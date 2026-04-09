@@ -183,7 +183,7 @@ const init = async (dbs: DBS) => {
     } satisfies McpToolCallResponse;
   };
 
-  const fetchTools = async (
+  const fetchTools = (
     serverName: string,
     context: McpCallContextFetchTools,
   ) => {

@@ -1,7 +1,6 @@
-import type { DBS } from "@src/index";
 import { getJsonSchemaAsTs } from "@common/getJsonSchemaAsTs";
+import type { DBS } from "@src/index";
 import { getValidatedMcpServerToolsAllowed } from "../definitionValidation/getValidatedMcpServerToolsAllowed";
-import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 
 export const getToolTypescriptSchemas = async (
   dbs: DBS,
@@ -35,10 +34,6 @@ export const getToolTypescriptSchemas = async (
     outputSchema,
     description,
   } of mcpTools) {
-    const prglMcp = getPropertySafe(
-      PROSTGLES_MCP_SERVERS_AND_TOOLS,
-      server_name,
-    );
     const argsTsSchema = getTsType(inputSchema);
     const outputTsSchema = getTsType(outputSchema);
 

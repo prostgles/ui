@@ -214,8 +214,8 @@ export function extractInstalledPackageTypes(projectDir: string): TypeFile[] {
       depPkgContent.includes('"typings"')
     ) {
       collected.set(depPkgPath, {
-        content: depPkgContent,
         filePath: depPkgPath,
+        content: depPkgContent,
       });
     }
   }

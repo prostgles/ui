@@ -86,11 +86,8 @@ export const getLLMToolsAllowedInThisChat = async ({
   const tools: Map<string, AllowedChatTool> = new Map();
 
   const { mcpTools } = await getMcpToolsWithDynamicDescription({
-    userType,
     dbs,
-    chat,
     allowedMcpToolsWithInfo,
-    clientReq,
   });
 
   /** Check for name collisions */

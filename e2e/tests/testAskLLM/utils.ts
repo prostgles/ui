@@ -1,7 +1,5 @@
 import { getMCPFullToolName } from "common/mcpUtils";
 
-export const stringify = (obj: any) => JSON.stringify(obj, null, 2);
-
 export type ToolUse = {
   content?: string;
   tool: {

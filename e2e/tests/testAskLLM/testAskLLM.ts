@@ -1,19 +1,21 @@
+import { getProstglesMCPFullToolName } from "common/mcpUtils";
+import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "common/prostglesMcp";
+import type { DBSSchema } from "common/publishUtils";
 import { join } from "path";
 import type { JSONB } from "prostgles-types";
+import { runDbsSql, type PageWIds } from "utils/utils";
 import { agenticWorkflowToolUses, research } from "./agenticWorkflowToolUses";
 import { createComponentToolUse } from "./createComponentToolUse";
+import { getAskUserToolUse } from "./getAskUserToolUse";
+import { mcpSandboxToolUse } from "./mcpSandboxToolUse";
 import {
   dockerWeatherToolUse,
   prostglesUICryptoDashboardSample,
   prostglesUIFoodDeliveryDashboardSample,
 } from "./sampleToolUseData";
-import { stringify, type Scenario, type ToolUse } from "./utils";
-import { mcpSandboxToolUse } from "./mcpSandboxToolUse";
-import { getProstglesMCPFullToolName } from "common/mcpUtils";
-import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "common/prostglesMcp";
-import { runDbsSql, type PageWIds } from "utils/utils";
-import type { DBSSchema } from "common/publishUtils";
 import { receiptImport } from "./scenarios/receiptImport/receiptImport.scenario";
+import { stringify } from "./stringify";
+import { type Scenario, type ToolUse } from "./utils";
 
 type RequestToolAccess = JSONB.GetType<
   (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["request_tool_access"]["schema"]
@@ -361,47 +363,11 @@ const toolResponses: Record<string, ToolUse> = {
   },
   ask_tool: {
     content: "I'll ask you a question using the ask_user_questions tool.",
-    tool: [
-      {
-        id: "ask-tool-use",
-        type: "function",
-        function: {
-          name: getProstglesMCPFullToolName(
-            "prostgles-ui",
-            "ask_user_questions",
-          ),
-          arguments: stringify({
-            questions: [
-              {
-                type: "choice",
-                question: "What is your favorite color?",
-                allowMultipleChoices: false,
-                suggestedAnswers: ["Red", "Blue", "Green", "Yellow"],
-              },
-              {
-                type: "choice",
-                question: "What is my favorite color?",
-                allowMultipleChoices: true,
-                suggestedAnswers: ["Red", "Blue", "Green", "Yellow"],
-              },
-              {
-                type: "table-columns",
-                tableName: "users",
-                question: "Table columns",
-              },
-              {
-                type: "table-name",
-                question: "Table name",
-              },
-              {
-                type: "free-text",
-                question: "Free text",
-              },
-            ],
-          }),
-        },
-      },
-    ],
+    ...getAskUserToolUse(true),
+  },
+  ask_tool_invalid: {
+    content: " ",
+    ...getAskUserToolUse(false),
   },
 };
 

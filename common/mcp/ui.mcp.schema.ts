@@ -1,6 +1,4 @@
-import { getMCPFullToolName } from "../mcpUtils";
 import { fixIndent } from "../utils";
-import type { dbMcpSchema } from "./db.mcp.schema";
 import { runCodeInSandboxSchema } from "./runCodeInSandboxSchema";
 import {
   agentDefinitionsSchema,
@@ -14,7 +12,7 @@ const { outputSchema, ...agentSchemaWithoutOutput } =
 const { files, userInput, userInputValue, ...runTsSchema } =
   runCodeInSandboxSchema.type;
 
-const TYPESCRIPT_CODE_QUALITY =
+export const TYPESCRIPT_CODE_QUALITY =
   "Ensure the typescript code compiles with no errors (assume strict tsconfig and recommended eslint rules). Use top level imports, not require or dynamic imports.";
 
 export const uiMcpSchema = {
@@ -150,12 +148,17 @@ export const uiMcpSchema = {
   ask_user_questions: {
     mode: "user-provides-response",
     description: [
-      "Ask a question to gather information from the user.",
+      "Ask a question to gather information from the user. ",
+      "This is meant to be used when the information cannot be easily obtained from the schema or tools available and is necessary to remove ambiguity from user intent.",
+      `Refrain from asking "free-text" unless absolutely necessary. Always try to use more ergonomic types ("choice", "table-name", "table-columns" etc.) type questions when possible to reduce user input errors and eliminate the effort of manually typing long responses.`,
+      "Always try to infer missing information from the schema and tools before asking the user.",
       "DO NOT SEND OTHER TOOL USE REQUESTS TOGETHER WITH THIS TOOL. It must be a single tool use request",
       "Be as short and as concise as possible.",
       "Do not ask more than 4 questions at a time.",
       `Each "choice" type question should have a list of suggested answers to choose from.`,
       `If allowMultipleChoices is true on "choice" type question, the user can select multiple answers.`,
+      `Refrain from asking user questions if the information can be easily obtained from the schema or tools available.`,
+      `Refrain from asking questions that will be answered later on through userInput.`,
       `When asking "table-columns" type questions, ensure the tableName is valid and include it in the question data. Example question data: { type: "table-columns", question: "Which columns should I select?", tableName: "users" }`,
     ].join("\n"),
     schema: {
@@ -220,13 +223,13 @@ export const uiMcpSchema = {
   get_tool_schemas: {
     mode: undefined,
     description: fixIndent(`
-          Get MCP tool descriptions, input and output schemas in typescript format. 
-          Will return all tools by default. 
-          Use toolNames to specify which tools to return.
-          infoLevel controls how much information to return about the tools:
-          - full: returns detailed descriptions and schemas for the tools to allow for better understanding of how to use them.
-          - basic (default): returns only the tool descriptions.
-        `),
+      Get MCP tool descriptions, input and output schemas in typescript format. 
+      Will return all tools by default. 
+      Use toolNames to specify which tools to return.
+      infoLevel controls how much information to return about the tools:
+      - full: returns detailed descriptions and schemas for the tools to allow for better understanding of how to use them.
+      - basic (default): returns only the tool descriptions.
+    `),
     schema: {
       type: {
         mcpServerTools: {
@@ -328,39 +331,7 @@ export const uiMcpSchema = {
   },
   create_agentic_workflow: {
     mode: "auto-approved-user-actionable",
-    description: [
-      `The workflow_function_definition must compile into valid typescript and call defineAgenticWorkflow().`,
-      `The file is an executable entry point. The code must be top-level execution only. You are prohibited from wrapping the defineAgenticWorkflow call in any functions`,
-      "Choose the minimum required database access and minimum required tools; prefer custom tablePermissions over broad SQL modes.",
-      "IMPORTANT: Do not provide CREATE statements for table names that are already present in the schema unless the user specifically asks for it.",
-      "If databaseAccessDefinitions.mode is custom, ensure every table used by dbHandler (find/count/insert/update/delete) exists in current schema or in ddlStatements, and that each used table is included in tablePermissions.",
-      "Take into account that the user has the ability to stop and re-run the workflow.",
-      "Prefer short iterative steps with progress updates via setProgress, and await async operations (avoid fire-and-forget promises) so stop/re-run works predictably.",
-      "Without over-engineering make the workflow resilient to re-runs unless it goes against the nature of the workflow.",
-      "Interleave agent steps and database writes; avoid collecting all agent output first and applying DB changes only at the end unless truly necessary.",
-      "When user requirements are ambiguous, ask targeted follow-up questions using ask_user_questions and include a best-guess default workflow.",
-      "Given that the workflow will run in a nodejs environment, you are free to use reputable npm packages as long as you include them in the workflow_function_definition dependencies and use them in a way that does not break the defineAgenticWorkflow call structure.",
-      "Do not add 'optional' to user input. It will be added automatically",
-
-      "Creates an agent workflow to complete the specified task using MCP tools and database access if needed.",
-      "Return workflow_function_definition as valid TypeScript that calls defineAgenticWorkflow(...) directly.",
-      TYPESCRIPT_CODE_QUALITY,
-      "Any external dependencies must be listed in the package_dependencies field to ensure they get installed.",
-      "Given that the workflow will run in a nodejs environment, you are free to use reputable npm packages as long as you include them in the workflow_function_definition dependencies and use them in a way that does not break the defineAgenticWorkflow call structure.",
-      "External dependencies should be reputable and kept to a minimum to reduce security risks. Do not forget to include corresponding @types/ package for any dependency that does not ship its own type declarations. Always prefer using existing modules and tools instead of adding new dependencies, but if necessary, only add well-known and widely used packages.",
-      "Do not use external dependencies if there are more robust MCP tools available.",
-      `Use ${getMCPFullToolName("prostgles-ui", "get_tool_schemas")} to check available tools that can be enabled and used.`,
-      "Avoid using external API if there are MCP tools or open source packages that can achieve the same result and reduce the amount of input required from user.",
-      "The user will initially execute it in series mode (agent calls and responses will be queued) to ensure it works as expected,",
-      "It is crucial that you allow the database interactions to flow after each agent step to ensure the user can provide feedback and to avoid doing unnecessary work.",
-      "Use least-privilege DB/tool scope; for custom DB mode, ensure all dbHandler tables are valid and included in tablePermissions.",
-      `DO NOT INCLUDE CREATE STATEMENTS FOR TABLES THAT ALREADY EXIST IN THE DATABASE. ` +
-        `Any change to the existing table schema must be done through the ${getMCPFullToolName("db", "execute_sql" satisfies keyof typeof dbMcpSchema)} before confirming it with the user.`,
-      `Inspect the existing table schemas and ensure the workflow function definition is compatible with them. If new tables are needed, confirm with the user first.`,
-      "Prefer to use folder/file access from userInput rather than mcp orchestrator tools. This mounts the files to the container to allow interacting with native nodejs fs module for file operations instead of using MCP tools that allow filesystem access unless requested by the user.",
-      "When interacting with the DB avoid using repeated insert() calls where insertMany(arr) is possible.",
-      "Avoid gathering agent responses and then executing database operations at the end of the workflow unless absolutely necessary, as it can lead to a long feedback loop and more work if the workflow needs to be adjusted.",
-    ].join("\n"),
+    description: "",
     schema: {
       type: {
         workflow_function_definition: {

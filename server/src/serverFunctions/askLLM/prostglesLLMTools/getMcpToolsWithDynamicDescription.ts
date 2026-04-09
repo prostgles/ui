@@ -3,17 +3,15 @@ import { isDefined } from "prostgles-types";
 import { getMCPToolNameParts } from "@common/mcpUtils";
 
 import type { DBSSchema } from "@common/publishUtils";
+import type { DBS } from "@src/index";
 import { getProstglesMcpHub } from "@src/McpHub/ProstglesMcpHub/ProstglesMcpHub";
-import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
-import { type GetLLMToolsArgs } from "../getLLMToolsAllowedInThisChat";
 import { getMCPServerTools } from "./getMCPServerTools";
 
 export const getMcpToolsWithDynamicDescription = async ({
   dbs,
-  chat,
   allowedMcpToolsWithInfo,
-  clientReq,
-}: Omit<GetLLMToolsArgs, "connectionId"> & {
+}: {
+  dbs: DBS;
   allowedMcpToolsWithInfo: (Pick<
     DBSSchema["mcp_server_tools"],
     "description" | "mode"
@@ -24,14 +22,8 @@ export const getMcpToolsWithDynamicDescription = async ({
     tool_id: number;
     name: `${string}--${string}`;
   })[];
-  clientReq: AuthClientRequest;
 }) => {
   const { mcp_server_tools } = await getMCPServerTools(dbs, {});
-
-  const { connection_id } = chat;
-  if (!connection_id) {
-    throw new Error(`Chat with id ${chat.id} does not have a connection_id`);
-  }
 
   const prostglesMCPHub = await getProstglesMcpHub(dbs);
   const serverEntries = prostglesMCPHub.getServers();
@@ -39,10 +31,6 @@ export const getMcpToolsWithDynamicDescription = async ({
     await Promise.all(
       serverEntries.map(async ([name, { fetchTools }]) => {
         const serverToolsMap = await fetchTools(dbs, {
-          chat,
-          connection_id,
-          user_id: chat.user_id,
-          clientReq,
           mcpTools: mcp_server_tools,
           toolsAllowed: allowedMcpToolsWithInfo.map((t) => {
             return {
@@ -50,7 +38,6 @@ export const getMcpToolsWithDynamicDescription = async ({
               tool_name: getMCPToolNameParts(t.name)!.toolName,
             };
           }),
-          dbs,
         });
         const serverTools = Object.values(serverToolsMap).filter(isDefined);
         const res = [name, serverTools] as const;

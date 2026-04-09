@@ -30,24 +30,5 @@ export const buildWebApp = async (
     shCommand: `cd client && npm install ${isTesting ? "" : "--silent"} && npm run build`,
   });
 
-  // let testResult:
-  //   | { stdout: string; stderr: string; exitCode: number }
-  //   | undefined;
-  // if (test) {
-  //   const testDir = join(web_app_directory, "e2e");
-  //   const res = spawnSync("npm", ["test"], {
-  //     cwd: testDir,
-  //     stdio: "inherit",
-  //     shell: true,
-  //   });
-  //   const stdOut = res.stdout.toString() || "";
-  //   const stdErr = res.stderr.toString() || "";
-  //   testResult = {
-  //     stdout: stdOut,
-  //     stderr: stdErr,
-  //     exitCode: res.status ?? -1,
-  //   };
-  // }
-
   return result;
 };

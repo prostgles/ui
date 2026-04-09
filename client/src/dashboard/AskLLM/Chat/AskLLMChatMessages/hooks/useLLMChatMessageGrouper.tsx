@@ -73,6 +73,7 @@ export const useLLMChatMessageGrouper = (props: P) => {
         const allowMinimise =
           toolCalls.length >= 2 &&
           !toolCalls.some(
+            /** TODO: allow collapsing if result has is_error and follows by tool retries */
             (m) => ProstglesMCPToolsWithUI[m.name]?.displayMode === "full",
           );
         const shouldExpand =

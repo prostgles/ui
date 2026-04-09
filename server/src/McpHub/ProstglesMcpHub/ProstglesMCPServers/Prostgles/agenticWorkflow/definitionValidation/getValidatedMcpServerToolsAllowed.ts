@@ -1,9 +1,11 @@
-import type { DBS } from "@src/index";
-import { getKeys, isEmpty } from "prostgles-types";
-import type { McpServerToolsAllowed } from "../runtimeSdk/defineAgenticWorkflow";
-import { getEntries } from "@common/utils";
-import { tout } from "@src/utils/tout";
 import type { DBSSchema } from "@common/publishUtils";
+import { getEntries } from "@common/utils";
+import type { DBS } from "@src/index";
+import { getProstglesMcpHub } from "@src/McpHub/ProstglesMcpHub/ProstglesMcpHub";
+import { tout } from "@src/utils/tout";
+import { getKeys, isDefined, isEmpty } from "prostgles-types";
+import type { McpServerToolsAllowed } from "../runtimeSdk/defineAgenticWorkflow";
+import type { ProstglesMcpServerHandlerInstance } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServerTypes";
 
 export const getValidatedMcpServerToolsAllowed = async (
   dbs: DBS,
@@ -25,10 +27,11 @@ export const getValidatedMcpServerToolsAllowed = async (
         )
         .flat()
     );
-  const serverNames = toolsFilter === "*" ? undefined : getKeys(toolsFilter);
-  if (serverNames) {
+  const requestedServerNames =
+    toolsFilter === "*" ? undefined : getKeys(toolsFilter);
+  if (requestedServerNames) {
     const serversWithNoTools = await dbs.mcp_servers.find({
-      name: { $in: serverNames },
+      name: { $in: requestedServerNames },
       enabled: false,
       $notExistsJoined: {
         mcp_server_tools: {},
@@ -52,7 +55,7 @@ export const getValidatedMcpServerToolsAllowed = async (
       );
     }
   }
-  const serverTools = await dbs.mcp_server_tools.find(
+  const serverToolsWithDefaultDescriptions = await dbs.mcp_server_tools.find(
     !serverToolNames ?
       {}
     : {
@@ -69,6 +72,43 @@ export const getValidatedMcpServerToolsAllowed = async (
       },
     },
   );
+
+  const serverNames = Array.from(
+    new Set(serverToolsWithDefaultDescriptions.map((t) => t.server_name)),
+  );
+  const prglMcpHub = await getProstglesMcpHub(dbs);
+
+  /** Add dynamic tool descriptions/schema */
+  const dynamicToolInfo = new Map(
+    (
+      await Promise.all(
+        serverNames.map(async (serverName) => {
+          const prglMcpServer = prglMcpHub.getServer(serverName) as {
+            server?: ProstglesMcpServerHandlerInstance;
+          };
+          if (!prglMcpServer.server) {
+            return undefined;
+          }
+          const toolSchemas = await prglMcpServer.server.fetchTools(dbs, {
+            mcpTools: serverToolsWithDefaultDescriptions,
+            toolsAllowed: serverToolsWithDefaultDescriptions.map((t) => ({
+              tool_id: t.id,
+              tool_name: t.name,
+            })),
+          });
+          return [serverName, toolSchemas] as const;
+        }),
+      )
+    ).filter(isDefined),
+  );
+
+  const serverTools = serverToolsWithDefaultDescriptions.map((tool) => {
+    const toolInfo = dynamicToolInfo.get(tool.server_name)?.[tool.name];
+    return {
+      ...tool,
+      description: toolInfo?.description || tool.description,
+    };
+  });
 
   const workflowToolsWithInfo =
     toolsFilter === "*" ? serverTools : (

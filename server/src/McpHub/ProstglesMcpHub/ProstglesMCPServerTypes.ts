@@ -34,10 +34,7 @@ export type McpCallContext = {
   messageId: string;
 };
 
-export type McpCallContextFetchTools = Omit<
-  McpCallContext,
-  "toolUseId" | "messageId"
-> & {
+export type McpCallContextFetchTools = {
   mcpTools: {
     name: string;
     server_name: string;
@@ -45,7 +42,6 @@ export type McpCallContextFetchTools = Omit<
     inputSchema: Record<string, unknown>;
     outputSchema: Record<string, unknown> | null;
   }[];
-  chat: DBSSchema["llm_chats"];
   toolsAllowed: {
     tool_id: number;
     tool_name: string;

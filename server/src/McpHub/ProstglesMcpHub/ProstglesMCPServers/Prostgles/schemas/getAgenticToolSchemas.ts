@@ -27,13 +27,9 @@ export const getAgenticWorkflowToolSchema = async ({
   const workflowTsSchema = await getDefineAgenticWorkflowTsWithDbAndMcpTypes({
     dbs,
     purpose: "agent-prompt",
-    // connection_id,
     dbGeneratedSchema: undefined,
   });
-  // Database table handler definition:
-  //   ${"```typescript"}
-  //   ${prostglesApiTypes}
-  //   ${"```"}
+
   return {
     name,
     description: fixIndent(`

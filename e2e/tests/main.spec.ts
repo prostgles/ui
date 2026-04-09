@@ -1607,8 +1607,6 @@ test.describe("Main test", () => {
 
     await updateAskLLMToolUseCode(page);
 
-    await newChat(page);
-
     /** Test ask tool */
     await newChat(page);
     await sendAskLLMMessage(page, " ask_tool ");
@@ -1621,38 +1619,43 @@ test.describe("Main test", () => {
     await page.getByTestId("AskUserQuestions").getByText("Blue").nth(1).click();
     await page
       .getByTestId("AskUserQuestions")
-      .locator(getDataKey("Table columns"))
+      .locator(getDataKey("table-columns"))
       .click();
     await page
-      .locator(getDataKey("Table columns"))
+      .locator(getDataKey("table-columns"))
       .locator(getDataKey("type"))
       .click();
     await page.keyboard.press("Escape");
     await page
       .getByTestId("AskUserQuestions")
-      .locator(getDataKey("Table name"))
+      .locator(getDataKey("table-name"))
       .click();
     await page
-      .locator(getDataKey("Table name"))
+      .locator(getDataKey("table-name"))
       .locator(getDataKey("receipts"))
       .click();
     await page
-      .locator(getDataKey("Free text"))
+      .locator(getDataKey("free-text"))
       .locator("input")
       .fill("some free text");
     await page.getByTestId("AskUserQuestions.confirm").click();
     await expect(
       page.getByTestId("AskUserQuestions.confirm"),
     ).not.toBeAttached();
-
     const buttons = page.getByTestId("AskUserQuestions").locator("button");
-
     for (const btn of await buttons.all()) {
       await expect(btn).toBeDisabled();
     }
     await expect(page.getByTestId("AskUserQuestions")).toContainText(
       "some free text",
     );
+
+    await newChat(page);
+    await sendAskLLMMessage(page, " ask_tool_invalid ");
+    await page.waitForTimeout(1e3);
+    await expect(
+      page.getByTestId("AskUserQuestions").locator("button"),
+    ).not.toBeAttached();
 
     await newChat(page);
     await setPromptByText(page, "Create workflow");
@@ -1694,7 +1697,7 @@ test.describe("Main test", () => {
     const selectFileOrFolderPath = async (fileTreeKey: string) => {
       const capitalizeFirstLetter = (s: string) =>
         s.charAt(0).toUpperCase() + s.slice(1);
-      const label = capitalizeFirstLetter(fileTreeKey.replace(/-/g, " ")); // + " (Read-Only)";
+      const label = capitalizeFirstLetter(fileTreeKey.replace(/-/g, " "));
       await startWorkFlowAndExpectError(
         `Missing required user input: ${JSON.stringify(label)}`,
       );

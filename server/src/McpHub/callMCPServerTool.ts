@@ -55,6 +55,21 @@ export const callMCPServerTool = async ({
   if (argErrors.error) {
     throw new Error(argErrors.error);
   }
+
+  const toolCallPlaceholderUsedForLoading =
+    await dbs.mcp_server_tool_calls.insert(
+      {
+        called_at: called_at.toISOString(),
+        mcp_server_name: serverName,
+        mcp_tool_name: toolName,
+        input: toolArguments,
+        chat_id,
+        user_id: user.id,
+        mcp_tool_approval_requests_id,
+      } satisfies DBSSchemaForInsert["mcp_server_tool_calls"],
+      { onConflict: isReRun ? "DoUpdate" : undefined, returning: { id: 1 } },
+    );
+
   const result = await tryCatchV2(async () => {
     const chat = await dbs.llm_chats.findOne({ id: chat_id, user_id: user.id });
     if (!chat) {
@@ -64,7 +79,7 @@ export const callMCPServerTool = async ({
     if (!connection_id) {
       throw new Error(`Chat with id ${chat_id} does not have a connection_id`);
     }
-    const chatAllowedMCPTool = await dbs.llm_chats_allowed_mcp_tools.findOne({
+    const toolsAllowed = await dbs.llm_chats_allowed_mcp_tools.findOne({
       chat_id,
       $existsJoined: {
         mcp_server_tools: {
@@ -73,7 +88,7 @@ export const callMCPServerTool = async ({
         },
       },
     });
-    if (!chatAllowedMCPTool) {
+    if (!toolsAllowed) {
       throw new Error("Tool invalid or not allowed for this chat");
     }
 
@@ -93,29 +108,20 @@ export const callMCPServerTool = async ({
 
     const mcpHub = await startMcpHub(dbs);
     const res = await mcpHub.callTool(
-      [serverName, chatAllowedMCPTool.server_config_id]
-        .filter(Boolean)
-        .join("_"),
+      [serverName, toolsAllowed.server_config_id].filter(Boolean).join("_"),
       toolName,
       toolArguments,
     );
     return res;
   });
 
-  await dbs.mcp_server_tool_calls.insert(
+  await dbs.mcp_server_tool_calls.update(
+    { id: toolCallPlaceholderUsedForLoading.id },
     {
-      called_at: called_at.toISOString(),
-      finished_at: new Date().toISOString(),
-      mcp_server_name: serverName,
-      mcp_tool_name: toolName,
-      input: toolArguments,
       output: result.data,
       error: getSerialisableError(result.error) || null,
-      chat_id,
-      user_id: user.id,
-      mcp_tool_approval_requests_id,
-    } satisfies DBSSchemaForInsert["mcp_server_tool_calls"],
-    { onConflict: isReRun ? "DoUpdate" : undefined },
+      finished_at: new Date().toISOString(),
+    },
   );
 
   if (result.hasError) {

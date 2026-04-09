@@ -1,6 +1,7 @@
 import { dedent } from "svgScreenshots/utils/dedent";
-import { stringify, type ToolUse } from "./utils";
+import { type ToolUse } from "./utils";
 import type { DBSSchema } from "common/publishUtils";
+import { stringify } from "./stringify";
 
 export const mcpSandboxToolUse: ToolUse = {
   content: `I'll create a container that runs a simple Node.js application.`,

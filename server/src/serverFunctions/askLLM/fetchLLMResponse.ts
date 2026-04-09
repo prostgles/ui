@@ -74,7 +74,9 @@ export const fetchLLMResponse = async (
 
   const responseData = (await readFetchStream(res)) as AnyObject | undefined;
   if (!responseData) {
-    throw new Error("No response data from LLM");
+    throw new Error(
+      "No response data from LLM. statusText:" + responseClone.statusText,
+    );
   }
 
   try {

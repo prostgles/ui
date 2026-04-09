@@ -1,14 +1,11 @@
 import { LLM_PROMPT_VARIABLES } from "@common/llmUtils";
+import { getProstglesMCPFullToolName } from "@common/mcpUtils";
 import { type PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import type { DBSSchemaForInsert } from "@common/publishUtils";
 import { getElectronConfig } from "@src/electronConfig";
 import type { DBS } from "../..";
+import { createAgenticWorkflowPrompt } from "./defaultPrompts/createAgenticWorkflow.prompt";
 import { setupLLMProviders } from "./setupLLMProviders";
-import {
-  getMCPFullToolName,
-  getProstglesMCPFullToolName,
-} from "@common/mcpUtils";
-import { uiMcpSchema } from "@common/mcp/ui.mcp.schema";
 
 type UiToolName =
   keyof (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"];
@@ -26,11 +23,14 @@ export const setupLLM = async (dbs: DBS) => {
     const user_id = adminUser?.id;
     const firstLine = [
       `You are an assistant for a software called ${LLM_PROMPT_VARIABLES.PROSTGLES_SOFTWARE_NAME}.`,
+      `Your main and the most important goal is to ensure the user achieves their objective with the least amount of effort/input from their side.`.toUpperCase(),
       `It allows managing and exploring data within Postgres databases as well as creating internal tools. \n`,
       `Today is ${LLM_PROMPT_VARIABLES.TODAY}.`,
       `DO NOT USE HARDCODED DATA UNLESS STRICTLY NECESSARY OR THE USER ASKS FOR IT.`,
+      `Use ${getProstglesMCPFullToolName("prostgles-ui", "ask_user_questions")} to clarify the user intent and/or your strategy with ergonomic, easy to answer "choice" type questions if needed.`,
       `Use ${getProstglesMCPFullToolName("prostgles-ui", "compact_context")} tool extensively to ensure only the most relevant information is kept between your steps. This improves the quality and cost of your work. Prefer to keep the key information as is, without sumarising to ensure minimal information is lost.`,
       `Use ${getProstglesMCPFullToolName("prostgles-ui", "create_agent")} when the task is iterative, requires multiple tool-assisted steps, or is better delegated to a focused sub-agent that does not need database access. Give it the minimum necessary tool access and ask it to return a concise final result.`,
+
       `When writing typescript code, ensure it compiles and do not include type or eslint errors. Assume strict: true (including noImplicitAny, strictNullChecks).`,
       `Let TS infer obvious local variable types. Avoid i < arr.length - 1 patterns; split into parents + last where needed.`,
       `Prefer to use types instead of interfaces. Prefer for...of over index-based for loops. Only use indexed loops when the numeric index itself is required.`,
@@ -104,15 +104,7 @@ export const setupLLM = async (dbs: DBS) => {
           },
           prompt: [
             firstLine,
-            "Assist the user in creating an agentic workflow.",
-            "They expect you to look at the schema and tools available and return the best suited tools, database schema and workflow logic for accomplishing their task.",
-            `It is crucial that you do not bother the user with questions that can be easily answered by looking at the schema or tools available. Always try to infer missing information from the schema and tools before asking the user.`,
-            `If user input controls are necessary explore the data involved sufficiently to ensure "enum" inputs are used as much as possible instead of "custom" to provide better UX and accuracy.`,
-            `Always use the ${getProstglesMCPFullToolName("prostgles-ui", "create_agentic_workflow")} tool to return a workflow_function_definition instead of only describing the workflow in plain text.`,
-            `Prefer to use ${getProstglesMCPFullToolName("prostgles-ui", "run_typescript_in_nodejs")} tool to perform exploratory work and data intensive tasks to prepare the workflow_function_definition.`,
-            `Use ${getProstglesMCPFullToolName("prostgles-ui", "create_agent")} to delegate preliminary research to a focused sub-agent that does not need database access. Give it the minimum necessary tool access and ask it to return a concise final result.`,
-            "",
-            uiMcpSchema.create_agentic_workflow.description,
+            createAgenticWorkflowPrompt,
             LLM_PROMPT_VARIABLES.SCHEMA,
             "",
           ].join("\n"),

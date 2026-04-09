@@ -1,4 +1,5 @@
-import { stringify, type ToolUse } from "./utils";
+import { stringify } from "./stringify";
+import { type ToolUse } from "./utils";
 
 export const createComponentToolUse: ToolUse = {
   tool: [

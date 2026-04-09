@@ -301,7 +301,7 @@ export const W_MethodControls = ({
           className="m-1"
         />
       )}
-      {showResults && !error && (
+      {showResults && !error && result !== undefined && (
         <div className="flex-row f-1">
           {outputTableInfo ?
             <SmartTable

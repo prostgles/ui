@@ -6,6 +6,7 @@ import {
   deleteExistingLLMChat,
   newChat,
   runDbSql,
+  runDbsSql,
   setModelByText,
   setPromptByText,
 } from "utils/utils";
@@ -119,6 +120,31 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   console.log("Receipt created at:", filePath);
   await typeSendAddScenes(page, addScene, receiptImport.firstMessage);
 
+  await runDbsSql(
+    page,
+    `
+    DROP TABLE IF EXISTS receipts;
+    CREATE TABLE receipts (
+      id BIGSERIAL PRIMARY KEY,
+      receipt_number text,
+      vendor_name text NOT NULL,
+      purchase_date date NOT NULL,
+      currency_code bpchar(3) NOT NULL DEFAULT 'USD'::bpchar,
+      subtotal numeric(12, 2) NOT NULL,
+      tax_amount numeric(12, 2) NOT NULL DEFAULT 0,
+      total_amount numeric(12, 2) NOT NULL,
+      payment_method text,
+      notes text,
+      metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now(),
+      CONSTRAINT receipts_totals_check CHECK ((total_amount >= subtotal)),
+      CONSTRAINT receipts_total_amount_check CHECK ((total_amount >= (0)::numeric)),
+      CONSTRAINT receipts_tax_amount_check CHECK ((tax_amount >= (0)::numeric)),
+      CONSTRAINT receipts_subtotal_check CHECK ((subtotal >= (0)::numeric))
+    )
+    `,
+  );
   await addSceneAnimation(getDataKey("Insert automatically without preview"));
   await addSceneAnimation(
     getDataKey(

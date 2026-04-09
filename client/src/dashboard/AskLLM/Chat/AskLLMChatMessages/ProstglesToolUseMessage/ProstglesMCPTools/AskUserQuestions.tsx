@@ -59,9 +59,12 @@ export const AskUserQuestions = ({
 
   const { sendToolUseResult } = useSendToolUseResult();
 
+  if (error) {
+    return null;
+  }
   return (
     <FlexCol className="w-full ta-left" data-command="AskUserQuestions">
-      <ErrorComponent error={error ?? result?.error} />
+      <ErrorComponent error={result?.error} />
       {questions?.map(({ question, ...questionData }, questionIndex) => {
         const questionResponseValues = Array.from(
           selectedAnswers.get(question)?.values() ?? [],
