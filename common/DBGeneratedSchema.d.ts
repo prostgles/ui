@@ -342,7 +342,7 @@ export type DBGeneratedSchema = {
       maximum_consecutive_tool_fails?: number;
       model?: null | number;
       name?: string;
-      options?: null | {    useTsTypesForTools?: boolean;  };
+      options?: null | {    mcpToolSchemaMode?: "ts-types-in-description" | "hide-schemas-and-descriptions";  };
       parent_chat_id?: null | number;
       parent_chat_message_id?: null | string;
       status?: 
@@ -703,7 +703,7 @@ export type DBGeneratedSchema = {
       id?: string;
       last_updated?: null | string;
       name?: null | string;
-      options?: null | {    showStateDB?: boolean;   hideNonSSLWarning?: boolean;   viewedSQLTips?: boolean;   viewedAccessInfo?: boolean;   theme?: "dark" | "light" | "from-system";   speech_mode?: "off" | "stt-local" | "stt-web" | "audio";   speech_send_mode?: "manual" | "auto";   llm_chat_window_positioning?: "right-panel" | "fullscreen";  };
+      options?: null | {    showStateDB?: boolean;   hideNonSSLWarning?: boolean;   viewedSQLTips?: boolean;   viewedAccessInfo?: boolean;   theme?: "dark" | "light" | "from-system";   speechMode?: "off" | "stt-local" | "stt-web" | "audio";   speechSendMode?: "manual" | "auto";   llmChatWindowPositioning?: "right-panel" | "fullscreen";   lastCwd?: string;  };
       password: string;
       passwordless_admin?: null | boolean;
       registration?: 

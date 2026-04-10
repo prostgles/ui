@@ -264,8 +264,8 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
       options: {
         nullable: true,
         jsonbSchemaType: {
-          useTsTypesForTools: {
-            type: "boolean",
+          mcpToolSchemaMode: {
+            enum: ["ts-types-in-description", "hide-schemas-and-descriptions"],
             optional: true,
           },
         },

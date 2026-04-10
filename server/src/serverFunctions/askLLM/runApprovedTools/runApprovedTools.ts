@@ -194,6 +194,7 @@ export const runApprovedTools = async ({
       }),
       aborter,
     });
+    return;
   }
 
   /** Wait for user to approve/deny/respond to all pending requests */

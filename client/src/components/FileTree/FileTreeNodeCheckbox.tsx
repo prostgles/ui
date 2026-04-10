@@ -1,6 +1,7 @@
 import Btn from "@components/Btn";
 import {
   mdiCheckboxBlankOutline,
+  mdiCheckboxIntermediateVariant,
   mdiCheckboxMarked,
   mdiRadioboxBlank,
   mdiRadioboxMarked,
@@ -24,7 +25,8 @@ export const FileTreeNodeCheckbox = ({
       <Btn
         data-command="FileTreeNode.checkbox"
         iconPath={
-          checkState.mode === "pick-one" ?
+          checkState.isChecked?.descendants ? mdiCheckboxIntermediateVariant
+          : checkState.mode === "pick-one" ?
             checkState.isChecked ?
               mdiRadioboxMarked
             : mdiRadioboxBlank

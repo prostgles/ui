@@ -1,5 +1,8 @@
 import type { PageWIds } from "utils/utils";
 import * as path from "path";
+import { mkdirSync } from "fs";
+
+export const DEMO_DIR = path.join(__dirname, "../../demo/home");
 
 export const createReceipt = async (page1: PageWIds) => {
   const context = await page1.context();
@@ -107,12 +110,30 @@ export const createReceipt = async (page1: PageWIds) => {
 
   await page.setContent(receiptHTML, { waitUntil: "domcontentloaded" });
 
+  const sample_home_dir_folders = [
+    "Documents/Receipts",
+    "Downloads",
+    "Pictures",
+    "Music",
+    "Videos",
+  ];
+  for (const folder of sample_home_dir_folders) {
+    const folderPath = path.join(DEMO_DIR, folder);
+    mkdirSync(folderPath, { recursive: true });
+  }
+
   const fileName = "hotel_receipt.png";
-  // Take screenshot
-  const filePath = path.join(__dirname, "../../demo", fileName);
+  const filePath = path.join(DEMO_DIR, sample_home_dir_folders[0], fileName);
   await page.screenshot({
     path: filePath,
     fullPage: true,
+  });
+  await page.pdf({
+    path: filePath.replace(".png", ".pdf"),
+    width: `${width}px`,
+    height: `${height}px`,
+    printBackground: true,
+    margin: { top: "0", right: "0", bottom: "0", left: "0" },
   });
 
   await page.close();

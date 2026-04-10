@@ -1,9 +1,11 @@
-import type { DBSSchema } from "@common/publishUtils";
+import { type DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
 import Chip from "@components/Chip";
-import { FlexCol, FlexRow } from "@components/Flex";
+import { FlexRow } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
 import Popup from "@components/Popup/Popup";
+import { ProgressBar } from "@components/ProgressBar";
+import { Select } from "@components/Select/Select";
 import { SwitchToggle } from "@components/SwitchToggle";
 import { mdiCircleOutline, mdiDotsVertical } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
@@ -12,8 +14,6 @@ import { nFormatter } from "src/utils/utils";
 import type { AskLLMChatProps } from "../Chat/AskLLMChat";
 import { LLMModelSelector } from "../LLMModelSelector";
 import { ChatActionBarBtnStyleProps } from "./AskLLMChatActionBar";
-import { Select } from "@components/Select/Select";
-import { ProgressBar } from "@components/ProgressBar";
 
 export const AskLLMChatActionBarModelSelector = (
   props: Pick<AskLLMChatProps, "setupState"> & {
@@ -25,6 +25,7 @@ export const AskLLMChatActionBarModelSelector = (
   const { activeChat, llmMessages } = props;
   const { extra_body } = activeChat;
   const { dbs } = usePrgl();
+
   const [show, setShow] = useState(false);
 
   const totalUsage = useMemo(() => {
@@ -96,6 +97,7 @@ export const AskLLMChatActionBarModelSelector = (
     },
     [activeChat.id, dbs.llm_chats, extra_body],
   );
+
   const tokensUsed = nFormatter(totalUsage.tokens, 0);
   const contextUsedMessage =
     !context_length ?
@@ -162,20 +164,33 @@ export const AskLLMChatActionBarModelSelector = (
             }}
           />
 
-          <SwitchToggle
-            label={{
-              label: "Use TS for mcp tools",
-              info: "If enabled, the LLM will receive TypeScript types for the tools instead of JSON Schema. This can help the LLM better understand how to use the tools.",
-            }}
-            variant="col"
-            checked={activeChat.options?.useTsTypesForTools ?? false}
+          <Select
+            label={"MCP tool options"}
+            value={activeChat.options?.mcpToolSchemaMode}
+            fullOptions={
+              [
+                {
+                  key: "ts-types-in-description",
+                  label: "Show as Typescript types",
+                  subLabel:
+                    "Will append tool input and output schemas as Typescript types in the tool description while removing Json Schema",
+                },
+                {
+                  key: "hide-schemas-and-descriptions",
+                  label: "Hide schemas and descriptions",
+                  subLabel:
+                    "Removes tool input and output schemas and descriptions from the tool description. Full tool info available by using get_tool_schemas",
+                },
+              ] as const
+            }
+            optional={true}
             onChange={async (newValue) => {
               await dbs.llm_chats.update(
                 { id: activeChat.id },
                 {
                   options: {
                     ...activeChat.options,
-                    useTsTypesForTools: newValue,
+                    mcpToolSchemaMode: newValue,
                   },
                 },
               );

@@ -1,16 +1,17 @@
 import Btn from "@components/Btn";
-import { FlexRow } from "@components/Flex";
+import { FlexCol, FlexRow } from "@components/Flex";
 import {
   mdiClose,
   mdiMagnify,
   mdiSortAlphabeticalAscending,
-  mdiSortNumericAscending,
-  mdiSortNumericDescending,
+  mdiSortClockDescendingOutline,
+  mdiSortNumericDescendingVariant,
 } from "@mdi/js";
 import { isDefined } from "prostgles-types";
 import React from "react";
 import { FileTreeCurrentDirectory } from "./FileTreeCurrentDirectory";
 import { type FileTreeState } from "./useFileTree";
+import { Select } from "@components/Select/Select";
 
 export const FileTreeSearchBar = ({
   rootPath,
@@ -25,31 +26,16 @@ export const FileTreeSearchBar = ({
   setSortBy,
 }: FileTreeState) => {
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 8,
-        flexShrink: 0,
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <FileTreeCurrentDirectory
-          path={rootPath ?? "/"}
-          onChange={(newDir) => setRootPath(newDir)}
-          existingFolderNames={tree
-            .map((p) => (p.type === "directory" ? p.name : undefined))
-            .filter(isDefined)}
-        />
-      </div>
+    <FlexCol className="gap-p5">
+      <FileTreeCurrentDirectory
+        path={rootPath ?? "/"}
+        onChange={(newDir) => setRootPath(newDir)}
+        existingFolderNames={tree
+          .map((p) => (p.type === "directory" ? p.name : undefined))
+          .filter(isDefined)}
+      />
 
-      <FlexRow className="f-1 gap-0">
+      <FlexRow className="f-1 gap-p25">
         <FlexRow
           className="fst-search f-1 gap-0 relative rounded bg-color-2 b b-color"
           style={{
@@ -98,29 +84,38 @@ export const FileTreeSearchBar = ({
             />
           )}
         </FlexRow>
-        <Btn
-          size="micro"
-          title={
-            sortBy === "name" ? "Sort by name"
-            : sortBy === "lastModified" ?
-              "Sort by modified time"
-            : "Sort by size"
-          }
-          iconPath={
-            sortBy === "name" ? mdiSortAlphabeticalAscending
-            : sortBy === "lastModified" ?
-              mdiSortNumericDescending
-            : mdiSortNumericAscending
-          }
-          onClick={() => {
-            setSortBy((prev) => {
-              if (prev === "name") return "lastModified";
-              if (prev === "lastModified") return "name";
-              return "name";
-            });
+        <Select
+          value={sortBy}
+          showSelected="icon"
+          size="small"
+          btnProps={{
+            variant: "icon",
           }}
+          fullOptions={
+            [
+              {
+                key: "name",
+                label: "Alphabetical",
+                subLabel: "Sort by name (A-Z)",
+                iconPath: mdiSortAlphabeticalAscending,
+              },
+              {
+                key: "lastModified",
+                label: "Newest first",
+                subLabel: "Sort by modified time (newest first)",
+                iconPath: mdiSortClockDescendingOutline,
+              },
+              {
+                key: "size",
+                label: "Largest first",
+                subLabel: "Sort by size (largest first)",
+                iconPath: mdiSortNumericDescendingVariant,
+              },
+            ] as const
+          }
+          onChange={setSortBy}
         />
       </FlexRow>
-    </div>
+    </FlexCol>
   );
 };

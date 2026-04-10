@@ -95,7 +95,7 @@ export const AskLLMChatHeader = (
             { key: "fullscreen", label: "Show in fullscreen" },
           ]}
           iconPath={mdiDotsHorizontal}
-          value={user.options?.llm_chat_window_positioning ?? "right-panel"}
+          value={user.options?.llmChatWindowPositioning ?? "right-panel"}
           showSelected={"icon"}
           btnProps={{
             variant: "icon",
@@ -109,7 +109,7 @@ export const AskLLMChatHeader = (
                 options: {
                   $merge: [
                     {
-                      llm_chat_window_positioning: chatWindowPositioning,
+                      llmChatWindowPositioning: chatWindowPositioning,
                     } satisfies Partial<NonNullable<typeof user.options>>,
                   ],
                 },

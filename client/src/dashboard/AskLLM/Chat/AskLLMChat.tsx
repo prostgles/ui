@@ -99,7 +99,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
   if (!messages) return;
 
   const showFullscreen =
-    user?.options?.llm_chat_window_positioning === "fullscreen";
+    user?.options?.llmChatWindowPositioning === "fullscreen";
 
   return (
     <Popup

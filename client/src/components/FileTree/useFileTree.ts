@@ -15,7 +15,10 @@ export type FileNode = {
 
 export type FileTreeState = ReturnType<typeof useFileTree>;
 
-export const useFileTree = ({ rootPath: rootPathFromProps }: FileTreeProps) => {
+export const useFileTree = ({
+  rootPath: rootPathFromProps,
+  defaultPattern = "",
+}: FileTreeProps) => {
   const {
     dbsMethods: { glob },
   } = usePrglCore();
@@ -32,7 +35,10 @@ export const useFileTree = ({ rootPath: rootPathFromProps }: FileTreeProps) => {
   const [rootLoading, setRootLoading] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
 
-  const [rootPath, setRootPath] = useState(rootPathFromProps);
+  const { user } = usePrglCore();
+  const [rootPath, setRootPath] = useState(
+    rootPathFromProps || user?.options?.lastCwd,
+  );
 
   const getSortedNodes = useCallback(
     (nodes: FileNode[]): FileNode[] => {
@@ -64,7 +70,7 @@ export const useFileTree = ({ rootPath: rootPathFromProps }: FileTreeProps) => {
   );
 
   const fetchRoot = useCallback(
-    (pattern = "") => {
+    (pattern = defaultPattern) => {
       setRootLoading(true);
       setRootError(undefined);
       fetchLevel(rootPath ?? "", pattern)
@@ -74,7 +80,7 @@ export const useFileTree = ({ rootPath: rootPathFromProps }: FileTreeProps) => {
         .catch((err: unknown) => setRootError(err))
         .finally(() => setRootLoading(false));
     },
-    [fetchLevel, rootPath],
+    [defaultPattern, fetchLevel, rootPath],
   );
 
   const [isLocalSearch, setIsLocalSearch] = useState(true);

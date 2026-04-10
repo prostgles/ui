@@ -1,10 +1,10 @@
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import type { DBSSchemaForInsert } from "@common/publishUtils";
 import ErrorComponent from "@components/ErrorComponent";
-import { FlexCol } from "@components/Flex";
+import { FlexCol, FlexRow } from "@components/Flex";
 import { FooterButtons } from "@components/Popup/FooterButtons";
 import { mdiCheck, mdiCheckAll } from "@mdi/js";
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { DatabaseAccessEditor } from "src/dashboard/DatabaseAccessEditor/DatabaseAccessEditor";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import { tout } from "src/utils/utils";
@@ -20,6 +20,16 @@ export const RequestToolAccess = ({
   chatId,
 }: ProstglesMCPToolsProps) => {
   const { dbs, dbsMethods } = usePrglCore();
+  const [configs, setConfigs] = useState<
+    Partial<
+      Record<
+        string,
+        {
+          configId: number;
+        }
+      >
+    >
+  >({});
   const input = useJSONBParsedData(
     message.input,
     PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["request_tool_access"][
@@ -107,6 +117,7 @@ export const RequestToolAccess = ({
                 server_name,
                 tool_id: id,
                 auto_approve: state === "auto_approve",
+                server_config_id: configs[server_name]?.configId,
               }) satisfies DBSSchemaForInsert["llm_chats_allowed_mcp_tools"],
           ),
           {
@@ -135,6 +146,7 @@ export const RequestToolAccess = ({
       message.id,
       message.name,
       sendToolUseResult,
+      configs,
     ],
   );
   const { mcpServerTools } = input.data ?? {};
@@ -173,12 +185,23 @@ export const RequestToolAccess = ({
           />
         )}
 
+        {input.data?.reason && (
+          <FlexRow>
+            <strong>Reason:</strong>&nbsp;{input.data.reason}
+          </FlexRow>
+        )}
+
         {input.data?.mcpServerTools && (
           <McpToolAccess
             title="Mcp tools"
             value={input.data.mcpServerTools}
-            configs={undefined}
-            onConfigChange={undefined}
+            configs={configs}
+            onConfigChange={(serverName, configId) =>
+              setConfigs((prev) => ({
+                ...prev,
+                [serverName]: { configId },
+              }))
+            }
           />
         )}
 

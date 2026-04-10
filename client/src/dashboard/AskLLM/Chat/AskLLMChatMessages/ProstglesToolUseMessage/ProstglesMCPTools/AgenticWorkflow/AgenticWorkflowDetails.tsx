@@ -10,6 +10,7 @@ import { AgentDefinition } from "./AgentDefinition";
 import { ContainerConfigurationEditor } from "./ContainerConfigurationEditor";
 import { McpToolAccess } from "./McpToolAccess";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import { isEmpty } from "src/utils/utils";
 
 export const AgenticWorkflowDetails = ({
   workflow,
@@ -65,7 +66,7 @@ export const AgenticWorkflowDetails = ({
           newTables={newTables}
         />
 
-        {orchestrationTools && (
+        {orchestrationTools && !isEmpty(orchestrationTools) && (
           <McpToolAccess
             title="Orchestration tools"
             value={orchestrationTools}

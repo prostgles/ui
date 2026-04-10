@@ -129,19 +129,22 @@ export const getLLMToolsAllowedInThisChat = async ({
 
   const toolList = Array.from(tools.values());
 
-  if (chat.options?.useTsTypesForTools) {
-    return toolList.map((t) => {
-      if (isEmpty(t.input_schema)) return t;
+  const { mcpToolSchemaMode } = chat.options ?? {};
+  if (mcpToolSchemaMode) {
+    return toolList.map(({ input_schema, description, ...t }) => {
       return {
         ...t,
         input_schema: {},
-        description: [
-          t.description,
-          `\nThe tool acceppts the following input (must be valid json) expressed in typescript types:`,
-          "```typescript",
-          getJsonSchemaAsTs(t.input_schema),
-          "```",
-        ].join("\n"),
+        description:
+          mcpToolSchemaMode === "hide-schemas-and-descriptions" ? ""
+          : isEmpty(input_schema) ? description
+          : [
+              description,
+              `\nThe tool acceppts the following input (must be valid json) expressed in typescript types:`,
+              "```typescript",
+              getJsonSchemaAsTs(input_schema),
+              "```",
+            ].join("\n"),
       };
     });
   }

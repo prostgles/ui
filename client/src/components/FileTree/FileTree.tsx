@@ -1,14 +1,16 @@
 import ErrorComponent from "@components/ErrorComponent";
-import { FlexCol } from "@components/Flex";
+import { FlexCol, FlexRow } from "@components/Flex";
 import Loading from "@components/Loader/Loading";
 import React, { useRef } from "react";
 import { FileTreeNode } from "./FileTreeNode";
 import { FileTreeSearchBar } from "./FileTreeSearchBar";
 import { FileTreeSelectedItems } from "./FileTreeSelectedItems";
 import { useFileTree, type FileNode } from "./useFileTree";
+import Btn from "@components/Btn";
 
 export type FileTreeProps = {
   rootPath?: string | undefined;
+  defaultPattern?: string;
 } & (
   | {
       mode: "pick-one";
@@ -44,6 +46,8 @@ export const FileTree = (props: FileTreeProps) => {
     tree,
     setRootPath,
     getSortedNodes,
+    isLocalSearch,
+    setIsLocalSearch,
   } = state;
 
   const itemLimit = 1000;
@@ -88,7 +92,19 @@ export const FileTree = (props: FileTreeProps) => {
               }}
             >
               {searchQuery ?
-                `No results for "${searchQuery}"`
+                <FlexRow>
+                  No results for {JSON.stringify(searchQuery)}
+                  {isLocalSearch && (
+                    <Btn
+                      size="small"
+                      color="action"
+                      variant="faded"
+                      onClick={() => setIsLocalSearch(false)}
+                    >
+                      Search recursively
+                    </Btn>
+                  )}
+                </FlexRow>
               : "Empty directory"}
             </div>
           : <>

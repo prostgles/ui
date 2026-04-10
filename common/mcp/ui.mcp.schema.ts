@@ -331,7 +331,8 @@ export const uiMcpSchema = {
   },
   create_agentic_workflow: {
     mode: "auto-approved-user-actionable",
-    description: "",
+    description:
+      "Creates and runs an agentic workflow to iteratively complete the specified task using MCP tools and database access if needed.",
     schema: {
       type: {
         workflow_function_definition: {

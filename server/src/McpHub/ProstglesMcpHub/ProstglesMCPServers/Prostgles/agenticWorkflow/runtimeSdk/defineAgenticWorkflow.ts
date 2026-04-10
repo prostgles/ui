@@ -375,17 +375,27 @@ export type UserInputOutputMapping = {
   "folder-path": string;
   "file-or-folder-path": string;
   "file-path": string;
-  "folder-paths": string;
-  "file-or-folder-paths": string;
-  "file-paths": string;
+  "folder-paths": string[];
+  "file-or-folder-paths": string[];
+  "file-paths": string[];
   enum: string;
   custom: unknown;
 };
 
-export type ValueOfUserInput<UserInput extends Record<string, UserInputItem>> =
-  {
-    [InputName in keyof UserInput]?: UserInputOutputMapping[UserInput[InputName]["type"]];
-  };
+type OptionalInputKeys<U extends Record<string, UserInputItem>> = {
+  [K in keyof U]-?: U[K] extends { optional: true } ? K : never;
+}[keyof U];
+
+type RequiredInputKeys<U extends Record<string, UserInputItem>> = Exclude<
+  keyof U,
+  OptionalInputKeys<U>
+>;
+
+export type ValueOfUserInput<U extends Record<string, UserInputItem>> = {
+  [K in RequiredInputKeys<U>]: UserInputOutputMapping[U[K]["type"]];
+} & {
+  [K in OptionalInputKeys<U>]?: UserInputOutputMapping[U[K]["type"]];
+};
 
 export type DefineAgenticWorkflow = <
   OrchestrationTools extends McpServerToolsAllowed,
