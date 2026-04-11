@@ -66,7 +66,7 @@ void describe("defineAgenticWorkflow", async () => {
           // @ts-expect-error
           result.invalid;
 
-          const result2 = await researcher(test_input?.tableName);
+          const result2 = await researcher(test_input.tableName);
         },
       );
     };
