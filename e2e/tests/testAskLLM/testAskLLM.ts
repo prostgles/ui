@@ -187,7 +187,7 @@ Object.values([receiptImport]).forEach(({ firstMessage, steps }) => {
 });
 
 const toolResponses: Record<string, ToolUse> = {
-  " OCR ": {
+  OCR: {
     tool: [
       {
         id: "ocr-tool-use",

@@ -1,6 +1,7 @@
 import { getCommandElemSelector, getDataKey } from "Testing";
 import { closeWorkspaceWindows, runDbsSql } from "utils/utils";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
+import type { DBSSchema } from "common/publishUtils";
 
 export const backupAndRestoreSvgif: OnBeforeScreenshot = async (
   page,
@@ -119,8 +120,10 @@ export const backupAndRestoreSvgif: OnBeforeScreenshot = async (
       dump_logs: logLines.slice(0, index).join("\n"),
       created,
       status: {
-        loading: { loaded: currentPercentage * totalSize, total: totalSize },
-      },
+        state: "loading",
+        loaded: currentPercentage * totalSize,
+        total: totalSize,
+      } satisfies DBSSchema["backups"]["status"],
       backupName,
     });
     await page.waitForTimeout(1500);
@@ -131,8 +134,9 @@ export const backupAndRestoreSvgif: OnBeforeScreenshot = async (
     dump_logs: logLines.join("\n"),
     created: originalCreated,
     status: {
-      ok: "1",
-    },
+      state: "finished",
+      timestamp: new Date().toISOString(),
+    } satisfies DBSSchema["backups"]["status"],
     backupName,
   });
 

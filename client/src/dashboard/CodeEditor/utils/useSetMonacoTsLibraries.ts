@@ -67,7 +67,7 @@ export const useSetMonacoTsLibraries = (
         setExtraLibs();
       }
     });
-
+    setExtraLibs();
     /* 
         THIS CLOSES ALL OTHER EDITORS 
         This is/was? needed to prevent this error: Type annotations can only be used in TypeScript files. 
