@@ -1,23 +1,22 @@
+import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import type { DBSSchema } from "@common/publishUtils";
 import { sliceText } from "@common/utils";
-import { MonacoCodeInMarkdown } from "@components/Chat/MonacoCodeInMarkdown/MonacoCodeInMarkdown";
 import { FlexCol } from "@components/Flex";
 import { Icon } from "@components/Icon/Icon";
 import { InfoRow } from "@components/InfoRow";
 import Loading from "@components/Loader/Loading";
-import Popup from "@components/Popup/Popup";
 import { SearchList } from "@components/SearchList/SearchList";
 import { Stopwatch } from "@components/Stopwatch";
 import { SvgIcon } from "@components/SvgIcon";
 import { mdiRobotOutline } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { useMcpServerIcons } from "@pages/ServerSettings/MCPServers/MCPServerTools/useMcpServerIcons";
-import { getKeys, includes, tryCatchV2 } from "prostgles-types";
+import { getKeys, includes } from "prostgles-types";
 import React, { useMemo, useState } from "react";
 import { AskLLMChat } from "src/dashboard/AskLLM/Chat/AskLLMChat";
 import { useAskLLMSetupState } from "src/dashboard/AskLLM/Setup/LLMSetupProvider";
-import type { ProstglesMCPToolsProps } from "../../ProstglesToolUseMessage";
-import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
+import type { ProstglesMCPToolsProps } from "../../../ProstglesToolUseMessage";
+import { ToolCall } from "./ToolCall";
 
 export const AgenticWorkflowActivity = ({
   chatId,
@@ -205,39 +204,11 @@ export const AgenticWorkflowActivity = ({
         />
       )}
       {selectedMcpToolCall && (
-        <Popup
-          title={`${selectedMcpToolCall.mcp_server_name} ${selectedMcpToolCall.mcp_tool_name} tool call details`}
-          contentClassName="flex-col gap-1 p-1"
+        <ToolCall
+          chatId={chatId}
+          toolCall={selectedMcpToolCall}
           onClose={() => setSelectedMcpToolCall(undefined)}
-          clickCatchStyle={{ opacity: 1 }}
-        >
-          <MonacoCodeInMarkdown
-            title="Input:"
-            codeString={
-              tryCatchV2(() =>
-                JSON.stringify(selectedMcpToolCall.input, null, 2),
-              ).data ?? "Could not parse input as JSON"
-            }
-            className="f-1"
-            language="json"
-            codeHeader={undefined}
-            sqlHandler={undefined}
-            loadedSuggestions={undefined}
-          />
-          <MonacoCodeInMarkdown
-            title="Output:"
-            codeString={
-              tryCatchV2(() =>
-                JSON.stringify(selectedMcpToolCall.output, null, 2),
-              ).data ?? "Could not parse output as JSON"
-            }
-            className="f-1"
-            language="json"
-            codeHeader={undefined}
-            sqlHandler={undefined}
-            loadedSuggestions={undefined}
-          />
-        </Popup>
+        />
       )}
     </FlexCol>
   );

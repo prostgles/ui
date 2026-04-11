@@ -20,12 +20,15 @@ import { useJSONBParsedData } from "./common/useJSONBParsedData";
 
 export const AskUserQuestions = ({
   chatId,
-  message,
-  toolUseResult,
-}: Pick<ProstglesMCPToolsProps, "chatId" | "message" | "toolUseResult">) => {
+  toolUseContent,
+  resultContent,
+}: Pick<
+  ProstglesMCPToolsProps,
+  "chatId" | "toolUseContent" | "resultContent"
+>) => {
   const { tables } = usePrgl();
   const { data, error } = useJSONBParsedData(
-    message.input,
+    toolUseContent.input,
     PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["ask_user_questions"][
       "schema"
     ],
@@ -36,7 +39,7 @@ export const AskUserQuestions = ({
   >(new Map());
 
   const result = useTypedToolUseResultDataV2(
-    toolUseResult?.toolUseResultMessage,
+    resultContent,
     PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["ask_user_questions"][
       "outputSchema"
     ],
@@ -212,8 +215,8 @@ export const AskUserQuestions = ({
           onClickPromise={async () => {
             await sendToolUseResult({
               chatId,
-              toolUseId: message.id,
-              toolName: message.name,
+              toolUseId: toolUseContent.id,
+              toolName: toolUseContent.name,
               type: "tool-use-result",
               content: [
                 {

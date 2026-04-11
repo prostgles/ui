@@ -1,5 +1,4 @@
 import { getProstglesMCPFullToolName } from "@common/mcpUtils";
-import type { DBSSchema } from "@common/publishUtils";
 import type { LoadedSuggestions } from "src/dashboard/Dashboard/dashboardUtils";
 import type {
   ToolResultMessage,
@@ -8,14 +7,15 @@ import type {
 import { Agent } from "./ProstglesMCPTools/Agent/Agent";
 import { AgenticWorkflowMessage } from "./ProstglesMCPTools/AgenticWorkflow/AgenticWorkflowMessage";
 import { AskUserQuestions } from "./ProstglesMCPTools/AskUserQuestions";
-import { RunCodeInSandbox } from "./ProstglesMCPTools/RunCodeInSandbox";
+import { DoclingConvertedDocument } from "./ProstglesMCPTools/DoclingConvertedDocument/DoclingConvertedDocument";
 import { ExecuteSQL } from "./ProstglesMCPTools/ExecuteSQL";
 import { LoadSuggestedDashboards } from "./ProstglesMCPTools/LoadSuggestedDashboards";
 import { RequestToolAccess } from "./ProstglesMCPTools/RequestToolAccess";
+import { RunCodeInSandbox } from "./ProstglesMCPTools/RunCodeInSandbox";
+import { RunTypescriptInNodejs } from "./ProstglesMCPTools/RunTypescriptInNodejs";
 import { CreateComponentQuickFeedbackPreview } from "./ProstglesMCPTools/Webdev/CreateComponentQuickFeedbackPreview";
 import { WebSearch } from "./ProstglesMCPTools/WebSearch/WebSearch";
-import { WebSnapshot } from "./ProstglesMCPTools/WebSearch/WebSnapshot";
-import { RunTypescriptInNodejs } from "./ProstglesMCPTools/RunTypescriptInNodejs";
+import { Markdown } from "./ProstglesMCPTools/WebSearch/Markdown";
 
 export const ProstglesMCPToolsWithUI = {
   [getProstglesMCPFullToolName("prostgles-ui", "create_dashboards") as string]:
@@ -69,11 +69,15 @@ export const ProstglesMCPToolsWithUI = {
     displayMode: "inline",
   },
   [getProstglesMCPFullToolName("web", "get_snapshot") as string]: {
-    component: WebSnapshot,
+    component: Markdown,
     displayMode: "inline",
   },
   [getProstglesMCPFullToolName("web", "get_document_text") as string]: {
-    component: WebSnapshot,
+    component: Markdown,
+    displayMode: "inline",
+  },
+  [getProstglesMCPFullToolName("documents", "get_document_text") as string]: {
+    component: DoclingConvertedDocument,
     displayMode: "inline",
   },
   [getProstglesMCPFullToolName(
@@ -105,14 +109,8 @@ export const ProstglesMCPToolsWithUI = {
 export type ProstglesMCPToolsProps = {
   loadedSuggestions: LoadedSuggestions | undefined;
   workspaceId: string | undefined;
-  message: ToolUseMessage;
   chatId: number;
   isShownInToolUseRequest?: boolean;
-  toolUseMessage: Pick<DBSSchema["llm_messages"], "id">;
-  toolUseResult:
-    | {
-        toolUseResult: DBSSchema["llm_messages"];
-        toolUseResultMessage: ToolResultMessage;
-      }
-    | undefined;
+  toolUseContent: ToolUseMessage;
+  resultContent: ToolResultMessage | undefined;
 };

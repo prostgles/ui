@@ -13,20 +13,19 @@ import { useJSONBParsedData } from "../common/useJSONBParsedData";
 import { mdiChat } from "@mdi/js";
 
 export const Agent = ({
-  message,
+  toolUseContent,
   chatId,
   loadedSuggestions,
   workspaceId,
-  toolUseMessage,
 }: Pick<
   ProstglesMCPToolsProps,
-  "chatId" | "message" | "loadedSuggestions" | "workspaceId" | "toolUseMessage"
+  "chatId" | "toolUseContent" | "loadedSuggestions" | "workspaceId"
 >) => {
   const { dbs, dbsMethods } = usePrgl();
   const setupState = useAskLLMSetupState();
 
   const inputValidation = useJSONBParsedData(
-    message.input,
+    toolUseContent.input,
     PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["create_agent"].schema,
   );
   // const outputValidation = useTypedToolUseResultDataV2(
@@ -40,35 +39,39 @@ export const Agent = ({
   });
   const [showAgentChatId, setShowAgentChatId] = useState<number>();
 
+  const { data: toolUseMessage } = dbs.llm_messages.useFindOne({
+    message: {
+      "@>": [
+        {
+          type: "tool_use",
+          id: toolUseContent.id,
+        },
+      ],
+    },
+  });
   const onUpdateInput = useCallback(
     async (updates: Record<string, unknown>) => {
-      const toolUseMessage = await dbs.llm_messages.findOne({
-        message: {
-          "@>": [
-            {
-              type: "tool_use",
-              id: message.id,
-            },
-          ],
-        },
-      });
       if (!toolUseMessage) {
         throw new Error("Tool use message not found");
       }
-      const toolUseContent = toolUseMessage.message.find(
-        (content) => content.type === "tool_use" && content.id === message.id,
+      const latestToolUseContent = toolUseMessage.message.find(
+        (content) =>
+          content.type === "tool_use" && content.id === toolUseContent.id,
       );
-      if (!toolUseContent) {
+      if (!latestToolUseContent) {
         throw new Error("Tool use content not found in message");
       }
       const updatedRows = await dbs.llm_messages.update(
         { id: toolUseMessage.id },
         {
           message: toolUseMessage.message.map((content) => {
-            if (content.type === "tool_use" && content.id === message.id) {
+            if (
+              content.type === "tool_use" &&
+              content.id === toolUseContent.id
+            ) {
               return {
                 ...content,
-                input: { ...message.input, ...updates },
+                input: { ...toolUseContent.input, ...updates },
               };
             }
             return content;
@@ -83,7 +86,7 @@ export const Agent = ({
       }
       console.log("Updated tool input with", updates);
     },
-    [dbs.llm_messages, message.id, message.input],
+    [dbs.llm_messages, toolUseContent.id, toolUseContent.input, toolUseMessage],
   );
 
   if (inputValidation.error !== undefined) {
@@ -119,7 +122,7 @@ export const Agent = ({
           >
             View activity
           </Btn>
-          {showAgentChatId && (
+          {showAgentChatId && toolUseMessage && (
             <AskLLMChat
               selectedChat={{
                 id: showAgentChatId,

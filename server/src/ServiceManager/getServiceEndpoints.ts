@@ -5,7 +5,7 @@ import type {
   RunningServiceInstance,
 } from "./ServiceManagerTypes";
 
-export const getServiceEndoints = <S extends ProstglesService>({
+export const getServiceEndpoints = <S extends ProstglesService>({
   serviceName,
   endpoints,
   baseUrl,

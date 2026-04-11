@@ -7,7 +7,7 @@ import { MonacoLogs } from "@components/MonacoLogs/MonacoLogs";
 import { MonacoLogsWithFullscreen } from "@components/MonacoLogs/MonacoLogsWithFullscreen";
 import React, { useMemo, useState } from "react";
 import { AgenticWorkflowActions } from "./AgenticWorkflowActions";
-import { AgenticWorkflowActivity } from "./AgenticWorkflowActivity";
+import { AgenticWorkflowActivity } from "./AgenticWorkflowActivity/AgenticWorkflowActivity";
 import { AgenticWorkflowDefinition } from "./AgenticWorkflowDefinition";
 import { AgenticWorkflowDetails } from "./AgenticWorkflowDetails";
 import { useAgenticWorkflowState } from "./hooks/useAgenticWorkflowState";

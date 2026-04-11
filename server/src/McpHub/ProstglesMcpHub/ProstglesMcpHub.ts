@@ -173,8 +173,8 @@ const init = async (dbs: DBS) => {
         {
           type: "text",
           text:
-            result.hasError ?
-              JSON.stringify(getSerialisableError(result.error))
+            result.hasError ? JSON.stringify(getSerialisableError(result.error))
+            : typeof result.data === "string" ? result.data
             : JSON.stringify(result.data ?? {}),
         },
       ],

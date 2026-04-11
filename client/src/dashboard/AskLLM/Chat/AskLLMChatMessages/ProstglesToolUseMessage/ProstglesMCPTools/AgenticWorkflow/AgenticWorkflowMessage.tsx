@@ -11,17 +11,20 @@ import {
 import { fixIndent } from "@common/utils";
 
 export const AgenticWorkflowMessage = ({
-  message,
-  toolUseResult,
+  toolUseContent,
+  resultContent,
   chatId,
-}: Pick<ProstglesMCPToolsProps, "chatId" | "message" | "toolUseResult">) => {
+}: Pick<
+  ProstglesMCPToolsProps,
+  "chatId" | "toolUseContent" | "resultContent"
+>) => {
   const inputValidation = useJSONBParsedData(
-    message.input,
+    toolUseContent.input,
     PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["create_agentic_workflow"]
       .schema,
   );
   const workflowValidation = useTypedToolUseResultDataV2(
-    toolUseResult?.toolUseResultMessage,
+    resultContent,
     PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["create_agentic_workflow"]
       .outputSchema,
     true,
@@ -84,7 +87,7 @@ export const AgenticWorkflowMessage = ({
       />
     );
   }
-  if (!toolUseResult) {
+  if (!resultContent) {
     return <div>Validating the workflow...</div>;
   }
   return (
@@ -92,7 +95,7 @@ export const AgenticWorkflowMessage = ({
       chatId={chatId}
       inputData={inputValidation.data as CreateAgenticWorkflowToolUseArgs}
       workflow_id={workflow_id}
-      tool_use_id={message.id}
+      tool_use_id={toolUseContent.id}
       validatedWorkflowDataIsValid={workflowValidation?.data?.isValid}
       workflowValidationError={workflowValidationError}
     />

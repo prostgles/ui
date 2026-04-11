@@ -15,8 +15,8 @@ import { useSendToolUseResult } from "./common/useSendToolUseResult";
 import { useTypedToolUseResultDataV2 } from "./common/useTypedToolUseResultData";
 
 export const RequestToolAccess = ({
-  message,
-  toolUseResult: toolResult,
+  toolUseContent,
+  resultContent,
   chatId,
 }: ProstglesMCPToolsProps) => {
   const { dbs, dbsMethods } = usePrglCore();
@@ -31,13 +31,13 @@ export const RequestToolAccess = ({
     >
   >({});
   const input = useJSONBParsedData(
-    message.input,
+    toolUseContent.input,
     PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["request_tool_access"][
       "schema"
     ],
   );
   const result = useTypedToolUseResultDataV2(
-    toolResult?.toolUseResultMessage,
+    resultContent,
     PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["request_tool_access"][
       "outputSchema"
     ],
@@ -70,8 +70,8 @@ export const RequestToolAccess = ({
       const onSendResult = () =>
         sendToolUseResult({
           chatId,
-          toolName: message.name,
-          toolUseId: message.id,
+          toolName: toolUseContent.name,
+          toolUseId: toolUseContent.id,
           type: "tool-use-result-confirmation",
           content: [
             {
@@ -143,8 +143,8 @@ export const RequestToolAccess = ({
       dbs.llm_chats_allowed_mcp_tools,
       dbs.mcp_servers,
       dbsMethods,
-      message.id,
-      message.name,
+      toolUseContent.id,
+      toolUseContent.name,
       sendToolUseResult,
       configs,
     ],
@@ -207,8 +207,8 @@ export const RequestToolAccess = ({
 
         <ErrorComponent
           error={
-            toolResult?.toolUseResultMessage.is_error ?
-              toolResult.toolUseResultMessage.content
+            resultContent?.is_error ?
+              resultContent.content
             : (result?.error ?? input.error)
           }
         />

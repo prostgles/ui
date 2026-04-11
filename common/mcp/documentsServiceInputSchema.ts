@@ -124,3 +124,6 @@ export const documentsServiceInputSchema = {
     },
   },
 } as const;
+
+export const { to_formats, ...documentsServiceInputSchemaMcpOptions } =
+  documentsServiceInputSchema.type;

@@ -193,8 +193,8 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
                 <div>Loading message...</div>
               : <ToolUI.component
                   chatId={chat_id}
-                  toolUseMessage={toolUseMessage}
-                  message={{
+                  // toolUseMessage={toolUseMessage}
+                  toolUseContent={{
                     type: "tool_use",
                     id: tool_use_id,
                     name,
@@ -210,7 +210,7 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
                         )
                         .find(isDefined)?.input ?? input,
                   }}
-                  toolUseResult={undefined}
+                  resultContent={undefined}
                   workspaceId={workspaceId}
                   loadedSuggestions={loadedSuggestions}
                   isShownInToolUseRequest={true}

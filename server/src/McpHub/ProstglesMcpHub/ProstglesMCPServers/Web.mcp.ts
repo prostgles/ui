@@ -67,6 +67,8 @@ const handler = {
 
             content =
               result.document.md_content ||
+              result.document.doctags_content ||
+              JSON.stringify(result.document.json_content) ||
               result.document.text_content ||
               result.document.html_content ||
               "";
@@ -184,7 +186,21 @@ const handler = {
               ...otherOpts,
             },
           });
-          return result.document.md_content || "";
+          const {
+            text_content,
+            doctags_content,
+            html_content,
+            json_content,
+            md_content,
+          } = result.document;
+          return String(
+            text_content ||
+              md_content ||
+              html_content ||
+              doctags_content ||
+              JSON.stringify(json_content) ||
+              "",
+          );
         },
       },
       fetchTools: () => {

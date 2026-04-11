@@ -25,8 +25,8 @@ import { useLLMSetup } from "src/dashboard/AskLLM/Setup/LLMSetupProvider";
 
 export const LoadSuggestedDashboards = ({
   workspaceId,
-  message,
-  toolUseResult,
+  toolUseContent,
+  resultContent,
 }: ProstglesMCPToolsProps) => {
   const { setWorkspace } = useSetActiveWorkspace(workspaceId);
   const { dbs, connectionId, tables } = usePrgl();
@@ -35,10 +35,12 @@ export const LoadSuggestedDashboards = ({
   const workspaces = useWorkspacesSync(dbs, connectionId);
   const alreadyLoadedWorkspaceIds = useMemo(() => {
     return workspaces
-      .map((w) => (w.source?.tool_use_id === message.id ? w.id : undefined))
+      .map((w) =>
+        w.source?.tool_use_id === toolUseContent.id ? w.id : undefined,
+      )
       .filter(isDefined);
-  }, [message.id, workspaces]);
-  const json = message.input as
+  }, [toolUseContent.id, workspaces]);
+  const json = toolUseContent.input as
     | JSONB.GetObjectType<
         (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["create_dashboards"]["schema"]["type"]
       >
@@ -59,11 +61,11 @@ export const LoadSuggestedDashboards = ({
     );
   }
 
-  if (!toolUseResult) {
+  if (!resultContent) {
     return null;
   }
 
-  if (toolUseResult.toolUseResultMessage.is_error) {
+  if (resultContent.is_error) {
     return <ErrorComponent error={"Failed to validate response"} />;
   }
 
@@ -117,7 +119,7 @@ export const LoadSuggestedDashboards = ({
             : undefined
           }
           onClick={() => {
-            loadGeneratedWorkspaces(prostglesWorkspaces, message.id, {
+            loadGeneratedWorkspaces(prostglesWorkspaces, toolUseContent.id, {
               dbs,
               connectionId,
               tables,

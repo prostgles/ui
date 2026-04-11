@@ -31,6 +31,7 @@ const handler = {
         get_document_text: async ({
           fileAsBase64,
           contentType,
+          to_format = CONVERT_DOCUMENT_DEFAULT_OPTIONS.to_formats[0],
           ...otherOpts
         }) => {
           const docsService =
@@ -40,9 +41,25 @@ const handler = {
           const result = await docsService.endpoints["/v1/convert/file"]({
             files: [blobWithType],
             ...CONVERT_DOCUMENT_DEFAULT_OPTIONS,
+            image_export_mode: "embedded",
+            to_formats: [to_format],
             ...otherOpts,
           });
-          return result.document.md_content || "";
+          const {
+            text_content,
+            doctags_content,
+            html_content,
+            json_content,
+            md_content,
+          } = result.document;
+          return String(
+            text_content ||
+              md_content ||
+              html_content ||
+              doctags_content ||
+              JSON.stringify(json_content) ||
+              "",
+          );
         },
       },
       fetchTools: () => {

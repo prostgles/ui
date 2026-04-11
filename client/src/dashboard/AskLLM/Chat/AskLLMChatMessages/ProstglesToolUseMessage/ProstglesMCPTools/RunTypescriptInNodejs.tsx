@@ -9,15 +9,14 @@ export type RunTypescriptInNodejsData = JSONB.GetObjectType<
 >;
 
 export const RunTypescriptInNodejs = ({
-  message,
-  toolUseResult: toolResult,
+  toolUseContent,
+  resultContent,
   chatId,
   isShownInToolUseRequest,
 }: ProstglesMCPToolsProps) => {
-  const toolUseResult = toolResult?.toolUseResultMessage;
   const { entrypointTs, packageDependencies, ...commonDockerOpts } =
-    message.input as RunTypescriptInNodejsData;
-  const toolUseId = message.id;
+    toolUseContent.input as RunTypescriptInNodejsData;
+  const toolUseId = toolUseContent.id;
 
   return (
     <DockerContainer
@@ -35,9 +34,9 @@ export const RunTypescriptInNodejs = ({
       }}
       toolUseId={toolUseId}
       isShownInToolUseRequest={isShownInToolUseRequest}
-      toolUseResult={toolUseResult}
+      toolUseResult={resultContent}
       onGetNewInput={({ files, ...commonOpts }) => ({
-        ...message,
+        ...toolUseContent,
         input: {
           ...commonOpts,
           entrypointTs: files["index.ts"]!,

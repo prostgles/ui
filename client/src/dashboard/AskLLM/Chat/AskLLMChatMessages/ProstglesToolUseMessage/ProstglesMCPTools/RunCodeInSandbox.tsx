@@ -9,14 +9,13 @@ export type RunCodeInSandboxData = JSONB.GetObjectType<
 >;
 
 export const RunCodeInSandbox = ({
-  message,
-  toolUseResult: toolResult,
+  toolUseContent,
+  resultContent,
   chatId,
   isShownInToolUseRequest,
 }: ProstglesMCPToolsProps) => {
-  const toolUseResult = toolResult?.toolUseResultMessage;
-  const initialData = message.input as RunCodeInSandboxData;
-  const toolUseId = message.id;
+  const initialData = toolUseContent.input as RunCodeInSandboxData;
+  const toolUseId = toolUseContent.id;
 
   return (
     <DockerContainer
@@ -24,9 +23,9 @@ export const RunCodeInSandbox = ({
       input={initialData}
       toolUseId={toolUseId}
       isShownInToolUseRequest={isShownInToolUseRequest}
-      toolUseResult={toolUseResult}
+      toolUseResult={resultContent}
       onGetNewInput={(input) => ({
-        ...message,
+        ...toolUseContent,
         input,
       })}
     />

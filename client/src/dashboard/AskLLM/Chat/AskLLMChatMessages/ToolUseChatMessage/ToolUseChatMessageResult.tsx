@@ -27,7 +27,6 @@ export const ToolUseChatMessageResult = (
     toolUseMessageContent,
     toolUseMessage,
     loadedSuggestions,
-    message,
   } = props;
 
   const toolCallError =
@@ -45,10 +44,9 @@ export const ToolUseChatMessageResult = (
         {(displayMode === "full" || anchorEl) && ProstglesToolComponent && (
           <ProstglesToolComponent
             workspaceId={workspaceId}
-            message={toolUseMessageContent}
+            toolUseContent={toolUseMessageContent}
             chatId={toolUseMessage.chat_id}
-            toolUseResult={toolUseResult}
-            toolUseMessage={message}
+            resultContent={toolUseResult?.toolUseResultMessage}
             loadedSuggestions={loadedSuggestions}
           />
         )}

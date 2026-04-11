@@ -15,7 +15,7 @@ import {
 } from "./sampleToolUseData";
 import { receiptImport } from "./scenarios/receiptImport/receiptImport.scenario";
 import { stringify } from "./stringify";
-import { type Scenario, type ToolUse } from "./utils";
+import { makeToolUse, type Scenario, type ToolUse } from "./utils";
 
 type RequestToolAccess = JSONB.GetType<
   (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["request_tool_access"]["schema"]
@@ -187,6 +187,27 @@ Object.values([receiptImport]).forEach(({ firstMessage, steps }) => {
 });
 
 const toolResponses: Record<string, ToolUse> = {
+  " OCR ": {
+    tool: [
+      {
+        id: "ocr-tool-use",
+        type: "function",
+        function: {
+          name: "agent_goal_reached",
+          arguments: stringify({
+            vendor_name: "Grand Ocean Hotel",
+            purchase_date: "2025-09-10",
+            currency_code: "USD",
+            subtotal: 450,
+            tax_amount: 0,
+            total_amount: 450,
+            receipt_number: "RCPT-20250911-001",
+            confidence: 0.95,
+          }),
+        },
+      },
+    ],
+  },
   task: taskToolUse,
   get_tool_schemas: {
     tool: [

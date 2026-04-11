@@ -1,4 +1,4 @@
-import { documentsServiceInputSchema } from "./documentsServiceInputSchema";
+import { documentsServiceInputSchemaMcpOptions } from "./documentsServiceInputSchema";
 export const webMcpSchema = {
   fetch: {
     description:
@@ -117,7 +117,7 @@ export const webMcpSchema = {
     description: "Get text contents of a document",
     schema: {
       type: {
-        ...documentsServiceInputSchema.type,
+        ...documentsServiceInputSchemaMcpOptions,
         url: {
           type: "string",
         },

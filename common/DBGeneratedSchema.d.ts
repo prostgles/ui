@@ -525,6 +525,7 @@ export type DBGeneratedSchema = {
       mcp_tool_approval_requests_id?: null | number;
       mcp_tool_name: string;
       output?: null | any;
+      tool_use_id?: null | string;
       user_id?: null | string;
     };
   };

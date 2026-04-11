@@ -1,4 +1,7 @@
-import { documentsServiceInputSchema } from "./documentsServiceInputSchema";
+import {
+  documentsServiceInputSchema,
+  documentsServiceInputSchemaMcpOptions,
+} from "./documentsServiceInputSchema";
 
 export const CONVERTABLE_DOCUMENT_TYPES = [
   // Documents
@@ -27,7 +30,12 @@ export const documentsMcpSchema = {
         contentType: {
           enum: [...CONVERTABLE_DOCUMENT_TYPES, ...CONVERTABLE_IMAGE_TYPES],
         },
-        ...documentsServiceInputSchema.type,
+        ...documentsServiceInputSchemaMcpOptions,
+        to_format: {
+          optional: true,
+          description: `Defaults to "md". Convert the document to a specific format.`,
+          enum: documentsServiceInputSchema.type.to_formats.allowedValues,
+        },
       },
     },
     outputSchema: {

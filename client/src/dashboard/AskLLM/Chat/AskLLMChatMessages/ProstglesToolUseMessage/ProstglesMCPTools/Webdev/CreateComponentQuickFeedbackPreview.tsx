@@ -11,17 +11,17 @@ import { useTypedToolUseResultDataV2 } from "../common/useTypedToolUseResultData
 import ErrorComponent from "@components/ErrorComponent";
 
 export const CreateComponentQuickFeedbackPreview = ({
-  message,
-  toolUseResult,
-}: Pick<ProstglesMCPToolsProps, "toolUseResult" | "message">) => {
-  const data = message.input as JSONB.GetObjectType<
+  toolUseContent,
+  resultContent,
+}: Pick<ProstglesMCPToolsProps, "resultContent" | "toolUseContent">) => {
+  const data = toolUseContent.input as JSONB.GetObjectType<
     (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["webdev"]["create_component_quick_feedback_preview"]["schema"]["type"]
   >;
 
   const { webAppUrl } = useWebAppConfigState();
 
   const toolResultJson = useTypedToolUseResultDataV2(
-    toolUseResult?.toolUseResultMessage,
+    resultContent,
     {
       type: {
         log: {
@@ -38,7 +38,7 @@ export const CreateComponentQuickFeedbackPreview = ({
 
   const logs = toolResultJson?.data?.log?.map(({ text }) => text).join("\n");
 
-  if (!toolUseResult) {
+  if (!resultContent) {
     return <div>Validating component...</div>;
   }
 
@@ -71,7 +71,7 @@ export const CreateComponentQuickFeedbackPreview = ({
             </FlexCol>
           ),
         },
-        ...(!toolUseResult.toolUseResultMessage.is_error ?
+        ...(!resultContent.is_error ?
           {
             Preview: {
               label: "Preview",
@@ -90,16 +90,10 @@ export const CreateComponentQuickFeedbackPreview = ({
             },
           }
         : {}),
-        ...(Boolean(
-          toolUseResult.toolUseResultMessage.is_error || toolResultJson?.error,
-        ) && {
+        ...(Boolean(resultContent.is_error || toolResultJson?.error) && {
           Error: {
             label: "Error",
-            content: (
-              <ErrorComponent
-                error={toolResultJson ?? toolUseResult.toolUseResultMessage}
-              />
-            ),
+            content: <ErrorComponent error={toolResultJson ?? resultContent} />,
           },
         }),
       }}

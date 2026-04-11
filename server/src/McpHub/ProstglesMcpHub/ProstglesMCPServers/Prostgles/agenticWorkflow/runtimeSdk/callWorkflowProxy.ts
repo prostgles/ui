@@ -14,10 +14,14 @@ export const callWorkflowProxy = async (args: ProxyCallData) => {
       return ["db.runSQL", args.type];
     }
     if (args.type === "agent") {
-      return ["agent." + args.agentName, args.input];
+      return ["agent." + args.agentName, truncateString(args.input)];
     }
     if (args.type === "tool") {
-      return [args.serverName, args.toolName, args.input];
+      return [
+        args.serverName,
+        args.toolName,
+        args.input && shortenJsonData(args.input),
+      ];
     }
     if (args.type === "progress") {
       const { percent, message } = args;
@@ -70,4 +74,26 @@ export const callWorkflowProxy = async (args: ProxyCallData) => {
   }
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return data as any;
+};
+
+const truncateString = (str: string, maxLength = 300): string => {
+  if (str.length <= maxLength) {
+    return str;
+  }
+  return str.slice(0, maxLength) + "... [truncated]";
+};
+
+const shortenJsonData = (
+  data: Record<string, unknown>,
+): Record<string, unknown> => {
+  const shortenedData: Record<string, unknown> = {};
+  for (const key in data) {
+    const value = data[key];
+    if (typeof value === "string") {
+      shortenedData[key] = truncateString(value);
+    } else {
+      shortenedData[key] = value;
+    }
+  }
+  return shortenedData;
 };

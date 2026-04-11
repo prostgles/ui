@@ -8,13 +8,8 @@ import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 const schema =
   PROSTGLES_MCP_SERVERS_AND_TOOLS["web"]["websearch"]["outputSchema"];
 
-export const WebSearch = ({
-  toolUseResult: toolResult,
-}: ProstglesMCPToolsProps) => {
-  const toolUseResult = useTypedToolUseResultData(
-    toolResult?.toolUseResultMessage,
-    schema,
-  );
+export const WebSearch = ({ resultContent }: ProstglesMCPToolsProps) => {
+  const toolUseResult = useTypedToolUseResultData(resultContent, schema);
 
   return (
     <ScrollFade

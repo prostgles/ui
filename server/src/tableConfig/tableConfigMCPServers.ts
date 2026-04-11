@@ -321,6 +321,7 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
       mcp_tool_approval_requests_id: `INTEGER REFERENCES mcp_tool_approval_requests(id) ON DELETE SET NULL`,
       mcp_server_name: `TEXT REFERENCES mcp_servers(name) ON DELETE SET NULL`,
       mcp_tool_name: `TEXT NOT NULL`,
+      tool_use_id: `TEXT DEFAULT ''`,
       mcp_server_config_id: `INTEGER`,
       input: `JSONB`,
       output: `JSONB`,

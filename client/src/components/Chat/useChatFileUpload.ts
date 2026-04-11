@@ -101,6 +101,9 @@ export const useChatFileUpload = () => {
             document: { md_content },
           } = await getDocumentText({
             files: [docFile],
+            options: {
+              to_formats: ["md"],
+            },
           });
           if (!md_content || errors.length) {
             console.error(errors);

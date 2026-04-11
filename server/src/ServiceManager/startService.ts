@@ -9,7 +9,7 @@ import {
   type ServiceInstance,
 } from "./ServiceManagerTypes";
 import { camelCaseToSkewerCase } from "./buildService";
-import { getServiceEndoints } from "./getServiceEndoints";
+import { getServiceEndpoints } from "./getServiceEndpoints";
 import { getSelectedConfigEnvs } from "./getSelectedConfigEnvs";
 import {
   executeDockerCommand,
@@ -176,7 +176,7 @@ export async function startService(
     status: "running",
     getLogs,
     stop,
-    endpoints: getServiceEndoints({ serviceName, baseUrl, endpoints }),
+    endpoints: getServiceEndpoints({ serviceName, baseUrl, endpoints }),
   };
 
   this.activeServices.set(serviceName, runningService);
