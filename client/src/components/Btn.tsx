@@ -244,6 +244,10 @@ class Button<HREF extends string | void = void> extends RTComp<
       }
       this.clickMessage({ loading: 0 });
     } catch (err) {
+      if (this.props.onClickPromiseMode === "noTickIcon") {
+        this.clickMessage({ loading: 0 });
+        return;
+      }
       this.clickMessage({
         err:
           ("onClickPromiseMessage" in this.props ?

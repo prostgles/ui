@@ -374,22 +374,32 @@ export type UserInputItem =
       defaultValue?: unknown;
     }>;
 
-export type UserInputOutputMapping = {
-  "table-filter": Record<string, any>;
-  "table-and-column": { tableName: string; columnName: string };
-  "table-column-value": unknown;
-  "table-column-values": unknown[];
-  "table-name": string;
-  "table-column": string;
-  "folder-path": string;
-  "file-or-folder-path": string;
-  "file-path": string;
-  "folder-paths": string[];
-  "file-or-folder-paths": string[];
-  "file-paths": string[];
-  enum: string;
-  custom: unknown;
+type UserInputOutputMappingCustom = {
+  string: string;
+  number: number;
+  boolean: boolean;
+  Date: Date;
 };
+export type UserInputOutputMapping<Input extends UserInputItem> =
+  Input extends { type: "enum" } ? Input["values"][number]
+  : Input extends { type: "custom" } ?
+    UserInputOutputMappingCustom[Input["dataType"]]
+  : {
+      "table-filter": Record<string, any>;
+      "table-and-column": { tableName: string; columnName: string };
+      "table-column-value": unknown;
+      "table-column-values": unknown[];
+      "table-name": string;
+      "table-column": string;
+      "folder-path": string;
+      "file-or-folder-path": string;
+      "file-path": string;
+      "folder-paths": string[];
+      "file-or-folder-paths": string[];
+      "file-paths": string[];
+      enum: unknown;
+      custom: unknown;
+    }[Input["type"]];
 
 type OptionalInputKeys<U extends Record<string, UserInputItem>> = {
   [K in keyof U]-?: U[K] extends { optional: true } ? K : never;
@@ -401,9 +411,9 @@ type RequiredInputKeys<U extends Record<string, UserInputItem>> = Exclude<
 >;
 
 export type ValueOfUserInput<U extends Record<string, UserInputItem>> = {
-  [K in RequiredInputKeys<U>]: UserInputOutputMapping[U[K]["type"]];
+  [K in RequiredInputKeys<U>]: UserInputOutputMapping<U[K]>;
 } & {
-  [K in OptionalInputKeys<U>]?: UserInputOutputMapping[U[K]["type"]];
+  [K in OptionalInputKeys<U>]?: UserInputOutputMapping<U[K]>;
 };
 
 export type DefineAgenticWorkflow = <

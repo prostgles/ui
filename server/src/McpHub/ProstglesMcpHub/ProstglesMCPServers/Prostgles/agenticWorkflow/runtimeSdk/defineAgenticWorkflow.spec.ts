@@ -39,6 +39,26 @@ void describe("defineAgenticWorkflow", async () => {
               type: "table-filter",
               tableName: "users",
             },
+            enum_input: {
+              title: "Enum Input",
+              type: "enum",
+              values: ["option1", "option2", "option3"] as const,
+            },
+            text_input: {
+              title: "Text Input",
+              type: "custom",
+              dataType: "string",
+            },
+            date_input: {
+              title: "Date Input",
+              type: "custom",
+              dataType: "Date",
+            },
+            number_input: {
+              title: "Number Input",
+              type: "custom",
+              dataType: "number",
+            },
           },
         },
         async ({
@@ -50,7 +70,13 @@ void describe("defineAgenticWorkflow", async () => {
           tableHandlers,
           runSQL,
           orchestratorToolHandlers,
-          userInputValues: { test_input },
+          userInputValues: {
+            test_input,
+            enum_input,
+            text_input,
+            date_input,
+            number_input,
+          },
         }) => {
           void tableHandlers.tbl1?.insert({ col1: "value1", col2: 123 });
           // @ts-expect-error
@@ -67,6 +93,16 @@ void describe("defineAgenticWorkflow", async () => {
           result.invalid;
 
           const result2 = await researcher(test_input.tableName);
+
+          if (enum_input === "option1") {
+            //@ts-expect-error
+          } else if (enum_input === "option233") {
+          }
+
+          text_input.trim();
+
+          date_input.getDate();
+          number_input.toFixed(2);
         },
       );
     };
