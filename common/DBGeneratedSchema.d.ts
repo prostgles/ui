@@ -48,7 +48,7 @@ export type DBGeneratedSchema = {
       finished?: null | string;
       id?: number;
       log:  (  {  type: "stdout" | "stderr" | "error";  text: string; } )[]
-      message_id?: null | string;
+      message_id?: null | number | string;
       state: 
        |  {  status: "running" | "completed" | "error" | "stopped" | "timed-out";  progressPercent?: number;  message?: string; }
       user_id: string;
@@ -62,7 +62,7 @@ export type DBGeneratedSchema = {
       connection_id?: null | string;
       created?: string;
       definition: string;
-      definition_data: {    containerConfiguration: {  timeout: number;  cpus?: string;  memory?: string;  readOnly?: boolean;  internetAccess?: "none" | "bridge" | "host"; };   agentDefinitions?: Record<string,  {  prompt: string;  modelName?: string;  maxCostUSD?: number;  maxIterations?: number;  tools?: Partial<Record<string,  Partial<Record<string, 1>>>>;  maxTokens?: number;  temperature?: number;  outputSchema: Record<string,  |  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; } |  {  optional?: boolean;  type: Record<string,  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }>; } |  {  optional?: boolean;  arrayOfType: Record<string,  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }>; }>; }>;   databaseAccessDefinitions?: |  {  mode: "execute_readonly_sql" | "execute_sql"; }
+      definition_data: {    containerConfiguration: {  timeout: number;  cpus?: string;  memory?: string;  readOnly?: boolean;  internetAccess?: "none" | "bridge" | "host"; };   agentDefinitions?: Record<string,  {  prompt: string;  modelName?: string;  maxCostUSD?: number;  maxIterations?: number;  tools?: Partial<Record<string,  Partial<Record<string, 1>>>>;  maxTokens?: number;  temperature?: number;  outputSchema: Record<string,  |  {  optional?: boolean;  nullable?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; } |  {  optional?: boolean;  nullable?: boolean;  type: Record<string,  {  optional?: boolean;  nullable?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }>; } |  {  optional?: boolean;  arrayOfType: Record<string,  {  optional?: boolean;  nullable?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }>; }>; }>;   databaseAccessDefinitions?: |  {  mode: "execute_readonly_sql" | "execute_sql"; }
  |  {  mode: "custom";  tablePermissions: Record<string,  {  select?: | true |  {  forcedFilter?: |  {  $and: any[]; } |  {  $or: any[]; };  fields: | "*" |  Record<string, 1> |  Record<string, 0>; };  update?: | true |  {  forcedFilter?: |  {  $and: any[]; } |  {  $or: any[]; };  fields: | "*" |  Record<string, 1> |  Record<string, 0>; };  insert?: | true |  {  fields: | "*" |  Record<string, 1> |  Record<string, 0>; };  delete?: | true |  {  forcedFilter?: |  {  $and: any[]; } |  {  $or: any[]; }; }; }>;  ddlStatements?: string; };   userInput?: Record<string, 
  |  {  title: string;  optional?: boolean;  type: "table-column-value";  tableName: string;  columnName: string;  defaultValue?: any; }
  |  {  title: string;  optional?: boolean;  type: "table-column-values";  tableName: string;  columnName: string;  defaultValue?: any[]; }
@@ -78,7 +78,7 @@ export type DBGeneratedSchema = {
       definition_override?: null | {    agentDefinitions?: Partial<Record<string,  {  prompt?: string;  modelName?: string;  maxCostUSD?: number;  maxIterations?: number;  tools?: Partial<Record<string,  Partial<Record<string, 1>>>>;  maxTokens?: number;  temperature?: number;  mcpServerConfigs?: Partial<Record<string,  {  configId: number; }>>; }>>;   containerConfiguration?: {  timeout?: number;  cpus?: string;  memory?: string;  readOnly?: boolean;  internetAccess?: "none" | "bridge" | "host"; };   orchestratorMcpServerConfigs?: Partial<Record<string,  {  configId: number; }>>;  };
       definition_summary?: string;
       id?: number;
-      message_id: string;
+      message_id: number | string;
       name: string;
       package_dependencies?: null | Record<string, string>
       saved?: boolean;
@@ -88,8 +88,8 @@ export type DBGeneratedSchema = {
   };
   alert_viewed_by: {
     columns: {
-      alert_id?: null | string;
-      id?: string;
+      alert_id?: null | number | string;
+      id?: number | string;
       user_id?: null | string;
       viewed?: null | string;
     };
@@ -100,7 +100,7 @@ export type DBGeneratedSchema = {
       created?: null | string;
       data?: null | any;
       database_config_id?: null | number;
-      id?: string;
+      id?: number | string;
       message?: null | string;
       severity: "info" | "warning" | "error"
       title?: null | string;
@@ -117,7 +117,7 @@ export type DBGeneratedSchema = {
       content_type?: string;
       created?: string;
       credential_id?: null | number;
-      dbSizeInBytes: string;
+      dbSizeInBytes: number | string;
       destination: "Local" | "Cloud" | "None (temp stream)"
       details?: null | any;
       dump_command: string;
@@ -140,7 +140,7 @@ export type DBGeneratedSchema = {
        |  {  state: "finished" | "stopped-by-user";  timestamp: string; }
        |  {  state: "error";  timestamp: string;  message: string; }
        |  {  state: "loading";  loaded: number;  total: number; }
-      sizeInBytes?: null | string;
+      sizeInBytes?: null | number | string;
       status: 
        |  {  state: "finished" | "stopped-by-user";  timestamp: string; }
        |  {  state: "error";  timestamp: string;  message: string; }
@@ -170,7 +170,7 @@ export type DBGeneratedSchema = {
       id?: string;
       info?: null | {    canCreateDb?: boolean;  };
       is_state_db?: null | boolean;
-      last_updated?: string;
+      last_updated?: number | string;
       name: string;
       on_mount_ts?: null | string;
       on_mount_ts_disabled?: null | boolean;
@@ -298,7 +298,7 @@ export type DBGeneratedSchema = {
       deleted?: null | boolean;
       disabled?: null | boolean;
       id?: string;
-      last_updated: string;
+      last_updated: number | string;
       options: 
        |  {  type: "table";  colorArr?: number[];  tablePath: (  {  table: string;  on: (  Record<string, any> )[]; } )[]; }
        |  {  type: "map";  dataSource?: |  {  type: "sql";  sql: string;  withStatement: string; } |  {  type: "table";  tableName: string;  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[]; } |  {  type: "local-table";  localTableName: string;  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; }; } |  {  type: "osm";  osmLayerQuery: string; };  title?: string;  mapIcons?: |  {  type: "fixed";  display?: "icon" | "icon+circle";  iconPath: string; } |  {  type: "conditional";  display?: "icon" | "icon+circle";  columnName: string;  conditions: (  {  value: any;  iconPath: string; } )[]; };  mapColorMode?: |  {  type: "fixed";  colorArr: number[]; } |  {  type: "scale";  columnName: string;  min: number;  max: number;  minColorArr: number[];  maxColorArr: number[]; } |  {  type: "conditional";  columnName: string;  conditions: (  {  value: any;  colorArr: number[]; } )[]; };  mapShowText?: {  columnName: string; };  columns: (  {  name: string;  colorArr: number[]; } )[]; }
@@ -315,7 +315,7 @@ export type DBGeneratedSchema = {
       agent_info?: 
        | null
        |  {  type: "orchestrator"; }
-       |  {  type: "agent";  name?: string;  toolUseId?: string;  prompt: string;  maxIterations?: number;  outputSchema: Record<string,  |  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; } |  {  optional?: boolean;  type: Record<string,  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }>; } |  {  optional?: boolean;  arrayOfType: Record<string,  {  optional?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }>; }>; }
+       |  {  type: "agent";  name?: string;  toolUseId?: string;  prompt: string;  maxIterations?: number;  outputSchema: Record<string,  |  {  optional?: boolean;  nullable?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; } |  {  optional?: boolean;  nullable?: boolean;  type: Record<string,  {  optional?: boolean;  nullable?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }>; } |  {  optional?: boolean;  arrayOfType: Record<string,  {  optional?: boolean;  nullable?: boolean;  type: "string" | "number" | "boolean" | "unknown" | "string[]" | "number[]" | "boolean[]" | "unknown[]"; }>; }>; }
       connection_id?: null | string;
       created?: string;
       currently_typed_message?: null | string;
@@ -338,13 +338,13 @@ export type DBGeneratedSchema = {
       extra_headers?: null | Record<string, string>
       id?: number;
       llm_prompt_id?: null | number;
-      max_total_cost_usd?: string;
+      max_total_cost_usd?: number | string;
       maximum_consecutive_tool_fails?: number;
       model?: null | number;
       name?: string;
       options?: null | {    mcpToolSchemaMode?: "ts-types-in-description" | "hide-schemas-and-descriptions";  };
       parent_chat_id?: null | number;
-      parent_chat_message_id?: null | string;
+      parent_chat_message_id?: null | number | string;
       status?: 
        | null
        |  {  state: "stopped";  reason: "max_total_cost_usd" | "estimated_future_max_total_cost_usd" | "maximum_consecutive_tool_fails" | "manual" | "max_iterations_reached";  timestamp: string; }
@@ -388,9 +388,9 @@ export type DBGeneratedSchema = {
   llm_messages: {
     columns: {
       chat_id: number;
-      cost?: string;
+      cost?: number | string;
       created?: null | string;
-      id?: string;
+      id?: number | string;
       llm_model_id?: null | number;
       message:  ( 
  |  {  type: "text";  text: string;  reasoning?: string; }
@@ -453,7 +453,7 @@ export type DBGeneratedSchema = {
       auth_type: "session-id" | "registration" | "email-confirmation" | "magic-link-registration" | "magic-link" | "otp-code" | "login" | "oauth"
       created?: null | string;
       failed?: null | boolean;
-      id?: string;
+      id?: number | string;
       info?: null | string;
       ip_address: string;
       ip_address_remote: string;
@@ -471,10 +471,10 @@ export type DBGeneratedSchema = {
       connection_id?: null | string;
       created?: null | string;
       data?: null | any;
-      duration?: null | string;
+      duration?: null | number | string;
       error?: null | any;
       has_error?: null | boolean;
-      id?: string;
+      id?: number | string;
       sid?: null | string;
       socket_id?: null | string;
       table_name?: null | string;
@@ -484,11 +484,11 @@ export type DBGeneratedSchema = {
   };
   magic_links: {
     columns: {
-      expires: string;
+      expires: number | string;
       id?: string;
       magic_link?: null | string;
       magic_link_used?: null | string;
-      session_expires?: string;
+      session_expires?: number | string;
       user_id: string;
     };
   };
@@ -571,7 +571,7 @@ export type DBGeneratedSchema = {
       created?: null | string;
       id?: number;
       input:  Record<string, unknown>
-      message_id?: null | string;
+      message_id?: null | number | string;
       response?: null | "approve" | "deny" | "auto-approve" | "timed-out"
       server_config_id?: null | number;
       server_name: string;
@@ -602,7 +602,7 @@ export type DBGeneratedSchema = {
   };
   schema_version: {
     columns: {
-      id: string;
+      id: number | string;
       table_config: any;
     };
   };
@@ -631,7 +631,7 @@ export type DBGeneratedSchema = {
     columns: {
       active?: null | boolean;
       created?: null | string;
-      expires: string;
+      expires: number | string;
       id: string;
       id_num?: number;
       ip_address: string;
@@ -660,12 +660,12 @@ export type DBGeneratedSchema = {
       client_hostname?: null | string;
       client_port?: null | number;
       cmd?: null | string;
-      cpu?: null | string;
+      cpu?: null | number | string;
       database_id: number;
       datid?: null | number;
       datname?: null | string;
       id_query_hash?: null | string;
-      mem?: null | string;
+      mem?: null | number | string;
       memPretty?: null | string;
       mhz?: null | string;
       pid: number;
@@ -702,7 +702,7 @@ export type DBGeneratedSchema = {
       email?: null | string;
       has_2fa_enabled?: null | boolean;
       id?: string;
-      last_updated?: null | string;
+      last_updated?: null | number | string;
       name?: null | string;
       options?: null | {    showStateDB?: boolean;   hideNonSSLWarning?: boolean;   viewedSQLTips?: boolean;   viewedAccessInfo?: boolean;   theme?: "dark" | "light" | "from-system";   speechMode?: "off" | "stt-local" | "stt-web" | "audio";   speechSendMode?: "manual" | "auto";   llmChatWindowPositioning?: "right-panel" | "fullscreen";   lastCwd?: string;  };
       password: string;
@@ -727,7 +727,7 @@ export type DBGeneratedSchema = {
       fullscreen?: null | boolean;
       having?: any;
       id?: string;
-      last_updated: string;
+      last_updated: number | string;
       limit?: null | number;
       method_name?: null | string;
       minimised?: null | boolean;
@@ -763,7 +763,7 @@ export type DBGeneratedSchema = {
       deleted?: boolean;
       icon?: null | string;
       id?: string;
-      last_updated: string;
+      last_updated: number | string;
       last_used?: string;
       layout?: null | any;
       layout_mode?: null | "fixed" | "editable"
@@ -836,7 +836,7 @@ export type GeneratedFunctionSchema = {
   "testDBConnection": (args: {    connection: any;  }) => Promise<{ prostglesSchemaVersion: (undefined | string); connectionInfo: { ssl: (false | true | { ca?: (undefined | string | Buffer<(ArrayBuffer | SharedArrayBuffer)> | Array<(string | Buffer<(ArrayBuffer | SharedArrayBuffer)>)>); pfx?: (undefined | string | Buffer<(ArrayBuffer | SharedArrayBuffer)> | Array<(string | object | Buffer<(ArrayBuffer | SharedArrayBuffer)>)>); cert?: (undefined | string | Buffer<(ArrayBuffer | SharedArrayBuffer)> | Array<(string | Buffer<(ArrayBuffer | SharedArrayBuffer)>)>); key?: (undefined | string | Buffer<(ArrayBuffer | SharedArrayBuffer)> | Array<(object | Buffer<(ArrayBuffer | SharedArrayBuffer)>)>); passphrase?: (undefined | string); rejectUnauthorized?: (undefined | false | true); secureOptions?: (undefined | number); NPNProtocols?: (undefined | Array<string> | Buffer<(ArrayBuffer | SharedArrayBuffer)> | Uint8Array<(ArrayBuffer | SharedArrayBuffer)> | Array<Buffer<(ArrayBuffer | SharedArrayBuffer)>> | Array<Uint8Array<(ArrayBuffer | SharedArrayBuffer)>>) }); application_name: string; host: string; port: number; user: string; database: string; password: string; connectionTimeoutMillis?: (undefined | number) }; canCreateDb: (undefined | false | true); isSSLModeFallBack?: (undefined | false | true) }>;
   "validateConnection": (args: {    connection: any;  }) => Promise<{ validatedConnection: any }>;
   "getInstalledPsqlVersions": () => Promise<(undefined | ({ os: ("" | "Windows" | "Linux" | "Mac"); filePath: string } & { psql: (undefined | string); pg_dump: (undefined | string); pg_restore: (undefined | string); docker: (undefined | string) }))>;
-  "createConnection": (args: {    connection: any;   origin: string;   sampleSchemaName?: string;  }) => Promise<{ connection: { config: (null | { enabled: boolean; path: string }); created: (null | string); db_conn: (null | string); db_connection_timeout: (null | number); db_host: string; db_name: string; db_pass: (null | string); db_port: number; db_schema_filter: (null | { [key: string]: 0 } | { [key: string]: 1 }); db_ssl: ("disable" | "allow" | "prefer" | "require" | "verify-ca" | "verify-full"); db_user: string; db_watch_shema: (null | false | true); disable_realtime: (null | false | true); display_options: (null | { prettyTableAndColumnNames: boolean }); id: string; info: (null | { canCreateDb?: (undefined | false | true) }); is_state_db: (null | false | true); last_updated: string; name: string; on_mount_ts: (null | string); on_mount_ts_disabled: (null | false | true); port: (null | number); prgl_params: any; prgl_url: (null | string); ssl_certificate: (null | string); ssl_client_certificate: (null | string); ssl_client_certificate_key: (null | string); ssl_reject_unauthorized: (null | false | true); table_options: (null | { [key: string]: (undefined | { icon?: (undefined | string); label?: (undefined | string); rowIconColumn?: (undefined | string); columns?: (undefined | { [key: string]: (undefined | { icon?: (undefined | string) }) }); card?: (undefined | { headerColumn?: (undefined | string) }) }) }); type: ("Standard" | "Connection URI" | "Prostgles"); url_path: (null | string); user_id: (null | string); web_app_directory: (null | string); web_app_templated: (null | false | true) }; database_config: { allowed_ips: Array<string>; allowed_ips_enabled: boolean; auth_created_user_type: (null | "admin" | "public" | "default"); auth_providers: (null | { website_url: string; email?: (undefined | { signupType: "withMagicLink"; enabled?: (undefined | false | true); smtp: ({ type: "smtp"; host: string; port: number; secure?: (undefined | false | true); rejectUnauthorized?: (undefined | false | true); user: string; pass: string } | { type: "aws-ses"; region: string; accessKeyId: string; secretAccessKey: string; sendingRate?: (undefined | number) }); emailTemplate: { from: string; subject: string; body: string }; emailConfirmationEnabled?: (undefined | false | true) } | { signupType: "withPassword"; enabled?: (undefined | false | true); minPasswordLength?: (undefined | number); smtp: ({ type: "smtp"; host: string; port: number; secure?: (undefined | false | true); rejectUnauthorized?: (undefined | false | true); user: string; pass: string } | { type: "aws-ses"; region: string; accessKeyId: string; secretAccessKey: string; sendingRate?: (undefined | number) }); emailTemplate: { from: string; subject: string; body: string }; emailConfirmationEnabled?: (undefined | false | true) }); google?: (undefined | { enabled?: (undefined | false | true); clientID: string; clientSecret: string; authOpts?: (undefined | { scope: Array<("email" | "profile" | "calendar" | "calendar.readonly" | "calendar.events" | "calendar.events.readonly")> }) }); github?: (undefined | { enabled?: (undefined | false | true); clientID: string; clientSecret: string; authOpts?: (undefined | { scope: Array<("read:user" | "user:email")> }) }); microsoft?: (undefined | { enabled?: (undefined | false | true); clientID: string; clientSecret: string; authOpts?: (undefined | { prompt: ("create" | "none" | "login" | "consent" | "select_account"); scope: Array<("email" | "profile" | "openid" | "offline_access" | "User.Read" | "User.ReadBasic.All" | "User.Read.All")> }) }); facebook?: (undefined | { enabled?: (undefined | false | true); clientID: string; clientSecret: string; authOpts?: (undefined | { scope: Array<("email" | "public_profile" | "user_birthday" | "user_friends" | "user_gender" | "user_hometown")> }) }); customOAuth?: (undefined | { enabled?: (undefined | false | true); clientID: string; clientSecret: string; displayName: string; displayIconPath?: (undefined | string); authorizationURL: string; tokenURL: string; authOpts?: (undefined | { scope: Array<string> }) }) }); backups_config: (null | { enabled?: (undefined | false | true); cloudConfig: (null | { credential_id?: (undefined | null | number) }); frequency: ("daily" | "monthly" | "weekly" | "hourly"); hour?: (undefined | number); dayOfWeek?: (undefined | number); dayOfMonth?: (undefined | number); keepLast?: (undefined | number); err?: (undefined | null | string); dump_options: ({ command: "pg_dumpall"; clean: boolean; dataOnly?: (undefined | false | true); globalsOnly?: (undefined | false | true); rolesOnly?: (undefined | false | true); schemaOnly?: (undefined | false | true); ifExists?: (undefined | false | true); encoding?: (undefined | string); keepLogs?: (undefined | false | true) } | { command: "pg_dump"; format: ("p" | "t" | "c"); dataOnly?: (undefined | false | true); clean?: (undefined | false | true); create?: (undefined | false | true); encoding?: (undefined | string); numberOfJobs?: (undefined | number); noOwner?: (undefined | false | true); compressionLevel?: (undefined | number); ifExists?: (undefined | false | true); keepLogs?: (undefined | false | true); excludeSchema?: (undefined | string); schemaOnly?: (undefined | false | true) }) }); cookie_options: (null | { secure?: (undefined | false | true); sameSite?: (undefined | "none" | "lax" | "strict") }); cors: (null | { allowedOrigins: Array<string>; credentialsAllowed?: (undefined | false | true); methods?: (undefined | Array<("GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD")>); allowedHeaders?: (undefined | Array<("Content-Type" | "Authorization" | "X-Requested-With" | "Accept" | "Origin" | "Access-Control-Allow-Origin")>) }); cors_csp_devmode_enabled: boolean; csp: (null | { fontSrc?: (undefined | Array<string>); mediaSrc?: (undefined | Array<string>); objectSrc?: (undefined | Array<string>); manifestSrc?: (undefined | Array<string>); defaultSrc?: (undefined | Array<string>); frameAncestors?: (undefined | Array<string>); scriptSrc?: (undefined | Array<string>); styleSrc?: (undefined | Array<string>); connectSrc?: (undefined | Array<string>); imgSrc?: (undefined | Array<string>); frameSrc?: (undefined | Array<string>); workerSrc?: (undefined | Array<string>); formAction?: (undefined | Array<string>); baseUri?: (undefined | Array<string>); upgradeInsecureRequests?: (undefined | Array<string>); blockAllMixedContent?: (undefined | Array<string>); requireSriFor?: (undefined | Array<("script" | "style" | "font")>); sandbox?: (undefined | Array<("allow-forms" | "allow-modals" | "allow-orientation-lock" | "allow-pointer-lock" | "allow-popups" | "allow-popups-to-escape-sandbox" | "allow-presentation" | "allow-same-origin" | "allow-scripts" | "allow-top-navigation")>) }); csp_add_defaults_enabled: boolean; db_host: string; db_name: string; db_port: number; enable_logs: boolean; file_table_config: (null | { fileTable?: (undefined | string); storageType: ({ type: "local" } | { type: "S3"; credential_id: number }); referencedTables?: any; delayedDelete?: (undefined | { deleteAfterNDays: number; checkIntervalHours?: (undefined | number) }) }); id: number; login_rate_limit: { maxAttemptsPerHour: number; groupBy: ("x-real-ip" | "remote_ip" | "ip") }; login_rate_limit_enabled: boolean; magic_link_validity_days: number; pass_process_env_vars_to_server_side_functions: boolean; rest_api_enabled: (null | false | true); session_max_age_days: number; sync_users: (null | false | true); table_config: (null | { [key: string]: ({ isLookupTable: { values: { [key: string]: string } } } | { columns: { [key: string]: (string | { hint?: (undefined | string); nullable?: (undefined | false | true); isText?: (undefined | false | true); trimmed?: (undefined | false | true); defaultValue?: any } | { jsonbSchema: ({ type: ("string" | "number" | "boolean" | "time" | "timestamp" | "number[]" | "boolean[]" | "string[]" | "Date" | "time[]" | "timestamp[]" | "Date[]"); optional?: (undefined | false | true); description?: (undefined | string) } | { type: ("Lookup" | "Lookup[]"); optional?: (undefined | false | true); description?: (undefined | string) } | { type: "object"; optional?: (undefined | false | true); description?: (undefined | string) }) }) } }) }); table_config_ts: (null | string); table_config_ts_disabled: (null | false | true); table_schema_positions: (null | { [key: string]: (undefined | { x: number; y: number }) }); table_schema_transform: (null | { translate: { x: number; y: number }; scale: number }); tableConfig: any; trust_proxy: boolean } }>;
+  "createConnection": (args: {    connection: any;   origin: string;   sampleSchemaName?: string;  }) => Promise<{ connection: { config: (null | { enabled: boolean; path: string }); created: (null | string); db_conn: (null | string); db_connection_timeout: (null | number); db_host: string; db_name: string; db_pass: (null | string); db_port: number; db_schema_filter: (null | { [key: string]: 0 } | { [key: string]: 1 }); db_ssl: ("disable" | "allow" | "prefer" | "require" | "verify-ca" | "verify-full"); db_user: string; db_watch_shema: (null | false | true); disable_realtime: (null | false | true); display_options: (null | { prettyTableAndColumnNames: boolean }); id: string; info: (null | { canCreateDb?: (undefined | false | true) }); is_state_db: (null | false | true); last_updated: (string | number); name: string; on_mount_ts: (null | string); on_mount_ts_disabled: (null | false | true); port: (null | number); prgl_params: any; prgl_url: (null | string); ssl_certificate: (null | string); ssl_client_certificate: (null | string); ssl_client_certificate_key: (null | string); ssl_reject_unauthorized: (null | false | true); table_options: (null | { [key: string]: (undefined | { icon?: (undefined | string); label?: (undefined | string); rowIconColumn?: (undefined | string); columns?: (undefined | { [key: string]: (undefined | { icon?: (undefined | string) }) }); card?: (undefined | { headerColumn?: (undefined | string) }) }) }); type: ("Standard" | "Connection URI" | "Prostgles"); url_path: (null | string); user_id: (null | string); web_app_directory: (null | string); web_app_templated: (null | false | true) }; database_config: { allowed_ips: Array<string>; allowed_ips_enabled: boolean; auth_created_user_type: (null | "admin" | "public" | "default"); auth_providers: (null | { website_url: string; email?: (undefined | { signupType: "withMagicLink"; enabled?: (undefined | false | true); smtp: ({ type: "smtp"; host: string; port: number; secure?: (undefined | false | true); rejectUnauthorized?: (undefined | false | true); user: string; pass: string } | { type: "aws-ses"; region: string; accessKeyId: string; secretAccessKey: string; sendingRate?: (undefined | number) }); emailTemplate: { from: string; subject: string; body: string }; emailConfirmationEnabled?: (undefined | false | true) } | { signupType: "withPassword"; enabled?: (undefined | false | true); minPasswordLength?: (undefined | number); smtp: ({ type: "smtp"; host: string; port: number; secure?: (undefined | false | true); rejectUnauthorized?: (undefined | false | true); user: string; pass: string } | { type: "aws-ses"; region: string; accessKeyId: string; secretAccessKey: string; sendingRate?: (undefined | number) }); emailTemplate: { from: string; subject: string; body: string }; emailConfirmationEnabled?: (undefined | false | true) }); google?: (undefined | { enabled?: (undefined | false | true); clientID: string; clientSecret: string; authOpts?: (undefined | { scope: Array<("email" | "profile" | "calendar" | "calendar.readonly" | "calendar.events" | "calendar.events.readonly")> }) }); github?: (undefined | { enabled?: (undefined | false | true); clientID: string; clientSecret: string; authOpts?: (undefined | { scope: Array<("read:user" | "user:email")> }) }); microsoft?: (undefined | { enabled?: (undefined | false | true); clientID: string; clientSecret: string; authOpts?: (undefined | { prompt: ("create" | "none" | "login" | "consent" | "select_account"); scope: Array<("email" | "profile" | "openid" | "offline_access" | "User.Read" | "User.ReadBasic.All" | "User.Read.All")> }) }); facebook?: (undefined | { enabled?: (undefined | false | true); clientID: string; clientSecret: string; authOpts?: (undefined | { scope: Array<("email" | "public_profile" | "user_birthday" | "user_friends" | "user_gender" | "user_hometown")> }) }); customOAuth?: (undefined | { enabled?: (undefined | false | true); clientID: string; clientSecret: string; displayName: string; displayIconPath?: (undefined | string); authorizationURL: string; tokenURL: string; authOpts?: (undefined | { scope: Array<string> }) }) }); backups_config: (null | { enabled?: (undefined | false | true); cloudConfig: (null | { credential_id?: (undefined | null | number) }); frequency: ("daily" | "monthly" | "weekly" | "hourly"); hour?: (undefined | number); dayOfWeek?: (undefined | number); dayOfMonth?: (undefined | number); keepLast?: (undefined | number); err?: (undefined | null | string); dump_options: ({ command: "pg_dumpall"; clean: boolean; dataOnly?: (undefined | false | true); globalsOnly?: (undefined | false | true); rolesOnly?: (undefined | false | true); schemaOnly?: (undefined | false | true); ifExists?: (undefined | false | true); encoding?: (undefined | string); keepLogs?: (undefined | false | true) } | { command: "pg_dump"; format: ("p" | "t" | "c"); dataOnly?: (undefined | false | true); clean?: (undefined | false | true); create?: (undefined | false | true); encoding?: (undefined | string); numberOfJobs?: (undefined | number); noOwner?: (undefined | false | true); compressionLevel?: (undefined | number); ifExists?: (undefined | false | true); keepLogs?: (undefined | false | true); excludeSchema?: (undefined | string); schemaOnly?: (undefined | false | true) }) }); cookie_options: (null | { secure?: (undefined | false | true); sameSite?: (undefined | "none" | "lax" | "strict") }); cors: (null | { allowedOrigins: Array<string>; credentialsAllowed?: (undefined | false | true); methods?: (undefined | Array<("GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD")>); allowedHeaders?: (undefined | Array<("Content-Type" | "Authorization" | "X-Requested-With" | "Accept" | "Origin" | "Access-Control-Allow-Origin")>) }); cors_csp_devmode_enabled: boolean; csp: (null | { fontSrc?: (undefined | Array<string>); mediaSrc?: (undefined | Array<string>); objectSrc?: (undefined | Array<string>); manifestSrc?: (undefined | Array<string>); defaultSrc?: (undefined | Array<string>); frameAncestors?: (undefined | Array<string>); scriptSrc?: (undefined | Array<string>); styleSrc?: (undefined | Array<string>); connectSrc?: (undefined | Array<string>); imgSrc?: (undefined | Array<string>); frameSrc?: (undefined | Array<string>); workerSrc?: (undefined | Array<string>); formAction?: (undefined | Array<string>); baseUri?: (undefined | Array<string>); upgradeInsecureRequests?: (undefined | Array<string>); blockAllMixedContent?: (undefined | Array<string>); requireSriFor?: (undefined | Array<("script" | "style" | "font")>); sandbox?: (undefined | Array<("allow-forms" | "allow-modals" | "allow-orientation-lock" | "allow-pointer-lock" | "allow-popups" | "allow-popups-to-escape-sandbox" | "allow-presentation" | "allow-same-origin" | "allow-scripts" | "allow-top-navigation")>) }); csp_add_defaults_enabled: boolean; db_host: string; db_name: string; db_port: number; enable_logs: boolean; file_table_config: (null | { fileTable?: (undefined | string); storageType: ({ type: "local" } | { type: "S3"; credential_id: number }); referencedTables?: any; delayedDelete?: (undefined | { deleteAfterNDays: number; checkIntervalHours?: (undefined | number) }) }); id: number; login_rate_limit: { maxAttemptsPerHour: number; groupBy: ("x-real-ip" | "remote_ip" | "ip") }; login_rate_limit_enabled: boolean; magic_link_validity_days: number; pass_process_env_vars_to_server_side_functions: boolean; rest_api_enabled: (null | false | true); session_max_age_days: number; sync_users: (null | false | true); table_config: (null | { [key: string]: ({ isLookupTable: { values: { [key: string]: string } } } | { columns: { [key: string]: (string | { hint?: (undefined | string); nullable?: (undefined | false | true); isText?: (undefined | false | true); trimmed?: (undefined | false | true); defaultValue?: any } | { jsonbSchema: ({ type: ("string" | "number" | "boolean" | "time" | "timestamp" | "number[]" | "boolean[]" | "string[]" | "Date" | "time[]" | "timestamp[]" | "Date[]"); optional?: (undefined | false | true); description?: (undefined | string) } | { type: ("Lookup" | "Lookup[]"); optional?: (undefined | false | true); description?: (undefined | string) } | { type: "object"; optional?: (undefined | false | true); description?: (undefined | string) }) }) } }) }); table_config_ts: (null | string); table_config_ts_disabled: (null | false | true); table_schema_positions: (null | { [key: string]: (undefined | { x: number; y: number }) }); table_schema_transform: (null | { translate: { x: number; y: number }; scale: number }); tableConfig: any; trust_proxy: boolean } }>;
   "refreshModels": () => Promise<void>;
   "reloadSchema": (args: {    conId: string;  }) => Promise<void>;
   "deleteConnection": (args: {    id: string;   dropDatabase: boolean;  }) => Promise<(undefined | Array<{ config: (null | { enabled: boolean; path: string }); created: (null | string); db_conn: (null | string); db_connection_timeout: (null | number); db_host: string; db_name: string; db_pass: (null | string); db_port: number; db_schema_filter: (null | { [key: string]: 0 } | { [key: string]: 1 }); db_ssl: ("disable" | "allow" | "prefer" | "require" | "verify-ca" | "verify-full"); db_user: string; db_watch_shema: (null | false | true); disable_realtime: (null | false | true); display_options: (null | { prettyTableAndColumnNames: boolean }); id: string; info: (null | { canCreateDb?: (undefined | false | true) }); is_state_db: (null | false | true); last_updated: string; name: string; on_mount_ts: (null | string); on_mount_ts_disabled: (null | false | true); port: (null | number); prgl_params: any; prgl_url: (null | string); ssl_certificate: (null | string); ssl_client_certificate: (null | string); ssl_client_certificate_key: (null | string); ssl_reject_unauthorized: (null | false | true); table_options: (null | { [key: string]: (undefined | { icon?: (undefined | string); label?: (undefined | string); rowIconColumn?: (undefined | string); columns?: (undefined | { [key: string]: (undefined | { icon?: (undefined | string) }) }); card?: (undefined | { headerColumn?: (undefined | string) }) }) }); type: ("Standard" | "Connection URI" | "Prostgles"); url_path: (null | string); user_id: (null | string); web_app_directory: (null | string); web_app_templated: (null | false | true) }>)>;
@@ -852,7 +852,7 @@ export type GeneratedFunctionSchema = {
  |  {  type: "end";  streamId: string; };  }) => Promise<(undefined | string)>;
   "setFileStorage": (args: {    connId: string;   tableConfig?: {  fileTable?: string;  storageType: |  {  type: "local"; } |  {  type: "S3";  credential_id: number; };  referencedTables?: any;  delayedDelete?: {  deleteAfterNDays: number;  checkIntervalHours?: number; }; };   opts?: {  keepS3Data?: boolean;  keepFileTable?: boolean; };  }) => Promise<void>;
   "getStatus": (args: {    connId: string;  }) => Promise<{ queries: Array<{ datid: (null | number); datname: (null | string); pid: number; usesysid: (null | number); usename: (null | string); application_name: string; client_addr: (null | string); client_hostname: (null | string); client_port: (null | number); backend_start: string; xact_start: (null | string); query_start: (null | string); state_change: (null | string); wait_event_type: (null | string); wait_event: (null | string); state: (null | string); backend_xid: any; backend_xmin: any; query: string; backend_type: string; blocked_by: Array<number>; running_time: { [key: string]: any } }>; topQueries: Array<{ [key: string]: any }>; blockedQueries: Array<{ [key: string]: any }>; connections: Array<{ datid: number; datname: string; numbackends: number; xact_commit: number; xact_rollback: number; blks_read: number; blks_hit: number; tup_returned: number; tup_fetched: number; tup_inserted: number; tup_updated: number; tup_deleted: number; conflicts: number; temp_files: number; temp_bytes: number; deadlocks: number; checksum_failures: (null | number); checksum_last_failure: (null | string); blk_read_time: number; blk_write_time: number; stats_reset: string }>; maxConnections: number; noBash: boolean; getPidStatsErrors: { [key: string]: any }; serverStatus?: (undefined | { clock_ticks: number; total_memoryKb: number; free_memoryKb: number; uptimeSeconds: number; cpu_model: string; cpu_cores_mhz: string; cpu_mhz: string; disk_space: string; memAvailable: number; ioInfo?: (undefined | Array<{ majorNumber: number; minorNumber: number; deviceName: string; readsCompletedSuccessfully: number; readsMerged: number; sectorsRead: number; timeSpentReadingMs: number; writesCompleted: number; writesMerged: number; sectorsWritten: number; timeSpentWritingMs: number; IOsCurrentlyInProgress: number; timeSpentDoingIOms: number; weightedTimeSpentDoingIOms: number }>) }) }>;
-  "getSampleSchemas": () => Promise<Array<(({ name: string; path: string } & { type: "sql"; file: string }) | ({ name: string; path: string } & { type: "dir"; tableConfigTs: string; onMountTs: string; onInitSQL: string; workspaceConfig: (undefined | { workspaces: Array<{ active_row: any; connection_id: string; created: (null | string); deleted: boolean; icon: (null | string); id: string; last_updated: string; last_used: string; layout: any; layout_mode: (null | "fixed" | "editable"); name: string; options: { hideCounts?: (undefined | false | true); tableListEndInfo?: (undefined | "size" | "none" | "count"); tableListSortBy?: (undefined | "name" | "extraInfo"); showAllMyQueries?: (undefined | false | true); defaultLayoutType?: (undefined | "row" | "tab" | "col"); pinnedMenu?: (undefined | false | true); pinnedMenuWidth?: (undefined | number) }; parent_workspace_id: (null | string); published: boolean; source: (null | { tool_use_id: string }); url_path: (null | string); user_id: string }> }); connection: (undefined | { db_schema_filter: (null | { [key: string]: 0 } | { [key: string]: 1 }); info: (null | { canCreateDb?: (undefined | false | true) }); table_options: (null | { [key: string]: (undefined | { icon?: (undefined | string); label?: (undefined | string); rowIconColumn?: (undefined | string); columns?: (undefined | { [key: string]: (undefined | { icon?: (undefined | string) }) }); card?: (undefined | { headerColumn?: (undefined | string) }) }) }) }); databaseConfig: (undefined | { table_schema_positions: (null | { [key: string]: (undefined | { x: number; y: number }) }); table_schema_transform: (null | { translate: { x: number; y: number }; scale: number }) }) }))>>;
+  "getSampleSchemas": () => Promise<Array<(({ name: string; path: string } & { type: "sql"; file: string }) | ({ name: string; path: string } & { type: "dir"; tableConfigTs: string; onMountTs: string; onInitSQL: string; workspaceConfig: (undefined | { workspaces: Array<{ active_row?: any; connection_id: string; created?: (undefined | null | string); deleted?: (undefined | false | true); icon?: (undefined | null | string); id?: (undefined | string); last_updated: (string | number); last_used?: (undefined | string); layout?: any; layout_mode?: (undefined | null | "fixed" | "editable"); name?: (undefined | string); options?: (undefined | { hideCounts?: (undefined | false | true); tableListEndInfo?: (undefined | "size" | "none" | "count"); tableListSortBy?: (undefined | "name" | "extraInfo"); showAllMyQueries?: (undefined | false | true); defaultLayoutType?: (undefined | "row" | "tab" | "col"); pinnedMenu?: (undefined | false | true); pinnedMenuWidth?: (undefined | number) }); parent_workspace_id?: (undefined | null | string); published?: (undefined | false | true); source?: (undefined | null | { tool_use_id: string }); url_path?: (undefined | null | string); user_id: string }> }); connection: (undefined | { db_schema_filter: (null | { [key: string]: 0 } | { [key: string]: 1 }); info: (null | { canCreateDb?: (undefined | false | true) }); table_options: (null | { [key: string]: (undefined | { icon?: (undefined | string); label?: (undefined | string); rowIconColumn?: (undefined | string); columns?: (undefined | { [key: string]: (undefined | { icon?: (undefined | string) }) }); card?: (undefined | { headerColumn?: (undefined | string) }) }) }) }); databaseConfig: (undefined | { table_schema_positions: (null | { [key: string]: (undefined | { x: number; y: number }) }); table_schema_transform: (null | { translate: { x: number; y: number }; scale: number }) }) }))>>;
   "getCompiledTS": (args: {    ts: string;  }) => Promise<string>;
   "killPID": (args: {    connId: string;   id_query_hash: string;   type?: "cancel" | "terminate";  }) => Promise<Array<any>>;
   "setOnMount": (args: {    connId: string;   changes: {  on_mount_ts?: string;  on_mount_ts_disabled?: boolean; };  }) => Promise<void>;

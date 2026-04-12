@@ -23,7 +23,7 @@ export const AgenticWorkflowActivity = ({
   messageId,
   finishedAt,
 }: Pick<ProstglesMCPToolsProps, "chatId"> & {
-  messageId: string;
+  messageId: DBSSchema["llm_messages"]["id"];
   finishedAt: Date | undefined;
 }) => {
   const { dbs, dbsMethods } = usePrgl();

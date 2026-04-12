@@ -6,17 +6,26 @@ type PrimitiveTypeWithArraysAndOptional = {
   type: PrimitiveType | `${PrimitiveType}[]`;
   optional?: boolean;
 };
+
+/**
+ * @example
+ * {
+ *  summary: { type: "string", nullable: true },
+ * }
+ */
 export type PropertyType =
   | PrimitiveTypeWithArraysAndOptional
   /** Object */
   | {
       type: Record<string, PrimitiveTypeWithArraysAndOptional>;
       optional?: boolean;
+      nullable?: boolean;
     }
   /** Array of objects */
   | {
       arrayOfType: Record<string, PrimitiveTypeWithArraysAndOptional>;
       optional?: boolean;
+      nullable?: boolean;
     };
 
 /**

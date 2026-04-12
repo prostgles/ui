@@ -24,7 +24,7 @@ export const LLMChatMessageHeader = ({
       let textMessageToCopy: string | undefined;
       let cost = 0;
       if (item.type === "single_message") {
-        cost = item.message.cost ? parseFloat(item.message.cost) : 0;
+        cost = item.message.cost ? parseFloat(String(item.message.cost)) : 0;
         const {
           message: { message },
         } = item;
@@ -38,7 +38,7 @@ export const LLMChatMessageHeader = ({
       } else {
         cost = item.messages.reduce((acc, curr) => {
           const currCost =
-            curr.message.cost ? parseFloat(curr.message.cost) : 0;
+            curr.message.cost ? parseFloat(String(curr.message.cost)) : 0;
           return acc + currCost;
         }, 0);
       }

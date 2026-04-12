@@ -38,7 +38,7 @@ export const createAgenticWorkflowPrompt = [
   `DO NOT INCLUDE CREATE STATEMENTS FOR TABLES THAT ALREADY EXIST IN THE DATABASE. ` +
     `Any change to the existing table schema must be done through the ${getProstglesMCPFullToolName("db", "execute_sql")} before confirming it with the user.`,
   `Inspect the existing table schemas and ensure the workflow function definition is compatible with them. If new tables are needed, confirm with the user first.`,
-  "Prefer to use folder/file access from userInput rather than mcp orchestrator tools. This mounts the files to the container to allow interacting with native nodejs fs module for file operations instead of using MCP tools that allow filesystem access unless requested by the user.",
+  "DO NOT USE filesystem mcp tools unless necessary. Prefer to use userInput of type folder/file which mounts the files to the container that can then be used with nodejs 'fs' module.",
   "When interacting with the DB avoid using repeated insert() calls where insertMany(arr) is possible.",
   "Avoid gathering agent responses and then executing database operations at the end of the workflow unless absolutely necessary, as it can lead to a long feedback loop and more work if the workflow needs to be adjusted.",
 ].join("\n");

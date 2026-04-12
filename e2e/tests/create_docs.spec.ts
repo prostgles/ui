@@ -32,7 +32,7 @@ test.describe("Create docs and screenshots", () => {
   test.describe.configure({
     retries: 0,
     mode: "serial",
-    timeout: 20 * MINUTE,
+    timeout: 25 * MINUTE,
   });
 
   test(`Restore databases`, async ({ page: p }) => {

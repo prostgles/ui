@@ -3,6 +3,7 @@ import type { AuthClientRequest } from "prostgles-server";
 import { createWorkflowExecutionHandlers } from "../proxyHandlers/createWorkflowExecutionHandlers";
 import type { ProxyCallDataDefinitions } from "../runtimeSdk/defineAgenticWorkflowHandlers.types";
 import { validateDatabaseAccessDefinitions } from "./validateDatabaseAccessDefinitions";
+import type { DBSSchema } from "@common/publishUtils";
 
 export const validateAgenticWorkflowDefinitions = async (
   { definitions, usedTables }: ProxyCallDataDefinitions,
@@ -19,7 +20,7 @@ export const validateAgenticWorkflowDefinitions = async (
     chatId: number;
     clientReq: AuthClientRequest;
     userId: string;
-    messageId: string;
+    messageId: DBSSchema["llm_messages"]["id"];
   },
 ) => {
   if (!connection_id) {

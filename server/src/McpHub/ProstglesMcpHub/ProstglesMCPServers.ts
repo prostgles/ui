@@ -1,5 +1,5 @@
 import { getKeys, includes } from "prostgles-types";
-import { ProstglesUiMCPServer } from "./ProstglesMCPServers/Prostgles.mcp";
+import { ProstglesUiMCPServer } from "./ProstglesMCPServers/Ui";
 import { WebDevMCPServer } from "./ProstglesMCPServers/WebDev/WebDev.mcp";
 import { WebMCPServer } from "./ProstglesMCPServers/Web.mcp";
 import type {

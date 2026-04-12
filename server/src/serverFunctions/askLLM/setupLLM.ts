@@ -22,14 +22,15 @@ export const setupLLM = async (dbs: DBS) => {
     const adminUser = await dbs.users.findOne({ passwordless_admin: true });
     const user_id = adminUser?.id;
     const firstLine = [
-      `You are an assistant for a software called ${LLM_PROMPT_VARIABLES.PROSTGLES_SOFTWARE_NAME}.`,
+      `You are an assistant for a software called ${JSON.stringify(LLM_PROMPT_VARIABLES.PROSTGLES_SOFTWARE_NAME)}.`,
       `Your main and the most important goal is to ensure the user achieves their objective with the least amount of effort/input from their side.`.toUpperCase(),
       `It allows managing and exploring data within Postgres databases as well as creating internal tools. \n`,
       `Today is ${LLM_PROMPT_VARIABLES.TODAY}.`,
       `DO NOT USE HARDCODED DATA UNLESS STRICTLY NECESSARY OR THE USER ASKS FOR IT.`,
-      `Use ${getProstglesMCPFullToolName("prostgles-ui", "ask_user_questions")} to clarify the user intent and/or your strategy with ergonomic, easy to answer "choice" type questions if needed.`,
-      `Use ${getProstglesMCPFullToolName("prostgles-ui", "compact_context")} tool extensively to ensure only the most relevant information is kept between your steps. This improves the quality and cost of your work. Prefer to keep the key information as is, without sumarising to ensure minimal information is lost.`,
-      `Use ${getProstglesMCPFullToolName("prostgles-ui", "create_agent")} when the task is iterative, requires multiple tool-assisted steps, or is better delegated to a focused sub-agent that does not need database access. Give it the minimum necessary tool access and ask it to return a concise final result.`,
+      `IMPORTANT: NEVER ASSUME THAT THE DATABASE IS EMPTY. ALWAYS USE ${JSON.stringify(getProstglesMCPFullToolName("db", "get_existing_tables_schema"))} TO CHECK THE CURRENT SCHEMA AND ADJUST YOUR ANSWERS ACCORDINGLY.`,
+      `Use ${JSON.stringify(getProstglesMCPFullToolName("prostgles-ui", "ask_user_questions"))} to clarify the user intent and/or your strategy with ergonomic, easy to answer "choice" type questions if needed.`,
+      `Use ${JSON.stringify(getProstglesMCPFullToolName("prostgles-ui", "compact_context"))} tool extensively to ensure only the most relevant information is kept between your steps. This improves the quality and cost of your work. Prefer to keep the key information as is, without sumarising to ensure minimal information is lost.`,
+      `Use ${JSON.stringify(getProstglesMCPFullToolName("prostgles-ui", "create_agent"))} when the task is iterative, requires multiple tool-assisted steps, or is better delegated to a focused sub-agent that does not need database access. Give it the minimum necessary tool access and ask it to return a concise final result.`,
 
       `When writing typescript code, ensure it compiles and do not include type or eslint errors. Assume strict: true (including noImplicitAny, strictNullChecks).`,
       `Let TS infer obvious local variable types. Avoid i < arr.length - 1 patterns; split into parents + last where needed.`,
@@ -53,8 +54,9 @@ export const setupLLM = async (dbs: DBS) => {
           options: {
             mcp_server_tools: allowProstglesUITools({
               ask_user_questions: 1,
-              get_tool_schemas: "auto-approve",
               request_tool_access: 1,
+              get_tool_schemas: "auto-approve",
+              get_tool_list: "auto-approve",
               compact_context: "auto-approve",
             }),
             database_access: "execute_readonly_sql",
@@ -71,6 +73,7 @@ export const setupLLM = async (dbs: DBS) => {
               ask_user_questions: 1,
               compact_context: "auto-approve",
               get_tool_schemas: "auto-approve",
+              get_tool_list: "auto-approve",
               request_tool_access: 1,
             }),
 
@@ -97,6 +100,7 @@ export const setupLLM = async (dbs: DBS) => {
               ask_user_questions: 1,
               compact_context: "auto-approve",
               get_tool_schemas: "auto-approve",
+              get_tool_list: "auto-approve",
               request_tool_access: 1,
               run_typescript_in_nodejs: 1,
             }),
@@ -141,6 +145,8 @@ export const setupLLM = async (dbs: DBS) => {
               ...allowProstglesUITools({
                 ask_user_questions: 1,
                 get_tool_schemas: "auto-approve",
+                get_tool_list: "auto-approve",
+                compact_context: "auto-approve",
               }),
             },
             database_access: "execute_readonly_sql",

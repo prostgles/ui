@@ -131,9 +131,20 @@ export const getLLMToolsAllowedInThisChat = async ({
 
   const { mcpToolSchemaMode } = chat.options ?? {};
   if (mcpToolSchemaMode) {
-    return toolList.map(({ input_schema, description, ...t }) => {
+    return toolList.map((toolSchema) => {
+      const { input_schema, description, ...toolInfo } = toolSchema;
+      if (
+        toolInfo.name ===
+          getProstglesMCPFullToolName("prostgles-ui", "get_tool_schemas") ||
+        toolInfo.name ===
+          getProstglesMCPFullToolName("prostgles-ui", "get_tool_list") ||
+        toolInfo.name ===
+          getProstglesMCPFullToolName("prostgles-ui", "compact_context")
+      ) {
+        return toolSchema;
+      }
       return {
-        ...t,
+        ...toolInfo,
         input_schema: {},
         description:
           mcpToolSchemaMode === "hide-schemas-and-descriptions" ? ""

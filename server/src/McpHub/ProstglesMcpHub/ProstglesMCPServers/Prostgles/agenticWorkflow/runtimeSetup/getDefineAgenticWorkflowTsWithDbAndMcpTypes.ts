@@ -107,7 +107,9 @@ export const getDefineAgenticWorkflowTsWithDbAndMcpTypes = async ({
     ...Object.entries(mcpServerToolDefinitions).map(([serverName, tool]) => {
       return [
         `  ${JSON.stringify(serverName)}: {`,
-        ...Object.entries(tool).map(([_toolName, funcDef]) => ` ${funcDef}`),
+        ...Object.entries(tool).map(
+          ([_toolName, { tsDefinition }]) => ` ${tsDefinition}`,
+        ),
         "}",
       ].join("\n");
     }),

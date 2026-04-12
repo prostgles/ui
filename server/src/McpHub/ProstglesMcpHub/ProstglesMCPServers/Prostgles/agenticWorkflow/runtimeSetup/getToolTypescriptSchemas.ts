@@ -26,7 +26,10 @@ export const getToolTypescriptSchemas = async (
     return res;
   };
 
-  const result: Record<string, Record<string, string>> = {};
+  const result: Record<
+    string,
+    Record<string, { description: string; tsDefinition: string }>
+  > = {};
   for (const {
     name,
     server_name,
@@ -37,19 +40,19 @@ export const getToolTypescriptSchemas = async (
     const argsTsSchema = getTsType(inputSchema);
     const outputTsSchema = getTsType(outputSchema);
 
-    const funcDef = `${JSON.stringify(name)}: (args: ${argsTsSchema}) => Promise<${outputTsSchema}>;`;
-    const funcDefWithDescription = [
-      "/**",
-      " * " + escapeForJsDoc(description).split("\n").join("\n * "),
-      " */",
-      funcDef,
-    ].join("\n");
-    const def =
-      mode === "basic" ? description
-      : mode === "compact" ? funcDef
-      : funcDefWithDescription;
+    const tsDefinition = `${JSON.stringify(name)}: (args: ${argsTsSchema}) => Promise<${outputTsSchema}>;`;
+    // const funcDefWithDescription = [
+    //   "/**",
+    //   " * " + escapeForJsDoc(description).split("\n").join("\n * "),
+    //   " */",
+    //   funcDef,
+    // ].join("\n");
+    // const tsDefinition =
+    //   mode === "basic" ? description
+    //   : mode === "compact" ? funcDef
+    //   : funcDefWithDescription;
     result[server_name] ??= {};
-    result[server_name][name] = def;
+    result[server_name][name] = { description, tsDefinition };
   }
 
   return result;

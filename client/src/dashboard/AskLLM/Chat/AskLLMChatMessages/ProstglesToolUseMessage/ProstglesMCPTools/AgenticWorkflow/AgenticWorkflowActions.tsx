@@ -38,7 +38,7 @@ export const AgenticWorkflowActions = ({
   onInitError: () => void;
   onSuccess: () => void;
   userInputState: UseAgenticWorkflowUserInputReturn;
-  messageId: string | undefined;
+  messageId: DBSSchema["llm_messages"]["id"] | undefined;
 } & Pick<ReturnType<typeof useAgenticWorkflowState>, "latestRun">) => {
   const [executionMode, setExecutionMode] = useState(
     latestRun?.execution_mode ?? "series",
@@ -58,7 +58,7 @@ export const AgenticWorkflowActions = ({
   });
   const totalCost = useMemo(() => {
     return agentMessages?.reduce((acc, msg) => {
-      const cost = parseFloat(msg.cost);
+      const cost = parseFloat(String(msg.cost));
       return acc + cost;
     }, 0);
   }, [agentMessages]);

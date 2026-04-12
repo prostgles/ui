@@ -1,3 +1,4 @@
+import type { DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
 import { FlexCol, FlexRow } from "@components/Flex";
 import React, { useMemo } from "react";
@@ -9,7 +10,7 @@ export const InChatToolApprover = ({
   chatId,
 }: {
   toolUseId: string;
-  messageId: string;
+  messageId: DBSSchema["llm_messages"]["id"];
   chatId: number;
 }) => {
   const { toolApprovalState } = useAskLLMSetupState();

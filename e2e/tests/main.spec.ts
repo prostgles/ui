@@ -1002,7 +1002,7 @@ test.describe("Main test", () => {
     await setModelByText(page, "son");
 
     await expect(page.getByTestId("LLMChatOptions.MCPTools")).toContainText(
-      "8",
+      "9",
     );
     await sendAskLLMMessage(page, " task ");
 
@@ -1019,7 +1019,7 @@ test.describe("Main test", () => {
     );
 
     await expect(page.getByTestId("LLMChatOptions.MCPTools")).toContainText(
-      "11",
+      "12",
     );
 
     const dbToolsBtn = await page

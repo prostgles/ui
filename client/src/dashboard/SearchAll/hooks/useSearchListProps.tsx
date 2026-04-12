@@ -101,7 +101,7 @@ export const useSearchAllListProps = ({
                 lineNumber: lineNumber + 1,
               };
 
-              extra = { options: { ...(q.options || {}), cursorPosition } };
+              extra = { options: { ...q.options, cursorPosition } };
             }
             q.$update?.({ closed: false, ...extra }, { deepMerge: true });
           },

@@ -1,4 +1,4 @@
-import type { DBSSchemaForInsert } from "@common/publishUtils";
+import type { DBSSchema, DBSSchemaForInsert } from "@common/publishUtils";
 import type { DBS } from "@src/index";
 import { getValidatedMcpServerToolsAllowed } from "../definitionValidation/getValidatedMcpServerToolsAllowed";
 import type { DatabaseAccessDefinition } from "../runtimeSdk/defineAgenticWorkflow";
@@ -16,7 +16,7 @@ export const setupOrchestrationToolPermissions = async ({
 }: {
   dbs: DBS;
   chatId: number;
-  messageId: string;
+  messageId: DBSSchema["llm_messages"]["id"];
   userId: string;
   orchestrationToolsWithInfo: Awaited<
     ReturnType<typeof getValidatedMcpServerToolsAllowed> | undefined

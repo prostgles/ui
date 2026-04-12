@@ -145,8 +145,16 @@ export type DeleteRule = {
   forcedFilterFrom?: "SelectRule" | "UpdateRule";
 };
 
+type CollapseNumberIfStringPresent<T> =
+  [Extract<T, string>] extends [never] ? T : Exclude<T, number>;
+
+export type RequiredCollapsed<T extends Record<string, unknown>> = Required<{
+  [K in keyof T]: CollapseNumberIfStringPresent<T[K]>;
+}>;
 export type DBSSchema = {
-  [K in keyof DBGeneratedSchema]: Required<DBGeneratedSchema[K]["columns"]>;
+  [K in keyof DBGeneratedSchema]: RequiredCollapsed<
+    DBGeneratedSchema[K]["columns"]
+  >;
 };
 
 export type DBSSchemaForInsert = {

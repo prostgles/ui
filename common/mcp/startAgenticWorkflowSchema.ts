@@ -28,6 +28,7 @@ const PrimitiveTypesWithArrays = [
 const PropertyTypeOptional = {
   type: {
     optional: { type: "boolean", optional: true },
+    nullable: { type: "boolean", optional: true },
     type: {
       enum: PrimitiveTypesWithArrays,
     },
@@ -42,6 +43,7 @@ export const agentOutputSchemaType = {
         {
           type: {
             optional: { type: "boolean", optional: true },
+            nullable: { type: "boolean", optional: true },
             type: {
               record: {
                 values: PropertyTypeOptional,

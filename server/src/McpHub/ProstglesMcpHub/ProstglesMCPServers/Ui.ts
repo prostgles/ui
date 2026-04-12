@@ -17,6 +17,7 @@ import { getToolTypescriptSchemas } from "./Prostgles/agenticWorkflow/runtimeSet
 import { fetchTools } from "./Prostgles/fetchTools";
 import { runCodeInSandboxContainer } from "./Prostgles/runCodeInSandboxContainer";
 import { startAgent } from "./Prostgles/startAgent";
+import { getMCPFullToolName } from "@common/mcpUtils";
 
 const serverName = "prostgles-ui" as const;
 const tools = PROSTGLES_MCP_SERVERS_AND_TOOLS[serverName];
@@ -195,17 +196,27 @@ const handler = {
           };
         },
         create_agentic_workflow: createAgenticWorkflow,
+        get_tool_list: async (_) => {
+          const mcpTools = await getValidatedMcpServerToolsAllowed(
+            dbs,
+            "*",
+            undefined,
+          );
+          return mcpTools.map(({ server_name, name }) => {
+            return { server_name, tool_name: name };
+          });
+        },
         get_tool_schemas: async ({ mcpServerTools, infoLevel }) => {
           return getToolTypescriptSchemas(
             dbs,
-            mcpServerTools ?? "*",
+            mcpServerTools, // ?? "*",
             infoLevel,
           );
         },
         create_dashboards: () => {
           return "Done";
         },
-        compact_context: async (args, { chat }) => {
+        compact_context: async (_args, { chat }) => {
           const messageCount = await dbs.llm_messages.count({
             chat_id: chat.id,
           });

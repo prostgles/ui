@@ -53,13 +53,19 @@ export const dbMcpSchema = {
   get_existing_tables_schema: {
     description: fixIndent(`
       Gets the schema of existing tables in the connected database.
-      Optionally can provide a list of table names to get the schema for specific tables. If not provided, the schema for all tables will be returned.
+      Optionally can provide a list of exact table names ("tableNames") or table name parts ("tableNameParts") to get the schema for specific tables. If not provided, the schema for all tables will be returned.
       `),
     schema: {
       type: {
         tableNames: {
           optional: true,
           type: "string[]",
+        },
+        tableNameRegex: {
+          optional: true,
+          type: "string",
+          description:
+            "Regular expression to match table names. For example, 'user' will match tables with names like 'user', 'users', 'app_user', etc.",
         },
       },
     },

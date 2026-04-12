@@ -46,8 +46,11 @@ const handler = {
             chat: context.chat,
           });
         },
-        get_existing_tables_schema: async ({ tableNames }, ctx) => {
-          return getExistingTablesSchema(tableNames, ctx);
+        get_existing_tables_schema: async (
+          { tableNames, tableNameRegex },
+          ctx,
+        ) => {
+          return getExistingTablesSchema({ tableNames, tableNameRegex }, ctx);
         },
         count: async ({ tableName, filter }, context) => {
           const tableHandler = await getTableHandlerWithScope(

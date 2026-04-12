@@ -1,5 +1,5 @@
 import { isDefined } from "./filterUtils";
-import { DBSSchema } from "./publishUtils";
+import { DBSSchema, type DBSSchemaForInsert } from "./publishUtils";
 
 export const SECOND = 1000;
 export const MINUTE = SECOND * 60;
@@ -240,7 +240,9 @@ export type SampleSchemaDir = {
   tableConfigTs: string;
   onMountTs: string;
   onInitSQL: string;
-  workspaceConfig: { workspaces: DBSSchema["workspaces"][] } | undefined;
+  workspaceConfig:
+    | { workspaces: DBSSchemaForInsert["workspaces"][] }
+    | undefined;
   connection:
     | Pick<
         DBSSchema["connections"],

@@ -33,7 +33,7 @@ export type ContainerProxyContext = {
     | undefined
     | {
         chat: DBSSchema["llm_chats"];
-        messageId: string;
+        messageId: DBSSchema["llm_messages"]["id"];
       };
 
   user: DBSSchema["users"];

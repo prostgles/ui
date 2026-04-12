@@ -13,10 +13,10 @@ export const checkMaxCostLimitForChat = async (
     return;
   }
   const { max_total_cost_usd } = chat;
-  const maxTotalCost = parseFloat(max_total_cost_usd || "0");
+  const maxTotalCost = parseFloat(String(max_total_cost_usd || 0));
   if (maxTotalCost && maxTotalCost > 0) {
     const pastMessageCost = pastMessages.reduce(
-      (acc, m) => acc + parseFloat(m.cost),
+      (acc, m) => acc + parseFloat(String(m.cost)),
       0,
     );
     const stopChat = async (

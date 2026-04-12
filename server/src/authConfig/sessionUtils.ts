@@ -116,7 +116,7 @@ export const insertUser = async (
   db: Pick<DBS, "users">,
   u: Parameters<typeof db.users.insert>[0] & { password: string },
 ) => {
-  const user = (await db.users.insert(u, { returning: "*" })) as Users;
+  const user = await db.users.insert(u, { returning: "*" });
   if (!user.id) throw "User id missing";
   if (typeof user.password !== "string") throw "Password missing";
   const hashedPassword = getPasswordHash(user, user.password);

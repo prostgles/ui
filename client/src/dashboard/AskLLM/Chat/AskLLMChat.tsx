@@ -13,6 +13,7 @@ import { AskLLMChatHeader } from "./AskLLMChatHeader";
 import { useAskLLMChatSend } from "./useAskLLMChatSend";
 import { useLLMChat } from "./useLLMChat";
 import { useLLMSchemaStr } from "./useLLMSchemaStr";
+import type { DBSSchema } from "@common/publishUtils";
 const CHAT_WIDTH = 900;
 
 export type AskLLMChatProps = Pick<
@@ -25,7 +26,11 @@ export type AskLLMChatProps = Pick<
   loadedSuggestions: LoadedSuggestions | undefined;
   selectedChat:
     | { type: "toolApproval"; id: number }
-    | { type: "agent"; id: number; parent_message_id: string }
+    | {
+        type: "agent";
+        id: number;
+        parent_message_id: DBSSchema["llm_messages"]["id"];
+      }
     | undefined;
 };
 

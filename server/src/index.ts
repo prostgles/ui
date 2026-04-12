@@ -216,7 +216,7 @@ export type BareConnectionDetails = Pick<
   | "ssl_certificate"
 >;
 export type DBS = DBOFullyTyped<DBGeneratedSchema>;
-export type Users = Required<DBGeneratedSchema["users"]["columns"]>;
+export type Users = DBSSchema["users"];
 export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
 export type DatabaseConfigs = DBSSchema["database_configs"];
 

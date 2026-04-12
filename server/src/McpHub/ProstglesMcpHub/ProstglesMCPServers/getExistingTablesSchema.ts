@@ -2,7 +2,10 @@ import { connectionManager } from "@src/index";
 import type { McpCallContext } from "../ProstglesMCPServerTypes";
 
 export const getExistingTablesSchema = async (
-  tableNames: string[] | undefined,
+  {
+    tableNames,
+    tableNameRegex,
+  }: { tableNames: string[] | undefined; tableNameRegex: string | undefined },
   { chat, connection_id, clientReq }: McpCallContext,
 ) => {
   const { db_schema_permissions, db_data_permissions } = chat;
@@ -83,7 +86,7 @@ export const getExistingTablesSchema = async (
   if (
     (db_schema_permissions.type === "OnRequest" ||
       db_schema_permissions.type === "Full") &&
-    tableNames
+    tableNames?.length
   ) {
     const allTables = tableSchema.map((t) => t.name);
     const invalidTableNames = tableNames.filter((t) => !allTables.includes(t));
@@ -95,12 +98,12 @@ export const getExistingTablesSchema = async (
   }
 
   const allowedTables =
-    db_schema_permissions.type === "Full" ?
+    (
+      db_schema_permissions.type === "Full" ||
+      db_schema_permissions.type === "OnRequest"
+    ) ?
       tableSchema
     : tableSchema.filter((t) => {
-        if (db_schema_permissions.type === "OnRequest") {
-          return !tableNames || tableNames.includes(t.name);
-        }
         if (db_schema_permissions.type === "SameAsData") {
           if (!db_data_permissions) {
             return false;
@@ -125,6 +128,17 @@ export const getExistingTablesSchema = async (
     viewDefinitions.map((v) => [v.oid.toString(), v.view_definition]),
   );
   const res = allowedTables
+    .filter((t) => {
+      if (tableNames?.length) {
+        return tableNames.includes(t.name);
+      }
+      if (tableNameRegex) {
+        // eslint-disable-next-line security/detect-non-literal-regexp
+        const regex = new RegExp(tableNameRegex, "i");
+        return regex.test(t.name);
+      }
+      return true;
+    })
     .map((t) => {
       const viewDefinition = viewDefinitonsMap.get(t.oid.toString());
       if (viewDefinition) {

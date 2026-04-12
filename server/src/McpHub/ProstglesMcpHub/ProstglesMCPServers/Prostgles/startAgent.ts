@@ -43,7 +43,7 @@ export const startAgent = async (
     signal: AbortSignal | undefined;
     timeout: number;
     started: number;
-    messageId: string;
+    messageId: string | number;
   },
 ) => {
   const {

@@ -31,7 +31,7 @@ export const AskLLMChatActionBarModelSelector = (
   const totalUsage = useMemo(() => {
     return llmMessages.reduce(
       (acc, msg) => {
-        const cost = parseFloat(msg.cost);
+        const cost = parseFloat(String(msg.cost));
         acc.cost += cost;
         acc.tokens += msg.total_tokens;
         return acc;

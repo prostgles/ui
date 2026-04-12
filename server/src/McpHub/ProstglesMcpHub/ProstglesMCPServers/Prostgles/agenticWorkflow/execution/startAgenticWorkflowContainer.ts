@@ -39,7 +39,7 @@ export const startAgenticWorkflowContainer = async (
     chat: DBSSchema["llm_chats"];
     connection_id: string;
     abortSignal: AbortSignal;
-    messageId: string;
+    messageId: DBSSchema["llm_messages"]["id"];
   },
   mode:
     | {

@@ -1,3 +1,4 @@
+import { getMCPFullToolName } from "../mcpUtils";
 import { fixIndent } from "../utils";
 import { runCodeInSandboxSchema } from "./runCodeInSandboxSchema";
 import {
@@ -220,12 +221,26 @@ export const uiMcpSchema = {
       },
     },
   },
+  get_tool_list: {
+    mode: undefined,
+    description: fixIndent(`
+      Get the list of installed MCP server and tool names. To get detailed information about the tools use ${getMCPFullToolName("prostgles-ui", "get_tool_schemas")}.
+   `),
+    schema: {
+      type: {},
+    },
+    outputSchema: {
+      arrayOfType: {
+        server_name: "string",
+        tool_name: "string",
+      },
+    },
+  },
   get_tool_schemas: {
     mode: undefined,
     description: fixIndent(`
-      Get MCP tool descriptions, input and output schemas in typescript format. 
-      Will return all tools by default. 
-      Use toolNames to specify which tools to return.
+      Get MCP tool descriptions, input and output schemas in typescript format.
+      Use mcpServerTools from ${"get_tool_list"} to specify which mcp servers/tools to return.
       infoLevel controls how much information to return about the tools:
       - full: returns detailed descriptions and schemas for the tools to allow for better understanding of how to use them.
       - basic (default): returns only the tool descriptions.
@@ -235,8 +250,7 @@ export const uiMcpSchema = {
         mcpServerTools: {
           description: fixIndent(`
                 Which MCP server tools to get in this format: { [serverName]: { [toolName1]: 1, [toolName2]: 1 } } which means toolName1 and toolName2 from serverName. 
-                Leave empty to get all tools. Example: { web: { fetch: 1 } }`),
-          optional: true,
+                Example: { web: { fetch: 1 } }`),
           ...mcpServerToolsAllowed,
         },
         infoLevel: {
@@ -249,7 +263,12 @@ export const uiMcpSchema = {
       record: {
         values: {
           record: {
-            values: "string",
+            values: {
+              type: {
+                description: "string",
+                tsDefinition: "string",
+              },
+            },
           },
         },
       },
