@@ -159,10 +159,15 @@ export const getNestedColumnSelect = async (
   let dateExtent: MinMax<Date> | undefined;
   if (c.nested.chart) {
     const targetTable = c.nested.path.at(-1)!.table;
+    const targetTableHandler = db[targetTable]!;
     dateExtent =
       withoutData ?
         { min: new Date(), max: new Date() }
-      : await getTimeChartMinMax(db[targetTable], {}, c.nested.chart.dateCol);
+      : await getTimeChartMinMax(
+          targetTableHandler,
+          {},
+          c.nested.chart.dateCol,
+        );
 
     const { bin } =
       withoutData ?

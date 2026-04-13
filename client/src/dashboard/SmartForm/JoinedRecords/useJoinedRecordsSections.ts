@@ -3,10 +3,7 @@ import {
   isJoinedFilter,
   type DetailedFilter,
 } from "@common/filterUtils";
-import type {
-  TableHandlerClient,
-  ViewHandlerClient,
-} from "prostgles-client/dist/prostgles";
+import type { TableHandlerClient } from "prostgles-client/dist/prostgles";
 import { usePromise } from "prostgles-client";
 import type { AnyObject } from "prostgles-types";
 import { useMemo, useRef, useState } from "react";
@@ -117,9 +114,7 @@ export const useJoinedRecordsSections = (props: JoinedRecordsProps) => {
         const joinFilter = getSmartGroupFilter(detailedJoinFilter);
         let countStr = "0";
         let countError: string | undefined;
-        const tableHandler = db[j.tableName] as
-          | undefined
-          | Partial<TableHandlerClient | ViewHandlerClient>;
+        const tableHandler = db[j.tableName];
         try {
           if (!isInsert) {
             countStr =

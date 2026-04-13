@@ -19,10 +19,13 @@ import type { DBSSchema } from "@common/publishUtils";
 import { fixIndent, ROUTES } from "@common/utils";
 import { AppContextProvider } from "@pages/AppContextProvider";
 import { prglStateStore } from "@pages/ProjectConnection/PrglContextProvider";
-import { type DBHandlerClient } from "prostgles-client";
+// import { type DBHandlerClient } from "prostgles-client";
 import type { AuthHandler } from "prostgles-client/dist/getAuthHandler";
-import type { ServerFunctionHandler } from "prostgles-client/dist/prostgles";
-import type { SQLHandler } from "prostgles-types";
+import type {
+  ServerFunctionHandler,
+  TableHandlerClient,
+} from "prostgles-client/dist/prostgles";
+import type { DBHandler, DBSchema, SQLHandler } from "prostgles-types";
 import { type Socket } from "socket.io-client";
 import { CommandPalette } from "./app/CommandPalette/CommandPalette";
 import { Documentation } from "./app/CommandPalette/Documentation";
@@ -82,7 +85,8 @@ export type PrglStateCore = Pick<
 >;
 
 export type PrglCore = {
-  db: DBHandlerClient | DBS;
+  // db: DBHandlerClient | DBS;
+  db: DBHandler;
   sql: SQLHandler | undefined;
   methods: ServerFunctionHandler;
   tables: CommonWindowProps["tables"];

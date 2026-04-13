@@ -6,7 +6,7 @@ import {
   MonacoEditor,
 } from "@components/MonacoEditor/MonacoEditor";
 import PopupMenu from "@components/PopupMenu";
-import { mdiDelta, mdiPlus } from "@mdi/js";
+import { mdiDatabasePlus, mdiDelta } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import React from "react";
 import type { DatabaseAccessPermission } from "./DatabaseAccessEditor";
@@ -60,7 +60,9 @@ export const TableAccessEditor = ({
             style={{
               visibility: ddlState ? "visible" : "hidden",
             }}
-            iconPath={ddlState?.state === "drifted" ? mdiDelta : mdiPlus}
+            iconPath={
+              ddlState?.state === "drifted" ? mdiDelta : mdiDatabasePlus
+            }
           />
         }
         footerButtons={[

@@ -30,7 +30,7 @@ export const useAppState = (
     const { tables: dbsTables = [] } = getTables(
       tableSchema ?? [],
       dbsConnectionOptions.table_options,
-      dbs as DBS,
+      dbs,
       true,
     );
     (window as any).dbs = dbs;
