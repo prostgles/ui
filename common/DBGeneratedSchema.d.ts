@@ -22,28 +22,28 @@ export type DBGeneratedSchema = {
       llm_credential_id: number;
       llm_prompt_id: number;
     };
-    referencedBy: {};
+    
   };
   access_control_connections: {
     columns: {
       access_control_id: number;
       connection_id: string;
     };
-    referencedBy: {};
+    
   };
   access_control_methods: {
     columns: {
       access_control_id: number;
       published_method_id: number;
     };
-    referencedBy: {};
+    
   };
   access_control_user_types: {
     columns: {
       access_control_id: number;
       user_type: string;
     };
-    referencedBy: {};
+    
   };
   agentic_workflow_runs: {
     columns: {
@@ -60,7 +60,7 @@ export type DBGeneratedSchema = {
       user_input_value:  Record<string, unknown>
       workflow_id: number;
     };
-    referencedBy: {};
+    
   };
   agentic_workflows: {
     columns: {
@@ -100,7 +100,7 @@ export type DBGeneratedSchema = {
       user_id?: null | string;
       viewed?: null | string;
     };
-    referencedBy: {};
+    
   };
   alerts: {
     columns: {
@@ -156,7 +156,7 @@ export type DBGeneratedSchema = {
        |  {  state: "loading";  loaded: number;  total?: number; }
       uploaded?: null | string;
     };
-    referencedBy: {};
+    
   };
   connections: {
     columns: {
@@ -228,7 +228,7 @@ export type DBGeneratedSchema = {
       on_run_logs?: null | string;
       table_config_logs?: null | string;
     };
-    referencedBy: {};
+    
   };
   database_configs: {
     columns: {
@@ -296,7 +296,7 @@ export type DBGeneratedSchema = {
       user_id: string;
       user_input_value:  Record<string, unknown>
     };
-    referencedBy: {};
+    
   };
   global_settings: {
     columns: {
@@ -306,7 +306,7 @@ export type DBGeneratedSchema = {
       updated_at?: string;
       updated_by?: "user" | "app"
     };
-    referencedBy: {};
+    
   };
   links: {
     columns: {
@@ -326,7 +326,7 @@ export type DBGeneratedSchema = {
       w2_id: string;
       workspace_id?: null | string;
     };
-    referencedBy: {};
+    
   };
   llm_chats: {
     columns: {
@@ -380,7 +380,7 @@ export type DBGeneratedSchema = {
       connection_id: string;
       server_function_id: number;
     };
-    referencedBy: {};
+    
   };
   llm_chats_allowed_mcp_tools: {
     columns: {
@@ -390,7 +390,7 @@ export type DBGeneratedSchema = {
       server_name: string;
       tool_id: number;
     };
-    referencedBy: {};
+    
   };
   llm_credentials: {
     columns: {
@@ -490,7 +490,7 @@ export type DBGeneratedSchema = {
       username?: null | string;
       x_real_ip: string;
     };
-    referencedBy: {};
+    
   };
   logs: {
     columns: {
@@ -508,7 +508,7 @@ export type DBGeneratedSchema = {
       tx_info?: null | any;
       type?: null | string;
     };
-    referencedBy: {};
+    
   };
   magic_links: {
     columns: {
@@ -519,7 +519,7 @@ export type DBGeneratedSchema = {
       session_expires?: number | string;
       user_id: string;
     };
-    referencedBy: {};
+    
   };
   mcp_server_configs: {
     columns: {
@@ -541,7 +541,7 @@ export type DBGeneratedSchema = {
       log?: string;
       server_name: string;
     };
-    referencedBy: {};
+    
   };
   mcp_server_tool_calls: {
     columns: {
@@ -559,7 +559,7 @@ export type DBGeneratedSchema = {
       tool_use_id?: null | string;
       user_id?: null | string;
     };
-    referencedBy: {};
+    
   };
   mcp_server_tools: {
     columns: {
@@ -641,7 +641,7 @@ export type DBGeneratedSchema = {
       id: number | string;
       table_config: any;
     };
-    referencedBy: {};
+    
   };
   services: {
     columns: {
@@ -658,7 +658,7 @@ export type DBGeneratedSchema = {
       selected_config_options?: null | Record<string, string>
       status: "stopped" | "starting" | "running" | "error" | "building" | "building-done" | "build-error"
     };
-    referencedBy: {};
+    
   };
   session_types: {
     columns: {
@@ -685,7 +685,7 @@ export type DBGeneratedSchema = {
       user_id: string;
       user_type: string;
     };
-    referencedBy: {};
+    
   };
   stats: {
     columns: {
@@ -720,7 +720,7 @@ export type DBGeneratedSchema = {
       wait_event_type?: null | string;
       xact_start?: null | string;
     };
-    referencedBy: {};
+    
   };
   user_statuses: {
     columns: {

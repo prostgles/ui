@@ -58,7 +58,10 @@ export const DatabaseAccessEditor = ({
               value={value?.mode ?? "none"}
               data-command="DatabaseAccessEditor.Mode"
               btnProps={{
-                color: value ? "action" : undefined,
+                color:
+                  !value ? undefined
+                  : value.mode === "execute_sql" ? "danger"
+                  : "action",
               }}
               label={"Database access"}
               fullOptions={MODES}

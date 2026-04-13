@@ -63,7 +63,6 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
       )
       `,
   );
-  await page.getByTestId("AskLLM").click();
   await newChat(page);
   await deletePreviousMessages(page);
   await setPromptByText(page, "chat");
