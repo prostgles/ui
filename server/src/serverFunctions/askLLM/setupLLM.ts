@@ -10,9 +10,9 @@ import { setupLLMProviders } from "./setupLLMProviders";
 type UiToolName =
   keyof (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"];
 const allowProstglesUITools = (
-  tools: Partial<Record<UiToolName, 1 | "auto-approve">>,
+  uiTools: Partial<Record<UiToolName, 1 | "auto-approve">>,
 ) => ({
-  "prostgles-ui": tools,
+  "prostgles-ui": uiTools,
 });
 
 export const setupLLM = async (dbs: DBS) => {

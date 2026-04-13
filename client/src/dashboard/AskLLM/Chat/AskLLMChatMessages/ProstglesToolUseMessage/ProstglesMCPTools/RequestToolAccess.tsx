@@ -165,7 +165,7 @@ export const RequestToolAccess = ({
           : "Requesting tool access"}
         </div>
         {!status && (
-          <div className="text-gray-700 mb-2">
+          <div className="text-0p5">
             The assistant is requesting access to{" "}
             {mcpServerTools ?
               <strong>mcp tools</strong>
@@ -177,18 +177,17 @@ export const RequestToolAccess = ({
             . Please review the request and grant or deny access.
           </div>
         )}
+        {input.data?.reason && (
+          <div>
+            <strong>Reason:</strong>&nbsp;{input.data.reason}
+          </div>
+        )}
         {dbAccess && (
           <DatabaseAccessEditor
             newTables={[]}
             onChange={undefined}
             value={dbAccess}
           />
-        )}
-
-        {input.data?.reason && (
-          <FlexRow>
-            <strong>Reason:</strong>&nbsp;{input.data.reason}
-          </FlexRow>
         )}
 
         {input.data?.mcpServerTools && (

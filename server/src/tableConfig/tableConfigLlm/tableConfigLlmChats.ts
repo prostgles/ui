@@ -343,7 +343,10 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
                   chat_id: row.id,
                   tool_id: tool.id,
                   server_name: tool.server_name,
-                  auto_approve: dataAccess?.auto_approve ?? false,
+                  auto_approve:
+                    tool.name === "get_existing_tables_schema" ?
+                      true
+                    : (dataAccess?.auto_approve ?? false),
                 })),
               );
             }

@@ -628,6 +628,7 @@ export default class W_Table extends RTComp<
         );
       }
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       const canInsert = Boolean(tableHandler?.insert);
       const showInsertButton = canInsert && w.options.hideInsertButton !== true;
       const pkeys = cols

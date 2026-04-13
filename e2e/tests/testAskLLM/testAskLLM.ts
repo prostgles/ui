@@ -28,7 +28,7 @@ export const clientNodeModulesDirectory = join(
 
 const requestToolAccessArgs = {
   reason:
-    "I will paste receipt images in this chat. Please extract the following information from each receipt:\n- Company/merchant name\n- Total amount\n- Currency\n- Date of purchase\n- Full extracted text\n\nAfter extracting the data, insert it into the receipts table.",
+    "I need to fetch data from an external API to provide you with accurate information.",
   databaseAccess: {
     receipts: {
       select: true,

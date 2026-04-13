@@ -267,6 +267,8 @@ export const uiMcpSchema = {
               type: {
                 description: "string",
                 tsDefinition: "string",
+                inputSchema: { record: { values: "unknown" } },
+                outputSchema: { nullable: true, record: { values: "unknown" } },
               },
             },
           },

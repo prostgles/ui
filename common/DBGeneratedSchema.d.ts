@@ -14,6 +14,7 @@ export type DBGeneratedSchema = {
       llm_daily_limit?: number;
       name?: null | string;
     };
+    referencedBy: {"access_control_allowed_llm":["access_control_id"],"access_control_connections":["access_control_id"],"access_control_methods":["access_control_id"],"access_control_user_types":["access_control_id"]};
   };
   access_control_allowed_llm: {
     columns: {
@@ -21,24 +22,28 @@ export type DBGeneratedSchema = {
       llm_credential_id: number;
       llm_prompt_id: number;
     };
+    referencedBy: {};
   };
   access_control_connections: {
     columns: {
       access_control_id: number;
       connection_id: string;
     };
+    referencedBy: {};
   };
   access_control_methods: {
     columns: {
       access_control_id: number;
       published_method_id: number;
     };
+    referencedBy: {};
   };
   access_control_user_types: {
     columns: {
       access_control_id: number;
       user_type: string;
     };
+    referencedBy: {};
   };
   agentic_workflow_runs: {
     columns: {
@@ -55,6 +60,7 @@ export type DBGeneratedSchema = {
       user_input_value:  Record<string, unknown>
       workflow_id: number;
     };
+    referencedBy: {};
   };
   agentic_workflows: {
     columns: {
@@ -85,6 +91,7 @@ export type DBGeneratedSchema = {
       tool_use_id: string;
       user_id: string;
     };
+    referencedBy: {"agentic_workflow_runs":["workflow_id"]};
   };
   alert_viewed_by: {
     columns: {
@@ -93,6 +100,7 @@ export type DBGeneratedSchema = {
       user_id?: null | string;
       viewed?: null | string;
     };
+    referencedBy: {};
   };
   alerts: {
     columns: {
@@ -109,6 +117,7 @@ export type DBGeneratedSchema = {
        |  {  page: "/connection-config";  section: "authentication" | "access_control" | "backups" | "table_config" | "details" | "status" | "methods" | "file_storage" | "API" | "webApp" | "security"; }
        |  {  page: "/server-settings";  section: "security" | "auth" | "cloud" | "mcpServers" | "llmProviders" | "services"; }
     };
+    referencedBy: {"alert_viewed_by":["alert_id"]};
   };
   backups: {
     columns: {
@@ -147,6 +156,7 @@ export type DBGeneratedSchema = {
        |  {  state: "loading";  loaded: number;  total?: number; }
       uploaded?: null | string;
     };
+    referencedBy: {};
   };
   connections: {
     columns: {
@@ -188,12 +198,14 @@ export type DBGeneratedSchema = {
       web_app_directory?: null | string;
       web_app_templated?: null | boolean;
     };
+    referencedBy: {"access_control_connections":["connection_id"],"agentic_workflows":["connection_id"],"alerts":["connection_id"],"backups":["connection_id"],"llm_chats":["connection_id"],"mcp_tool_approval_requests":["connection_id"],"published_methods":["connection_id"],"services":["connection_id"],"workspaces":["connection_id"]};
   };
   credential_types: {
     columns: {
       description?: null | string;
       id: "AWS" | "Cloudflare"
     };
+    referencedBy: {"credentials":["type"]};
   };
   credentials: {
     columns: {
@@ -207,6 +219,7 @@ export type DBGeneratedSchema = {
       type: "AWS" | "Cloudflare"
       user_id?: null | string;
     };
+    referencedBy: {"backups":["credential_id"]};
   };
   database_config_logs: {
     columns: {
@@ -215,6 +228,7 @@ export type DBGeneratedSchema = {
       on_run_logs?: null | string;
       table_config_logs?: null | string;
     };
+    referencedBy: {};
   };
   database_configs: {
     columns: {
@@ -254,6 +268,7 @@ export type DBGeneratedSchema = {
       tableConfig?: null | any;
       trust_proxy?: boolean;
     };
+    referencedBy: {"access_control":["database_id"],"alerts":["database_config_id"],"connections":["db_name","db_host","db_port"],"database_config_logs":["id"],"stats":["database_id"]};
   };
   docker_containers: {
     columns: {
@@ -281,6 +296,7 @@ export type DBGeneratedSchema = {
       user_id: string;
       user_input_value:  Record<string, unknown>
     };
+    referencedBy: {};
   };
   global_settings: {
     columns: {
@@ -290,6 +306,7 @@ export type DBGeneratedSchema = {
       updated_at?: string;
       updated_by?: "user" | "app"
     };
+    referencedBy: {};
   };
   links: {
     columns: {
@@ -309,6 +326,7 @@ export type DBGeneratedSchema = {
       w2_id: string;
       workspace_id?: null | string;
     };
+    referencedBy: {};
   };
   llm_chats: {
     columns: {
@@ -353,6 +371,7 @@ export type DBGeneratedSchema = {
        |  {  state: "goal-data-validation-failure" | "goal-failure";  data: unknown;  error: string;  timestamp: string; }
       user_id: string;
     };
+    referencedBy: {"agentic_workflow_runs":["chat_id"],"agentic_workflows":["chat_id"],"docker_containers":["chat_id"],"llm_chats":["parent_chat_id"],"llm_chats_allowed_functions":["chat_id","connection_id"],"llm_chats_allowed_mcp_tools":["chat_id"],"llm_messages":["chat_id"],"mcp_server_tool_calls":["chat_id"],"mcp_tool_approval_requests":["chat_id"]};
   };
   llm_chats_allowed_functions: {
     columns: {
@@ -361,6 +380,7 @@ export type DBGeneratedSchema = {
       connection_id: string;
       server_function_id: number;
     };
+    referencedBy: {};
   };
   llm_chats_allowed_mcp_tools: {
     columns: {
@@ -370,6 +390,7 @@ export type DBGeneratedSchema = {
       server_name: string;
       tool_id: number;
     };
+    referencedBy: {};
   };
   llm_credentials: {
     columns: {
@@ -384,6 +405,7 @@ export type DBGeneratedSchema = {
       provider_id: string;
       user_id: string;
     };
+    referencedBy: {"access_control_allowed_llm":["llm_credential_id"]};
   };
   llm_messages: {
     columns: {
@@ -402,6 +424,7 @@ export type DBGeneratedSchema = {
       total_tokens: number;
       user_id?: null | string;
     };
+    referencedBy: {"agentic_workflow_runs":["message_id"],"agentic_workflows":["message_id"],"mcp_tool_approval_requests":["message_id"]};
   };
   llm_models: {
     columns: {
@@ -422,6 +445,7 @@ export type DBGeneratedSchema = {
       provider_id: string;
       supported_parameters?: null |  ( string )[]
     };
+    referencedBy: {"llm_chats":["model"],"llm_messages":["llm_model_id"]};
   };
   llm_prompts: {
     columns: {
@@ -434,6 +458,7 @@ export type DBGeneratedSchema = {
       prompt?: string;
       user_id?: null | string;
     };
+    referencedBy: {"access_control_allowed_llm":["llm_prompt_id"],"llm_chats":["llm_prompt_id"]};
   };
   llm_providers: {
     columns: {
@@ -446,6 +471,7 @@ export type DBGeneratedSchema = {
       id: string;
       logo_url?: null | string;
     };
+    referencedBy: {"llm_credentials":["provider_id"],"llm_models":["provider_id"]};
   };
   login_attempts: {
     columns: {
@@ -464,6 +490,7 @@ export type DBGeneratedSchema = {
       username?: null | string;
       x_real_ip: string;
     };
+    referencedBy: {};
   };
   logs: {
     columns: {
@@ -481,6 +508,7 @@ export type DBGeneratedSchema = {
       tx_info?: null | any;
       type?: null | string;
     };
+    referencedBy: {};
   };
   magic_links: {
     columns: {
@@ -491,6 +519,7 @@ export type DBGeneratedSchema = {
       session_expires?: number | string;
       user_id: string;
     };
+    referencedBy: {};
   };
   mcp_server_configs: {
     columns: {
@@ -500,6 +529,7 @@ export type DBGeneratedSchema = {
       last_updated?: null | string;
       server_name: string;
     };
+    referencedBy: {"llm_chats_allowed_mcp_tools":["server_config_id"],"mcp_server_tool_calls":["mcp_server_name","mcp_server_config_id"],"mcp_tool_approval_requests":["server_config_id"]};
   };
   mcp_server_logs: {
     columns: {
@@ -511,6 +541,7 @@ export type DBGeneratedSchema = {
       log?: string;
       server_name: string;
     };
+    referencedBy: {};
   };
   mcp_server_tool_calls: {
     columns: {
@@ -528,6 +559,7 @@ export type DBGeneratedSchema = {
       tool_use_id?: null | string;
       user_id?: null | string;
     };
+    referencedBy: {};
   };
   mcp_server_tools: {
     columns: {
@@ -540,6 +572,7 @@ export type DBGeneratedSchema = {
       outputSchema?: null | Record<string, unknown>
       server_name: string;
     };
+    referencedBy: {"llm_chats_allowed_mcp_tools":["tool_id"],"mcp_server_tool_calls":["mcp_server_name","mcp_tool_name"],"mcp_tool_approval_requests":["server_name","tool_name"]};
   };
   mcp_servers: {
     columns: {
@@ -563,6 +596,7 @@ export type DBGeneratedSchema = {
        |  {  type: "code";  packageJson: string;  tsconfigJson: string;  files: Record<string, string>; }
       stderr?: null | string;
     };
+    referencedBy: {"llm_chats_allowed_mcp_tools":["server_name"],"mcp_server_configs":["server_name"],"mcp_server_logs":["server_name"],"mcp_server_tool_calls":["mcp_server_name"],"mcp_server_tools":["server_name"]};
   };
   mcp_tool_approval_requests: {
     columns: {
@@ -583,6 +617,7 @@ export type DBGeneratedSchema = {
       updated?: null | string;
       user_id: string;
     };
+    referencedBy: {"mcp_server_tool_calls":["mcp_tool_approval_requests_id"]};
   };
   published_methods: {
     columns: {
@@ -599,12 +634,14 @@ export type DBGeneratedSchema = {
       run?: string;
       tsconfig?: null | any;
     };
+    referencedBy: {"access_control_methods":["published_method_id"],"llm_chats_allowed_functions":["server_function_id","connection_id"]};
   };
   schema_version: {
     columns: {
       id: number | string;
       table_config: any;
     };
+    referencedBy: {};
   };
   services: {
     columns: {
@@ -621,11 +658,13 @@ export type DBGeneratedSchema = {
       selected_config_options?: null | Record<string, string>
       status: "stopped" | "starting" | "running" | "error" | "building" | "building-done" | "build-error"
     };
+    referencedBy: {};
   };
   session_types: {
     columns: {
       id: "web" | "api_token" | "mobile"
     };
+    referencedBy: {"sessions":["type"]};
   };
   sessions: {
     columns: {
@@ -646,6 +685,7 @@ export type DBGeneratedSchema = {
       user_id: string;
       user_type: string;
     };
+    referencedBy: {};
   };
   stats: {
     columns: {
@@ -680,17 +720,20 @@ export type DBGeneratedSchema = {
       wait_event_type?: null | string;
       xact_start?: null | string;
     };
+    referencedBy: {};
   };
   user_statuses: {
     columns: {
       id: "active" | "disabled" | "public"
     };
+    referencedBy: {"users":["status"]};
   };
   user_types: {
     columns: {
       description?: null | string;
       id: "admin" | "public" | "default"
     };
+    referencedBy: {"access_control_user_types":["user_type"],"database_configs":["auth_created_user_type"],"users":["type"]};
   };
   users: {
     columns: {
@@ -716,6 +759,7 @@ export type DBGeneratedSchema = {
       type?: "admin" | "public" | "default"
       username: string;
     };
+    referencedBy: {"agentic_workflow_runs":["user_id"],"agentic_workflows":["user_id"],"alert_viewed_by":["user_id"],"connections":["user_id"],"credentials":["user_id"],"docker_containers":["user_id"],"links":["user_id"],"llm_chats":["user_id"],"llm_credentials":["user_id"],"llm_messages":["user_id"],"llm_prompts":["user_id"],"magic_links":["user_id"],"mcp_server_tool_calls":["user_id"],"mcp_tool_approval_requests":["user_id"],"sessions":["user_id"],"windows":["user_id"],"workspaces":["user_id"]};
   };
   windows: {
     columns: {
@@ -747,6 +791,7 @@ export type DBGeneratedSchema = {
       user_id: string;
       workspace_id?: null | string;
     };
+    referencedBy: {"links":["w1_id","w2_id"],"windows":["parent_window_id"]};
   };
   workspace_layout_modes: {
     columns: {
@@ -754,6 +799,7 @@ export type DBGeneratedSchema = {
       en?: null | string;
       id: "fixed" | "editable"
     };
+    referencedBy: {"workspaces":["layout_mode"]};
   };
   workspaces: {
     columns: {
@@ -775,6 +821,7 @@ export type DBGeneratedSchema = {
       url_path?: null | string;
       user_id: string;
     };
+    referencedBy: {"links":["workspace_id"],"windows":["workspace_id"],"workspaces":["parent_workspace_id"]};
   };
   
 }
@@ -812,7 +859,7 @@ export type GeneratedFunctionSchema = {
   "enable2FA": (args: {    token: string;  }) => Promise<string>;
   "disable2FA": () => Promise<(undefined | Array<void>)>;
   "changePassword": (args: {    oldPassword: string;   newPassword: string;  }) => Promise<void>;
-  "getLLMAllowedChatTools": (args: {    chatId: number;  }) => Promise<(undefined | Array<({ description: string; server_name: string; mode: (null | "auto-approved-user-actionable" | "user-provides-response") } & { tool_id: number; name: string; tool_name: string; input_schema: any; auto_approve: boolean })>)>;
+  "getLLMAllowedChatTools": (args: {    chatId: number;  }) => Promise<(undefined | Array<({ server_name: string; description: string; mode: (null | "auto-approved-user-actionable" | "user-provides-response") } & { tool_id: number; name: string; tool_name: string; input_schema: any; auto_approve: boolean })>)>;
   "createWebAppFromTemplate": (args: {    connectionId: string;   clean?: boolean;  }) => Promise<string>;
   "buildWebApp": (args: {    connectionId: string;   clean?: boolean;  }) => Promise<(({ command: string; exitCode: number; timedOut: boolean; executionTime: number; log: Array<{ type: ("error" | "stdout" | "stderr"); text: string }> } & { state: ("close" | "error" | "timed-out" | "aborted") }) | ({ command: string; exitCode: number; timedOut: boolean; executionTime: number; log: Array<{ type: ("error" | "stdout" | "stderr"); text: string }> } & { state: "error"; error: (undefined | null | string | Array<any> | { [key: string]: any }) }))>;
   "testWebApp": (args: {    connectionId: string;  }) => Promise<(({ command: string; exitCode: number; timedOut: boolean; executionTime: number; log: Array<{ type: ("error" | "stdout" | "stderr"); text: string }> } & { state: ("close" | "error" | "timed-out" | "aborted") }) | ({ command: string; exitCode: number; timedOut: boolean; executionTime: number; log: Array<{ type: ("error" | "stdout" | "stderr"); text: string }> } & { state: "error"; error: (undefined | null | string | Array<any> | { [key: string]: any }) }))>;

@@ -28,7 +28,15 @@ export const getToolTypescriptSchemas = async (
 
   const result: Record<
     string,
-    Record<string, { description: string; tsDefinition: string }>
+    Record<
+      string,
+      {
+        description: string;
+        tsDefinition: string;
+        inputSchema: Record<string, unknown>;
+        outputSchema: Record<string, unknown> | null;
+      }
+    >
   > = {};
   for (const {
     name,
@@ -52,7 +60,12 @@ export const getToolTypescriptSchemas = async (
     //   : mode === "compact" ? funcDef
     //   : funcDefWithDescription;
     result[server_name] ??= {};
-    result[server_name][name] = { description, tsDefinition };
+    result[server_name][name] = {
+      description,
+      tsDefinition,
+      inputSchema,
+      outputSchema,
+    };
   }
 
   return result;
