@@ -18,6 +18,8 @@ import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
 import { getAgentGoalTools } from "./agentConstants";
 import { getMCPServerTools } from "./prostglesLLMTools/getMCPServerTools";
 import { getMcpToolsWithDynamicDescription } from "./prostglesLLMTools/getMcpToolsWithDynamicDescription";
+import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
+import type { uiMcpSchema } from "@common/mcp/ui.mcp.schema";
 
 export type GetLLMToolsArgs = {
   userType: string;
@@ -133,13 +135,21 @@ export const getLLMToolsAllowedInThisChat = async ({
   if (mcpToolSchemaMode) {
     return toolList.map((toolSchema) => {
       const { input_schema, description, ...toolInfo } = toolSchema;
+
+      const nonHiddenSchemaToolNames = [
+        "get_tool_schemas",
+        "ask_user_questions",
+        "request_tool_access",
+        "compact_context",
+        "get_tool_list",
+        "get_tool_schemas",
+      ] as const satisfies (keyof typeof uiMcpSchema)[];
       if (
-        toolInfo.name ===
-          getProstglesMCPFullToolName("prostgles-ui", "get_tool_schemas") ||
-        toolInfo.name ===
-          getProstglesMCPFullToolName("prostgles-ui", "get_tool_list") ||
-        toolInfo.name ===
-          getProstglesMCPFullToolName("prostgles-ui", "compact_context")
+        nonHiddenSchemaToolNames.some(
+          (toolName) =>
+            toolInfo.name ===
+            getProstglesMCPFullToolName("prostgles-ui", toolName),
+        )
       ) {
         return toolSchema;
       }
@@ -147,7 +157,8 @@ export const getLLMToolsAllowedInThisChat = async ({
         ...toolInfo,
         input_schema: {},
         description:
-          mcpToolSchemaMode === "hide-schemas-and-descriptions" ? ""
+          mcpToolSchemaMode === "hide-schemas-and-descriptions" ?
+            "Must use 'get_tool_schemas' tool to see description and input schema for this tool"
           : isEmpty(input_schema) ? description
           : [
               description,

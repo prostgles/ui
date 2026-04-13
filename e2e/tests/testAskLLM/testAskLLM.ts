@@ -15,7 +15,7 @@ import {
 } from "./sampleToolUseData";
 import { receiptImport } from "./scenarios/receiptImport/receiptImport.scenario";
 import { stringify } from "./stringify";
-import { makeToolUse, type Scenario, type ToolUse } from "./utils";
+import { type Scenario, type ToolUse } from "./utils";
 
 type RequestToolAccess = JSONB.GetType<
   (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["request_tool_access"]["schema"]
@@ -437,7 +437,7 @@ return {
   },
 };//`;
 
-export const updateAskLLMToolUseCode = async (page: PageWIds) => {
+export const setupAskLLMToolUse = async (page: PageWIds) => {
   const existingFunc: DBSSchema["published_methods"] | undefined =
     await runDbsSql(
       page,

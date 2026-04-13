@@ -278,8 +278,13 @@ export const uiMcpSchema = {
   },
   request_tool_access: {
     mode: "auto-approved-user-actionable",
-    description:
-      "Request access to mcp tools. The user will be prompted to approve or deny access. Use this tool when you need access to a tool that you don't have access to yet. The user will then approve access if they are comfortable with it based on the tool description and the context of the conversation.",
+    description: fixIndent(
+      `Request access to mcp tools/database. 
+      USE THE STRICTEST LEAST-PRIVILEGE ACCESS POSSIBLE when requesting database access.
+      The user will be prompted to approve or deny access. 
+      Use this tool when you need access to a tool that you don't have access to yet. 
+      The user will then approve access if they are comfortable with it based on the tool description and the context of the conversation.`,
+    ),
     schema: {
       type: {
         reason: {

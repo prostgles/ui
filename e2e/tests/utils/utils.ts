@@ -1265,3 +1265,11 @@ export const enableMCPServers = async (
     }
   }
 };
+
+export const deletePreviousMessages = async (page: PageWIds) => {
+  const firstMessage = await page.getByTestId("AskLLM.DeleteMessage").first();
+  if (await firstMessage.count()) {
+    await firstMessage.click();
+    await page.locator(getDataKey("allToBottom")).click();
+  }
+};

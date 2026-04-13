@@ -5,6 +5,7 @@ import type { McpTool } from "@src/McpHub/AnthropicMcpHub/McpTypes";
 import type { McpCallContextFetchTools } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServerTypes";
 import { getJSONBSchemaAsJSONSchema, omitKeys } from "prostgles-types";
 import { getDefineAgenticWorkflowTsWithDbAndMcpTypes } from "../agenticWorkflow/runtimeSetup/getDefineAgenticWorkflowTsWithDbAndMcpTypes";
+import { CHEAPER_AGENTIC_MODEL_RANKING } from "@src/serverFunctions/askLLM/refreshModels";
 
 const name = "create_agentic_workflow" as const;
 export const getAgenticWorkflowToolSchema = async ({
@@ -45,6 +46,7 @@ export const getAgenticWorkflowToolSchema = async ({
     If access to the database is needed, an access type can be specified. 
     Use the most restrictive access type that is needed to complete the task (type custom with specific tables and allowed commands).
  
+    ## Preferred agent models: ${JSON.stringify(CHEAPER_AGENTIC_MODEL_RANKING)}
   `),
     inputSchema: getJSONBSchemaAsJSONSchema("", "", {
       type: omitKeys(args, ["workflowId"]),

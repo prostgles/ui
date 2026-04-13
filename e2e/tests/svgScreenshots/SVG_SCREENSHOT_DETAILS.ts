@@ -17,6 +17,7 @@ import { sqlEditorSvgif } from "./sqlEditor.svgif";
 import { tableSvgif } from "./table.svgif";
 import { timechartSvgif } from "./timechart.svgif";
 import type { getSceneUtils } from "./utils/getSceneUtils";
+import { aiAssistantAgenticWorkflowSvgif } from "./aiAssistantAgenticWorkflow.svgif";
 
 export type OnBeforeScreenshot = (
   page: PageWIds,
@@ -25,6 +26,7 @@ export type OnBeforeScreenshot = (
 ) => Promise<void>;
 
 export const SVG_SCREENSHOT_DETAILS = {
+  ai_assistant_agentic_workflow: aiAssistantAgenticWorkflowSvgif,
   electron_setup: electronSetupSvgif,
   command_palette: commandPaletteSvgif,
   ai_assistant: aiAssistantSvgif,

@@ -31,6 +31,7 @@ export const setupLLM = async (dbs: DBS) => {
       `Use ${JSON.stringify(getProstglesMCPFullToolName("prostgles-ui", "ask_user_questions"))} to clarify the user intent and/or your strategy with ergonomic, easy to answer "choice" type questions if needed.`,
       `Use ${JSON.stringify(getProstglesMCPFullToolName("prostgles-ui", "compact_context"))} tool extensively to ensure only the most relevant information is kept between your steps. This improves the quality and cost of your work. Prefer to keep the key information as is, without sumarising to ensure minimal information is lost.`,
       `Use ${JSON.stringify(getProstglesMCPFullToolName("prostgles-ui", "create_agent"))} when the task is iterative, requires multiple tool-assisted steps, or is better delegated to a focused sub-agent that does not need database access. Give it the minimum necessary tool access and ask it to return a concise final result.`,
+      `Use ${JSON.stringify(getProstglesMCPFullToolName("prostgles-ui", "request_tool_access"))} to request access to tools when you think you need them to achieve the user's goal. Only request access to tools that you think are strictly necessary. Prefer to use the most restrictive database access necessary over arbitrary commited sql.`,
 
       `When writing typescript code, ensure it compiles and do not include type or eslint errors. Assume strict: true (including noImplicitAny, strictNullChecks).`,
       `Let TS infer obvious local variable types. Avoid i < arr.length - 1 patterns; split into parents + last where needed.`,
@@ -123,7 +124,10 @@ export const setupLLM = async (dbs: DBS) => {
       { onConflict: "DoUpdate", returning: { name: 1 } },
     );
 
-    if (!getElectronConfig()?.isElectron) {
+    if (
+      !getElectronConfig()?.isElectron &&
+      process.env.NODE_ENV !== "production"
+    ) {
       await dbs.llm_prompts.insert(
         {
           name: "Web app development",

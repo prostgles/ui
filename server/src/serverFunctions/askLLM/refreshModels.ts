@@ -138,26 +138,37 @@ export const refreshModels = async (dbs: DBS) => {
   });
 };
 
-const AGENTIC_MODEL_RANKING = [
-  "gpt-5.3-codex",
-  "gpt-5.2-codex",
-  "qwen3.5-397b-a17b",
+export const CHEAPER_AGENTIC_MODEL_RANKING = [
   "claude-4.5-haiku",
-  "claude-4.6-sonnet",
-  // "claude-4.6-opus",
-  "gemini-3.1-pro",
+  "claude-3.5-haiku",
   "gemini-3-flash",
   "gemini-2.5-flash",
   "gemini-2.5-flash-lite",
-  "grok-4.1-fast",
+  "gpt-5.4-mini",
   "gpt-5.1-codex-mini",
   "gpt-4.1-mini",
   "gpt-4.1-nano",
   "gpt-4o-mini",
+  "codex-mini",
+  "qwen3.5-flash",
+  "kimi-k2.5-0127",
+  "minimax-m2.5",
+];
+
+export const AGENTIC_MODEL_RANKING = [
+  "gpt-5.3-codex",
+  "gpt-5.2-codex",
+  "qwen3.5-397b-a17b",
+  "claude-4.6-sonnet",
+  // "claude-4.6-opus",
+  "gemini-3.1-pro",
+  "grok-4.1-fast",
+  "grok-4.20-20260309",
   "kimi-k2-thinking",
   "glm-4.7",
   "glm-5",
   "deepseek-reasoner",
+  ...CHEAPER_AGENTIC_MODEL_RANKING,
 ];
 
 export const DEFAULT_AGENT_MODEL = "claude-4.6-sonnet";

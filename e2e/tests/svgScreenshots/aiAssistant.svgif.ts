@@ -2,10 +2,11 @@ import { expect } from "@playwright/test";
 import { getCommandElemSelector, getDataKey, getDataLabel } from "Testing";
 import { createReceipt, DEMO_DIR } from "testAskLLM/createReceipt";
 import { receiptImport } from "testAskLLM/scenarios/receiptImport/receiptImport.scenario";
-import { updateAskLLMToolUseCode } from "testAskLLM/testAskLLM";
+import { setupAskLLMToolUse } from "testAskLLM/testAskLLM";
 import {
   closeWorkspaceWindows,
   deleteExistingLLMChat,
+  deletePreviousMessages,
   newChat,
   runDbSql,
   runDbsSql,
@@ -21,6 +22,9 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   { openConnection },
   { addScene, addSceneAnimation },
 ) => {
+  if (Math.PI) {
+    throw new Error("dwadaw");
+  }
   // await goTo(page, "/server-settings?section=llmProviders");
   // await page.getByTestId("dashboard.window.rowInsertTop").click();
   // await page.getByTestId("Popup.content").waitFor({ state: "visible" });
@@ -35,7 +39,7 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   await openConnection("food_delivery");
   await page.getByTestId("AskLLM").click();
   await page.waitForTimeout(1000);
-  await updateAskLLMToolUseCode(page);
+  await setupAskLLMToolUse(page);
   const UnloadSuggestedDashboards = await page.getByTestId(
     "AskLLMChat.UnloadSuggestedDashboards",
   );
@@ -52,13 +56,6 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
 
   await setModelByText(page, "sonn");
   await setPromptByText(page, "dashboard");
-  const deletePreviousMessages = async () => {
-    const firstMessage = await page.getByTestId("AskLLM.DeleteMessage").first();
-    if (await firstMessage.count()) {
-      await firstMessage.click();
-      await page.locator(getDataKey("allToBottom")).click();
-    }
-  };
   await addScene({
     svgFileName: "focus_textarea",
     animations: [
@@ -90,94 +87,7 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   await page.waitForTimeout(4000);
   await addScene({ svgFileName: "dashboards_loaded" });
 
-  await page.getByTestId("AskLLM").click();
-  await page.getByTestId("AskLLMChat.UnloadSuggestedDashboards").click();
-
-  await openConnection("prostgles_video_demo");
-  await closeWorkspaceWindows(page);
-  await runDbSql(
-    page,
-    `
-      CREATE TABLE IF NOT EXISTS receipts (
-        id SERIAL PRIMARY KEY,
-        company TEXT,
-        extracted_text TEXT,
-        amount NUMERIC,
-        currency TEXT,
-        date TIMESTAMP,
-        created_at TIMESTAMP DEFAULT NOW()
-      );
-
-      DROP TABLE IF EXISTS receipts;
-      CREATE TABLE receipts (
-        id BIGSERIAL PRIMARY KEY,
-        receipt_number text,
-        vendor_name text NOT NULL,
-        purchase_date date NOT NULL,
-        currency_code bpchar(3) NOT NULL DEFAULT 'USD'::bpchar,
-        subtotal numeric(12, 2) NOT NULL,
-        tax_amount numeric(12, 2) NOT NULL DEFAULT 0,
-        total_amount numeric(12, 2) NOT NULL,
-        payment_method text,
-        notes text,
-        metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
-        created_at timestamptz NOT NULL DEFAULT now(),
-        updated_at timestamptz NOT NULL DEFAULT now(),
-        CONSTRAINT receipts_totals_check CHECK ((total_amount >= subtotal)),
-        CONSTRAINT receipts_total_amount_check CHECK ((total_amount >= (0)::numeric)),
-        CONSTRAINT receipts_tax_amount_check CHECK ((tax_amount >= (0)::numeric)),
-        CONSTRAINT receipts_subtotal_check CHECK ((subtotal >= (0)::numeric))
-      )
-      `,
-  );
-  await page.getByTestId("AskLLM").click();
-  await newChat(page);
-  await deletePreviousMessages();
-  await setPromptByText(page, "chat");
-  await setModelByText(page, "sonn");
-
-  await deletePreviousMessages();
-  await setPromptByText(page, "Create workflow");
-  const { filePath } = await createReceipt(page);
-
-  await typeSendAddScenes(page, addScene, receiptImport.firstMessage);
-
-  await addSceneAnimation(getDataKey("Insert automatically without preview"));
-  await addSceneAnimation(
-    getDataKey(
-      "Skip likely duplicates (vendor + date + total + receipt_number)",
-    ),
-  );
-  await addSceneAnimation(
-    getDataKey("Skip that file and report it (recommended)"),
-  );
-
-  await addSceneAnimation(getCommandElemSelector("AskUserQuestions.confirm"));
-
-  await runDbsSql(
-    page,
-    `
-    UPDATE users 
-    SET options = options || '{"lastCwd": ${JSON.stringify(DEMO_DIR)} }'::JSONB`,
-  );
-
-  await page.locator(getDataKey("sourcePaths")).click({ timeout: 35000 });
-  await fileBrowserGoToPath(page.getByTestId("FileTree"), [
-    "Documents",
-    "Receipts",
-  ]);
-  await page.getByText("Done", { exact: true }).click();
-  const startWorkflow = await page.getByTestId("AgenticWorkflow.start").last();
-  await startWorkflow.waitFor({ state: "visible", timeout: 25000 });
-  await startWorkflow.click();
-  await page.waitForTimeout(5500);
-  await addSceneAnimation(getDataKey("Activity"));
-  await page.waitForTimeout(5500);
-  await addSceneAnimation(getDataKey("Definition"));
-  await page.waitForTimeout(5500);
-  await addSceneAnimation(getDataKey("Logs"));
-
-  await deletePreviousMessages();
+  await deletePreviousMessages(page);
   await setPromptByText(page, "chat");
   await typeSendAddScenes(
     page,
@@ -197,6 +107,7 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
     svgFileName: "tasks",
     animations: [{ type: "wait", duration: 1000 }],
   });
+  const { filePath } = await createReceipt(page);
   await page.waitForTimeout(4000);
   const fileChooserPromise = page.waitForEvent("filechooser");
   await page.getByTestId("Chat.addFiles").click();
@@ -217,7 +128,7 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
     "Grand Ocean Hotel",
   );
 
-  await deletePreviousMessages();
+  await deletePreviousMessages(page);
   await page.waitForTimeout(1000);
   await setPromptByText(page, "chat");
   await page.getByTestId("LLMChatOptions.MCPTools").click();
@@ -294,7 +205,7 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   await page.waitForTimeout(2000);
   await addScene({ svgFileName: "sql_result" });
 
-  await deletePreviousMessages();
+  await deletePreviousMessages(page);
   await addSceneAnimation(getCommandElemSelector("Chat.speech"), "rightClick");
   await addSceneAnimation(getDataKey("stt-local"));
   await addScene({ svgFileName: "stt" });
