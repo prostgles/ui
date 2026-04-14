@@ -71,6 +71,7 @@ export const useLLMChatMessages = (props: P) => {
       llmMessagesWithGroups,
       isLoadingSince,
       user?.id,
+      user?.options?.hideLlmLoadingCounter,
       dbs,
       workspaceId,
       loadedSuggestions,

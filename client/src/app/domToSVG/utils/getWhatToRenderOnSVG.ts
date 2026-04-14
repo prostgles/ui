@@ -97,9 +97,6 @@ export const getWhatToRenderOnSVG = async (
   if (includes(["fixed", "absolute", "relative"], style.position)) {
     childAffectingStyles.position = style.position;
   }
-  // if (style.transform && style.transform !== "none") {
-  //   childAffectingStyles.transform = style.transform;
-  // }
 
   const foreignObject = await getForeignObject(element, style, x, y);
   const fontIcon = getFontIconElement(element);

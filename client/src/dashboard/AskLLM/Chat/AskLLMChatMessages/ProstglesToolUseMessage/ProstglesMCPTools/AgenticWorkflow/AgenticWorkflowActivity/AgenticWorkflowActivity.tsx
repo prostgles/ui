@@ -31,7 +31,7 @@ export const AgenticWorkflowActivity = ({
   messageId,
   finishedAt,
 }: AgenticWorkflowActivityProps) => {
-  const { dbsMethods } = usePrgl();
+  const { dbsMethods, user } = usePrgl();
   const setupState = useAskLLMSetupState();
   const [agentChatId, setAgentChatId] = useState<number>();
   const [selectedMcpToolCall, setSelectedMcpToolCall] =
@@ -76,7 +76,7 @@ export const AgenticWorkflowActivity = ({
                 mcp_server_name ===
                   ("db" satisfies keyof typeof PROSTGLES_MCP_SERVERS_AND_TOOLS) &&
                 includes(dbTools, mcp_tool_name) &&
-                typeof toolInput.tableName === "string"
+                typeof toolInput?.tableName === "string"
               ) {
                 return `${mcpToolDisplayName} ${toolInput.tableName} `;
               }
@@ -95,6 +95,7 @@ export const AgenticWorkflowActivity = ({
               : item.finished_at ? new Date(item.finished_at)
               : finishedAt;
 
+            const isLoading = !endedAt;
             return {
               key: item.type + item.id,
               "data-command":
@@ -102,7 +103,7 @@ export const AgenticWorkflowActivity = ({
                   "AgenticWorkflow.openChat"
                 : "AgenticWorkflow.openToolCall",
               contentLeft: icon,
-              rowClassname: !endedAt ? "skeleton" : "",
+              rowClassname: isLoading ? "skeleton" : "",
               label: name,
               styles: {
                 subLabel: { whiteSpace: "nowrap" },
@@ -117,12 +118,14 @@ export const AgenticWorkflowActivity = ({
               ).replaceAll("\n", " "),
               contentRight: (
                 <FlexRow className="gap-p5">
-                  <Stopwatch
-                    className="text-2"
-                    startTime={startedAt}
-                    endTime={endedAt}
-                  />
-                  {!endedAt && <Loading sizePx={24} delay={0} />}
+                  {isLoading && user?.options?.hideLlmLoadingCounter ? null : (
+                    <Stopwatch
+                      className="text-2"
+                      startTime={startedAt}
+                      endTime={endedAt}
+                    />
+                  )}
+                  {isLoading && <Loading sizePx={24} delay={0} />}
                 </FlexRow>
               ),
               onPress: () => {

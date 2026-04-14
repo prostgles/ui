@@ -87,9 +87,9 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
     receiptImport.firstMessage,
     undefined,
     undefined,
-    2000,
+    { LlmResponseLoadingDuration: 1000 },
   );
-  // await addScene({ animations: [{ type: "wait", duration: 500 }] });
+
   await addSceneAnimation(
     getDataKey("Insert automatically without preview"),
     undefined,
@@ -126,16 +126,26 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
 
   await addSceneAnimation(getDataKey("sourcePaths"), undefined, "fast");
 
-  await addSceneAnimation(
-    `${getCommandElemSelector("FileTree")} ${getDataLabel("Documents")}`,
-    undefined,
-    "fast",
-  );
-  await addSceneAnimation(
-    `${getCommandElemSelector("FileTree")} ${getDataLabel("Receipts")}`,
-    undefined,
-    "fast",
-  );
+  await page
+    .locator(
+      `${getCommandElemSelector("FileTree")} ${getDataLabel("Documents")}`,
+    )
+    .click();
+  // await addSceneAnimation(
+  //   `${getCommandElemSelector("FileTree")} ${getDataLabel("Documents")}`,
+  //   undefined,
+  //   "fast",
+  // );
+  await page
+    .locator(
+      `${getCommandElemSelector("FileTree")} ${getDataLabel("Receipts")}`,
+    )
+    .click();
+  // await addSceneAnimation(
+  //   `${getCommandElemSelector("FileTree")} ${getDataLabel("Receipts")}`,
+  //   undefined,
+  //   "fast",
+  // );
   await addSceneAnimation(
     `${getCommandElemSelector("FileTree")} ${getDataLabel("Receipts")} ${getCommandElemSelector("FileTreeNode.folderRow")} ${getCommandElemSelector("FileTreeNode.checkbox")}`,
     undefined,
@@ -161,27 +171,30 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
     selector: getDataLabel("documents get_document_text"),
     nth: 0,
   });
-  await addSceneAnimation(
-    {
-      selector: getCommandElemSelector("Popup.close"),
-      nth: 1,
-    },
-    undefined,
-    "fast",
-  );
+  // await addSceneAnimation(
+  //   {
+  //     selector: getCommandElemSelector("Popup.close"),
+  //     nth: 1,
+  //   },
+  //   undefined,
+  //   "fast",
+  // )
+  await page.keyboard.press("Escape");
+
   await addSceneAnimation({
     selector: getDataLabel("receiptExtractor"),
     nth: 1,
   });
-  await addSceneAnimation(
-    {
-      selector: getCommandElemSelector("Popup.close"),
-      nth: 1,
-    },
-    undefined,
-    "fast",
-  );
-  // await page.waitForTimeout(5500);
+  // await addSceneAnimation(
+  //   {
+  //     selector: getCommandElemSelector("Popup.close"),
+  //     nth: 1,
+  //   },
+  //   undefined,
+  //   "fast",
+  // );
+  await page.keyboard.press("Escape");
+
   await addSceneAnimation(getDataKey("Logs"));
   await page.waitForTimeout(5500);
   await addScene({ animations: [{ type: "wait", duration: 4500 }] });
