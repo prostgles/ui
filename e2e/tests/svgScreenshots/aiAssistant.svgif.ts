@@ -1,6 +1,6 @@
 import { expect } from "@playwright/test";
 import { getCommandElemSelector, getDataKey, getDataLabel } from "Testing";
-import { createReceipt, DEMO_DIR } from "testAskLLM/createReceipt";
+import { createReceipts, DEMO_DIR } from "testAskLLM/createReceipts";
 import { receiptImport } from "testAskLLM/scenarios/receiptImport/receiptImport.scenario";
 import { setupAskLLMToolUse } from "testAskLLM/testAskLLM";
 import {
@@ -107,7 +107,7 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
     svgFileName: "tasks",
     animations: [{ type: "wait", duration: 1000 }],
   });
-  const { filePath } = await createReceipt(page);
+  const { filePath } = await createReceipts(page, true);
   await page.waitForTimeout(4000);
   const fileChooserPromise = page.waitForEvent("filechooser");
   await page.getByTestId("Chat.addFiles").click();

@@ -217,6 +217,7 @@ export const RequestToolAccess = ({
           footerButtons={[
             {
               label: "Deny",
+              size: "small",
               onClickPromise: () => onAddTools(toolResultData, "deny"),
             },
             {
@@ -224,6 +225,7 @@ export const RequestToolAccess = ({
               title: "Add tools to chat",
               color: "action",
               variant: "filled",
+              size: "small",
               "data-command": "RequestToolAccess.Approve",
               iconPath: mdiCheck,
               onClickPromise: () => onAddTools(toolResultData, "approved"),
@@ -233,6 +235,7 @@ export const RequestToolAccess = ({
               title: "Add tools to chat and auto-approve",
               color: "action",
               variant: "filled",
+              size: "small",
               iconPath: mdiCheckAll,
               "data-command": "RequestToolAccess.AutoApprove",
               onClickPromise: () => onAddTools(toolResultData, "auto_approve"),

@@ -7,7 +7,6 @@ import {
   getMessageContentItems,
   type LLMMessageGroup,
 } from "../hooks/useLLMChatMessageGrouper";
-import { getIconForToolUseMessage } from "../ToolUseChatMessage/useToolUseChatMessage";
 import type { LLMChatMessageCommonProps } from "./LLMChatMessage";
 import { LLMChatMessageContentText } from "./LLMChatMessageContentText";
 import { LLMToolCallIcon } from "./LLMToolCallIcon";
@@ -25,14 +24,14 @@ export const LLMGroupedToolCallsMessage = ({
   }, [messages]);
 
   const { sql } = usePrgl();
-  const { mcpServerIcons } = useMcpServerIcons();
+  const { getIconFromFullName } = useMcpServerIcons();
   const { icons, toolCallCount } = useMemo(() => {
     let toolCallCount = 0;
     const iconPaths = messageContentItems
       .map((m) => {
         if (m.type === "tool_use") {
           toolCallCount++;
-          return getIconForToolUseMessage(m, mcpServerIcons);
+          return getIconFromFullName(m.name);
         }
       })
       .filter(isDefined);
@@ -41,7 +40,7 @@ export const LLMGroupedToolCallsMessage = ({
       icons,
       toolCallCount,
     };
-  }, [messageContentItems, mcpServerIcons]);
+  }, [messageContentItems, getIconFromFullName]);
 
   const allMessagesAreErrored = useMemo(() => {
     let totalToolResultMessages = 0;

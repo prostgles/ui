@@ -1,26 +1,32 @@
 import type { PageWIds } from "utils/utils";
 import * as path from "path";
-import { mkdirSync } from "fs";
+import { mkdirSync, rmSync } from "fs";
 
 export const DEMO_DIR = path.join(__dirname, "../../demo/home");
 
-export const createReceipt = async (page1: PageWIds) => {
+export const createReceipts = async (page1: PageWIds, addPngs = false) => {
+  const sample_home_dir_folders = [
+    "Documents/Receipts",
+    "Downloads",
+    "Pictures",
+    "Music",
+    "Videos",
+  ];
+  rmSync(DEMO_DIR, { recursive: true, force: true });
+  for (const folder of sample_home_dir_folders) {
+    const folderPath = path.join(DEMO_DIR, folder);
+    mkdirSync(folderPath, { recursive: true });
+  }
+
   const context = await page1.context();
   const page = await context.newPage();
   const width = 500;
   const height = 600;
   await page.setViewportSize({ width, height });
-  const receiptData = {
-    hotelName: "Grand Ocean Hotel",
-    guestName: "John Doe",
-    roomNumber: "305",
-    checkIn: "2025-09-10",
-    checkOut: "2025-09-12",
-    amount: "$450.00",
-    receiptNumber: "RCPT-20250911-001",
-  };
 
-  const receiptHTML = `
+  const filePaths: string[] = [];
+  for (const [index, receiptData] of sampleReceiptData.entries()) {
+    const receiptHTML = `
     <html>
       <head>
         <style>
@@ -108,34 +114,65 @@ export const createReceipt = async (page1: PageWIds) => {
     </html>
   `;
 
-  await page.setContent(receiptHTML, { waitUntil: "domcontentloaded" });
+    await page.setContent(receiptHTML, { waitUntil: "domcontentloaded" });
 
-  const sample_home_dir_folders = [
-    "Documents/Receipts",
-    "Downloads",
-    "Pictures",
-    "Music",
-    "Videos",
-  ];
-  for (const folder of sample_home_dir_folders) {
-    const folderPath = path.join(DEMO_DIR, folder);
-    mkdirSync(folderPath, { recursive: true });
+    const fileName = `hotel_receipt${!index ? "" : index}.png`;
+    const filePath = path.join(DEMO_DIR, sample_home_dir_folders[0], fileName);
+    filePaths.push(filePath);
+    if (addPngs) {
+      await page.screenshot({
+        path: filePath,
+        fullPage: true,
+      });
+    }
+    await page.pdf({
+      path: filePath.replace(".png", ".pdf"),
+      width: `${width}px`,
+      height: `${height}px`,
+      printBackground: true,
+      margin: { top: "0", right: "0", bottom: "0", left: "0" },
+    });
   }
 
-  const fileName = "hotel_receipt.png";
-  const filePath = path.join(DEMO_DIR, sample_home_dir_folders[0], fileName);
-  await page.screenshot({
-    path: filePath,
-    fullPage: true,
-  });
-  await page.pdf({
-    path: filePath.replace(".png", ".pdf"),
-    width: `${width}px`,
-    height: `${height}px`,
-    printBackground: true,
-    margin: { top: "0", right: "0", bottom: "0", left: "0" },
-  });
-
   await page.close();
-  return { filePath };
+  return { filePath: filePaths[0]! };
 };
+
+const sampleReceiptData = [
+  {
+    hotelName: "Grand Ocean Hotel",
+    guestName: "John Doe",
+    roomNumber: "305",
+    checkIn: "2025-09-10",
+    checkOut: "2025-09-12",
+    amount: "$450.00",
+    receiptNumber: "RCPT-20250911-001",
+  },
+  {
+    hotelName: "Mountain View Inn",
+    guestName: "Jane Smith",
+    roomNumber: "210",
+    checkIn: "2025-08-15",
+    checkOut: "2025-08-18",
+    amount: "$300.00",
+    receiptNumber: "RCPT-20250816-002",
+  },
+  {
+    hotelName: "City Center Lodge",
+    guestName: "Alice Johnson",
+    roomNumber: "502",
+    checkIn: "2025-07-20",
+    checkOut: "2025-07-22",
+    amount: "$200.00",
+    receiptNumber: "RCPT-20250721-003",
+  },
+  {
+    hotelName: "Lakeside Resort",
+    guestName: "Bob Brown",
+    roomNumber: "120",
+    checkIn: "2025-06-05",
+    checkOut: "2025-06-10",
+    amount: "$600.00",
+    receiptNumber: "RCPT-20250606-004",
+  },
+] as const;

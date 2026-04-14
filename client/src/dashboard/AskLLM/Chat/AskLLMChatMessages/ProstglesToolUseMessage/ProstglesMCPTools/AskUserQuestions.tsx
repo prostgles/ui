@@ -79,7 +79,6 @@ export const AskUserQuestions = ({
           >
             <p className="p-0 m-0 bold">{question}</p>
             <FlexRowWrap
-              className="ml-p5 "
               style={{
                 gap: ".5em 2em",
               }}

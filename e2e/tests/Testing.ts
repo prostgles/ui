@@ -565,6 +565,9 @@ export const COMMANDS = {
   FileTreeNode: "",
   "FileTreeNode.header": "",
   "FileTreeNode.checkbox": "",
+  "FileTreeNode.folderRow": "",
+  "FileTreeNode.fileRow": "",
+  "UserInput.Done": "",
 } as const satisfies Record<
   string,
   | string

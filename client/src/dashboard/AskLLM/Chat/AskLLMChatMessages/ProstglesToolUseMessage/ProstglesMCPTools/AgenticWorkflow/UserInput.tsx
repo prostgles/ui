@@ -33,7 +33,7 @@ export const UserInput = ({
   return (
     <>
       <FullscreenWrapper
-        className="bt b-color bg-color-2 w-full ta-start rounded-unset"
+        className="bt b-color w-full ta-start rounded-unset"
         maxContentHeight={300}
         title={
           <Btn
@@ -120,6 +120,7 @@ export const UserInput = ({
                         color: "action",
                         onClickClose: true,
                         variant: "filled",
+                        "data-command": "UserInput.Done",
                         className: "ml-auto",
                       },
                     ]}

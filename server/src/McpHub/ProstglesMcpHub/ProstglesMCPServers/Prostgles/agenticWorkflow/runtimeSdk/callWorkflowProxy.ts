@@ -76,7 +76,7 @@ export const callWorkflowProxy = async (args: ProxyCallData) => {
   return data as any;
 };
 
-const truncateString = (str: string, maxLength = 300): string => {
+const truncateString = (str: string, maxLength = 100): string => {
   if (str.length <= maxLength) {
     return str;
   }

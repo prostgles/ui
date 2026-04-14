@@ -14,6 +14,7 @@ export type ProstglesMcpServerDefinition = {
       description: string;
       schema: JSONB.FieldTypeObj | undefined;
       outputSchema: JSONB.FieldType | undefined;
+      icon?: string;
       mode?: DBSSchema["mcp_server_tools"]["mode"];
     }
   >;

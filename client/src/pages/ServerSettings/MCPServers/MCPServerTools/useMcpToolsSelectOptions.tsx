@@ -6,7 +6,7 @@ import { useMcpServerIcons } from "./useMcpServerIcons";
 
 export const useMcpToolsSelectOptions = () => {
   const { dbs } = usePrglCore();
-  const { mcpServerIcons } = useMcpServerIcons();
+  const { getIcon } = useMcpServerIcons();
   const { data: tools } = dbs.mcp_server_tools.useFind();
   const options = React.useMemo(() => {
     return (tools ?? []).map((t) => {
@@ -17,7 +17,7 @@ export const useMcpToolsSelectOptions = () => {
         !t.outputSchema ? "unknown" : (
           getJsonSchemaAsTs(t.outputSchema, { mode: "compact" })
         );
-      const icon = mcpServerIcons.get(t.server_name);
+      const icon = getIcon(t.server_name, t.name);
       return {
         key: t.id,
         label: `${t.server_name} ${t.name}`,
@@ -28,6 +28,6 @@ export const useMcpToolsSelectOptions = () => {
         ...(icon ? { leftContent: <SvgIcon icon={icon} /> } : {}),
       };
     });
-  }, [mcpServerIcons, tools]);
-  return { tools, options, mcpServerIcons };
+  }, [getIcon, tools]);
+  return { tools, options, getIcon };
 };

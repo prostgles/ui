@@ -25,7 +25,7 @@ type P = {
   onConfigChange: undefined | ((serverName: string, configId: number) => void);
 };
 export const McpToolAccess = ({ value, title, configs, onConfigChange }: P) => {
-  const { mcpServers, mcpServerIcons } = useMcpServerIcons();
+  const { mcpServers, getIcon } = useMcpServerIcons();
   const [editServerConfig, setEditServerConfig] = useState<{
     serverName: string;
     configId: number | undefined;
@@ -47,7 +47,7 @@ export const McpToolAccess = ({ value, title, configs, onConfigChange }: P) => {
         style={{ maxHeight: "100px" }}
       >
         {Object.entries(value).map(([mcpServerName, toolNameObj = {}]) => {
-          const icon = mcpServerIcons.get(mcpServerName);
+          const icon = getIcon(mcpServerName);
           const toolNames = Object.keys(toolNameObj);
           const server = mcpServers?.find((s) => s.name === mcpServerName);
           const { config_schema } = server ?? {};

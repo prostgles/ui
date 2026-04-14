@@ -51,6 +51,7 @@ const outputSchemaArrayOfObjects = {
 
 export const dbMcpSchema = {
   get_existing_tables_schema: {
+    icon: "DatabaseEyeOutline",
     description: fixIndent(`
       Gets the schema of existing tables in the connected database.
       Optionally can provide a list of exact table names ("tableNames") or table name parts ("tableNameParts") to get the schema for specific tables. If not provided, the schema for all tables will be returned.
@@ -74,6 +75,7 @@ export const dbMcpSchema = {
     },
   },
   execute_readonly_sql: {
+    icon: "DatabaseSearchOutline",
     annotations: { readOnlyHint: true },
     description:
       "Executes a SQL query on the connected database in readonly mode (no data can be changed, the transaction is rolled back at the end).",
@@ -81,6 +83,7 @@ export const dbMcpSchema = {
     outputSchema: outputSchemaArrayOfObjects,
   },
   execute_sql: {
+    icon: "DatabaseEditOutline",
     annotations: { readOnlyHint: false, destructiveHint: true },
     description:
       "Executes a SQL query on the connected database in commit mode (data can be changed, the transaction committed at the end).",
@@ -88,6 +91,7 @@ export const dbMcpSchema = {
     outputSchema: outputSchemaArrayOfObjects,
   },
   count: {
+    icon: "Counter",
     description: "Counts rows in a table that satisfy a filter.",
     annotations: { readOnlyHint: true },
     schema: {
@@ -99,6 +103,7 @@ export const dbMcpSchema = {
     outputSchema: "number",
   },
   find: {
+    icon: "TableSearch",
     description: "Selects rows from a table.",
     annotations: { readOnlyHint: true },
     schema: {
@@ -121,6 +126,7 @@ export const dbMcpSchema = {
     outputSchema: outputSchemaArrayOfObjects,
   },
   insert: {
+    icon: "TablePlus",
     description: "Inserts a row into a table.",
     annotations: { readOnlyHint: false },
     schema: {
@@ -156,6 +162,7 @@ export const dbMcpSchema = {
     },
   },
   insertMany: {
+    icon: "TablePlus",
     description: "Inserts rows into a table.",
     annotations: { readOnlyHint: false },
     schema: {
@@ -189,6 +196,7 @@ export const dbMcpSchema = {
     },
   },
   update: {
+    icon: "TableEdit",
     description: "Updates rows in a table.",
     annotations: { destructiveHint: true, readOnlyHint: false },
     schema: {
@@ -234,6 +242,7 @@ export const dbMcpSchema = {
     },
   },
   delete: {
+    icon: "TableRemove",
     annotations: { destructiveHint: true, readOnlyHint: false },
     description: "Deletes rows from a table.",
     schema: {

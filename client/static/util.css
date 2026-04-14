@@ -1384,9 +1384,8 @@ select:hover {
 
 .select-button:focus,
 select:focus {
-  border: 1px solid var(--focus-color);
-  box-shadow: 0 0 0 1px var(--focus-color);
-  outline: none;
+  outline: 2px solid var(--focus-color);
+  outline-offset: -2px;
 }
 
 .form-field .select-button:focus {
@@ -1545,7 +1544,8 @@ a.btn:focus,
 .focus-border:focus-within {
   -webkit-appearance: none !important;
   outline: 2px solid var(--focus-color) !important;
-  box-shadow: 0 0 0 2px var(--focus-color) !important;
+  outline-offset: -2px !important; /** To prevent the outline being cliped by parent overflow */
+  /* box-shadow: 0 0 0 2px var(--focus-color) !important; */
   border-color: transparent !important;
   z-index: 1;
 }
@@ -1978,4 +1978,34 @@ input[type="file"]::-webkit-file-upload-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Base skeleton */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: #e5e7eb; /* fallback gray */
+  border-radius: 4px;
+}
+
+/* Shimmer layer */
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  animation: shimmer 1.2s infinite;
+}
+
+/* GPU-friendly transform animation */
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
 }

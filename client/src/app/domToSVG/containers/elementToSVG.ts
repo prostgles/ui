@@ -80,6 +80,11 @@ export const elementToSVG = async (
     }
   });
 
+  if (style.transform && style.transform !== "none") {
+    g.style.transform = style.transform;
+    g.style.transformOrigin = `${toFixed(x + width / 2)}px ${toFixed(y + height / 2)}px`;
+  }
+
   const rectElem = rectangleToSVG(
     g,
     element,

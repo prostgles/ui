@@ -30,8 +30,8 @@ const outputSchema = {
 
 export const documentsService = {
   icon: "FileDocumentOutline",
-  label: "Documents",
-  description: "Extract data from documents.",
+  label: "Docling",
+  description: "Extract information from documents.",
   port: 5001,
   volumes: {
     "docling-cache": "/app/.cache",

@@ -20,12 +20,10 @@ import { fixIndent, ROUTES } from "@common/utils";
 import { AppContextProvider } from "@pages/AppContextProvider";
 import { prglStateStore } from "@pages/ProjectConnection/PrglContextProvider";
 // import { type DBHandlerClient } from "prostgles-client";
+import { ElectronSearchBar } from "@components/ElectronSearchBar";
 import type { AuthHandler } from "prostgles-client/dist/getAuthHandler";
-import type {
-  ServerFunctionHandler,
-  TableHandlerClient,
-} from "prostgles-client/dist/prostgles";
-import type { DBHandler, DBSchema, SQLHandler } from "prostgles-types";
+import type { ServerFunctionHandler } from "prostgles-client/dist/prostgles";
+import type { DBHandler, SQLHandler } from "prostgles-types";
 import { type Socket } from "socket.io-client";
 import { CommandPalette } from "./app/CommandPalette/CommandPalette";
 import { Documentation } from "./app/CommandPalette/Documentation";
@@ -44,7 +42,6 @@ import { NonHTTPSWarning } from "./pages/NonHTTPSWarning";
 import { useAppTheme } from "./theme/useAppTheme";
 import { PrglCoreProvider } from "./useAppState/PrglCoreContextProvider";
 import { useAppState } from "./useAppState/useAppState";
-import { ElectronSearchBar } from "@components/ElectronSearchBar";
 
 export type ClientUser = {
   sid: string;

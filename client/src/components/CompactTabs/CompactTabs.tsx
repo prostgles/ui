@@ -2,6 +2,7 @@ import { getEntries } from "@common/utils";
 import { FullscreenWrapper } from "@components/FullscreenWrapper/FullscreenWrapper";
 import React, { useMemo, useState } from "react";
 import Btn from "../Btn";
+import type { TestSelectors } from "src/Testing";
 
 type CompactTabItem = {
   label: string;
@@ -18,6 +19,8 @@ export const CompactTabs = <T extends Record<string, CompactTabItem>>({
   titleEndContent,
   titleWhenMinimised,
   contentClassname,
+  footer,
+  ...testSelectors
 }: {
   items: T;
   defaultTab?: keyof T;
@@ -31,7 +34,8 @@ export const CompactTabs = <T extends Record<string, CompactTabItem>>({
   };
   titleWhenMinimised: React.ReactNode;
   titleEndContent?: React.ReactNode;
-}) => {
+  footer?: React.ReactNode;
+} & TestSelectors) => {
   const [localActiveTab, setLocalActiveTab] = useState(
     defaultTab ??
       getEntries(items).find(([_, item]) => !item.disabledInfo)?.[0],
@@ -46,6 +50,7 @@ export const CompactTabs = <T extends Record<string, CompactTabItem>>({
   }, [controlled, localActiveTab]);
   return (
     <FullscreenWrapper
+      {...testSelectors}
       className={className}
       style={style}
       title={(minimized) => (
@@ -71,6 +76,7 @@ export const CompactTabs = <T extends Record<string, CompactTabItem>>({
         </>
       )}
       maxContentHeight={maxHeight}
+      footer={footer}
     >
       <>
         {getEntries(items).map(([tabName, { content }]) => (

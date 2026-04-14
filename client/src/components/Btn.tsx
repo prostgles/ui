@@ -505,7 +505,6 @@ class Button<HREF extends string | void = void> extends RTComp<
               )
             }
             to={this.props.href}
-            tabIndex={-1}
           >
             {content}
           </NavLink>,

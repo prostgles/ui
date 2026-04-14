@@ -565,6 +565,7 @@ export type DBGeneratedSchema = {
     columns: {
       annotations?: null | {    title?: string;   readOnlyHint?: boolean;   openWorldHint?: boolean;   idempotentHint?: boolean;   destructiveHint?: boolean;  };
       description: string;
+      icon?: null | string;
       id?: number;
       inputSchema:  Record<string, unknown>
       mode?: null | "auto-approved-user-actionable" | "user-provides-response"

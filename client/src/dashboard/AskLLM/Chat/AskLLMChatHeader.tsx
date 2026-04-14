@@ -31,11 +31,11 @@ export const AskLLMChatHeader = (
 
   return (
     <FlexRow className="AskLLMChatHeader">
-      {!activeChat?.agent_info && (
+      {/* {!activeChat?.agent_info && (
         <FlexCol className="gap-p25">
           <div>{t.AskLLM["AI Assistant"]}</div>
         </FlexCol>
-      )}
+      )} */}
       <FlexRow className="gap-p25 min-w-0">
         <AskLLMChatSettings
           prompts={prompts}

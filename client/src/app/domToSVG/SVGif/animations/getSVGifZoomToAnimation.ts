@@ -31,7 +31,7 @@ export const getSVGifZoomToAnimation = (
   const {
     elementSelector,
     duration,
-    maxScale = 3,
+    maxScale = 2,
     type,
     bringToFrontSelector,
   } = animation;

@@ -115,6 +115,7 @@ export const FileTreeNode = ({
       data-key={node.path}
     >
       <div
+        data-command={isDir ? "FileTreeNode.folderRow" : "FileTreeNode.fileRow"}
         className={`fst-tree-row ta-start hover-bg`}
         role={isDir ? "button" : "option"}
         tabIndex={0}

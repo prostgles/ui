@@ -1,6 +1,6 @@
 import type { DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
-import { FlexRow } from "@components/Flex";
+import { classOverride, FlexRow } from "@components/Flex";
 import { ProgressBar } from "@components/ProgressBar";
 import { Select } from "@components/Select/Select";
 import { Stopwatch } from "@components/Stopwatch";
@@ -32,7 +32,9 @@ export const AgenticWorkflowActions = ({
   messageId,
   latestRun,
   onSuccess,
+  className,
 }: Pick<ProstglesMCPToolsProps, "chatId"> & {
+  className?: string;
   workflow: DBSSchema["agentic_workflows"];
   onStarted: () => void;
   onInitError: () => void;
@@ -73,7 +75,7 @@ export const AgenticWorkflowActions = ({
 
   return (
     <>
-      <FlexRow className="f-1 jc-end gap-0">
+      <FlexRow className={classOverride("jc-end gap-0 ", className)}>
         {showSchemaDriftAlert && (
           <AgenticWorkflowSchemaDrift
             {...showSchemaDriftAlert}
@@ -160,7 +162,7 @@ export const AgenticWorkflowActions = ({
           variant="filled"
           color="action"
           size="small"
-          className="mx-p25"
+          className="ml-p25"
           disabledInfo={
             !startAgenticWorkflow ?
               "Starting agentic workflows is not allowed/available"
@@ -215,6 +217,7 @@ export const AgenticWorkflowActions = ({
           <Btn
             size="small"
             title="Stop"
+            className="ml-p25"
             iconPath={mdiStop}
             data-command="AgenticWorkflow.stop"
             variant="faded"

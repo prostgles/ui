@@ -13,7 +13,7 @@ import { CONVERT_DOCUMENT_DEFAULT_OPTIONS } from "@src/ServiceManager/services/d
 const tools = PROSTGLES_MCP_SERVERS_AND_TOOLS["documents"];
 
 const definition = {
-  icon_path: "FileDocumentMultipleOutline",
+  icon_path: "TextBoxSearchOutline",
   label: "Documents",
   description: "Convert documents to text and extract information from them",
   tools,

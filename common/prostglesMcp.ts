@@ -23,6 +23,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
          */
         schema: { type: any };
         outputSchema?: any;
+        icon?: string;
         mode?: DBSSchema["mcp_server_tools"]["mode"];
         annotations?: DBSSchema["mcp_server_tools"]["annotations"];
       }

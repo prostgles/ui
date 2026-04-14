@@ -1,9 +1,7 @@
-import { getMCPToolNameParts } from "@common/mcpUtils";
 import type { DBSSchema } from "@common/publishUtils";
 import type { MonacoCodeInMarkdownProps } from "@components/Chat/MonacoCodeInMarkdown/MonacoCodeInMarkdown";
 import { useMcpServerIcons } from "@pages/ServerSettings/MCPServers/MCPServerTools/useMcpServerIcons";
 import { useMemo } from "react";
-import type { ToolUseMessage } from "./ToolUseChatMessage";
 import { getToolUseResult } from "./utils/getToolUseResult";
 
 export type ToolUseMessageProps = {
@@ -14,7 +12,7 @@ export type ToolUseMessageProps = {
 } & Pick<MonacoCodeInMarkdownProps, "sqlHandler" | "loadedSuggestions">;
 
 export const useToolUseChatMessage = (props: ToolUseMessageProps) => {
-  const { mcpServerIcons } = useMcpServerIcons();
+  const { getIconFromFullName } = useMcpServerIcons();
   const { message, nextMessage, toolUseMessageContentIndex } = props;
 
   const toolUseMessage = message;
@@ -23,9 +21,9 @@ export const useToolUseChatMessage = (props: ToolUseMessageProps) => {
 
   const iconName = useMemo(() => {
     return toolUseMessageContent?.type === "tool_use" ?
-        getIconForToolUseMessage(toolUseMessageContent, mcpServerIcons)
+        getIconFromFullName(toolUseMessageContent.name)
       : undefined;
-  }, [mcpServerIcons, toolUseMessageContent]);
+  }, [getIconFromFullName, toolUseMessageContent]);
 
   if (toolUseMessageContent?.type !== "tool_use") {
     return "Unexpected message tool use message";
@@ -51,11 +49,3 @@ export type ToolUseChatMessageState = Exclude<
   ReturnType<typeof useToolUseChatMessage>,
   string
 >;
-
-export const getIconForToolUseMessage = (
-  { name }: ToolUseMessage,
-  mcpServerIcons: Map<string, string>,
-) => {
-  const serverName = getMCPToolNameParts(name)?.serverName;
-  return serverName && mcpServerIcons.get(serverName);
-};

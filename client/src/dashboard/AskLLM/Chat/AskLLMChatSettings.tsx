@@ -4,7 +4,6 @@ import { FlexCol } from "@components/Flex";
 import Popup from "@components/Popup/Popup";
 import { mdiCogOutline } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import type { DBHandlerClient } from "prostgles-client";
 import React, { useMemo, useState } from "react";
 import { t } from "../../../i18n/i18nUtils";
 import { SmartForm, type SmartFormProps } from "../../SmartForm/SmartForm";
@@ -53,7 +52,7 @@ export const AskLLMChatSettings = (props: LLMChatOptionsProps) => {
     <>
       <Btn
         title={t.AskLLMChatHeader["Chat settings"]}
-        variant="icon"
+        variant="faded"
         iconPath={mdiCogOutline}
         onClick={() => setAnchorEl(anchorEl ? undefined : chatRootDiv)}
         data-command="LLMChatOptions.toggle"

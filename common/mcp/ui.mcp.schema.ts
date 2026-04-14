@@ -18,6 +18,7 @@ export const TYPESCRIPT_CODE_QUALITY =
 
 export const uiMcpSchema = {
   compact_context: {
+    icon: "ArrowCollapse",
     mode: undefined,
     description: [
       "Reduces the conversation history sent to the LLM while preserving important context.",
@@ -38,6 +39,7 @@ export const uiMcpSchema = {
     outputSchema: "string",
   },
   run_code_in_sandbox: {
+    icon: "Docker",
     annotations: {
       openWorldHint: true,
     },
@@ -83,6 +85,7 @@ export const uiMcpSchema = {
     },
   },
   run_typescript_in_nodejs: {
+    icon: "Nodejs",
     annotations: {
       openWorldHint: true,
     },
@@ -147,6 +150,7 @@ export const uiMcpSchema = {
     },
   },
   ask_user_questions: {
+    icon: "AccountQuestionOutline",
     mode: "user-provides-response",
     description: [
       "Ask a question to gather information from the user. ",
@@ -222,6 +226,7 @@ export const uiMcpSchema = {
     },
   },
   get_tool_list: {
+    icon: "Tools",
     mode: undefined,
     description: fixIndent(`
       Get the list of installed MCP server and tool names. To get detailed information about the tools use ${getMCPFullToolName("prostgles-ui", "get_tool_schemas")}.
@@ -237,6 +242,7 @@ export const uiMcpSchema = {
     },
   },
   get_tool_schemas: {
+    icon: "Tools",
     mode: undefined,
     description: fixIndent(`
       Get MCP tool descriptions, input and output schemas in typescript format.
@@ -277,6 +283,7 @@ export const uiMcpSchema = {
     },
   },
   request_tool_access: {
+    icon: "LockQuestion",
     mode: "auto-approved-user-actionable",
     description: fixIndent(
       `Request access to mcp tools/database. 
@@ -322,6 +329,7 @@ export const uiMcpSchema = {
     },
   },
   create_agent: {
+    icon: "RobotOutline",
     mode: undefined, //"auto-approved-user-actionable",
     description: [
       "Creates and runs an agent to iteratively complete the specified task using MCP tools if needed.",
@@ -356,6 +364,7 @@ export const uiMcpSchema = {
     },
   },
   create_agentic_workflow: {
+    icon: "CubeOutline",
     mode: "auto-approved-user-actionable",
     description:
       "Creates and runs an agentic workflow to iteratively complete the specified task using MCP tools and database access if needed.",
@@ -402,6 +411,7 @@ export const uiMcpSchema = {
     },
   },
   create_dashboards: {
+    icon: "ViewCarousel",
     mode: "auto-approved-user-actionable",
     description:
       "Suggest Prostgles UI dashboards to visualize data for the specified task.",

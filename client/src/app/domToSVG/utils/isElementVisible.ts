@@ -1,9 +1,18 @@
 import { includes } from "prostgles-types";
 
 export const isElementVisible = (element: Element) => {
+  /**
+   * This ensures we get correct w h for rotated elems
+   */
+  const initialTransform = window.getComputedStyle(element).transform;
+  if (initialTransform && element instanceof HTMLElement) {
+    element.style.transform = "none";
+  }
   const style = window.getComputedStyle(element);
   const bbox = getBoundingClientRect(element);
-
+  if (initialTransform && element instanceof HTMLElement) {
+    element.style.transform = initialTransform;
+  }
   if (!isElementNode(element) && !isTextNode(element))
     return { isVisible: false, style, bbox };
 

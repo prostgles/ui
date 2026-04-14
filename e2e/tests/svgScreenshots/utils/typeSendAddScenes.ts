@@ -9,6 +9,7 @@ export const typeSendAddScenes = async (
   text: string,
   endAnimations: SVGif.Animation[] = [],
   waitFor?: () => Promise<void>,
+  LLMresponseloadingDuration = 500,
 ) => {
   await page.getByTestId("Chat.textarea").fill(text);
   await page.waitForTimeout(1000);
@@ -26,17 +27,24 @@ export const typeSendAddScenes = async (
         },
       }
     );
-  const waitAnimation: SVGif.Animation = {
+  const waitAnimation = {
     type: "wait",
     duration: 500,
-  };
+  } as const satisfies SVGif.Animation;
   await addScene({
     animations:
       typeAnimation ? [typeAnimation, waitAnimation] : [waitAnimation],
   });
   await page.getByTestId("Chat.send").click();
-  await page.waitForTimeout(2000);
-  await addScene(); // LLM response loading
+  await page.waitForTimeout(1000);
+  await addScene({
+    animations: [
+      {
+        type: "wait",
+        duration: LLMresponseloadingDuration,
+      },
+    ],
+  }); // LLM response loading
   const lastMessage = page
     .getByTestId("Chat.messageList")
     .locator(".message")

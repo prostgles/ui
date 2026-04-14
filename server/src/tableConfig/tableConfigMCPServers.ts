@@ -1,13 +1,12 @@
 import type { DBSSchema } from "@common/publishUtils";
+import { testMCPServerConfig } from "@src/McpHub/testMCPServerConfig";
 import type {
   ValidateRowArgsCommon,
   ValidateRowsArgsCommon,
 } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
-import type { DBS } from "..";
 import { isDefined } from "prostgles-types";
-import { testMCPServerConfig } from "@src/McpHub/testMCPServerConfig";
-import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
+import type { DBS } from "..";
 
 export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
   mcp_servers: {
@@ -125,6 +124,7 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
     columns: {
       id: `SERIAL PRIMARY KEY`,
       name: `TEXT NOT NULL`,
+      icon: `TEXT`,
       description: `TEXT NOT NULL`,
       server_name: `TEXT NOT NULL REFERENCES mcp_servers(name) ON DELETE CASCADE`,
       inputSchema: {

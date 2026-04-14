@@ -8,7 +8,7 @@ import { getFontIconElement } from "../graphics/fontIconToSVG";
 import { getTextForSVG } from "../text/getTextForSVG";
 import { isElementVisible, isImgNode, isSVGNode } from "./isElementVisible";
 import { getForeignObject } from "../graphics/getForeignObject";
-import { includes } from "src/dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar";
+import { includes } from "prostgles-types";
 
 const attributesToKeep = [
   "data-command",
@@ -94,9 +94,12 @@ export const getWhatToRenderOnSVG = async (
   if (style.opacity && style.opacity !== "1") {
     childAffectingStyles.opacity = style.opacity;
   }
-  if (includes(style.position, ["fixed", "absolute", "relative"])) {
+  if (includes(["fixed", "absolute", "relative"], style.position)) {
     childAffectingStyles.position = style.position;
   }
+  // if (style.transform && style.transform !== "none") {
+  //   childAffectingStyles.transform = style.transform;
+  // }
 
   const foreignObject = await getForeignObject(element, style, x, y);
   const fontIcon = getFontIconElement(element);

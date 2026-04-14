@@ -18,6 +18,7 @@ export const FullscreenWrapper = ({
   children,
   endActions,
   maxContentHeight,
+  footer,
   ...testSelectors
 }: TestSelectors & {
   className?: string;
@@ -25,6 +26,7 @@ export const FullscreenWrapper = ({
   maxContentHeight?: number | string;
   title: React.ReactNode | ((minimized: boolean) => React.ReactNode);
   children: React.ReactNode;
+  footer?: React.ReactNode;
   endActions?: (Pick<
     BtnProps,
     "disabledInfo" | "title" | "onClick" | "onClickPromise" | "color"
@@ -50,9 +52,7 @@ export const FullscreenWrapper = ({
         /** This is done to ensure that monaco editors revert to initial size within chat */
         key={fullscreen.toString()}
         className={classOverride(
-          "FullscreenWrapper relative b b-color rounded gap-0 o-hidden " +
-            (fullscreen ? "f-1" : "f-0"),
-          className,
+          "FullscreenWrapper  " + (fullscreen ? "f-1" : "f-0"),
         )}
         aria-modal={fullscreen}
         style={{
@@ -68,51 +68,63 @@ export const FullscreenWrapper = ({
           : {}),
         }}
       >
-        <FlexRow className="bg-color-2 p-p25 gap-0">
-          <div
-            className={
-              "ai-center text-sm text-color-4 f-1 ta-start flex-row gap-p5" +
-              (minimized ? " noselect pointer " : "")
-            }
-            onClick={minimized ? () => setMinimized(false) : undefined}
-          >
-            {typeof title === "function" ? title(minimized) : title}
-          </div>
-          {endActions?.map((action, i) => (
+        <FlexCol
+          className={classOverride(
+            "f-1 relative b b-color rounded gap-0 o-hidden",
+            className,
+          )}
+        >
+          <FlexRow className="bg-color-2 p-p25 gap-0">
+            <div
+              className={
+                "ai-center text-sm text-color-4 f-1 ta-start flex-row gap-p5" +
+                (minimized ? " noselect pointer " : "")
+              }
+              onClick={minimized ? () => setMinimized(false) : undefined}
+            >
+              {typeof title === "function" ? title(minimized) : title}
+            </div>
+            {endActions?.map((action, i) => (
+              <Btn
+                key={i}
+                title={action.title}
+                iconPath={action.iconPath}
+                onClick={action.onClick}
+              />
+            ))}
             <Btn
-              key={i}
-              title={action.title}
-              iconPath={action.iconPath}
-              onClick={action.onClick}
+              title={minimized ? "Maximize" : "Minimize"}
+              data-command="FullscreenWrapper.toggleMinimize"
+              iconPath={
+                minimized ? mdiUnfoldMoreHorizontal : mdiUnfoldLessHorizontal
+              }
+              size="small"
+              disabledInfo={
+                fullscreen ? "Cannot minimize in fullscreen mode" : undefined
+              }
+              onClick={() => {
+                setMinimized((m) => !m);
+                setFullscreen(false);
+              }}
             />
-          ))}
-          <Btn
-            title={minimized ? "Maximize" : "Minimize"}
-            data-command="FullscreenWrapper.toggleMinimize"
-            iconPath={
-              minimized ? mdiUnfoldMoreHorizontal : mdiUnfoldLessHorizontal
-            }
-            size="small"
-            disabledInfo={
-              fullscreen ? "Cannot minimize in fullscreen mode" : undefined
-            }
-            onClick={() => {
-              setMinimized((m) => !m);
-              setFullscreen(false);
-            }}
-          />
-          <Btn
-            title={fullscreen ? "Exit Fullscreen" : "Toggle Fullscreen"}
-            data-command="FullscreenWrapper.toggleFullscreen"
-            iconPath={fullscreen ? mdiClose : mdiFullscreen}
-            size="small"
-            onClick={() => {
-              setFullscreen(!fullscreen);
-              setMinimized(false);
-            }}
-          />
-        </FlexRow>
-        {minimized ? null : children}
+            <Btn
+              title={fullscreen ? "Exit Fullscreen" : "Toggle Fullscreen"}
+              data-command="FullscreenWrapper.toggleFullscreen"
+              iconPath={fullscreen ? mdiClose : mdiFullscreen}
+              size="small"
+              onClick={() => {
+                setFullscreen(!fullscreen);
+                setMinimized(false);
+              }}
+            />
+          </FlexRow>
+          {minimized ? null : children}
+        </FlexCol>
+        {minimized ?
+          null
+        : !fullscreen ?
+          footer
+        : <div className="p-1">{footer}</div>}
       </FlexCol>
     </WrapInPopupIfNeeded>
   );
