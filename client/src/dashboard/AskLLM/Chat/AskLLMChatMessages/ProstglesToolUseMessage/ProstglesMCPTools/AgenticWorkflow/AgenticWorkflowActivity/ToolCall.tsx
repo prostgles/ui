@@ -23,7 +23,6 @@ export const ToolCall = ({
     input,
     output,
     chat_id,
-    error,
     tool_use_id,
   } = selectedMcpToolCall;
   const fullName = getMCPFullToolName(mcp_server_name || "", mcp_tool_name);
@@ -59,11 +58,12 @@ export const ToolCall = ({
             id: tool_use_id || "",
             type: "tool_use",
             name: fullName,
-            input: input,
+            input: input ?? undefined,
           }}
           resultContent={{
             type: "tool_result",
             tool_name: fullName,
+            content: [],
             ...output,
             tool_use_id: tool_use_id || "",
           }}

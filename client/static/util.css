@@ -1984,7 +1984,7 @@ input[type="file"]::-webkit-file-upload-button {
 .skeleton {
   position: relative;
   overflow: hidden;
-  background: #e5e7eb; /* fallback gray */
+  background: var(--bg-color-1);
   border-radius: 4px;
 }
 

@@ -35,7 +35,7 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
     page,
     `
     UPDATE users 
-    SET options = options || '{"lastCwd": ${JSON.stringify(DEMO_DIR)} }'::JSONB`,
+    SET options = options || '{"lastCwd": ${JSON.stringify(DEMO_DIR)}, "hideLlmLoadingCounter": true }'::JSONB`,
   );
   await runDbSql(
     page,
@@ -87,7 +87,7 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
     receiptImport.firstMessage,
     undefined,
     undefined,
-    1000,
+    2000,
   );
   // await addScene({ animations: [{ type: "wait", duration: 500 }] });
   await addSceneAnimation(
@@ -113,7 +113,7 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
     undefined,
     "fast",
   );
-  await addScene({ animations: [{ type: "wait", duration: 500 }] });
+  await addScene({ animations: [{ type: "wait", duration: 1500 }] });
 
   await page
     .locator(getDataKey("sourcePaths"))
@@ -125,14 +125,6 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
   await page.keyboard.press("Escape");
 
   await addSceneAnimation(getDataKey("sourcePaths"), undefined, "fast");
-
-  // await fileBrowserGoToPath(
-  //   page.getByTestId("FileTree"),
-  //   ["Documents", "Receipts"],
-  //   async (selector) => {
-  //     await addSceneAnimation(selector, undefined, "fast");
-  //   },
-  // );
 
   await addSceneAnimation(
     `${getCommandElemSelector("FileTree")} ${getDataLabel("Documents")}`,
@@ -167,12 +159,12 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
   await addScene({ animations: [{ type: "wait", duration: 1000 }] });
   await addSceneAnimation({
     selector: getDataLabel("documents get_document_text"),
-    nth: 1,
+    nth: 0,
   });
   await addSceneAnimation(
     {
       selector: getCommandElemSelector("Popup.close"),
-      nth: 2,
+      nth: 1,
     },
     undefined,
     "fast",
@@ -184,7 +176,7 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
   await addSceneAnimation(
     {
       selector: getCommandElemSelector("Popup.close"),
-      nth: 2,
+      nth: 1,
     },
     undefined,
     "fast",

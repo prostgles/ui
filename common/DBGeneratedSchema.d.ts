@@ -547,15 +547,15 @@ export type DBGeneratedSchema = {
     columns: {
       called_at?: string;
       chat_id?: null | number;
-      error?: null | any;
+      error?: null | unknown
       finished_at?: null | string;
       id?: number;
-      input?: null | any;
+      input?: null | Record<string, unknown>
       mcp_server_config_id?: null | number;
       mcp_server_name?: null | string;
       mcp_tool_approval_requests_id?: null | number;
       mcp_tool_name: string;
-      output?: null | any;
+      output?: null | Record<string, unknown>
       tool_use_id?: null | string;
       user_id?: null | string;
     };
@@ -748,7 +748,7 @@ export type DBGeneratedSchema = {
       id?: string;
       last_updated?: null | number | string;
       name?: null | string;
-      options?: null | {    showStateDB?: boolean;   hideNonSSLWarning?: boolean;   viewedSQLTips?: boolean;   viewedAccessInfo?: boolean;   theme?: "dark" | "light" | "from-system";   speechMode?: "off" | "stt-local" | "stt-web" | "audio";   speechSendMode?: "manual" | "auto";   llmChatWindowPositioning?: "right-panel" | "fullscreen";   lastCwd?: string;  };
+      options?: null | {    showStateDB?: boolean;   hideNonSSLWarning?: boolean;   viewedSQLTips?: boolean;   viewedAccessInfo?: boolean;   theme?: "dark" | "light" | "from-system";   speechMode?: "off" | "stt-local" | "stt-web" | "audio";   speechSendMode?: "manual" | "auto";   llmChatWindowPositioning?: "right-panel" | "fullscreen";   hideLlmLoadingCounter?: boolean;   lastCwd?: string;  };
       password: string;
       passwordless_admin?: null | boolean;
       registration?: 

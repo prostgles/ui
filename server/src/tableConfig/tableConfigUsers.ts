@@ -124,6 +124,12 @@ export const tableConfigUsers = {
             optional: true,
             enum: ["right-panel", "fullscreen"],
           },
+          hideLlmLoadingCounter: {
+            type: "boolean",
+            optional: true,
+            description:
+              "Hides the loading counter that is shown when the assistant is generating a message response.",
+          },
           lastCwd: {
             type: "string",
             optional: true,

@@ -1805,10 +1805,7 @@ test.describe("Main test", () => {
         .click();
       for (const text of Array.isArray(shownText) ? shownText : [shownText]) {
         await expect(
-          page
-            .getByTestId("FullscreenWrapper")
-            .filter({ visible: true })
-            .last(),
+          page.getByTestId("AgenticWorkflow").filter({ visible: true }).last(),
         ).toContainText(text);
       }
       await page

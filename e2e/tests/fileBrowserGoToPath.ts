@@ -4,7 +4,6 @@ import type { LocatorWIds } from "utils/utils";
 export const fileBrowserGoToPath = async (
   locator: LocatorWIds,
   targetPath: string[],
-  insteadOfOnClick?: (selector: string) => Promise<void>,
 ) => {
   /**
    * The runner checks out repos under a nested structure:
@@ -25,18 +24,9 @@ export const fileBrowserGoToPath = async (
     const rowLocator = locator.locator(rowSelector);
     const isLastSegment = index === path.length - 1;
     if (isLastSegment) {
-      const selector = `${rowSelector} ${getCommandElemSelector("FileTreeNode.checkbox")}`;
-      if (insteadOfOnClick) {
-        await insteadOfOnClick(selector);
-      } else {
-        await rowLocator.locator(selector).click();
-      }
+      await rowLocator.getByTestId("FileTreeNode.checkbox").click();
     } else {
-      if (insteadOfOnClick) {
-        await insteadOfOnClick(rowSelector);
-      } else {
-        await rowLocator.click();
-      }
+      await rowLocator.click();
     }
     await locator.page().waitForTimeout(1e3);
   }

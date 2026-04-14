@@ -17,12 +17,18 @@ export type LLMChatMessageCommonProps = Pick<
 type P = LLMChatMessageCommonProps & {
   messageItem: LLMMessageItem;
   isLoadingSinceDate: Date | undefined;
+  hideLoadingCounter: boolean;
 };
 
 export const LLMChatMessage = memo(
   (props: P) => {
-    const { messageItem, isLoadingSinceDate, loadedSuggestions, workspaceId } =
-      props;
+    const {
+      messageItem,
+      isLoadingSinceDate,
+      loadedSuggestions,
+      workspaceId,
+      hideLoadingCounter,
+    } = props;
 
     const message =
       messageItem.type === "single_message" ?
@@ -47,7 +53,7 @@ export const LLMChatMessage = memo(
         {isLoadingSinceDate && (
           <>
             <Loading />
-            <Counter from={isLoadingSinceDate} />
+            {hideLoadingCounter ? null : <Counter from={isLoadingSinceDate} />}
           </>
         )}
         {(meta?.stop_reason as string | undefined)?.toLowerCase() ===

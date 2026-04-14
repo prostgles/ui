@@ -56,6 +56,9 @@ export const useLLMChatMessages = (props: P) => {
                   messageItem={messageItem}
                   workspaceId={workspaceId}
                   loadedSuggestions={loadedSuggestions}
+                  hideLoadingCounter={
+                    user?.options?.hideLlmLoadingCounter ?? false
+                  }
                 />
               ),
               sender_id: user_id || "ai",

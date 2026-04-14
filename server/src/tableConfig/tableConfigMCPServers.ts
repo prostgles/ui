@@ -323,9 +323,32 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
       mcp_tool_name: `TEXT NOT NULL`,
       tool_use_id: `TEXT DEFAULT ''`,
       mcp_server_config_id: `INTEGER`,
-      input: `JSONB`,
-      output: `JSONB`,
-      error: `JSON`,
+      input: {
+        nullable: true,
+        jsonbSchema: {
+          record: {
+            values: {
+              type: "unknown",
+            },
+          },
+        },
+      },
+      output: {
+        nullable: true,
+        jsonbSchema: {
+          record: {
+            values: {
+              type: "unknown",
+            },
+          },
+        },
+      },
+      error: {
+        nullable: true,
+        jsonbSchema: {
+          type: "unknown",
+        },
+      },
       called_at: `TIMESTAMPTZ NOT NULL DEFAULT NOW()`,
       finished_at: `TIMESTAMPTZ`,
     },
