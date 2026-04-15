@@ -46,7 +46,13 @@ export const getSceneUtils = (
           /** Defaults to charByChar */
           mode?: "charByChar" | "fill" | "fillZoomTo";
         } = "click",
-    duration: "auto" | "fast" = "auto",
+    duration:
+      | "auto"
+      | "fast"
+      | "faster"
+      | {
+          waitBeforeClick: number;
+        } = "auto",
   ) => {
     const {
       svgif: svgifSelector,
@@ -86,14 +92,27 @@ export const getSceneUtils = (
       animations: [
         {
           type: "wait",
-          duration: duration === "fast" ? 800 : 1000,
+          duration:
+            duration === "faster" ? 400
+            : duration === "fast" ? 800
+            : duration === "auto" ? 1000
+            : duration.waitBeforeClick,
         },
         {
           type: elementIsVisible ? "click" : "clickAppearOnHover",
           elementSelector: svgifSelector,
-          duration: duration === "fast" ? 700 : 1000,
-          waitBeforeClick: duration === "fast" ? 200 : 500,
-          lingerMs: duration === "fast" ? 200 : 500,
+          duration:
+            duration === "faster" ? 400
+            : duration === "fast" ? 700
+            : 1000,
+          waitBeforeClick:
+            duration === "faster" ? 100
+            : duration === "fast" ? 200
+            : 500,
+          lingerMs:
+            duration === "faster" ? 100
+            : duration === "fast" ? 200
+            : 500,
         },
       ],
     });

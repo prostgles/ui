@@ -51,8 +51,13 @@ export const runAgentGoalTool = async ({
     tool_use_id: agetGoalTool.id,
     is_error: validationResult?.error !== undefined,
     content:
-      goalFailed ? "goal-failed"
-      : validationResult?.error !== undefined ? "goal-data-validation-failure"
+      goalFailed ?
+        JSON.stringify({ agent_error: "goal-failed", ...agetGoalTool.input })
+      : validationResult?.error !== undefined ?
+        JSON.stringify({
+          message: "goal-data-validation-failure",
+          error: validationResult.error,
+        })
       : "goal-reached",
   } as const satisfies ToolResultMessage;
 

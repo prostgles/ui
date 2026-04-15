@@ -1,21 +1,17 @@
 import { expect } from "@playwright/test";
 import { getCommandElemSelector, getDataKey, getDataLabel } from "Testing";
-import { createReceipts, DEMO_DIR } from "testAskLLM/createReceipts";
-import { receiptImport } from "testAskLLM/scenarios/receiptImport/receiptImport.scenario";
+import { createReceipts } from "testAskLLM/createReceipts";
 import { setupAskLLMToolUse } from "testAskLLM/testAskLLM";
 import {
   closeWorkspaceWindows,
   deleteExistingLLMChat,
   deletePreviousMessages,
   newChat,
-  runDbSql,
-  runDbsSql,
   setModelByText,
   setPromptByText,
 } from "utils/utils";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
 import { typeSendAddScenes } from "./utils/typeSendAddScenes";
-import { fileBrowserGoToPath } from "fileBrowserGoToPath";
 
 export const aiAssistantSvgif: OnBeforeScreenshot = async (
   page,

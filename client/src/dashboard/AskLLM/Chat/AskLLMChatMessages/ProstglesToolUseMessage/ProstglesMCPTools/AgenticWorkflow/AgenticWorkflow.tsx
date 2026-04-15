@@ -1,10 +1,15 @@
+import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
+import type { RequiredKeepUndefined } from "@common/utils";
 import { SuccessMessage } from "@components/Animations";
+import Btn from "@components/Btn";
 import { CompactTabs } from "@components/CompactTabs/CompactTabs";
 import ErrorComponent from "@components/ErrorComponent";
-import { FlexCol } from "@components/Flex";
 import { InfoRow } from "@components/InfoRow";
 import { MonacoLogs } from "@components/MonacoLogs/MonacoLogs";
 import { MonacoLogsWithFullscreen } from "@components/MonacoLogs/MonacoLogsWithFullscreen";
+import { mdiBookmark, mdiBookmarkOutline } from "@mdi/js";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import type { JSONB } from "prostgles-types";
 import React, { useMemo, useState } from "react";
 import { AgenticWorkflowActions } from "./AgenticWorkflowActions";
 import { AgenticWorkflowActivity } from "./AgenticWorkflowActivity/AgenticWorkflowActivity";
@@ -12,12 +17,6 @@ import { AgenticWorkflowDefinition } from "./AgenticWorkflowDefinition";
 import { AgenticWorkflowDetails } from "./AgenticWorkflowDetails";
 import { useAgenticWorkflowState } from "./hooks/useAgenticWorkflowState";
 import { useUserInput } from "./hooks/useUserInput";
-import Btn from "@components/Btn";
-import { mdiBookmark, mdiBookmarkOutline } from "@mdi/js";
-import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import type { RequiredKeepUndefined } from "@common/utils";
-import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
-import type { JSONB } from "prostgles-types";
 
 export type CreateAgenticWorkflowToolUseArgs = RequiredKeepUndefined<
   JSONB.GetObjectType<
@@ -49,7 +48,7 @@ export const AgenticWorkflow = ({
       }
     | undefined;
 } & Parameters<typeof useAgenticWorkflowState>[0]) => {
-  const { dbs } = usePrgl();
+  const { dbs, user } = usePrgl();
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const successDuration = useMemo(
     () => ({
@@ -184,7 +183,7 @@ export const AgenticWorkflow = ({
       }}
       footer={
         <>
-          {showSuccessMessage && (
+          {showSuccessMessage && !user?.options?.hideLlmLoadingCounter && (
             <div
               style={{
                 background:

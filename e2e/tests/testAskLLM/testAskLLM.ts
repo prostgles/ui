@@ -16,6 +16,8 @@ import {
 import { receiptImport } from "./scenarios/receiptImport/receiptImport.scenario";
 import { stringify } from "./stringify";
 import { type Scenario, type ToolUse } from "./utils";
+import { sampleReceiptData } from "./createReceipts";
+import { fromEntries } from "common/utils";
 
 type RequestToolAccess = JSONB.GetType<
   (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["request_tool_access"]["schema"]
@@ -187,6 +189,38 @@ Object.values([receiptImport]).forEach(({ firstMessage, steps }) => {
 });
 
 const toolResponses: Record<string, ToolUse> = {
+  ...fromEntries(
+    sampleReceiptData.map(
+      ({ amount, checkIn, guestName, hotelName, receiptNumber }, i) => {
+        const amountNumber = Number(amount.replace("$", ""));
+        return [
+          guestName,
+          {
+            content: "",
+            tool: [
+              {
+                id: "ocr-tool-use-jane-smith",
+                type: "function",
+                function: {
+                  name: "agent_goal_reached",
+                  arguments: stringify({
+                    vendor_name: hotelName,
+                    purchase_date: checkIn,
+                    currency_code: "USD",
+                    subtotal: amountNumber,
+                    tax_amount: 0,
+                    total_amount: amountNumber,
+                    receipt_number: receiptNumber,
+                    confidence: 0.95,
+                  }),
+                },
+              },
+            ],
+          } satisfies ToolUse,
+        ] as const;
+      },
+    ),
+  ),
   OCR: {
     tool: [
       {

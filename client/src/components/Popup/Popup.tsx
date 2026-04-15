@@ -16,9 +16,10 @@ import { PopupHeader } from "./PopupHeader";
 import { getPopupStyle } from "./getPopupStyle";
 import { popupCheckPosition } from "./popupCheckPosition";
 
+const MODAL_ROOT_ID = "modal-root";
 let modalRoot: HTMLElement | null = null;
 export const getModalRoot = (forPointer = false) => {
-  const id = forPointer ? "pointer-root" : "modal-root";
+  const id = forPointer ? "pointer-root" : MODAL_ROOT_ID;
   let node = document.getElementById(id);
   if (!node) {
     node = document.createElement("div");
@@ -31,6 +32,17 @@ export const getModalRoot = (forPointer = false) => {
   return node;
 };
 getModalRoot();
+
+export const isTopMostPopup = (popup: HTMLElement) => {
+  const modalRoot = document.getElementById(MODAL_ROOT_ID);
+  const topPopupPortal = modalRoot?.lastElementChild as HTMLElement | null;
+
+  // If a popup is on top and it does NOT contain this fullscreen wrapper,
+  // let that popup handle Escape instead.
+  const topPopupBelongsToThisFullscreen = !!topPopupPortal?.contains(popup);
+
+  return topPopupBelongsToThisFullscreen;
+};
 
 export const POPUP_CLASSES = {
   root: "popup-component-root",
@@ -182,7 +194,9 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
 
     if (
       e.key === "Escape" &&
-      !document.querySelector(`.FullscreenWrapper[aria-modal=true]`)
+      this.ref &&
+      isTopMostPopup(this.ref)
+      // !document.querySelector(`.FullscreenWrapper[aria-modal=true]`)
     ) {
       onClose?.(e);
     }
@@ -360,6 +374,7 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
         <div
           className={`${POPUP_CLASSES.root} positioning_${positioning} card m-auto bg-popup${positioning === "right-panel" ? "-content" : ""} flex-col shadow-xl  o-hidden`}
           data-command={this.props["data-command"]}
+          data-key={this.props["data-key"]}
           ref={(r) => {
             if (r) {
               this.ref = r;

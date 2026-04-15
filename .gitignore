@@ -29,4 +29,5 @@ ui
 configs
 debug
 docs/screenshots/svgif-scenes
+docs/**/*.webm
 connections

@@ -111,6 +111,7 @@ export const SavedAgenticWorkflowsAndContainers = () => {
                 state.setShowChat({
                   selectedChatId: selectedWorkflow.chat_id,
                 });
+                setSelectedWorkflowId(undefined);
               }}
               iconPath={mdiChat}
               variant="faded"

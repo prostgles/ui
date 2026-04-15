@@ -6,6 +6,7 @@ import { SVG_SCREENSHOT_DIR, type SVGifScene } from "./constants";
 import { saveSVGifs } from "./saveSVGifs";
 import { saveSVGScreenshot } from "./saveSVGScreenshot";
 import { getSceneUtils } from "./getSceneUtils";
+import { svgifToWebm } from "./svgifToWebm";
 
 export const saveSVGs = async (page: PageWIds) => {
   /** Delete existing markdown docs */
@@ -33,6 +34,11 @@ export const saveSVGs = async (page: PageWIds) => {
 
       await saveSVGifs(page, [svgifSpec], []);
       console.timeEnd(`Generated SVGif: ${fileName}.svgif.svg`);
+      await svgifToWebm({
+        svgifPath: `${SVG_SCREENSHOT_DIR}/${fileName}.svgif.svg`,
+        outDir: SVG_SCREENSHOT_DIR,
+      });
+      console.log(`Generated webm: ${fileName}.webm`);
     } else {
       await saveSVGScreenshot(page, fileName, undefined);
     }

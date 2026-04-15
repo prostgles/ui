@@ -70,6 +70,8 @@ export const DatabaseAccessEditorCustomTables = ({
                 <>
                   <Btn
                     iconPath={tableRules.update ? mdiTableEdit : mdiTable}
+                    data-command="DatabaseAccessEditorCustomTables.openTable"
+                    data-key={t.name}
                     variant="faded"
                     size="small"
                     onClick={() => setShowTable(t.name)}

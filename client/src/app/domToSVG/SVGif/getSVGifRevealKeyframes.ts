@@ -7,15 +7,21 @@ export const getSVGifRevealKeyframes = ({
 }: {
   fromPerc: number;
   toPerc: number;
-  mode: "top to bottom" | "left to right" | "opacity" | "growIn";
+  mode:
+    | "top to bottom"
+    | "left to right"
+    | "opacity"
+    | { type: "growIn"; startScale: number | undefined };
 }) => {
-  if (mode === "growIn") {
+  const { type: modeStr, startScale = 0.2 } =
+    typeof mode === "string" ? { type: mode } : mode;
+  if (modeStr === "growIn") {
     return [
       !fromPerc ? "" : (
-        `0% { opacity: 0; transform: scale(0.2); transform-origin: center; }`
+        `0% { opacity: 0; transform: scale(${startScale}); transform-origin: center; }`
       ),
-      `${toFixed(fromPerc, 4)}% { opacity: 0; transform: scale(0.2); transform-origin: center; }`,
-      `${toFixed(fromPerc + 0.1, 4)}% { opacity: 0; transform: scale(0.2); transform-origin: center; }`,
+      `${toFixed(fromPerc, 4)}% { opacity: 0; transform: scale(${startScale}); transform-origin: center; }`,
+      `${toFixed(fromPerc + 0.1, 4)}% { opacity: 0; transform: scale(${startScale}); transform-origin: center; }`,
       `${toFixed(toPerc, 4)}% { opacity: 1; transform: scale(1); transform-origin: center; }`,
       toPerc === 100 ? "" : (
         `100% { opacity: 1; transform: scale(1); transform-origin: center; }`

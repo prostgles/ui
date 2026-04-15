@@ -1,12 +1,19 @@
+import { isTopMostPopup } from "@components/Popup/Popup";
 import { useEffect, useState } from "react";
 
-export const useFullscreen = () => {
+export const useFullscreen = (
+  divRef: React.RefObject<HTMLDivElement>,
+  isInsidePopup: boolean,
+) => {
   const [fullscreen, setFullscreen] = useState(false);
 
   /** Close on escape */
   useEffect(() => {
+    if (isInsidePopup) return; // Let the popup handle escape if we're inside a popup
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && fullscreen) {
+      if (e.key === "Escape" && fullscreen && divRef.current) {
+        if (!isTopMostPopup(divRef.current)) return;
+
         setFullscreen(false);
       }
     };
@@ -14,7 +21,7 @@ export const useFullscreen = () => {
     return () => {
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [fullscreen]);
+  }, [divRef, fullscreen]);
 
   const fullscreenOnStyle =
     fullscreen ?

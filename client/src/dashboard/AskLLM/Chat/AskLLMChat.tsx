@@ -110,6 +110,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
     <Popup
       key={showFullscreen.toString()}
       data-command="AskLLM.popup"
+      data-key={activeChat?.agent_info?.type}
       showFullscreenToggle={{
         getContentStyle: (isFullscreen) =>
           isFullscreen && !window.isLowWidthScreen ?

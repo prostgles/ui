@@ -208,9 +208,11 @@ export const AskUserQuestions = ({
         <Btn
           disabledInfo={selectedAnswers.size ? undefined : "Select answers"}
           data-command="AskUserQuestions.confirm"
-          variant="filled"
+          variant={
+            selectedAnswers.size === questions?.length ? "filled" : "faded"
+          }
           className="ml-auto"
-          color="action"
+          color={"action"}
           onClickPromise={async () => {
             await sendToolUseResult({
               chatId,

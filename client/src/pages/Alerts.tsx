@@ -149,15 +149,16 @@ export const Alerts = () => {
         </div>
       }
       positioning="beneath-center"
-      contentStyle={{
-        background: "transparent",
-      }}
+      // contentStyle={{
+      //   background: "var(--bg-color-0)",
+      // }}
+      // contentClassName="bg-color-0 shadow"
       onClickClose={false}
-      rootStyle={{
-        border: "unset",
-        boxShadow: "unset",
-        background: "transparent",
-      }}
+      // rootStyle={{
+      //   border: "unset",
+      //   boxShadow: "unset",
+      //   background: "transparent",
+      // }}
     >
       {!!alerts.length && (
         <SmartCardList

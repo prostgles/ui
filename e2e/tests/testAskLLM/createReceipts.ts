@@ -2,7 +2,8 @@ import type { PageWIds } from "utils/utils";
 import * as path from "path";
 import { mkdirSync, rmSync } from "fs";
 
-export const DEMO_DIR = path.join(__dirname, "../../demo/home");
+export const DEMO_DIR = path.join(__dirname, "../../demo");
+export const DEMO_HOME_DIR = path.join(DEMO_DIR, "/home");
 
 export const createReceipts = async (page1: PageWIds, addPngs = false) => {
   const sample_home_dir_folders = [
@@ -12,9 +13,9 @@ export const createReceipts = async (page1: PageWIds, addPngs = false) => {
     "Music",
     "Videos",
   ];
-  rmSync(DEMO_DIR, { recursive: true, force: true });
+  rmSync(DEMO_HOME_DIR, { recursive: true, force: true });
   for (const folder of sample_home_dir_folders) {
-    const folderPath = path.join(DEMO_DIR, folder);
+    const folderPath = path.join(DEMO_HOME_DIR, folder);
     mkdirSync(folderPath, { recursive: true });
   }
 
@@ -117,7 +118,11 @@ export const createReceipts = async (page1: PageWIds, addPngs = false) => {
     await page.setContent(receiptHTML, { waitUntil: "domcontentloaded" });
 
     const fileName = `hotel_receipt${!index ? "" : index}.png`;
-    const filePath = path.join(DEMO_DIR, sample_home_dir_folders[0], fileName);
+    const filePath = path.join(
+      DEMO_HOME_DIR,
+      sample_home_dir_folders[0],
+      fileName,
+    );
     filePaths.push(filePath);
     if (addPngs) {
       await page.screenshot({
@@ -138,7 +143,7 @@ export const createReceipts = async (page1: PageWIds, addPngs = false) => {
   return { filePath: filePaths[0]! };
 };
 
-const sampleReceiptData = [
+export const sampleReceiptData = [
   {
     hotelName: "Grand Ocean Hotel",
     guestName: "John Doe",

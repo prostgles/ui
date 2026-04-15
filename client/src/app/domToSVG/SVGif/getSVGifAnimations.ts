@@ -142,7 +142,10 @@ export const getSVGifAnimations = (
             keyframes: getSVGifRevealKeyframes({
               fromPerc,
               toPerc,
-              mode: animation.type === "fadeIn" ? "opacity" : "growIn",
+              mode:
+                animation.type === "fadeIn" ?
+                  "opacity"
+                : { type: "growIn", startScale: animation.startScale },
               // mode: "top to bottom",
             }),
           });

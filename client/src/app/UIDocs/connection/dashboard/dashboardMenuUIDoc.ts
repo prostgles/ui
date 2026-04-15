@@ -1,5 +1,6 @@
 import { getDataKey, getDataLabel } from "../../../../Testing";
 import type { UIDocElement } from "../../../UIDocs";
+import { agenticWorkflowsUIDoc } from "../agenticWorkflowsUIDoc";
 
 export const dashboardMenuUIDoc = {
   type: "popup",
@@ -181,19 +182,7 @@ export const dashboardMenuUIDoc = {
         },
       ],
     },
-    {
-      type: "section",
-      title: "Agentic workflows",
-      selectorCommand: "SavedAgenticWorkflowsAndContainers",
-      componentName: "SavedAgenticWorkflowsAndContainers",
-      description: `List of saved agentic workflows of the current user for the current connection.`,
-      docs: `
-        Agentic workflows consist of typescript logic that runs in an isolated environment with granular access controls to your data and MCP tools.
-        They are ideal for automating tedious data intensive tasks that may involve using agentic chats.
-        Agentic workflows can be saved and reused, making it easier to manage and execute recurring tasks efficiently.
-      `,
-      children: [],
-    },
+    agenticWorkflowsUIDoc,
     {
       type: "popup",
       selectorCommand: "SchemaGraph",

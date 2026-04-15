@@ -33,6 +33,7 @@ export const ToolCall = ({
 
   return (
     <Popup
+      data-command="ToolCall"
       title={`${mcp_server_name} ${mcp_tool_name} tool call details`}
       headerRightContent={
         <SegmentedToggle

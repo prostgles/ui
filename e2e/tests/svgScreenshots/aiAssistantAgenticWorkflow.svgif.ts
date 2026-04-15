@@ -1,5 +1,5 @@
 import { getCommandElemSelector, getDataKey, getDataLabel } from "Testing";
-import { createReceipts, DEMO_DIR } from "testAskLLM/createReceipts";
+import { createReceipts, DEMO_HOME_DIR } from "testAskLLM/createReceipts";
 import { receiptImport } from "testAskLLM/scenarios/receiptImport/receiptImport.scenario";
 import { setupAskLLMToolUse } from "testAskLLM/testAskLLM";
 import {
@@ -12,8 +12,8 @@ import {
   setPromptByText,
 } from "utils/utils";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
+import { startScreencast } from "./utils/startScreencast";
 import { typeSendAddScenes } from "./utils/typeSendAddScenes";
-import { join } from "path";
 
 export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
   page,
@@ -22,20 +22,23 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
 ) => {
   await openConnection("prostgles_video_demo");
   await closeWorkspaceWindows(page);
-  const disposable = await page.screencast.start({
-    path: join(DEMO_DIR, "demvid.webm"),
-    quality: 100,
-    size: { width: 900, height: 900 },
-  });
+
   await page.getByTestId("AskLLM").click();
   await page.waitForTimeout(1000);
   await setupAskLLMToolUse(page);
 
+  await createReceipts(page);
   await runDbsSql(
     page,
     `
     UPDATE users 
-    SET options = options || '{"lastCwd": ${JSON.stringify(DEMO_DIR)}, "hideLlmLoadingCounter": true }'::JSONB`,
+    SET options = options || \${demo_options}`,
+    {
+      demo_options: {
+        hideLlmLoadingCounter: true,
+        lastCwd: DEMO_HOME_DIR,
+      },
+    },
   );
   await runDbSql(
     page,
@@ -72,6 +75,7 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
       )
       `,
   );
+  const videoRecorder = await startScreencast(page, "agentic_workflow");
   await newChat(page);
   await deletePreviousMessages(page);
   await setPromptByText(page, "chat");
@@ -79,7 +83,6 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
 
   await deletePreviousMessages(page);
   await setPromptByText(page, "Create workflow");
-  await createReceipts(page);
 
   await typeSendAddScenes(
     page,
@@ -87,42 +90,62 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
     receiptImport.firstMessage,
     undefined,
     undefined,
-    { LlmResponseLoadingDuration: 1000 },
+    { LlmResponseLoadingDuration: 0 },
   );
 
   await addSceneAnimation(
     getDataKey("Insert automatically without preview"),
     undefined,
-    "fast",
+    "faster",
   );
   await addSceneAnimation(
     getDataKey(
       "Skip likely duplicates (vendor + date + total + receipt_number)",
     ),
     undefined,
-    "fast",
+    "faster",
   );
   await addSceneAnimation(
     getDataKey("Skip that file and report it (recommended)"),
     undefined,
-    "fast",
+    "faster",
   );
 
   await addSceneAnimation(
     getCommandElemSelector("AskUserQuestions.confirm"),
     undefined,
-    "fast",
+    "faster",
   );
-  await addScene({ animations: [{ type: "wait", duration: 1500 }] });
+  await addScene({ animations: [{ type: "wait", duration: 2000 }] });
 
   await page
     .locator(getDataKey("sourcePaths"))
     .waitFor({ state: "visible", timeout: 35000 });
-
+  await addScene({
+    animations: [
+      {
+        type: "wait",
+        duration: 1000,
+      },
+    ],
+  });
   await page.getByTestId("FullscreenWrapper.toggleFullscreen").first().click();
-  await addSceneAnimation(getDataKey("Definition"));
-  await addSceneAnimation(getDataKey("Details"));
-  await page.keyboard.press("Escape");
+  await addScene({
+    animations: [
+      {
+        type: "growIn",
+        elementSelector: getCommandElemSelector("AgenticWorkflow"),
+        duration: 150,
+        startScale: 0.8,
+      },
+    ],
+  });
+  await addSceneAnimation(getDataKey("Definition"), undefined, {
+    waitBeforeClick: 1500,
+  });
+  await addSceneAnimation(getDataKey("Details"), undefined, {
+    waitBeforeClick: 1500,
+  });
 
   await addSceneAnimation(getDataKey("sourcePaths"), undefined, "fast");
 
@@ -131,21 +154,11 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
       `${getCommandElemSelector("FileTree")} ${getDataLabel("Documents")}`,
     )
     .click();
-  // await addSceneAnimation(
-  //   `${getCommandElemSelector("FileTree")} ${getDataLabel("Documents")}`,
-  //   undefined,
-  //   "fast",
-  // );
   await page
     .locator(
       `${getCommandElemSelector("FileTree")} ${getDataLabel("Receipts")}`,
     )
     .click();
-  // await addSceneAnimation(
-  //   `${getCommandElemSelector("FileTree")} ${getDataLabel("Receipts")}`,
-  //   undefined,
-  //   "fast",
-  // );
   await addSceneAnimation(
     `${getCommandElemSelector("FileTree")} ${getDataLabel("Receipts")} ${getCommandElemSelector("FileTreeNode.folderRow")} ${getCommandElemSelector("FileTreeNode.checkbox")}`,
     undefined,
@@ -167,9 +180,24 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
   // await page.waitForTimeout(5500);
   await addSceneAnimation(getDataKey("Activity"));
   await addScene({ animations: [{ type: "wait", duration: 1000 }] });
-  await addSceneAnimation({
-    selector: getDataLabel("documents get_document_text"),
-    nth: 0,
+  await addSceneAnimation(
+    {
+      selector: getDataLabel("documents get_document_text"),
+      nth: 0,
+    },
+    undefined,
+    "fast",
+  );
+  await addScene({
+    animations: [
+      {
+        type: "growIn",
+        startScale: 0.8,
+        elementSelector: getCommandElemSelector("ToolCall"),
+        duration: 300,
+      },
+      { type: "wait", duration: 1500 },
+    ],
   });
   // await addSceneAnimation(
   //   {
@@ -183,7 +211,19 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
 
   await addSceneAnimation({
     selector: getDataLabel("receiptExtractor"),
-    nth: 1,
+    nth: 0,
+  });
+  await addScene({
+    animations: [
+      {
+        type: "growIn",
+        elementSelector:
+          getCommandElemSelector("AskLLM.popup") + getDataKey("agent"),
+        startScale: 0.95,
+        duration: 150,
+      },
+      { type: "wait", duration: 2000 },
+    ],
   });
   // await addSceneAnimation(
   //   {
@@ -195,8 +235,16 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
   // );
   await page.keyboard.press("Escape");
 
-  await addSceneAnimation(getDataKey("Logs"));
-  await page.waitForTimeout(5500);
+  await addSceneAnimation(getDataKey("Details"), undefined, "faster");
+  await addSceneAnimation(
+    getCommandElemSelector("DatabaseAccessEditorCustomTables.openTable"),
+    undefined,
+    "faster",
+  );
+
+  await page
+    .getByTestId("AgenticWorkflow.stop")
+    .waitFor({ state: "detached", timeout: 15000 });
   await addScene({ animations: [{ type: "wait", duration: 4500 }] });
-  await disposable.dispose();
+  await videoRecorder.stop();
 };

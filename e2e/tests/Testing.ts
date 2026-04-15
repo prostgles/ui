@@ -568,6 +568,8 @@ export const COMMANDS = {
   "FileTreeNode.folderRow": "",
   "FileTreeNode.fileRow": "",
   "UserInput.Done": "",
+  "DatabaseAccessEditorCustomTables.openTable": "",
+  ToolCall: "",
 } as const satisfies Record<
   string,
   | string
@@ -658,6 +660,7 @@ export declare namespace SVGif {
         elementSelector: string;
         duration: number;
         type: "fadeIn" | "growIn";
+        startScale?: number;
       }
     | {
         type: "wait";

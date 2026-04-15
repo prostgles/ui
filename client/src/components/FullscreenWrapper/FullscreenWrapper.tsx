@@ -34,11 +34,14 @@ export const FullscreenWrapper = ({
     iconPath: string;
   })[];
 }) => {
-  const { fullscreen, setFullscreen, fullscreenStyle } = useFullscreen();
   const [minimized, setMinimized] = useState(false);
   const divRef = React.useRef<HTMLDivElement>(null);
   const isInsidePopup = !!divRef.current?.closest(
     `[aria-modal="true"],[role="dialog"]`,
+  );
+  const { fullscreen, setFullscreen, fullscreenStyle } = useFullscreen(
+    divRef,
+    isInsidePopup,
   );
   return (
     <WrapInPopupIfNeeded
