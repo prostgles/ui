@@ -195,7 +195,7 @@ export const sqlEditorSvgif: OnBeforeScreenshot = async (
       {
         type: "click",
         elementSelector: getCommandElemSelector("AddChartMenu.Timechart"),
-        duration: 500,
+        duration: 750,
       },
     ],
   });
@@ -208,7 +208,7 @@ export const sqlEditorSvgif: OnBeforeScreenshot = async (
       {
         type: "click",
         elementSelector: '[data-key="timestamp"]',
-        duration: 500,
+        duration: 750,
       },
     ],
   });
@@ -244,7 +244,7 @@ export const sqlEditorSvgif: OnBeforeScreenshot = async (
       {
         type: "click",
         elementSelector: getCommandElemSelector("AddChartMenu.Map"),
-        duration: 500,
+        duration: 750,
       },
     ],
   });

@@ -61,6 +61,7 @@ export const getSVGifCursorAnimationHandler = ({
       throw new Error(`Unexpected. BBox missing`);
     }
 
+    const minMoveTime = 200;
     const {
       type,
       lingerMs = 500,
@@ -75,11 +76,11 @@ export const getSVGifCursorAnimationHandler = ({
     const cx = bbox.x + xOffset;
     const cy = bbox.y + yOffset;
 
-    if (duration < waitBeforeClick) {
+    if (duration < waitBeforeClick + minMoveTime) {
       throw new Error(
         fixIndent(`
           Duration ${duration}ms for "${type}" animation on element ${elementSelector} in SVG file ${svgFileName} is too short. 
-          It must be greater than the waitBeforeClick time of ${waitBeforeClick}ms.
+          It must be greater than the waitBeforeClick + minMoveTime time of ${waitBeforeClick + minMoveTime}ms.
         `),
       );
     }

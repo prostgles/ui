@@ -2,6 +2,7 @@ import type { PageWIds } from "utils/utils";
 import type { SVGifScene } from "./constants";
 import { saveSVGScreenshot } from "./saveSVGScreenshot";
 import type { Locator } from "@playwright/test";
+import type { SVGif } from "Testing";
 
 export const getSceneUtils = (
   page: PageWIds,
@@ -53,6 +54,7 @@ export const getSceneUtils = (
       | {
           waitBeforeClick: number;
         } = "auto",
+    extraAnimations: SVGif.Animation[] = [],
   ) => {
     const {
       svgif: svgifSelector,
@@ -114,6 +116,7 @@ export const getSceneUtils = (
             : duration === "fast" ? 200
             : 500,
         },
+        ...extraAnimations,
       ],
     });
     if (action === "click" || action === "rightClick") {

@@ -18,9 +18,6 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   { openConnection },
   { addScene, addSceneAnimation },
 ) => {
-  if (Math.PI) {
-    throw new Error("dwadaw");
-  }
   // await goTo(page, "/server-settings?section=llmProviders");
   // await page.getByTestId("dashboard.window.rowInsertTop").click();
   // await page.getByTestId("Popup.content").waitFor({ state: "visible" });
@@ -83,6 +80,8 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   await page.waitForTimeout(4000);
   await addScene({ svgFileName: "dashboards_loaded" });
 
+  await openConnection("prostgles_video_demo");
+  await page.getByTestId("AskLLM").click();
   await deletePreviousMessages(page);
   await setPromptByText(page, "chat");
   await typeSendAddScenes(

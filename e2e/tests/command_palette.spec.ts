@@ -18,6 +18,10 @@ test.use({
 const IS_PIPELINE = process.env.CI === "true";
 
 test.describe("Test command palette", () => {
+  if (IS_PIPELINE) {
+    // Takes too long. Run locally only
+    return;
+  }
   test.describe.configure({
     retries: 0,
     mode: "parallel",
@@ -31,10 +35,6 @@ test.describe("Test command palette", () => {
     page.on("pageerror", console.error);
 
     if (!flatUIDocs) {
-      if (IS_PIPELINE) {
-        // Takes too long. Run locally only
-        return;
-      }
       await goTo(page, "/");
       await page.waitForTimeout(500);
       flatUIDocs = await page.evaluate(() => {

@@ -34,11 +34,11 @@ export const saveSVGs = async (page: PageWIds) => {
 
       await saveSVGifs(page, [svgifSpec], []);
       console.timeEnd(`Generated SVGif: ${fileName}.svgif.svg`);
-      await svgifToWebm({
-        svgifPath: `${SVG_SCREENSHOT_DIR}/${fileName}.svgif.svg`,
-        outDir: SVG_SCREENSHOT_DIR,
-      });
-      console.log(`Generated webm: ${fileName}.webm`);
+      // await svgifToWebm({
+      //   svgifPath: `${SVG_SCREENSHOT_DIR}/${fileName}.svgif.svg`,
+      //   outDir: SVG_SCREENSHOT_DIR,
+      // });
+      // console.log(`Generated webm: ${fileName}.webm`);
     } else {
       await saveSVGScreenshot(page, fileName, undefined);
     }

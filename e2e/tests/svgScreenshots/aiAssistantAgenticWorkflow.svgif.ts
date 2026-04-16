@@ -12,7 +12,6 @@ import {
   setPromptByText,
 } from "utils/utils";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
-import { startScreencast } from "./utils/startScreencast";
 import { typeSendAddScenes } from "./utils/typeSendAddScenes";
 
 export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
@@ -67,11 +66,11 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
         subtotal numeric(12, 2) NOT NULL,
         tax_amount numeric(12, 2) NOT NULL DEFAULT 0,
         total_amount numeric(12, 2) NOT NULL,
-        payment_method text,
-        notes text,
+      --  payment_method text,
+      --  notes text,
       --  metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
         created_at timestamptz NOT NULL DEFAULT now(),
-        updated_at timestamptz NOT NULL DEFAULT now(),
+      --  updated_at timestamptz NOT NULL DEFAULT now(),
         CONSTRAINT receipts_totals_check CHECK ((total_amount >= subtotal)),
         CONSTRAINT receipts_total_amount_check CHECK ((total_amount >= (0)::numeric)),
         CONSTRAINT receipts_tax_amount_check CHECK ((tax_amount >= (0)::numeric)),
@@ -79,7 +78,7 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
       )
       `,
   );
-  const videoRecorder = await startScreencast(page, "agentic_workflow");
+
   await newChat(page);
   await deletePreviousMessages(page);
   await setPromptByText(page, "chat");
@@ -154,9 +153,6 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
       },
     ],
   });
-  // await addSceneAnimation(getDataKey("Details"), undefined, {
-  //   waitBeforeClick: 1500,
-  // });
 
   await addSceneAnimation(getDataKey("sourcePaths"), undefined, "fast");
 
@@ -192,7 +188,7 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
     "fast",
   );
   await addScene({ animations: [{ type: "wait", duration: 1000 }] });
-  // await page.waitForTimeout(5500);
+
   await addSceneAnimation(getDataKey("Activity"));
   await addScene({ animations: [{ type: "wait", duration: 1000 }] });
   await page
@@ -216,16 +212,17 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
         duration: 300,
       },
       { type: "wait", duration: 1500 },
+      {
+        type: "click",
+        elementSelector:
+          getCommandElemSelector("ToolCall") +
+          " " +
+          getCommandElemSelector("Popup.close"),
+        duration: 750,
+      },
     ],
   });
-  // await addSceneAnimation(
-  //   {
-  //     selector: getCommandElemSelector("Popup.close"),
-  //     nth: 1,
-  //   },
-  //   undefined,
-  //   "fast",
-  // )
+
   await page.keyboard.press("Escape");
 
   await addSceneAnimation({
@@ -242,21 +239,31 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
         duration: 150,
       },
       { type: "wait", duration: 2000 },
+      {
+        type: "click",
+        elementSelector:
+          getCommandElemSelector("AskLLM.popup") +
+          getDataKey("agent") +
+          " " +
+          getCommandElemSelector("Popup.close"),
+        duration: 750,
+      },
     ],
   });
-  // await addSceneAnimation(
-  //   {
-  //     selector: getCommandElemSelector("Popup.close"),
-  //     nth: 1,
-  //   },
-  //   undefined,
-  //   "fast",
-  // );
+
   await page.keyboard.press("Escape");
 
+  await page
+    .locator(getDataLabel("db insertMany receipts "))
+    .waitFor({ state: "visible", timeout: 35000 });
   await addSceneAnimation(
-    getDataKey("receipts") +
-      getCommandElemSelector("AgenticWorkflowActivity.openTable"),
+    {
+      nth: 0,
+      selector:
+        getDataLabel("db insertMany receipts ") +
+        " " +
+        getCommandElemSelector("AgenticWorkflowActivity.openTable"),
+    },
     undefined,
     "faster",
   );
@@ -269,17 +276,4 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
       },
     ],
   });
-
-  // await addSceneAnimation(
-  //   getCommandElemSelector("DatabaseAccessEditorCustomTables.openTable"),
-  //   undefined,
-  //   "faster",
-  // );
-
-  await page
-    .getByTestId("AgenticWorkflow.stop")
-    .waitFor({ state: "detached", timeout: 15000 });
-  await page.waitForTimeout(5000);
-  await addScene({ animations: [{ type: "wait", duration: 4500 }] });
-  await videoRecorder.stop();
 };
