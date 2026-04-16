@@ -24,7 +24,7 @@ import type { ProstglesColumn } from "./W_Table/W_Table";
 import type { TableHandlerClient } from "prostgles-client";
 
 type SmartTableProps = Pick<Prgl, "db" | "sql" | "tables" | "methods"> &
-  Pick<PopupProps, "clickCatchStyle"> & {
+  Pick<PopupProps, "clickCatchStyle" | "positioning"> & {
     filter?: DetailedFilter[];
     tableName: string;
     tableCols?: ProstglesColumn[];
@@ -236,6 +236,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
       titlePrefix,
       title,
       clickCatchStyle,
+      positioning = "right-panel",
     } = this.props;
     const {
       filter,
@@ -252,7 +253,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
       typeof title === "function" ?
         title({ filteredRows, totalRows })
       : (title ?? (
-          <span className="text-1 px-1 py-p5">
+          <span className="text-1 pxd-1 py-p5">
             {titlePrefix ?? tableName}
             <span>{` (${filteredRows.toLocaleString()}/${totalRows.toLocaleString()})`}</span>
           </span>
@@ -275,7 +276,8 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
     const content = (
       <FlexCol
         className={
-          "gap-0 f-1 min-h-0 relative " + (onClosePopup ? "" : className)
+          "SmartTable gap-0 f-1 min-h-0 relative " +
+          (onClosePopup ? "" : className)
         }
       >
         {!onClosePopup && titleNode}
@@ -309,7 +311,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
           filter={filter}
           onChange={(filter) => {
             this.props.onFilterChange?.(filter);
-            this.getData(filter);
+            void this.getData(filter);
           }}
           onHavingChange={() => {
             console.warn("Having change not implemented");
@@ -361,7 +363,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
     return (
       <Popup
         title={titleNode}
-        positioning="right-panel"
+        positioning={positioning}
         onClose={onClosePopup}
         contentStyle={{
           maxWidth: "calc(100vw - 20px)",

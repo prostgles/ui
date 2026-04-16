@@ -106,7 +106,7 @@ export const getSceneUtils = (
             : duration === "fast" ? 700
             : 1000,
           waitBeforeClick:
-            duration === "faster" ? 100
+            duration === "faster" ? 200
             : duration === "fast" ? 200
             : 500,
           lingerMs:

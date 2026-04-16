@@ -88,7 +88,7 @@ export const AgenticWorkflowMessage = ({
     );
   }
   if (!resultContent) {
-    return <div>Validating the workflow...</div>;
+    return <div className="skeleton w-fit">Validating the workflow...</div>;
   }
   return (
     <AgenticWorkflow

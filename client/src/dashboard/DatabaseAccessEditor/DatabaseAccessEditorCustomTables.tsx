@@ -38,6 +38,7 @@ export const DatabaseAccessEditorCustomTables = ({
           sql={sql}
           tableName={showTable}
           tables={tables}
+          positioning="center"
           onClosePopup={() => setShowTable(undefined)}
           clickCatchStyle={{ opacity: 1 }}
         />

@@ -1,6 +1,7 @@
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import type { DBSSchema } from "@common/publishUtils";
 import { sliceText } from "@common/utils";
+import Btn from "@components/Btn";
 import { FlexCol, FlexRow } from "@components/Flex";
 import { Icon } from "@components/Icon/Icon";
 import { InfoRow } from "@components/InfoRow";
@@ -8,7 +9,7 @@ import Loading from "@components/Loader/Loading";
 import { SearchList } from "@components/SearchList/SearchList";
 import { Stopwatch } from "@components/Stopwatch";
 import { SvgIcon } from "@components/SvgIcon";
-import { mdiRobotOutline } from "@mdi/js";
+import { mdiRobotOutline, mdiTable } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { useMcpServerIcons } from "@pages/ServerSettings/MCPServers/MCPServerTools/useMcpServerIcons";
 import { getKeys, includes } from "prostgles-types";
@@ -18,6 +19,7 @@ import { useAskLLMSetupState } from "src/dashboard/AskLLM/Setup/LLMSetupProvider
 import type { ProstglesMCPToolsProps } from "../../../ProstglesToolUseMessage";
 import { ToolCall } from "./ToolCall";
 import { useAgenticWorkflowActivityItems } from "./useAgenticWorkflowActivityItems";
+import SmartTable from "src/dashboard/SmartTable";
 
 export type AgenticWorkflowActivityProps = Pick<
   ProstglesMCPToolsProps,
@@ -31,11 +33,13 @@ export const AgenticWorkflowActivity = ({
   messageId,
   finishedAt,
 }: AgenticWorkflowActivityProps) => {
-  const { dbsMethods, user } = usePrgl();
+  const { dbsMethods, user, db, tables, sql, methods } = usePrgl();
   const setupState = useAskLLMSetupState();
   const [agentChatId, setAgentChatId] = useState<number>();
   const [selectedMcpToolCall, setSelectedMcpToolCall] =
     useState<DBSSchema["mcp_server_tool_calls"]>();
+
+  const [selectedTableName, setSelectedTableName] = useState<string>();
 
   const { items } = useAgenticWorkflowActivityItems({ chatId, messageId });
   const { getIcon } = useMcpServerIcons();
@@ -95,6 +99,17 @@ export const AgenticWorkflowActivity = ({
               : item.finished_at ? new Date(item.finished_at)
               : finishedAt;
 
+            const maybeTableName =
+              (
+                item.type === "orchestrator_tool_call" &&
+                item.mcp_server_name === "db"
+              ) ?
+                item.input?.tableName
+              : undefined;
+
+            const tableName =
+              typeof maybeTableName === "string" ? maybeTableName : undefined;
+
             const isLoading = !endedAt;
             return {
               key: item.type + item.id,
@@ -118,6 +133,23 @@ export const AgenticWorkflowActivity = ({
               ).replaceAll("\n", " "),
               contentRight: (
                 <FlexRow className="gap-p5">
+                  {tableName && (
+                    <Btn
+                      iconPath={mdiTable}
+                      size="small"
+                      variant="faded"
+                      color="action"
+                      title="Open table"
+                      children="Open table"
+                      data-key={tableName}
+                      data-command="AgenticWorkflowActivity.openTable"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        setSelectedTableName(tableName);
+                      }}
+                    />
+                  )}
                   {isLoading && user?.options?.hideLlmLoadingCounter ? null : (
                     <Stopwatch
                       className="text-2"
@@ -161,6 +193,18 @@ export const AgenticWorkflowActivity = ({
           chatId={chatId}
           toolCall={selectedMcpToolCall}
           onClose={() => setSelectedMcpToolCall(undefined)}
+        />
+      )}
+      {selectedTableName && (
+        <SmartTable
+          db={db}
+          tables={tables}
+          methods={methods}
+          sql={sql}
+          tableName={selectedTableName}
+          positioning="center"
+          onClosePopup={() => setSelectedTableName(undefined)}
+          clickCatchStyle={{ opacity: 1 }}
         />
       )}
     </FlexCol>

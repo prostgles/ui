@@ -39,7 +39,7 @@ export const CreateComponentQuickFeedbackPreview = ({
   const logs = toolResultJson?.data?.log?.map(({ text }) => text).join("\n");
 
   if (!resultContent) {
-    return <div>Validating component...</div>;
+    return <div className="skeleton w-fit">Validating component...</div>;
   }
 
   return (

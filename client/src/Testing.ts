@@ -570,6 +570,7 @@ export const COMMANDS = {
   "UserInput.Done": "",
   "DatabaseAccessEditorCustomTables.openTable": "",
   ToolCall: "",
+  "AgenticWorkflowActivity.openTable": "",
 } as const satisfies Record<
   string,
   | string

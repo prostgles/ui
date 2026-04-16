@@ -23,10 +23,6 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
   await openConnection("prostgles_video_demo");
   await closeWorkspaceWindows(page);
 
-  await page.getByTestId("AskLLM").click();
-  await page.waitForTimeout(1000);
-  await setupAskLLMToolUse(page);
-
   await createReceipts(page);
   await runDbsSql(
     page,
@@ -40,6 +36,14 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
       },
     },
   );
+  /** Ensures user opts get updated.
+   * TODO: check if overriding user in useProjectDb with the one form useAppState subscription breaks too many things  */
+  await page.reload();
+
+  await page.getByTestId("AskLLM").click();
+  await page.waitForTimeout(1000);
+  await setupAskLLMToolUse(page);
+
   await runDbSql(
     page,
     `
@@ -65,7 +69,7 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
         total_amount numeric(12, 2) NOT NULL,
         payment_method text,
         notes text,
-        metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+      --  metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
         created_at timestamptz NOT NULL DEFAULT now(),
         updated_at timestamptz NOT NULL DEFAULT now(),
         CONSTRAINT receipts_totals_check CHECK ((total_amount >= subtotal)),
@@ -129,23 +133,30 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
       },
     ],
   });
-  await page.getByTestId("FullscreenWrapper.toggleFullscreen").first().click();
+
+  await addSceneAnimation(
+    {
+      selector: getCommandElemSelector("FullscreenWrapper.toggleFullscreen"),
+      nth: 0,
+    },
+    undefined,
+    {
+      waitBeforeClick: 200,
+    },
+  );
   await addScene({
     animations: [
       {
         type: "growIn",
         elementSelector: getCommandElemSelector("AgenticWorkflow"),
         duration: 150,
-        startScale: 0.8,
+        startScale: 0.95,
       },
     ],
   });
-  await addSceneAnimation(getDataKey("Definition"), undefined, {
-    waitBeforeClick: 1500,
-  });
-  await addSceneAnimation(getDataKey("Details"), undefined, {
-    waitBeforeClick: 1500,
-  });
+  // await addSceneAnimation(getDataKey("Details"), undefined, {
+  //   waitBeforeClick: 1500,
+  // });
 
   await addSceneAnimation(getDataKey("sourcePaths"), undefined, "fast");
 
@@ -171,6 +182,10 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
     "fast",
   );
 
+  await addSceneAnimation(getDataKey("Definition"), undefined, {
+    waitBeforeClick: 1500,
+  });
+
   await addSceneAnimation(
     getCommandElemSelector("AgenticWorkflow.start"),
     undefined,
@@ -180,6 +195,10 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
   // await page.waitForTimeout(5500);
   await addSceneAnimation(getDataKey("Activity"));
   await addScene({ animations: [{ type: "wait", duration: 1000 }] });
+  await page
+    .locator(getDataLabel("documents get_document_text"))
+    .nth(1)
+    .waitFor({ state: "visible" });
   await addSceneAnimation(
     {
       selector: getDataLabel("documents get_document_text"),
@@ -235,12 +254,27 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
   // );
   await page.keyboard.press("Escape");
 
-  await addSceneAnimation(getDataKey("Details"), undefined, "faster");
   await addSceneAnimation(
-    getCommandElemSelector("DatabaseAccessEditorCustomTables.openTable"),
+    getDataKey("receipts") +
+      getCommandElemSelector("AgenticWorkflowActivity.openTable"),
     undefined,
     "faster",
   );
+
+  await addScene({
+    animations: [
+      {
+        type: "wait",
+        duration: 2000,
+      },
+    ],
+  });
+
+  // await addSceneAnimation(
+  //   getCommandElemSelector("DatabaseAccessEditorCustomTables.openTable"),
+  //   undefined,
+  //   "faster",
+  // );
 
   await page
     .getByTestId("AgenticWorkflow.stop")
