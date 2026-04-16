@@ -9,7 +9,6 @@ import { getProstglesMcpHub } from "@src/McpHub/ProstglesMcpHub/ProstglesMcpHub"
 import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
 import { getSerialisableError } from "prostgles-types";
 import { callMCPServerTool } from "../../../McpHub/callMCPServerTool";
-import { AGENT_GOAL_TOOL_NAMES } from "../agentConstants";
 import { askLLM, type AskLLMArgs, type LLMMessage } from "../askLLM";
 import {
   getAllToolNames,
@@ -18,6 +17,7 @@ import {
 import { getMostSimilar } from "./getMostSimilar";
 import { runAgentGoalTool } from "./runAgentGoalTool";
 import { validateLastMessageToolUseRequests } from "./validateLastMessageToolUseRequests";
+import { AGENT_GOAL_TOOL_NAMES } from "@common/mcp/startAgenticWorkflowSchema";
 
 export type ToolUseMessage = Extract<LLMMessage[number], { type: "tool_use" }>;
 type ToolUseMessageWithInfo =

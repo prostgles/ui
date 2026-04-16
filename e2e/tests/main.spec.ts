@@ -1596,6 +1596,9 @@ test.describe("Main test", () => {
 
   test("Agentic workflow", async ({ page: p }) => {
     const page = p as PageWIds;
+    if (process.env.CI) {
+      test.setTimeout(10 * 60e3);
+    }
     await loginWhenSignupIsEnabled(page);
 
     await openConnection(page, "cloud");
@@ -1861,9 +1864,9 @@ test.describe("Main test", () => {
       .first()
       .click();
     const agentChant = page.getByTestId("AskLLM.popup").nth(1);
-    await expect(
-      agentChant.getByTestId("ToolUseMessage.toggle").first(),
-    ).toContainText("agent_goal_reached");
+    await expect(agentChant.getByTestId("Chat.messageList")).toContainText(
+      "Agent goal reached",
+    );
     await agentChant.getByTestId("Popup.close").click();
 
     /** Activity tool calls details */

@@ -17,7 +17,6 @@ import { getToolTypescriptSchemas } from "./Prostgles/agenticWorkflow/runtimeSet
 import { fetchTools } from "./Prostgles/fetchTools";
 import { runCodeInSandboxContainer } from "./Prostgles/runCodeInSandboxContainer";
 import { startAgent } from "./Prostgles/startAgent";
-import { getMCPFullToolName } from "@common/mcpUtils";
 
 const serverName = "prostgles-ui" as const;
 const tools = PROSTGLES_MCP_SERVERS_AND_TOOLS[serverName];
@@ -224,6 +223,38 @@ const handler = {
             throw new Error("No messages to compact");
           }
           return "Done";
+        },
+        get_table_metadata: async ({ tableName }, { connection_id }) => {
+          const con = await dbs.connections.findOne({
+            id: connection_id,
+          });
+          if (!con) {
+            throw new Error(`Connection with id ${connection_id} not found`);
+          }
+          return con.table_options?.[tableName];
+        },
+        set_table_metadata: async (
+          { tableName, metadata },
+          { connection_id },
+        ) => {
+          const con = await dbs.connections.findOne({
+            id: connection_id,
+          });
+          if (!con) {
+            throw new Error(`Connection with id ${connection_id} not found`);
+          }
+          await dbs.connections.update(
+            { id: connection_id },
+            {
+              table_options: {
+                $merge: [
+                  {
+                    [tableName]: metadata,
+                  },
+                ],
+              },
+            },
+          );
         },
       },
       fetchTools,

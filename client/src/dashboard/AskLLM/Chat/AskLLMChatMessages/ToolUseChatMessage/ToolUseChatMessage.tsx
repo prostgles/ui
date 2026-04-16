@@ -1,8 +1,8 @@
-import type { DBSSchema } from "@common/publishUtils";
+import { isObject, type DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
 import { FlexCol } from "@components/Flex";
 import { mdiCodeJson } from "@mdi/js";
-import React, { useCallback, useState } from "react";
+import React, { useState } from "react";
 
 import { ErrorTrap } from "@components/ErrorComponent";
 import PopupMenu from "@components/PopupMenu";
@@ -11,21 +11,20 @@ import { InChatToolApprover } from "./InChatToolApprover";
 import { ToolUseChatMessageBtn } from "./ToolUseChatMessageBtn";
 import { ToolUseChatMessageJSONData } from "./ToolUseChatMessageJSONData";
 import { ToolUseChatMessageResult } from "./ToolUseChatMessageResult";
-import { ToolUseReRun } from "./ToolUseReRun";
+import { ToolUseReRunBtn } from "./ToolUseReRunBtn";
 import {
   useToolUseChatMessage,
   type ToolUseMessageProps,
 } from "./useToolUseChatMessage";
+import { AGENT_GOAL_TOOL_NAMES } from "@common/mcp/startAgenticWorkflowSchema";
 
 export const ToolUseChatMessage = (props: ToolUseMessageProps) => {
-  const [toolDataAnchorEl, setToolDataAnchorEl] = useState<HTMLButtonElement>();
-
   const toolUseInfo = useToolUseChatMessage(props);
-  const onClick: React.MouseEventHandler<HTMLButtonElement> = useCallback(
-    ({ currentTarget }) => {
-      setToolDataAnchorEl(toolDataAnchorEl ? undefined : currentTarget);
-    },
-    [toolDataAnchorEl],
+  const [expanded, setExpanded] = useState(
+    isObject(toolUseInfo) &&
+      Object.values(AGENT_GOAL_TOOL_NAMES).some(
+        (toolName) => toolUseInfo.toolUseMessageContent.name === toolName,
+      ),
   );
 
   if (typeof toolUseInfo === "string") {
@@ -56,7 +55,7 @@ export const ToolUseChatMessage = (props: ToolUseMessageProps) => {
             <ToolUseChatMessageBtn
               {...toolUseInfo}
               displayMode={displayMode}
-              onClick={onClick}
+              onClick={() => setExpanded((prev) => !prev)}
             />
           )}
           {ToolUI && (
@@ -77,7 +76,7 @@ export const ToolUseChatMessage = (props: ToolUseMessageProps) => {
             </PopupMenu>
           )}
           {toolUseInfo.toolUseResult && (
-            <ToolUseReRun
+            <ToolUseReRunBtn
               variant="icon"
               chatId={toolUseInfo.toolUseMessage.chat_id}
               toolRequest={toolUseInfo.toolUseMessageContent}
@@ -88,8 +87,7 @@ export const ToolUseChatMessage = (props: ToolUseMessageProps) => {
         <ToolUseChatMessageResult
           {...toolUseInfo}
           {...props}
-          anchorEl={toolDataAnchorEl}
-          setAnchorEl={setToolDataAnchorEl}
+          anchorEl={expanded}
         />
       </FlexCol>
       {typeof toolUseInfo !== "string" && (

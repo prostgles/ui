@@ -17,6 +17,7 @@ import { AgenticWorkflowDefinition } from "./AgenticWorkflowDefinition";
 import { AgenticWorkflowDetails } from "./AgenticWorkflowDetails";
 import { useAgenticWorkflowState } from "./hooks/useAgenticWorkflowState";
 import { useUserInput } from "./hooks/useUserInput";
+import Loading from "@components/Loader/Loading";
 
 export type CreateAgenticWorkflowToolUseArgs = RequiredKeepUndefined<
   JSONB.GetObjectType<
@@ -125,15 +126,16 @@ export const AgenticWorkflow = ({
         )
       }
       items={{
-        ...(workflow && {
+        ...(workflow_id && {
           Details: {
             label: "Details",
-            content: (
-              <AgenticWorkflowDetails
-                workflow={workflow}
-                userInputState={userInputState}
-              />
-            ),
+            content:
+              !workflow ?
+                <Loading className="m-2" />
+              : <AgenticWorkflowDetails
+                  workflow={workflow}
+                  userInputState={userInputState}
+                />,
           },
         }),
         Definition: {

@@ -40,6 +40,7 @@ export const WorkspaceSettings = ({
           title="Workspace settings"
           iconPath={mdiCog}
           className="workspace-settings"
+          size="small"
           onContextMenu={async () => {
             const workspaceData = await dbs.workspaces.findOne(
               { id: w.id },

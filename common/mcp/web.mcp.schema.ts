@@ -40,7 +40,8 @@ export const webMcpSchema = {
     },
   },
   websearch: {
-    description: "Perform a web search and return results",
+    description:
+      "Performs a web search and return results. Powered by [SearXNG](https://docs.searxng.org/)",
     schema: {
       type: {
         q: {

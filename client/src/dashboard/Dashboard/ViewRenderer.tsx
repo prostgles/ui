@@ -3,11 +3,13 @@ import { FlexCol } from "@components/Flex";
 import { isDefined, isEqual } from "prostgles-types";
 import React from "react";
 import { useSearchParams } from "react-router";
+import { isPlaywrightTest } from "src/i18n/i18nUtils";
 import { DashboardHotkeys } from "../DashboardMenu/DashboardHotkeys";
 import { LinkMenu } from "../LinkMenu";
 import RTComp from "../RTComp";
 import type { SilverGridProps } from "../SilverGrid/SilverGrid";
 import { SilverGridReact } from "../SilverGrid/SilverGrid";
+import { W_Barchart } from "../W_Barchart/W_Barchart";
 import W_Map from "../W_Map/W_Map";
 import {
   getLinkColorV2,
@@ -18,7 +20,7 @@ import { W_SQL } from "../W_SQL/W_SQL";
 import type { ActiveRow } from "../W_Table/W_Table";
 import W_Table from "../W_Table/W_Table";
 import { W_TimeChart } from "../W_TimeChart/W_TimeChart";
-import { default as WNDOW } from "../Window";
+import { getWindowTitle } from "../Window";
 import { getCrossFilters } from "../joinUtils";
 import type { LocalSettings } from "../localSettings";
 import { useLocalSettings } from "../localSettings";
@@ -28,7 +30,6 @@ import type {
   DashboardData,
   DashboardProps,
   DashboardState,
-  _Dashboard,
 } from "./Dashboard";
 import type {
   ChartType,
@@ -37,8 +38,6 @@ import type {
   WindowSyncItem,
 } from "./dashboardUtils";
 import { getViewRendererUtils } from "./getViewRendererUtils";
-import { W_Barchart } from "../W_Barchart/W_Barchart";
-import { isPlaywrightTest } from "src/i18n/i18nUtils";
 
 export type ViewRendererProps = Pick<DashboardProps, "prgl"> &
   Pick<DashboardData, "workspace" | "links" | "windows"> &
@@ -188,7 +187,7 @@ export class ViewRenderer extends RTComp<
         "data-key": w.id,
         "data-table-name": w.table_name,
         "data-view-type": w.type,
-        "data-title": WNDOW.getTitle(w),
+        "data-title": getWindowTitle(w),
         w,
         workspace,
         childWindows,

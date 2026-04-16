@@ -31,7 +31,8 @@ export const W_Method = (allProps: W_MethodProps) => {
 
   return (
     <Window
-      w={w as any}
+      w={w}
+      connection={props.prgl.connection}
       layoutMode={props.workspace.layout_mode ?? "editable"}
       getMenu={(w, closeMenu) => (
         <W_MethodMenu {...allProps} w={w} closeMenu={closeMenu} />

@@ -11,10 +11,7 @@ import type {
 
 export const ToolUseChatMessageResult = (
   props: ToolUseMessageProps & {
-    anchorEl: HTMLElement | undefined;
-    setAnchorEl: React.Dispatch<
-      React.SetStateAction<HTMLButtonElement | undefined>
-    >;
+    anchorEl: boolean;
   } & Pick<
       ToolUseChatMessageState,
       "toolUseResult" | "toolUseMessage" | "toolUseMessageContent"

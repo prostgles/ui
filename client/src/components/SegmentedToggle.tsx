@@ -1,5 +1,5 @@
 import { getEntries } from "@common/utils";
-import Btn from "@components/Btn";
+import Btn, { type BtnProps } from "@components/Btn";
 import { classOverride, FlexRow, type DivProps } from "@components/Flex";
 import React from "react";
 
@@ -12,6 +12,7 @@ type SegmentedToggleProps<O extends string> = {
       children?: React.ReactNode;
       iconPath: string;
       disabledInfo?: string;
+      size?: BtnProps["size"];
     }
   >;
   onChange: (value: O) => void;
@@ -40,7 +41,7 @@ export const SegmentedToggle = <O extends string>({
         return (
           <Btn
             key={key}
-            size="micro"
+            size={"micro"}
             data-key={key}
             {...btnProps}
             variant={value === key ? "faded" : undefined}

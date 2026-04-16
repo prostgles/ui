@@ -2,10 +2,10 @@ import type { GeneratedFunctionSchema } from "@common/DBGeneratedSchema";
 import { getProstglesMCPFullToolName } from "@common/mcpUtils";
 import type { DBSSchema, DBSSchemaForInsert } from "@common/publishUtils";
 import type { DBS } from "@src/index";
-import { AGENT_GOAL_TOOL_NAMES } from "@src/serverFunctions/askLLM/agentConstants";
 import { tout } from "@src/utils/tout";
 import type { getValidatedMcpServerToolsAllowed } from "./agenticWorkflow/definitionValidation/getValidatedMcpServerToolsAllowed";
 import type { getAgentConfigWithDefaults } from "./agenticWorkflow/proxyHandlers/getAgentConfigWithDefaults";
+import { AGENT_GOAL_TOOL_NAMES } from "@common/mcp/startAgenticWorkflowSchema";
 
 export const startAgent = async (
   agentInput: string | undefined,

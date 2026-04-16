@@ -27,7 +27,7 @@ import type {
   ToolResultMessage,
   ToolUseMessage,
 } from "../../ToolUseChatMessage/ToolUseChatMessage";
-import { ToolUseReRun } from "../../ToolUseChatMessage/ToolUseReRun";
+import { ToolUseReRunBtn } from "../../ToolUseChatMessage/ToolUseReRunBtn";
 import type { ProstglesMCPToolsProps } from "../ProstglesToolUseMessage";
 import { useUserInput } from "./AgenticWorkflow/hooks/useUserInput";
 import { UserInput } from "./AgenticWorkflow/UserInput";
@@ -202,7 +202,7 @@ export const DockerContainer = ({
               />
             )}
           {toolUseResult && (
-            <ToolUseReRun
+            <ToolUseReRunBtn
               chatId={chatId}
               toolRequest={updatedToolUse}
               variant="text"

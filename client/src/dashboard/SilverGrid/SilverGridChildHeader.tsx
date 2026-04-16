@@ -130,9 +130,8 @@ export const SilverGridChildHeader = (props: P) => {
                     padding: ".5em 0 .5em .75em ",
                   }}
                   {...attrs}
-                >
-                  {title}
-                </div>
+                  children={title}
+                />
                 {isFixed ?
                   <div style={{ width: "1em" }} />
                 : <CloseButton {...props} tabId={tabId} />}
@@ -164,9 +163,8 @@ export const SilverGridChildHeader = (props: P) => {
               <div
                 className={`${GridHeaderClassname} py-p5 f-1 min-w-0 max-w-fit text-ellipsis noselect `}
                 {...attrs}
-              >
-                {tab.title}
-              </div>
+                // children={tab.title}
+              />
               {isFixed ?
                 <div style={{ width: "1em" }} />
               : <CloseButton {...props} tabId={tab.id} />}

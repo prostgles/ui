@@ -245,6 +245,7 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
   await page
     .getByTestId("AgenticWorkflow.stop")
     .waitFor({ state: "detached", timeout: 15000 });
+  await page.waitForTimeout(5000);
   await addScene({ animations: [{ type: "wait", duration: 4500 }] });
   await videoRecorder.stop();
 };

@@ -19,7 +19,7 @@ export const WorkspaceDeleteBtn = ({
   activeWorkspaceId,
   disabledInfo,
 }: WorkspaceDeleteBtnProps) => {
-  const [error, setError] = useState<any>();
+  const [error, setError] = useState<unknown>();
 
   return (
     <PopupMenu
@@ -38,6 +38,7 @@ export const WorkspaceDeleteBtn = ({
           disabledInfo={disabledInfo}
           data-command="WorkspaceDeleteBtn"
           color="danger"
+          size="small"
         />
       }
       content={
@@ -46,7 +47,7 @@ export const WorkspaceDeleteBtn = ({
             Are you sure you want to delete this workspace and all related data
             (windows, links)?
           </div>
-          {error && <ErrorComponent error={error} />}
+          <ErrorComponent error={error} />
         </div>
       }
       footerButtons={[
@@ -72,7 +73,7 @@ export const WorkspaceDeleteBtn = ({
               } else {
                 void pageReload("Workspace deleted");
               }
-            } catch (newWspErr) {
+            } catch {
               setError(error);
             }
           },

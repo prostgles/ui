@@ -85,7 +85,7 @@ export const speechToTextService = {
   },
   healthCheck: { endpoint: "/health" },
   description:
-    "Speech-to-Text Service using Faster-Whisper. Used in the AI Assistant chat.",
+    "Speech-to-Text Service powered by [Faster-Whisper](https://github.com/SYSTRAN/faster-whisper). Used in the AI Assistant chat.",
   endpoints: {
     "/": {
       method: "GET",

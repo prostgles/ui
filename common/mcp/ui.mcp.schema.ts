@@ -5,6 +5,7 @@ import {
   agentDefinitionsSchema,
   mcpServerToolsAllowed,
 } from "./startAgenticWorkflowSchema";
+import { tableOptionsJsonbSchema } from "./tableOptionsJsonbSchema";
 import { tablePermissionsSchema } from "./tablePermissionsSchema";
 
 const { outputSchema, ...agentSchemaWithoutOutput } =
@@ -408,6 +409,35 @@ export const uiMcpSchema = {
           error: { type: "unknown", optional: true },
         },
       ],
+    },
+  },
+  get_table_metadata: {
+    icon: "Table",
+    mode: undefined,
+    description:
+      "Get metadata about a database table such as column names and types.",
+    schema: {
+      type: {
+        tableName: "string",
+      },
+    },
+    outputSchema: {
+      type: "unknown",
+    },
+  },
+  set_table_metadata: {
+    icon: "Table",
+    mode: undefined,
+    description:
+      "Set metadata about a database table such as column names and types.",
+    schema: {
+      type: {
+        tableName: "string",
+        metadata: tableOptionsJsonbSchema,
+      },
+    },
+    outputSchema: {
+      type: "unknown",
     },
   },
   create_dashboards: {

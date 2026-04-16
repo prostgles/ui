@@ -149,3 +149,8 @@ export const startAgenticWorkflowSchema = {
     },
   },
 } as const; // satisfies JSONB.ObjectType["type"];
+
+export const AGENT_GOAL_TOOL_NAMES = {
+  REACHED: "agent_goal_reached",
+  FAILED: "agent_goal_failed",
+};

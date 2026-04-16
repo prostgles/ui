@@ -86,15 +86,18 @@ export const WorkspaceMenuDropDown = ({
                 key: w.name,
                 label: w.name,
                 labelStyle: {},
-                rowStyle:
-                  workspace.id === w.id ?
-                    {
-                      background: "var(--bg-li-selected)",
-                    }
-                  : {},
+                rowStyle: {
+                  background:
+                    workspace.id === w.id ? "var(--bg-li-selected)" : undefined,
+                },
+                styles: {
+                  rowInner: {
+                    alignItems: "center",
+                  },
+                },
                 contentLeft: (
                   <div
-                    className="flex-col ai-start f-0 mr-1 text-2"
+                    className="flex-col ai-start f-0 text-2"
                     style={
                       workspace.id === w.id ?
                         { color: "var(--active)" }
@@ -114,6 +117,7 @@ export const WorkspaceMenuDropDown = ({
                         iconPath={mdiAccountMultiple}
                         color="action"
                         asNavLink={true}
+                        size="small"
                         href={`/connection-config/${w.connection_id}?section=access_control`}
                       />
                     )}
@@ -131,6 +135,7 @@ export const WorkspaceMenuDropDown = ({
                       iconPath={mdiContentCopy}
                       title="Clone workspace"
                       data-command="WorkspaceMenu.CloneWorkspace"
+                      size="small"
                       onClickPromise={async () => {
                         await cloneWorkspace(dbs, w.id).then((d) => {
                           setWorkspace(d.clonedWsp);

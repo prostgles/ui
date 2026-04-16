@@ -1,9 +1,9 @@
 import { getJSONBSchemaValidationError } from "prostgles-types";
-import { AGENT_GOAL_TOOL_NAMES } from "../agentConstants";
 import { askLLM, type AskLLMArgs } from "../askLLM";
 import type { ToolResultMessage, ToolUseMessage } from "./runApprovedTools";
 import type { DBSSchema } from "@common/publishUtils";
 import type { DBS } from "@src/index";
+import { AGENT_GOAL_TOOL_NAMES } from "@common/mcp/startAgenticWorkflowSchema";
 
 export const runAgentGoalTool = async ({
   chat,

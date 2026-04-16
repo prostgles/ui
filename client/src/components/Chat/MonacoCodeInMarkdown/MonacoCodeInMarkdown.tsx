@@ -1,11 +1,10 @@
 import { FullscreenWrapper } from "@components/FullscreenWrapper/FullscreenWrapper";
 import type { editor } from "monaco-editor";
 import type { SQLHandler } from "prostgles-types";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo } from "react";
 import type { LoadedSuggestions } from "../../../dashboard/Dashboard/dashboardUtils";
 import { SuccessMessage } from "../../Animations";
 import ErrorComponent from "../../ErrorComponent";
-import { classOverride, FlexCol } from "../../Flex";
 import {
   MONACO_READONLY_DEFAULT_OPTIONS,
   MonacoEditor,
@@ -34,14 +33,13 @@ export type MonacoCodeInMarkdownProps = {
 export const MonacoCodeInMarkdown = (props: MonacoCodeInMarkdownProps) => {
   const { language, codeString, title, loadedSuggestions, className, style } =
     props;
-  const [fullscreen, setFullscreen] = useState(false);
 
   const monacoOptions = useMemo(() => {
     return {
       ...MONACO_READONLY_DEFAULT_OPTIONS,
-      lineNumbers: fullscreen ? "on" : "off",
+      lineNumbers: "on",
     } satisfies editor.IStandaloneEditorConstructionOptions;
-  }, [fullscreen]);
+  }, []);
 
   const runSQLState = useOnRunSQL(props);
   const { sqlResult } = runSQLState;
@@ -76,48 +74,53 @@ export const MonacoCodeInMarkdown = (props: MonacoCodeInMarkdownProps) => {
   const lang = LANGUAGE_FALLBACK.get(language) ?? language;
 
   return (
-    <FlexCol
-      className={classOverride(
-        "MarkdownMonacoCode relative rounded gap-0 f-0 o-hidden ",
-        className,
-      )}
+    // <FlexCol
+    //   className={classOverride(
+    //     "MarkdownMonacoCode relative rounded gap-0 f-0 o-hidden ",
+    //     className,
+    //   )}
+    //   style={{
+    //     minWidth: "min(600px, calc(100vw - 4em))",
+    //     ...style,
+    //   }}
+    //   data-command="MarkdownMonacoCode"
+    // >
+    <FullscreenWrapper
+      key={codeString}
+      className={"f-1 f-0 o-hidden"}
       style={{
         minWidth: "min(600px, calc(100vw - 4em))",
         ...style,
       }}
       data-command="MarkdownMonacoCode"
+      title={<MarkdownMonacoCodeHeader {...props} {...runSQLState} />}
     >
-      <FullscreenWrapper
+      {" "}
+      <MonacoEditor
         key={codeString}
         className={"f-1"}
-        title={<MarkdownMonacoCodeHeader {...props} {...runSQLState} />}
-      >
-        {" "}
-        <MonacoEditor
-          key={codeString}
-          className={"f-1"}
-          loadedSuggestions={loadedSuggestions}
-          value={codeString}
-          language={lang}
-          options={monacoOptions}
-          onMount={onListenToContentHeightChange}
-          minHeight={100}
+        loadedSuggestions={loadedSuggestions}
+        value={codeString}
+        language={lang}
+        options={monacoOptions}
+        onMount={onListenToContentHeightChange}
+        minHeight={100}
+      />
+      {sqlResult?.state === "ok-command-result" ?
+        <SuccessMessage message={sqlResult.commandResult} />
+      : sqlResult?.state === "error" ?
+        <ErrorComponent error={sqlResult.error} />
+      : sqlResult?.state === "ok" ?
+        <Table
+          tableStyle={{
+            border: "none",
+            maxHeight: "70vh",
+          }}
+          rows={sqlResult.rows}
+          cols={sqlResult.columns}
         />
-        {sqlResult?.state === "ok-command-result" ?
-          <SuccessMessage message={sqlResult.commandResult} />
-        : sqlResult?.state === "error" ?
-          <ErrorComponent error={sqlResult.error} />
-        : sqlResult?.state === "ok" ?
-          <Table
-            tableStyle={{
-              border: "none",
-              maxHeight: fullscreen ? undefined : "70vh",
-            }}
-            rows={sqlResult.rows}
-            cols={sqlResult.columns}
-          />
-        : null}
-      </FullscreenWrapper>
-    </FlexCol>
+      : null}
+    </FullscreenWrapper>
+    // </FlexCol>
   );
 };

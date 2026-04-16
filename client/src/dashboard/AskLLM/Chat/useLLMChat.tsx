@@ -66,14 +66,14 @@ export const useLLMChat = (props: UseLLMChatProps) => {
         {
           name: "New chat",
           // TODO: add publish rules (forcedData) to DBHandlerClient typings
-          user_id: undefined as any,
+          user_id: undefined as unknown as string,
           connection_id: props.connectionId,
           llm_prompt_id: promptId,
           model: lastModelId,
-          options: {
-            /** Anthropic consumes tokens for tools json schema as opposed to openai codex? */
-            mcpToolSchemaMode: "hide-schemas-and-descriptions",
-          },
+          // options: {
+          //   /** Anthropic consumes tokens for tools json schema as opposed to openai codex? */
+          //   mcpToolSchemaMode: "hide-schemas-and-descriptions",
+          // },
         },
         { returning: "*" },
       );

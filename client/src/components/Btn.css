@@ -99,10 +99,10 @@ button.fade-in,
 }
 
 .dark-theme .btn-color-action {
-  --filled-bg: #1d5895;
+  --filled-bg: #0e72d9;
   --border-color: #5292d7;
   --color: var(--blue-200);
-  --faded-bg: #004fa3cc;
+  --faded-bg: #004fa37d;
   --faded-bg-hover: #6195e4ee;
 }
 
@@ -125,8 +125,8 @@ button.fade-in,
   --faded-bg-hover: var(--green-200);
 }
 .dark-theme .btn-color-green {
-  --color: var(--green-900);
-  --faded-bg: #55b68b;
+  --color: #6afad9;
+  --faded-bg: #04744294;
 }
 .btn-color-danger {
   --color: var(--text-danger);

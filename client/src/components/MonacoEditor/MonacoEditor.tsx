@@ -318,4 +318,5 @@ export const MONACO_READONLY_DEFAULT_OPTIONS = {
   /** prevent long single lines in json strings */
   wordWrap: "on",
   wrappingIndent: "same",
+  lineNumbersMinChars: 4,
 } satisfies editor.IStandaloneEditorConstructionOptions;

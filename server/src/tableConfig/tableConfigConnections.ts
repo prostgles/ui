@@ -1,5 +1,6 @@
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
 import { UNIQUE_DB_COLS } from "./tableConfigDatabaseConfig";
+import { tableOptionsJsonbSchema } from "@common/mcp/tableOptionsJsonbSchema";
 
 const UNIQUE_DB_FIELDLIST = UNIQUE_DB_COLS.join(", ");
 
@@ -99,35 +100,7 @@ export const tableConfigConnections: TableConfig<{ en: 1 }> = {
       },
       table_options: {
         nullable: true,
-        jsonbSchema: {
-          record: {
-            partial: true,
-            values: {
-              type: {
-                icon: { type: "string", optional: true },
-                label: { type: "string", optional: true },
-                rowIconColumn: { type: "string", optional: true },
-                columns: {
-                  optional: true,
-                  record: {
-                    partial: true,
-                    values: {
-                      type: {
-                        icon: { type: "string", optional: true },
-                      },
-                    },
-                  },
-                },
-                card: {
-                  optional: true,
-                  type: {
-                    headerColumn: { type: "string", optional: true },
-                  },
-                },
-              },
-            },
-          },
-        },
+        jsonbSchema: tableOptionsJsonbSchema,
       },
       display_options: {
         nullable: true,

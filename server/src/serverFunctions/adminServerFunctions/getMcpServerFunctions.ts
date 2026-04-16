@@ -7,7 +7,7 @@ import {
   installMCPServer,
 } from "@src/McpHub/AnthropicMcpHub/installMCPServer";
 import { callMCPServerTool } from "@src/McpHub/callMCPServerTool";
-import { getRunTypescriptInNodejsFiles } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Ui";
+import { getRunTypescriptInNodejsFiles } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Ui.mcp";
 import { reloadMcpServerTools } from "@src/McpHub/reloadMcpServerTools";
 import type { getServerFunctionsContext } from "../getServerFunctionsContext";
 import { getDefineAdminFunction } from "./getDefineAdminFunction";

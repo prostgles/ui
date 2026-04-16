@@ -14,7 +14,12 @@ type P = {
   variant: "icon" | "text";
   newInput?: unknown;
 };
-export const ToolUseReRun = ({ chatId, toolRequest, variant, newInput }: P) => {
+export const ToolUseReRunBtn = ({
+  chatId,
+  toolRequest,
+  variant,
+  newInput,
+}: P) => {
   const {
     dbsMethods: { reRunMCPServerTool },
   } = usePrglCore();

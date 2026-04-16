@@ -23,7 +23,7 @@ export const documentsMcpSchema = {
   get_document_text: {
     mode: undefined,
     description:
-      "Get text contents of a document/image. Based on docling. Supported formats: txt, pdf, docx, pptx, jpg, png, and more.",
+      "Converts documents/images into structured data. Supported formats: txt, pdf, docx, pptx, jpg, png, and more. Powered by [docling](https://www.docling.ai/).",
     schema: {
       type: {
         fileAsBase64: "string",

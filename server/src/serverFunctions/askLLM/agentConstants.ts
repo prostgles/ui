@@ -1,14 +1,11 @@
 import { wrapCode } from "@common/llmUtils";
+import { AGENT_GOAL_TOOL_NAMES } from "@common/mcp/startAgenticWorkflowSchema";
 import type { DBSSchema } from "@common/publishUtils";
 import {
   getJSONBSchemaAsJSONSchema,
   getJSONBSchemaTSTypes,
 } from "prostgles-types";
 
-export const AGENT_GOAL_TOOL_NAMES = {
-  REACHED: "agent_goal_reached",
-  FAILED: "agent_goal_failed",
-};
 export const getAgentGoalTools = (
   agent_info: Exclude<
     NonNullable<DBSSchema["llm_chats"]["agent_info"]>,

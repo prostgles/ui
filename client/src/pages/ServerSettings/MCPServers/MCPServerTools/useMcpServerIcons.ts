@@ -7,34 +7,44 @@ import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 export const useMcpServerIcons = () => {
   const { dbs } = usePrglCore();
 
-  const mcpServers = dbs.mcp_servers.useFind(
+  const mcpServersRequest = dbs.mcp_servers.useFind(
     {},
     {
       select: {
         name: 1,
         icon_path: 1,
         config_schema: 1,
-        mcp_server_tools: { name: 1, icon: 1 },
+        mcp_server_tools: { name: 1, icon: 1, description: 1 },
       },
     },
   );
+
+  const mcpServers = mcpServersRequest.data as
+    | (Pick<
+        DBSSchema["mcp_servers"],
+        "name" | "icon_path" | "config_schema"
+      > & {
+        mcp_server_tools: Pick<
+          DBSSchema["mcp_server_tools"],
+          "name" | "icon" | "description"
+        >[];
+      })[]
+    | undefined;
+
   const mcpServerIcons = useMemo(() => {
     const iconMap = new Map<
       string,
-      { serverIcon: string; toolIcons: Map<string, string> }
+      {
+        serverIcon: string;
+        toolInfo: Map<string, { description: string; icon: string | null }>;
+      }
     >();
-    mcpServers.data?.forEach(({ name, icon_path, mcp_server_tools }) => {
+    mcpServers?.forEach(({ name, icon_path, mcp_server_tools }) => {
       if (icon_path) {
-        const toolIcons = mcp_server_tools as Pick<
-          DBSSchema["mcp_server_tools"],
-          "name" | "icon"
-        >[];
         iconMap.set(name, {
           serverIcon: icon_path,
-          toolIcons: new Map(
-            toolIcons
-              .map((t) => (!t.icon ? undefined : ([t.name, t.icon] as const)))
-              .filter(isDefined),
+          toolInfo: new Map(
+            mcp_server_tools.map((t) => [t.name, t] as const).filter(isDefined),
           ),
         });
       }
@@ -47,7 +57,9 @@ export const useMcpServerIcons = () => {
       const serverIcons = mcpServerIcons.get(serverName);
       if (!serverIcons) return undefined;
       if (toolName) {
-        return serverIcons.toolIcons.get(toolName) ?? serverIcons.serverIcon;
+        return (
+          serverIcons.toolInfo.get(toolName)?.icon ?? serverIcons.serverIcon
+        );
       }
       return serverIcons.serverIcon;
     },
@@ -64,8 +76,8 @@ export const useMcpServerIcons = () => {
   );
 
   return {
-    mcpServers: mcpServers.data,
-    // mcpServerIcons,
+    mcpServers,
+    mcpServerIcons,
     getIcon,
     getIconFromFullName,
   };

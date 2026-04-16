@@ -6,6 +6,7 @@ import { getElectronConfig } from "@src/electronConfig";
 import type { DBS } from "../..";
 import { createAgenticWorkflowPrompt } from "./defaultPrompts/createAgenticWorkflow.prompt";
 import { setupLLMProviders } from "./setupLLMProviders";
+import { createDashboardsPrompt } from "./defaultPrompts/createDashboards.prompt";
 
 type UiToolName =
   keyof (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"];
@@ -28,6 +29,7 @@ export const setupLLM = async (dbs: DBS) => {
       `Today is ${LLM_PROMPT_VARIABLES.TODAY}.`,
       `DO NOT USE HARDCODED DATA UNLESS STRICTLY NECESSARY OR THE USER ASKS FOR IT.`,
       `IMPORTANT: NEVER ASSUME THAT THE DATABASE IS EMPTY. ALWAYS USE ${JSON.stringify(getProstglesMCPFullToolName("db", "get_existing_tables_schema"))} TO CHECK THE CURRENT SCHEMA AND ADJUST YOUR ANSWERS ACCORDINGLY.`,
+      `IMPORTANT: ${JSON.stringify(getProstglesMCPFullToolName("prostgles-ui", "get_tool_schemas"))} tool requires you to specify the exact tool names you need information on. Use this tool AFTER calling ${JSON.stringify(getProstglesMCPFullToolName("prostgles-ui", "get_tool_list"))} to ensure you can provide the necessary input.`,
       `Use ${JSON.stringify(getProstglesMCPFullToolName("prostgles-ui", "ask_user_questions"))} to clarify the user intent and/or your strategy with ergonomic, easy to answer "choice" type questions if needed.`,
       `Use ${JSON.stringify(getProstglesMCPFullToolName("prostgles-ui", "compact_context"))} tool extensively to ensure only the most relevant information is kept between your steps. This improves the quality and cost of your work. Prefer to keep the key information as is, without sumarising to ensure minimal information is lost.`,
       `Use ${JSON.stringify(getProstglesMCPFullToolName("prostgles-ui", "create_agent"))} when the task is iterative, requires multiple tool-assisted steps, or is better delegated to a focused sub-agent that does not need database access. Give it the minimum necessary tool access and ask it to return a concise final result.`,
@@ -83,8 +85,7 @@ export const setupLLM = async (dbs: DBS) => {
           icon: "ViewCarousel",
           prompt: [
             firstLine,
-            "Assist user with any queries they might have about creating dashboards.",
-            "",
+            createDashboardsPrompt,
             LLM_PROMPT_VARIABLES.SCHEMA,
             "",
           ].join("\n"),

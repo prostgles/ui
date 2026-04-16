@@ -571,6 +571,7 @@ export default class W_Table extends RTComp<
       return (
         <Window
           w={w}
+          connection={prgl.connection}
           layoutMode={workspace.layout_mode ?? "editable"}
           quickMenuProps={{
             tables,

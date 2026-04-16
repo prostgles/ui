@@ -15,7 +15,8 @@ export const webSearchSearxngService = {
   port: 8080,
   hostPort: 8888,
   healthCheck: { method: "GET", endpoint: "/search" },
-  description: "Web search using searxng. Used in the AI Assistant chat.",
+  description:
+    "Web search powered by [SearXNG](https://docs.searxng.org/). Used in the AI Assistant chat.",
   endpoints: {
     "/search": {
       method: "GET",

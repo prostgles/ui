@@ -31,7 +31,8 @@ const outputSchema = {
 export const documentsService = {
   icon: "FileDocumentOutline",
   label: "Docling",
-  description: "Extract information from documents.",
+  description:
+    "Convert documents and images to structured data using [Docling](https://www.docling.ai/)",
   port: 5001,
   volumes: {
     "docling-cache": "/app/.cache",

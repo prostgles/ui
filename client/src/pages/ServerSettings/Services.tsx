@@ -1,6 +1,7 @@
 import type { DBSSchema } from "@common/publishUtils";
 import { getEntries } from "@common/utils";
 import { useOnErrorAlert } from "@components/AlertProvider";
+import { Marked } from "@components/Chat/Marked";
 import { FlexCol, FlexRow } from "@components/Flex";
 import { Label } from "@components/Label";
 import { MonacoLogsWithFullscreen } from "@components/MonacoLogs/MonacoLogsWithFullscreen";
@@ -188,11 +189,21 @@ const useServicesFieldConfigs = ({
       },
       {
         name: "description",
-        hide: !!showSpecificService,
+        hide: Boolean(showSpecificService),
+        renderMode: "value",
+        render: (description) => (
+          <Marked
+            codeHeader={undefined}
+            content={description}
+            loadedSuggestions={undefined}
+            prgl={undefined}
+            sqlHandler={undefined}
+          />
+        ),
       },
       {
         name: "default_port",
-        hide: !!showSpecificService,
+        hide: Boolean(showSpecificService),
       },
       {
         name: "logs",

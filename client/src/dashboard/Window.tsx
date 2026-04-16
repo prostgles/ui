@@ -3,18 +3,21 @@ import {
   mdiClose,
   mdiCog,
   mdiCogOutline,
-  mdiDotsVertical,
+  mdiFunction,
+  mdiMap,
   mdiOpenInNew,
+  mdiScript,
 } from "@mdi/js";
 
-import type { SingleSyncHandles } from "prostgles-client/dist/SyncedTable/SyncedTable";
-import type { ReactNode } from "react";
-import React from "react";
-import ReactDOM from "react-dom";
 import Btn from "@components/Btn";
 import { ErrorTrap } from "@components/ErrorComponent";
 import { FlexCol, FlexRow } from "@components/Flex";
 import Popup from "@components/Popup/Popup";
+import { SvgIcon } from "@components/SvgIcon";
+import type { SingleSyncHandles } from "prostgles-client/dist/SyncedTable/SyncedTable";
+import type { ReactNode } from "react";
+import React from "react";
+import ReactDOM from "react-dom";
 import { t } from "../i18n/i18nUtils";
 import type { WindowData, WindowSyncItem } from "./Dashboard/dashboardUtils";
 import type { DeepPartial } from "./RTComp";
@@ -23,11 +26,12 @@ import type { ReactSilverGridNode } from "./SilverGrid/SilverGrid";
 import { getSilverGridTitleNode } from "./SilverGrid/SilverGridChildHeader";
 import type { ProstglesQuickMenuProps } from "./W_QuickMenu";
 import { W_QuickMenu } from "./W_QuickMenu";
+import type { DBSSchema } from "@common/publishUtils";
 
 type P<W extends WindowSyncItem> = {
   w?: W;
   onWChange?: (w: W, delta: DeepPartial<W>) => any;
-
+  connection: DBSSchema["connections"];
   children?: ReactNode;
   getMenu?: (w: W, onClose: () => any) => ReactNode;
   layoutMode: "fixed" | "editable";
@@ -57,30 +61,24 @@ export default class Window<W extends WindowSyncItem> extends RTComp<
 
   d: D = {};
 
-  static getTitle(_w: WindowSyncItem) {
-    const w = _w.$get() as WindowSyncItem | undefined;
-    const title =
-      !w ? undefined : (
-        w.name ||
-        w.title?.replace("${rowCount}", "") ||
-        w.table_name ||
-        w.method_name ||
-        w.id
-      );
-    return title || "Empty";
-  }
-
   onDelta = (dp) => {
     const { w } = this.d;
     const { onWChange } = this.props;
-    if (this.ref && w) {
-      const titleDiv = getSilverGridTitleNode(w.id);
-      const title = Window.getTitle(w);
-      if (titleDiv && titleDiv.innerText !== title) {
-        titleDiv.innerText = title;
-        titleDiv.title = title;
-      }
-    }
+    // if (this.ref && w) {
+    //   const titleDiv = getSilverGridTitleNode(w.id);
+    //   const title = getWindowTitle(w);
+    //   if (titleDiv) {
+    //     // titleDiv.innerText = title;
+    //     // titleDiv.title = title;
+    //     // ReactDOM.createPortal(
+    //     //   <FlexRow title={title}>
+    //     //     <SvgIcon icon="Table" />
+    //     //     <div>{title}</div>
+    //     //   </FlexRow>,
+    //     //   titleDiv,
+    //     // );
+    //   }
+    // }
 
     if (dp?.onWChange && this.d.w) {
       onWChange?.(this.d.w as any, this.d.w as any);
@@ -117,11 +115,36 @@ export default class Window<W extends WindowSyncItem> extends RTComp<
 
   ref?: HTMLDivElement;
   render(): ReactSilverGridNode | null {
-    const { children, getMenu, layoutMode = "editable" } = this.props;
+    const {
+      children,
+      getMenu,
+      layoutMode = "editable",
+      connection,
+    } = this.props;
     const { showMenu } = this.state;
     const { w = this.props.w } = this.state;
 
     if (!w) return null;
+
+    let titlePortal;
+    const titleDiv = getSilverGridTitleNode(w.id);
+    if (titleDiv) {
+      const title = getWindowTitle(w);
+      const tableName = w.table_name;
+      const icon =
+        tableName ? (connection.table_options?.[tableName]?.icon ?? "Table")
+        : w.type === "sql" ? "ScriptOutline"
+        : w.type === "method" ? "Function"
+        : w.type === "map" ? "Map"
+        : undefined;
+      titlePortal = ReactDOM.createPortal(
+        <FlexRow title={title} className="gap-p5">
+          {icon && <SvgIcon className="text-1" icon={icon} />}
+          <div>{title}</div>
+        </FlexRow>,
+        titleDiv,
+      );
+    }
 
     let menuPortal;
     const menuIconContainer = this.ref?.parentElement?.querySelector(
@@ -138,8 +161,8 @@ export default class Window<W extends WindowSyncItem> extends RTComp<
               iconPath={mdiCogOutline}
               title={t.Window["Open menu"]}
               data-command="dashboard.window.menu"
-              onContextMenu={(e) => {
-                navigator.clipboard.writeText(w.id);
+              onContextMenu={() => {
+                void navigator.clipboard.writeText(w.id);
               }}
               onClick={(e) => {
                 this.setState({
@@ -159,6 +182,7 @@ export default class Window<W extends WindowSyncItem> extends RTComp<
 
     const windowContent = (
       <>
+        {titlePortal}
         {menuPortal}
         <div
           key={w.id + "-content"}
@@ -245,7 +269,7 @@ export default class Window<W extends WindowSyncItem> extends RTComp<
               variant="outline"
               data-command="dashboard.window.closeChart"
               iconPath={mdiClose}
-              onClick={() => w.$update({ closed: true })}
+              onClick={() => void w.$update({ closed: true })}
               children={
                 window.isLowWidthScreen ? null : t.Window["Close chart"]
               }
@@ -259,3 +283,16 @@ export default class Window<W extends WindowSyncItem> extends RTComp<
     return windowContent;
   }
 }
+
+export const getWindowTitle = (_w: WindowSyncItem) => {
+  const w = _w.$get() as WindowSyncItem | undefined;
+  const title =
+    !w ? undefined : (
+      w.name ||
+      w.title?.replace("${rowCount}", "") ||
+      w.table_name ||
+      w.method_name ||
+      w.id
+    );
+  return title || "Empty";
+};
