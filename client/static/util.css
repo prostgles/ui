@@ -751,6 +751,11 @@
 .as-center {
   align-self: center;
 }
+
+.as-stretch {
+  align-self: stretch;
+}
+
 .js-center {
   justify-self: center;
 }

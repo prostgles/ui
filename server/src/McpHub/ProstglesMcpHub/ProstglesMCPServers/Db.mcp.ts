@@ -18,6 +18,7 @@ import type { ProxyDbCallData } from "./Prostgles/agenticWorkflow/runtimeSdk/def
 import { getClientDBHandlersForChat } from "./getClientDBHandlersForChat";
 import type { ProstglesDbTools } from "@common/mcpUtils";
 import { getExistingTablesSchema } from "./getExistingTablesSchema";
+import { connectionManager } from "@src/index";
 
 const serverName = "db" as const;
 const definition = {
@@ -50,7 +51,18 @@ const handler = {
           { tableNames, tableNameRegex },
           ctx,
         ) => {
-          return getExistingTablesSchema({ tableNames, tableNameRegex }, ctx);
+          const con = connectionManager.getActiveConnectionSilentFail(
+            ctx.connection_id,
+          );
+          if (!con?.prgl.getSchema().length) {
+            return "Schema is empty";
+          }
+          const schema = await getExistingTablesSchema(
+            { tableNames, tableNameRegex },
+            ctx,
+          );
+
+          return schema || "No tables found matching the criteria";
         },
         count: async ({ tableName, filter }, context) => {
           const tableHandler = await getTableHandlerWithScope(

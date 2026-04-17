@@ -205,7 +205,7 @@ const handler = {
             return { server_name, tool_name: name };
           });
         },
-        get_tool_schemas: async ({ mcpServerTools, infoLevel }) => {
+        get_specific_tool_schemas: async ({ mcpServerTools, infoLevel }) => {
           return getToolTypescriptSchemas(
             dbs,
             mcpServerTools, // ?? "*",

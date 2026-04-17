@@ -42,9 +42,10 @@ export const MarkdownMonacoCodeHeader = (
                 iconPath={mdiPlay}
                 variant="faded"
                 size="small"
+                color="warn"
                 clickConfirmation={{
                   buttonText: "Execute",
-                  color: "action",
+                  color: "warn",
                   message:
                     "This query will COMMIT (permanently save) changes. Double-check before running",
                 }}

@@ -19,9 +19,11 @@ export const FullscreenWrapper = ({
   endActions,
   maxContentHeight,
   footer,
+  borderWrapperClassName,
   ...testSelectors
 }: TestSelectors & {
   className?: string;
+  borderWrapperClassName?: string;
   style?: React.CSSProperties;
   maxContentHeight?: number | string;
   title: React.ReactNode | ((minimized: boolean) => React.ReactNode);
@@ -56,6 +58,7 @@ export const FullscreenWrapper = ({
         key={fullscreen.toString()}
         className={classOverride(
           "FullscreenWrapper  " + (fullscreen ? "f-1" : "f-0"),
+          className,
         )}
         aria-modal={fullscreen}
         style={{
@@ -74,7 +77,7 @@ export const FullscreenWrapper = ({
         <FlexCol
           className={classOverride(
             "f-1 relative b b-color rounded gap-0 o-hidden",
-            className,
+            borderWrapperClassName,
           )}
         >
           <FlexRow className="bg-color-2 p-p25 gap-0">

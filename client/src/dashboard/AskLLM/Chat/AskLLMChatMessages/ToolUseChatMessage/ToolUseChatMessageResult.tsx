@@ -37,7 +37,7 @@ export const ToolUseChatMessageResult = (
 
   return (
     <>
-      <FlexCol className="w-full">
+      <FlexCol className="wd-full min-w-0">
         {(displayMode === "full" || anchorEl) && ProstglesToolComponent && (
           <ProstglesToolComponent
             workspaceId={workspaceId}

@@ -179,7 +179,7 @@ export const AskLLMChatActionBarModelSelector = (
                   key: "hide-schemas-and-descriptions",
                   label: "Hide schemas and descriptions",
                   subLabel:
-                    "Removes tool input and output schemas and descriptions from the tool description. Full tool info available by using get_tool_schemas",
+                    "Removes tool input and output schemas and descriptions from the tool description. Full tool info available by using get_specific_tool_schemas",
                 },
               ] as const
             }

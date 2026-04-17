@@ -12,6 +12,7 @@ import {
 import { Table } from "../../Table/Table";
 import { MarkdownMonacoCodeHeader } from "./MarkdownMonacoCodeHeader";
 import { useOnRunSQL } from "./useOnRunSQL";
+import { classOverride } from "@components/Flex";
 
 const LANGUAGE_FALLBACK = new Map<string, string>([
   ["tsx", "typescript"],
@@ -87,7 +88,7 @@ export const MonacoCodeInMarkdown = (props: MonacoCodeInMarkdownProps) => {
     // >
     <FullscreenWrapper
       key={codeString}
-      className={"f-1 f-0 o-hidden"}
+      className={classOverride("f-1 f-0 o-hidden", className)}
       style={{
         minWidth: "min(600px, calc(100vw - 4em))",
         ...style,

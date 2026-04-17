@@ -1191,12 +1191,12 @@ test.describe("Main test", () => {
       "free ai assistant interrupt tool call",
     );
 
-    await sendAskLLMMessage(page, " get_tool_schemas ");
+    await sendAskLLMMessage(page, " get_specific_tool_schemas ");
     // Auto-approved by default
     await page
       .getByTestId("ToolUseMessage.toggle")
       .getByText(
-        'prostgles-ui--get_tool_schemas\nmcpServerTools: {"web":{"fetch":1}}',
+        'prostgles-ui--get_specific_tool_schemas\nmcpServerTools: {"web":{"fetch":1}}',
       )
       .click();
     await expect(page.getByTestId("Chat.messageList")).toContainText(

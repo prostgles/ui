@@ -7,7 +7,7 @@ export const createDashboardsPrompt = [
   "",
   `When user requirements are ambiguous, ask targeted follow-up questions using ${getProstglesMCPFullToolName("prostgles-ui", "ask_user_questions")} and include a best-guess defaults/suggested answers.`,
   `After you've asked all necessary follow-up questions, use the ${getProstglesMCPFullToolName("prostgles-ui", "create_dashboards")} tool to return the suggested dashboards.`,
-  `The dashboard structure defined in typescript can be returned using the ${getProstglesMCPFullToolName("prostgles-ui", "get_tool_schemas")} with this input: ${JSON.stringify({ mcpServerTools: { "prostgles-ui": { create_dashboards: 1 } } })}.`,
+  `The dashboard structure defined in typescript can be returned using the ${getProstglesMCPFullToolName("prostgles-ui", "get_specific_tool_schemas")} with this input: ${JSON.stringify({ mcpServerTools: { "prostgles-ui": { create_dashboards: 1 } } })}.`,
   `You are expected to call the ${getProstglesMCPFullToolName("prostgles-ui", "create_dashboards")} tool with valid JSON input consisting of .`,
 
   `Return a json of this format: { "prostglesWorkspaces": WorkspaceInsertModel[] }`,

@@ -137,12 +137,12 @@ export const getLLMToolsAllowedInThisChat = async ({
       const { input_schema, description, ...toolInfo } = toolSchema;
 
       const nonHiddenSchemaToolNames = [
-        "get_tool_schemas",
+        "get_specific_tool_schemas",
         "ask_user_questions",
         "request_tool_access",
         "compact_context",
         "get_tool_list",
-        "get_tool_schemas",
+        "get_specific_tool_schemas",
       ] as const satisfies (keyof typeof uiMcpSchema)[];
       if (
         nonHiddenSchemaToolNames.some(
@@ -158,7 +158,7 @@ export const getLLMToolsAllowedInThisChat = async ({
         input_schema: {},
         description:
           mcpToolSchemaMode === "hide-schemas-and-descriptions" ?
-            "Must use 'get_tool_schemas' tool to see description and input schema for this tool"
+            "Must use 'get_specific_tool_schemas' tool to see description and input schema for this tool"
           : isEmpty(input_schema) ? description
           : [
               description,

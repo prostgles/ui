@@ -33,7 +33,7 @@ export const UserInput = ({
   return (
     <>
       <FullscreenWrapper
-        className="bt b-color w-full ta-start rounded-unset"
+        borderWrapperClassName="bt b-color w-full ta-start rounded-unset"
         maxContentHeight={300}
         title={
           <Btn

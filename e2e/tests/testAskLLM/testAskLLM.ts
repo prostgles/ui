@@ -243,13 +243,16 @@ const toolResponses: Record<string, ToolUse> = {
     ],
   },
   task: taskToolUse,
-  get_tool_schemas: {
+  get_specific_tool_schemas: {
     tool: [
       {
         id: "get-tool-schemas-use",
         type: "function",
         function: {
-          name: getProstglesMCPFullToolName("prostgles-ui", "get_tool_schemas"),
+          name: getProstglesMCPFullToolName(
+            "prostgles-ui",
+            "get_specific_tool_schemas",
+          ),
           arguments: stringify({ mcpServerTools: { web: { fetch: 1 } } }),
         },
       },

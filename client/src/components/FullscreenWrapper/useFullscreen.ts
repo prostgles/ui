@@ -23,7 +23,7 @@ export const useFullscreen = (
     };
   }, [divRef, fullscreen]);
 
-  const fullscreenOnStyle =
+  const fullscreenStyle =
     fullscreen ?
       ({
         position: "fixed",
@@ -34,13 +34,9 @@ export const useFullscreen = (
         width: "100vw",
         height: "100vh",
         zIndex: 1000,
+        background: `var(--bg-color-0)`,
       } satisfies React.CSSProperties)
     : undefined;
-
-  const fullscreenStyle = {
-    ...fullscreenOnStyle,
-    background: `var(--bg-color-0)`,
-  };
 
   return {
     fullscreen,

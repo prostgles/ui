@@ -230,7 +230,7 @@ export const uiMcpSchema = {
     icon: "Tools",
     mode: undefined,
     description: fixIndent(`
-      Get the list of installed MCP server and tool names. To get detailed information about the tools use ${getMCPFullToolName("prostgles-ui", "get_tool_schemas")}.
+      Get the list of installed MCP server and tool names. To get detailed information about the tools use ${getMCPFullToolName("prostgles-ui", "get_specific_tool_schemas")}.
    `),
     schema: {
       type: {},
@@ -242,7 +242,7 @@ export const uiMcpSchema = {
       },
     },
   },
-  get_tool_schemas: {
+  get_specific_tool_schemas: {
     icon: "Tools",
     mode: undefined,
     description: fixIndent(`

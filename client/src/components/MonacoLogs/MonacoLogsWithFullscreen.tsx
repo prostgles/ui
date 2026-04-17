@@ -38,7 +38,7 @@ export const MonacoLogsWithFullscreen = ({
 
   const monacoStyle = useMemo(
     () => ({
-      minWidth: "400px",
+      minWidth: "min(400px, 100%)",
       width: "100%",
       maxHeight: fullscreen ? undefined : `${maxHeight}px`,
       height: fullscreen ? "100%" : undefined,

@@ -29,7 +29,7 @@ export type PropertyType =
     };
 
 /**
- * Use get_tool_schemas tool to get the full definitions of mcp functions that go into McpServerToolDefinitions
+ * Use get_specific_tool_schemas tool to get the full definitions of mcp functions that go into McpServerToolDefinitions
  */
 type McpServerToolDefinitions = Record<
   string,

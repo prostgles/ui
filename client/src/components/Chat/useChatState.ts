@@ -22,6 +22,7 @@ export const useChatState = (
 
   const [scrollRef, setScrollRef] = useState<HTMLDivElement | null>(null);
 
+  const lastMessageId = messages.at(-1)?.id;
   useEffect(() => {
     if (scrollRef) {
       setTimeout(() => {
@@ -29,7 +30,7 @@ export const useChatState = (
         /** Wait for base64 images to load and resize */
       }, 10);
     }
-  }, [messages, scrollRef]);
+  }, [lastMessageId, scrollRef]);
 
   const getCurrentMessage = useCallback(
     () => textAreaRef.current?.value || currentlyTypedMessage || "",
