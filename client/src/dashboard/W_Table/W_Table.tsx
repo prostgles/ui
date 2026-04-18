@@ -43,7 +43,7 @@ import { CodeEditor } from "../CodeEditor/CodeEditor";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import { SmartFilterBar } from "../SmartFilterBar/SmartFilterBar";
 import type { ProstglesQuickMenuProps } from "../W_QuickMenu";
-import Window from "../Window";
+import Window from "../Window/Window";
 import { CardView } from "./CardView/CardView";
 import { NodeCountChecker } from "./NodeCountChecker";
 import { QuickFilterGroupsControl } from "./QuickFilterGroupsControl";

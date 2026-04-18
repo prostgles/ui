@@ -1,7 +1,7 @@
 import { FlexCol } from "@components/Flex";
 import { Pan } from "@components/Pan";
 import React from "react";
-import type { WindowSyncItem } from "./Dashboard/dashboardUtils";
+import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
 import { useDebouncedCallback } from "src/hooks/useDebouncedCallback";
 
 export type ChildWindowLayoutProps = {
@@ -16,13 +16,10 @@ export const ChildWindowLayout = ({
   const rootRef = React.useRef<HTMLDivElement>(null);
   const childRef = React.useRef<HTMLDivElement>(null);
 
-  const childWindowPosition =
-    childWindow?.w.parent_window_options?.position ?? "bottom";
+  const { position = "bottom" } = childWindow?.w.parent_window_options ?? {};
 
   const resizeClass =
-    childWindowPosition === "top" || childWindowPosition === "bottom" ?
-      "resizing-ns"
-    : "resizing-ew";
+    position === "top" || position === "bottom" ? "resizing-ns" : "resizing-ew";
   const childWPercentage =
     childWindow?.w.parent_window_options?.sizePercentage ?? 50;
   const childSize =
@@ -36,7 +33,7 @@ export const ChildWindowLayout = ({
       childWindow.w.$update(
         {
           parent_window_options: {
-            sizePercentage: newPerc,
+            sizePercentage: Math.round(newPerc),
           },
         },
         { deepMerge: true },
@@ -46,17 +43,18 @@ export const ChildWindowLayout = ({
     1000,
   );
 
-  if (!childWindow) return <>{children}</>;
+  if (!childWindow || position === "full") return <>{children}</>;
   return (
     <div
       ref={rootRef}
+      className="bg-color-1"
       style={{
         display: "flex",
         flex: 1,
         flexDirection:
-          childWindowPosition === "top" ? "column"
-          : childWindowPosition === "bottom" ? "column-reverse"
-          : childWindowPosition === "left" ? "row"
+          position === "top" ? "column"
+          : position === "bottom" ? "column-reverse"
+          : position === "left" ? "row"
           : "row-reverse",
         height: "100%",
         width: "100%",
@@ -71,7 +69,7 @@ export const ChildWindowLayout = ({
             right: "bl",
             bottom: "bt",
             left: "br",
-          }[childWindowPosition]
+          }[position]
         }
         style={childSize}
       >
@@ -105,18 +103,18 @@ export const ChildWindowLayout = ({
           if (resizeClass === "resizing-ew") {
             const left = rootRef.current.getBoundingClientRect().left;
             const newWidth = e.x - left;
-            const perc =
-              100 -
+            const p =
               100 * (newWidth / rootRef.current.getBoundingClientRect().width);
+            const perc = position === "left" ? p : 100 - p;
             childRef.current.style.width = `${perc}%`;
             updateSize(perc);
           } else {
             const top = rootRef.current.getBoundingClientRect().top;
             const newHeight = e.y - top;
-            const perc =
-              100 -
+            const p =
               100 *
-                (newHeight / rootRef.current.getBoundingClientRect().height);
+              (newHeight / rootRef.current.getBoundingClientRect().height);
+            const perc = position === "top" ? p : 100 - p;
             childRef.current.style.height = `${perc}%`;
             updateSize(perc);
           }
@@ -129,12 +127,12 @@ export const ChildWindowLayout = ({
             ...(resizeClass === "resizing-ew" ?
               {
                 height: "100%",
-                width: "25px",
+                width: "10px",
                 cursor: "ew-resize",
               }
             : {
                 width: "100%",
-                height: "25px",
+                height: "10px",
                 cursor: "ns-resize",
               }),
           }}

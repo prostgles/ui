@@ -37,7 +37,7 @@ import type { CommonWindowProps, DashboardState } from "../Dashboard/Dashboard";
 import type { CodeBlock } from "../SQLEditor/SQLCompletion/completionUtils/getCodeBlock";
 import type { ProstglesQuickMenuProps } from "../W_QuickMenu";
 import { AddChartMenu } from "../W_Table/TableMenu/AddChartMenu";
-import Window from "../Window";
+import Window from "../Window/Window";
 import { type ChartableSQL, getChartableSQL } from "./getChartableSQL";
 import { runSQL } from "./runSQL/runSQL";
 import { SQLHotkeys } from "./SQLHotkeys";

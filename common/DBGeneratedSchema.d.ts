@@ -780,7 +780,7 @@ export type DBGeneratedSchema = {
       nested_tables?: null | any;
       options?: any;
       parent_window_id?: null | string;
-      parent_window_options?: null | {    sizePercentage?: number;   position?: "top" | "bottom" | "left" | "right";  };
+      parent_window_options?: null | {    sizePercentage?: number;   position?: "top" | "bottom" | "left" | "right" | "full";  };
       selected_sql?: string;
       show_menu?: null | boolean;
       sort?: null | any;

@@ -7,6 +7,7 @@ import {
   mdiDockLeft,
   mdiDockRight,
   mdiDockTop,
+  mdiDockWindow,
   mdiOpenInNew,
 } from "@mdi/js";
 
@@ -20,14 +21,14 @@ import type { SingleSyncHandles } from "prostgles-client/dist/SyncedTable/Synced
 import type { ReactNode } from "react";
 import React from "react";
 import ReactDOM from "react-dom";
-import { t } from "../i18n/i18nUtils";
-import type { WindowData, WindowSyncItem } from "./Dashboard/dashboardUtils";
-import type { DeepPartial, DeltaOf } from "./RTComp";
-import RTComp from "./RTComp";
-import type { ReactSilverGridNode } from "./SilverGrid/SilverGrid";
-import { getSilverGridTitleNode } from "./SilverGrid/SilverGridChildHeader";
-import type { ProstglesQuickMenuProps } from "./W_QuickMenu";
-import { W_QuickMenu } from "./W_QuickMenu";
+import { t } from "../../i18n/i18nUtils";
+import type { WindowData, WindowSyncItem } from "../Dashboard/dashboardUtils";
+import type { DeepPartial, DeltaOf } from "../RTComp";
+import RTComp from "../RTComp";
+import type { ReactSilverGridNode } from "../SilverGrid/SilverGrid";
+import { getSilverGridTitleNode } from "../SilverGrid/SilverGridChildHeader";
+import type { ProstglesQuickMenuProps } from "../W_QuickMenu";
+import { W_QuickMenu } from "../W_QuickMenu";
 import {
   ChildWindowLayout,
   type ChildWindowLayoutProps,
@@ -221,7 +222,10 @@ export default class Window<W extends WindowSyncItem> extends RTComp<
           data-command="Window.ChildChart"
           className="f-1 gap-0 min-s-0 o-hidden"
         >
-          <FlexRow data-command="Window.ChildChart.toolbar" className="p-p5">
+          <FlexRow
+            data-command="Window.ChildChart.toolbar"
+            className="p-p25 gap-p25 bb b-color"
+          >
             <Btn
               className="f-0 ml-auto"
               title={t.Window["Open menu"]}
@@ -266,10 +270,11 @@ export default class Window<W extends WindowSyncItem> extends RTComp<
             <Select
               showSelected="icon"
               fullOptions={[
+                { key: "top", iconPath: mdiDockTop },
+                { key: "right", iconPath: mdiDockRight },
                 { key: "bottom", iconPath: mdiDockBottom },
                 { key: "left", iconPath: mdiDockLeft },
-                { key: "right", iconPath: mdiDockRight },
-                { key: "top", iconPath: mdiDockTop },
+                { key: "full", iconPath: mdiDockWindow },
               ]}
               size="small"
               title="Chart position"

@@ -15,7 +15,7 @@ import type { WindowData, WindowSyncItem } from "../Dashboard/dashboardUtils";
 import RTComp, { type DeltaOf, type DeltaOfData } from "../RTComp";
 import type { LayerBase } from "../W_Map/W_Map";
 import type { ActiveRow } from "../W_Table/W_Table";
-import Window from "../Window";
+import Window from "../Window/Window";
 import { fetchAndSetTimechartLayerData } from "./fetchData/fetchAndSetTimechartLayerData";
 import { getTimeChartLayerQueries } from "./fetchData/getTimeChartLayers";
 import type { TimeChartLayerWithBinOrError } from "./fetchData/getTimeChartLayersWithBins";

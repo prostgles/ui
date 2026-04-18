@@ -25,7 +25,7 @@ export const tableConfigWindows = {
           },
           position: {
             optional: true,
-            enum: ["top", "bottom", "left", "right"],
+            enum: ["top", "bottom", "left", "right", "full"],
           },
         },
       },

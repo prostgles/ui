@@ -20,7 +20,7 @@ import { W_SQL } from "../W_SQL/W_SQL";
 import type { ActiveRow } from "../W_Table/W_Table";
 import W_Table from "../W_Table/W_Table";
 import { W_TimeChart } from "../W_TimeChart/W_TimeChart";
-import { getWindowTitle } from "../Window";
+import { getWindowTitle } from "../Window/Window";
 import { getCrossFilters } from "../joinUtils";
 import type { LocalSettings } from "../localSettings";
 import { useLocalSettings } from "../localSettings";

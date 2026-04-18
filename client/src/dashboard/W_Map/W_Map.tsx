@@ -23,7 +23,7 @@ import RTComp from "../RTComp";
 import { SmartForm } from "../SmartForm/SmartForm";
 import type { ActiveRow } from "../W_Table/W_Table";
 import W_Table from "../W_Table/W_Table";
-import Window from "../Window";
+import Window from "../Window/Window";
 import { DataLayerManager } from "../WindowControls/DataLayerManager/DataLayerManager";
 import { W_MapMenu } from "./W_MapMenu";
 import { MapInfoSection } from "./controls/MapInfoSection";

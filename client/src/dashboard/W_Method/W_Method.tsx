@@ -2,7 +2,7 @@ import { useIsMounted } from "prostgles-client";
 import React, { useEffect, useState } from "react";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
-import Window from "../Window";
+import Window from "../Window/Window";
 import { W_MethodControls } from "./W_MethodControls";
 import { W_MethodMenu } from "./W_MethodMenu";
 
