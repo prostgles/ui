@@ -51,7 +51,7 @@ export type W_SQLProps = Omit<CommonWindowProps, "w"> & {
   onAddChart?: OnAddChart;
   titleIcon?: React.ReactNode;
   activeRowStyle?: React.CSSProperties;
-  childWindow: React.ReactNode | undefined;
+  childWindow: { node: React.ReactNode; w: WindowSyncItem } | undefined;
   suggestions?: DashboardState["suggestions"];
   setLinkMenu: ProstglesQuickMenuProps["setLinkMenu"];
 };
@@ -559,7 +559,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
               this.setState({ cols: newCols });
             }}
             onSort={(sort) => {
-              this.runSQL(sort);
+              void this.runSQL(sort);
             }}
           />
         </div>
@@ -584,6 +584,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
     return (
       <Window
         w={w}
+        childWindow={childWindow}
         connection={this.props.prgl.connection}
         layoutMode={workspace.layout_mode ?? "editable"}
         quickMenuProps={{

@@ -12,5 +12,5 @@ export const CSP_DEFAULTS = {
     "data:",
     "blob:",
   ],
-  connectSrc: [SELF, "ws:", "wss:"],
+  connectSrc: [SELF, "ws:", "wss:", "https://*.tile.openstreetmap.org"],
 };

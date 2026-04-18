@@ -36,6 +36,9 @@
 .resizing-ew {
   border-right: 2px solid #00d0ff !important;
 }
+.resizing-ns {
+  border-bottom: 2px solid #00d0ff !important;
+}
 
 .table-component .table-column-label {
   -webkit-line-clamp: 2;

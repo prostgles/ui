@@ -100,11 +100,11 @@ export const NEBULA_GL_EDIT_TYPES = [
 export const geometryToGeoEWKT = (
   f: GeoJSONFeature["geometry"],
   srid?: number,
-) => {
+): { $ST_GeomFromEWKT: string[] } => {
   if (f.type === "GeometryCollection") {
     return {
       $ST_GeomFromEWKT: [
-        `${srid ? `SRID=${srid};` : ""}GEOMETRYCOLLECTION(${f.geometries.map((g) => geometryToGeoEWKT(g, srid))})`,
+        `${srid ? `SRID=${srid};` : ""}GEOMETRYCOLLECTION(${f.geometries.map((g) => geometryToGeoEWKT(g, srid).$ST_GeomFromEWKT)})`,
       ],
     };
   }

@@ -225,7 +225,7 @@ export const DockerContainer = ({
 
         {container && (
           <FullscreenWrapper
-            className="as-stretch"
+            className="as-stretch w-full"
             borderWrapperClassName="bt b-color bg-color-2 w-full ta-start rounded-unset"
             data-command="DockerSandboxCreateContainer.Logs"
             title={

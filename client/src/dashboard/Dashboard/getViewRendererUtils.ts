@@ -66,7 +66,7 @@ export const getViewRendererUtils = function (
         !otherWindowOpts.parent_window_id
       ) {
         console.error("SYNC FAIL BUG, REFRESHING");
-        pageReload("SYNC FAIL BUG");
+        void pageReload("SYNC FAIL BUG");
       }
     }, 1000);
 
@@ -105,8 +105,8 @@ export const getViewRendererUtils = function (
         w2_id,
         workspace_id: workspace.id,
         options,
-        last_updated: undefined as any,
-        user_id: undefined as any,
+        last_updated: undefined as unknown as string,
+        user_id: undefined as unknown as string,
       },
       { returning: "*" },
     );

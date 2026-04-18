@@ -36,6 +36,7 @@ export const W_Barchart = ({
   return (
     <Window
       getMenu={undefined}
+      childWindow={undefined}
       w={w}
       connection={prgl.connection}
       layoutMode={workspace.layout_mode ?? "editable"}

@@ -110,6 +110,7 @@ export const InMapControls = ({
             <Select
               title="Map extent behavior"
               data-command="MapExtentBehavior"
+              size="small"
               fullOptions={MapExtentBehavior}
               value={options.extentBehavior}
               onChange={(extentBehavior) => {
@@ -122,6 +123,7 @@ export const InMapControls = ({
               iconPath={mdiImageFilterCenterFocus}
               onClick={fitBounds}
               className="shadow "
+              size="small"
               variant="faded"
             />
           </FlexRow>

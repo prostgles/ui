@@ -3,12 +3,14 @@ import {
   mdiClose,
   mdiCog,
   mdiCogOutline,
-  mdiFunction,
-  mdiMap,
+  mdiDockBottom,
+  mdiDockLeft,
+  mdiDockRight,
+  mdiDockTop,
   mdiOpenInNew,
-  mdiScript,
 } from "@mdi/js";
 
+import type { DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
 import { ErrorTrap } from "@components/ErrorComponent";
 import { FlexCol, FlexRow } from "@components/Flex";
@@ -20,13 +22,17 @@ import React from "react";
 import ReactDOM from "react-dom";
 import { t } from "../i18n/i18nUtils";
 import type { WindowData, WindowSyncItem } from "./Dashboard/dashboardUtils";
-import type { DeepPartial } from "./RTComp";
+import type { DeepPartial, DeltaOf } from "./RTComp";
 import RTComp from "./RTComp";
 import type { ReactSilverGridNode } from "./SilverGrid/SilverGrid";
 import { getSilverGridTitleNode } from "./SilverGrid/SilverGridChildHeader";
 import type { ProstglesQuickMenuProps } from "./W_QuickMenu";
 import { W_QuickMenu } from "./W_QuickMenu";
-import type { DBSSchema } from "@common/publishUtils";
+import {
+  ChildWindowLayout,
+  type ChildWindowLayoutProps,
+} from "./ChildWindowLayout";
+import { Select } from "@components/Select/Select";
 
 type P<W extends WindowSyncItem> = {
   w?: W;
@@ -38,7 +44,7 @@ type P<W extends WindowSyncItem> = {
   quickMenuProps?: W extends WindowSyncItem<"table"> | WindowSyncItem<"sql"> ?
     Omit<ProstglesQuickMenuProps, "w">
   : undefined;
-};
+} & ChildWindowLayoutProps;
 
 type S<W extends WindowSyncItem> = {
   showMenu: HTMLButtonElement | undefined;
@@ -61,27 +67,10 @@ export default class Window<W extends WindowSyncItem> extends RTComp<
 
   d: D = {};
 
-  onDelta = (dp) => {
-    const { w } = this.d;
+  onDelta = (dp: DeltaOf<P<W>>) => {
     const { onWChange } = this.props;
-    // if (this.ref && w) {
-    //   const titleDiv = getSilverGridTitleNode(w.id);
-    //   const title = getWindowTitle(w);
-    //   if (titleDiv) {
-    //     // titleDiv.innerText = title;
-    //     // titleDiv.title = title;
-    //     // ReactDOM.createPortal(
-    //     //   <FlexRow title={title}>
-    //     //     <SvgIcon icon="Table" />
-    //     //     <div>{title}</div>
-    //     //   </FlexRow>,
-    //     //   titleDiv,
-    //     // );
-    //   }
-    // }
-
     if (dp?.onWChange && this.d.w) {
-      onWChange?.(this.d.w as any, this.d.w as any);
+      onWChange?.(this.d.w as W, this.d.w as DeepPartial<W>);
     }
 
     if (this.props.w && !this.d.wSync) {
@@ -120,6 +109,7 @@ export default class Window<W extends WindowSyncItem> extends RTComp<
       getMenu,
       layoutMode = "editable",
       connection,
+      childWindow,
     } = this.props;
     const { showMenu } = this.state;
     const { w = this.props.w } = this.state;
@@ -198,7 +188,11 @@ export default class Window<W extends WindowSyncItem> extends RTComp<
             }
           }}
         >
-          <ErrorTrap>{children}</ErrorTrap>
+          <ErrorTrap>
+            <ChildWindowLayout childWindow={childWindow}>
+              {children}
+            </ChildWindowLayout>
+          </ErrorTrap>
         </div>
 
         {showMenu && getMenu && (
@@ -229,9 +223,9 @@ export default class Window<W extends WindowSyncItem> extends RTComp<
         >
           <FlexRow data-command="Window.ChildChart.toolbar" className="p-p5">
             <Btn
-              className="f-0"
+              className="f-0 ml-auto"
               title={t.Window["Open menu"]}
-              variant="outline"
+              variant="faded"
               color="action"
               iconPath={mdiCog}
               data-command="dashboard.window.chartMenu"
@@ -240,39 +234,65 @@ export default class Window<W extends WindowSyncItem> extends RTComp<
                   showMenu: showMenu ? undefined : currentTarget,
                 });
               }}
-              children={
-                window.isLowWidthScreen ? null : t.Window["Chart options"]
-              }
+              size="small"
+              // children={
+              //   window.isLowWidthScreen ? null : t.Window["Chart options"]
+              // }
             />
 
             <Btn
-              className="ml-auto"
               iconPath={mdiArrowCollapse}
               color="action"
+              variant="faded"
               title={t.Window["Collapse chart"]}
               data-command="dashboard.window.collapseChart"
+              size="small"
               onClick={() => {
                 w.$update({ minimised: true });
               }}
             />
             <Btn
-              variant="outline"
+              variant="faded"
               iconPath={mdiOpenInNew}
               color="action"
+              title={t.Window["Detach chart"]}
               data-command="dashboard.window.detachChart"
-              onClick={() => w.$update({ parent_window_id: null })}
-              children={
-                window.isLowWidthScreen ? null : t.Window["Detach chart"]
-              }
+              onClick={() => void w.$update({ parent_window_id: null })}
+              size="small"
+              // children={
+              //   window.isLowWidthScreen ? null : t.Window["Detach chart"]
+              // }
+            />
+            <Select
+              showSelected="icon"
+              fullOptions={[
+                { key: "bottom", iconPath: mdiDockBottom },
+                { key: "left", iconPath: mdiDockLeft },
+                { key: "right", iconPath: mdiDockRight },
+                { key: "top", iconPath: mdiDockTop },
+              ]}
+              size="small"
+              title="Chart position"
+              value={w.parent_window_options?.position ?? "bottom"}
+              onChange={(value) => {
+                w.$update(
+                  {
+                    parent_window_options: { position: value },
+                  },
+                  { deepMerge: true },
+                );
+              }}
             />
             <Btn
-              variant="outline"
+              variant="faded"
+              title={t.Window["Close chart"]}
               data-command="dashboard.window.closeChart"
               iconPath={mdiClose}
+              size="small"
               onClick={() => void w.$update({ closed: true })}
-              children={
-                window.isLowWidthScreen ? null : t.Window["Close chart"]
-              }
+              // children={
+              //   window.isLowWidthScreen ? null : t.Window["Close chart"]
+              // }
             />
           </FlexRow>
           {windowContent}

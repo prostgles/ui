@@ -31,7 +31,6 @@ export const createAgenticWorkflowPrompt = [
   "Given that the workflow will run in a nodejs environment, you are free to use reputable npm packages as long as you include them in the workflow_function_definition dependencies and use them in a way that does not break the defineAgenticWorkflow call structure.",
   "External dependencies should be reputable and kept to a minimum to reduce security risks. Do not forget to include corresponding @types/ package for any dependency that does not ship its own type declarations. Always prefer using existing modules and tools instead of adding new dependencies, but if necessary, only add well-known and widely used packages.",
   "Do not use external dependencies if there are more robust MCP tools available.",
-  `Use ${getProstglesMCPFullToolName("prostgles-ui", "get_specific_tool_schemas")} to check available tools that can be enabled and used.`,
   "Avoid using external API if there are MCP tools or open source packages that can achieve the same result and reduce the amount of input required from user.",
   "The user will initially execute it in series mode (agent calls and responses will be queued) to ensure it works as expected,",
   "It is crucial that you allow the database interactions to flow after each agent step to ensure the user can provide feedback and to avoid doing unnecessary work.",

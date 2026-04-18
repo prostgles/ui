@@ -68,7 +68,7 @@ import type { TableHandlerClient } from "prostgles-client";
 export type W_TableProps = Omit<CommonWindowProps, "w"> & {
   w: WindowSyncItem<"table">;
   setLinkMenu: ProstglesQuickMenuProps["setLinkMenu"];
-  childWindow: React.ReactNode | undefined;
+  childWindow: { node: React.ReactNode; w: WindowSyncItem } | undefined;
   onLinkTable?: (tableName: string, path: ParsedJoinPath[]) => void;
   onClickRow?: TableProps<ColumnSort>["onRowClick"];
   filter?: any;
@@ -571,6 +571,7 @@ export default class W_Table extends RTComp<
       return (
         <Window
           w={w}
+          childWindow={childWindow}
           connection={prgl.connection}
           layoutMode={workspace.layout_mode ?? "editable"}
           quickMenuProps={{
@@ -707,9 +708,9 @@ export default class W_Table extends RTComp<
                   error={error}
                 />
               )}
-              {childWindow ?
-                childWindow
-              : cardOpts ?
+              {(
+                cardOpts // childWindow ? childWindow :
+              ) ?
                 <CardView
                   key={`${cardOpts.cardGroupBy}-${cardOpts.cardOrderBy}-${this.state.dataAge}`}
                   cols={cols}

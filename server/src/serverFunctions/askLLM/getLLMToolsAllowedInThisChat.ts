@@ -142,7 +142,6 @@ export const getLLMToolsAllowedInThisChat = async ({
         "request_tool_access",
         "compact_context",
         "get_tool_list",
-        "get_specific_tool_schemas",
       ] as const satisfies (keyof typeof uiMcpSchema)[];
       if (
         nonHiddenSchemaToolNames.some(

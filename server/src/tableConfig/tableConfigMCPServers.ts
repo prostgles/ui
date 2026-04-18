@@ -178,7 +178,11 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
          *        The tool input is provided to the user to interact with and give feedback (which will be incorporated into the tool result).
          *        No execution logic and mostly used for structured questions and answers
          */
-        enum: ["auto-approved-user-actionable", "user-provides-response"],
+        enum: [
+          "auto-approved-user-actionable",
+          "user-provides-response",
+          "always-needs-approval",
+        ],
       },
     },
     indexes: {

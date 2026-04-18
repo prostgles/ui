@@ -158,7 +158,8 @@ export const runApprovedTools = async ({
       userApprovalResponse,
       tool,
       state:
-        (
+        tool.mode === "always-needs-approval" ? "needs-approval"
+        : (
           tool.auto_approve ||
           tool.mode === "auto-approved-user-actionable" ||
           userApprovalResponse?.response === "approve" ||

@@ -293,6 +293,7 @@ export class W_TimeChart extends RTComp<W_TimeChartProps, W_TimeChartState, D> {
     return (
       <Window
         w={w}
+        childWindow={undefined}
         getMenu={this.getMenu}
         layoutMode={workspace.layout_mode ?? "editable"}
         connection={connection}

@@ -568,7 +568,7 @@ export type DBGeneratedSchema = {
       icon?: null | string;
       id?: number;
       inputSchema:  Record<string, unknown>
-      mode?: null | "auto-approved-user-actionable" | "user-provides-response"
+      mode?: null | "auto-approved-user-actionable" | "user-provides-response" | "always-needs-approval"
       name: string;
       outputSchema?: null | Record<string, unknown>
       server_name: string;
@@ -780,6 +780,7 @@ export type DBGeneratedSchema = {
       nested_tables?: null | any;
       options?: any;
       parent_window_id?: null | string;
+      parent_window_options?: null | {    sizePercentage?: number;   position?: "top" | "bottom" | "left" | "right";  };
       selected_sql?: string;
       show_menu?: null | boolean;
       sort?: null | any;
@@ -860,7 +861,7 @@ export type GeneratedFunctionSchema = {
   "enable2FA": (args: {    token: string;  }) => Promise<string>;
   "disable2FA": () => Promise<(undefined | Array<void>)>;
   "changePassword": (args: {    oldPassword: string;   newPassword: string;  }) => Promise<void>;
-  "getLLMAllowedChatTools": (args: {    chatId: number;  }) => Promise<(undefined | Array<({ server_name: string; description: string; mode: (null | "auto-approved-user-actionable" | "user-provides-response") } & { tool_id: number; name: string; tool_name: string; input_schema: any; auto_approve: boolean })>)>;
+  "getLLMAllowedChatTools": (args: {    chatId: number;  }) => Promise<(undefined | Array<({ server_name: string; description: string; mode: (null | "auto-approved-user-actionable" | "user-provides-response" | "always-needs-approval") } & { tool_id: number; name: string; tool_name: string; input_schema: any; auto_approve: boolean })>)>;
   "createWebAppFromTemplate": (args: {    connectionId: string;   clean?: boolean;  }) => Promise<string>;
   "buildWebApp": (args: {    connectionId: string;   clean?: boolean;  }) => Promise<(({ command: string; exitCode: number; timedOut: boolean; executionTime: number; log: Array<{ type: ("error" | "stdout" | "stderr"); text: string }> } & { state: ("close" | "error" | "timed-out" | "aborted") }) | ({ command: string; exitCode: number; timedOut: boolean; executionTime: number; log: Array<{ type: ("error" | "stdout" | "stderr"); text: string }> } & { state: "error"; error: (undefined | null | string | Array<any> | { [key: string]: any }) }))>;
   "testWebApp": (args: {    connectionId: string;  }) => Promise<(({ command: string; exitCode: number; timedOut: boolean; executionTime: number; log: Array<{ type: ("error" | "stdout" | "stderr"); text: string }> } & { state: ("close" | "error" | "timed-out" | "aborted") }) | ({ command: string; exitCode: number; timedOut: boolean; executionTime: number; log: Array<{ type: ("error" | "stdout" | "stderr"); text: string }> } & { state: "error"; error: (undefined | null | string | Array<any> | { [key: string]: any }) }))>;

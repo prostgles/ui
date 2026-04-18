@@ -139,6 +139,7 @@ export const Connection = (props: ConnectionProps) => {
                   data-key={w.name}
                   color="action"
                   asNavLink={true}
+                  size="small"
                   href={getConnectionPath(connection, w.id)}
                 >
                   {w.name || <em>Workspace</em>}

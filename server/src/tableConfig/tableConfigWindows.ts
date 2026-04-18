@@ -14,6 +14,21 @@ export const tableConfigWindows = {
           hint: "If defined then this is a chart for another window and will be rendered within that parent window",
         },
       },
+      parent_window_options: {
+        nullable: true,
+        jsonbSchemaType: {
+          sizePercentage: {
+            optional: true,
+            type: "integer",
+            description:
+              "Percentage of the parent window the chart should take. Only used for attached charts",
+          },
+          position: {
+            optional: true,
+            enum: ["top", "bottom", "left", "right"],
+          },
+        },
+      },
       user_id: `UUID NOT NULL REFERENCES users(id)  ON DELETE CASCADE`,
       /*   ON DELETE SET NULL is used to ensure we don't delete saved SQL queries */
       workspace_id: `UUID REFERENCES workspaces(id) ON DELETE SET NULL`,

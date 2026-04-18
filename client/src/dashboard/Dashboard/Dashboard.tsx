@@ -4,7 +4,11 @@ import type {
   SingleSyncHandles,
 } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import React from "react";
-import RTComp, { type DeltaOfData } from "../RTComp";
+import RTComp, {
+  type DeepPartial,
+  type DeltaOf,
+  type DeltaOfData,
+} from "../RTComp";
 import { getSqlSuggestions } from "../SQLEditor/SQLEditorSuggestions";
 import type { DBObject } from "../SearchAll/SearchAll";
 
@@ -290,7 +294,7 @@ export class _Dashboard extends RTComp<
         { workspace_id: wsp.id },
         { handlesOnData: true, select: "*", patchText: false },
         (_wnds, deltas) => {
-          const wnds: WindowSyncItem[] = _wnds as any;
+          const wnds = _wnds as WindowSyncItem[];
           if (!this.mounted) return;
 
           const windows = wnds.sort(
@@ -305,7 +309,18 @@ export class _Dashboard extends RTComp<
            * Maybe ....
            */
           const stringOpts = (w: WindowSyncItem) =>
-            `${w.id} ${w.type} ${w.fullscreen} ${JSON.stringify(w.filter)} ${JSON.stringify(w.having)} ${w.parent_window_id} ${w.minimised} ${w.created}`; // ${JSON.stringify((w as any).options?.extent ?? {})}
+            [
+              w.id,
+              w.type,
+              w.fullscreen,
+              JSON.stringify(w.filter),
+              JSON.stringify(w.having),
+              w.parent_window_id,
+              w.minimised,
+              w.created,
+              w.parent_window_options?.position,
+              w.parent_window_options?.sizePercentage,
+            ].join();
           if (
             this.d.windows.map(stringOpts).sort().join() ===
             openWindows.map(stringOpts).sort().join()
@@ -314,7 +329,7 @@ export class _Dashboard extends RTComp<
           }
           this.setData(
             { allWindows: windows, windows: openWindows, closedWindows },
-            { windows: deltas as any },
+            { windows: deltas as DeepPartial<WindowSyncItem[]> },
           );
         },
       );

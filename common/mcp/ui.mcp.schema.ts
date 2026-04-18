@@ -331,7 +331,7 @@ export const uiMcpSchema = {
   },
   create_agent: {
     icon: "RobotOutline",
-    mode: undefined, //"auto-approved-user-actionable",
+    mode: "always-needs-approval" /** To prevent privilege escalation */,
     description: [
       "Creates and runs an agent to iteratively complete the specified task using MCP tools if needed.",
       "The agent works in its own chat, can take multiple tool-assisted steps up to its configured iteration limit, and returns a final result.",

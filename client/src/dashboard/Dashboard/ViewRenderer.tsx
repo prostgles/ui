@@ -125,7 +125,7 @@ export class ViewRenderer extends RTComp<
 
     const getRenderedWindow = (
       w: WindowSyncItem,
-      childWindow: React.ReactNode | null,
+      childWindow: { node: React.ReactNode; w: WindowSyncItem } | undefined,
       childWindows: WindowSyncItem[],
     ) => {
       const onClose: CommonWindowProps["onClose"] = async (e) => {
@@ -348,7 +348,14 @@ export class ViewRenderer extends RTComp<
         const renderedChildNode =
           latestChildWindow &&
           getRenderedWindow(latestChildWindow, undefined, []).elem;
-        return getRenderedWindow(w, renderedChildNode, latestChildWindows);
+        return getRenderedWindow(
+          w,
+          renderedChildNode && {
+            node: renderedChildNode,
+            w: latestChildWindow,
+          },
+          latestChildWindows,
+        );
       })
       .filter(isDefined);
 

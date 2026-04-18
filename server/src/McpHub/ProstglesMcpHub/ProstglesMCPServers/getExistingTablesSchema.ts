@@ -67,7 +67,7 @@ export const getExistingTablesSchema = async (
     const viewDefinitions = (await clientSql(
       `
       SELECT 
-        regclass(table_schema|| '.' ||table_name  )::OID as oid, 
+        regclass(table_schema|| '.' || table_name  )::OID as oid, 
         table_name, 
         view_definition 
       FROM information_schema.views 
@@ -140,8 +140,17 @@ export const getExistingTablesSchema = async (
       return true;
     })
     .map((t) => {
-      const viewDefinition = viewDefinitonsMap.get(t.oid.toString());
+      let viewDefinition = viewDefinitonsMap.get(t.oid.toString());
       if (viewDefinition) {
+        /** Exclude postgis views */
+        if (
+          t.name.startsWith("spatial_ref_sys") ||
+          t.name.startsWith("geometry_columns")
+        ) {
+          viewDefinition =
+            "[] -- PostGIS view definition hidden to reduce token usage";
+        }
+
         return {
           query: `CREATE VIEW ${t.name} AS ${viewDefinition}`,
           constraints: [],

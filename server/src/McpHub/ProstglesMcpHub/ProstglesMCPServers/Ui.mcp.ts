@@ -17,6 +17,10 @@ import { getToolTypescriptSchemas } from "./Prostgles/agenticWorkflow/runtimeSet
 import { fetchTools } from "./Prostgles/fetchTools";
 import { runCodeInSandboxContainer } from "./Prostgles/runCodeInSandboxContainer";
 import { startAgent } from "./Prostgles/startAgent";
+import {
+  getMCPFullToolName,
+  getProstglesMCPFullToolName,
+} from "@common/mcpUtils";
 
 const serverName = "prostgles-ui" as const;
 const tools = PROSTGLES_MCP_SERVERS_AND_TOOLS[serverName];
@@ -96,17 +100,30 @@ const handler = {
             dbs,
           );
           try {
+            const toolsWithInfo =
+              tools &&
+              (await getValidatedMcpServerToolsAllowed(dbs, tools, undefined));
+
+            const createAgentFullToolName = getProstglesMCPFullToolName(
+              "prostgles-ui",
+              "create_agent",
+            );
+            const createAgentTool = toolsWithInfo?.find(
+              (t) =>
+                getMCPFullToolName(t.server_name, t.name) ===
+                createAgentFullToolName,
+            );
+            if (createAgentTool) {
+              throw new Error(
+                `Tool "${createAgentFullToolName}" cannot be used as a tool within an agent created by the "${createAgentFullToolName}" tool to prevent privilege escalation and infinite recursion.`,
+              );
+            }
+
             const rawRes = await startAgent(
               undefined,
               {
                 name: `Agent for toolUseId ${toolUseId}`,
-                toolsWithInfo:
-                  tools &&
-                  (await getValidatedMcpServerToolsAllowed(
-                    dbs,
-                    tools,
-                    undefined,
-                  )),
+                toolsWithInfo,
                 configWithDefaults,
                 autoApproveAllTools,
                 requestTimestamp: new Date(),
