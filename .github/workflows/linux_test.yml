@@ -9,7 +9,7 @@ concurrency:
 jobs:
   test_linux:
     runs-on: ubuntu-latest
-    timeout-minutes: 75
+    timeout-minutes: 55
     services:
       postgres:
         image: postgis/postgis:15-3.3

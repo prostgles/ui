@@ -2079,10 +2079,25 @@ test.describe("Main test", () => {
       { returnType: "value" },
     );
     await expect(currUser).toEqual(dbName);
+  });
 
+  test("Ensure realtime works and is resilient to schema change", async ({
+    page: p,
+  }) => {
+    const page = p as PageWIds;
+    await login(page);
+    const dbName = "db_with_owner";
+    await openConnection(page, "db_with_owner");
+    await runDbSql(
+      page,
+      `DROP TABLE IF EXISTS "table_name"; 
+      DROP TABLE IF EXISTS "MySchema"."MyTable"; 
+      DROP SCHEMA IF EXISTS "MySchema" CASCADE;`,
+    );
     /** Ensure realtime works and is resilient to schema change */
     const createTableQuery = `CREATE TABLE "table_name" ( id SERIAL PRIMARY KEY, title  VARCHAR(250), gencol TEXT GENERATED ALWAYS AS ( title || id::TEXT) stored);`;
     await runDbSql(page, createTableQuery);
+    await page.reload();
     await page
       .getByTestId("dashboard.menu.tablesSearchList")
       .locator(`[data-key="table_name"]`)
@@ -2154,7 +2169,7 @@ test.describe("Main test", () => {
     await page.getByTestId("Connection.edit.updateOrCreateConfirm").click();
     await page
       .getByTestId("dashboard.menu.tablesSearchList")
-      .locator(`[data-key=${JSON.stringify(`"MySchema"."MyTable"`)}]`)
+      .locator(getDataKey(`"MySchema"."MyTable"`))
       .click();
     await insertRow(page, `"MySchema"."MyTable"`, { MyColumn: "some value" });
     await page
@@ -2909,14 +2924,15 @@ test.describe("Main test", () => {
     const usersTable = await getTableWindow(page, "users");
 
     /** Test pagination */
-    const pageInput = await usersTable.getByTestId("Pagination.page");
+    let pageInput = await usersTable.getByTestId("Pagination.page");
     await expect(await pageInput.inputValue()).toBe("1");
     await expect(await pageInput.getAttribute("min")).toBe("1");
     await expect(await pageInput.getAttribute("max")).toBe("7");
     await expect(
-      await usersTable.getByTestId("Pagination.pageCountInfo").textContent(),
-    ).toBe(`7 pages  (100 rows)`);
+      usersTable.getByTestId("Pagination.pageCountInfo"),
+    ).toContainText(`7 pages  (100 rows)`);
     await usersTable.getByTestId("Pagination.lastPage").click();
+    pageInput = await usersTable.getByTestId("Pagination.page");
     await pageInput.scrollIntoViewIfNeeded();
     await expect(await pageInput.inputValue()).toBe("7");
     await usersTable.getByTestId("Pagination.firstPage").click();
@@ -2964,7 +2980,7 @@ test.describe("Main test", () => {
     await page
       .getByTestId("AddChartMenu.Map")
       .getByRole("option")
-      .filter({ hasText: "> orders (delivery_address)" })
+      .filter({ hasText: "orders (delivery_address)" })
       .click();
     await page.waitForTimeout(3e3);
     await page.getByTestId("dashboard.window.detachChart").click();
@@ -2973,7 +2989,7 @@ test.describe("Main test", () => {
     await page
       .getByTestId("AddChartMenu.Timechart")
       .getByRole("option")
-      .getByText("> orders (created_at)", { exact: true })
+      .getByText("orders (created_at)", { exact: true })
       .click();
     await page.waitForTimeout(3e3);
     await page.getByTestId("dashboard.window.detachChart").click();

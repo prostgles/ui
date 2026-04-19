@@ -995,6 +995,7 @@ export const openConnection = async (
     | "food_delivery"
     | "Prostgles UI state"
     | "prostgles_video_demo"
+    | "db_with_owner"
     | "Prostgles UI automated tests database",
 ) => {
   await goTo(page, "/connections");

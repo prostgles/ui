@@ -32,6 +32,7 @@ export type CustomHeaderClassNames = {
 export type ReactSilverGridNode = ReactElement<{
   "data-table-name": string | null;
   "data-type": "title" | "header-icons" | "content";
+  "data-links-to": string;
   "data-title"?: string;
   "data-key"?: string;
 }>;
@@ -157,14 +158,19 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
           /** TODO: this logic should apply to any view that is linked to other views. */
           const newLayoutType =
             (
-              orphans.some((o) =>
-                includes(["map", "timechart"], o.props["data-view-type"]),
+              orphans.some(
+                (o) =>
+                  o.props["data-links-to"] ||
+                  includes(["map", "timechart"], o.props["data-view-type"]),
               )
             ) ?
               "col"
             : defaultLayoutType;
           let newLayout = { ...layout };
-          if (newLayout.type === newLayoutType) {
+          if (
+            newLayout.type === newLayoutType ||
+            (newLayout.type !== "item" && newLayoutType === "tab")
+          ) {
             const totalSize = (newLayout.items as LayoutConfig[]).reduce(
               (a, v) => a + v.size,
               0,
@@ -333,7 +339,18 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
           layout.items.find((d) => equalsNumOrStr(d.id, layout.activeTabKey)) ??
           firstItem;
         const activeItemId = activeItem.id;
-        const child = getChildNode(activeItemId) ?? (
+        const activeChild = getChildNode(activeItemId);
+        if (!activeChild) {
+          console.trace(
+            "Active child not found for id",
+            activeItemId,
+            "in layout",
+            layout,
+            "children",
+            children,
+          );
+        }
+        const child = activeChild ?? (
           <FlexRow className="p-2 ai-center">
             Item not found
             <Btn

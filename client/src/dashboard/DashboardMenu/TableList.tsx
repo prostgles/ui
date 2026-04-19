@@ -19,6 +19,7 @@ import { ensureFadeDoesNotShowForOneItem } from "./DashboardMenuContent";
 import { useTableSizeInfo } from "./useTableSizeInfo";
 import type { DBSSchema } from "@common/publishUtils";
 import { useAddViewToWorkspace } from "../Dashboard/useAddViewToWorkspace";
+import Loading from "@components/Loader/Loading";
 
 export const TableList = ({
   workspace,
@@ -37,9 +38,12 @@ export const TableList = ({
     db,
   } = usePrgl();
 
-  const { tablesWithInfo } = useTableSizeInfo(workspace.options);
+  const { tablesWithInfo, isLoading } = useTableSizeInfo(workspace.options);
   const { addViewToWorkspace } = useAddViewToWorkspace();
 
+  if (isLoading) {
+    return <Loading />;
+  }
   if (!tables.length) {
     return <div className="text-1p5 p-1">0 tables/views</div>;
   }

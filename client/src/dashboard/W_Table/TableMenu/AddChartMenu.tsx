@@ -1,7 +1,7 @@
 import Btn, { type BtnProps } from "@components/Btn";
 import { getSearchRanking } from "@components/SearchList/searchMatchUtils/getSearchRanking";
 import { Select } from "@components/Select/Select";
-import { mdiChartLine, mdiMap } from "@mdi/js";
+import { mdiChartLine, mdiMap, mdiSetLeftCenter } from "@mdi/js";
 import { useMemoDeep } from "prostgles-client/dist/prostgles";
 import {
   _PG_numbers,
@@ -22,6 +22,9 @@ import { rgbaToString } from "../../W_Map/getMapFeatureStyle";
 import type { ChartableSQL } from "../../W_SQL/getChartableSQL";
 import type { ChartColumn, ColInfo } from "./getChartCols";
 import { getChartCols } from "./getChartCols";
+import type { DeckGlColor } from "src/dashboard/Map/DeckGLMap";
+import { SvgIcon } from "@components/SvgIcon";
+import { Icon } from "@components/Icon/Icon";
 
 type P = Pick<CommonWindowProps, "myLinks" | "childWindows"> & {
   onAddChart: OnAddChart;
@@ -259,7 +262,7 @@ export const AddChartMenu = (props: P) => {
               minHeight: 0,
               color:
                 layerAlreadyAdded ?
-                  rgbaToString(layerAlreadyAdded as any)
+                  rgbaToString(layerAlreadyAdded as DeckGlColor)
                 : undefined,
             },
             "data-command":
@@ -285,18 +288,31 @@ export const AddChartMenu = (props: P) => {
                   variant: "icon",
                   ...btnProps,
                 }}
-                fullOptions={c.cols.map((c, i) => ({
-                  key: c.type === "joined" ? c.label : c.name,
-                  label:
-                    c.type === "joined" ? `> ${c.label} (${c.name})` : c.name,
-                  ranking: (searchTerm) =>
-                    getSearchRanking(
-                      searchTerm,
-                      c.type === "joined" ?
-                        c.path.map((p) => p.table)
-                      : [c.name],
-                    ),
-                }))}
+                fullOptions={c.cols.map((c) => {
+                  const targetTable =
+                    c.type === "joined" ?
+                      tables.find((t) => t.name === c.path.at(-1)?.table)
+                    : undefined;
+                  return {
+                    key: c.type === "joined" ? c.label : c.name,
+                    label:
+                      c.type === "joined" ? `${c.label} (${c.name})` : c.name,
+                    leftContent:
+                      targetTable ?
+                        targetTable.icon ?
+                          <SvgIcon className="text-1" icon={targetTable.icon} />
+                        : <Icon className="text-1" path={mdiSetLeftCenter} />
+                      : undefined,
+
+                    ranking: (searchTerm) =>
+                      getSearchRanking(
+                        searchTerm,
+                        c.type === "joined" ?
+                          c.path.map((p) => p.table)
+                        : [c.name],
+                      ),
+                  };
+                })}
                 onChange={(colNameOrLabel) => {
                   const col = c.cols.find((col) =>
                     col.type === "joined" ?

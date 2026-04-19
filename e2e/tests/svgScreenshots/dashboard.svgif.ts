@@ -137,4 +137,37 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
       getDataKey("created_at"),
   );
   await addScene({ animations: [{ type: "wait", duration: 3000 }] });
+
+  const ordersHeader = page.locator(
+    `[data-table-name="orders"] .silver-grid-item-header--title`,
+  );
+  const bbox = await ordersHeader.boundingBox();
+  if (!bbox) {
+    throw "Could not find orders table header";
+  }
+  const centerPoint = [
+    bbox.x + bbox.width / 2,
+    bbox.y + bbox.height / 2,
+  ] as const;
+  const [x, y] = centerPoint;
+
+  await page.mouse.move(x, y, {
+    steps: 22,
+  });
+  await ordersHeader.hover();
+  await page.waitForTimeout(500);
+  await page.mouse.down({ button: "left" });
+  await page.mouse.move(x + 75, y + 25, {
+    steps: 22,
+  });
+  await page.waitForTimeout(1500);
+  await addScene({ animations: [{ type: "wait", duration: 1000 }] });
+  await page.mouse.move(x + 675, y + 25, {
+    steps: 22,
+  });
+  await page.waitForTimeout(1500);
+  await addScene({ animations: [{ type: "wait", duration: 1000 }] });
+  await page.mouse.up({ button: "left" });
+  await addScene({ animations: [{ type: "wait", duration: 1000 }] });
+  await page.waitForTimeout(1500);
 };

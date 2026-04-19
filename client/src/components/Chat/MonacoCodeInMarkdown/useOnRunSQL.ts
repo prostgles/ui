@@ -2,8 +2,11 @@ import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { useCallback, useState } from "react";
 import { getFieldsWithActions } from "src/dashboard/W_SQL/parseSqlResultCols";
 import type { MonacoCodeInMarkdownProps } from "./MonacoCodeInMarkdown";
+import type { ProstglesColumn } from "src/dashboard/W_SQL/W_SQL";
 
-export const useOnRunSQL = ({ codeString }: MonacoCodeInMarkdownProps) => {
+export const useOnRunSQL = ({
+  codeString,
+}: Pick<MonacoCodeInMarkdownProps, "codeString">) => {
   const [sqlResult, setSqlResult] = useState<SQLResult | undefined>(undefined);
 
   const {
@@ -57,7 +60,11 @@ export const useOnRunSQL = ({ codeString }: MonacoCodeInMarkdownProps) => {
 };
 
 type SQLResult =
-  | { state: "ok"; rows: any[]; columns: any[] }
+  | {
+      state: "ok";
+      rows: any[];
+      columns: ReturnType<typeof getFieldsWithActions>;
+    }
   | { state: "ok-command-result"; commandResult: string }
   | { state: "error"; error: unknown }
   | { state: "loading"; query: string; withCommit: boolean };

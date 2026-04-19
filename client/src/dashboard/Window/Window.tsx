@@ -36,7 +36,7 @@ import {
 import { Select } from "@components/Select/Select";
 
 type P<W extends WindowSyncItem> = {
-  w?: W;
+  // w?: W;
   onWChange?: (w: W, delta: DeepPartial<W>) => any;
   connection: DBSSchema["connections"];
   children?: ReactNode;
@@ -45,7 +45,7 @@ type P<W extends WindowSyncItem> = {
   quickMenuProps?: W extends WindowSyncItem<"table"> | WindowSyncItem<"sql"> ?
     Omit<ProstglesQuickMenuProps, "w">
   : undefined;
-} & ChildWindowLayoutProps;
+} & ChildWindowLayoutProps<W>;
 
 type S<W extends WindowSyncItem> = {
   showMenu: HTMLButtonElement | undefined;
@@ -74,7 +74,7 @@ export default class Window<W extends WindowSyncItem> extends RTComp<
       onWChange?.(this.d.w as W, this.d.w as DeepPartial<W>);
     }
 
-    if (this.props.w && !this.d.wSync) {
+    if (!this.d.wSync) {
       const wSync = this.props.w.$cloneSync((_w, delta) => {
         const w = _w;
         this.setData({ w }, { w: delta });
@@ -114,8 +114,6 @@ export default class Window<W extends WindowSyncItem> extends RTComp<
     } = this.props;
     const { showMenu } = this.state;
     const { w = this.props.w } = this.state;
-
-    if (!w) return null;
 
     let titlePortal;
     const titleDiv = getSilverGridTitleNode(w.id);
@@ -190,7 +188,7 @@ export default class Window<W extends WindowSyncItem> extends RTComp<
           }}
         >
           <ErrorTrap>
-            <ChildWindowLayout childWindow={childWindow}>
+            <ChildWindowLayout w={w} childWindow={childWindow}>
               {children}
             </ChildWindowLayout>
           </ErrorTrap>

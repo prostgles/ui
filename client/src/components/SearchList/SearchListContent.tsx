@@ -156,7 +156,7 @@ export const SearchListContent = <M extends boolean = false>(
     <div
       data-command="SearchList"
       className={
-        "SearchList list-comp ta-left flex-col min-h-0 gap-p5 " + className
+        "SearchList list-comp ta-left flex-col min-h-0 gap-dp5 " + className
       }
       ref={rootRef}
       onKeyDown={onKeyDown}

@@ -19,6 +19,9 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
   { openConnection },
   { addScene, addSceneAnimation },
 ) => {
+  if (Math.PI) {
+    throw "Drag and rearrange";
+  }
   await openConnection("prostgles_video_demo");
   await closeWorkspaceWindows(page);
 

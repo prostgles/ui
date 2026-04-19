@@ -11,7 +11,10 @@ export type InputSchema = JSONB.GetObjectType<
   (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["db"]["execute_sql"]["schema"]["type"]
 >;
 
-export const ExecuteSQL = ({ toolUseContent }: ProstglesMCPToolsProps) => {
+export const ExecuteSQL = ({
+  toolUseContent,
+  resultContent,
+}: ProstglesMCPToolsProps) => {
   const initialData = toolUseContent.input as InputSchema;
   const { sql } = usePrgl();
   const codeString = initialData.sql;
@@ -24,6 +27,7 @@ export const ExecuteSQL = ({ toolUseContent }: ProstglesMCPToolsProps) => {
         codeString={codeString}
         sqlHandler={sql}
         loadedSuggestions={undefined}
+        resultContent={resultContent}
       />
     </FlexCol>
   );

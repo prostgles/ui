@@ -187,6 +187,9 @@ export class ViewRenderer extends RTComp<
         "data-key": w.id,
         "data-table-name": w.table_name,
         "data-view-type": w.type,
+        "data-links-to": myLinks
+          .map((l) => (l.w1_id === w.id ? l.w2_id : l.w1_id))
+          .join(","),
         "data-title": getWindowTitle(w),
         w,
         workspace,

@@ -4,19 +4,22 @@ import React from "react";
 import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
 import { useDebouncedCallback } from "src/hooks/useDebouncedCallback";
 
-export type ChildWindowLayoutProps = {
+export type ChildWindowLayoutProps<W extends WindowSyncItem> = {
+  w: W;
   childWindow: { node: React.ReactNode; w: WindowSyncItem } | undefined;
   children: React.ReactNode;
 };
 
-export const ChildWindowLayout = ({
+export const ChildWindowLayout = <W extends WindowSyncItem>({
+  w,
   children,
   childWindow,
-}: ChildWindowLayoutProps) => {
+}: ChildWindowLayoutProps<W>) => {
   const rootRef = React.useRef<HTMLDivElement>(null);
   const childRef = React.useRef<HTMLDivElement>(null);
 
-  const { position = "bottom" } = childWindow?.w.parent_window_options ?? {};
+  const { position = w.type === "sql" ? "full" : "bottom" } =
+    childWindow?.w.parent_window_options ?? {};
 
   const resizeClass =
     position === "top" || position === "bottom" ? "resizing-ns" : "resizing-ew";
@@ -43,7 +46,12 @@ export const ChildWindowLayout = ({
     1000,
   );
 
-  if (!childWindow || position === "full") return <>{children}</>;
+  if (!childWindow || w.type === "sql") {
+    return <>{children}</>;
+  }
+  if (position === "full") {
+    return <>{childWindow.node}</>;
+  }
   return (
     <div
       ref={rootRef}

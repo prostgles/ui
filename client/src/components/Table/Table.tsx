@@ -124,8 +124,9 @@ export const Table = <Sort extends ColumnSortSQL>(
 
   const cols = allCols.filter((c) => !c.hidden);
 
+  /** Do not use width for key to prevent scroll persist breaking when ordering  */
   const tableKey =
-    cols.map((c) => `${c.key}${c.width}`).join() + draggedCol?.idx;
+    cols.map((c) => `${c.key}${!!c.width}`).join() + draggedCol?.idx;
   return (
     <div
       key={tableKey}

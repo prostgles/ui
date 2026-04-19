@@ -63,7 +63,7 @@ export const getConnectionPublish = ({
             ...acc,
             [tableName]: {
               select: allowAllTables.includes("select") ? "*" : undefined,
-              ...(!(tableHandler.is_view as boolean) && {
+              ...(!(tableHandler.isView as boolean) && {
                 update: allowAllTables.includes("update") ? "*" : undefined,
                 insert: allowAllTables.includes("insert") ? "*" : undefined,
                 delete: allowAllTables.includes("delete") ? "*" : undefined,
@@ -92,7 +92,7 @@ export const getConnectionPublish = ({
         (acc, { table, rule, tableHandler }) => {
           const parsedRule = parseTableRules(
             omitKeys(rule, ["tableName"]),
-            tableHandler.is_view,
+            tableHandler.isView,
             table.columns.map((c) => c.name),
             { user },
           );

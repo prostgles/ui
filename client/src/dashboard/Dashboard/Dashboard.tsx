@@ -628,6 +628,7 @@ export type CommonWindowProps<T extends ChartType = ChartType> = Pick<
     | "method"
     | "barchart";
   "data-title": string;
+  "data-links-to": string;
   w: WindowSyncItem<T>;
   childWindows: WindowSyncItem[];
   getLinksAndWindows: () => {

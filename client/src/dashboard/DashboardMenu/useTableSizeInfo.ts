@@ -14,7 +14,7 @@ export type TablesWithInfo = (DBSchemaTablesWJoins[number] & {
 })[];
 export const useTableSizeInfo = (
   workspaceOptions: DBSSchema["workspaces"]["options"],
-): { tablesWithInfo: TablesWithInfo } => {
+) => {
   const { tables, db } = usePrgl();
   const { tableListEndInfo, tableListSortBy } = workspaceOptions;
   const tablesWithInfoNonSorted = usePromise(async () => {
@@ -64,7 +64,7 @@ export const useTableSizeInfo = (
     );
   }, [tables, tableListEndInfo, db]);
 
-  const tablesWithInfo = useMemo(() => {
+  const tablesWithInfo: TablesWithInfo = useMemo(() => {
     if (!tablesWithInfoNonSorted) {
       const tablesWithEmptyInfo = tables.map((t) => ({
         ...t,
@@ -89,5 +89,6 @@ export const useTableSizeInfo = (
 
   return {
     tablesWithInfo,
+    isLoading: !tablesWithInfoNonSorted,
   };
 };

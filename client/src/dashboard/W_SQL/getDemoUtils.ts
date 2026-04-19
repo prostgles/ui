@@ -196,11 +196,11 @@ export const getDemoUtils = (w: Pick<WindowSyncItem<"sql">, "id">) => {
     await tout(1300);
   };
   const runSQL = async () => sqlAction("run");
-  const fromBeginning = (withNewline = true, text?: string) => {
+  const fromBeginning = async (withNewline = true, text?: string) => {
     const editorOpts = getEditor();
     editorOpts.e.setValue(text ?? "");
     if (text) {
-      moveCursor.pageDown();
+      await moveCursor.pageDown();
     }
     if (withNewline) {
       newLine();

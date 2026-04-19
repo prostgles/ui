@@ -103,7 +103,7 @@ export const SearchInput = (props: SearchInputProps) => {
           borderTopLeftRadius: 0,
           borderBottomLeftRadius: 0,
           overflow: "visible",
-          margin: "0px",
+          margin: "2px",
         }}
       >
         {isLoading && (
@@ -120,8 +120,8 @@ export const SearchInput = (props: SearchInputProps) => {
             title={"Match case"}
             iconPath={mdiFormatLetterCase}
             style={{
-              margin: "1px",
               visibility: isLoading ? "hidden" : "visible",
+              padding: "6px",
             }}
             color={matchCaseState.value ? "action" : undefined}
             onClick={() => {
