@@ -340,16 +340,16 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
           firstItem;
         const activeItemId = activeItem.id;
         const activeChild = getChildNode(activeItemId);
-        if (!activeChild) {
-          console.trace(
-            "Active child not found for id",
-            activeItemId,
-            "in layout",
-            layout,
-            "children",
-            children,
-          );
-        }
+        // if (!activeChild) {
+        //   console.trace(
+        //     "Active child not found for id",
+        //     activeItemId,
+        //     "in layout",
+        //     layout,
+        //     "children",
+        //     children,
+        //   );
+        // }
         const child = activeChild ?? (
           <FlexRow className="p-2 ai-center">
             Item not found
@@ -505,6 +505,7 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
             if (r) this.refTarget = r;
           }}
           className={" absolute silver-grid-view-move-target b"}
+          data-command="SilverGrid.viewMoveTarget"
           style={{
             ...targetStyle,
             zIndex: 232,

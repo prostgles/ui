@@ -161,12 +161,27 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
     steps: 22,
   });
   await page.waitForTimeout(1500);
-  await addScene({ animations: [{ type: "wait", duration: 1000 }] });
+  await addScene({
+    animations: [
+      { type: "wait", duration: 1000 },
+      {
+        type: "properties",
+        elementSelector: getCommandElemSelector("SilverGrid.viewMoveTarget"),
+        duration: 200,
+        props: {
+          x: "394",
+          y: "61",
+          width: "447",
+          height: "838",
+        },
+      },
+    ],
+  });
   await page.mouse.move(x + 675, y + 25, {
     steps: 22,
   });
   await page.waitForTimeout(1500);
-  await addScene({ animations: [{ type: "wait", duration: 1000 }] });
+  // await addScene({ animations: [{ type: "wait", duration: 1000 }] });
   await page.mouse.up({ button: "left" });
   await addScene({ animations: [{ type: "wait", duration: 1000 }] });
   await page.waitForTimeout(1500);

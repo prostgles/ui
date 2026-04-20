@@ -571,6 +571,7 @@ export const COMMANDS = {
   "DatabaseAccessEditorCustomTables.openTable": "",
   ToolCall: "",
   "AgenticWorkflowActivity.openTable": "",
+  "SilverGrid.viewMoveTarget": "",
 } as const satisfies Record<
   string,
   | string
@@ -662,6 +663,12 @@ export declare namespace SVGif {
         duration: number;
         type: "fadeIn" | "growIn";
         startScale?: number;
+      }
+    | {
+        elementSelector: string;
+        duration: number;
+        type: "properties";
+        props: Record<"x" | "y" | "width" | "height", string | number>;
       }
     | {
         type: "wait";

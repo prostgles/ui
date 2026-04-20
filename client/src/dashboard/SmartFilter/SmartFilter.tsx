@@ -134,6 +134,7 @@ export const SmartFilter = (props: SmartFilterProps) => {
               <Btn
                 className="OPERAND text-active hover"
                 title={onOperandChange ? "Press to toggle" : "Operand"}
+                size="small"
                 onClick={
                   !onOperandChange ? undefined : (
                     () => {

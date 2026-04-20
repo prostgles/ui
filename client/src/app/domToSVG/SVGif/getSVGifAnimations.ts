@@ -4,6 +4,7 @@ import { renderSvg } from "../text/textToSVG";
 import { toFixed } from "../utils/toFixed";
 import { addSVGifCaption } from "./addSVGifCaption";
 import { getSVGifCursorAnimationHandler } from "./animations/getSVGifCursorAnimationHandler";
+import { getSVGifPropertiesAnimation } from "./animations/getSVGifPropertiesAnimation";
 import { getSVGifTypeAnimation } from "./animations/getSVGifTypeAnimation";
 import { getSVGifZoomToAnimation } from "./animations/getSVGifZoomToAnimation";
 import { getAnimationProperty } from "./getSVGif";
@@ -110,7 +111,9 @@ export const getSVGifAnimations = (
             height,
           })
         : undefined;
+
       if (animation.type === "wait") {
+        // do nothing, just advance the timeline
       } else if (
         animation.type === "click" ||
         animation.type === "clickAppearOnHover" ||
@@ -165,8 +168,6 @@ export const getSVGifAnimations = (
           );
           sceneNodeAnimations.push(...parsedAnimations.sceneNodeAnimations);
           appendStyle(parsedAnimations.style);
-
-          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         } else if (animation.type === "zoomToElement") {
           const parsedAnimations = getSVGifZoomToAnimation(
             { height, width },
@@ -183,6 +184,22 @@ export const getSVGifAnimations = (
             true,
           );
           appendRootStyle(parsedAnimations.style);
+        } else if (animation.type === "properties") {
+          const parsedAnimations = getSVGifPropertiesAnimation(
+            { height, width },
+            { element, bbox },
+            parsedScene,
+            animation,
+            {
+              sceneId,
+              sceneIndex,
+              totalDuration: totalSvgifDuration,
+              getPercent,
+              fromTime,
+            },
+          );
+          sceneNodeAnimations.push(...parsedAnimations.sceneNodeAnimations);
+          // appendStyle(parsedAnimations.style);
         }
       }
       const isParallelAnimation = animation.type === "zoomToElement";

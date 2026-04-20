@@ -131,14 +131,14 @@ export const MinimisedFilter = ({
   return (
     <FlexRow
       className={
-        "FilterWrapper_MinimisedRoot noselect pointer relative o-hidden gap-p5 " +
+        "FilterWrapper_MinimisedRoot noselect pointer relative o-hidden gap-p25 " +
         className
       }
       style={{
         opacity: filter.disabled ? ".8" : 1,
         ...style,
         borderRadius: "1em",
-        padding: "2px 6px",
+        padding: window.isMobileDevice ? "2px 6px" : "4px 8px",
       }}
     >
       {disabledToggle}

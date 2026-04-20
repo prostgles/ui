@@ -147,6 +147,10 @@ const getRectanglePath = (
     width: width - visibleBorderWidth,
     height: height - visibleBorderWidth,
   };
+  const strokeDasharray =
+    style.borderStyle === "dashed" && visibleBorderWidth ?
+      visibleBorderWidth * 2
+    : undefined;
 
   /** Use recangle if possible */
   const hasSingleRadius = new Set([rtl, rtr, rbr, rbl]).size === 1;
@@ -162,6 +166,9 @@ const getRectanglePath = (
     rect.setAttribute("height", adjusted.height);
     rect.setAttribute("rx", rtl);
     rect.setAttribute("ry", rtl);
+    if (strokeDasharray) {
+      rect.setAttribute("stroke-dasharray", strokeDasharray.toString());
+    }
     return { path: rect, showBorder, rtl, rtr, rbr, rbl, borderWidth };
   }
 
@@ -181,6 +188,9 @@ const getRectanglePath = (
     ),
   );
 
+  if (strokeDasharray) {
+    path.setAttribute("stroke-dasharray", strokeDasharray.toString());
+  }
   path satisfies SVGElementTagNameMap[(typeof BORDER_ELEMENT_TYPES)[number]];
   return { path, showBorder, rtl, rtr, rbr, rbl, borderWidth };
 };
