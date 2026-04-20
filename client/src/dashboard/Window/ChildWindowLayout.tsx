@@ -18,8 +18,7 @@ export const ChildWindowLayout = <W extends WindowSyncItem>({
   const rootRef = React.useRef<HTMLDivElement>(null);
   const childRef = React.useRef<HTMLDivElement>(null);
 
-  const { position = w.type === "sql" ? "full" : "bottom" } =
-    childWindow?.w.parent_window_options ?? {};
+  const { position = "bottom" } = childWindow?.w.parent_window_options ?? {};
 
   const resizeClass =
     position === "top" || position === "bottom" ? "resizing-ns" : "resizing-ew";

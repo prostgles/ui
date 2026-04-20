@@ -1,6 +1,10 @@
-import { getCommandElemSelector, getDataKey } from "Testing";
+import { getCommandElemSelector, getDataKey, getDataLabel } from "Testing";
 import { goTo } from "utils/goTo";
-import { closeWorkspaceWindows, deleteAllWorkspaces } from "utils/utils";
+import {
+  closeWorkspaceWindows,
+  deleteAllWorkspaces,
+  runDbsSql,
+} from "utils/utils";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
 import { expect } from "@playwright/test";
 import { clickTableRow } from "./table.svgif";
@@ -13,6 +17,16 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
   await goTo(page, "/connections");
 
   await openConnection("food_delivery");
+
+  /** Ensure mock locations are updated */
+  await runDbsSql(
+    page,
+    `
+    UPDATE connections
+    SET on_mount_ts_disabled = false
+    WHERE name = 'food_delivery'
+  `,
+  );
 
   const toggleMenuBtn = await page.getByTestId(
     "DashboardMenuHeader.togglePinned",
@@ -71,6 +85,7 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
   await addScene({ animations: [{ type: "wait", duration: 500 }] });
   await page.waitForTimeout(5500);
   await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("ArrowDown");
   await addScene({ animations: [{ type: "wait", duration: 500 }] });
   await page.keyboard.press("Enter");
   await page.getByTestId("dashboard.window.menu").waitFor({ state: "visible" });
@@ -78,61 +93,60 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
   await addScene({ animations: [{ type: "wait", duration: 1500 }] });
 
   // Table
-  await closeWorkspaceWindows(page);
-  await openMenuIfClosed();
-  await addSceneAnimation(getDataKey("orders"));
+  // await closeWorkspaceWindows(page);
+  // await openMenuIfClosed();
+  // await addSceneAnimation(getDataKey("orders"));
 
   const pageParams = { page, addSceneAnimation, addScene };
   await clickTableRow(pageParams, 1, undefined, 1);
 
   await addSceneAnimation(
     getCommandElemSelector("JoinedRecords.SectionToggle") +
-      '[data-key="order_items"]',
+      '[data-key="orders"]',
+    // '[data-key="order_items"]',
   );
 
   await page.waitForTimeout(2000);
   await page
     .locator(
-      getCommandElemSelector("JoinedRecords.Section") +
-        '[data-key="order_items"]',
+      getCommandElemSelector("JoinedRecords.Section") + '[data-key="orders"]',
     )
     .scrollIntoViewIfNeeded();
   await addScene();
   await page.getByTestId("Popup.close").click();
 
-  await page.getByTestId("dashboard.window.toggleFilterBar").click();
-  /* Ensure location is populated */
-  // await addSceneAnimation(
-  //   getCommandElemSelector("dashboard.window.toggleFilterBar"),
-  // );
-  await page.getByTestId("SearchList.Input").fill("picked");
-  await page.locator(`[data-label="picked_up"]`).waitFor({ state: "visible" });
-  await page.keyboard.press("ArrowDown");
-  await page.keyboard.press("Enter");
-  await page.getByTestId("dashboard.window.toggleFilterBar").click();
-  await page.waitForTimeout(1000);
-  await page.reload();
-  await page.getByTestId("dashboard.window.menu").waitFor({ state: "visible" });
+  // await page.getByTestId("dashboard.window.toggleFilterBar").click();
+  // /* Ensure location is populated */
+  // // await addSceneAnimation(
+  // //   getCommandElemSelector("dashboard.window.toggleFilterBar"),
+  // // );
+  // await page.getByTestId("SearchList.Input").fill("picked");
+  // await page.locator(`[data-label="picked_up"]`).waitFor({ state: "visible" });
+  // await page.keyboard.press("ArrowDown");
+  // await page.keyboard.press("Enter");
+  // await page.getByTestId("dashboard.window.toggleFilterBar").click();
+  // await page.waitForTimeout(1000);
+  // await page.reload();
+  // await page.getByTestId("dashboard.window.menu").waitFor({ state: "visible" });
 
   await addSceneAnimation(getCommandElemSelector("AddChartMenu.Map"));
 
-  await addSceneAnimation(getDataKey("(deliverer_id = id) users"));
-  await page.waitForTimeout(3000);
-
+  // await addSceneAnimation(getDataKey("(deliverer_id = id) users"));
+  await addSceneAnimation(getDataLabel("orders > customers (location)"));
   await page.waitForTimeout(3000);
 
   await page.getByTestId("MapExtentBehavior").click();
   await page.waitForTimeout(2000);
   await page.locator(getDataKey("autoZoomToData")).click();
-  await clickTableRow(pageParams, 2);
+  // await clickTableRow(pageParams, 2);
 
-  await clickTableRow(pageParams, 3);
+  // await clickTableRow(pageParams, 3);
 
-  await clickTableRow(pageParams, 1);
+  // await clickTableRow(pageParams, 1);
 
-  await addScene({ animations: [{ type: "wait", duration: 1000 }] });
+  // await addScene({ animations: [{ type: "wait", duration: 1000 }] });
 
-  await clickTableRow(pageParams, 1);
+  // await clickTableRow(pageParams, 1);
 
   await addSceneAnimation(
     getCommandElemSelector("dashboard.window.detachChart"),
@@ -146,7 +160,7 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
   await addScene({ animations: [{ type: "wait", duration: 3000 }] });
 
   const ordersHeader = page.locator(
-    `[data-table-name="orders"] .silver-grid-item-header--title`,
+    `[data-table-name="restaurants"] .silver-grid-item-header--title`,
   );
   const bbox = await ordersHeader.boundingBox();
   if (!bbox) {
@@ -171,37 +185,15 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
   await addScene({
     animations: [
       { type: "wait", duration: 1000 },
-      // {
-      //   type: "properties",
-      //   elementSelector:
-      //     getCommandElemSelector("SilverGrid.viewMoveTarget") + " rect",
-      //   props: {
-      //     x: [1, 394, 452],
-      //     y: [60, 60, 60],
-      //     width: [898, 447, 447],
-      //     height: [418, 840, 840],
-      //   },
-
-      //   duration: 1000,
-      // },
       {
         type: "custom",
         elementSelector: getCommandElemSelector("SilverGrid.viewMoveTarget"),
         attributes: {
-          // x: [1, 394, 452],
-          // y: [60, 60, 60],
-          // width: [898, 447, 447],
-          // height: [418, 840, 840],
-          transform: [
-            "translate(0, 0)",
-            "translate(452px, 0px) ",
-            // "translate(350px, 20px) scale(0.5)",
-          ],
+          transform: ["translate(0, 0)", "translate(448px, 0px) "],
         },
-
         duration: 1000,
       },
-      { type: "wait", duration: 1500 },
+      { type: "wait", duration: 500 },
     ],
   });
   await page.mouse.move(x + 675, y + 25, {
@@ -210,6 +202,17 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
   await page.waitForTimeout(1500);
   // await addScene({ animations: [{ type: "wait", duration: 1000 }] });
   await page.mouse.up({ button: "left" });
+  await page.waitForTimeout(1500);
+
   await addScene({ animations: [{ type: "wait", duration: 1000 }] });
   await page.waitForTimeout(1500);
+
+  await runDbsSql(
+    page,
+    `
+    UPDATE connections
+    SET on_mount_ts_disabled = true
+    WHERE name = 'food_delivery'
+  `,
+  );
 };
