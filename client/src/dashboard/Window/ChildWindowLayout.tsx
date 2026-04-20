@@ -46,7 +46,7 @@ export const ChildWindowLayout = <W extends WindowSyncItem>({
     1000,
   );
 
-  if (!childWindow || w.type === "sql") {
+  if (!childWindow) {
     return <>{children}</>;
   }
   if (position === "full") {

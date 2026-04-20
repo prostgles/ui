@@ -664,6 +664,12 @@ export declare namespace SVGif {
         startScale?: number;
       }
     | {
+        elementSelector: string;
+        duration: number;
+        type: "path";
+        toPath: string;
+      }
+    | {
         type: "wait";
         duration: number;
       };

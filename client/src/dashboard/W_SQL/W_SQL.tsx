@@ -541,27 +541,29 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
             )}
           </div>
 
-          <W_SQLResults
-            {...this.state}
-            w={w}
-            childWindow={childWindow}
-            tables={tables}
-            onPageChange={(newPage) => {
-              this.setState({ page: newPage });
-            }}
-            onPageSizeChange={(pageSize) => {
-              this.setState({ pageSize });
-              if (this.d.w?.limit && pageSize > this.d.w.limit) {
-                w.$update({ limit: pageSize });
-              }
-            }}
-            onResize={(newCols) => {
-              this.setState({ cols: newCols });
-            }}
-            onSort={(sort) => {
-              void this.runSQL(sort);
-            }}
-          />
+          {!childWindow && (
+            <W_SQLResults
+              {...this.state}
+              w={w}
+              childWindow={childWindow}
+              tables={tables}
+              onPageChange={(newPage) => {
+                this.setState({ page: newPage });
+              }}
+              onPageSizeChange={(pageSize) => {
+                this.setState({ pageSize });
+                if (this.d.w?.limit && pageSize > this.d.w.limit) {
+                  w.$update({ limit: pageSize });
+                }
+              }}
+              onResize={(newCols) => {
+                this.setState({ cols: newCols });
+              }}
+              onSort={(sort) => {
+                void this.runSQL(sort);
+              }}
+            />
+          )}
         </div>
 
         {popup && (

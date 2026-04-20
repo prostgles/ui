@@ -47,7 +47,7 @@ export const SmartFilterBarRightActions = (props: SmartFilterBarProps) => {
   if (!table_name || !table) return null;
 
   const commonBtnProps = {
-    variant: "outline",
+    variant: "faded",
     className: "shadow w-fit h-fit bg-color-0",
   } as const;
 

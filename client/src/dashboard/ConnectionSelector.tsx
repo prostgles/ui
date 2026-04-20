@@ -23,6 +23,7 @@ export const ConnectionSelector = ({ connection, dbs, location }: P) => {
         label: c.name || c.db_name || c.id,
         subLabel: !c.db_name ? undefined : getServerInfoStr(c, true),
       }))}
+      noSearchLimit={3}
       onChange={(cId) => {
         const subpath =
           location === "workspace" ? "connections" : "connection-config";

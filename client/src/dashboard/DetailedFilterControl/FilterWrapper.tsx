@@ -146,11 +146,14 @@ export class FilterWrapper extends RTComp<
       <Btn
         title={(filter.disabled ? "Enable" : "Disable") + " filter"}
         iconPath={mdiCheckBold}
+        size="small"
         className={`DisableEnableToggle ${minimised ? "round" : "rounded-l"}`}
         style={{
           ...(minimised && {
             background: "transparent",
             padding: 0,
+            minHeight: 0,
+            minWidth: 0,
           }),
         }}
         onClick={() => onChange({ ...filter, disabled: !filter.disabled })}

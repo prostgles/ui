@@ -273,7 +273,7 @@ export class TableHeader<Sort extends ColumnSortSQL> extends React.Component<
                     </div>
                     {col.subLabel !== undefined && this.props.showSubLabel ?
                       <div
-                        className="table-column-sublabel text-2 mt-p25 font-normal ws-nowrap text-ellipsis "
+                        className="table-column-sublabel text-2 font-normal ws-nowrap text-ellipsis "
                         title={col.subLabelTitle}
                       >
                         {col.subLabel}

@@ -101,9 +101,7 @@ export const W_SQLResults = (props: W_SQLResultsProps) => {
         (hideResults ? " hidden " : "")
       }
     >
-      {childWindow ?
-        childWindow.node
-      : notices ?
+      {notices ?
         <div className="p-1 ws-pre text-1">
           {notices
             .slice(0)
