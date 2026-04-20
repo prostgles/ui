@@ -54,6 +54,21 @@ export const SmartCardListHeaderControls = (
   ) {
     return null;
   }
+
+  if (
+    !(
+      titleNode ||
+      (showTopBar &&
+        ((isObject(showTopBar) && showTopBar.leftContent) ||
+          tableControls?.willShowInsert ||
+          (showSearch && tableControls) ||
+          (tableControls?.setLocalOrderBy && showSort))) ||
+      filterProps
+    )
+  ) {
+    return null;
+  }
+
   return (
     <FlexCol className="SmartCardListControls gap-p5 aid-end py-p25">
       {titleNode}

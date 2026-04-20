@@ -39,9 +39,13 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
   await openMenuIfClosed(true);
 
   /** Search all */
-  await addScene({ caption: "Search all tables (Ctrl+Shift+F)" });
+  await addScene({
+    caption: "Search all tables (Ctrl+Shift+F)",
+    animations: [{ type: "wait", duration: 1000 }],
+  });
   await page.keyboard.press("Control+Shift+KeyF");
-  await addScene();
+  await page.waitForTimeout(1000);
+  // await addScene({ animations: [{ type: "wait", duration: 1000 }] });
   const searchAllInput = page.getByTestId("SearchAll");
   /** To prevent searching */
   await searchAllInput.evaluate(
@@ -57,16 +61,17 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
       {
         type: "type",
         elementSelector: getCommandElemSelector("SearchAll"),
-        duration: 2000,
+        duration: 1000,
       },
     ],
   });
   await searchAllInput.evaluate((el: HTMLInputElement) => (el.value = ""));
   await searchAllInput.fill("bengal tiger");
   await page.waitForTimeout(1000);
-  await addScene({ animations: [{ type: "wait", duration: 1500 }] });
+  await addScene({ animations: [{ type: "wait", duration: 500 }] });
   await page.waitForTimeout(5500);
-  await addScene({ animations: [{ type: "wait", duration: 1500 }] });
+  await page.keyboard.press("ArrowDown");
+  await addScene({ animations: [{ type: "wait", duration: 500 }] });
   await page.keyboard.press("Enter");
   await page.getByTestId("dashboard.window.menu").waitFor({ state: "visible" });
   await page.waitForTimeout(2000);
@@ -95,15 +100,17 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
   await addScene();
   await page.getByTestId("Popup.close").click();
 
+  await page.getByTestId("dashboard.window.toggleFilterBar").click();
   /* Ensure location is populated */
-  await addSceneAnimation(
-    getCommandElemSelector("dashboard.window.toggleFilterBar"),
-  );
+  // await addSceneAnimation(
+  //   getCommandElemSelector("dashboard.window.toggleFilterBar"),
+  // );
   await page.getByTestId("SearchList.Input").fill("picked");
   await page.locator(`[data-label="picked_up"]`).waitFor({ state: "visible" });
   await page.keyboard.press("ArrowDown");
   await page.keyboard.press("Enter");
   await page.getByTestId("dashboard.window.toggleFilterBar").click();
+  await page.waitForTimeout(1000);
   await page.reload();
   await page.getByTestId("dashboard.window.menu").waitFor({ state: "visible" });
 
@@ -111,9 +118,6 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
 
   await addSceneAnimation(getDataKey("(deliverer_id = id) users"));
   await page.waitForTimeout(3000);
-  await addSceneAnimation(
-    getCommandElemSelector("dashboard.window.detachChart"),
-  );
 
   await page.waitForTimeout(3000);
 
@@ -130,6 +134,9 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
 
   await clickTableRow(pageParams, 1);
 
+  await addSceneAnimation(
+    getCommandElemSelector("dashboard.window.detachChart"),
+  );
   await addSceneAnimation(getCommandElemSelector("AddChartMenu.Timechart"));
   await addSceneAnimation(
     getCommandElemSelector("AddChartMenu.Timechart") +
@@ -164,17 +171,37 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
   await addScene({
     animations: [
       { type: "wait", duration: 1000 },
+      // {
+      //   type: "properties",
+      //   elementSelector:
+      //     getCommandElemSelector("SilverGrid.viewMoveTarget") + " rect",
+      //   props: {
+      //     x: [1, 394, 452],
+      //     y: [60, 60, 60],
+      //     width: [898, 447, 447],
+      //     height: [418, 840, 840],
+      //   },
+
+      //   duration: 1000,
+      // },
       {
-        type: "properties",
+        type: "custom",
         elementSelector: getCommandElemSelector("SilverGrid.viewMoveTarget"),
-        duration: 200,
-        props: {
-          x: "394",
-          y: "61",
-          width: "447",
-          height: "838",
+        attributes: {
+          // x: [1, 394, 452],
+          // y: [60, 60, 60],
+          // width: [898, 447, 447],
+          // height: [418, 840, 840],
+          transform: [
+            "translate(0, 0)",
+            "translate(452px, 0px) ",
+            // "translate(350px, 20px) scale(0.5)",
+          ],
         },
+
+        duration: 1000,
       },
+      { type: "wait", duration: 1500 },
     ],
   });
   await page.mouse.move(x + 675, y + 25, {

@@ -47,7 +47,7 @@ export const schemaDiagramSvgif: OnBeforeScreenshot = async (
     await addScene({
       animations: [
         {
-          type: "moveTo",
+          type: "moveCursor",
           xy: point,
           duration: 500,
         },
@@ -57,7 +57,7 @@ export const schemaDiagramSvgif: OnBeforeScreenshot = async (
   }
 
   await addScene({
-    animations: [{ type: "moveTo", xy: [350, 460], duration: 200 }],
+    animations: [{ type: "moveCursor", xy: [350, 460], duration: 200 }],
   });
   await addScene({
     animations: [{ type: "wait", duration: 4000 }],

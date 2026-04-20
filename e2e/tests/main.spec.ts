@@ -75,6 +75,8 @@ const DB_NAMES = {
 };
 const backupDir = resolve(__dirname, "../demo/backups");
 
+const TWENTY_SECONDS_OR_MORE = process.env.CI ? 50e3 : 20e3;
+
 test.describe.configure({ mode: "serial" });
 test.describe("Main test", () => {
   if (process.env.ONLY_VIDEO) {
@@ -227,7 +229,7 @@ test.describe("Main test", () => {
       await page
         .getByTestId("dashboard.window.rowInsert")
         .and(page.locator(`[data-key="users"]`))
-        .waitFor({ state: "visible", timeout: 20e3 });
+        .waitFor({ state: "visible", timeout: TWENTY_SECONDS_OR_MORE });
     };
 
     await goTo(page);
@@ -1377,7 +1379,7 @@ test.describe("Main test", () => {
       await sendAskLLMMessage(page, " mcpsandbox ");
       await page
         .getByTestId("AskLLMToolApprover.AllowOnce")
-        .click({ timeout: 20e3 });
+        .click({ timeout: TWENTY_SECONDS_OR_MORE });
       await expect(page.getByTestId("Chat.messageList")).toContainText(
         "create a container that runs",
         { timeout: 60e3 },
@@ -1394,7 +1396,7 @@ test.describe("Main test", () => {
         await expect(
           locator ?? page.getByTestId("ToolUseMessage").last(),
         ).toContainText(res, {
-          timeout: 20e3,
+          timeout: TWENTY_SECONDS_OR_MORE,
         });
       }
     };

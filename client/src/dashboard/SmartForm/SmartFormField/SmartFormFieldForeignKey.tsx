@@ -209,7 +209,7 @@ export const SmartFormFieldForeignKey = (
           title="Remove nested insert"
           iconPath={mdiClose}
           onClick={() => {
-            onChange({ type: "nested-column", value: undefined });
+            void onChange({ type: "nested-column", value: undefined });
           }}
         />
       </FlexRow>
@@ -231,6 +231,8 @@ export const SmartFormFieldForeignKey = (
           justifyContent: "space-between",
           flex: 1,
           paddingLeft: "6px",
+          /** Handled by the parent FormField wrapper .focus-border */
+          outline: "unset",
         },
       }}
     />

@@ -58,7 +58,7 @@ export const compressSVGif = (
           matchingNode.outerHTML === originalNode.outerHTML &&
           !parsedScene.animations.some((anim) => {
             const node =
-              anim.type !== "wait" && anim.type !== "moveTo" ?
+              anim.type !== "wait" && anim.type !== "moveCursor" ?
                 matchingNode.querySelector(anim.elementSelector)
               : null;
             return node;

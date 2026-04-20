@@ -630,7 +630,7 @@ export declare namespace SVGif {
         lingerMs?: number;
       }
     | {
-        type: "moveTo";
+        type: "moveCursor";
         xy: [number, number];
         duration: number;
       };
@@ -668,7 +668,13 @@ export declare namespace SVGif {
         elementSelector: string;
         duration: number;
         type: "properties";
-        props: Record<"x" | "y" | "width" | "height", string | number>;
+        props: Record<"x" | "y" | "width" | "height", (string | number)[]>;
+      }
+    | {
+        elementSelector: string;
+        duration: number;
+        type: "custom";
+        attributes: Record<"transform", [string, string]>;
       }
     | {
         type: "wait";

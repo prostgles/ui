@@ -61,7 +61,7 @@ export const typeSendAddScenes = async (
   await expect(lastMessage).toContainClass("incoming", { timeout: 15000 });
 
   for await (const animation of endAnimations) {
-    if (animation.type !== "wait" && animation.type !== "moveTo") {
+    if (animation.type !== "wait" && animation.type !== "moveCursor") {
       await page
         .locator(animation.elementSelector)
         .waitFor({ state: "visible", timeout: 15000 });

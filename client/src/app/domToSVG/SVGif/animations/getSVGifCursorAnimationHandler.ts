@@ -47,7 +47,7 @@ export const getSVGifCursorAnimationHandler = ({
     sceneNodeAnimations: SceneNodeAnimation[];
     sceneId: string;
   }) => {
-    if (animation.type === "moveTo") {
+    if (animation.type === "moveCursor") {
       cursorMovements.push({
         fromPerc: Number(getPercent(currentPrevDuration)),
         toPerc: Number(getPercent(currentPrevDuration + animation.duration)),

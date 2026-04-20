@@ -11,6 +11,7 @@ import { getAnimationProperty } from "./getSVGif";
 import type { SVGifParsedScene } from "./getSVGifParsedScenes";
 import { getSVGifRevealKeyframes } from "./getSVGifRevealKeyframes";
 import { getSVGifTargetBBox } from "./getSVGifTargetBBox";
+import { getSVGifCustomAnimation } from "./animations/getSVGifCustomAnimation";
 
 /**
  * Given an SVGifScenes, return the animations
@@ -102,7 +103,7 @@ export const getSVGifAnimations = (
     };
     for (const [animationIndex, animation] of animations.entries()) {
       const bboxInfo =
-        animation.type !== "moveTo" && animation.type !== "wait" ?
+        animation.type !== "moveCursor" && animation.type !== "wait" ?
           getSVGifTargetBBox({
             elementSelector: animation.elementSelector,
             svgDom,
@@ -117,7 +118,7 @@ export const getSVGifAnimations = (
       } else if (
         animation.type === "click" ||
         animation.type === "clickAppearOnHover" ||
-        animation.type === "moveTo"
+        animation.type === "moveCursor"
       ) {
         cursorHandler.addAnimation({
           currentPrevDuration,
@@ -186,6 +187,22 @@ export const getSVGifAnimations = (
           appendRootStyle(parsedAnimations.style);
         } else if (animation.type === "properties") {
           const parsedAnimations = getSVGifPropertiesAnimation(
+            { height, width },
+            { element, bbox },
+            parsedScene,
+            animation,
+            {
+              sceneId,
+              sceneIndex,
+              totalDuration: totalSvgifDuration,
+              getPercent,
+              fromTime,
+            },
+          );
+          sceneNodeAnimations.push(...parsedAnimations.sceneNodeAnimations);
+          // appendStyle(parsedAnimations.style);
+        } else if (animation.type === "custom") {
+          const parsedAnimations = getSVGifCustomAnimation(
             { height, width },
             { element, bbox },
             parsedScene,
