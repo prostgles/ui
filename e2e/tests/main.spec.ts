@@ -3201,6 +3201,12 @@ test.describe("Main test", () => {
           return dialog.accept();
         });
       });
+    await runDbSql(
+      page,
+      `
+        CREATE TABLE force_cached_col_types_reload (); -- Needed failed test rerun
+        DROP TABLE force_cached_col_types_reload;`,
+    );
     await startSqlTest();
   });
 

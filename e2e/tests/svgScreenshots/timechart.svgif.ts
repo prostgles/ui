@@ -48,7 +48,9 @@ export const timechartSvgif: OnBeforeScreenshot = async (
   await addSceneAnimation(
     getCommandElemSelector("TimeChartLayerOptions.groupBy"),
   );
-  await addSceneAnimation(getDataKey("symbol"));
+  await addSceneAnimation(
+    getCommandElemSelector("Popup.content") + " " + getDataKey("symbol"),
+  );
   await addSceneAnimation(getCommandElemSelector("Popup.close"));
   await addScene();
   await toggleMenuPinned(false);

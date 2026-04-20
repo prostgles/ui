@@ -4,17 +4,15 @@ import React from "react";
 import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
 import { useDebouncedCallback } from "src/hooks/useDebouncedCallback";
 
-export type ChildWindowLayoutProps<W extends WindowSyncItem> = {
-  w: W;
+export type ChildWindowLayoutProps = {
   childWindow: { node: React.ReactNode; w: WindowSyncItem } | undefined;
   children: React.ReactNode;
 };
 
-export const ChildWindowLayout = <W extends WindowSyncItem>({
-  w,
+export const ChildWindowLayout = ({
   children,
   childWindow,
-}: ChildWindowLayoutProps<W>) => {
+}: ChildWindowLayoutProps) => {
   const rootRef = React.useRef<HTMLDivElement>(null);
   const childRef = React.useRef<HTMLDivElement>(null);
 

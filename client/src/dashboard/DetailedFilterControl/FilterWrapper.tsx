@@ -316,6 +316,7 @@ export class FilterWrapper extends RTComp<
 
           <Btn
             iconPath={mdiDelete}
+            data-command="FilterWrapper.deleteFilter"
             title="Delete filter"
             onClick={() => {
               onChange();

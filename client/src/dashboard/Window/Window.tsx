@@ -36,7 +36,7 @@ import {
 import { Select } from "@components/Select/Select";
 
 type P<W extends WindowSyncItem> = {
-  // w?: W;
+  w: W;
   onWChange?: (w: W, delta: DeepPartial<W>) => any;
   connection: DBSSchema["connections"];
   children?: ReactNode;
@@ -45,7 +45,7 @@ type P<W extends WindowSyncItem> = {
   quickMenuProps?: W extends WindowSyncItem<"table"> | WindowSyncItem<"sql"> ?
     Omit<ProstglesQuickMenuProps, "w">
   : undefined;
-} & ChildWindowLayoutProps<W>;
+} & ChildWindowLayoutProps;
 
 type S<W extends WindowSyncItem> = {
   showMenu: HTMLButtonElement | undefined;
@@ -188,7 +188,7 @@ export default class Window<W extends WindowSyncItem> extends RTComp<
           }}
         >
           <ErrorTrap>
-            <ChildWindowLayout w={w} childWindow={childWindow}>
+            <ChildWindowLayout childWindow={childWindow}>
               {children}
             </ChildWindowLayout>
           </ErrorTrap>

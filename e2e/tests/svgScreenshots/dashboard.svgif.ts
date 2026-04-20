@@ -90,7 +90,7 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
   await page.keyboard.press("Enter");
   await page.getByTestId("dashboard.window.menu").waitFor({ state: "visible" });
   await page.waitForTimeout(2000);
-  await addScene({ animations: [{ type: "wait", duration: 1500 }] });
+  await addScene({ animations: [{ type: "wait", duration: 500 }] });
 
   // Table
   // await closeWorkspaceWindows(page);
@@ -129,18 +129,22 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
   // await page.reload();
   // await page.getByTestId("dashboard.window.menu").waitFor({ state: "visible" });
 
+  await addSceneAnimation(getCommandElemSelector("FilterWrapper.deleteFilter"));
   await addSceneAnimation(getCommandElemSelector("AddChartMenu.Map"));
 
   // await addSceneAnimation(getDataKey("(deliverer_id = id) users"));
-  await addSceneAnimation(getDataLabel("orders > customers (location)"));
+  await addSceneAnimation(
+    getDataLabel("orders > (deliverer_id = id) users (location)"),
+  );
   await page.waitForTimeout(3000);
+  await page.getByTestId("InMapControls.goToDataBounds").click();
 
   await page.getByTestId("MapExtentBehavior").click();
   await page.waitForTimeout(2000);
   await page.locator(getDataKey("autoZoomToData")).click();
-  // await clickTableRow(pageParams, 2);
+  await clickTableRow(pageParams, 2);
 
-  // await clickTableRow(pageParams, 3);
+  await clickTableRow(pageParams, 3);
 
   // await clickTableRow(pageParams, 1);
 
@@ -215,4 +219,5 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
     WHERE name = 'food_delivery'
   `,
   );
+  await page.waitForTimeout(1500);
 };

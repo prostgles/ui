@@ -48,7 +48,7 @@ export const addViewToWorkspace = async (
   let options: WindowData["options"] = { hideTable: true };
   const defaultTableOptions: WindowData["options"] = {
     maxCellChars: 500,
-    showFilters: false,
+    showFilters: filter.length ? true : false,
     refresh: { type: "Realtime", throttleSeconds: 1, intervalSeconds: 1 },
   };
   let table_oid: number | undefined;

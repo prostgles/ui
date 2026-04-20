@@ -572,6 +572,7 @@ export const COMMANDS = {
   ToolCall: "",
   "AgenticWorkflowActivity.openTable": "",
   "SilverGrid.viewMoveTarget": "",
+  "FilterWrapper.deleteFilter": "",
 } as const satisfies Record<
   string,
   | string

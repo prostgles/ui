@@ -19,9 +19,9 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
   { openConnection },
   { addScene, addSceneAnimation },
 ) => {
-  if (Math.PI) {
-    throw "Drag and rearrange";
-  }
+  // if (Math.PI) {
+  //   throw "Drag and rearrange";
+  // }
   await openConnection("prostgles_video_demo");
   await closeWorkspaceWindows(page);
 
@@ -197,7 +197,7 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
   await page
     .locator(getDataLabel("documents get_document_text"))
     .nth(1)
-    .waitFor({ state: "visible" });
+    .waitFor({ state: "visible", timeout: 35000 });
   await addSceneAnimation(
     {
       selector: getDataLabel("documents get_document_text"),
