@@ -1,5 +1,9 @@
 import { getCommandElemSelector, getDataKey } from "Testing";
-import { deleteAllWorkspaces, openTable } from "utils/utils";
+import {
+  closeWorkspaceWindows,
+  deleteAllWorkspaces,
+  openTable,
+} from "utils/utils";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
 
 export const timechartSvgif: OnBeforeScreenshot = async (
@@ -9,6 +13,7 @@ export const timechartSvgif: OnBeforeScreenshot = async (
 ) => {
   await openConnection("crypto");
   await deleteAllWorkspaces(page);
+  await closeWorkspaceWindows(page);
   await openTable(page, "futures");
   await addSceneAnimation(
     getCommandElemSelector("dashboard.window.toggleFilterBar"),

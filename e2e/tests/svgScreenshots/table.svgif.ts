@@ -91,9 +91,14 @@ export const tableSvgif: OnBeforeScreenshot = async (
   );
   await addSceneAnimation(getDataKey("Quick Stats"));
   await addSceneAnimation(getDataKey("rider"));
+
+  await addScene({ animations: [{ type: "wait", duration: 1500 }] });
+
   await page.getByTestId("Popup.close").click();
 
-  return;
+  await addScene({ animations: [{ type: "wait", duration: 1500 }] });
+
+  await page.waitForTimeout(500);
   // await addSceneAnimation(getDataKey("orders"));
   // await addSceneAnimation(
   //   getCommandElemSelector("JoinedRecords.SectionToggle") +

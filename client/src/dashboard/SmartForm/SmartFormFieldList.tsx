@@ -76,7 +76,7 @@ export const SmartFormFieldList = (props: P) => {
   return (
     <ScrollFade
       className={classOverride(
-        "SmartFormFieldList flex-col f-1 o-auto min-h-0 min-w-0 pb-1 gap-1 px-2",
+        "SmartFormFieldList flex-col f-1 o-auto min-h-0 min-w-0 pb-1 gap-1 pl-1 pr-2",
         contentClassname,
       )}
     >

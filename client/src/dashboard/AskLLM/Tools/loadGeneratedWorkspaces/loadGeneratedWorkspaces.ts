@@ -105,8 +105,8 @@ export const loadGeneratedWorkspaces = async (
       options: {
         pinnedMenu: false,
       },
-      user_id: undefined as any,
-      last_updated: undefined as any,
+      user_id: undefined as unknown as string,
+      last_updated: undefined as unknown as string,
       connection_id: connectionId,
       windows,
       source: {

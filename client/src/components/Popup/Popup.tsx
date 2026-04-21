@@ -400,7 +400,7 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
         >
           <div
             className={classOverride(
-              `${POPUP_CLASSES.rootChild} w-full min-h-0 text-center flex-col bg-inherit ${fullHeightPositions.includes(positioning) ? "f-1" : ""}`,
+              `${POPUP_CLASSES.rootChild} w-full min-h-0 text-center flex-col bg-inherit ${fullHeightPositions.includes(positioning) || fullScreen ? "f-1" : ""}`,
               rootChildClassname,
             )}
             style={{

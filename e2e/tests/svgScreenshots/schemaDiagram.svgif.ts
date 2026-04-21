@@ -21,7 +21,7 @@ export const schemaDiagramSvgif: OnBeforeScreenshot = async (
     ],
   });
   await page.getByTestId("SchemaGraph").click();
-  await page.waitForTimeout(1500);
+  await page.waitForTimeout(2500);
   await addScene({
     animations: [
       {
@@ -39,7 +39,7 @@ export const schemaDiagramSvgif: OnBeforeScreenshot = async (
     .waitFor({ state: "visible" });
 
   for (const point of [
-    [430, 370],
+    [430, 350],
     [350, 440],
   ] satisfies [number, number][]) {
     await page.mouse.move(...point, { steps: 10 });

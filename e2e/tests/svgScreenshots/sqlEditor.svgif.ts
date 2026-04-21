@@ -255,15 +255,15 @@ export const sqlEditorSvgif: OnBeforeScreenshot = async (
     svgFileName: "map",
     caption: "Map visualization",
   });
-  await monacoType(page, `.ProstglesSQL`, `${mapQuery}\nINNER JOIN `, {
-    deleteAllAndFill: false,
-    keyPressDelay: 0,
-    pressAfterTyping: ["Control+Space"],
-  });
-  await addScene({
-    svgFileName: "map_with_suggestions",
-    caption: "Map visualization",
-  });
+  // await monacoType(page, `.ProstglesSQL`, `${mapQuery}\nINNER JOIN `, {
+  //   deleteAllAndFill: false,
+  //   keyPressDelay: 0,
+  //   pressAfterTyping: ["Control+Space"],
+  // });
+  // await addScene({
+  //   svgFileName: "map_with_suggestions",
+  //   caption: "Map visualization",
+  // });
   await page.getByTestId("dashboard.window.closeChart").click();
 };
 

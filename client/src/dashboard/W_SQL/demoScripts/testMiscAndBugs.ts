@@ -12,7 +12,7 @@ export const testMiscAndBugs: DemoScript = async ({
 }) => {
   await runDbSQL(`CREATE EXTENSION IF NOT EXISTS postgis;`);
 
-  fromBeginning();
+  await fromBeginning();
   await typeAuto("set");
   await typeAuto(" statement");
   await typeAuto(" ");
@@ -20,7 +20,7 @@ export const testMiscAndBugs: DemoScript = async ({
   await tout(1200);
   testResult("SET statement_timeout TO '0ms'");
 
-  fromBeginning();
+  await fromBeginning();
   await typeAuto("va");
   await typeAuto(" ");
   await typeAuto(" ");
@@ -37,7 +37,7 @@ export const testMiscAndBugs: DemoScript = async ({
     }
   };
   /** Test Notify */
-  fromBeginning();
+  await fromBeginning();
   await typeAuto(`LISTEN mychannel`, {
     nth: -1,
     msPerChar: 10,
@@ -50,7 +50,7 @@ export const testMiscAndBugs: DemoScript = async ({
   await sqlAction("stop-listen");
 
   /** test One Packet Bug */
-  fromBeginning();
+  await fromBeginning();
   await typeAuto(`SELECT pg_sleep(1), '${notificationText}' as a`, {
     nth: -1,
     msPerChar: 10,

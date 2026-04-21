@@ -141,7 +141,7 @@ export const TableAccessEditor = ({
               }
             </p>
             <MonacoEditor
-              className="b b-color-0"
+              className="b b-color-0 f-1"
               language={"sql"}
               loadedSuggestions={undefined}
               value={fixIndent(ddlState.patchDdl ?? ddlState.ddl)}

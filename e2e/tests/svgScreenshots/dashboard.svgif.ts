@@ -112,8 +112,25 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
       getCommandElemSelector("JoinedRecords.Section") + '[data-key="orders"]',
     )
     .scrollIntoViewIfNeeded();
-  await addScene();
-  await page.getByTestId("Popup.close").click();
+  await addScene({ animations: [{ type: "wait", duration: 1500 }] });
+
+  // await addSceneAnimation({
+  //   selector: getCommandElemSelector("dashboard.window.viewEditRow"),
+  //   nth: 0,
+  // });
+  // await page.waitForTimeout(1500);
+  // await addSceneAnimation(
+  //   getCommandElemSelector("JoinedRecords.SectionToggle") +
+  //     getDataKey("order_items"),
+  // );
+  await page.waitForTimeout(1500);
+  await addSceneAnimation({
+    selector: getCommandElemSelector("SmartCard.viewEditRow"),
+    nth: 0,
+  });
+  await addScene({ animations: [{ type: "wait", duration: 1500 }] });
+  await page.getByTestId("Popup.close").last().click();
+  await page.getByTestId("Popup.close").last().click();
 
   // await page.getByTestId("dashboard.window.toggleFilterBar").click();
   // /* Ensure location is populated */

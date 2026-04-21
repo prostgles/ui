@@ -106,13 +106,7 @@ export const SearchInput = (props: SearchInputProps) => {
           margin: "2px",
         }}
       >
-        {isLoading && (
-          <Loading
-            className="noselect mr-p5 bg-color-0"
-            sizePx={24}
-            variant="cover"
-          />
-        )}
+        {isLoading && <Loading className="noselect mr-p5 " sizePx={24} />}
 
         {matchCaseState && (
           <Btn

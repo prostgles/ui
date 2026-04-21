@@ -9,6 +9,7 @@ import {
 } from "./utils/utils";
 import { USERS } from "utils/constants";
 import { goTo } from "utils/goTo";
+import { getSerialisableError } from "prostgles-types";
 // const viewPortSize = { width: 1920, height: 1080 };
 const viewPortSize = { width: 1280, height: 1080 };
 test.use({
@@ -75,7 +76,8 @@ test.describe("Demo video", () => {
           } catch (e) {
             console.error(e);
             console.error(JSON.stringify(e));
-            throw JSON.stringify(e);
+            await new Promise((res) => setTimeout(res, 10e3));
+            throw getSerialisableError(e);
           }
         });
       await page.waitForTimeout(1e3);

@@ -15,5 +15,8 @@ export const SVGIF_SCENES_DIR = path.join(
   SCREENSHOTS_PATH,
   SVGIF_SCENES_PATH,
 );
-
+export const SVGIF_SCENES_SPECS_PATH = path.join(
+  SVGIF_SCENES_DIR,
+  "overview_svgif_specs.json",
+);
 export type SVGifScene = SVGif.Scene;

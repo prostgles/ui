@@ -34,4 +34,6 @@ export const fileImporter: OnBeforeScreenshot = async (
   await page.waitForTimeout(1500);
   await addScene({ animations: [{ type: "wait", duration: 2000 }] });
   await addSceneAnimation(getCommandElemSelector("FileImporterFooter.import"));
+  await addScene({ animations: [{ type: "wait", duration: 1500 }] });
+  await addScene({ animations: [{ type: "wait", duration: 1500 }] });
 };

@@ -2,11 +2,17 @@ import * as fs from "fs";
 import { getOverviewSvgifSpecs } from "svgScreenshots/getOverviewSvgifSpecs.svgif";
 import { getDashboardUtils, type PageWIds } from "../../utils/utils";
 import { SVG_SCREENSHOT_DETAILS } from "../SVG_SCREENSHOT_DETAILS";
-import { SVG_SCREENSHOT_DIR, type SVGifScene } from "./constants";
+import {
+  SVG_SCREENSHOT_DIR,
+  SVGIF_SCENES_DIR,
+  type SVGifScene,
+} from "./constants";
 import { saveSVGifs } from "./saveSVGifs";
 import { saveSVGScreenshot } from "./saveSVGScreenshot";
 import { getSceneUtils } from "./getSceneUtils";
 import { svgifToWebm } from "./svgifToWebm";
+import { writeFile } from "fs/promises";
+import { join } from "path";
 
 export const saveSVGs = async (page: PageWIds) => {
   /** Delete existing markdown docs */
@@ -46,11 +52,13 @@ export const saveSVGs = async (page: PageWIds) => {
   const svgifSpecsObj = fromEntriesTyped(
     svgifSpecs.map((s) => [s.fileName, s.scenes]),
   );
-  const { overviewSvgifSpecs, svgifCovers } =
-    await getOverviewSvgifSpecs(svgifSpecsObj);
-  await saveSVGifs(page, overviewSvgifSpecs, svgifCovers);
+
+  await writeFile(
+    join(SVGIF_SCENES_DIR, `overview_svgif_specs.json`),
+    JSON.stringify(svgifSpecsObj, null, 2),
+  );
   await page.waitForTimeout(100);
-  return { svgifSpecs, overviewSvgifSpecs, svgifCovers };
+  return { svgifSpecs };
 };
 
 const fromEntriesTyped = <K extends string, V>(

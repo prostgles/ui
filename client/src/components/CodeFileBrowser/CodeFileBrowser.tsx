@@ -3,7 +3,7 @@ import { FlexRow } from "@components/Flex";
 import { MenuList } from "@components/MenuList";
 import { MONACO_READONLY_DEFAULT_OPTIONS } from "@components/MonacoEditor/MonacoEditor";
 import { mdiText } from "@mdi/js";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { CodeEditorWithSaveButton } from "src/dashboard/CodeEditor/CodeEditorWithSaveButton";
 
 export const CodeFileBrowser = ({
@@ -16,17 +16,19 @@ export const CodeFileBrowser = ({
     content: string;
   }) => void | Promise<void>;
 }) => {
-  // ADD REACT TYPES FROM node_modules/@types/react/index.d.ts
-  // const { dbsMethods } = usePrglCore();
-  // const tsTypes = usePromise(async () => {
-  //   if (!dbsMethods.getNodeTypes) return;
-  //   return await dbsMethods.getNodeTypes();
-  // }, [dbsMethods]);
-
   const [activeFilePath, setActiveFilePath] = useState(Object.keys(files)[0]);
   const activeContent = activeFilePath ? (files[activeFilePath] ?? "") : "";
   const extension = activeFilePath?.toLowerCase().split(".").at(-1) ?? "txt";
-
+  const language = useMemo(() => {
+    if (extension === "ts") {
+      return {
+        lang: "typescript",
+        environment: "nodejs",
+        modelFileName: activeFilePath ?? "file.ts",
+      } as const;
+    }
+    return FILE_EXTENSION_TO_ICON_INFO[extension]?.label ?? "plaintext";
+  }, [activeFilePath, extension]);
   return (
     <FlexRow className="min-w-0 min-h-0 ai-start gap-0 w-full max-w-full f-1">
       <MenuList
@@ -49,25 +51,10 @@ export const CodeFileBrowser = ({
       />
       <FlexRow className="o-auto f-1 w-full h-full ai-start">
         {activeFilePath && (
-          // <MonacoEditor
-          //   className="f-1 h-full"
-          //   language={
-          //     FILE_EXTENSION_TO_ICON_INFO[extension]?.label ?? "plaintext"
-          //   }
-          //   loadedSuggestions={undefined}
-          //   value={activeContent}
-          //   style={{ width: "min(600px, 100%)", minHeight: 200 }}
-          //   onChange={(newValue) => {
-          //     onChange({ fileName: activeFilePath, content: newValue });
-          //   }}
-          //   options={monacoOptions}
-          // />
           <CodeEditorWithSaveButton
             key={activeFilePath}
             className="f-1 h-full"
-            language={
-              FILE_EXTENSION_TO_ICON_INFO[extension]?.label ?? "plaintext"
-            }
+            language={language}
             label=""
             value={activeContent}
             // style={{ width: "min(600px, 100%)", minHeight: 200 }}

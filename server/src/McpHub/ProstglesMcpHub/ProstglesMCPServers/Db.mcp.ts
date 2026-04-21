@@ -79,6 +79,7 @@ const handler = {
           );
           const result = await tableHandler.find(filter, {
             select: select as {},
+            limit: 10,
             ...params,
           });
           return result;

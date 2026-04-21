@@ -14,6 +14,8 @@ import { DOCS_DIR } from "svgScreenshots/utils/constants";
 import { svgScreenshotsCompleteReferenced } from "svgScreenshots/utils/svgScreenshotsCompleteReferenced";
 import { USERS } from "utils/constants";
 import { goTo } from "utils/goTo";
+import { getOverviewSvgifSpecs } from "svgScreenshots/getOverviewSvgifSpecs.svgif";
+import { saveSVGifs } from "svgScreenshots/utils/saveSVGifs";
 
 test.use({
   viewport: {
@@ -139,8 +141,21 @@ test.describe("Create docs and screenshots", () => {
       await page.waitForTimeout(1100);
 
       await prepare(page);
-      const { svgifSpecs, overviewSvgifSpecs, svgifCovers } =
-        await saveSVGs(page);
+      await saveSVGs(page);
+    }
+  });
+
+  test("Create overviews and verify screenshots", async ({ page: p }) => {
+    const page = p as PageWIds;
+
+    await login(page, USERS.test_user, "/login");
+    if (!IS_PIPELINE) {
+      await page.waitForTimeout(1100);
+
+      const { svgifSpecsObj, overviewSvgifSpecs, svgifCovers } =
+        await getOverviewSvgifSpecs();
+      await saveSVGifs(page, overviewSvgifSpecs, svgifCovers);
+
       const svgFilesUsedExternally = [
         ...overviewSvgifSpecs
           .filter((s) => s.usedExternally)
@@ -148,7 +163,7 @@ test.describe("Create docs and screenshots", () => {
         ...svgifCovers.map((c) => c.fileName),
       ];
       await svgScreenshotsCompleteReferenced(
-        svgifSpecs.flatMap((s) => s.scenes),
+        Object.values(svgifSpecsObj).flat(),
         svgFilesUsedExternally,
       );
     }

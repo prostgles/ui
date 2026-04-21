@@ -34,10 +34,10 @@ export const testSqlCharts: DemoScript = async ({
   await fromBeginning(false, timechartQueries);
 
   const addChart = async (chartType: "Timechart" | "Map") => {
-    moveCursor.pageDown();
-    moveCursor.lineEnd();
-    moveCursor.up(1);
-    moveCursor.down(2);
+    await moveCursor.pageDown();
+    await moveCursor.lineEnd();
+    await moveCursor.up(1);
+    await moveCursor.down(2);
     await click(
       chartType === "Map" ? "AddChartMenu.Map" : "AddChartMenu.Timechart",
     );

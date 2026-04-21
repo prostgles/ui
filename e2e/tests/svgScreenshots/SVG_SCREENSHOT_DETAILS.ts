@@ -6,18 +6,17 @@ import { getCommandElemSelector, getDataKey } from "../Testing";
 import { getDashboardUtils, openTable, type PageWIds } from "../utils/utils";
 import { accountSvgif } from "./account.svgif";
 import { aiAssistantSvgif } from "./aiAssistant.svgif";
+import { aiAssistantAgenticWorkflowSvgif } from "./aiAssistantAgenticWorkflow.svgif";
 import { backupAndRestoreSvgif } from "./backupAndRestore.svgif";
 import { commandPaletteSvgif } from "./commandPalette.svgif";
 import { electronSetupSvgif } from "./electronSetup.svgif";
 import { mapSvgif } from "./map.svgif";
 import { navbarSvgif } from "./navbar.svgif";
 import { newConnectionSvgif } from "./newConnection.svgif";
-import { smartFormSvgif } from "./smartForm.svgif";
 import { sqlEditorSvgif } from "./sqlEditor.svgif";
 import { tableSvgif } from "./table.svgif";
 import { timechartSvgif } from "./timechart.svgif";
 import type { getSceneUtils } from "./utils/getSceneUtils";
-import { aiAssistantAgenticWorkflowSvgif } from "./aiAssistantAgenticWorkflow.svgif";
 
 export type OnBeforeScreenshot = (
   page: PageWIds,
@@ -32,7 +31,6 @@ export const SVG_SCREENSHOT_DETAILS = {
   command_palette: commandPaletteSvgif,
   ai_assistant: aiAssistantSvgif,
   timechart: timechartSvgif,
-  smart_form: smartFormSvgif,
   backup_and_restore: backupAndRestoreSvgif,
   table: tableSvgif,
   map: mapSvgif,
@@ -60,8 +58,6 @@ export const SVG_SCREENSHOT_DETAILS = {
       text: "4326",
       // mode: "fill",
     });
-    await addScene();
-    await page.keyboard.press("ArrowDown");
     await addScene();
     await page.keyboard.press("Enter");
     await page.waitForTimeout(1500);

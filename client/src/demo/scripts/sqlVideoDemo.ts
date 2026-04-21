@@ -14,6 +14,7 @@ import {
   openConnection,
   waitForElement,
 } from "../demoUtils";
+import { getCommandElemSelector } from "src/Testing";
 
 export { fixIndent };
 const sqlVideoDemo: DemoScript = async (args) => {
@@ -96,7 +97,7 @@ const sqlVideoDemo: DemoScript = async (args) => {
     script: string,
     logic: () => Promise<void>,
   ) => {
-    fromBeginning(false, `/* ${title} */\n${script}`);
+    await fromBeginning(false, `/* ${title} */\n${script}`);
     await tout(1e3);
     await logic();
     await tout(1e3);
@@ -439,9 +440,14 @@ const timeChartDemo: DemoScript = async ({
 
   /** Shows numeric col avg by default */
   shouldBeEqual(layer.innerText, "Avg(\nrval\n),\ndate");
+  await tout(100);
 
-  /** Cannot add the same layer */
-  shouldBeEqual(addTChartBtn.disabled, true);
+  for (const btn of document.querySelectorAll<HTMLButtonElement>(
+    getCommandElemSelector("AddChartMenu.Timechart"),
+  )) {
+    /** Cannot add the same layer */
+    shouldBeEqual(btn.disabled, true, "Cannot add the same layer");
+  }
 
   const setLayerFunc = async (func: "$avg" | "$countAll", layerNumber = 0) => {
     await click("TimeChartLayerOptions.aggFunc", "", {
@@ -526,8 +532,8 @@ const timeChartDemo: DemoScript = async ({
   await click("dashboard.window.closeChart");
 };
 
-export const shouldBeEqual = (a: any, b: any) => {
+export const shouldBeEqual = (a: any, b: any, message?: string) => {
   if (a !== b) {
-    throw new Error(`Expected ${a} to equal ${b}`);
+    throw new Error(`Expected ${a} to equal ${b}. ${message ?? ""}`);
   }
 };

@@ -119,7 +119,11 @@ export const dbMcpSchema = {
             nulls: { enum: ["first", "last"], optional: true },
           },
         },
-        limit: { optional: true, type: "integer" },
+        limit: {
+          optional: true,
+          description: "Defaults to 10",
+          type: "integer",
+        },
         offset: { optional: true, type: "integer" },
       },
     },

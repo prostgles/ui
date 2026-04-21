@@ -96,7 +96,7 @@ export const JoinedRecords = (props: JoinedRecordsProps) => {
         return (
           <Section
             key={path.join(".")}
-            className="trigger-hover pl-1"
+            className="trigger-hover "
             btnProps={{
               ["data-command"]: "JoinedRecords.SectionToggle",
               ["data-key"]: path.join("."),

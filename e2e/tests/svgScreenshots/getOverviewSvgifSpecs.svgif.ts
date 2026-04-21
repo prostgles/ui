@@ -1,15 +1,19 @@
+import { readFile } from "fs/promises";
 import type { SVG_SCREENSHOT_DETAILS } from "./SVG_SCREENSHOT_DETAILS";
-import type { SVGifScene } from "./utils/constants";
+import { SVGIF_SCENES_SPECS_PATH, type SVGifScene } from "./utils/constants";
 
-export const getOverviewSvgifSpecs = async (
-  existing: Record<keyof typeof SVG_SCREENSHOT_DETAILS, SVGifScene[]>,
-) => {
+export const getOverviewSvgifSpecs = async () => {
+  const svgifSpecsObj: Record<
+    keyof typeof SVG_SCREENSHOT_DETAILS,
+    SVGifScene[]
+  > = JSON.parse(await readFile(SVGIF_SCENES_SPECS_PATH, "utf-8"));
+
   const sliceScenes = (
     fileName: keyof typeof SVG_SCREENSHOT_DETAILS,
     start: number,
-    end = existing[fileName].length,
+    end = svgifSpecsObj[fileName].length,
   ) => {
-    const scenes = structuredClone(existing[fileName].slice(start, end));
+    const scenes = structuredClone(svgifSpecsObj[fileName].slice(start, end));
     if (scenes.length !== end - start) {
       throw new Error(
         `Not enough scenes in ${fileName}: expected ${end - start}, got ${scenes.length}`,
@@ -27,6 +31,11 @@ export const getOverviewSvgifSpecs = async (
       scenes: [...sliceScenes("table", 2)],
     },
     {
+      fileName: "smart_form",
+      usedExternally: true,
+      scenes: [...sliceScenes("table", 2, 6)],
+    },
+    {
       fileName: "interactive_dashboards",
       usedExternally: true,
       scenes: [...sliceScenes("dashboard", 15)],
@@ -41,7 +50,7 @@ export const getOverviewSvgifSpecs = async (
       usedExternally: true,
       scenes: [
         ...sliceScenes("sql_editor", 1, 10),
-        ...sliceScenes("sql_editor", 18, 19),
+        ...sliceScenes("sql_editor", 12),
       ],
     },
 
@@ -100,7 +109,7 @@ export const getOverviewSvgifSpecs = async (
         ...sliceScenes("ai_assistant", 0),
 
         ...sliceScenes("sql_editor", 8, 10),
-        ...sliceScenes("sql_editor", 18, 19),
+        ...sliceScenes("sql_editor", 12),
         ...sliceScenes("file_importer", 0),
       ],
     },
@@ -109,31 +118,31 @@ export const getOverviewSvgifSpecs = async (
   const svgifCovers: { fileName: string; svgSceneFileName: string }[] = [
     {
       fileName: "linked_data",
-      svgSceneFileName: existing.dashboard[20]!.svgFileName,
+      svgSceneFileName: svgifSpecsObj.dashboard[10]!.svgFileName,
     },
     {
       fileName: "sql_editor",
-      svgSceneFileName: existing.sql_editor[13]!.svgFileName,
+      svgSceneFileName: svgifSpecsObj.sql_editor[13]!.svgFileName,
     },
     {
       fileName: "sql_editor1",
-      svgSceneFileName: existing.sql_editor[18]!.svgFileName,
+      svgSceneFileName: svgifSpecsObj.sql_editor[12]!.svgFileName,
     },
     {
       fileName: "backups",
-      svgSceneFileName: existing.backup_and_restore[16]!.svgFileName,
+      svgSceneFileName: svgifSpecsObj.backup_and_restore[16]!.svgFileName,
     },
 
     {
       fileName: "ai_assistant",
-      svgSceneFileName: existing.ai_assistant[4]!.svgFileName,
+      svgSceneFileName: svgifSpecsObj.ai_assistant[4]!.svgFileName,
     },
 
     {
       fileName: "timechart_cover",
-      svgSceneFileName: existing.ai_assistant[31]!.svgFileName, // or 32 with tooltip
+      svgSceneFileName: svgifSpecsObj.ai_assistant[31]!.svgFileName, // or 32 with tooltip
     },
   ];
 
-  return { svgifCovers, overviewSvgifSpecs };
+  return { svgifSpecsObj, svgifCovers, overviewSvgifSpecs };
 };

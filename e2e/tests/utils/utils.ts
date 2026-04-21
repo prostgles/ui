@@ -613,7 +613,7 @@ export const openTable = async (
 
   /** Ensure table was opened */
   const table = page.locator(
-    `[data-table-name${exact ? "" : "^"}=${JSON.stringify(namePartStart)}]`,
+    `[data-table-name${exact ? "=" : "^="}${JSON.stringify(namePartStart)}]`,
   );
 
   /** Used for debugging */
