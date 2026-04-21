@@ -5,7 +5,7 @@ import { MINUTE } from "../../utils/utils";
 export const getFilesFromDir = (
   dir: string,
   endWith: string,
-  checkAge = true,
+  checkAge = false,
 ) => {
   const files = fs
     .readdirSync(dir)

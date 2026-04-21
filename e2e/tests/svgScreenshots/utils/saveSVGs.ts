@@ -1,5 +1,6 @@
 import * as fs from "fs";
-import { getOverviewSvgifSpecs } from "svgScreenshots/getOverviewSvgifSpecs.svgif";
+import { writeFile } from "fs/promises";
+import { join } from "path";
 import { getDashboardUtils, type PageWIds } from "../../utils/utils";
 import { SVG_SCREENSHOT_DETAILS } from "../SVG_SCREENSHOT_DETAILS";
 import {
@@ -7,12 +8,9 @@ import {
   SVGIF_SCENES_DIR,
   type SVGifScene,
 } from "./constants";
+import { getSceneUtils } from "./getSceneUtils";
 import { saveSVGifs } from "./saveSVGifs";
 import { saveSVGScreenshot } from "./saveSVGScreenshot";
-import { getSceneUtils } from "./getSceneUtils";
-import { svgifToWebm } from "./svgifToWebm";
-import { writeFile } from "fs/promises";
-import { join } from "path";
 
 export const saveSVGs = async (page: PageWIds) => {
   /** Delete existing markdown docs */
