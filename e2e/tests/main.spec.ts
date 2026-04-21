@@ -75,7 +75,10 @@ const DB_NAMES = {
 };
 const backupDir = resolve(__dirname, "../demo/backups");
 
-const TWENTY_SECONDS_OR_MORE = process.env.CI ? 50e3 : 20e3;
+const getTimeout = (base: number) => ({
+  timeout: base * (process.env.CI ? 3 : 1),
+});
+const TWENTY_SECONDS_OR_MORE = getTimeout(20_000);
 
 test.describe.configure({ mode: "serial" });
 test.describe("Main test", () => {
@@ -122,7 +125,7 @@ test.describe("Main test", () => {
     await page.getByTestId("config.bkp").click();
     await page
       .getByTestId("BackupsControls.Completed")
-      .waitFor({ state: "visible", timeout: 15e3 });
+      .waitFor({ state: "visible", ...TWENTY_SECONDS_OR_MORE });
     const canDelete = await page.getByRole("button", { name: "Delete all..." });
     if (await canDelete.count()) {
       await canDelete.click();
@@ -229,7 +232,7 @@ test.describe("Main test", () => {
       await page
         .getByTestId("dashboard.window.rowInsert")
         .and(page.locator(`[data-key="users"]`))
-        .waitFor({ state: "visible", timeout: TWENTY_SECONDS_OR_MORE });
+        .waitFor({ state: "visible", ...TWENTY_SECONDS_OR_MORE });
     };
 
     await goTo(page);
@@ -827,7 +830,9 @@ test.describe("Main test", () => {
     await page.getByTestId("config.methods").click();
 
     /** This timeout is crucial in ensuring monaco editor shows suggestions */
-    await page.getByText("Create function").click({ timeout: 10e3 });
+    await page
+      .getByText("Create function")
+      .click({ ...TWENTY_SECONDS_OR_MORE });
     await page.locator("input#function_name").fill("askLLM");
     await page.waitForTimeout(1e3);
     await monacoType(page, ".MethodDefinition", "dbo.t", {
@@ -908,7 +913,9 @@ test.describe("Main test", () => {
     await goTo(page, "/connections");
     await page.getByRole("link", { name: "Prostgles UI state" }).click();
     await page.getByTestId("AskLLM").click();
-    await page.getByTestId("SetupLLMCredentials.free").click({ timeout: 10e3 });
+    await page
+      .getByTestId("SetupLLMCredentials.free")
+      .click({ ...TWENTY_SECONDS_OR_MORE });
     await page.locator("input#email").fill(USERS.free_llm_user1);
     await page.getByTestId("ProstglesSignup.continue").click();
     await page.waitForTimeout(1e3);
@@ -978,11 +985,11 @@ test.describe("Main test", () => {
     await sendAskLLMMessage(page, " request_tool_access ");
     await page
       .getByTestId("RequestToolAccess.Approve")
-      .click({ timeout: 10e3 });
+      .click({ ...TWENTY_SECONDS_OR_MORE });
 
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       `Requested access to websearch tool and read access to receipts table in the database.`,
-      { timeout: 10e3 },
+      { ...TWENTY_SECONDS_OR_MORE },
     );
     await page.getByTestId("LLMChatOptions.DatabaseAccess").click();
     await expect(page.getByTestId("DatabaseAccessEditor.Mode")).toContainText(
@@ -1007,14 +1014,14 @@ test.describe("Main test", () => {
 
     await page
       .getByTestId("RequestToolAccess.Approve")
-      .click({ timeout: 10e3 });
+      .click({ ...TWENTY_SECONDS_OR_MORE });
     await expect(page.getByTestId("RequestToolAccess")).toContainText(
       "Added tool access",
-      { timeout: 10e3 },
+      { ...TWENTY_SECONDS_OR_MORE },
     );
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       "Added fetch tool access and database permissions for receipts table.",
-      { timeout: 10e3 },
+      { ...TWENTY_SECONDS_OR_MORE },
     );
 
     await expect(page.getByTestId("LLMChatOptions.MCPTools")).toContainText(
@@ -1036,7 +1043,7 @@ test.describe("Main test", () => {
     );
     await page
       .getByTestId("AskLLMChat.LoadSuggestedDashboards")
-      .click({ timeout: 18e3 });
+      .click({ ...TWENTY_SECONDS_OR_MORE });
 
     const workspaceBtn = await page.getByTestId("WorkspaceMenu.list");
     await expect(workspaceBtn).toContainText("Customer Insights");
@@ -1090,9 +1097,9 @@ test.describe("Main test", () => {
       ).toBeVisible();
 
       /** Service finished starting. This might take much longer if it needs installing */
-      await expect(page.getByLabel("Convert docs to markdown")).toBeChecked({
-        timeout: 90e3,
-      });
+      await expect(page.getByLabel("Convert docs to markdown")).toBeChecked(
+        getTimeout(90e3),
+      );
 
       await page.keyboard.press("Control+KeyK");
       await page.waitForTimeout(1500);
@@ -1107,7 +1114,7 @@ test.describe("Main test", () => {
         .getByTestId("Chat.attachedFiles")
         .getByTestId("MediaViewer")
         .getByText("sample.pdf");
-      await expect(itemBtn).toBeVisible({ timeout: 15e3 });
+      await expect(itemBtn).toBeVisible({ ...TWENTY_SECONDS_OR_MORE });
 
       /** Shows content in popup */
       await itemBtn.click();
@@ -1124,7 +1131,7 @@ test.describe("Main test", () => {
       /** Re-adding the same file works */
       await addFile();
 
-      await expect(itemBtn).toBeVisible({ timeout: 15e3 });
+      await expect(itemBtn).toBeVisible({ ...TWENTY_SECONDS_OR_MORE });
 
       await page.getByTestId("Chat.send").click();
 
@@ -1133,12 +1140,14 @@ test.describe("Main test", () => {
         .getByTestId("Chat.messageList")
         .getByTestId("LLMChatMessageContent.textDocument")
         .getByText("sample.pdf");
-      await expect(inChatItemBtn).toBeVisible({ timeout: 15e3 });
+      await expect(inChatItemBtn).toBeVisible({
+        ...TWENTY_SECONDS_OR_MORE,
+      });
 
       /** Agent was provided the text content */
       await expect(page.getByTestId("Chat.messageList")).toContainText(
         "This is a sample PDF",
-        { timeout: 15e3 },
+        { ...TWENTY_SECONDS_OR_MORE },
       );
 
       await inChatItemBtn.click();
@@ -1163,13 +1172,13 @@ test.describe("Main test", () => {
     await sendAskLLMMessage(page, " mcp ");
     await page
       .getByTestId("AskLLMToolApprover.AllowOnce")
-      .click({ timeout: 10e3 });
+      .click({ ...TWENTY_SECONDS_OR_MORE });
     await page.waitForTimeout(1e3);
     const mcpToolUse = await getAskLLMLastMessage(page);
     await expect(mcpToolUse).toContainText(
       "successfully fetched the login page",
       {
-        timeout: 10_000,
+        ...TWENTY_SECONDS_OR_MORE,
       },
     );
 
@@ -1179,14 +1188,14 @@ test.describe("Main test", () => {
     await sendAskLLMMessage(page, " mcp ");
     await page
       .getByTestId("AskLLMToolApprover.AllowOnce")
-      .waitFor({ state: "visible", timeout: 10e3 });
+      .waitFor({ state: "visible", ...TWENTY_SECONDS_OR_MORE });
     await page.getByTestId("Popup.close").last().click();
     await page.waitForTimeout(1e3);
     await sendAskLLMMessage(page, " interrupt tool call ");
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       "Tool use requests were interrupted by the user",
       {
-        timeout: 10e3,
+        ...TWENTY_SECONDS_OR_MORE,
       },
     );
     await expect(page.getByTestId("Chat.messageList")).toContainText(
@@ -1222,7 +1231,7 @@ test.describe("Main test", () => {
     await enableMCPServers(page, ["playwright"]);
     await page
       .getByText("browser_tabs")
-      .waitFor({ state: "visible", timeout: 10e3 }); // wait for tools list to refresh
+      .waitFor({ state: "visible", ...TWENTY_SECONDS_OR_MORE }); // wait for tools list to refresh
     await page.getByTestId("Popup.close").last().click();
 
     await page.waitForTimeout(2e3);
@@ -1263,7 +1272,7 @@ test.describe("Main test", () => {
     /** Can be flaky */
     await expect(page.getByTestId("MarkdownMonacoCode").last()).toContainText(
       `Page Title: Prostgles`,
-      { timeout: 15e3 },
+      { ...TWENTY_SECONDS_OR_MORE },
     );
     await lastToolUseBtn.click();
 
@@ -1275,7 +1284,7 @@ test.describe("Main test", () => {
       page
         .getByTestId("Chat.messageList")
         .getByText(`Tool name "web--invalidfetch" is invalid`),
-    ).toHaveCount(5, { timeout: 30e3 });
+    ).toHaveCount(5, getTimeout(30e3));
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       `failed consecutive tool requests reached`,
     );
@@ -1302,7 +1311,7 @@ test.describe("Main test", () => {
     }
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       `Maximum total cost of the chat (5) reached. Current cost: 5.4`,
-      { timeout: 8_000 },
+      { ...TWENTY_SECONDS_OR_MORE },
     );
 
     const maxCost = 4;
@@ -1332,7 +1341,7 @@ test.describe("Main test", () => {
       page.getByTestId("Chat.messageList").locator(".message").last(),
     ).toContainText(
       `Maximum total cost of the chat (5) will be reached after sending this message`,
-      { timeout: 30_000 },
+      getTimeout(30e3),
     );
   });
 
@@ -1349,11 +1358,11 @@ test.describe("Main test", () => {
       "Create dashboards",
     );
 
-    await page.getByTestId("LLMChatOptions.MCPTools").click({ timeout: 10e3 });
+    await page.getByTestId("LLMChatOptions.MCPTools").click(getTimeout(10e3));
     await page
       .locator(getDataKey("prostgles-ui"))
       .getByText("run_code_in_sandbox", { exact: true })
-      .waitFor({ state: "visible", timeout: 15e3 });
+      .waitFor({ state: "visible", ...getTimeout(15e3) });
     await page.waitForTimeout(2e3);
     /** Tools are loaded after enabling */
     await page
@@ -1379,10 +1388,10 @@ test.describe("Main test", () => {
       await sendAskLLMMessage(page, " mcpsandbox ");
       await page
         .getByTestId("AskLLMToolApprover.AllowOnce")
-        .click({ timeout: TWENTY_SECONDS_OR_MORE });
+        .click({ ...TWENTY_SECONDS_OR_MORE });
       await expect(page.getByTestId("Chat.messageList")).toContainText(
         "create a container that runs",
-        { timeout: 60e3 },
+        getTimeout(60e3),
       );
       await page.waitForTimeout(3e3);
 
@@ -1390,13 +1399,13 @@ test.describe("Main test", () => {
 
       await page
         .getByTestId("DockerSandboxCreateContainer.stop")
-        .waitFor({ state: "detached", timeout: 40e3 });
+        .waitFor({ state: "detached", ...getTimeout(40e3) });
 
       for (const res of Array.isArray(result) ? result : [result]) {
         await expect(
           locator ?? page.getByTestId("ToolUseMessage").last(),
         ).toContainText(res, {
-          timeout: TWENTY_SECONDS_OR_MORE,
+          ...TWENTY_SECONDS_OR_MORE,
         });
       }
     };
@@ -1416,7 +1425,7 @@ test.describe("Main test", () => {
       async () => {
         await page
           .getByTestId("AskLLMToolApprover.AllowOnce")
-          .click({ timeout: 20e3 });
+          .click({ ...TWENTY_SECONDS_OR_MORE });
         await page.waitForTimeout(1e3);
         await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
         await page
@@ -1433,7 +1442,7 @@ test.describe("Main test", () => {
     await page.keyboard.press("Escape");
     await page
       .getByTestId("LLMChatOptions.DatabaseAccess")
-      .click({ timeout: 10e3 });
+      .click(TWENTY_SECONDS_OR_MORE);
 
     await runDbSql(
       page,
@@ -1506,9 +1515,7 @@ test.describe("Main test", () => {
     ).toContainText("3 tool calls");
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       "Tool call failed. Will not retry",
-      {
-        timeout: 30e3,
-      },
+      getTimeout(30e3),
     );
     await page.getByTestId("ToolUseMessage.toggleGroup").last().click();
     await expect(
@@ -1517,7 +1524,7 @@ test.describe("Main test", () => {
         .getByText(
           'Tool name "web--fetch" is not allowed. Must enable it for this chat',
         ),
-    ).toHaveCount(3, { timeout: 30e3 });
+    ).toHaveCount(3, getTimeout(30e3));
 
     await newChat(page);
     await toggleMCPTools(page, ["fetch"]);
@@ -1528,9 +1535,7 @@ test.describe("Main test", () => {
 
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       "Fetched in parallel successfully",
-      {
-        timeout: 30e3,
-      },
+      getTimeout(30e3),
     );
     await page.getByTestId("ToolUseMessage.toggleGroup").last().click();
 
@@ -1539,9 +1544,7 @@ test.describe("Main test", () => {
         getCommandElemSelector("ToolUseMessage.toggle") +
           `[data-color="default"]`,
       ),
-    ).toHaveCount(3, {
-      timeout: 30e3,
-    });
+    ).toHaveCount(3, getTimeout(30e3));
 
     await newChat(page);
     await toggleMCPTools(page, ["websearch", "get_snapshot"]);
@@ -1551,9 +1554,7 @@ test.describe("Main test", () => {
     await page.getByTestId("AskLLMToolApprover.AllowAlways").click();
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       "Search done.",
-      {
-        timeout: 30e3,
-      },
+      getTimeout(30e3),
     );
 
     await page.getByTestId("ToolUseMessage.toggleGroup").click();
@@ -1593,7 +1594,7 @@ test.describe("Main test", () => {
     );
     await page
       .getByTestId("AskLLMToolApprover.AllowAlways")
-      .click({ timeout: 10e3 });
+      .click(getTimeout(10e3));
   });
 
   test("Agentic workflow", async ({ page: p }) => {
@@ -1675,12 +1676,11 @@ test.describe("Main test", () => {
     await sendAskLLMMessage(page, " agentic_workflow ");
 
     const startWorkFlowAndExpectError = async (errorMessage: string) => {
-      await page.getByTestId("AgenticWorkflow.start").click({
-        timeout: 60e3,
-      });
-      await expect(page.getByTestId("Alert")).toContainText(errorMessage, {
-        timeout: 60e3,
-      });
+      await page.getByTestId("AgenticWorkflow.start").click(getTimeout(60e3));
+      await expect(page.getByTestId("Alert")).toContainText(
+        errorMessage,
+        getTimeout(60e3),
+      );
       await page.getByText("OK", { exact: true }).click();
     };
 
@@ -1772,17 +1772,13 @@ test.describe("Main test", () => {
     /** Progress bar works */
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       "Processing user 2/",
-      {
-        timeout: 30e3,
-      },
+      getTimeout(30e3),
     );
 
     await page.getByTestId("AgenticWorkflow.stop").click();
     await expect(page.getByTestId("Popup.content").last()).toContainText(
       "Agentic workflow container stopped with status: aborted",
-      {
-        timeout: 10_000,
-      },
+      getTimeout(10e3),
     );
     await page
       .getByTestId("Popup.footer")
@@ -1792,15 +1788,11 @@ test.describe("Main test", () => {
     const runWorkflowAndExpectSuccess = async (
       shownText: string | string[] = ["ai_assistant_dashboards"],
     ) => {
-      await page.getByTestId("AgenticWorkflow.start").click({
-        timeout: 30e3,
-      });
+      await page.getByTestId("AgenticWorkflow.start").click(getTimeout(30e3));
 
       await expect(page.locator(".SuccessMessage")).toContainText(
         "Workflow finished successfully",
-        {
-          timeout: 120e3,
-        },
+        getTimeout(120e3),
       );
 
       await page
@@ -1837,7 +1829,7 @@ test.describe("Main test", () => {
 
     await newChat(page);
     await sendAskLLMMessage(page, " agentic_workflow_filesystem ");
-    await page.getByTestId("McpToolAccess.configure").click({ timeout: 60e3 });
+    await page.getByTestId("McpToolAccess.configure").click(getTimeout(60e3));
     await fileBrowserGoToPath(page.getByTestId("FileTree"), [
       "ui",
       "e2e",
@@ -1857,9 +1849,7 @@ test.describe("Main test", () => {
     await runWorkflowAndExpectSuccess();
 
     /** Activity agent chats */
-    await page.locator(getDataKey("Activity")).click({
-      timeout: 10e3,
-    });
+    await page.locator(getDataKey("Activity")).click(getTimeout(10e3));
     await page
       .getByTestId("AgenticWorkflow")
       .getByTestId("AgenticWorkflow.openChat")
@@ -1929,9 +1919,7 @@ test.describe("Main test", () => {
     await sendAskLLMMessage(page, " agentic_workflow_clashing ");
     await expect(
       page.getByTestId("AgenticWorkflow.validationErrorLogs"),
-    ).toContainText(`relation "users" already exists`, {
-      timeout: 30e3,
-    });
+    ).toContainText(`relation "users" already exists`, getTimeout(30e3));
 
     await newChat(page);
     await sendAskLLMMessage(page, " agentic_workflow_invalidTable ");
@@ -1939,9 +1927,7 @@ test.describe("Main test", () => {
       page.getByTestId("AgenticWorkflow.validationErrorLogs"),
     ).toContainText(
       `Validation error for databaseHandler usage: the following table names do not match any new tables or existing tables: ["invalid_table"]`,
-      {
-        timeout: 30e3,
-      },
+      getTimeout(30e3),
     );
 
     await page.waitForTimeout(1e3);
@@ -1951,9 +1937,7 @@ test.describe("Main test", () => {
       page.getByTestId("AgenticWorkflow.validationErrorLogs"),
     ).toContainText(
       `"invalid_table" does not match any new or existing tables`,
-      {
-        timeout: 30e3,
-      },
+      getTimeout(30e3),
     );
   });
 
@@ -2010,7 +1994,7 @@ test.describe("Main test", () => {
       await fillLoginFormAndSubmit(lpage, user);
       await lpage
         .getByTestId("Login.error")
-        .waitFor({ state: "visible", timeout: 15e3 });
+        .waitFor({ state: "visible", ...TWENTY_SECONDS_OR_MORE });
       await expect(
         await lpage.getByTestId("Login.error").textContent(),
       ).toContain(errorMessage);
@@ -2117,12 +2101,12 @@ test.describe("Main test", () => {
     );
     await page
       .getByText("my_new_value_1")
-      .waitFor({ state: "visible", timeout: 15e3 });
+      .waitFor({ state: "visible", ...TWENTY_SECONDS_OR_MORE });
 
     await runDbSql(page, `DROP TABLE table_name;`);
     await page
       .getByTestId("W_Table.TableNotFound")
-      .waitFor({ state: "visible", timeout: 15e3 });
+      .waitFor({ state: "visible", ...TWENTY_SECONDS_OR_MORE });
 
     await runDbSql(page, createTableQuery);
     await runDbSql(
@@ -2143,11 +2127,11 @@ test.describe("Main test", () => {
     );
     await page
       .getByText("my_new_value_1")
-      .waitFor({ state: "visible", timeout: 15e3 });
+      .waitFor({ state: "visible", ...TWENTY_SECONDS_OR_MORE });
 
     await page
       .getByText("my_new_value_3")
-      .waitFor({ state: "visible", timeout: 15e3 });
+      .waitFor({ state: "visible", ...TWENTY_SECONDS_OR_MORE });
     await page.waitForTimeout(4e3);
 
     /** Test schema select */
@@ -2176,7 +2160,7 @@ test.describe("Main test", () => {
     await insertRow(page, `"MySchema"."MyTable"`, { MyColumn: "some value" });
     await page
       .getByText("some value")
-      .waitFor({ state: "visible", timeout: 15e3 });
+      .waitFor({ state: "visible", ...TWENTY_SECONDS_OR_MORE });
 
     await goTo(page, "localhost:3004/connections");
     await page.waitForTimeout(4e3);
@@ -2192,7 +2176,7 @@ test.describe("Main test", () => {
     await login(page, undefined, requestedUrl);
     await page
       .getByTestId("ProjectConnection.error")
-      .waitFor({ state: "visible", timeout: 15e3 });
+      .waitFor({ state: "visible", ...TWENTY_SECONDS_OR_MORE });
     const currentUrl = await page.url();
     await expect(currentUrl).toEqual(requestedUrl);
   });
@@ -2269,7 +2253,7 @@ test.describe("Main test", () => {
     }
     await page
       .getByRole("link", { name: "Connections" })
-      .waitFor({ state: "visible", timeout: 15e3 });
+      .waitFor({ state: "visible", ...TWENTY_SECONDS_OR_MORE });
 
     /** Using recovery code */
     await page.request.post("/logout");
@@ -2282,7 +2266,7 @@ test.describe("Main test", () => {
     await page.waitForTimeout(3e3);
     await page
       .getByRole("link", { name: "Connections" })
-      .waitFor({ state: "visible", timeout: 15e3 });
+      .waitFor({ state: "visible", ...TWENTY_SECONDS_OR_MORE });
 
     await page.getByRole("link", { name: "test_user" }).click();
     await page.getByTestId("MenuList").locator(`[data-key="security"]`).click();
@@ -2299,7 +2283,7 @@ test.describe("Main test", () => {
 
     await page
       .getByTestId("dashboard.goToConnConfig")
-      .waitFor({ state: "visible", timeout: 10e3 });
+      .waitFor({ state: "visible", ...getTimeout(10e3) });
     await page.getByTestId("dashboard.goToConnConfig").click();
     await page.getByTestId("config.details").click();
     await page.getByTestId("config.status").click();
@@ -2318,7 +2302,7 @@ test.describe("Main test", () => {
       await page.getByTestId("config.bkp.AutomaticBackups").click();
       await page
         .getByTestId("config.bkp.AutomaticBackups.toggle")
-        .click({ timeout: 5e3 });
+        .click(getTimeout(10e3));
       await page.waitForTimeout(1e3);
       /** If it was enabled already enabled then re-enable it */
       const text = await page
@@ -2331,7 +2315,7 @@ test.describe("Main test", () => {
     await toggleAutomaticBackups();
     await page
       .getByRole("button", { name: "Restore...", exact: true })
-      .waitFor({ state: "visible", timeout: 15e3 });
+      .waitFor({ state: "visible", ...TWENTY_SECONDS_OR_MORE });
     await deleteAllBackups(page);
 
     /** Disable automatic backups */
@@ -2417,7 +2401,7 @@ test.describe("Main test", () => {
     await createDatabase(TEST_DB_NAME, page);
     await page
       .getByTestId("dashboard.menu.sqlEditor")
-      .waitFor({ state: "visible", timeout: 15e3 });
+      .waitFor({ state: "visible", ...TWENTY_SECONDS_OR_MORE });
     const editors = await page.locator(".ProstglesSQL").count();
     if (!editors) {
       await page.getByTestId("dashboard.menu.sqlEditor").click();
@@ -3267,7 +3251,7 @@ test.describe("Main test", () => {
     await page.getByRole("link", { name: TEST_DB_NAME }).click();
     await page
       .getByTestId("dashboard.menu.tablesSearchList")
-      .waitFor({ state: "visible", timeout: 10e3 });
+      .waitFor({ state: "visible", ...TWENTY_SECONDS_OR_MORE });
     await openTable(page, "my_tabl");
 
     /** Ask LLM limit */
@@ -3289,7 +3273,7 @@ test.describe("Main test", () => {
     await page.getByRole("link", { name: TEST_DB_NAME }).click();
     await page
       .getByTestId("dashboard.menu.tablesSearchList")
-      .waitFor({ state: "visible", timeout: 10e3 });
+      .waitFor({ state: "visible", ...TWENTY_SECONDS_OR_MORE });
     const [response1, response2] = await getLLMResponses(page, ["hey", "hey"]);
     await expect(response1.isOk).toBe(true);
     await expect(response2.isOk).toBe(false);
@@ -3368,8 +3352,8 @@ test.describe("Main test", () => {
     await page.waitForTimeout(1e3);
     await page
       .getByTestId("Btn.ClickConfirmation.Confirm")
-      .click({ timeout: 10e3 });
-    await expect(createFromTemplateBtn).toBeEnabled({ timeout: 5e3 });
+      .click(TWENTY_SECONDS_OR_MORE);
+    await expect(createFromTemplateBtn).toBeEnabled(TWENTY_SECONDS_OR_MORE);
     // Page will reload
     await page.waitForTimeout(500);
     await clickAndWait(page.getByTestId("WebAppConfig.build"));

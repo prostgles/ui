@@ -57,12 +57,12 @@ export const getOverviewSvgifSpecs = async () => {
     {
       fileName: "agentic_workflow_1",
       usedExternally: true,
-      scenes: [...sliceScenes("ai_assistant_agentic_workflow", 0, 11)],
+      scenes: [...sliceScenes("ai_assistant_agentic_workflow", 0, 10)],
     },
     {
       fileName: "agentic_workflow_2",
       usedExternally: true,
-      scenes: [...sliceScenes("ai_assistant_agentic_workflow", 11, 16)],
+      scenes: [...sliceScenes("ai_assistant_agentic_workflow", 10, 16)],
     },
     {
       fileName: "agentic_workflow_3",
