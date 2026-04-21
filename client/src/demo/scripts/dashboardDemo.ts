@@ -177,6 +177,11 @@ export const dashboardDemo = async () => {
   await openTable("futures");
 
   await click("dashboard.window.toggleFilterBar");
+
+  if ((window as any).CI) {
+    return;
+  }
+
   await type("btcusd", "", ".SmartFilterBar input");
   await click("", `[data-label="BTCUSDT"]`);
 

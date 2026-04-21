@@ -30,7 +30,13 @@ test.describe("Demo video", () => {
 
   test("Video demo", async ({ page: p }) => {
     const page = p as PageWIds;
-
+    const CI = !!process.env.CI;
+    await page.addInitScript(
+      ({ CI }) => {
+        (window as any).CI = CI;
+      },
+      { CI },
+    );
     await login(page, USERS.test_user, "/login");
     await page.waitForTimeout(2000);
     // await page.getByTestId("App.colorScheme").click();

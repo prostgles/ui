@@ -13,6 +13,9 @@ export type LayoutItem = {
   /**
    * Table name after quote_ident() has been applied.
    * This means that any table names with uppercase letters or special characters will be quoted.
+   * @example
+   *  '"MY_Table"'
+   *  'my_table'
    */
   tableName: string | null;
   viewType: "table" | "map" | "timechart" | "sql" | "barchart";
