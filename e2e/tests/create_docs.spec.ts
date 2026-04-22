@@ -12,7 +12,7 @@ import {
 } from "./utils/utils";
 import { DOCS_DIR } from "svgScreenshots/utils/constants";
 import { svgScreenshotsCompleteReferenced } from "svgScreenshots/utils/svgScreenshotsCompleteReferenced";
-import { USERS } from "utils/constants";
+import { IS_GITHUB_WORKER, USERS } from "utils/constants";
 import { goTo } from "utils/goTo";
 import { getOverviewSvgifSpecs } from "svgScreenshots/getOverviewSvgifSpecs.svgif";
 import { saveSVGifs } from "svgScreenshots/utils/saveSVGifs";
@@ -27,8 +27,6 @@ test.use({
     args: ["--start-maximized"],
   },
 });
-
-const IS_PIPELINE = process.env.CI === "true";
 
 test.describe("Create docs and screenshots", () => {
   test.describe.configure({
@@ -66,7 +64,7 @@ test.describe("Create docs and screenshots", () => {
 
     await login(page, USERS.test_user, "/login");
 
-    if (!IS_PIPELINE) {
+    if (!IS_GITHUB_WORKER) {
       /** Delete existing markdown docs */
       if (fs.existsSync(DOCS_DIR)) {
         fs.rmSync(DOCS_DIR, { force: true, recursive: true });
@@ -85,7 +83,7 @@ test.describe("Create docs and screenshots", () => {
       const filePath = path.join(DOCS_DIR, file.fileName);
 
       const preparedFileContent = getDocWithDarkModeImgTags(file.text);
-      if (IS_PIPELINE) {
+      if (IS_GITHUB_WORKER) {
         const existingFile = fs.readFileSync(filePath, "utf-8");
         if (existingFile !== preparedFileContent) {
           console.error(existingFile, preparedFileContent);
@@ -137,7 +135,7 @@ test.describe("Create docs and screenshots", () => {
     const page = p as PageWIds;
 
     await login(page, USERS.test_user, "/login");
-    if (!IS_PIPELINE) {
+    if (!IS_GITHUB_WORKER) {
       await page.waitForTimeout(1100);
 
       await prepare(page);
@@ -149,7 +147,7 @@ test.describe("Create docs and screenshots", () => {
     const page = p as PageWIds;
 
     await login(page, USERS.test_user, "/login");
-    if (!IS_PIPELINE) {
+    if (!IS_GITHUB_WORKER) {
       await page.waitForTimeout(1100);
 
       const { svgifSpecsObj, overviewSvgifSpecs, svgifCovers } =
