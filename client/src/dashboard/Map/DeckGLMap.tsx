@@ -156,7 +156,7 @@ export type DecKGLMapProps = {
   /**
    * Used to identify when auto-zoom needs to be triggered
    */
-  geoJsonLayersDataFilterSignature: string;
+  dataFilterSignature: string;
   onLoad?: (map: MapHandler) => void;
   onHover?: (object?: any, coords?: HoverCoords) => any;
   onPointerMove?: (coords?: HoverCoords) => any;
@@ -278,11 +278,11 @@ export class DeckGLMap extends RTComp<DecKGLMapProps, DeckGLMapState, D> {
     dD: Partial<D> = {},
   ) => {
     if (
-      dP?.geoJsonLayersDataFilterSignature &&
+      dP?.dataFilterSignature &&
       this.props.options.extentBehavior === "autoZoomToData" &&
       this.deckW
     ) {
-      this.fitBounds();
+      void this.fitBounds();
     }
 
     /** Init */
@@ -450,12 +450,10 @@ export class DeckGLMap extends RTComp<DecKGLMapProps, DeckGLMapState, D> {
           // extensions: [new deckGlLibs.extensions.CollisionFilterExtension()],
           filled: true,
 
-          /**
-           * Radius of the circle in meters. If radiusUnits is not meters, this is converted from meters.
-           */
           getPointRadius: (f) => (g.getIcon ? 0.1 : (f.properties.radius ?? 1)),
-          pointRadiusMinPixels: 2,
+          pointRadiusUnits: "pixels",
           pointRadiusScale: 1,
+          pointRadiusMinPixels: 2,
 
           extruded: Boolean(g.elevation),
           getElevation: g.elevation || 0,
@@ -478,7 +476,7 @@ export class DeckGLMap extends RTComp<DecKGLMapProps, DeckGLMapState, D> {
 
           getIconColor: g.getFillColor,
           getIcon: g.getIcon,
-          getIconPixelOffset: (f) => [0, -10],
+          getIconPixelOffset: () => [0, -10],
           getIconSize: g.getIcon && ((f) => g.getIcon!(f).width),
           lineWidthMinPixels: 2,
           //@ts-ignore

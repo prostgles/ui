@@ -1,3 +1,4 @@
+import type { DBS } from "src/dashboard/Dashboard/DBS";
 import type { DeckGLMapDivDemoControls } from "../../dashboard/Map/DeckGLMap";
 import { runDbSQL } from "../../dashboard/W_SQL/getDemoUtils";
 import { tout } from "../../pages/ElectronSetup/ElectronSetup";
@@ -25,12 +26,13 @@ export const closeAllViews = async () => {
 export const dashboardDemo = async () => {
   await tout(500);
 
+  const { dbs } = window as unknown as { dbs: DBS };
   const DEMO_WSP_PREFIX = "Demo Workspace ";
-  const demoWspNameFilter = { "name.$like": `${DEMO_WSP_PREFIX}%` };
-  await (window as any).dbs.workspaces.update(demoWspNameFilter, {
+  const demoWspNameFilter = { name: { $like: `${DEMO_WSP_PREFIX}%` } };
+  await dbs.workspaces.update(demoWspNameFilter, {
     deleted: true,
   });
-  await (window as any).dbs.workspaces.delete(demoWspNameFilter);
+  await dbs.workspaces.delete(demoWspNameFilter);
 
   await click("dashboard.goToConnections");
   await tout(500);
@@ -107,7 +109,7 @@ export const dashboardDemo = async () => {
 
   /** Add Map */
   await click("AddChartMenu.Map");
-  await click("AddChartMenu.Map", `[data-key="location"]`);
+  await click("AddChartMenu.Map", `[data-key="rider_location"]`);
   await tout(2e3);
   const mapDiv = document.querySelector(
     ".DeckGLMapDiv",

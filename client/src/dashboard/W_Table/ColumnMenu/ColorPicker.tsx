@@ -183,12 +183,11 @@ export const ColorCircle = ({
   color,
   onClick,
   label,
-  size,
-}: Pick<BtnProps, "onClick" | "label" | "size"> & { color: string }) => {
+}: Pick<BtnProps, "onClick" | "label"> & { color: string }) => {
   return (
     <Btn
       label={label}
-      size={size}
+      size={"small"}
       className={"shadow b b-color f-0"}
       style={{ backgroundColor: color }}
       onClick={onClick}

@@ -81,17 +81,18 @@ export const LoadSuggestedDashboards = ({
             positioning="fullscreen"
             onClickClose={false}
             button={
-              <Chip
+              <Btn
                 key={i}
-                color="blue"
-                leftIcon={w.icon ? undefined : { path: mdiViewCarousel }}
-                style={{ borderRadius: "8px", cursor: "pointer" }}
+                variant="faded"
+                color="action"
+                size="small"
+                iconNode={
+                  w.icon ? <SvgIcon size={18} icon={w.icon} /> : undefined
+                }
+                iconPath={w.icon ? undefined : mdiViewCarousel}
               >
-                <FlexRow className="gap-p5 pr-p25">
-                  {w.icon && <SvgIcon icon={w.icon} />}
-                  {w.name}
-                </FlexRow>
-              </Chip>
+                {w.name}
+              </Btn>
             }
           >
             <MonacoCodeInMarkdown
@@ -112,6 +113,7 @@ export const LoadSuggestedDashboards = ({
           color="action"
           iconPath={mdiOpenInNew}
           variant="filled"
+          size="small"
           data-command="AskLLMChat.LoadSuggestedDashboards"
           disabledInfo={
             !json.prostglesWorkspaces.length ?
@@ -150,6 +152,7 @@ export const LoadSuggestedDashboards = ({
           iconPath={mdiDelete}
           variant="faded"
           color="danger"
+          size="small"
           title="Delete already loaded workspaces"
           data-command="AskLLMChat.UnloadSuggestedDashboards"
           onClickPromise={async () => {

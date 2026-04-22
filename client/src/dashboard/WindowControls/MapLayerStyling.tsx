@@ -2,12 +2,13 @@ import { FlexRow } from "@components/Flex";
 import { IconPalette } from "@components/IconPalette/IconPalette";
 import PopupMenu from "@components/PopupMenu";
 import { Select } from "@components/Select/Select";
-import React from "react";
+import React, { useMemo } from "react";
 import type { LinkSyncItem } from "../Dashboard/dashboardUtils";
 import { ColorCircle, ColorPicker } from "../W_Table/ColumnMenu/ColorPicker";
 import type { LayerColorPickerProps } from "./LayerColorPicker";
 import type { ChartLinkOptions } from "./DataLayerManager/DataLayer";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import { isDefined } from "@common/filterUtils";
 
 type P = Pick<LayerColorPickerProps, "column" | "title"> & {
   linkOptions: Extract<LinkSyncItem["options"], { type: "map" }>;
@@ -28,6 +29,28 @@ export const MapLayerStyling = ({
   const table =
     !tableName ? undefined : tables.find((t) => t.name === tableName);
 
+  const suggestedIcons = useMemo(() => {
+    if (!table) return [];
+    const joinPathTables = new Set([table]);
+    if (dataSource?.type === "table" && dataSource.joinPath) {
+      dataSource.joinPath.forEach((jp) => {
+        const nextTable = tables.find((t) => t.name === jp.table);
+        if (nextTable) {
+          joinPathTables.add(nextTable);
+        }
+      });
+    }
+    return Array.from(joinPathTables)
+      .map((t) =>
+        t.icon ?
+          {
+            label: t.name,
+            icon: t.icon,
+          }
+        : undefined,
+      )
+      .filter(isDefined);
+  }, [dataSource, table, tables]);
   const linkColor = `rgba(${getLinkColor(linkOptions)})`;
 
   return (
@@ -69,6 +92,7 @@ export const MapLayerStyling = ({
                 linkOptions.mapIcons.iconPath
               : undefined
             }
+            suggestedIcons={suggestedIcons}
             onChange={(iconPath) => {
               onChange({
                 ...linkOptions,

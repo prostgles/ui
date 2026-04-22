@@ -165,7 +165,7 @@ export const fetchMapLayerData = async function (this: W_Map, dataAge: number) {
                     sub,
                   });
                 } catch (e: any) {
-                  console.error(e);
+                  console.error({ tableName, tableFilterWOExtent }, e);
                   alert("Could not subscribe. Check logs ");
                 }
               }
@@ -219,7 +219,7 @@ export const fetchMapLayerData = async function (this: W_Map, dataAge: number) {
                       [MAP_SELECT_COLUMNS.geoJson]: {
                         $ST_Simplify: [geomColumn, size],
                       },
-                    } as any,
+                    } as unknown as SelectParams["select"],
                     limit: AGG_LIMIT,
                   };
                 }
@@ -259,13 +259,13 @@ export const fetchMapLayerData = async function (this: W_Map, dataAge: number) {
 
               if (willAggregate) {
                 const radiusRangeScale = scaleLinear()
-                  .range([20, 250])
-                  .domain([0.001, 0.1]);
+                  .range([65, 14]) // smaller max radius to reduce overlap
+                  .domain([0.001, 0.1])
+                  .clamp(true);
                 const scale = scaleLinear()
-                  .range([0.07, 0.0005])
-                  .domain([0.886, 0.007166]);
-                /** TODO: fix point bad agg cluster positioning at low zoom  */
-                // const scale = d3.scaleLinear().range([0.07, 0.0005]).domain([0.2, 0.007166]).clamp(true);
+                  .range([0.07, 0.009])
+                  .domain([0.886, 0.007]);
+
                 const size = scale(minDelta);
                 const opts = {
                   select: {
@@ -374,6 +374,7 @@ export const fetchMapLayerData = async function (this: W_Map, dataAge: number) {
                 q,
                 this.state.clickedItem,
                 this.props.myLinks,
+                willAggregate,
               ),
               getLineWidth: (f) => 1211,
               layerColor,

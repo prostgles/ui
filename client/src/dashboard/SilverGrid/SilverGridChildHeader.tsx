@@ -157,7 +157,7 @@ export const SilverGridChildHeader = (props: P) => {
                 marginTop: "2px",
                 /** Used to prevent unexpected scroll of tab headers */
                 overflowY: "hidden",
-                maxWidth: "max(300px, 40%)",
+                maxWidth: tabs.length === 1 ? "100%" : "max(300px, 40%)",
               }}
             >
               <div

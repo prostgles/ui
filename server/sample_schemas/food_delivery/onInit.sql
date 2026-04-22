@@ -811,6 +811,7 @@ CREATE TABLE addresses (
 );
 
 CREATE INDEX idx_addresses ON addresses USING gist (geog);
+CREATE INDEX idx_addresses_geometry ON addresses USING gist ((geog::geometry));
 
 
 CREATE TABLE users (
@@ -821,7 +822,7 @@ CREATE TABLE users (
   first_name VARCHAR(50) NOT NULL,
   last_name VARCHAR(50) NOT NULL,
   phone_number VARCHAR(20) NOT NULL,
-  location GEOGRAPHY,
+  rider_location GEOGRAPHY,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -1005,6 +1006,10 @@ CREATE TABLE IF NOT EXISTS "london_restaurants.geojson" (
 CREATE INDEX IF NOT EXISTS idx_london 
 ON "london_restaurants.geojson" USING gist (geometry);
 
+
+CREATE INDEX IF NOT EXISTS idx_london_geometry 
+ON "london_restaurants.geojson" USING gist ((geometry::geometry));
+
 /* 
   To include tag values in the CSV must ensure add "out meta" or "out body"
   https://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL#CSV_output_mode 
@@ -1103,7 +1108,7 @@ BEGIN
       (
         st_dump( 
           st_generatepoints(
-            st_buffer(geog::GEOMETRY, 0.05, 'quad_segs=8'), 
+            st_buffer(geog::GEOMETRY, 0.1, 'quad_segs=8'), 
             100
           )
         )
@@ -1368,7 +1373,7 @@ BEGIN
   WHILE now() < end_time AND progress < 1 LOOP
 
     UPDATE users u
-    SET location = st_lineinterpolatepoint(r.geog, progress - (random() * 0.1), true)
+    SET rider_location = st_lineinterpolatepoint(r.geog, progress - (random() * 0.1), true)
     FROM routes r
     WHERE u.id = r.deliverer_id;
     

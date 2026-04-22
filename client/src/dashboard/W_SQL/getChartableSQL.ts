@@ -154,6 +154,7 @@ const getChartColsFromSql = async (
   }));
   const allCols: ChartColumn[] = _allCols.map((c) => ({
     ...c,
+    key: c.name,
     type: "normal",
     otherColumns: _allCols.filter((c) => !isGeoCol(c) && !isDateCol(c)),
   }));

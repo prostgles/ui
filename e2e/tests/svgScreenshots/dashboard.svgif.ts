@@ -151,7 +151,7 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
 
   // await addSceneAnimation(getDataKey("(deliverer_id = id) users"));
   await addSceneAnimation(
-    getDataLabel("orders > (deliverer_id = id) users (location)"),
+    getDataLabel("orders > (deliverer_id = id) users (rider_location)"),
   );
   await page.waitForTimeout(3000);
   await page.getByTestId("InMapControls.goToDataBounds").click();

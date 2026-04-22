@@ -66,7 +66,7 @@ export const AddChartMenu = (props: P) => {
     return res;
   }, [chartableSQL, tables, w, type]);
 
-  const { geoCols, dateCols, barCols, sql, withStatement = "" } = chartCols;
+  const { geoCols, dateCols, sql, withStatement = "" } = chartCols;
 
   const tableName = w.table_name;
   const onAdd = (
@@ -104,6 +104,9 @@ export const AddChartMenu = (props: P) => {
       .filter(isDefined);
     const colorArr = getRandomColor(1, usedColors);
     const type = linkOpts.type;
+    const targetTable = tables.find(
+      (t) => t.name === (joinPath?.at(-1)?.table ?? tableName),
+    );
     onAddChart({
       name,
       linkOpts: {
@@ -135,17 +138,25 @@ export const AddChartMenu = (props: P) => {
                   numericColumn: firstNumericColumn,
                 }
               : undefined,
-            columns: linkOpts.columns.map(({ name }, i) => ({
+            columns: linkOpts.columns.map(({ name }) => ({
               name,
               colorArr,
             })),
           }
         : {
             type,
-            columns: linkOpts.columns.map(({ name }, i) => ({
+            columns: linkOpts.columns.map(({ name }) => ({
               name,
               colorArr,
             })),
+            mapIcons:
+              !targetTable?.icon ?
+                undefined
+              : {
+                  type: "fixed",
+                  iconPath: targetTable.icon,
+                  display: "icon+circle",
+                },
           }),
         dataSource:
           sql ?
@@ -294,7 +305,7 @@ export const AddChartMenu = (props: P) => {
                       tables.find((t) => t.name === c.path.at(-1)?.table)
                     : undefined;
                   return {
-                    key: c.type === "joined" ? c.label : c.name,
+                    key: c.key,
                     label:
                       c.type === "joined" ? `${c.label} (${c.name})` : c.name,
                     leftContent:
@@ -313,12 +324,8 @@ export const AddChartMenu = (props: P) => {
                       ),
                   };
                 })}
-                onChange={(colNameOrLabel) => {
-                  const col = c.cols.find((col) =>
-                    col.type === "joined" ?
-                      col.label === colNameOrLabel
-                    : col.name === colNameOrLabel,
-                  );
+                onChange={(key) => {
+                  const col = c.cols.find((col) => col.key === key);
                   c.onAdd(
                     [col!],
                     col?.type === "joined" ? col.path : undefined,

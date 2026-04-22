@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import "./Select.css";
 import { sliceText } from "@common/utils";
 import type { TestSelectors } from "../../Testing";
@@ -228,6 +228,16 @@ export class Select<
         return 0;
       });
 
+    const nonUniqueKey = (() => {
+      const seen = new Set();
+      for (const fo of fullOptions) {
+        if (seen.has(fo.key)) {
+          return fo.key;
+        }
+        seen.add(fo.key);
+      }
+    })();
+
     type OptionType =
       Multi extends true ? O[]
       : O | Optional extends true ? undefined
@@ -369,6 +379,9 @@ export class Select<
           });
         }}
         btnLabel={btnLabel}
+        disabledInfo={
+          nonUniqueKey ? `Duplicate key: ${nonUniqueKey}` : disabledInfo
+        }
       />
     );
     let chips: React.ReactNode = null;

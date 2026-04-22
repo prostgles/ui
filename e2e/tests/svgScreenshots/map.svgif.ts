@@ -13,7 +13,9 @@ export const mapSvgif: OnBeforeScreenshot = async (
 
   await addSceneAnimation(getCommandElemSelector("AddChartMenu.Map"));
   await addSceneAnimation(
-    getCommandElemSelector("AddChartMenu.Map") + " " + getDataKey("location"),
+    getCommandElemSelector("AddChartMenu.Map") +
+      " " +
+      getDataKey("rider_location"),
   );
   await addSceneAnimation(
     getCommandElemSelector("dashboard.window.detachChart"),
@@ -23,7 +25,7 @@ export const mapSvgif: OnBeforeScreenshot = async (
   await addSceneAnimation(getDataKey("autoZoomToData"));
 
   /** Ensure only records with location are at the top */
-  await page.locator(getDataKey("location")).click();
+  await page.locator(getDataKey("rider_location")).click();
 
   const pageParams = { page, addSceneAnimation, addScene };
   await clickTableRow(pageParams, 1, undefined, 2);

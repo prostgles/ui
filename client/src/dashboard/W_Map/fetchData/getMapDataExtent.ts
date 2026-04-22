@@ -12,6 +12,7 @@ export const getMapDataExtent: DecKGLMapProps["onGetFullExtent"] =
     const {
       prgl: { db, sql: sqlHandler },
       layerQueries = [],
+      active_row,
     } = this.props;
 
     let minLat,
@@ -20,8 +21,15 @@ export const getMapDataExtent: DecKGLMapProps["onGetFullExtent"] =
       maxLng,
       _xyExtent: { e: string } | AnyObject | undefined;
     for (const layer of layerQueries) {
+      if (active_row) {
+        const isTargetLayer =
+          layer.type === "table" && layer.wid === active_row.window_id;
+        if (!isTargetLayer) {
+          continue;
+        }
+      }
       if (layer.type === "osm") {
-        return undefined;
+        continue;
       } else if ("tableName" in layer) {
         const { geomColumn, tableName } = layer;
         const { finalFilterWOextent } = this.getFilter(

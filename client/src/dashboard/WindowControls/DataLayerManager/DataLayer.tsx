@@ -1,15 +1,7 @@
 import type { DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
 import { FlexRowWrap } from "@components/Flex";
-import { Label } from "@components/Label";
-import {
-  mdiClose,
-  mdiEye,
-  mdiEyeOff,
-  mdiScript,
-  mdiSetCenter,
-  mdiTable,
-} from "@mdi/js";
+import { mdiClose, mdiEye, mdiEyeOff } from "@mdi/js";
 import React, { useCallback } from "react";
 import { RenderFilter } from "src/dashboard/RenderFilter";
 import type { Link, LinkSyncItem } from "../../Dashboard/dashboardUtils";
@@ -19,16 +11,15 @@ import type {
   W_TimeChartProps,
 } from "../../W_TimeChart/W_TimeChart";
 import { LayerColorPicker } from "../LayerColorPicker";
-import { OSMLayerOptions } from "../OSMLayerOptions";
-import { SQLChartLayerEditor } from "../SQLChartLayerEditor";
 import { TimeChartLayerOptions } from "../TimeChartLayerOptions";
+import { DataLayerDataSource } from "./DataLayerDataSource";
 import type { MapLayerManagerProps } from "./DataLayerManager";
 
 export type ChartLinkOptions = Exclude<
   DBSSchema["links"]["options"],
   { type: "table" }
 >;
-type P =
+export type DataLayerProps =
   | (Pick<W_TimeChartProps, "w" | "getLinksAndWindows" | "myLinks"> & {
       type: "timechart";
       layer: NonNullable<
@@ -46,7 +37,7 @@ type P =
         }
       >;
     });
-export const DataLayer = (props: P) => {
+export const DataLayer = (props: DataLayerProps) => {
   const { myLinks, layer, w, getLinksAndWindows } = props;
 
   const thisLink = myLinks.find((l) => l.id === layer.linkId);
@@ -94,32 +85,7 @@ export const DataLayer = (props: P) => {
         linkOptions={linkOptions}
       />
 
-      {dataSource?.type === "osm" ?
-        <OSMLayerOptions link={thisLink} dataSource={dataSource} />
-      : <Label
-          variant="header"
-          iconPath={
-            dataSource?.type === "local-table" ? mdiTable
-            : dataSource?.type === "table" ?
-              mdiSetCenter
-            : mdiScript
-          }
-          info={
-            dataSource?.type === "local-table" ? "Local table"
-            : dataSource?.type === "table" ?
-              `${dataSource.joinPath?.length ? "Linked table" : "Table"}: ${[{ table: tableName }, ...(dataSource.joinPath ?? [])].map((p) => p.table).join(" -> ")} (${column})`
-            : <SQLChartLayerEditor link={thisLink} />
-          }
-          className={"ws-nowrap f-1 min-w-0"}
-          title={
-            dataSource?.type === "table" || dataSource?.type === "local-table" ?
-              `Table name`
-            : "SQL Script"
-          }
-        >
-          <div className="text-ellipsis">{layerDesc}</div>
-        </Label>
-      }
+      <DataLayerDataSource {...props} />
 
       <TimeChartLayerOptions
         w={w}

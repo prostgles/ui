@@ -491,7 +491,7 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
 
     const geoJsonLayers = layers;
 
-    const geoJsonLayersDataFilterSignature = JSON.stringify([layerQueries]);
+    const dataFilterSignature = JSON.stringify([layerQueries]);
     let form: React.ReactNode = null;
     if (w.options.showCardOnClick && clickedItem?.properties.i) {
       const table = this.props.tables.find(
@@ -555,9 +555,7 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
                 void this.setLayerData(this.state.dataAge);
                 this.map = map;
               }}
-              geoJsonLayersDataFilterSignature={
-                geoJsonLayersDataFilterSignature
-              }
+              dataFilterSignature={dataFilterSignature}
               topLeftContent={
                 !w.options.hideLayersBtn && (
                   <DataLayerManager
@@ -627,7 +625,7 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
               initialState={(w.options as any) || {}}
               geoJsonLayers={geoJsonLayers}
               options={{
-                extentBehavior: w.options.extentBehavior,
+                extentBehavior: w.options.extentBehavior ?? "autoZoomToData",
               }}
               onOptionsChange={(newOpts) => {
                 w.$update({ options: newOpts }, { deepMerge: true });

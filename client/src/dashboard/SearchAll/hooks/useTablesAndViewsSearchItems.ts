@@ -18,7 +18,7 @@ export const useTablesAndViewsSearchItems = ({
         .map((s) => {
           const { type, OID } = s;
           const isUserCreatedTable =
-            (type === "table" || type === "view") &&
+            (type === "table" || type === "view" || type === "mview") &&
             s.schema &&
             !["information_schema"].includes(s.schema) &&
             !s.schema.startsWith("pg_");

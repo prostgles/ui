@@ -15,20 +15,23 @@ type P = {
   iconName: string | null | undefined;
   onChange: (newIcon: string | undefined | null) => void;
   label?: BtnProps["label"];
+  suggestedIcons?: { label: string; icon: string }[];
 };
-export const IconPalette = ({ iconName, onChange, label }: P) => {
+export const IconPalette = ({
+  iconName,
+  onChange,
+  label,
+  suggestedIcons,
+}: P) => {
   const iconList = usePromise(async () => {
-    const iconsNames: string[] = await fetch("/icons/_meta.json").then((r) =>
+    const iconsNames = (await fetch("/icons/_meta.json").then((r) =>
       r.json(),
-    );
+    )) as string[];
     return iconsNames;
   }, []);
   const [searchTerm, setSearchTerm] = useState("");
   const iconSize = 55;
-  const iconStyle = {
-    width: `${iconSize}px`,
-    height: `${iconSize}px`,
-  };
+
   const displayedItemsFull = useMemo(() => {
     if (!iconList) return [];
     return iconList
@@ -77,7 +80,7 @@ export const IconPalette = ({ iconName, onChange, label }: P) => {
           iconNode={!iconName ? undefined : <SvgIcon icon={iconName} />}
           onClick={() => setOpen(true)}
         />
-        {![undefined, null].includes(iconName as any) && (
+        {Boolean(iconName) && (
           <Btn
             className="as-end"
             iconPath={mdiClose}
@@ -101,7 +104,7 @@ export const IconPalette = ({ iconName, onChange, label }: P) => {
           contentClassName="p-0"
           positioning="center"
           persistInitialSize={true}
-          title="Chose icon"
+          title="Choose icon"
           onClose={() => setOpen(false)}
         >
           <FlexCol
@@ -113,11 +116,32 @@ export const IconPalette = ({ iconName, onChange, label }: P) => {
             <FormFieldDebounced
               label={"Search icons"}
               value={searchTerm}
+              type="text"
               onChange={(newTerm) => {
                 setSearchTerm(newTerm);
                 setPage(0);
               }}
             />
+            {suggestedIcons?.length ?
+              <FlexRow>
+                {suggestedIcons.map(({ label, icon }) => (
+                  <Btn
+                    key={icon}
+                    variant="faded"
+                    onClick={() => {
+                      onChange(icon);
+                      setOpen(false);
+                    }}
+                    iconNode={<SvgIcon icon={icon} size={18} />}
+                    className="f-0 w-fit h-fit"
+                    size="small"
+                  >
+                    {" "}
+                    {label}
+                  </Btn>
+                ))}
+              </FlexRow>
+            : null}
             <div
               style={{
                 height: "1px",

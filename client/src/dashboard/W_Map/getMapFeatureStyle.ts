@@ -51,6 +51,7 @@ export const getMapFeatureStyle = (
   layerQuery: LayerQuery,
   clickedItem: ClickedItem | undefined,
   links: LinkSyncItem[],
+  willAggregate: boolean,
 ): Pick<
   GeoJsonLayerProps,
   | "getFillColor"
@@ -109,7 +110,8 @@ export const getMapFeatureStyle = (
       return lineColor;
     },
     getText:
-      mapShowText ?
+      willAggregate ? undefined
+      : mapShowText ?
         (f) => {
           const { columnName } = mapShowText;
           return (
@@ -127,8 +129,9 @@ export const getMapFeatureStyle = (
         }
       : undefined,
     getIcon:
-      !mapIcons ? undefined : (
-        (f) => {
+      willAggregate ? undefined
+      : !mapIcons ? undefined
+      : (f) => {
           const icon =
             mapIcons.type === "fixed" ?
               mapIcons.iconPath
@@ -150,8 +153,7 @@ export const getMapFeatureStyle = (
             width: 24,
             height: 24,
           };
-        }
-      ),
-    display: mapIcons?.display,
+        },
+    display: willAggregate ? undefined : mapIcons?.display,
   };
 };

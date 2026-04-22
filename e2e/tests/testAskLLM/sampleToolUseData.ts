@@ -556,7 +556,7 @@ export const prostglesUIFoodDeliveryDashboardSample = {
           type: "map",
           layers: [
             {
-              geoColumn: "location",
+              geoColumn: "rider_location",
               table_name: "v_riders",
             },
           ],
@@ -655,7 +655,7 @@ export const prostglesUIFoodDeliveryDashboardSample = {
           type: "map",
           layers: [
             {
-              geoColumn: "location",
+              geoColumn: "rider_location",
               table_name: "customers",
             },
           ],

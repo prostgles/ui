@@ -16,6 +16,7 @@ import { DashboardMenuContent } from "./DashboardMenuContent";
 import { DashboardMenuHeader } from "./DashboardMenuHeader";
 import { DashboardMenuHotkeys } from "./DashboardMenuHotkeys";
 import { useAddViewToWorkspace } from "../Dashboard/useAddViewToWorkspace";
+import { includes } from "prostgles-types";
 
 export type DashboardMenuProps = Pick<DashboardProps, "prgl"> & {
   suggestions: DashboardState["suggestions"];
@@ -104,7 +105,7 @@ export const DashboardMenu = ({
                 sql: s.definition,
                 name: s.name,
               });
-            } else if ((s as any).type === "table") {
+            } else if (includes(["table", "view", "mview"], s.type)) {
               if (db[s.name]) {
                 void addViewToWorkspace({
                   workspace_id: workspace.id,

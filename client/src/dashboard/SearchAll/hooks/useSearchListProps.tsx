@@ -44,8 +44,7 @@ export const useSearchAllListProps = ({
 
   if (mode === "views and queries") {
     /** Prioritise public schema */
-    items = tablesAndViews
-      .filter((s) => s.type === "table" && typesToSearch.includes("tables"))
+    items = (typesToSearch.includes("tables") ? tablesAndViews : [])
       .map((suggestion) => {
         const { name, type, subLabel, icon } = suggestion;
         return {

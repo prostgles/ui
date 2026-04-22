@@ -54,7 +54,7 @@ export const SvgIcon = ({
   const sizePx = `${size || 24}px`;
   return (
     <div
-      className={className}
+      className={classOverride("f-0", className)}
       style={{
         width: sizePx,
         height: sizePx,

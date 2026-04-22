@@ -82,7 +82,7 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
 
   await openConnection("prostgles_video_demo");
   await page.getByTestId("AskLLM").click();
-  await deletePreviousMessages(page);
+  await newChat(page);
   await setPromptByText(page, "chat");
   await typeSendAddScenes(
     page,

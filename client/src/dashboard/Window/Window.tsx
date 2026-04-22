@@ -129,7 +129,7 @@ export default class Window<W extends WindowSyncItem> extends RTComp<
       titlePortal = ReactDOM.createPortal(
         <FlexRow title={title} className="gap-p5">
           {icon && <SvgIcon className="text-1" icon={icon} />}
-          <div>{title}</div>
+          <div className="min-w-0 text-ellipsis">{title}</div>
         </FlexRow>,
         titleDiv,
       );

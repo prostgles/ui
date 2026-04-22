@@ -92,6 +92,7 @@ export const tableSvgif: OnBeforeScreenshot = async (
   await addSceneAnimation(getDataKey("Quick Stats"));
   await addSceneAnimation(getDataKey("rider"));
 
+  await page.waitForTimeout(2000);
   await addScene({ animations: [{ type: "wait", duration: 1500 }] });
 
   await page.getByTestId("Popup.close").click();

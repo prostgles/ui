@@ -1,5 +1,5 @@
 import { mdiDatabase } from "@mdi/js";
-import React from "react";
+import React, { useState } from "react";
 import { Select } from "@components/Select/Select";
 import { t } from "../i18n/i18nUtils";
 import type { Connection } from "../pages/NewConnection/NewConnnectionForm";
@@ -14,6 +14,7 @@ type P = {
 
 export const ConnectionSelector = ({ connection, dbs, location }: P) => {
   const { data: connections } = dbs.connections.useFind();
+  const [isLoading, setIsLoading] = useState(false);
   return (
     <Select
       title={t.ConnectionSelector["Switch database"]}
@@ -25,6 +26,7 @@ export const ConnectionSelector = ({ connection, dbs, location }: P) => {
       }))}
       noSearchLimit={3}
       onChange={(cId) => {
+        setIsLoading(true);
         const subpath =
           location === "workspace" ? "connections" : "connection-config";
         const newLocation = `/${subpath}/${cId}${window.location.search}`;
@@ -35,6 +37,7 @@ export const ConnectionSelector = ({ connection, dbs, location }: P) => {
         iconPath: mdiDatabase,
         iconPosition: "left",
         variant: "faded",
+        loading: isLoading,
         style: {
           flex: 1,
           minWidth: 0,
