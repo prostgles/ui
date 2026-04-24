@@ -62,8 +62,9 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
   // await addScene({ animations: [{ type: "wait", duration: 1000 }] });
   const searchAllInput = page.getByTestId("SearchAll");
   /** To prevent searching */
+  const demoRestaurantName = "sun cafe";
   await searchAllInput.evaluate(
-    (el: HTMLInputElement) => (el.value = "bengal tiger"),
+    (el: HTMLInputElement) => (el.value = demoRestaurantName),
   );
   await addScene({
     animations: [
@@ -80,7 +81,7 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
     ],
   });
   await searchAllInput.evaluate((el: HTMLInputElement) => (el.value = ""));
-  await searchAllInput.fill("bengal tiger");
+  await searchAllInput.fill(demoRestaurantName);
   await page.waitForTimeout(1000);
   await addScene({ animations: [{ type: "wait", duration: 500 }] });
   await page.waitForTimeout(5500);

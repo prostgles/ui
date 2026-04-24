@@ -21,7 +21,7 @@ import type { ActiveRow } from "../W_Table/W_Table";
 import W_Table from "../W_Table/W_Table";
 import { W_TimeChart } from "../W_TimeChart/W_TimeChart";
 import { getWindowTitle } from "../Window/Window";
-import { getCrossFilters } from "../joinUtils";
+import { getCrossFilters } from "../getCrossFilters";
 import type { LocalSettings } from "../localSettings";
 import { useLocalSettings } from "../localSettings";
 import { findShortestPath, makeReversibleGraph } from "../shortestPath";
@@ -38,6 +38,7 @@ import type {
   WindowSyncItem,
 } from "./dashboardUtils";
 import { getViewRendererUtils } from "./getViewRendererUtils";
+import { onLinkTable } from "./onLinkTable";
 
 export type ViewRendererProps = Pick<DashboardProps, "prgl"> &
   Pick<DashboardData, "workspace" | "links" | "windows"> &
@@ -119,9 +120,13 @@ export class ViewRenderer extends RTComp<
 
     if (!workspace || !tables) return;
 
-    const { onClickRow, onAddChart, onLinkTable } = getViewRendererUtils.bind(
-      this,
-    )({ ...this.props, windows, links, workspace, tables });
+    const { onClickRow } = getViewRendererUtils.bind(this)({
+      ...this.props,
+      windows,
+      links,
+      workspace,
+      tables,
+    });
 
     const getRenderedWindow = (
       w: WindowSyncItem,
@@ -205,7 +210,6 @@ export class ViewRenderer extends RTComp<
         myLinks,
         active_row: this.state.active_row,
         getLinksAndWindows: () => this.getOpenedLinksAndWindows(),
-        onAddChart: !onAddChart ? undefined : (args) => onAddChart(args, w),
       };
       const setLinkMenu =
         isReadonly ? undefined : (
@@ -289,20 +293,19 @@ export class ViewRenderer extends RTComp<
             />
           );
         } else if (w.type === "table") {
-          const crossF = getCrossFilters(w, active_row, links, windows);
+          const crossF = getCrossFilters(
+            w,
+            undefined,
+            active_row,
+            links,
+            windows,
+          );
           result = (
             <W_Table
               setLinkMenu={setLinkMenu}
               activeRowColor={colorStr}
               activeRow={
                 active_row?.window_id === w.id ? active_row : undefined
-              }
-              onLinkTable={
-                this.props.isReadonly ?
-                  undefined
-                : (tblName, path) => {
-                    void onLinkTable(w, tblName, path);
-                  }
               }
               joinFilter={crossF.activeRowFilter}
               externalFilters={crossF.all}
@@ -410,7 +413,16 @@ export class ViewRenderer extends RTComp<
             onClose={() => this.setState({ linkMenuWindow: undefined })}
             gridRef={this.gridWrapperRef}
             onLinkTable={(tableName, path) =>
-              onLinkTable(linkMenuWindow.w, tableName, path)
+              onLinkTable({
+                q: linkMenuWindow.w,
+                tableName,
+                tablePath: path,
+                myLinks: links.filter((l) =>
+                  [l.w1_id, l.w2_id].includes(linkMenuWindow.w.id),
+                ),
+                prgl,
+                workspaceId: linkMenuWindow.w.workspace_id,
+              })
             }
           />
         )}

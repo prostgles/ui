@@ -14,6 +14,8 @@ import { NavLink } from "react-router";
 import { getConnectionPaths } from "@common/utils";
 import { isDefined } from "@common/filterUtils";
 import type { BtnProps } from "@components/Btn";
+import ErrorComponent from "@components/ErrorComponent";
+import Chip from "@components/Chip";
 
 export type AskLLMToolsProps = {
   workspaceId: string | undefined;
@@ -47,6 +49,28 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
       requests?.find(({ id }) => id === showRequestId)
     : nonIgnoredRequests?.[0];
 
+  const toolUse = useMemo(() => {
+    if (!requestItem) return;
+    const { input, tool_use_id, source, llm_messages } = requestItem;
+    const toolUseMessage = llm_messages[0];
+    if (source.type === "proxy") {
+      return { state: "ok", input } as const;
+    }
+    if (!toolUseMessage) {
+      return { state: "error" } as const;
+    }
+    const inputFromMessage = toolUseMessage.message
+      .map((content) =>
+        content.type === "tool_use" && content.id === tool_use_id ?
+          content
+        : undefined,
+      )
+      .find(isDefined)?.input;
+    return {
+      state: "ok",
+      input: inputFromMessage,
+    } as const;
+  }, [requestItem]);
   if (!requestItem || (openedChatId !== undefined && !showRequestId)) {
     return null;
   }
@@ -57,8 +81,8 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
     tool_name,
     input,
     tool_use_id,
-    llm_messages,
     mcp_server_tools,
+    source,
   } = requestItem;
   const { annotations } = mcp_server_tools[0] ?? {};
   const connections = requestItem.connections as
@@ -73,7 +97,6 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
     requestItem.connection_id !== connectionId ?
       connections?.find((c) => c.id === requestItem.connection_id)
     : undefined;
-  const toolUseMessage = llm_messages[0];
 
   const btnDestructiveToolHint: Pick<BtnProps, "title" | "color"> =
     annotations?.readOnlyHint === false ?
@@ -92,6 +115,12 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
         color: "action",
         title: undefined,
       };
+
+  if (toolUse?.state === "error" || !toolUse?.input) {
+    return (
+      <ErrorComponent error="Tool use message not found for this request" />
+    );
+  }
 
   return (
     <Popup
@@ -176,6 +205,9 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
           <FlexRow>
             from <strong>{server_name}</strong>
           </FlexRow>
+          {source.type === "proxy" && (
+            <Chip color="blue">Requested from container</Chip>
+          )}
         </FlexRow>
         <Marked
           style={{ maxHeight: "200px" }}
@@ -189,33 +221,19 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
         {!isEmpty(input) && (
           <>
             {ToolUI ?
-              !toolUseMessage ?
-                <div>Loading message...</div>
-              : <ToolUI.component
-                  chatId={chat_id}
-                  // toolUseMessage={toolUseMessage}
-                  toolUseContent={{
-                    type: "tool_use",
-                    id: tool_use_id,
-                    name,
-                    input:
-                      toolUseMessage.message
-                        .map((content) =>
-                          (
-                            content.type === "tool_use" &&
-                            content.id === tool_use_id
-                          ) ?
-                            content
-                          : undefined,
-                        )
-                        .find(isDefined)?.input ?? input,
-                  }}
-                  resultContent={undefined}
-                  workspaceId={workspaceId}
-                  loadedSuggestions={loadedSuggestions}
-                  isShownInToolUseRequest={true}
-                />
-
+              <ToolUI.component
+                chatId={chat_id}
+                toolUseContent={{
+                  type: "tool_use",
+                  id: tool_use_id,
+                  name,
+                  input: toolUse.input,
+                }}
+                resultContent={undefined}
+                workspaceId={workspaceId}
+                loadedSuggestions={loadedSuggestions}
+                isShownInToolUseRequest={true}
+              />
             : <CodeEditorWithSaveButton
                 label="Input"
                 value={JSON.stringify(input, null, 2)}

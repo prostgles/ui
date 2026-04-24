@@ -1,6 +1,10 @@
 import type { DetailedFilter } from "@common/filterUtils";
 import { Icon } from "@components/Icon/Icon";
-import type { SearchListProps } from "@components/SearchList/SearchList";
+import type {
+  SearchListItem,
+  SearchListProps,
+  SvgIconName,
+} from "@components/SearchList/SearchList";
 import { SvgIcon } from "@components/SvgIcon";
 import {
   mdiChatQuestion,
@@ -15,6 +19,7 @@ import type { SearchAllProps } from "../SearchAll";
 import { SearchMatchRow } from "../SearchMatchRow";
 import type { SearchAllState } from "./useSearchAllState";
 import type { useSearchTables } from "./useSearchTables";
+import type { F } from "react-router/dist/development/routeModules-CA7kSxJJ";
 
 export const useSearchAllListProps = ({
   mode,
@@ -51,38 +56,29 @@ export const useSearchAllListProps = ({
           key: name,
           label: name,
           subLabel,
-          contentLeft: (
-            <div className="f-0">
-              {icon ?
-                <SvgIcon icon={icon} className="text-1p5 m-p25" />
-              : <Icon
-                  className="text-1p5 m-p25"
-                  path={
-                    type === "table" ? mdiTable
-                    : type === "function" ?
-                      mdiFunction
-                    : mdiChatQuestion
-                  }
-                />
-              }
-            </div>
-          ),
+          iconLeft: {
+            type: "SvgIcon",
+            pathName:
+              (icon as SvgIconName | undefined) ??
+              (type === "table" ? "Table"
+              : type === "function" ? "Function"
+              : "ChatQuestion"),
+          },
           onPress: (e, term) => {
             onClose();
             onOpenDBObject(suggestion);
           },
-        };
+        } satisfies SearchListItem;
       })
       .concat(
         (typesToSearch.includes("queries") ? (queries ?? []) : []).map((q) => ({
           key: q.id,
           label: q.name,
           subLabel: q.sql || "", // sliceText(q.sql || "", 200) ,
-          contentLeft: (
-            <div className="f-0">
-              <Icon className="text-1p5 p-p25" path={mdiScriptTextPlay} />
-            </div>
-          ),
+          iconLeft: {
+            type: "SvgIcon",
+            pathName: "ScriptTextPlay",
+          },
           onPress: (e, term) => {
             onClose();
             let extra = {};
@@ -113,11 +109,10 @@ export const useSearchAllListProps = ({
             key: methodKey,
             label: methodKey,
             subLabel: Object.keys(method.input ?? {}).join(", "),
-            contentLeft: (
-              <div className="f-0">
-                <Icon className="text-1p5 p-p25" path={mdiFunction} />
-              </div>
-            ),
+            iconLeft: {
+              type: "SvgIcon",
+              pathName: "Function",
+            },
             onPress: (e, term) => {
               onClose();
               onOpenDBObject(undefined, methodKey);
@@ -131,15 +126,28 @@ export const useSearchAllListProps = ({
       const icon = tableHash.get(m.table)?.icon;
       return {
         ...m,
-        key: m.$rowhash + i,
+        key: `${m.$rowhash + i}`,
         label: m.table,
-        content: (
-          <div className="f-1 flex-row ai-start" title="Open table">
-            <div className="flex-col ai-start f-0 text-1">
+        styles: {
+          rowInner: {
+            gap: ".25em",
+          },
+        },
+        iconLeft: {
+          type: "SvgIcon",
+          pathName:
+            icon ? (icon as SvgIconName)
+            : db[m.table]?.insert ? "TableEdit"
+            : "Table",
+        },
+        title: "Open table",
+        contentBottom: (
+          <div className="f-1 flex-row ai-start">
+            {/* <div className="flex-col ai-start f-0 text-1 ">
               {icon ?
                 <SvgIcon icon={icon} />
               : <Icon path={db[m.table]?.insert ? mdiTableEdit : mdiTable} />}
-            </div>
+            </div> */}
             <div className="flex-col ai-start f-1">
               <div className="font-18">{m.table}</div>
               <div

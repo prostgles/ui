@@ -511,9 +511,8 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
                     w={w}
                     myLinks={myLinks}
                     childWindows={this.props.childWindows}
-                    onAddChart={onAddChart}
                     chartableSQL={currentCodeBlockChartColumns}
-                    tables={tables}
+                    getLinksAndWindows={this.props.getLinksAndWindows}
                     size="micro"
                   />
               }
@@ -593,10 +592,10 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
           dbs,
           prgl: this.props.prgl,
           myLinks: this.props.myLinks,
-          onAddChart,
           tables,
           setLinkMenu,
           childWindows: this.props.childWindows,
+          getLinksAndWindows: this.props.getLinksAndWindows,
           chartableSQL: currentCodeBlockChartColumns,
         }}
         getMenu={(w, onClose) => (

@@ -210,13 +210,11 @@ export const PCustomTables = ({
                 : undefined,
               title: t.name,
               rowStyle: { border: "1px solid var(--b-default)" },
-              contentLeft: (
-                <Icon
-                  className="mr-p5 text-2"
-                  title={icon.title}
-                  path={icon.path}
-                />
-              ),
+              iconLeft: {
+                type: "Icon",
+                title: icon.title,
+                path: icon.path,
+              },
               contentRight: (
                 <TablePermissionControls
                   key={t.name}

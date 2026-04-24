@@ -1,11 +1,10 @@
+import type { DBSSchema } from "@common/publishUtils";
 import { mdiAccountOutline, mdiAccountQuestion, mdiAccountStar } from "@mdi/js";
+import type { TableHandlerClient } from "prostgles-client";
 import React from "react";
 import type { TestSelectors } from "../../Testing";
-import { Icon } from "@components/Icon/Icon";
 import type { DBS } from "../Dashboard/DBS";
 import { SmartSelect } from "../SmartSelect";
-import type { TableHandlerClient } from "prostgles-client";
-import type { DBSSchema } from "@common/publishUtils";
 import type { UserType } from "./useEditedAccessRule";
 
 type P = {
@@ -72,17 +71,14 @@ export const UserTypeSelect = (props: P) => {
         return {
           subLabel,
           disabledInfo,
-          contentLeft: (
-            <Icon
-              style={{ opacity: 0.75 }}
-              path={
-                id === "admin" ? mdiAccountStar
-                : id === "public" ?
-                  mdiAccountQuestion
-                : mdiAccountOutline
-              }
-            />
-          ),
+          iconLeft: {
+            type: "Icon",
+            style: { opacity: 0.75 },
+            path:
+              id === "admin" ? mdiAccountStar
+              : id === "public" ? mdiAccountQuestion
+              : mdiAccountOutline,
+          },
         };
       }}
     />

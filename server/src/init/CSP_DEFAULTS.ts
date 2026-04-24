@@ -12,5 +12,11 @@ export const CSP_DEFAULTS = {
     "data:",
     "blob:",
   ],
-  connectSrc: [SELF, "ws:", "wss:", "https://*.tile.openstreetmap.org"],
+  connectSrc: [
+    SELF,
+    "data:" /** Used by deckgl icon render */,
+    "ws:",
+    "wss:",
+    "https://*.tile.openstreetmap.org",
+  ],
 };

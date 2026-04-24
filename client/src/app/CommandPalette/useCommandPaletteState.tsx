@@ -1,6 +1,5 @@
 import { getProperty } from "@common/utils";
 import Btn from "@components/Btn";
-import { Icon } from "@components/Icon/Icon";
 import type { SearchListItem } from "@components/SearchList/SearchList";
 import { getItemSearchRank } from "@components/SearchList/searchMatchUtils/getItemSearchRank";
 import {
@@ -56,9 +55,9 @@ export const useCommandPaletteState = (prglLoaded: boolean) => {
       parentLabels: data.parentTitles,
       label: data.title,
       subLabel: data.description,
-      contentLeft:
+      iconLeft:
         iconPath ?
-          <Icon path={iconPath} title={data.type} className="text-1 f-0" />
+          { type: "Icon", path: iconPath, title: data.type }
         : undefined,
       onPress: async () => {
         // TODO: keep track of which component needs prglLoaded and if it's not loaded:

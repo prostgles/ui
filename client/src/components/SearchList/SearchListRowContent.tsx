@@ -3,7 +3,7 @@ import React from "react";
 import type { ParsedListItem } from "./SearchList";
 
 export const SearchListRowContent = ({ item }: { item: ParsedListItem }) => {
-  if ("content" in item) return item.content;
+  if (item.content !== undefined) return item.content;
   const { contentLeft, contentBottom, contentRight } = item;
 
   return (

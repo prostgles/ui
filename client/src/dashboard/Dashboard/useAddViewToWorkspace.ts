@@ -70,7 +70,7 @@ export const addViewToWorkspace = async (
     }
   }
 
-  const r = await dbs.windows.insert(
+  const newWindow = await dbs.windows.insert(
     {
       sql,
       filter,
@@ -82,11 +82,11 @@ export const addViewToWorkspace = async (
       method_name,
       fullscreen: false,
       workspace_id,
-      /** TODO: add auth to client schema */
-      last_updated: undefined as any,
-      user_id: undefined as any,
+      /** TODO: add auth to client schema types */
+      last_updated: undefined as unknown as string,
+      user_id: undefined as unknown as string,
     },
     { returning: "*" },
   );
-  return r.id;
+  return newWindow.id;
 };

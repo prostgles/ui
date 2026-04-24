@@ -2,7 +2,10 @@ import Btn from "@components/Btn";
 import { FlexCol } from "@components/Flex";
 import { Icon } from "@components/Icon/Icon";
 import { InfoRow } from "@components/InfoRow";
-import { SearchList } from "@components/SearchList/SearchList";
+import {
+  SearchList,
+  type SvgIconName,
+} from "@components/SearchList/SearchList";
 import { SvgIcon } from "@components/SvgIcon";
 import {
   mdiFile,
@@ -105,32 +108,20 @@ export const TableList = ({
       }
       items={tablesWithInfo.map((table) => {
         return {
-          contentLeft: (
-            <div
-              data-command={
-                table.isFileTable ? "dashboard.menu.fileTable" : undefined
-              }
-              className="flex-col ai-start f-0 text-1"
-            >
-              {table.icon ?
-                <SvgIcon icon={table.icon} />
-              : <Icon
-                  title={
-                    table.isFileTable ? "File table"
-                    : table.isView ?
-                      "View"
-                    : "Table"
-                  }
-                  path={
-                    table.isFileTable ? mdiFile
-                    : db[table.name]?.insert ?
-                      mdiTableEdit
-                    : mdiTableEye
-                  }
-                />
-              }
-            </div>
-          ),
+          iconLeft: {
+            type: "SvgIcon",
+            pathName:
+              (table.icon as SvgIconName | undefined) ||
+              (table.isFileTable ? "File"
+              : db[table.name]?.insert ? "TableEdit"
+              : "TableEye"),
+            title:
+              table.isFileTable ? "File table"
+              : table.isView ? "View"
+              : "Table",
+            "data-command":
+              table.isFileTable ? "dashboard.menu.fileTable" : undefined,
+          },
           key: table.name,
           label: table.label,
           title: table.comment,

@@ -1,5 +1,6 @@
 import { getMCPToolNameParts } from "@common/mcpUtils";
 import type { DBSSchema } from "@common/publishUtils";
+import type { SvgIconName } from "@components/SearchList/SearchList";
 import { isDefined } from "prostgles-types";
 import { useCallback, useMemo } from "react";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
@@ -35,16 +36,27 @@ export const useMcpServerIcons = () => {
     const iconMap = new Map<
       string,
       {
-        serverIcon: string;
-        toolInfo: Map<string, { description: string; icon: string | null }>;
+        serverIcon: SvgIconName;
+        toolInfo: Map<
+          string,
+          { description: string; icon: SvgIconName | null }
+        >;
       }
     >();
     mcpServers?.forEach(({ name, icon_path, mcp_server_tools }) => {
       if (icon_path) {
         iconMap.set(name, {
-          serverIcon: icon_path,
+          serverIcon: icon_path as SvgIconName,
           toolInfo: new Map(
-            mcp_server_tools.map((t) => [t.name, t] as const).filter(isDefined),
+            mcp_server_tools
+              .map(
+                (t) =>
+                  [
+                    t.name,
+                    { ...t, icon: t.icon as SvgIconName | null },
+                  ] as const,
+              )
+              .filter(isDefined),
           ),
         });
       }

@@ -9,7 +9,10 @@ import Btn from "@components/Btn";
 import { FlexCol } from "@components/Flex";
 import { Icon } from "@components/Icon/Icon";
 import PopupMenu from "@components/PopupMenu";
-import { SearchList } from "@components/SearchList/SearchList";
+import {
+  SearchList,
+  type SvgIconName,
+} from "@components/SearchList/SearchList";
 import { SvgIcon } from "@components/SvgIcon";
 import { cloneWorkspace } from "../Dashboard/cloneWorkspace";
 import { WorkspaceAddBtn } from "./WorkspaceAddBtn";
@@ -95,20 +98,15 @@ export const WorkspaceMenuDropDown = ({
                     alignItems: "center",
                   },
                 },
-                contentLeft: (
-                  <div
-                    className="flex-col ai-start f-0 text-2"
-                    style={
-                      workspace.id === w.id ?
-                        { color: "var(--active)" }
-                      : undefined
-                    }
-                  >
-                    {w.icon ?
-                      <SvgIcon icon={w.icon} />
-                    : <Icon path={mdiViewCarousel} size={1} />}
-                  </div>
-                ),
+                iconLeft: {
+                  type: "SvgIcon",
+                  pathName:
+                    (w.icon as SvgIconName | undefined) || "ViewCarousel",
+                  style:
+                    workspace.id === w.id ?
+                      { color: "var(--active)" }
+                    : undefined,
+                },
                 contentRight: (
                   <div className="flex-row gap-p5 pl-1 show-on-parent-hover">
                     {w.published && isAdmin && (

@@ -1,15 +1,13 @@
-import { mdiFileCogOutline, mdiLink } from "@mdi/js";
-import { type FileColumnConfig, isEmpty } from "prostgles-types";
-import { isDefined } from "prostgles-types";
-import React, { useState } from "react";
 import Btn from "@components/Btn";
 import { FlexCol } from "@components/Flex";
-import { Icon } from "@components/Icon/Icon";
 import Popup from "@components/Popup/Popup";
 import { SearchList } from "@components/SearchList/SearchList";
+import { mdiFileCogOutline } from "@mdi/js";
+import { type FileColumnConfig, isDefined, isEmpty } from "prostgles-types";
+import React, { useState } from "react";
+import { quickClone } from "../../utils/utils";
 import { type CommonWindowProps } from "../Dashboard/Dashboard";
 import { FileColumnConfigEditor } from "./FileColumnConfigEditor";
-import { quickClone } from "../../utils/utils";
 
 export type FileTableConfigReferences = Record<
   string,
@@ -112,7 +110,10 @@ export const FileColumnConfigControls = (
                 getFileColumnConfigDescription(linkedTable.fileColumn.file!)
                   .full
               : "Missing from table",
-            contentLeft: <Icon path={mdiLink} className="mr-p5" />,
+            iconLeft: {
+              type: "SvgIcon",
+              pathName: "Link",
+            },
             contentRight:
               linkedTable.fileColumn ?
                 <Btn

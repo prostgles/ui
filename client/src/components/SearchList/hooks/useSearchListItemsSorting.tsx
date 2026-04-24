@@ -1,5 +1,7 @@
+import { Icon } from "@components/Icon/Icon";
+import { SvgIcon } from "@components/SvgIcon";
 import { isEqual } from "prostgles-types";
-import { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo } from "react";
 import { getSearchListMatchAndHighlight } from "../getSearchListMatchAndHighlight";
 import type {
   ParsedListItem,
@@ -28,35 +30,71 @@ export const useSearchListItemsSorting = (
     searchTerm,
     onSearchItems,
     searchItems,
-    items = [],
+    items: rawItemsWithLeftIcons = [],
     dontHighlight,
     onSearch,
     matchCase,
     limit = 34,
   } = props;
   const styles = rowStyleVariant === "row-wrap" ? rowWrapStyle : undefined;
+  const items = useMemo(() => {
+    return rawItemsWithLeftIcons.map((item) => {
+      if (item.iconLeft !== undefined) {
+        const { iconLeft, ...searchListItem } = item;
+        return {
+          ...searchListItem,
+          contentLeft: (
+            <div
+              title={iconLeft.title}
+              style={iconLeft.style}
+              data-command={iconLeft["data-command"]}
+              data-key={iconLeft["data-key"]}
+              className={
+                "f-0 text-1p5 " + (searchListItem.contentBottom ? "mt-p25" : "")
+              }
+            >
+              {iconLeft.type === "Icon" ?
+                <Icon path={iconLeft.path} />
+              : <SvgIcon icon={iconLeft.pathName} />}
+            </div>
+          ),
+        };
+      }
+      return item;
+    });
+  }, [rawItemsWithLeftIcons]);
 
   const getFullItem = useCallback(
-    (d: SearchListItem): ParsedListItem => {
+    (searchListItem: SearchListItem): ParsedListItem => {
       const match = getSearchListMatchAndHighlight({
         matchCase,
         ranking:
-          typeof d.ranking === "function" ? d.ranking(searchTerm) : d.ranking,
+          typeof searchListItem.ranking === "function" ?
+            searchListItem.ranking(searchTerm)
+          : searchListItem.ranking,
         term: searchTerm,
-        style: d.styles?.label,
-        subLabelStyle: { ...styles?.subLabel, ...d.styles?.subLabel },
+        style: searchListItem.styles?.label,
+        subLabelStyle: {
+          ...styles?.subLabel,
+          ...searchListItem.styles?.subLabel,
+        },
         rootStyle: {
           ...styles?.labelRootWrapperStyle,
-          ...d.styles?.labelRootWrapperStyle,
+          ...searchListItem.styles?.labelRootWrapperStyle,
         },
-        text: getValueAsText(d.label !== undefined ? d.label : d.key) ?? "",
-        key: d.key,
-        subLabel: d.subLabel,
+        text:
+          getValueAsText(
+            searchListItem.label !== undefined ?
+              searchListItem.label
+            : searchListItem.key,
+          ) ?? "",
+        key: searchListItem.key,
+        subLabel: searchListItem.subLabel,
       });
       return {
-        ...d,
+        ...searchListItem,
         ...match,
-      };
+      } as ParsedListItem;
     },
     [matchCase, searchTerm, styles],
   );

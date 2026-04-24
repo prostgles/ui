@@ -7,7 +7,7 @@ import {
 import Btn from "@components/Btn";
 import React from "react";
 import type { CommonWindowProps } from "./Dashboard/Dashboard";
-import type { OnAddChart, WindowSyncItem } from "./Dashboard/dashboardUtils";
+import type { WindowSyncItem } from "./Dashboard/dashboardUtils";
 
 import { isJoinedFilter } from "@common/filterUtils";
 import { classOverride, FlexRow } from "@components/Flex";
@@ -19,7 +19,7 @@ import { AddChartMenu } from "./W_Table/TableMenu/AddChartMenu";
 
 export type ProstglesQuickMenuProps = Pick<
   CommonWindowProps,
-  "tables" | "prgl" | "myLinks" | "childWindows"
+  "tables" | "prgl" | "myLinks" | "childWindows" | "getLinksAndWindows"
 > & {
   w: WindowSyncItem<"table"> | WindowSyncItem<"sql">;
   dbs: DBS;
@@ -27,7 +27,6 @@ export type ProstglesQuickMenuProps = Pick<
     w: WindowSyncItem<"table">;
     anchorEl: HTMLElement | Element;
   }) => any;
-  onAddChart?: OnAddChart;
   /**
    * If undefined then will show all
    */
@@ -39,20 +38,20 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
   const {
     w,
     setLinkMenu,
-    onAddChart,
     show,
     chartableSQL,
     prgl,
     myLinks,
     childWindows,
+    getLinksAndWindows,
   } = props;
-  const { tables } = prgl;
+  const { tables, dbs } = prgl;
   const table = tables.find((t) => t.name === w.table_name);
   const showLinks =
     (!show || show.link) &&
     Boolean(
       (setLinkMenu && w.table_name && table?.joinsV2.length) ||
-        (w.type !== "sql" && !!myLinks.length),
+      (w.type !== "sql" && !!myLinks.length),
     );
 
   const [firstLink] = myLinks;
@@ -82,13 +81,12 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
         style={{ maxWidth: "fit-content", margin: "2px 0", gap: "1px" }}
         ref={divRef}
       >
-        {onAddChart && addChartProps && !show && (
+        {Boolean((dbs.windows as any).insert) && addChartProps && !show && (
           <AddChartMenu
             {...addChartProps}
-            tables={tables}
             childWindows={childWindows}
             myLinks={myLinks}
-            onAddChart={onAddChart}
+            getLinksAndWindows={getLinksAndWindows}
           />
         )}
         {hasMinimisedCharts && (

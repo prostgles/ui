@@ -222,7 +222,9 @@ export const W_MethodControls = ({
 
                   setLoading(true);
                   setError(undefined);
-                  const res = await methodFromSchema.run(params);
+                  const res = await methodFromSchema.run(
+                    !methodFullData?.arguments.length ? undefined : params,
+                  );
                   if (outputTableInfo) {
                     w?.$update({
                       name: `${method_name} - ${await db[outputTableInfo.name]?.count?.()}`,

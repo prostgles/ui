@@ -47,7 +47,6 @@ export type W_TableMenuProps = Pick<
 > & {
   onAddChart?: OnAddChart;
   w: WindowSyncItem<"table">;
-  onLinkTable?: (tableName: string, path: ParsedJoinPath[]) => any;
   cols: ColumnConfigWInfo[];
   suggestions: CommonWindowProps["suggestions"];
   onClose: () => any;

@@ -477,10 +477,14 @@ export class Select<
               label,
               subLabel,
               ranking,
-              contentLeft:
-                leftContent ? leftContent
-                : iconPath ? <Icon path={iconPath} className="text-1" />
+              iconLeft:
+                iconPath ?
+                  {
+                    type: "Icon",
+                    path: iconPath,
+                  }
                 : undefined,
+              contentLeft: iconPath ? undefined : leftContent,
               contentRight: rightContent,
               styles: {
                 subLabel: {
@@ -499,7 +503,7 @@ export class Select<
               checked,
               disabledInfo,
               ...selectorProps,
-            };
+            } satisfies SearchListItem;
           },
         )}
       />

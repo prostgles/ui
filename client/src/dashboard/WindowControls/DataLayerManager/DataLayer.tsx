@@ -1,6 +1,6 @@
 import type { DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
-import { FlexRowWrap } from "@components/Flex";
+import { FlexRow } from "@components/Flex";
 import { mdiClose, mdiEye, mdiEyeOff } from "@mdi/js";
 import React, { useCallback } from "react";
 import { RenderFilter } from "src/dashboard/RenderFilter";
@@ -22,6 +22,7 @@ export type ChartLinkOptions = Exclude<
 export type DataLayerProps =
   | (Pick<W_TimeChartProps, "w" | "getLinksAndWindows" | "myLinks"> & {
       type: "timechart";
+      asLegend?: boolean;
       layer: NonNullable<
         ProstglesTimeChartLayer & {
           link: LinkSyncItem;
@@ -30,6 +31,7 @@ export type DataLayerProps =
     })
   | (Pick<W_MapProps, "w" | "getLinksAndWindows" | "myLinks"> & {
       type: "map";
+      asLegend?: boolean;
       w: MapLayerManagerProps["w"];
       layer: NonNullable<
         LayerQuery & {
@@ -38,7 +40,7 @@ export type DataLayerProps =
       >;
     });
 export const DataLayer = (props: DataLayerProps) => {
-  const { myLinks, layer, w, getLinksAndWindows } = props;
+  const { myLinks, layer, w, getLinksAndWindows, asLegend } = props;
 
   const thisLink = myLinks.find((l) => l.id === layer.linkId);
   const linkOptions = thisLink?.options;
@@ -74,80 +76,91 @@ export const DataLayer = (props: DataLayerProps) => {
     [thisLink],
   );
   return (
-    <FlexRowWrap
+    <FlexRow
       key={layer._id}
-      className={`LayerQuery bg-color-0 ai-center gap-1 ta-left b b-color rounded ${window.isMobileDevice ? "p-p5" : "p-1"}`}
+      className={`LayerQuery bg-color-0 ta-left ai-center rounded ${asLegend ? "gap-p5" : "gap-0 b b-color pl-p5"}`}
     >
       <LayerColorPicker
         onChange={updateOptions}
         title={layerDesc}
         column={column}
         linkOptions={linkOptions}
+        btnProps={
+          asLegend ?
+            {
+              size: "micro",
+            }
+          : {}
+        }
       />
 
       <DataLayerDataSource {...props} />
 
-      <TimeChartLayerOptions
-        w={w}
-        getLinksAndWindows={getLinksAndWindows}
-        link={thisLink}
-        myLinks={myLinks}
-        column={column}
-      />
+      {!asLegend && (
+        <>
+          <TimeChartLayerOptions
+            w={w}
+            getLinksAndWindows={getLinksAndWindows}
+            link={thisLink}
+            myLinks={myLinks}
+            column={column}
+          />
 
-      {dataSource?.type === "local-table" && (
-        <RenderFilter
-          title="Manage filters"
-          mode="micro"
-          selectedColumns={undefined}
-          itemName="filter"
-          tableName={dataSource.localTableName}
-          contextData={undefined}
-          filter={dataSource.smartGroupFilter}
-          onChange={(andOrFilter) => {
-            updateOptions({
-              ...linkOptions,
-              dataSource: {
-                ...dataSource,
-                smartGroupFilter: andOrFilter,
-              },
-            });
-          }}
-        />
+          {dataSource?.type === "local-table" && (
+            <RenderFilter
+              title="Manage filters"
+              mode="micro"
+              selectedColumns={undefined}
+              itemName="filter"
+              tableName={dataSource.localTableName}
+              contextData={undefined}
+              filter={dataSource.smartGroupFilter}
+              onChange={(andOrFilter) => {
+                updateOptions({
+                  ...linkOptions,
+                  dataSource: {
+                    ...dataSource,
+                    smartGroupFilter: andOrFilter,
+                  },
+                });
+              }}
+            />
+          )}
+
+          <Btn
+            title="Toggle layer on/off"
+            data-command="ChartLayerManager.toggleLayer"
+            className={`ml-auto ${thisLink.disabled ? "" : "show-on-parent-hover"} `}
+            iconPath={thisLink.disabled ? mdiEyeOff : mdiEye}
+            color={"action"}
+            onClick={() => {
+              if (thisLink.options.type === "table") return;
+              thisLink.$update({ disabled: !thisLink.disabled });
+            }}
+          />
+
+          <Btn
+            color="danger"
+            title="Remove layer"
+            data-command="ChartLayerManager.removeLayer"
+            className="show-on-parent-hover"
+            onClickPromise={() => {
+              if (thisLink.options.type === "table") return;
+              const opts = thisLink.options;
+              const newOpts: Link["options"] = {
+                ...opts,
+                columns: opts.columns.filter((c) => c.name !== column),
+              };
+              if (newOpts.columns.length === 0) {
+                thisLink.$update({ closed: true });
+              } else {
+                updateOptions(newOpts);
+              }
+            }}
+            iconPath={mdiClose}
+          />
+        </>
       )}
-
-      <Btn
-        title="Toggle layer on/off"
-        data-command="ChartLayerManager.toggleLayer"
-        className={`ml-auto ${thisLink.disabled ? "" : "show-on-parent-hover"} `}
-        iconPath={thisLink.disabled ? mdiEyeOff : mdiEye}
-        color={"action"}
-        onClick={() => {
-          if (thisLink.options.type === "table") return;
-          thisLink.$update({ disabled: !thisLink.disabled });
-        }}
-      />
-
-      <Btn
-        color="danger"
-        title="Remove layer"
-        data-command="ChartLayerManager.removeLayer"
-        className="show-on-parent-hover"
-        onClickPromise={() => {
-          if (thisLink.options.type === "table") return;
-          const opts = thisLink.options;
-          const newOpts: Link["options"] = {
-            ...opts,
-            columns: opts.columns.filter((c) => c.name !== column),
-          };
-          if (newOpts.columns.length === 0) {
-            thisLink.$update({ closed: true });
-          } else {
-            updateOptions(newOpts);
-          }
-        }}
-        iconPath={mdiClose}
-      />
-    </FlexRowWrap>
+    </FlexRow>
   );
 };

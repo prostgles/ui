@@ -3,7 +3,11 @@ import { mdiPlus } from "@mdi/js";
 import { isEqual } from "prostgles-types";
 import React from "react";
 import { FlexRow, FlexRowWrap } from "../../Flex";
-import type { SearchListItem, SearchListProps } from "../SearchList";
+import type {
+  ParsedListItem,
+  SearchListItem,
+  SearchListProps,
+} from "../SearchList";
 import { useSearchListItemsSorting } from "./useSearchListItemsSorting";
 import type { SearchListState } from "./useSearchListSearch";
 
@@ -65,6 +69,12 @@ export const useSearchListItems = (
                   </React.Fragment>
                 ))}
               </FlexRowWrap>;
+          if (item.content !== undefined) {
+            console.warn(
+              "SearchListItem with content should not have contentLeft or it will be ignored",
+              item,
+            );
+          }
           return {
             ...item,
             contentTop,
@@ -74,7 +84,7 @@ export const useSearchListItems = (
               : <FlexRow className="gap-0">
                   {contentLeft ?? leftSpacer}
                 </FlexRow>,
-          };
+          } as ParsedListItem;
         });
       })
     : renderedItemsWithoutHeaders;

@@ -1050,9 +1050,9 @@ SET geometry = st_point(lon, lat, 4326);
 
 CREATE TABLE IF NOT EXISTS routes (
   id BIGINT PRIMARY KEY,
-  geog GEOGRAPHY,
   deliverer_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
-  geometry JSONB
+  geometry JSONB,
+  geog GEOGRAPHY GENERATED ALWAYS AS (ST_SetSRID(ST_GeomFromGeoJSON(geometry), 4326)) STORED
 );
 
 /* Create ~14k restaurants in London */
@@ -1102,27 +1102,58 @@ AS $$
     number_of_riders INTEGER;
 BEGIN
 
-  WITH uadd as (
-    INSERT INTO addresses (street, city, state, postal_code, country, geog)
-    SELECT 'West street', 'London', 'UK', 'England', postal_code,
-      (
-        st_dump( 
-          st_generatepoints(
-            st_buffer(geog::GEOMETRY, 0.1, 'quad_segs=8'), 
-            100
-          )
-        )
-      ).geom::GEOGRAPHY
-    FROM addresses a
-    WHERE EXISTS (
-      SELECT * 
-      FROM restaurants r
-      WHERE r.address_id = a.id
-    )
+  -- WITH uadd as (
+  --   INSERT INTO addresses (street, city, state, postal_code, country, geog)
+  --   SELECT 'West street', 'London', 'UK', 'England', postal_code,
+  --     (
+  --       st_dump( 
+  --         st_generatepoints(
+  --           st_buffer(geog::GEOMETRY, 0.1, 'quad_segs=8'), 
+  --           100
+  --         )
+  --       )
+  --     ).geom::GEOGRAPHY
+  --   FROM addresses a
+  --   WHERE EXISTS (
+  --     SELECT * 
+  --     FROM restaurants r
+  --     WHERE r.address_id = a.id
+  --   )
+  --   ORDER BY random()
+  --   LIMIT number_of_users
+  --   RETURNING *
+  -- ), 
+  WITH road_points AS (
+    SELECT
+      ST_LineInterpolatePoint(r.geog::geometry, random())::geography AS road_geog
+    FROM routes r
+    WHERE r.geog IS NOT NULL
     ORDER BY random()
     LIMIT number_of_users
+  ),
+  uadd AS (
+    INSERT INTO addresses (street, city, state, postal_code, country, geog)
+    SELECT
+      'West street',
+      'London',
+      'UK',
+      COALESCE(NULLIF(near_addr.postal_code,''), 'N/A'),
+      'England',
+      ST_Project(
+        rp.road_geog,
+        8 + random() * 25,
+        random() * 2 * pi()
+      )::geography
+    FROM road_points rp
+    LEFT JOIN LATERAL (
+      SELECT a.postal_code
+      FROM addresses a
+      WHERE a.geog IS NOT NULL
+      ORDER BY a.geog <-> rp.road_geog
+      LIMIT 1
+    ) near_addr ON TRUE
     RETURNING *
-  ), 
+  ),
   new_users AS (
     SELECT fk.*, 'pwd' as pwd, 'customer' as type, 
       geog, id as address_id
@@ -1160,7 +1191,6 @@ BEGIN
   LIMIT number_of_riders;
 END $$;
 
-CALL mock_users(1e5::integer, '1 year');
 
 CREATE OR REPLACE VIEW customers AS
 WITH order_stats AS (
@@ -1219,7 +1249,7 @@ WHERE rnum < 50; --number of menu items per restaurant
 
 
 
-CREATE OR REPLACE PROCEDURE mock_orders(number_of_orders INTEGER DEFAULT 1e4, period INTERVAL DEFAULT '1 second')
+CREATE OR REPLACE PROCEDURE mock_orders(number_of_orders INTEGER DEFAULT 1e4, period INTERVAL DEFAULT '1 second', restaurant_name TEXT DEFAULT NULL)
 LANGUAGE plpgsql
 AS $$  
 BEGIN
@@ -1267,8 +1297,12 @@ BEGIN
   LEFT JOIN LATERAL (
     SELECT *
       , st_distance(u.geog, ri.geog) as dist
-    FROM v_restaurants ri
-    WHERE st_distance(u.geog, ri.geog) < 7000
+    FROM ( 
+      SELECT * 
+      FROM v_restaurants
+      WHERE CASE WHEN restaurant_name IS NULL THEN TRUE ELSE name = restaurant_name END
+    ) ri
+    WHERE CASE WHEN restaurant_name IS NOT NULL THEN TRUE ELSE  st_distance(u.geog, ri.geog) < 7000 END
     ORDER BY u.geog <-> ri.geog
     LIMIT 1
   ) r ON TRUE; 
@@ -1315,8 +1349,6 @@ BEGIN
 
 END $$;
 
-CALL mock_orders(1e5::INTEGER, '1 year'::INTERVAL);
-CALL mock_orders(35e3::INTEGER, '1 hour'::INTERVAL);
 
 
 

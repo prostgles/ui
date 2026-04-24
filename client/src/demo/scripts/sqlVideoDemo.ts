@@ -166,8 +166,8 @@ const sqlVideoDemo: DemoScript = async (args) => {
       await moveCursor.lineEnd();
       await typeQuick(`, age(cr`, { waitBeforeAccept: 1500 });
       await moveCursor.down(1);
-      await moveCursor.lineEnd();
-      await newLine();
+      await moveCursor.lineEnd(500);
+      newLine();
       await typeQuick(`W`, { triggerMode: "firstChar", waitBeforeAccept: 500 });
       await typeQuick(` opt`);
       await typeAuto(` the`, { waitAccept: 1e3 });

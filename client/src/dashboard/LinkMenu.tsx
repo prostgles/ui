@@ -1,7 +1,7 @@
-import type { DBHandlerClient } from "prostgles-client";
+import Popup from "@components/Popup/Popup";
 import type { ParsedJoinPath } from "prostgles-types";
 import React from "react";
-import Popup from "@components/Popup/Popup";
+import type { Prgl } from "src/App";
 import { Chart } from "./Charts";
 import type { CanvasChart, Shape } from "./Charts/CanvasChart";
 import type { DBS } from "./Dashboard/DBS";
@@ -13,9 +13,8 @@ import type {
   WindowSyncItem,
 } from "./Dashboard/dashboardUtils";
 import RTComp from "./RTComp";
-import { JoinPathSelectorV2 } from "./W_Table/ColumnMenu/JoinPathSelectorV2";
 import { getLinkColorV2 } from "./W_Map/fetchData/getMapLayerQueries";
-import type { Prgl } from "src/App";
+import { JoinPathSelectorV2 } from "./W_Table/ColumnMenu/JoinPathSelectorV2";
 
 type P = {
   db: Prgl["db"];
@@ -46,46 +45,13 @@ export class LinkMenu extends RTComp<P, S> {
     chartRef: undefined,
   };
 
-  static getMyLinks = (
-    _links: Link[],
-    w: WindowData,
-    windows: WindowData[],
-  ) => {
-    const getLinks = (links: Link[], allLinks: Link[]) => {
-      return allLinks.filter((al) =>
-        [al.w1_id, al.w2_id].some((alid) =>
-          links.some((l) => [l.w1_id, l.w2_id].includes(alid)),
-        ),
-      );
-    };
-    const links = _links.filter((l) =>
-      [l.w1_id, l.w2_id].every((wid) =>
-        windows.some((w) => wid === w.id && !w.closed && !w.deleted),
-      ),
-    );
-
-    let currLinks = links.filter((l) => [l.w1_id, l.w2_id].includes(w.id));
-    let prevLinks = currLinks;
-    let myLinks = [...currLinks];
-    do {
-      currLinks = getLinks(
-        prevLinks,
-        links.filter((l) => !myLinks.find((ml) => ml.id === l.id)),
-      );
-      prevLinks = currLinks;
-      myLinks = myLinks.concat(currLinks);
-    } while (currLinks.length);
-
-    return myLinks;
-  };
-
   loadShapes = () => {
-    const { w, links, gridRef, windows, tables } = this.props;
+    const { w, links, gridRef, windows } = this.props;
 
     if (w.table_name && this.rootRef) {
       const shapes: Shape[] = [];
 
-      const myLinks = LinkMenu.getMyLinks(links, w, windows); // links.filter(l => [l.w1_id, l.w2_id].includes(w.id));
+      const myLinks = getMyLinks(links, w, windows); // links.filter(l => [l.w1_id, l.w2_id].includes(w.id));
       // const myWindows = windows.filter(w => !w.closed && !w.deleted && myLinks.some(l =>  [l.w1_id, l.w2_id].includes(w.id)));
 
       /**
@@ -335,3 +301,32 @@ export class LinkMenu extends RTComp<P, S> {
     );
   }
 }
+
+const getMyLinks = (_links: Link[], w: WindowData, windows: WindowData[]) => {
+  const getLinks = (links: Link[], allLinks: Link[]) => {
+    return allLinks.filter((al) =>
+      [al.w1_id, al.w2_id].some((alid) =>
+        links.some((l) => [l.w1_id, l.w2_id].includes(alid)),
+      ),
+    );
+  };
+  const links = _links.filter((l) =>
+    [l.w1_id, l.w2_id].every((wid) =>
+      windows.some((w) => wid === w.id && !w.closed && !w.deleted),
+    ),
+  );
+
+  let currLinks = links.filter((l) => [l.w1_id, l.w2_id].includes(w.id));
+  let prevLinks = currLinks;
+  let myLinks = [...currLinks];
+  do {
+    currLinks = getLinks(
+      prevLinks,
+      links.filter((l) => !myLinks.find((ml) => ml.id === l.id)),
+    );
+    prevLinks = currLinks;
+    myLinks = myLinks.concat(currLinks);
+  } while (currLinks.length);
+
+  return myLinks;
+};

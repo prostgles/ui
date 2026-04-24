@@ -33,7 +33,7 @@ export const onMount: ProstglesOnMount = async ({ dbo: db, sql }) => {
   await db.symbols.insert([...FUNDING_SYMBOLS.map((pair) => ({ pair }))], {
     onConflict: "DoNothing",
   });
-  if (!(await db.futures.count())) {
+  if (!+(await db.futures.count())) {
     await loadHistorcalFutures(db);
     await loadHistoricalFundingRates(db);
   }
@@ -160,10 +160,10 @@ export const onMount: ProstglesOnMount = async ({ dbo: db, sql }) => {
         { returnType: "row" },
       );
       let truncateQuery = "";
-      if (futures_id > 1e6 && realtimeFutures) {
+      if (futures_id > 10e6 && realtimeFutures) {
         truncateQuery += `TRUNCATE futures RESTART IDENTITY;\n`;
       }
-      if (gas_id > 1e5 && loadGasPrices) {
+      if (gas_id > 10e5 && loadGasPrices) {
         truncateQuery += `TRUNCATE gas_prices RESTART IDENTITY;\n`;
       }
       if (truncateQuery) {

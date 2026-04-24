@@ -1,15 +1,16 @@
-import { test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
+import { type AnyObject } from "prostgles-types";
+import { USERS } from "utils/constants";
+import { goTo } from "utils/goTo";
 import {
   PageWIds,
   createDatabase,
   login,
   openConnection,
+  runDbSql,
   runDbsSql,
   setupProstglesLLMProvider,
 } from "./utils/utils";
-import { USERS } from "utils/constants";
-import { goTo } from "utils/goTo";
-import { getSerialisableError } from "prostgles-types";
 // const viewPortSize = { width: 1920, height: 1080 };
 const viewPortSize = { width: 1280, height: 1080 };
 test.use({
@@ -39,11 +40,32 @@ test.describe("Demo video", () => {
     );
     await login(page, USERS.test_user, "/login");
     await page.waitForTimeout(2000);
-    // await page.getByTestId("App.colorScheme").click();
-    // // await page.getByTestId("App.colorScheme").locator(`[data-key=light]`).click();
-    // await page.getByTestId("App.colorScheme").locator(`[data-key=dark]`).click();
+
+    await runDbsSql(
+      page,
+      `
+        UPDATE connections
+        SET on_mount_ts_disabled = true
+        WHERE name IN ('food_delivery', 'crypto')
+      `,
+    );
+    await runDbsSql(
+      page,
+      `
+        UPDATE connections
+        SET on_mount_ts_disabled = false
+        WHERE name IN ('food_delivery', 'crypto')
+      `,
+    );
+    await openConnection(page, "crypto");
+    await page.getByTestId("dashboard.goToConnConfig").click();
+    await page.getByTestId("config.methods").click();
+    await page.getByTestId("ServerSideFunctions.onMountEnabled").click();
+    await expect(
+      page.getByTestId("ServerSideFunctions.onMountEnabled"),
+    ).toHaveAttribute("aria-checked", "true");
+
     const getVideoDemoConnection = async () => {
-      // await goTo(page, "/connections");
       const videoDemoConnection = await page.getByRole("link", {
         name: "prostgles_video_demo",
         exact: true,
@@ -83,7 +105,16 @@ test.describe("Demo video", () => {
             console.error(e);
             console.error(JSON.stringify(e));
             await new Promise((res) => setTimeout(res, 10e3));
-            throw getSerialisableError(e);
+            const errorObj = Object.getOwnPropertyNames(
+              typeof e !== "object" ? { error: e } : e,
+            ).reduce(
+              (acc, key) => ({
+                ...acc,
+                [key]: (e as AnyObject)[key],
+              }),
+              {},
+            );
+            throw JSON.stringify(errorObj);
           }
         });
       await page.waitForTimeout(1e3);

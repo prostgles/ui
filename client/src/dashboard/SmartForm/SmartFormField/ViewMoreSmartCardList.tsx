@@ -60,6 +60,7 @@ export const ViewMoreSmartCardList = ({
           <SmartCardList
             showTopBar={true}
             db={db}
+            style={{ flex: 1 }}
             sql={sql}
             methods={methods}
             tables={tables}

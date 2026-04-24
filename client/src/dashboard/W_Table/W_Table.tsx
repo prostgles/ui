@@ -69,7 +69,6 @@ export type W_TableProps = Omit<CommonWindowProps, "w"> & {
   w: WindowSyncItem<"table">;
   setLinkMenu: ProstglesQuickMenuProps["setLinkMenu"];
   childWindow: { node: React.ReactNode; w: WindowSyncItem } | undefined;
-  onLinkTable?: (tableName: string, path: ParsedJoinPath[]) => void;
   onClickRow?: TableProps<ColumnSort>["onRowClick"];
   filter?: any;
   joinFilter?: AnyObject;
@@ -456,7 +455,7 @@ export default class W_Table extends RTComp<
   }
 
   getMenu = (w: WindowSyncItem<"table">, onClose: VoidFunction) => {
-    const { prgl, onLinkTable, onAddChart } = this.props;
+    const { prgl, onAddChart } = this.props;
 
     const cols = w.columns;
 
@@ -470,7 +469,6 @@ export default class W_Table extends RTComp<
         cols={cols}
         onAddChart={onAddChart}
         w={w}
-        onLinkTable={onLinkTable}
         suggestions={this.props.suggestions}
         onClose={onClose}
         externalFilters={this.props.externalFilters}
@@ -580,9 +578,9 @@ export default class W_Table extends RTComp<
             chartableSQL: undefined,
             dbs,
             setLinkMenu,
-            onAddChart,
             myLinks: this.props.myLinks,
             childWindows: this.props.childWindows,
+            getLinksAndWindows: this.props.getLinksAndWindows,
             show:
               childWindow || this.props.workspace.layout_mode === "fixed" ?
                 { filter: true }

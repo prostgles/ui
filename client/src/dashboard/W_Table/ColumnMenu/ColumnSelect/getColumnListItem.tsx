@@ -1,13 +1,4 @@
-import React from "react";
-import { Icon } from "@components/Icon/Icon";
 import type { SearchListItem } from "@components/SearchList/SearchList";
-import { type ValidatedColumnInfo } from "prostgles-types";
-import { getColumnDataColor } from "src/dashboard/SmartForm/SmartFormField/RenderValue";
-import type { ColumnConfigWInfo } from "../../W_Table";
-import {
-  colIs,
-  tsDataTypeFromUdtName,
-} from "src/dashboard/SmartForm/SmartFormField/fieldUtils";
 import {
   mdiCalendar,
   mdiCodeBrackets,
@@ -24,6 +15,13 @@ import {
   mdiTimetable,
   mdiToggleSwitchOutline,
 } from "@mdi/js";
+import { type ValidatedColumnInfo } from "prostgles-types";
+import {
+  colIs,
+  tsDataTypeFromUdtName,
+} from "src/dashboard/SmartForm/SmartFormField/fieldUtils";
+import { getColumnDataColor } from "src/dashboard/SmartForm/SmartFormField/RenderValue";
+import type { ColumnConfigWInfo } from "../../W_Table";
 
 export const getColumnListItem = (
   c: Pick<ValidatedColumnInfo, "name"> &
@@ -34,12 +32,12 @@ export const getColumnListItem = (
       >
     > & { disabledInfo?: string },
   columnWInfo?: ColumnConfigWInfo,
-): Pick<SearchListItem, "data" | "title"> & {
+): Pick<
+  SearchListItem,
+  "data" | "title" | "subLabel" | "iconLeft" | "disabledInfo"
+> & {
   key: string;
   label: string;
-  subLabel?: string;
-  contentLeft: React.ReactNode;
-  disabledInfo?: string;
 } => {
   const subLabel =
     columnWInfo?.nested ?
@@ -58,13 +56,11 @@ export const getColumnListItem = (
     data: c,
     disabledInfo: c.disabledInfo,
     title: columnWInfo?.nested ? "referenced data" : c.udt_name || "computed",
-    contentLeft: (
-      <Icon
-        className="text-2"
-        style={{ color: getColumnDataColor(c, "var(--text-2)") }}
-        path={getColumnIconPath(c, columnWInfo)}
-      />
-    ),
+    iconLeft: {
+      type: "Icon",
+      style: { color: getColumnDataColor(c, "var(--text-2)") },
+      path: getColumnIconPath(c, columnWInfo),
+    },
   };
 };
 

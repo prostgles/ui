@@ -191,7 +191,6 @@ export const SearchListItems = forwardRef<
                         (index === 0 && showFirstItemAsFocused ?
                           " focused "
                         : "") +
-                        (onMultiToggle ? " px-1 " : "") +
                         (renderedItem.selected ? " selected " : "") +
                         (renderedItem.disabledInfo ? " not-allowed "
                         : renderedItem.onPress ? " pointer "

@@ -1,34 +1,27 @@
 import Btn, { type BtnProps } from "@components/Btn";
+import { Icon } from "@components/Icon/Icon";
 import { getSearchRanking } from "@components/SearchList/searchMatchUtils/getSearchRanking";
 import { Select } from "@components/Select/Select";
+import { SvgIcon } from "@components/SvgIcon";
 import { mdiChartLine, mdiMap, mdiSetLeftCenter } from "@mdi/js";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { useMemoDeep } from "prostgles-client/dist/prostgles";
-import {
-  _PG_numbers,
-  includes,
-  isDefined,
-  type ParsedJoinPath,
-} from "prostgles-types";
+import { isDefined, type ParsedJoinPath } from "prostgles-types";
 import React from "react";
+import { addChart } from "src/dashboard/Dashboard/addChart";
+import type { DeckGlColor } from "src/dashboard/Map/DeckGLMap";
 import { t } from "../../../i18n/i18nUtils";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
-import type {
-  DBSchemaTablesWJoins,
-  OnAddChart,
-  WindowData,
-} from "../../Dashboard/dashboardUtils";
-import { getRandomColor } from "../../Dashboard/PALETTE";
+import type { WindowData } from "../../Dashboard/dashboardUtils";
 import { rgbaToString } from "../../W_Map/getMapFeatureStyle";
 import type { ChartableSQL } from "../../W_SQL/getChartableSQL";
-import type { ChartColumn, ColInfo } from "./getChartCols";
+import type { ChartColumn } from "./getChartCols";
 import { getChartCols } from "./getChartCols";
-import type { DeckGlColor } from "src/dashboard/Map/DeckGLMap";
-import { SvgIcon } from "@components/SvgIcon";
-import { Icon } from "@components/Icon/Icon";
 
-type P = Pick<CommonWindowProps, "myLinks" | "childWindows"> & {
-  onAddChart: OnAddChart;
-  tables: DBSchemaTablesWJoins;
+type P = Pick<
+  CommonWindowProps,
+  "myLinks" | "childWindows" | "getLinksAndWindows"
+> & {
   btnClassName?: string;
   size?: "micro";
 } & (
@@ -48,13 +41,14 @@ export const AddChartMenu = (props: P) => {
   const {
     type,
     w,
-    onAddChart,
-    tables,
     chartableSQL,
     size,
     myLinks,
     childWindows,
+    getLinksAndWindows,
   } = props;
+
+  const { tables, dbs } = usePrgl();
 
   const isMicroMode = size === "micro";
   const chartCols = useMemoDeep(() => {
@@ -68,108 +62,22 @@ export const AddChartMenu = (props: P) => {
 
   const { geoCols, dateCols, sql, withStatement = "" } = chartCols;
 
-  const tableName = w.table_name;
-  const onAdd = (
-    linkOpts: {
-      type: "map" | "timechart" | "barchart";
-      columns: ChartColumn[];
-    },
-    joinPath: ParsedJoinPath[] | undefined,
-  ) => {
-    const otherColumns = linkOpts.columns
-      .reduce((a, v) => {
-        v.otherColumns.forEach((vc) => {
-          if (!a.some((ac) => ac.name === vc.name)) {
-            a.push(vc);
-          }
-        });
-        return a;
-      }, [] as ColInfo[])
-      .map(({ name, udt_name, is_pkey }) => ({ name, udt_name, is_pkey }));
-
-    const firstNumericColumn = otherColumns.find(
-      (c) => !c.is_pkey && includes(_PG_numbers, c.udt_name),
-    )?.name;
-    const columnList = `(${linkOpts.columns.map((c) => c.name).join()})`;
-    const name =
-      joinPath ?
-        `${[tableName, ...joinPath.slice(0).map((p) => p.table)].join(" > ")} ${columnList}`
-      : `${tableName || ""} ${columnList}`;
-    const usedColors = myLinks
-      .flatMap((l) =>
-        l.options.type !== "table" ?
-          l.options.columns.map((c) => c.colorArr)
-        : undefined,
-      )
-      .filter(isDefined);
-    const colorArr = getRandomColor(1, usedColors);
-    const type = linkOpts.type;
-    const targetTable = tables.find(
-      (t) => t.name === (joinPath?.at(-1)?.table ?? tableName),
-    );
-    onAddChart({
-      name,
-      linkOpts: {
-        ...(type === "timechart" ?
-          {
-            type,
-            otherColumns,
-            columns: [
-              {
-                name: linkOpts.columns[0]!.name,
-                colorArr,
-                statType:
-                  firstNumericColumn ?
-                    {
-                      funcName: "$avg",
-                      numericColumn: firstNumericColumn,
-                    }
-                  : undefined,
-              },
-            ],
-          }
-        : type === "barchart" ?
-          {
-            type: "barchart",
-            statType:
-              firstNumericColumn ?
-                {
-                  funcName: "$sum",
-                  numericColumn: firstNumericColumn,
-                }
-              : undefined,
-            columns: linkOpts.columns.map(({ name }) => ({
-              name,
-              colorArr,
-            })),
-          }
-        : {
-            type,
-            columns: linkOpts.columns.map(({ name }) => ({
-              name,
-              colorArr,
-            })),
-            mapIcons:
-              !targetTable?.icon ?
-                undefined
-              : {
-                  type: "fixed",
-                  iconPath: targetTable.icon,
-                  display: "icon+circle",
-                },
-          }),
-        dataSource:
-          sql ?
-            {
-              type: "sql",
-              sql,
-              withStatement,
-            }
-          : {
-              type: "table",
-              tableName: w.table_name!,
-              joinPath,
-            },
+  const onAdd = (linkOpts: {
+    type: "map" | "timechart" | "barchart";
+    columns: ChartColumn[];
+    joinPath: ParsedJoinPath[] | undefined;
+  }) => {
+    const { windows } = getLinksAndWindows();
+    void addChart({
+      dbs,
+      windows,
+      myLinks,
+      parentWindow: w,
+      tables,
+      newChart: {
+        ...linkOpts,
+        sql,
+        withStatement,
       },
     });
   };
@@ -185,7 +93,7 @@ export const AddChartMenu = (props: P) => {
       iconPath: mdiMap,
       cols: geoCols,
       onAdd: (cols, path) => {
-        onAdd({ type: "map", columns: cols }, path);
+        onAdd({ type: "map", columns: cols, joinPath: path });
       },
     },
     {
@@ -193,13 +101,11 @@ export const AddChartMenu = (props: P) => {
       iconPath: mdiChartLine,
       cols: dateCols,
       onAdd: (cols, path) => {
-        onAdd(
-          {
-            type: "timechart",
-            columns: cols,
-          },
-          path,
-        );
+        onAdd({
+          type: "timechart",
+          columns: cols,
+          joinPath: path,
+        });
       },
     },
     // {

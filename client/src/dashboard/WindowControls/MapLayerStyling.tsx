@@ -10,7 +10,7 @@ import type { ChartLinkOptions } from "./DataLayerManager/DataLayer";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { isDefined } from "@common/filterUtils";
 
-type P = Pick<LayerColorPickerProps, "column" | "title"> & {
+type P = Pick<LayerColorPickerProps, "column" | "title" | "btnProps"> & {
   linkOptions: Extract<LinkSyncItem["options"], { type: "map" }>;
   onChange: (newOptions: ChartLinkOptions) => void;
 };
@@ -19,6 +19,7 @@ export const MapLayerStyling = ({
   onChange,
   column,
   title,
+  btnProps,
 }: P) => {
   const { tables } = usePrgl();
   const { dataSource } = linkOptions;
@@ -52,7 +53,6 @@ export const MapLayerStyling = ({
       .filter(isDefined);
   }, [dataSource, table, tables]);
   const linkColor = `rgba(${getLinkColor(linkOptions)})`;
-
   return (
     <PopupMenu
       title={title}
@@ -70,6 +70,7 @@ export const MapLayerStyling = ({
             required={true}
             className="w-fit m-p5 text-2"
             value={linkColor}
+            btnProps={btnProps}
             onChange={(__, _, colorArr) => {
               onChange({
                 ...linkOptions,
@@ -115,6 +116,7 @@ export const MapLayerStyling = ({
                   "Icon"
                 : "Circle and Icon"
               }
+              size="small"
               onChange={(v) => {
                 onChange({
                   ...linkOptions,
@@ -129,6 +131,7 @@ export const MapLayerStyling = ({
           {table && (
             <Select
               label={"Labels"}
+              size="small"
               value={linkOptions.mapShowText?.columnName}
               fullOptions={table.columns.map((c) => ({
                 key: c.name,

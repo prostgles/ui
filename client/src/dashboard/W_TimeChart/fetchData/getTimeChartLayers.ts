@@ -3,7 +3,7 @@ import type {
   LinkSyncItem,
   WindowSyncItem,
 } from "../../Dashboard/dashboardUtils";
-import { getCrossFilters } from "../../joinUtils";
+import { getCrossFilters } from "../../getCrossFilters";
 import { getLinkColor } from "../../W_Map/fetchData/getMapLayerQueries";
 import type { ActiveRow } from "../../W_Table/W_Table";
 import type { ProstglesTimeChartLayer } from "../W_TimeChart";
@@ -72,7 +72,7 @@ export const getTimeChartLayer = ({
         }
 
         /** Map will always join to the same table name. Use that table */
-        const jf = getCrossFilters(w, active_row, links, windows);
+        const jf = getCrossFilters(w, l.id, active_row, links, windows);
 
         const layer: ProstglesTimeChartLayer = {
           ...commonOpts,

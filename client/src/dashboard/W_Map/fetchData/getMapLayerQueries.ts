@@ -6,8 +6,8 @@ import type {
   WindowSyncItem,
 } from "../../Dashboard/dashboardUtils";
 import { windowIs } from "../../Dashboard/dashboardUtils";
-import type { CrossFilters } from "../../joinUtils";
-import { getCrossFilters } from "../../joinUtils";
+import type { CrossFilters } from "../../getCrossFilters";
+import { getCrossFilters } from "../../getCrossFilters";
 import type { LayerOSM, LayerQuery, LayerSQL, LayerTable } from "../W_Map";
 import type { ActiveRow } from "../../W_Table/W_Table";
 import type { DeckGlColor } from "../../Map/DeckGLMap";
@@ -143,14 +143,14 @@ export const getMapLayerQueries = ({
           };
 
           if (tableName) {
-            const jf: CrossFilters =
+            const crossFilters: CrossFilters =
               !linkW ?
                 {
                   all: [],
                   crossFilters: [],
                   activeRowFilter: undefined,
                 }
-              : getCrossFilters(w, active_row, links, windows);
+              : getCrossFilters(w, l.id, active_row, links, windows);
 
             const smartGroupFilter =
               lOpts.dataSource?.type === "local-table" ?
@@ -180,9 +180,9 @@ export const getMapLayerQueries = ({
               type: "table",
               tableName,
               ...joinInfo,
-              externalFilters: [...jf.all, localLayerFilter],
+              externalFilters: [...crossFilters.all, localLayerFilter],
               tableFilter: getSmartGroupFilter(linkW?.filter || []),
-              joinFilter: jf.activeRowFilter,
+              joinFilter: crossFilters.activeRowFilter,
               // elevation: 1000
             };
             return lt;

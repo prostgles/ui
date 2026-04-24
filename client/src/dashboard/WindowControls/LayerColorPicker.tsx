@@ -30,6 +30,7 @@ export const LayerColorPicker = ({
         onChange={onChange}
         column={column}
         title={title}
+        btnProps={btnProps}
       />
     );
   }

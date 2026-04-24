@@ -139,6 +139,7 @@ export const Alerts = () => {
 
   return (
     <PopupMenu
+      data-command="Alerts"
       button={
         <div>
           <Btn

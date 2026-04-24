@@ -156,7 +156,7 @@ export const fetchMapLayerData = async function (this: W_Map, dataAge: number) {
                       throttle: (w.options.refresh.throttleSeconds || 0) * 1000,
                     },
                     () => {
-                      this.setLayerData(Date.now());
+                      void this.setLayerData(Date.now());
                     },
                   );
                   this.layerSubs.push({
@@ -166,7 +166,6 @@ export const fetchMapLayerData = async function (this: W_Map, dataAge: number) {
                   });
                 } catch (e: any) {
                   console.error({ tableName, tableFilterWOExtent }, e);
-                  alert("Could not subscribe. Check logs ");
                 }
               }
 

@@ -574,10 +574,12 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
               basemapImage={w.options.basemapImage}
               projection={w.options.projection}
               onClick={(e) => {
-                const object: ClickedItem | undefined = e.object as any;
+                const object = e.object as ClickedItem | undefined;
                 let rowFilter: AnyObject | undefined;
-                const filterOrHash: string | AnyObject | undefined =
-                  object?.properties.i;
+                const filterOrHash = object?.properties.i as
+                  | string
+                  | AnyObject
+                  | undefined;
                 if (object && filterOrHash) {
                   if (isObject(filterOrHash)) {
                     rowFilter = filterOrHash;
@@ -603,7 +605,7 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
                   e.object?.properties?.tableName,
                 );
 
-                const newClickedItem = e.object as any;
+                const newClickedItem = e.object as ClickedItem | undefined;
                 if (
                   JSON.stringify(newClickedItem) !==
                   JSON.stringify(this.state.clickedItem)

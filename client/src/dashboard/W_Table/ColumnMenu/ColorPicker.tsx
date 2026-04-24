@@ -187,7 +187,7 @@ export const ColorCircle = ({
   return (
     <Btn
       label={label}
-      size={"small"}
+      size={"micro"}
       className={"shadow b b-color f-0"}
       style={{ backgroundColor: color }}
       onClick={onClick}

@@ -40,6 +40,7 @@ export const SearchListContent = <M extends boolean = false>(
     dataSignature,
     leftContent,
     noBorder,
+    belowSearchBoxContent,
   } = props;
   const multiSelect = !!onMultiToggle;
   const noShadow = variant?.includes("no-shadow");
@@ -269,6 +270,7 @@ export const SearchListContent = <M extends boolean = false>(
           />
         }
       </div>
+      {belowSearchBoxContent}
       {listNode}
     </div>
   );

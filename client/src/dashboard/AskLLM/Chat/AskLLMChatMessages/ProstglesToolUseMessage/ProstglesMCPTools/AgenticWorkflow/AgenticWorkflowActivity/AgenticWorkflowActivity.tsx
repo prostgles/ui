@@ -3,23 +3,21 @@ import type { DBSSchema } from "@common/publishUtils";
 import { sliceText } from "@common/utils";
 import Btn from "@components/Btn";
 import { FlexCol, FlexRow } from "@components/Flex";
-import { Icon } from "@components/Icon/Icon";
 import { InfoRow } from "@components/InfoRow";
 import Loading from "@components/Loader/Loading";
 import { SearchList } from "@components/SearchList/SearchList";
 import { Stopwatch } from "@components/Stopwatch";
-import { SvgIcon } from "@components/SvgIcon";
-import { mdiRobotOutline, mdiTable } from "@mdi/js";
+import { mdiTable } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { useMcpServerIcons } from "@pages/ServerSettings/MCPServers/MCPServerTools/useMcpServerIcons";
 import { getKeys, includes } from "prostgles-types";
 import React, { useState } from "react";
 import { AskLLMChat } from "src/dashboard/AskLLM/Chat/AskLLMChat";
 import { useAskLLMSetupState } from "src/dashboard/AskLLM/Setup/LLMSetupProvider";
+import SmartTable from "src/dashboard/SmartTable";
 import type { ProstglesMCPToolsProps } from "../../../ProstglesToolUseMessage";
 import { ToolCall } from "./ToolCall";
 import { useAgenticWorkflowActivityItems } from "./useAgenticWorkflowActivityItems";
-import SmartTable from "src/dashboard/SmartTable";
 
 export type AgenticWorkflowActivityProps = Pick<
   ProstglesMCPToolsProps,
@@ -56,16 +54,6 @@ export const AgenticWorkflowActivity = ({
           limit={500}
           autoScrollToBottom={true}
           items={items.map((item) => {
-            const icon =
-              item.type === "agent_chat" ?
-                <Icon path={mdiRobotOutline} />
-              : <SvgIcon
-                  icon={
-                    (item.mcp_server_name &&
-                      getIcon(item.mcp_server_name, item.mcp_tool_name)) ??
-                    "Tools"
-                  }
-                />;
             const name = (() => {
               if (item.type === "agent_chat") {
                 return item.agent_info?.type === "agent" ?
@@ -117,7 +105,15 @@ export const AgenticWorkflowActivity = ({
                 item.type === "agent_chat" ?
                   "AgenticWorkflow.openChat"
                 : "AgenticWorkflow.openToolCall",
-              contentLeft: icon,
+              iconLeft: {
+                type: "SvgIcon",
+                pathName:
+                  item.type === "agent_chat" ?
+                    "RobotOutline"
+                  : ((item.mcp_server_name ?
+                      getIcon(item.mcp_server_name, item.mcp_tool_name)
+                    : undefined) ?? "Tools"),
+              },
               rowClassname: isLoading ? "skeleton" : "",
               label: name,
               styles: {

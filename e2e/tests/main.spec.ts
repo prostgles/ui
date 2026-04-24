@@ -3337,6 +3337,19 @@ test.describe("Main test", () => {
 
     await page.getByLabel("ALLOWED_DIR").fill("/prostgles-mcp-test");
     await page.getByText("Enable", { exact: true }).click();
+    await page.getByTestId("Popup.close").last().click();
+    await page.getByTestId("Popup.close").last().click();
+    await page.getByTestId("Alerts").click(TWENTY_SECONDS_OR_MORE);
+    await expect(page.getByTestId("Alerts")).toContainText(
+      "MCP Server Hub Tool Load Error",
+    );
+    await page.getByText("Go to issue").click();
+    await page
+      .locator(getDataKey("myServer"))
+      .getByTestId("SmartCard.viewEditRow")
+      .click();
+    await page.getByTestId("SmartForm.delete").click();
+    await page.getByTestId("SmartForm.delete.confirm").click();
   });
 
   test("Web template build works", async ({ page: p }) => {

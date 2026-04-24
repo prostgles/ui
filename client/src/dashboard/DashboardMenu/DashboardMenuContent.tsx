@@ -1,11 +1,12 @@
 import { getEntries } from "@common/utils";
 import { FlexCol, FlexRowWrap } from "@components/Flex";
-import { Icon } from "@components/Icon/Icon";
 import { InfoRow } from "@components/InfoRow";
 import { SearchList } from "@components/SearchList/SearchList";
 import { mdiFunction, mdiScriptTextPlay } from "@mdi/js";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import React, { useRef } from "react";
 import { getIsPinnedMenu } from "../Dashboard/Dashboard";
+import { useAddViewToWorkspace } from "../Dashboard/useAddViewToWorkspace";
 import { SchemaGraph } from "../SchemaGraph/SchemaGraph";
 import { WorkspaceAddBtn } from "../WorkspaceMenu/WorkspaceAddBtn";
 import { useSetActiveWorkspace } from "../WorkspaceMenu/useWorkspaces";
@@ -16,8 +17,6 @@ import { DashboardMenuResizer } from "./DashboardMenuResizer";
 import { NewTableMenu } from "./NewTableMenu";
 import { SavedAgenticWorkflowsAndContainers } from "./SavedAgenticWorkflowsAndContainers";
 import { TableList } from "./TableList";
-import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import { useAddViewToWorkspace } from "../Dashboard/useAddViewToWorkspace";
 
 type P = DashboardMenuProps & {
   onClose: undefined | VoidFunction;
@@ -133,11 +132,10 @@ export const DashboardMenuContent = (props: P) => {
             )
             .map((t, i) => ({
               key: i,
-              contentLeft: (
-                <div className="flex-col ai-start f-0 text-1">
-                  <Icon path={mdiScriptTextPlay} size={1} />
-                </div>
-              ),
+              iconLeft: {
+                type: "Icon",
+                path: mdiScriptTextPlay,
+              },
               label: t.name,
               disabledInfo: !t.closed ? "Already opened" : undefined,
               contentRight: (
@@ -163,12 +161,11 @@ export const DashboardMenuContent = (props: P) => {
           className={"search-list-functions b-t f-1 min-h-0 max-h-fit "}
           style={ensureFadeDoesNotShowForOneItem}
           placeholder={"Search " + detailedMethods.length + " functions"}
-          items={detailedMethods.map((t, i) => ({
-            contentLeft: (
-              <div className="flex-col ai-start f-0 text-1">
-                <Icon path={mdiFunction} />
-              </div>
-            ),
+          items={detailedMethods.map((t) => ({
+            iconLeft: {
+              type: "Icon",
+              path: mdiFunction,
+            },
             key: t.name,
             label: t.name,
             onPress: () => {

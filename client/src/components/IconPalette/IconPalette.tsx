@@ -74,15 +74,19 @@ export const IconPalette = ({
         <Btn
           label={label}
           variant="faded"
+          size="small"
           children={!iconName ? "Set icon..." : undefined}
           iconPath={!iconName ? mdiChevronDown : undefined}
           iconPosition={!iconName ? "right" : undefined}
-          iconNode={!iconName ? undefined : <SvgIcon icon={iconName} />}
+          iconNode={
+            !iconName ? undefined : <SvgIcon icon={iconName} size={16} />
+          }
           onClick={() => setOpen(true)}
         />
         {Boolean(iconName) && (
           <Btn
             className="as-end"
+            size="small"
             iconPath={mdiClose}
             onClick={() => onChange(null)}
           />
