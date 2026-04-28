@@ -17,12 +17,14 @@ export const getDeckLibs = async () => {
   const mvtLoader = await import(
     /* webpackChunkName: "mvtLoader" */ "@loaders.gl/mvt"
   );
-  // const extensions = await import(/* webpackChunkName: "deckglExtensions" */ "@deck.gl/extensions");
+  const extensions = await import(
+    /* webpackChunkName: "deckglExtensions" */ "@deck.gl/extensions"
+  );
 
   return {
     lib,
     MVTLoader: mvtLoader.MVTLoader,
-    // extensions
+    extensions,
   };
 };
 export type DeckGlLib = Awaited<ReturnType<typeof getDeckLibs>>["lib"];

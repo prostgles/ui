@@ -97,8 +97,7 @@ test.describe("Demo video", () => {
           try {
             await (node as any).start();
           } catch (e) {
-            console.error(e);
-            console.error(JSON.stringify(e));
+            console.error(e, JSON.stringify(e));
             await new Promise((res) => setTimeout(res, 10e3));
             const errorObj = Object.getOwnPropertyNames(
               typeof e !== "object" ? { error: e } : e,

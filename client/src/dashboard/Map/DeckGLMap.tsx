@@ -329,7 +329,7 @@ export class DeckGLMap extends RTComp<DecKGLMapProps, DeckGLMapState, D> {
           onHover: (e) => {
             this.props.onPointerMove?.({
               ...e,
-              coordinates: e.coordinate as any,
+              coordinates: e.coordinate as [number, number],
               screenCoordinates: e.pixel,
             });
           },
