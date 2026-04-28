@@ -64,7 +64,9 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
   /** To prevent searching */
   const demoRestaurantName = "sun cafe";
   await searchAllInput.evaluate(
-    (el: HTMLInputElement) => (el.value = demoRestaurantName),
+    (el: HTMLInputElement, demoRestaurantName) =>
+      (el.value = demoRestaurantName),
+    demoRestaurantName,
   );
   await addScene({
     animations: [

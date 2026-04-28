@@ -66,6 +66,7 @@ test.describe("Demo video", () => {
     ).toHaveAttribute("aria-checked", "true");
 
     const getVideoDemoConnection = async () => {
+      await goTo(page, "/connections");
       const videoDemoConnection = await page.getByRole("link", {
         name: "prostgles_video_demo",
         exact: true,
@@ -74,13 +75,7 @@ test.describe("Demo video", () => {
     };
 
     const localVideoDemoConnection = await getVideoDemoConnection();
-    if (await localVideoDemoConnection.isVisible()) {
-      await localVideoDemoConnection.click();
-    } else {
-      await createDatabase("prostgles_video_demo", page);
-      await goTo(page, "/connections");
-      await createDatabase("food_delivery", page, true);
-    }
+    await localVideoDemoConnection.click({ timeout: 10000 });
 
     await setupProstglesLLMProvider(page);
 

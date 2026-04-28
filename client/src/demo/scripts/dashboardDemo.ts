@@ -173,16 +173,12 @@ export const dashboardDemo = async () => {
   // await createWorkspace();
 
   await closeAllViews();
-  await runDbSQL(
-    "DELETE FROM futures WHERE (now() - timestamp) > interval '30 minutes'",
-  ).catch(console.error);
+  // await runDbSQL(
+  //   "DELETE FROM futures WHERE (now() - timestamp) > interval '30 minutes'",
+  // ).catch(console.error);
   await openTable("futures");
 
   await click("dashboard.window.toggleFilterBar");
-
-  if ((window as any).CI) {
-    return;
-  }
 
   await type("btcusd", "", ".SmartFilterBar input");
   await click("", `[data-label="BTCUSDT"]`);

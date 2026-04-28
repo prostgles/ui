@@ -16,7 +16,8 @@ let realtimeFutures = false;
 export const onMount: ProstglesOnMount = async ({ dbo: db, sql }) => {
   const getMarketCaps = async () => {
     const marketCaps = await fetch(
-      "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250",
+      "https://prostgles.com/static/market_caps.json",
+      // "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250",
     ).then((d) => d.json());
     const batchUpdate = marketCaps.map(({ id, ...otherData }) => [
       { id },
@@ -25,12 +26,12 @@ export const onMount: ProstglesOnMount = async ({ dbo: db, sql }) => {
     console.log(`marketCaps ${marketCaps.length} items`);
     console.log(`batchUpdate ${batchUpdate.length} items`);
     await db.market_caps.updateBatch(batchUpdate);
-    await db.market_caps.insert(marketCaps, { onConflict: "DoUpdate" });
+    await db.market_caps.insertMany(marketCaps, { onConflict: "DoUpdate" });
   };
   setInterval(getMarketCaps, 30 * SECOND);
   getMarketCaps();
 
-  await db.symbols.insert([...FUNDING_SYMBOLS.map((pair) => ({ pair }))], {
+  await db.symbols.insertMany([...FUNDING_SYMBOLS.map((pair) => ({ pair }))], {
     onConflict: "DoNothing",
   });
   if (!+(await db.futures.count())) {
@@ -50,7 +51,7 @@ export const onMount: ProstglesOnMount = async ({ dbo: db, sql }) => {
         timestamp: new Date(data.E),
       }));
       console.log(`db.symbols.insert ${data.length} items`);
-      await db.symbols.insert(
+      await db.symbols.insertMany(
         [
           ...data.map(({ symbol }) => ({ pair: symbol })),
           ...FUNDING_SYMBOLS.map((pair) => ({ pair })),
@@ -58,7 +59,7 @@ export const onMount: ProstglesOnMount = async ({ dbo: db, sql }) => {
         { onConflict: "DoNothing" },
       );
 
-      await db.futures.insert(data);
+      await db.futures.insertMany(data);
     };
   }
 
@@ -76,7 +77,7 @@ export const onMount: ProstglesOnMount = async ({ dbo: db, sql }) => {
   const marketsCount = await db.markets.count();
   if (!marketsCount) {
     // const marketAthCharts = Array.from({ length: 250 }, (_, i) => i + 1).map(i => ({
-    await db.markets.insert(markets);
+    await db.markets.insertMany(markets);
   }
 
   if (loadGasPrices) {
@@ -184,7 +185,7 @@ const loadHistorcalFutures = async (db) => {
     );
     console.log(`Loaded ${data.length} historical futures for ${pair}`);
     if (!data.length) continue;
-    await db.futures.insert(data);
+    await db.futures.insertMany(data);
   }
 };
 
@@ -241,7 +242,9 @@ const loadHistoricalFundingRates = async (db) => {
       Date.now(),
     );
     console.log(`Fetched ${data.length} funding rates for ${symbol}`);
-    await db.futures_funding_rates.insert(data, { onConflict: "DoNothing" });
+    await db.futures_funding_rates.insertMany(data, {
+      onConflict: "DoNothing",
+    });
     console.log(`Loaded ${data.length} funding rates for ${symbol}`);
   }
 };
