@@ -296,13 +296,13 @@ export const fetchMapLayerData = async function (this: W_Map, dataAge: number) {
                 }));
               } else {
                 const scale = scaleLinear()
-                  .range([1, 10, 80, 100])
-                  .domain([20, 14, 10, 1])
+                  .domain([20, 4])
+                  .range([4, 8])
                   .clamp(true);
-
                 rows = await tableHandler.find(f.finalFilter, opts);
 
                 const radius = scale(zoom);
+
                 rows = rows.map((r) => ({ ...r, type: "table", radius }));
               }
               if (aggs)

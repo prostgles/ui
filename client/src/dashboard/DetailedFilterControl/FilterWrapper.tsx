@@ -190,6 +190,7 @@ export class FilterWrapper extends RTComp<
           color: "default",
           variant: "default",
         }}
+        size="small"
         onChange={(type) => {
           let newF: DetailedFilterBase = {
             ...filter,
@@ -303,6 +304,7 @@ export class FilterWrapper extends RTComp<
                 data-command="FilterWrapper_Field"
                 onClick={toggle}
                 variant="text"
+                size="small"
                 title={toggleTitle}
                 color={btnColor}
               >
@@ -318,6 +320,7 @@ export class FilterWrapper extends RTComp<
             iconPath={mdiDelete}
             data-command="FilterWrapper.deleteFilter"
             title="Delete filter"
+            size="small"
             onClick={() => {
               onChange();
             }}

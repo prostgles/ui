@@ -131,7 +131,9 @@ export const Table = <Sort extends ColumnSortSQL>(
     <div
       key={tableKey}
       className={classOverride(
-        TableRootClassname + " o-auto flex-col f-1 min-h-0 min-w-0 ",
+        /** fixed-first-column disabled due to table header scroll up and out  */
+        TableRootClassname +
+          " fixed-first-column-disabled o-auto flex-col f-1 min-h-0 min-w-0 ",
         className,
       )}
       ref={ref}
@@ -186,7 +188,7 @@ export const onWheelScroll =
     if (e.shiftKey || e.ctrlKey || !e.currentTarget.contains(e.target as Node))
       return;
 
-    const oFlowY = (el?: HTMLElement | null) => {
+    const hasHorizontalOverflow = (el?: HTMLElement | null) => {
       return el && el.scrollWidth > el.clientWidth;
     };
     let maxDepth = 5;
@@ -198,7 +200,7 @@ export const onWheelScroll =
         );
     let sel;
     while (maxDepth > 0) {
-      if (oFlowY(el)) {
+      if (hasHorizontalOverflow(el)) {
         sel = el;
         maxDepth = 0;
       } else {

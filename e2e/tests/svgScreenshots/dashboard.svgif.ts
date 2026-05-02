@@ -14,6 +14,9 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
   { openConnection, openMenuIfClosed, toggleMenuPinned },
   { addScene, addSceneAnimation },
 ) => {
+  // if (Math.PI) {
+  //   throw "Done";
+  // }
   await goTo(page, "/connections");
 
   await openConnection("food_delivery");

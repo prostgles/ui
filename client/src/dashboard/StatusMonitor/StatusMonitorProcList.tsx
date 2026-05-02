@@ -8,8 +8,8 @@ import Loading from "@components/Loader/Loading";
 import PopupMenu from "@components/PopupMenu";
 import { mdiCancel, mdiStopCircleOutline } from "@mdi/js";
 import { usePromise } from "prostgles-client";
-import type { DBHandlerClient } from "prostgles-client";
 import React, { useMemo, useState } from "react";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import type { AppContextProps } from "../../App";
 import CodeExample from "../CodeExample";
 import type { SmartCardListProps } from "../SmartCardList/SmartCardList";
@@ -43,17 +43,9 @@ export const StatusMonitorProcList = (
     noBash: boolean | undefined;
   },
 ) => {
-  const {
-    connectionId,
-    dbs,
-    dbsMethods,
-    dbsMethodSchema,
-    dbsTables,
-    runConnectionQuery,
-    samplingRate,
-    noBash,
-    dbsSql,
-  } = props;
+  const { dbs, dbsMethods, dbsMethodSchema, dbsTables, dbsSql } = usePrglCore();
+  const { runConnectionQuery } = dbsMethods;
+  const { connectionId, samplingRate, noBash } = props;
   const [viewType, setViewType] = useState<StatusMonitorViewType>(
     StatusMonitorViewTypes[1].key,
   );
@@ -79,7 +71,7 @@ export const StatusMonitorProcList = (
   const [datidFilter, setDatidFilter] = useState<number | undefined>();
 
   const databaseId = usePromise(async () => {
-    const datids = await runConnectionQuery({
+    const datids = await runConnectionQuery!({
       conId: connectionId,
       query: `SELECT datid
       FROM pg_catalog.pg_stat_database
@@ -127,7 +119,6 @@ export const StatusMonitorProcList = (
             allToggledFields={allToggledFields}
             excludedFields={excludedFields}
             setToggledFields={setToggledFields}
-            dbsTables={dbsTables}
             datidFilter={datidFilter}
             setDatidFilter={setDatidFilter}
             databaseId={databaseId}
@@ -284,7 +275,7 @@ const useStatusMonitorProcListProps = (
           </PopupMenu>
         ),
       },
-    ] satisfies FieldConfigs;
+    ] satisfies FieldConfigs; //<DBSSchema["stats"]>[];
 
     const excludedFields = [
       ...fixedFields

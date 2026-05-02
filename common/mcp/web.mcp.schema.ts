@@ -33,6 +33,12 @@ export const webMcpSchema = {
           description:
             "Maximum length of the returned content slice. Defaults to returning the full content.",
         },
+        timeout: {
+          type: "integer",
+          optional: true,
+          description:
+            "Maximum time in milliseconds to wait for the fetch operation. Defaults to 15000 (15 seconds).",
+        },
       },
     },
     outputSchema: {

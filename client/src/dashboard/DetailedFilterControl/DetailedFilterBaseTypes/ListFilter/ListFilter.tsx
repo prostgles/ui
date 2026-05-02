@@ -197,9 +197,7 @@ export class ListFilter extends RTComp<ListFilterProps, ListFilterState> {
           onSearch={(searchTerm) => {
             this.setState({ searchTerm });
           }}
-          searchStyle={{
-            margin: "0 .5em",
-          }}
+          className="m-p5"
           noSearchLimit={0}
           items={items}
           onMultiToggle={(items) => {

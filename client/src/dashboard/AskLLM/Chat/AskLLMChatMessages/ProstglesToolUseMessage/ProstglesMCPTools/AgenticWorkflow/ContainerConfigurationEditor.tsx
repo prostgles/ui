@@ -15,12 +15,14 @@ import FormField from "@components/FormField/FormField";
 import { HeaderSection } from "@components/HeaderSection";
 import { getDurationAsStr } from "@components/Stopwatch";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
+import type { TestSelectors } from "src/Testing";
 
 export const ContainerConfigurationEditor = ({
   workflow,
+  ...testSelectors
 }: {
   workflow: DBSSchema["agentic_workflows"];
-}) => {
+} & TestSelectors) => {
   const { containerConfiguration } = workflow.definition_data;
   const { id, definition_override } = workflow;
   const { dbs } = usePrglCore();
@@ -55,6 +57,7 @@ export const ContainerConfigurationEditor = ({
 
   return (
     <HeaderSection
+      {...testSelectors}
       title="Container configuration"
       titleEndContent={
         <Btn

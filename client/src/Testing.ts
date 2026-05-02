@@ -573,7 +573,16 @@ export const COMMANDS = {
   "AgenticWorkflowActivity.openTable": "",
   "SilverGrid.viewMoveTarget": "",
   "FilterWrapper.deleteFilter": "",
+  McpToolAccess: "",
   Alerts: "",
+  "AgenticWorkflowDetails.agents": "",
+  "AgenticWorkflowDetails.containerConfiguration": "",
+  "AgenticWorkflowDetails.description": "",
+  "TableAccessEditor.newTableDDL": "",
+  "AgenticWorkflowDetails.orchestrationTools": "",
+  AgenticWorkflowActions: "",
+  UserInput: "",
+  NestedTimechartControls: "",
 } as const satisfies Record<
   string,
   | string

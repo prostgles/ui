@@ -21,8 +21,6 @@ export const mapSvgif: OnBeforeScreenshot = async (
     getCommandElemSelector("dashboard.window.detachChart"),
   );
   await page.waitForTimeout(3000);
-  await addSceneAnimation(getCommandElemSelector("MapExtentBehavior"));
-  await addSceneAnimation(getDataKey("autoZoomToData"));
 
   /** Ensure only records with location are at the top */
   await page.locator(getDataKey("rider_location")).click();

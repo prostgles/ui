@@ -162,6 +162,7 @@ export type DecKGLMapProps = {
   onPointerMove?: (coords?: HoverCoords) => any;
   onMapStateChange?: (state: MapState) => any;
   mapStateChangeDebounce?: number;
+  enableCollisionFilter: boolean | undefined;
 
   /**
    * Must return:
@@ -434,6 +435,7 @@ export class DeckGLMap extends RTComp<DecKGLMapProps, DeckGLMapState, D> {
       dataOpacity,
       basemapDesaturate,
       basemapOpacity,
+      enableCollisionFilter,
     } = this.props;
     const { deckGlLibs } = this;
     if (!deckGlLibs) return { layers: [], dataLayers: [], tileLayers: [] };
@@ -447,7 +449,10 @@ export class DeckGLMap extends RTComp<DecKGLMapProps, DeckGLMapState, D> {
             features: g.features,
           },
           /** Disabled due to bad experience (features missing) */
-          // extensions: [new deckGlLibs.extensions.CollisionFilterExtension()],
+          extensions:
+            enableCollisionFilter ?
+              [new deckGlLibs.extensions.CollisionFilterExtension()]
+            : [],
           filled: true,
 
           getPointRadius: (f) => (g.getIcon ? 0.1 : (f.properties.radius ?? 1)),

@@ -86,6 +86,9 @@ export class TableHeader<Sort extends ColumnSortSQL> extends React.Component<
           role="row"
           className="noselect f-0 flex-row shadow bg-color-1"
           onWheel={onWheelScroll(TableRootClassname)}
+          style={{
+            zIndex: 1,
+          }}
         >
           {cols.map((col, iCol) => {
             const mySort = sort.find((s) => getSortColumn(s, [col]));

@@ -87,11 +87,7 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
           content:
             !dbsMethods.getStatus || !dbsMethods.runConnectionQuery ?
               null
-            : <StatusMonitor
-                {...prgl}
-                getStatus={dbsMethods.getStatus}
-                runConnectionQuery={dbsMethods.runConnectionQuery}
-              />,
+            : <StatusMonitor connectionId={connectionId} />,
         },
         access_control: {
           label: t.ConnectionConfig["Access control"],

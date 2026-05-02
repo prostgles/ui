@@ -145,6 +145,7 @@ const useServicesFieldConfigs = ({
                       key={configKey}
                       title={config.label || configKey}
                       data-key={configKey}
+                      label={config.label || configKey}
                       btnProps={{
                         size: "small",
                       }}
@@ -211,7 +212,7 @@ const useServicesFieldConfigs = ({
           !v ||
           Boolean(
             showSpecificService &&
-            (status === "running" || status === "stopped"),
+              (status === "running" || status === "stopped"),
           ),
         renderMode: "full",
         render: (_, { logs }) => (

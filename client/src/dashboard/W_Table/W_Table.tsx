@@ -1,5 +1,5 @@
 import { mdiAlertOutline, mdiPlus } from "@mdi/js";
-import type { AnyObject, ParsedJoinPath } from "prostgles-types";
+import type { AnyObject } from "prostgles-types";
 import { getKeys } from "prostgles-types";
 
 import Loading from "@components/Loader/Loading";
@@ -32,9 +32,10 @@ import { ColumnMenu } from "./ColumnMenu/ColumnMenu";
 import type { DetailedFilterBase } from "@common/filterUtils";
 import { matchObj } from "@common/utils";
 import { ClickCatchOverlayZIndex } from "@components/ClickCatchOverlay";
-import { FlexCol } from "@components/Flex";
+import { FlexCol, FlexRow } from "@components/Flex";
 import { Icon } from "@components/Icon/Icon";
 import type { PaginationProps } from "@components/Table/Pagination";
+import type { TableHandlerClient } from "prostgles-client";
 import { isDefined, isEqual, pickKeys } from "prostgles-types";
 import type { Command } from "../../Testing";
 import { createReactiveState } from "../../appUtils";
@@ -63,7 +64,6 @@ import { getTableCols } from "./tableUtils/getTableCols";
 import { getTableSelect } from "./tableUtils/getTableSelect";
 import { prepareColsForRender } from "./tableUtils/prepareColsForRender";
 import { getSort, getSortColumn, updateWCols } from "./tableUtils/tableUtils";
-import type { TableHandlerClient } from "prostgles-client";
 
 export type W_TableProps = Omit<CommonWindowProps, "w"> & {
   w: WindowSyncItem<"table">;
@@ -662,10 +662,6 @@ export default class W_Table extends RTComp<
                 }}
               />
             )}
-            <NodeCountChecker
-              parentNode={this.ref}
-              dataAge={this.state.rowsLoaded}
-            />
 
             {!!w.options.showFilters && (
               <FlexCol
@@ -673,7 +669,7 @@ export default class W_Table extends RTComp<
                 className={`gap-p5 p-p5 bg-color-0 ${childWindow ? " bb b-color " : ""}`}
                 style={{
                   /** Ensure it covers the attached timechart layer opts button */
-                  zIndex: 2,
+                  zIndex: ClickCatchOverlayZIndex,
                 }}
                 title="Edit filters"
               >
@@ -764,25 +760,33 @@ export default class W_Table extends RTComp<
                   afterLastRowContent={
                     showInsertButton &&
                     !childWindow && (
-                      <Btn
-                        iconPath={mdiPlus}
-                        data-command="dashboard.window.rowInsert"
-                        data-key={tableName}
-                        title={t.W_Table["Insert row"]}
-                        className="shadow w-fit h-fit mt-1"
-                        color="action"
-                        variant={w.options.showFilters ? "outline" : "filled"}
+                      <FlexRow
+                        className="p-1"
                         style={{
                           position: "sticky",
-                          left: "15px",
-                          bottom: "15px",
+                          left: 0,
+                          bottom: 0,
                           /** Below the filter search clickcatch */
                           zIndex: ClickCatchOverlayZIndex - 1,
                         }}
-                        onClick={() => {
-                          this.rowPanelRState.set({ type: "insert" });
-                        }}
-                      />
+                      >
+                        <Btn
+                          iconPath={mdiPlus}
+                          data-command="dashboard.window.rowInsert"
+                          data-key={tableName}
+                          title={t.W_Table["Insert row"]}
+                          className="shadow w-fit h-fit"
+                          color="action"
+                          variant={w.options.showFilters ? "outline" : "filled"}
+                          onClick={() => {
+                            this.rowPanelRState.set({ type: "insert" });
+                          }}
+                        />
+                        <NodeCountChecker
+                          parentNode={this.ref}
+                          dataAge={this.state.rowsLoaded}
+                        />
+                      </FlexRow>
                     )
                   }
                 />

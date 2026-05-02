@@ -1274,3 +1274,12 @@ export const deletePreviousMessages = async (page: PageWIds) => {
     await page.locator(getDataKey("allToBottom")).click();
   }
 };
+
+export const allowOnce = async (page: PageWIds, doClick = true) => {
+  const allowOnceBtn = await page
+    .getByTestId("AskLLMToolApprover.AllowOnce")
+    .last();
+  await allowOnceBtn.waitFor({ state: "visible", timeout: 15000 });
+  doClick && (await allowOnceBtn.click());
+  await page.waitForTimeout(2500);
+};

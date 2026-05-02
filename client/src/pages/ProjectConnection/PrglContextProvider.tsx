@@ -24,7 +24,7 @@ export const PrglProvider = ({
       <LLMSetupProvider>
         <CommandPalette
           isElectron={prgl.serverState.isElectron}
-          prglLoaded={true}
+          prglLoaded={prgl}
         />
         {children}{" "}
       </LLMSetupProvider>

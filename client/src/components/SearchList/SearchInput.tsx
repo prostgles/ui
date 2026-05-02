@@ -5,6 +5,7 @@ import Btn from "../Btn";
 import { classOverride, FlexRow } from "../Flex";
 import { Input } from "../Input";
 import Loading from "../Loader/Loading";
+import { ClickCatchOverlayZIndex } from "@components/ClickCatchOverlay";
 
 export const SearchInputZIndex = 2;
 
@@ -78,19 +79,20 @@ export const SearchInput = (props: SearchInputProps) => {
           ...(mode?.["!noList"] && {
             borderBottomLeftRadius: 0,
             borderBottomRightRadius: 0,
-            zIndex: 3,
+            zIndex: ClickCatchOverlayZIndex + 1,
           }),
           ...(matchCaseState && {
             borderTopRightRadius: 0,
             borderBottomRightRadius: 0,
           }),
           ...(size !== "small" && {
-            padding: "0.75em",
+            padding: "0.5em",
             paddingRight: 0,
           }),
           ...(leftContent && {
             paddingLeft: 0,
           }),
+          margin: "2px",
           ...style,
         }}
         autoComplete="off"
@@ -106,7 +108,18 @@ export const SearchInput = (props: SearchInputProps) => {
           margin: "2px",
         }}
       >
-        {isLoading && <Loading className="noselect mr-p5 " sizePx={24} />}
+        {isLoading && (
+          <Loading
+            className="noselect m-auto"
+            style={{
+              position: "absolute",
+              right: ".5em",
+              top: 0,
+              bottom: 0,
+            }}
+            sizePx={24}
+          />
+        )}
 
         {matchCaseState && (
           <Btn
@@ -117,6 +130,7 @@ export const SearchInput = (props: SearchInputProps) => {
               visibility: isLoading ? "hidden" : "visible",
               padding: "6px",
             }}
+            size="small"
             color={matchCaseState.value ? "action" : undefined}
             onClick={() => {
               matchCaseState.onChange(!matchCaseState.value);

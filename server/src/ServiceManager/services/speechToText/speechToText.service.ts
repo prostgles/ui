@@ -64,7 +64,7 @@ export const speechToTextService = {
         "Select the language for transcription. 'auto' will auto-detect the language.",
       defaultOption: "auto",
       options: {
-        auto: { env: { WHISPER_LANGUAGE: "" } },
+        auto: { env: {} },
         en: { env: { WHISPER_LANGUAGE: "en" } },
         es: { env: { WHISPER_LANGUAGE: "es" } },
         fr: { env: { WHISPER_LANGUAGE: "fr" } },

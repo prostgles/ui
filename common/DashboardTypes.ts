@@ -166,15 +166,16 @@ type ColumnFilter = BasicFilter | ComplexColumnFilter;
 /**
  * Filter that matches rows based on existence of related rows in another table
  */
-type JoinedFilter = {
-  $existsJoined: {
+type JoinedFilter = Record<
+  "$existsJoined" | "$notExistsJoined",
+  {
     path: TableJoin[];
     /**
      * Filter that will be applied to the joined table (last table in the path)
      */
     filter: ColumnFilter;
-  };
-};
+  }
+>;
 
 type FilterItem = ColumnFilter | JoinedFilter;
 
@@ -229,22 +230,34 @@ type TableColumn = {
    * Render column value in a chip
    * Cannot be used with nested
    */
-  styling?: {
-    type: "conditional";
-    conditions: {
-      chipColor:
-        | "red"
-        | "pink"
-        | "purple"
-        | "blue"
-        | "indigo"
-        | "green"
-        | "yellow"
-        | "gray";
-      operator: "=" | "!=" | ">" | "<" | ">=" | "<=";
-      value: string;
-    }[];
-  };
+  styling?:
+    | {
+        type: "conditional";
+        conditions: {
+          chipColor:
+            | "red"
+            | "pink"
+            | "purple"
+            | "blue"
+            | "indigo"
+            | "green"
+            | "yellow"
+            | "gray";
+          operator: "=" | "!=" | ">" | "<" | ">=" | "<=";
+          value: string;
+        }[];
+      }
+    | {
+        type: "Icons";
+        /**
+         * Column value will be mapped to a mdi icon name.
+         * @example:
+         * {
+         *   bar: "GlassCocktail";
+         * }
+         */
+        valueToIconMap: Record<string, string>;
+      };
 
   /**
    * If set, column value will rendered in a specific way

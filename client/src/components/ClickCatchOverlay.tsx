@@ -3,7 +3,10 @@ import "./ClickCatchOverlay.css";
 import { type DivProps, classOverride } from "./Flex";
 import type { Command } from "../Testing";
 
-export const ClickCatchOverlayZIndex = 1;
+/**
+ * Must be avove table fixed column
+ */
+export const ClickCatchOverlayZIndex = 5;
 
 export const ClickCatchOverlay = ({
   style,

@@ -4,7 +4,7 @@ import {
   SearchList,
   type SvgIconName,
 } from "@components/SearchList/SearchList";
-import { mdiScript, mdiSetCenter, mdiTable } from "@mdi/js";
+import { mdiLinkPlus, mdiScript, mdiSetCenter, mdiTable } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { isDefined, isEqual } from "prostgles-types";
 import React, { useMemo } from "react";
@@ -14,6 +14,7 @@ import type { LinkSyncItem } from "../../Dashboard/dashboardUtils";
 import { OSMLayerOptions } from "../OSMLayerOptions";
 import { SQLChartLayerEditor } from "../SQLChartLayerEditor";
 import type { ChartLinkOptions, DataLayerProps } from "./DataLayer";
+import { sliceText } from "@common/utils";
 
 export const DataLayerDataSource = (props: DataLayerProps) => {
   const { myLinks, layer, w, getLinksAndWindows, asLegend } = props;
@@ -41,8 +42,8 @@ export const DataLayerDataSource = (props: DataLayerProps) => {
     dataSource?.type === "osm" ? dataSource.osmLayerQuery
     : dataSource?.type === "sql" ? dataSource.sql
     : undefined;
-  const layerDesc =
-    osmOrSQLQuery ?? `${joinPath?.at(-1)?.table || tableName} (${column})`;
+
+  const layerDesc = `${joinPath?.at(-1)?.table || tableName || sliceText(osmOrSQLQuery, 20)} (${column})`;
 
   if (asLegend) {
     return <div className="text-ellipsis">{layerDesc}</div>;
@@ -58,7 +59,7 @@ export const DataLayerDataSource = (props: DataLayerProps) => {
       iconPath={
         dataSource?.type === "local-table" ? mdiTable
         : dataSource?.type === "table" ?
-          mdiSetCenter
+          mdiLinkPlus
         : mdiScript
       }
       info={
@@ -203,6 +204,7 @@ const DataLayerDataSourceInfo = ({
                       ),
                       parentWindow: joinedChartCols.parentTable,
                       windows,
+                      existingChartWindow: w,
                     });
                   },
                 };

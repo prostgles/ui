@@ -408,22 +408,16 @@ export const askLLM = async (args: AskLLMArgs) => {
     });
 
     /** Move prostgles-ui tool_use messages to the end for better UX (because no tool result is expected) */
-    const prostglesUIToolUse = filterArr(aiResponseMessageRaw, {
-      type: "tool_use",
-    } as const).filter(
-      (m) =>
-        getMCPToolNameParts(m.name)?.serverName ===
-        ("prostgles-ui" satisfies keyof typeof PROSTGLES_MCP_SERVERS_AND_TOOLS),
-    );
-    const aiResponseMessage =
-      !prostglesUIToolUse.length ? aiResponseMessageRaw : (
-        [
-          ...filterArrInverse(aiResponseMessageRaw, {
-            type: "tool_use",
-          } as const),
-          ...prostglesUIToolUse,
-        ]
-      );
+    const aiResponseMessage = aiResponseMessageRaw.toSorted((a, b) => {
+      const getIsProstglesUIToolUse = (
+        m: DBSSchema["llm_messages"]["message"][number],
+      ) => {
+        return m.type === "tool_use" && m.name.startsWith("prostgles-ui");
+      };
+      const aIsProstglesUIToolUse = getIsProstglesUIToolUse(a);
+      const bIsProstglesUIToolUse = getIsProstglesUIToolUse(b);
+      return Number(aIsProstglesUIToolUse) - Number(bIsProstglesUIToolUse);
+    });
 
     await dbs.llm_messages.update(
       { id: aiResponseMessagePlaceholder.id },

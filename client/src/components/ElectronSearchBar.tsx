@@ -1,3 +1,4 @@
+import { mdiArrowDown, mdiArrowUp, mdiClose } from "@mdi/js";
 import React, {
   useCallback,
   useEffect,
@@ -5,12 +6,11 @@ import React, {
   useState,
   type KeyboardEvent,
 } from "react";
-import { FlexRow } from "./Flex";
-import Btn from "./Btn";
-import { mdiArrowDown, mdiArrowUp, mdiClose } from "@mdi/js";
+import { getCommandElemSelector } from "src/Testing";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
+import Btn from "./Btn";
+import { FlexRow } from "./Flex";
 import Popup from "./Popup/Popup";
-import { getCommandElemSelector, type Command } from "src/Testing";
 
 declare class Highlight {
   constructor(...ranges: Range[]);

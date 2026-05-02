@@ -6,7 +6,10 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import { ClickCatchOverlay } from "../ClickCatchOverlay";
+import {
+  ClickCatchOverlay,
+  ClickCatchOverlayZIndex,
+} from "../ClickCatchOverlay";
 import { DraggableLI } from "../DraggableLI";
 import { classOverride, FlexCol } from "../Flex";
 import { POPUP_CLASSES } from "../Popup/Popup";
@@ -100,7 +103,7 @@ export const SearchListItems = forwardRef<
                 position: "fixed",
                 top,
                 left,
-                zIndex: 3,
+                zIndex: ClickCatchOverlayZIndex + 1,
                 right: bbox.right,
                 width: `${bbox.width}px`,
               };
@@ -109,6 +112,7 @@ export const SearchListItems = forwardRef<
     } satisfies React.CSSProperties;
   }, [inputWrapper, isSearch]);
   useAutoScrollToBottom(ulNode, renderedItems.length, !!autoScrollToBottom);
+
   return (
     <div
       className={

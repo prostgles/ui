@@ -46,11 +46,11 @@ export const LinkedColumnSelect = ({
         <PopupMenu
           data-command="LinkedColumn.ColumnListMenu"
           title="Select columns"
-          contentClassName=""
+          contentClassName="f-1 min-h-0 o-hidden"
           clickCatchStyle={{ opacity: 0.1 }}
           positioning="beneath-left"
           button={
-            <FlexCol className="gap-p25">
+            <FlexCol className="gap-p25 min-h-0">
               <Label label="Columns" variant="normal"></Label>
               <Btn
                 variant="faded"
@@ -68,7 +68,7 @@ export const LinkedColumnSelect = ({
           }
           render={(pClose) => {
             return (
-              <FlexCol>
+              <FlexCol className="min-h-0">
                 <ColumnList
                   columns={nestedColumns}
                   table={table}

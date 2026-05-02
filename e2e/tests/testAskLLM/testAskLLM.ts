@@ -18,6 +18,7 @@ import { stringify } from "./stringify";
 import { type Scenario, type ToolUse } from "./utils";
 import { sampleReceiptData } from "./createReceipts";
 import { fromEntries } from "common/utils";
+import { hygieneRatingsApiScenario } from "./scenarios/hygieneRatingsApi.scenario";
 
 type RequestToolAccess = JSONB.GetType<
   (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["request_tool_access"]["schema"]
@@ -181,12 +182,14 @@ const playwrightMCPToolUse: ToolUse = {
 };
 
 const scenarios: Record<string, Scenario> = {};
-Object.values([receiptImport]).forEach(({ firstMessage, steps }) => {
-  if (scenarios[firstMessage]) {
-    throw new Error(`Duplicate scenario firstMessage: ${firstMessage}`);
-  }
-  scenarios[firstMessage] = { firstMessage, steps };
-});
+Object.values([receiptImport, hygieneRatingsApiScenario]).forEach(
+  ({ firstMessage, steps }) => {
+    if (scenarios[firstMessage]) {
+      throw new Error(`Duplicate scenario firstMessage: ${firstMessage}`);
+    }
+    scenarios[firstMessage] = { firstMessage, steps };
+  },
+);
 
 const toolResponses: Record<string, ToolUse> = {
   ...fromEntries(

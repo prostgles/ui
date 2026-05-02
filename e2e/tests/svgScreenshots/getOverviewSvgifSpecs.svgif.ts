@@ -71,6 +71,22 @@ export const getOverviewSvgifSpecs = async () => {
     },
 
     {
+      fileName: "table_1",
+      usedExternally: true,
+      scenes: [...sliceScenes("table", 0, 8)],
+    },
+    {
+      fileName: "table_2",
+      usedExternally: true,
+      scenes: [...sliceScenes("table", 8, 16)],
+    },
+    {
+      fileName: "table_3",
+      usedExternally: true,
+      scenes: [...sliceScenes("table", 16)],
+    },
+
+    {
       fileName: "ai_assistant_questions",
       usedExternally: true,
       scenes: [...sliceScenes("ai_assistant", 20, 25)],

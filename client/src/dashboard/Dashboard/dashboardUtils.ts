@@ -142,6 +142,7 @@ export type ChartOptions<CType extends ChartType = "table"> =
       showAddShapeBtn?: boolean;
       hideLayersBtn?: boolean;
       showCardOnClick?: boolean;
+      enableCollisionFilter?: boolean;
       tileAttribution?: {
         title: string;
         url: string;

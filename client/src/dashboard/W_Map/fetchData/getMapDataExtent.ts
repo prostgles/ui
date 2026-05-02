@@ -20,7 +20,8 @@ export const getMapDataExtent: DecKGLMapProps["onGetFullExtent"] =
       maxLat,
       maxLng,
       _xyExtent: { e: string } | AnyObject | undefined;
-    for (const layer of layerQueries) {
+    const activeLayerQueries = layerQueries.filter((l) => !l.disabled);
+    for (const layer of activeLayerQueries) {
       if (active_row) {
         const isTargetLayer =
           layer.type === "table" && layer.wid === active_row.window_id;

@@ -1776,14 +1776,10 @@ test.describe("Main test", () => {
     );
 
     await page.getByTestId("AgenticWorkflow.stop").click();
-    await expect(page.getByTestId("Popup.content").last()).toContainText(
-      "Agentic workflow container stopped with status: aborted",
+    await expect(page.getByTestId("AgenticWorkflowActions")).toContainText(
+      "Stopped",
       getTimeout(10e3),
     );
-    await page
-      .getByTestId("Popup.footer")
-      .getByText("OK", { exact: true })
-      .click();
 
     const runWorkflowAndExpectSuccess = async (
       shownText: string | string[] = ["ai_assistant_dashboards"],

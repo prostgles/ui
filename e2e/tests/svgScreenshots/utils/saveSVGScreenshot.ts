@@ -44,4 +44,5 @@ export const saveSVGScreenshot = async (
   console.log(
     `Saved SVG screenshot (${(Date.now() - start).toLocaleString()}ms): ${fileName}.svg`,
   );
+  await page.waitForTimeout(100);
 };

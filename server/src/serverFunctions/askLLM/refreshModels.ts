@@ -180,6 +180,7 @@ const CHAT_MODEL_RANKING = [
   "claude-4.6-sonnet",
   "gemini-3.1-pro",
   "kimi-k2-thinking",
+  "glm-5.1",
   "glm-4.7",
 ];
 

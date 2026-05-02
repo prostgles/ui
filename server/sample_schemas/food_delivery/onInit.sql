@@ -841,6 +841,8 @@ CREATE TABLE restaurants (
   id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
   address VARCHAR(100) NOT NULL,
+  website TEXT,
+  type TEXT,
   logo BYTEA,
   address_id BIGINT NOT NULL REFERENCES addresses,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -917,8 +919,8 @@ CREATE INDEX ON orders (deliverer_id, created_at);
 
 CREATE TABLE order_items (
   id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  order_id INTEGER NOT NULL REFERENCES orders(id),
-  menu_item_id INTEGER NOT NULL REFERENCES menu_items(id),
+  order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  menu_item_id INTEGER NOT NULL REFERENCES menu_items(id) ON DELETE CASCADE,
   quantity INTEGER NOT NULL,
   price NUMERIC(8,2) NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -1057,7 +1059,7 @@ CREATE TABLE IF NOT EXISTS routes (
 
 /* Create ~14k restaurants in London */
 WITH raddr as (
-  SELECT name, st_centroid(geometry)::GEOGRAPHY AS geog, 'restaurant' as type, postcode
+  SELECT name, website, amenity, st_centroid(geometry)::GEOGRAPHY AS geog, 'restaurant' as type, postcode
   FROM "london_restaurants.geojson"
   WHERE name IS NOT NULL
   -- AND postcode IS NOT NULL
@@ -1069,8 +1071,8 @@ iaddr as (
   RETURNING *
 ), 
 ires AS (
-  INSERT INTO restaurants (name, address, address_id)
-  SELECT r.name, 'London', a.id
+  INSERT INTO restaurants (name, address, type, website, address_id)
+  SELECT r.name, 'London', r.amenity, website, a.id
   FROM iaddr a
   INNER JOIN raddr r 
     ON a.geog::TEXT = r.geog::TEXT
@@ -1249,7 +1251,10 @@ WHERE rnum < 50; --number of menu items per restaurant
 
 
 
-CREATE OR REPLACE PROCEDURE mock_orders(number_of_orders INTEGER DEFAULT 1e4, period INTERVAL DEFAULT '1 second', restaurant_name TEXT DEFAULT NULL)
+CREATE OR REPLACE PROCEDURE mock_orders(
+  number_of_orders INTEGER DEFAULT 1e4, 
+  period INTERVAL DEFAULT '1 second' 
+)
 LANGUAGE plpgsql
 AS $$  
 BEGIN
@@ -1279,7 +1284,7 @@ BEGIN
     SELECT *, row_number() over() as rnum
     FROM (
       SELECT *
-      FROM customers
+      FROM customers c 
       ORDER BY last_order
       LIMIT number_of_orders
     ) unested
@@ -1299,10 +1304,9 @@ BEGIN
       , st_distance(u.geog, ri.geog) as dist
     FROM ( 
       SELECT * 
-      FROM v_restaurants
-      WHERE CASE WHEN restaurant_name IS NULL THEN TRUE ELSE name = restaurant_name END
+      FROM v_restaurants 
     ) ri
-    WHERE CASE WHEN restaurant_name IS NOT NULL THEN TRUE ELSE  st_distance(u.geog, ri.geog) < 7000 END
+    WHERE st_distance(u.geog, ri.geog) < 7000
     ORDER BY u.geog <-> ri.geog
     LIMIT 1
   ) r ON TRUE; 

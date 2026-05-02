@@ -573,6 +573,7 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
               }
               basemapImage={w.options.basemapImage}
               projection={w.options.projection}
+              enableCollisionFilter={w.options.enableCollisionFilter}
               onClick={(e) => {
                 const object = e.object as ClickedItem | undefined;
                 let rowFilter: AnyObject | undefined;

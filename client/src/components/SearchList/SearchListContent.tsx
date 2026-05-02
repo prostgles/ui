@@ -14,6 +14,7 @@ import {
   useSearchListOnKeyUpDown,
 } from "./hooks/useSearchListOnKeyUpDown";
 import { useSearchListSearch } from "./hooks/useSearchListSearch";
+import { ClickCatchOverlayZIndex } from "@components/ClickCatchOverlay";
 
 export const SearchListContent = <M extends boolean = false>(
   props: SearchListProps<M>,
@@ -175,7 +176,10 @@ export const SearchListContent = <M extends boolean = false>(
           (isSearch ? " " : "  ai-center  ") +
           (!hasSearch && !multiSelect ? " hidden" : "")
         }
-        style={searchStyle}
+        style={{
+          zIndex: isSearch ? ClickCatchOverlayZIndex + 1 : undefined,
+          ...searchStyle,
+        }}
       >
         {!hasSearch ?
           multiSelect ?

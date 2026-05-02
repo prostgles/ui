@@ -12,6 +12,7 @@ import { mdiTools } from "@mdi/js";
 import { MCPServerConfig } from "@pages/ServerSettings/MCPServers/MCPServerConfig/MCPServerConfig";
 import { useMcpServerIcons } from "@pages/ServerSettings/MCPServers/MCPServerTools/useMcpServerIcons";
 import React, { useState } from "react";
+import type { TestSelectors } from "src/Testing";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 
 type P = {
@@ -23,8 +24,14 @@ type P = {
     DBSSchema["agentic_workflows"]["definition_override"]
   >["orchestratorMcpServerConfigs"];
   onConfigChange: undefined | ((serverName: string, configId: number) => void);
-};
-export const McpToolAccess = ({ value, title, configs, onConfigChange }: P) => {
+} & TestSelectors;
+export const McpToolAccess = ({
+  value,
+  title,
+  configs,
+  onConfigChange,
+  ...testSelectors
+}: P) => {
   const { mcpServers, getIcon } = useMcpServerIcons();
   const [editServerConfig, setEditServerConfig] = useState<{
     serverName: string;
@@ -39,7 +46,11 @@ export const McpToolAccess = ({ value, title, configs, onConfigChange }: P) => {
   } = dbs.mcp_server_configs.useSubscribe({}, {});
   if (isLoading || !allConfigData) return <Loading />;
   return (
-    <HeaderSection title={title}>
+    <HeaderSection
+      title={title}
+      data-command="McpToolAccess"
+      {...testSelectors}
+    >
       <ErrorComponent title="Failed to get mcp server configs" error={error} />
       <ScrollFade
         title={title}

@@ -41,6 +41,24 @@ const selectSchema = {
   ],
 } as const;
 
+const orderByItemSchema = {
+  key: "string",
+  asc: { enum: [true, false] },
+  nulls: { enum: ["first", "last"], optional: true },
+} as const;
+
+const orderBySchema = {
+  optional: true,
+  oneOf: [
+    {
+      arrayOfType: orderByItemSchema,
+    },
+    {
+      type: orderByItemSchema,
+    },
+  ],
+} as const;
+
 const outputSchemaArrayOfObjects = {
   arrayOf: {
     record: {
@@ -91,7 +109,7 @@ export const dbMcpSchema = {
     outputSchema: outputSchemaArrayOfObjects,
   },
   count: {
-    icon: "Counter",
+    icon: "DatabaseEyeOutline",
     description: "Counts rows in a table that satisfy a filter.",
     annotations: { readOnlyHint: true },
     schema: {
@@ -111,14 +129,7 @@ export const dbMcpSchema = {
         tableName: "string",
         filter: { optional: true, ...filterSchema.filter },
         select: selectSchema,
-        orderBy: {
-          optional: true,
-          arrayOfType: {
-            key: "string",
-            asc: { enum: [true, false] },
-            nulls: { enum: ["first", "last"], optional: true },
-          },
-        },
+        orderBy: orderBySchema,
         limit: {
           optional: true,
           description: "Defaults to 10",

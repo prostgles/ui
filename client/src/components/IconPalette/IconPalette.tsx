@@ -110,6 +110,7 @@ export const IconPalette = ({
           persistInitialSize={true}
           title="Choose icon"
           onClose={() => setOpen(false)}
+          autoFocusFirst={"content"}
         >
           <FlexCol
             className="f-1 min-s-0 o-auto p-1 ai-center"
@@ -153,7 +154,7 @@ export const IconPalette = ({
                 background: "var(--text-2)",
               }}
             ></div>
-            <ScrollFade className="text-1 min-s-0 o-auto flex-row-wrap gap-1 f-1">
+            <ScrollFade className="text-1 max-h-fit min-s-0 o-auto flex-row-wrap gap-1 f-1">
               {displayedItems.map(({ name, node }) => {
                 return (
                   <FlexCol

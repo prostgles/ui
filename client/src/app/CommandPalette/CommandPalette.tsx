@@ -7,6 +7,7 @@ import "./CommandPalette.css";
 import { Documentation } from "./Documentation";
 import { DynamicComponent } from "./DynamicComponent";
 import { useCommandPaletteState } from "./useCommandPaletteState";
+import type { Prgl } from "src/App";
 
 /**
  * By pressing Ctrl+K, the user to search and go to functionality in the UI.
@@ -16,7 +17,7 @@ export const CommandPalette = ({
   prglLoaded,
 }: {
   isElectron: boolean;
-  prglLoaded: boolean;
+  prglLoaded: undefined | Prgl;
 }) => {
   const {
     showSection,
@@ -27,7 +28,7 @@ export const CommandPalette = ({
     setMessage,
     quickPeekComponent,
     setQuickPeekComponent,
-  } = useCommandPaletteState(prglLoaded);
+  } = useCommandPaletteState(Boolean(prglLoaded));
   return (
     <>
       {highlights.map((h, i) => (
@@ -88,7 +89,10 @@ export const CommandPalette = ({
             {showSection === "commands" ?
               <>
                 {quickPeekComponent ?
-                  <DynamicComponent component={quickPeekComponent} props={{}} />
+                  <DynamicComponent
+                    component={quickPeekComponent}
+                    props={{ connectionId: prglLoaded?.connectionId }}
+                  />
                 : <SearchList
                     placeholder="Search actions..."
                     autoFocus={true}

@@ -31,7 +31,7 @@ export type FullOption<O extends OptionKey = string> = Pick<
   checked?: boolean;
   disabledInfo?: string;
   rightContent?: React.ReactNode;
-} & Pick<SearchListItemContent, "contentTop"> &
+} & Pick<SearchListItemContent, "contentTop" | "iconLeft"> &
   TestSelectors &
   (
     | {
@@ -429,7 +429,7 @@ export class Select<
             borderRadius: "var(--rounded)",
           }),
         }}
-        searchStyle={variant === "search-list-only" ? {} : { margin: "0.5em" }}
+        // searchStyle={variant === "search-list-only" ? {} : { margin: "0.5em" }}
         placeholder={placeholder}
         defaultSearch={defaultSearch}
         noSearchLimit={noSearchLimit}

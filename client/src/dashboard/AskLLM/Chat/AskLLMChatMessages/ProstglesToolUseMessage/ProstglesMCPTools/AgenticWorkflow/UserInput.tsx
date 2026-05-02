@@ -34,6 +34,7 @@ export const UserInput = ({
     <>
       <FullscreenWrapper
         borderWrapperClassName="bt b-color w-full ta-start rounded-unset"
+        data-command="UserInput"
         maxContentHeight={300}
         title={
           <Btn
@@ -50,6 +51,7 @@ export const UserInput = ({
         {show && (
           <FlexRowWrap className="p-1 o-auto">
             {Object.entries(userInput).map(([inputKey, inputItem]) => {
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
               const currentValue =
                 userInputValue?.[inputKey] ??
                 ("defaultValue" in inputItem ?

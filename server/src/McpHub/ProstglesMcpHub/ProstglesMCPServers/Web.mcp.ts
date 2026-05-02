@@ -35,6 +35,7 @@ const handler = {
           max_length = 5000,
           start_index = 0,
           headers,
+          timeout = 15000,
         }) => {
           let content = "";
 
@@ -44,6 +45,7 @@ const handler = {
               headers: {
                 "User-Agent": "Mozilla/5.0 ",
               },
+              signal: AbortSignal.timeout(timeout),
               ...headers,
             });
 

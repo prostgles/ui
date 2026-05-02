@@ -132,7 +132,7 @@ export const RenderFilter = (props: RenderFilterProps) => {
         <Btn
           title={title}
           iconPath={mdiFilter}
-          variant="icon"
+          // variant="icon"
           color={filterIsNotEmpty ? "action" : undefined}
           {...(mode === "micro" ? {} : mode)}
           data-command="RenderFilter.edit"

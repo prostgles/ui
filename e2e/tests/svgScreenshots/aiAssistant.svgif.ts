@@ -3,6 +3,7 @@ import { getCommandElemSelector, getDataKey, getDataLabel } from "Testing";
 import { createReceipts } from "testAskLLM/createReceipts";
 import { setupAskLLMToolUse } from "testAskLLM/testAskLLM";
 import {
+  allowOnce,
   closeWorkspaceWindows,
   deleteExistingLLMChat,
   deletePreviousMessages,
@@ -36,6 +37,7 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   const UnloadSuggestedDashboards = await page.getByTestId(
     "AskLLMChat.UnloadSuggestedDashboards",
   );
+
   if (await UnloadSuggestedDashboards.count()) {
     await UnloadSuggestedDashboards.click();
     await page.waitForTimeout(1000);
@@ -47,6 +49,7 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   await closeWorkspaceWindows(page);
   await addSceneAnimation(getCommandElemSelector("AskLLM"));
 
+  await newChat(page);
   await setModelByText(page, "sonn");
   await setPromptByText(page, "dashboard");
   await addScene({
@@ -170,14 +173,6 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
 
   await setPromptByText(page, "chat");
 
-  const allowOnce = async (doClick = true) => {
-    const allowOnceBtn = await page
-      .getByTestId("AskLLMToolApprover.AllowOnce")
-      .last();
-    await allowOnceBtn.waitFor({ state: "visible", timeout: 15000 });
-    doClick && (await allowOnceBtn.click());
-    await page.waitForTimeout(2500);
-  };
   await typeSendAddScenes(
     page,
     addScene,
@@ -190,9 +185,9 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
         duration: 1000,
       },
     ],
-    () => allowOnce(false),
+    () => allowOnce(page, false),
   );
-  await allowOnce();
+  await allowOnce(page);
   await page.getByTestId("ToolUseMessage.toggle").last().click();
   await expect(page.getByTestId("MarkdownMonacoCode").last()).toContainText(
     "SELECT * FROM orders",

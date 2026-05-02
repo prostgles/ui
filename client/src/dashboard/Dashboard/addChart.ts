@@ -23,6 +23,7 @@ export const addChart = async ({
   windows,
   myLinks,
   tables,
+  existingChartWindow,
 }: {
   dbs: DBS;
   newChart: {
@@ -32,7 +33,16 @@ export const addChart = async ({
     sql: string | undefined;
     withStatement: string;
   };
+  /**
+   * The table OR sql window from which the chart is being added.
+   */
   parentWindow: Pick<WindowData, "id" | "workspace_id" | "table_name">;
+  /**
+   * If the chart window already exists (because user is adding multiple charts from the same table/sql window), pass it here to avoid creating multiple chart windows for the same table/sql window.
+   */
+  existingChartWindow:
+    | undefined
+    | Pick<WindowData, "id" | "workspace_id" | "table_name">;
   windows: WindowData[];
   myLinks: Link[];
   tables: DBSchemaTableWJoins[];
@@ -100,11 +110,13 @@ export const addChart = async ({
     };
   }
 
-  const existingChartWindow = windows.find(
-    (cw) => cw.type === chartType && cw.parent_window_id === parentWindow.id,
-  );
-  const chartWindow =
+  const _existingChartWindow =
     existingChartWindow ??
+    windows.find(
+      (cw) => cw.type === chartType && cw.parent_window_id === parentWindow.id,
+    );
+  const chartWindow =
+    _existingChartWindow ??
     ((await addWindow(
       dbs,
       { name, type: chartType, ...extra },

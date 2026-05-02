@@ -1,7 +1,6 @@
 import { getCommandElemSelector, getDataKey, getDataLabel } from "Testing";
 import { createReceipts, DEMO_HOME_DIR } from "testAskLLM/createReceipts";
 import { receiptImport } from "testAskLLM/scenarios/receiptImport/receiptImport.scenario";
-import { setupAskLLMToolUse } from "testAskLLM/testAskLLM";
 import {
   closeWorkspaceWindows,
   deletePreviousMessages,
@@ -19,9 +18,6 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
   { openConnection },
   { addScene, addSceneAnimation },
 ) => {
-  // if (Math.PI) {
-  //   throw "Drag and rearrange";
-  // }
   await openConnection("prostgles_video_demo");
   await closeWorkspaceWindows(page);
 
@@ -44,7 +40,6 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
 
   await page.getByTestId("AskLLM").click();
   await page.waitForTimeout(1000);
-  await setupAskLLMToolUse(page);
 
   await runDbSql(
     page,
@@ -127,6 +122,7 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
   await page
     .locator(getDataKey("sourcePaths"))
     .waitFor({ state: "visible", timeout: 35000 });
+
   await addScene({
     animations: [
       {
@@ -154,8 +150,76 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
         duration: 150,
         startScale: 0.95,
       },
+      {
+        type: "fadeIn",
+        elementSelector: getCommandElemSelector(
+          "AgenticWorkflowDetails.description",
+        ),
+        duration: 1500,
+      },
+      {
+        type: "fadeIn",
+        elementSelector: getCommandElemSelector(
+          "AgenticWorkflowDetails.containerConfiguration",
+        ),
+        duration: 1500,
+      },
+      {
+        type: "fadeIn",
+        elementSelector: getCommandElemSelector("DatabaseAccessEditor"),
+        duration: 1500,
+      },
+      {
+        type: "fadeIn",
+        elementSelector: getCommandElemSelector(
+          "AgenticWorkflowDetails.orchestrationTools",
+        ),
+        duration: 1500,
+      },
+      {
+        type: "fadeIn",
+        elementSelector: getCommandElemSelector(
+          "AgenticWorkflowDetails.agents",
+        ),
+        duration: 1500,
+      },
+
+      {
+        type: "fadeIn",
+        elementSelector: getCommandElemSelector("UserInput"),
+        duration: 1500,
+      },
     ],
   });
+
+  // await addScene({
+  //   animations: [
+  //     {
+  //       type: "fadeIn",
+  //       elementSelector: getCommandElemSelector(
+  //         "AgenticWorkflowDetails.description",
+  //       ),
+  //       duration: 1500,
+  //     },
+  //     {
+  //       type: "fadeIn",
+  //       elementSelector: getCommandElemSelector(
+  //         "AgenticWorkflowDetails.containerConfiguration",
+  //       ),
+  //       duration: 1500,
+  //     },
+  //     {
+  //       type: "fadeIn",
+  //       elementSelector: getCommandElemSelector("DatabaseAccessEditor"),
+  //       duration: 1500,
+  //     },
+  //     {
+  //       type: "fadeIn",
+  //       elementSelector: getCommandElemSelector("UserInput"),
+  //       duration: 1500,
+  //     },
+  //   ],
+  // });
 
   await addSceneAnimation(getDataKey("sourcePaths"), undefined, "fast");
 

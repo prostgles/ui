@@ -147,7 +147,7 @@ export const ColumnMenu = (props: P) => {
   const [w, setW] = useState<WindowSyncItem<"table">>(props.w);
   const tableName = w.table_name;
   const [column, setColumn] = useState<ColumnConfigWInfo>();
-  const [activeKey, setActiveKey] = useState<string>();
+  const [activeKey, setActiveKey] = useState<string | undefined>("Sort");
   const { state, setState } = useReactiveState(props.columnMenuState);
   const colName = state?.column;
   const getIsMounted = useIsMounted();

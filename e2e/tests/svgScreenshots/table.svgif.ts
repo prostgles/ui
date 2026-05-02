@@ -24,23 +24,27 @@ export const tableSvgif: OnBeforeScreenshot = async (
   // );
   // return;
   await openMenuIfClosed();
-  await addSceneAnimation(getDataKey("users"));
+  await page.locator(getDataKey("users")).click();
 
   /** Show linked computed column */
   await addSceneAnimation(getCommandElemSelector("AddColumnMenu"));
 
   await addSceneAnimation(
     getCommandElemSelector("AddColumnMenu") + " " + getDataKey("Computed"),
-    undefined,
-    "fast",
+    // undefined,
+    // "fast",
   );
-  await addSceneAnimation(getDataKey("$sum"));
+  await addSceneAnimation(getDataKey("$sum"), undefined, "fast");
   await addSceneAnimation(
     getCommandElemSelector("FunctionColumnList.SearchInput"),
     { action: "type", text: "total", mode: "fill" },
   );
 
-  await addSceneAnimation(getDataKey("(id = customer_id) orders.Total Price"));
+  await addSceneAnimation(
+    getDataKey("(id = customer_id) orders.Total Price"),
+    undefined,
+    "fast",
+  );
   await addSceneAnimation(
     getCommandElemSelector("QuickAddComputedColumn.name"),
     { action: "type", text: "Total Spent", mode: "fill" },
@@ -91,11 +95,10 @@ export const tableSvgif: OnBeforeScreenshot = async (
   );
   await addSceneAnimation(getDataKey("Quick Stats"));
   await addSceneAnimation(getDataKey("rider"));
+  await page.getByTestId("Popup.close").click();
 
   await page.waitForTimeout(2000);
   await addScene({ animations: [{ type: "wait", duration: 1500 }] });
-
-  await page.getByTestId("Popup.close").click();
 
   await addScene({ animations: [{ type: "wait", duration: 1500 }] });
 

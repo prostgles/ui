@@ -77,7 +77,7 @@ export const dashboardDemo = async () => {
   await tout(500);
   await click("AddColumnMenu");
   await click("AddColumnMenu", "[data-key=Referenced]");
-  await click("JoinPathSelectorV2");
+  // await click("JoinPathSelectorV2");
   await click("JoinPathSelectorV2", `[data-key="(id = customer_id) orders"]`);
 
   await click("QuickAddComputedColumn");

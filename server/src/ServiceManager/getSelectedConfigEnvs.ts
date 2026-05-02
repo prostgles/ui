@@ -14,28 +14,26 @@ export const getSelectedConfigEnvs = async (
   const buildArgs: string[] = [];
   let gpus = serviceConfig.gpus;
   const { configs } = serviceConfig;
-  if (configs && serviceRecord?.selected_config_options) {
-    for (const [configKey, configValue] of Object.entries(
-      serviceRecord.selected_config_options,
-    )) {
-      const config = configs[configKey];
-      if (config) {
-        const option = config.options[configValue];
-        if (option) {
-          env = {
-            ...env,
-            ...option.env,
-          };
-          if (option.buildArgs) {
-            for (const [buildArgKey, buildArgValue] of Object.entries(
-              option.buildArgs,
-            )) {
-              buildArgs.push(`--build-arg`, `${buildArgKey}=${buildArgValue}`);
-            }
+  if (configs) {
+    for (const [configKey, config] of Object.entries(configs)) {
+      const selectedConfig =
+        serviceRecord?.selected_config_options?.[configKey] ??
+        config.defaultOption;
+      const option = config.options[selectedConfig];
+      if (option) {
+        env = {
+          ...env,
+          ...option.env,
+        };
+        if (option.buildArgs) {
+          for (const [buildArgKey, buildArgValue] of Object.entries(
+            option.buildArgs,
+          )) {
+            buildArgs.push(`--build-arg`, `${buildArgKey}=${buildArgValue}`);
           }
-          if ("gpus" in option) {
-            gpus = option.gpus;
-          }
+        }
+        if ("gpus" in option) {
+          gpus = option.gpus;
         }
       }
     }

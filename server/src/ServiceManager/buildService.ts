@@ -83,14 +83,7 @@ export async function buildService(
   const instance: ServiceInstance = {
     status: "building",
     building: executeDockerCommand(
-      [
-        "build",
-        ...buildArgs.map((arg) => ["--build-arg", arg]).flat(),
-        "-t",
-        imageName,
-        ...labelArgs,
-        ".",
-      ],
+      ["build", ...buildArgs, "-t", imageName, ...labelArgs, "."],
       {
         timeout: 600_000,
         signal: abortController.signal,

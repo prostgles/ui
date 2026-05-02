@@ -17,6 +17,8 @@ import { sqlEditorSvgif } from "./sqlEditor.svgif";
 import { tableSvgif } from "./table.svgif";
 import { timechartSvgif } from "./timechart.svgif";
 import type { getSceneUtils } from "./utils/getSceneUtils";
+import { aiAssistantAgenticWorkflowGovApiSvgif } from "./aiAssistantAgenticWorkflowGovApi.svgif";
+import { tableTimechartSvgif } from "./tableTimechart.svgif";
 
 export type OnBeforeScreenshot = (
   page: PageWIds,
@@ -25,6 +27,10 @@ export type OnBeforeScreenshot = (
 ) => Promise<void>;
 
 export const SVG_SCREENSHOT_DETAILS = {
+  table_timechart: tableTimechartSvgif,
+  table: tableSvgif,
+  map: mapSvgif,
+  ai_assistant_agentic_workflow_gov_api: aiAssistantAgenticWorkflowGovApiSvgif,
   dashboard: dashboardSvgif,
   ai_assistant_agentic_workflow: aiAssistantAgenticWorkflowSvgif,
   electron_setup: electronSetupSvgif,
@@ -32,8 +38,6 @@ export const SVG_SCREENSHOT_DETAILS = {
   ai_assistant: aiAssistantSvgif,
   timechart: timechartSvgif,
   backup_and_restore: backupAndRestoreSvgif,
-  table: tableSvgif,
-  map: mapSvgif,
   account: accountSvgif,
   navbar: navbarSvgif,
   schema_diagram: schemaDiagramSvgif,

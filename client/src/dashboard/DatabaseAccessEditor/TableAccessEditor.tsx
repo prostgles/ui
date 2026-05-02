@@ -45,6 +45,7 @@ export const TableAccessEditor = ({
         onClickClose={false}
         showFullscreenToggle={{}}
         clickCatchStyle={{ opacity: 1 }}
+        data-command={!ddlState ? undefined : "TableAccessEditor.newTableDDL"}
         button={
           <Btn
             variant="faded"

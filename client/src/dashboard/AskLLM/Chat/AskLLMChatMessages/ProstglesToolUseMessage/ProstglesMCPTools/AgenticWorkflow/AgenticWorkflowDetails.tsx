@@ -53,12 +53,19 @@ export const AgenticWorkflowDetails = ({
   return (
     <FlexCol className="AgenticWorkflowDetails f-1 gap-0">
       <FlexCol className="w-full f-1 p-1 o-auto max-h-fit">
-        <div title={`Workflow id: ${workflow.id}`} className="ta-start">
+        <div
+          data-command="AgenticWorkflowDetails.description"
+          title={`Workflow id: ${workflow.id}`}
+          className="ta-start"
+        >
           <div className="font-18 bold">{name}</div>
           <div className="font-14">{definition_summary}</div>
         </div>
 
-        <ContainerConfigurationEditor workflow={workflow} />
+        <ContainerConfigurationEditor
+          data-command="AgenticWorkflowDetails.containerConfiguration"
+          workflow={workflow}
+        />
 
         <DatabaseAccessEditor
           value={dbAccess}
@@ -70,6 +77,7 @@ export const AgenticWorkflowDetails = ({
           <McpToolAccess
             title="Orchestration tools"
             value={orchestrationTools}
+            data-command="AgenticWorkflowDetails.orchestrationTools"
             configs={definition_override?.orchestratorMcpServerConfigs}
             onConfigChange={(serverName, configId) => {
               void updateOverride({
@@ -83,7 +91,10 @@ export const AgenticWorkflowDetails = ({
         )}
 
         {agentDefinitions && (
-          <HeaderSection title="Agents">
+          <HeaderSection
+            data-command="AgenticWorkflowDetails.agents"
+            title="Agents"
+          >
             {Object.keys(agentDefinitions).map((agentName) => {
               const { agentDefinitions = {} } = workflow.definition_data;
 

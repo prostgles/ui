@@ -39,6 +39,7 @@ export const connectionConfigUIDoc = {
       selectorCommand: "config.status",
       title: "Status monitor",
       iconPath: mdiChartLine,
+      componentName: "StatusMonitor",
       description:
         "View real-time connection status, running queries, and system resource usage.",
       children: [],

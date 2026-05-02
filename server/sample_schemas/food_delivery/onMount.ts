@@ -39,7 +39,6 @@ export const onMount: ProstglesOnMount = async ({ dbo: db, sql }) => {
 
     CALL mock_users(1e5::integer, '1 year');
     CALL mock_orders(1e5::INTEGER, '1 year'::INTERVAL);
-    CALL mock_orders(100::INTEGER, '1 year'::INTERVAL, 'Sun Cafe'::TEXT);
     CALL mock_orders(35e3::INTEGER, '1 hour'::INTERVAL);
   `);
   }

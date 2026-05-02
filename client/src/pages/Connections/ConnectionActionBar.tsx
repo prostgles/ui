@@ -83,12 +83,7 @@ export const ConnectionActionBar = (props: ConnectionProps) => {
             />
           }
         >
-          <StatusMonitor
-            {...props}
-            connectionId={connection.id}
-            getStatus={dbsMethods.getStatus}
-            runConnectionQuery={dbsMethods.runConnectionQuery}
-          />
+          <StatusMonitor connectionId={connection.id} />
         </PopupMenu>
       )}
 

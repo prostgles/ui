@@ -210,6 +210,7 @@ export const connectionsUIDoc = {
           description:
             "View real-time statistics, running queries, and system resource usage (CPU, RAM, Disk) for this connection.",
           children: [],
+          componentName: "StatusMonitor",
         },
         {
           type: "link",

@@ -1,3 +1,7 @@
+:root {
+  --row-hover-color: var(--li-hover-bg);
+}
+
 .table-component .sort-asc::after {
   content: "\25b2";
   color: var(--text-0);
@@ -21,11 +25,12 @@
 }
 
 .table-component .hover:hover {
-  background-color: rgba(0, 183, 255, 0.04);
+  background-color: var(--row-hover-color);
 }
 
 .table-component .d-row {
   max-height: 100px;
+  background-color: var(--bg-color-0);
 }
 
 .table-component .d-row.active-row {
@@ -55,4 +60,38 @@
 
 .dark-theme .table-component div[role="table"] {
   background-color: #1e1e1e;
+}
+
+.dark-theme .table-component [role="row"] > :first-child {
+  background-color: #1e1e1e;
+}
+
+/* 1) Keep both-axis scrolling on the outer table container */
+.table-component.fixed-first-column {
+  overflow: auto;
+}
+
+/* 2) Prevent TableBody from becoming the sticky containing block */
+.table-component.fixed-first-column [data-command="TableBody"] {
+  overflow: visible !important;
+}
+
+/* 3) Keep header visible while vertical scrolling now happens on .table-component */
+.table-component.fixed-first-column [data-command="TableHeader"][role="row"] {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  background-color: inherit;
+}
+
+/* 4) Pin first column for header + body */
+.table-component.fixed-first-column [role="row"] > :first-child {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  background-color: var(--bg-color-0);
+}
+
+.table-component.fixed-first-column [role="row"].d-row:hover > :first-child {
+  background-color: var(--row-hover-color);
 }

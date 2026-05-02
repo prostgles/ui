@@ -194,7 +194,7 @@ export const App = () => {
         <ElectronSearchBar />
         <FlexCol key={prglState.dbsKey} className={`App gap-0 f-1 min-h-0`}>
           {!prglLoaded && (
-            <CommandPalette isElectron={isElectron} prglLoaded={false} />
+            <CommandPalette isElectron={isElectron} prglLoaded={undefined} />
           )}
           <XRealIpSpoofableAlert {...state} />
           {demoStarted && <MousePointer />}

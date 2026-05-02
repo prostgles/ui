@@ -79,6 +79,7 @@ export const AddChartMenu = (props: P) => {
         sql,
         withStatement,
       },
+      existingChartWindow: undefined,
     });
   };
 

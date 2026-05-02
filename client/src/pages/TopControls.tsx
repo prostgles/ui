@@ -69,7 +69,7 @@ export const TopControls = (props: TopControlsProps) => {
     >
       {wrapIfNeeded(
         <>
-          <FlexRow className={`max-w-fit f-1 ai-center ${paddingClass}`}>
+          <FlexRow className={`max-w-fit f-1 gap-p5 ai-center ${paddingClass}`}>
             <DashboardMenuBtn {...menuBtnProps} />
             <ConnectionConfigBtn {...prgl} location={location} />
             {!window.isMobileDevice && (
@@ -79,7 +79,7 @@ export const TopControls = (props: TopControlsProps) => {
 
           {props.location === "workspace" && <WorkspaceMenu {...props} />}
           <FlexRow
-            className={`ml-auto min-w-0 f-0 ai-start gap-1 text-1p5 w-fit ai-center noselect o-auto no-scroll-bar jc-end ${paddingClass}`}
+            className={`ml-auto min-w-0 f-0 ai-start gap-p5 text-1p5 w-fit ai-center noselect o-auto no-scroll-bar jc-end ${paddingClass}`}
             style={{
               maxWidth: "100%",
             }}

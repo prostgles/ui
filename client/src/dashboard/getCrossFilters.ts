@@ -76,6 +76,10 @@ const getJoinFilters = (
         chartFilters: AnyObject[],
         reverseToTable: string | undefined,
       ) => {
+        const chartFilter =
+          !chartFilters.length ? {}
+          : chartFilters.length === 1 ? chartFilters[0]
+          : { $and: chartFilters };
         if (link.options.type === "map" || link.options.type === "timechart") {
           const { dataSource } = link.options;
           const joinPath =
@@ -89,15 +93,17 @@ const getJoinFilters = (
             const f = {
               $existsJoined: {
                 path: [...previousPath, ...parsedPath],
-                filter:
-                  !chartFilters.length ? {} : { $and: chartFilters.concat({}) },
+                filter: chartFilter,
               },
             };
 
             return { parsedPath, f };
           }
         }
-        return { parsedPath: [], f: { $and: chartFilters } };
+        return {
+          parsedPath: [],
+          f: chartFilter,
+        };
       };
 
       /** Table getting chart filters */
@@ -143,6 +149,10 @@ const getJoinFilters = (
           : reverseParsedPath(tablePath.slice(0), otherWindow.table_name);
         const parsedPath = [...previousPath, ...currentParsedPath];
         const otherTableFilters = getTableFilters(otherWindow);
+        const otherTableFilter =
+          !otherTableFilters.length ? {}
+          : otherTableFilters.length === 1 ? otherTableFilters[0]
+          : { $and: otherTableFilters };
         return {
           l: link,
           w: otherWindow,
@@ -150,12 +160,7 @@ const getJoinFilters = (
           f: {
             $existsJoined: {
               path: parsedPath,
-              filter:
-                !otherTableFilters.length ?
-                  {}
-                : {
-                    $and: otherTableFilters.concat({}),
-                  },
+              filter: otherTableFilter,
             },
           },
           activeRowFilter:

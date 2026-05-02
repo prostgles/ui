@@ -16,6 +16,7 @@ import { IS_GITHUB_WORKER, USERS } from "utils/constants";
 import { goTo } from "utils/goTo";
 import { getOverviewSvgifSpecs } from "svgScreenshots/getOverviewSvgifSpecs.svgif";
 import { saveSVGifs } from "svgScreenshots/utils/saveSVGifs";
+import { setupAskLLMToolUse } from "testAskLLM/testAskLLM";
 
 test.use({
   viewport: {
@@ -32,7 +33,7 @@ test.describe("Create docs and screenshots", () => {
   test.describe.configure({
     retries: 0,
     mode: "serial",
-    timeout: 25 * MINUTE,
+    timeout: 28 * MINUTE,
   });
 
   test(`Restore databases`, async ({ page: p }) => {
@@ -159,6 +160,8 @@ test.describe("Create docs and screenshots", () => {
           .filter((s) => s.usedExternally)
           .map((s) => s.fileName + ".svgif"),
         ...svgifCovers.map((c) => c.fileName),
+        "ai_assistant_agentic_workflow_gov_api.svgif",
+        "table_timechart.svgif",
       ];
       await svgScreenshotsCompleteReferenced(
         Object.values(svgifSpecsObj).flat(),
@@ -184,6 +187,7 @@ const getDocWithDarkModeImgTags = (fileContent: string) => {
 };
 
 const prepare = async (page: PageWIds) => {
+  await setupAskLLMToolUse(page);
   await runDbsSql(
     page,
     "UPDATE database_configs SET table_schema_transform = $1, table_schema_positions = $2 WHERE db_name = 'prostgles_video_demo';",

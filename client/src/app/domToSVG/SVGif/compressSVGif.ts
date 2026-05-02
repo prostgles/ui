@@ -37,6 +37,12 @@ export const compressSVGif = (
     }
     const useElem = document.createElementNS(SVG_NAMESPACE, "use");
     useElem.setAttribute("href", `#${id}`);
+    /** Transfer over test selectors */
+    Array.from(node.attributes).forEach((attr) => {
+      if (attr.name.startsWith("data-") && attr.name !== "data-selector") {
+        useElem.setAttribute(attr.name, attr.value);
+      }
+    });
     node.replaceWith(useElem);
   };
   const scenes = Array.from(svg.querySelectorAll(`#all-scenes > svg`));

@@ -34,11 +34,18 @@ const handler = {
       stop: async () => {},
       tools: {
         execute_readonly_sql: async (args, context) => {
-          return runSqlTool(args, {
+          const rows = await runSqlTool(args, {
             toolName: "execute_readonly_sql",
             connectionId: context.connection_id,
             chat: context.chat,
           });
+          const ROW_LIMIT = 4000;
+          if (rows.length > ROW_LIMIT) {
+            throw new Error(
+              `Query returned ${rows.length} rows, which exceeds the limit of ${ROW_LIMIT} rows for execute_readonly_sql tool. `,
+            );
+          }
+          return rows;
         },
         execute_sql: async (args, context) => {
           return runSqlTool(args, {

@@ -21,17 +21,31 @@ export const useLLMChatMessageGrouper = (props: P) => {
     const result: LLMMessageItem[] = [];
     llmMessages.forEach((message, index) => {
       const prevItem = result.at(-1);
-      const isToolResult = message.message.some(
+      const hasToolResult = message.message.some(
         (m) => m.type === "tool_result",
       );
-      if (isToolResult) return; // Skip rendering tool result messages directly
-      const hasToolUseOrResult = message.message.some(
-        (m) => m.type === "tool_use" || m.type === "tool_result",
-      );
+      if (hasToolResult) return; // Skip rendering tool result messages directly
+
+      const hasToolUse = message.message.some((m) => m.type === "tool_use");
       const nextMessage = llmMessages[index + 1];
+      const nextNextMessage = llmMessages[index + 2];
+      const allToolUsesAreCollapsible =
+        hasToolUse &&
+        message.message.every(
+          (m) =>
+            m.type !== "tool_use" ||
+            /** TODO: allow collapsing if followed by tool retries */
+            ProstglesMCPToolsWithUI[m.name]?.displayMode !== "full" ||
+            (nextMessage?.message.some(
+              (nm) => nm.type === "tool_result" && nm.tool_use_id === m.id,
+            ) &&
+              nextNextMessage?.message.some(
+                (nnm) => nnm.type === "tool_use" && nnm.name === m.name,
+              )),
+        );
 
       /** Start or continue group */
-      if (hasToolUseOrResult) {
+      if (allToolUsesAreCollapsible) {
         /** Continue group */
         if (prevItem?.type === "tool_call_message_group") {
           prevItem.messages = [...prevItem.messages, { message, nextMessage }];
@@ -70,12 +84,12 @@ export const useLLMChatMessageGrouper = (props: P) => {
         const toolCalls = getMessageContentItems(item).filter(
           (m) => m.type === "tool_use",
         );
-        const allowMinimise =
-          toolCalls.length >= 2 &&
-          toolCalls.every(
-            /** TODO: allow collapsing if result has is_error and follows by tool retries */
-            (m) => ProstglesMCPToolsWithUI[m.name]?.displayMode !== "full",
-          );
+        const allowMinimise = toolCalls.length >= 2;
+        // &&
+        // toolCalls.every(
+        //   /** TODO: allow collapsing if result has is_error and follows by tool retries */
+        //   (m) => ProstglesMCPToolsWithUI[m.name]?.displayMode !== "full",
+        // );
         const shouldExpand =
           !allowMinimise || toggledSections.has(item.startId);
 

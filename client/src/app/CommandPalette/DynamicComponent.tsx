@@ -38,14 +38,18 @@ const DYNAMIC_COMPONENT_REGISTRY = {
       default: mod.LLMProviderSetup,
     })),
   SavedAgenticWorkflowsAndContainers: () =>
-    import(
-      "src/dashboard/DashboardMenu/SavedAgenticWorkflowsAndContainers"
-    ).then((mod) => ({
-      default: mod.SavedAgenticWorkflowsAndContainers,
-    })),
+    import("src/dashboard/DashboardMenu/SavedAgenticWorkflowsAndContainers").then(
+      (mod) => ({
+        default: mod.SavedAgenticWorkflowsAndContainers,
+      }),
+    ),
   BackupsControls: () =>
     import("src/dashboard/BackupAndRestore/BackupsControls").then((mod) => ({
       default: mod.BackupsControls,
+    })),
+  StatusMonitor: () =>
+    import("src/dashboard/StatusMonitor/StatusMonitor").then((mod) => ({
+      default: mod.StatusMonitor,
     })),
 } as const satisfies Record<
   string,

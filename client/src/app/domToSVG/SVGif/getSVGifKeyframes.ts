@@ -10,13 +10,18 @@ type Frame = {
       | "height"
       | "transform"
       | "transform-origin"
+      | "opacity"
       | "clip-path",
       string | number
     >
   >;
 };
 
-export const getSVGifKeyframes = (from: Frame, to: Frame) => {
+export const getSVGifKeyframes = (
+  from: Frame,
+  to: Frame,
+  addOpacity = true,
+) => {
   const fromPerc = from.percentage;
   const toPerc = to.percentage;
   const fromAttrs = Object.entries(from.attributes)
@@ -26,10 +31,12 @@ export const getSVGifKeyframes = (from: Frame, to: Frame) => {
     .map(([k, v]) => `${k}: ${v};`)
     .join(" ");
   return [
-    !fromPerc ? "" : `0% { opacity: 0; ${fromAttrs} }`,
-    `${toFixed(fromPerc, 4)}% { opacity: 0; ${fromAttrs} }`,
-    `${toFixed(fromPerc + 0.1, 4)}% { opacity: 1; ${fromAttrs} }`,
-    `${toFixed(toPerc, 4)}% { opacity: 1; ${toAttrs}  }`,
-    toPerc === 100 ? "" : `100% { opacity: 1; ${toAttrs} }`,
+    !fromPerc ? "" : `0% { ${addOpacity ? "opacity: 0;" : ""} ${fromAttrs} }`,
+    `${toFixed(fromPerc, 4)}%         { ${addOpacity ? "opacity: 0;" : ""} ${fromAttrs} }`,
+    `${toFixed(fromPerc + 0.1, 4)}%   { ${addOpacity ? "opacity: 1;" : ""} ${fromAttrs} }`,
+    `${toFixed(toPerc, 4)}%           { ${addOpacity ? "opacity: 1;" : ""} ${toAttrs}  }`,
+    toPerc === 100 ? "" : (
+      `100%       { ${addOpacity ? "opacity: 1;" : ""} ${toAttrs} }`
+    ),
   ].filter(Boolean);
 };
