@@ -32,25 +32,28 @@ export const loadGeneratedWorkspaces = async (
           return {
             ...c,
             show: true,
-            style: c.styling && {
-              type: "Conditional",
-              conditions: c.styling.conditions.map((cond) => {
-                // "textColor": "#ffffff",
-                // "textColorDarkMode": "#2386d5",
-                // "chipColor": "#673AB7"
-                const style =
-                  Object.entries(CHIP_COLOR_NAMES).find(
-                    ([k]) => k === cond.chipColor,
-                  )?.[1] ?? CHIP_COLOR_NAMES.blue!;
-                return {
-                  condition: cond.value,
-                  operator: cond.operator,
-                  textColor: style.textColor,
-                  chipColor: style.color,
-                  textColorDarkMode: style.textColorDarkMode,
-                };
-              }),
-            },
+            style:
+              c.styling?.type === "conditional" ?
+                {
+                  type: "Conditional",
+                  conditions: c.styling.conditions.map((cond) => {
+                    // "textColor": "#ffffff",
+                    // "textColorDarkMode": "#2386d5",
+                    // "chipColor": "#673AB7"
+                    const style =
+                      Object.entries(CHIP_COLOR_NAMES).find(
+                        ([k]) => k === cond.chipColor,
+                      )?.[1] ?? CHIP_COLOR_NAMES.blue!;
+                    return {
+                      condition: cond.value,
+                      operator: cond.operator,
+                      textColor: style.textColor,
+                      chipColor: style.color,
+                      textColorDarkMode: style.textColorDarkMode,
+                    };
+                  }),
+                }
+              : c.styling,
           };
         });
         const {
