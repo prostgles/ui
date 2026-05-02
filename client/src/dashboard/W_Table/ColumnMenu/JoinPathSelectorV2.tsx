@@ -178,6 +178,7 @@ export const JoinPathSelectorV2 = (props: P) => {
       value={targetValue?.key}
       data-command="JoinPathSelectorV2"
       fullOptions={fullOptions}
+      noSearchLimit={0}
       variant={!targetValue?.key || variant ? "search-list-only" : undefined}
       onChange={(key) => {
         const idx = fullOptions.findIndex((d) => d.key === key);

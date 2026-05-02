@@ -2936,11 +2936,9 @@ test.describe("Main test", () => {
     await getSearchListItem(page.getByTestId("AddColumnMenu"), {
       dataKey: "Referenced",
     }).click();
-    await page.getByTestId("JoinPathSelectorV2").click();
-    await page.waitForTimeout(1e3);
     await getSearchListItem(page.getByTestId("JoinPathSelectorV2"), {
       dataKey: "orders",
-    }).click();
+    }).click(TWENTY_SECONDS_OR_MORE);
     await page.getByTestId("LinkedColumn.ColumnList.toggle").click();
     await page.waitForTimeout(1e3);
     await getSearchListItem(page, { dataKey: "total_cost" })

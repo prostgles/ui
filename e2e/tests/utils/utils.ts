@@ -740,9 +740,7 @@ export const getSearchListItem = (
   page: PageWIds | LocatorWIds,
   { dataKey }: { dataKey: string },
 ) => {
-  return page
-    .getByTestId("SearchList.List")
-    .locator(`[data-key=${JSON.stringify(dataKey)}]`);
+  return page.getByTestId("SearchList.List").locator(getDataKey(dataKey));
 };
 export const getTableWindow = (page: PageWIds, tableName: string) => {
   return page.locator(`[data-table-name=${JSON.stringify(tableName)}]`);

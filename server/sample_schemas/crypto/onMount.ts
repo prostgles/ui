@@ -210,7 +210,10 @@ const fetchHistoricalFutures = async (
       console.error("Error fetching historical futures:", res.statusText, data);
       break;
     }
-    if (!data.length) break;
+    if (!data.length) {
+      console.log("No more data to fetch for", symbol);
+      break;
+    }
 
     allData.push(...data);
 
@@ -219,7 +222,7 @@ const fetchHistoricalFutures = async (
     currentStart = lastCandleOpenTime + 1;
 
     // Avoid rate limits
-    await new Promise((r) => setTimeout(r, 50));
+    await new Promise((r) => setTimeout(r, 150));
   }
 
   return allData.map(([openTime, open, high, low, close, volume]) => ({
