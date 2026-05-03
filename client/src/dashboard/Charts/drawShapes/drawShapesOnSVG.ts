@@ -290,6 +290,10 @@ export const drawShapesOnSVG = (
       textElement.setAttribute("opacity", opacity.toString());
       textElement.textContent = s.text;
 
+      if (s.textBaseline) {
+        textElement.setAttribute("dominant-baseline", s.textBaseline);
+      }
+
       // Handle background if present
       if (s.background) {
         const txtSize = measureSvgText(s.text, s.font || "");

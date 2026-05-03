@@ -116,8 +116,8 @@ export const DataLayerManager = (props: MapLayerManagerProps) => {
     <>
       {type === "map" && showLegend && (
         <FlexCol
-          className="gap-p5 bg-color-0 p-p5 rounded shadow ws-nowrap"
-          style={{ maxWidth: "200px" }}
+          className="DataLayerManager_Legend gap-p5 bg-color-0 p-p5 rounded shadow ws-nowrap"
+          style={{ maxWidth: "200px", marginLeft: "-5px", marginTop: "-5px" }}
         >
           {(layerQueries as LayerQuery[]).map((layer) => {
             return (

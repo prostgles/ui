@@ -3,10 +3,10 @@ import { IconPalette } from "@components/IconPalette/IconPalette";
 import PopupMenu from "@components/PopupMenu";
 import { Select } from "@components/Select/Select";
 import React, { useMemo } from "react";
-import type { LinkSyncItem } from "../Dashboard/dashboardUtils";
-import { ColorCircle, ColorPicker } from "../W_Table/ColumnMenu/ColorPicker";
+import type { LinkSyncItem } from "../../Dashboard/dashboardUtils";
+import { ColorCircle, ColorPicker } from "../../W_Table/ColumnMenu/ColorPicker";
 import type { LayerColorPickerProps } from "./LayerColorPicker";
-import type { ChartLinkOptions } from "./DataLayerManager/DataLayer";
+import type { ChartLinkOptions } from "./DataLayer";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { isDefined } from "@common/filterUtils";
 
@@ -24,7 +24,8 @@ export const MapLayerStyling = ({
   const { tables } = usePrgl();
   const { dataSource } = linkOptions;
   const tableName =
-    dataSource?.type === "table" ? dataSource.tableName
+    dataSource?.type === "table" ?
+      dataSource.joinPath?.at(-1)?.table || dataSource.tableName
     : dataSource?.type === "local-table" ? dataSource.localTableName
     : undefined;
   const table =
@@ -52,6 +53,7 @@ export const MapLayerStyling = ({
       )
       .filter(isDefined);
   }, [dataSource, table, tables]);
+
   const linkColor = `rgba(${getLinkColor(linkOptions)})`;
   return (
     <PopupMenu

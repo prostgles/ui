@@ -1,23 +1,28 @@
-import { FlexCol } from "@components/Flex";
+import { sliceText } from "@common/utils";
+import Btn from "@components/Btn";
+import { FlexCol, FlexRow } from "@components/Flex";
+import { InfoRow } from "@components/InfoRow";
 import { Label } from "@components/Label";
+import PopupMenu from "@components/PopupMenu";
 import {
   SearchList,
   type SvgIconName,
 } from "@components/SearchList/SearchList";
-import { mdiLinkPlus, mdiScript, mdiSetCenter, mdiTable } from "@mdi/js";
+import { mdiLinkPlus, mdiScript, mdiTable } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { isDefined, isEqual } from "prostgles-types";
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { addChart } from "src/dashboard/Dashboard/addChart";
 import { getChartCols } from "src/dashboard/W_Table/TableMenu/getChartCols";
 import type { LinkSyncItem } from "../../Dashboard/dashboardUtils";
 import { OSMLayerOptions } from "../OSMLayerOptions";
 import { SQLChartLayerEditor } from "../SQLChartLayerEditor";
 import type { ChartLinkOptions, DataLayerProps } from "./DataLayer";
-import { sliceText } from "@common/utils";
+import Popup from "@components/Popup/Popup";
 
 export const DataLayerDataSource = (props: DataLayerProps) => {
-  const { myLinks, layer, w, getLinksAndWindows, asLegend } = props;
+  const { myLinks, layer, w, getLinksAndWindows } = props;
+  const [popupAnchor, setPopupAnchor] = useState<HTMLButtonElement>();
 
   const thisLink = myLinks.find((l) => l.id === layer.linkId);
   const linkOptions = thisLink?.options;
@@ -45,40 +50,46 @@ export const DataLayerDataSource = (props: DataLayerProps) => {
 
   const layerDesc = `${joinPath?.at(-1)?.table || tableName || sliceText(osmOrSQLQuery, 20)} (${column})`;
 
-  if (asLegend) {
-    return <div className="text-ellipsis">{layerDesc}</div>;
-  }
+  const iconPath =
+    dataSource?.type === "local-table" ? mdiTable
+    : dataSource?.type === "table" ? mdiLinkPlus
+    : mdiScript;
 
   if (dataSource?.type === "osm") {
     return <OSMLayerOptions link={thisLink} dataSource={dataSource} />;
   }
 
   return (
-    <Label
-      variant="header"
-      iconPath={
-        dataSource?.type === "local-table" ? mdiTable
-        : dataSource?.type === "table" ?
-          mdiLinkPlus
-        : mdiScript
-      }
-      info={
-        <DataLayerDataSourceInfo
-          w={w}
-          getLinksAndWindows={getLinksAndWindows}
-          dataSource={dataSource}
-          thisLink={thisLink}
-        />
-      }
-      className={"ws-nowrap f-1 min-w-0"}
-      title={
-        dataSource?.type === "table" || dataSource?.type === "local-table" ?
-          `Table name`
-        : "SQL Script"
-      }
-    >
-      <div className="text-ellipsis">{layerDesc}</div>
-    </Label>
+    <FlexRow className="DataLayerDataSource min-w-0 gap-p5">
+      <Btn
+        iconPath={iconPath}
+        data-command={popupAnchor ? undefined : "DataLayerDataSourceInfo"}
+        size="small"
+        color="action"
+        style={{ padding: 0, minHeight: 0, minWidth: 0 }}
+        onClick={({ currentTarget }) => setPopupAnchor(currentTarget)}
+      />
+      {popupAnchor && (
+        <Popup
+          data-command="DataLayerDataSourceInfo"
+          positioning="beneath-left"
+          anchorEl={popupAnchor}
+          contentClassName="ai-start ta-left p-1"
+          onClose={() => setPopupAnchor(undefined)}
+        >
+          <DataLayerDataSourceInfo
+            w={w}
+            getLinksAndWindows={getLinksAndWindows}
+            dataSource={dataSource}
+            thisLink={thisLink}
+            onClose={() => setPopupAnchor(undefined)}
+          />
+        </Popup>
+      )}
+      <div className="text-ellipsis" title={layerDesc}>
+        {layerDesc}
+      </div>
+    </FlexRow>
   );
 };
 
@@ -87,9 +98,11 @@ const DataLayerDataSourceInfo = ({
   dataSource,
   thisLink,
   getLinksAndWindows,
+  onClose,
 }: {
   dataSource: Exclude<ChartLinkOptions["dataSource"], { type: "osm" }>;
   thisLink: LinkSyncItem;
+  onClose: () => void;
 } & Pick<DataLayerProps, "w" | "getLinksAndWindows">) => {
   const { tables, dbs } = usePrgl();
   const joinedChartCols = useMemo(() => {
@@ -134,34 +147,36 @@ const DataLayerDataSourceInfo = ({
   const thisLinkOpts = thisLink.options;
   return (
     <FlexCol style={{ maxHeight: "min(550px, 100vh)" }} className="gap-p5">
-      <div>Data join chain</div>
-      <FlexCol className=" ">
-        {[{ table: tableName, on: [] }, ...(joinPath ?? [])]
-          .toReversed()
-          .map(({ table, on }, i, arr) => {
-            const prevOn = arr[i - 1]?.on;
-            const isLast = i === (joinPath?.length ?? 0);
-            const leftCondition =
-              !i || !prevOn ?
-                ""
-              : ` (${prevOn.map((cond) => Object.keys(cond))})`;
+      <InfoRow color="info" className="p-p5">
+        <div style={{ fontWeight: "bold" }}>Join path</div>
+        <FlexCol className="gap-0">
+          {[{ table: tableName, on: [] }, ...(joinPath ?? [])]
+            .toReversed()
+            .map(({ table, on }, i, arr) => {
+              const prevOn = arr[i - 1]?.on;
+              const isLast = i === (joinPath?.length ?? 0);
+              const leftCondition =
+                !i || !prevOn ?
+                  ""
+                : ` (${prevOn.map((cond) => Object.keys(cond))})`;
 
-            const nextOn = on;
-            const rightCondition =
-              nextOn.length ?
-                ` (${nextOn.map((cond) => Object.values(cond) as string[])})`
-              : "";
-            return (
-              <div key={i} style={{ marginLeft: `${i}em` }}>
-                {" "}
-                <span style={{ fontSize: 14 }}>{leftCondition}</span>{" "}
-                <strong>{table}</strong>{" "}
-                <span style={{ fontSize: 14 }}>{rightCondition}</span>{" "}
-                {isLast ? "" : " -> "}
-              </div>
-            );
-          })}
-      </FlexCol>
+              const nextOn = on;
+              const rightCondition =
+                nextOn.length ?
+                  ` (${nextOn.map((cond) => Object.values(cond) as string[])})`
+                : "";
+              return (
+                <div key={i} style={{ marginLeft: `${i}em` }}>
+                  {" "}
+                  <span style={{ fontSize: 14 }}>{leftCondition}</span>{" "}
+                  <strong>{table}</strong>{" "}
+                  <span style={{ fontSize: 14 }}>{rightCondition}</span>{" "}
+                  {isLast ? "" : " -> "}
+                </div>
+              );
+            })}
+        </FlexCol>
+      </InfoRow>
       {thisLinkOpts.type === "map" && (
         <>
           <div
@@ -206,6 +221,7 @@ const DataLayerDataSourceInfo = ({
                       windows,
                       existingChartWindow: w,
                     });
+                    onClose();
                   },
                 };
               }) ?? []

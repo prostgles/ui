@@ -1,5 +1,5 @@
 import { test } from "@playwright/test";
-import { PageWIds, createDatabase, login } from "./utils/utils";
+import { PageWIds, createDatabase, login, runDbSql } from "./utils/utils";
 import { USERS } from "utils/constants";
 import { goTo } from "utils/goTo";
 
@@ -29,6 +29,26 @@ test.describe("Demo video setup", () => {
       await page.waitForTimeout(2000);
       await goTo(page, "http://localhost:3004/connections");
       await createDatabase("crypto", page, true);
+      let xrp_fetch_timeout = 60e3;
+      let hasXrpData = false;
+      while (xrp_fetch_timeout > 0) {
+        const xrpRows = await runDbSql(
+          page,
+          "SELECT * FROM futures WHERE symbol = 'XRPUSDT' LIMIT 2",
+          {},
+          { returnType: "rows" },
+        );
+        hasXrpData = xrpRows.length > 0;
+        if (hasXrpData) {
+          break;
+        }
+        await page.waitForTimeout(2000);
+      }
+      if (!hasXrpData) {
+        throw new Error(
+          "XRP data not available in crypto database after waiting for 60 seconds.",
+        );
+      }
     }
   });
 });

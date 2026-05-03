@@ -40,6 +40,7 @@ export const SavedAgenticWorkflowsAndContainers = () => {
           } satisfies FilterItem<DBSSchema["agentic_workflow_runs"]>,
         },
       },
+      orderBy: [{ key: "created", asc: false }],
     },
   );
 

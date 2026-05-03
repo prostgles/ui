@@ -235,6 +235,10 @@
   background-color: var(--formfield-bg-color) !important;
 }
 
+.bg-faded-red {
+  background-color: var(--faded-red);
+}
+
 .text-0 {
   color: var(--text-0);
 }

@@ -107,9 +107,9 @@ export const runAgentGoalTool = async ({
           },
     },
   );
-  if (validationResult?.error || goalFailed) {
+  if (validationResult?.error !== undefined) {
     throw new Error(
-      `Agent goal tool input validation failed: ${goalFailed ? "goal failure. " + ((agetGoalTool.input?.error as string) || "") : validationResult?.error} ${JSON.stringify(agetGoalTool.input)}`,
+      `Agent goal tool input validation failed: ${validationResult.error} ${JSON.stringify(agetGoalTool.input)}`,
     );
   }
   return;

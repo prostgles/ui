@@ -8,7 +8,7 @@ import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
 import { ColorByLegend } from "../WindowControls/ColorByLegend/ColorByLegend";
 import type { ChartLinkOptions } from "../WindowControls/DataLayerManager/DataLayer";
 import { useSortedLayerQueries } from "../WindowControls/DataLayerManager/useSortedLayerQueries";
-import { LayerColorPicker } from "../WindowControls/LayerColorPicker";
+import { LayerColorPicker } from "../WindowControls/DataLayerManager/LayerColorPicker";
 import { TimeChartLayerOptions } from "../WindowControls/TimeChartLayerOptions";
 import type {
   ProstglesTimeChartLayer,

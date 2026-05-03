@@ -583,6 +583,7 @@ export const COMMANDS = {
   AgenticWorkflowActions: "",
   UserInput: "",
   NestedTimechartControls: "",
+  DataLayerDataSourceInfo: "",
 } as const satisfies Record<
   string,
   | string

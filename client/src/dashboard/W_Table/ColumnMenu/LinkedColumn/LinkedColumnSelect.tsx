@@ -130,11 +130,7 @@ export const LinkedColumnSelect = ({
             positioning="beneath-left"
             data-command="QuickAddComputedColumn"
             button={
-              <Btn
-                variant="faded"
-                iconPath={mdiSigma}
-                data-command="QuickAddComputedColumn"
-              >
+              <Btn variant="faded" iconPath={mdiSigma}>
                 Row count/Aggregate
               </Btn>
             }

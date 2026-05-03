@@ -1,8 +1,7 @@
 import type { BtnProps } from "@components/Btn";
 import React from "react";
-import { ColorPicker } from "../W_Table/ColumnMenu/ColorPicker";
-import type { ChartLinkOptions } from "./DataLayerManager/DataLayer";
-import { MapLayerStyling } from "./MapLayerStyling";
+import { ColorPicker } from "../../W_Table/ColumnMenu/ColorPicker";
+import type { ChartLinkOptions } from "./DataLayer";
 
 export type LayerColorPickerProps = {
   linkOptions: ChartLinkOptions;
@@ -22,18 +21,6 @@ export const LayerColorPicker = ({
   const rgba = linkOptions.columns.find((c) => c.name === column)?.colorArr ?? [
     100, 100, 100,
   ];
-
-  if (linkOptions.type === "map") {
-    return (
-      <MapLayerStyling
-        linkOptions={linkOptions}
-        onChange={onChange}
-        column={column}
-        title={title}
-        btnProps={btnProps}
-      />
-    );
-  }
 
   return (
     <ColorPicker

@@ -45,7 +45,6 @@ export type W_TableMenuProps = Pick<
   W_TableProps,
   "workspace" | "prgl" | "externalFilters" | "joinFilter"
 > & {
-  onAddChart?: OnAddChart;
   w: WindowSyncItem<"table">;
   cols: ColumnConfigWInfo[];
   suggestions: CommonWindowProps["suggestions"];

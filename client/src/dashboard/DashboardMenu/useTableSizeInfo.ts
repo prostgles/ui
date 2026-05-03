@@ -12,6 +12,10 @@ export type TablesWithInfo = (DBSchemaTablesWJoins[number] & {
   count: number;
   sizeNum: number;
 })[];
+
+/**
+ * TODO: move up to Dashboard level and provide via context to avoid fetching every time
+ */
 export const useTableSizeInfo = (
   workspaceOptions: DBSSchema["workspaces"]["options"],
 ) => {

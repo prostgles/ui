@@ -10,10 +10,11 @@ import type {
   ProstglesTimeChartLayer,
   W_TimeChartProps,
 } from "../../W_TimeChart/W_TimeChart";
-import { LayerColorPicker } from "../LayerColorPicker";
+import { LayerColorPicker } from "./LayerColorPicker";
 import { TimeChartLayerOptions } from "../TimeChartLayerOptions";
 import { DataLayerDataSource } from "./DataLayerDataSource";
 import type { MapLayerManagerProps } from "./DataLayerManager";
+import { MapLayerStyling } from "./MapLayerStyling";
 
 export type ChartLinkOptions = Exclude<
   DBSSchema["links"]["options"],
@@ -78,21 +79,36 @@ export const DataLayer = (props: DataLayerProps) => {
   return (
     <FlexRow
       key={layer._id}
-      className={`LayerQuery bg-color-0 ta-left ai-center rounded ${asLegend ? "gap-p5" : "gap-0 b b-color pl-p5"}`}
+      className={`LayerQuery bg-color-0 ta-left ai-center rounded ${asLegend ? "gap-p5" : "gap-p5 b b-color pl-p5"}`}
     >
-      <LayerColorPicker
-        onChange={updateOptions}
-        title={layerDesc}
-        column={column}
-        linkOptions={linkOptions}
-        btnProps={
-          asLegend ?
-            {
-              size: "micro",
-            }
-          : {}
-        }
-      />
+      {linkOptions.type === "map" ?
+        <MapLayerStyling
+          linkOptions={linkOptions}
+          onChange={updateOptions}
+          column={column}
+          title={layerDesc}
+          btnProps={
+            asLegend ?
+              {
+                size: "micro",
+              }
+            : {}
+          }
+        />
+      : <LayerColorPicker
+          onChange={updateOptions}
+          title={layerDesc}
+          column={column}
+          linkOptions={linkOptions}
+          btnProps={
+            asLegend ?
+              {
+                size: "micro",
+              }
+            : {}
+          }
+        />
+      }
 
       <DataLayerDataSource {...props} />
 

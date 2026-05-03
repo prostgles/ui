@@ -4,11 +4,7 @@ import type {
   SingleSyncHandles,
 } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import React from "react";
-import RTComp, {
-  type DeepPartial,
-  type DeltaOf,
-  type DeltaOfData,
-} from "../RTComp";
+import RTComp, { type DeepPartial, type DeltaOfData } from "../RTComp";
 import { getSqlSuggestions } from "../SQLEditor/SQLEditorSuggestions";
 import type { DBObject } from "../SearchAll/SearchAll";
 
@@ -39,7 +35,6 @@ import type {
   DBSchemaTablesWJoins,
   LinkSyncItem,
   LoadedSuggestions,
-  OnAddChart,
   WindowData,
   WindowSyncItem,
   Workspace,
@@ -346,7 +341,7 @@ export class _Dashboard extends RTComp<
       ((delta.workspace && "hideCounts" in delta.workspace) ||
         delta.workspace?.options?.tableListEndInfo ||
         delta.workspace?.options?.tableListSortBy);
-    const schemaChanged = this.props.prgl.dbKey !== this.loadingSchema?.dbKey; //  !this.loadingSchema?.dbKey.startsWith(FORCED_REFRESH_PREFIX) &&
+    const schemaChanged = this.props.prgl.dbKey !== this.loadingSchema?.dbKey;
     const dataWasImported = !!delta.imported;
 
     if (

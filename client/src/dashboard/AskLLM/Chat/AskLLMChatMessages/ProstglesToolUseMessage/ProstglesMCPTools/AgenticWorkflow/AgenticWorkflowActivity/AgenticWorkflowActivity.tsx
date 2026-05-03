@@ -99,6 +99,13 @@ export const AgenticWorkflowActivity = ({
               typeof maybeTableName === "string" ? maybeTableName : undefined;
 
             const isLoading = !endedAt;
+            const failed =
+              item.type === "agent_chat" ?
+                item.status?.state === "goal-failure" ||
+                item.status?.state === "goal-data-validation-failure"
+              : item.error;
+            const errorStyle =
+              failed ? { color: "var(--text-danger)" } : undefined;
             return {
               key: item.type + item.id,
               "data-command":
@@ -107,6 +114,7 @@ export const AgenticWorkflowActivity = ({
                 : "AgenticWorkflow.openToolCall",
               iconLeft: {
                 type: "SvgIcon",
+                style: errorStyle,
                 pathName:
                   item.type === "agent_chat" ?
                     "RobotOutline"
@@ -114,10 +122,17 @@ export const AgenticWorkflowActivity = ({
                       getIcon(item.mcp_server_name, item.mcp_tool_name)
                     : undefined) ?? "Tools"),
               },
-              rowClassname: isLoading ? "skeleton" : "",
+              rowClassname:
+                isLoading ? "skeleton"
+                : failed ? "bg-faded-red"
+                : "",
               label: name,
               styles: {
-                subLabel: { whiteSpace: "nowrap" },
+                label: errorStyle,
+                subLabel: {
+                  whiteSpace: "nowrap",
+                  ...errorStyle,
+                },
               },
               subLabel: sliceText(
                 item.type === "agent_chat" ?
@@ -148,7 +163,7 @@ export const AgenticWorkflowActivity = ({
                   )}
                   {isLoading && user?.options?.hideLlmLoadingCounter ? null : (
                     <Stopwatch
-                      className="text-2"
+                      className={failed ? "text-danger" : "text-2"}
                       startTime={startedAt}
                       endTime={endedAt}
                     />

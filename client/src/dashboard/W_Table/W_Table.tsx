@@ -74,7 +74,6 @@ export type W_TableProps = Omit<CommonWindowProps, "w"> & {
   joinFilter?: AnyObject;
   externalFilters: AnyObject[];
   activeRow?: ActiveRow;
-  onAddChart?: OnAddChart;
   activeRowColor?: React.CSSProperties["color"];
   workspace: WorkspaceSyncItem;
 };
@@ -455,7 +454,7 @@ export default class W_Table extends RTComp<
   }
 
   getMenu = (w: WindowSyncItem<"table">, onClose: VoidFunction) => {
-    const { prgl, onAddChart } = this.props;
+    const { prgl } = this.props;
 
     const cols = w.columns;
 
@@ -467,7 +466,6 @@ export default class W_Table extends RTComp<
         workspace={this.props.workspace}
         // cols={cols.filter((c) => !c.computedConfig)}
         cols={cols}
-        onAddChart={onAddChart}
         w={w}
         suggestions={this.props.suggestions}
         onClose={onClose}
@@ -485,8 +483,7 @@ export default class W_Table extends RTComp<
     const tableHandler = db[tableName] as TableHandlerClient | undefined;
 
     try {
-      // const columnsConfig = await getAndFixWColumnsConfig(tables, w); //columns: columnsConfig,
-      const orderBy = getSort(tables, { ...w, sort }) as any;
+      const orderBy = getSort(tables, { ...w, sort }) as ColumnSort[];
       /** Ensure the sort is valid */
       const { select } = await getTableSelect(w, tables, db, {}, true);
       await tableHandler?.find!({}, { select, limit: 0, orderBy });
@@ -538,7 +535,6 @@ export default class W_Table extends RTComp<
       setLinkMenu,
       joinFilter,
       activeRow,
-      onAddChart,
       activeRowColor,
       prgl,
       childWindow,
@@ -582,9 +578,7 @@ export default class W_Table extends RTComp<
             childWindows: this.props.childWindows,
             getLinksAndWindows: this.props.getLinksAndWindows,
             show:
-              childWindow || this.props.workspace.layout_mode === "fixed" ?
-                { filter: true }
-              : undefined,
+              workspace.layout_mode === "fixed" ? { filter: true } : undefined,
           }}
           getMenu={this.getMenu}
         >
