@@ -16,6 +16,7 @@ import type {
   GeoJsonLayerProps,
   HoverCoords,
   MapHandler,
+  MapState,
 } from "../Map/DeckGLMap";
 import { DeckGLMap } from "../Map/DeckGLMap";
 import type { DeltaOfData } from "../RTComp";
@@ -527,6 +528,11 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
       }
     }
 
+    const dpr =
+      typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
+    const dprRounded = dpr >= 1.5 ? 2 : 1;
+    const retinaToken = dprRounded > 1 ? "@2x" : "";
+    const scaleToken = dprRounded > 1 ? "2x" : "1x";
     const content = (
       <>
         {form}
@@ -618,14 +624,19 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
                 v
                   .replaceAll("{Z}", "{z}")
                   .replaceAll("{X}", "{x}")
-                  .replaceAll("{Y}", "{y}"),
+                  .replaceAll("{Y}", "{y}")
+                  .replaceAll("{r}", retinaToken)
+                  .replaceAll("{dpr}", String(dprRounded))
+                  .replaceAll("{ratio}", String(dprRounded))
+                  .replaceAll("{scale}", scaleToken),
               )}
+              basemapZoomOffset={w.options.basemapZoomOffset ?? 0}
               tileSize={w.options.tileSize || 256}
               tileAttribution={w.options.tileAttribution}
               basemapOpacity={w.options.basemapOpacity ?? 0.2}
               basemapDesaturate={w.options.basemapDesaturate ?? 0}
               dataOpacity={w.options.dataOpacity ?? 0.5}
-              initialState={(w.options as any) || {}}
+              initialState={w.options as MapState}
               geoJsonLayers={geoJsonLayers}
               options={{
                 extentBehavior: w.options.extentBehavior ?? "autoZoomToData",

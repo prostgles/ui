@@ -131,7 +131,7 @@ export const useDrawSchemaShapes = (
             } else {
               otherShapes.push({
                 ...s,
-                opacity: 0.4,
+                opacity: 0.3,
               });
             }
           });

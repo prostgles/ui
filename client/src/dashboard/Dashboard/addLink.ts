@@ -17,12 +17,8 @@ export const addLink = ({
   };
   myLinks: Link[];
 }) => {
-  // const { links } = this.getOpenedLinksAndWindows();
   const { w1_id, w2_id, workspace_id } = newLink;
 
-  // const myLinks = links.filter((l) =>
-  //   [l.w1_id, l.w2_id].find((wid) => [w1_id, w2_id].includes(wid)),
-  // );
   const cLinkColor = myLinks
     .map((l) => (l.options.type === "table" ? l.options.colorArr : undefined))
     .find((c) => c);

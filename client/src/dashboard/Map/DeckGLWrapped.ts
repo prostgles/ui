@@ -66,10 +66,13 @@ export class DeckWrapped {
     this.opts = opts;
     this.node = node;
     const { type, initialViewState } = this.opts;
-
+    const dpr =
+      typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
+    const useDevicePixels = Math.max(1, Math.min(2, dpr));
     this.deck = new lib.Deck({
       ...(getViews({ type, lib, initialViewState }) as any),
       parent: node,
+      useDevicePixels,
       controller: true,
       ...omitKeys(opts, [
         "type",

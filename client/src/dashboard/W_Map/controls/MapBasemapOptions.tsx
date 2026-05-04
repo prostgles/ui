@@ -33,6 +33,7 @@ export const MapBasemapOptions = ({ w, className, asPopup }: P) => {
     basemapImage,
     tileAttribution,
     tileSize,
+    basemapZoomOffset,
   } = asPopup ? localOptions : w.options;
   const tileURLsOrDefaults = tileURLs?.length ? tileURLs : DEFAULT_TILE_URLS;
   const updateOptions = useCallback(
@@ -206,6 +207,19 @@ export const MapBasemapOptions = ({ w, className, asPopup }: P) => {
             options={[16, 32, 64, 128, 256, 512, 1024]}
             onChange={(tileSize) => {
               updateOptions({ tileSize });
+            }}
+          />
+          <InfoRow color="info">
+            Retina placeholders supported in tile URL: {"{r}"}, {"{dpr}"},{" "}
+            {"{ratio}"}, {"{scale}"}
+          </InfoRow>
+
+          <FormField
+            label="Tile zoom offset"
+            value={basemapZoomOffset ?? 0}
+            options={[-2, -1, 0, 1, 2]}
+            onChange={(basemapZoomOffset) => {
+              updateOptions({ basemapZoomOffset });
             }}
           />
         </>

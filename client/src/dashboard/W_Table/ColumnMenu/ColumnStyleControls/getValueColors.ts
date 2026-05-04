@@ -5,7 +5,7 @@ import { chipColorsFadedBorder } from "../ColumnDisplayFormat/ChipStylePalette";
 import { getRandomElement, type ConditionalStyle } from "./ColumnStyleControls";
 import type { DBS } from "src/dashboard/Dashboard/DBS";
 
-type DefaultConditionalStyleArgs =
+export type DefaultConditionalStyleArgs =
   | {
       type: "table";
       db: DBHandlerClient | DBS;

@@ -62,8 +62,6 @@ export const SelectTriggerButton = <
   const noOtherOption =
     !options.length || (options.length === 1 && value === options[0]);
 
-  // if (!onChange) return null;
-
   const showSelectedIcon =
     showSelected === "icon" ? selectedFullOptions[0]?.iconPath : undefined;
 

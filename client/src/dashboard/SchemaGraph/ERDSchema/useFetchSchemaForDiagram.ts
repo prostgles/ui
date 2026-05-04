@@ -83,12 +83,22 @@ export const useFetchSchemaForDiagram = (
       });
 
     const colors = COLOR_PALETTE.slice(0);
+    const schemaColorMap = new Map<string, string>();
+    const upsertSchemaColorMap = (schema: string) => {
+      if (schemaColorMap.has(schema)) return schemaColorMap.get(schema)!;
+      const color = colors.shift() ?? getCssVariableValue("--text-2");
+      schemaColorMap.set(schema, color);
+      return color;
+    };
     const allTablesWithRootColor = allTableMostReferencedTop.map((t) => ({
       ...t,
       /** Root color assigned to top most referenced tables  */
-      rootColor: colors.shift(),
+      rootColor:
+        columnColorMode === "schema" ?
+          upsertSchemaColorMap(t.qualifiedNameParts.schema)
+        : t.references.length || t.referencedBy.length ? colors.shift()
+        : undefined,
     }));
-
     const allTables = await Promise.all(
       allTablesWithRootColor.map(async (t) => {
         return {
@@ -97,7 +107,7 @@ export const useFetchSchemaForDiagram = (
             !t.icon ? undefined : (
               await fetchSVGImage(
                 t.icon,
-                columnColorMode === "root" ?
+                columnColorMode === "root" || columnColorMode === "schema" ?
                   (t.rootColor ?? defaultIconColor)
                 : defaultIconColor,
               )
@@ -185,6 +195,7 @@ export const useFetchSchemaForDiagram = (
       tablesWithPositions,
       fkeys,
       columnConstraintIcons,
+      schemaColorMap,
     };
   }, [columnColorMode, dbConf, dbTables, sql]);
 

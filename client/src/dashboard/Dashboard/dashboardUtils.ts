@@ -139,6 +139,7 @@ export type ChartOptions<CType extends ChartType = "table"> =
       colorField?: string;
       tileURLs?: string[];
       tileSize?: number;
+      basemapZoomOffset?: number;
       showAddShapeBtn?: boolean;
       hideLayersBtn?: boolean;
       showCardOnClick?: boolean;

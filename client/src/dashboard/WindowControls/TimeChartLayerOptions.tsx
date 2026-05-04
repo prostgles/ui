@@ -175,6 +175,7 @@ export const TimeChartLayerOptions = ({
               variant={isOnScreen ? "text" : "faded"}
               iconPath={isOnScreen ? "" : mdiSigma}
               title="Aggregate function"
+              size="small"
               data-command="TimeChartLayerOptions.aggFunc"
               style={{
                 paddingRight: isOnScreen ? "0" : undefined,
@@ -199,6 +200,7 @@ export const TimeChartLayerOptions = ({
                 label="Aggregation type"
                 variant="div"
                 className="w-fit"
+                size="small"
                 data-command="TimeChartLayerOptions.aggFunc.select"
                 btnProps={{
                   iconPath: mdiSigma,
@@ -231,6 +233,7 @@ export const TimeChartLayerOptions = ({
                 btnProps={{
                   color: "action",
                 }}
+                size="small"
                 data-command="TimeChartLayerOptions.numericColumn"
                 fullOptions={numericCols.map((c) => ({
                   key: c.name,
@@ -256,6 +259,7 @@ export const TimeChartLayerOptions = ({
               label="Group by field"
               variant="div"
               className="w-fit "
+              size="small"
               data-command="TimeChartLayerOptions.groupBy"
               optional={true}
               disabledInfo={

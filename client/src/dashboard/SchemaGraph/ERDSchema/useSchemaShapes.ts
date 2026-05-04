@@ -23,7 +23,13 @@ export const useSchemaShapes = (
     canvasRef: React.RefObject<HTMLCanvasElement>;
   },
 ) => {
-  const { canvasRef, displayMode, columnDisplayMode, columnColorMode } = props;
+  const {
+    canvasRef,
+    displayMode,
+    columnDisplayMode,
+    columnColorMode,
+    selectedTables,
+  } = props;
   const shapesRef = useRef<SchemaShape[]>([]);
   const [shapesVersion, setShapesVersion] = useState(0);
   const { schemaInfo, dbConfId, dbConf } = useFetchSchemaForDiagram(props);
@@ -40,6 +46,17 @@ export const useSchemaShapes = (
     const COL_ICON_SIZE = 20;
     const PADDING = 10;
     const nodeShapes = tablesWithPositions
+
+      .filter((t) => {
+        if (displayMode === "all") return true;
+        if (displayMode === "custom") {
+          return !selectedTables || selectedTables.has(t.name);
+        }
+        if (displayMode === "relations") {
+          return t.references.length || t.referencedBy.length;
+        }
+        return !t.references.length && !t.referencedBy.length;
+      })
       .map((table, i) => {
         const offset = 50 * i;
         const x = table.position?.x ?? offset;
@@ -71,15 +88,16 @@ export const useSchemaShapes = (
           ],
           font: "bold 22px Courier",
           fillStyle:
-            columnColorMode === "root" ?
+            columnColorMode === "root" || columnColorMode === "schema" ?
               (table.rootColor ?? headerfillStyle)
             : headerfillStyle,
         });
 
+        const tableFkeys = fkeys.filter((fk) => fk.table_oid === table.oid);
         const columns = table.columns.filter((c) =>
           columnDisplayMode === "none" ? false
           : columnDisplayMode === "references" ?
-            fkeys.some(
+            tableFkeys.some(
               (fcons) =>
                 fcons.conkey?.includes(c.ordinal_position) ||
                 fcons.confkey?.includes(c.ordinal_position),
@@ -91,7 +109,10 @@ export const useSchemaShapes = (
           const colYOffset = COL_SPACING * (i + 2);
 
           let textFillStyle = getCssVariableValue("--text-0");
-          if (columnColorMode === "root" && c.references?.length) {
+          if (
+            (columnColorMode === "root" || columnColorMode === "schema") &&
+            c.references?.length
+          ) {
             textFillStyle =
               getRootTable(c.references, tablesWithPositions)?.rootColor ??
               textFillStyle;
@@ -205,25 +226,34 @@ export const useSchemaShapes = (
 
         return box;
       })
-      .filter(isDefined)
-      .filter((t) => {
-        if (displayMode === "all") return true;
-        if (displayMode === "relations") {
-          return t.data.references.length || t.data.referencedBy.length;
-        }
-        return !t.data.references.length && !t.data.referencedBy.length;
-      });
+      .filter(isDefined);
 
     const linkShapes: LinkLine[] = fkeys
       .flatMap((fkCons) => {
         const tbl = nodeShapes.find((n) => n.id === fkCons.table_oid);
         const ftbl = nodeShapes.find((n) => n.id === fkCons.ftable_oid);
         if (!tbl || !ftbl) {
-          if (displayMode !== "leaf") {
+          if (displayMode !== "leaf" && displayMode !== "custom") {
             console.warn("link not found", fkCons);
           }
           return undefined;
         }
+        const fkColumnNames =
+          fkCons.conkey
+            ?.map(
+              (ordPos) =>
+                tbl.data.columns.find((c) => c.ordinal_position === ordPos)
+                  ?.name,
+            )
+            .filter(isDefined) ?? [];
+        const isOneToOne =
+          fkColumnNames.length > 0 &&
+          tbl.data.uniqueColumnGroups?.some(
+            (group) =>
+              group.length === fkColumnNames.length &&
+              group.every((col) => fkColumnNames.includes(col)),
+          );
+
         return fkCons.conkey?.map((key, i) => {
           const colIdx = tbl.data.columns.findIndex(
             (c) => c.ordinal_position === key,
@@ -243,9 +273,10 @@ export const useSchemaShapes = (
             targetId: tbl.id,
             sourceYOffset: PADDING + COL_SPACING * (1 + fcolIdx + 0.5),
             targetYOffset: PADDING + COL_SPACING * (1 + colIdx + 0.5),
+            cardinality: isOneToOne ? "one-to-one" : "one-to-many",
             lineWidth: 3,
             strokeStyle:
-              columnColorMode === "root" ?
+              columnColorMode === "root" || columnColorMode === "schema" ?
                 (ftbl.data.rootColor ?? getCssVariableValue("--text-2"))
               : columnColorMode === "on-delete" ?
                 CASCADE_LEGEND[fkCons.on_delete_action ?? "NO ACTION"].color
@@ -267,6 +298,7 @@ export const useSchemaShapes = (
     columnDisplayMode,
     columnColorMode,
     dbConf,
+    selectedTables,
   ]);
 
   return {

@@ -1,6 +1,7 @@
 import Btn from "@components/Btn";
 import Popup from "@components/Popup/Popup";
 import { mdiRelationManyToMany } from "@mdi/js";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import React, { useState } from "react";
 import type { Prgl } from "../../App";
 import type { Connection } from "../../pages/NewConnection/NewConnnectionForm";
@@ -10,7 +11,6 @@ import {
   SchemaGraphControls,
   useSchemaGraphControls,
 } from "./SchemaGraphControls";
-import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 
 export type SchemaGraphProps = Pick<
   Prgl,

@@ -57,6 +57,9 @@ export const drawShapes = (
     }
 
     ctx.globalAlpha = s.opacity ?? 1;
+    if (s.filter) {
+      ctx.filter = s.filter;
+    }
     ctx.lineJoin = "bevel";
     if (s.type === "image") {
       ctx.drawImage(s.image, ...s.coords, s.w, s.h);

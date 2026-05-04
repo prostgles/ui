@@ -25,15 +25,7 @@ export const timechartSvgif: OnBeforeScreenshot = async (
 
   await addSceneAnimation(`[data-label="BTCUSDT"]`);
   await addSceneAnimation(getCommandElemSelector("FilterWrapper_FieldName"));
-  await addSceneAnimation(
-    getCommandElemSelector("FilterWrapper") +
-      " " +
-      getCommandElemSelector("SearchList.Input"),
-    {
-      action: "type",
-      text: "xrp",
-    },
-  );
+
   await addSceneAnimation(getDataKey("XRPUSDT"));
   await addSceneAnimation(getCommandElemSelector("FilterWrapper_Field"));
 

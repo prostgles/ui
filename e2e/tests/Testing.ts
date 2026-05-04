@@ -272,6 +272,7 @@ export const COMMANDS = {
   SchemaGraph: "",
   "SchemaGraph.TopControls": "",
   "SchemaGraph.TopControls.tableRelationsFilter": "",
+  "SchemaGraph.TopControls.tableFilter": "",
   "SchemaGraph.TopControls.columnRelationsFilter": "",
   "SchemaGraph.TopControls.linkColorMode": "",
   "SchemaGraph.TopControls.resetLayout": "",

@@ -1,7 +1,13 @@
 const SELF = "'self'";
 export const CSP_DEFAULTS = {
   defaultSrc: [SELF],
-  imgSrc: [SELF, "data:", "blob:", "https://*.tile.openstreetmap.org"],
+  imgSrc: [
+    SELF,
+    "data:",
+    "blob:",
+    "https://vector.openstreetmap.org",
+    "https://*.tile.openstreetmap.org",
+  ],
   styleSrc: [SELF, "'unsafe-inline'"],
   scriptSrc: [SELF], // localLLMHeaders
   /* data import (papaparse) requires: worker-src blob: 'self' */
@@ -17,6 +23,7 @@ export const CSP_DEFAULTS = {
     "data:" /** Used by deckgl icon render */,
     "ws:",
     "wss:",
+    "https://vector.openstreetmap.org",
     "https://*.tile.openstreetmap.org",
   ],
 };

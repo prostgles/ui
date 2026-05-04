@@ -48,6 +48,10 @@ export const useDatabaseAccessEditorTables = ({
                   publishInfo: {},
                   label: t.name,
                   name: t.name,
+                  qualifiedNameParts: {
+                    schema: t.schema ?? "",
+                    name: t.name,
+                  },
                   ddlState: getTableSchemaDriftState(
                     tables.find((et) => et.name === t.name),
                     t,

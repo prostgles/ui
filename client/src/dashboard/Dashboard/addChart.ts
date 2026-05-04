@@ -69,9 +69,10 @@ export const addChart = async ({
     extra = {
       parent_window_id: parentWindow.id,
       options: {
-        dataOpacity: 0.5,
+        dataOpacity: 0.8,
         basemapOpacity: 0.25,
         basemapDesaturate: 0,
+        basemapZoomOffset: 0,
         tileAttribution: {
           title: "© OpenStreetMap",
           url: "https://www.openstreetmap.org/",

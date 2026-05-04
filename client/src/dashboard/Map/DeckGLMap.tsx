@@ -152,6 +152,7 @@ export type DecKGLMapProps = {
   basemapDesaturate: number;
   dataOpacity: number;
   initialState?: MapState;
+  basemapZoomOffset: number | undefined;
   geoJsonLayers?: GeoJsonLayerProps[];
   /**
    * Used to identify when auto-zoom needs to be triggered
@@ -346,6 +347,7 @@ export class DeckGLMap extends RTComp<DecKGLMapProps, DeckGLMapState, D> {
         dP?.dataOpacity ||
         dP?.basemapDesaturate ||
         dP?.basemapOpacity ||
+        dP?.basemapZoomOffset ||
         "editedFeaturesLayer" in dD)
     ) {
       this.deckW.render({
@@ -436,6 +438,7 @@ export class DeckGLMap extends RTComp<DecKGLMapProps, DeckGLMapState, D> {
       basemapDesaturate,
       basemapOpacity,
       enableCollisionFilter,
+      basemapZoomOffset,
     } = this.props;
     const { deckGlLibs } = this;
     if (!deckGlLibs) return { layers: [], dataLayers: [], tileLayers: [] };
@@ -512,6 +515,7 @@ export class DeckGLMap extends RTComp<DecKGLMapProps, DeckGLMapState, D> {
               desaturate: basemapDesaturate,
               tileURLs,
               tileSize,
+              zoomOffset: basemapZoomOffset ?? 0,
             },
             this.deckGlLibs,
           ),

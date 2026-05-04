@@ -1,35 +1,53 @@
 import { FlexCol } from "@components/Flex";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import React, { useCallback, useRef } from "react";
-import type { useSchemaGraphControls } from "../SchemaGraphControls";
+import React, { useCallback, useMemo, useRef } from "react";
+import {
+  CASCADE_LEGEND,
+  type useSchemaGraphControls,
+} from "../SchemaGraphControls";
 import { useCanvasPanZoom } from "./useCanvasPanZoom";
 import { useDrawSchemaShapes } from "./useDrawSchemaShapes";
 import { useSetPanShapes } from "./usePanShapes";
 import { useSchemaShapes, type SchemaShape } from "./useSchemaShapes";
+import { getEntries } from "@common/utils";
+import Chip from "@components/Chip";
 
 export type ColumnDisplayMode = "none" | "all" | "references";
-export type ColumnColorMode = "default" | "root" | "on-update" | "on-delete";
+export type ColumnColorMode =
+  | "schema"
+  | "default"
+  | "root"
+  | "on-update"
+  | "on-delete";
 export type ERDSchemaProps = Pick<
   ReturnType<typeof useSchemaGraphControls>,
-  "displayMode" | "columnDisplayMode" | "columnColorMode"
+  "displayMode" | "columnDisplayMode" | "columnColorMode" | "selectedTables"
 >;
 export const ERDSchema = ({
   displayMode,
   columnDisplayMode,
   columnColorMode,
+  selectedTables,
 }: ERDSchemaProps) => {
   const { dbs, theme } = usePrgl();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const divRef = useRef<HTMLDivElement>(null);
 
-  const { shapesRef, dbConfId, shapesVersion, canAutoPosition, dbConf } =
-    useSchemaShapes({
-      canvasRef,
-      displayMode,
-      columnDisplayMode,
-      columnColorMode,
-    });
+  const {
+    shapesRef,
+    schemaInfo,
+    dbConfId,
+    shapesVersion,
+    canAutoPosition,
+    dbConf,
+  } = useSchemaShapes({
+    canvasRef,
+    displayMode,
+    columnDisplayMode,
+    columnColorMode,
+    selectedTables,
+  });
 
   const { onRenderShapes, positionRef, scaleRef, setScaleAndPosition } =
     useDrawSchemaShapes({
@@ -99,6 +117,23 @@ export const ERDSchema = ({
     onRenderShapes,
     onPanEnded,
   });
+
+  const legendItems = useMemo(() => {
+    const { schemaColorMap } = schemaInfo || {};
+    if (columnColorMode === "schema" && schemaColorMap) {
+      return Array.from(schemaColorMap.entries()).map(([schema, color]) => ({
+        label: schema,
+        color,
+      }));
+    } else if (["on-delete", "on-update"].includes(columnColorMode)) {
+      return getEntries(CASCADE_LEGEND).map(([label, { color, title }]) => ({
+        label,
+        color,
+        title,
+      }));
+    }
+  }, [columnColorMode, schemaInfo]);
+
   return (
     <FlexCol
       key={theme}
@@ -112,6 +147,22 @@ export const ERDSchema = ({
         className="text-search-svg absolute w-full h-full"
         style={{ pointerEvents: "none" }}
       />
+      {legendItems && (
+        <FlexCol
+          style={{
+            position: "absolute",
+            right: "1em",
+            top: "1em",
+          }}
+        >
+          {" "}
+          {legendItems.map(({ color, label }) => (
+            <Chip key={label} style={{ color }}>
+              {label}
+            </Chip>
+          ))}
+        </FlexCol>
+      )}
     </FlexCol>
   );
 };

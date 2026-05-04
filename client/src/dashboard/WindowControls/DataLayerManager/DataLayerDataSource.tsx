@@ -2,8 +2,7 @@ import { sliceText } from "@common/utils";
 import Btn from "@components/Btn";
 import { FlexCol, FlexRow } from "@components/Flex";
 import { InfoRow } from "@components/InfoRow";
-import { Label } from "@components/Label";
-import PopupMenu from "@components/PopupMenu";
+import Popup from "@components/Popup/Popup";
 import {
   SearchList,
   type SvgIconName,
@@ -18,10 +17,13 @@ import type { LinkSyncItem } from "../../Dashboard/dashboardUtils";
 import { OSMLayerOptions } from "../OSMLayerOptions";
 import { SQLChartLayerEditor } from "../SQLChartLayerEditor";
 import type { ChartLinkOptions, DataLayerProps } from "./DataLayer";
-import Popup from "@components/Popup/Popup";
 
-export const DataLayerDataSource = (props: DataLayerProps) => {
-  const { myLinks, layer, w, getLinksAndWindows } = props;
+export const DataLayerDataSource = (
+  props: DataLayerProps & {
+    hideDesc?: boolean;
+  },
+) => {
+  const { myLinks, layer, w, getLinksAndWindows, hideDesc } = props;
   const [popupAnchor, setPopupAnchor] = useState<HTMLButtonElement>();
 
   const thisLink = myLinks.find((l) => l.id === layer.linkId);
@@ -86,9 +88,11 @@ export const DataLayerDataSource = (props: DataLayerProps) => {
           />
         </Popup>
       )}
-      <div className="text-ellipsis" title={layerDesc}>
-        {layerDesc}
-      </div>
+      {!hideDesc && (
+        <div className="text-ellipsis" title={layerDesc}>
+          {layerDesc}
+        </div>
+      )}
     </FlexRow>
   );
 };
@@ -145,6 +149,11 @@ const DataLayerDataSourceInfo = ({
 
   const { joinPath, tableName } = dataSource;
   const thisLinkOpts = thisLink.options;
+  const chartableColumns =
+    thisLinkOpts.type === "map" ? joinedChartCols?.otherGeoCols
+    : thisLinkOpts.type === "timechart" ? joinedChartCols?.otherDateCols
+    : undefined;
+
   return (
     <FlexCol style={{ maxHeight: "min(550px, 100vh)" }} className="gap-p5">
       <InfoRow color="info" className="p-p5">
@@ -177,26 +186,27 @@ const DataLayerDataSourceInfo = ({
             })}
         </FlexCol>
       </InfoRow>
-      {thisLinkOpts.type === "map" && (
-        <>
-          <div
-            className="bt b-color my-p5"
-            style={{ width: "100%", height: "1px" }}
-          />
-          <SearchList
-            label={
-              <>
-                Add another joined layer to <strong>{tableName}</strong>
-              </>
-            }
-            items={
-              joinedChartCols?.otherGeoCols.map((geoCol) => {
+      {chartableColumns &&
+        (thisLinkOpts.type === "map" || thisLinkOpts.type === "timechart") &&
+        joinedChartCols && (
+          <>
+            <div
+              className="bt b-color my-p5"
+              style={{ width: "100%", height: "1px" }}
+            />
+            <SearchList
+              label={
+                <>
+                  Add another joined layer to <strong>{tableName}</strong>
+                </>
+              }
+              items={chartableColumns.map((column) => {
                 const table = tables.find(
-                  (t) => t.name === geoCol.path.at(-1)?.table,
+                  (t) => t.name === column.path.at(-1)?.table,
                 );
                 return {
-                  key: geoCol.key,
-                  label: geoCol.label + ` (${geoCol.name})`,
+                  key: column.key,
+                  label: column.label + ` (${column.name})`,
                   iconLeft: {
                     type: "SvgIcon",
                     pathName:
@@ -206,9 +216,9 @@ const DataLayerDataSourceInfo = ({
                     const { links, windows } = getLinksAndWindows();
                     await addChart({
                       newChart: {
-                        type: "map",
-                        columns: [geoCol],
-                        joinPath: geoCol.path,
+                        type: thisLinkOpts.type,
+                        columns: [column],
+                        joinPath: column.path,
                         sql: undefined,
                         withStatement: "",
                       },
@@ -224,11 +234,10 @@ const DataLayerDataSourceInfo = ({
                     onClose();
                   },
                 };
-              }) ?? []
-            }
-          />
-        </>
-      )}
+              })}
+            />
+          </>
+        )}
     </FlexCol>
   );
 };

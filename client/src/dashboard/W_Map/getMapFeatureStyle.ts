@@ -132,6 +132,7 @@ export const getMapFeatureStyle = (
       willAggregate ? undefined
       : !mapIcons ? undefined
       : (f) => {
+          const size = 28;
           const icon =
             mapIcons.type === "fixed" ?
               mapIcons.iconPath
@@ -144,14 +145,14 @@ export const getMapFeatureStyle = (
             parseFeatureColor(f, link, layerQuery) || layerQuery.lineColor;
           const svg = rawSvg.replace(
             "<svg ",
-            `<svg width="24" height="24" style="color:${rgbaToString(lineColor)};" `,
+            `<svg width="${size}" height="${size}" style="color:${rgbaToString(lineColor)};" `,
           );
           return {
             id: `${iconPath}-${lineColor}`,
             // Maybe load directly to avoid the flickering? `${location.origin}${iconPath}`, //
             url: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`,
-            width: 24,
-            height: 24,
+            width: size,
+            height: size,
           };
         },
     display: willAggregate ? undefined : mapIcons?.display,

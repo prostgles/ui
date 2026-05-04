@@ -20,6 +20,7 @@ export type ShapeBase<T = void> = {
   id: string | number;
   elevation?: number;
   opacity?: number;
+  filter?: string;
 } & (T extends void ? { data?: T } : { data: T });
 
 export type Circle<T = any> = ShapeBase<T> &
@@ -63,6 +64,9 @@ export type MultiLine<T = any> = ShapeBase<T> &
     withGradient?: boolean;
     variant?: "smooth";
   };
+
+export type LinkCardinality = "one-to-one" | "one-to-many";
+
 export type LinkLine<T = any> = ShapeBase<T> &
   StrokeProps & {
     type: "linkline";
@@ -70,6 +74,7 @@ export type LinkLine<T = any> = ShapeBase<T> &
     targetId: string | number;
     sourceYOffset: number;
     targetYOffset: number;
+    cardinality: LinkCardinality;
     variant?: "smooth";
   };
 export type Image<T = any> = ShapeBase<T> & {

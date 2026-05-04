@@ -60,7 +60,7 @@ export default defineConfig(
         "warn",
         {
           additionalHooks:
-            "(usePromise|useEffectAsync|useProstglesClient|useAsyncEffectQueue|useEffectDeep)",
+            "(usePromise|useEffectAsync|useProstglesClient|useAsyncEffectQueue|useEffectDeep|useDebouncedCallback|useThrottledCallback)",
         },
       ],
       "no-cond-assign": "error",

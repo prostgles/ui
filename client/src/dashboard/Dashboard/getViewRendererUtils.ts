@@ -17,78 +17,8 @@ type Args = ViewRendererProps & {
 };
 export const getViewRendererUtils = function (
   this: ViewRenderer,
-  { prgl, workspace, windows, links, tables }: Args,
+  { windows, links, tables }: Args,
 ) {
-  // const addChart =
-  //   (!prgl.dbs.windows.insert as boolean) ?
-  //     undefined
-  //   : async (args: NewChartOpts, parentW: WindowData) => {
-  //       const { name, linkOpts } = args;
-  //       const type = args.linkOpts.type;
-  //       let extra:
-  //         | Pick<WindowData<"map">, "parent_window_id" | "options">
-  //         | Pick<WindowData<"timechart">, "parent_window_id" | "options"> = {
-  //         parent_window_id: null,
-  //       };
-
-  //       if (type === "map") {
-  //         extra = {
-  //           parent_window_id: parentW.id,
-  //           options: {
-  //             dataOpacity: 0.5,
-  //             basemapOpacity: 0.25,
-  //             basemapDesaturate: 0,
-  //             tileAttribution: {
-  //               title: "© OpenStreetMap",
-  //               url: "https://www.openstreetmap.org/",
-  //             },
-  //             aggregationMode: {
-  //               type: "limit",
-  //               limit: 2000,
-  //               wait: 2,
-  //             },
-  //             refresh: {
-  //               type: "Realtime",
-  //               throttleSeconds: 1,
-  //               intervalSeconds: 1,
-  //             },
-  //             showCardOnClick: true,
-  //             showAddShapeBtn: true,
-  //           },
-  //         };
-  //       } else if (type === "timechart") {
-  //         extra = {
-  //           parent_window_id: parentW.id,
-  //           options: {
-  //             showBinLabels: "off",
-  //             binValueLabelMaxDecimals: 3,
-  //             missingBins: "ignore",
-  //             refresh: {
-  //               type: "Realtime",
-  //               throttleSeconds: 1,
-  //               intervalSeconds: 1,
-  //             },
-  //           },
-  //         };
-  //       } else if (type === "barchart") {
-  //         extra = {
-  //           parent_window_id: parentW.id,
-  //         };
-  //       }
-  //       // const existingCharts = await windows.filter(cw => cw.parent_window_id === parentW.id);
-  //       // if(existingCharts.length){
-  //       //   // alert("Close existing chart before adding new one");
-  //       // } else {
-
-  //       //   const w = await addWindow({ name, type, ...extra }) as WindowData;
-  //       // }
-  //       const w =
-  //         windows.find(
-  //           (cw) => cw.type === type && cw.parent_window_id === parentW.id,
-  //         ) ?? ((await addWindow({ name, type, ...extra })) as WindowData);
-  //       await addLink({ w1_id: parentW.id, w2_id: w.id, linkOpts });
-  //     };
-
   type ClickRowOpts =
     | { type: "table-row" }
     | { type: "timechart"; value: ActiveRow["timeChart"] }
@@ -174,6 +104,5 @@ export const getViewRendererUtils = function (
 
   return {
     onClickRow,
-    // onLinkTable,
   };
 };

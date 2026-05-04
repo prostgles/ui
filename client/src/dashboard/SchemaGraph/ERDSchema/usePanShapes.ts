@@ -149,7 +149,7 @@ const pointInRect = (
   );
 };
 
-const moveToEnd = (array: any[], index: number) => {
+const moveToEnd = (array: unknown[], index: number) => {
   if (index < 0 || index >= array.length) return array;
 
   const element = array.splice(index, 1)[0];

@@ -10,14 +10,15 @@ import { clickTableRow } from "./table.svgif";
 
 export const mapSvgif: OnBeforeScreenshot = async (
   page,
-  { toggleMenuPinned },
+  { toggleMenuPinned, openMenuIfClosed },
   { addScene, addSceneAnimation },
 ) => {
   await openConnection(page, "food_delivery");
   await deleteAllWorkspaces(page);
   await closeWorkspaceWindows(page);
   await openTable(page, "restaurants");
-
+  // await openMenuIfClosed(true);
+  await toggleMenuPinned(false);
   await addSceneAnimation(getCommandElemSelector("AddChartMenu.Map"));
   await addSceneAnimation(
     getCommandElemSelector("AddChartMenu.Map") +
