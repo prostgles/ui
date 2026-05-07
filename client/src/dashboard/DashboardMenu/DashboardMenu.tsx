@@ -1,5 +1,6 @@
 import Popup from "@components/Popup/Popup";
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
+import { includes } from "prostgles-types";
 import React, { useCallback, useMemo } from "react";
 import type { ReactiveState } from "../../appUtils";
 import { useReactiveState } from "../../appUtils";
@@ -7,16 +8,14 @@ import type {
   CommonWindowProps,
   DashboardProps,
   DashboardState,
-  _Dashboard,
 } from "../Dashboard/Dashboard";
 import type { WindowData, Workspace } from "../Dashboard/dashboardUtils";
+import { useAddViewToWorkspace } from "../Dashboard/useAddViewToWorkspace";
 import type { SEARCH_TYPES } from "../SearchAll/SearchAll";
 import { SearchAll } from "../SearchAll/SearchAll";
 import { DashboardMenuContent } from "./DashboardMenuContent";
 import { DashboardMenuHeader } from "./DashboardMenuHeader";
 import { DashboardMenuHotkeys } from "./DashboardMenuHotkeys";
-import { useAddViewToWorkspace } from "../Dashboard/useAddViewToWorkspace";
-import { includes } from "prostgles-types";
 
 export type DashboardMenuProps = Pick<DashboardProps, "prgl"> & {
   suggestions: DashboardState["suggestions"];
@@ -173,13 +172,6 @@ export const DashboardMenu = ({
             overflow: "hidden",
             padding: 0,
           }}
-          autoFocusFirst={
-            isReadonlyWorkspace ? undefined : (
-              {
-                selector: `.search-list-tables input`,
-              }
-            )
-          }
         >
           <DashboardMenuContent
             {...props}

@@ -177,7 +177,8 @@ export const SearchListContent = <M extends boolean = false>(
           (!hasSearch && !multiSelect ? " hidden" : "")
         }
         style={{
-          zIndex: isSearch ? ClickCatchOverlayZIndex + 1 : undefined,
+          zIndex:
+            isSearch && listNode ? ClickCatchOverlayZIndex + 1 : undefined,
           ...searchStyle,
         }}
       >

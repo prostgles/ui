@@ -1,28 +1,20 @@
+import type { DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
 import { FlexCol } from "@components/Flex";
-import { Icon } from "@components/Icon/Icon";
 import { InfoRow } from "@components/InfoRow";
+import Loading from "@components/Loader/Loading";
 import {
   SearchList,
   type SvgIconName,
 } from "@components/SearchList/SearchList";
-import { SvgIcon } from "@components/SvgIcon";
-import {
-  mdiFile,
-  mdiFilter,
-  mdiRefresh,
-  mdiTableEdit,
-  mdiTableEye,
-} from "@mdi/js";
+import { mdiFilter, mdiRefresh } from "@mdi/js";
 import { SchemaFilter } from "@pages/NewConnection/SchemaFilter";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import React from "react";
 import { t } from "src/i18n/i18nUtils";
+import { useAddViewToWorkspace } from "../Dashboard/useAddViewToWorkspace";
 import { ensureFadeDoesNotShowForOneItem } from "./DashboardMenuContent";
 import { useTableSizeInfo } from "./useTableSizeInfo";
-import type { DBSSchema } from "@common/publishUtils";
-import { useAddViewToWorkspace } from "../Dashboard/useAddViewToWorkspace";
-import Loading from "@components/Loader/Loading";
 
 export const TableList = ({
   workspace,
@@ -86,6 +78,7 @@ export const TableList = ({
       }
       inputProps={{
         "data-command": "dashboard.menu.tablesSearchListInput",
+        autoFocus: true,
       }}
       placeholder={`${tables.length} tables/views`}
       noResultsContent={

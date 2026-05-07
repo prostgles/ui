@@ -79,6 +79,11 @@ const getTimeout = (base: number) => ({
   timeout: base * (process.env.CI ? 3 : 1),
 });
 const TWENTY_SECONDS_OR_MORE = getTimeout(20_000);
+const viewPortSize = { width: 1080, height: 1080 };
+test.use({
+  /** Increase size to ensure agentic workflow fits all logs */
+  viewport: viewPortSize,
+});
 
 test.describe.configure({ mode: "serial" });
 test.describe("Main test", () => {
