@@ -47,8 +47,23 @@ export const onMount: ProstglesOnMount = async ({ dbo: db, sql }) => {
       VACUUM;
     `);
 
+  let shownProcInfo = false;
   const mockLocations = async () => {
     try {
+      if (!shownProcInfo) {
+        shownProcInfo = true;
+        console.log(
+          await sql(
+            `
+        SELECT pg_get_function_arguments(p.oid), postgis_full_version()
+        FROM pg_proc p
+        WHERE proname = 'st_lineinterpolatepoint';
+        `,
+            {},
+            { returnType: "rows" },
+          ),
+        );
+      }
       await sql(`CALL mock_locations(); /* from fork */`);
     } catch (error) {
       console.error("Error calling mock_locations", error);

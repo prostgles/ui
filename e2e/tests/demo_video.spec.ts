@@ -29,6 +29,15 @@ const videoTestDuration = 12 * 60e3;
 test.describe("Demo video", () => {
   test.setTimeout(videoTestDuration);
 
+  test.beforeEach(async ({ page }) => {
+    page.on("console", (msg) =>
+      console.log("[browser:" + msg.type() + "]", msg.text()),
+    );
+    page.on("pageerror", (err) =>
+      console.error("[pageerror]", err?.stack || err),
+    );
+  });
+
   test("Video demo", async ({ page: p }) => {
     const page = p as PageWIds;
     const CI = !!process.env.CI;
@@ -97,8 +106,6 @@ test.describe("Demo video", () => {
           try {
             await (node as any).start();
           } catch (e) {
-            console.error(e, JSON.stringify(e));
-            await new Promise((res) => setTimeout(res, 10e3));
             const errorObj = Object.getOwnPropertyNames(
               typeof e !== "object" ? { error: e } : e,
             ).reduce(
@@ -108,6 +115,9 @@ test.describe("Demo video", () => {
               }),
               {},
             );
+            console.error(errorObj);
+            console.error(e, JSON.stringify(e));
+            await new Promise((res) => setTimeout(res, 10e3));
             throw JSON.stringify(errorObj);
           }
         });

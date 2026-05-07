@@ -1409,7 +1409,7 @@ BEGIN
   WHILE now() < end_time AND progress < 1 LOOP
 
     UPDATE users u
-    SET rider_location = st_lineinterpolatepoint(r.geog, progress - (random() * 0.1), true)
+    SET rider_location = st_lineinterpolatepoint(r.geog::geometry, progress - (random() * 0.1), true)::geography
     FROM routes r
     WHERE u.id = r.deliverer_id;
     

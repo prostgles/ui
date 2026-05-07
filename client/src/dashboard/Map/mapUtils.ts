@@ -18,6 +18,8 @@ export const DEFAULT_TILE_URLS = [
   "https://b.tile.openstreetmap.org/{z}/{x}/{y}.png",
   "https://c.tile.openstreetmap.org/{z}/{x}/{y}.png",
 
+  // "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+
   // https://vector.openstreetmap.org/shortbread_v1/{z}/{x}/{y}.mvt
 ];
 
