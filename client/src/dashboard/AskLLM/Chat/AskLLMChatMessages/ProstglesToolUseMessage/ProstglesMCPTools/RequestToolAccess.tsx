@@ -43,21 +43,22 @@ export const RequestToolAccess = ({
     ],
   );
 
-  const compactDatabaseAccess = input.data?.databaseAccess;
-  const dbAccess = useMemo(
-    () =>
-      typeof compactDatabaseAccess === "string" ?
-        {
-          mode: compactDatabaseAccess,
-        }
-      : compactDatabaseAccess ?
-        ({
-          mode: "custom",
-          tablePermissions: compactDatabaseAccess,
-        } as const)
-      : undefined,
-    [compactDatabaseAccess],
-  );
+  // const compactDatabaseAccess = input.data?.databaseAccess;
+  // const dbAccess = useMemo(
+  //   () =>
+  //     typeof compactDatabaseAccess === "string" ?
+  //       {
+  //         mode: compactDatabaseAccess,
+  //       }
+  //     : compactDatabaseAccess ?
+  //       ({
+  //         mode: "custom",
+  //         tablePermissions: compactDatabaseAccess,
+  //       } as const)
+  //     : undefined,
+  //   [compactDatabaseAccess],
+  // );
+  const dbAccess = input.data?.databaseAccess;
 
   const toolResultData = result?.data;
 

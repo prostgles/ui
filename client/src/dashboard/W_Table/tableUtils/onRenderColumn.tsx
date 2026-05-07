@@ -1,10 +1,7 @@
-import type {
-  AnyObject,
-  DBSchemaTable,
-  ValidatedColumnInfo,
-} from "prostgles-types";
-import React from "react";
+import { ROUTES } from "@common/utils";
 import { MediaViewer } from "@components/MediaViewer/MediaViewer";
+import type { DBSchemaTable, ValidatedColumnInfo } from "prostgles-types";
+import React from "react";
 import type { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
 import { RenderValue } from "../../SmartForm/SmartFormField/RenderValue";
 import type { NestedTimeChartMeta } from "../ColumnMenu/ColumnDisplayFormat/NestedColumnRender";
@@ -13,13 +10,12 @@ import { DISPLAY_FORMATS } from "../ColumnMenu/ColumnDisplayFormat/columnFormatU
 import type { ColumnConfigWInfo, MinMaxVals } from "../W_Table";
 import { StyledTableColumn } from "./StyledTableColumn";
 import type { ProstglesTableColumn } from "./getTableCols";
-import { ROUTES } from "@common/utils";
 
 export type RenderedColumn = ColumnConfigWInfo &
   Pick<ValidatedColumnInfo, "tsDataType" | "udt_name" | "name"> &
   Pick<ProstglesTableColumn, "format">; // | "noSanitize" | "contentConfig" | "allowedHTMLTags">;
 export type OnRenderColumnProps = {
-  c: RenderedColumn;
+  column: RenderedColumn;
   getValues: () => any[];
   tables: DBSchemaTablesWJoins;
   table: DBSchemaTable | undefined;
@@ -29,7 +25,7 @@ export type OnRenderColumnProps = {
 };
 export const onRenderColumn = (args: OnRenderColumnProps) => {
   const {
-    c,
+    column,
     table,
     tables,
     maxCellChars = 500,
@@ -38,12 +34,12 @@ export const onRenderColumn = (args: OnRenderColumnProps) => {
     maximumFractionDigits,
   } = args;
   const formatRender = DISPLAY_FORMATS.find(
-    (df) =>
-      df.type !== "NONE" &&
-      ((table && df.match?.(table, c)) ?? df.type === c.format?.type),
+    ({ type, match }) =>
+      type !== "NONE" &&
+      ((table && match?.(table, column)) ?? type === column.format?.type),
   );
   const onRender: ProstglesTableColumn["onRender"] =
-    c.nested ?
+    column.nested ?
       ({ value, row }) => {
         // const nestedTimeChartDates: number[] | undefined = c.nested?.chart && value && value.flatMap(nr => isObject(nr)? +new Date(nr.date) : -1)
         // const allDatesAreValid = nestedTimeChartDates && nestedTimeChartDates.every(d => Number.isFinite(d));
@@ -53,7 +49,7 @@ export const onRenderColumn = (args: OnRenderColumnProps) => {
         //     new Date(Math.max(...nestedTimeChartDates)),
         //   ]
         // };
-        const chartLimits = barchartVals?.[c.name];
+        const chartLimits = barchartVals?.[column.name];
         const nestedTimeChartMeta: NestedTimeChartMeta | undefined =
           chartLimits ?
             {
@@ -68,48 +64,54 @@ export const onRenderColumn = (args: OnRenderColumnProps) => {
           <NestedColumnRender
             value={value}
             row={row}
-            c={c}
+            c={column}
             tables={tables}
             nestedTimeChartMeta={nestedTimeChartMeta}
           />
         );
       }
-    : c.style && c.style.type !== "None" ?
+    : column.style && column.style.type !== "None" ?
       (rowInfo) => (
         <StyledTableColumn
           {...rowInfo}
-          c={c}
+          column={column}
           maxCellChars={maxCellChars}
           barchartVals={barchartVals}
         />
       )
     : formatRender ?
       ({ row }) => {
-        let value = row[c.name];
+        let value = row[column.name];
 
         const connectionId = location.pathname
           .split("/")
           .find((p, i, arr) => arr[i - 1] === "connections");
-        if (c.info?.file) {
-          if (!value && c.format?.type === "Media") return null;
-          value = `${ROUTES.STORAGE}/${connectionId}/${row[c.name]}`;
+        if (column.info?.file) {
+          if (!value && column.format?.type === "Media") return null;
+          value = `${ROUTES.STORAGE}/${connectionId}/${row[column.name]}`;
         }
-        return formatRender.render(value, row, c, c.format!, maxCellChars);
+        return formatRender.render(
+          value,
+          row,
+          column,
+          column.format!,
+          maxCellChars,
+        );
       }
-    : table?.isFileTable && c.name === "url" ?
+    : table?.isFileTable && column.name === "url" ?
       ({ value, row }) => {
         return <MediaViewer key={value} url={value} />;
       }
     : /** Not pretty enough */
-    c.udt_name === "interval" ?
+    column.udt_name === "interval" ?
       ({ row }) =>
-        Object.keys(row[c.name] ?? {})
-          .map((k) => `${row[c.name][k]} ${k}`)
+        Object.keys(row[column.name] ?? {})
+          .map((k) => `${row[column.name][k]} ${k}`)
           .join(", ")
     : /** c.tsDataType and c.udt_name SHOULD NOT BE MISSING AT THIS POINT! */
       ({ value }) => (
         <RenderValue
-          column={c.computedConfig ?? c}
+          column={column.computedConfig ?? column}
           value={value}
           showTitle={true}
           maxLength={maxCellChars}

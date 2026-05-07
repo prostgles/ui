@@ -1782,7 +1782,7 @@ test.describe("Main test", () => {
     );
 
     const runWorkflowAndExpectSuccess = async (
-      shownText: string | string[] = ["ai_assistant_dashboards"],
+      shownText: string | string[] = ["<!DOCTYPE html>"],
     ) => {
       await page.getByTestId("AgenticWorkflow.start").click(getTimeout(30e3));
 

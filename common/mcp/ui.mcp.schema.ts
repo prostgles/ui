@@ -1,5 +1,6 @@
 import { getMCPFullToolName } from "../mcpUtils";
 import { fixIndent } from "../utils";
+import { databaseAccessSchema } from "./databaseAccessSchema";
 import { runCodeInSandboxSchema } from "./runCodeInSandboxSchema";
 import {
   agentDefinitionsSchema,
@@ -248,9 +249,10 @@ export const uiMcpSchema = {
     description: fixIndent(`
       Get MCP tool descriptions, input and output schemas in typescript format.
       Use mcpServerTools from ${"get_tool_list"} to specify which mcp servers/tools to return.
-      infoLevel controls how much information to return about the tools:
+      "infoLevel" (optional) controls how much information to return about the tools:
       - full: returns detailed descriptions and schemas for the tools to allow for better understanding of how to use them.
       - basic (default): returns only the tool descriptions.
+      "mcpServerTools" IS REQUIRED to specify which tools to get information about. Example: { web: { fetch: 1 } }
     `),
     schema: {
       type: {
@@ -306,15 +308,15 @@ export const uiMcpSchema = {
           optional: true,
           ...mcpServerToolsAllowed,
         },
-        // databaseAccess: databaseAccessSchema,
-        databaseAccess: {
-          optional: true,
-          oneOf: [
-            { enum: ["execute_readonly_sql"] },
-            { enum: ["execute_sql"] },
-            tablePermissionsSchema,
-          ],
-        },
+        databaseAccess: databaseAccessSchema,
+        // databaseAccess: {
+        //   optional: true,
+        //   oneOf: [
+        //     { enum: ["execute_readonly_sql"] },
+        //     { enum: ["execute_sql"] },
+        //     tablePermissionsSchema,
+        //   ],
+        // },
       },
     },
     outputSchema: {

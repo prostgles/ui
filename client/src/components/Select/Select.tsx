@@ -56,7 +56,15 @@ type E =
   | React.ChangeEvent
   | KeyboardEvent;
 
-// type P<O extends FullOption, Multi extends boolean = false> = {
+type ApplyOptionality<Optional extends boolean, T> =
+  Optional extends true ? T | undefined : T;
+
+export type SelectValueFromProps<
+  O extends OptionKey,
+  Multi extends boolean,
+  Optional extends boolean,
+> = ApplyOptionality<Optional, Multi extends true ? O[] : O>;
+
 export type SelectProps<
   O extends OptionKey,
   Multi extends boolean = false,
@@ -65,9 +73,7 @@ export type SelectProps<
   onChange:
     | undefined
     | ((
-        val: Multi extends true ? O[]
-        : O | Optional extends true ? undefined
-        : O,
+        val: SelectValueFromProps<O, Multi, Optional>,
         e: E,
         option: FullOption<O> | undefined,
       ) => void);
@@ -166,7 +172,7 @@ export class Select<
       showTop = 3,
       sliceMax = 150,
       disabledInfo,
-      optional = false,
+      optional,
       showSelectedSublabel = false,
       placeholder = "Search...",
     } = this.props;
@@ -238,10 +244,7 @@ export class Select<
       }
     })();
 
-    type OptionType =
-      Multi extends true ? O[]
-      : O | Optional extends true ? undefined
-      : O;
+    type OptionType = SelectValueFromProps<O, Multi, Optional>;
 
     const selectStyle: React.CSSProperties =
       !label ?

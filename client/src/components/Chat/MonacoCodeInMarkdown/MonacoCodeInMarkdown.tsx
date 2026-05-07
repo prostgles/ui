@@ -141,7 +141,7 @@ export const MonacoCodeInMarkdown = (props: MonacoCodeInMarkdownProps) => {
         minHeight={100}
       />
       {sqlResult?.state === "ok-command-result" ?
-        <SuccessMessage message={sqlResult.commandResult} />
+        <SuccessMessage variant="small" message={sqlResult.commandResult} />
       : sqlResult?.state === "error" ?
         <ErrorComponent error={sqlResult.error} />
       : sqlResult?.state === "ok" ?

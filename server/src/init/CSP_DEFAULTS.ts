@@ -3,7 +3,7 @@ export const CSP_DEFAULTS = {
   defaultSrc: [SELF],
   imgSrc: [
     SELF,
-    "data:",
+    "data:", // required for AskLLM Spinner
     "blob:",
     "https://vector.openstreetmap.org",
     "https://*.tile.openstreetmap.org",

@@ -83,9 +83,10 @@ export const setHttpAppSecurity = (
     connectSrc: addDevDefaultsToStateConnection(csp?.connectSrc, "wss"),
   };
 
-  const cspEnabled =
-    !getElectronConfig()?.isElectron &&
-    Boolean(csp || csp_add_defaults_enabled || cors_csp_devmode_enabled);
+  // !getElectronConfig()?.isElectron &&
+  const cspEnabled = Boolean(
+    csp || csp_add_defaults_enabled || cors_csp_devmode_enabled,
+  );
 
   const cspHelmetMiddlewareHandlerName = "cspHelmetMiddlewareHandler";
   setNonceHandler(app, cspEnabled);

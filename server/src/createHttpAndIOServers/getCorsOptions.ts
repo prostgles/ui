@@ -20,11 +20,16 @@ export const getCorsOptions = (
         corsSettings?.credentialsAllowed
       ),
     origin: (requestedOrigin, cb) => {
-      if (!requestedOrigin || getElectronConfig()?.isElectron) {
+      if (!requestedOrigin) {
+        //|| getElectronConfig()?.isElectron
         return cb(null, true);
       }
 
       const allowedOrigins = [...(corsSettings?.allowedOrigins ?? [])];
+      const eConfig = getElectronConfig();
+      if (eConfig?.isElectron) {
+        allowedOrigins.push(`http://localhost:${eConfig.port ?? port}`);
+      }
       if (cors_csp_devmode_enabled) {
         allowedOrigins.push(`http://localhost:${stateAppPort}`);
         if (!is_state_db) {

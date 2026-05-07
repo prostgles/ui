@@ -110,7 +110,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
             headerClassname: isNumeric ? " jc-end  " : " ",
             className: isNumeric ? " ta-right " : " ",
             onRender: onRenderColumn({
-              c,
+              column: c,
               table,
               tables,
               barchartVals: undefined,

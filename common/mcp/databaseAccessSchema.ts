@@ -1,3 +1,4 @@
+import { SQL_COMMANDS_ARRAY } from "./SQL_COMMANDS";
 import { tablePermissionsSchema } from "./tablePermissionsSchema";
 
 export const databaseAccessSchema = {
@@ -7,7 +8,22 @@ export const databaseAccessSchema = {
   oneOfType: [
     {
       mode: {
-        enum: ["execute_readonly_sql", "execute_sql"],
+        enum: ["execute_readonly_sql"],
+      },
+    },
+    {
+      mode: {
+        enum: ["execute_sql"],
+      },
+      allowedCommands: {
+        optional: true,
+        record: {
+          partial: true,
+          keysEnum: SQL_COMMANDS_ARRAY,
+          values: {
+            enum: [1],
+          },
+        },
       },
     },
     {

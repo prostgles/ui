@@ -1,5 +1,7 @@
 import type { databaseAccessSchema } from "@common/mcp/databaseAccessSchema";
+import { SQL_COMMANDS_ARRAY } from "@common/mcp/SQL_COMMANDS";
 import type { DBSSchema } from "@common/publishUtils";
+import { fromEntries } from "@common/utils";
 import Btn from "@components/Btn";
 import { FlexRow } from "@components/Flex";
 import { HeaderSection } from "@components/HeaderSection";
@@ -11,12 +13,15 @@ import {
   mdiTable,
   mdiTableSearch,
 } from "@mdi/js";
-import { type JSONB } from "prostgles-types";
+import { getKeys, type JSONB } from "prostgles-types";
 import React, { useState } from "react";
 import { DatabaseAccessEditorCustomTables } from "./DatabaseAccessEditorCustomTables";
 
-export type DatabaseAccessPermission = JSONB.GetType<
-  typeof databaseAccessSchema
+// export type DatabaseAccessPermission = JSONB.GetType<
+//   typeof databaseAccessSchema
+// >;
+export type DatabaseAccessPermission = NonNullable<
+  DBSSchema["agentic_workflows"]["definition_data"]["databaseAccessDefinitions"]
 >;
 
 export type DatabaseAccessEditorProps = {
@@ -54,37 +59,59 @@ export const DatabaseAccessEditor = ({
       {(showSelect || contentRight) && (
         <FlexRow>
           {showSelect && (
-            <Select
-              value={value?.mode ?? "none"}
-              data-command="DatabaseAccessEditor.Mode"
-              btnProps={{
-                color:
-                  !value ? undefined
-                  : value.mode === "execute_sql" ? "danger"
-                  : "action",
-              }}
-              label={"Database access"}
-              fullOptions={MODES}
-              onChange={
-                !onChange ? undefined : (
-                  (dataAccess) => {
-                    void onChange(
-                      dataAccess === "none" ? undefined
-                      : dataAccess === "custom" ?
-                        {
-                          mode: dataAccess,
-                          tablePermissions: {},
-                        }
-                      : {
-                          mode: dataAccess,
-                        },
-                    );
-                  }
-                )
-              }
-            />
+            <>
+              <Select
+                value={value?.mode ?? "none"}
+                data-command="DatabaseAccessEditor.Mode"
+                btnProps={{
+                  color:
+                    !value ? undefined
+                    : value.mode === "execute_sql" ? "danger"
+                    : "action",
+                }}
+                label={"Database access"}
+                fullOptions={MODES}
+                onChange={
+                  !onChange ? undefined : (
+                    (dataAccess) => {
+                      void onChange(
+                        dataAccess === "none" ? undefined
+                        : dataAccess === "custom" ?
+                          {
+                            mode: dataAccess,
+                            tablePermissions: {},
+                          }
+                        : {
+                            mode: dataAccess,
+                          },
+                      );
+                    }
+                  )
+                }
+              />
+              {value?.mode === "execute_sql" && (
+                <Select
+                  value={getKeys(value.allowedCommands ?? {})}
+                  label={"Allowed commands"}
+                  emptyLabel="All"
+                  fullOptions={SQL_COMMANDS_ARRAY.map((key) => ({ key }))}
+                  multiSelect={true}
+                  optional={true}
+                  onChange={(allowedCommands) => {
+                    if (!onChange) return;
+                    void onChange({
+                      mode: "execute_sql",
+                      allowedCommands:
+                        allowedCommands &&
+                        fromEntries(
+                          allowedCommands.map((command) => [command, 1]),
+                        ),
+                    });
+                  }}
+                />
+              )}
+            </>
           )}
-
           {contentRight}
         </FlexRow>
       )}

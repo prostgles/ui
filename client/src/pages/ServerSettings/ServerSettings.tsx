@@ -59,7 +59,6 @@ export const ServerSettings = ({ serverState }: ServerSettingsProps) => {
             items={
               {
                 security: {
-                  hide: serverState.isElectron,
                   label: t.ServerSettings["Security"],
                   leftIconPath: mdiSecurity,
                   content: (

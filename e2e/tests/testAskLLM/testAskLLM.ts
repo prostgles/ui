@@ -20,7 +20,7 @@ import { sampleReceiptData } from "./createReceipts";
 import { fromEntries } from "common/utils";
 import { hygieneRatingsApiScenario } from "./scenarios/hygieneRatingsApi.scenario";
 
-type RequestToolAccess = JSONB.GetType<
+export type RequestToolAccess = JSONB.GetType<
   (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["request_tool_access"]["schema"]
 >;
 
@@ -33,10 +33,13 @@ const requestToolAccessArgs = {
   reason:
     "I need to fetch data from an external API to provide you with accurate information.",
   databaseAccess: {
-    receipts: {
-      select: true,
-      insert: true,
-      update: true,
+    mode: "custom",
+    tablePermissions: {
+      receipts: {
+        select: true,
+        insert: true,
+        update: true,
+      },
     },
   },
   mcpServerTools: {
@@ -383,13 +386,16 @@ const toolResponses: Record<string, ToolUse> = {
               web: { websearch: 1 },
             },
             databaseAccess: {
-              receipts: {
-                select: true,
+              mode: "custom",
+              tablePermissions: {
+                receipts: {
+                  select: true,
+                },
               },
             },
             reason:
               "I need to fetch data from an external API to provide you with accurate information.",
-          }),
+          } satisfies RequestToolAccess),
         },
       },
     ],

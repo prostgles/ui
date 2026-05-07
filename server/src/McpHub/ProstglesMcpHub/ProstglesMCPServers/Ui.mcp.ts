@@ -173,8 +173,13 @@ const handler = {
               `mcpServerTools is empty. Either exclude it or provide valid tool server names.`,
             );
           }
-          if (databaseAccess && typeof databaseAccess !== "string") {
-            const tablePermissions = databaseAccess;
+
+          const tablePermissions =
+            databaseAccess?.mode === "custom" ?
+              databaseAccess.tablePermissions
+            : undefined;
+
+          if (tablePermissions) {
             if (isEmpty(tablePermissions)) {
               throw new Error(
                 `Custom database access must have at least one table permission defined`,

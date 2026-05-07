@@ -42,6 +42,7 @@ export default defineConfig(
     plugins: {
       "@typescript-eslint": tseslint.plugin,
       react: eslintPluginReact,
+      //@ts-ignore
       "react-hooks": eslintPluginReactHooks,
     },
     settings: {

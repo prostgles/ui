@@ -139,12 +139,12 @@ export const AskLLMChatActionBarDatabaseAccess = (
               },
               {
                 key: "Full",
-                subLabel: "Send schema for all dashboard tables.",
+                subLabel: "Schema for all user tables applied to the prompt.",
                 iconPath: mdiDatabaseEye,
               },
               {
                 key: "Custom",
-                subLabel: "Send schema only for selected tables.",
+                subLabel: "Schema for selected tables applied to the prompt.",
                 iconPath: mdiTableSearch,
               },
               {
@@ -158,7 +158,7 @@ export const AskLLMChatActionBarDatabaseAccess = (
                 key: "OnRequest",
                 label: "On request",
                 subLabel:
-                  "Only send schema when the LLM explicitly asks for it in the prompt.",
+                  "Only send schema for tables requested by the LLM. Existing table names provided in the prompt.",
                 iconPath: mdiDatabaseCheck,
               },
             ] as const

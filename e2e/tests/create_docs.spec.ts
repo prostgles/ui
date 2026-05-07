@@ -98,9 +98,9 @@ test.describe("Create docs and screenshots", () => {
       await page.waitForTimeout(100);
     }
 
-    /** Ensure all scripts exist in the readme to ensure we don't show non-tested scripts */
-    const uiInstallationFile = fs.readFileSync(
-      path.join(DOCS_DIR, "02_Installation.md"),
+    /** Test all scripts from readme */
+    const uiInstallationDocs = fs.readFileSync(
+      path.join(DOCS_DIR, "02_Installation_(Docker).md"),
       "utf-8",
     );
     const mainReadmeFile = fs.readFileSync(
@@ -117,7 +117,7 @@ test.describe("Create docs and screenshots", () => {
         });
       return scripts;
     };
-    const docsScripts = getScripts(uiInstallationFile);
+    const docsScripts = getScripts(uiInstallationDocs);
     const readmeScripts = getScripts(mainReadmeFile);
     if (!docsScripts.length) {
       throw new Error("No scripts found in the installation file");

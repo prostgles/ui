@@ -19,6 +19,7 @@ import { getClientDBHandlersForChat } from "./getClientDBHandlersForChat";
 import type { ProstglesDbTools } from "@common/mcpUtils";
 import { getExistingTablesSchema } from "./getExistingTablesSchema";
 import { connectionManager } from "@src/index";
+import { parse } from "pgsql-ast-parser";
 
 const serverName = "db" as const;
 const definition = {
@@ -243,7 +244,8 @@ const runSqlTool = async (
     throw new Error("SQL query is required");
   }
 
-  const mode = chat.db_data_permissions?.mode;
+  const dbAccess = chat.db_data_permissions;
+  const mode = dbAccess?.mode;
   if (!mode || mode === "custom") {
     throw new Error(
       `Chat does not have permissions to run SQL queries. Please check the chat's database permissions.`,
@@ -255,6 +257,25 @@ const runSqlTool = async (
       throw new Error(
         `Chat does not have permissions to run SQL queries with commit. Please check the chat's database permissions.`,
       );
+    }
+  }
+
+  const allowedCommands =
+    dbAccess.mode === "execute_sql" ? dbAccess.allowedCommands : undefined;
+  if (allowedCommands) {
+    const commandsAllowedSet = new Set(Object.keys(allowedCommands));
+    if (commandsAllowedSet.size > 0) {
+      const statements = parse(sql);
+      for (const statement of statements) {
+        const command = statement.type;
+        if (!commandsAllowedSet.has(command)) {
+          throw new Error(
+            `SQL command "${command}" is not allowed. Allowed commands are: ${[
+              ...commandsAllowedSet,
+            ].join(", ")}`,
+          );
+        }
+      }
     }
   }
 

@@ -138,6 +138,7 @@ export const start = async (params: {
         resolve(true);
       }, 1000);
     });
+    port = actualPort;
     return onReady(actualPort);
   });
 

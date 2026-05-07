@@ -25,7 +25,7 @@ test.use({
   },
 });
 
-const videoTestDuration = 10 * 60e3;
+const videoTestDuration = 12 * 60e3;
 test.describe("Demo video", () => {
   test.setTimeout(videoTestDuration);
 

@@ -4,7 +4,12 @@ import React from "react";
 import { RenderValue } from "../../dashboard/SmartForm/SmartFormField/RenderValue";
 import { getCommandElemSelector } from "../../Testing";
 import Btn from "../Btn";
-import type { FullOption, OptionKey, SelectProps } from "./Select";
+import type {
+  FullOption,
+  OptionKey,
+  SelectProps,
+  SelectValueFromProps,
+} from "./Select";
 
 type P<
   O extends OptionKey,
@@ -185,9 +190,7 @@ export const SelectTriggerButton = <
             size={size}
             onClick={(e) =>
               onChange(
-                undefined as Multi extends true ? O[]
-                : O | Optional extends true ? undefined
-                : O,
+                undefined as SelectValueFromProps<O, Multi, Optional>,
                 e,
                 undefined,
               )

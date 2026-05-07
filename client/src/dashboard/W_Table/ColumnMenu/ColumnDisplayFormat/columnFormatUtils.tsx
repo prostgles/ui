@@ -16,6 +16,7 @@ import type { RenderedColumn } from "../../tableUtils/onRenderColumn";
 import type { ColumnConfig } from "../ColumnMenu";
 import type { TableWindowInsertModel } from "@common/DashboardTypes";
 import { ContentTypes } from "@components/MediaViewer/RenderMedia";
+import { FlexRowWrap } from "@components/Flex";
 
 const CurrencySchema = {
   type: {
@@ -310,13 +311,15 @@ export const DISPLAY_FORMATS = [
   },
   {
     type: "Media",
-    tsDataType: ["string"],
-    render: (v, row, c, f) => {
+    tsDataType: ["string", "string[]"],
+    render: (valueOrValues, row, c, f) => {
       const mediaFormat = f;
       const params = mediaFormat.params;
-      return (
+      const onRender = (v: string) => (
         <MediaViewer
+          key={v}
           url={v}
+          style={{ maxHeight: "100%" }}
           content_type={
             params?.type === "Fixed" ? params.fixedContentType
             : params?.type === "From column" && params.contentTypeColumnName ?
@@ -330,6 +333,14 @@ export const DISPLAY_FORMATS = [
           // }}
         />
       );
+      if (Array.isArray(valueOrValues)) {
+        return (
+          <FlexRowWrap className="ai-start min-h-0">
+            {valueOrValues.map((v) => onRender(v))}
+          </FlexRowWrap>
+        );
+      }
+      return onRender(valueOrValues);
     },
   } satisfies FormattedColRender<Extract<ColumnFormat, { type: "Media" }>>,
   {

@@ -1,14 +1,20 @@
+import { dbMcpSchema } from "@common/mcp/db.mcp.schema";
 import type { ProstglesDbTools } from "@common/mcpUtils";
 import type { DBSSchema } from "@common/publishUtils";
 import type { DBS } from "@src/index";
+import { proxyDbCommands } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/agenticWorkflow/runtimeSdk/tableHandlers";
 import type { ValidateRowArgsCommon } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
 import { getKeys, isDefined, type JSONB } from "prostgles-types";
 import { agentOutputSchemaType } from "../../../../common/mcp/startAgenticWorkflowSchema";
 import { tablePermissionsSchema } from "../tablePermissionsSchema";
 import { extraRequestData } from "./tableConfigLlmExtraRequestData";
-import { proxyDbCommands } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/agenticWorkflow/runtimeSdk/tableHandlers";
-import { dbMcpSchema } from "@common/mcp/db.mcp.schema";
+import { databaseAccessSchema } from "@common/mcp/databaseAccessSchema";
+import type { Statement } from "pgsql-ast-parser";
+import { SQL_COMMANDS } from "@common/mcp/SQL_COMMANDS";
+
+/** Sync types */
+SQL_COMMANDS satisfies Record<Statement["type"], 1>;
 
 const commonrunSQLOpts = {
   query_timeout: {
@@ -232,6 +238,8 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
                 description:
                   "Can run SQL queries that will be commited (if the current user is allowed). Use with caution",
               },
+              allowedCommands:
+                databaseAccessSchema.oneOfType[1].allowedCommands,
               ...commonrunSQLOpts,
             },
             {

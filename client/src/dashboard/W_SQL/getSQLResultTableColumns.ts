@@ -26,7 +26,7 @@ export const getSQLResultTableColumns = ({
       headerClassname: isNumeric ? " jc-end  " : " ",
       className: isNumeric ? " ta-right " : " ",
       onRender: onRenderColumn({
-        c: { ...c, name: i.toString(), format: undefined },
+        column: { ...c, name: i.toString(), format: undefined },
         getValues: () => rows.map((r) => r[i]),
         table: undefined,
         tables,

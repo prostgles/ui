@@ -331,10 +331,14 @@ export const UserInput = ({
                       : undefined
                     }
                     onChange={(newValue) => {
-                      const [tableName, columnName] = newValue.split(separator);
                       setUserInputValue((prev) => ({
                         ...prev,
-                        [inputKey]: { tableName, columnName },
+                        [inputKey]: (() => {
+                          if (!newValue) return undefined;
+                          const [tableName, columnName] =
+                            newValue.split(separator);
+                          return { tableName, columnName };
+                        })(),
                       }));
                     }}
                   />

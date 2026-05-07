@@ -1,4 +1,4 @@
-<h1 id="installation"> Installation </h1> 
+<h1 id="installation_(docker)"> Installation (Docker) </h1> 
 
 The quickest way to start is with Docker. 
 If you don't have Docker installed, please follow the official 

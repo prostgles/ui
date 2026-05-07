@@ -1,7 +1,7 @@
 import type { UIDoc } from "../UIDocs";
 
 export const UIInstallation = {
-  title: "Installation",
+  title: "Installation (Docker)",
   type: "info",
   description: "A guide to help you get started with the application.",
   docs: `

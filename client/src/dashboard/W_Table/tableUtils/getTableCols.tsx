@@ -183,7 +183,7 @@ export const getTableCols = ({
       width: c.width ?? 100,
       noRightBorder: opts?.noRightBorder ?? false,
       onRender: onRenderColumn({
-        c,
+        column: c,
         table,
         tables,
         barchartVals,
