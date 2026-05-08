@@ -242,6 +242,10 @@ export const startAgenticWorkflowContainer = async (
           "internetAccess",
         ])
       : {}),
+      readOnly:
+        mode.type === "full" ?
+          mode.definition.containerConfiguration.readOnly
+        : true,
       signal: abortSignal,
       networkMode:
         (

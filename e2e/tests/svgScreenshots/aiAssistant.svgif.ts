@@ -160,8 +160,7 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
     animations: [{ type: "wait", duration: 1000 }],
   });
 
-  await page.getByTestId("Popup.close").last().click();
-  await deleteExistingLLMChat(page);
+  await newChat(page);
   await page.getByTestId("LLMChatOptions.DatabaseAccess").click();
   await page.getByTestId("DatabaseAccessEditor.Mode").click();
 
