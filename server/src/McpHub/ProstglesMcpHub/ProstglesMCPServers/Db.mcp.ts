@@ -1,8 +1,10 @@
+import type { ProstglesDbTools } from "@common/mcpUtils";
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import type { DBSSchema } from "@common/publishUtils";
 import { fromEntries, getEntries } from "@common/utils";
 import type { McpTool } from "@src/McpHub/AnthropicMcpHub/McpTypes";
-import { getTemplateUserConnection } from "@src/serverFunctions/askLLM/prostglesLLMTools/getDbConnectionWithPermissions";
+import { connectionManager } from "@src/index";
+import { getTemplateUserConnection } from "@src/serverFunctions/askLLM/prostglesLLMTools/getTemplateUserConnection";
 import {
   getJSONBSchemaAsJSONSchema,
   type JSONB,
@@ -16,10 +18,7 @@ import type {
 } from "../ProstglesMCPServerTypes";
 import type { ProxyDbCallData } from "./Prostgles/agenticWorkflow/runtimeSdk/defineAgenticWorkflowHandlers.types";
 import { getClientDBHandlersForChat } from "./getClientDBHandlersForChat";
-import type { ProstglesDbTools } from "@common/mcpUtils";
 import { getExistingTablesSchema } from "./getExistingTablesSchema";
-import { connectionManager } from "@src/index";
-import { parse } from "pgsql-ast-parser";
 
 const serverName = "db" as const;
 const definition = {
@@ -260,29 +259,7 @@ const runSqlTool = async (
     }
   }
 
-  const allowedCommands =
-    dbAccess.mode === "execute_sql" ? dbAccess.allowedCommands : undefined;
-  if (allowedCommands) {
-    const commandsAllowedSet = new Set(Object.keys(allowedCommands));
-    if (commandsAllowedSet.size > 0) {
-      const statements = parse(sql);
-      for (const statement of statements) {
-        const command = statement.type;
-        if (!commandsAllowedSet.has(command)) {
-          throw new Error(
-            `SQL command "${command}" is not allowed. Allowed commands are: ${[
-              ...commandsAllowedSet,
-            ].join(", ")}`,
-          );
-        }
-      }
-    }
-  }
-
-  const db = await getTemplateUserConnection(
-    connectionId,
-    toolName === "execute_sql" ? undefined : "readonly",
-  );
+  const db = await getTemplateUserConnection(connectionId, dbAccess);
   const queryWithTimeout =
     query_timeout && Number.isInteger(query_timeout) ?
       [`SET LOCAL statement_timeout to '${query_timeout}s'`, sql].join(";\n")

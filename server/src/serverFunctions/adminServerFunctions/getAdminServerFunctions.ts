@@ -23,7 +23,7 @@ import path, { join } from "path";
 import { getIsSuperUser } from "prostgles-server/dist/Prostgles";
 import { getKeys, includes, isEmpty, type SQLHandler } from "prostgles-types";
 import { getSampleSchemas } from "../applySampleSchema";
-import { getTemplateUserConnection } from "../askLLM/prostglesLLMTools/getDbConnectionWithPermissions";
+import { getTemplateUserConnection } from "../askLLM/prostglesLLMTools/getTemplateUserConnection";
 import { refreshModels } from "../askLLM/refreshModels";
 import { deleteConnection } from "../deleteConnection";
 import { getConnectionAndDatabaseConfig } from "../getConnectionAndDatabaseConfig";
@@ -174,11 +174,13 @@ export const getAdminServerFunctions = (
         query: "string",
         mode: { enum: ["default", "readOnly"], optional: true },
         args: { type: "any", optional: true },
-      },
+      } as const,
       run: async ({ connectionId, query, args, mode }) => {
         const db = await getTemplateUserConnection(
           connectionId,
-          mode === "" ? "readonly" : undefined,
+          mode === "readOnly" ?
+            { mode: "execute_readonly_sql" }
+          : { mode: "execute_sql" },
         );
         const { command, fields, rowCount, rows, duration } = await db.result(
           query,

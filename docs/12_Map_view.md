@@ -5,6 +5,13 @@ It requires the [PostGIS](https://postgis.net/) extension to be installed on you
 It can display points, lines, and polygons based on geometry or geography columns in your tables or views.
 It supports multiple layers, custom basemaps, and various map controls for interaction.
 
+## Features
+
+- **Multiple layer support**: Display multiple layers of geographical data on the same map, each with its own data source and styling options.
+- **Data-driven styling**: Style your map layers with custom colors or icons based on the attributes of your geographical data for better visualization.
+- **Custom basemaps**: Choose from different basemap options or add your own custom tiles for the map background.
+- **Map controls**: Interact with the map using controls for zooming, panning, and displaying cursor coordinates.
+
 <img src="./screenshots/map.svgif.svg" alt="Map view screenshot" style="border: 1px solid; margin: 1em 0;" />
 
   - **Header section**: Contains menu button, title and window minimise/fullscreen controls.  

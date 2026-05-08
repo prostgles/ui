@@ -1,4 +1,3 @@
-import { SQL_COMMANDS_ARRAY } from "./SQL_COMMANDS";
 import { tablePermissionsSchema } from "./tablePermissionsSchema";
 
 export const databaseAccessSchema = {
@@ -19,7 +18,7 @@ export const databaseAccessSchema = {
         optional: true,
         record: {
           partial: true,
-          keysEnum: SQL_COMMANDS_ARRAY,
+          keysEnum: ["select", "insert", "update", "delete"],
           values: {
             enum: [1],
           },

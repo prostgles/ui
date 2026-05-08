@@ -1,5 +1,3 @@
-import type { databaseAccessSchema } from "@common/mcp/databaseAccessSchema";
-import { SQL_COMMANDS_ARRAY } from "@common/mcp/SQL_COMMANDS";
 import type { DBSSchema } from "@common/publishUtils";
 import { fromEntries } from "@common/utils";
 import Btn from "@components/Btn";
@@ -13,13 +11,10 @@ import {
   mdiTable,
   mdiTableSearch,
 } from "@mdi/js";
-import { getKeys, type JSONB } from "prostgles-types";
+import { getKeys } from "prostgles-types";
 import React, { useState } from "react";
 import { DatabaseAccessEditorCustomTables } from "./DatabaseAccessEditorCustomTables";
 
-// export type DatabaseAccessPermission = JSONB.GetType<
-//   typeof databaseAccessSchema
-// >;
 export type DatabaseAccessPermission = NonNullable<
   DBSSchema["agentic_workflows"]["definition_data"]["databaseAccessDefinitions"]
 >;
@@ -94,7 +89,9 @@ export const DatabaseAccessEditor = ({
                   value={getKeys(value.allowedCommands ?? {})}
                   label={"Allowed commands"}
                   emptyLabel="All"
-                  fullOptions={SQL_COMMANDS_ARRAY.map((key) => ({ key }))}
+                  fullOptions={(
+                    ["select", "insert", "update", "delete"] as const
+                  ).map((key) => ({ key }))}
                   multiSelect={true}
                   optional={true}
                   onChange={(allowedCommands) => {

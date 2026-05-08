@@ -1,3 +1,4 @@
+import { databaseAccessSchema } from "@common/mcp/databaseAccessSchema";
 import { dbMcpSchema } from "@common/mcp/db.mcp.schema";
 import type { ProstglesDbTools } from "@common/mcpUtils";
 import type { DBSSchema } from "@common/publishUtils";
@@ -9,12 +10,6 @@ import { getKeys, isDefined, type JSONB } from "prostgles-types";
 import { agentOutputSchemaType } from "../../../../common/mcp/startAgenticWorkflowSchema";
 import { tablePermissionsSchema } from "../tablePermissionsSchema";
 import { extraRequestData } from "./tableConfigLlmExtraRequestData";
-import { databaseAccessSchema } from "@common/mcp/databaseAccessSchema";
-import type { Statement } from "pgsql-ast-parser";
-import { SQL_COMMANDS } from "@common/mcp/SQL_COMMANDS";
-
-/** Sync types */
-SQL_COMMANDS satisfies Record<Statement["type"], 1>;
 
 const commonrunSQLOpts = {
   query_timeout: {

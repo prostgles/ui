@@ -2914,14 +2914,14 @@ test.describe("Main test", () => {
     let pageInput = await usersTable.getByTestId("Pagination.page");
     await expect(await pageInput.inputValue()).toBe("1");
     await expect(await pageInput.getAttribute("min")).toBe("1");
-    await expect(await pageInput.getAttribute("max")).toBe("7");
+    await expect(await pageInput.getAttribute("max")).toBe("4");
     await expect(
       usersTable.getByTestId("Pagination.pageCountInfo"),
-    ).toContainText(`7 pages  (100 rows)`);
+    ).toContainText(`4 pages  (100 rows)`);
     await usersTable.getByTestId("Pagination.lastPage").click();
     pageInput = await usersTable.getByTestId("Pagination.page");
     await pageInput.scrollIntoViewIfNeeded();
-    await expect(await pageInput.inputValue()).toBe("7");
+    await expect(await pageInput.inputValue()).toBe("4");
     await usersTable.getByTestId("Pagination.firstPage").click();
     await expect(await pageInput.inputValue()).toBe("1");
     await usersTable.getByTestId("Pagination.nextPage").click();

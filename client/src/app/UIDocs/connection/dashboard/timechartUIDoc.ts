@@ -14,12 +14,10 @@ export const timechartUIDoc = {
     <img src="./screenshots/timechart.svgif.svg" alt="Timechart view screenshot" />
 
     ## Features
-    - Multiple layers with independent data sources and styles.
-    - Configurable aggregation functions and grouping options.
-    - Zoomable and pannable canvas for detailed data exploration.
-    - Interactive tooltips and data point selection.
-    - Time filters for focused analysis.
-    - Layer legend for quick access to layer settings.
+    
+    - **Multiple layer support**: Display multiple layers of time-series data on the same chart, each with its own data source and styling options.
+    - **Aggregation and grouping**: Configure aggregation functions and grouping options for each layer to analyze trends and patterns in your data effectively.
+    - **Interactive exploration**: Interact with the chart using zooming, panning, and tooltips to explore your data in detail.
   
     ## Components
     `,
