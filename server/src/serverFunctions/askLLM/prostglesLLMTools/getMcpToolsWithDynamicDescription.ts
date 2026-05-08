@@ -20,7 +20,10 @@ export const getMcpToolsWithDynamicDescription = async ({
     auto_approve: boolean;
     chat_id: number;
     tool_id: number;
-    name: `${string}--${string}`;
+    /**
+     * server_name and tool_name combined
+     */
+    name: string;
   })[];
 }) => {
   const { mcp_server_tools } = await getMCPServerTools(dbs, {});

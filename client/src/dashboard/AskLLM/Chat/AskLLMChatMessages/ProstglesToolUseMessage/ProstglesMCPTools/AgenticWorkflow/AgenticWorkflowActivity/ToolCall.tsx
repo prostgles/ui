@@ -30,16 +30,19 @@ export const ToolCall = ({
     chat_id,
     tool_use_id,
   } = selectedMcpToolCall;
-  const fullName = getMCPFullToolName(mcp_server_name || "", mcp_tool_name);
+  const fullName = getMCPFullToolName(
+    mcp_server_name || "",
+    mcp_tool_name || "",
+  );
   const ToolUI = ProstglesMCPToolsWithUI[fullName];
   const [displayMode, setDisplayMode] = useState<"ui" | "json">(
     ToolUI ? "ui" : "json",
   );
   const { mcpServerIcons, getIcon } = useMcpServerIcons();
-  const icon = getIcon(mcp_server_name ?? "", mcp_tool_name);
+  const icon = getIcon(mcp_server_name ?? "", mcp_tool_name || "");
   const description = mcpServerIcons
     .get(mcp_server_name ?? "")
-    ?.toolInfo.get(mcp_tool_name)?.description;
+    ?.toolInfo.get(mcp_tool_name || "")?.description;
   return (
     <Popup
       data-command="ToolCall"

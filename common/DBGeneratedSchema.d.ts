@@ -82,7 +82,9 @@ export type DBGeneratedSchema = {
  |  {  title: string;  optional?: boolean;  type: "folder-path" | "file-path" | "file-or-folder-path";  accessMode: "read" | "read-write"; }
  |  {  title: string;  optional?: boolean;  type: "folder-paths" | "file-paths" | "file-or-folder-paths";  accessMode: "read" | "read-write"; }>;   newTables?: (  {  name: string;  schema?: string;  columns: (  {  name: string;  dataType: string;  nullable?: boolean;  isPrimaryKey?: boolean; } )[]; } )[];   orchestrationTools?: | undefined
  |  Partial<Record<string,  Partial<Record<string, 1>>>>;  };
-      definition_override?: null | {    agentDefinitions?: Partial<Record<string,  {  prompt?: string;  modelName?: string;  maxCostUSD?: number;  maxIterations?: number;  tools?: Partial<Record<string,  Partial<Record<string, 1>>>>;  maxTokens?: number;  temperature?: number;  mcpServerConfigs?: Partial<Record<string,  {  configId: number; }>>; }>>;   containerConfiguration?: {  timeout?: number;  cpus?: string;  memory?: string;  readOnly?: boolean;  internetAccess?: "none" | "bridge" | "host"; };   orchestratorMcpServerConfigs?: Partial<Record<string,  {  configId: number; }>>;  };
+      definition_override?: null | {    databaseAccessDefinitions?: |  {  mode: "execute_readonly_sql"; }
+ |  {  mode: "execute_sql";  allowedCommands?: Partial<Record<"alter enum" | "alter table" | "alter index" | "alter sequence" | "begin" | "comment" | "commit" | "create composite type" | "create enum" | "create extension" | "create function" | "create index" | "create materialized view" | "create schema" | "create sequence" | "create table" | "create view" | "deallocate" | "delete" | "do" | "drop function" | "drop index" | "drop sequence" | "drop table" | "drop trigger" | "drop type" | "insert" | "prepare" | "refresh materialized view" | "set names" | "set timezone" | "start transaction" | "truncate table" | "union all" | "raise" | "rollback" | "set" | "show" | "tablespace" | "union" | "update" | "values" | "select", 1>>; }
+ |  {  mode: "custom";  tablePermissions: Record<string,  {  select?: | true |  {  forcedFilter?: |  {  $and: any[]; } |  {  $or: any[]; };  fields: | "*" |  Record<string, 1> |  Record<string, 0>; };  update?: | true |  {  forcedFilter?: |  {  $and: any[]; } |  {  $or: any[]; };  fields: | "*" |  Record<string, 1> |  Record<string, 0>; };  insert?: | true |  {  fields: | "*" |  Record<string, 1> |  Record<string, 0>; };  delete?: | true |  {  forcedFilter?: |  {  $and: any[]; } |  {  $or: any[]; }; }; }>;  ddlStatements?: string; };   agentDefinitions?: Partial<Record<string,  {  prompt?: string;  modelName?: string;  maxCostUSD?: number;  maxIterations?: number;  tools?: Partial<Record<string,  Partial<Record<string, 1>>>>;  maxTokens?: number;  temperature?: number;  mcpServerConfigs?: Partial<Record<string,  {  configId: number; }>>; }>>;   containerConfiguration?: {  timeout?: number;  cpus?: string;  memory?: string;  readOnly?: boolean;  internetAccess?: "none" | "bridge" | "host"; };   orchestratorMcpServerConfigs?: Partial<Record<string,  {  configId: number; }>>;  };
       definition_summary?: string;
       id?: number;
       message_id: number | string;
@@ -552,10 +554,11 @@ export type DBGeneratedSchema = {
       finished_at?: null | string;
       id?: number;
       input?: null | Record<string, unknown>
+      mcp_full_tool_name: string;
       mcp_server_config_id?: null | number;
       mcp_server_name?: null | string;
       mcp_tool_approval_requests_id?: null | number;
-      mcp_tool_name: string;
+      mcp_tool_name?: null | string;
       output?: null | Record<string, unknown>
       tool_use_id?: null | string;
       user_id?: null | string;

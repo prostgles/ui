@@ -47,42 +47,53 @@ export const SavedAgenticWorkflowsAndContainers = () => {
   const searchListProps = useMemo(() => {
     const items = (agenticWorkflows || [])
       .filter((w) => w.saved || w.agentic_workflow_runs.length)
-      .map((workflow) => {
-        const dbAccess = workflow.definition_data.databaseAccessDefinitions;
-        return {
-          key: workflow.id,
-          label: workflow.name,
-          styles: {
-            label: {
-              whiteSpace: "nowrap",
+      .map(
+        ({
+          id,
+          name,
+          definition_data,
+          definition_summary,
+          definition_override,
+          agentic_workflow_runs,
+        }) => {
+          const dbAccess =
+            definition_override?.databaseAccessDefinitions ??
+            definition_data.databaseAccessDefinitions;
+          return {
+            key: id,
+            label: name,
+            styles: {
+              label: {
+                whiteSpace: "nowrap",
+              },
+              subLabel: {
+                whiteSpace: "nowrap",
+              },
             },
-            subLabel: {
-              whiteSpace: "nowrap",
+            subLabel: sliceText(definition_summary, 200),
+            contentBottom:
+              dbAccess?.mode === "custom" ?
+                <ScrollFade className="flex-row o-auto mt-p5 gap-p5">
+                  {Object.keys(dbAccess.tablePermissions).map((tableName) => (
+                    <Chip
+                      style={{ background: "var(--bg-color-3)" }}
+                      key={tableName}
+                    >
+                      {tableName}
+                    </Chip>
+                  ))}
+                </ScrollFade>
+              : null,
+            onPress: () => {
+              setSelectedWorkflowId(id);
             },
-          },
-          subLabel: sliceText(workflow.definition_summary, 200),
-          contentBottom:
-            dbAccess?.mode === "custom" ?
-              <ScrollFade className="flex-row o-auto mt-p5 gap-p5">
-                {Object.keys(dbAccess.tablePermissions).map((tableName) => (
-                  <Chip
-                    style={{ background: "var(--bg-color-3)" }}
-                    key={tableName}
-                  >
-                    {tableName}
-                  </Chip>
-                ))}
-              </ScrollFade>
-            : null,
-          onPress: () => {
-            setSelectedWorkflowId(workflow.id);
-          },
-          contentLeft:
-            workflow.agentic_workflow_runs.length ?
-              <Loading sizePx={16} className="mt-p25" />
-            : <Icon path={mdiCubeOutline} />,
-        } satisfies SearchListItem;
-      });
+            contentLeft:
+              agentic_workflow_runs.length ?
+                <Loading sizePx={16} className="mt-p25" />
+              : <Icon path={mdiCubeOutline} />,
+          } satisfies SearchListItem;
+        },
+      );
     return {
       items,
     };

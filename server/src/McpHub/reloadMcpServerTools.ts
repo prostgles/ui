@@ -64,17 +64,16 @@ export const updateMcpServerTools = async (
   }
 
   await dbs.tx(async (tx) => {
-    await tx.mcp_server_tools
-      .delete({
-        server_name: serverName,
-        name: { $nin: tools.map((t) => t.name) },
-      })
-      .catch((e) => {
-        console.error(
-          `Error deleting MCP server tools for server ${serverName}:`,
-          e,
-        );
-      });
+    await tx.mcp_server_tools.delete({
+      server_name: serverName,
+      name: { $nin: tools.map((t) => t.name) },
+    });
+    // .catch((e) => {
+    //   console.error(
+    //     `Error deleting MCP server tools for server ${serverName}:`,
+    //     e,
+    //   );
+    // });
     if (tools.length) {
       await tx.mcp_server_tools.insertMany(
         tools.map(

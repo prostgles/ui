@@ -118,7 +118,7 @@ export const AgenticWorkflowActivity = ({
                 pathName:
                   item.type === "agent_chat" ?
                     "RobotOutline"
-                  : ((item.mcp_server_name ?
+                  : ((item.mcp_server_name && item.mcp_tool_name ?
                       getIcon(item.mcp_server_name, item.mcp_tool_name)
                     : undefined) ?? "Tools"),
               },

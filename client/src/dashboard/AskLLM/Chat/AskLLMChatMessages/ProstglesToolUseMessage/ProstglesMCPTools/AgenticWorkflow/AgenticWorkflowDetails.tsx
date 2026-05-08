@@ -26,7 +26,8 @@ export const AgenticWorkflowDetails = ({
     newTables,
   } = workflow.definition_data;
   const { name, definition_summary, definition_override } = workflow;
-  const dbAccess = databaseAccessDefinitions;
+  const dbAccess =
+    definition_override?.databaseAccessDefinitions ?? databaseAccessDefinitions;
   const { dbs } = usePrgl();
 
   const updateOverride = useCallback(
@@ -69,7 +70,9 @@ export const AgenticWorkflowDetails = ({
 
         <DatabaseAccessEditor
           value={dbAccess}
-          onChange={undefined}
+          onChange={(newDbAccess) => {
+            updateOverride({ databaseAccessDefinitions: newDbAccess });
+          }}
           newTables={newTables}
         />
 

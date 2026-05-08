@@ -144,7 +144,9 @@ export const createWorkflowExecutionHandlers = async <
           chatId,
           userId,
           connectionId,
-          databaseAccessDefinitions,
+          databaseAccessDefinitions:
+            definition_override?.databaseAccessDefinitions ??
+            databaseAccessDefinitions,
           autoApproveAllTools,
           messageId: message_id,
         })

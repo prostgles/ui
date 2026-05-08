@@ -41,6 +41,8 @@ export const tableConfigAgenticWorkflow: TableConfig<{ en: 1 }> = {
       definition_override: {
         nullable: true,
         jsonbSchemaType: {
+          databaseAccessDefinitions:
+            startAgenticWorkflowSchema.databaseAccessDefinitions,
           agentDefinitions: {
             optional: true,
             record: {

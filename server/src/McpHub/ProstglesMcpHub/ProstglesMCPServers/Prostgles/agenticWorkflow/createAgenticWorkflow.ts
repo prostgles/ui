@@ -184,7 +184,9 @@ export const createAgenticWorkflow = async (
   /** We check a second time with actual table schemas */
   let res = initialBuild;
   if (initialBuild.isValid) {
-    const { databaseAccessDefinitions } = initialBuild.data.definition_data;
+    const databaseAccessDefinitions =
+      initialBuild.data.definition_override?.databaseAccessDefinitions ??
+      initialBuild.data.definition_data.databaseAccessDefinitions;
     res = await getValidWorkflowDefinition(
       {
         workflow_function_definition,

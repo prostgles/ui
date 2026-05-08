@@ -59,12 +59,14 @@ export const uiMcpSchema = {
         
         Example input payload:
         
+        ${"```json"}
         {
           "files": {
             "Dockerfile": "FROM node:18\nWORKDIR /app\nCOPY . .\nRUN npm install\nCMD [\"node\", \"index.js\"]",
             "index.ts": "import type { JSONB } from \"prostgles-types\"; console.log('hello world');"
           }
         }
+        ${"```"}
         `),
     schema: runCodeInSandboxSchema,
     outputSchema: {
@@ -106,13 +108,14 @@ export const uiMcpSchema = {
         Otherwise, permissions have no effect.
         
         Example input payload:
-        
+        ${"```json"}
         {
           "indexTs": "import type { JSONB } from \"prostgles-types\"; console.log('hello world');",
           "packageDependencies": {
             "prostgles-types": "^4.0.217",
           }
         }
+        ${"```"}
         `),
     schema: {
       type: {
@@ -291,6 +294,7 @@ export const uiMcpSchema = {
     description: fixIndent(
       `Request access to mcp tools/database. 
       USE THE STRICTEST LEAST-PRIVILEGE ACCESS POSSIBLE when requesting database access.
+      Prefer to use mode=custom for database access and specify the exact tables and permissions needed instead of using mode=execute_sql or execute_readonly_sql which provide much broader access.
       The user will be prompted to approve or deny access. 
       Use this tool when you need access to a tool that you don't have access to yet. 
       The user will then approve access if they are comfortable with it based on the tool description and the context of the conversation.`,

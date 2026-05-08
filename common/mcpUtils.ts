@@ -8,8 +8,10 @@ export const getMCPFullToolName = <
 >(
   server_name: ServerName,
   name: Name,
-): `${ServerName}${typeof MCP_TOOL_NAME_SEPARATOR}${Name}` => {
-  return `${server_name}${MCP_TOOL_NAME_SEPARATOR}${name}` as const;
+): `${ServerName}${typeof MCP_TOOL_NAME_SEPARATOR}${Name}` | Name => {
+  return !server_name ? name : (
+      (`${server_name}${MCP_TOOL_NAME_SEPARATOR}${name}` as const)
+    );
 };
 
 export type ProstglesDbTools = (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["db"];

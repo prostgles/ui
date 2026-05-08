@@ -73,17 +73,15 @@ export const startAgenticWorkflow = async ({
   userInputValue: Record<string, unknown>;
   connection_id: string;
 }) => {
-  const { name, definition_data } = workflow;
+  const { name, definition_data, definition_override } = workflow;
   const containerConfigurationWithOverrides = {
-    ...workflow.definition_data.containerConfiguration,
-    ...workflow.definition_override?.containerConfiguration,
+    ...definition_data.containerConfiguration,
+    ...definition_override?.containerConfiguration,
   };
-  const {
-    agentDefinitions,
-    databaseAccessDefinitions,
-    orchestrationTools,
-    userInput,
-  } = definition_data;
+  const { agentDefinitions, orchestrationTools, userInput } = definition_data;
+  const databaseAccessDefinitions =
+    definition_override?.databaseAccessDefinitions ??
+    definition_data.databaseAccessDefinitions;
   const aborter = new AbortController();
   const { agentHandlers, orchestratorChat } =
     await createWorkflowExecutionHandlers(

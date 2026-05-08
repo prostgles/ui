@@ -10,6 +10,7 @@ import { getProstglesMCPServer } from "./ProstglesMcpHub/ProstglesMCPServers";
 import { getProstglesMcpHub } from "./ProstglesMcpHub/ProstglesMcpHub";
 import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
 import type { McpToolCallResponse } from "./AnthropicMcpHub/McpHub";
+import { getMCPFullToolName } from "@common/mcpUtils";
 
 export const callMCPServerTool = async ({
   dbs,
@@ -59,6 +60,7 @@ export const callMCPServerTool = async ({
   const toolCallPlaceholderUsedForLoading =
     await dbs.mcp_server_tool_calls.insert(
       {
+        mcp_full_tool_name: getMCPFullToolName(serverName, toolName),
         called_at: called_at.toISOString(),
         mcp_server_name: serverName,
         mcp_tool_name: toolName,

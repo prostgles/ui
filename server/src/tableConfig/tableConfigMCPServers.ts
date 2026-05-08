@@ -324,9 +324,10 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
       user_id: `UUID REFERENCES users(id) ON DELETE SET NULL`,
       mcp_tool_approval_requests_id: `INTEGER REFERENCES mcp_tool_approval_requests(id) ON DELETE SET NULL`,
       mcp_server_name: `TEXT REFERENCES mcp_servers(name) ON DELETE SET NULL`,
-      mcp_tool_name: `TEXT NOT NULL`,
+      mcp_tool_name: `TEXT`,
       tool_use_id: `TEXT DEFAULT ''`,
       mcp_server_config_id: `INTEGER`,
+      mcp_full_tool_name: `TEXT NOT NULL`,
       input: {
         nullable: true,
         jsonbSchema: {

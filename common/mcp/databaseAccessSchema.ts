@@ -29,7 +29,11 @@ export const databaseAccessSchema = {
     {
       mode: { enum: ["custom"] },
       tablePermissions: tablePermissionsSchema,
-      ddlStatements: { type: "string", optional: true },
+      ddlStatements: {
+        description: "Table create statements",
+        type: "string",
+        optional: true,
+      },
     },
   ],
 } as const;
