@@ -11,7 +11,7 @@ export const fileBrowserGoToPath = async (
    */
   const [_repoOwner, repoName = "ui"] =
     process.env.GITHUB_REPOSITORY?.split("/") ?? [];
-  const githubWorkerPath = ["work", repoName] as const;
+  const githubWorkerPath = [repoName]; // ["work", repoName] as const;
   const path = [
     ...(process.env.CI === "true" ? githubWorkerPath : []),
     ...targetPath,
