@@ -92,26 +92,23 @@ const buildPermissionConfigQuery = (
     );
   }
 
-  const canSelect =
-    dbAccess.allowedCommands ? !!dbAccess.allowedCommands.select : true;
-  const canInsert =
-    dbAccess.allowedCommands ? !!dbAccess.allowedCommands.insert : true;
-  const canUpdate =
-    dbAccess.allowedCommands ? !!dbAccess.allowedCommands.update : true;
-  const canDelete =
-    dbAccess.allowedCommands ? !!dbAccess.allowedCommands.delete : true;
-  const tableGrantStatements = [
-    canSelect &&
-      `EXECUTE format('GRANT SELECT ON ALL TABLES IN SCHEMA %I TO %I', s.nspname, ${USERNAME_AND_PASSWORD_PLACEHOLDER});`,
-    canInsert &&
-      `EXECUTE format('GRANT INSERT ON ALL TABLES IN SCHEMA %I TO %I', s.nspname, ${USERNAME_AND_PASSWORD_PLACEHOLDER});`,
-    canUpdate &&
-      `EXECUTE format('GRANT UPDATE ON ALL TABLES IN SCHEMA %I TO %I', s.nspname, ${USERNAME_AND_PASSWORD_PLACEHOLDER});`,
-    canDelete &&
-      `EXECUTE format('GRANT DELETE ON ALL TABLES IN SCHEMA %I TO %I', s.nspname, ${USERNAME_AND_PASSWORD_PLACEHOLDER});`,
-  ]
-    .filter(Boolean)
-    .join("\n        ");
+  const tableGrantStatements: string[] = [];
+  const defaultTablePrivilegeStatements: string[] = [];
+  const tableCommands = ["select", "insert", "update", "delete"] as const;
+  const tableCommandsUsedSet = new Set<(typeof tableCommands)[number]>();
+  tableCommands.forEach((command) => {
+    if (!dbAccess.allowedCommands || dbAccess.allowedCommands[command]) {
+      tableCommandsUsedSet.add(command);
+      tableGrantStatements.push(
+        `EXECUTE format('GRANT ${command} ON ALL TABLES IN SCHEMA %I TO %I', s.nspname, ${USERNAME_AND_PASSWORD_PLACEHOLDER});`,
+      );
+
+      tableGrantStatements.push(`EXECUTE format('ALTER DEFAULT PRIVILEGES FOR ROLE %I IN SCHEMA %I GRANT SELECT ON TABLES TO %I',
+            owner_role.owner_name, s.nspname, ${USERNAME_AND_PASSWORD_PLACEHOLDER});`);
+    }
+  });
+  const canSelect = tableCommandsUsedSet.has("select");
+  const canInsert = tableCommandsUsedSet.has("insert");
 
   const sequenceGrantStatements = [
     canSelect &&
@@ -121,23 +118,6 @@ const buildPermissionConfigQuery = (
   ]
     .filter(Boolean)
     .join("\n        ");
-
-  const defaultTablePrivilegeStatements = [
-    canSelect &&
-      `EXECUTE format('ALTER DEFAULT PRIVILEGES FOR ROLE %I IN SCHEMA %I GRANT SELECT ON TABLES TO %I',
-            owner_role.owner_name, s.nspname, ${USERNAME_AND_PASSWORD_PLACEHOLDER});`,
-    canInsert &&
-      `EXECUTE format('ALTER DEFAULT PRIVILEGES FOR ROLE %I IN SCHEMA %I GRANT INSERT ON TABLES TO %I',
-            owner_role.owner_name, s.nspname, ${USERNAME_AND_PASSWORD_PLACEHOLDER});`,
-    canUpdate &&
-      `EXECUTE format('ALTER DEFAULT PRIVILEGES FOR ROLE %I IN SCHEMA %I GRANT UPDATE ON TABLES TO %I',
-            owner_role.owner_name, s.nspname, ${USERNAME_AND_PASSWORD_PLACEHOLDER});`,
-    canDelete &&
-      `EXECUTE format('ALTER DEFAULT PRIVILEGES FOR ROLE %I IN SCHEMA %I GRANT DELETE ON TABLES TO %I',
-            owner_role.owner_name, s.nspname, ${USERNAME_AND_PASSWORD_PLACEHOLDER});`,
-  ]
-    .filter(Boolean)
-    .join("\n          ");
 
   const defaultSequencePrivilegeStatements = [
     canSelect &&
@@ -173,7 +153,7 @@ const buildPermissionConfigQuery = (
           AND nspname NOT LIKE 'pg_temp_%'
       LOOP
         EXECUTE format('GRANT USAGE ON SCHEMA %I TO %I', s.nspname, ${USERNAME_AND_PASSWORD_PLACEHOLDER});
-        ${tableGrantStatements || "-- No table grants configured for this profile"}
+        ${tableGrantStatements.join("\n        ") || "-- No table grants configured for this profile"}
         ${sequenceGrantStatements || "-- No sequence grants configured for this profile"}
       END LOOP;
 
@@ -192,7 +172,7 @@ const buildPermissionConfigQuery = (
             AND nspname NOT LIKE 'pg_toast%'
             AND nspname NOT LIKE 'pg_temp_%'
         LOOP
-          ${defaultTablePrivilegeStatements || "-- No default table privileges configured for this profile"}
+          ${defaultTablePrivilegeStatements.join("\n        ") || "-- No default table privileges configured for this profile"}
           ${defaultSequencePrivilegeStatements || "-- No default sequence privileges configured for this profile"}
         END LOOP;
       END LOOP;
