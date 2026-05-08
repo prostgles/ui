@@ -199,8 +199,9 @@ export default class Window<W extends WindowSyncItem> extends RTComp<
             title={t.Window.Menu}
             fixedTopLeft={true}
             anchorEl={showMenu}
-            positioning={"center"}
+            positioning={"beneath-center"}
             rootStyle={{ padding: 0 }}
+            rootChildStyle={{ flex: 1 }}
             clickCatchStyle={{ opacity: 0.5, backdropFilter: "blur(1px)" }}
             contentClassName=""
             contentStyle={{

@@ -151,7 +151,11 @@ export const DashboardMenuContent = (props: P) => {
         />
       )}
 
-      <TableList workspace={workspace} onClose={onClose} />
+      <TableList
+        pinnedMenu={pinnedMenu}
+        workspace={workspace}
+        onClose={onClose}
+      />
 
       {detailedMethods.length > 0 && (
         <SearchList

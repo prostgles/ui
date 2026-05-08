@@ -835,13 +835,12 @@ test.describe("Main test", () => {
     await page.getByTestId("config.methods").click();
 
     /** This timeout is crucial in ensuring monaco editor shows suggestions */
-    await page
-      .getByText("Create function")
-      .click({ ...TWENTY_SECONDS_OR_MORE });
+    await page.getByText("Create function").click(TWENTY_SECONDS_OR_MORE);
     await page.locator("input#function_name").fill("askLLM");
     await page.waitForTimeout(1e3);
     await monacoType(page, ".MethodDefinition", "dbo.t", {
       deleteAll: false,
+      pressBeforeTyping: ["ArrowUp"],
       /** This helps with flaky tests done on workers */
       pressAfterTyping: [
         "Backspace",
@@ -853,12 +852,13 @@ test.describe("Main test", () => {
     });
     await monacoType(page, ".MethodDefinition", "dbo.t", {
       deleteAll: false,
+      pressBeforeTyping: ["ArrowUp"],
     });
     await page.keyboard.press("Tab");
 
     /** Ensure db schema suggestions work */
     const initialCode =
-      "export const run: ProstglesMethod = async (args, { db, dbo, user, callMCPServerTool }) => {\n  dbo.tx\n}";
+      "export const run: ProstglesMethod = async (args, { db, dbo, user, callMCPServerTool }) => {\n dbo.tx \n}";
     const funcCode = await getMonacoValue(page, ".MethodDefinition");
     await expect(funcCode).toEqual(initialCode);
 

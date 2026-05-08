@@ -19,9 +19,11 @@ import { useTableSizeInfo } from "./useTableSizeInfo";
 export const TableList = ({
   workspace,
   onClose,
+  pinnedMenu,
 }: {
   workspace: DBSSchema["workspaces"];
   onClose: VoidFunction | undefined;
+  pinnedMenu: boolean | undefined;
 }) => {
   const {
     tables,
@@ -78,7 +80,7 @@ export const TableList = ({
       }
       inputProps={{
         "data-command": "dashboard.menu.tablesSearchListInput",
-        autoFocus: true,
+        autoFocus: pinnedMenu ? undefined : true,
       }}
       placeholder={`${tables.length} tables/views`}
       noResultsContent={
