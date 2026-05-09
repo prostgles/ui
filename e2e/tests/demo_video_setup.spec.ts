@@ -42,11 +42,20 @@ test.describe("Demo video setup", () => {
         if (hasXrpData) {
           break;
         }
-        await page.waitForTimeout(2000);
+        const waitTime = 2000;
+        await page.waitForTimeout(waitTime);
+        xrp_fetch_timeout -= waitTime;
       }
       if (!hasXrpData) {
+        const xrpRows = await runDbSql(
+          page,
+          "SELECT DISTINCT symbol FROM futures ",
+          {},
+          { returnType: "rows" },
+        );
         throw new Error(
-          "XRP data not available in crypto database after waiting for 60 seconds.",
+          "XRP data not available in crypto database after waiting for 60 seconds." +
+            JSON.stringify(xrpRows),
         );
       }
     }
