@@ -11,16 +11,17 @@ export const schemaDiagramSvgif: OnBeforeScreenshot = async (
   await closeWorkspaceWindows(page);
   await openMenuIfClosed();
   await page.waitForTimeout(500);
-  await addScene({
-    animations: [
-      { type: "wait", duration: 1000 },
-      {
-        type: "click",
-        elementSelector: getCommandElemSelector("SchemaGraph"),
-        duration: 1000,
-      },
-    ],
-  });
+  // await addScene({
+  //   animations: [
+  //     { type: "wait", duration: 1000 },
+  //     {
+  //       type: "click",
+  //       elementSelector: getCommandElemSelector("SchemaGraph"),
+  //       duration: 1000,
+  //     },
+  //   ],
+  // });
+
   await page.getByTestId("SchemaGraph").click();
   await page.waitForTimeout(2500);
   await addScene({

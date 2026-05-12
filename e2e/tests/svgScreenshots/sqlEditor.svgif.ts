@@ -1,48 +1,75 @@
-import { getDataKey, getCommandElemSelector, type SVGif } from "Testing";
+import { expect } from "@playwright/test";
+import { getCommandElemSelector, type SVGif } from "Testing";
 import { closeWorkspaceWindows, monacoType, runDbSql } from "utils/utils";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
-import { expect } from "@playwright/test";
 
 export const sqlEditorSvgif: OnBeforeScreenshot = async (
   page,
   { openConnection, openMenuIfClosed, toggleMenuPinned },
-  { addScene, addSceneAnimation },
+  { addScene },
 ) => {
+  // if (Math.PI) {
+  //   throw "FISDW";
+  // }
   await openConnection("prostgles_video_demo");
   await page.getByTestId("WorkspaceMenu.list").getByText("default").click();
   await toggleMenuPinned();
   await closeWorkspaceWindows(page);
   await openMenuIfClosed();
+  const initialViewport = page.viewportSize();
+  if (!initialViewport) {
+    throw new Error("Viewport size is undefined");
+  }
+
+  await page.getByTestId("dashboard.menu.sqlEditor").click();
+  await toggleMenuPinned();
+
+  /** Ensure the suggestions details pane is underneath the suggestion list */
+  await page.setViewportSize({
+    width: 600,
+    height: 900,
+  });
+  /** Remove TopHeader */
+  await page.evaluate(() => {
+    const topHeader = document.querySelector(".TopHeader");
+    if (topHeader) {
+      topHeader.remove();
+    }
+  });
 
   const sqlSuggestionsScene = async ({
     query,
     svgFileName,
     caption,
+    executeAfterTyping,
   }: {
     query: string;
     svgFileName: string;
     caption?: string;
     animations?: SVGif.Animation[];
+    executeAfterTyping?: boolean;
   }) => {
     await monacoType(page, `.ProstglesSQL`, query, {
       deleteAllAndFill: true,
+      keyPressDelay: executeAfterTyping ? 0 : undefined,
     });
+
+    if (executeAfterTyping) {
+      await page.waitForTimeout(500);
+      await page.keyboard.press("Alt+KeyE");
+      await page.waitForTimeout(500);
+    }
+
     await addScene({
       svgFileName,
       caption,
-      animations: [{ type: "wait", duration: 1000 }],
+      animations: [{ type: "wait", duration: 2000 }],
     });
   };
-
   await page.waitForTimeout(500);
-  // await addSceneAnimation(getCommandElemSelector("dashboard.menu.sqlEditor")); // weird
-  await addSceneAnimation(getCommandElemSelector("dashboard.menu.sqlEditor"));
-  await page.waitForTimeout(500);
-  await toggleMenuPinned();
 
   await sqlSuggestionsScene({
     svgFileName: "keywords",
-    caption: "Keywords details and documentation",
     query: "se",
   });
 
@@ -50,42 +77,42 @@ export const sqlEditorSvgif: OnBeforeScreenshot = async (
     query: "EXPLAIN ( ",
     svgFileName: "explain_options",
     animations: [{ type: "wait", duration: 2000 }],
-    // caption: "EXPLAIN command options",
   });
 
   await sqlSuggestionsScene({
     query: "CREATE INDEX idx_messages_sent ON messages \nUSING ",
     svgFileName: "index_types",
     animations: [{ type: "wait", duration: 2000 }],
-    // caption: "Index type suggestions",
   });
 
   await sqlSuggestionsScene({
     query: "SELECT jsonb_agg",
     svgFileName: "functions",
-    caption: "Function argument details and documentation",
   });
 
   await sqlSuggestionsScene({
     query: "SELECT *\nFROM me",
     svgFileName: "tables",
-    caption: "Table details with related data",
   });
 
   await sqlSuggestionsScene({
     query: "SELECT * \nFROM messages m\nJOIN us",
     svgFileName: "joins",
-    caption: "JOIN suggestions",
   });
 
   await sqlSuggestionsScene({
     query:
       "SELECT * \nFROM messages m \nJOIN users u\n ON u.id = m.sender_id\nWHERE u.options ",
     svgFileName: "jsonb_properties",
-    caption: "JSONB property suggestions",
   });
 
-  /** Insert data */
+  await sqlSuggestionsScene({
+    query: mapQuery.replace("AS double precision) ", "AS double ) "),
+    svgFileName: "error_position",
+    executeAfterTyping: true,
+  });
+
+  /** Sample data */
   await runDbSql(
     page,
     `
@@ -117,14 +144,12 @@ export const sqlEditorSvgif: OnBeforeScreenshot = async (
   );
   await addScene({
     svgFileName: "values",
-    caption: "Column value suggestions",
   });
   await page.keyboard.press("Tab");
   await page.keyboard.press("Alt+KeyE");
   await page.waitForTimeout(1500);
   await addScene({
     svgFileName: "values_result",
-    caption: "Results table with sorting",
   });
 
   await page.reload();
@@ -133,7 +158,6 @@ export const sqlEditorSvgif: OnBeforeScreenshot = async (
   await sqlSuggestionsScene({
     query: "SELECT max() over( ",
     svgFileName: "window_functions",
-    caption: "Window functions",
   });
 
   await page.getByTestId("dashboard.window.menu").click();
@@ -155,35 +179,17 @@ export const sqlEditorSvgif: OnBeforeScreenshot = async (
   await addScene({
     svgFileName: "cpu_usage",
     animations: [{ type: "wait", duration: 2000 }],
-    caption: "Runtime statistics",
   });
 
   await page.reload();
 
-  await monacoType(
-    page,
-    `.ProstglesSQL`,
-    "WITH recent_messages AS (\n  SELECT * FROM messages\n  WHERE \"timestamp\" > NOW() - INTERVAL '7 days'\n)\nSELECT * FROM ",
-    {
-      deleteAllAndFill: true,
-      /** Sets value to avoid extra parens inserted while typing */
-      keyPressDelay: 0,
-      pressAfterTyping: [
-        "ArrowDown",
-        "ArrowDown",
-        "ArrowDown",
-        "Control+ArrowRight",
-        "Control+ArrowRight",
-        "Control+ArrowRight",
-        "Control+ArrowRight",
-        "Control+ArrowRight",
-        "Control+Space",
-      ],
-    },
-  );
+  await monacoType(page, `.ProstglesSQL`, TIMECHART_QUERY, {
+    /** Sets value to avoid extra parens inserted while typing */
+    deleteAllAndFill: true,
+    keyPressDelay: 0,
+  });
   await addScene({
     svgFileName: "cte",
-    caption: "Common Table Expression (CTE) completion",
   });
 
   await page.keyboard.press("Tab");
@@ -201,39 +207,15 @@ export const sqlEditorSvgif: OnBeforeScreenshot = async (
   });
 
   await page.getByTestId("AddChartMenu.Timechart").first().click();
-  await page.waitForTimeout(1500);
-  await addScene({
-    svgFileName: "timechart_btn2",
-    animations: [
-      {
-        type: "click",
-        elementSelector: '[data-key="timestamp"]',
-        duration: 750,
-      },
-    ],
-  });
-  await page.locator(getDataKey("timestamp")).click();
+
   await page.waitForTimeout(1500);
   await addScene({
     svgFileName: "timechart",
-    caption: "Timechart visualization",
   });
   await page.getByTestId("dashboard.window.closeChart").click();
 
   await runDbSql(page, `CREATE EXTENSION IF NOT EXISTS "postgis"`);
   await page.waitForTimeout(1500);
-  /** Map */
-  const mapQuery = [
-    `SELECT id,`,
-    `ST_SetSRID(`,
-    `  ST_MakePoint(`,
-    `    CAST( 144.9 + (random() - 0.5) * 0.5 AS double precision),  `,
-    `    CAST( -37.8 + (random() - 0.5) * 0.5 AS double precision)  `,
-    `  ),`,
-    `  4326`,
-    `) AS geom`,
-    `FROM generate_series(1, 100) AS id`,
-  ].join("\n");
   await monacoType(page, `.ProstglesSQL`, mapQuery, {
     deleteAllAndFill: true,
     keyPressDelay: 0,
@@ -253,19 +235,22 @@ export const sqlEditorSvgif: OnBeforeScreenshot = async (
   await page.waitForTimeout(2500);
   await addScene({
     svgFileName: "map",
-    caption: "Map visualization",
   });
-  // await monacoType(page, `.ProstglesSQL`, `${mapQuery}\nINNER JOIN `, {
-  //   deleteAllAndFill: false,
-  //   keyPressDelay: 0,
-  //   pressAfterTyping: ["Control+Space"],
-  // });
-  // await addScene({
-  //   svgFileName: "map_with_suggestions",
-  //   caption: "Map visualization",
-  // });
   await page.getByTestId("dashboard.window.closeChart").click();
+  await page.setViewportSize(initialViewport);
 };
+
+const mapQuery = [
+  `SELECT id,`,
+  `ST_SetSRID(`,
+  `  ST_MakePoint(`,
+  `    CAST( 144.9 + (random() - 0.5) * 0.5 AS double precision),  `,
+  `    CAST( -37.8 + (random() - 0.5) * 0.5 AS double precision)  `,
+  `  ),`,
+  `  4326`,
+  `) AS geom`,
+  `FROM generate_series(1, 100) AS id`,
+].join("\n");
 
 const intensiveQuery = `
 WITH RECURSIVE
@@ -297,3 +282,25 @@ FROM mandelbrot_iterations
 GROUP BY x, y;
 
  `;
+
+const TIMECHART_QUERY = `WITH series AS (
+  SELECT
+    gs::date AS day,
+    extract(epoch FROM gs) AS t
+  FROM generate_series(
+    current_date - 89,
+    current_date,
+    '1 day'::interval
+  ) AS gs
+)
+SELECT
+  day,
+  round(
+    200
+    + 80  * sin(t / 864000.0)
+    + 30  * sin(t / 172800.0 + 1.2)
+    + 15  * (random() - 0.5)
+    + 0.4 * (row_number() OVER (ORDER BY day))
+  )::int AS value
+FROM series
+ORDER BY day`;

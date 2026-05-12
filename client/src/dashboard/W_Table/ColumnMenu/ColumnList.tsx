@@ -2,7 +2,13 @@ import Btn from "@components/Btn";
 import { FlexRow } from "@components/Flex";
 import PopupMenu from "@components/PopupMenu";
 import { SearchList } from "@components/SearchList/SearchList";
-import { mdiDelete, mdiFunction, mdiLink, mdiPencil } from "@mdi/js";
+import {
+  mdiDelete,
+  mdiFormatColorFill,
+  mdiFunction,
+  mdiLink,
+  mdiPencil,
+} from "@mdi/js";
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import { omitKeys } from "prostgles-types";
 import React, { useMemo, useState } from "react";
@@ -18,6 +24,7 @@ import type { ColumnConfig } from "./ColumnMenu";
 import { getColumnListItem } from "./ColumnSelect/getColumnListItem";
 import { LinkedColumn } from "./LinkedColumn/LinkedColumn";
 import { SummariseColumn } from "./SummariseColumns";
+import { ColumnStyleControls } from "./ColumnStyleControls/ColumnStyleControls";
 
 type P = {
   columns: ColumnConfigWInfo[];
@@ -91,6 +98,11 @@ export const ColumnList = ({
             : c.computedConfig?.isColumn ? "Remove Function"
             : c.computedConfig || c.nested ? "Remove computed field"
             : undefined;
+
+          const nestedColumn = c.nested ? c.nested : undefined;
+          const nestedColumnsToShow = nestedColumn?.columns.filter(
+            (col) => col.show,
+          );
           return {
             ...getColumnListItem({ ...c.info, name: c.name }, c),
             ...(showToggle ? { checked: c.show } : {}),
@@ -123,6 +135,60 @@ export const ColumnList = ({
                         prgl={prgl}
                         suggestions={undefined}
                         field={c.name}
+                      />
+                    </PopupMenu>
+                  )}
+                  {nestedColumn && nestedColumnsToShow?.length === 1 && (
+                    <PopupMenu
+                      positioning="center"
+                      title={`Alter ${c.name}`}
+                      clickCatchStyle={{ opacity: 1 }}
+                      data-command="W_TableMenu_ColumnList.alter"
+                      button={
+                        <Btn
+                          iconPath={mdiFormatColorFill}
+                          title="Style column"
+                          color="action"
+                          className="show-on-trigger-hover"
+                        />
+                      }
+                      onClickClose={false}
+                      contentClassName="p-1"
+                    >
+                      <ColumnStyleControls
+                        db={prgl.db}
+                        tableName={nestedColumn.path.at(-1)!.table}
+                        tables={prgl.tables}
+                        column={nestedColumnsToShow[0]!}
+                        onUpdate={({ style }) => {
+                          const newCols = columns.map((col) => {
+                            if (col.name === c.name && col.nested) {
+                              return {
+                                ...col,
+                                nested: {
+                                  ...col.nested,
+                                  columns: nestedColumn.columns.map((nc) =>
+                                    nc.name === nestedColumnsToShow[0]!.name ?
+                                      { ...nc, style }
+                                    : nc,
+                                  ),
+                                },
+                              };
+                            }
+                            return col;
+                          });
+                          onChange(newCols);
+                        }}
+                        tsDataType={
+                          c.info?.tsDataType ||
+                          c.computedConfig?.tsDataType ||
+                          "any"
+                        }
+                        udt_name={
+                          c.info?.udt_name ||
+                          c.computedConfig?.udt_name ||
+                          "text"
+                        }
                       />
                     </PopupMenu>
                   )}

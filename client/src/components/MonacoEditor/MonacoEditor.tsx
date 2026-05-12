@@ -1,11 +1,5 @@
 import { useEffectDeep, useMemoDeep } from "prostgles-client";
-import {
-  getKeys,
-  isEqual,
-  isObject,
-  pickKeys,
-  type AnyObject,
-} from "prostgles-types";
+import { getKeys, isEqual, pickKeys, type AnyObject } from "prostgles-types";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { appTheme, useReactiveState } from "../../appUtils";
 import type { LoadedSuggestions } from "../../dashboard/Dashboard/dashboardUtils";
@@ -19,6 +13,10 @@ import { getMonaco } from "../../dashboard/SQLEditor/W_SQLEditor";
 import type { editor, Monaco } from "../../dashboard/W_SQL/monacoEditorTypes";
 import { loadPSQLLanguage } from "../../dashboard/W_SQL/MonacoLanguageRegister";
 import { isPlaywrightTest } from "../../i18n/i18nUtils";
+import {
+  hackyFixOptionmatchOnWordStartOnly,
+  hackyShowDocumentationBecauseStorageServiceIsBrokenSinceV42,
+} from "./monacoHackyFixes";
 import { useMonacoEditorAddActions } from "./useMonacoEditorAddActions";
 
 export type MonacoEditorProps = Pick<TestSelectors, "data-command"> & {
@@ -150,6 +148,7 @@ const MonacoEditorWithoutLanguage = (props: MonacoEditorProps) => {
     return () => {
       newEditor.dispose();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     monaco,
     language,
@@ -188,7 +187,8 @@ const MonacoEditorWithoutLanguage = (props: MonacoEditorProps) => {
   useEffect(() => {
     if (!editor) return;
     /** For some reason getRawOptions() returns stale theme from time to time */
-    const theme =
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const theme: string =
       //@ts-ignore
       editor._themeService?.getColorTheme().themeName ?? fullOptions.theme;
     const currentEditorOptions = pickKeys(
@@ -255,55 +255,6 @@ const valueIsDifferentFromEditor = (
     }
   } catch {}
   return valuesDiffer;
-};
-
-const hackyShowDocumentationBecauseStorageServiceIsBrokenSinceV42 = (
-  editor: editor.IStandaloneCodeEditor,
-  expandSuggestionDocs = true,
-) => {
-  const sc = editor.getContribution("editor.contrib.suggestController");
-  //@ts-ignore
-  if (sc?.widget) {
-    //@ts-ignore
-    const suggestWidget = sc.widget.value;
-    if (suggestWidget && suggestWidget._setDetailsVisible) {
-      // This will default to visible details. But when user switches it off
-      // they will remain switched off:
-      suggestWidget._setDetailsVisible(expandSuggestionDocs);
-    }
-    // I also wanted my widget to be shorter by default:
-    if (suggestWidget && suggestWidget._persistedSize) {
-      // suggestWidget._persistedSize.store({width: 200, height: 256});
-    }
-  }
-};
-
-const hackyFixOptionmatchOnWordStartOnly = (
-  editor: editor.IStandaloneCodeEditor,
-) => {
-  try {
-    /* 
-      118 for 0.50 
-      119 for 0.52.0
-      133 for 0.53 
-    */
-    const indexOfConfig = 133;
-    // ensure typing name matches relname
-    // suggestModel.js:420
-    //@ts-ignore
-    const confObj = editor._configuration?.options?._values?.[indexOfConfig];
-    if (!isObject(confObj)) {
-      console.error(
-        "new monaco version might have broken hackyFixOptionmatchOnWordStartOnly again",
-      );
-    }
-    if (confObj && "matchOnWordStartOnly" in confObj) {
-      //@ts-ignore
-      editor._configuration.options._values[
-        indexOfConfig
-      ].matchOnWordStartOnly = false;
-    }
-  } catch (e) {}
 };
 
 export const MONACO_READONLY_DEFAULT_OPTIONS = {

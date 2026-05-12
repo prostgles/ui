@@ -186,7 +186,10 @@ import {
 } from "@components/MonacoEditor/MonacoEditor";
 import { getSelectedText } from "@components/MonacoEditor/useMonacoEditorAddActions";
 import { mdiPlay } from "@mdi/js";
-import type { IPosition } from "monaco-editor/esm/vs/editor/editor.api";
+import type {
+  IPosition,
+  Position,
+} from "monaco-editor/esm/vs/editor/editor.api";
 import type { SQLHandler } from "prostgles-types";
 import { isEmpty, isEqual, omitKeys } from "prostgles-types";
 import { SECOND } from "../Charts";
@@ -243,7 +246,10 @@ type P = {
   onStopQuery?: (terminate: boolean) => any;
   sql?: SQLHandler;
   onMount?: (ref: SQLEditorRef) => void;
-  onUnmount?: (editor: any, cursorPosition: any) => void | Promise<void>;
+  onUnmount?: (
+    editor: any,
+    cursorPosition: Position | undefined,
+  ) => void | Promise<void>;
   cursorPosition?: IPosition;
   onDidSetCursorPosition?: () => void;
   style?: React.CSSProperties;
@@ -264,10 +270,10 @@ export class W_SQLEditor extends RTComp<P, S> {
   error?: MonacoError;
   value?: string;
 
-  constructor(props) {
+  constructor(props: P) {
     super(props);
     this.state = {
-      value: props.value ?? "",
+      value: props.value,
       editorMounted: false,
     };
   }
@@ -275,7 +281,7 @@ export class W_SQLEditor extends RTComp<P, S> {
   onMount() {
     window.addEventListener(
       "beforeunload",
-      async (e) => {
+      async () => {
         await this.onUnmount();
       },
       false,
@@ -283,7 +289,10 @@ export class W_SQLEditor extends RTComp<P, S> {
   }
 
   async onUnmount() {
-    await this.props.onUnmount?.(this.editor, this.editor?.getPosition());
+    await this.props.onUnmount?.(
+      this.editor,
+      this.editor?.getPosition() || undefined,
+    );
     if (this.rootRef) this.resizeObserver?.unobserve(this.rootRef);
   }
 
@@ -291,7 +300,7 @@ export class W_SQLEditor extends RTComp<P, S> {
   loadedSuggestions: DashboardState["suggestions"];
   loadedFuncs = false;
   resizeObserver?: ResizeObserver;
-  onDelta = async (dp, ds) => {
+  onDelta = async () => {
     const {
       error,
       getFuncDef,
@@ -308,7 +317,7 @@ export class W_SQLEditor extends RTComp<P, S> {
     }
 
     if (!this.resizeObserver && this.rootRef) {
-      this.resizeObserver = new ResizeObserver((entries) => {
+      this.resizeObserver = new ResizeObserver(() => {
         this.editor?.revealLineInCenterIfOutsideViewport(
           this.editor.getPosition()?.lineNumber ?? value.split(EOL).length,
         );
@@ -350,7 +359,7 @@ export class W_SQLEditor extends RTComp<P, S> {
     /* SET ERROR */
     if (this.editor && !isEqual(error, this.error)) {
       this.error = error;
-      setMonacEditorError(
+      void setMonacEditorError(
         this.editor,
         monaco,
         this.getCurrentCodeBlock,
@@ -360,7 +369,7 @@ export class W_SQLEditor extends RTComp<P, S> {
     }
   };
 
-  inDebounce: any;
+  inDebounce: ReturnType<typeof setTimeout> | null = null;
   curVal?: string;
   onChange = (val: string) => {
     const { onChange, debounce = 300 } = this.props;
@@ -445,7 +454,7 @@ export class W_SQLEditor extends RTComp<P, S> {
 
   onMonacoEditorMount = (editor: editor.IStandaloneCodeEditor) => {
     const { onMount, sqlOptions } = this.props;
-    addSqlEditorFunctions(
+    void addSqlEditorFunctions(
       editor,
       sqlOptions?.executeOptions === "smallest-block",
     );
@@ -459,13 +468,13 @@ export class W_SQLEditor extends RTComp<P, S> {
       });
     }
     this.editor = editor;
-    setActions(editor, this);
-    editor.onDidChangeModelContent((e) => {
+    void setActions(editor, this);
+    editor.onDidChangeModelContent(() => {
       this.onChange(editor.getValue());
-      setActiveCodeBlock.bind(this)(undefined);
+      void setActiveCodeBlock.bind(this)(undefined);
     });
     editor.onDidChangeCursorPosition((e) => {
-      setActiveCodeBlock.bind(this)(e);
+      void setActiveCodeBlock.bind(this)(e);
     });
 
     const { cursorPosition, onDidSetCursorPosition } = this.props;

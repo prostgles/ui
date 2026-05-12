@@ -289,7 +289,7 @@ export class AlterColumn extends RTComp<AlterColumnProps, S> {
                   query: `ALTER TABLE ${tName} \nRENAME COLUMN ${JSON.stringify(field)} \nTO ${JSON.stringify(newName)} `,
                 });
               } else if (k === "dataType") {
-                this.onNewDataType({ dataType: val.dataType });
+                void this.onNewDataType({ dataType: val.dataType });
               } else if (k === "isPkey") {
                 if (!pkeyCons) {
                   this.setState({

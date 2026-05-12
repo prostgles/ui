@@ -28,10 +28,11 @@ export type OnBeforeScreenshot = (
 
 export const SVG_SCREENSHOT_DETAILS = {
   schema_diagram: schemaDiagramSvgif,
-  timechart: timechartSvgif,
-  sql_editor: sqlEditorSvgif,
   map: mapSvgif,
+  timechart: timechartSvgif,
+
   table_timechart: tableTimechartSvgif,
+  sql_editor: sqlEditorSvgif,
   table: tableSvgif,
   ai_assistant_agentic_workflow_gov_api: aiAssistantAgenticWorkflowGovApiSvgif,
   dashboard: dashboardSvgif,

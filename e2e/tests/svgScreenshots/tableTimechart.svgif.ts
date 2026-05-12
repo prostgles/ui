@@ -1,5 +1,9 @@
 import { getCommandElemSelector, getDataKey } from "Testing";
-import { closeWorkspaceWindows, deleteAllWorkspaces } from "utils/utils";
+import {
+  closeWorkspaceWindows,
+  deleteAllWorkspaces,
+  runDbSql,
+} from "utils/utils";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
 
 export const tableTimechartSvgif: OnBeforeScreenshot = async (

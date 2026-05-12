@@ -12,6 +12,7 @@ import { RenderValue } from "../../../SmartForm/SmartFormField/RenderValue";
 import { getYLabelFunc } from "../../../W_TimeChart/fetchData/getTimeChartData";
 import { getColWInfo } from "../../tableUtils/getColWInfo";
 import type { ColumnConfig } from "../ColumnMenu";
+import { StyledTableColumn } from "../../tableUtils/StyledTableColumn";
 
 const NESTED_LIMIT = 10;
 
@@ -93,12 +94,28 @@ export const NestedColumnRender = ({
           getValues={() => valueList.map((v) => v?.[key])}
         />
       : JSON.stringify(value);
+    if (columnWInfo?.style && columnWInfo.style.type !== "None") {
+      return (
+        <StyledTableColumn
+          row={row}
+          value={value}
+          column={{
+            ...columnWInfo,
+            ...columnWInfo.info!,
+            ...datType,
+          }}
+          renderedVal={renderedValue}
+          maxCellChars={undefined}
+          barchartVals={undefined}
+        />
+      );
+    }
     return renderedValue;
   };
   const valueList = value ?? [];
-  const [firstValue, ...rest] = valueList;
+  const [firstValue, ...otherValues] = valueList;
   const isSingleValue = shownNestedColumns.length === 1;
-  if (isSingleValue && !isMedia && firstValue && !rest.length) {
+  if (isSingleValue && !isMedia && firstValue && !otherValues.length) {
     const [key, value] = Object.entries(firstValue)[0]!;
     return <>{render({ key, value })}</>;
   }

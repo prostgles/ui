@@ -585,6 +585,8 @@ export const COMMANDS = {
   UserInput: "",
   NestedTimechartControls: "",
   DataLayerDataSourceInfo: "",
+  SilverGridChild: "",
+  App: "",
 } as const satisfies Record<
   string,
   | string

@@ -16,7 +16,7 @@ import { blend } from "../colorBlend";
 import type { ProstglesTableColumn } from "./getTableCols";
 import type { OnRenderColumnProps } from "./onRenderColumn";
 
-type P = OnColRenderRowInfo &
+type P = Pick<OnColRenderRowInfo, "row" | "value" | "renderedVal"> &
   Pick<OnRenderColumnProps, "maxCellChars" | "column" | "barchartVals">;
 
 export const StyledTableColumn = ({
@@ -27,8 +27,10 @@ export const StyledTableColumn = ({
   renderedVal,
 }: P) => {
   if (c.style?.type === "Icons") {
-    const valueKey = value?.toString() ?? "";
-    const iconName = valueKey && c.style.valueToIconMap[valueKey];
+    const valueKey = String(value?.toString() ?? "");
+    const iconName = (valueKey && c.style.valueToIconMap[valueKey]) as
+      | string
+      | undefined;
     const sizeNum = c.style.size ?? 24;
     const iconNode = iconName && <SvgIcon icon={iconName} size={sizeNum} />;
     return <FlexRow>{iconNode ?? value}</FlexRow>;
@@ -49,7 +51,7 @@ export const StyledTableColumn = ({
       />
     );
   } else if (c.style?.type !== "None") {
-    const style = getCellStyle(c, c, row, barchartVals?.[c.name]);
+    const style = getCellStyle(c, c, value, barchartVals?.[c.name]);
 
     if (
       includes(["Fixed", "Conditional"], c.style?.type) &&
@@ -150,7 +152,7 @@ export const StyledCell = ({
 export const getCellStyle = (
   col: ColumnConfig,
   c: Pick<ProstglesTableColumn, "tsDataType" | "udt_name">,
-  row: AnyObject,
+  val: any,
   dataRange: MinMax | undefined,
 ):
   | {
@@ -166,7 +168,7 @@ export const getCellStyle = (
   } else if (style.type === "Fixed") {
     res = { ...style };
   } else if (style.type === "Conditional") {
-    const val = row[col.name];
+    // const val = row[col.name];
 
     const match = style.conditions.find(({ operator, condition }) => {
       const isNumeric =
@@ -219,14 +221,12 @@ export const getCellStyle = (
       minColor = "#63f717",
       maxColor = "#46b5d5",
     } = style;
-    const val =
-      _PG_date.includes(c.udt_name as any) ?
-        +new Date(row[col.name])
-      : +row[col.name];
+    const dateOrNumber =
+      _PG_date.includes(c.udt_name as any) ? +new Date(val) : +val;
     const { max, min } = dataRange ?? {};
 
-    if (isNumber(val) && isNumber(min) && isNumber(max)) {
-      const perc = (val - min) / (max - min);
+    if (isNumber(dateOrNumber) && isNumber(min) && isNumber(max)) {
+      const perc = (dateOrNumber - min) / (max - min);
 
       res = {
         textColor,

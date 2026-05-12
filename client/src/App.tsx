@@ -192,7 +192,11 @@ export const App = () => {
     <AppContextProvider appContextProps={appContextProps}>
       <PrglCoreProvider prglCore={prglState}>
         <ElectronSearchBar />
-        <FlexCol key={prglState.dbsKey} className={`App gap-0 f-1 min-h-0`}>
+        <FlexCol
+          key={prglState.dbsKey}
+          data-command="App"
+          className={`App gap-0 f-1 min-h-0`}
+        >
           {!prglLoaded && (
             <CommandPalette isElectron={isElectron} prglLoaded={undefined} />
           )}

@@ -198,7 +198,7 @@ export const getTableCols = ({
        */
       getCellStyle: (row) => {
         if (c.style?.type === "Scale" && barchartVals?.[c.name]) {
-          const style = getCellStyle(c, c, row, barchartVals[c.name]);
+          const style = getCellStyle(c, c, row[c.name], barchartVals[c.name]);
           if (!style?.cellColor && !style?.textColor) {
             return {};
           }

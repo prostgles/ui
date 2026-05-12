@@ -28,7 +28,9 @@ export const timechartSvgif: OnBeforeScreenshot = async (
 
   await addSceneAnimation(getDataKey("XRPUSDT"));
   await addSceneAnimation(getCommandElemSelector("FilterWrapper_Field"));
-
+  await addSceneAnimation(
+    getCommandElemSelector("dashboard.window.toggleFilterBar"),
+  );
   await addSceneAnimation(getCommandElemSelector("AddChartMenu.Timechart"));
   await addSceneAnimation(
     getCommandElemSelector("AddChartMenu.Timechart") +
@@ -49,6 +51,8 @@ export const timechartSvgif: OnBeforeScreenshot = async (
     getCommandElemSelector("Popup.content") + " " + getDataKey("symbol"),
   );
   await addSceneAnimation(getCommandElemSelector("Popup.close"));
+  await addScene();
+  await page.getByTestId("dashboard.window.detachChart").click();
   await addScene();
   await toggleMenuPinned(false);
   await page.waitForTimeout(1500);

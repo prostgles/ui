@@ -112,6 +112,7 @@ export const ColumnStyleControls = (props: StyleColumnProps) => {
     setStyle({ ...style, ...newStyle } as typeof style);
   };
   const { state: theme } = useReactiveState(appTheme);
+
   return (
     <FlexCol className="ColumnStyleControls flex-col gap-1">
       <Select

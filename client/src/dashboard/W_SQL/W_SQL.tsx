@@ -120,7 +120,7 @@ export type W_SQLState = {
   handler?: SocketSQLStreamHandlers;
   activeQuery: undefined | W_SQL_ActiveQuery;
   joins: string[];
-  error?: any;
+  error?: unknown;
   w?: SyncDataItem<WindowData>;
   hideTable?: boolean;
   sql: string;
@@ -209,7 +209,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
     window.addEventListener("keydown", this.saveFunc, false);
   }
 
-  saveFunc = (e) => {
+  saveFunc = (e: KeyboardEvent) => {
     if (
       e.key === "s" &&
       e.ctrlKey &&
@@ -290,7 +290,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
         },
       },
     });
-    this.state.handler?.stop(terminate);
+    void this.state.handler?.stop(terminate);
     return true;
   };
 
@@ -373,8 +373,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
             <Btn
               color="action"
               variant="filled"
-              onClick={async () => {
-                // const newOptions = { ...user.options, viewedSQLTips: true };
+              onClickPromise={async () => {
                 await dbs.users.update(
                   { id: user.id },
                   { options: { $merge: [{ viewedSQLTips: true }] } },
@@ -431,7 +430,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
             }
             className={`min-h-0 min-w-0 flex-col relative ${hideCodeEditor ? "f-0" : "f-1"}`}
           >
-            {error && <ErrorComponent error={error} className="m-2" />}
+            <ErrorComponent error={error} className="m-2" />
             <W_SQLEditor
               value={this.d.w?.sql ?? ""}
               style={hideCodeEditor ? { display: "none" } : {}}

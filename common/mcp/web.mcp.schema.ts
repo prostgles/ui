@@ -135,3 +135,5 @@ export const webMcpSchema = {
     },
   },
 } as const;
+
+export const GOOGLE_FAVICON_ENDPOINT = "https://www.google.com/s2/favicons";

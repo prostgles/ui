@@ -843,7 +843,11 @@ CREATE TABLE restaurants (
   address VARCHAR(100) NOT NULL,
   website TEXT,
   type TEXT,
-  logo BYTEA,
+  logo TEXT GENERATED ALWAYS AS (
+    'https://www.google.com/s2/favicons?domain=' ||
+    regexp_replace(website, '^(https?://[^/]+).*$', '\1/') ||
+    '&sz=64'
+  ) STORED,
   address_id BIGINT NOT NULL REFERENCES addresses,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import { tryCatchV2 } from "prostgles-types";
+import { GOOGLE_FAVICON_ENDPOINT } from "@common/mcp/web.mcp.schema";
 
 export const Favicon = ({
   url,
@@ -14,7 +15,7 @@ export const Favicon = ({
         const _url = new URL(url);
         const domain = _url.hostname;
         // const mainUrl = `https://icons.duckduckgo.com/ip3/${domain}.ico`;
-        const otherUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+        const otherUrl = `${GOOGLE_FAVICON_ENDPOINT}?domain=${domain}&sz=64`;
         return otherUrl;
       }).data,
     [url],

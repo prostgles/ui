@@ -178,7 +178,7 @@ export const ColumnMenu = (props: P) => {
 
   const onUpdate = (nc: Partial<ColumnConfig>) => {
     if (!column) return;
-    const newCols = w.columns?.map((c, i) => {
+    const newCols = w.columns?.map((c) => {
       if (c.name === column.name) {
         return { ...c, ...nc };
       }

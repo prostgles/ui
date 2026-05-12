@@ -366,6 +366,7 @@ export class SilverGridChild extends RTComp<
          * */
         key={fullscreen + layout.id}
         className={`SilverGridChild silver-grid-box silver-grid-item bg-color-1 f-1 flex-col min-w-0 min-h-0 ${fullscreen ? " fullscreen " : " "} ${isFixed ? "rounded shadow" : ""}`}
+        data-command="SilverGridChild"
         data-box-id={layout.id}
         data-box-type="item"
         data-table-name={layout.tableName}

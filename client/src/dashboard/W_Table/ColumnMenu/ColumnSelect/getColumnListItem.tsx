@@ -41,7 +41,10 @@ export const getColumnListItem = (
 } => {
   const subLabel =
     columnWInfo?.nested ?
-      columnWInfo.nested.columns.map((c) => c.name).join(", ")
+      columnWInfo.nested.columns
+        .filter((c) => c.show)
+        .map((c) => c.name)
+        .join(", ")
     : columnWInfo ?
       `${columnWInfo.info?.udt_name ?? columnWInfo.computedConfig?.udt_name}      ${columnWInfo.info?.is_nullable ? "nullable" : ""}`
     : c.udt_name;

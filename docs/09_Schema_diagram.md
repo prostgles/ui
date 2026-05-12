@@ -47,6 +47,15 @@ The menu also includes options to clone existing workspaces and delete them if t
 The workspace area is the main place for interacting with your data. 
 It includes the SQL editor, data tables, maps, and timecharts, allowing you to execute queries, visualize data, and manage database objects.
 
+## Features
+
+- **Flexible layout**: Arrange your workspace with multiple tabs and split views to compare data, write queries, and visualize results side by side.
+- **AI assistant**: Automate tasks, write queries, create visualizations, and explore your data with natural language commands.
+- **Views and visualizations**: Create different views for your data, including tables, maps, and timecharts, to explore and analyze your data in various ways.
+- **SQL editor**: Write and execute SQL queries directly in the dashboard, with features like syntax highlighting, autocomplete, and query history to enhance your productivity.
+- **Real-time updates**: Each table/view shows real-time data by default
+- **Cross-filtering**: Tables, maps, and timecharts stay cross-filtered when opened from the same source data, allowing you to explore your data from different angles while keeping the context.
+
   - <a href="#sql_editor">SQL editor</a>: The SQL editor allows users to write and execute SQL queries against the selected database. It provides a user-friendly interface for interacting with the database.  
   - <a href="#table_view">Table view</a>: Allows interacting with a table/view from the database.  
   - <a href="#map_view">Map view</a>: Displays a map visualization based on the Table/SQL query results.  

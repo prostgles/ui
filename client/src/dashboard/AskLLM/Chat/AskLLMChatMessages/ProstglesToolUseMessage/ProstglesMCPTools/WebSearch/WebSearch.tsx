@@ -1,16 +1,23 @@
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import { FlexCol, FlexRow } from "@components/Flex";
+import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 import React from "react";
 import type { ProstglesMCPToolsProps } from "../../ProstglesToolUseMessage";
-import { useTypedToolUseResultData } from "../common/useTypedToolUseResultData";
+import { useJSONBParsedData } from "../common/useJSONBParsedData";
+import { useTypedToolUseResultDataV2 } from "../common/useTypedToolUseResultData";
 import { Favicon } from "./Favicon";
-import { ScrollFade } from "@components/ScrollFade/ScrollFade";
+const inputSchema =
+  PROSTGLES_MCP_SERVERS_AND_TOOLS["web"]["websearch"]["schema"];
 const schema =
   PROSTGLES_MCP_SERVERS_AND_TOOLS["web"]["websearch"]["outputSchema"];
 
-export const WebSearch = ({ resultContent }: ProstglesMCPToolsProps) => {
-  const toolUseResult = useTypedToolUseResultData(resultContent, schema);
-
+export const WebSearch = ({
+  toolUseContent,
+  resultContent,
+}: ProstglesMCPToolsProps) => {
+  const toolUse = useJSONBParsedData(toolUseContent.input, inputSchema);
+  const toolUseResult = useTypedToolUseResultDataV2(resultContent, schema);
+  const toolUseResultData = toolUseResult?.data;
   return (
     <ScrollFade
       className="o-auto flex-col gap-p5"
@@ -18,10 +25,16 @@ export const WebSearch = ({ resultContent }: ProstglesMCPToolsProps) => {
         maxHeight: "70vh",
       }}
     >
-      {toolUseResult && toolUseResult.length === 0 && (
-        <div style={{ color: "var(--gray)" }}>No results found.</div>
+      {toolUse.data && (
+        <FlexRow className="min-w-0 py-1">
+          <div className="ws-nowrap">Search query:</div>
+          <div className="text-ellipsis f-1 min-w-0">{toolUse.data.q}</div>
+        </FlexRow>
       )}
-      {toolUseResult?.map((result, index) => {
+      {toolUseResultData && toolUseResultData.length === 0 && (
+        <div className="text-1">No results found.</div>
+      )}
+      {toolUseResultData?.map((result, index) => {
         return (
           <FlexCol
             key={index}
