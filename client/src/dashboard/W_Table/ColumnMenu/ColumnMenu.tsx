@@ -250,7 +250,7 @@ export const ColumnMenu = (props: P) => {
         />
       ),
     },
-    "Display format": {
+    "Render as": {
       style:
         column.format && column.format.type !== "NONE" ?
           { color: "var(--active)" }

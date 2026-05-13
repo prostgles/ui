@@ -64,25 +64,21 @@ export const backupAndRestoreSvgif: OnBeforeScreenshot = async (
   await addSceneAnimation(getDataKey("Cloud"));
   await addSceneAnimation(
     getCommandElemSelector("CloudStorageCredentialSelector.selectCredential"),
-    undefined,
-    "fast",
+    { duration: "fast" },
   );
   await addScene({ animations: [{ type: "wait", duration: 1500 }] });
   await page.keyboard.press("Escape");
-  await addSceneAnimation(getDataKey("Local"), undefined, "fast");
-  await addSceneAnimation(
-    getCommandElemSelector("config.bkp.create.name"),
-    {
+  await addSceneAnimation(getDataKey("Local"), { duration: "fast" });
+  await addSceneAnimation(getCommandElemSelector("config.bkp.create.name"), {
+    duration: "fast",
+    action: {
       action: "type",
       text: backupName,
     },
-    "fast",
-  );
-  await addSceneAnimation(
-    getCommandElemSelector("config.bkp.create.start"),
-    undefined,
-    "fast",
-  );
+  });
+  await addSceneAnimation(getCommandElemSelector("config.bkp.create.start"), {
+    duration: "fast",
+  });
   await page
     .getByTestId("BackupControls.DeleteAll")
     .waitFor({ state: "visible", timeout: 20_000 });

@@ -34,31 +34,28 @@ export const tableSvgif: OnBeforeScreenshot = async (
     // undefined,
     // "fast",
   );
-  await addSceneAnimation(getDataKey("$sum"), undefined, "fast");
+  await addSceneAnimation(getDataKey("$sum"), { duration: "fast" });
   await addSceneAnimation(
     getCommandElemSelector("FunctionColumnList.SearchInput"),
-    { action: "type", text: "total", mode: "fill" },
+    { action: { action: "type", text: "total", mode: "fill" } },
   );
 
-  await addSceneAnimation(
-    getDataKey("(id = customer_id) orders.Total Price"),
-    undefined,
-    "fast",
-  );
+  await addSceneAnimation(getDataKey("(id = customer_id) orders.Total Price"), {
+    duration: "fast",
+  });
   await addSceneAnimation(
     getCommandElemSelector("QuickAddComputedColumn.name"),
-    { action: "type", text: "Total Spent", mode: "fill" },
+    { action: { action: "type", text: "Total Spent", mode: "fill" } },
   );
   await addSceneAnimation(
     getCommandElemSelector("QuickAddComputedColumn.Add"),
-    undefined,
-    "fast",
+    { duration: "fast" },
   );
   await page.waitForTimeout(2000);
 
   /** Sort by computed column */
-  await addSceneAnimation(getDataKey("Total Spent"), undefined, "fast");
-  await addSceneAnimation(getDataKey("Total Spent"), undefined, "fast");
+  await addSceneAnimation(getDataKey("Total Spent"), { duration: "fast" });
+  await addSceneAnimation(getDataKey("Total Spent"), { duration: "fast" });
 
   /** Show card joined records */
   const pageParams = { page, addSceneAnimation, addScene };
@@ -79,6 +76,9 @@ export const tableSvgif: OnBeforeScreenshot = async (
   };
   // was ok up to here
   await openJoinedSection("orders");
+  await addScene({
+    svgFileName: "joined_records_linked_data",
+  });
   await addSceneAnimation({
     selector: getCommandElemSelector("SmartCard.viewEditRow"),
     nth: 0,
@@ -89,10 +89,9 @@ export const tableSvgif: OnBeforeScreenshot = async (
   await page.getByTestId("Popup.close").last().click();
 
   /** Show quick stats filter and map */
-  await addSceneAnimation(
-    `[role="columnheader"]` + getDataKey("type"),
-    "rightClick",
-  );
+  await addSceneAnimation(`[role="columnheader"]` + getDataKey("type"), {
+    action: "rightClick",
+  });
   await addSceneAnimation(getDataKey("Quick Stats"));
   await addSceneAnimation(getDataKey("rider"));
   await page.getByTestId("Popup.close").click();

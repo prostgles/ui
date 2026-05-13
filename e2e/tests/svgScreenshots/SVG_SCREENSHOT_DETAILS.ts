@@ -27,19 +27,19 @@ export type OnBeforeScreenshot = (
 ) => Promise<void>;
 
 export const SVG_SCREENSHOT_DETAILS = {
+  ai_assistant: aiAssistantSvgif,
+  table_timechart: tableTimechartSvgif,
+  timechart: timechartSvgif,
+  sql_editor: sqlEditorSvgif,
   schema_diagram: schemaDiagramSvgif,
   map: mapSvgif,
-  timechart: timechartSvgif,
 
-  table_timechart: tableTimechartSvgif,
-  sql_editor: sqlEditorSvgif,
   table: tableSvgif,
   ai_assistant_agentic_workflow_gov_api: aiAssistantAgenticWorkflowGovApiSvgif,
   dashboard: dashboardSvgif,
   ai_assistant_agentic_workflow: aiAssistantAgenticWorkflowSvgif,
   electron_setup: electronSetupSvgif,
   command_palette: commandPaletteSvgif,
-  ai_assistant: aiAssistantSvgif,
   backup_and_restore: backupAndRestoreSvgif,
   account: accountSvgif,
   navbar: navbarSvgif,
@@ -59,9 +59,11 @@ export const SVG_SCREENSHOT_DETAILS = {
       getCommandElemSelector("dashboard.window.toggleFilterBar"),
     );
     await addSceneAnimation(getCommandElemSelector("SearchList.Input"), {
-      action: "type",
-      text: "4326",
-      // mode: "fill",
+      action: {
+        action: "type",
+        text: "4326",
+        // mode: "fill",
+      },
     });
     await addScene();
     await page.keyboard.press("Enter");

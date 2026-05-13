@@ -91,7 +91,7 @@ export const MonacoCodeInMarkdown = (props: MonacoCodeInMarkdownProps) => {
       const rows = tryCatchV2(
         () => JSON.parse(resultString) as Record<string, unknown>[],
       ).data;
-      if (!rows?.length) {
+      if (!rows) {
         return {
           state: "ok-command-result",
           commandResult: "Query executed successfully. No rows returned.",

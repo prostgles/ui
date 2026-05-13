@@ -73,6 +73,7 @@ export const AgenticWorkflowDetails = ({
           onChange={(newDbAccess) => {
             updateOverride({ databaseAccessDefinitions: newDbAccess });
           }}
+          hideTablesWithoutAccess={true}
           newTables={newTables}
         />
 

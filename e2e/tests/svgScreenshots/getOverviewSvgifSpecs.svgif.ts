@@ -172,7 +172,8 @@ export const getOverviewSvgifSpecs = async () => {
 
     {
       fileName: "timechart_cover",
-      svgSceneFileName: svgifSpecsObj.ai_assistant[31]!.svgFileName, // or 32 with tooltip
+      /** Request tool access */
+      svgSceneFileName: svgifSpecsObj.ai_assistant[8]!.svgFileName, // or 32 with tooltip
     },
   ];
 

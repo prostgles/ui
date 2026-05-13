@@ -13,6 +13,7 @@ import {
 } from "utils/utils";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
 import { typeSendAddScenes } from "./utils/typeSendAddScenes";
+import { geoQuestionScenario } from "testAskLLM/scenarios/geoQuestion.scenario";
 
 export const aiAssistantSvgif: OnBeforeScreenshot = async (
   page,
@@ -47,41 +48,41 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   await deleteExistingLLMChat(page);
   await page.getByTestId("Popup.close").last().click();
   await closeWorkspaceWindows(page);
-  await addSceneAnimation(getCommandElemSelector("AskLLM"));
+  // await addSceneAnimation(getCommandElemSelector("AskLLM"));
 
+  // await newChat(page);
+  // await setModelByText(page, "sonn");
+  // await setPromptByText(page, "dashboard");
+  // await addScene({
+  //   svgFileName: "focus_textarea",
+  //   animations: [
+  //     { type: "wait", duration: 1000 },
+  //     {
+  //       type: "click",
+  //       elementSelector: getCommandElemSelector("Chat.textarea"),
+  //       offset: { x: 20, y: 10 },
+  //       duration: 1e3,
+  //     },
+  //   ],
+  // });
+
+  await openConnection("crypto");
+  await page.getByTestId("AskLLM").click();
   await newChat(page);
-  await setModelByText(page, "sonn");
   await setPromptByText(page, "dashboard");
-  await addScene({
-    svgFileName: "focus_textarea",
-    animations: [
-      { type: "wait", duration: 1000 },
-      {
-        type: "click",
-        elementSelector: getCommandElemSelector("Chat.textarea"),
-        offset: { x: 20, y: 10 },
-        duration: 1e3,
-      },
-    ],
-  });
 
   await typeSendAddScenes(
     page,
     addScene,
-    "I need some dashboards with useful insights and metrics",
-    [
-      {
-        type: "click",
-        elementSelector: getCommandElemSelector(
-          "AskLLMChat.LoadSuggestedDashboards",
-        ),
-        duration: 1000,
-      },
-    ],
+    "I need to look at futures and funding rates data across top coins",
   );
-  await page.getByTestId("AskLLMChat.LoadSuggestedDashboards").click();
-  await page.waitForTimeout(4000);
-  await addScene({ svgFileName: "dashboards_loaded" });
+  await addSceneAnimation(
+    getCommandElemSelector("AskLLMChat.LoadSuggestedDashboards"),
+  );
+  await addScene({ svgFileName: "crypto_dashboards" });
+  await page.mouse.move(450, 300);
+  await page.mouse.click(450, 300);
+  await addScene({ svgFileName: "crypto_dashboards_tooltip" });
 
   await openConnection("prostgles_video_demo");
   await page.getByTestId("AskLLM").click();
@@ -91,12 +92,17 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
     page,
     addScene,
     "The task involves importing data from receipt images I will paste in this chat",
+    undefined,
+    undefined,
+    undefined,
+    "request_tool_access",
   );
   const loadToolsBtn = await page
     .getByTestId("RequestToolAccess.Approve")
     .last();
 
   await loadToolsBtn.waitFor({ state: "visible", timeout: 15000 });
+
   await addSceneAnimation(getCommandElemSelector("RequestToolAccess.Approve"));
 
   await page.getByText("Added tool access").waitFor({ state: "visible" });
@@ -170,12 +176,14 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
     .click();
   await page.getByTestId("Popup.close").last().click();
 
+  await openConnection("food_delivery");
+  await page.getByTestId("AskLLM").click();
   await setPromptByText(page, "chat");
 
   await typeSendAddScenes(
     page,
     addScene,
-    "Show a list of orders from the last 30 days",
+    geoQuestionScenario.firstMessage,
     [
       { type: "wait", duration: 1000 },
       {
@@ -185,36 +193,23 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
       },
     ],
     () => allowOnce(page, false),
+    undefined,
+    "geo_question",
   );
   await allowOnce(page);
+  await page.getByTestId("ToolUseMessage.toggleGroup").last().click();
   await page.getByTestId("ToolUseMessage.toggle").last().click();
   await expect(page.getByTestId("MarkdownMonacoCode").last()).toContainText(
-    "SELECT * FROM orders",
+    "WITH o30 AS (  SELECT o.id",
   );
   await page.waitForTimeout(2000);
   await addScene({ svgFileName: "sql_result" });
 
   await deletePreviousMessages(page);
-  await addSceneAnimation(getCommandElemSelector("Chat.speech"), "rightClick");
+  await addSceneAnimation(getCommandElemSelector("Chat.speech"), {
+    action: "rightClick",
+  });
   await addSceneAnimation(getDataKey("stt-local"));
   await addScene({ svgFileName: "stt" });
   await page.keyboard.press("Escape");
-
-  await openConnection("crypto");
-  await page.getByTestId("AskLLM").click();
-  await newChat(page);
-  await setPromptByText(page, "dashboard");
-
-  await typeSendAddScenes(
-    page,
-    addScene,
-    "I need to look at futures and funding rates data across top coins",
-  );
-  await addSceneAnimation(
-    getCommandElemSelector("AskLLMChat.LoadSuggestedDashboards"),
-  );
-  await addScene({ svgFileName: "crypto_dashboards" });
-  await page.mouse.move(450, 300);
-  await page.mouse.click(450, 300);
-  await addScene({ svgFileName: "crypto_dashboards_tooltip" });
 };

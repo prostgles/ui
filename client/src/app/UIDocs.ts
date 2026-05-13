@@ -18,6 +18,7 @@ import { serverSettingsUIDoc } from "./UIDocs/serverSettingsUIDoc";
 import { UIInstallation } from "./UIDocs/UIInstallationUIDoc";
 import { getSVGif } from "./domToSVG/SVGif/getSVGif";
 import type { DynamicComponentRegistry } from "./CommandPalette/DynamicComponent";
+import { setThemeForSVGScreenshot } from "./domToSVG/setThemeForSVGScreenshot";
 
 /**
  * The purpose of UIDocs is to provide structured metadata about the UI elements.
@@ -264,5 +265,6 @@ window.flatUIDocs = flatUIDocs;
 
 if (isPlaywrightTest) {
   window.toSVG = domToThemeAwareSVG;
+  window.setTheme = setThemeForSVGScreenshot;
   window.getSVGif = getSVGif;
 }

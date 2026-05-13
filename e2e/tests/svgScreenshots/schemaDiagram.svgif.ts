@@ -7,6 +7,9 @@ export const schemaDiagramSvgif: OnBeforeScreenshot = async (
   { openMenuIfClosed, openConnection },
   { addScene, addSceneAnimation },
 ) => {
+  // if (Math.PI) {
+  //   throw "FISDW";
+  // }
   await openConnection("prostgles_video_demo");
   await closeWorkspaceWindows(page);
   await openMenuIfClosed();

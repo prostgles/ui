@@ -1,9 +1,5 @@
 import { getCommandElemSelector, getDataKey } from "Testing";
-import {
-  closeWorkspaceWindows,
-  deleteAllWorkspaces,
-  runDbSql,
-} from "utils/utils";
+import { closeWorkspaceWindows, deleteAllWorkspaces } from "utils/utils";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
 
 export const tableTimechartSvgif: OnBeforeScreenshot = async (
@@ -42,27 +38,25 @@ export const tableTimechartSvgif: OnBeforeScreenshot = async (
 
   await addSceneAnimation(
     getCommandElemSelector("AddColumnMenu") + " " + getDataKey("Referenced"),
-    undefined,
-    "fast",
+    {
+      duration: "fast",
+    },
   );
 
   await addSceneAnimation(
     getCommandElemSelector("JoinPathSelectorV2") + " " + getDataKey("orders"),
-    undefined,
-    "fast",
+    {
+      duration: "fast",
+    },
   );
 
-  await addSceneAnimation(
-    getCommandElemSelector("NestedTimechartControls"),
-    undefined,
-    "fast",
-  );
+  await addSceneAnimation(getCommandElemSelector("NestedTimechartControls"), {
+    duration: "fast",
+  });
   await page.keyboard.press("Escape");
-  await addSceneAnimation(
-    getCommandElemSelector("LinkedColumn.Add"),
-    undefined,
-    "fast",
-  );
+  await addSceneAnimation(getCommandElemSelector("LinkedColumn.Add"), {
+    duration: "fast",
+  });
 
   await page.locator(getDataKey("Number of Orders")).click();
   await page.waitForTimeout(500);

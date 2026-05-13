@@ -1,57 +1,62 @@
 import { expect } from "@playwright/test";
 import { getCommandElemSelector, type SVGif } from "Testing";
-import { closeWorkspaceWindows, monacoType, runDbSql } from "utils/utils";
+import {
+  closeWorkspaceWindows,
+  monacoType,
+  runDbSql,
+  type KeyPressOrCombination,
+} from "utils/utils";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
+import { dedent } from "./utils/dedent";
 
 export const sqlEditorSvgif: OnBeforeScreenshot = async (
   page,
   { openConnection, openMenuIfClosed, toggleMenuPinned },
   { addScene },
 ) => {
-  // if (Math.PI) {
-  //   throw "FISDW";
-  // }
   await openConnection("prostgles_video_demo");
   await page.getByTestId("WorkspaceMenu.list").getByText("default").click();
   await toggleMenuPinned();
   await closeWorkspaceWindows(page);
   await openMenuIfClosed();
-  const initialViewport = page.viewportSize();
-  if (!initialViewport) {
-    throw new Error("Viewport size is undefined");
-  }
-
   await page.getByTestId("dashboard.menu.sqlEditor").click();
   await toggleMenuPinned();
 
-  /** Ensure the suggestions details pane is underneath the suggestion list */
-  await page.setViewportSize({
-    width: 600,
-    height: 900,
-  });
-  /** Remove TopHeader */
-  await page.evaluate(() => {
-    const topHeader = document.querySelector(".TopHeader");
-    if (topHeader) {
-      topHeader.remove();
-    }
-  });
+  const removeTopHeader = async () => {
+    /** Remove TopHeader */
+    await page.evaluate(() => {
+      const topHeader = document.querySelector(".TopHeader");
+      if (topHeader) {
+        topHeader.remove();
+      }
+
+      const dashboardWrapper =
+        document.querySelector<HTMLDivElement>(".Dashboard_Wrapper");
+      if (dashboardWrapper) {
+        dashboardWrapper.style.margin = "0";
+      }
+    });
+  };
+  await removeTopHeader();
 
   const sqlSuggestionsScene = async ({
     query,
     svgFileName,
     caption,
     executeAfterTyping,
+    pressAfterTyping,
   }: {
     query: string;
     svgFileName: string;
     caption?: string;
     animations?: SVGif.Animation[];
     executeAfterTyping?: boolean;
+    pressAfterTyping?: KeyPressOrCombination[];
   }) => {
     await monacoType(page, `.ProstglesSQL`, query, {
       deleteAllAndFill: true,
       keyPressDelay: executeAfterTyping ? 0 : undefined,
+      pressAfterTyping,
     });
 
     if (executeAfterTyping) {
@@ -107,7 +112,25 @@ export const sqlEditorSvgif: OnBeforeScreenshot = async (
   });
 
   await sqlSuggestionsScene({
-    query: mapQuery.replace("AS double precision) ", "AS double ) "),
+    query: dedent(`
+      SELECT * 
+      FROM users
+
+      SELECT *
+      FROM "contacts.csv"
+    `),
+    svgFileName: "execution_options",
+    pressAfterTyping: ["Backspace"],
+  });
+
+  await sqlSuggestionsScene({
+    query: dedent(`
+      SELECT id, name, email
+      FROM users
+      WHERE created_at >= '2026-01-01'
+      ORDER BY name
+      LIMT 10;
+    `),
     svgFileName: "error_position",
     executeAfterTyping: true,
   });
@@ -154,6 +177,7 @@ export const sqlEditorSvgif: OnBeforeScreenshot = async (
 
   await page.reload();
   await page.waitForTimeout(1500);
+  await removeTopHeader();
 
   await sqlSuggestionsScene({
     query: "SELECT max() over( ",
@@ -182,6 +206,7 @@ export const sqlEditorSvgif: OnBeforeScreenshot = async (
   });
 
   await page.reload();
+  await removeTopHeader();
 
   await monacoType(page, `.ProstglesSQL`, TIMECHART_QUERY, {
     /** Sets value to avoid extra parens inserted while typing */
@@ -237,7 +262,6 @@ export const sqlEditorSvgif: OnBeforeScreenshot = async (
     svgFileName: "map",
   });
   await page.getByTestId("dashboard.window.closeChart").click();
-  await page.setViewportSize(initialViewport);
 };
 
 const mapQuery = [

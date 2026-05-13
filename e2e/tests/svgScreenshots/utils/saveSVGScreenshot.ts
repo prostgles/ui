@@ -32,6 +32,25 @@ export const saveSVGScreenshot = async (
     path: path.join(dir, fileName + ".png"),
     fullPage: true,
   });
+
+  // await page.waitForTimeout(1000);
+
+  // /** Switch theme  */
+  // await page.evaluate(() => {
+  //   //@ts-ignore
+  //   window.setTheme("dark");
+  // });
+  // await page.waitForTimeout(1000);
+  // await page.screenshot({
+  //   path: path.join(dir, fileName + ".dark.png"),
+  //   fullPage: true,
+  // });
+  // await page.evaluate(() => {
+  //   //@ts-ignore
+  //   window.setTheme(undefined);
+  // });
+  // await page.waitForTimeout(500);
+
   const filePath = path.join(dir, fileName + ".svg");
   const filePathDark = path.join(dir, fileName + ".dark.svg");
 

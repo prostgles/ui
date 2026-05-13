@@ -2,7 +2,7 @@ import { localSettings } from "../../dashboard/localSettings";
 import { tout } from "../../utils/utils";
 
 export const setThemeForSVGScreenshot = async (theme: undefined | "dark") => {
-  const resetUICallbacks: (() => void)[] = [];
+  const resetUICallbacks: (() => Promise<void>)[] = [];
 
   /** Ensure that any sql suggestion popups are opened back */
   const sqlEditor = document.querySelector<HTMLDivElement>(`div.ProstglesSQL`);
@@ -51,47 +51,7 @@ export const setThemeForSVGScreenshot = async (theme: undefined | "dark") => {
   }
   await tout(500);
 };
-// function getUniqueSelector(element: HTMLElement) {
-//   // If element has an ID, use it
-//   if (element.id) {
-//     return `#${element.id}`;
-//   }
 
-//   // Build path from element to root
-//   const path: string[] = [];
-//   let current: HTMLElement | null = element;
-
-//   while (current && current !== document.body) {
-//     let selector = current.tagName.toLowerCase();
-
-//     // Add class if available
-//     if (current.className && typeof current.className === "string") {
-//       const classes = current.className.trim().split(/\s+/).join(".");
-//       if (classes) {
-//         selector += `.${classes}`;
-//       }
-//     }
-
-//     // Add nth-child if needed to make it unique
-//     const parent: HTMLElement | null = current.parentElement;
-//     if (parent) {
-//       const siblings = Array.from(parent.children);
-//       const sameTagSiblings = siblings.filter(
-//         (s) => s.tagName === current?.tagName,
-//       );
-
-//       if (sameTagSiblings.length > 1) {
-//         const index = siblings.indexOf(current) + 1;
-//         selector += `:nth-child(${index})`;
-//       }
-//     }
-
-//     path.unshift(selector);
-//     current = parent;
-//   }
-
-//   return path.join(" > ");
-// }
 function getUniqueSelector(element: HTMLElement): string {
   // If element has an ID, use it
   if (element.id) {

@@ -19,8 +19,10 @@ export const timechartSvgif: OnBeforeScreenshot = async (
     getCommandElemSelector("dashboard.window.toggleFilterBar"),
   );
   await addSceneAnimation(getCommandElemSelector("SearchList.Input"), {
-    action: "type",
-    text: "btcu",
+    action: {
+      action: "type",
+      text: "btcu",
+    },
   });
 
   await addSceneAnimation(`[data-label="BTCUSDT"]`);
@@ -47,10 +49,12 @@ export const timechartSvgif: OnBeforeScreenshot = async (
   await addSceneAnimation(
     getCommandElemSelector("TimeChartLayerOptions.groupBy"),
   );
-  await addSceneAnimation(
-    getCommandElemSelector("Popup.content") + " " + getDataKey("symbol"),
-  );
-  await addSceneAnimation(getCommandElemSelector("Popup.close"));
+  await page
+    .locator(
+      getCommandElemSelector("Popup.content") + " " + getDataKey("symbol"),
+    )
+    .click();
+  await page.getByTestId("Popup.close").click();
   await addScene();
   await page.getByTestId("dashboard.window.detachChart").click();
   await addScene();

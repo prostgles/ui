@@ -38,24 +38,34 @@ export const getSceneUtils = (
       | string
       | { svgif: string; playwright: string; nth?: number }
       | { selector: string; nth?: number },
-    action:
-      | "click"
-      | "rightClick"
-      | {
-          action: "type";
-          text: string;
-          /** Defaults to charByChar */
-          mode?: "charByChar" | "fill" | "fillZoomTo";
-        } = "click",
-    duration:
-      | "auto"
-      | "fast"
-      | "faster"
-      | {
-          waitBeforeClick: number;
-        } = "auto",
-    extraAnimations: SVGif.Animation[] = [],
+    opts?: {
+      action?:
+        | "click"
+        | "rightClick"
+        | {
+            action: "type";
+            text: string;
+            /** Defaults to charByChar */
+            mode?: "charByChar" | "fill" | "fillZoomTo";
+          };
+      duration?:
+        | "auto"
+        | "fast"
+        | "faster"
+        | {
+            waitBeforeClick: number;
+          };
+      extraAnimations?: SVGif.Animation[];
+      svgFileName?: string;
+    },
   ) => {
+    const {
+      action = "click",
+      duration = "auto",
+      extraAnimations = [],
+      svgFileName,
+    } = opts ?? {};
+
     const {
       svgif: svgifSelector,
       playwright: playwrightSelector,
@@ -91,6 +101,7 @@ export const getSceneUtils = (
     }
 
     await addScene({
+      svgFileName,
       animations: [
         {
           type: "wait",

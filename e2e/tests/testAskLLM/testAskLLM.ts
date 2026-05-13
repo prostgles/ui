@@ -1,11 +1,13 @@
 import { getProstglesMCPFullToolName } from "common/mcpUtils";
 import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "common/prostglesMcp";
 import type { DBSSchema } from "common/publishUtils";
+import { fromEntries } from "common/utils";
 import { join } from "path";
 import type { JSONB } from "prostgles-types";
 import { runDbsSql, type PageWIds } from "utils/utils";
 import { agenticWorkflowToolUses, research } from "./agenticWorkflowToolUses";
 import { createComponentToolUse } from "./createComponentToolUse";
+import { sampleReceiptData } from "./createReceipts";
 import { getAskUserToolUse } from "./getAskUserToolUse";
 import { mcpSandboxToolUse } from "./mcpSandboxToolUse";
 import {
@@ -13,12 +15,11 @@ import {
   prostglesUICryptoDashboardSample,
   prostglesUIFoodDeliveryDashboardSample,
 } from "./sampleToolUseData";
+import { geoQuestionScenario } from "./scenarios/geoQuestion.scenario";
+import { hygieneRatingsApiScenario } from "./scenarios/hygieneRatingsApi.scenario";
 import { receiptImport } from "./scenarios/receiptImport/receiptImport.scenario";
 import { stringify } from "./stringify";
 import { type Scenario, type ToolUse } from "./utils";
-import { sampleReceiptData } from "./createReceipts";
-import { fromEntries } from "common/utils";
-import { hygieneRatingsApiScenario } from "./scenarios/hygieneRatingsApi.scenario";
 
 export type RequestToolAccess = JSONB.GetType<
   (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["request_tool_access"]["schema"]
@@ -185,14 +186,16 @@ const playwrightMCPToolUse: ToolUse = {
 };
 
 const scenarios: Record<string, Scenario> = {};
-Object.values([receiptImport, hygieneRatingsApiScenario]).forEach(
-  ({ firstMessage, steps }) => {
-    if (scenarios[firstMessage]) {
-      throw new Error(`Duplicate scenario firstMessage: ${firstMessage}`);
-    }
-    scenarios[firstMessage] = { firstMessage, steps };
-  },
-);
+Object.values([
+  receiptImport,
+  hygieneRatingsApiScenario,
+  geoQuestionScenario,
+]).forEach(({ firstMessage, steps }) => {
+  if (scenarios[firstMessage]) {
+    throw new Error(`Duplicate scenario firstMessage: ${firstMessage}`);
+  }
+  scenarios[firstMessage] = { firstMessage, steps };
+});
 
 const toolResponses: Record<string, ToolUse> = {
   ...fromEntries(

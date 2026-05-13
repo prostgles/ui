@@ -92,7 +92,7 @@ type InputKey =
   | "Space";
 type ArrowKey = "ArrowUp" | "ArrowDown" | "ArrowLeft" | "ArrowRight";
 type ArrowKeyCombinations = `${KeyPress}+${ArrowKey | InputKey}`;
-type KeyPressOrCombination = InputKey | ArrowKeyCombinations | ArrowKey;
+export type KeyPressOrCombination = InputKey | ArrowKeyCombinations | ArrowKey;
 
 /**
  * Will overwrite all previous content

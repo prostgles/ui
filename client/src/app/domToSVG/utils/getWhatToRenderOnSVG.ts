@@ -25,6 +25,7 @@ export const getWhatToRenderOnSVG = async (
   parentSvg: SVGElement | SVGGElement,
 ) => {
   const { isVisible, style, bbox } = isElementVisible(element);
+
   // Calculate absolute position
   const x = bbox.left + context.offsetX;
   const y = bbox.top + context.offsetY;

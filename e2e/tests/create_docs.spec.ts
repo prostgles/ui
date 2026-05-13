@@ -23,6 +23,7 @@ test.use({
     width: 900,
     height: 900,
   },
+  deviceScaleFactor: 2,
   trace: "retain-on-failure",
   launchOptions: {
     args: ["--start-maximized"],
@@ -132,7 +133,7 @@ test.describe("Create docs and screenshots", () => {
     }
   });
 
-  test("Create screenshots", async ({ page: p }) => {
+  test("Create screenshots", async ({ page: p, browser }) => {
     const page = p as PageWIds;
 
     await login(page, USERS.test_user, "/login");

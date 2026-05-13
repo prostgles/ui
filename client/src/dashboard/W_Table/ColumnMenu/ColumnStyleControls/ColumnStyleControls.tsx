@@ -1,11 +1,11 @@
 import { FlexCol, FlexRowWrap } from "@components/Flex";
 import { MINI_BARCHART_COLOR } from "@components/ProgressBar";
 import { Select } from "@components/Select/Select";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { _PG_numbers, includes } from "prostgles-types";
 import type { ValidatedColumnInfo } from "prostgles-types/lib";
 import React from "react";
 import { type Prgl } from "../../../../App";
-import { appTheme, useReactiveState } from "../../../../appUtils";
 import { ColorPicker } from "../ColorPicker";
 import { ChipStylePalette } from "../ColumnDisplayFormat/ChipStylePalette";
 import { ConditionalCellIconStyleControls } from "../ColumnDisplayFormat/ConditionalCellIconStyleControls";
@@ -111,7 +111,7 @@ export const ColumnStyleControls = (props: StyleColumnProps) => {
   ) => {
     setStyle({ ...style, ...newStyle } as typeof style);
   };
-  const { state: theme } = useReactiveState(appTheme);
+  const { theme } = usePrgl();
 
   return (
     <FlexCol className="ColumnStyleControls flex-col gap-1">

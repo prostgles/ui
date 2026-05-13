@@ -16,6 +16,7 @@ export const typeSendAddScenes = async (
     LlmResponseLoadingDuration?: number;
     LlmResponseReceivedWaitDuration?: number;
   } = {},
+  fileName?: string,
 ) => {
   await page.getByTestId("Chat.textarea").fill(text);
   await page.waitForTimeout(1000);
@@ -70,6 +71,7 @@ export const typeSendAddScenes = async (
 
   await waitFor?.();
   await addScene({
+    svgFileName: fileName,
     animations: [
       {
         type: "fadeIn",

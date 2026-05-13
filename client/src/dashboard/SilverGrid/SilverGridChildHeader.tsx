@@ -161,9 +161,8 @@ export const SilverGridChildHeader = (props: P) => {
               }}
             >
               <div
-                className={`${GridHeaderClassname} py-p5 f-1 min-w-0 max-w-fit text-ellipsis noselect `}
+                className={`${GridHeaderClassname} f-1 min-w-0 max-w-fit text-ellipsis noselect `}
                 {...attrs}
-                // children={tab.title}
               />
               {isFixed ?
                 <div style={{ width: "1em" }} />

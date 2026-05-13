@@ -26,6 +26,7 @@ export type DatabaseAccessEditorProps = {
     | ((newValue: DatabaseAccessPermission | undefined) => void);
   contentRight?: React.ReactNode;
   newTables: DBSSchema["agentic_workflows"]["definition_data"]["newTables"];
+  hideTablesWithoutAccess?: true;
 };
 
 export const DatabaseAccessEditor = ({
@@ -33,6 +34,7 @@ export const DatabaseAccessEditor = ({
   onChange,
   contentRight,
   newTables,
+  hideTablesWithoutAccess,
 }: DatabaseAccessEditorProps) => {
   const showSelect = value?.mode !== "custom" || onChange;
   const [showDetails, setShowDetails] = useState(false);
@@ -118,6 +120,7 @@ export const DatabaseAccessEditor = ({
           onChange={onChange}
           value={value}
           showDetails={showDetails}
+          hideTablesWithoutAccess={hideTablesWithoutAccess}
         />
       )}
     </HeaderSection>

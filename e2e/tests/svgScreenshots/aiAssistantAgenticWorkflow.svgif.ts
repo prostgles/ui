@@ -94,29 +94,23 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
     { LlmResponseLoadingDuration: 0 },
   );
 
-  await addSceneAnimation(
-    getDataKey("Insert automatically without preview"),
-    undefined,
-    "faster",
-  );
+  await addSceneAnimation(getDataKey("Insert automatically without preview"), {
+    duration: "fast",
+  });
   await addSceneAnimation(
     getDataKey(
       "Skip likely duplicates (vendor + date + total + receipt_number)",
     ),
-    undefined,
-    "faster",
+    { duration: "fast" },
   );
   await addSceneAnimation(
     getDataKey("Skip that file and report it (recommended)"),
-    undefined,
-    "faster",
+    { duration: "fast" },
   );
 
-  await addSceneAnimation(
-    getCommandElemSelector("AskUserQuestions.confirm"),
-    undefined,
-    "faster",
-  );
+  await addSceneAnimation(getCommandElemSelector("AskUserQuestions.confirm"), {
+    duration: "fast",
+  });
   await addScene({ animations: [{ type: "wait", duration: 2000 }] });
 
   await page
@@ -137,9 +131,10 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
       selector: getCommandElemSelector("FullscreenWrapper.toggleFullscreen"),
       nth: 0,
     },
-    undefined,
     {
-      waitBeforeClick: 200,
+      duration: {
+        waitBeforeClick: 200,
+      },
     },
   );
   await addScene({
@@ -221,7 +216,7 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
   //   ],
   // });
 
-  await addSceneAnimation(getDataKey("sourcePaths"), undefined, "fast");
+  await addSceneAnimation(getDataKey("sourcePaths"), { duration: "fast" });
 
   await page
     .locator(
@@ -235,25 +230,22 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
     .click();
   await addSceneAnimation(
     `${getCommandElemSelector("FileTree")} ${getDataLabel("Receipts")} ${getCommandElemSelector("FileTreeNode.folderRow")} ${getCommandElemSelector("FileTreeNode.checkbox")}`,
-    undefined,
-    "fast",
+    { duration: "fast" },
   );
 
-  await addSceneAnimation(
-    getCommandElemSelector("UserInput.Done"),
-    undefined,
-    "fast",
-  );
-
-  await addSceneAnimation(getDataKey("Definition"), undefined, {
-    waitBeforeClick: 1500,
+  await addSceneAnimation(getCommandElemSelector("UserInput.Done"), {
+    duration: "fast",
   });
 
-  await addSceneAnimation(
-    getCommandElemSelector("AgenticWorkflow.start"),
-    undefined,
-    "fast",
-  );
+  await addSceneAnimation(getDataKey("Definition"), {
+    duration: {
+      waitBeforeClick: 1500,
+    },
+  });
+
+  await addSceneAnimation(getCommandElemSelector("AgenticWorkflow.start"), {
+    duration: "fast",
+  });
   await addScene({ animations: [{ type: "wait", duration: 1000 }] });
 
   await addSceneAnimation(getDataKey("Activity"));
@@ -267,8 +259,7 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
       selector: getDataLabel("documents get_document_text"),
       nth: 0,
     },
-    undefined,
-    "fast",
+    { duration: "fast" },
   );
   await addScene({
     animations: [
@@ -331,8 +322,7 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
         " " +
         getCommandElemSelector("AgenticWorkflowActivity.openTable"),
     },
-    undefined,
-    "faster",
+    { duration: "fast" },
   );
 
   await addScene({

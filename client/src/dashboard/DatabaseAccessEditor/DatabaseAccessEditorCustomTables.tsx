@@ -18,10 +18,14 @@ export const DatabaseAccessEditorCustomTables = ({
   onChange,
   newTables,
   showDetails,
+  hideTablesWithoutAccess,
 }: {
   value: Extract<DatabaseAccessEditorProps["value"], { mode: "custom" }>;
   showDetails: boolean;
-} & Pick<DatabaseAccessEditorProps, "onChange" | "newTables">) => {
+} & Pick<
+  DatabaseAccessEditorProps,
+  "onChange" | "newTables" | "hideTablesWithoutAccess"
+>) => {
   const { tables, db, sql, methods } = usePrgl();
 
   const [showTable, setShowTable] = useState<string>();
@@ -60,7 +64,7 @@ export const DatabaseAccessEditorCustomTables = ({
         items={tableList
           .map((t) => {
             const tableRules = value.tablePermissions[t.name] ?? {};
-            if (!onChange && isEmpty(tableRules)) {
+            if ((!onChange || hideTablesWithoutAccess) && isEmpty(tableRules)) {
               return;
             }
             return {
