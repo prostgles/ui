@@ -790,15 +790,14 @@ CREATE OR REPLACE FUNCTION setof_fake_contacts(num int4) RETURNS SETOF customers
 $$ LANGUAGE SQL; 
 
 CREATE TABLE user_types (
-  id TEXT PRIMARY KEY, 
-  description TEXT
+  id TEXT PRIMARY KEY
 );  
 
 INSERT INTO user_types (id, description) 
-VALUES ('customer', 'Places orders for delivery'), 
-  ('restaurant_manager', 'Represents a restaurant and manages menu items and orders'),
-  ('support', 'Provides customer support for the food delivery service'),
-  ('rider', 'Delivers orders for the food delivery service');
+VALUES ('customer'), 
+  ('restaurant_manager'),
+  ('support'),
+  ('rider');
 
 CREATE TABLE addresses (
   id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,

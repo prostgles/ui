@@ -1,9 +1,7 @@
 import { connectionManager } from "@src/index";
 import { runConnectionQuery } from "@src/serverFunctions/getServerFunctions";
-import { parse, type Statement } from "pgsql-ast-parser";
-import { includes, isDefined } from "prostgles-types";
-import { ALLOWED_DDL_STATEMENT_TYPES } from "../runtimeSdk/defineAgenticWorkflow";
 import type { ProxyCallDataDefinitions } from "../runtimeSdk/defineAgenticWorkflowHandlers.types";
+import { parseDDLStatements } from "./parseDDLStatements";
 import { quoteIdent } from "./quoteIdent";
 
 export const validateDatabaseAccessDefinitions = async ({
@@ -35,15 +33,7 @@ export const validateDatabaseAccessDefinitions = async ({
         if (!ddlStatements.trim()) {
           throw new Error("ddlStatements is an empty string");
         }
-        const statements = parse(ddlStatements);
-        const statementIsAllowed = (
-          statement: Statement,
-        ): statement is Extract<
-          Statement,
-          { type: (typeof ALLOWED_DDL_STATEMENT_TYPES)[number] }
-        > => {
-          return includes(ALLOWED_DDL_STATEMENT_TYPES, statement.type);
-        };
+        const statements = await parseDDLStatements(ddlStatements);
 
         const currentSchema = await runConnectionQuery<{ schema: string }>(
           connection_id,
@@ -56,51 +46,12 @@ export const validateDatabaseAccessDefinitions = async ({
             : [schema, name].map(quoteIdent).join(".");
         };
 
-        const parsedDdlStatements = statements
-          .map((statement) => {
-            if (!statementIsAllowed(statement)) {
-              throw new Error(
-                `Only ${JSON.stringify(ALLOWED_DDL_STATEMENT_TYPES)} statements are allowed in ddlStatements`,
-              );
-            }
-            if (statement.type === "create table") {
-              const tableName = statement.name.name;
-              const tableSchema = statement.name.schema;
-
-              return {
-                type: statement.type,
-                escapedTableName: getEscapedName(tableName, tableSchema),
-                tableName,
-                tableSchema,
-                statement,
-              };
-            }
-
-            if (statement.type === "create view") {
-              const viewName = statement.name.name;
-              const viewSchema = statement.name.schema;
-
-              return {
-                type: statement.type,
-                escapedTableName: getEscapedName(viewName, viewSchema),
-                tableName: viewName,
-                tableSchema: viewSchema,
-                statement,
-              };
-            }
-
-            const tableName = statement.table.name;
-            const tableSchema = statement.table.schema;
-
-            return {
-              type: statement.type,
-              escapedTableName: getEscapedName(tableName, tableSchema),
-              tableName,
-              tableSchema,
-              statement,
-            };
-          })
-          .filter(isDefined);
+        const parsedDdlStatements = statements.map((s) => {
+          return {
+            ...s,
+            escapedTableName: getEscapedName(s.tableName, s.schemaName),
+          };
+        });
 
         const futureSchema = await activeConnection.prgl.getTSSchema({
           ddlWithRollback: ddlStatements,
@@ -108,7 +59,7 @@ export const validateDatabaseAccessDefinitions = async ({
         parsedDdlStatements.forEach((ps) => {
           if (!tablePermissions[ps.escapedTableName]) {
             throw new Error(
-              `Table "${ps.escapedTableName}" from ddlStatements not found in tablePermissions: \n${JSON.stringify(ps.statement)}`,
+              `Table "${ps.escapedTableName}" from ddlStatements not found in tablePermissions: \n${JSON.stringify(ps.statementText)}`,
             );
           }
         });

@@ -91,7 +91,7 @@ export const validateAgenticWorkflowDefinitions = async (
   const newTables = tablesOrViews.filter((tov) => {
     return parsedDdlStatements?.some((stmt) => {
       return (
-        (stmt.type === "create table" || stmt.type === "create view") &&
+        (stmt.type === "create_table" || stmt.type === "create_view") &&
         tov.name === stmt.escapedTableName
       );
     });
