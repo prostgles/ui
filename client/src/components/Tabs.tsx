@@ -256,7 +256,12 @@ export default class Tabs<T extends TabItems = TabItems> extends RTComp<
           />
         }
         {!activeContent ? null : (
-          <div className={`Tabs_Content ${contentClass}`}>{activeContent}</div>
+          <div
+            style={{ minWidth: "400px" }}
+            className={`Tabs_Content ${contentClass}`}
+          >
+            {activeContent}
+          </div>
         )}
       </div>
     );

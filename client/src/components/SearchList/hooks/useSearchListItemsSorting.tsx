@@ -94,7 +94,7 @@ export const useSearchListItemsSorting = (
       return {
         ...searchListItem,
         ...match,
-      } as ParsedListItem;
+      };
     },
     [matchCase, searchTerm, styles],
   );

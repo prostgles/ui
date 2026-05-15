@@ -114,7 +114,7 @@ export const subscribeToAuthSetupChanges = async (
     (passwordlessAdmin) => {
       setContext({
         passwordlessAdmin:
-          passwordlessAdmin as AuthConfigForStateConnection["passwordlessAdmin"],
+          passwordlessAdmin,
       });
     },
   );

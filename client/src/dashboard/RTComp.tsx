@@ -26,7 +26,7 @@ export default class RTComp<
 
   private p?: P;
   s?: S;
-  d: Partial<D> = {} as D;
+  d: Partial<D> = {};
 
   async componentDidMount() {
     this.mounted = true;

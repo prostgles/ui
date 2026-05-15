@@ -60,7 +60,7 @@ export const drawShapesOnSVG = (
         y,
       });
     } else if (s.type === "linkline") {
-      drawSvgLinkLine(shapes, g as SVGElement, s);
+      drawSvgLinkLine(shapes, g, s);
     } else if (s.type === "rectangle") {
       const [x, y] = s.coords.map((v) => toFixed(v)) as typeof s.coords;
       const width = toFixed(s.w);

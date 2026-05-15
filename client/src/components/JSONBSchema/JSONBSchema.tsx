@@ -178,9 +178,4 @@ export const JSONBSchema = <S extends Schema>(props: P<S>) => {
 };
 
 // @ts-ignore
-export const JSONBSchemaA = JSONBSchema as (
-  props: JSONBSchemaCommonProps & {
-    schema: any;
-    onChange: (newValue: any) => void;
-  },
-) => React.JSX.Element;
+export const JSONBSchemaA = JSONBSchema;

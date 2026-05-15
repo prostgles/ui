@@ -33,7 +33,7 @@ export const fetchMapLayerData = async function (this: W_Map, dataAge: number) {
   const { w } = this.d;
   if (!w) return;
 
-  const ext4326: Extent = (w.options.extent as Extent | undefined) || [
+  const ext4326: Extent = (w.options.extent) || [
     -180, -90, 180, 90,
   ];
 
@@ -125,9 +125,7 @@ export const fetchMapLayerData = async function (this: W_Map, dataAge: number) {
                 return;
               }
 
-              const tableHandler = db[tableName] as
-                | Partial<TableHandlerClient>
-                | undefined;
+              const tableHandler = db[tableName];
               if (
                 !tableHandler?.find ||
                 !tableHandler.findOne ||

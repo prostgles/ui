@@ -76,6 +76,7 @@ export const ColumnList = ({
       }}
       limit={200}
       className="f-1 p-1"
+      style={{ minWidth: "400px" }}
       onMultiToggle={
         !showToggle ? undefined : (
           (items) => {

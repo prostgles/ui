@@ -304,7 +304,7 @@ export class DeckGLMap extends RTComp<DecKGLMapProps, DeckGLMapState, D> {
       this.deckW = new DeckWrapped(
         this.refRoot,
         {
-          initialViewState: _initialState as any,
+          initialViewState: _initialState,
           type: projection,
           onLoad: () => {
             this.props.onLoad?.({

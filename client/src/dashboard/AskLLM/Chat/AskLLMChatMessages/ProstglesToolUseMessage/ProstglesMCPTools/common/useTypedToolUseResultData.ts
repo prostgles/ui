@@ -77,7 +77,7 @@ export const useTypedToolUseResultDataV2 = <S extends JSONB.FieldType>(
       return {
         error: toolUseResult.content,
         data: undefined,
-      } as TypedToolUseValidationResult<S>;
+      };
     }
   }, [allowExtraProperties, schema, toolUseResult]);
 

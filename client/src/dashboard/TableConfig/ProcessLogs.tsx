@@ -19,7 +19,7 @@ export const ProcessLogs = (props: P) => {
   const { data: conn } = dbs.connections.useSubscribeOne({ id: connectionId });
   const { data: dbConf } = dbs.database_configs.useSubscribeOne({
     $existsJoined: { connections: { id: connectionId } },
-  } as FilterItem);
+  });
   const { data: dbConfLogs } = dbs.database_config_logs.useSubscribeOne({
     $existsJoined: {
       "database_configs.connections": { id: connectionId },

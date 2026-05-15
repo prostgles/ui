@@ -2,10 +2,10 @@ import type { TableHandler } from "prostgles-types";
 import { callWorkflowProxy } from "./callWorkflowProxy";
 import type { ProxyDbCallData } from "./defineAgenticWorkflowHandlers.types";
 
-export const tableHandlers = new Proxy({} as Record<string, unknown>, {
+export const tableHandlers = new Proxy({}, {
   get(_target, tableName: string) {
     if (typeof tableName !== "string") return undefined;
-    const commandProxy = new Proxy({} as Record<string, unknown>, {
+    const commandProxy = new Proxy({}, {
       get(_target, command: keyof TableHandler) {
         if (typeof command !== "string") return undefined;
         return (...args: unknown[]) => {

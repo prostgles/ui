@@ -274,7 +274,7 @@ export const getViewState = <Type extends ViewType>(
     zoom: typeof state?.["zoom"] === "number" ? state["zoom"] : 0,
     ...(state && pickKeys(state as any, ["bearing", "pitch", "extent"], true)),
   };
-  return initialViewState as any;
+  return initialViewState;
 };
 
 type ViewType = DeckWrappedOpts["type"];

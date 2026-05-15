@@ -1,25 +1,15 @@
 import type { DetailedFilter } from "@common/filterUtils";
-import { Icon } from "@components/Icon/Icon";
 import type {
   SearchListItem,
   SearchListProps,
   SvgIconName,
 } from "@components/SearchList/SearchList";
-import { SvgIcon } from "@components/SvgIcon";
-import {
-  mdiChatQuestion,
-  mdiFunction,
-  mdiScriptTextPlay,
-  mdiTable,
-  mdiTableEdit,
-} from "@mdi/js";
 import React, { useMemo } from "react";
 import type { ChartOptions } from "../../Dashboard/dashboardUtils";
 import type { SearchAllProps } from "../SearchAll";
 import { SearchMatchRow } from "../SearchMatchRow";
 import type { SearchAllState } from "./useSearchAllState";
 import type { useSearchTables } from "./useSearchTables";
-import type { F } from "react-router/dist/development/routeModules-CA7kSxJJ";
 
 export const useSearchAllListProps = ({
   mode,

@@ -236,9 +236,7 @@ const runSqlTool = async (
     sql,
     query_timeout = 30,
     query_params,
-  } = args as unknown as JSONB.GetObjectType<
-    ProstglesDbTools["execute_sql"]["schema"]["type"]
-  >;
+  } = args;
   if (!sql) {
     throw new Error("SQL query is required");
   }

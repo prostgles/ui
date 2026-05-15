@@ -90,7 +90,10 @@ const getOrCreateSheet = (): CSSStyleSheet => {
   const el = document.createElement("style");
   el.id = "ansi-log-monaco-styles";
   document.head.appendChild(el);
-  styleSheet = el.sheet as CSSStyleSheet;
+  styleSheet = el.sheet;
+  if (!styleSheet) {
+    throw new Error("Failed to create stylesheet for ANSI log styles");
+  }
   return styleSheet;
 };
 

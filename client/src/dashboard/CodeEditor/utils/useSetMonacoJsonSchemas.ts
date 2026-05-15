@@ -44,8 +44,7 @@ export const setMonacoEditorJsonSchemas = async (
   if (!matchingModel) {
     try {
       const newModel = monaco.editor.createModel(
-        /** Why might be undefined?! */
-        (value as string | undefined) ?? editor.getValue(),
+        value,
         "json",
         mySchemas[0]?.theUri,
       );

@@ -156,7 +156,7 @@ export const PublishedWorkspaceSelector = ({
           disabledInfo={
             !publishedWorkspaces.length ? "No published workspaces" : undefined
           }
-          tableHandler={dbs.workspaces as any}
+          tableHandler={dbs.workspaces}
           filter={{ published: true, connection_id: connectionId }}
           allowCreate={false}
           fieldName="id"

@@ -215,7 +215,7 @@ const getProperty = <T extends Record<string, unknown>, K extends keyof T>(
   prop: K,
 ): T[K] | undefined => {
   if (prop in obj && includes(getKeys(obj), prop)) {
-    return obj[prop] as T[K];
+    return obj[prop];
   }
   return undefined;
 };

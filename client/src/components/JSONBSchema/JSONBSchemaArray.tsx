@@ -96,7 +96,7 @@ export const JSONBSchemaArray = ({
               >
                 <div className="flex-row-wrap f-1 ">
                   <JSONBSchema
-                    schema={{ ...itemSchema } as any}
+                    schema={{ ...itemSchema }}
                     value={item}
                     onChange={
                       ((newValue) => {
@@ -155,7 +155,7 @@ export const JSONBSchemaArray = ({
           ]}
         >
           <JSONBSchema
-            schema={itemSchema as any}
+            schema={itemSchema}
             value={newItem.val}
             onChange={
               ((newValue) => {

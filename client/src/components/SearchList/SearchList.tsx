@@ -80,6 +80,12 @@ export type ParsedListItem = Omit<SearchListItem, "iconLeft"> & {
   rank?: number;
 };
 
+export type OnPartialResult = (
+  searchItems: SearchListItem[],
+  finished: boolean,
+  cancel: VoidFunction,
+) => any;
+
 export type SearchListProps<M extends boolean = false> = TestSelectors & {
   defaultSearch?: string;
   defaultValue?: string;
@@ -89,11 +95,7 @@ export type SearchListProps<M extends boolean = false> = TestSelectors & {
   onSearchItems?: (
     term: string,
     opts?: { matchCase?: boolean },
-    onPartialResult?: (
-      searchItems: SearchListItem[],
-      finished: boolean,
-      cancel: VoidFunction,
-    ) => any,
+    onPartialResult?: OnPartialResult,
   ) => Promise<SearchListItem[]>;
   onType?: (term: string, setTerm: (newTerm: string) => void) => void;
   items?: SearchListItem[];

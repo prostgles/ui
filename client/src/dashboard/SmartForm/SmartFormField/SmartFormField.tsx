@@ -185,7 +185,7 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
   if (column.tsDataType.endsWith("[]") && !column.tsDataType.includes("any")) {
     const elemTSType = tsDataTypeFromUdtName(column.element_udt_name as any);
     arrayType = {
-      tsDataType: elemTSType as any,
+      tsDataType: elemTSType,
       udt_name: column.element_udt_name as any,
     };
   }

@@ -904,6 +904,8 @@ test.describe("Main test", () => {
     await page.waitForTimeout(1e3);
     await page.getByLabel("Argument name").last().waitFor({ state: "visible" });
     await page.getByTestId("Popup.close").click();
+    /** This is crucial in ensuring monaco automatic text placeholder replacements don't break the code */
+    await setupAskLLMToolUse(page);
 
     /**
      * Publish functions for user

@@ -245,10 +245,7 @@ export const NewConnectionForm = ({
                     ></Btn>
                   }
                   initialState={
-                    { query: "", action: "create" } as {
-                      query: string;
-                      action: "create" | "clone";
-                    }
+                    { query: "", action: "create" }
                   }
                   render={(pClose, { query, action }, setState) => {
                     if (action === "clone" && origCon?.db_name) {

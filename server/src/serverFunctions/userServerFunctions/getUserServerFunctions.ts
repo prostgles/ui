@@ -69,7 +69,7 @@ export const getUserServerFunctions = async (
         await askLLM({
           connectionId,
           /** Avoid infinite error */
-          userMessage: userMessage as DBSSchema["llm_messages"]["message"],
+          userMessage: userMessage,
           schema,
           chatId,
           dbs,

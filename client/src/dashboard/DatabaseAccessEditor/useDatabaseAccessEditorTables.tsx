@@ -33,7 +33,7 @@ export const useDatabaseAccessEditorTables = ({
             ...t,
             ddlState:
               newTable && getTableSchemaDriftState(t, newTable, newTablesDdl),
-          } as TableSchemaWithDriftState;
+          };
         })
         .concat(
           newTables
@@ -84,7 +84,7 @@ export const useDatabaseAccessEditorTables = ({
                         filter: true,
                       }) as DBSchemaTableColumn,
                   ),
-                }) as TableSchemaWithDriftState,
+                }),
             ) ?? [],
         )
         .toSorted((a, b) => {

@@ -5,9 +5,7 @@ export const getOrchestrationToolHandlers = (
   definitions: Parameters<DefineAgenticWorkflow>[0],
 ) => {
   return new Proxy(
-    {} as Parameters<
-      Parameters<DefineAgenticWorkflow>[1]
-    >[0]["orchestratorToolHandlers"],
+    {},
     {
       get(_target, mcpServerName: string) {
         if (typeof mcpServerName !== "string") return undefined;
@@ -18,8 +16,10 @@ export const getOrchestrationToolHandlers = (
           );
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         const serverTools = definitions.orchestrationTools[
-          mcpServerName as unknown as keyof typeof definitions.orchestrationTools
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+          mcpServerName as keyof typeof definitions.orchestrationTools
         ] as Record<string, 1> | undefined;
         if (!serverTools) {
           throw new Error(
@@ -28,7 +28,7 @@ export const getOrchestrationToolHandlers = (
         }
 
         return new Proxy(
-          {} as Record<string, (input?: unknown) => Promise<unknown>>,
+          {},
           {
             get(_serverTarget, toolName: string) {
               if (typeof toolName !== "string") return undefined;

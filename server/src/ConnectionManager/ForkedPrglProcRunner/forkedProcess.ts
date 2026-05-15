@@ -82,6 +82,16 @@ const initForkedProc = () => {
       } else {
         if (!onReadyParamsProxy) throw "prgl not ready";
 
+        const evalSource = <T>(code: string): T => {
+          try {
+            return eval(code + "\n\n exports;") as T;
+          } catch (error) {
+            throw new Error("Error evaluating code: ", {
+              cause: error instanceof Error ? error : String(error),
+            });
+          }
+        };
+
         try {
           if (msg.type === "mcpResult") {
             const { callId, error, result } = msg;
@@ -89,12 +99,12 @@ const initForkedProc = () => {
             delete toolCalls[callId];
           } else if (msg.type === "run") {
             const { code, validatedArgs, user, id } = msg;
-            const { run } = eval(code + "\n\n exports;") as {
+            const { run } = evalSource<{
               run: (
                 args: any,
                 prglParams: OnReadyParamsBasic & { user: any },
               ) => Promise<unknown>;
-            };
+            }>(code);
             // const callMCPServerTool = async (
             //   serverName: string,
             //   toolName: string,
@@ -123,7 +133,9 @@ const initForkedProc = () => {
             cb(undefined, methodResult);
           } else {
             const { code } = msg;
-            const { onMount } = eval(code + "\n\n exports;");
+            const { onMount } = evalSource<{
+              onMount: (args: any) => Promise<unknown>;
+            }>(code);
 
             const methodResult = await onMount(onReadyParamsProxy);
             cb(undefined, methodResult);

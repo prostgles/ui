@@ -43,7 +43,7 @@ export const UserTypeSelect = (props: P) => {
       placeholder="New or existing user type"
       fieldName="id"
       onChange={onChange}
-      tableHandler={dbs.user_types as TableHandlerClient}
+      tableHandler={dbs.user_types}
       values={userTypes}
       getLabel={(_id) => {
         const id = _id as UserType;

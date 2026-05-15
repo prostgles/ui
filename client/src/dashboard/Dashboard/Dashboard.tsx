@@ -210,16 +210,16 @@ export class _Dashboard extends RTComp<
       }
       let wsp: Workspace | undefined;
       try {
-        wsp = (await workspaces.findOne(
+        wsp = await workspaces.findOne(
           workspaceId ? { id: workspaceId, ...wspFilter } : wspFilter,
           { orderBy: { last_used: -1 } },
-        )) as Workspace;
+        );
 
         await cloneEditableWorkpsaces({ dbs, user_id });
 
         /** If this is an editable workspace then ensure we're working on a clone */
         if (
-          wsp.published &&
+          wsp?.published &&
           wsp.user_id !== this.props.prgl.user?.id &&
           wsp.layout_mode !== "fixed"
         ) {
@@ -239,7 +239,7 @@ export class _Dashboard extends RTComp<
         return;
       }
 
-      if (!wsp as any) {
+      if (!wsp) {
         this.setState({ wspError: true });
         return;
       }

@@ -1,5 +1,6 @@
 import type { DetailedFilter } from "@common/filterUtils";
 import type {
+  OnPartialResult,
   SearchListItem,
   SearchListProps,
 } from "@components/SearchList/SearchList";
@@ -14,7 +15,7 @@ export async function onSearchItems(
   this: SmartSearch,
   term: string,
   opts?: { matchCase?: boolean },
-  onPartialResult?,
+  onPartialResult?: OnPartialResult,
 ): Promise<Required<SearchListProps>["items"]> {
   if (typeof term !== "string") {
     return [];
@@ -127,9 +128,9 @@ export async function onSearchItems(
     return searchItems;
   };
   const hasChars = Boolean(term && /[a-z]/i.test(term));
+  let canceled = false as boolean;
   for (let i = 0; i < columns.length; i++) {
     const col = columns[i]!;
-    let canceled: boolean = false as boolean;
     if (canceled || (col.tsDataType === "number" && hasChars)) {
       /** 100% no result due to data type mismatch */
     } else {

@@ -77,16 +77,7 @@ export const useAskLLMToolApprove = () => {
     return;
   }
   return {
-    requests: requests as
-      | (DBSSchema["mcp_tool_approval_requests"] & {
-          llm_messages: Pick<DBSSchema["llm_messages"], "id" | "message">[];
-          mcp_server_tools: Pick<
-            DBSSchema["mcp_server_tools"],
-            "id" | "description" | "annotations"
-          >[];
-          connections: Pick<DBSSchema["connections"], "id" | "name">[];
-        })[]
-      | undefined,
+    requests: requests,
     respond,
     dbSchemaForPrompt,
     showRequestId,

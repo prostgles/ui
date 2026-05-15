@@ -499,7 +499,7 @@ export default class FormField<
     const inputNode =
       inputContent ? inputContent
         // : type === "file" ? <InputFile {...(inputProps as any)} />
-      : type === "checkbox" ? <Checkbox {...(inputProps as any)} />
+      : type === "checkbox" ? <Checkbox {...(inputProps)} />
       : readOnly ?
         <div
           className="pr-p5 py-p5 font-16 ta-left o-auto"

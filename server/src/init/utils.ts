@@ -40,3 +40,4 @@ export const setNonceHandler = (app: e.Express, enable: boolean) => {
 };
 
 export const isTesting = !!process.env.PRGL_TEST;
+export const isDevelopment = process.env.NODE_ENV === "development";

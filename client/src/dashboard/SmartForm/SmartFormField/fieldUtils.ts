@@ -147,7 +147,7 @@ export const getInputType = (
     : ["address_line1", "address_line"].includes(c.name) ? "address-line1"
     : ["address_line2"].includes(c.name) ? "address-line2"
     : c.tsDataType === "string" ? "text"
-    : (c.tsDataType as string)
+    : (c.tsDataType)
   );
 };
 

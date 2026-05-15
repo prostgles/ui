@@ -148,7 +148,7 @@ export const useNewRowDataHandler = (args: Args) => {
             { [columnName]: newVal.value },
             { returning: "*" },
           );
-          onSuccess?.("update", newRow as any);
+          onSuccess?.("update", newRow);
         } catch (_e: any) {
           parseError(_e);
           throw _e;

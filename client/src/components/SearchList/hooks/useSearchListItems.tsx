@@ -84,7 +84,7 @@ export const useSearchListItems = (
               : <FlexRow className="gap-0">
                   {contentLeft ?? leftSpacer}
                 </FlexRow>,
-          } as ParsedListItem;
+          };
         });
       })
     : renderedItemsWithoutHeaders;

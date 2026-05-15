@@ -793,7 +793,7 @@ CREATE TABLE user_types (
   id TEXT PRIMARY KEY
 );  
 
-INSERT INTO user_types (id, description) 
+INSERT INTO user_types (id) 
 VALUES ('customer'), 
   ('restaurant_manager'),
   ('support'),

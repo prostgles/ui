@@ -77,70 +77,7 @@ export const setupLLMProviders = async (dbs: DBS) => {
         extra_body: {
           max_tokens: 16_000,
         },
-        llm_models: [
-          {
-            name: "claude-sonnet-4-20250514",
-            pricing_info: {
-              input: 3,
-              output: 15,
-              cachedInput: 3.75,
-              cachedOutput: 0.3,
-            },
-            mcp_tool_support: true,
-          },
-          {
-            name: "claude-3-7-sonnet-20250219",
-            pricing_info: {
-              input: 3,
-              output: 15,
-              cachedInput: 3.75,
-              cachedOutput: 0.3,
-            },
-            mcp_tool_support: true,
-          },
-          {
-            name: "claude-3-5-sonnet-20241022",
-            pricing_info: {
-              input: 3,
-              output: 15,
-              cachedInput: 1,
-              cachedOutput: 0.08,
-            },
-            mcp_tool_support: true,
-          },
-          {
-            name: "claude-3-5-sonnet-20240620",
-            pricing_info: {
-              input: 3,
-              output: 15,
-              cachedInput: 1,
-              cachedOutput: 0.08,
-            },
-            mcp_tool_support: true,
-          },
-          {
-            name: "claude-3-sonnet-20240229",
-            pricing_info: { input: 3, output: 15 },
-          },
-          {
-            name: "claude-3-5-haiku-20241022",
-            pricing_info: {
-              input: 0.8,
-              output: 4,
-              cachedInput: 1,
-              cachedOutput: 0.08,
-            },
-          },
-          {
-            name: "claude-3-opus-20240229",
-            pricing_info: {
-              input: 15,
-              output: 75,
-              cachedInput: 18.75,
-              cachedOutput: 1.5,
-            },
-          },
-        ],
+        llm_models: [],
       },
       {
         id: "Google",
@@ -149,54 +86,7 @@ export const setupLLMProviders = async (dbs: DBS) => {
         api_url:
           "https://generativelanguage.googleapis.com/v1beta/models/$MODEL:generateContent?key=$KEY",
         logo_url: "/logos/google.svg",
-        llm_models: [
-          {
-            name: "gemini-2.5-pro-exp-03-25",
-            pricing_info: {
-              input: 1.25,
-              output: 10,
-              threshold: { tokenLimit: 200_000, input: 2.5, output: 15 },
-            },
-          },
-          {
-            name: "gemini-2.5-pro-preview-03-25",
-            pricing_info: {
-              input: 1.25,
-              output: 10,
-              threshold: { tokenLimit: 200_000, input: 2.5, output: 15 },
-            },
-          },
-          {
-            name: "gemini-2.0-flash",
-            pricing_info: {
-              input: 0.1,
-              output: 0.4,
-              cachedInput: 1,
-              cachedOutput: 0.025,
-            },
-          },
-          {
-            name: "gemini-2.0-flash-lite",
-            pricing_info: { input: 0.075, output: 0.3 },
-          },
-          {
-            name: "gemini-1.5-flash",
-            pricing_info: {
-              input: 0.075,
-              output: 0.3,
-              threshold: {
-                tokenLimit: 128_000,
-                input: 0.15,
-                output: 0.6,
-              },
-            },
-          },
-          {
-            name: "gemini-1.5-flash-8b",
-            pricing_info: { input: 0.0375, output: 0.15 },
-          },
-          { name: "gemini-1.5-pro", pricing_info: { input: 1.25, output: 5 } },
-        ],
+        llm_models: [],
       },
       {
         id: "Ollama",
@@ -250,17 +140,17 @@ export const setupLLMProviders = async (dbs: DBS) => {
             pricing_info: null,
             model_created: "2025-03-07 12:19:04.913961",
           },
-          {
-            name: "anthropic/claude-4.6-sonnet",
-            pricing_info: {
-              input: 3,
-              output: 15,
-              cachedInput: 1,
-              cachedOutput: 0.08,
-            },
-            model_created: "2024-10-22 12:00:00",
-            mcp_tool_support: true,
-          },
+          // {
+          //   name: "anthropic/claude-4.6-sonnet",
+          //   pricing_info: {
+          //     input: 3,
+          //     output: 15,
+          //     cachedInput: 1,
+          //     cachedOutput: 0.08,
+          //   },
+          //   model_created: "2024-10-22 12:00:00",
+          //   mcp_tool_support: true,
+          // },
         ],
       },
       {

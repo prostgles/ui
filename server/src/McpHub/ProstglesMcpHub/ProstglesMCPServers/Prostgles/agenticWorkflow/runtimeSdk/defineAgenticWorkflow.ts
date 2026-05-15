@@ -37,9 +37,6 @@ type McpServerToolDefinitions = Record<
 >;
 // type McpServerToolDefinitions = {
 //   web: {
-//     fetch_webpage: (args: { url: string }) => Promise<{ content: string }>;
-//   };
-//   web: {
 //     search: (args: { q: string }) => Promise<{ results: string[] }>;
 //     get_snapshot: (args: { url: string }) => Promise<{ snapshot: string }>;
 //   };

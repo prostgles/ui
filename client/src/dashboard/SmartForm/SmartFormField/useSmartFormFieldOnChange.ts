@@ -20,7 +20,7 @@ export const useSmartFormFieldOnChange = (
       if (
         _newValue === "" &&
         ["Date", "number", "boolean", "Object"].includes(
-          column.tsDataType as string,
+          column.tsDataType,
         ) &&
         column.is_nullable
       ) {

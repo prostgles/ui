@@ -51,7 +51,7 @@ export class NumberOrDateFilter extends RTComp<
               max: { $max: [column.name] },
             },
           },
-        )) as Limits | undefined;
+        ));
       } else {
         const { select } = await getTableSelect(
           { table_name: tableName, columns: column.columns },

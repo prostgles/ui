@@ -26,7 +26,7 @@ export const getColWInfo = (
         return false;
       }
       return true;
-    }) as ColumnConfigWInfo[];
+    });
 
   const newCols = tableColumns.filter(
     (c) => !columns.find((r) => r.info && r.name === c.name),

@@ -259,7 +259,7 @@ export class TableHeader<Sort extends ColumnSortSQL> extends React.Component<
                     "flex-row fs-1 h-fit " +
                     (!col.sortable ? ""
                     : typeof mySort?.asc !== "boolean" ? " sort-none "
-                    : [false].includes(mySort.asc as any) ? "sort-desc"
+                    : [false].includes(mySort.asc) ? "sort-desc"
                     : "sort-asc") +
                     (col.headerClassname || "")
                   }

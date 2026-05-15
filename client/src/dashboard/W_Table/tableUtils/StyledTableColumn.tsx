@@ -28,9 +28,7 @@ export const StyledTableColumn = ({
 }: P) => {
   if (c.style?.type === "Icons") {
     const valueKey = String(value?.toString() ?? "");
-    const iconName = (valueKey && c.style.valueToIconMap[valueKey]) as
-      | string
-      | undefined;
+    const iconName = (valueKey && c.style.valueToIconMap[valueKey]);
     const sizeNum = c.style.size ?? 24;
     const iconNode = iconName && <SvgIcon icon={iconName} size={sizeNum} />;
     return <FlexRow>{iconNode ?? value}</FlexRow>;

@@ -258,9 +258,8 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
           }
         }, 600);
       }
-      const deltaOpts =
-        delta.w?.options ?? ({} as WindowData<"map">["options"]);
-      const changedOpts = getKeys(deltaOpts || {});
+      const deltaOpts = delta.w?.options ?? {};
+      const changedOpts = getKeys(deltaOpts);
       const changedWkeys = getKeys(delta.w || {});
 
       if (

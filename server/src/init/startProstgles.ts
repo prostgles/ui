@@ -195,7 +195,7 @@ export const startProstgles = async ({
     statePrgl = prgl;
 
     startDevHotReloadNotifier({ io, port, host });
-    return { state: "ok", dbs: prgl.db as DBS };
+    return { state: "ok", dbs: prgl.db };
   } catch (err) {
     return { state: "error", error: err as Error, errorType: "init" };
   }

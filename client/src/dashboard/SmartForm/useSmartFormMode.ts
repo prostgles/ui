@@ -72,7 +72,7 @@ export const useSmartFormMode = (
   const { tableName, rowFilter, db, table, onChange, parentForm, onLoaded } =
     props;
   const [loading, setLoading] = useState(false);
-  const tableHandler = db[tableName] as Partial<TableHandlerClient> | undefined;
+  const tableHandler = db[tableName];
   const [localRowFilter, setLocalRowFilter] = useState(rowFilter);
   useEffectDeep(() => {
     setLocalRowFilter(rowFilter);

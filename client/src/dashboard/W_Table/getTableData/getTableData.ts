@@ -28,7 +28,7 @@ export async function getTableData(
 
   let ns: Partial<W_TableState> | undefined;
 
-  const tableHandler = db[tableName] as Partial<TableHandlerClient> | undefined;
+  const tableHandler = db[tableName];
   if (!tableHandler) return;
   try {
     if (!tableHandler.find) {

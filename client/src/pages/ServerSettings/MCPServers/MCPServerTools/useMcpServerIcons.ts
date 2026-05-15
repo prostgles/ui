@@ -20,17 +20,7 @@ export const useMcpServerIcons = () => {
     },
   );
 
-  const mcpServers = mcpServersRequest.data as
-    | (Pick<
-        DBSSchema["mcp_servers"],
-        "name" | "icon_path" | "config_schema"
-      > & {
-        mcp_server_tools: Pick<
-          DBSSchema["mcp_server_tools"],
-          "name" | "icon" | "description"
-        >[];
-      })[]
-    | undefined;
+  const mcpServers = mcpServersRequest.data;
 
   const mcpServerIcons = useMemo(() => {
     const iconMap = new Map<

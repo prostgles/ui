@@ -476,7 +476,7 @@ class Button<HREF extends string | void = void> extends RTComp<
           `${_className} btn btn-${variant} btn-size-${size} btn-color-${color} ws-nowrap w-fit `,
           className,
         ),
-        ref: this.props._ref as any,
+        ref: this.props._ref,
         ...pickKeys(otherProps, ["data-id"]),
       };
 

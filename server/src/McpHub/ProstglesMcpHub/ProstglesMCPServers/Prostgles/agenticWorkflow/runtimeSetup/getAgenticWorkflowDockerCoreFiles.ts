@@ -114,7 +114,7 @@ export const packageJsonTemplate = {
     "@types/node": "^22.19.15",
     eslint: "^9.39.4",
     "@eslint/js": "^9.39.1",
-    "typescript-eslint": "^8.57.1",
+    "typescript-eslint": "^8.59.3",
   },
 } as const;
 

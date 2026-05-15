@@ -6,7 +6,6 @@ import { Select, type FullOption } from "@components/Select/Select";
 import { SvgIconFromURL } from "@components/SvgIcon";
 import { mdiAccountKey, mdiPencil, mdiPlus, mdiRefresh } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import type { DBHandlerClient } from "prostgles-client";
 import type { DetailedJoinSelect } from "prostgles-types";
 import React, { useMemo, useState } from "react";
 import { nFormatter } from "src/utils/utils";
@@ -122,6 +121,8 @@ export const LLMModelSelector = ({
         className={className}
         multiSelect={false}
         value={value}
+        /** Always show search bar to enable the endOfResultsContent Refresh models flow */
+        noSearchLimit={0}
         onChange={(id) => {
           const model = models?.find((m) => m.id === id);
           onChange(id, model!);

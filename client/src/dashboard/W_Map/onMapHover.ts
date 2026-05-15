@@ -86,7 +86,7 @@ export function onMapHover(
                 const filter = getMapFilter(
                   layer,
                   table.columns,
-                  hoverObj.properties as any,
+                  hoverObj.properties,
                   this.props.myLinks,
                 )?.filterValue;
                 // const filter = selectData.i.$jsonb_build_object? (i as AnyObject) : {

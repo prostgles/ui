@@ -84,8 +84,7 @@ export const ProstglesSignup = ({
             await dbs.llm_credentials.insert({
               provider_id: "Prostgles",
               api_key,
-              //@ts-ignore
-              user_id: undefined,
+              user_id: undefined as unknown as string,
             });
             /** This will trigger a page reload. Keep it last to ensure any errors during token validation are shown */
             await dbs.global_settings.update(

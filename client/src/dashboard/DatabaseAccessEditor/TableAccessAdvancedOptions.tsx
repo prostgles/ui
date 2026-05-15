@@ -109,7 +109,7 @@ export const TableAccessAdvancedOptions = ({
               <div>Filter applied to all queries on this table</div>
             </FlexCol>
           }
-          detailedFilter={filterOptions.forcedFilter as SingleGroupFilter}
+          detailedFilter={filterOptions.forcedFilter}
           tableName={table.name}
           contextData={[]}
           onChange={(forcedFilterDetailed) => {

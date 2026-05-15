@@ -391,15 +391,12 @@ export function getTimeAxisTicks(args: GetTimeTicksOpts): ChartedText[] {
     lb,
     ...[midTicksBottom, midTicks].flatMap((ticks, tickRowIndex) => {
       return ticks
-        .map(
-          (t, i) =>
-            ({
-              id: "midTicks-row-" + tickRowIndex + "-idx-" + i,
-              ...MIDTICK_STYLE,
-              text: t.label,
-              coords: [t.x, height - 10 - tickRowIndex * 15],
-            }) as ChartedText,
-        )
+        .map((t, i) => ({
+          id: "midTicks-row-" + tickRowIndex + "-idx-" + i,
+          ...MIDTICK_STYLE,
+          text: t.label,
+          coords: [t.x, height - 10 - tickRowIndex * 15] as [number, number],
+        }))
         .filter((t) => {
           /* Remove mid ticks that overlap with the end ticks */
           const x = getScreenXY(t.coords[0], 0)[0],

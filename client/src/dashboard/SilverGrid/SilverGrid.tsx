@@ -100,12 +100,12 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
           this.onChange({
             id: "1",
             ...(defaultLayoutType === "tab" && { activeTabKey: undefined }),
-            type: defaultLayoutType as any,
+            type: defaultLayoutType as "row",
             size: 100,
             items: children.map((c, i) => ({
               id: c.props["data-key"] || i.toString(),
               tableName: c.props["data-table-name"],
-              viewType: c.props["data-view-type"],
+              viewType: c.props["data-view-type"] as "map",
               title: c.props["data-title"],
               type: "item",
               size: 20,
@@ -198,7 +198,7 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
             newLayout = {
               id: "1",
               ...(newLayoutType === "tab" && { activeTabKey: undefined }),
-              type: newLayoutType as any,
+              type: newLayoutType as "row",
               size: 100,
               isRoot: true,
               items: orphans

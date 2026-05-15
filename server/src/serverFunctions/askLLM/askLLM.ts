@@ -334,11 +334,7 @@ export const askLLM = async (args: AskLLMArgs) => {
           llm_providers: "*",
         },
       },
-    )) as
-      | (DBSSchema["llm_models"] & {
-          llm_providers: DBSSchema["llm_providers"][];
-        })
-      | undefined;
+    ));
 
     if (!modelData) {
       await updateLlmResponseMessageTextWithError("Model not found");

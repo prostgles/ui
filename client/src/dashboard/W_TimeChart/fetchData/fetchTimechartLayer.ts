@@ -76,9 +76,7 @@ export async function fetchTimechartLayer({
         (layer.joinPath?.at(-1)?.table ?? layer.tableName)
       : layer.localTableName;
 
-    const tableHandler = db[tableName] as
-      | Partial<TableHandlerClient>
-      | undefined;
+    const tableHandler = db[tableName];
     if (!tableHandler?.findOne || !tableHandler.find) {
       throw `Cannot query table ${tableName}: Missing or disallowed`;
     }

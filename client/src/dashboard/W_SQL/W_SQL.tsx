@@ -222,14 +222,11 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
     }
   };
 
-  streamData = createReactiveState(
-    { rows: [] } as { rows: any[] },
-    (newState) => {
-      if (newState.rows.length < this.state.pageSize) {
-        this.setState({ rows: newState.rows });
-      }
-    },
-  );
+  streamData = createReactiveState({ rows: [] as any[] }, (newState) => {
+    if (newState.rows.length < this.state.pageSize) {
+      this.setState({ rows: newState.rows });
+    }
+  });
 
   async onUnmount() {
     window.removeEventListener("keydown", this.saveFunc, false);

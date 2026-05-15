@@ -43,7 +43,7 @@ export const startupState: {
   },
   onReady: (cb: StateListener) => {
     if (startupState.state.state !== "loading") {
-      cb(startupState.state as FinishedState);
+      cb(startupState.state);
       return;
     }
     startupState.listeners.push(cb);

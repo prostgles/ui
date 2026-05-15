@@ -13,9 +13,7 @@ export const validateFilter = async (
   }: Pick<BaseFilterProps, "db" | "tableName" | "column" | "tables">,
 ) => {
   try {
-    const tableHandler = db[tableName] as
-      | Partial<TableHandlerClient>
-      | undefined;
+    const tableHandler = db[tableName];
     const finalFilter = getFinalFilter(filter);
     const isHaving =
       column.type === "computed" && column.computedConfig.funcDef.isAggregate;
