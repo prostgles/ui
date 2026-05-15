@@ -84,7 +84,7 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   await page.mouse.click(450, 300);
   await addScene({ svgFileName: "crypto_dashboards_tooltip" });
 
-  await openConnection("prostgles_video_demo");
+  await openConnection("cloud");
   await page.getByTestId("AskLLM").click();
   await newChat(page);
   await setPromptByText(page, "chat");
