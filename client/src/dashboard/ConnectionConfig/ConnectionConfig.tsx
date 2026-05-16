@@ -1,4 +1,7 @@
-import type { CONNECTION_CONFIG_SECTIONS } from "@common/utils";
+import {
+  tableMightBeUndefinedDueToAccessControl,
+  type CONNECTION_CONFIG_SECTIONS,
+} from "@common/utils";
 import { FlexRow } from "@components/Flex";
 import { Icon } from "@components/Icon/Icon";
 import type { TabItem } from "@components/Tabs";
@@ -49,7 +52,7 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
   const { serverState, dbs, connectionId, db, dbsMethods } = prgl;
   const propsWithPrgl = useMemo(() => ({ ...props, prgl }), [props, prgl]);
   const disabledText =
-    (dbs.access_control as any)?.update ?
+    tableMightBeUndefinedDueToAccessControl(dbs.access_control)?.update ?
       undefined
     : t.ConnectionConfig["Must be admin to access this"];
   const stateDisabledInfo =

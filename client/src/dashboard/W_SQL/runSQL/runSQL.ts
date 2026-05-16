@@ -177,7 +177,7 @@ export async function runSQL(this: W_SQL, sort: ColumnSortSQL[] = []) {
         : undefined;
       if (!runningQuery && packet.type !== "error") {
         if (w.$get()?.closed) {
-          handler.stop();
+          await handler.stop();
         } else {
           console.error(this.state.activeQuery, sql, packet);
           alert(

@@ -503,3 +503,12 @@ export type RequiredKeepUndefined<T> = Simplify<
     [K in OptionalKeys<T>]: T[K] | undefined;
   }
 >;
+
+/**
+ * TODO: find a compile time solution
+ */
+export const tableMightBeUndefinedDueToAccessControl = <T>(
+  tableHandler: T,
+): T | undefined => {
+  return tableHandler;
+};

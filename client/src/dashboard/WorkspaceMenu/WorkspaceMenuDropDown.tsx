@@ -1,27 +1,20 @@
-import {
-  mdiAccountMultiple,
-  mdiChevronDown,
-  mdiContentCopy,
-  mdiViewCarousel,
-} from "@mdi/js";
-import React, { useMemo } from "react";
 import Btn from "@components/Btn";
 import { FlexCol } from "@components/Flex";
-import { Icon } from "@components/Icon/Icon";
 import PopupMenu from "@components/PopupMenu";
 import {
   SearchList,
   type SvgIconName,
 } from "@components/SearchList/SearchList";
-import { SvgIcon } from "@components/SvgIcon";
+import { mdiAccountMultiple, mdiChevronDown, mdiContentCopy } from "@mdi/js";
+import React, { useMemo } from "react";
+import type { Prgl } from "src/App";
 import { cloneWorkspace } from "../Dashboard/cloneWorkspace";
+import type { WorkspaceSyncItem } from "../Dashboard/dashboardUtils";
+import type { useSetActiveWorkspace, useWorkspaces } from "./useWorkspaces";
 import { WorkspaceAddBtn } from "./WorkspaceAddBtn";
 import { WorkspaceDeleteBtn } from "./WorkspaceDeleteBtn";
 import "./WorkspaceMenu.css";
 import { WorkspaceSettings } from "./WorkspaceSettings";
-import type { WorkspaceSyncItem } from "../Dashboard/dashboardUtils";
-import type { Prgl } from "src/App";
-import type { useSetActiveWorkspace, useWorkspaces } from "./useWorkspaces";
 
 type P = {
   workspace: WorkspaceSyncItem;
@@ -59,6 +52,7 @@ export const WorkspaceMenuDropDown = ({
           title="Manage Workspaces"
           iconPath={mdiChevronDown}
           className={"text-0"}
+          size="default"
           data-command="WorkspaceMenuDropDown"
         />
       }

@@ -30,6 +30,8 @@ export const getLinkLines = (
  *  */
 const controlPointFactor = 0.4;
 
+type HorizontalSide = "left" | "right";
+
 const getLinkLinePoints = (
   shapes: (ShapeV2 | LinkLine)[],
   linkLine: LinkLine,
@@ -48,8 +50,34 @@ const getLinkLinePoints = (
   const y1 = yOffset?.position === "source" ? _y1 + yOffset.value : _y1;
   const y2 = yOffset?.position === "target" ? _y2 + yOffset.value : _y2;
 
-  const startP = [x1 + r1.w, y1 + sourceYOffset] as const;
-  const endP = [x2, y2 + targetYOffset] as const;
+  const sourceSideXs = {
+    left: x1,
+    right: x1 + r1.w,
+  } satisfies Record<HorizontalSide, number>;
+  const targetSideXs = {
+    left: x2,
+    right: x2 + r2.w,
+  } satisfies Record<HorizontalSide, number>;
+
+  const sidePairs = (
+    [
+      ["left", "left"],
+      ["left", "right"],
+      ["right", "left"],
+      ["right", "right"],
+    ] as const
+  ).map(([sourceSide, targetSide]) => ({
+    sourceSide,
+    targetSide,
+    distance: Math.abs(sourceSideXs[sourceSide] - targetSideXs[targetSide]),
+  }));
+
+  const { sourceSide, targetSide } = sidePairs.reduce((best, current) =>
+    current.distance < best.distance ? current : best,
+  );
+
+  const startP = [sourceSideXs[sourceSide], y1 + sourceYOffset] as const;
+  const endP = [targetSideXs[targetSide], y2 + targetYOffset] as const;
   const startPoint = {
     x: startP[0],
     y: startP[1],
@@ -76,8 +104,17 @@ const getLinkLinePoints = (
     ),
   );
 
-  const controlPoint1 = { x: startPoint.x + horizontalOffset, y: startPoint.y };
-  const controlPoint2 = { x: endPoint.x - horizontalOffset, y: endPoint.y };
+  const sourceDirection = sourceSide === "right" ? 1 : -1;
+  const targetDirection = targetSide === "left" ? -1 : 1;
+
+  const controlPoint1 = {
+    x: startPoint.x + horizontalOffset * sourceDirection,
+    y: startPoint.y,
+  };
+  const controlPoint2 = {
+    x: endPoint.x + horizontalOffset * targetDirection,
+    y: endPoint.y,
+  };
   return {
     startPoint,
     endPoint,

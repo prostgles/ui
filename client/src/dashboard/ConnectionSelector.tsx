@@ -38,6 +38,7 @@ export const ConnectionSelector = ({ connection, dbs, location }: P) => {
         iconPosition: "left",
         variant: "faded",
         loading: isLoading,
+        size: "default",
         style: {
           flex: 1,
           minWidth: 0,

@@ -1,11 +1,9 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import "./Loading.css";
+import React from "react";
 import RTComp from "../../dashboard/RTComp";
-import { classOverride, FlexRow } from "../Flex";
 import { tout } from "../../utils/utils";
-import { SpinnerV2 } from "./SpinnerV2";
+import { classOverride, FlexRow } from "../Flex";
+import "./Loading.css";
 import { SpinnerV4 } from "./SpinnerV4";
-import { SpinnerV3 } from "./SpinnerV3";
 export const pageReload = async (reason: string) => {
   console.log("pageReload due to: ", reason);
   await tout(200);

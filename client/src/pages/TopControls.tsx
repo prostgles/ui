@@ -20,7 +20,7 @@ import type {
   FullExtraProps,
 } from "./ProjectConnection/ProjectConnection";
 import { AskLLM } from "../dashboard/AskLLM/AskLLM";
-import { ROUTES } from "@common/utils";
+import { ROUTES, tableMightBeUndefinedDueToAccessControl } from "@common/utils";
 import { t } from "../i18n/i18nUtils";
 
 type TopControlsProps = {
@@ -86,7 +86,8 @@ export const TopControls = (props: TopControlsProps) => {
           >
             {location === "workspace" && <AppVideoDemo />}
 
-            {!!(prgl.dbs.alerts as any)?.subscribe && <Alerts />}
+            {tableMightBeUndefinedDueToAccessControl(prgl.dbs.alerts)
+              ?.subscribe && <Alerts />}
 
             {prgl.dbsMethods.askLLM && (
               <AskLLM
@@ -107,6 +108,7 @@ export const TopControls = (props: TopControlsProps) => {
               variant="faded"
               asNavLink={true}
               iconPath={mdiArrowLeft}
+              size="default"
             >
               {/* {window.isMediumWidthScreen ? null : t.TopControls.Connections} */}
             </Btn>
@@ -147,6 +149,7 @@ export const ConnectionConfigBtn = ({
             `${ROUTES.CONFIG}/${connection.id}`
           : `${ROUTES.CONNECTIONS}/${connection.id}`
         }
+        size="default"
         asNavLink={true}
         children={
           isOnWorkspace ? null : t.TopControls["Connection configuration"]

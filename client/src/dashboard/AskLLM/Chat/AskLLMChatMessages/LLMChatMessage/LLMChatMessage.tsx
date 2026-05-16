@@ -52,7 +52,7 @@ export const LLMChatMessage = memo(
         }
         {isLoadingSinceDate && (
           <>
-            <Loading />
+            <Loading className="text-2" />
             {hideLoadingCounter ? null : <Counter from={isLoadingSinceDate} />}
           </>
         )}

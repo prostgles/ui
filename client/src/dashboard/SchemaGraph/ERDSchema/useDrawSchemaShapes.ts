@@ -129,10 +129,24 @@ export const useDrawSchemaShapes = (
                   : getCssVariableValue("--active"),
               });
             } else {
-              otherShapes.push({
-                ...s,
-                opacity: 0.3,
-              });
+              /**
+               * Ensure the rectangles themselves are opaque
+               * to prevent text bleed on overlapping rectangles
+               * */
+              otherShapes.push(
+                s.type === "rectangle" ?
+                  {
+                    ...s,
+                    children: s.children?.map((c) => ({
+                      ...c,
+                      opacity: 0.2,
+                    })),
+                  }
+                : {
+                    ...s,
+                    opacity: 0.1,
+                  },
+              );
             }
           });
           drawnShapes = [...otherShapes, ...relatedShapes];

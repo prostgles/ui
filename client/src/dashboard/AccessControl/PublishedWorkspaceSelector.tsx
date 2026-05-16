@@ -136,7 +136,7 @@ export const PublishedWorkspaceSelector = ({
           }}
           disabledInfo={
             !publishedWorkspaces.length ?
-              "Cannot change if no published workspaces"
+              "Cannot change if there are no published workspaces"
             : undefined
           }
           label={{

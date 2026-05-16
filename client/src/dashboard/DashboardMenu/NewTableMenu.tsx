@@ -58,6 +58,7 @@ export const NewTableMenu = (
           iconClassname: "",
           color: "action",
           variant: "filled",
+          size: "default",
           className: "",
           children: null,
         }}

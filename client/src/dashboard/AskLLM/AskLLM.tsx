@@ -2,7 +2,7 @@ import Btn from "@components/Btn";
 import { ErrorTrap } from "@components/ErrorComponent";
 import { mdiAssistant } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import { t } from "../../i18n/i18nUtils";
 import type { LoadedSuggestions } from "../Dashboard/dashboardUtils";
 import { AskLLMChat } from "./Chat/AskLLMChat";
@@ -43,6 +43,7 @@ export const AskLLM = (props: AskLLMProps) => {
         color="action"
         iconPath={mdiAssistant}
         data-command="AskLLM"
+        size="default"
         onClick={() => {
           setShowChat({});
         }}

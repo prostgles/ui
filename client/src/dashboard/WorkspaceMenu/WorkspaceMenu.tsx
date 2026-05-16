@@ -72,6 +72,7 @@ export const WorkspaceMenu = (props: P) => {
                   "Shared workspace"
                 : "Workspace") + (wsp.isMine ? "" : " (readonly)")
               }
+              size="default"
               iconNode={wsp.icon ? <SvgIcon icon={wsp.icon} /> : undefined}
               style={{
                 padding: "16px",
@@ -104,6 +105,7 @@ export const WorkspaceMenu = (props: P) => {
           }
           title={"Toggle Layout Mode"}
           data-command="WorkspaceMenu.toggleWorkspaceLayoutMode"
+          size="default"
           onClick={() => {
             workspace.$update({
               layout_mode:

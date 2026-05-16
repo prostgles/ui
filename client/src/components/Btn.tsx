@@ -294,7 +294,11 @@ class Button<HREF extends string | void = void> extends RTComp<
 
     const isDisabled = disabledInfo || loading;
     let _className = "";
-    const { size = window.isLowWidthScreen ? "small" : "default" } = this.props;
+    const { size: sizeFromProps = "small" } = this.props;
+    const size =
+      sizeFromProps === "default" && window.isLowWidthScreen ?
+        "small"
+      : sizeFromProps;
 
     const hasBgClassname = (className + "").includes("bg-");
     _className =

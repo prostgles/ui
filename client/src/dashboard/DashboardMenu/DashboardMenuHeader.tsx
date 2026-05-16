@@ -33,6 +33,7 @@ export const DashboardMenuHeader = ({
       <Btn
         key="sql"
         {...dataCommand("dashboard.menu.sqlEditor")}
+        size="default"
         className="f-1 jc-start max-w-fit"
         title={t.DashboardMenuHeader["Opens SQL Query editor"]}
         onClickPromise={async () => {

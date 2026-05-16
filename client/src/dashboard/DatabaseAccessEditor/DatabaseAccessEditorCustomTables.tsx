@@ -104,9 +104,7 @@ export const DatabaseAccessEditorCustomTables = ({
               rowStyle: {
                 padding: "0.25em",
                 ...(onChange ?
-                  {
-                    border: "1px solid var(--b-default)",
-                  }
+                  {}
                 : {
                     /** Disable focus */
                     background: "unset",
