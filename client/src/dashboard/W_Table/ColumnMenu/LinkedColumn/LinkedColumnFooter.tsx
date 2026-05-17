@@ -40,13 +40,14 @@ export const LinkedColumnFooter = ({
       )}
       <FlexRow className="mt-2">
         {onClose && (
-          <Btn onClick={onClose} variant="outline">
+          <Btn onClick={onClose} variant="outline" size="default">
             {t.common["Cancel"]}
           </Btn>
         )}
         {column?.nested && (
           <Btn
             color="danger"
+            size="default"
             onClick={() => {
               updateWCols(
                 w,
@@ -63,6 +64,7 @@ export const LinkedColumnFooter = ({
           <Btn
             color="action"
             variant="filled"
+            size="default"
             className="ml-auto"
             disabledInfo={disabledInfo}
             data-command="LinkedColumn.Add"

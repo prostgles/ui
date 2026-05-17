@@ -2,7 +2,6 @@ import { FlexRow, FlexRowWrap } from "@components/Flex";
 import { CellBarchart } from "@components/ProgressBar";
 import { SvgIcon } from "@components/SvgIcon";
 import type { OnColRenderRowInfo } from "@components/Table/Table";
-import type { AnyObject } from "prostgles-types";
 import { _PG_date, _PG_numbers, includes } from "prostgles-types";
 import React from "react";
 import { RenderValue } from "../../SmartForm/SmartFormField/RenderValue";
@@ -16,19 +15,18 @@ import { blend } from "../colorBlend";
 import type { ProstglesTableColumn } from "./getTableCols";
 import type { OnRenderColumnProps } from "./onRenderColumn";
 
-type P = Pick<OnColRenderRowInfo, "row" | "value" | "renderedVal"> &
+type P = Pick<OnColRenderRowInfo, "value" | "renderedVal"> &
   Pick<OnRenderColumnProps, "maxCellChars" | "column" | "barchartVals">;
 
 export const StyledTableColumn = ({
   column: c,
   value,
-  row,
   barchartVals,
   renderedVal,
 }: P) => {
   if (c.style?.type === "Icons") {
     const valueKey = String(value?.toString() ?? "");
-    const iconName = (valueKey && c.style.valueToIconMap[valueKey]);
+    const iconName = valueKey && c.style.valueToIconMap[valueKey];
     const sizeNum = c.style.size ?? 24;
     const iconNode = iconName && <SvgIcon icon={iconName} size={sizeNum} />;
     return <FlexRow>{iconNode ?? value}</FlexRow>;
@@ -104,7 +102,7 @@ export const StyledCell = ({
   renderedVal,
   className = "",
 }: {
-  renderedVal: any;
+  renderedVal: React.ReactNode;
   style: ChipStyle | undefined;
   className?: string;
 }) => {
@@ -194,7 +192,7 @@ export const getCellStyle = (
       } else if (operator === "!=") {
         return val != cval;
       } else if (operator === "in" || operator === "not in") {
-        const is_in = condition.includes(val);
+        const is_in = includes(condition, val);
 
         if (operator === "in") return is_in;
         else return !is_in;
@@ -219,8 +217,7 @@ export const getCellStyle = (
       minColor = "#63f717",
       maxColor = "#46b5d5",
     } = style;
-    const dateOrNumber =
-      _PG_date.includes(c.udt_name as any) ? +new Date(val) : +val;
+    const dateOrNumber = includes(_PG_date, c.udt_name) ? +new Date(val) : +val;
     const { max, min } = dataRange ?? {};
 
     if (isNumber(dateOrNumber) && isNumber(min) && isNumber(max)) {

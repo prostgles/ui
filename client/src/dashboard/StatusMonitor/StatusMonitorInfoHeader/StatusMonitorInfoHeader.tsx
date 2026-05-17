@@ -96,7 +96,9 @@ export const StatusMonitorInfoHeader = (
             onSetDatidFilter={setDatidFilter}
           />
         )}
-        <StatusMonitorInfoHeaderCpu serverStatus={c?.serverStatus} />
+        {c?.serverStatus && (
+          <StatusMonitorInfoHeaderCpu serverStatus={c.serverStatus} />
+        )}
 
         <FormFieldDebounced
           label={"Sampling rate (s)"}

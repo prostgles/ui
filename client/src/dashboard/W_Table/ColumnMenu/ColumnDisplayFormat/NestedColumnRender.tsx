@@ -48,7 +48,7 @@ export const NestedColumnRender = ({
             getYLabel: getYLabelFunc(""),
             color: "rgb(0, 183, 255)",
             cols: [],
-            data: value as any,
+            data: value as TimeChartLayer["data"],
             variant:
               c.nested.chart.renderStyle === "smooth-line" ?
                 "smooth"
@@ -97,7 +97,6 @@ export const NestedColumnRender = ({
     if (columnWInfo?.style && columnWInfo.style.type !== "None") {
       return (
         <StyledTableColumn
-          row={row}
           value={value}
           column={{
             ...columnWInfo,

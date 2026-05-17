@@ -18,3 +18,5 @@ export const QUERIES = {
  * TODO: move to self-hosted workers
  */
 export const IS_GITHUB_WORKER = process.env.CI === "true";
+
+export const demoRestaurantName = "sun cafe";

@@ -94,6 +94,7 @@ export type FormFieldProps<
     inputClassName?: string;
     wrapperStyle?: React.CSSProperties;
     inputStyle?: React.CSSProperties;
+    hintWrapperStyle?: React.CSSProperties;
     multiSelect?: boolean;
     labelAsValue?: boolean;
     onSuggest?: (term?: string) => Promise<string[]>;
@@ -296,6 +297,7 @@ export default class FormField<
       variant,
       showFullScreenToggle,
       leftIcon,
+      hintWrapperStyle,
     } = this.props;
 
     this.id ??= this.props.id ?? generateUniqueID();
@@ -499,7 +501,7 @@ export default class FormField<
     const inputNode =
       inputContent ? inputContent
         // : type === "file" ? <InputFile {...(inputProps as any)} />
-      : type === "checkbox" ? <Checkbox {...(inputProps)} />
+      : type === "checkbox" ? <Checkbox {...inputProps} />
       : readOnly ?
         <div
           className="pr-p5 py-p5 font-16 ta-left o-auto"
@@ -625,6 +627,7 @@ export default class FormField<
         onKeyDown={(e) => onFormFieldKeyDown.bind(this)(e, selectSuggestion)}
         hintWrapperStyle={{
           flex: 1,
+          ...hintWrapperStyle,
           ...(variant === "row" && { flexDirection: "row" }),
           ...(asJSON && { minWidth: "min(400px, 90vw)" }),
         }}

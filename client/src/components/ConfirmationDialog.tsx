@@ -52,12 +52,18 @@ export default class ConfirmationDialog extends RTComp<ConfirmDialogProps, S> {
           <div className="">{message}</div>
         </div>
         <FlexRowWrap className="p-p5 f-0 bt b-color jc-end ">
-          <Btn className="mr-1" variant="faded" onClick={() => onClose()}>
+          <Btn
+            className="mr-1"
+            size="default"
+            variant="faded"
+            onClick={() => onClose()}
+          >
             Cancel
           </Btn>
           <Btn
             color={acceptBtn.color}
             variant="filled"
+            size="default"
             data-command={acceptBtn.dataCommand}
             onClick={() => {
               onAccept();

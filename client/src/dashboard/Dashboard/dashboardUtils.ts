@@ -14,7 +14,6 @@ import type {
 import type { SQLSuggestion } from "../SQLEditor/W_SQLEditor";
 import type { RefreshOptions } from "../W_Table/TableMenu/W_TableMenu";
 
-import type { CardLayout } from "@common/DashboardTypes";
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type { DetailedFilter } from "@common/filterUtils";
 import { type OmitDistributive } from "@common/utils";
@@ -24,6 +23,7 @@ import type {
   ColumnSort,
   ColumnSortSQL,
 } from "../W_Table/ColumnMenu/ColumnMenu";
+import type { CardLayout } from "./cardLayout";
 
 export type ChartType =
   | "table"

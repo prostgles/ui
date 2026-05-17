@@ -396,13 +396,15 @@ export const getConnectionApiPaths = ({
     ws: port && !is_state_db ? WS_DB : `${WS_DB}/${url_path || id}`,
   };
 };
-export const getConnectionPaths = ({
-  id,
-}: Pick<DBSSchema["connections"], "id">) => {
+export const getConnectionPaths = (
+  { id }: Pick<DBSSchema["connections"], "id">,
+  sectionName?: string,
+) => {
+  const ending = sectionName ? `${id}?section=${sectionName}` : id;
   return {
-    dashboard: `${ROUTES.CONNECTIONS}/${id}`,
-    config: `${ROUTES.CONFIG}/${id}`,
-    webAppTests: `${ROUTES.PLAYWRIGHT_REPORT}/${id}`,
+    dashboard: `${ROUTES.CONNECTIONS}/${ending}`,
+    config: `${ROUTES.CONFIG}/${ending}`,
+    webAppTests: `${ROUTES.PLAYWRIGHT_REPORT}/${ending}`,
   };
 };
 
@@ -503,6 +505,13 @@ export type RequiredKeepUndefined<T> = Simplify<
     [K in OptionalKeys<T>]: T[K] | undefined;
   }
 >;
+
+export const getRandomElement = <Arr>(
+  items: Arr[],
+): { elem: Arr; index: number } => {
+  const randomIndex = Math.floor(Math.random() * items.length);
+  return { elem: items[randomIndex]!, index: randomIndex };
+};
 
 /**
  * TODO: find a compile time solution

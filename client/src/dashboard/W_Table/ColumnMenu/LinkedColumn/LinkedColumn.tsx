@@ -95,7 +95,11 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
   }, [localColumn, table]);
 
   return (
-    <FlexCol data-command="LinkedColumn" className="LinkedColumn gap-2">
+    <FlexCol
+      data-command="LinkedColumn"
+      className="LinkedColumn gap-2"
+      style={{ maxWidth: "600px" }}
+    >
       <InfoRow color="info" variant="naked" className=" " iconPath="">
         {
           t.LinkedColumn[
@@ -224,6 +228,7 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
                     step: 1,
                     max: 30,
                   }}
+                  variant="row"
                   onChange={(limit) => {
                     updateNested({
                       limit:

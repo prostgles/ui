@@ -2,6 +2,8 @@
   "name": "prostgles-ui-client",
   "dependencies": {
     "@mdi/js": "^7.4.47",
+    "@tanstack/react-table": "^8.21.3",
+    "@tanstack/react-virtual": "^3.13.24",
     "@types/dom-speech-recognition": "^0.0.6",
     "anser": "^2.3.5",
     "d3": "^7.9.0",

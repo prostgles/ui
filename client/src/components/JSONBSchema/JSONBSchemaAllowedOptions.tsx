@@ -54,6 +54,7 @@ export const JSONBSchemaAllowedOptions = ({
         onChange(newVal);
       }}
       error={error}
+      hintWrapperStyle={{ gap: 0 }}
     />
   );
 };

@@ -31,6 +31,7 @@ export const NonHTTPSWarning = ({
         {canUpdateUsers && (
           <Btn
             variant="faded"
+            size="default"
             onClickPromise={async () => {
               await dbs.users.update(
                 { id: authUser?.id },

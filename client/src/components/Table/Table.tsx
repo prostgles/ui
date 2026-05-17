@@ -16,7 +16,7 @@ export const TableRootClassname = "table-component";
 export type OnColRenderRowInfo = {
   row: AnyObject;
   value: any;
-  renderedVal: any;
+  renderedVal: React.ReactNode;
   rowIndex: number;
   prevRow: AnyObject | undefined;
   nextRow: AnyObject | undefined;
@@ -24,7 +24,7 @@ export type OnColRenderRowInfo = {
 /**
  * Renders inner cell node
  */
-type OnColRender = (rowInfo: OnColRenderRowInfo) => any;
+type OnColRender = (rowInfo: OnColRenderRowInfo) => React.ReactNode;
 
 export type TableColumn = {
   key: string | number;

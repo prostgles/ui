@@ -8,6 +8,7 @@ import {
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
 import { expect } from "@playwright/test";
 import { clickTableRow } from "./table.svgif";
+import { demoRestaurantName } from "utils/constants";
 
 export const dashboardSvgif: OnBeforeScreenshot = async (
   page,
@@ -65,7 +66,6 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
   // await addScene({ animations: [{ type: "wait", duration: 1000 }] });
   const searchAllInput = page.getByTestId("SearchAll");
   /** To prevent searching */
-  const demoRestaurantName = "sun cafe";
   await searchAllInput.evaluate(
     (el: HTMLInputElement, demoRestaurantName) =>
       (el.value = demoRestaurantName),

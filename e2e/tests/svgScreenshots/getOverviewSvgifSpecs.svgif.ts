@@ -28,7 +28,7 @@ export const getOverviewSvgifSpecs = async () => {
     {
       fileName: "linked_data",
       usedExternally: true,
-      scenes: [...sliceScenes("table", 2)],
+      scenes: [...sliceScenes("table_timechart", 1)],
     },
     {
       fileName: "smart_form",

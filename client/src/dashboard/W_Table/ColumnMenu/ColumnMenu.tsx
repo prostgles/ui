@@ -334,7 +334,7 @@ export const ColumnMenu = (props: P) => {
       ),
     },
     "Edit Computed Column": {
-      hide: !isComputed,
+      hide: !isComputed || !!column.nested,
       leftIconPath: mdiTableColumnPlusAfter,
       style: { color: "var(--active)" },
       content: (

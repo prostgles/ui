@@ -56,6 +56,7 @@ export const AskLLMChatSettings = (props: LLMChatOptionsProps) => {
         iconPath={mdiCogOutline}
         onClick={() => setAnchorEl(anchorEl ? undefined : chatRootDiv)}
         data-command="LLMChatOptions.toggle"
+        size="default"
       />
       {anchorEl && (
         <Popup

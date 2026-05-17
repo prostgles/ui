@@ -37,12 +37,13 @@ export const FooterButtons = ({
   return (
     <Footer {...divProps} style={{ padding: "1em", ...divProps.style }}>
       {footer}
-      {bottomBtns.map((b, i: any) => {
+      {bottomBtns.map((b, i) => {
         if ("node" in b)
           return <React.Fragment key={i}>{b.node}</React.Fragment>;
         return (
           <Btn
             key={i}
+            size="default"
             {...(omitKeys(b, ["label", "onClickClose", "onClick"]) as any)}
             onClick={(e) => {
               if (b.onClickClose && onClose) onClose(e);

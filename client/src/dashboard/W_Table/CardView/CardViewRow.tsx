@@ -1,4 +1,3 @@
-import type { CardLayout } from "@common/DashboardTypes";
 import { matchObj } from "@common/utils";
 import { FlexRowWrap } from "@components/Flex";
 import { _PG_date, type AnyObject } from "prostgles-types";
@@ -9,6 +8,7 @@ import { getEditColumn } from "../tableUtils/getEditColumn";
 import type { CardViewProps, IndexedRow } from "./CardView";
 import { DragHeader, DragHeaderHeight } from "./DragHeader";
 import type { CardViewState } from "./useCardViewState";
+import type { CardLayout } from "src/dashboard/Dashboard/cardLayout";
 
 export type CardViewRowProps = Pick<
   CardViewProps,
@@ -256,7 +256,7 @@ const CardViewRowContent = ({
           {c.onRender?.({
             row: row,
             value,
-            renderedVal: value,
+            renderedVal: value as React.ReactNode,
             rowIndex: rowIndex,
             nextRow: indexedRows[rowIndex + 1],
             prevRow: indexedRows[rowIndex - 1],

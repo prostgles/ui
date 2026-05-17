@@ -9,7 +9,7 @@ const TEXT_WIDTH_ATTR = "data-text-width";
 const TEXT_HEIGHT_ATTR = "data-text-height";
 
 const getLineBreakPartsWithDelimiters = (content: string) =>
-  content.split(/([\s\-–—:]+)/);
+  content.split(/([\s\-–—/]+)/); //.split(/([\s\-–—:]+)/);
 
 export const textToSVG = (
   element: HTMLElement,

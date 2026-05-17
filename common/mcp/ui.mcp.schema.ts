@@ -386,6 +386,7 @@ export const uiMcpSchema = {
           type: "string",
           description:
             "A concise summary of the workflow function definition for the user to understand what the workflow does without having to read the code. This will be shown to the user when asking for approval to run the workflow.",
+          //TODO: add: " For best practice, you can link key parts of the summary to the relevant parts of the code using markdown links with line numbers. Example: 'This workflow does X, Y and Z. The function starts by doing [A](#L10), then it does [B](#L20) and finally it does [C](#L30).'",
         },
         package_dependencies: {
           optional: true,

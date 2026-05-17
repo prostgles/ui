@@ -61,7 +61,7 @@ export const loadGeneratedWorkspaces = async (
           filter,
           filterOperand,
           quickFilterGroups,
-          cardLayout,
+          // cardLayout,
           table_name,
           title,
         } = generatedWindow;
@@ -73,7 +73,7 @@ export const loadGeneratedWorkspaces = async (
           options: {
             filterOperand,
             quickFilterGroups,
-            cardLayout,
+            // cardLayout,
           } satisfies WindowData<"table">["options"],
           sort: sort
             ?.map((s) => {

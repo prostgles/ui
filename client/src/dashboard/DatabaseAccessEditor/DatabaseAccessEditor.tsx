@@ -14,6 +14,7 @@ import {
 import { getKeys } from "prostgles-types";
 import React, { useState } from "react";
 import { DatabaseAccessEditorCustomTables } from "./DatabaseAccessEditorCustomTables";
+import { SwitchToggle } from "@components/SwitchToggle";
 
 export type DatabaseAccessPermission = NonNullable<
   DBSSchema["agentic_workflows"]["definition_data"]["databaseAccessDefinitions"]
@@ -37,6 +38,7 @@ export const DatabaseAccessEditor = ({
   hideTablesWithoutAccess,
 }: DatabaseAccessEditorProps) => {
   const showSelect = value?.mode !== "custom" || onChange;
+  const [showAllTables, setShowAllTables] = useState(!hideTablesWithoutAccess);
   const [showDetails, setShowDetails] = useState(false);
   return (
     <HeaderSection
@@ -86,6 +88,15 @@ export const DatabaseAccessEditor = ({
                   )
                 }
               />
+              {value?.mode === "custom" && (
+                <SwitchToggle
+                  checked={showAllTables}
+                  label={{ label: "Show all tables", style: { gap: 0 } }}
+                  // variant="col"
+                  className="show-on-parent-hover"
+                  onChange={setShowAllTables}
+                />
+              )}
               {value?.mode === "execute_sql" && (
                 <Select
                   value={getKeys(value.allowedCommands ?? {})}
@@ -120,7 +131,7 @@ export const DatabaseAccessEditor = ({
           onChange={onChange}
           value={value}
           showDetails={showDetails}
-          hideTablesWithoutAccess={hideTablesWithoutAccess}
+          hideTablesWithoutAccess={showAllTables ? undefined : true}
         />
       )}
     </HeaderSection>

@@ -1,4 +1,12 @@
-import { GOOGLE_FAVICON_ENDPOINT } from "@common/mcp/web.mcp.schema";
+import {
+  GOOGLE_FAVICON_ENDPOINT,
+  GOOGLE_FAVICON_ENDPOINT_REDIRECT,
+} from "@common/mcp/web.mcp.schema";
+
+const GOOGLE_FAVICON_ENDPOINTS = [
+  GOOGLE_FAVICON_ENDPOINT,
+  GOOGLE_FAVICON_ENDPOINT_REDIRECT,
+];
 
 const SELF = "'self'";
 export const CSP_DEFAULTS = {
@@ -9,7 +17,7 @@ export const CSP_DEFAULTS = {
     "blob:",
     "https://vector.openstreetmap.org",
     "https://*.tile.openstreetmap.org",
-    GOOGLE_FAVICON_ENDPOINT,
+    ...GOOGLE_FAVICON_ENDPOINTS,
   ],
   styleSrc: [SELF, "'unsafe-inline'"],
   scriptSrc: [SELF], // localLLMHeaders

@@ -50,6 +50,7 @@ export const JSONBSchemaObject = ({
           variant="faded"
           onClick={() => {
             setShowOptional(true);
+            //@ts-ignore
             onChange({});
           }}
         />

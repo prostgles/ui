@@ -140,7 +140,7 @@ export const RenderMedia = ({
     const fullscreenTypes = ["video"];
     return (
       <div
-        className={`MediaViewer relative f-1 noselect flex-row min-h-0`}
+        className={`MediaViewer relative f-1 noselect flex-row min-h-0 ai-start`}
         data-command="MediaViewer"
         style={style}
       >

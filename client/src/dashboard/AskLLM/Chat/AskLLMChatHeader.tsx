@@ -55,6 +55,9 @@ export const AskLLMChatHeader = (
               subLabel: getPGIntervalAsText(c.created_ago, true, true, true),
             })) ?? []
           }
+          btnProps={{
+            size: "default",
+          }}
           value={activeChatId}
           showSelectedSublabel={true}
           style={{
@@ -73,6 +76,7 @@ export const AskLLMChatHeader = (
             data-command="AskLLMChat.NewChat"
             variant="faded"
             color="action"
+            size="default"
             disabledInfo={
               !preferredPromptId ?
                 t.AskLLMChatHeader["No prompt found"]

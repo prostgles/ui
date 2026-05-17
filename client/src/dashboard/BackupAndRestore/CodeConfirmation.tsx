@@ -130,13 +130,14 @@ export const CodeConfirmation = ({
                   onChange={setHasConfirmed}
                 />
                 <div className="flex-row gap-1 ai-center mt-1  w-full">
-                  <Btn onClick={popupClose} variant="outline">
+                  <Btn onClick={popupClose} variant="outline" size="default">
                     Close
                   </Btn>
                   <>
                     {confirmButtonsFullProps.map((btnProps, i) => (
                       <Btn
                         key={i}
+                        size="default"
                         {...btnProps}
                         onClickPromise={async (...args) => {
                           await btnProps.onClickPromise(...args);

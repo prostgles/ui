@@ -71,7 +71,7 @@ export const NestedTimechartControls = ({ tableName, chart, onChange }: P) => {
 
   return (
     <>
-      <div className="py-p75">OR</div>
+      <div className="py-p5">OR</div>
       <PopupMenu
         data-command="NestedTimechartControls"
         button={

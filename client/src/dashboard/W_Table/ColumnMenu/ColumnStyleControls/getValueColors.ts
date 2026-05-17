@@ -2,8 +2,9 @@ import type { DBHandlerClient, TableHandlerClient } from "prostgles-client";
 import type { AnyObject, SQLHandler } from "prostgles-types";
 import type { Theme } from "src/App";
 import { chipColorsFadedBorder } from "../ColumnDisplayFormat/ChipStylePalette";
-import { getRandomElement, type ConditionalStyle } from "./ColumnStyleControls";
 import type { DBS } from "src/dashboard/Dashboard/DBS";
+import { getRandomElement } from "@common/utils";
+import type { ConditionalStyle } from "./ColumnStyleControls";
 
 export type DefaultConditionalStyleArgs =
   | {

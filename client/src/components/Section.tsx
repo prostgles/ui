@@ -99,6 +99,7 @@ export const Section = (props: SectionProps) => {
             (titleRightContent ? "" : "f-1d") +
             " p-p5 ta-left font-20 bold jc-start mr-1"
           }
+          size="default"
           title="Expand section"
           disabledInfo={disabledInfo}
           style={{

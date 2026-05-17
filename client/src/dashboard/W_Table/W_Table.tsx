@@ -7,7 +7,6 @@ import type { TableColumn, TableProps } from "@components/Table/Table";
 import { PAGE_SIZES, Table, closest } from "@components/Table/Table";
 import React from "react";
 import type {
-  OnAddChart,
   Query,
   WindowData,
   WindowSyncItem,
@@ -458,7 +457,9 @@ export default class W_Table extends RTComp<
 
     const cols = w.columns;
 
-    if (!cols) return <ErrorComponent error="Columns not defined" />;
+    if (!cols) {
+      return <ErrorComponent error="Columns not defined" />;
+    }
 
     return (
       <W_TableMenu

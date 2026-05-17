@@ -68,12 +68,14 @@ const MediaSchema = {
     oneOfType: [
       {
         type: {
+          title: "Content type",
           enum: ["Auto"],
           description: "Auto detect from URL and headers (default)",
         },
       },
       {
         type: {
+          title: "Content type",
           enum: ["Fixed"],
           description: "Fixed",
         },
@@ -85,6 +87,7 @@ const MediaSchema = {
       },
       {
         type: {
+          title: "Content type",
           enum: ["From column"],
           description: "From column",
         },
@@ -97,6 +100,7 @@ const MediaSchema = {
       },
       {
         type: {
+          title: "Content type",
           enum: ["From URL Extension"],
           description: "From URL Extension (e.g. .png, .mp4)",
         },

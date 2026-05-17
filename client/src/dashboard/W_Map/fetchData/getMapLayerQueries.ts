@@ -13,6 +13,7 @@ import type { ActiveRow } from "../../W_Table/W_Table";
 import type { DeckGlColor } from "../../Map/DeckGLMap";
 import { getSmartGroupFilter } from "@common/filterUtils";
 import { PALETTE } from "src/dashboard/Dashboard/PALETTE";
+import { removeQuotes } from "src/dashboard/SQLEditor/SQLCompletion/getJoinSuggestions";
 
 type Args = {
   links: LinkSyncItem[];
@@ -76,7 +77,7 @@ export const getMapLayerQueries = ({
         throw "columns/OSM query missing from link";
       }
       const isLocalLayerLink = l.w1_id === l.w2_id;
-      const linkW =
+      const linkSourceWindow =
         isLocalLayerLink ? undefined : (
           windows.find(
             (_w) =>
@@ -96,7 +97,7 @@ export const getMapLayerQueries = ({
         : undefined;
       const tableName =
         isLocalLayerLink ? _localTableName : (
-          (joinEndTable?.table ?? linkW?.table_name)
+          (joinEndTable?.table ?? linkSourceWindow?.table_name)
         );
 
       if (lOpts.dataSource?.type === "osm") {
@@ -139,12 +140,12 @@ export const getMapLayerQueries = ({
             lineColor,
             color,
             geomColumn,
-            wid: linkW?.id,
+            wid: linkSourceWindow?.id,
           };
 
           if (tableName) {
             const crossFilters: CrossFilters =
-              !linkW ?
+              !linkSourceWindow ?
                 {
                   all: [],
                   crossFilters: [],
@@ -181,22 +182,29 @@ export const getMapLayerQueries = ({
               tableName,
               ...joinInfo,
               externalFilters: [...crossFilters.all, localLayerFilter],
-              tableFilter: getSmartGroupFilter(linkW?.filter || []),
+              tableFilter: getSmartGroupFilter(linkSourceWindow?.filter || []),
               joinFilter: crossFilters.activeRowFilter,
               // elevation: 1000
             };
             return lt;
 
             /** Must be sql */
-          } else if (linkW?.type === "sql") {
-            const latestW = linkW.$get();
-            const sql =
+          } else if (
+            linkSourceWindow?.type === "sql" ||
+            lOpts.dataSource?.type === "sql"
+          ) {
+            // const latestW = linkSourceWindow.$get();
+            const rawSql =
               lOpts.dataSource?.type === "sql" ?
                 lOpts.dataSource.sql
               : undefined;
-            if (!sql) {
+            if (!rawSql) {
               throw "Unexpected: sql missing";
             }
+            const sql =
+              rawSql.trim().endsWith(";") ?
+                rawSql.trim().slice(0, -1)
+              : rawSql.trim();
             const lsql: LayerSQL = {
               ...commonOpts,
               type: "sql",
@@ -211,7 +219,7 @@ export const getMapLayerQueries = ({
             }
             return lsql;
           } else {
-            console.error("linkW is missing?");
+            console.error("linkSourceWindow is missing?");
           }
         })
         .filter(isDefined);

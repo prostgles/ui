@@ -314,9 +314,9 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
         >
           <ScrollFade
             className="flex-col gap-1 f-1 o-auto min-h-0 p-p25 no-scroll-bar"
-            style={{
-              margin: "-.25em" /* Used to ensure focus border is visible */,
-            }}
+            // style={{
+            //   margin: "-.25em" /* Used to ensure focus border is visible */,
+            // }}
           >
             {mode === "clone" && origCon && (
               <InfoRow color="action">
@@ -364,7 +364,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
             style={{ background: "white", padding: "1em" }}
             withIcon={true}
           />
-          <div className="flex-row-wrap ai-center mt-1 gap-1 ">
+          <div className="flex-row-wrap ai-center pt-1 gap-1 bt b-color-0 bg-color-0">
             {mode === "edit" && (
               <CodeConfirmation
                 positioning="center"
@@ -374,7 +374,8 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                   <Btn
                     iconPath={mdiDeleteOutline}
                     color="danger"
-                    variant="outline"
+                    size="default"
+                    variant="faded"
                     data-command="Connection.edit.delete"
                   >
                     {t.common.Delete}...
@@ -390,7 +391,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                       }
                     </InfoRow>
                     <Section
-                      title={t.NewConnection["Related data"]}
+                      title={t.common["Related data"]}
                       disableFullScreen={true}
                       style={{
                         maxWidth: "min(100%, 600px)",
@@ -462,10 +463,11 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
               <Btn
                 title={t.NewConnection["Clone connection"]}
                 className={"f-0 mx-1 w-fit "}
-                variant="outline"
+                variant="faded"
                 color="action"
+                size="default"
                 iconPath={mdiContentDuplicate}
-                onClick={(e) => {
+                onClick={() => {
                   if (c.name)
                     void updateConnection({ name: c.name + " (copy)" });
                   void updateConnection({ created: null, is_state_db: null });
@@ -482,6 +484,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
               color="action"
               data-command="Connection.edit.updateOrCreateConfirm"
               iconPath={mode === "edit" ? mdiCheck : mdiPlus}
+              size="default"
               disabledInfo={
                 (
                   mode === "edit" &&

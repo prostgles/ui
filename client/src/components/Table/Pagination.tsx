@@ -38,12 +38,15 @@ export const Pagination = (props: PaginationProps) => {
     maxPage = Math.ceil(totalRows / pageSize) - 1;
   }
 
-  if (!maxPage) return null;
+  // if (!maxPage) return null;
 
   const noPrev = zeroBasedPage === 0 ? "Already at first page" : undefined;
   const noNext = zeroBasedPage === maxPage ? "Already at last page" : undefined;
   const totalPages = maxPage + 1;
   const totalRowCount = +(totalRows ?? 0);
+  if (noPrev && noNext && totalRowCount < PAGE_SIZES[0]) {
+    return null;
+  }
   const pageCountInfoNode = (
     <div
       className="text-2 text-sm p-p5 noselect"
@@ -53,14 +56,6 @@ export const Pagination = (props: PaginationProps) => {
       {` (${totalRowCount.toLocaleString()} rows)`}
     </div>
   );
-  if (noPrev && noNext) {
-    return (
-      <FlexRow className="p-1">
-        <div style={{ opacity: 0.5 }}>End of results</div>
-        {pageCountInfoNode}
-      </FlexRow>
-    );
-  }
   const displayPage = zeroBasedPage + 1;
   return (
     <FlexRow
@@ -71,6 +66,7 @@ export const Pagination = (props: PaginationProps) => {
         data-command="Pagination.firstPage"
         iconPath={mdiPageFirst}
         disabledInfo={noPrev}
+        size="default"
         onClick={() => {
           onPageChange(0);
         }}
@@ -79,6 +75,7 @@ export const Pagination = (props: PaginationProps) => {
         data-command="Pagination.prevPage"
         iconPath={mdiChevronLeft}
         disabledInfo={noPrev}
+        size="default"
         onClick={() => {
           onPageChange(Math.max(0, zeroBasedPage - 1));
         }}
@@ -106,6 +103,7 @@ export const Pagination = (props: PaginationProps) => {
         data-command="Pagination.nextPage"
         iconPath={mdiChevronRight}
         disabledInfo={noNext}
+        size="default"
         onClick={() => {
           onPageChange(Math.min(maxPage, zeroBasedPage + 1));
         }}
@@ -114,6 +112,7 @@ export const Pagination = (props: PaginationProps) => {
         data-command="Pagination.lastPage"
         iconPath={mdiPageLast}
         disabledInfo={noNext}
+        size="default"
         onClick={() => {
           onPageChange(maxPage);
         }}

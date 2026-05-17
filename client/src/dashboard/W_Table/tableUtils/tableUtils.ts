@@ -75,7 +75,10 @@ export const updateWCols = (
       }),
     });
   }
-  return w.$update({ sort: [], columns: newMinimalCols });
+  return w.$update({
+    // sort: [],
+    columns: newMinimalCols,
+  });
 };
 
 export const getSortColumn = (

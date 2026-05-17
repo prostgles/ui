@@ -146,6 +146,7 @@ export const Alerts = () => {
             variant="faded"
             color={highestSeverityColor}
             iconPath={mdiBellBadgeOutline}
+            size="default"
           />
         </div>
       }

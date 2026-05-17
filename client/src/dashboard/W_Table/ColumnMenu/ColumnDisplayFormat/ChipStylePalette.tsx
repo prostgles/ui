@@ -89,6 +89,8 @@ export const CHIP_COLOR_NAMES = {
   gray: chipColorsFadedBorder[7],
 };
 
+export const DEFAULT_CHIP_STYLE = chipColorsFadedBorder[0]!;
+
 const chipColorsFaded = chipColorsFadedBorder.map((c) => ({
   ...c,
   borderColor: undefined,

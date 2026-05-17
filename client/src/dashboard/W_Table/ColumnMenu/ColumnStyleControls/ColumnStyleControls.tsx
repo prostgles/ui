@@ -7,7 +7,10 @@ import type { ValidatedColumnInfo } from "prostgles-types/lib";
 import React from "react";
 import { type Prgl } from "../../../../App";
 import { ColorPicker } from "../ColorPicker";
-import { ChipStylePalette } from "../ColumnDisplayFormat/ChipStylePalette";
+import {
+  ChipStylePalette,
+  DEFAULT_CHIP_STYLE,
+} from "../ColumnDisplayFormat/ChipStylePalette";
 import { ConditionalCellIconStyleControls } from "../ColumnDisplayFormat/ConditionalCellIconStyleControls";
 import type { CONDITION_OPERATORS } from "../ColumnDisplayFormat/ConditionalCellStyleControls";
 import { ConditionalCellStyleControls } from "../ColumnDisplayFormat/ConditionalCellStyleControls";
@@ -157,7 +160,7 @@ export const ColumnStyleControls = (props: StyleColumnProps) => {
             <ColorPicker
               label="Text"
               className="m-p5"
-              value={style.textColor || "black"}
+              value={style.textColor || DEFAULT_CHIP_STYLE.textColor}
               onChange={(textColor) => {
                 updateStylePart({ textColor });
               }}
@@ -165,7 +168,7 @@ export const ColumnStyleControls = (props: StyleColumnProps) => {
             <ColorPicker
               label="Chip"
               className="m-p5"
-              value={style.chipColor || "red"}
+              value={style.chipColor || DEFAULT_CHIP_STYLE.color}
               onChange={(chipColor) => {
                 updateStylePart({ chipColor });
               }}
@@ -246,11 +249,4 @@ export const ColumnStyleControls = (props: StyleColumnProps) => {
       : null}
     </FlexCol>
   );
-};
-
-export const getRandomElement = <Arr,>(
-  items: Arr[],
-): { elem: Arr; index: number } => {
-  const randomIndex = Math.floor(Math.random() * items.length);
-  return { elem: items[randomIndex]!, index: randomIndex };
 };

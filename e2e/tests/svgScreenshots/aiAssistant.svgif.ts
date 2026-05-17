@@ -19,6 +19,7 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   { openConnection },
   { addScene, addSceneAnimation },
 ) => {
+  // throw new Error("DWA");
   // await goTo(page, "/server-settings?section=llmProviders");
   // await page.getByTestId("dashboard.window.rowInsertTop").click();
   // await page.getByTestId("Popup.content").waitFor({ state: "visible" });
@@ -178,6 +179,7 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   await openConnection("food_delivery");
   await page.getByTestId("AskLLM").click();
   await setPromptByText(page, "chat");
+  await newChat(page);
 
   await typeSendAddScenes(
     page,

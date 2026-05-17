@@ -1,4 +1,4 @@
-import type { DeepWriteable } from "@common/utils";
+import { getConnectionPaths, ROUTES, type DeepWriteable } from "@common/utils";
 import { JSONBSchema } from "@components/JSONBSchema/JSONBSchema";
 import { includes, type DBSchemaTable } from "prostgles-types";
 import React, { useMemo } from "react";
@@ -7,6 +7,9 @@ import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
 import type { ColumnConfigWInfo } from "../../W_Table";
 import type { ColumnFormat } from "./columnFormatUtils";
 import { ColumnFormatSchema, getFormatOptions } from "./columnFormatUtils";
+import { FlexCol } from "@components/Flex";
+import { Link } from "react-router";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 
 type P = {
   db: Prgl["db"];
@@ -23,6 +26,7 @@ export const ColumnDisplayFormat = ({
   onChange,
   db,
 }: P) => {
+  const { connection } = usePrgl();
   const schema = useMemo(() => {
     const schemaWithoutAllowedValues = {
       ...ColumnFormatSchema,
@@ -62,13 +66,20 @@ export const ColumnDisplayFormat = ({
   }, [column, table.columns]);
 
   return (
-    <JSONBSchema
-      schema={schema}
-      db={db}
-      tables={tables}
-      value={column.format}
-      onChange={onChange}
-    />
+    <FlexCol>
+      <JSONBSchema
+        schema={schema}
+        db={db}
+        tables={tables}
+        value={column.format}
+        onChange={onChange}
+      />
+      {column.format?.type === "Media" && (
+        <Link to={getConnectionPaths(connection, "security").config}>
+          Content Security Policy settings
+        </Link>
+      )}
+    </FlexCol>
   );
 };
 

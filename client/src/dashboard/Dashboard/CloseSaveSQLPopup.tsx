@@ -28,7 +28,7 @@ export const CloseSaveSQLPopup = ({
             label: "Delete",
             color: "danger",
             "data-command": "CloseSaveSQLPopup.delete",
-            variant: "outline",
+            variant: "faded",
             iconPath: mdiDelete,
             onClickPromise: async () => {
               await namePopupWindow.$update({ closed: true, deleted: true });

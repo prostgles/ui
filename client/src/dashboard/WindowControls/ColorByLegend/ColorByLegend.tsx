@@ -18,12 +18,10 @@ import { useDebouncedCallback } from "src/hooks/useDebouncedCallback";
 import { isDefined } from "../../../utils/utils";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import { ColorPicker } from "../../W_Table/ColumnMenu/ColorPicker";
-import {
-  getRandomElement,
-  type ColumnValue,
-} from "../../W_Table/ColumnMenu/ColumnStyleControls/ColumnStyleControls";
+import { type ColumnValue } from "../../W_Table/ColumnMenu/ColumnStyleControls/ColumnStyleControls";
 import type { W_TimeChartStateLayer } from "../../W_TimeChart/W_TimeChart";
 import { getGroupByValueColor } from "./getGroupByValueColor";
+import { getRandomElement } from "@common/utils";
 
 type P = DivProps &
   Pick<CommonWindowProps, "getLinksAndWindows" | "myLinks" | "w"> & {

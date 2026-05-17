@@ -98,7 +98,7 @@ export const AgeFilter = (props: FilterProps) => {
           />
         </div>
       )}
-      <div className="flex-row p-p2d5 gap-p5">
+      <div className="flex-row gap-p5 ai-center">
         <Select
           className="text-action"
           iconPath=""

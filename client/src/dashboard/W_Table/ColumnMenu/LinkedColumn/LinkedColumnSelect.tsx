@@ -122,7 +122,7 @@ export const LinkedColumnSelect = ({
               updateNested({ chart, limit: chart ? 200 : 20 });
             }}
           />
-          <div className="py-p75">OR</div>
+          <div className="py-p5">OR</div>
 
           <PopupMenu
             contentClassName="p-1 flex-col gap-1"

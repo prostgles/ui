@@ -844,7 +844,7 @@ CREATE TABLE restaurants (
   type TEXT,
   logo TEXT GENERATED ALWAYS AS (
     'https://www.google.com/s2/favicons?domain=' ||
-    regexp_replace(website, '^(https?://[^/]+).*$', '\1/') ||
+    regexp_replace(nullif(website, ''), '^(https?://[^/]+).*$', '\1/') ||
     '&sz=64'
   ) STORED,
   address_id BIGINT NOT NULL REFERENCES addresses,
@@ -1302,15 +1302,16 @@ BEGIN
     LIMIT number_of_orders
   ) rider
   ON rider.rnum = u.rnum
-  LEFT JOIN LATERAL (
+  INNER JOIN LATERAL (
     SELECT *
-      , st_distance(u.geog, ri.geog) as dist
-    FROM ( 
-      SELECT * 
-      FROM v_restaurants 
-    ) ri
-    WHERE st_distance(u.geog, ri.geog) < 7000
-    ORDER BY u.geog <-> ri.geog
+      , st_distance(u.geog, ri.geog) as dist 
+    FROM v_restaurants ri
+    WHERE u.geog IS NOT NULL
+    AND ri.geog IS NOT NULL 
+    AND ri.name ~* '\m(McDonald''s|KFC|Burger King|Sun Cafe|Subway|Domino''s|Pizza Hut|Starbucks|Costa|Pret A Manger|Greggs|Nando''s)\M' 
+    AND ri.logo IS NOT NULL
+    AND st_distance(u.geog, ri.geog) < 7000 
+    ORDER BY u.geog <-> ri.geog 
     LIMIT 1
   ) r ON TRUE; 
  
