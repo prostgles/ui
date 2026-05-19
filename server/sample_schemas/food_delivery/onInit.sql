@@ -856,6 +856,7 @@ CREATE TABLE restaurants (
 
 CREATE INDEX idx_restaurants_address_id ON restaurants ( address_id );
 CREATE INDEX idx_restaurants_id_address_id ON restaurants ( id, address_id );
+CREATE INDEX idx_restaurant_name ON restaurants ( name );
 
 CREATE TABLE restaurant_managers (
   restaurant_id INTEGER REFERENCES restaurants(id),
@@ -1272,72 +1273,81 @@ LANGUAGE plpgsql
 AS $$  
 BEGIN
  
-  INSERT INTO orders (
-    customer_id, 
-    customer_address_id, 
-    restaurant_id, 
-    deliverer_id, 
-    status, 
-    delivery_fee, 
-    service_fee, 
-    total_price, 
-    created_at
-  )
-  SELECT 
-    u.id as customer_id, 
-    u.address_id as customer_address_id, 
-    r.id as restaurant_id, 
-    rider.id as deliverer_id,  
-    CASE WHEN random() < 0.5 THEN 'preparing' ELSE 'picked_up' END as order_status,
-    round(r.dist/1000) as delivery_fee, 
-    1 as service_fee, 
-    round(random() * 100) as total_price, 
-    now() - (random() * period) as created_at
-  FROM (
-    SELECT *, row_number() over() as rnum
-    FROM (
-      SELECT *
-      FROM customers c 
-      WHERE restaurant_name IS NULL OR EXISTS (
-        SELECT 1 
-        FROM v_restaurants r
-        WHERE r.name = restaurant_name
-        AND st_dwithin(c.geog, r.geog, 5000)
+  WITH filtered_restaurants AS (
+    SELECT id, geog
+    FROM v_restaurants
+    WHERE geog IS NOT NULL
+      AND is_popular = true
+      AND (
+        logo IS NOT NULL
+        OR restaurant_name IS NOT NULL
+        AND name = restaurant_name
       )
-      ORDER BY last_order
+  ),
+  chosen_customers AS (
+    SELECT c.*, row_number() OVER () AS rnum
+    FROM (
+      SELECT c.*
+      FROM customers c
+      WHERE c.geog IS NOT NULL
+        AND EXISTS (
+          SELECT 1
+          FROM filtered_restaurants fr
+          WHERE ST_DWithin(c.geog, fr.geog, 5000)
+        )
+      ORDER BY c.last_order
       LIMIT number_of_orders
-    ) unested
-  ) u
-  INNER JOIN ( 
-    SELECT *, row_number() over(ORDER BY random()) as rnum
-    FROM v_riders, 
+    ) c
+  ),
+  chosen_riders AS (
+    SELECT *, row_number() OVER (ORDER BY random()) AS rnum
+    FROM v_riders,
       generate_series(
-        1, 
-        greatest(ceil(number_of_orders/(select count(*) from v_riders)), 1)::BIGINT
+        1,
+        greatest(ceil(number_of_orders / (SELECT count(*) FROM v_riders)), 1)::bigint
       )
     LIMIT number_of_orders
-  ) rider
-  ON rider.rnum = u.rnum
-  INNER JOIN LATERAL (
-    SELECT *
-      , st_distance(u.geog, ri.geog) as dist 
-    FROM v_restaurants ri
-    WHERE u.geog IS NOT NULL
-    AND ri.geog IS NOT NULL 
-    AND ri.is_popular = true
-    AND ri.logo IS NOT NULL
-    AND st_distance(u.geog, ri.geog) < 7000 
-    ORDER BY u.geog <-> ri.geog 
-    LIMIT 1
-  ) r ON TRUE; 
- 
-
+  ),
+  new_orders AS (
+    INSERT INTO orders (
+      customer_id, 
+      customer_address_id, 
+      restaurant_id, 
+      deliverer_id, 
+      status, 
+      delivery_fee, 
+      service_fee, 
+      total_price, 
+      created_at
+    )
+    SELECT 
+      u.id , 
+      u.address_id , 
+      r.id  , 
+      rider.id  ,  
+      CASE WHEN random() < 0.5 THEN 'preparing' ELSE 'picked_up' END as order_status,
+      round(r.dist/1000) as delivery_fee, 
+      1 as service_fee, 
+      round(random() * 100) as total_price, 
+      now() - (random() * period) as created_at
+    FROM chosen_customers u
+    JOIN chosen_riders rider
+      ON rider.rnum = u.rnum
+    JOIN LATERAL (
+      SELECT fr.id, ST_Distance(u.geog, fr.geog) AS dist
+      FROM filtered_restaurants fr
+      WHERE ST_DWithin(u.geog, fr.geog, 7000)
+      ORDER BY u.geog <-> fr.geog
+      LIMIT 1
+    ) r ON TRUE
+    RETURNING *
+  )
   /* Create 5 items per order  */
   INSERT INTO order_items (order_id, menu_item_id, quantity, price, created_at)
   SELECT id, item_id, 1, price, now() - (random() * period)
   FROM (
     SELECT  o.id, o.restaurant_id, mi.id as item_id, mi.price, row_number() over(PARTITION BY o.id ) as urnum
-    FROM orders o
+    FROM new_orders o
     INNER JOIN (
       SELECT id, restaurant_id, price
       FROM menu_items

@@ -84,7 +84,7 @@ export const getSceneUtils = (
       Number.isFinite(nth) ?
         page.locator(playwrightSelector).nth(nth!)
       : page.locator(playwrightSelector);
-    await playwrightLocator.scrollIntoViewIfNeeded();
+    await playwrightLocator.scrollIntoViewIfNeeded({ timeout: 20_000 });
 
     const elementIsVisible = await playwrightLocator.evaluate((n) => {
       const hoverParent = n.closest(`[class*="hover"]`) as HTMLElement | null;
