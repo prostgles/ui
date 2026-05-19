@@ -123,8 +123,10 @@ export const getTimechartTooltipShapes = function (this: TimeChart) {
     let minLabelY: number | undefined;
     let maxLabelY: number | undefined;
     const labelTickCanvasX = xCursor + labelHeight / 2;
-    const labelYMin = yMin;
-    const labelYMax = yMax - labelHeight / 2;
+    /* Top limit */
+    const labelYMin = yMin + 10;
+    /* Bottom limit - ensure time tooltip doesn't obscure */
+    const labelYMax = yMax - labelHeight;
     let textLabels = layers
       .map((l, layerIndex) => {
         if (!this.data || l.snapped_data?.value === undefined) {

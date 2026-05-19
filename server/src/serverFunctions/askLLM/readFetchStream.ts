@@ -1,3 +1,5 @@
+import { getSerialisableError } from "prostgles-types";
+
 export const readFetchStream = async (response: Response) => {
   const contentType = response.headers.get("content-type");
 
@@ -22,7 +24,11 @@ export const readFetchStream = async (response: Response) => {
       try {
         return JSON.parse(text);
       } catch (parseError: any) {
-        throw new Error(text);
+        throw {
+          message: `Failed to parse LLM response as JSON. Raw response: ${text}.`,
+          jsonError: getSerialisableError(jsonError),
+          parseError: getSerialisableError(parseError),
+        };
       }
     }
   }
@@ -30,7 +36,7 @@ export const readFetchStream = async (response: Response) => {
   const decoder = new TextDecoder();
   let buffer = "";
   try {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, no-constant-condition
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
@@ -51,5 +57,13 @@ export const readFetchStream = async (response: Response) => {
       html: buffer,
     };
   }
-  return JSON.parse(buffer);
+
+  try {
+    return JSON.parse(buffer);
+  } catch (e) {
+    throw {
+      message: `Failed to parse LLM response as JSON. Raw response: ${buffer}.`,
+      error: getSerialisableError(e),
+    };
+  }
 };

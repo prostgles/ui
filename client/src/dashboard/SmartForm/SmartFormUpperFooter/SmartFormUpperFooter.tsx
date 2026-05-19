@@ -174,7 +174,7 @@ export const SmartFormUpperFooter = (props: SmartFormUpperFooterProps) => {
       )}
       {showMethods && (
         <div className="dbMethodActions flex-row-wrap gap-p5 p-1">
-          {dbMethodActions.map(({ methodName, arg, argName }, i) => {
+          {dbMethodActions.map(({ methodName, arg, argName }) => {
             const { lookup } = arg;
             const showInRowCard =
               lookup?.type !== "data" ? undefined : lookup.showInRowCard;

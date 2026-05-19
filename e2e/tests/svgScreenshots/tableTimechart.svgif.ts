@@ -6,6 +6,8 @@ import {
 } from "utils/utils";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
 
+const linkedSortCol = "Orders (30d)";
+
 export const tableTimechartSvgif: OnBeforeScreenshot = async (
   page,
   { openConnection, toggleMenuPinned, openMenuIfClosed },
@@ -19,7 +21,13 @@ export const tableTimechartSvgif: OnBeforeScreenshot = async (
   await page.getByTestId("dashboard.menu").click();
 
   await openMenuIfClosed();
-  await page.locator(getDataKey("restaurants")).click();
+  await page
+    .locator(
+      getCommandElemSelector("dashboard.menu.tablesSearchList") +
+        " " +
+        getDataKey("restaurants"),
+    )
+    .click();
 
   await page.waitForTimeout(2000);
   const res = await runDbsSql(
@@ -57,6 +65,16 @@ export const tableTimechartSvgif: OnBeforeScreenshot = async (
   // await page.locator("input#nested-col-name").fill("All orders");
   // await page.waitForTimeout(1500);
   // await page.getByTestId("LinkedColumn.Add").click();
+  await page.getByTestId("WorkspaceMenu.toggleWorkspaceLayoutMode").click();
+
+  await page.evaluate(() => {
+    document.querySelector<HTMLDivElement>(".TopHeader")!.style.display =
+      "none";
+    [".Project", ".silver-grid-component", "body"].forEach((selector) => {
+      document.querySelector<HTMLDivElement>(selector)!.style.background =
+        "transparent";
+    });
+  });
 
   /** Show linked computed column */
   await addSceneAnimation(getCommandElemSelector("AddColumnMenu"));
@@ -83,15 +101,11 @@ export const tableTimechartSvgif: OnBeforeScreenshot = async (
     duration: "fast",
   });
 
-  const linkedSortCol = "Orders last 30d";
   await page.locator(getDataKey(linkedSortCol)).click();
   await page.waitForTimeout(500);
   await addSceneAnimation(getDataKey(linkedSortCol));
   await page.waitForTimeout(1500);
 
-  await addScene();
-
-  await page.getByTestId("WorkspaceMenu.toggleWorkspaceLayoutMode").click();
   await addScene();
   await page.getByTestId("WorkspaceMenu.toggleWorkspaceLayoutMode").click();
 
@@ -101,7 +115,7 @@ export const tableTimechartSvgif: OnBeforeScreenshot = async (
 const windowConfig = {
   columns: [
     {
-      name: "Orders last 30d",
+      name: linkedSortCol,
       show: true,
       width: 140,
       nested: {

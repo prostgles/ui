@@ -19,7 +19,7 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   { openConnection },
   { addScene, addSceneAnimation },
 ) => {
-  // throw new Error("DWA");
+  throw new Error("DWA");
   // await goTo(page, "/server-settings?section=llmProviders");
   // await page.getByTestId("dashboard.window.rowInsertTop").click();
   // await page.getByTestId("Popup.content").waitFor({ state: "visible" });

@@ -1,11 +1,3 @@
-import { mdiAlertCircleOutline, mdiFormatText } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client";
-import {
-  getSerialisableError,
-  type AnyObject,
-  type SQLHandler,
-} from "prostgles-types";
-import React from "react";
 import Btn from "@components/Btn";
 import ErrorComponent from "@components/ErrorComponent";
 import FormField from "@components/FormField/FormField";
@@ -13,6 +5,14 @@ import Loading from "@components/Loader/Loading";
 import Popup from "@components/Popup/Popup";
 import PopupMenu from "@components/PopupMenu";
 import { Table } from "@components/Table/Table";
+import { mdiAlertCircleOutline, mdiFormatText } from "@mdi/js";
+import {
+  getSerialisableError,
+  type AnyObject,
+  type SQLHandler,
+} from "prostgles-types";
+import React from "react";
+import type { Prgl } from "src/App";
 import { bytesToSize } from "../BackupAndRestore/BackupsControls";
 import { CodeEditor } from "../CodeEditor/CodeEditor";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
@@ -23,7 +23,6 @@ import { ApplySuggestedDataTypes } from "./checkCSVColumnDataTypes";
 import { FileImporterFooter } from "./FileImporterFooter";
 import { importFile, type ImportProgress } from "./importFile";
 import { setFile } from "./setFile";
-import type { Prgl } from "src/App";
 const streamColumnDataTypes = ["TEXT", "JSON", "JSONB"] as const;
 
 type Papa = typeof import("papaparse");

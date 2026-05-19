@@ -254,9 +254,7 @@ export const getSVGifAnimations = (
         sceneId,
       });
     }
-    const serializer = new XMLSerializer();
-    const svgString = serializer.serializeToString(svgDom);
-    appendSvgToSvg({ id: sceneId, svgFile: svgString, svgDom }, g);
+    appendSvgToSvg({ id: sceneId, svgDom }, g);
 
     const isLastScene = sceneIndex === parsedScenes.length - 1;
     sceneKeyframes.push(`${getPercent(currentPrevDuration)}% ${visible}`);
@@ -292,7 +290,7 @@ export type SceneNodeAnimation = {
 };
 
 const appendSvgToSvg = (
-  { svgFile, id, svgDom }: { svgFile: string; id: string; svgDom: SVGElement },
+  { id, svgDom }: { id: string; svgDom: SVGElement },
   g: SVGGElement,
 ) => {
   svgDom.setAttribute("id", id);

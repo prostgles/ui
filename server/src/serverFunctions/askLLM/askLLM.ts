@@ -326,7 +326,7 @@ export const askLLM = async (args: AskLLMArgs) => {
     );
   };
   try {
-    const modelData = (await dbs.llm_models.findOne(
+    const modelData = await dbs.llm_models.findOne(
       { id: chat.model },
       {
         select: {
@@ -334,7 +334,7 @@ export const askLLM = async (args: AskLLMArgs) => {
           llm_providers: "*",
         },
       },
-    ));
+    );
 
     if (!modelData) {
       await updateLlmResponseMessageTextWithError("Model not found");

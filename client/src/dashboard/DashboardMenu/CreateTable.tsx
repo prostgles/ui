@@ -285,6 +285,7 @@ export const CreateTable = ({
                 variant="filled"
                 color="action"
                 className="ml-auto"
+                size="default"
                 data-command="dashboard.menu.createTable.confirm"
                 disabledInfo={
                   !tableOpts.name?.trim().length ?
