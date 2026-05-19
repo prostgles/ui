@@ -13,10 +13,12 @@ export const onMount: ProstglesOnMount = async ({ dbo: db, sql }) => {
   // }).then((res) => res.json());
 
   if (!count) {
+    console.log("Downloading road data...");
     const { elements } = await fetch(
       "https://prostgles.com/static/routes.json",
     ).then((res) => res.json());
 
+    console.log("Inserting road data into database...");
     await db.routes.insert(
       elements.map((d) => ({
         id: d.id,
@@ -27,6 +29,7 @@ export const onMount: ProstglesOnMount = async ({ dbo: db, sql }) => {
       })),
     );
 
+    console.log("Creating indexes...");
     await sql(` 
 
     DELETE FROM routes
@@ -37,10 +40,24 @@ export const onMount: ProstglesOnMount = async ({ dbo: db, sql }) => {
     CREATE INDEX IF NOT EXISTS idx_roads 
     ON routes USING gist (geog);
 
-    CALL mock_users(1e5::integer, '1 year');
-    CALL mock_orders(1e5::INTEGER, '1 year'::INTERVAL);
-    CALL mock_orders(35e3::INTEGER, '1 hour'::INTERVAL);
+    CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id);
+
   `);
+
+    console.log("Indexes and mock data...");
+    for (const query of [
+      `CALL mock_users(1e5::integer, '1 year');`,
+      `CALL mock_orders(1e3::INTEGER, '6 month'::INTERVAL);`,
+      `CALL mock_orders(1e3::INTEGER, '3 month'::INTERVAL);`,
+      `CALL mock_orders(1e3::INTEGER, '2 month'::INTERVAL);`,
+      `CALL mock_orders(1e3::INTEGER, '1 month'::INTERVAL);`,
+      `CALL mock_orders(10::INTEGER, '1 month'::INTERVAL, 'Sun Cafe');`,
+      // `CALL mock_orders(35e3::INTEGER, '1 hour'::INTERVAL);`,
+    ]) {
+      console.log("Running query:", query);
+      await sql(query);
+    }
+    console.log("Finished inserting mock data.");
   }
 
   await sql(`

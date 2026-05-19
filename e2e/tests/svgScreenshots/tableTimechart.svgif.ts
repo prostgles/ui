@@ -107,6 +107,7 @@ export const tableTimechartSvgif: OnBeforeScreenshot = async (
   await page.waitForTimeout(1500);
 
   await addScene();
+  await page.reload();
   await page.getByTestId("WorkspaceMenu.toggleWorkspaceLayoutMode").click();
 
   await page.waitForTimeout(2000);

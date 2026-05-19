@@ -847,6 +847,9 @@ CREATE TABLE restaurants (
     regexp_replace(nullif(website, ''), '^(https?://[^/]+).*$', '\1/') ||
     '&sz=64'
   ) STORED,
+  is_popular BOOLEAN GENERATED ALWAYS AS (
+    name ~* '\m(McDonald''s|KFC|Burger King|Sun Cafe|Subway|Domino''s|Pizza Hut|Starbucks|Costa|Pret A Manger|Greggs|Nando''s)\M' 
+  ) STORED,
   address_id BIGINT NOT NULL REFERENCES addresses,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -912,6 +915,8 @@ CREATE TABLE orders (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE INDEX ON orders (id, restaurant_id, customer_id, deliverer_id);
+
 CREATE INDEX ON orders (restaurant_id);
 CREATE INDEX ON orders (customer_id);
 CREATE INDEX ON orders (deliverer_id);
@@ -928,6 +933,9 @@ CREATE TABLE order_items (
   price NUMERIC(8,2) NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE INDEX ON order_items (order_id);
+CREATE INDEX ON order_items (menu_item_id);
 
 CREATE TABLE order_updates (
   id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -1133,6 +1141,12 @@ BEGIN
       ST_LineInterpolatePoint(r.geog::geometry, random())::geography AS road_geog
     FROM routes r
     WHERE r.geog IS NOT NULL
+    AND EXISTS (
+      SELECT 1
+      FROM v_restaurants res
+      WHERE is_popular 
+      AND ST_DWithin(res.geog, r.geog, 5000) -- within 5km of a restaurant
+    )
     ORDER BY random()
     LIMIT number_of_users
   ),
@@ -1174,17 +1188,12 @@ BEGIN
     SELECT email, pwd, first_name, last_name, phone_number, type,  now() - (random() * period)
     FROM new_users
     RETURNING *
-  )
-  -- , 
-  -- uains AS (
+  ) 
     INSERT INTO user_addresses (user_id, address_id)
     SELECT u.id, nu.address_id 
     FROM uins u 
     INNER JOIN new_users nu
-      ON u.email = nu.email
-  --   RETURNING *
-  -- )
-  -- SELECT * FROM uains
+      ON u.email = nu.email 
   ;
 
   number_of_riders := GREATEST(CEIL(number_of_users / 5), 1);
@@ -1256,7 +1265,8 @@ WHERE rnum < 50; --number of menu items per restaurant
 
 CREATE OR REPLACE PROCEDURE mock_orders(
   number_of_orders INTEGER DEFAULT 1e4, 
-  period INTERVAL DEFAULT '1 second' 
+  period INTERVAL DEFAULT '1 second',
+  restaurant_name TEXT DEFAULT NULL
 )
 LANGUAGE plpgsql
 AS $$  
@@ -1288,6 +1298,12 @@ BEGIN
     FROM (
       SELECT *
       FROM customers c 
+      WHERE restaurant_name IS NULL OR EXISTS (
+        SELECT 1 
+        FROM v_restaurants r
+        WHERE r.name = restaurant_name
+        AND st_dwithin(c.geog, r.geog, 5000)
+      )
       ORDER BY last_order
       LIMIT number_of_orders
     ) unested
@@ -1308,7 +1324,7 @@ BEGIN
     FROM v_restaurants ri
     WHERE u.geog IS NOT NULL
     AND ri.geog IS NOT NULL 
-    AND ri.name ~* '\m(McDonald''s|KFC|Burger King|Sun Cafe|Subway|Domino''s|Pizza Hut|Starbucks|Costa|Pret A Manger|Greggs|Nando''s)\M' 
+    AND ri.is_popular = true
     AND ri.logo IS NOT NULL
     AND st_distance(u.geog, ri.geog) < 7000 
     ORDER BY u.geog <-> ri.geog 
