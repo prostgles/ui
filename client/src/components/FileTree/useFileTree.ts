@@ -36,9 +36,8 @@ export const useFileTree = ({
   const searchRef = useRef<HTMLInputElement>(null);
 
   const { user } = usePrglCore();
-  const [rootPath, setRootPath] = useState(
-    rootPathFromProps || user?.options?.lastCwd,
-  );
+  const defaultRoot = rootPathFromProps || user?.options?.lastCwd;
+  const [rootPath, setRootPath] = useState(defaultRoot);
 
   const getSortedNodes = useCallback(
     (nodes: FileNode[]): FileNode[] => {
