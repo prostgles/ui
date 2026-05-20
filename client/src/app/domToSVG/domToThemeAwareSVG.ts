@@ -280,11 +280,11 @@ export const domToThemeAwareSVG = async (
 
 document.body.addEventListener("keydown", (e) => {
   if (e.key === "F2") {
-    // void domToThemeAwareSVG(document.body, "current");
-    domToThemeAwareSVGPortable(document.body).then(({ svg, svgString }) => {
-      renderSvg(svg);
-      console.log(svgString);
-    });
+    void domToThemeAwareSVG(document.body, "current");
+    // domToThemeAwareSVGPortable(document.body).then(({ svg, svgString }) => {
+    //   renderSvg(svg);
+    //   console.log(svgString);
+    // });
   } else if (e.key === "F4") {
     void domToThemeAwareSVG(document.body, "both");
   } else if (e.key === "F6") {

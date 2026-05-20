@@ -56,7 +56,7 @@ export const AskLLMChatActionBarModelSelector = (
 
   const usageColor =
     usageRatio > 0.9 ? "var(--danger, #dc2626)"
-    : usageRatio > 0.75 ? "var(--warn, #f59e0b)"
+    : usageRatio > 0.75 ? "var(--text-warning, #f59e0b)"
     : "var(--action, #16a34a)";
 
   const deg = usageRatio * 360;

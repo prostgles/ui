@@ -150,12 +150,17 @@ const moveBordersToTop = (svg: SVGGElement) => {
   svg
     .querySelectorAll<SVGScreenshotNodeType>(BORDER_ELEMENT_TYPES.join(","))
     .forEach((path) => {
-      if (
-        path._purpose?.border &&
-        !path._purpose.background &&
-        path.parentElement instanceof SVGGElement
-      ) {
+      if (!path._purpose || !(path.parentElement instanceof SVGGElement)) {
+        return;
+      }
+      const { background, border, shadow } = path._purpose;
+      if (border && !background) {
         path.parentElement.appendChild(path);
+      } else if (
+        (shadow || background) &&
+        path.parentElement.parentElement instanceof SVGGElement
+      ) {
+        path.parentElement.parentElement.prepend(path);
       }
     });
 };

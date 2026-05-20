@@ -71,6 +71,16 @@ export const aiAssistantAgenticWorkflowGovApiSvgif: OnBeforeScreenshot = async (
     animations: [{ type: "wait", duration: 1000 }],
   });
   await page.getByTestId("Popup.close").last().click();
+  await addSceneAnimation(
+    getDataKey("restaurants") +
+      " " +
+      getCommandElemSelector("selectRuleAdvanced"),
+  );
+  await addScene({
+    animations: [{ type: "wait", duration: 1000 }],
+  });
+  await page.getByTestId("Popup.close").last().click();
+
   await addSceneAnimation(getDataKey("Definition"));
   await page.locator(".monaco-editor .monaco-scrollable-element").click();
   await page.mouse.wheel(0, -800); // scroll up

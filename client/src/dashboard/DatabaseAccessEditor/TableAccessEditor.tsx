@@ -12,6 +12,7 @@ import React from "react";
 import type { DatabaseAccessPermission } from "./DatabaseAccessEditor";
 import { TableAccessAdvancedOptionsMenu } from "./TableAccessAdvancedOptionsMenu";
 import type { TableSchemaWithDriftState } from "./useDatabaseAccessEditorTables";
+import { InfoRow } from "@components/InfoRow";
 
 export type TableAccessPermissions = Extract<
   DatabaseAccessPermission,
@@ -44,6 +45,7 @@ export const TableAccessEditor = ({
         title={"Table created in this workflow"}
         onClickClose={false}
         showFullscreenToggle={{}}
+        positioning="center"
         clickCatchStyle={{ opacity: 1 }}
         data-command={!ddlState ? undefined : "TableAccessEditor.newTableDDL"}
         contentStyle={{
@@ -133,7 +135,21 @@ export const TableAccessEditor = ({
       >
         {ddlState && (
           <FlexCol>
-            <p className="ta-start">
+            <InfoRow
+              className="ta-start"
+              style={{
+                color: {
+                  matches: "var(--action)",
+                  drifted: "var(--text-warning)",
+                  new: "var(--green)",
+                }[ddlState.state],
+                borderColor: {
+                  matches: "var(--action)",
+                  drifted: "var(--text-warning)",
+                  new: "var(--green)",
+                }[ddlState.state],
+              }}
+            >
               {
                 {
                   new: "This table does not exist in the database yet. It will be created with the DDL below.",
@@ -143,7 +159,7 @@ export const TableAccessEditor = ({
                     "The live table schema matches this workflow's definition.",
                 }[ddlState.state]
               }
-            </p>
+            </InfoRow>
             <MonacoEditor
               className="b b-color-0 f-1"
               language={"sql"}

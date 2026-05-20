@@ -29,12 +29,12 @@ export const schemaDiagramSvgif: OnBeforeScreenshot = async (
   await page.waitForTimeout(2500);
   await addScene({
     animations: [
-      {
-        type: "fadeIn",
-        elementSelector: getCommandElemSelector("SchemaGraph"),
-        duration: 500,
-      },
-      { type: "wait", duration: 1000 },
+      // {
+      //   type: "fadeIn",
+      //   elementSelector: getCommandElemSelector("SchemaGraph"),
+      //   duration: 500,
+      // },
+      { type: "wait", duration: 2000 },
     ],
   });
 

@@ -36,6 +36,7 @@ export const UserInput = ({
         borderWrapperClassName="bt b-color w-full ta-start rounded-unset"
         data-command="UserInput"
         maxContentHeight={300}
+        style={{ alignSelf: "stretch" }}
         title={
           <Btn
             size="small"

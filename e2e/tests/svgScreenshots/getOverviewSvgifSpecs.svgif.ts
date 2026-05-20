@@ -55,6 +55,28 @@ export const getOverviewSvgifSpecs = async () => {
     },
 
     {
+      fileName: "table_timechart_1",
+      usedExternally: true,
+      scenes: [...sliceScenes("table_timechart", 0, 3)],
+    },
+    {
+      fileName: "table_timechart_2",
+      usedExternally: true,
+      scenes: [...sliceScenes("table_timechart", 3, 6)],
+    },
+
+    {
+      fileName: "schema_diagram_1",
+      usedExternally: true,
+      scenes: [...sliceScenes("schema_diagram", 0, 3)],
+    },
+    {
+      fileName: "schema_diagram_2",
+      usedExternally: true,
+      scenes: [...sliceScenes("schema_diagram", 3, 6)],
+    },
+
+    {
       fileName: "agentic_workflow_1",
       usedExternally: true,
       scenes: [...sliceScenes("ai_assistant_agentic_workflow", 0, 10)],
