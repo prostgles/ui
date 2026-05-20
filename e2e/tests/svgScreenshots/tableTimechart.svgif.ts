@@ -74,6 +74,9 @@ export const tableTimechartSvgif: OnBeforeScreenshot = async (
       document.querySelector<HTMLDivElement>(selector)!.style.background =
         "transparent";
     });
+    document.querySelector<HTMLDivElement>(
+      ".silver-grid-component",
+    )!.style.padding = "0";
   });
 
   /** Show linked computed column */

@@ -62,7 +62,7 @@ export const getOverviewSvgifSpecs = async () => {
     {
       fileName: "table_timechart_2",
       usedExternally: true,
-      scenes: [...sliceScenes("table_timechart", 3, 6)],
+      scenes: [...sliceScenes("table_timechart", 3)],
     },
 
     {
@@ -73,7 +73,7 @@ export const getOverviewSvgifSpecs = async () => {
     {
       fileName: "schema_diagram_2",
       usedExternally: true,
-      scenes: [...sliceScenes("schema_diagram", 3, 6)],
+      scenes: [...sliceScenes("schema_diagram", 3)],
     },
 
     {

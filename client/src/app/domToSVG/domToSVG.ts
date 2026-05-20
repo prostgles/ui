@@ -156,12 +156,13 @@ const moveBordersToTop = (svg: SVGGElement) => {
       const { background, border, shadow } = path._purpose;
       if (border && !background) {
         path.parentElement.appendChild(path);
-      } else if (
-        (shadow || background) &&
-        path.parentElement.parentElement instanceof SVGGElement
-      ) {
-        path.parentElement.parentElement.prepend(path);
       }
+      // else if (
+      //   (shadow || background) &&
+      //   path.parentElement.parentElement instanceof SVGGElement
+      // ) {
+      //   path.parentElement.parentElement.prepend(path);
+      // }
     });
 };
 

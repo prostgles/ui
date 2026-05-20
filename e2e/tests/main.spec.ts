@@ -3353,6 +3353,7 @@ test.describe("Main test", () => {
     await page.getByTestId("SmartForm.delete.confirm").click();
   });
 
+  /** Flaky on github */
   test("Web template build works", async ({ page: p }) => {
     const page = p as PageWIds;
     await login(page, USERS.test_user, "localhost:3004/login");
