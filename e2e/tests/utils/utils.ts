@@ -2,7 +2,7 @@ import { Locator, Page as PG, expect } from "@playwright/test";
 import * as path from "path";
 import { Command, getCommandElemSelector, getDataKey } from "../Testing";
 import { goTo } from "./goTo";
-import { TEST_DB_NAME, USERS } from "./constants";
+import { IS_GITHUB_WORKER, TEST_DB_NAME, USERS } from "./constants";
 
 type FuncNamesReturningLocatorObj = {
   [prop in keyof PG as PG[prop] extends (...args: any) => any ?
@@ -1231,7 +1231,7 @@ export const setupMagicLinkAuth = async (page: PageWIds) => {
 
 export const clickAndWait = async (
   btnLocator: LocatorWIds,
-  timeout = 60_000,
+  timeout = IS_GITHUB_WORKER ? 120_000 : 60_000,
 ) => {
   await btnLocator.click();
   await btnLocator.page().waitForTimeout(200);
