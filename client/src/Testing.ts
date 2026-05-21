@@ -587,6 +587,7 @@ export const COMMANDS = {
   DataLayerDataSourceInfo: "",
   SilverGridChild: "",
   App: "",
+  SwitchToggle: "",
 } as const satisfies Record<
   string,
   | string

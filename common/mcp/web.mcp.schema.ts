@@ -137,4 +137,4 @@ export const webMcpSchema = {
 } as const;
 
 export const GOOGLE_FAVICON_ENDPOINT = "https://www.google.com/s2/favicons";
-export const GOOGLE_FAVICON_ENDPOINT_REDIRECT = "https://t3.gstatic.com/";
+export const GOOGLE_FAVICON_ENDPOINT_REDIRECT = "https://*.gstatic.com/";

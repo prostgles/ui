@@ -28,8 +28,8 @@ const table_schema_positions = {
     y: -146.4190735982366,
   },
   user_types: {
-    x: -1484.0931586178083,
-    y: -566.8350226338544,
+    x: -1265.7721573856406,
+    y: -531.6790750485014,
   },
   _menu_items: {
     x: 700,
@@ -59,10 +59,6 @@ const table_schema_positions = {
     x: -750.203925184484,
     y: -1095.6041244601697,
   },
-  routes: {
-    x: 980,
-    y: 444,
-  },
   spatial_ref_sys: {
     x: 980,
     y: 920,
@@ -91,6 +87,11 @@ const table_schema_positions = {
     x: -105.19710678250252,
     y: -373.49180690996263,
   },
+  routes: {
+    x: -105,
+    y: -200,
+  },
+  hygiene_ratings: { x: -194, y: -361 },
   delivery_status_changes: {
     x: -61.28934921994736,
     y: -577.6752137133151,

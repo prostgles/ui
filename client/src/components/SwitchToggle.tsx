@@ -78,6 +78,7 @@ export const SwitchToggle: React.FC<SwitchToggleProps> = ({
       {labelProps && <Label {...labelProps} aria-checked={checked} />}
       <div
         className={`Switch-root rounded focusable ${checked ? "checked" : " "}`}
+        data-command="SwitchToggle"
       >
         <span className={"SwitchBase-root "}>
           <input

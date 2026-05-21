@@ -149,15 +149,17 @@ export const ERDSchema = ({
       />
       {legendItems && (
         <FlexCol
+          className="p-1 rounded gap-p5"
           style={{
             position: "absolute",
-            right: "1em",
-            top: "1em",
+            right: 0,
+            top: 0,
+            backdropFilter: "blur(2px)",
           }}
         >
           {" "}
           {legendItems.map(({ color, label }) => (
-            <Chip key={label} style={{ color }}>
+            <Chip key={label} style={{ color }} className="shadow">
               {label}
             </Chip>
           ))}

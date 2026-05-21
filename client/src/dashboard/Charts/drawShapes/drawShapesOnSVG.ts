@@ -53,7 +53,7 @@ export const drawShapesOnSVG = (
       ctx.drawImage(s.image, 0, 0, s.w, s.h);
       const dataURL = localCanvas.toDataURL();
       addImageFromDataURL(g, dataURL, context, {
-        style: {} as CSSStyleDeclaration,
+        style: { opacity: opacity.toString() } as CSSStyleDeclaration,
         height: s.h,
         width: s.w,
         x,

@@ -24,6 +24,13 @@ export const getOverviewSvgifSpecs = async () => {
     return scenes;
   };
   const overviewSvgifSpecs = [
+    {
+      /** Used in readme */
+      fileName: "overview",
+      usedExternally: true,
+      scenes: [...sliceScenes("ai_assistant", 20, 23)],
+    },
+
     /** Overview section */
     {
       fileName: "linked_data",
@@ -52,6 +59,24 @@ export const getOverviewSvgifSpecs = async () => {
         ...sliceScenes("sql_editor", 1, 10),
         ...sliceScenes("sql_editor", 12),
       ],
+    },
+
+    {
+      fileName: "ai_assistant_access_request",
+      usedExternally: true,
+      scenes: [...sliceScenes("ai_assistant", 6, 11)],
+    },
+
+    {
+      fileName: "ai_assistant_generated_dashboard",
+      usedExternally: true,
+      scenes: [...sliceScenes("ai_assistant", 0, 6)],
+    },
+
+    {
+      fileName: "ai_assistant_data_analysis",
+      usedExternally: true,
+      scenes: [...sliceScenes("ai_assistant", 20, 23)],
     },
 
     {
@@ -184,7 +209,7 @@ export const getOverviewSvgifSpecs = async () => {
     },
     {
       fileName: "backups",
-      svgSceneFileName: svgifSpecsObj.backup_and_restore[16]!.svgFileName,
+      svgSceneFileName: svgifSpecsObj.backup_and_restore[14]!.svgFileName,
     },
 
     {

@@ -212,7 +212,7 @@ const useServicesFieldConfigs = ({
           !v ||
           Boolean(
             showSpecificService &&
-              (status === "running" || status === "stopped"),
+            (status === "running" || status === "stopped"),
           ),
         renderMode: "full",
         render: (_, { logs }) => (

@@ -32,7 +32,7 @@ const table_options = {
   customers: {
     icon: "AccountCashOutline",
   },
-};
+} satisfies typeof import("../../../common/DBGeneratedSchema");
 
 export default {
   table_options,

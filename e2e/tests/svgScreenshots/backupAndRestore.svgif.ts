@@ -10,10 +10,11 @@ export const backupAndRestoreSvgif: OnBeforeScreenshot = async (
 ) => {
   await openConnection("crypto");
   await closeWorkspaceWindows(page);
-  await addSceneAnimation(getCommandElemSelector("dashboard.goToConnConfig"));
-  await addSceneAnimation(getCommandElemSelector("config.bkp"));
+  await page.getByTestId("dashboard.goToConnConfig").click();
+  await page.getByTestId("config.bkp").click();
 
   /** Delete existing */
+  await page.waitForTimeout(3_000);
   const deleteAllBtn = page.getByTestId("BackupControls.DeleteAll");
   if (await deleteAllBtn.count()) {
     await deleteAllBtn.click();

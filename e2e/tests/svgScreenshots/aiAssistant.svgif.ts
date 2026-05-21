@@ -9,6 +9,7 @@ import {
   deleteExistingLLMChat,
   deletePreviousMessages,
   newChat,
+  runDbsMethod,
   setPromptByText,
 } from "utils/utils";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
@@ -205,12 +206,24 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   );
   await page.waitForTimeout(2000);
   await addScene({ svgFileName: "sql_result" });
+  await page
+    .getByTestId("Chat.messageList")
+    .locator(".message")
+    .last()
+    .scrollIntoViewIfNeeded();
+  await addScene({ svgFileName: "data_analysis_result" });
 
-  await deletePreviousMessages(page);
-  await addSceneAnimation(getCommandElemSelector("Chat.speech"), {
-    action: "rightClick",
+  await runDbsMethod(page, "toggleService", {
+    serviceName: "speechToText",
+    enable: false,
   });
+  await page.waitForTimeout(2_000);
+  await deletePreviousMessages(page);
+  await addSceneAnimation(getCommandElemSelector("Chat.speech"));
   await addSceneAnimation(getDataKey("stt-local"));
   await addScene({ svgFileName: "stt" });
+  await addSceneAnimation(
+    getDataKey("speechToText") + " " + getCommandElemSelector("SwitchToggle"),
+  );
   await page.keyboard.press("Escape");
 };

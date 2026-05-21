@@ -13,6 +13,7 @@ export const tableOptionsJsonbSchema = {
             values: {
               type: {
                 icon: { type: "string", optional: true },
+                renderAs: { type: "string", optional: true },
               },
             },
           },
