@@ -262,7 +262,7 @@ export const SQL_TESTING_SCRIPTS = {
   jsonb:
     "\nSELECT request\nFROM logs\nWHERE request ->>'Authorization' IS NULL\nLIMIT 200",
   nestedSelects:
-    "\nWITH cte1 AS (\n  SELECT *\n  FROM (\n    SELECT *\n    FROM geography_columns\n    WHERE coord_dimension = 1\n  ) t\n)\nSELECT * FROM cte1;\nSELECT st_point(1, 2)::GEOGRAPHY",
+    "\nWITH cte1 AS (\n  SELECT *\n  FROM (\n    SELECT *\n    FROM geography_columns gc\n    WHERE gc.coord_dimension = 1\n  ) t\n)\nSELECT * FROM cte1;\nSELECT st_point(1, 2)::GEOGRAPHY",
 };
 export type SqlTestingScripts = typeof SQL_TESTING_SCRIPTS;
 

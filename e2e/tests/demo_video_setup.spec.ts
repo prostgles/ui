@@ -1,6 +1,6 @@
 import { test } from "@playwright/test";
 import { PageWIds, createDatabase, login, runDbSql } from "./utils/utils";
-import { USERS } from "utils/constants";
+import { demoRestaurantName, USERS } from "utils/constants";
 import { goTo } from "utils/goTo";
 
 const videoTestDuration = 10 * 60e3;
@@ -47,8 +47,18 @@ test.describe("Demo video setup", () => {
     await awaitCondition(async () => {
       const { rowCount } = await runDbSql(
         page,
-        "SELECT * FROM orders LIMIT 2",
-        {},
+        `
+        SELECT * 
+        FROM orders o 
+        WHERE EXISTS (
+          SELECT 1 
+          FROM restaurants r 
+          WHERE r.name ilike \${demoRestaurantName} 
+          AND o.restaurant_id = r.id
+        ) 
+        LIMIT 2
+        `,
+        { demoRestaurantName },
         { returnType: "result" },
       );
       ordersHaveBeenCreated = rowCount > 0;

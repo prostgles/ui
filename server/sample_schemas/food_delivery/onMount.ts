@@ -47,6 +47,7 @@ export const onMount: ProstglesOnMount = async ({ dbo: db, sql }) => {
     console.log("Indexes and mock data...");
     for (const query of [
       `CALL mock_users(1e5::integer, '1 year');`,
+      `CALL ensure_popular_restaurant_customer_coverage('1 month'::INTERVAL, 'Sun Cafe');`,
       `CALL mock_orders(10::INTEGER, '1 month'::INTERVAL, 'Sun Cafe');`,
       `CALL mock_orders(1e3::INTEGER, '6 month'::INTERVAL);`,
       `CALL mock_orders(1e3::INTEGER, '3 month'::INTERVAL);`,

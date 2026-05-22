@@ -156,10 +156,12 @@ export const sqlEditorSvgif: OnBeforeScreenshot = async (
     ((SELECT id FROM user_inserts WHERE username = 'user3'), 'Hello from user3', now() - '5day'::interval);
   `,
   );
+
   await monacoType(
     page,
     `.ProstglesSQL`,
-    "SELECT * \nFROM messages m \nJOIN users u\n ON u.id = m.sender_id\nWHERE u.options ->>'timeZone' = ''",
+    "SELECT * \nFROM messages m \nJOIN u",
+    // "SELECT * \nFROM messages m \nJOIN users u\n ON u.id = m.sender_id\nWHERE u.options ->>'timeZone' = ''",
     {
       deleteAllAndFill: true,
       pressAfterTyping: ["ArrowLeft", "Control+Space"],
@@ -169,6 +171,9 @@ export const sqlEditorSvgif: OnBeforeScreenshot = async (
     svgFileName: "values",
   });
   await page.keyboard.press("Tab");
+
+  await page.keyboard.type("where u.options ", { delay: 100 });
+
   await page.keyboard.press("Alt+KeyE");
   await page.waitForTimeout(1500);
   await addScene({

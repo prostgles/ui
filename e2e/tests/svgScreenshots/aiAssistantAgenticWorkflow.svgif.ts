@@ -137,6 +137,11 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
       },
     },
   );
+
+  const sectionFadeInOpts = {
+    type: "fadeIn",
+    duration: 1_000,
+  } as const;
   await addScene({
     animations: [
       {
@@ -146,43 +151,37 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
         startScale: 0.95,
       },
       {
-        type: "fadeIn",
+        ...sectionFadeInOpts,
         elementSelector: getCommandElemSelector(
           "AgenticWorkflowDetails.description",
         ),
-        duration: 1500,
       },
       {
-        type: "fadeIn",
+        ...sectionFadeInOpts,
         elementSelector: getCommandElemSelector(
           "AgenticWorkflowDetails.containerConfiguration",
         ),
-        duration: 1500,
       },
       {
-        type: "fadeIn",
+        ...sectionFadeInOpts,
         elementSelector: getCommandElemSelector("DatabaseAccessEditor"),
-        duration: 1500,
       },
       {
-        type: "fadeIn",
+        ...sectionFadeInOpts,
         elementSelector: getCommandElemSelector(
           "AgenticWorkflowDetails.orchestrationTools",
         ),
-        duration: 1500,
       },
       {
-        type: "fadeIn",
+        ...sectionFadeInOpts,
         elementSelector: getCommandElemSelector(
           "AgenticWorkflowDetails.agents",
         ),
-        duration: 1500,
       },
 
       {
-        type: "fadeIn",
+        ...sectionFadeInOpts,
         elementSelector: getCommandElemSelector("UserInput"),
-        duration: 1500,
       },
     ],
   });

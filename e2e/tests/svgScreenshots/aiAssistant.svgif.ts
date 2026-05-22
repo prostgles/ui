@@ -220,10 +220,12 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   await page.waitForTimeout(2_000);
   await deletePreviousMessages(page);
   await addSceneAnimation(getCommandElemSelector("Chat.speech"));
-  await addSceneAnimation(getDataKey("stt-local"));
-  await addScene({ svgFileName: "stt" });
+  await page.locator(getDataKey("stt-local")).click();
+  await addScene({ svgFileName: "stt_setting_up" });
   await addSceneAnimation(
     getDataKey("speechToText") + " " + getCommandElemSelector("SwitchToggle"),
   );
+  await page.waitForTimeout(4_000);
+  await addScene({ svgFileName: "stt_ready" });
   await page.keyboard.press("Escape");
 };

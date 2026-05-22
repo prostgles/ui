@@ -1278,11 +1278,11 @@ BEGIN
     FROM v_restaurants
     WHERE geog IS NOT NULL
       AND is_popular = true
-      AND (
-        logo IS NOT NULL
-        OR restaurant_name IS NOT NULL
-        AND name = restaurant_name
-      )
+      AND CASE 
+        WHEN restaurant_name IS NOT NULL 
+          THEN name ilike restaurant_name 
+        ELSE logo IS NOT NULL 
+      END
   ),
   chosen_customers AS (
     SELECT c.*, row_number() OVER () AS rnum
@@ -1449,3 +1449,61 @@ BEGIN
     PERFORM pg_sleep(random() * 1);  
   END LOOP;
 END $$; 
+
+CREATE OR REPLACE PROCEDURE ensure_popular_restaurant_customer_coverage(
+  period INTERVAL DEFAULT '1 day',
+  restaurant_name TEXT DEFAULT NULL
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  r RECORD;
+  new_address_id BIGINT;
+  new_user_id INT;
+  seed_email TEXT;
+BEGIN
+  FOR r IN
+    SELECT vr.id, vr.name, vr.geog
+    FROM v_restaurants vr
+    WHERE vr.name ilike restaurant_name
+  LOOP
+    IF NOT EXISTS (
+      SELECT 1
+      FROM customers c
+      WHERE c.geog IS NOT NULL
+        AND ST_DWithin(c.geog, r.geog, 5000)
+    ) THEN
+      INSERT INTO addresses (street, city, state, postal_code, country, geog)
+      VALUES (
+        'Near ' || left(r.name, 200),
+        'London',
+        'UK',
+        'N/A',
+        'England',
+        ST_Project(
+          r.geog,
+          100 + random() * 4500,   -- always <= 4.6km
+          random() * 2 * pi()
+        )::geography
+      )
+      RETURNING id INTO new_address_id;
+
+      seed_email := 'seed_pop_' || r.id || '_' || floor(extract(epoch from clock_timestamp()))::text || '@local.test';
+
+      INSERT INTO users (type, email, password, first_name, last_name, phone_number, created_at)
+      VALUES (
+        'customer',
+        seed_email,
+        'pwd',
+        'Seed',
+        'Customer',
+        '07000000000',
+        now() - (random() * period)
+      )
+      RETURNING id INTO new_user_id;
+
+      INSERT INTO user_addresses (user_id, address_id)
+      VALUES (new_user_id, new_address_id);
+    END IF;
+  END LOOP;
+END $$;

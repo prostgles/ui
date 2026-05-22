@@ -5,7 +5,7 @@ import { mdiFullscreen } from "@mdi/js";
 import React, { useEffect, useMemo, useState } from "react";
 import { MonacoLogs } from "./MonacoLogs";
 import type { TestSelectors } from "src/Testing";
-import Popup from "@components/Popup/Popup";
+import Popup, { useIsInsidePopup } from "@components/Popup/Popup";
 
 export const MonacoLogsWithFullscreen = ({
   logs,
@@ -48,9 +48,7 @@ export const MonacoLogsWithFullscreen = ({
     [fullscreen, maxHeight],
   );
   const divRef = React.useRef<HTMLDivElement>(null);
-  const isInsidePopup = !!divRef.current?.closest(
-    `[aria-modal="true"],[role="dialog"]`,
-  );
+  const isInsidePopup = useIsInsidePopup();
 
   if (isInsidePopup && fullscreen) {
     return (

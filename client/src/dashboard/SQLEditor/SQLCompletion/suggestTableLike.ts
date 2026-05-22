@@ -1,7 +1,8 @@
+import { includes } from "prostgles-types";
 import type { SQLSuggestion } from "../W_SQLEditor";
 import type { CodeBlock } from "./completionUtils/getCodeBlock";
 import { getTableExpressionReturnTypes } from "./completionUtils/getTableExpressionReturnTypes";
-import { getJoinSuggestions } from "./getJoinSuggestions";
+import { getJoinSuggestions, getStartingLetters } from "./getJoinSuggestions";
 import type {
   ParsedSQLSuggestion,
   SQLMatchContext,
@@ -65,7 +66,16 @@ export const suggestTableLike = async (
               )
             ),
         )
-        .map((s) => ({ ...s, sortText: s.schema === "public" ? "b" : "c" }))
+        .map((s) => {
+          const canAddAlias = includes(["from", "join"], cb.ltoken?.textLC);
+          return {
+            ...s,
+            ...(canAddAlias && {
+              insertText: `${s.insertText} ${getStartingLetters(s.name)}\n`,
+            }),
+            sortText: s.schema === "public" ? "b" : "c",
+          };
+        })
     );
   const tables = [...schemaTables, ...aliasedTables];
 

@@ -65,7 +65,8 @@ export const useCodeEditorTsTypes = (
            */
           export type ProstglesOnMount = (args: { 
             dbo: Required<import("prostgles-server").DBOFullyTyped<DBGeneratedSchema>>; 
-            db: import("prostgles-server").DB; 
+            sql: import("prostgles-types").SQLHandler;
+            db: import("prostgles-server").DB;
           }) => void | Promise<void>; 
         }; 
         export {} `,

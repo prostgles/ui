@@ -18,6 +18,69 @@ export const testBugs: DemoScript = async (args) => {
     runDbSQL,
     runSQL,
   } = args;
+  /** CTE names */
+  const cteScriptCompressed = `WITH cte1 AS (
+SELECT 1 
+FROM (
+SELECT *
+FROM geography_columns
+) t
+)SELECT *`;
+  const cteScriptSpaced = `
+  WITH cte1 AS (
+    SELECT 1 
+    FROM (
+      SELECT *
+      FROM geography_columns
+    ) t
+  )
+  SELECT *`;
+  for (const cteScript of [cteScriptCompressed, cteScriptSpaced]) {
+    await fromBeginning(false, cteScript);
+    await typeAuto(" ");
+    await typeAuto(" ");
+    await typeAuto(" w");
+    await typeAuto(" ");
+    testResult(cteScript + ` FROM cte1 WHERE "?column?"`);
+  }
+
+  const testFunctionArgs = async () => {
+    await fromBeginning();
+    await typeAuto(`SELECT quer`);
+    await typeAuto(`, lef`);
+    await typeAuto(`()`, { nth: -1 });
+    await moveCursor.left();
+    await typeAuto(``);
+    await moveCursor.right();
+    await typeAuto(`,current_sett`);
+    await typeAuto(`()`, { nth: -1 });
+    await moveCursor.left();
+    await typeAuto(`allow_in`);
+    const expected = `SELECT query, left(application_name),current_setting('allow_in_place_tablespaces')
+FROM pg_catalog.pg_stat_activity
+LIMIT 200`;
+    testResult(expected);
+
+    await fromBeginning();
+    const expect2 = `SELECT * \nFROM pg_catalog.pg_stat_activity a\nWH`;
+    await typeAuto(expect2, { msPerChar: 10 });
+    await typeAuto(` lef`);
+    await typeAuto(`()`, { nth: -1 });
+    await moveCursor.left();
+    await typeAuto(`a.`);
+    await moveCursor.right();
+    await typeAuto(` `);
+    await moveCursor.right();
+    await typeAuto(` current_sett`);
+    await typeAuto(`()`, { nth: -1 });
+    await moveCursor.left();
+    await typeAuto(`allow_in`);
+    testResult(
+      expect2 +
+        `ERE left(a.application_name) = current_setting('allow_in_place_tablespaces')`,
+    );
+  };
+  await testFunctionArgs();
 
   const testIncompleteQuery = async () => {
     await fromBeginning();
@@ -85,7 +148,7 @@ export const testBugs: DemoScript = async (args) => {
   testResult(
     selectSubSelectBug.replace(
       "SELECT FROM  ",
-      "SELECT FROM pg_catalog.pg_namespace ",
+      "SELECT FROM pg_catalog.pg_namespace pn\n   ",
     ),
   );
 
@@ -255,7 +318,7 @@ export const testBugs: DemoScript = async (args) => {
   /** Test explain */
   await fromBeginning(false, "EXPLAIN SELECT * FROM");
   await typeAuto(" class");
-  testResult("EXPLAIN SELECT * FROM pg_catalog.pg_class");
+  testResult("EXPLAIN SELECT * FROM pg_catalog.pg_class pc\n");
 
   await fromBeginning(false, "EXPLAIN UPDATE");
   await typeAuto(" class");
@@ -499,70 +562,6 @@ CREATE TABLE "MySchema"."MyTable" (
   testResult(
     query + " t.commit_action = c.relpersistence\n  OR c.relkind = t.is_typed",
   );
-
-  /** CTE names */
-  const cteScriptCompressed = `WITH cte1 AS (
-SELECT 1 
-FROM (
-SELECT *
-FROM geography_columns
-) t
-)SELECT *`;
-  const cteScriptSpaced = `
-  WITH cte1 AS (
-    SELECT 1 
-    FROM (
-      SELECT *
-      FROM geography_columns
-    ) t
-  )
-  SELECT *`;
-  for (const cteScript of [cteScriptCompressed, cteScriptSpaced]) {
-    await fromBeginning(false, cteScript);
-    await typeAuto(" ");
-    await typeAuto(" ");
-    await typeAuto(" w");
-    await typeAuto(" ");
-    testResult(cteScript + ` FROM cte1 WHERE "?column?"`);
-  }
-
-  const testFunctionArgs = async () => {
-    await fromBeginning();
-    await typeAuto(`SELECT quer`);
-    await typeAuto(`, lef`);
-    await typeAuto(`()`, { nth: -1 });
-    await moveCursor.left();
-    await typeAuto(``);
-    await moveCursor.right();
-    await typeAuto(`,current_sett`);
-    await typeAuto(`()`, { nth: -1 });
-    await moveCursor.left();
-    await typeAuto(`allow_in`);
-    const expected = `SELECT query, left(application_name),current_setting('allow_in_place_tablespaces')
-FROM pg_catalog.pg_stat_activity
-LIMIT 200`;
-    testResult(expected);
-
-    await fromBeginning();
-    const expect2 = `SELECT * \nFROM pg_catalog.pg_stat_activity a\nWH`;
-    await typeAuto(expect2, { msPerChar: 10 });
-    await typeAuto(` lef`);
-    await typeAuto(`()`, { nth: -1 });
-    await moveCursor.left();
-    await typeAuto(`a.`);
-    await moveCursor.right();
-    await typeAuto(` `);
-    await moveCursor.right();
-    await typeAuto(` current_sett`);
-    await typeAuto(`()`, { nth: -1 });
-    await moveCursor.left();
-    await typeAuto(`allow_in`);
-    testResult(
-      expect2 +
-        `ERE left(a.application_name) = current_setting('allow_in_place_tablespaces')`,
-    );
-  };
-  await testFunctionArgs();
 
   /** Actions work */
   await fromBeginning();

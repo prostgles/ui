@@ -1,4 +1,4 @@
-import Popup from "@components/Popup/Popup";
+import Popup, { useIsInsidePopup } from "@components/Popup/Popup";
 import {
   mdiClose,
   mdiFullscreen,
@@ -38,9 +38,7 @@ export const FullscreenWrapper = ({
 }) => {
   const [minimized, setMinimized] = useState(false);
   const divRef = React.useRef<HTMLDivElement>(null);
-  const isInsidePopup = !!divRef.current?.closest(
-    `[aria-modal="true"],[role="dialog"]`,
-  );
+  const isInsidePopup = useIsInsidePopup();
   const { fullscreen, setFullscreen, fullscreenStyle } = useFullscreen(
     divRef,
     isInsidePopup,

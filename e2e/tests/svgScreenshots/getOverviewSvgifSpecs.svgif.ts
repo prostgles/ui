@@ -24,13 +24,6 @@ export const getOverviewSvgifSpecs = async () => {
     return scenes;
   };
   const overviewSvgifSpecs = [
-    {
-      /** Used in readme */
-      fileName: "overview",
-      usedExternally: true,
-      scenes: [...sliceScenes("ai_assistant", 20, 23)],
-    },
-
     /** Overview section */
     {
       fileName: "linked_data",
@@ -182,14 +175,11 @@ export const getOverviewSvgifSpecs = async () => {
     {
       fileName: "overview",
       scenes: [
-        ...sliceScenes("command_palette", 1, 8),
-        ...sliceScenes("schema_diagram", 1, 6),
-        ...sliceScenes("dashboard", 6),
-        ...sliceScenes("ai_assistant", 0),
-
-        ...sliceScenes("sql_editor", 8, 10),
+        ...sliceScenes("schema_diagram", 0, 3),
+        ...sliceScenes("ai_assistant_agentic_workflow", 9, 10),
+        ...sliceScenes("sql_editor", 9, 12),
         ...sliceScenes("sql_editor", 12),
-        ...sliceScenes("file_importer", 0),
+        ...sliceScenes("table_timechart", 5),
       ],
     },
   ];

@@ -159,7 +159,7 @@ export const createTables: DemoScript = async ({
   await typeAuto(" ");
   await typeAuto("\n"); // FROM
   await typeAuto(" geo");
-  await typeAuto("\nwh");
+  await typeAuto("wh");
   await typeAuto(" coord");
   await typeAuto(" = 1", { nth: -1 });
   await moveCursor.down();
