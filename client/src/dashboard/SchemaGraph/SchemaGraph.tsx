@@ -53,7 +53,3 @@ export const SchemaGraph = () => {
     </>
   );
 };
-
-export const getSchemaTableColY = (i, height) => {
-  return (!i ? 8 : 16) + i * 20 - height / 2;
-};

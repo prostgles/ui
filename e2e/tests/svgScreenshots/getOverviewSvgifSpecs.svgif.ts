@@ -19,11 +19,20 @@ export const getOverviewSvgifSpecs = async () => {
         `Not enough scenes in ${fileName}: expected ${end - start}, got ${scenes.length}`,
       );
     }
-    const lastScene = scenes[scenes.length - 1];
-    lastScene.animations.push({ type: "wait", duration: 4000 });
+
     return scenes;
   };
   const overviewSvgifSpecs = [
+    {
+      fileName: "overview",
+      scenes: [
+        ...sliceScenes("sql_editor", 5, 7),
+        ...sliceScenes("schema_diagram", 1, 3),
+        ...sliceScenes("ai_assistant_agentic_workflow", 0, 1),
+        ...sliceScenes("ai_assistant_agentic_workflow", 12, 15),
+        ...sliceScenes("table_timechart", 6),
+      ],
+    },
     /** Overview section */
     {
       fileName: "linked_data",
@@ -171,18 +180,18 @@ export const getOverviewSvgifSpecs = async () => {
       usedExternally: true,
       scenes: [...sliceScenes("backup_and_restore", 2)],
     },
-
-    {
-      fileName: "overview",
-      scenes: [
-        ...sliceScenes("schema_diagram", 0, 3),
-        ...sliceScenes("ai_assistant_agentic_workflow", 9, 10),
-        ...sliceScenes("sql_editor", 9, 12),
-        ...sliceScenes("sql_editor", 12),
-        ...sliceScenes("table_timechart", 5),
-      ],
-    },
-  ];
+  ].map((sceneInfo) => {
+    return {
+      ...sceneInfo,
+      // scenes: sceneInfo.scenes.map((scene, index) => ({
+      //   ...scene,
+      //   animations:
+      //     index === sceneInfo.scenes.length - 1 ?
+      //       [...scene.animations]
+      //     : [...scene.animations, { type: "wait", duration: 4000 }],
+      // })),
+    } as typeof sceneInfo;
+  });
 
   const svgifCovers: { fileName: string; svgSceneFileName: string }[] = [
     {

@@ -208,7 +208,7 @@ export const dashboardMenuUIDoc = {
       `,
       docOptions: "asSeparateFile",
       childrenTitle: "Top controls",
-      // componentName: "SchemaGraph",// The popup title controls need refactoring
+      // componentName: "SchemaGraph", // The popup title controls need refactoring to ensure this works
       children: [
         {
           type: "select",

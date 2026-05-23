@@ -25,7 +25,7 @@ export const schemaDiagramSvgif: OnBeforeScreenshot = async (
     {
       table_schema_transform: {
         scale: 0.541,
-        translate: { x: 719, y: 844 },
+        translate: { x: 693, y: 738.5 },
       },
     },
   );

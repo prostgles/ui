@@ -81,10 +81,11 @@ export const getTextForSVG = (
   }
 
   return Array.from(element.childNodes)
-    .map((childTextNode, index) => {
+    .map((childTextNode) => {
       if (!isTextNode(childTextNode)) return;
       const textContent = childTextNode.textContent;
       if (!textContent || !textContent.trim()) return;
+
       const range = document.createRange();
       range.selectNodeContents(childTextNode);
       const textRect = range.getBoundingClientRect();
@@ -103,12 +104,23 @@ export const getTextForSVG = (
       if (visibleTextWidth && visibleTextHeight) {
         const edgeRects = getTextEdgeRects(childTextNode, textContent.length);
         const textIndent = edgeRects.startCharRect.left - textRect.x;
+        const NON_COLLAPSING_WHITE_SPACE = new Set([
+          "pre",
+          "pre-wrap",
+          "break-spaces",
+        ]);
         const res: TextForSVG = {
           style: {
             // eslint-disable-next-line @typescript-eslint/no-misused-spread
             ...style,
             /** This is done to preserve leading spaces between spans of the same text block */
-            whiteSpace: textContent.startsWith(" ") ? "pre" : style.whiteSpace,
+            whiteSpace:
+              (
+                textContent.startsWith(" ") &&
+                NON_COLLAPSING_WHITE_SPACE.has(style.whiteSpace)
+              ) ?
+                "pre"
+              : style.whiteSpace,
           },
           textContent,
           x: textRect.x,

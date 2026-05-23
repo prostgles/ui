@@ -108,7 +108,20 @@ export const sqlEditorSvgif: OnBeforeScreenshot = async (
   await sqlSuggestionsScene({
     query:
       "SELECT * \nFROM messages m \nJOIN users u\n ON u.id = m.sender_id\nWHERE u.options ",
-    svgFileName: "jsonb_properties",
+    svgFileName: "jsonb_properties1",
+  });
+
+  await sqlSuggestionsScene({
+    query:
+      "SELECT * \nFROM messages m \nJOIN users u\n ON u.id = m.sender_id\nWHERE u.options ->>'time",
+    svgFileName: "jsonb_properties2",
+  });
+
+  await sqlSuggestionsScene({
+    query:
+      "SELECT * \nFROM messages m \nJOIN users u\n ON u.id = m.sender_id\nWHERE u.options ->>'timeZone' = ''",
+    pressAfterTyping: ["ArrowLeft", "Control+Space"],
+    svgFileName: "jsonb_properties3",
   });
 
   await sqlSuggestionsScene({

@@ -117,14 +117,14 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
     .locator(getDataKey("sourcePaths"))
     .waitFor({ state: "visible", timeout: 35000 });
 
-  await addScene({
-    animations: [
-      {
-        type: "wait",
-        duration: 1000,
-      },
-    ],
-  });
+  // await addScene({
+  //   animations: [
+  //     {
+  //       type: "wait",
+  //       duration: 1000,
+  //     },
+  //   ],
+  // });
 
   await addSceneAnimation(
     {

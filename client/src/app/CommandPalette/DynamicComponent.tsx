@@ -51,6 +51,10 @@ const DYNAMIC_COMPONENT_REGISTRY = {
     import("src/dashboard/StatusMonitor/StatusMonitor").then((mod) => ({
       default: mod.StatusMonitor,
     })),
+  SchemaGraph: () =>
+    import("src/dashboard/SchemaGraph/SchemaGraph").then((mod) => ({
+      default: mod.SchemaGraph,
+    })),
 } as const satisfies Record<
   string,
   () => Promise<{ default: React.ComponentType<any> }>

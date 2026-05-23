@@ -158,11 +158,9 @@ export const elementToSVG = async (
     await fontIconToSVG(g, image, context, elemInfo);
   } else if (image?.type === "img") {
     await imgToSVG(g, image.element, elemInfo, context);
-  } else if (image?.type === "maskedElement") {
+  } else if (image?.type === "maskOrBgImage") {
     const { width, height, x, y } = element.getBoundingClientRect();
-    const dataUrl = decodeURIComponent(
-      style.maskImage.split(",")[1]!.slice(0, -2),
-    );
+    const dataUrl = decodeURIComponent(image.image.split(",")[1]!.slice(0, -2));
     const parser = new DOMParser();
     const svgDoc = parser.parseFromString(dataUrl, "image/svg+xml");
     const svgElement = svgDoc.documentElement;
@@ -187,7 +185,7 @@ export const elementToSVG = async (
     parentSvg.appendChild(wrapperG);
   }
 
-  if (image?.type !== "maskedElement") {
+  if (image?.type !== "maskOrBgImage") {
     copyAnimations?.(style, rectElem?.path ?? g, context.cssDeclarations, true);
   }
 
