@@ -25,7 +25,7 @@ export const FileImporterFooter = (props: P) => {
   return (
     <>
       <div className={"ai-center flex-row f-1 gap-1"}>
-        <Btn onClick={onCancel} className="mr-auto">
+        <Btn onClick={onCancel} className="mr-auto" size="default">
           Cancel
         </Btn>
 
@@ -35,6 +35,7 @@ export const FileImporterFooter = (props: P) => {
             onClick={onImport}
             disabledInfo={customHeadersError}
             variant="filled"
+            size="default"
             color="action"
             data-command="FileImporterFooter.import"
           >
@@ -45,6 +46,7 @@ export const FileImporterFooter = (props: P) => {
         {hideOpenTable ? null : (
           <Btn
             className="ml-1"
+            size="default"
             onClick={() => {
               openTable(importing.tableName);
               onCancel();

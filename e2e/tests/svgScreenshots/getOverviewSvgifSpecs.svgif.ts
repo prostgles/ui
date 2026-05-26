@@ -1,30 +1,52 @@
+import { readFile } from "fs/promises";
 import type { SVG_SCREENSHOT_DETAILS } from "./SVG_SCREENSHOT_DETAILS";
-import type { SVGifScene } from "./utils/constants";
+import { SVGIF_SCENES_SPECS_PATH, type SVGifScene } from "./utils/constants";
 
-export const getOverviewSvgifSpecs = async (
-  existing: Record<keyof typeof SVG_SCREENSHOT_DETAILS, SVGifScene[]>,
-) => {
+export const getOverviewSvgifSpecs = async () => {
+  const svgifSpecsObj: Record<
+    keyof typeof SVG_SCREENSHOT_DETAILS,
+    SVGifScene[]
+  > = JSON.parse(await readFile(SVGIF_SCENES_SPECS_PATH, "utf-8"));
+
   const sliceScenes = (
     fileName: keyof typeof SVG_SCREENSHOT_DETAILS,
     start: number,
-    end = existing[fileName].length,
+    end = svgifSpecsObj[fileName].length,
   ) => {
-    const scenes = structuredClone(existing[fileName].slice(start, end));
+    const scenes = structuredClone(svgifSpecsObj[fileName].slice(start, end));
     if (scenes.length !== end - start) {
       throw new Error(
         `Not enough scenes in ${fileName}: expected ${end - start}, got ${scenes.length}`,
       );
     }
-    const lastScene = scenes[scenes.length - 1];
-    lastScene.animations.push({ type: "wait", duration: 4000 });
+
     return scenes;
   };
   const overviewSvgifSpecs = [
+    {
+      fileName: "overview",
+      scenes: [
+        ...sliceScenes("sql_editor", 5, 7),
+        ...sliceScenes("schema_diagram", 1, 2),
+        ...sliceScenes("ai_assistant_agentic_workflow_gov_api", 0, 2),
+        ...sliceScenes("ai_assistant_agentic_workflow_gov_api", 5, 6),
+        // ...sliceScenes("ai_assistant_agentic_workflow_gov_api", 9, 11),
+        // ...sliceScenes("ai_assistant_agentic_workflow_gov_api", 12),
+        // ...sliceScenes("ai_assistant_agentic_workflow", 0, 1),
+        // ...sliceScenes("ai_assistant_agentic_workflow", 12, 15),
+        ...sliceScenes("table_timechart", 9, 10),
+      ],
+    },
     /** Overview section */
     {
       fileName: "linked_data",
       usedExternally: true,
-      scenes: [...sliceScenes("table", 2)],
+      scenes: [...sliceScenes("table_timechart", 1)],
+    },
+    {
+      fileName: "smart_form",
+      usedExternally: true,
+      scenes: [...sliceScenes("table", 2, 6)],
     },
     {
       fileName: "interactive_dashboards",
@@ -34,15 +56,87 @@ export const getOverviewSvgifSpecs = async (
     {
       fileName: "ai_assistant_overview",
       usedExternally: true,
-      scenes: [...sliceScenes("ai_assistant", 0)],
+      scenes: [...sliceScenes("ai_assistant", 1)],
     },
     {
       fileName: "sql_editor_overview",
       usedExternally: true,
       scenes: [
         ...sliceScenes("sql_editor", 1, 10),
-        ...sliceScenes("sql_editor", 18, 19),
+        ...sliceScenes("sql_editor", 12),
       ],
+    },
+
+    {
+      fileName: "ai_assistant_access_request",
+      usedExternally: true,
+      scenes: [...sliceScenes("ai_assistant", 6, 11)],
+    },
+
+    {
+      fileName: "ai_assistant_generated_dashboard",
+      usedExternally: true,
+      scenes: [...sliceScenes("ai_assistant", 0, 6)],
+    },
+
+    {
+      fileName: "ai_assistant_data_analysis",
+      usedExternally: true,
+      scenes: [...sliceScenes("ai_assistant", 20, 23)],
+    },
+
+    {
+      fileName: "table_timechart_1",
+      usedExternally: true,
+      scenes: [...sliceScenes("table_timechart", 0, 3)],
+    },
+    {
+      fileName: "table_timechart_2",
+      usedExternally: true,
+      scenes: [...sliceScenes("table_timechart", 3)],
+    },
+
+    {
+      fileName: "schema_diagram_1",
+      usedExternally: true,
+      scenes: [...sliceScenes("schema_diagram", 0, 3)],
+    },
+    {
+      fileName: "schema_diagram_2",
+      usedExternally: true,
+      scenes: [...sliceScenes("schema_diagram", 3)],
+    },
+
+    {
+      fileName: "agentic_workflow_1",
+      usedExternally: true,
+      scenes: [...sliceScenes("ai_assistant_agentic_workflow", 0, 10)],
+    },
+    {
+      fileName: "agentic_workflow_2",
+      usedExternally: true,
+      scenes: [...sliceScenes("ai_assistant_agentic_workflow", 10, 16)],
+    },
+    {
+      fileName: "agentic_workflow_3",
+      usedExternally: true,
+      scenes: [...sliceScenes("ai_assistant_agentic_workflow", 17)],
+    },
+
+    {
+      fileName: "table_1",
+      usedExternally: true,
+      scenes: [...sliceScenes("table", 0, 8)],
+    },
+    {
+      fileName: "table_2",
+      usedExternally: true,
+      scenes: [...sliceScenes("table", 8, 16)],
+    },
+    {
+      fileName: "table_3",
+      usedExternally: true,
+      scenes: [...sliceScenes("table", 16)],
     },
 
     {
@@ -90,50 +184,48 @@ export const getOverviewSvgifSpecs = async (
       usedExternally: true,
       scenes: [...sliceScenes("backup_and_restore", 2)],
     },
-
-    {
-      fileName: "overview",
-      scenes: [
-        ...sliceScenes("command_palette", 1, 8),
-        ...sliceScenes("schema_diagram", 1, 6),
-        ...sliceScenes("dashboard", 6),
-        ...sliceScenes("ai_assistant", 0),
-
-        ...sliceScenes("sql_editor", 8, 10),
-        ...sliceScenes("sql_editor", 18, 19),
-        ...sliceScenes("file_importer", 0),
-      ],
-    },
-  ];
+  ].map((sceneInfo) => {
+    return {
+      ...sceneInfo,
+      // scenes: sceneInfo.scenes.map((scene, index) => ({
+      //   ...scene,
+      //   animations:
+      //     index === sceneInfo.scenes.length - 1 ?
+      //       [...scene.animations]
+      //     : [...scene.animations, { type: "wait", duration: 4000 }],
+      // })),
+    } as typeof sceneInfo;
+  });
 
   const svgifCovers: { fileName: string; svgSceneFileName: string }[] = [
     {
       fileName: "linked_data",
-      svgSceneFileName: existing.dashboard[20]!.svgFileName,
+      svgSceneFileName: svgifSpecsObj.dashboard[10]!.svgFileName,
     },
     {
       fileName: "sql_editor",
-      svgSceneFileName: existing.sql_editor[13]!.svgFileName,
+      svgSceneFileName: svgifSpecsObj.sql_editor[13]!.svgFileName,
     },
     {
       fileName: "sql_editor1",
-      svgSceneFileName: existing.sql_editor[18]!.svgFileName,
+      svgSceneFileName: svgifSpecsObj.sql_editor[12]!.svgFileName,
     },
     {
       fileName: "backups",
-      svgSceneFileName: existing.backup_and_restore[16]!.svgFileName,
+      svgSceneFileName: svgifSpecsObj.backup_and_restore[14]!.svgFileName,
     },
 
     {
       fileName: "ai_assistant",
-      svgSceneFileName: existing.ai_assistant[4]!.svgFileName,
+      svgSceneFileName: svgifSpecsObj.ai_assistant[4]!.svgFileName,
     },
 
     {
       fileName: "timechart_cover",
-      svgSceneFileName: existing.timechart[19]!.svgFileName,
+      /** Request tool access */
+      svgSceneFileName: svgifSpecsObj.ai_assistant[8]!.svgFileName, // or 32 with tooltip
     },
   ];
 
-  return { svgifCovers, overviewSvgifSpecs };
+  return { svgifSpecsObj, svgifCovers, overviewSvgifSpecs };
 };

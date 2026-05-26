@@ -1,23 +1,27 @@
-import { getSmartGroupFilter } from "@common/filterUtils";
+import {
+  getSmartGroupFilter,
+  getTableFilterFromDetailedGroupFilter,
+} from "@common/filterUtils";
 import type { DivProps } from "@components/Flex";
 import { FlexRow, classOverride } from "@components/Flex";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { useEffectDeep } from "prostgles-client/dist/prostgles";
+import { isEqual } from "prostgles-types";
 import React, { useCallback, useMemo } from "react";
 import { chipColors } from "src/dashboard/W_Table/ColumnMenu/ColumnDisplayFormat/ChipStylePalette";
 import {
   DefaultConditionalStyleLimit,
   fetchColumnValues,
+  type DefaultConditionalStyleArgs,
 } from "src/dashboard/W_Table/ColumnMenu/ColumnStyleControls/getValueColors";
+import { useDebouncedCallback } from "src/hooks/useDebouncedCallback";
 import { isDefined } from "../../../utils/utils";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import { ColorPicker } from "../../W_Table/ColumnMenu/ColorPicker";
-import {
-  getRandomElement,
-  type ColumnValue,
-} from "../../W_Table/ColumnMenu/ColumnStyleControls/ColumnStyleControls";
+import { type ColumnValue } from "../../W_Table/ColumnMenu/ColumnStyleControls/ColumnStyleControls";
 import type { W_TimeChartStateLayer } from "../../W_TimeChart/W_TimeChart";
 import { getGroupByValueColor } from "./getGroupByValueColor";
+import { getRandomElement } from "@common/utils";
 
 type P = DivProps &
   Pick<CommonWindowProps, "getLinksAndWindows" | "myLinks" | "w"> & {
@@ -28,7 +32,7 @@ type P = DivProps &
   };
 export const ColorByLegend = ({ className, style, onChanged, ...props }: P) => {
   const { groupByColumn, layers } = props;
-  const { db, theme } = usePrgl();
+  const { db, sql, theme } = usePrgl();
   const {
     getColor,
     oldLayerWindow,
@@ -38,12 +42,23 @@ export const ColorByLegend = ({ className, style, onChanged, ...props }: P) => {
   } = getGroupByValueColor(props);
 
   const layerGroupByValues = useMemo(
-    () => Array.from(new Set(layers.map((l) => l.groupByValue))),
+    () =>
+      Array.from(new Set(layers.map((l) => l.groupByValue)))
+        .filter(isDefined)
+        .sort(),
     [layers],
   );
 
   const linkOptions = thisLinkTimechartOptions;
-  const tableName = oldLayerWindow?.table_name;
+  const { dataSource } = linkOptions ?? {};
+  const tableName =
+    dataSource?.type === "local-table" ? dataSource.localTableName
+    : dataSource?.type === "table" ? dataSource.tableName
+    : oldLayerWindow?.table_name;
+  const smartGroupFilter =
+    dataSource?.type === "local-table" ?
+      dataSource.smartGroupFilter
+    : undefined;
   const groupByColumnColors = linkOptions?.groupByColumnColors;
 
   const updateGroupByColumnColors = useCallback(
@@ -60,8 +75,11 @@ export const ColorByLegend = ({ className, style, onChanged, ...props }: P) => {
     [thisLink, linkOptions, onChanged],
   );
 
-  /** Add group by colors */
-  useEffectDeep(() => {
+  const parentWindowFilter = props
+    .getLinksAndWindows()
+    .windows.find((w) => w.id === props.w.parent_window_id)?.filter;
+
+  const fetchValuesParams = useMemo(() => {
     const missingLabels =
       !valueStyles ? undefined : (
         layerGroupByValues.filter(
@@ -73,16 +91,16 @@ export const ColorByLegend = ({ className, style, onChanged, ...props }: P) => {
       (missingLabels?.length &&
         valueStyles.length < DefaultConditionalStyleLimit)
     ) {
-      const parentW = props
-        .getLinksAndWindows()
-        .windows.find((w) => w.id === props.w.parent_window_id);
-      const filter = getSmartGroupFilter(parentW?.filter || []);
-      void fetchColumnValues(
-        linkOptions?.dataSource?.type === "sql" ?
+      const filter =
+        smartGroupFilter ?
+          getTableFilterFromDetailedGroupFilter(smartGroupFilter)
+        : getSmartGroupFilter(parentWindowFilter || []);
+      const fetchArgs: DefaultConditionalStyleArgs =
+        dataSource?.type === "sql" ?
           {
             type: "sql",
-            db,
-            query: linkOptions.dataSource.sql,
+            sql: sql!,
+            query: dataSource.sql,
             columnName: groupByColumn,
             theme,
           }
@@ -93,9 +111,33 @@ export const ColorByLegend = ({ className, style, onChanged, ...props }: P) => {
             columnName: groupByColumn,
             filter,
             theme,
-          },
-      ).then((values) => {
-        if (!values) return;
+          };
+      return fetchArgs;
+    }
+  }, [
+    valueStyles,
+    layerGroupByValues,
+    smartGroupFilter,
+    parentWindowFilter,
+    dataSource,
+    sql,
+    groupByColumn,
+    theme,
+    db,
+    tableName,
+  ]);
+
+  const fetchAndSetMissingLabels = useDebouncedCallback(
+    (fetchValuesParams: DefaultConditionalStyleArgs) => {
+      void fetchColumnValues(fetchValuesParams).then((values) => {
+        if (
+          !values ||
+          isEqual(
+            values.toSorted(),
+            valueStyles?.map((v) => v.value).toSorted(),
+          )
+        )
+          return;
         const prevSyleIndexes = new Set<number>();
         updateGroupByColumnColors(
           values.map((value) => {
@@ -112,29 +154,28 @@ export const ColorByLegend = ({ className, style, onChanged, ...props }: P) => {
           }),
         );
       });
-    }
-  }, [
-    db,
-    groupByColumn,
-    layerGroupByValues,
-    linkOptions,
-    tableName,
-    props,
-    theme,
-    updateGroupByColumnColors,
-    valueStyles,
-  ]);
+    },
+    [updateGroupByColumnColors, valueStyles],
+  );
+
+  /** Add group by colors */
+  useEffectDeep(() => {
+    if (!fetchValuesParams) return;
+    fetchAndSetMissingLabels(fetchValuesParams);
+  }, [fetchAndSetMissingLabels, fetchValuesParams, updateGroupByColumnColors]);
 
   if (!valueStyles?.length) return null;
   const labels = [
-    ...layers.map(
-      (l) =>
-        valueStyles.find((s) => s.value === l.groupByValue) ??
-        ({
-          value: l.groupByValue,
-          color: l.color,
-        } satisfies (typeof valueStyles)[number]),
-    ),
+    ...layers
+      .filter((l) => l.groupByValue !== undefined)
+      .map(
+        (l) =>
+          valueStyles.find((s) => s.value === l.groupByValue) ??
+          ({
+            value: l.groupByValue,
+            color: l.color,
+          } satisfies (typeof valueStyles)[number]),
+      ),
     ...valueStyles
       .filter((s) => !layers.some((l) => l.groupByValue === s.value))
       .slice(0, 3),

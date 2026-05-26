@@ -35,7 +35,7 @@ export type TypeAutoOpts = {
 
 export const runDbSQL: SQLHandler = async (...args: any[]) => {
   try {
-    return await (window as any).db?.sql(...args);
+    return await (window as any)?.sql(...args);
   } catch (e) {
     console.error(e);
     throw e;
@@ -196,11 +196,13 @@ export const getDemoUtils = (w: Pick<WindowSyncItem<"sql">, "id">) => {
     await tout(1300);
   };
   const runSQL = async () => sqlAction("run");
-  const fromBeginning = (withNewline = true, text?: string) => {
+  const fromBeginning = async (withNewline = true, text?: string) => {
+    await tout(100);
     const editorOpts = getEditor();
     editorOpts.e.setValue(text ?? "");
+    await tout(100);
     if (text) {
-      moveCursor.pageDown();
+      await moveCursor.pageDown();
     }
     if (withNewline) {
       newLine();

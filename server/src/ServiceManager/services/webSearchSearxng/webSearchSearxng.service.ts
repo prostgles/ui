@@ -4,7 +4,7 @@ import type { ProstglesService } from "../../ServiceManagerTypes";
 
 const inputSchema = {
   type: {
-    ...PROSTGLES_MCP_SERVERS_AND_TOOLS["websearch"]["websearch"]["schema"].type,
+    ...PROSTGLES_MCP_SERVERS_AND_TOOLS["web"]["websearch"]["schema"].type,
     format: { enum: ["json"] },
   },
 } as const satisfies JSONB.FieldType;
@@ -15,17 +15,17 @@ export const webSearchSearxngService = {
   port: 8080,
   hostPort: 8888,
   healthCheck: { method: "GET", endpoint: "/search" },
-  description: "Web search using searxng. Used in the AI Assistant chat.",
+  description:
+    "Web search powered by [SearXNG](https://docs.searxng.org/). Used in the AI Assistant chat.",
   endpoints: {
     "/search": {
       method: "GET",
       description: "SearXNG search endpoint",
-
       inputSchema: inputSchema,
       outputSchema: {
         type: {
           results: {
-            ...PROSTGLES_MCP_SERVERS_AND_TOOLS["websearch"]["websearch"][
+            ...PROSTGLES_MCP_SERVERS_AND_TOOLS["web"]["websearch"][
               "outputSchema"
             ],
           },

@@ -16,12 +16,13 @@ export const rgbToHex = (r, g, b) =>
 
 export const asRGB = (color: string, maxOpacity?: "1" | "255"): RGBA => {
   if (color.toLowerCase().trim().startsWith("rgb")) {
-    const rgba = color
-      .trim()
-      .split("(")[1]
-      ?.split(")")[0]
-      ?.split(",")
-      .map((v) => +v.trim());
+    const rgbaInner = color.trim().split("(")[1]?.split(")")[0];
+    const rgbaComma = rgbaInner?.split(",");
+    const rgbaSpace = rgbaInner?.split(" ");
+    const rgba = (
+      rgbaComma?.length && rgbaComma.length >= 3 ?
+        rgbaComma
+      : rgbaSpace)?.map((v) => +v.trim());
     if ((rgba?.length ?? 0) >= 3 && rgba?.every((v) => Number.isFinite(v))) {
       let opacity = rgba[3] || 1;
       if (maxOpacity === "255" && opacity <= 1) {

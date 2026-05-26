@@ -7,6 +7,7 @@ import {
   type UseProstglesClientProps,
 } from "prostgles-client/dist/prostgles";
 import { useEffect, useMemo } from "react";
+import type { DBSMethods } from "src/dashboard/Dashboard/DBS";
 import type { ClientUser } from "../App";
 import { isPlaywrightTest } from "../i18n/i18nUtils";
 import { playwrightTestLogs } from "../utils/utils";
@@ -40,9 +41,11 @@ export const useDBSClient = (
     return clientProps;
   }, [onDisconnect, serverState?.initState.state]);
 
-  const dbsClient = useProstglesClient<DBGeneratedSchema, ClientUser>(
-    clientProps,
-  );
+  const dbsClient = useProstglesClient<
+    DBGeneratedSchema,
+    DBSMethods,
+    ClientUser
+  >(clientProps);
 
   const socket =
     !dbsClient.hasError && !dbsClient.isLoading && dbsClient.socket;
@@ -51,10 +54,13 @@ export const useDBSClient = (
     if (!socket) return;
 
     socket.on("infolog", console.log);
-    socket.on("server-restart-request", (_sure) => {
-      setTimeout(() => {
-        void pageReload("server-restart-request");
-      }, 2000);
+    socket.on("server-restart-request", (withDelay) => {
+      setTimeout(
+        () => {
+          void pageReload("server-restart-request");
+        },
+        withDelay ? 200 : 0,
+      );
     });
     socket.on("redirect", (newLocation) => {
       if (typeof newLocation !== "string") return;

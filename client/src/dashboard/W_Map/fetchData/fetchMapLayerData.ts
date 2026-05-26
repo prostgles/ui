@@ -12,6 +12,7 @@ import type { W_MapState } from "../W_Map";
 import { MAP_SELECT_COLUMNS, getMapSelect, getSQLData } from "./getMapData";
 import { getMapFeatureStyle } from "../getMapFeatureStyle";
 import { scaleLinear } from "d3";
+import type { TableHandlerClient } from "prostgles-client";
 
 export const DEFAULT_GET_COLOR: Pick<
   GeoJsonLayerProps,
@@ -25,14 +26,14 @@ export const DEFAULT_GET_COLOR: Pick<
 
 export const fetchMapLayerData = async function (this: W_Map, dataAge: number) {
   const {
-    prgl: { db },
+    prgl: { db, sql: sqlHandler },
     layerQueries = [],
     tables,
   } = this.props;
   const { w } = this.d;
   if (!w) return;
 
-  const ext4326: Extent = (w.options.extent as Extent | undefined) || [
+  const ext4326: Extent = (w.options.extent) || [
     -180, -90, 180, 90,
   ];
 
@@ -153,7 +154,7 @@ export const fetchMapLayerData = async function (this: W_Map, dataAge: number) {
                       throttle: (w.options.refresh.throttleSeconds || 0) * 1000,
                     },
                     () => {
-                      this.setLayerData(Date.now());
+                      void this.setLayerData(Date.now());
                     },
                   );
                   this.layerSubs.push({
@@ -162,8 +163,7 @@ export const fetchMapLayerData = async function (this: W_Map, dataAge: number) {
                     sub,
                   });
                 } catch (e: any) {
-                  console.error(e);
-                  alert("Could not subscribe. Check logs ");
+                  console.error({ tableName, tableFilterWOExtent }, e);
                 }
               }
 
@@ -216,7 +216,7 @@ export const fetchMapLayerData = async function (this: W_Map, dataAge: number) {
                       [MAP_SELECT_COLUMNS.geoJson]: {
                         $ST_Simplify: [geomColumn, size],
                       },
-                    } as any,
+                    } as unknown as SelectParams["select"],
                     limit: AGG_LIMIT,
                   };
                 }
@@ -256,13 +256,13 @@ export const fetchMapLayerData = async function (this: W_Map, dataAge: number) {
 
               if (willAggregate) {
                 const radiusRangeScale = scaleLinear()
-                  .range([20, 250])
-                  .domain([0.001, 0.1]);
+                  .range([65, 14]) // smaller max radius to reduce overlap
+                  .domain([0.001, 0.1])
+                  .clamp(true);
                 const scale = scaleLinear()
-                  .range([0.07, 0.0005])
-                  .domain([0.886, 0.007166]);
-                /** TODO: fix point bad agg cluster positioning at low zoom  */
-                // const scale = d3.scaleLinear().range([0.07, 0.0005]).domain([0.2, 0.007166]).clamp(true);
+                  .range([0.07, 0.009])
+                  .domain([0.886, 0.007]);
+
                 const size = scale(minDelta);
                 const opts = {
                   select: {
@@ -294,13 +294,13 @@ export const fetchMapLayerData = async function (this: W_Map, dataAge: number) {
                 }));
               } else {
                 const scale = scaleLinear()
-                  .range([1, 10, 80, 100])
-                  .domain([20, 14, 10, 1])
+                  .domain([20, 4])
+                  .range([4, 8])
                   .clamp(true);
-
                 rows = await tableHandler.find(f.finalFilter, opts);
 
                 const radius = scale(zoom);
+
                 rows = rows.map((r) => ({ ...r, type: "table", radius }));
               }
               if (aggs)
@@ -312,7 +312,7 @@ export const fetchMapLayerData = async function (this: W_Map, dataAge: number) {
                   (r) => r[MAP_SELECT_COLUMNS.geoJson]?.coordinates?.length,
                 );
             } else if ("sql" in q) {
-              if (!db.sql) {
+              if (!sqlHandler) {
                 console.error("Not enough privileges to run query");
                 alert(
                   "Could not show data: sql privilege not allowed for current user",
@@ -328,7 +328,7 @@ export const fetchMapLayerData = async function (this: W_Map, dataAge: number) {
                 return;
               }
 
-              rows = await getSQLData(q, db, AGG_LIMIT);
+              rows = await getSQLData(q, sqlHandler, AGG_LIMIT);
               rows = rows.map((r) => ({ ...r, type: "sql" }));
             }
 
@@ -371,6 +371,7 @@ export const fetchMapLayerData = async function (this: W_Map, dataAge: number) {
                 q,
                 this.state.clickedItem,
                 this.props.myLinks,
+                willAggregate,
               ),
               getLineWidth: (f) => 1211,
               layerColor,

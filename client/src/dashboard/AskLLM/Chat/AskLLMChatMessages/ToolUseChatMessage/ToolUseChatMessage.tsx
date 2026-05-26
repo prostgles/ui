@@ -1,30 +1,32 @@
-import type { DBSSchema } from "@common/publishUtils";
+import { isObject, type DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
-import { FlexCol, FlexRow } from "@components/Flex";
+import { FlexCol } from "@components/Flex";
 import { mdiCodeJson } from "@mdi/js";
-import React, { useCallback, useState } from "react";
+import React, { useState } from "react";
 
 import { ErrorTrap } from "@components/ErrorComponent";
 import PopupMenu from "@components/PopupMenu";
 import { ProstglesMCPToolsWithUI } from "../ProstglesToolUseMessage/ProstglesToolUseMessage";
+import { InChatToolApprover } from "./InChatToolApprover";
 import { ToolUseChatMessageBtn } from "./ToolUseChatMessageBtn";
 import { ToolUseChatMessageJSONData } from "./ToolUseChatMessageJSONData";
 import { ToolUseChatMessageResult } from "./ToolUseChatMessageResult";
+import { ToolUseReRunBtn } from "./ToolUseReRunBtn";
 import {
   useToolUseChatMessage,
   type ToolUseMessageProps,
 } from "./useToolUseChatMessage";
+import { AGENT_GOAL_TOOL_NAMES } from "@common/mcp/startAgenticWorkflowSchema";
 
 export const ToolUseChatMessage = (props: ToolUseMessageProps) => {
-  const [toolDataAnchorEl, setToolDataAnchorEl] = useState<HTMLButtonElement>();
-
   const toolUseInfo = useToolUseChatMessage(props);
-  const onClick: React.MouseEventHandler<HTMLButtonElement> = useCallback(
-    ({ currentTarget }) => {
-      setToolDataAnchorEl(toolDataAnchorEl ? undefined : currentTarget);
-    },
-    [toolDataAnchorEl],
+  const [expanded, setExpanded] = useState(
+    isObject(toolUseInfo) &&
+      Object.values(AGENT_GOAL_TOOL_NAMES).some(
+        (toolName) => toolUseInfo.toolUseMessageContent.name === toolName,
+      ),
   );
+
   if (typeof toolUseInfo === "string") {
     return <>{toolUseInfo}</>;
   }
@@ -32,7 +34,6 @@ export const ToolUseChatMessage = (props: ToolUseMessageProps) => {
 
   const ToolUI = ProstglesMCPToolsWithUI[m.name];
   const { displayMode } = ToolUI ?? {};
-
   return (
     <ErrorTrap>
       <FlexCol
@@ -44,12 +45,17 @@ export const ToolUseChatMessage = (props: ToolUseMessageProps) => {
           : undefined
         }
       >
-        <FlexRow className="ai-start">
+        <div
+          className={
+            (!ToolUI || displayMode !== "full" ? "flex-row" : "flex-row-wrap") +
+            " gap-p5 ai-start h-fit"
+          }
+        >
           {(!ToolUI || displayMode !== "full") && (
             <ToolUseChatMessageBtn
               {...toolUseInfo}
               displayMode={displayMode}
-              onClick={onClick}
+              onClick={() => setExpanded((prev) => !prev)}
             />
           )}
           {ToolUI && (
@@ -58,22 +64,39 @@ export const ToolUseChatMessage = (props: ToolUseMessageProps) => {
               title={m.name}
               onClickClose={false}
               button={
-                <Btn iconPath={mdiCodeJson} className="show-on-trigger-hover" />
+                <Btn
+                  iconPath={mdiCodeJson}
+                  size="small"
+                  className="show-on-trigger-hover"
+                />
               }
               contentClassName="p-1 flex-col gap-1 f-1"
             >
               <ToolUseChatMessageJSONData {...props} />
             </PopupMenu>
           )}
-        </FlexRow>
+          {toolUseInfo.toolUseResult && (
+            <ToolUseReRunBtn
+              variant="icon"
+              chatId={toolUseInfo.toolUseMessage.chat_id}
+              toolRequest={toolUseInfo.toolUseMessageContent}
+            />
+          )}
+        </div>
 
         <ToolUseChatMessageResult
           {...toolUseInfo}
           {...props}
-          anchorEl={toolDataAnchorEl}
-          setAnchorEl={setToolDataAnchorEl}
+          anchorEl={expanded}
         />
       </FlexCol>
+      {typeof toolUseInfo !== "string" && (
+        <InChatToolApprover
+          toolUseId={toolUseInfo.toolUseMessageContent.id}
+          messageId={toolUseInfo.toolUseMessage.id}
+          chatId={toolUseInfo.toolUseMessage.chat_id}
+        />
+      )}
     </ErrorTrap>
   );
 };

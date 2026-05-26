@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink } from "react-router";
 import "./NavBar.css";
 
 import { mdiArrowLeft, mdiClose, mdiMenu } from "@mdi/js";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import type { ProstglesState } from "@common/electronInitTypes";
 import type { ClientUser, Prgl } from "../../App";
 import { AccountMenu } from "../../pages/AccountMenu";

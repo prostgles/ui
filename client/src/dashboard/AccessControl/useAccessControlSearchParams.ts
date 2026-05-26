@@ -1,4 +1,4 @@
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router";
 import type { AccessControlAction } from "./AccessControl";
 import { isEqual } from "prostgles-types";
 

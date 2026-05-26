@@ -1,4 +1,4 @@
-import type { CommonWindowProps } from "../../Dashboard/Dashboard";
+import type { DBSchemaTableWJoins } from "src/dashboard/Dashboard/dashboardUtils";
 
 export type JoinTree = {
   table: string;
@@ -12,7 +12,7 @@ export type JoinTree = {
 export const getJoinTree = (args: {
   tableName: string;
   excludeTables?: string[];
-  tables: CommonWindowProps["tables"];
+  tables: DBSchemaTableWJoins[];
 }): JoinTree[] => {
   const { tables, tableName, excludeTables = [] } = args;
   const table = tables.find((t) => t.name === tableName);

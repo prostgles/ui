@@ -1,20 +1,19 @@
-import { usePromise } from "prostgles-client";
-import React from "react";
 import Btn from "@components/Btn";
 import ErrorComponent from "@components/ErrorComponent";
 import { FlexRow } from "@components/Flex";
 import PopupMenu from "@components/PopupMenu";
+import { usePromise } from "prostgles-client";
+import React from "react";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import { CodeEditor } from "../../../../dashboard/CodeEditor/CodeEditor";
-import type { ServerSettingsProps } from "../../ServerSettings";
 import type { MCPServerWithToolAndConfigs } from "../useMCPServersListProps";
 
 export const MCPServersInstall = ({
   mcpServer,
-  dbs,
-  dbsMethods,
-}: Pick<ServerSettingsProps, "dbsMethods" | "dbs"> & {
+}: {
   mcpServer: MCPServerWithToolAndConfigs;
 }) => {
+  const { dbs, dbsMethods } = usePrglCore();
   if (!mcpServer.source) {
     throw new Error("MCP Server source is not defined");
   }
@@ -28,7 +27,7 @@ export const MCPServersInstall = ({
   const log = (install_log || "") + (install_error || "");
   const mcpServerStatus = usePromise(async () => {
     mcpServer.installed; // To ensure it refreshes when installed changes
-    return dbsMethods.getMCPServersStatus?.(name);
+    return dbsMethods.getMCPServersStatus?.({ serverName: name });
   }, [mcpServer.installed, dbsMethods, name]);
 
   const { installMCPServer } = dbsMethods;
@@ -71,7 +70,7 @@ export const MCPServersInstall = ({
         color={"action"}
         size="small"
         onClickPromise={async () => {
-          return installMCPServer(name);
+          return installMCPServer({ name });
         }}
         data-command="MCPServersInstall.install"
       >

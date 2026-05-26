@@ -1,16 +1,18 @@
-import { useEffectDeep } from "prostgles-client";
-import React, { useState } from "react";
 import { FlexCol, FlexRow } from "@components/Flex";
 import Loading from "@components/Loader/Loading";
 import { SearchList } from "@components/SearchList/SearchList";
-import type { CommonWindowProps } from "../../Dashboard/Dashboard";
-import type { JoinV2 } from "../../Dashboard/dashboardUtils";
+import { useEffectDeep } from "prostgles-client";
+import React, { useState } from "react";
+import type {
+  DBSchemaTableWJoins,
+  JoinV2,
+} from "../../Dashboard/dashboardUtils";
 import { getJoinTree, type JoinTree } from "./getJoinTree";
 import { JoinPathItem, getJoinPathConditionStr } from "./JoinPathItem";
 
 type P = {
   tableName: string;
-  tables: CommonWindowProps["tables"];
+  tables: DBSchemaTableWJoins[];
   onSelect: (joinPath: JoinV2[]) => void;
   variant?: "hover";
   className?: string;
@@ -83,7 +85,7 @@ export const JoinPathSelector = (props: P) => {
 
 export const getHasJoins = (
   tableName: string,
-  tables: CommonWindowProps["tables"],
+  tables: DBSchemaTableWJoins[],
 ) => {
   return Boolean(
     tables.find(

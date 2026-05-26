@@ -1,16 +1,16 @@
-import React from "react";
-import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
-import type { W_TableMenuMetaProps } from "./W_TableMenu";
-import { ACCESS_RULE_METHODS } from "../../AccessControl/AccessRuleSummary";
-import { Link } from "react-router-dom";
-import { getAccessControlHref } from "../../AccessControl/useAccessControlSearchParams";
+import { isObject } from "@common/publishUtils";
+import Btn from "@components/Btn";
+import { FlexCol } from "@components/Flex";
+import { InfoRow } from "@components/InfoRow";
+import { Label } from "@components/Label";
 import { LabeledRow } from "@components/LabeledRow";
 import { mdiAccount, mdiPlus } from "@mdi/js";
-import Btn from "@components/Btn";
-import { InfoRow } from "@components/InfoRow";
-import { isObject } from "@common/publishUtils";
+import React from "react";
+import { Link } from "react-router";
+import { ACCESS_RULE_METHODS } from "../../AccessControl/AccessRuleSummary";
+import { getAccessControlHref } from "../../AccessControl/useAccessControlSearchParams";
 import { RenderFilter } from "../../RenderFilter";
-import { Label } from "@components/Label";
+import type { W_TableMenuMetaProps } from "./W_TableMenu";
 
 export const W_TableMenu_AccessRules = ({
   tableMeta,
@@ -76,11 +76,9 @@ export const W_TableMenu_AccessRules = ({
                                     <Label variant="normal">USING</Label>
                                     <RenderFilter
                                       contextData={undefined}
-                                      db={prgl.db}
                                       itemName="condition"
                                       selectedColumns={undefined}
                                       tableName={w.table_name}
-                                      tables={prgl.tables}
                                       mode="minimised"
                                       filter={rule.forcedFilterDetailed}
                                       onChange={() => {}}
@@ -93,11 +91,9 @@ export const W_TableMenu_AccessRules = ({
                                     <div>CHECK</div>
                                     <RenderFilter
                                       contextData={undefined}
-                                      db={prgl.db}
                                       itemName="condition"
                                       selectedColumns={undefined}
                                       tableName={w.table_name}
-                                      tables={prgl.tables}
                                       mode="minimised"
                                       filter={rule.checkFilterDetailed}
                                       onChange={() => {}}

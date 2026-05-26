@@ -39,6 +39,7 @@ export const connectionConfigUIDoc = {
       selectorCommand: "config.status",
       title: "Status monitor",
       iconPath: mdiChartLine,
+      componentName: "StatusMonitor",
       description:
         "View real-time connection status, running queries, and system resource usage.",
       children: [],
@@ -46,7 +47,17 @@ export const connectionConfigUIDoc = {
     accessControlUIDoc,
     fileStorageUIDoc,
     backupAndRestoreUIDoc,
+    {
+      type: "tab",
+      selectorCommand: "config.webApp",
+      componentName: "WebAppConfig",
+      title: "Web app",
+      description:
+        "React based web development environment (experimental feature).",
+      children: [],
+    },
     apiUIDoc,
+
     {
       type: "tab",
       selectorCommand: "config.tableConfig",
@@ -59,6 +70,7 @@ export const connectionConfigUIDoc = {
       type: "tab",
       selectorCommand: "config.methods",
       title: "Server-side functions",
+      componentName: "ServerSideFunctions",
       description:
         "Configure and manage server-side functions (experimental feature).",
       children: [],

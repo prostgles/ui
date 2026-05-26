@@ -107,7 +107,7 @@ export const JSONBSchemaOneOfType = ({
           ...omitKeys(s, ["oneOfType"]),
           type: matchingOneOfSchema,
         }}
-        value={value as any}
+        value={value}
         onChange={(newValue) => {
           /**
            * If matching a different schema then keep only common properties

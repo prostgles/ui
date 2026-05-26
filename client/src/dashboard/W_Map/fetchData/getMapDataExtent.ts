@@ -10,8 +10,9 @@ import { defaultWorldExtent } from "../../WindowControls/AddChartLayer";
 export const getMapDataExtent: DecKGLMapProps["onGetFullExtent"] =
   async function (this: W_Map, fromUserClick = false) {
     const {
-      prgl: { db },
+      prgl: { db, sql: sqlHandler },
       layerQueries = [],
+      active_row,
     } = this.props;
 
     let minLat,
@@ -19,9 +20,17 @@ export const getMapDataExtent: DecKGLMapProps["onGetFullExtent"] =
       maxLat,
       maxLng,
       _xyExtent: { e: string } | AnyObject | undefined;
-    for (const layer of layerQueries) {
+    const activeLayerQueries = layerQueries.filter((l) => !l.disabled);
+    for (const layer of activeLayerQueries) {
+      if (active_row) {
+        const isTargetLayer =
+          layer.type === "table" && layer.wid === active_row.window_id;
+        if (!isTargetLayer) {
+          continue;
+        }
+      }
       if (layer.type === "osm") {
-        return undefined;
+        continue;
       } else if ("tableName" in layer) {
         const { geomColumn, tableName } = layer;
         const { finalFilterWOextent } = this.getFilter(
@@ -34,15 +43,15 @@ export const getMapDataExtent: DecKGLMapProps["onGetFullExtent"] =
             select: { e: { $ST_Extent: [geomColumn] } },
           })) ?? [];
       } else {
-        if (!db.sql) throw "SQL not allowed";
+        if (!sqlHandler) throw "SQL not allowed";
         const q = this.getSQL(
           layer,
           "ST_Extent(${geomColumn:name}::geometry) as e",
         );
-        // console.log( await db.sql(q.sql, q.args, { returnType: "statement" }))
         try {
           _xyExtent =
-            (await db.sql(q.sql, q.args, { returnType: "row" })) ?? undefined;
+            (await sqlHandler(q.sql, q.args, { returnType: "row" })) ??
+            undefined;
         } catch (error) {
           console.error(error);
         }

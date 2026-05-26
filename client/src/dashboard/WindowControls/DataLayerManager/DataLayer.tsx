@@ -1,16 +1,7 @@
 import type { DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
-import { FlexRowWrap } from "@components/Flex";
-import { Label } from "@components/Label";
-import {
-  mdiClose,
-  mdiEye,
-  mdiEyeOff,
-  mdiScript,
-  mdiSetCenter,
-  mdiTable,
-} from "@mdi/js";
-import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import { FlexRow } from "@components/Flex";
+import { mdiClose, mdiEye, mdiEyeOff } from "@mdi/js";
 import React, { useCallback } from "react";
 import { RenderFilter } from "src/dashboard/RenderFilter";
 import type { Link, LinkSyncItem } from "../../Dashboard/dashboardUtils";
@@ -19,19 +10,20 @@ import type {
   ProstglesTimeChartLayer,
   W_TimeChartProps,
 } from "../../W_TimeChart/W_TimeChart";
-import { LayerColorPicker } from "../LayerColorPicker";
-import { OSMLayerOptions } from "../OSMLayerOptions";
-import { SQLChartLayerEditor } from "../SQLChartLayerEditor";
+import { LayerColorPicker } from "./LayerColorPicker";
 import { TimeChartLayerOptions } from "../TimeChartLayerOptions";
+import { DataLayerDataSource } from "./DataLayerDataSource";
 import type { MapLayerManagerProps } from "./DataLayerManager";
+import { MapLayerStyling } from "./MapLayerStyling";
 
 export type ChartLinkOptions = Exclude<
   DBSSchema["links"]["options"],
   { type: "table" }
 >;
-type P =
+export type DataLayerProps =
   | (Pick<W_TimeChartProps, "w" | "getLinksAndWindows" | "myLinks"> & {
       type: "timechart";
+      asLegend?: boolean;
       layer: NonNullable<
         ProstglesTimeChartLayer & {
           link: LinkSyncItem;
@@ -40,6 +32,7 @@ type P =
     })
   | (Pick<W_MapProps, "w" | "getLinksAndWindows" | "myLinks"> & {
       type: "map";
+      asLegend?: boolean;
       w: MapLayerManagerProps["w"];
       layer: NonNullable<
         LayerQuery & {
@@ -47,9 +40,8 @@ type P =
         }
       >;
     });
-export const DataLayer = (props: P) => {
-  const { tables, db } = usePrgl();
-  const { myLinks, layer, w, getLinksAndWindows } = props;
+export const DataLayer = (props: DataLayerProps) => {
+  const { myLinks, layer, w, getLinksAndWindows, asLegend } = props;
 
   const thisLink = myLinks.find((l) => l.id === layer.linkId);
   const linkOptions = thisLink?.options;
@@ -85,107 +77,106 @@ export const DataLayer = (props: P) => {
     [thisLink],
   );
   return (
-    <FlexRowWrap
+    <FlexRow
       key={layer._id}
-      className={`LayerQuery bg-color-0 ai-center gap-1 ta-left b b-color rounded ${window.isMobileDevice ? "p-p5" : "p-1"}`}
+      className={`LayerQuery bg-color-0 ta-left ai-center rounded ${asLegend ? "gap-p5" : "gap-p5 b b-color pl-p5"}`}
     >
-      <LayerColorPicker
-        onChange={updateOptions}
-        title={layerDesc}
-        column={column}
-        linkOptions={linkOptions}
-      />
-
-      {dataSource?.type === "osm" ?
-        <OSMLayerOptions link={thisLink} dataSource={dataSource} />
-      : <Label
-          variant="header"
-          iconPath={
-            dataSource?.type === "local-table" ? mdiTable
-            : dataSource?.type === "table" ?
-              mdiSetCenter
-            : mdiScript
+      {linkOptions.type === "map" ?
+        <MapLayerStyling
+          linkOptions={linkOptions}
+          onChange={updateOptions}
+          column={column}
+          title={layerDesc}
+          btnProps={
+            asLegend ?
+              {
+                size: "micro",
+              }
+            : {}
           }
-          info={
-            dataSource?.type === "local-table" ? "Local table"
-            : dataSource?.type === "table" ?
-              `${dataSource.joinPath?.length ? "Linked table" : "Table"}: ${[{ table: tableName }, ...(dataSource.joinPath ?? [])].map((p) => p.table).join(" -> ")} (${column})`
-            : <SQLChartLayerEditor link={thisLink} />
+        />
+      : <LayerColorPicker
+          onChange={updateOptions}
+          title={layerDesc}
+          column={column}
+          linkOptions={linkOptions}
+          btnProps={
+            asLegend ?
+              {
+                size: "micro",
+              }
+            : {}
           }
-          className={"ws-nowrap f-1 min-w-0"}
-          title={
-            dataSource?.type === "table" || dataSource?.type === "local-table" ?
-              `Table name`
-            : "SQL Script"
-          }
-        >
-          <div className="text-ellipsis">{layerDesc}</div>
-        </Label>
+        />
       }
 
-      <TimeChartLayerOptions
-        w={w}
-        getLinksAndWindows={getLinksAndWindows}
-        link={thisLink}
-        myLinks={myLinks}
-        column={column}
-      />
+      <DataLayerDataSource {...props} />
 
-      {dataSource?.type === "local-table" && (
-        <RenderFilter
-          db={db}
-          tables={tables}
-          title="Manage filters"
-          mode="micro"
-          selectedColumns={undefined}
-          itemName="filter"
-          tableName={dataSource.localTableName}
-          contextData={undefined}
-          filter={dataSource.smartGroupFilter}
-          onChange={(andOrFilter) => {
-            updateOptions({
-              ...linkOptions,
-              dataSource: {
-                ...dataSource,
-                smartGroupFilter: andOrFilter,
-              },
-            });
-          }}
-        />
+      {!asLegend && (
+        <>
+          <TimeChartLayerOptions
+            w={w}
+            getLinksAndWindows={getLinksAndWindows}
+            link={thisLink}
+            myLinks={myLinks}
+            column={column}
+          />
+
+          {dataSource?.type === "local-table" && (
+            <RenderFilter
+              title="Manage filters"
+              mode="micro"
+              selectedColumns={undefined}
+              itemName="filter"
+              tableName={dataSource.localTableName}
+              contextData={undefined}
+              filter={dataSource.smartGroupFilter}
+              onChange={(andOrFilter) => {
+                updateOptions({
+                  ...linkOptions,
+                  dataSource: {
+                    ...dataSource,
+                    smartGroupFilter: andOrFilter,
+                  },
+                });
+              }}
+            />
+          )}
+
+          <Btn
+            title="Toggle layer on/off"
+            data-command="ChartLayerManager.toggleLayer"
+            className={`ml-auto ${thisLink.disabled ? "" : "show-on-parent-hover"} `}
+            iconPath={thisLink.disabled ? mdiEyeOff : mdiEye}
+            color={"action"}
+            onClick={() => {
+              if (thisLink.options.type === "table") return;
+              thisLink.$update({ disabled: !thisLink.disabled });
+            }}
+          />
+
+          <Btn
+            color="danger"
+            title="Remove layer"
+            data-command="ChartLayerManager.removeLayer"
+            className="show-on-parent-hover"
+            onClickPromise={() => {
+              if (thisLink.options.type === "table") return;
+              const opts = thisLink.options;
+              const newOpts: Link["options"] = {
+                ...opts,
+                columns: opts.columns.filter((c) => c.name !== column),
+              };
+              if (newOpts.columns.length === 0) {
+                thisLink.$update({ closed: true });
+              } else {
+                updateOptions(newOpts);
+              }
+            }}
+            iconPath={mdiClose}
+          />
+        </>
       )}
-
-      <Btn
-        title="Toggle layer on/off"
-        data-command="ChartLayerManager.toggleLayer"
-        className={`ml-auto ${thisLink.disabled ? "" : "show-on-parent-hover"} `}
-        iconPath={thisLink.disabled ? mdiEyeOff : mdiEye}
-        color={"action"}
-        onClick={() => {
-          if (thisLink.options.type === "table") return;
-          thisLink.$update({ disabled: !thisLink.disabled });
-        }}
-      />
-
-      <Btn
-        color="danger"
-        title="Remove layer"
-        data-command="ChartLayerManager.removeLayer"
-        className="show-on-parent-hover"
-        onClickPromise={() => {
-          if (thisLink.options.type === "table") return;
-          const opts = thisLink.options;
-          const newOpts: Link["options"] = {
-            ...opts,
-            columns: opts.columns.filter((c) => c.name !== column),
-          };
-          if (newOpts.columns.length === 0) {
-            thisLink.$update({ closed: true });
-          } else {
-            updateOptions(newOpts);
-          }
-        }}
-        iconPath={mdiClose}
-      />
-    </FlexRowWrap>
+    </FlexRow>
   );
 };

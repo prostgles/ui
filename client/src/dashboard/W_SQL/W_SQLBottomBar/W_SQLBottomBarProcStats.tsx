@@ -19,7 +19,7 @@ export const W_SQLBottomBarProcStats = ({
     const pid = activeQuery?.pid;
     if (!getStatus || (activeQuery?.state !== "running" && pid)) return;
     const interval = setInterval(async () => {
-      await getStatus(connectionId);
+      await getStatus({ connId: connectionId });
       const procInfo = await dbs.stats.findOne({
         $existsJoined: {
           "database_configs.connections": {

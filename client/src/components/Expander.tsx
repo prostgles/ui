@@ -1,12 +1,10 @@
 import React, { useState } from "react";
 
 type ExpanderProps = {
-  style?: React.CSSProperties;
-  className?: string;
   getButton: (isOpen: boolean) => React.ReactChild;
   children: React.ReactNode;
 };
-function Expander({ children, getButton }: ExpanderProps) {
+export const Expander = ({ children, getButton }: ExpanderProps) => {
   const [isOpen, setOpen] = useState(false);
 
   return (
@@ -15,6 +13,4 @@ function Expander({ children, getButton }: ExpanderProps) {
       {isOpen && children}
     </>
   );
-}
-
-export default Expander;
+};

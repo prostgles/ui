@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { COMMAND_SEARCH_ATTRIBUTE_NAME } from "./Testing";
 import { login, MINUTE, PageWIds } from "./utils/utils";
 import { goTo } from "utils/goTo";
-import { USERS } from "utils/constants";
+import { IS_GITHUB_WORKER, USERS } from "utils/constants";
 
 test.use({
   viewport: {
@@ -15,9 +15,8 @@ test.use({
   },
 });
 
-const IS_PIPELINE = process.env.CI === "true";
-
 test.describe("Test command palette", () => {
+  test.skip(IS_GITHUB_WORKER, "Takes too long. Run locally only");
   test.describe.configure({
     retries: 0,
     mode: "parallel",
@@ -31,10 +30,6 @@ test.describe("Test command palette", () => {
     page.on("pageerror", console.error);
 
     if (!flatUIDocs) {
-      if (IS_PIPELINE) {
-        // Takes too long. Run locally only
-        return;
-      }
       await goTo(page, "/");
       await page.waitForTimeout(500);
       flatUIDocs = await page.evaluate(() => {
@@ -53,7 +48,7 @@ test.describe("Test command palette", () => {
   for (let i = 0; i < workers; i++) {
     test(`Test command search worker: ${i}`, async ({ page: p }) => {
       const page = p as PageWIds;
-      if (IS_PIPELINE) {
+      if (IS_GITHUB_WORKER) {
         // Takes too long. Run locally only
         return;
       }

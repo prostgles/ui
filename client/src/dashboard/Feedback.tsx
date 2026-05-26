@@ -11,8 +11,8 @@ import { t } from "../i18n/i18nUtils";
 import { tout } from "../utils/utils";
 import { useIsMounted } from "prostgles-client";
 
-export const Feedback = (props: Pick<Prgl, "dbsMethods" | "dbs">) => {
-  const { dbsMethods, dbs } = props;
+export const Feedback = (props: Pick<Prgl, "dbsMethods">) => {
+  const { dbsMethods } = props;
   const getIsMounted = useIsMounted();
   const { sendFeedback } = dbsMethods;
   const [feedback, setFeedBack] = useState<{
@@ -46,6 +46,7 @@ export const Feedback = (props: Pick<Prgl, "dbsMethods" | "dbs">) => {
           variant="faded"
           data-command="Feedback"
           iconPath={mdiMessageBookmarkOutline}
+          size="default"
         >
           {/* {window.isMediumWidthScreen ? null : t.Feedback.Feedback} */}
         </Btn>
@@ -73,7 +74,10 @@ export const Feedback = (props: Pick<Prgl, "dbsMethods" | "dbs">) => {
               onClickPromise: async (e) => {
                 try {
                   setFeedBack({ ...feedback, sending: true });
-                  await sendFeedback(feedback);
+                  await sendFeedback({
+                    details: feedback.details,
+                    email: feedback.email,
+                  });
                   setFeedBack({ ...feedback, success: true });
                   await tout(3000);
                   if (getIsMounted()) {

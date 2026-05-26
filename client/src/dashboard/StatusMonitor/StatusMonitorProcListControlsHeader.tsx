@@ -8,6 +8,7 @@ import {
   StatusMonitorViewTypes,
   type StatusMonitorViewType,
 } from "./StatusMonitorProcList";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 
 type P = StatusMonitorProps & {
   viewType: StatusMonitorViewType;
@@ -23,7 +24,6 @@ type P = StatusMonitorProps & {
 
 export const StatusMonitorProcListControlsHeader = (props: P) => {
   const {
-    dbsTables,
     excludedFields,
     allToggledFields,
     setToggledFields,
@@ -33,7 +33,7 @@ export const StatusMonitorProcListControlsHeader = (props: P) => {
     setViewType,
     databaseId,
   } = props;
-
+  const { dbsTables } = usePrglCore();
   const statColumns = useMemo(
     () => dbsTables.find((t) => t.name === "stats")?.columns ?? [],
     [dbsTables],

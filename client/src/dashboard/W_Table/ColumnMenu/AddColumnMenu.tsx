@@ -7,8 +7,9 @@ import {
   mdiTableColumnPlusAfter,
   mdiTableEdit,
 } from "@mdi/js";
-import { type DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { SQLHandler } from "prostgles-client";
 import React, { useMemo, useState } from "react";
+import type { Prgl } from "src/App";
 import { t } from "../../../i18n/i18nUtils";
 import type {
   DBSchemaTablesWJoins,
@@ -54,7 +55,8 @@ const options = [
 export type AddColumnMenuProps = {
   w: WindowSyncItem<"table">;
   tables: DBSchemaTablesWJoins;
-  db: DBHandlerClient;
+  db: Prgl["db"];
+  sql: SQLHandler | undefined;
   suggestions: LoadedSuggestions | undefined;
   variant?: "detailed";
   nestedColumnOpts: NestedColumnOpts | undefined;
@@ -63,10 +65,10 @@ export type AddColumnMenuProps = {
 export const AddColumnMenu = ({
   w,
   tables,
-  db,
   variant,
   nestedColumnOpts,
   suggestions,
+  sql,
 }: AddColumnMenuProps) => {
   const table = tables.find((t) => t.name === w.table_name);
   const [colType, setColType] = useState<
@@ -98,8 +100,8 @@ export const AddColumnMenu = ({
   }
 
   const cannotCreateColumns =
-    !db.sql ? t.AddColumnMenu["Not enough privileges"]
-    : table.info.isView ?
+    !sql ? t.AddColumnMenu["Not enough privileges"]
+    : table.isView ?
       t.AddColumnMenu["This is a view. Cannot create columns, must recreate"]
     : undefined;
   const onClose = () => setColType();
@@ -129,7 +131,7 @@ export const AddColumnMenu = ({
               t.AddColumnMenu[
                 "Aggregates and/or Count not allowed with linked "
               ]
-            : o.key === "CreateFileColumn" && table.info.isFileTable ?
+            : o.key === "CreateFileColumn" && table.isFileTable ?
               "Cannot add file column to a file table"
             : undefined,
         }))}
@@ -139,9 +141,7 @@ export const AddColumnMenu = ({
         null
       : colType === "CreateFileColumn" ?
         <CreateFileColumn
-          db={db}
-          tables={tables}
-          fileTable={tables[0]?.info.fileTableName}
+          fileTable={tables[0]?.fileTableName}
           tableName={table.name}
           onClose={() => setColType(undefined)}
         />
@@ -178,7 +178,7 @@ export const AddColumnMenu = ({
             />
           : colType === "Create" ?
             <CreateColumn
-              db={db}
+              sql={sql!}
               field=""
               table={table}
               tables={tables}

@@ -1,0 +1,160 @@
+import type { GeneratedFunctionSchema } from "@common/DBGeneratedSchema";
+import { getProstglesMCPFullToolName } from "@common/mcpUtils";
+import type { DBSSchema, DBSSchemaForInsert } from "@common/publishUtils";
+import type { DBS } from "@src/index";
+import { tout } from "@src/utils/tout";
+import type { getValidatedMcpServerToolsAllowed } from "./agenticWorkflow/definitionValidation/getValidatedMcpServerToolsAllowed";
+import type { getAgentConfigWithDefaults } from "./agenticWorkflow/proxyHandlers/getAgentConfigWithDefaults";
+import { AGENT_GOAL_TOOL_NAMES } from "@common/mcp/startAgenticWorkflowSchema";
+
+export const startAgent = async (
+  agentInput: string | undefined,
+  {
+    name,
+    toolsWithInfo,
+    configWithDefaults,
+    autoApproveAllTools,
+    requestTimestamp,
+  }: {
+    name: string;
+    toolsWithInfo:
+      | undefined
+      | Awaited<ReturnType<typeof getValidatedMcpServerToolsAllowed>>;
+    configWithDefaults: Awaited<ReturnType<typeof getAgentConfigWithDefaults>>;
+    autoApproveAllTools: boolean;
+    requestTimestamp: Date;
+  },
+  {
+    dbs,
+    chatId,
+    connectionId,
+    userId,
+    signal,
+    askLLM,
+    started,
+    timeout,
+    messageId,
+  }: {
+    dbs: DBS;
+    userId: string;
+    chatId: number;
+    connectionId: string;
+    askLLM: GeneratedFunctionSchema["askLLM"];
+    signal: AbortSignal | undefined;
+    timeout: number;
+    started: number;
+    messageId: string | number;
+  },
+) => {
+  const {
+    model,
+    prompt,
+    outputSchema,
+    maxCostUSD,
+    maxIterations,
+    maxTokens,
+    temperature,
+  } = configWithDefaults;
+  const agentChat = await dbs.llm_chats.insert(
+    {
+      name,
+      user_id: userId,
+      parent_chat_id: chatId,
+      parent_chat_message_id: messageId,
+      connection_id: connectionId,
+      agent_info: {
+        type: "agent",
+        name,
+        prompt: [
+          "You are part of an agentic workflow and you have the following limits: " +
+            JSON.stringify({ maxIterations, maxTokens }),
+          "Use the tools as needed to complete your tasks.",
+          "Be concise and to the point.",
+          "It is crucial that you use the least amount of steps, input and output that is necessary to complete your goal and instructions. ",
+          `Use ${getProstglesMCPFullToolName("prostgles-ui", "compact_context")} tool extensively to ensure only the most relevant information is kept between your steps. This improves the quality and cost of your work. `,
+          `Prefer to keep the key information as is, without sumarising to ensure minimal information is lost.`,
+          `\n`,
+          `You must use the ${Object.values(AGENT_GOAL_TOOL_NAMES)} tools to return your final answer or bail out, and the output of that tool must match the expected output schema.`,
+          "",
+          "Below is your prompt:",
+          prompt /* provided as first message */,
+        ].join("\n"),
+        outputSchema,
+        maxIterations,
+      },
+      model: model.id,
+      max_total_cost_usd: maxCostUSD.toString(),
+      extra_body: {
+        max_tokens: maxTokens,
+        temperature,
+      },
+      created: requestTimestamp.toISOString(),
+      /**
+       * satisfies added due to weird ts behaviour (hidden conversion to any) but.
+       * TODO: detect why and where else TS is silently failing to show errors due to outputSchema complexity
+       * */
+    } satisfies DBSSchemaForInsert["llm_chats"],
+    { returning: "*" },
+  );
+  if (toolsWithInfo?.length) {
+    await dbs.llm_chats_allowed_mcp_tools.insertMany(
+      toolsWithInfo.map(({ id, server_name, configId }) => {
+        return {
+          chat_id: agentChat.id,
+          tool_id: id,
+          server_name,
+          auto_approve: autoApproveAllTools,
+          server_config_id: configId,
+        } satisfies DBSSchemaForInsert["llm_chats_allowed_mcp_tools"];
+      }),
+    );
+  }
+
+  await askLLM({
+    chatId: agentChat.id,
+    type: "new-message",
+    userMessage: [
+      {
+        type: "text",
+        text: agentInput || "continue",
+      },
+    ],
+    connectionId,
+    schema: "",
+  });
+
+  let chatStatus = null as DBSSchema["llm_chats"]["status"];
+  do {
+    if (Date.now() - started > timeout) {
+      throw new Error(
+        [
+          `Agent ${name} timed out after ${(timeout / 1000).toFixed(2)} seconds.`,
+          `chat id: ${agentChat.id}`,
+          `chat status: ${JSON.stringify(chatStatus)}`,
+        ].join("\n"),
+      );
+    }
+    if (signal?.aborted) {
+      throw new Error(
+        `Agent ${name} stopped due to workflow execution being aborted.`,
+      );
+    }
+    await tout(500);
+    const chat = await dbs.llm_chats.findOne(
+      { id: agentChat.id },
+      { select: { status: 1 } },
+    );
+    chatStatus = chat?.status ?? null;
+  } while (!chatStatus || chatStatus.state === "loading");
+
+  if (chatStatus.state === "stopped") {
+    throw new Error(`Agent ${name} failed with error: ${chatStatus.reason}`);
+  }
+
+  if (chatStatus.state === "goal-data-validation-failure") {
+    throw new Error(
+      `Agent ${name} failed because the output did not match the expected schema. Error details: ${chatStatus.error}, Output data: ${JSON.stringify(chatStatus.data)}`,
+    );
+  }
+  return chatStatus.data;
+};

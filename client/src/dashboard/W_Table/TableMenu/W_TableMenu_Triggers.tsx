@@ -157,6 +157,7 @@ export const W_TableMenu_Triggers = ({ tableMeta, onSetQuery, w, prgl }: P) => {
 
       <SmartCardList
         db={prgl.db}
+        sql={prgl.sql}
         methods={prgl.methods}
         tables={prgl.tables}
         noDataComponent={<InfoRow color="info">No triggers</InfoRow>}

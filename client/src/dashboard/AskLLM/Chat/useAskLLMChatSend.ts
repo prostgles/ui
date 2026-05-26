@@ -24,16 +24,16 @@ export const useAskLLMChatSend = ({
   const { connectionId } = usePrgl();
   const { addAlert } = useAlert();
   const sendQuery = useCallback(
-    (msg: LLMMessage["message"] | undefined, isToolApproval: boolean) => {
+    (msg: LLMMessage["message"] | undefined) => {
       if (!msg || !activeChatId) return;
       /** TODO: move dbSchemaForPrompt to server-side */
-      void askLLM(
+      void askLLM({
         connectionId,
-        msg,
-        dbSchemaForPrompt,
-        activeChatId,
-        isToolApproval ? "approve-tool-use" : "new-message",
-      ).catch((error) => {
+        userMessage: msg,
+        schema: dbSchemaForPrompt,
+        chatId: activeChatId,
+        type: "new-message",
+      }).catch((error) => {
         const errorText = error?.message || error;
         const errorTextMessage =
           typeof errorText === "string" ? errorText : JSON.stringify(errorText);
@@ -47,16 +47,12 @@ export const useAskLLMChatSend = ({
   );
 
   const sendMessage: ChatProps["onSend"] = useCallback(
-    async (text: string | undefined, files) => {
+    async (userMessage: LLMMessage["message"] | undefined, files) => {
       const fileMessages = await Promise.all(
         (files ?? []).map(async (file) => toMediaMessage(file)),
       );
       return sendQuery(
-        [
-          text ? ({ type: "text", text } as const) : undefined,
-          ...fileMessages,
-        ].filter(isDefined),
-        false,
+        [...(userMessage ?? []), ...fileMessages].filter(isDefined),
       );
     },
     [sendQuery],
@@ -71,7 +67,7 @@ export const useAskLLMChatSend = ({
     if (!isLoading || activeChatId === undefined) {
       return;
     }
-    return () => stopAskLLM(activeChatId);
+    return () => stopAskLLM({ chatId: activeChatId });
   }, [activeChatId, isLoading, stopAskLLM]);
 
   return {

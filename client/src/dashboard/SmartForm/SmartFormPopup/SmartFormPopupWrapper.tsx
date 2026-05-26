@@ -1,18 +1,15 @@
-import { mdiChevronLeft, mdiChevronRight } from "@mdi/js";
-import {
-  type AnyObject,
-  getKeys,
-  type ValidatedColumnInfo,
-} from "prostgles-types";
-import React, { useMemo } from "react";
-import { sliceText } from "@common/utils";
 import Btn from "@components/Btn";
 import { FlexRow } from "@components/Flex";
-import type { PopupProps } from "@components/Popup/Popup";
 import Popup from "@components/Popup/Popup";
 import { SvgIcon } from "@components/SvgIcon";
+import { mdiTextBoxOutline } from "@mdi/js";
+import { type AnyObject, type ValidatedColumnInfo } from "prostgles-types";
+import React from "react";
 import type { SmartFormProps } from "../SmartForm";
 import type { SmartFormState } from "../useSmartForm";
+import { SmartFormPrevNext } from "./SmartFormPrevNext";
+import { useSmartFormPrevNext } from "./useSmartFormPrevNext";
+import { useSmartFormSubTitle } from "./useSmartFormSubTitle";
 
 type P = Pick<SmartFormProps, "onPrevOrNext" | "prevNext" | "asPopup"> & {
   rowFilterObj: AnyObject | undefined;
@@ -25,6 +22,8 @@ type P = Pick<SmartFormProps, "onPrevOrNext" | "prevNext" | "asPopup"> & {
   maxWidth: string;
   onClose: () => void;
   table: SmartFormState["table"];
+  showAsMarkdown: boolean;
+  setShowAsMarkdown: React.Dispatch<React.SetStateAction<boolean>> | undefined;
 };
 export const SmartFormPopupWrapper = ({
   onPrevOrNext,
@@ -37,100 +36,44 @@ export const SmartFormPopupWrapper = ({
   onClose,
   asPopup,
   table,
+  setShowAsMarkdown,
+  showAsMarkdown,
 }: P) => {
-  const prevNextClass = "smartformprevnext";
-
-  const autoFocusFirstIfIsInsert = !rowFilterObj;
-  const extraProps: Pick<
-    PopupProps,
-    "onKeyDown" | "headerRightContent" | "autoFocusFirst"
-  > = useMemo(() => {
-    return !onPrevOrNext ?
-        ({
-          autoFocusFirst: autoFocusFirstIfIsInsert ? "content" : undefined,
-        } satisfies Pick<PopupProps, "autoFocusFirst">)
-      : {
-          autoFocusFirst: "header",
-          onKeyDown: (e, section) => {
-            if (section !== "header") return;
-
-            if (e.key === "ArrowLeft") {
-              onPrevOrNext(-1);
-            }
-            if (e.key === "ArrowRight") {
-              onPrevOrNext(1);
-            }
-          },
-          headerRightContent: (
-            <div className={"flex-row mx-1 " + prevNextClass}>
-              <Btn
-                iconPath={mdiChevronLeft}
-                disabledInfo={
-                  prevNext?.prev === false ? "Reached end" : undefined
-                }
-                data-command="SmartForm.header.previousRow"
-                onClick={({ currentTarget }) => {
-                  currentTarget.focus();
-                  onPrevOrNext(-1);
-                }}
-              />
-              <Btn
-                iconPath={mdiChevronRight}
-                data-command="SmartForm.header.nextRow"
-                disabledInfo={
-                  prevNext?.next === false ? "Reached end" : undefined
-                }
-                onClick={({ currentTarget }) => {
-                  currentTarget.focus();
-                  onPrevOrNext(1);
-                }}
-              />
-            </div>
-          ),
-        };
-  }, [autoFocusFirstIfIsInsert, onPrevOrNext, prevNext?.next, prevNext?.prev]);
-
-  const { subTitle } = useMemo(() => {
-    const filterKeys =
-      rowFilterObj && "$and" in rowFilterObj ?
-        rowFilterObj.$and.flatMap((f) => getKeys(f))
-      : getKeys(rowFilterObj ?? {});
-    /** Do not show subTitle rowFilter if it's primary key and shows in columns */
-    const knownJoinColumns = displayedColumns
-      .filter((c) => c.is_pkey || c.references)
-      .map((c) => c.name);
-    const subTitle =
-      rowFilterObj ?
-        filterKeys.every((col) => knownJoinColumns.includes(col)) ?
-          undefined
-        : sliceText(
-            " (" +
-              Object.entries(rowFilterObj)
-                .map(([k, v]) => `${k}: ${JSON.stringify(v)}`)
-                .join(" AND ") +
-              ")",
-            100,
-          )
-      : "";
-    return { subTitle };
-  }, [displayedColumns, rowFilterObj]);
+  const prevNextState = useSmartFormPrevNext({ onPrevOrNext, prevNext });
+  const { subTitle } = useSmartFormSubTitle({ displayedColumns, rowFilterObj });
 
   if (!asPopup) {
     return children;
   }
+  const autoFocusFirstIfIsInsert = !rowFilterObj;
   return (
     <Popup
       title={
         <FlexRow
           data-command="SmartForm.header.tableIconAndName"
-          className="gap-1"
+          className="gap-p25"
         >
-          {table.icon && <SvgIcon size={34} icon={table.icon} />}
+          {table.icon && <SvgIcon size={24} icon={table.icon} />}
           {headerText}
         </FlexRow>
       }
       subTitle={subTitle}
-      {...extraProps}
+      headerRightContent={
+        <FlexRow className="gap-p25">
+          {prevNextState && <SmartFormPrevNext {...prevNextState} />}
+          {setShowAsMarkdown && (
+            <Btn
+              title="Show as markdown"
+              iconPath={mdiTextBoxOutline}
+              variant={showAsMarkdown ? "filled" : "icon"}
+              color={showAsMarkdown ? "action" : undefined}
+              onClick={() => setShowAsMarkdown((v) => !v)}
+            />
+          )}
+        </FlexRow>
+      }
+      onKeyDown={prevNextState?.onKeyDown}
+      autoFocusFirst={autoFocusFirstIfIsInsert ? "content" : undefined}
       contentClassName={`${maxWidth} pt-1`}
       positioning="right-panel"
       onClose={onClose}

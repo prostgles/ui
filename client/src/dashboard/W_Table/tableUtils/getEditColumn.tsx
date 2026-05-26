@@ -1,5 +1,5 @@
 import { mdiOpenInNew, mdiPencilOutline } from "@mdi/js";
-import type { TableHandlerClient } from "prostgles-client/dist/prostgles";
+import type { TableHandlerClient } from "prostgles-client";
 import type { AnyObject, ValidatedColumnInfo } from "prostgles-types";
 import React from "react";
 import Btn from "@components/Btn";

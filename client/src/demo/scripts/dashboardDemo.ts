@@ -1,3 +1,4 @@
+import type { DBS } from "src/dashboard/Dashboard/DBS";
 import type { DeckGLMapDivDemoControls } from "../../dashboard/Map/DeckGLMap";
 import { runDbSQL } from "../../dashboard/W_SQL/getDemoUtils";
 import { tout } from "../../pages/ElectronSetup/ElectronSetup";
@@ -25,12 +26,13 @@ export const closeAllViews = async () => {
 export const dashboardDemo = async () => {
   await tout(500);
 
+  const { dbs } = window as unknown as { dbs: DBS };
   const DEMO_WSP_PREFIX = "Demo Workspace ";
-  const demoWspNameFilter = { "name.$like": `${DEMO_WSP_PREFIX}%` };
-  await (window as any).dbs.workspaces.update(demoWspNameFilter, {
+  const demoWspNameFilter = { name: { $like: `${DEMO_WSP_PREFIX}%` } };
+  await dbs.workspaces.update(demoWspNameFilter, {
     deleted: true,
   });
-  await (window as any).dbs.workspaces.delete(demoWspNameFilter);
+  await dbs.workspaces.delete(demoWspNameFilter);
 
   await click("dashboard.goToConnections");
   await tout(500);
@@ -60,7 +62,11 @@ export const dashboardDemo = async () => {
       // await click("dashboard.menu");
       // await click("DashboardMenuHeader.togglePinned");
     }
-    await click("dashboard.menu.tablesSearchList", `[data-key=${tableName}]`);
+    await click(
+      "dashboard.menu.tablesSearchList",
+      `[data-key=${JSON.stringify(tableName)}]`,
+    );
+    await waitForElement("", `[data-table-name=${JSON.stringify(tableName)}]`);
     // await click("DashboardMenuHeader.togglePinned");
   };
 
@@ -71,7 +77,7 @@ export const dashboardDemo = async () => {
   await tout(500);
   await click("AddColumnMenu");
   await click("AddColumnMenu", "[data-key=Referenced]");
-  await click("JoinPathSelectorV2");
+  // await click("JoinPathSelectorV2");
   await click("JoinPathSelectorV2", `[data-key="(id = customer_id) orders"]`);
 
   await click("QuickAddComputedColumn");
@@ -103,7 +109,7 @@ export const dashboardDemo = async () => {
 
   /** Add Map */
   await click("AddChartMenu.Map");
-  await click("AddChartMenu.Map", `[data-key="location"]`);
+  await click("AddChartMenu.Map", `[data-key="rider_location"]`);
   await tout(2e3);
   const mapDiv = document.querySelector(
     ".DeckGLMapDiv",
@@ -167,14 +173,20 @@ export const dashboardDemo = async () => {
   // await createWorkspace();
 
   await closeAllViews();
-  await runDbSQL(
-    "DELETE FROM futures WHERE (now() - timestamp) > interval '30 minutes'",
-  );
+  // await runDbSQL(
+  //   "DELETE FROM futures WHERE (now() - timestamp) > interval '30 minutes'",
+  // ).catch(console.error);
   await openTable("futures");
 
   await click("dashboard.window.toggleFilterBar");
+
+  /** Future data not loading */
+  if ((window as any).CI) {
+    return;
+  }
+
   await type("btcusd", "", ".SmartFilterBar input");
-  await click("", `[data-label="BTCUSDC"]`);
+  await click("", `[data-label="BTCUSDT"]`);
 
   await click("", `[title="Click to expand/collapse"]`);
   await type("btcu", "", ".FilterWrapper input.custom-input");

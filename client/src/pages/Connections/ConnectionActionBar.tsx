@@ -1,20 +1,19 @@
+import { ROUTES } from "@common/utils";
+import Btn from "@components/Btn";
+import { FlexRow } from "@components/Flex";
+import PopupMenu from "@components/PopupMenu";
 import {
   mdiChartLine,
   mdiCog,
   mdiDotsHorizontal,
-  mdiDotsVertical,
   mdiLadybug,
   mdiPencil,
 } from "@mdi/js";
 import React from "react";
-import Btn from "@components/Btn";
-import { FlexRow } from "@components/Flex";
-import PopupMenu from "@components/PopupMenu";
 import { StatusMonitor } from "../../dashboard/StatusMonitor/StatusMonitor";
+import { t } from "../../i18n/i18nUtils";
 import { StatusDotCircleIcon } from "../Account/Sessions";
 import type { ConnectionProps } from "./Connection";
-import { t } from "../../i18n/i18nUtils";
-import { ROUTES } from "@common/utils";
 
 export const ConnectionActionBar = (props: ConnectionProps) => {
   const { dbsMethods, connection, dbs, isAdmin } = props;
@@ -34,7 +33,7 @@ export const ConnectionActionBar = (props: ConnectionProps) => {
       color={connection.isConnected ? "green" : undefined}
       className={connection.isConnected ? "" : "show-on-trigger-hover"}
       onClickPromise={async () => {
-        await dbsMethods.disconnect!(connection.id);
+        await dbsMethods.disconnect!({ conId: connection.id });
       }}
       style={{
         padding: "14px",
@@ -84,12 +83,7 @@ export const ConnectionActionBar = (props: ConnectionProps) => {
             />
           }
         >
-          <StatusMonitor
-            {...props}
-            connectionId={connection.id}
-            getStatus={dbsMethods.getStatus}
-            runConnectionQuery={dbsMethods.runConnectionQuery}
-          />
+          <StatusMonitor connectionId={connection.id} />
         </PopupMenu>
       )}
 

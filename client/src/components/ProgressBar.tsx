@@ -1,24 +1,46 @@
 import React from "react";
 import "./ProgressBar.css";
 import type { DivProps } from "./Flex";
-import { classOverride } from "./Flex";
+import { classOverride, FlexRow } from "./Flex";
 
 type P = {
+  messageTop?: React.ReactNode;
   message?: React.ReactNode;
   style?: React.CSSProperties;
   value: number;
   totalValue: number;
-};
+  endContent?: React.ReactNode;
+  color?: "active" | "gray";
+} & Omit<DivProps, "children">;
+
 export const MINI_BARCHART_COLOR = "var(--active)";
 
-export const ProgressBar = ({ message, value, totalValue, style }: P) => {
-  const perc = totalValue > value ? Math.round((100 * value) / totalValue) : -1;
+export const ProgressBar = ({
+  messageTop,
+  message,
+  value,
+  totalValue,
+  endContent,
+  color,
+  ...divProps
+}: P) => {
+  const perc =
+    value === 0 ? 0
+    : totalValue >= value ? Math.round((100 * value) / totalValue)
+    : -1;
   const lightColor = "var(--bg-action)";
   const height = 4;
   const isIndeterminate = perc === -1;
 
   return (
-    <div className="ProgressBar flex-col gap-p25" style={style}>
+    <div
+      {...divProps}
+      className={classOverride(
+        "ProgressBar flex-col gap-p25",
+        divProps.className,
+      )}
+    >
+      {messageTop}
       <div
         className="ProgressBarOuter shadow"
         style={{
@@ -31,7 +53,9 @@ export const ProgressBar = ({ message, value, totalValue, style }: P) => {
           style={{
             borderRadius: `${height / 2}px`,
             height: `${height}px`,
-            background: MINI_BARCHART_COLOR,
+            background: { active: MINI_BARCHART_COLOR, gray: "var(--text-2)" }[
+              color ?? "active"
+            ],
             minHeight: `${height}px`,
             minWidth: "2px",
             ...(isIndeterminate ?
@@ -46,7 +70,10 @@ export const ProgressBar = ({ message, value, totalValue, style }: P) => {
           }}
         />
       </div>
-      <div className={"text-1 "}>{message}</div>
+      <FlexRow>
+        <div className={"text-1 "}>{message}</div>
+        {endContent}
+      </FlexRow>
     </div>
   );
 };

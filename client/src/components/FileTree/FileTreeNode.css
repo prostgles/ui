@@ -1,0 +1,12 @@
+.fst-tree-row {
+  background: var(--bg-color-0);
+}
+
+.fst-tree-row:hover {
+  background: var(--li-hover-bg);
+}
+
+.fst-tree-row[aria-selected="true"],
+.fst-tree-row[aria-selected="true"]:hover {
+  background: var(--bg-li-selected);
+}

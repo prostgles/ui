@@ -84,6 +84,9 @@ const Wrapper = ({
         zIndex: 1,
         /** No dark tiles */
         color: "black",
+        /** Ensure we can zoom out of no data */
+        touchAction: "none",
+        pointerEvents: "none",
       }}
     >
       {children}

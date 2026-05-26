@@ -30,8 +30,7 @@ export const SmartFormFileSection = ({
   row,
   newRowDataHandler,
 }: P) => {
-  const tableInfo = table.info;
-  const { isFileTable } = table.info;
+  const { isFileTable } = table;
   const tableName = table.name;
   const media: Media[] | undefined = useMemo(() => {
     if (!isFileTable) throw "Must be a file table";
@@ -64,7 +63,7 @@ export const SmartFormFileSection = ({
   return (
     <FileInput
       key={tableName}
-      className={"mt-p5 f-0 " + (tableInfo.isFileTable ? " min-w-300" : "")}
+      className={"mt-p5 f-0 " + (isFileTable ? " min-w-300" : "")}
       media={media}
       // minSize={isFileTable ? 470 : 450}
       maxFileCount={1}
@@ -89,7 +88,7 @@ export const SmartFormFileSection = ({
       }}
       onDelete={async (media) => {
         if ("id" in media && media.id) {
-          if (action.type === "update" && tableInfo.isFileTable) {
+          if (action.type === "update" && isFileTable) {
             // ????
             newRowDataHandler.setNewRow({
               [tableName]: { type: "nested-table", value: [] },

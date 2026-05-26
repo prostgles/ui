@@ -2,7 +2,7 @@ import type {
   DetailedFilter,
   GroupedDetailedFilter,
 } from "@common/filterUtils";
-import Btn from "@components/Btn";
+import Btn, { type BtnProps } from "@components/Btn";
 import PopupMenu from "@components/PopupMenu";
 import { mdiFilter } from "@mdi/js";
 import React, { useMemo } from "react";
@@ -13,17 +13,18 @@ import type {
 } from "./AccessControl/OptionControllers/FilterControl";
 import { SmartFilter, type SmartFilterProps } from "./SmartFilter/SmartFilter";
 import type { ColumnConfig } from "./W_Table/ColumnMenu/ColumnMenu";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 
 export type RenderFilterProps = {
   filter: SingleGroupFilter | undefined;
   onChange: (filter: SingleGroupFilter) => void;
   contextData: ContextDataSchema | undefined;
   title?: string;
-  mode?: "micro" | "compact" | "minimised";
+  mode?: ("micro" | BtnProps) | "compact" | "minimised";
   itemName: "filter" | "condition";
   selectedColumns: ColumnConfig[] | undefined;
   hideOperand?: boolean;
-} & Pick<ForcedFilterControlProps, "db" | "tableName" | "tables">;
+} & Pick<ForcedFilterControlProps, "tableName">;
 
 export const RenderFilter = (props: RenderFilterProps) => {
   const {
@@ -33,12 +34,11 @@ export const RenderFilter = (props: RenderFilterProps) => {
     mode,
     title = `Edit ${props.itemName}s`,
     itemName,
-    db,
     tableName,
-    tables,
     selectedColumns,
     hideOperand,
   } = props;
+  const { db, tables } = usePrgl();
   const isAndOrFilter = "$and" in f || "$or" in f;
   const minimised = mode && mode === "minimised";
   const { filters, ...filterProps } = useMemo(() => {
@@ -132,9 +132,10 @@ export const RenderFilter = (props: RenderFilterProps) => {
         <Btn
           title={title}
           iconPath={mdiFilter}
-          variant="icon"
-          data-command="RenderFilter.edit"
+          // variant="icon"
           color={filterIsNotEmpty ? "action" : undefined}
+          {...(mode === "micro" ? {} : mode)}
+          data-command="RenderFilter.edit"
         />
       }
       contentStyle={{

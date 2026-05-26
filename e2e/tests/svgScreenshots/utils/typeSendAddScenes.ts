@@ -9,6 +9,14 @@ export const typeSendAddScenes = async (
   text: string,
   endAnimations: SVGif.Animation[] = [],
   waitFor?: () => Promise<void>,
+  {
+    LlmResponseLoadingDuration = 500,
+    LlmResponseReceivedWaitDuration = 1500,
+  }: {
+    LlmResponseLoadingDuration?: number;
+    LlmResponseReceivedWaitDuration?: number;
+  } = {},
+  fileName?: string,
 ) => {
   await page.getByTestId("Chat.textarea").fill(text);
   await page.waitForTimeout(1000);
@@ -26,17 +34,26 @@ export const typeSendAddScenes = async (
         },
       }
     );
-  const waitAnimation: SVGif.Animation = {
+  const waitAnimation = {
     type: "wait",
     duration: 500,
-  };
+  } as const satisfies SVGif.Animation;
   await addScene({
     animations:
       typeAnimation ? [typeAnimation, waitAnimation] : [waitAnimation],
   });
   await page.getByTestId("Chat.send").click();
-  await page.waitForTimeout(2000);
-  await addScene(); // LLM response loading
+  await page.waitForTimeout(1000);
+  if (LlmResponseLoadingDuration) {
+    await addScene({
+      animations: [
+        {
+          type: "wait",
+          duration: LlmResponseLoadingDuration,
+        },
+      ],
+    }); // LLM response loading
+  }
   const lastMessage = page
     .getByTestId("Chat.messageList")
     .locator(".message")
@@ -45,7 +62,7 @@ export const typeSendAddScenes = async (
   await expect(lastMessage).toContainClass("incoming", { timeout: 15000 });
 
   for await (const animation of endAnimations) {
-    if (animation.type !== "wait" && animation.type !== "moveTo") {
+    if (animation.type !== "wait" && animation.type !== "moveCursor") {
       await page
         .locator(animation.elementSelector)
         .waitFor({ state: "visible", timeout: 15000 });
@@ -54,6 +71,7 @@ export const typeSendAddScenes = async (
 
   await waitFor?.();
   await addScene({
+    svgFileName: fileName,
     animations: [
       {
         type: "fadeIn",
@@ -61,7 +79,7 @@ export const typeSendAddScenes = async (
         elementSelector:
           getCommandElemSelector("Chat.messageList") + " > g:last-of-type",
       },
-      { type: "wait", duration: 1500 },
+      { type: "wait", duration: LlmResponseReceivedWaitDuration },
       ...endAnimations,
     ],
   });

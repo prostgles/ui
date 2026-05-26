@@ -1,13 +1,13 @@
 import type { FileTable } from "@common/utils";
 import type { AnyObject } from "prostgles-types";
-import type { CommonWindowProps } from "../../Dashboard/Dashboard";
+import type { DBSchemaTableWithRenderInfo } from "src/dashboard/Dashboard/getTables";
 import type { WindowData } from "../../Dashboard/dashboardUtils";
 import type { ColumnConfigWInfo } from "../W_Table";
 import { getColWInfo } from "./getColWInfo";
 import { getColWidth } from "./getColWidth";
 
 export const getFullColumnConfig = (
-  tables: CommonWindowProps["tables"],
+  tables: DBSchemaTableWithRenderInfo[],
   w: Pick<WindowData<"table">, "columns" | "table_name">,
   data?: AnyObject[],
   windowWidth?: number,
@@ -22,7 +22,7 @@ export const getFullColumnConfig = (
     /* Show file columns as Media format by default */
     colsWInfo = colsWInfo.map((r) => {
       const isFileColumn =
-        (table.info.isFileTable && r.name === "url") || r.info?.file;
+        (table.isFileTable && r.name === "url") || r.info?.file;
       return {
         ...r,
         format:
@@ -50,7 +50,7 @@ export const getFullColumnConfig = (
     }
 
     /* If media table then set url column display format to Media  */
-    if (!w.columns?.length && table.info.isFileTable) {
+    if (!w.columns?.length && table.isFileTable) {
       colsWInfo = structuredClone(colsWInfo);
       const urlColumnIndex = colsWInfo.findIndex((c) => c.name === "url");
       const urlColumn = colsWInfo.splice(urlColumnIndex, 1)[0];

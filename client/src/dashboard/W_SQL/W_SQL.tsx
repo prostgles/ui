@@ -37,7 +37,7 @@ import type { CommonWindowProps, DashboardState } from "../Dashboard/Dashboard";
 import type { CodeBlock } from "../SQLEditor/SQLCompletion/completionUtils/getCodeBlock";
 import type { ProstglesQuickMenuProps } from "../W_QuickMenu";
 import { AddChartMenu } from "../W_Table/TableMenu/AddChartMenu";
-import Window from "../Window";
+import Window from "../Window/Window";
 import { type ChartableSQL, getChartableSQL } from "./getChartableSQL";
 import { runSQL } from "./runSQL/runSQL";
 import { SQLHotkeys } from "./SQLHotkeys";
@@ -51,7 +51,7 @@ export type W_SQLProps = Omit<CommonWindowProps, "w"> & {
   onAddChart?: OnAddChart;
   titleIcon?: React.ReactNode;
   activeRowStyle?: React.CSSProperties;
-  childWindow: React.ReactNode | undefined;
+  childWindow: { node: React.ReactNode; w: WindowSyncItem } | undefined;
   suggestions?: DashboardState["suggestions"];
   setLinkMenu: ProstglesQuickMenuProps["setLinkMenu"];
 };
@@ -120,7 +120,7 @@ export type W_SQLState = {
   handler?: SocketSQLStreamHandlers;
   activeQuery: undefined | W_SQL_ActiveQuery;
   joins: string[];
-  error?: any;
+  error?: unknown;
   w?: SyncDataItem<WindowData>;
   hideTable?: boolean;
   sql: string;
@@ -209,7 +209,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
     window.addEventListener("keydown", this.saveFunc, false);
   }
 
-  saveFunc = (e) => {
+  saveFunc = (e: KeyboardEvent) => {
     if (
       e.key === "s" &&
       e.ctrlKey &&
@@ -222,14 +222,11 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
     }
   };
 
-  streamData = createReactiveState(
-    { rows: [] } as { rows: any[] },
-    (newState) => {
-      if (newState.rows.length < this.state.pageSize) {
-        this.setState({ rows: newState.rows });
-      }
-    },
-  );
+  streamData = createReactiveState({ rows: [] as any[] }, (newState) => {
+    if (newState.rows.length < this.state.pageSize) {
+      this.setState({ rows: newState.rows });
+    }
+  });
 
   async onUnmount() {
     window.removeEventListener("keydown", this.saveFunc, false);
@@ -290,7 +287,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
         },
       },
     });
-    this.state.handler?.stop(terminate);
+    void this.state.handler?.stop(terminate);
     return true;
   };
 
@@ -333,7 +330,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
       suggestions,
       tables,
       setLinkMenu,
-      prgl: { db, dbs, dbsTables, user },
+      prgl: { db, sql: sqlHandler, dbs, dbsTables, user },
       myLinks,
       childWindow,
       workspace,
@@ -360,7 +357,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
           style={{
             inset: 0,
             background: "#00000040",
-            zIndex: 6, // Ensure it's above the right minimap scrollbar
+            zIndex: 1,
           }}
         >
           <div className="SQLHotkeysWrapper min-s-0 bg-color-0 p-1 rounded max-s-fit flex-col gap-1">
@@ -373,8 +370,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
             <Btn
               color="action"
               variant="filled"
-              onClick={async () => {
-                // const newOptions = { ...user.options, viewedSQLTips: true };
+              onClickPromise={async () => {
                 await dbs.users.update(
                   { id: user.id },
                   { options: { $merge: [{ viewedSQLTips: true }] } },
@@ -421,13 +417,21 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
                 this.editorContainer = r;
               }
             }}
+            style={
+              infoPlaceholder ?
+                {
+                  // Ensure infoPlaceholder appears above the right minimap scrollbar but beneath the askLLM chat
+                  zIndex: 0,
+                }
+              : {}
+            }
             className={`min-h-0 min-w-0 flex-col relative ${hideCodeEditor ? "f-0" : "f-1"}`}
           >
-            {error && <ErrorComponent error={error} className="m-2" />}
+            <ErrorComponent error={error} className="m-2" />
             <W_SQLEditor
               value={this.d.w?.sql ?? ""}
               style={hideCodeEditor ? { display: "none" } : {}}
-              sql={db.sql}
+              sql={sqlHandler}
               suggestions={
                 !suggestions ? undefined : (
                   {
@@ -450,7 +454,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
                 }
                 const res =
                   cb &&
-                  (await getChartableSQL(cb, db.sql!, tables).catch(
+                  (await getChartableSQL(cb, sqlHandler!, tables).catch(
                     () => undefined,
                   ));
                 this.setState({ currentCodeBlockChartColumns: res });
@@ -482,9 +486,13 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
               onStopQuery={this.killQuery}
               error={sqlError}
               getFuncDef={
-                !db.sql ? undefined : (
+                !sqlHandler ? undefined : (
                   (name, minArgs) => {
-                    return getFuncs({ db: { sql: db.sql! }, name, minArgs });
+                    return getFuncs({
+                      sql: sqlHandler,
+                      name,
+                      minArgs,
+                    });
                   }
                 )
               }
@@ -499,9 +507,8 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
                     w={w}
                     myLinks={myLinks}
                     childWindows={this.props.childWindows}
-                    onAddChart={onAddChart}
                     chartableSQL={currentCodeBlockChartColumns}
-                    tables={tables}
+                    getLinksAndWindows={this.props.getLinksAndWindows}
                     size="micro"
                   />
               }
@@ -509,6 +516,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
             {this.d.w && (
               <W_SQLBottomBar
                 {...this.state}
+                sql={sqlHandler}
                 connectionId={this.props.prgl.connectionId}
                 dbsMethods={this.props.prgl.dbsMethods}
                 toggleCodeEditor={() =>
@@ -528,27 +536,29 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
             )}
           </div>
 
-          <W_SQLResults
-            {...this.state}
-            w={w}
-            childWindow={childWindow}
-            tables={tables}
-            onPageChange={(newPage) => {
-              this.setState({ page: newPage });
-            }}
-            onPageSizeChange={(pageSize) => {
-              this.setState({ pageSize });
-              if (this.d.w?.limit && pageSize > this.d.w.limit) {
-                w.$update({ limit: pageSize });
-              }
-            }}
-            onResize={(newCols) => {
-              this.setState({ cols: newCols });
-            }}
-            onSort={(sort) => {
-              this.runSQL(sort);
-            }}
-          />
+          {!childWindow && (
+            <W_SQLResults
+              {...this.state}
+              w={w}
+              childWindow={childWindow}
+              tables={tables}
+              onPageChange={(newPage) => {
+                this.setState({ page: newPage });
+              }}
+              onPageSizeChange={(pageSize) => {
+                this.setState({ pageSize });
+                if (this.d.w?.limit && pageSize > this.d.w.limit) {
+                  w.$update({ limit: pageSize });
+                }
+              }}
+              onResize={(newCols) => {
+                this.setState({ cols: newCols });
+              }}
+              onSort={(sort) => {
+                void this.runSQL(sort);
+              }}
+            />
+          )}
         </div>
 
         {popup && (
@@ -571,15 +581,15 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
     return (
       <Window
         w={w}
+        childWindow={childWindow}
+        connection={this.props.prgl.connection}
         layoutMode={workspace.layout_mode ?? "editable"}
         quickMenuProps={{
           dbs,
-          prgl: this.props.prgl,
           myLinks: this.props.myLinks,
-          onAddChart,
-          tables,
           setLinkMenu,
           childWindows: this.props.childWindows,
+          getLinksAndWindows: this.props.getLinksAndWindows,
           chartableSQL: currentCodeBlockChartColumns,
         }}
         getMenu={(w, onClose) => (

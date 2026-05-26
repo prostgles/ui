@@ -4,19 +4,21 @@ import { FlexRow } from "@components/Flex";
 import { Select } from "@components/Select/Select";
 import { mdiFilter, mdiMagnify, mdiPlay, mdiStop } from "@mdi/js";
 import React from "react";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import type { MCPServersProps } from "../MCPServers";
+import { useMcpToolsSelectOptions } from "../MCPServerTools/useMcpToolsSelectOptions";
 import { AddMCPServer } from "./AddMCPServer";
 
 export const MCPServersToolbar = ({
-  dbs,
   selectedTool,
   setSelectedTool,
 }: MCPServersProps & {
   selectedTool: undefined | DBSSchema["mcp_server_tools"];
   setSelectedTool: (tool: undefined | DBSSchema["mcp_server_tools"]) => void;
 }) => {
-  const { data: tools } = dbs.mcp_server_tools.useFind();
+  const { dbs } = usePrglCore();
   const globalSettings = dbs.global_settings.useSubscribeOne();
+  const { options, tools } = useMcpToolsSelectOptions();
 
   return (
     <>
@@ -58,11 +60,7 @@ export const MCPServersToolbar = ({
             },
           }}
           value={selectedTool?.id}
-          fullOptions={(tools ?? []).map((t) => ({
-            key: t.id,
-            label: `${t.server_name} ${t.name}`,
-            subLabel: t.description,
-          }))}
+          fullOptions={options}
           onChange={(id) => {
             setSelectedTool(tools?.find((t) => t.id === id));
           }}

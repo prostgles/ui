@@ -1,14 +1,16 @@
-import { test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
+import { type AnyObject } from "prostgles-types";
+import { USERS } from "utils/constants";
+import { goTo } from "utils/goTo";
 import {
   PageWIds,
   createDatabase,
   login,
   openConnection,
+  runDbSql,
   runDbsSql,
   setupProstglesLLMProvider,
 } from "./utils/utils";
-import { USERS } from "utils/constants";
-import { goTo } from "utils/goTo";
 // const viewPortSize = { width: 1920, height: 1080 };
 const viewPortSize = { width: 1280, height: 1080 };
 test.use({
@@ -23,20 +25,57 @@ test.use({
   },
 });
 
-const videoTestDuration = 10 * 60e3;
+const videoTestDuration = 12 * 60e3;
 test.describe("Demo video", () => {
   test.setTimeout(videoTestDuration);
 
+  test.beforeEach(async ({ page }) => {
+    page.on("console", (msg) =>
+      console.log("[browser:" + msg.type() + "]", msg.text()),
+    );
+    page.on("pageerror", (err) =>
+      console.error("[pageerror]", err?.stack || err),
+    );
+  });
+
   test("Video demo", async ({ page: p }) => {
     const page = p as PageWIds;
-
+    const CI = !!process.env.CI;
+    await page.addInitScript(
+      ({ CI }) => {
+        (window as any).CI = CI;
+      },
+      { CI },
+    );
     await login(page, USERS.test_user, "/login");
     await page.waitForTimeout(2000);
-    // await page.getByTestId("App.colorScheme").click();
-    // // await page.getByTestId("App.colorScheme").locator(`[data-key=light]`).click();
-    // await page.getByTestId("App.colorScheme").locator(`[data-key=dark]`).click();
+
+    await runDbsSql(
+      page,
+      `
+        UPDATE connections
+        SET on_mount_ts_disabled = true
+        WHERE name IN ('food_delivery', 'crypto')
+      `,
+    );
+    await runDbsSql(
+      page,
+      `
+        UPDATE connections
+        SET on_mount_ts_disabled = false
+        WHERE name IN ('food_delivery', 'crypto')
+      `,
+    );
+    await openConnection(page, "crypto");
+    await page.getByTestId("dashboard.goToConnConfig").click();
+    await page.getByTestId("config.methods").click();
+    await page.getByTestId("ServerSideFunctions.onMountEnabled").click();
+    await expect(
+      page.getByTestId("ServerSideFunctions.onMountEnabled"),
+    ).toHaveAttribute("aria-checked", "true");
+
     const getVideoDemoConnection = async () => {
-      // await goTo(page, "/connections");
+      await goTo(page, "/connections");
       const videoDemoConnection = await page.getByRole("link", {
         name: "prostgles_video_demo",
         exact: true,
@@ -45,13 +84,7 @@ test.describe("Demo video", () => {
     };
 
     const localVideoDemoConnection = await getVideoDemoConnection();
-    if (await localVideoDemoConnection.isVisible()) {
-      await localVideoDemoConnection.click();
-    } else {
-      await createDatabase("prostgles_video_demo", page);
-      await goTo(page, "/connections");
-      await createDatabase("food_delivery", page, true);
-    }
+    await localVideoDemoConnection.click({ timeout: 10000 });
 
     await setupProstglesLLMProvider(page);
 
@@ -73,9 +106,19 @@ test.describe("Demo video", () => {
           try {
             await (node as any).start();
           } catch (e) {
-            console.error(e);
-            console.error(JSON.stringify(e));
-            throw JSON.stringify(e);
+            const errorObj = Object.getOwnPropertyNames(
+              typeof e !== "object" ? { error: e } : e,
+            ).reduce(
+              (acc, key) => ({
+                ...acc,
+                [key]: (e as AnyObject)[key],
+              }),
+              {},
+            );
+            console.error(errorObj);
+            console.error(e, JSON.stringify(e));
+            await new Promise((res) => setTimeout(res, 10e3));
+            throw JSON.stringify(errorObj);
           }
         });
       await page.waitForTimeout(1e3);

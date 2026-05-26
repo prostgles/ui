@@ -1,34 +1,42 @@
-import { authenticator } from "otplib";
-import {
-  getMagicLinkUrl,
-  type LoginSignupConfig,
-} from "prostgles-server/dist/Auth/AuthTypes";
-import type { DB } from "prostgles-server/dist/initProstgles";
-import type { Users } from "..";
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
+import { authenticator } from "otplib";
+import { type LoginSignupConfig } from "prostgles-server/dist/Auth/AuthTypes";
+import type { DB } from "prostgles-server/dist/initProstgles";
+import type { DBS, Users } from "..";
 import { log } from "../index";
 import { getPasswordHash } from "./authUtils";
-import { upsertSession } from "./upsertSession";
 import { getEmailSenderWithMockTest } from "./emailProvider/getEmailSenderWithMockTest";
 import { getRandomSixDigitCode } from "./emailProvider/onEmailRegistration";
-import type { SUser } from "./sessionUtils";
 import { loginWithProvider } from "./OAuthProviders/loginWithProvider";
+import type { SUser } from "./sessionUtils";
 import { startRateLimitedLoginAttempt } from "./startRateLimitedLoginAttempt";
+import type { AuthConfigForStateConnection } from "./subscribeToAuthSetupChanges";
+import { upsertSession } from "./upsertSession";
 
 export const getLogin = async (
-  auth_providers: DBGeneratedSchema["global_settings"]["columns"]["auth_providers"],
+  dbs: DBS,
+  _dbs: DB,
+  database_config: NonNullable<
+    AuthConfigForStateConnection["stateDatabaseConfig"]
+  >,
 ) => {
-  const mailClient = await getEmailSenderWithMockTest(auth_providers);
+  const { auth_providers } = database_config;
+  const mailClient = await getEmailSenderWithMockTest(auth_providers).catch(
+    (error) => {
+      console.error("Failed to initialize mail client", error);
+      return undefined;
+    },
+  );
   const { email: emailAuthConfig } = auth_providers ?? {};
 
   const login: Required<
     LoginSignupConfig<DBGeneratedSchema, SUser>
-  >["login"] = async (loginParams, dbs, _db: DB, clientInfo) => {
+  >["login"] = async (loginParams, _, __, clientInfo, getMagicLinkUrl) => {
     log("login");
     const { ip_address, ip_address_remote, user_agent, x_real_ip } = clientInfo;
 
     if (loginParams.type === "OAuth") {
-      return loginWithProvider(loginParams, dbs, clientInfo);
+      return loginWithProvider(loginParams, dbs, clientInfo, database_config);
     }
 
     const { username, password, totp_token, totp_recovery_code } = loginParams;
@@ -81,18 +89,19 @@ export const getLogin = async (
             },
             { returning: "*" },
           ));
-        // const mlink = await makeMagicLink(newUser, db, "/", {
-        //   session_expires: Date.now() + 1 * YEAR,
-        // });
+
         await mailClient.sendMagicLinkEmail({
           to: newUser.username,
           code: newCode,
-          url: getMagicLinkUrl(auth_providers.website_url, {
-            type: "otp",
-            code: newCode,
-            email: username,
-            returnToken: false,
-          }),
+          url: getMagicLinkUrl(
+            {
+              type: "otp",
+              code: newCode,
+              email: username,
+              returnToken: false,
+            },
+            auth_providers.website_url,
+          ),
         });
         return {
           session: undefined,
@@ -160,7 +169,7 @@ export const getLogin = async (
           matchingUser,
           totp_recovery_code.trim(),
         );
-        const areMatching = await _db.any(
+        const areMatching = await _dbs.any(
           "SELECT * FROM users WHERE id = ${id} AND \"2fa\"->>'recoveryCode' = ${hashedRecoveryCode} ",
           { id: matchingUser.id, hashedRecoveryCode },
         );
@@ -188,6 +197,7 @@ export const getLogin = async (
       ip,
       db: dbs,
       user_agent,
+      database_config,
     });
     return { session, response: { success: true } };
   };

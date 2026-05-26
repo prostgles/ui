@@ -13,6 +13,9 @@ export type LayoutItem = {
   /**
    * Table name after quote_ident() has been applied.
    * This means that any table names with uppercase letters or special characters will be quoted.
+   * @example
+   *  '"MY_Table"'
+   *  'my_table'
    */
   tableName: string | null;
   viewType: "table" | "map" | "timechart" | "sql" | "barchart";
@@ -163,15 +166,16 @@ type ColumnFilter = BasicFilter | ComplexColumnFilter;
 /**
  * Filter that matches rows based on existence of related rows in another table
  */
-type JoinedFilter = {
-  $existsJoined: {
+type JoinedFilter = Record<
+  "$existsJoined" | "$notExistsJoined",
+  {
     path: TableJoin[];
     /**
      * Filter that will be applied to the joined table (last table in the path)
      */
     filter: ColumnFilter;
-  };
-};
+  }
+>;
 
 type FilterItem = ColumnFilter | JoinedFilter;
 
@@ -226,22 +230,34 @@ type TableColumn = {
    * Render column value in a chip
    * Cannot be used with nested
    */
-  styling?: {
-    type: "conditional";
-    conditions: {
-      chipColor:
-        | "red"
-        | "pink"
-        | "purple"
-        | "blue"
-        | "indigo"
-        | "green"
-        | "yellow"
-        | "gray";
-      operator: "=" | "!=" | ">" | "<" | ">=" | "<=";
-      value: string;
-    }[];
-  };
+  styling?:
+    | {
+        type: "conditional";
+        conditions: {
+          chipColor:
+            | "red"
+            | "pink"
+            | "purple"
+            | "blue"
+            | "indigo"
+            | "green"
+            | "yellow"
+            | "gray";
+          operator: "=" | "!=" | ">" | "<" | ">=" | "<=";
+          value: string;
+        }[];
+      }
+    | {
+        type: "Icons";
+        /**
+         * Column value will be mapped to a mdi icon name.
+         * @example:
+         * {
+         *   bar: "GlassCocktail";
+         * }
+         */
+        valueToIconMap: Record<string, string>;
+      };
 
   /**
    * If set, column value will rendered in a specific way
@@ -299,35 +315,6 @@ type TableColumn = {
       };
 };
 
-/**
- * Represents a rendered cell in a card layout
- */
-type CardLayoutRowColumnValue = {
-  type: "node";
-  columnName: string;
-  /**
-   * React.CSSProperties;
-   */
-  style?: Record<string, string | number>;
-  /**
-   * If true, label will be hidden and only value will be shown
-   */
-  hideLabel?: boolean;
-};
-
-/**
- * Renders a div element with specified style and contents.
- * Used to arrange children in flex row/column/row-wrapped layouts for efficient content density.
- */
-export type CardLayout = {
-  type?: "container";
-  /**
-   * React.CSSProperties;
-   */
-  style?: Record<string, string | number>;
-  children: (CardLayout | CardLayoutRowColumnValue)[];
-};
-
 export type TableWindowInsertModel = Filtering & {
   id: string;
   type: "table";
@@ -352,11 +339,6 @@ export type TableWindowInsertModel = Filtering & {
         asc: boolean;
         nulls: "first" | "last";
       }[];
-
-  /**
-   * Layout used when the table is switched to the card list view mode, where each row is shown as a card.
-   */
-  cardLayout: CardLayout;
 };
 
 type LayerDataSource =

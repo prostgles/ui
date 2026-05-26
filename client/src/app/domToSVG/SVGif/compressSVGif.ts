@@ -37,6 +37,12 @@ export const compressSVGif = (
     }
     const useElem = document.createElementNS(SVG_NAMESPACE, "use");
     useElem.setAttribute("href", `#${id}`);
+    /** Transfer over test selectors */
+    Array.from(node.attributes).forEach((attr) => {
+      if (attr.name.startsWith("data-") && attr.name !== "data-selector") {
+        useElem.setAttribute(attr.name, attr.value);
+      }
+    });
     node.replaceWith(useElem);
   };
   const scenes = Array.from(svg.querySelectorAll(`#all-scenes > svg`));
@@ -58,7 +64,7 @@ export const compressSVGif = (
           matchingNode.outerHTML === originalNode.outerHTML &&
           !parsedScene.animations.some((anim) => {
             const node =
-              anim.type !== "wait" && anim.type !== "moveTo" ?
+              anim.type !== "wait" && anim.type !== "moveCursor" ?
                 matchingNode.querySelector(anim.elementSelector)
               : null;
             return node;

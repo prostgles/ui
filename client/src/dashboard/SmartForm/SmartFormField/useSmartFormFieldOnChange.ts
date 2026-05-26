@@ -9,11 +9,7 @@ export const useSmartFormFieldOnChange = (
     onChange: (newColData: ColumnData) => void;
   },
 ) => {
-  const {
-    onChange,
-    column,
-    table: { info: tableInfo },
-  } = props;
+  const { onChange, column, table } = props;
   const [error, setError] = useState<any>();
 
   const onCheckAndChange = useCallback(
@@ -24,7 +20,7 @@ export const useSmartFormFieldOnChange = (
       if (
         _newValue === "" &&
         ["Date", "number", "boolean", "Object"].includes(
-          column.tsDataType as string,
+          column.tsDataType,
         ) &&
         column.is_nullable
       ) {
@@ -38,7 +34,7 @@ export const useSmartFormFieldOnChange = (
         error = err;
       }
 
-      if (!tableInfo.hasFiles) {
+      if (!table.hasFiles) {
         if (
           typeof column.min === "number" &&
           typeof newValue === "number" &&
@@ -61,7 +57,7 @@ export const useSmartFormFieldOnChange = (
       }
       setError(error);
     },
-    [column, onChange, tableInfo.hasFiles],
+    [column, onChange, table.hasFiles],
   );
 
   return {

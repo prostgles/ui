@@ -10,7 +10,7 @@ export const useSetMonacoJsonSchemas = (
   languageObj: LanguageConfig | undefined,
 ) => {
   useEffectDeep(() => {
-    setMonacoEditorJsonSchemas(editor, value, languageObj);
+    void setMonacoEditorJsonSchemas(editor, value, languageObj);
   }, [editor, languageObj]);
 };
 
@@ -44,8 +44,7 @@ export const setMonacoEditorJsonSchemas = async (
   if (!matchingModel) {
     try {
       const newModel = monaco.editor.createModel(
-        /** Why might be undefined?! */
-        (value as string | undefined) ?? editor.getValue(),
+        value,
         "json",
         mySchemas[0]?.theUri,
       );

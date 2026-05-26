@@ -30,7 +30,7 @@ export type SearchAllSuggestion = Pick<
   icon?: string;
 };
 
-export type SearchAllProps = Pick<Prgl, "db" | "methods" | "tables"> & {
+export type SearchAllProps = Pick<Prgl, "db" | "methods" | "tables" | "sql"> & {
   suggestions: SQLSuggestion[] | undefined;
   onClose: () => void;
   onOpen: (arg: { table: string; filter: DetailedFilter[] }) => void;
@@ -43,7 +43,6 @@ export type SearchAllProps = Pick<Prgl, "db" | "methods" | "tables"> & {
   searchType?: (typeof SEARCH_TYPES)[number]["key"];
   defaultTerm?: string;
   queries?: SyncDataItem<WindowData<"sql">>[];
-  loadTable: _Dashboard["loadTable"];
 };
 
 export const SearchAll = (props: SearchAllProps) => {

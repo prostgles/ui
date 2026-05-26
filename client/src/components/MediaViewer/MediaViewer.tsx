@@ -4,14 +4,19 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Icon } from "../Icon/Icon";
 import Popup from "../Popup/Popup";
 import {
-  ContentTypes,
   RenderMedia,
   type UrlInfo,
   type ValidContentType,
 } from "./RenderMedia";
+import { ContentTypes } from "@common/columnDisplayFormat.schema";
 
 type P = {
   url: string;
+
+  /**
+   * Filename
+   */
+  name?: string;
 
   /**
    * Request prev or next media
@@ -31,7 +36,8 @@ type P = {
 };
 
 export const MediaViewer = (props: P) => {
-  const { onPrevOrNext, style, content_type, url, allowedHostnames } = props;
+  const { onPrevOrNext, style, content_type, url, allowedHostnames, name } =
+    props;
   const [isFocused, setIsFocused] = useState(false);
   const [urlInfo, setUrlInfo] = useState<UrlInfo | undefined>(
     content_type && url ?
@@ -112,6 +118,7 @@ export const MediaViewer = (props: P) => {
   return (
     <>
       <RenderMedia
+        title={name}
         isFocused={isFocused}
         setIsFocused={setIsFocused}
         style={style}
@@ -130,7 +137,8 @@ export const MediaViewer = (props: P) => {
           autoFocusFirst={"content"}
           focusTrap={true}
           title={
-            !urlInfo ? "" : (
+            name ??
+            (!urlInfo ? "" : (
               <a
                 href={urlInfo.validated}
                 target="_blank"
@@ -140,7 +148,7 @@ export const MediaViewer = (props: P) => {
               >
                 {urlInfo.forDisplay}
               </a>
-            )
+            ))
           }
           onKeyDown={!onPrevOrNext ? undefined : onKeyDown}
         >
@@ -157,6 +165,7 @@ export const MediaViewer = (props: P) => {
           >
             {toggleClick && ToggleBtn(true, () => toggleClick(-1))}
             <RenderMedia
+              title={name}
               isFocused={isFocused}
               setIsFocused={setIsFocused}
               style={style}

@@ -9,6 +9,7 @@ import { JSONBSchema } from "@components/JSONBSchema/JSONBSchema";
 import { Section } from "@components/Section";
 import { MethodDefinitionEditAsJson } from "./MethodDefinitionEditAsJson";
 import { MethodFunctionDefinition } from "./MethodFunctionDefinition";
+import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 
 export type MethodDefinitionProps = {
   onChange: (newMethod: MethodDefinitionProps["method"]) => void;
@@ -64,7 +65,7 @@ export const MethodDefinition = (props: MethodDefinitionProps) => {
   if (renderCode) return codeEditorNode;
 
   return (
-    <FlexCol className="MethodDefinition f-1 gap-p5">
+    <ScrollFade className="MethodDefinition flex-col o-auto min-h-0 f-1 gap-p5 p-1">
       <div className="flex-row ai-center gap-1">
         <Btn
           className="ml-auto"
@@ -75,7 +76,7 @@ export const MethodDefinition = (props: MethodDefinitionProps) => {
             seteditAsJSON(!editAsJSON);
           }}
         >
-          {!editAsJSON ? "Edit as JSON" : "Edit as form"}
+          {!editAsJSON ? "Switch to JSON editor" : "Switch to form editor"}
         </Btn>
       </div>
       {editAsJSON ?
@@ -126,16 +127,18 @@ export const MethodDefinition = (props: MethodDefinitionProps) => {
                 </p>
                 <JSONBSchema
                   className="mt-1"
-                  schema={{
-                    title: "Display table",
-                    description:
-                      "Table that will be displayed below controls and inputs",
-                    optional: true,
-                    lookup: {
-                      type: "schema",
-                      object: "table",
-                    },
-                  }}
+                  schema={
+                    {
+                      title: "Display table",
+                      description:
+                        "Table that will be displayed below controls and inputs",
+                      optional: true,
+                      lookup: {
+                        type: "schema",
+                        object: "table",
+                      },
+                    } as const
+                  }
                   value={method.outputTable}
                   onChange={(outputTable) => {
                     onChange({ ...method, outputTable: outputTable ?? null });
@@ -148,6 +151,6 @@ export const MethodDefinition = (props: MethodDefinitionProps) => {
           )}
         </>
       }
-    </FlexCol>
+    </ScrollFade>
   );
 };

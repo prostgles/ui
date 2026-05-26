@@ -16,9 +16,10 @@ import { PopupHeader } from "./PopupHeader";
 import { getPopupStyle } from "./getPopupStyle";
 import { popupCheckPosition } from "./popupCheckPosition";
 
+const MODAL_ROOT_ID = "modal-root";
 let modalRoot: HTMLElement | null = null;
 export const getModalRoot = (forPointer = false) => {
-  const id = forPointer ? "pointer-root" : "modal-root";
+  const id = forPointer ? "pointer-root" : MODAL_ROOT_ID;
   let node = document.getElementById(id);
   if (!node) {
     node = document.createElement("div");
@@ -31,6 +32,23 @@ export const getModalRoot = (forPointer = false) => {
   return node;
 };
 getModalRoot();
+
+const PopupPresenceContext = React.createContext(false);
+
+export const useIsInsidePopup = () => {
+  return React.useContext(PopupPresenceContext);
+};
+
+export const isTopMostPopup = (popup: HTMLElement) => {
+  const modalRoot = document.getElementById(MODAL_ROOT_ID);
+  const topPopupPortal = modalRoot?.lastElementChild as HTMLElement | null;
+
+  // If a popup is on top and it does NOT contain this fullscreen wrapper,
+  // let that popup handle Escape instead.
+  const topPopupBelongsToThisFullscreen = !!topPopupPortal?.contains(popup);
+
+  return topPopupBelongsToThisFullscreen;
+};
 
 export const POPUP_CLASSES = {
   root: "popup-component-root",
@@ -101,7 +119,10 @@ export type PopupProps = TestSelectors & {
    */
   fixedTopLeft?: boolean;
   autoFocusFirst?: "header" | "content" | { selector: string };
-  onKeyDown?: (e: KeyboardEvent, section: "header" | "content") => void;
+  onKeyDown?: (
+    e: KeyboardEvent,
+    section: "header" | "content" | Element | null,
+  ) => void;
   collapsible?:
     | boolean
     | {
@@ -151,7 +172,9 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
         e,
         document.activeElement?.closest("header." + POPUP_CLASSES.title) ?
           "header"
-        : "content",
+        : document.activeElement?.closest("header." + POPUP_CLASSES.content) ?
+          "content"
+        : document.activeElement,
       );
     }
     if (focusTrap && e.key === "Tab") {
@@ -175,7 +198,12 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
       }
     }
 
-    if (e.key === "Escape") {
+    if (
+      e.key === "Escape" &&
+      this.ref &&
+      isTopMostPopup(this.ref)
+      // !document.querySelector(`.FullscreenWrapper[aria-modal=true]`)
+    ) {
       onClose?.(e);
     }
   };
@@ -289,8 +317,7 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
   checkPosition = popupCheckPosition.bind(this);
   prevStateStyles: PopupState["stateStyle"][] = [];
   render() {
-    const defaultContentClassName =
-      this.props.title && !window.isLowWidthScreen ? "p-1 pl-2" : "p-1";
+    const defaultContentClassName = "p-1";
     const {
       onClose,
       positioning,
@@ -335,100 +362,103 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
     );
 
     const result = (
-      <>
-        {/* Used to improve UX for onWaitForContentFinish */}
-        {onClose && style.opacity !== 0 && (
-          <ClickCatchOverlay
-            style={{
-              position: "fixed",
-              opacity: 0,
-              zIndex: POPUP_ZINDEX,
-              ...clickCatchStyle,
-            }}
-            className="flex-col"
-            onClick={onClose}
-          />
-        )}
-
-        <div
-          className={`${POPUP_CLASSES.root} positioning_${positioning} card m-auto bg-popup${positioning === "right-panel" ? "-content" : ""} flex-col shadow-xl  o-hidden`}
-          data-command={this.props["data-command"]}
-          ref={(r) => {
-            if (r) {
-              this.ref = r;
-            }
-          }}
-          onClick={
-            !(onClickClose && onClose) ? undefined : (
-              (e) => {
-                if (window.getSelection()?.toString()) {
-                  return;
-                }
-                onClose(e);
-              }
-            )
-          }
-          style={{
-            boxSizing: "content-box",
-            ...style,
-          }}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="modal-headline"
-        >
-          <div
-            className={classOverride(
-              `${POPUP_CLASSES.rootChild} w-full min-h-0 text-center flex-col bg-inherit ${fullHeightPositions.includes(positioning) ? "f-1" : ""}`,
-              rootChildClassname,
-            )}
-            style={{
-              ...rootChildStyle,
-              ...showFullscreenToggle?.getStyle?.(Boolean(fullScreen)),
-            }}
-          >
-            <PopupHeader
-              {...this.props}
-              rootDiv={this.ref}
-              onToggleFullscreen={() => {
-                const newFullScreen = !fullScreen;
-                if (!newFullScreen) {
-                  this.position = undefined;
-                }
-                this.setState({ fullScreen: newFullScreen });
+      <PopupPresenceContext.Provider value={true}>
+        <>
+          {/* Used to improve UX for onWaitForContentFinish */}
+          {onClose && style.opacity !== 0 && (
+            <ClickCatchOverlay
+              style={{
+                position: "fixed",
+                opacity: 0,
+                zIndex: POPUP_ZINDEX,
+                ...clickCatchStyle,
               }}
-              toggleContent={toggleContent}
-              collapsed={collapsed}
-              fullScreen={fullScreen}
+              className="flex-col"
+              onClick={onClose}
             />
+          )}
 
-            {!collapsed && (
-              <div
-                className={classOverride(
-                  POPUP_CLASSES.content +
-                    " bg-inherit flex-col f-1 min-h-0 o-auto ",
-                  contentClassName,
-                )}
-                style={{
-                  ...contentStyle,
-                  ...contentFullScreenStyle,
+          <div
+            className={`${POPUP_CLASSES.root} positioning_${positioning} card m-auto bg-popup${positioning === "right-panel" ? "-content" : ""} flex-col shadow-xl  o-hidden`}
+            data-command={this.props["data-command"]}
+            data-key={this.props["data-key"]}
+            ref={(r) => {
+              if (r) {
+                this.ref = r;
+              }
+            }}
+            onClick={
+              !(onClickClose && onClose) ? undefined : (
+                (e) => {
+                  if (window.getSelection()?.toString()) {
+                    return;
+                  }
+                  onClose(e);
+                }
+              )
+            }
+            style={{
+              boxSizing: "content-box",
+              ...style,
+            }}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modal-headline"
+          >
+            <div
+              className={classOverride(
+                `${POPUP_CLASSES.rootChild} w-full min-h-0 text-center flex-col bg-inherit ${fullHeightPositions.includes(positioning) || fullScreen ? "f-1" : ""}`,
+                rootChildClassname,
+              )}
+              style={{
+                ...rootChildStyle,
+                ...showFullscreenToggle?.getStyle?.(Boolean(fullScreen)),
+              }}
+            >
+              <PopupHeader
+                {...this.props}
+                rootDiv={this.ref}
+                onToggleFullscreen={() => {
+                  const newFullScreen = !fullScreen;
+                  if (!newFullScreen) {
+                    this.position = undefined;
+                  }
+                  this.setState({ fullScreen: newFullScreen });
                 }}
-                data-command={"Popup.content" satisfies Command}
-              >
-                <ErrorTrap>{content || children}</ErrorTrap>
-              </div>
-            )}
+                toggleContent={toggleContent}
+                collapsed={collapsed}
+                fullScreen={fullScreen}
+              />
+
+              {!collapsed && (
+                <div
+                  className={classOverride(
+                    POPUP_CLASSES.content +
+                      " bg-inherit flex-col f-1 min-h-0 o-auto ",
+                    contentClassName,
+                  )}
+                  style={{
+                    ...contentStyle,
+                    ...contentFullScreenStyle,
+                  }}
+                  data-command={"Popup.content" satisfies Command}
+                >
+                  <ErrorTrap>{content || children}</ErrorTrap>
+                </div>
+              )}
+            </div>
+            <FooterButtons
+              {...pickKeys(this.props, [
+                "footerButtons",
+                "onClose",
+                "footer",
+                "onClose",
+              ] satisfies (keyof FooterButtonsProps)[])}
+              data-command="Popup.footer"
+            />
           </div>
-          <FooterButtons
-            {...pickKeys(this.props, [
-              "footerButtons",
-              "onClose",
-              "footer",
-              "onClose",
-            ] satisfies (keyof FooterButtonsProps)[])}
-            data-command="Popup.footer"
-          />
-        </div>
-      </>
+        </>
+      </PopupPresenceContext.Provider>
     );
 
     return ReactDOM.createPortal(result, this.el);

@@ -1,4 +1,4 @@
-import { getCommandElemSelector, getDataKeyElemSelector } from "Testing";
+import { getCommandElemSelector, getDataKey } from "Testing";
 import { goTo } from "utils/goTo";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
 
@@ -10,7 +10,7 @@ export const navbarSvgif: OnBeforeScreenshot = async (
   await goTo(page, "/");
 
   for (const to of ["/connections", "/users", "/server-settings", "/account"]) {
-    await addSceneAnimation(getDataKeyElemSelector(to));
+    await addSceneAnimation(getDataKey(to));
     await page.waitForTimeout(2000);
   }
 

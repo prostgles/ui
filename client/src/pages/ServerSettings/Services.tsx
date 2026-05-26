@@ -1,20 +1,20 @@
 import type { DBSSchema } from "@common/publishUtils";
 import { getEntries } from "@common/utils";
 import { useOnErrorAlert } from "@components/AlertProvider";
+import { Marked } from "@components/Chat/Marked";
 import { FlexCol, FlexRow } from "@components/Flex";
 import { Label } from "@components/Label";
-import { MonacoLogRenderer } from "@components/MonacoLogRenderer/MonacoLogRenderer";
+import { MonacoLogsWithFullscreen } from "@components/MonacoLogs/MonacoLogsWithFullscreen";
 import { Select } from "@components/Select/Select";
 import { StatusChip } from "@components/StatusChip";
 import { SvgIcon } from "@components/SvgIcon";
 import { SwitchToggle } from "@components/SwitchToggle";
-import type { DBHandlerClient } from "prostgles-client";
 import React, { useMemo } from "react";
-import type { Prgl } from "src/App";
 import type { FieldConfig } from "src/dashboard/SmartCard/SmartCard";
 import { SmartCardList } from "src/dashboard/SmartCardList/SmartCardList";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 
-type P = Pick<Prgl, "dbs" | "dbsMethods" | "dbsTables"> & {
+type P = {
   showSpecificService:
     | undefined
     | {
@@ -24,20 +24,15 @@ type P = Pick<Prgl, "dbs" | "dbsMethods" | "dbsTables"> & {
       };
 };
 
-export const Services = ({
-  dbs,
-  dbsMethods,
-  dbsTables,
-  showSpecificService,
-}: P) => {
+export const Services = ({ showSpecificService }: P) => {
+  const { dbs, dbsTables, dbsSql, dbsMethodSchema } = usePrglCore();
   const { servicesFieldConfigs } = useServicesFieldConfigs({
-    dbs,
-    dbsMethods,
     showSpecificService,
   });
   return (
     <SmartCardList
-      db={dbs as DBHandlerClient}
+      sql={dbsSql}
+      db={dbs}
       title={
         showSpecificService && (
           <Label
@@ -55,7 +50,7 @@ export const Services = ({
       }
       orderBy={{ key: "label" }}
       tableName={"services"}
-      methods={dbsMethods}
+      methods={dbsMethodSchema}
       tables={dbsTables}
       showTopBar={false}
       realtime={true}
@@ -66,10 +61,9 @@ export const Services = ({
 };
 
 const useServicesFieldConfigs = ({
-  dbs,
-  dbsMethods,
   showSpecificService,
-}: Pick<P, "dbsMethods" | "dbs" | "showSpecificService">) => {
+}: Pick<P, "showSpecificService">) => {
+  const { dbs, dbsMethods } = usePrglCore();
   const { toggleService } = dbsMethods;
   const { onErrorAlert } = useOnErrorAlert();
   const servicesFieldConfigs = useMemo(() => {
@@ -133,9 +127,12 @@ const useServicesFieldConfigs = ({
                     data-key="service-toggle"
                     title={isRunning ? "Stop service" : "Start service"}
                     checked={isRunning}
-                    onChange={() =>
-                      void onErrorAlert(async () => {
-                        await toggleService(name, !isRunning);
+                    onChange={async () =>
+                      await onErrorAlert(async () => {
+                        await toggleService({
+                          serviceName: name,
+                          enable: !isRunning,
+                        });
                       })
                     }
                   />
@@ -148,6 +145,7 @@ const useServicesFieldConfigs = ({
                       key={configKey}
                       title={config.label || configKey}
                       data-key={configKey}
+                      label={config.label || configKey}
                       btnProps={{
                         size: "small",
                       }}
@@ -192,11 +190,21 @@ const useServicesFieldConfigs = ({
       },
       {
         name: "description",
-        hide: !!showSpecificService,
+        hide: Boolean(showSpecificService),
+        renderMode: "value",
+        render: (description) => (
+          <Marked
+            codeHeader={undefined}
+            content={description}
+            loadedSuggestions={undefined}
+            prgl={undefined}
+            sqlHandler={undefined}
+          />
+        ),
       },
       {
         name: "default_port",
-        hide: !!showSpecificService,
+        hide: Boolean(showSpecificService),
       },
       {
         name: "logs",
@@ -214,7 +222,7 @@ const useServicesFieldConfigs = ({
               maxWidth: showSpecificService ? "200px" : undefined,
             }}
           >
-            <MonacoLogRenderer logs={logs || ""} label="Logs" />
+            <MonacoLogsWithFullscreen logs={logs || ""} label="Logs" />
           </FlexCol>
         ),
       },

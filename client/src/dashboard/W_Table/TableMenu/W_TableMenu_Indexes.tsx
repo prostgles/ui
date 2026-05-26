@@ -97,6 +97,7 @@ export const W_TableMenu_Indexes = ({
       </div>
       <SmartCardList
         db={prgl.db}
+        sql={prgl.sql}
         methods={prgl.methods}
         tables={prgl.tables}
         noDataComponent={<InfoRow color="info">No indexes</InfoRow>}

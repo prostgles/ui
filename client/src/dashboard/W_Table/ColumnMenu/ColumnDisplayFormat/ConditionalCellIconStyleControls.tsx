@@ -113,11 +113,16 @@ export const ConditionalCellIconStyleControls = ({
         color="action"
         variant="faded"
         iconPath={mdiPlus}
-        onClick={async () => {
+        onClickPromise={async () => {
           const firstNonNullValueRow = await db[tableName]?.findOne?.(
-            { [column.name]: { $ne: null } },
+            {
+              [column.name]: {
+                $nin: [null, ...Object.keys(style.valueToIconMap)],
+              },
+            },
             { select: { [column.name]: 1 } },
           );
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           const firstNonNullValue = firstNonNullValueRow?.[column.name];
           if (firstNonNullValue !== undefined) {
             updateCondStyle({

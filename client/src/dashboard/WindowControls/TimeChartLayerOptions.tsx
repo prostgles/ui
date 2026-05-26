@@ -35,19 +35,18 @@ export const TimeChartLayerOptions = ({
   w: wMapOrTimechart,
   mode,
 }: TimeChartLayerOptionsProps) => {
-  const { db, tables } = usePrgl();
-  const sqlHandler = db.sql;
+  const { db, sql, tables } = usePrgl();
   const linkOpts = link.options;
   const sqlDataSourceColumns = usePromise(async () => {
     if (
-      !sqlHandler ||
+      !sql ||
       linkOpts.type !== "timechart" ||
       linkOpts.dataSource?.type !== "sql"
     )
       return [];
     const { colTypes, error } = await getTableExpressionReturnType(
       linkOpts.dataSource.sql,
-      sqlHandler,
+      sql,
     );
     if (error) console.warn(error);
     return (
@@ -58,7 +57,7 @@ export const TimeChartLayerOptions = ({
         };
       }) ?? []
     );
-  }, [linkOpts, sqlHandler]);
+  }, [linkOpts, sql]);
 
   if (!windowIs(wMapOrTimechart, "timechart")) {
     return null;
@@ -176,6 +175,7 @@ export const TimeChartLayerOptions = ({
               variant={isOnScreen ? "text" : "faded"}
               iconPath={isOnScreen ? "" : mdiSigma}
               title="Aggregate function"
+              size="small"
               data-command="TimeChartLayerOptions.aggFunc"
               style={{
                 paddingRight: isOnScreen ? "0" : undefined,
@@ -200,6 +200,7 @@ export const TimeChartLayerOptions = ({
                 label="Aggregation type"
                 variant="div"
                 className="w-fit"
+                size="small"
                 data-command="TimeChartLayerOptions.aggFunc.select"
                 btnProps={{
                   iconPath: mdiSigma,
@@ -232,6 +233,7 @@ export const TimeChartLayerOptions = ({
                 btnProps={{
                   color: "action",
                 }}
+                size="small"
                 data-command="TimeChartLayerOptions.numericColumn"
                 fullOptions={numericCols.map((c) => ({
                   key: c.name,
@@ -257,6 +259,7 @@ export const TimeChartLayerOptions = ({
               label="Group by field"
               variant="div"
               className="w-fit "
+              size="small"
               data-command="TimeChartLayerOptions.groupBy"
               optional={true}
               disabledInfo={
@@ -320,10 +323,8 @@ export const TimeChartLayerOptions = ({
                         },
                       });
                     }}
-                    db={db}
                     tableName={lq.localTableName}
                     filter={dataSource.smartGroupFilter}
-                    tables={tables}
                   />
                 </FlexCol>
               )}

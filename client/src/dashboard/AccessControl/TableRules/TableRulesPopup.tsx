@@ -19,6 +19,7 @@ import { Icon } from "@components/Icon/Icon";
 import { mdiFile, mdiTable, mdiTableEye } from "@mdi/js";
 import { getEntries } from "@common/utils";
 import { SyncRuleControl } from "../RuleTypeControls/SyncRuleControl";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 
 type TableRulesPopupProps = TablePermissionControlsProps & {
   table: DBSchemaTablesWJoins[number];
@@ -31,13 +32,13 @@ export const TableRulesPopup = ({
   tablesWithRules: allRules,
   tableRules,
   onChange,
-  prgl,
   table,
   tableErrors,
   userTypes,
   onClose,
   ...props
 }: TableRulesPopupProps) => {
+  const prgl = usePrgl();
   const [editedRuleType, setEditedRuleType] = useState<EditedRuleType>(
     props.editedRuleType,
   );
@@ -72,7 +73,7 @@ export const TableRulesPopup = ({
     onClose();
   };
 
-  const { info } = table;
+  const { isFileTable, isView } = table;
   const ruleWasChanged =
     JSON.stringify(tableRules[editedRuleType]) ===
     JSON.stringify(localRules[editedRuleType]);
@@ -83,15 +84,15 @@ export const TableRulesPopup = ({
           <Icon
             className="text-2"
             path={
-              info.isFileTable ? mdiFile
-              : info.isView ?
+              isFileTable ? mdiFile
+              : isView ?
                 mdiTableEye
               : mdiTable
             }
           />
           <FlexCol className="gap-p5">
             <div>{table.name}</div>
-            {table.info.isFileTable && (
+            {table.isFileTable && (
               <div className="font-14 text-2">
                 File metadata is stored in this table
               </div>

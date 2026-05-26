@@ -81,7 +81,7 @@ export const MCPServerToolsGroupToggle = ({
                     checked={checked}
                     variant="micro"
                     onChange={({ currentTarget: { checked: newChecked } }) => {
-                      onErrorAlert(() =>
+                      void onErrorAlert(() =>
                         onToggleTools(ids, newChecked ? "approve" : "remove"),
                       );
                     }}

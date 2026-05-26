@@ -21,7 +21,7 @@ export const JoinedRecordsSection = ({
   descendants: JoinedRecordsProps["tables"];
 }) => {
   return (
-    <FlexCol className=" p-1 " data-command="JoinedRecords.Section">
+    <FlexCol className=" px-1 pb-1 pt-p5 " data-command="JoinedRecords.Section">
       {section.error && (
         <ErrorComponent
           error={section.error}
@@ -58,6 +58,7 @@ const JoinedRecordsSectionCardList = (
     newRowDataHandler,
     tableName,
     tablesToShow,
+    sql,
   } = props;
 
   const descendantInsertTables = useMemo(
@@ -102,6 +103,7 @@ const JoinedRecordsSectionCardList = (
       <SmartCardListJoinedNewRecords
         key={s.path.join(".")}
         db={db}
+        sql={sql}
         methods={methods}
         table={s.table}
         tables={tables}
@@ -128,6 +130,7 @@ const JoinedRecordsSectionCardList = (
       <SmartCardList
         key={s.path.join(".")}
         db={db}
+        sql={sql}
         tables={tables}
         methods={methods}
         tableName={s.tableName}

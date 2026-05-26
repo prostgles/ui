@@ -1,6 +1,14 @@
 import type { Extent } from "./DeckGLMap";
 import type { DeckGlLibs } from "./DeckGLWrapped";
 import type { TileLayer, TileLayerProps } from "deck.gl";
+import {
+  getLineColor,
+  getFillColor,
+  getPointRadius,
+  getText,
+  getTextColor,
+  getTextSize,
+} from "./MVTLayerProps";
 
 export const DEFAULT_TILE_URLS = [
   // 'http://{s}.tile.stamen.com/watercolor/{z}/{x}/{y}.jpg'
@@ -9,6 +17,10 @@ export const DEFAULT_TILE_URLS = [
   "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
   "https://b.tile.openstreetmap.org/{z}/{x}/{y}.png",
   "https://c.tile.openstreetmap.org/{z}/{x}/{y}.png",
+
+  // "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+
+  // https://vector.openstreetmap.org/shortbread_v1/{z}/{x}/{y}.mvt
 ];
 
 export function makeTileLayer(
@@ -19,8 +31,7 @@ export function makeTileLayer(
     onTilesLoad = undefined,
     showBorder = false,
     tileSize = 256, // 256 / devicePixelRatio; // or 512
-
-    asMVT = false,
+    zoomOffset = 0,
   } = {},
   deckGlLibs: DeckGlLibs,
 ): TileLayer {
@@ -45,18 +56,10 @@ export function makeTileLayer(
       },
       minZoom: 0,
       maxZoom: 14,
-      getFillColor: (f) => {
-        switch (f.properties.layerName) {
-          case "poi":
-            return [255, 0, 0];
-          case "water":
-            return [120, 150, 180];
-          case "building":
-            return [218, 218, 218];
-          default:
-            return [240, 240, 240];
-        }
-      },
+      opacity,
+      pointType: "circle+text",
+      getLineColor,
+      getFillColor,
       getLineWidth: (f) => {
         switch (f.properties.class) {
           case "street":
@@ -67,8 +70,13 @@ export function makeTileLayer(
             return 1;
         }
       },
-      getLineColor: [192, 192, 192],
-      getPointRadius: 2,
+      /** Here it breaks the rendering completely */
+      // extensions: [new deckGlLibs.extensions.CollisionFilterExtension()],
+      getPointRadius,
+      getText,
+      getTextColor,
+      getTextSize,
+      // getPointRadius: 2,
       pointRadiusUnits: "pixels",
       stroked: false,
       // picking: true
@@ -79,7 +87,6 @@ export function makeTileLayer(
     id: "basemap",
     TilesetClass: deckGlLibs.lib._Tileset2D,
     opacity,
-
     desaturate,
     transparentColor: [255, 255, 255, 255],
 
@@ -104,7 +111,7 @@ export function makeTileLayer(
     minZoom: 0,
     maxZoom: 19,
     tileSize,
-
+    zoomOffset,
     renderSubLayers: (props) => {
       const {
         bbox: { west, south, east, north },
@@ -154,8 +161,6 @@ export function makeImageLayer({
   sharpImage = false,
   deckGlLibs,
 }: MakeImageLayerArgs) {
-  //@ts-ignore
-  const { GL } = deckGlLibs.luma;
   return new deckGlLibs.lib.BitmapLayer({
     opacity,
     transparentColor: [255, 255, 255, 255],
@@ -168,11 +173,11 @@ export function makeImageLayer({
     textureParameters:
       !sharpImage ? undefined : (
         {
-          [GL.TEXTURE_MIN_FILTER]: GL.NEAREST,
-          [GL.TEXTURE_MAG_FILTER]: GL.NEAREST,
+          minFilter: "nearest",
+          magFilter: "nearest",
         }
       ),
 
-    coordinateSystem: deckGlLibs.lib.COORDINATE_SYSTEM.CARTESIAN,
+    coordinateSystem: "cartesian",
   });
 }

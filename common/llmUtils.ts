@@ -76,7 +76,7 @@ export const filterArrInverse = <T, U extends Partial<T>>(
 ): FilterUnMatch<T, U>[] => {
   const patternEntries = Object.entries(pattern);
   return arr.filter((item) => {
-    return patternEntries.every(
+    return patternEntries.some(
       ([key, value]) => item[key as keyof T] !== value,
     );
   }) as FilterUnMatch<T, U>[];
@@ -86,10 +86,15 @@ export const LLM_PROMPT_VARIABLES = {
   PROSTGLES_SOFTWARE_NAME: "${prostglesSoftwareName}",
   SCHEMA: "${schema}",
   DASHBOARD_TYPES: "${dashboardTypes}",
+  DB_TYPESCRIPT_SCHEMA: "${dbTypescriptSchema}",
+  DB_HANDLER_SCHEMA: "${dbHandlerSchema}",
   TODAY: "${today}",
 } as const;
 
-export const wrapCode = (language: "sql" | "typescript", code: string) => {
+export const wrapCode = (
+  language: "sql" | "typescript" | "html" | "json",
+  code: string,
+) => {
   return "```" + language + "\n" + code + "\n```";
 };
 

@@ -10,16 +10,17 @@ export const ToolUseChatMessageBtnTextSummary = ({
 }) => {
   const inputTextSummary = useMemo(() => {
     const maxLength = 50;
-    if (isObject(m.input)) {
-      const keys = Object.keys(m.input);
+    const input = m.input;
+    if (isObject(input)) {
+      const keys = Object.keys(input);
       const selectedKeys = keys.slice(0, 5);
       const args = selectedKeys
         .map((key) => {
-          const value = m.input[key];
+          const value = input[key];
           const valueString =
             Array.isArray(value) || isObject(value) ?
               JSON.stringify(value)
-            : value.toString();
+            : (value as number).toString();
 
           return `${key}: ${sliceText(valueString, Math.round(maxLength / selectedKeys.length), undefined, true)}`;
         })

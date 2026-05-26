@@ -1,11 +1,11 @@
 import { mdiHelp, mdiInformationOutline } from "@mdi/js";
-import React from "react";
+import React, { useState } from "react";
 import Btn from "./Btn";
 import { Checkbox } from "./Checkbox";
 import { classOverride } from "./Flex";
 import { Icon } from "./Icon/Icon";
 import "./Label.css";
-import PopupMenu from "./PopupMenu";
+import Popup from "./Popup/Popup";
 
 export type NormalLabelProps = {
   variant: "normal";
@@ -53,51 +53,39 @@ export const Label = ({
   ...otherProps
 }: LabelProps) => {
   const isHeader = variant === "header";
+  const [showInfo, setShowInfo] = useState<HTMLElement>();
 
   const ensureInfoBtnKeepsCardLayoutCellsConsistent = Boolean(
     !isHeader && info,
   );
 
-  const IconBtn = info && (
-    <PopupMenu
-      title={popupTitle ?? label ?? "Information"}
-      positioning="beneath-center"
-      clickCatchStyle={{ opacity: 0.3 }}
-      rootStyle={{
-        maxWidth: "500px",
-      }}
-      className={isHeader ? undefined : "show-on-parent-hover"}
-      contentClassName="p-1"
-      style={
-        ensureInfoBtnKeepsCardLayoutCellsConsistent ?
-          {
-            position: "absolute",
-            top: "-.5em",
-            right: 0,
-            overflow: "visible",
-          }
-        : {}
+  const iconBtnStyle: React.CSSProperties =
+    ensureInfoBtnKeepsCardLayoutCellsConsistent ?
+      {
+        position: "absolute",
+        top: "-.5em",
+        right: 0,
+        overflow: "visible",
       }
-      button={
-        !isHeader ?
-          <Btn iconPath={mdiHelp} size="micro" />
-        : <Btn
-            iconPath={iconPath}
-            className="Label_QuestionButton text-2  relative ai-center"
-            title="Click for more information"
-          />
-      }
-    >
-      <div className="flex-row ta-left">
-        <Icon
-          path={mdiInformationOutline}
-          size={1}
-          className="f-0 text-2 mr-1"
-        />
-        {info}
-      </div>
-    </PopupMenu>
-  );
+    : {};
+
+  const IconBtn =
+    !info ? null
+    : !isHeader ?
+      <Btn
+        iconPath={mdiHelp}
+        size="micro"
+        className=" show-on-parent-hover"
+        onClick={({ currentTarget }) => setShowInfo(currentTarget)}
+        style={iconBtnStyle}
+      />
+    : <Btn
+        iconPath={iconPath}
+        className="Label_QuestionButton text-2  relative ai-center"
+        title="Click for more information"
+        onClick={({ currentTarget }) => setShowInfo(currentTarget)}
+        style={iconBtnStyle}
+      />;
 
   return (
     <label
@@ -121,7 +109,7 @@ export const Label = ({
         color: size === "small" ? "var(--text-1)" : "var(--text-1)",
         ...otherProps.style,
         ...(ensureInfoBtnKeepsCardLayoutCellsConsistent &&
-          IconBtn && {
+          info && {
             paddingRight: "2em",
           }),
       }}
@@ -137,6 +125,28 @@ export const Label = ({
         />
       )}
       {!isHeader && IconBtn}
+      {info && showInfo && (
+        <Popup
+          title={popupTitle ?? label ?? "Information"}
+          anchorEl={showInfo}
+          positioning="beneath-center"
+          clickCatchStyle={{ opacity: 0.3 }}
+          rootStyle={{
+            maxWidth: "500px",
+          }}
+          contentClassName="p-1"
+          onClose={() => setShowInfo(undefined)}
+        >
+          <div className="flex-row ta-left">
+            <Icon
+              path={mdiInformationOutline}
+              size={1}
+              className="f-0 text-2 mr-1"
+            />
+            {info}
+          </div>
+        </Popup>
+      )}
     </label>
   );
 };

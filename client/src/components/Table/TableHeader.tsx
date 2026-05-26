@@ -86,6 +86,9 @@ export class TableHeader<Sort extends ColumnSortSQL> extends React.Component<
           role="row"
           className="noselect f-0 flex-row shadow bg-color-1"
           onWheel={onWheelScroll(TableRootClassname)}
+          style={{
+            zIndex: 1,
+          }}
         >
           {cols.map((col, iCol) => {
             const mySort = sort.find((s) => getSortColumn(s, [col]));
@@ -108,7 +111,7 @@ export class TableHeader<Sort extends ColumnSortSQL> extends React.Component<
             return (
               <div
                 key={iCol}
-                className={classOverride(className, "br b-color-1")}
+                className={classOverride(className, "jc-center br b-color-1")}
                 {...(col.onContextMenu ? iosContextMenuPolyfill() : {})}
                 onContextMenu={
                   !col.onContextMenu ? undefined : (
@@ -133,6 +136,8 @@ export class TableHeader<Sort extends ColumnSortSQL> extends React.Component<
                 style={{
                   ...getDraggedTableColStyle(col, iCol, draggedCol),
                   ...contextMenuStyles,
+                  maxHeight: "3em",
+                  overflow: "hidden",
                 }}
                 draggable={true}
                 onDragStart={(e) => {
@@ -254,7 +259,7 @@ export class TableHeader<Sort extends ColumnSortSQL> extends React.Component<
                     "flex-row fs-1 h-fit " +
                     (!col.sortable ? ""
                     : typeof mySort?.asc !== "boolean" ? " sort-none "
-                    : [false].includes(mySort.asc as any) ? "sort-desc"
+                    : [false].includes(mySort.asc) ? "sort-desc"
                     : "sort-asc") +
                     (col.headerClassname || "")
                   }
@@ -271,7 +276,7 @@ export class TableHeader<Sort extends ColumnSortSQL> extends React.Component<
                     </div>
                     {col.subLabel !== undefined && this.props.showSubLabel ?
                       <div
-                        className="table-column-sublabel text-2 mt-p25 font-normal ws-nowrap text-ellipsis "
+                        className="table-column-sublabel text-2 font-normal ws-nowrap text-ellipsis "
                         title={col.subLabelTitle}
                       >
                         {col.subLabel}

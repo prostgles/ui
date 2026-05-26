@@ -6,6 +6,7 @@ import { setThemeForSVGScreenshot } from "./setThemeForSVGScreenshot";
 import type { TextForSVG } from "./text/getTextForSVG";
 import { renderSvg } from "./text/textToSVG";
 import type { getWhatToRenderOnSVG } from "./utils/getWhatToRenderOnSVG";
+import { domToSvg2 } from "./domToSvg2";
 export const displayNoneIfDark = "--dark-theme-hide";
 export const displayNoneIfLight = "--light-theme-hide";
 export const domToThemeAwareSVG = async (
@@ -280,6 +281,7 @@ export const domToThemeAwareSVG = async (
 document.body.addEventListener("keydown", (e) => {
   if (e.key === "F2") {
     void domToThemeAwareSVG(document.body, "current");
+    // domToSvg2();
   } else if (e.key === "F4") {
     void domToThemeAwareSVG(document.body, "both");
   } else if (e.key === "F6") {

@@ -70,15 +70,25 @@ export const AccessControlRuleEditor = ({
   dbsConnection,
   onCancel,
 }: UserGroupRuleEditorProps) => {
-  const { db, dbs, dbsTables, dbsMethods, connection, tables } = prgl;
+  const {
+    dbs,
+    sql,
+    dbsTables,
+    dbsMethods,
+    connection,
+    tables,
+    dbsMethodSchema,
+  } = prgl;
   const editedRule = useEditedAccessRule({ action, prgl });
   const { setAction } = useAccessControlSearchParams();
   const [wspErrors, setWspErrors] = useState<string>();
 
-  const currentSQLUser: string | undefined = usePromise(
+  const currentSQLUser = usePromise(
     async () =>
-      await db.sql?.(`SELECT "current_user"()`, {}, { returnType: "value" }),
-    [db],
+      (await sql?.(`SELECT "current_user"()`, {}, { returnType: "value" })) as
+        | string
+        | undefined,
+    [sql],
   );
   const type = editedRule?.type;
   if (!editedRule) {
@@ -157,8 +167,10 @@ export const AccessControlRuleEditor = ({
           <UserStats
             theme={prgl.theme}
             dbs={dbs}
+            dbsSql={prgl.dbsSql}
             dbsTables={dbsTables}
             dbsMethods={dbsMethods}
+            dbsMethodSchema={dbsMethodSchema}
           />
         </FlexRow>
 
@@ -267,7 +279,7 @@ export const AccessControlRuleEditor = ({
                 onChange({
                   ...rule,
                   ...newRule,
-                } as any);
+                } as AccessRule);
               }}
             />
 
@@ -301,7 +313,6 @@ export const AccessControlRuleEditor = ({
 
             <PublishedMethods
               className="my-2 PublishedMethods"
-              prgl={prgl}
               editedRule={editedRule}
               accessRuleId={
                 action.type === "edit" ? action.selectedRuleId : undefined

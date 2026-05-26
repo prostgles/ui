@@ -790,15 +790,14 @@ CREATE OR REPLACE FUNCTION setof_fake_contacts(num int4) RETURNS SETOF customers
 $$ LANGUAGE SQL; 
 
 CREATE TABLE user_types (
-  id TEXT PRIMARY KEY, 
-  description TEXT
+  id TEXT PRIMARY KEY
 );  
 
-INSERT INTO user_types (id, description) 
-VALUES ('customer', 'Places orders for delivery'), 
-  ('restaurant_manager', 'Represents a restaurant and manages menu items and orders'),
-  ('support', 'Provides customer support for the food delivery service'),
-  ('rider', 'Delivers orders for the food delivery service');
+INSERT INTO user_types (id) 
+VALUES ('customer'), 
+  ('restaurant_manager'),
+  ('support'),
+  ('rider');
 
 CREATE TABLE addresses (
   id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -811,6 +810,7 @@ CREATE TABLE addresses (
 );
 
 CREATE INDEX idx_addresses ON addresses USING gist (geog);
+CREATE INDEX idx_addresses_geometry ON addresses USING gist ((geog::geometry));
 
 
 CREATE TABLE users (
@@ -821,7 +821,7 @@ CREATE TABLE users (
   first_name VARCHAR(50) NOT NULL,
   last_name VARCHAR(50) NOT NULL,
   phone_number VARCHAR(20) NOT NULL,
-  location GEOGRAPHY,
+  rider_location GEOGRAPHY,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -840,13 +840,23 @@ CREATE TABLE restaurants (
   id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
   address VARCHAR(100) NOT NULL,
-  logo BYTEA,
-  address_id BIGINT NOT NULL REFERENCES addresses,
+  website TEXT,
+  type TEXT,
+  logo TEXT GENERATED ALWAYS AS (
+    'https://www.google.com/s2/favicons?domain=' ||
+    regexp_replace(nullif(website, ''), '^(https?://[^/]+).*$', '\1/') ||
+    '&sz=64'
+  ) STORED,
+  is_popular BOOLEAN GENERATED ALWAYS AS (
+    name ~* '\m(McDonald''s|KFC|Burger King|Sun Cafe|Subway|Domino''s|Pizza Hut|Starbucks|Costa|Pret A Manger|Greggs|Nando''s)\M' 
+  ) STORED,
+  address_id BIGINT NOT NULL REFERENCES addresses ON DELETE CASCADE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX idx_restaurants_address_id ON restaurants ( address_id );
 CREATE INDEX idx_restaurants_id_address_id ON restaurants ( id, address_id );
+CREATE INDEX idx_restaurant_name ON restaurants ( name );
 
 CREATE TABLE restaurant_managers (
   restaurant_id INTEGER REFERENCES restaurants(id),
@@ -856,7 +866,7 @@ CREATE TABLE restaurant_managers (
  
 CREATE TABLE menu_items (
   id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  restaurant_id INTEGER NOT NULL REFERENCES restaurants(id),
+  restaurant_id INTEGER NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
   name VARCHAR(100) NOT NULL,
   category VARCHAR(100) NOT NULL,
   price NUMERIC(8,2) NOT NULL,
@@ -906,6 +916,8 @@ CREATE TABLE orders (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE INDEX ON orders (id, restaurant_id, customer_id, deliverer_id);
+
 CREATE INDEX ON orders (restaurant_id);
 CREATE INDEX ON orders (customer_id);
 CREATE INDEX ON orders (deliverer_id);
@@ -916,12 +928,15 @@ CREATE INDEX ON orders (deliverer_id, created_at);
 
 CREATE TABLE order_items (
   id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  order_id INTEGER NOT NULL REFERENCES orders(id),
-  menu_item_id INTEGER NOT NULL REFERENCES menu_items(id),
+  order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  menu_item_id INTEGER NOT NULL REFERENCES menu_items(id) ON DELETE CASCADE,
   quantity INTEGER NOT NULL,
   price NUMERIC(8,2) NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE INDEX ON order_items (order_id);
+CREATE INDEX ON order_items (menu_item_id);
 
 CREATE TABLE order_updates (
   id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -1005,6 +1020,10 @@ CREATE TABLE IF NOT EXISTS "london_restaurants.geojson" (
 CREATE INDEX IF NOT EXISTS idx_london 
 ON "london_restaurants.geojson" USING gist (geometry);
 
+
+CREATE INDEX IF NOT EXISTS idx_london_geometry 
+ON "london_restaurants.geojson" USING gist ((geometry::geometry));
+
 /* 
   To include tag values in the CSV must ensure add "out meta" or "out body"
   https://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL#CSV_output_mode 
@@ -1045,14 +1064,14 @@ SET geometry = st_point(lon, lat, 4326);
 
 CREATE TABLE IF NOT EXISTS routes (
   id BIGINT PRIMARY KEY,
-  geog GEOGRAPHY,
   deliverer_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
-  geometry JSONB
+  geometry JSONB,
+  geog GEOGRAPHY GENERATED ALWAYS AS (ST_SetSRID(ST_GeomFromGeoJSON(geometry), 4326)) STORED
 );
 
 /* Create ~14k restaurants in London */
 WITH raddr as (
-  SELECT name, st_centroid(geometry)::GEOGRAPHY AS geog, 'restaurant' as type, postcode
+  SELECT name, website, amenity, st_centroid(geometry)::GEOGRAPHY AS geog, 'restaurant' as type, postcode
   FROM "london_restaurants.geojson"
   WHERE name IS NOT NULL
   -- AND postcode IS NOT NULL
@@ -1064,8 +1083,8 @@ iaddr as (
   RETURNING *
 ), 
 ires AS (
-  INSERT INTO restaurants (name, address, address_id)
-  SELECT r.name, 'London', a.id
+  INSERT INTO restaurants (name, address, type, website, address_id)
+  SELECT r.name, 'London', r.amenity, website, a.id
   FROM iaddr a
   INNER JOIN raddr r 
     ON a.geog::TEXT = r.geog::TEXT
@@ -1097,27 +1116,64 @@ AS $$
     number_of_riders INTEGER;
 BEGIN
 
-  WITH uadd as (
-    INSERT INTO addresses (street, city, state, postal_code, country, geog)
-    SELECT 'West street', 'London', 'UK', 'England', postal_code,
-      (
-        st_dump( 
-          st_generatepoints(
-            st_buffer(geog::GEOMETRY, 0.05, 'quad_segs=8'), 
-            100
-          )
-        )
-      ).geom::GEOGRAPHY
-    FROM addresses a
-    WHERE EXISTS (
-      SELECT * 
-      FROM restaurants r
-      WHERE r.address_id = a.id
+  -- WITH uadd as (
+  --   INSERT INTO addresses (street, city, state, postal_code, country, geog)
+  --   SELECT 'West street', 'London', 'UK', 'England', postal_code,
+  --     (
+  --       st_dump( 
+  --         st_generatepoints(
+  --           st_buffer(geog::GEOMETRY, 0.1, 'quad_segs=8'), 
+  --           100
+  --         )
+  --       )
+  --     ).geom::GEOGRAPHY
+  --   FROM addresses a
+  --   WHERE EXISTS (
+  --     SELECT * 
+  --     FROM restaurants r
+  --     WHERE r.address_id = a.id
+  --   )
+  --   ORDER BY random()
+  --   LIMIT number_of_users
+  --   RETURNING *
+  -- ), 
+  WITH road_points AS (
+    SELECT
+      ST_LineInterpolatePoint(r.geog::geometry, random())::geography AS road_geog
+    FROM routes r
+    WHERE r.geog IS NOT NULL
+    AND EXISTS (
+      SELECT 1
+      FROM v_restaurants res
+      WHERE is_popular 
+      AND ST_DWithin(res.geog, r.geog, 5000) -- within 5km of a restaurant
     )
     ORDER BY random()
     LIMIT number_of_users
+  ),
+  uadd AS (
+    INSERT INTO addresses (street, city, state, postal_code, country, geog)
+    SELECT
+      'West street',
+      'London',
+      'UK',
+      COALESCE(NULLIF(near_addr.postal_code,''), 'N/A'),
+      'England',
+      ST_Project(
+        rp.road_geog,
+        8 + random() * 25,
+        random() * 2 * pi()
+      )::geography
+    FROM road_points rp
+    LEFT JOIN LATERAL (
+      SELECT a.postal_code
+      FROM addresses a
+      WHERE a.geog IS NOT NULL
+      ORDER BY a.geog <-> rp.road_geog
+      LIMIT 1
+    ) near_addr ON TRUE
     RETURNING *
-  ), 
+  ),
   new_users AS (
     SELECT fk.*, 'pwd' as pwd, 'customer' as type, 
       geog, id as address_id
@@ -1133,17 +1189,12 @@ BEGIN
     SELECT email, pwd, first_name, last_name, phone_number, type,  now() - (random() * period)
     FROM new_users
     RETURNING *
-  )
-  -- , 
-  -- uains AS (
+  ) 
     INSERT INTO user_addresses (user_id, address_id)
     SELECT u.id, nu.address_id 
     FROM uins u 
     INNER JOIN new_users nu
-      ON u.email = nu.email
-  --   RETURNING *
-  -- )
-  -- SELECT * FROM uains
+      ON u.email = nu.email 
   ;
 
   number_of_riders := GREATEST(CEIL(number_of_users / 5), 1);
@@ -1155,7 +1206,6 @@ BEGIN
   LIMIT number_of_riders;
 END $$;
 
-CALL mock_users(1e5::integer, '1 year');
 
 CREATE OR REPLACE VIEW customers AS
 WITH order_stats AS (
@@ -1214,67 +1264,90 @@ WHERE rnum < 50; --number of menu items per restaurant
 
 
 
-CREATE OR REPLACE PROCEDURE mock_orders(number_of_orders INTEGER DEFAULT 1e4, period INTERVAL DEFAULT '1 second')
+CREATE OR REPLACE PROCEDURE mock_orders(
+  number_of_orders INTEGER DEFAULT 1e4, 
+  period INTERVAL DEFAULT '1 second',
+  restaurant_name TEXT DEFAULT NULL
+)
 LANGUAGE plpgsql
 AS $$  
 BEGIN
  
-  INSERT INTO orders (
-    customer_id, 
-    customer_address_id, 
-    restaurant_id, 
-    deliverer_id, 
-    status, 
-    delivery_fee, 
-    service_fee, 
-    total_price, 
-    created_at
-  )
-  SELECT 
-    u.id as customer_id, 
-    u.address_id as customer_address_id, 
-    r.id as restaurant_id, 
-    rider.id as deliverer_id,  
-    CASE WHEN random() < 0.5 THEN 'preparing' ELSE 'picked_up' END as order_status,
-    round(r.dist/1000) as delivery_fee, 
-    1 as service_fee, 
-    round(random() * 100) as total_price, 
-    now() - (random() * period) as created_at
-  FROM (
-    SELECT *, row_number() over() as rnum
+  WITH filtered_restaurants AS (
+    SELECT id, geog
+    FROM v_restaurants
+    WHERE geog IS NOT NULL
+      AND is_popular = true
+      AND CASE 
+        WHEN restaurant_name IS NOT NULL 
+          THEN name ilike restaurant_name 
+        ELSE logo IS NOT NULL 
+      END
+  ),
+  chosen_customers AS (
+    SELECT c.*, row_number() OVER () AS rnum
     FROM (
-      SELECT *
-      FROM customers
-      ORDER BY last_order
+      SELECT c.*
+      FROM customers c
+      WHERE c.geog IS NOT NULL
+        AND EXISTS (
+          SELECT 1
+          FROM filtered_restaurants fr
+          WHERE ST_DWithin(c.geog, fr.geog, 5000)
+        )
+      ORDER BY c.last_order
       LIMIT number_of_orders
-    ) unested
-  ) u
-  INNER JOIN ( 
-    SELECT *, row_number() over(ORDER BY random()) as rnum
-    FROM v_riders, 
+    ) c
+  ),
+  chosen_riders AS (
+    SELECT *, row_number() OVER (ORDER BY random()) AS rnum
+    FROM v_riders,
       generate_series(
-        1, 
-        greatest(ceil(number_of_orders/(select count(*) from v_riders)), 1)::BIGINT
+        1,
+        greatest(ceil(number_of_orders / (SELECT count(*) FROM v_riders)), 1)::bigint
       )
     LIMIT number_of_orders
-  ) rider
-  ON rider.rnum = u.rnum
-  LEFT JOIN LATERAL (
-    SELECT *
-      , st_distance(u.geog, ri.geog) as dist
-    FROM v_restaurants ri
-    WHERE st_distance(u.geog, ri.geog) < 7000
-    ORDER BY u.geog <-> ri.geog
-    LIMIT 1
-  ) r ON TRUE; 
- 
-
+  ),
+  new_orders AS (
+    INSERT INTO orders (
+      customer_id, 
+      customer_address_id, 
+      restaurant_id, 
+      deliverer_id, 
+      status, 
+      delivery_fee, 
+      service_fee, 
+      total_price, 
+      created_at
+    )
+    SELECT 
+      u.id , 
+      u.address_id , 
+      r.id  , 
+      rider.id  ,  
+      CASE WHEN random() < 0.5 THEN 'preparing' ELSE 'picked_up' END as order_status,
+      round(r.dist/1000) as delivery_fee, 
+      1 as service_fee, 
+      round(random() * 100) as total_price, 
+      now() - (random() * period) as created_at
+    FROM chosen_customers u
+    JOIN chosen_riders rider
+      ON rider.rnum = u.rnum
+    JOIN LATERAL (
+      SELECT fr.id, ST_Distance(u.geog, fr.geog) AS dist
+      FROM filtered_restaurants fr
+      WHERE ST_DWithin(u.geog, fr.geog, 7000)
+      ORDER BY u.geog <-> fr.geog
+      LIMIT 1
+    ) r ON TRUE
+    RETURNING *
+  )
   /* Create 5 items per order  */
   INSERT INTO order_items (order_id, menu_item_id, quantity, price, created_at)
   SELECT id, item_id, 1, price, now() - (random() * period)
   FROM (
     SELECT  o.id, o.restaurant_id, mi.id as item_id, mi.price, row_number() over(PARTITION BY o.id ) as urnum
-    FROM orders o
+    FROM new_orders o
     INNER JOIN (
       SELECT id, restaurant_id, price
       FROM menu_items
@@ -1310,8 +1383,6 @@ BEGIN
 
 END $$;
 
-CALL mock_orders(1e5::INTEGER, '1 year'::INTERVAL);
-CALL mock_orders(35e3::INTEGER, '1 hour'::INTERVAL);
 
 
 
@@ -1368,7 +1439,7 @@ BEGIN
   WHILE now() < end_time AND progress < 1 LOOP
 
     UPDATE users u
-    SET location = st_lineinterpolatepoint(r.geog, progress - (random() * 0.1), true)
+    SET rider_location = st_lineinterpolatepoint(r.geog::geometry, progress - (random() * 0.1), true)::geography
     FROM routes r
     WHERE u.id = r.deliverer_id;
     
@@ -1378,3 +1449,61 @@ BEGIN
     PERFORM pg_sleep(random() * 1);  
   END LOOP;
 END $$; 
+
+CREATE OR REPLACE PROCEDURE ensure_popular_restaurant_customer_coverage(
+  period INTERVAL DEFAULT '1 day',
+  restaurant_name TEXT DEFAULT NULL
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  r RECORD;
+  new_address_id BIGINT;
+  new_user_id INT;
+  seed_email TEXT;
+BEGIN
+  FOR r IN
+    SELECT vr.id, vr.name, vr.geog
+    FROM v_restaurants vr
+    WHERE vr.name ilike restaurant_name
+  LOOP
+    IF NOT EXISTS (
+      SELECT 1
+      FROM customers c
+      WHERE c.geog IS NOT NULL
+        AND ST_DWithin(c.geog, r.geog, 5000)
+    ) THEN
+      INSERT INTO addresses (street, city, state, postal_code, country, geog)
+      VALUES (
+        'Near ' || left(r.name, 200),
+        'London',
+        'UK',
+        'N/A',
+        'England',
+        ST_Project(
+          r.geog,
+          100 + random() * 4500,   -- always <= 4.6km
+          random() * 2 * pi()
+        )::geography
+      )
+      RETURNING id INTO new_address_id;
+
+      seed_email := 'seed_pop_' || r.id || '_' || floor(extract(epoch from clock_timestamp()))::text || '@local.test';
+
+      INSERT INTO users (type, email, password, first_name, last_name, phone_number, created_at)
+      VALUES (
+        'customer',
+        seed_email,
+        'pwd',
+        'Seed',
+        'Customer',
+        '07000000000',
+        now() - (random() * period)
+      )
+      RETURNING id INTO new_user_id;
+
+      INSERT INTO user_addresses (user_id, address_id)
+      VALUES (new_user_id, new_address_id);
+    END IF;
+  END LOOP;
+END $$;

@@ -12,7 +12,7 @@ import {
   type TabularExpression,
 } from "./getTabularExpressions";
 
-export type GetTableExpressionSuggestionsArgs = Pick<
+export type TableExpressionSuggestionArgs = Pick<
   SQLMatchContext,
   "ss" | "sql"
 > & {
@@ -20,8 +20,8 @@ export type GetTableExpressionSuggestionsArgs = Pick<
   parentCb?: SQLMatchContext["cb"];
 };
 
-export const getTableExpressionSuggestions = async (
-  args: GetTableExpressionSuggestionsArgs,
+export const getTableExpressionReturnTypes = async (
+  args: TableExpressionSuggestionArgs,
   require: "table" | "columns",
   onlyCurrentBlock = false,
 ): Promise<{

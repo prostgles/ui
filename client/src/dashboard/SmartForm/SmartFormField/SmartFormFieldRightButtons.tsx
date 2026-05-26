@@ -26,7 +26,6 @@ export const getSmartFormFieldRightButtons = ({
         title={showDateInput.value ? "Edit as text" : "Edit with picker"}
         iconPath={showDateInput.value ? mdiFormatText : mdiCalendar}
         className="h-full"
-        // color={showDateInput? "action" : undefined}
         onClick={() => showDateInput.onChange(!showDateInput.value)}
       />
     );

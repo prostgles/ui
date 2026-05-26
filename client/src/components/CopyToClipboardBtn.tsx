@@ -15,8 +15,8 @@ export const CopyToClipboardBtn = ({
       {...btnProps}
       title={t.common["Copy to clipboard"]}
       iconPath={mdiContentCopy}
-      onClickMessage={async (_, setM) => {
-        await navigator.clipboard.writeText(content);
+      onClickMessage={(_, setM) => {
+        void navigator.clipboard.writeText(content);
         setM({ ok: t.common["Copied!"] });
       }}
     />

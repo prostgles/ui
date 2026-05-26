@@ -3,11 +3,11 @@ import { isJoinedFilter } from "@common/filterUtils";
 import Btn from "@components/Btn";
 import { FlexCol, classOverride } from "@components/Flex";
 import { InfoRow } from "@components/InfoRow";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject } from "prostgles-types";
 import React, { useMemo } from "react";
+import type { Prgl } from "src/App";
 import type { ContextDataSchema } from "../AccessControl/OptionControllers/FilterControl";
-import type { CommonWindowProps } from "../Dashboard/Dashboard";
+import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
 import { DetailedFilterControl } from "../DetailedFilterControl/DetailedFilterControl";
 import type { FilterWrapperProps } from "../DetailedFilterControl/FilterWrapper";
 import type { ColumnConfig } from "../W_Table/ColumnMenu/ColumnMenu";
@@ -16,9 +16,9 @@ export * from "./smartFilterUtils";
 
 export type Operand = "AND" | "OR";
 export type SmartFilterProps = Pick<FilterWrapperProps, "variant"> & {
-  db: DBHandlerClient;
+  db: Prgl["db"];
   tableName: string;
-  tables: CommonWindowProps["tables"];
+  tables: DBSchemaTableWJoins[];
   onChange: (filter: DetailedFilter[]) => void;
   detailedFilter?: DetailedFilter[];
   operand?: Operand;
@@ -134,6 +134,7 @@ export const SmartFilter = (props: SmartFilterProps) => {
               <Btn
                 className="OPERAND text-active hover"
                 title={onOperandChange ? "Press to toggle" : "Operand"}
+                size="small"
                 onClick={
                   !onOperandChange ? undefined : (
                     () => {

@@ -68,110 +68,15 @@ export const W_TableMenu_CurrentQuery = (props: W_TableMenuProps) => {
             minWidth: "500px",
             minHeight: "500px",
           }}
-          language={type === "SQL" ? "sql" : "javascript"}
+          language={
+            type === "Full config" ? "json"
+            : type === "SQL" ?
+              "sql"
+            : "javascript"
+          }
           value={query}
         />
       )}
     </FlexCol>
   );
 };
-/*
-
-await db['users'].find(
-  {}, 
-  {
-  "select": {
-    "id": 1,
-    "email": 1,
-    "password": 1,
-    "first_name": 1,
-    "last_name": 1,
-    "phone_number": 1,
-    "type": 1,
-    "location": 1,
-    "created_at": 1,
-    "customer_id_orders": {
-      "$leftJoin": [
-        {
-          "on": [
-            {
-              "id": "customer_id"
-            }
-          ],
-          "table": "orders"
-        }
-      ],
-      "filter": { "c": { ">": 0 } },
-      "limit": 20,
-      "select": {
-        "c": {
-          "$countAll": []
-        }
-      },
-      "filter": {}
-    }
-  },
-  "limit": 5,
-  "orderBy": []
-}
-)
-
-await db['users'].find(
-  {
-  "first_name": "Mirta"
-}, 
-  {
-  "select": {
-    "id": 1,
-    "email": 1,
-    "password": 1,
-    "first_name": 1,
-    "last_name": 1,
-    "phone_number": 1,
-    "type": 1,
-    "location": 1,
-    "created_at": 1,
-    "deliverer_id_orders": {
-      "$leftJoin": [
-        {
-          "on": [
-            {
-              "id": "deliverer_id"
-            }
-          ],
-          "table": "orders"
-        }
-      ],
-      "limit": 20,
-      "select": {
-        "COUNT ALL": {
-          "$countAll": []
-        }
-      },
-      "filter": {}
-    },
-    "customer_id_orders": {
-      "$leftJoin": [
-        {
-          "on": [
-            {
-              "id": "customer_id"
-            }
-          ],
-          "table": "orders"
-        }
-      ],
-      "limit": 20,
-      "select": {
-        "COUNT ALL": {
-          "$countAll": []
-        }
-      },
-      "filter": {}
-    }
-  },
-  "orderBy": []
-}
-)
-
-*/

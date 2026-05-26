@@ -1,11 +1,12 @@
-import type { JSONB } from "prostgles-types";
-import { speechToTextService } from "./services/speechToText/speechToText.service";
-import type { JSONBTypeIfDefined } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServerTypes";
-import { webSearchSearxngService } from "./services/webSearchSearxng/webSearchSearxng.service";
 import type {
   ExecutionResult,
   ProcessLog,
-} from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/DockerSandbox/executeDockerCommand";
+} from "@src/McpHub/DockerSandbox/executeDockerCommand";
+import type { JSONBTypeIfDefined } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServerTypes";
+import type { JSONB } from "prostgles-types";
+import { documentsService } from "./services/documents/documents.service";
+import { speechToTextService } from "./services/speechToText/speechToText.service";
+import { webSearchSearxngService } from "./services/webSearchSearxng/webSearchSearxng.service";
 
 export type DockerGPUS = "none" | "all" | number | number[];
 
@@ -39,13 +40,39 @@ export type ProstglesService = {
   gpus?: DockerGPUS;
   healthCheck: { endpoint: string; method?: "GET" | "POST" };
   volumes?: Record<string, string>;
+  bind?: Record<
+    /**
+     * source, src
+     * The location of the file or directory on the host. This can be an absolute or relative path.
+     */
+    string,
+    {
+      /**
+       * destination, dst, target
+       * The path where the file or directory is mounted in the container. Must be an absolute path.
+       */
+      containerPath: string;
+      /**
+       * readonly, ro
+       * Whether to mount the bind as read-only.
+       */
+      readOnly?: boolean;
+    }
+  >;
   endpoints: Record<
     string,
     {
       method: "GET" | "POST";
       description: string;
       /* Defaults to 'body' for POST and 'query' for GET */
-      inputType?: "body" | "query";
+      inputType?: /** Will stringify if needed */
+      | "body"
+        /**
+         * Will convert to FormData. Only supports string and Blob values.
+         */
+        | "FormData"
+        | "query";
+
       inputSchema: JSONB.FieldType | undefined;
       outputSchema: JSONB.FieldType | undefined;
     }
@@ -55,6 +82,7 @@ export type ProstglesService = {
 export const prostglesServices = {
   speechToText: speechToTextService,
   webSearchSearxng: webSearchSearxngService,
+  documents: documentsService,
 };
 
 export type RunningServiceInstance<
@@ -96,10 +124,13 @@ export type ServiceInstance<
       getLogs: () => ProcessLog[];
       stop: () => void;
     }
-  | RunningServiceInstance<Service>
   | {
       status: "error";
       error: unknown;
-    };
+    }
+  | {
+      status: "stopped";
+    }
+  | RunningServiceInstance<Service>;
 
 export type OnServiceLogs = (logs: ProcessLog[]) => void;

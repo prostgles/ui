@@ -1,44 +1,57 @@
 import Btn from "@components/Btn";
 import { Marked } from "@components/Chat/Marked";
-import Expander from "@components/Expander";
+import { Expander } from "@components/Expander";
 import { mdiBrain } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { SQLHandler } from "prostgles-client";
 import React from "react";
 import type { LoadedSuggestions } from "src/dashboard/Dashboard/dashboardUtils";
 import { type LLMMessageContent } from "../ToolUseChatMessage/ToolUseChatMessage";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 
 export const LLMChatMessageContentText = (props: {
   messageContent: Extract<LLMMessageContent, { type: "text"; text: string }>;
   loadedSuggestions: LoadedSuggestions | undefined;
-  db: DBHandlerClient;
+  sqlHandler: SQLHandler | undefined;
 }) => {
-  const { messageContent, loadedSuggestions, db } = props;
-
-  const sqlHandler = db.sql;
+  const {
+    messageContent: { reasoning, text },
+    loadedSuggestions,
+    sqlHandler,
+  } = props;
+  const prgl = usePrgl();
   return (
     <React.Fragment>
-      {messageContent.reasoning && (
+      {reasoning && (
         <Expander
           getButton={() => (
-            <Btn title="Reasoning" iconPath={mdiBrain} variant="faded">
-              Reasoning...
+            <Btn
+              title="Reasoning"
+              iconPath={mdiBrain}
+              variant="text"
+              size="small"
+            >
+              Reasoning
             </Btn>
           )}
         >
           <Marked
             codeHeader={undefined}
-            content={messageContent.reasoning}
+            content={reasoning}
             sqlHandler={sqlHandler}
             loadedSuggestions={loadedSuggestions}
+            prgl={prgl}
           />
         </Expander>
       )}
-      <Marked
-        codeHeader={undefined}
-        content={messageContent.text}
-        sqlHandler={sqlHandler}
-        loadedSuggestions={loadedSuggestions}
-      />
+      {text && (
+        <Marked
+          codeHeader={undefined}
+          content={text}
+          sqlHandler={sqlHandler}
+          loadedSuggestions={loadedSuggestions}
+          prgl={prgl}
+        />
+      )}
     </React.Fragment>
   );
 };

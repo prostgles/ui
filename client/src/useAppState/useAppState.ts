@@ -1,8 +1,7 @@
-import { type DBHandlerClient, useAsyncEffectQueue } from "prostgles-client";
-import { includes } from "prostgles-types";
-import { useMemo, useState } from "react";
 import type { DBSSchema } from "@common/publishUtils";
-import type { AppState } from "../App";
+import { useAsyncEffectQueue } from "prostgles-client";
+import { useMemo, useState } from "react";
+import type { PrglReadyState } from "../App";
 import type { DBS, DBSMethods } from "../dashboard/Dashboard/DBS";
 import { getTables } from "../dashboard/Dashboard/getTables";
 import { dbsConnectionOptions } from "./dbsConnectionOptions";
@@ -15,33 +14,44 @@ export const useAppState = (
   const serverState = useServerState();
   const dbsClient = useDBSClient(onDisconnect, serverState);
   const [user, setUser] = useState<DBSSchema["users"]>();
-
+  const { isElectron = false } = serverState ?? {};
   const prglStateWaiting = dbsClient.hasError || dbsClient.isLoading;
-  const prglState: AppState["prglState"] = useMemo(() => {
+  const prglState: PrglReadyState | undefined = useMemo(() => {
     if (prglStateWaiting) return;
-    const { dbo: dbs, methods, auth, tableSchema, socket } = dbsClient;
+    const {
+      db: dbs,
+      sql: dbsSql,
+      methods,
+      auth,
+      tableSchema,
+      socket,
+    } = dbsClient;
 
     const { tables: dbsTables = [] } = getTables(
       tableSchema ?? [],
       dbsConnectionOptions.table_options,
-      dbs as DBHandlerClient,
+      dbs,
       true,
     );
     (window as any).dbs = dbs;
+    (window as any).dbsSql = dbsSql;
     (window as any).dbsSocket = socket;
     (window as any).dbsMethods = methods;
     (window as any).auth = auth;
     return {
       dbs: dbs as DBS,
+      dbsSql,
       dbsMethods: methods as DBSMethods,
+      dbsMethodSchema: dbsClient.methodSchema ?? {},
       dbsTables,
       auth,
-      isAdminOrSupport: includes(["admin", "support"], auth.user?.type),
       dbsSocket: socket,
       sid: auth.user?.sid,
       dbsKey: Date.now() + "",
+      user: auth.user,
+      isElectron,
     };
-  }, [dbsClient, prglStateWaiting]);
+  }, [dbsClient, prglStateWaiting, isElectron]);
 
   const { dbs, auth } = prglState ?? {};
 
@@ -68,7 +78,6 @@ export const useAppState = (
       state: "error" as const,
       dbsClientError,
       prglState: undefined,
-      user: undefined,
       serverState,
     };
   }
@@ -77,7 +86,7 @@ export const useAppState = (
     state: prglStateWaiting ? ("loading" as const) : ("ok" as const),
     dbsClientError: undefined,
     prglState,
-    user,
     serverState,
+    user,
   };
 };

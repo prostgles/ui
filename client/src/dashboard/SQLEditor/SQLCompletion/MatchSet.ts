@@ -43,7 +43,7 @@ export const MatchSet: SQLMatcher = {
     if (cb.prevLC.startsWith("set session authorization")) {
       return {
         suggestions: getExpected("user", cb, ss).suggestions.concat(
-          _suggestKWD(["DEFAULT"]).suggestions as any,
+          _suggestKWD(["DEFAULT"]).suggestions,
         ),
       };
     }

@@ -1,17 +1,19 @@
-import { mdiCog } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import React from "react";
-import type { Prgl } from "../../App";
 import Btn from "@components/Btn";
 import { IconPalette } from "@components/IconPalette/IconPalette";
 import PopupMenu from "@components/PopupMenu";
+import { mdiCog } from "@mdi/js";
+import React from "react";
+import type { Prgl } from "../../App";
 import type {
   DBSchemaTablesWJoins,
   Workspace,
 } from "../Dashboard/dashboardUtils";
 import { SmartForm } from "../SmartForm/SmartForm";
 
-type WorkspaceSettingsProps = Pick<Prgl, "dbs" | "dbsMethods"> & {
+type WorkspaceSettingsProps = Pick<
+  Prgl,
+  "dbs" | "dbsMethodSchema" | "dbsSql"
+> & {
   w: Workspace;
   dbsTables: DBSchemaTablesWJoins;
 };
@@ -19,7 +21,8 @@ export const WorkspaceSettings = ({
   dbs,
   dbsTables,
   w,
-  dbsMethods,
+  dbsMethodSchema,
+  dbsSql,
 }: WorkspaceSettingsProps) => {
   return (
     <PopupMenu
@@ -36,6 +39,7 @@ export const WorkspaceSettings = ({
           title="Workspace settings"
           iconPath={mdiCog}
           className="workspace-settings"
+          size="small"
           onContextMenu={async () => {
             const workspaceData = await dbs.workspaces.findOne(
               { id: w.id },
@@ -65,13 +69,14 @@ export const WorkspaceSettings = ({
       render={(popupClose) => (
         <div className="flex-col gap-p5  min-h-0">
           <SmartForm
-            db={dbs as DBHandlerClient}
+            db={dbs}
+            sql={dbsSql}
             showJoinedTables={false}
             label=""
             contentClassname="p-1"
             tableName="workspaces"
             tables={dbsTables}
-            methods={dbsMethods}
+            methods={dbsMethodSchema}
             confirmUpdates={true}
             columns={{
               name: 1,

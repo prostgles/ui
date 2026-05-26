@@ -7,6 +7,7 @@ import { type AnyObject } from "prostgles-types";
 import { useEffect, useMemo, useState } from "react";
 import {
   getSmartGroupFilter,
+  type DetailedFilter,
   type DetailedFilterBase,
 } from "@common/filterUtils";
 import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
@@ -17,7 +18,7 @@ export type SmartFormMode =
       type: "view" | "update";
       currentRow: AnyObject | undefined;
       loading: boolean;
-      rowFilter: DetailedFilterBase[];
+      rowFilter: DetailedFilter[];
       rowFilterObj: AnyObject;
       select: AnyObject;
       clone: VoidFunction | undefined;
@@ -29,7 +30,7 @@ export type SmartFormMode =
     }
   | {
       type: "multiUpdate";
-      rowFilter: DetailedFilterBase[];
+      rowFilter: DetailedFilter[];
       rowFilterObj: AnyObject;
       tableHandlerUpdate: undefined | TableHandlerClient["update"];
       tableHandlerDelete: undefined | TableHandlerClient["delete"];
@@ -71,8 +72,7 @@ export const useSmartFormMode = (
   const { tableName, rowFilter, db, table, onChange, parentForm, onLoaded } =
     props;
   const [loading, setLoading] = useState(false);
-  const tableHandler = db[tableName] as Partial<TableHandlerClient> | undefined;
-  const tableInfo = table?.info;
+  const tableHandler = db[tableName];
   const [localRowFilter, setLocalRowFilter] = useState(rowFilter);
   useEffectDeep(() => {
     setLocalRowFilter(rowFilter);
@@ -100,7 +100,7 @@ export const useSmartFormMode = (
   const activeRowFilter = localRowFilter || rowFilter;
 
   const modeOrError: ModeOrError = useMemo(() => {
-    if (!tableHandlerGetInfo || !tableHandlerGetColumns || !tableInfo) {
+    if (!tableHandlerGetInfo || !tableHandlerGetColumns || !table) {
       return ("Table getInfo/getColumns hooks not available/published: " +
         tableName) satisfies ModeOrError;
     }
@@ -140,12 +140,12 @@ export const useSmartFormMode = (
       const select = { "*": 1 } as const;
 
       if (
-        tableInfo.fileTableName &&
-        tableInfo.fileTableName !== tableName &&
-        tableInfo.hasFiles &&
-        db[tableInfo.fileTableName]?.find
+        table.fileTableName &&
+        table.fileTableName !== tableName &&
+        table.hasFiles &&
+        db[table.fileTableName]?.find
       ) {
-        select[tableInfo.fileTableName] = "*";
+        select[table.fileTableName] = "*";
       }
 
       return {
@@ -182,7 +182,7 @@ export const useSmartFormMode = (
     }
     //@ts-ignore
   }, [
-    tableInfo,
+    table,
     rowFilter,
     tableName,
     isManuallyControlled,

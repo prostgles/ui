@@ -8,7 +8,7 @@ import { AskLLMChatActionBarModelSelector } from "./AskLLMChatActionBarModelSele
 import { AskLLMChatActionBarPromptSelector } from "./AskLLMChatActionBarPromptSelector";
 
 export const AskLLMChatActionBar = (
-  props: Pick<AskLLMChatProps, "prgl" | "setupState"> & {
+  props: Pick<AskLLMChatProps, "setupState"> & {
     activeChat: DBSSchema["llm_chats"];
     dbSchemaForPrompt: string;
     llmMessages: DBSSchema["llm_messages"][];

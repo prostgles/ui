@@ -53,8 +53,8 @@ export const SpeechToTextSendModes = [
 export const useChatSpeechSetup = () => {
   const { dbsMethods, user, dbs } = usePrgl();
   const { transcribeAudio } = dbsMethods;
-  const speechToTextMode = user?.options?.speech_mode ?? "off";
-  const sendMode = user?.options?.speech_send_mode ?? "manual";
+  const speechToTextMode = user?.options?.speechMode ?? "off";
+  const sendMode = user?.options?.speechSendMode ?? "manual";
   const { onErrorAlert } = useOnErrorAlert();
   const setSpeechToTextMode = useCallback(
     (newMode = speechToTextMode, newSendMode = sendMode) => {
@@ -64,7 +64,7 @@ export const useChatSpeechSetup = () => {
           { id: user.id },
           {
             options: {
-              $merge: [{ speech_mode: newMode, speech_send_mode: newSendMode }],
+              $merge: [{ speechMode: newMode, speechSendMode: newSendMode }],
             },
           },
         );
@@ -84,8 +84,8 @@ export const useChatSpeechSetup = () => {
   });
   const mustEnableTranscriptionService = Boolean(
     speechToTextMode === "stt-local" &&
-      transcriptionService &&
-      transcriptionService.status !== "running",
+    transcriptionService &&
+    transcriptionService.status !== "running",
   );
   const speechEnabledErrors =
     mustEnableTranscriptionService ?

@@ -1,34 +1,32 @@
-import { mdiKey, mdiLogin } from "@mdi/js";
-import React from "react";
-import type { Prgl } from "../../../App";
 import Btn from "@components/Btn";
 import { FlexCol, FlexRowWrap } from "@components/Flex";
 import { InfoRow } from "@components/InfoRow";
 import Loading from "@components/Loader/Loading";
 import Popup from "@components/Popup/Popup";
+import { mdiKey, mdiLogin } from "@mdi/js";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import React from "react";
+import { isPlaywrightTest } from "../../../i18n/i18nUtils";
 import { AddLLMPromptForm } from "./AddLLMPromptForm";
 import { LLMProviderSetup } from "./LLMProviderSetup";
 import { ProstglesSignup } from "./ProstglesSignup";
-import type { LLMSetupState } from "./useLLMSetupState";
-import { isPlaywrightTest } from "../../../i18n/i18nUtils";
+import type { LLMSetupState } from "./LLMSetupProvider";
 
-export type SetupLLMCredentialsProps = Pick<
-  Prgl,
-  "theme" | "dbs" | "dbsTables" | "dbsMethods"
-> & {
+export type SetupLLMCredentialsProps = {
   setupState: Exclude<LLMSetupState, { state: "ready" }>;
 } & (
-    | {
-        asPopup: true;
-        onClose: VoidFunction;
-      }
-    | {
-        asPopup?: false;
-        onClose?: undefined;
-      }
-  );
+  | {
+      asPopup: true;
+      onClose: VoidFunction;
+    }
+  | {
+      asPopup?: false;
+      onClose?: undefined;
+    }
+);
 export const SetupLLMCredentials = (props: SetupLLMCredentialsProps) => {
-  const { dbs, dbsTables, dbsMethods, asPopup, onClose, setupState } = props;
+  const { dbs, dbsTables, dbsSql } = usePrgl();
+  const { asPopup, onClose, setupState } = props;
   const [setupType, setSetupType] = React.useState<"free" | "api" | undefined>(
     isPlaywrightTest ? undefined : "api",
   );
@@ -51,7 +49,7 @@ export const SetupLLMCredentials = (props: SetupLLMCredentialsProps) => {
               color="action"
               onClick={() => setSetupType("free")}
               iconPath={mdiLogin}
-              disabledInfo={isPlaywrightTest ? undefined : "Coming soon"}
+              // disabledInfo={isPlaywrightTest ? undefined : "Coming soon"}
             >
               Signup (free)
             </Btn>
@@ -67,20 +65,14 @@ export const SetupLLMCredentials = (props: SetupLLMCredentialsProps) => {
             </Btn>
           </FlexRowWrap>
         </FlexCol>
-        {setupType === "free" && (
-          <ProstglesSignup
-            setupState={setupState}
-            dbs={dbs}
-            dbsMethods={dbsMethods}
-          />
-        )}
-        {setupType === "api" && <LLMProviderSetup {...props} />}
+        {setupType === "free" && <ProstglesSignup setupState={setupState} />}
+        {setupType === "api" && <LLMProviderSetup />}
         {setupType && !prompts.length && (
           <FlexCol className="mt-2">
             <InfoRow color="info" variant="filled">
               No existing prompts
             </InfoRow>
-            <AddLLMPromptForm dbs={dbs} dbsTables={dbsTables} />
+            <AddLLMPromptForm dbsSql={dbsSql} dbs={dbs} dbsTables={dbsTables} />
           </FlexCol>
         )}
       </FlexCol>;

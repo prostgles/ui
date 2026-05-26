@@ -14,6 +14,7 @@ import { RenderValue } from "../SmartForm/SmartFormField/RenderValue";
 import { SmartCardActions } from "./SmartCardActions";
 import { SmartCardColumn } from "./SmartCardColumn";
 import { useFieldConfigParser } from "./useFieldConfigParser";
+import { getProperty } from "@common/utils";
 
 type NestedSmartCardProps = Pick<SmartCardProps, "footer" | "excludeNulls">;
 type NestedSmartFormProps = Pick<
@@ -49,11 +50,14 @@ export type FieldConfigBase<T extends AnyObject | void = void> = {
 export type FieldConfigRender<T extends AnyObject = AnyObject> = (
   value: any,
   row: T,
+  data: {
+    rows: T[];
+    index: number;
+  },
 ) => React.ReactNode;
 
 export type ParsedFieldConfig<T extends AnyObject = AnyObject> =
   FieldConfigBase<T> & {
-    // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
     select?: "*" | number | AnyObject | keyof T;
     hideIf?: (value, row: T) => boolean;
     render?: FieldConfigRender<T>;
@@ -71,10 +75,14 @@ export type SmartCardCommonProps = {};
 
 export type SmartCardProps<T extends AnyObject = AnyObject> = Pick<
   Prgl,
-  "db" | "tables" | "methods"
+  "db" | "tables" | "methods" | "sql"
 > &
   Pick<SmartCardListProps<T>, "tableName" | "tables"> & {
     defaultData: T;
+    fullData: {
+      rows: T[];
+      index: number;
+    };
     rowFilter?: DetailedFilterBase[];
 
     columns?: ValidatedColumnInfo[];
@@ -127,6 +135,7 @@ export const SmartCard = <T extends AnyObject>(props: SmartCardProps<T>) => {
     footer = null,
     title,
     defaultData,
+    fullData,
     contentClassname = "",
     contentStyle = {},
     showViewEditBtn = true,
@@ -163,11 +172,11 @@ export const SmartCard = <T extends AnyObject>(props: SmartCardProps<T>) => {
           )}
           style={{ columnGap: "1em", ...contentStyle }}
         >
-          {fieldConfigsWithColumns.map(({ name, fc, col: column }, i) => {
+          {fieldConfigsWithColumns.map(({ name, fc, col: column }) => {
             const labelText = fc.label ?? column?.label ?? column?.name ?? null;
 
             const valueNode =
-              fc.render?.(defaultData[name], defaultData) ||
+              fc.render?.(defaultData[name], defaultData, fullData) ||
               (column && (
                 <RenderValue column={column} value={defaultData[name]} />
               ));
@@ -184,7 +193,7 @@ export const SmartCard = <T extends AnyObject>(props: SmartCardProps<T>) => {
                 valueNode={valueNode}
                 renderMode={fc.renderMode ?? "value"}
                 labelTitle={column?.udt_name || ""}
-                info={column?.hint}
+                info={column && getProperty(column, "hint")}
               />
             );
           })}

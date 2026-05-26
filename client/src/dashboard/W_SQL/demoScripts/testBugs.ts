@@ -18,14 +18,77 @@ export const testBugs: DemoScript = async (args) => {
     runDbSQL,
     runSQL,
   } = args;
+  /** CTE names */
+  const cteScriptCompressed = `WITH cte1 AS (
+SELECT 1 
+FROM (
+SELECT *
+FROM geography_columns
+) t
+)SELECT *`;
+  const cteScriptSpaced = `
+  WITH cte1 AS (
+    SELECT 1 
+    FROM (
+      SELECT *
+      FROM geography_columns
+    ) t
+  )
+  SELECT *`;
+  for (const cteScript of [cteScriptCompressed, cteScriptSpaced]) {
+    await fromBeginning(false, cteScript);
+    await typeAuto(" ");
+    await typeAuto(" ");
+    await typeAuto(" w");
+    await typeAuto(" ");
+    testResult(cteScript + ` FROM cte1 WHERE "?column?"`);
+  }
+
+  const testFunctionArgs = async () => {
+    await fromBeginning();
+    await typeAuto(`SELECT quer`);
+    await typeAuto(`, lef`);
+    await typeAuto(`()`, { nth: -1 });
+    await moveCursor.left();
+    await typeAuto(``);
+    await moveCursor.right();
+    await typeAuto(`,current_sett`);
+    await typeAuto(`()`, { nth: -1 });
+    await moveCursor.left();
+    await typeAuto(`allow_in`);
+    const expected = `SELECT query, left(application_name),current_setting('allow_in_place_tablespaces')
+FROM pg_catalog.pg_stat_activity
+LIMIT 200`;
+    testResult(expected);
+
+    await fromBeginning();
+    const expect2 = `SELECT * \nFROM pg_catalog.pg_stat_activity a\nWH`;
+    await typeAuto(expect2, { msPerChar: 10 });
+    await typeAuto(` lef`);
+    await typeAuto(`()`, { nth: -1 });
+    await moveCursor.left();
+    await typeAuto(`a.`);
+    await moveCursor.right();
+    await typeAuto(` `);
+    await moveCursor.right();
+    await typeAuto(` current_sett`);
+    await typeAuto(`()`, { nth: -1 });
+    await moveCursor.left();
+    await typeAuto(`allow_in`);
+    testResult(
+      expect2 +
+        `ERE left(a.application_name) = current_setting('allow_in_place_tablespaces')`,
+    );
+  };
+  await testFunctionArgs();
 
   const testIncompleteQuery = async () => {
-    fromBeginning();
+    await fromBeginning();
     await typeAuto(`\nALTER TABLE my_ ALTER`, { nth: -1 });
     await typeAuto(` `);
     await moveCursor.left(13);
     await typeAuto(`t`);
-    await testResult("ALTER TABLE my_table ALTER COLUMN");
+    testResult("ALTER TABLE my_table ALTER COLUMN");
   };
   await testIncompleteQuery();
 
@@ -49,7 +112,7 @@ export const testBugs: DemoScript = async (args) => {
       WHERE t.table_schema = c.table_schema AND t.table_name = c.table_name
       GROUP BY 1, 2
     ) c ON TRUE`);
-  fromBeginning(false, nestedSubQueryInWith);
+  await fromBeginning(false, nestedSubQueryInWith);
   await moveCursor.up(5);
   await moveCursor.lineEnd();
   await moveCursor.left();
@@ -60,7 +123,7 @@ export const testBugs: DemoScript = async (args) => {
 
   const alterTable3TknsBug = fixIndent`
     ALTER TABLE pg_catalog.pg_transform`;
-  fromBeginning(false, alterTable3TknsBug);
+  await fromBeginning(false, alterTable3TknsBug);
   await typeAuto(` dcs`);
   await typeAuto(` `);
   testResult(alterTable3TknsBug + " DROP CONSTRAINT pg_transform_oid_index");
@@ -77,15 +140,15 @@ export const testBugs: DemoScript = async (args) => {
     where
       t.oid = ix.indrelid
   `);
-  fromBeginning(false, selectSubSelectBug);
+  await fromBeginning(false, selectSubSelectBug);
   await moveCursor.pageUp();
   await moveCursor.down(2);
   await moveCursor.right(15);
   await typeAuto(`pna`);
-  await testResult(
+  testResult(
     selectSubSelectBug.replace(
       "SELECT FROM  ",
-      "SELECT FROM pg_catalog.pg_namespace ",
+      "SELECT FROM pg_catalog.pg_namespace pn\n   ",
     ),
   );
 
@@ -102,25 +165,25 @@ export const testBugs: DemoScript = async (args) => {
       and t.relkind = 'r'
       and ix.
   `);
-  fromBeginning(false, crossJoinQuery);
+  await fromBeginning(false, crossJoinQuery);
   await moveCursor.pageDown();
   await moveCursor.lineEnd();
   await typeAuto(`uni`);
-  await testResult(crossJoinQuery + "indisunique");
+  testResult(crossJoinQuery + "indisunique");
 
   /** hackyFixOptionmatchOnWordStartOnly */
-  fromBeginning(false, crossJoinQuery + "uni");
+  await fromBeginning(false, crossJoinQuery + "uni");
   await moveCursor.pageDown();
   await moveCursor.lineEnd();
   await typeAuto(``);
-  await testResult(crossJoinQuery + "indisunique");
+  testResult(crossJoinQuery + "indisunique");
 
   const crossJoinQuery2 = crossJoinQuery.replace("and ix.", "and ");
-  fromBeginning(false, crossJoinQuery2);
+  await fromBeginning(false, crossJoinQuery2);
   await moveCursor.pageDown();
   await moveCursor.lineEnd();
   await typeAuto(`uniq`);
-  await testResult(crossJoinQuery2 + "ix.indisunique");
+  testResult(crossJoinQuery2 + "ix.indisunique");
 
   await testSqlCharts(args);
 
@@ -128,8 +191,8 @@ export const testBugs: DemoScript = async (args) => {
   const qPrefDoubling = fixIndent(`
     DELETE FROM pg_catalog.pg_class pc
     WHERE pc.rela`);
-  fromBeginning(false, qPrefDoubling);
-  moveCursor.lineEnd();
+  await fromBeginning(false, qPrefDoubling);
+  await moveCursor.lineEnd();
   await typeAuto(`c`);
   testResult(qPrefDoubling + "cl");
 
@@ -145,7 +208,7 @@ export const testBugs: DemoScript = async (args) => {
   ]) {
     await fromBeginning(false, script);
     await typeAuto(" ");
-    await testResult(script + " id1");
+    testResult(script + " id1");
   }
 
   /** Create index public schema prefix */
@@ -157,7 +220,7 @@ export const testBugs: DemoScript = async (args) => {
     await fromBeginning(false, script);
     await moveCursor.left(2);
     await typeAuto(" ");
-    await testResult(script.replace(")", "id1 )"));
+    testResult(script.replace(")", "id1 )"));
   }
   await runDbSQL(`DROP TABLE  my_p_table;`);
 
@@ -165,11 +228,11 @@ export const testBugs: DemoScript = async (args) => {
   const alterTableQuery = "ALTER TABLE pg_catalog.pg_class ";
   await fromBeginning(false, alterTableQuery + "DROP COLUMN");
   await typeAuto(" nam");
-  await testResult(alterTableQuery + "DROP COLUMN relname");
+  testResult(alterTableQuery + "DROP COLUMN relname");
   await fromBeginning(false, alterTableQuery + "ALTER COLUMN");
   await typeAuto(" nam");
   await typeAuto(" drd");
-  await testResult(alterTableQuery + "ALTER COLUMN relname DROP DEFAULT");
+  testResult(alterTableQuery + "ALTER COLUMN relname DROP DEFAULT");
 
   /** Timechart works with codeblocks */
   await fromBeginning(false, "SELECT now(), 3; \n\nselect 1");
@@ -198,7 +261,7 @@ export const testBugs: DemoScript = async (args) => {
       WHERE 
     ) tt
       ON TRUE`);
-  fromBeginning(false, lateralJoin);
+  await fromBeginning(false, lateralJoin);
   await moveCursor.up(2);
   await moveCursor.lineEnd();
   await typeAuto(`c.`);
@@ -215,7 +278,7 @@ export const testBugs: DemoScript = async (args) => {
     .replace(`max( )`, `max(  he)`)
     .replace(`lag(  )`, `lag(   he) OVER()`)
     .replace(`first_value()`, `first_value( he)`);
-  fromBeginning(false, withNestingBug);
+  await fromBeginning(false, withNestingBug);
   await moveCursor.up();
   await moveCursor.lineStart();
   await moveCursor.right(16);
@@ -235,7 +298,7 @@ export const testBugs: DemoScript = async (args) => {
     values (1, 1, 'a'), (1, 9, 'a')
     ) tbl (id, col123, "name")
     ORDER BY`);
-  fromBeginning(false, namedValues);
+  await fromBeginning(false, namedValues);
   await typeAuto(" c");
   testResult(namedValues + " tbl.col123");
 
@@ -250,18 +313,18 @@ export const testBugs: DemoScript = async (args) => {
   await moveCursor.lineEnd();
   await moveCursor.left();
   await typeAuto(` name`);
-  await testResult(cteFuncArgQuery.replace("max()", "max( relname)"));
+  testResult(cteFuncArgQuery.replace("max()", "max( relname)"));
 
   /** Test explain */
   await fromBeginning(false, "EXPLAIN SELECT * FROM");
   await typeAuto(" class");
-  await testResult("EXPLAIN SELECT * FROM pg_catalog.pg_class");
+  testResult("EXPLAIN SELECT * FROM pg_catalog.pg_class pc\n");
 
   await fromBeginning(false, "EXPLAIN UPDATE");
   await typeAuto(" class");
   await typeAuto(" ");
   await typeAuto(" ");
-  await testResult("EXPLAIN UPDATE pg_catalog.pg_class SET oid");
+  testResult("EXPLAIN UPDATE pg_catalog.pg_class SET oid");
 
   const sortTextBug = fixIndent(`
     SELECT *
@@ -269,7 +332,7 @@ export const testBugs: DemoScript = async (args) => {
     ORDER BY`);
   await fromBeginning(false, sortTextBug);
   await typeAuto(" name");
-  await testResult(sortTextBug + " relname");
+  testResult(sortTextBug + " relname");
 
   await fromBeginning(false, "");
   await typeAuto("SELECT unne");
@@ -284,14 +347,14 @@ export const testBugs: DemoScript = async (args) => {
   await typeAuto(" pgcla");
   await typeAuto(" ", { nth: 1 });
   await typeAuto(" ");
-  await testResult(idxQ);
+  testResult(idxQ);
   await moveCursor.lineEnd();
   await typeAuto("\n ");
   await typeAuto(" nam");
   await typeAuto("\n whe");
   await typeAuto(" reln");
   await typeAuto(" ");
-  await testResult(idxQ + "\n INCLUDE (relname)\n  WHERE relname =");
+  testResult(idxQ + "\n INCLUDE (relname)\n  WHERE relname =");
 
   const createViewWithOptions = fixIndent(`
     CREATE OR REPLACE VIEW myview`);
@@ -301,7 +364,7 @@ export const testBugs: DemoScript = async (args) => {
   await typeAuto(" ");
   await typeAuto(" ");
   await typeAuto(" ");
-  await testResult(
+  testResult(
     createViewWithOptions +
       " WITH (check_option =cascaded , security_barrier =false)",
   );
@@ -312,7 +375,7 @@ export const testBugs: DemoScript = async (args) => {
     WHERE `);
   await fromBeginning(false, funcsColliding);
   await typeAuto(` schem`);
-  await testResult(funcsColliding + " ui.schemaname");
+  testResult(funcsColliding + " ui.schemaname");
 
   const quotedSchemaBug = `
 DROP SCHEMA IF EXISTS "MySchema" CASCADE;
@@ -327,13 +390,13 @@ CREATE TABLE "MySchema"."MyTable" (
 );
   `;
   await runDbSQL(quotedSchemaBug);
-  fromBeginning(false, "");
+  await fromBeginning(false, "");
   await tout(2500);
   await typeAuto(`SELECT MyColu`);
   await moveCursor.up(2);
   await moveCursor.lineEnd();
   await typeAuto(`, MyFunc`);
-  await testResult(
+  testResult(
     fixIndent(`
     SELECT "MyColumn", "MySchema"."MyFunction"()
     FROM "MySchema"."MyTable"
@@ -343,39 +406,39 @@ CREATE TABLE "MySchema"."MyTable" (
   const alterQ = fixIndent(`
       ALTER TABLE "MySchema"."MyTable"
       ALTER COLUMN "MyColu"`);
-  fromBeginning(false, alterQ);
+  await fromBeginning(false, alterQ);
   await tout(2500);
   await moveCursor.lineEnd();
   await moveCursor.left(1);
-  await triggerSuggest();
+  triggerSuggest();
   await tout(500);
   acceptSelectedSuggestion();
-  await testResult(alterQ.replace(`"MyColu"`, `"MyColumn"`));
+  testResult(alterQ.replace(`"MyColu"`, `"MyColumn"`));
 
-  fromBeginning(false, `DROP SCHEMA`);
+  await fromBeginning(false, `DROP SCHEMA`);
   await typeAuto(` mys`);
   testResult(`DROP SCHEMA "MySchema"`);
 
   /** Ensure whitespace is kept, replacing quoted identifiers works as expected */
-  fromBeginning(false, `SELECT FROM "MySchema"."MyTable"`);
+  await fromBeginning(false, `SELECT FROM "MySchema"."MyTable"`);
   await moveCursor.lineStart();
   await moveCursor.right(6);
   await typeAuto(` `);
   testResult(`SELECT "MyColumn" FROM "MySchema"."MyTable"`);
 
-  fromBeginning(false, `SELECT "m" FROM "MySchema"."MyTable"`);
+  await fromBeginning(false, `SELECT "m" FROM "MySchema"."MyTable"`);
   await moveCursor.lineStart();
   await moveCursor.right(9);
   await typeAuto(`y`);
   testResult(`SELECT "MyColumn" FROM "MySchema"."MyTable"`);
 
-  fromBeginning(false, `SELECT "m" FROM "MySchema"."MyTable"`);
+  await fromBeginning(false, `SELECT "m" FROM "MySchema"."MyTable"`);
   await moveCursor.lineStart();
   await moveCursor.right(9);
   await typeAuto(`yf`);
   testResult(`SELECT "MySchema"."MyFunction"() FROM "MySchema"."MyTable"`);
 
-  fromBeginning(false, `SELECT mycolum FROM "MySchema"."MyTable"`);
+  await fromBeginning(false, `SELECT mycolum FROM "MySchema"."MyTable"`);
   await moveCursor.lineStart();
   await moveCursor.right(14);
   await typeAuto(`n`);
@@ -388,7 +451,7 @@ CREATE TABLE "MySchema"."MyTable" (
   await moveCursor.lineEnd();
   await typeAuto(` `);
   await typeAuto(` `);
-  await testResult(
+  testResult(
     `CREATE INDEX myidx ON "MySchema"."MyTable" (  "MyColumn" ) INCLUDE ("MyColumn")`,
   );
   await runDbSQL(`DROP SCHEMA IF EXISTS "MySchema" CASCADE;`);
@@ -405,7 +468,7 @@ CREATE TABLE "MySchema"."MyTable" (
     SELECT * FROM information_schema.tables;
   `);
   const codeBlockQueryLines = codeBlockQueries.split("\n");
-  fromBeginning(false, codeBlockQueries);
+  await fromBeginning(false, codeBlockQueries);
   await tout(500);
   let cb = await actions.getCodeBlockValue();
   testResult(codeBlockQueryLines.at(-1)!, cb);
@@ -426,9 +489,9 @@ CREATE TABLE "MySchema"."MyTable" (
   const updateQuery = fixIndent(`
     UPDATE prostgles.app_triggers
     SET`);
-  fromBeginning(false, updateQuery);
+  await fromBeginning(false, updateQuery);
   await typeAuto(` `);
-  await testResult(
+  testResult(
     fixIndent(`
     ${updateQuery} app_id
   `),
@@ -439,7 +502,7 @@ CREATE TABLE "MySchema"."MyTable" (
     WITH cte1 AS (
       SELECT '{ "a": { "b": { "c": 222 } } }'::jsonb as j, 2 as z
     )`;
-  fromBeginning(
+  await fromBeginning(
     false,
     fixIndent(`
     ${cteQuery}
@@ -454,7 +517,7 @@ CREATE TABLE "MySchema"."MyTable" (
   await typeAuto(` `);
   await typeAuto(` `);
   await moveCursor.down();
-  await newLine();
+  newLine();
   await typeAuto(`w`);
   await typeAuto(` `);
   await typeAuto(` `);
@@ -469,7 +532,7 @@ CREATE TABLE "MySchema"."MyTable" (
   triggerSuggest();
   await tout(500);
   acceptSelectedSuggestion();
-  await testResult(
+  testResult(
     fixIndent(`
     ${cteQuery}
     SELECT j ->'a' ->'b' ->>'c'
@@ -490,7 +553,7 @@ CREATE TABLE "MySchema"."MyTable" (
   JOIN information_schema.tables t
   ON true
   WHERE`;
-  fromBeginning(false, query);
+  await fromBeginning(false, query);
   await typeAuto(" comm");
   await typeAuto(" =");
   await typeAuto(" relper");
@@ -500,72 +563,8 @@ CREATE TABLE "MySchema"."MyTable" (
     query + " t.commit_action = c.relpersistence\n  OR c.relkind = t.is_typed",
   );
 
-  /** CTE names */
-  const cteScriptCompressed = `WITH cte1 AS (
-SELECT 1 
-FROM (
-SELECT *
-FROM geography_columns
-) t
-)SELECT *`;
-  const cteScriptSpaced = `
-  WITH cte1 AS (
-    SELECT 1 
-    FROM (
-      SELECT *
-      FROM geography_columns
-    ) t
-  )
-  SELECT *`;
-  for (const cteScript of [cteScriptCompressed, cteScriptSpaced]) {
-    fromBeginning(false, cteScript);
-    await typeAuto(" ");
-    await typeAuto(" ");
-    await typeAuto(" w");
-    await typeAuto(" ");
-    testResult(cteScript + ` FROM cte1 WHERE "?column?"`);
-  }
-
-  const testFunctionArgs = async () => {
-    fromBeginning();
-    await typeAuto(`SELECT quer`);
-    await typeAuto(`, lef`);
-    await typeAuto(`()`, { nth: -1 });
-    moveCursor.left();
-    await typeAuto(``);
-    moveCursor.right();
-    await typeAuto(`,current_sett`);
-    await typeAuto(`()`, { nth: -1 });
-    moveCursor.left();
-    await typeAuto(`allow_in`);
-    const expected = `SELECT query, left(application_name),current_setting('allow_in_place_tablespaces')
-FROM pg_catalog.pg_stat_activity
-LIMIT 200`;
-    testResult(expected);
-
-    fromBeginning();
-    const expect2 = `SELECT * \nFROM pg_catalog.pg_stat_activity a\nWH`;
-    await typeAuto(expect2, { msPerChar: 10 });
-    await typeAuto(` lef`);
-    await typeAuto(`()`, { nth: -1 });
-    moveCursor.left();
-    await typeAuto(`a.`);
-    moveCursor.right();
-    await typeAuto(` `);
-    moveCursor.right();
-    await typeAuto(` current_sett`);
-    await typeAuto(`()`, { nth: -1 });
-    moveCursor.left();
-    await typeAuto(`allow_in`);
-    testResult(
-      expect2 +
-        `ERE left(a.application_name) = current_setting('allow_in_place_tablespaces')`,
-    );
-  };
-  await testFunctionArgs();
-
   /** Actions work */
-  fromBeginning();
+  await fromBeginning();
   await typeAuto(`ALTER TABLE`, { nth: -1 });
   getEditor().e.trigger("demo", "select2CB", {});
   await tout(500);
@@ -573,13 +572,13 @@ LIMIT 200`;
   testResult("SELECT");
 
   /** ALTER TABLE table name with schema */
-  fromBeginning();
+  await fromBeginning();
   await typeAuto(`ALTER TABLE prostgles`, { nth: -1 });
   await typeAuto(`.at`);
   testResult("ALTER TABLE prostgles.app_triggers");
 
   /** Documentation not showing */
-  fromBeginning();
+  await fromBeginning();
   await typeAuto(`SEL`, { nth: -1, msPerChar: 10 });
   await tout(1e3);
   const isOk = document.body.innerText.includes("sql-select.html");
@@ -591,7 +590,7 @@ FROM pg_catalog.pg_tables
 WHERE schemaname = 'public'`;
 
   /** AND/OR after WHERE */
-  fromBeginning(false, selectScript);
+  await fromBeginning(false, selectScript);
   await typeAuto(`\na`);
   testResult(selectScript + "\nAND");
 };

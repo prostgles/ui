@@ -1,21 +1,23 @@
-import { asName } from "prostgles-client/dist/prostgles";
 import {
   getFinalFilter,
   parseContextVal,
-  type GroupedDetailedFilter,
   type DetailedFilter,
+  type GroupedDetailedFilter,
 } from "@common/filterUtils";
 import type { ForcedData } from "@common/publishUtils";
+import { asName } from "prostgles-client/dist/prostgles";
+import type { Prgl } from "src/App";
 import type { SelectRuleControlProps } from "./SelectRuleControl";
 type GetComparablePGPolicyArgs = Pick<
   SelectRuleControlProps,
-  "table" | "userTypes" | "prgl"
+  "table" | "userTypes"
 > & {
   command: "SELECT" | "UPDATE" | "INSERT" | "DELETE" | undefined;
   forcedFilterDetailed: GroupedDetailedFilter | undefined;
   checkFilterDetailed: GroupedDetailedFilter | undefined;
   forcedDataDetail: ForcedData[] | undefined;
   excludeRLSStatement?: boolean;
+  db: Prgl["db"];
 };
 
 export const getComparablePGPolicy = async ({
@@ -25,7 +27,7 @@ export const getComparablePGPolicy = async ({
   forcedDataDetail,
   userTypes,
   table,
-  prgl,
+  db,
   excludeRLSStatement,
 }: GetComparablePGPolicyArgs) => {
   const columns = table.columns.map((c) => c.name);
@@ -40,7 +42,7 @@ export const getComparablePGPolicy = async ({
     }
     const parsedFilter = getFinalFilter(f, undefined, { columns });
     try {
-      const condition = (await prgl.db[table.name]?.find?.(parsedFilter, {
+      const condition = (await db[table.name]?.find?.(parsedFilter, {
         returnType: "statement-where",
       })) as any as string;
       return condition.trim();

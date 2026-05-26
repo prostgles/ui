@@ -1,4 +1,4 @@
-import type { TableHandlerClient } from "prostgles-client/dist/prostgles";
+import type { TableHandlerClient } from "prostgles-client";
 import type { AnyObject } from "prostgles-types";
 import { isEmpty } from "../../../utils/utils";
 
@@ -20,7 +20,7 @@ export const getRowFilter = async (
   let rowFilter: DetailedFilterBase[] | undefined;
   const { columns } = table;
   let pkeys = columns.filter((c) => c.filter && c.is_pkey);
-  const uniqueColumnGroup = table.info.uniqueColumnGroups?.find((colNames) =>
+  const uniqueColumnGroup = table.uniqueColumnGroups?.find((colNames) =>
     colNames.every((colName) => columns.some((c) => c.name === colName)),
   );
   if (!pkeys.length && uniqueColumnGroup) {

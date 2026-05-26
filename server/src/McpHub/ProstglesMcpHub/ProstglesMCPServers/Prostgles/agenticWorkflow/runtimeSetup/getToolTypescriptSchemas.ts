@@ -1,0 +1,84 @@
+import { getJsonSchemaAsTs } from "@common/getJsonSchemaAsTs";
+import type { DBS } from "@src/index";
+import { getValidatedMcpServerToolsAllowed } from "../definitionValidation/getValidatedMcpServerToolsAllowed";
+
+export const getToolTypescriptSchemas = async (
+  dbs: DBS,
+  mcpServerTools: Record<string, Record<string, 1>> | "*",
+  mode: "full" | "basic" | "compact" = "full",
+) => {
+  const mcpTools = await getValidatedMcpServerToolsAllowed(
+    dbs,
+    mcpServerTools,
+    undefined,
+  );
+
+  const getTsType = (schema: Record<string, unknown> | null | undefined) => {
+    let res =
+      !schema ? "string" : (
+        getJsonSchemaAsTs(schema, { mode: mode === "basic" ? "compact" : mode })
+      );
+    res = res.trim();
+    res = res || " unknown";
+    if (res.endsWith(";")) {
+      return res.slice(0, -1);
+    }
+    return res;
+  };
+
+  const result: Record<
+    string,
+    Record<
+      string,
+      {
+        description: string;
+        tsDefinition: string;
+        inputSchema: Record<string, unknown>;
+        outputSchema: Record<string, unknown> | null;
+      }
+    >
+  > = {};
+  for (const {
+    name,
+    server_name,
+    inputSchema,
+    outputSchema,
+    description,
+  } of mcpTools) {
+    const argsTsSchema = getTsType(inputSchema);
+    const outputTsSchema = getTsType(outputSchema);
+
+    const tsDefinition = `${JSON.stringify(name)}: (args: ${argsTsSchema}) => Promise<${outputTsSchema}>;`;
+    // const funcDefWithDescription = [
+    //   "/**",
+    //   " * " + escapeForJsDoc(description).split("\n").join("\n * "),
+    //   " */",
+    //   funcDef,
+    // ].join("\n");
+    // const tsDefinition =
+    //   mode === "basic" ? description
+    //   : mode === "compact" ? funcDef
+    //   : funcDefWithDescription;
+    result[server_name] ??= {};
+    result[server_name][name] = {
+      description,
+      tsDefinition,
+      inputSchema,
+      outputSchema,
+    };
+  }
+
+  return result;
+};
+const escapeForJsDoc = (text: string) => {
+  return text
+    .replace(/\r\n?/g, "\n") // normalize newlines
+    .replace(/\*\//g, "*\\/"); // prevent closing the comment
+};
+
+export const getPropertySafe = <T extends object>(
+  obj: T,
+  key: string,
+): T[keyof T] | undefined => {
+  return key in obj ? obj[key as keyof T] : undefined;
+};

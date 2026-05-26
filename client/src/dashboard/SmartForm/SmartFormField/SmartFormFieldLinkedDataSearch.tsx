@@ -11,7 +11,7 @@ import {
 
 type P = Pick<
   SmartFormFieldLinkedDataProps,
-  "db" | "methods" | "tables" | "row" | "column" | "tableName"
+  "db" | "methods" | "tables" | "row" | "column" | "tableName" | "sql"
 > & {
   ftable: DBSchemaTableWJoins;
   fcol: string;
@@ -30,6 +30,7 @@ export const SmartFormFieldLinkedDataSearch = ({
   readOnly,
   onChange,
   tableName,
+  sql,
 }: P) => {
   const listProps = useMemo(() => {
     const searchFilterValue = row[column.name];
@@ -79,6 +80,7 @@ export const SmartFormFieldLinkedDataSearch = ({
   return (
     <ViewMoreSmartCardList
       db={db}
+      sql={sql}
       tables={tables}
       methods={methods}
       ftable={ftable}

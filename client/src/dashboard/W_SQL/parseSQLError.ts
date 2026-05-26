@@ -13,14 +13,14 @@ export const parseSQLError = async function (
 ) {
   const { MarkerSeverity } = await getMonaco();
   const {
-    prgl: { db },
+    prgl: { sql: sqlHandler },
   } = this.props;
   const err = parseError(rawErr);
   let message: string = err?.message;
   const hint = await runSQLErrorHints(
     err,
     this.props.suggestions?.suggestions,
-    db.sql!,
+    sqlHandler!,
     trimmedSql,
   );
   if (hint) {

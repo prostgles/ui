@@ -20,6 +20,7 @@ export default defineConfig(
       "sample_schemas",
       "**/*.d.ts",
       "**/*.js",
+      "src/ServiceManager/services/*/src",
     ],
   },
   {
@@ -65,6 +66,10 @@ export default defineConfig(
       "@typescript-eslint/await-thenable": "warn",
       "@typescript-eslint/no-unsafe-member-access": "warn",
       "@typescript-eslint/no-unsafe-call": "warn",
+      "@typescript-eslint/restrict-template-expressions": [
+        "warn",
+        { allowNumber: true, allowArray: true },
+      ],
       "@typescript-eslint/no-unused-vars": [
         "warn",
         {

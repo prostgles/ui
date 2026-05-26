@@ -1,4 +1,6 @@
 .chip {
+  color-scheme: light dark;
+
   padding-left: 0.625rem;
   padding-right: 0.625rem;
   padding-top: 0.125rem;
@@ -38,15 +40,24 @@
 
 .chip.green.variant-default,
 .chip.green.variant-outline {
-  background-color: var(--green-100);
+  background-color: #00c87047;
 }
 .chip.yellow {
-  color: var(--yellow-500);
+  color: var(--yellow);
 }
 .chip.yellow.variant-default,
 .chip.yellow.variant-outline {
   background-color: var(--yellow-100);
 }
+
+.chip.orange {
+  color: light-dark(#c67108, #f49826ab);
+}
+.chip.orange.variant-default,
+.chip.orange.variant-outline {
+  background-color: #f38f1354; /* #ffe699; */
+}
+
 .chip.red {
   color: var(--red-500);
 }
@@ -63,10 +74,5 @@
 }
 .chip.blue.variant-default,
 .chip.blue.variant-outline {
-  background-color: var(--blue-100);
-}
-
-.dark-theme .chip.blue.variant-default,
-.chip.blue.variant-outline {
-  background-color: #242d37;
+  background-color: light-dark(var(--blue-100), #00448fd4);
 }

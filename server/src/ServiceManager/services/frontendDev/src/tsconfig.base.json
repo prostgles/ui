@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noUncheckedIndexedAccess": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true,
+    "strictNullChecks": true,
+    "checkJs": true,
+
+    "allowJs": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,  
+    "declaration": true,
+    "declarationMap": true
+  },
+  "include": ["src"],
+  "exclude": [
+    "node_modules",
+    "public",
+    "typings/browser",
+    "typings/browser.d.ts"
+  ]
+}

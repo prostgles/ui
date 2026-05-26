@@ -1,13 +1,14 @@
-import { mdiCheck, mdiCheckAll } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { usePromise } from "prostgles-client";
-import React, { useState } from "react";
 import Btn from "@components/Btn";
 import { FlexCol } from "@components/Flex";
 import { InfoRow } from "@components/InfoRow";
+import { mdiCheck, mdiCheckAll } from "@mdi/js";
+import { usePromise } from "prostgles-client";
+import type { DBHandlerClient } from "prostgles-client";
+import React, { useState } from "react";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import { SmartCardList } from "../../../dashboard/SmartCardList/SmartCardList";
 import type { ColumnSort } from "../../../dashboard/W_Table/ColumnMenu/ColumnMenu";
-import type { ServerSettingsProps } from "../ServerSettings";
+import { MCPServerConfigProvider } from "./MCPServerConfig/MCPServerConfig";
 import { MCPServerFooterActions } from "./MCPServerFooterActions/MCPServerFooterActions";
 import { MCPServersHeader } from "./MCPServersHeader";
 import { MCPServersToolbar } from "./MCPServersToolbar/MCPServersToolbar";
@@ -15,15 +16,13 @@ import {
   useMCPServersListProps,
   type MCPServerWithToolAndConfigs,
 } from "./useMCPServersListProps";
-import { MCPServerConfigProvider } from "./MCPServerConfig/MCPServerConfig";
-import { isDefined } from "@common/filterUtils";
 
-export type MCPServersProps = Omit<ServerSettingsProps, "auth"> & {
+export type MCPServersProps = {
   chatId: number | undefined;
 };
 
-export const MCPServers = (props: MCPServersProps) => {
-  const { dbsMethods, dbs, dbsTables, chatId } = props;
+export const MCPServers = ({ chatId }: MCPServersProps) => {
+  const { dbsMethods, dbs, dbsMethodSchema, dbsTables, dbsSql } = usePrglCore();
 
   const { getMcpHostInfo } = dbsMethods;
   const envInfo = usePromise(async () => getMcpHostInfo?.(), [getMcpHostInfo]);
@@ -39,7 +38,7 @@ export const MCPServers = (props: MCPServersProps) => {
 
   const [loaded, setLoaded] = useState(false);
   return (
-    <MCPServerConfigProvider dbs={dbs}>
+    <MCPServerConfigProvider>
       <FlexCol
         className="p-1 pt-0 min-w-0 f-1 max-w-800"
         style={{
@@ -49,7 +48,7 @@ export const MCPServers = (props: MCPServersProps) => {
       >
         <MCPServersHeader envInfo={envInfo} />
         <MCPServersToolbar
-          {...props}
+          chatId={chatId}
           selectedTool={selectedTool}
           setSelectedTool={setSelectedTool}
         />
@@ -83,8 +82,9 @@ export const MCPServers = (props: MCPServersProps) => {
             </Btn>
           )}
           <SmartCardList<MCPServerWithToolAndConfigs>
-            db={dbs as DBHandlerClient}
-            methods={dbsMethods}
+            sql={dbsSql}
+            db={dbs}
+            methods={dbsMethodSchema}
             className={mcp_servers_disabled ? "no-interaction" : undefined}
             tableName="mcp_servers"
             realtime={true}
@@ -106,8 +106,6 @@ export const MCPServers = (props: MCPServersProps) => {
             getRowFooter={(r) => (
               <MCPServerFooterActions
                 mcp_server={r}
-                dbs={dbs}
-                dbsMethods={dbsMethods}
                 envInfo={envInfo}
                 chatContext={chatContext}
               />

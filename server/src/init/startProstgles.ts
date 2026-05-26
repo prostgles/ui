@@ -1,7 +1,8 @@
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type { ProstglesInitState } from "@common/electronInitTypes";
+import { getServerFunctions } from "@src/serverFunctions/getServerFunctions";
 import type { Express } from "express";
-import path from "path";
+import path, { join } from "path";
 import type pg from "pg-promise/typescript/pg-subset";
 import prostgles from "prostgles-server";
 import type { InitResult } from "prostgles-server/dist/initProstgles";
@@ -15,11 +16,11 @@ import type { DBSConnectionInfo } from "../electronConfig";
 import { actualRootDir, getElectronConfig } from "../electronConfig";
 import { DBS_CONNECTION_INFO } from "../envVars";
 import { publish } from "../publish/publish";
-import { publishMethods } from "../publishMethods/publishMethods";
 import { tableConfig } from "../tableConfig/tableConfig";
 import { tableConfigMigrations } from "../tableConfig/tableConfigMigrations";
-import { onProstglesReady } from "./onProstglesReady";
+import { prostglesOnReady } from "./prostglesOnReady";
 import { startDevHotReloadNotifier } from "./startDevHotReloadNotifier";
+import type { ConnectionDetails } from "@src/connectionUtils/getConnectionDetails";
 
 type StartArguments = {
   app: Express;
@@ -69,7 +70,7 @@ export const startProstgles = async ({
       return { state: "error", error, errorType: "connection" };
     }
 
-    let validatedDbConnection: pg.IConnectionParameters<pg.IClient> | undefined;
+    let validatedDbConnection: ConnectionDetails | undefined;
     try {
       const tested = await testDBConnection(con, true);
       if (tested.isSSLModeFallBack) {
@@ -101,6 +102,10 @@ export const startProstgles = async ({
       sqlFilePath: path.join(actualRootDir + "/src/init.sql"),
       io,
       tsGeneratedTypesDir,
+      tsGeneratedTypesFunctionsPath:
+        IS_PROD ? undefined : (
+          join(actualRootDir, "/src/init/startProstgles.ts")
+        ),
       watchSchema,
       watchSchemaType: "DDL_trigger",
       transactions: true,
@@ -143,7 +148,7 @@ export const startProstgles = async ({
 
           const deletedWindows = await dbo.windows.delete(
             {
-              $or: [{ deleted: true }, { closed: true, "type.<>": "sql" }],
+              $or: [{ deleted: true }, { closed: true, type: { "<>": "sql" } }],
             },
             {
               returning: { id: 1 },
@@ -179,18 +184,18 @@ export const startProstgles = async ({
         const { user } = params;
         return Boolean(user && user.type === "admin");
       },
-      publishMethods,
+      functions: getServerFunctions,
       publish,
       joins: "inferred",
       onReady: async (params, update) => {
-        await onProstglesReady(params, update, app, con);
+        await prostglesOnReady(params, update, app, con, port);
       },
     });
 
     statePrgl = prgl;
 
     startDevHotReloadNotifier({ io, port, host });
-    return { state: "ok", dbs: prgl.db as DBS };
+    return { state: "ok", dbs: prgl.db };
   } catch (err) {
     return { state: "error", error: err as Error, errorType: "init" };
   }

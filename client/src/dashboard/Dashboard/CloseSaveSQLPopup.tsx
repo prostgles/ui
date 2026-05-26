@@ -1,9 +1,8 @@
+import FormField from "@components/FormField/FormField";
+import Popup from "@components/Popup/Popup";
+import { mdiContentSave, mdiDelete } from "@mdi/js";
 import React from "react";
 import type { WindowSyncItem } from "./dashboardUtils";
-import Popup from "@components/Popup/Popup";
-import FormField from "@components/FormField/FormField";
-import Btn from "@components/Btn";
-import { mdiContentSave, mdiDelete } from "@mdi/js";
 
 type P = {
   namePopupWindow?: { w: WindowSyncItem; node: HTMLButtonElement };
@@ -29,7 +28,7 @@ export const CloseSaveSQLPopup = ({
             label: "Delete",
             color: "danger",
             "data-command": "CloseSaveSQLPopup.delete",
-            variant: "outline",
+            variant: "faded",
             iconPath: mdiDelete,
             onClickPromise: async () => {
               await namePopupWindow.$update({ closed: true, deleted: true });

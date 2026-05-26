@@ -175,11 +175,11 @@ export const useCreatePostgresUser = ({ connId, runConnectionQuery }: Args) => {
     if (!connId || !runConnectionQuery || !newUserName || !newPgUser.create)
       return undefined;
     if (!newUserName) return "Username is required";
-    const matchingUserNames = await runConnectionQuery(
-      connId,
-      `SELECT usename FROM pg_catalog.pg_user WHERE usename = $1`,
-      [newUserName],
-    );
+    const matchingUserNames = await runConnectionQuery({
+      conId: connId,
+      query: `SELECT usename FROM pg_catalog.pg_user WHERE usename = $1`,
+      args: [newUserName],
+    });
     return matchingUserNames.length > 0 ? "User already exists" : undefined;
   }, [newUserName, connId, runConnectionQuery, newPgUser.create]);
   const newUserPasswordError =

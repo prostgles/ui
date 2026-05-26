@@ -3,12 +3,12 @@ import React from "react";
 import type { ParsedListItem } from "./SearchList";
 
 export const SearchListRowContent = ({ item }: { item: ParsedListItem }) => {
-  if ("content" in item) return item.content;
+  if (item.content !== undefined) return item.content;
   const { contentLeft, contentBottom, contentRight } = item;
 
   return (
     <div
-      className="ROWINNER flex-row ai-center f-1 gap-p5 "
+      className="ROWINNER flex-row ai-start f-1 gap-p5 "
       style={item.styles?.rowInner}
     >
       {typeof item.checked === "boolean" && (

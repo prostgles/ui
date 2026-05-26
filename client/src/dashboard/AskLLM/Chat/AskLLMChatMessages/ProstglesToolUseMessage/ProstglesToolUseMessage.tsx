@@ -1,54 +1,98 @@
-import { getProstglesMCPFullToolName } from "@common/prostglesMcp";
-import type { DBSSchema } from "@common/publishUtils";
-import type { ToolResultMessage } from "../ToolUseChatMessage/ToolUseChatMessage";
-import { DockerSandboxCreateContainer } from "./ProstglesMCPTools/DockerSandboxCreateContainer";
+import { AGENT_GOAL_TOOL_NAMES } from "@common/mcp/startAgenticWorkflowSchema";
+import { getProstglesMCPFullToolName } from "@common/mcpUtils";
+import type { LoadedSuggestions } from "src/dashboard/Dashboard/dashboardUtils";
+import type {
+  ToolResultMessage,
+  ToolUseMessage,
+} from "../ToolUseChatMessage/ToolUseChatMessage";
+import { Agent } from "./ProstglesMCPTools/Agent/Agent";
+import { AgentGoallToolCall } from "./ProstglesMCPTools/Agent/AgentGoallToolCall";
+import { AgenticWorkflowMessage } from "./ProstglesMCPTools/AgenticWorkflow/AgenticWorkflowMessage";
+import { AskUserQuestions } from "./ProstglesMCPTools/AskUserQuestions";
+import { DoclingConvertedDocument } from "./ProstglesMCPTools/DoclingConvertedDocument/DoclingConvertedDocument";
 import { ExecuteSQL } from "./ProstglesMCPTools/ExecuteSQL";
 import { LoadSuggestedDashboards } from "./ProstglesMCPTools/LoadSuggestedDashboards";
-import { LoadSuggestedWorkflow } from "./ProstglesMCPTools/LoadSuggestedWorkflow";
-import { LoadSuggestedToolsAndPrompt } from "./ProstglesMCPTools/LoadSuggestedToolsAndPrompt/LoadSuggestedToolsAndPrompt";
+import { RequestToolAccess } from "./ProstglesMCPTools/RequestToolAccess";
+import { RunCodeInSandbox } from "./ProstglesMCPTools/RunCodeInSandbox";
+import { RunTypescriptInNodejs } from "./ProstglesMCPTools/RunTypescriptInNodejs";
+import { CreateComponentQuickFeedbackPreview } from "./ProstglesMCPTools/Webdev/CreateComponentQuickFeedbackPreview";
+import { Markdown } from "./ProstglesMCPTools/WebSearch/Markdown";
 import { WebSearch } from "./ProstglesMCPTools/WebSearch/WebSearch";
 
 export const ProstglesMCPToolsWithUI = {
-  [getProstglesMCPFullToolName("prostgles-ui", "suggest_dashboards") as string]:
+  [getProstglesMCPFullToolName("prostgles-ui", "create_dashboards") as string]:
     {
       component: LoadSuggestedDashboards,
       displayMode: "full",
     },
   [getProstglesMCPFullToolName(
     "prostgles-ui",
-    "suggest_tools_and_prompt",
+    "create_agentic_workflow",
   ) as string]: {
-    component: LoadSuggestedToolsAndPrompt,
+    component: AgenticWorkflowMessage,
     displayMode: "full",
+    showsError: true,
   },
-  [getProstglesMCPFullToolName(
-    "prostgles-ui",
-    "suggest_agent_workflow",
-  ) as string]: {
-    component: LoadSuggestedWorkflow,
+  [getProstglesMCPFullToolName("prostgles-ui", "create_agent") as string]: {
+    component: Agent,
     displayMode: "full",
+    showsError: true,
   },
-  "docker-sandbox--create_container": {
-    component: DockerSandboxCreateContainer,
-    displayMode: "inline",
+  [getProstglesMCPFullToolName("prostgles-ui", "ask_user_questions") as string]:
+    {
+      component: AskUserQuestions,
+      displayMode: "full",
+    },
+  [getProstglesMCPFullToolName("prostgles-ui", "run_code_in_sandbox")]: {
+    component: RunCodeInSandbox,
+    displayMode: "full",
+    showsError: true,
   },
-  [getProstglesMCPFullToolName(
-    "prostgles-db",
-    "execute_sql_with_commit",
-  ) as string]: {
+  [getProstglesMCPFullToolName("prostgles-ui", "run_typescript_in_nodejs")]: {
+    component: RunTypescriptInNodejs,
+    displayMode: "full",
+    showsError: true,
+  },
+  [getProstglesMCPFullToolName("prostgles-ui", "request_tool_access")]: {
+    component: RequestToolAccess,
+    displayMode: "full",
+    showsError: true,
+  },
+  [getProstglesMCPFullToolName("db", "execute_sql") as string]: {
     component: ExecuteSQL,
     displayMode: "inline",
   },
-  [getProstglesMCPFullToolName(
-    "prostgles-db",
-    "execute_sql_with_rollback",
-  ) as string]: {
+  [getProstglesMCPFullToolName("db", "execute_readonly_sql") as string]: {
     component: ExecuteSQL,
     displayMode: "inline",
   },
-  [getProstglesMCPFullToolName("websearch", "websearch") as string]: {
+  [getProstglesMCPFullToolName("web", "websearch") as string]: {
     component: WebSearch,
     displayMode: "inline",
+  },
+  [getProstglesMCPFullToolName("web", "get_snapshot") as string]: {
+    component: Markdown,
+    displayMode: "inline",
+  },
+  [getProstglesMCPFullToolName("web", "get_document_text") as string]: {
+    component: Markdown,
+    displayMode: "inline",
+  },
+  [getProstglesMCPFullToolName("documents", "get_document_text") as string]: {
+    component: DoclingConvertedDocument,
+    displayMode: "inline",
+  },
+  [getProstglesMCPFullToolName(
+    "webdev",
+    "create_component_quick_feedback_preview",
+  ) as string]: {
+    component: CreateComponentQuickFeedbackPreview,
+    displayMode: "full",
+    showsError: true,
+  },
+  [AGENT_GOAL_TOOL_NAMES.REACHED]: {
+    component: AgentGoallToolCall,
+    displayMode: "full",
   },
 } satisfies Record<
   string,
@@ -60,21 +104,19 @@ export const ProstglesMCPToolsWithUI = {
      * - full: will render component and a side button to show source JSON in popup
      */
     displayMode: "full" | "inline";
+    /**
+     * If true then no error message will be shown outside the tool component.
+     * It is expected that the tool component itself shows/handles errors
+     */
+    showsError?: boolean;
   }
 >;
 
 export type ProstglesMCPToolsProps = {
+  loadedSuggestions: LoadedSuggestions | undefined;
   workspaceId: string | undefined;
-  // message: ToolUseMessage;
-  message: {
-    id: string;
-    input: any;
-  };
   chatId: number;
-  toolUseResult:
-    | {
-        toolUseResult: DBSSchema["llm_messages"];
-        toolUseResultMessage: ToolResultMessage;
-      }
-    | undefined;
+  isShownInToolUseRequest?: boolean;
+  toolUseContent: ToolUseMessage;
+  resultContent: ToolResultMessage | undefined;
 };

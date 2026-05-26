@@ -4,22 +4,24 @@ import { FlexCol, FlexRow } from "@components/Flex";
 import Loading from "@components/Loader/Loading";
 import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 import { mdiFilter, mdiSortAscending, mdiSortDescending } from "@mdi/js";
-import { type DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import { type ValidatedColumnInfo } from "prostgles-types";
 import React, { useState } from "react";
+import type { Prgl } from "src/App";
 import type { WindowData } from "src/dashboard/Dashboard/dashboardUtils";
 import { useColumnStats } from "./useColumnQuickStats";
+import { RenderValue } from "src/dashboard/SmartForm/SmartFormField/RenderValue";
 
 export type ColumnQuickStatsProps = {
   column: ValidatedColumnInfo;
-  db: DBHandlerClient;
+  db: Prgl["db"];
   w: SyncDataItem<Required<WindowData<"table">>, true>;
 };
+
 export const ColumnQuickStats = (props: ColumnQuickStatsProps) => {
   const [sortAscending, setSortAscending] = useState(false);
   const stats = useColumnStats(props, sortAscending);
-
+  const { column } = props;
   if (!stats) return <Loading />;
   if (stats.type === "error") return <ErrorComponent error={stats} />;
 
@@ -38,8 +40,24 @@ export const ColumnQuickStats = (props: ColumnQuickStatsProps) => {
 
       {stats.minMax && (
         <>
-          <StatRow label="Min" value={stats.minMax.min?.toString() ?? "N/A"} />
-          <StatRow label="Max" value={stats.minMax.max?.toString() ?? "N/A"} />
+          <StatRow
+            label="Min"
+            value={
+              <RenderValue
+                column={column}
+                value={stats.minMax.min?.toString()}
+              />
+            }
+          />
+          <StatRow
+            label="Max"
+            value={
+              <RenderValue
+                column={column}
+                value={stats.minMax.max?.toString()}
+              />
+            }
+          />
         </>
       )}
 
@@ -75,6 +93,7 @@ export const ColumnQuickStats = (props: ColumnQuickStatsProps) => {
                 count={d.count}
                 onClickAddFilter={d.onClick}
                 max={maxCount}
+                column={column}
               />
             ))}
           </ScrollFade>
@@ -102,18 +121,22 @@ const DistributionBar = ({
   count,
   max,
   onClickAddFilter,
+  column,
 }: {
   label: string;
   count: number;
   max: number;
   onClickAddFilter?: () => void;
+  column: ValidatedColumnInfo;
 }) => {
   const percentage = max > 0 ? (count / max) * 100 : 0;
   return (
     <div className="flex-col gap-p5 trigger-hover">
       <div className="flex-row gap-p5 ai-center jc-between">
         <FlexRow>
-          <strong>{label}</strong>
+          <strong>
+            <RenderValue column={column} value={label} />
+          </strong>
           {onClickAddFilter && (
             <Btn
               iconPath={mdiFilter}

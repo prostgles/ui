@@ -1,17 +1,15 @@
 /* eslint-disable no-useless-escape */
 
-import type { Monaco } from "../W_SQL/monacoEditorTypes";
+import type { editor, Monaco } from "../W_SQL/monacoEditorTypes";
 
 let logThemeLoaded = false;
 export const LOG_LANGUAGE_ID = "log";
-export const LOG_LANGUAGE_THEME = "logview";
+export const LOG_LANGUAGE_THEME_LIGHT = "logview";
+export const LOG_LANGUAGE_THEME_DARK = "logview-dark";
 export const registerLogLang = (monaco: Monaco) => {
   if (logThemeLoaded) return;
   logThemeLoaded = true;
   monaco.languages.register({ id: LOG_LANGUAGE_ID });
-
-  const logCustomRules = [];
-  const themeRules = [];
 
   monaco.languages.setMonarchTokensProvider(LOG_LANGUAGE_ID, {
     keywords: ["error", "warning", "info", "success"],
@@ -32,8 +30,6 @@ export const registerLogLang = (monaco: Monaco) => {
             },
           },
         ],
-        // Custom rules
-        ...logCustomRules,
         // Trace/Verbose
         [/\b(Trace)\b:/, "verbose"],
         // Serilog VERBOSE
@@ -109,21 +105,24 @@ export const registerLogLang = (monaco: Monaco) => {
     },
   });
 
-  monaco.editor.defineTheme(LOG_LANGUAGE_THEME, {
+  const rules: editor.ITokenThemeRule[] = [
+    { token: "info.log", foreground: "#4b71ca" },
+    { token: "error.log", foreground: "#ff0000", fontStyle: "bold" },
+    { token: "warning.log", foreground: "#FFA500" },
+    { token: "date.log", foreground: "#008800" },
+    { token: "constant", foreground: "#00891f" },
+    { token: "exceptiontype.log", foreground: "#808080" },
+  ];
+  monaco.editor.defineTheme(LOG_LANGUAGE_THEME_LIGHT, {
     base: "vs",
     inherit: true,
-    rules: [
-      { token: "info.log", foreground: "#4b71ca" },
-      { token: "error.log", foreground: "#ff0000", fontStyle: "bold" },
-      { token: "warning.log", foreground: "#FFA500" },
-      { token: "date.log", foreground: "#008800" },
-      { token: "constant", foreground: "#00891f" },
-      { token: "exceptiontype.log", foreground: "#808080" },
-      ...themeRules,
-    ],
-    colors: {
-      "editor.lineHighlightBackground": "#ffffff",
-      "editorGutter.background": "#f7f7f7",
-    },
+    rules,
+    colors: {},
+  });
+  monaco.editor.defineTheme(LOG_LANGUAGE_THEME_DARK, {
+    base: "vs-dark",
+    inherit: true,
+    rules,
+    colors: {},
   });
 };

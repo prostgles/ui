@@ -188,7 +188,7 @@ export const useEditedAccessRule = ({
 
   const result: ValidEditedAccessRuleState = {
     ...ruleData,
-    newRule: newRule as any,
+    newRule: newRule as EditedAccessRule,
     userTypes,
     worspaceTableAndColumns: wspTables?.worspaceTableAndColumns,
     tableErrors,

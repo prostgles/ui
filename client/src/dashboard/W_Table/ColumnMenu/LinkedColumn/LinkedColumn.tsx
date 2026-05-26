@@ -4,13 +4,10 @@ import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
 import { InfoRow } from "@components/InfoRow";
 import { Select } from "@components/Select/Select";
 import { mdiDotsHorizontal } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 import { t } from "../../../../i18n/i18nUtils";
-import type {
-  DBSchemaTablesWJoins,
-  WindowSyncItem,
-} from "../../../Dashboard/dashboardUtils";
+import type { WindowSyncItem } from "../../../Dashboard/dashboardUtils";
 import { SmartFilterBar } from "../../../SmartFilterBar/SmartFilterBar";
 import type { ColumnConfigWInfo } from "../../W_Table";
 import { getColWInfo } from "../../tableUtils/getColWInfo";
@@ -18,7 +15,6 @@ import type { ColumnConfig } from "../ColumnMenu";
 import { JoinPathSelectorV2, getAllJoins } from "../JoinPathSelectorV2";
 import { LinkedColumnFooter } from "./LinkedColumnFooter";
 import { LinkedColumnSelect } from "./LinkedColumnSelect";
-import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 
 export type LinkedColumnProps = {
   w: WindowSyncItem<"table">;
@@ -47,7 +43,7 @@ export const NESTED_COLUMN_DISPLAY_MODES = [
 
 export const LinkedColumn = (props: LinkedColumnProps) => {
   const { w } = props;
-  const { tables, db } = usePrgl();
+  const { tables, db, sql } = usePrgl();
   const getCol = (name: string) => w.columns?.find((c) => c.name === name);
 
   const [localColumn, setLocalColumn] = useState<ColumnConfigWInfo>();
@@ -92,14 +88,18 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
   useEffect(() => {
     if (!localColumn) return;
     const shownCols = localColumn.nested?.columns.filter((c) => c.show) ?? [];
-    const width = shownCols.length > 2 || table?.info.isFileTable ? 250 : 150;
+    const width = shownCols.length > 2 || table?.isFileTable ? 250 : 150;
     if (localColumn.width !== width) {
       setLocalColumn({ ...localColumn, width });
     }
   }, [localColumn, table]);
 
   return (
-    <FlexCol data-command="LinkedColumn" className="LinkedColumn gap-2">
+    <FlexCol
+      data-command="LinkedColumn"
+      className="LinkedColumn gap-2"
+      style={{ maxWidth: "600px" }}
+    >
       <InfoRow color="info" variant="naked" className=" " iconPath="">
         {
           t.LinkedColumn[
@@ -158,7 +158,7 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
              */
             const nestedColumns = getColWInfo(table, null).map((c, i) => ({
               ...c,
-              show: !!table.info.isFileTable || i < 5,
+              show: !!table.isFileTable || i < 5,
             }));
             const newCol: ColumnConfig = {
               name: newColName,
@@ -228,6 +228,7 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
                     step: 1,
                     max: 30,
                   }}
+                  variant="row"
                   onChange={(limit) => {
                     updateNested({
                       limit:
@@ -247,6 +248,7 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
                   table_name={table.name}
                   db={db}
                   tables={tables}
+                  sql={sql}
                   columns={currentColumn.nested.columns}
                   rowCount={-1}
                   methods={{}}

@@ -4,21 +4,20 @@ import { FlexRow } from "@components/Flex";
 import Popup from "@components/Popup/Popup";
 import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 import { mdiClose, mdiTools } from "@mdi/js";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import type { FilterItem } from "prostgles-types";
 import React, { useEffect, useMemo, useState } from "react";
-import type { Prgl } from "../../../App";
 import { MCPServerConfig } from "../../../pages/ServerSettings/MCPServers/MCPServerConfig/MCPServerConfig";
 import { ChatActionBarBtnStyleProps } from "./AskLLMChatActionBar";
 
 export const AskLLMChatActionBarMCPToolsBtn = ({
-  dbs,
   activeChat,
   loading,
-  dbsMethods,
-}: Pick<Prgl, "dbs" | "dbsMethods"> & {
+}: {
   loading: boolean;
   activeChat: DBSSchema["llm_chats"];
 }) => {
+  const { dbs, dbsMethods } = usePrgl();
   const { data: allowedTools } = dbs.mcp_server_tools.useSubscribe(
     {
       $existsJoined: {
@@ -154,7 +153,6 @@ export const AskLLMChatActionBarMCPToolsBtn = ({
         <MCPServerConfig
           chatId={activeChat.id}
           existingConfig={undefined}
-          dbs={dbs}
           onDone={() => {
             setServerToConfigure(undefined);
           }}

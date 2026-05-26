@@ -103,21 +103,6 @@ export const rectangleToSVG = (
       outlineNode.setAttribute("stroke-linejoin", "round");
       outlineNode.setAttribute("stroke-linecap", "round");
       g.appendChild(outlineNode);
-      // const { path, rtl, rtr, rbr, rbl, showBorder, borderWidth } = getPath();
-      // if (path instanceof SVGRectElement) {
-      //   throw new Error("Outline not supported for rect element");
-      // }
-      // path.setAttribute(
-      //   "d",
-      //   roundedRectPath(
-      //     /** This is to ensure the new-connection connection type radio buttons are aligned */
-      //     x - outline.borderWidth / 2 + (!showBorder ? borderWidth : 0),
-      //     y - outline.borderWidth / 2 + (!showBorder ? borderWidth : 0),
-      //     width + outline.borderWidth,
-      //     height + outline.borderWidth,
-      //     [rtl, rtr, rbr, rbl],
-      //   ),
-      // );
     }
 
     if (border.type === "border") {
@@ -162,6 +147,10 @@ const getRectanglePath = (
     width: width - visibleBorderWidth,
     height: height - visibleBorderWidth,
   };
+  const strokeDasharray =
+    style.borderStyle === "dashed" && visibleBorderWidth ?
+      visibleBorderWidth * 2
+    : undefined;
 
   /** Use recangle if possible */
   const hasSingleRadius = new Set([rtl, rtr, rbr, rbl]).size === 1;
@@ -177,6 +166,9 @@ const getRectanglePath = (
     rect.setAttribute("height", adjusted.height);
     rect.setAttribute("rx", rtl);
     rect.setAttribute("ry", rtl);
+    if (strokeDasharray) {
+      rect.setAttribute("stroke-dasharray", strokeDasharray.toString());
+    }
     return { path: rect, showBorder, rtl, rtr, rbr, rbl, borderWidth };
   }
 
@@ -196,6 +188,9 @@ const getRectanglePath = (
     ),
   );
 
+  if (strokeDasharray) {
+    path.setAttribute("stroke-dasharray", strokeDasharray.toString());
+  }
   path satisfies SVGElementTagNameMap[(typeof BORDER_ELEMENT_TYPES)[number]];
   return { path, showBorder, rtl, rtr, rbr, rbl, borderWidth };
 };

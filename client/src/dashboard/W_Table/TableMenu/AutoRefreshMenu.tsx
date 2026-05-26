@@ -1,11 +1,10 @@
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import ButtonGroup from "@components/ButtonGroup";
+import FormField from "@components/FormField/FormField";
 import { InfoRow } from "@components/InfoRow";
+import React from "react";
+import type { Prgl } from "src/App";
 import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";
 import type { RefreshOptions } from "./W_TableMenu";
-import React from "react";
-import FormField from "@components/FormField/FormField";
-import type { DBS } from "../../Dashboard/DBS";
 
 export const AutoRefreshMenu = ({
   w,
@@ -16,7 +15,7 @@ export const AutoRefreshMenu = ({
     | WindowSyncItem<"map">
     | WindowSyncItem<"table">
     | WindowSyncItem<"timechart">;
-  db?: DBHandlerClient;
+  db?: Prgl["db"];
 }) => {
   const { refresh } = w.options;
   const {

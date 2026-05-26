@@ -74,11 +74,11 @@ export class AlterColumn extends RTComp<AlterColumnProps, S> {
   setConstraints = debounce(async () => {
     const {
       table,
-      prgl: { db },
+      prgl: { sql },
       field,
     } = this.props;
-    if (!db.sql || !field) return;
-    const constraints = await getColumnConstraints(table.name, field, db.sql);
+    if (!sql || !field) return;
+    const constraints = await getColumnConstraints(table.name, field, sql);
     this.setState({ constraints });
   }, 100);
 
@@ -94,7 +94,7 @@ export class AlterColumn extends RTComp<AlterColumnProps, S> {
   ) => {
     const {
       table,
-      prgl: { db },
+      prgl: { sql },
     } = this.props;
 
     const field = JSON.stringify(this.state.field || this.props.field);
@@ -124,7 +124,7 @@ export class AlterColumn extends RTComp<AlterColumnProps, S> {
       if (newType.startsWith("TIMESTAMP") || newType === "DATE") {
         using = `USING to_timestamp(${usingCol}, 'YYYY-MM-DD HH:MI:SS')::${newType}`;
 
-        const value = await db.sql!(
+        const value = await sql!(
           `SELECT ${field} FROM ${tableName} WHERE  ${field} IS NOT NULL LIMIT 1`,
           {},
           { returnType: "value" },
@@ -213,7 +213,7 @@ export class AlterColumn extends RTComp<AlterColumnProps, S> {
 
   render() {
     const { table, prgl } = this.props;
-    const { db, tables } = prgl;
+    const { sql, tables } = prgl;
 
     const isCreate = !this.props.field;
     const field = this.state.field || this.props.field;
@@ -289,7 +289,7 @@ export class AlterColumn extends RTComp<AlterColumnProps, S> {
                   query: `ALTER TABLE ${tName} \nRENAME COLUMN ${JSON.stringify(field)} \nTO ${JSON.stringify(newName)} `,
                 });
               } else if (k === "dataType") {
-                this.onNewDataType({ dataType: val.dataType });
+                void this.onNewDataType({ dataType: val.dataType });
               } else if (k === "isPkey") {
                 if (!pkeyCons) {
                   this.setState({
@@ -333,7 +333,7 @@ export class AlterColumn extends RTComp<AlterColumnProps, S> {
               }
             }}
           />
-          {table.info.fileTableName && (
+          {table.fileTableName && (
             <AlterColumnFileOptions
               columnName={col.name}
               tableName={tableName}
@@ -390,7 +390,7 @@ export class AlterColumn extends RTComp<AlterColumnProps, S> {
         {query && (!isCreate || showCreateQuery) && (
           <SQLSmartEditor
             query={query}
-            sql={db.sql!}
+            sql={sql!}
             title={isCreate ? "Create column query" : "Alter column query"}
             suggestions={this.props.suggestions}
             onCancel={() => {

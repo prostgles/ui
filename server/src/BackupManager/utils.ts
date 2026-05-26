@@ -8,6 +8,7 @@ import type { Connections, DBS } from "..";
 import { getCloudClient } from "../cloudClients/cloudClients";
 import { getConnectionDetails } from "../connectionUtils/getConnectionDetails";
 import { getRootDir } from "../electronConfig";
+import type { DBSSchema } from "@common/publishUtils";
 
 export const getConnectionUri = (c: Connections) =>
   c.db_conn ||
@@ -16,7 +17,7 @@ export const getConnectionUri = (c: Connections) =>
 export async function getFileMgr(dbs: DBS, credId: number | null) {
   const localFolderPath = path.resolve(getRootDir() + ROUTES.BACKUPS);
 
-  let cred;
+  let cred: DBSSchema["credentials"] | undefined;
   if (credId) {
     cred = await dbs.credentials.findOne({ id: credId });
     if (!cred) throw new Error("Could not find the credentials");

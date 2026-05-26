@@ -34,7 +34,7 @@ export const SmartFilterBarSort = ({ table, ...props }: P) => {
   let orderByKey: string | undefined;
   let orderAsc = true;
   if ("w" in props) {
-    orderByKey = w?.sort?.[0]?.key as string;
+    orderByKey = w?.sort?.[0]?.key;
     orderAsc = w?.sort?.[0]?.asc ?? true;
   } else if (typeof props.sort?.key === "string") {
     orderByKey = props.sort.key;

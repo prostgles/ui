@@ -93,6 +93,7 @@ export const SmartCardActions = <T extends AnyObject>(
       {editMode && typeof tableName === "string" && (
         <SmartForm
           db={db}
+          sql={props.sql}
           tables={tables}
           methods={methods}
           asPopup={true}

@@ -14,6 +14,7 @@ export type ColInfo = Pick<
   "name" | "udt_name" | "is_pkey"
 >;
 type JoinedChartColumn = {
+  key: string;
   type: "joined";
   label: string;
   path: ParsedJoinPath[];
@@ -21,6 +22,7 @@ type JoinedChartColumn = {
 } & ColInfo;
 
 type NormalChartColumn = {
+  key: string;
   type: "normal";
   otherColumns: ColInfo[];
 } & ColInfo;
@@ -76,6 +78,7 @@ export const getChartCols = (
       j.table.columns.filter(isDateCol).map(
         (c) =>
           ({
+            key: `${j.label}.${c.name}`,
             type: "joined",
             ...j,
             is_pkey: c.is_pkey,
@@ -92,6 +95,7 @@ export const getChartCols = (
       j.table.columns.filter(isGeoCol).map(
         (c) =>
           ({
+            key: `${j.label}.${c.name}`,
             type: "joined",
             ...j,
             is_pkey: c.is_pkey,
@@ -115,6 +119,7 @@ export const getChartCols = (
 
   const windowDateCols: ChartColumn[] = cols.filter(isDateCol).map((c) => ({
     ...c,
+    key: c.name,
     type: "normal",
     otherColumns: getOtherCols(
       tables.find((t) => t.name === w.table_name)?.columns || [],
@@ -122,6 +127,7 @@ export const getChartCols = (
   }));
   const windowGeoCols: ChartColumn[] = cols.filter(isGeoCol).map((c) => ({
     ...c,
+    key: c.name,
     type: "normal",
     otherColumns: getOtherCols(
       tables.find((t) => t.name === w.table_name)?.columns || [],
@@ -132,6 +138,7 @@ export const getChartCols = (
   const geoCols: ChartColumn[] = [...windowGeoCols, ...geoColsJoined];
   const barCols: ChartColumn[] = cols.map((c) => ({
     ...c,
+    key: c.name,
     type: "normal",
     otherColumns: getOtherCols(
       tables.find((t) => t.name === w.table_name)?.columns || [],

@@ -15,8 +15,8 @@ export const newConnectionSvgif: OnBeforeScreenshot = async (
       },
       {
         elementSelector: '[data-command="Connections.new"]',
-        duration: 1000,
         type: "click",
+        duration: 1000,
       },
     ],
   });

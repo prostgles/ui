@@ -12,36 +12,42 @@ import type { DashboardMenuProps } from "./DashboardMenu";
 import { DashboardMenuSettings } from "./DashboardMenuSettings";
 import { getIsPinnedMenu } from "../Dashboard/Dashboard";
 import { t } from "../../i18n/i18nUtils";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import { useAddViewToWorkspace } from "../Dashboard/useAddViewToWorkspace";
 
-type P = Pick<DashboardMenuProps, "prgl" | "loadTable" | "workspace"> & {
+type P = Pick<DashboardMenuProps, "workspace"> & {
   onClose: VoidFunction | undefined;
   onClickSearchAll: VoidFunction;
 };
 
 export const DashboardMenuHeader = ({
-  prgl,
-  loadTable,
   onClose,
   workspace,
   onClickSearchAll,
 }: P) => {
-  const db = prgl.db;
+  const { sql } = usePrgl();
+  const { addViewToWorkspace } = useAddViewToWorkspace();
   const pinnedMenu = getIsPinnedMenu(workspace);
   return (
     <FlexRowWrap className="DashboardMenuHeader gap-p5 f-0">
       <Btn
         key="sql"
         {...dataCommand("dashboard.menu.sqlEditor")}
+        size="default"
         className="f-1 jc-start max-w-fit"
         title={t.DashboardMenuHeader["Opens SQL Query editor"]}
         onClickPromise={async () => {
-          await loadTable({ type: "sql", name: "SQL Query" });
+          await addViewToWorkspace({
+            workspace_id: workspace.id,
+            type: "sql",
+            name: "SQL Query",
+          });
           onClose?.();
         }}
         color="action"
         variant="filled"
         iconPath={mdiScriptTextPlay}
-        disabledInfo={db.sql ? undefined : t.common["Not permitted"]}
+        disabledInfo={sql ? undefined : t.common["Not permitted"]}
       >
         {window.isLowWidthScreen ? null : t.DashboardMenuHeader["SQL Editor"]}
       </Btn>
@@ -55,7 +61,7 @@ export const DashboardMenuHeader = ({
           onClose?.();
         }}
       />
-      <DashboardMenuSettings prgl={prgl} workspace={workspace} />
+      <DashboardMenuSettings workspace={workspace} />
       <Btn
         iconPath={!pinnedMenu ? mdiPinOutline : mdiPinOffOutline}
         disabledInfo={

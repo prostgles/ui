@@ -1,149 +1,146 @@
-import type { DBHandlerClient } from "prostgles-client";
-import React, { useCallback, useMemo } from "react";
+import React, { useMemo, useState } from "react";
 
-import { getMCPToolNameParts } from "@common/prostglesMcp";
+import { getMCPFullToolName } from "@common/mcpUtils";
 import type { DBSSchema } from "@common/publishUtils";
 import { Marked } from "@components/Chat/Marked";
 import { FlexCol, FlexRow } from "@components/Flex";
 import Popup from "@components/Popup/Popup";
 import { CodeEditorWithSaveButton } from "src/dashboard/CodeEditor/CodeEditorWithSaveButton";
-import type { Prgl } from "../../../App";
+import type { LoadedSuggestions } from "src/dashboard/Dashboard/dashboardUtils";
 import { isEmpty } from "../../../utils/utils";
-import type { DBS } from "../../Dashboard/DBS";
 import { ProstglesMCPToolsWithUI } from "../Chat/AskLLMChatMessages/ProstglesToolUseMessage/ProstglesToolUseMessage";
-import type { ToolUseMessage } from "../Chat/AskLLMChatMessages/ToolUseChatMessage/ToolUseChatMessage";
-import {
-  useLLMToolsApprover,
-  type ApproveRequest,
-  type ToolApproval,
-} from "./useLLMToolsApprover";
+import type { useAskLLMToolApprove } from "./useAskLLMToolApprover";
+import { NavLink } from "react-router";
+import { getConnectionPaths } from "@common/utils";
+import { isDefined } from "@common/filterUtils";
+import type { BtnProps } from "@components/Btn";
+import ErrorComponent from "@components/ErrorComponent";
+import Chip from "@components/Chip";
 
 export type AskLLMToolsProps = {
-  dbs: DBS;
-  db: DBHandlerClient;
-  activeChat: DBSSchema["llm_chats"];
-  prompt: DBSSchema["llm_prompts"];
-  messages: DBSSchema["llm_messages"][];
-  sendQuery: (
-    msg: DBSSchema["llm_messages"]["message"] | undefined,
-    isToolApproval: boolean,
-  ) => void;
-} & Pick<Prgl, "methods" | "connection">;
+  workspaceId: string | undefined;
+  loadedSuggestions: LoadedSuggestions | undefined;
+  onOpenChat: (selectedChatId: number) => void;
+  openedChatId: number | undefined;
+  connectionId: string;
+} & ReturnType<typeof useAskLLMToolApprove>;
 
 export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
-  const { dbs, activeChat } = props;
-  const activeChatId = activeChat.id;
-  const [mustApprove, setMustApprove] = React.useState<
-    {
-      onResponse: (mode: "once" | "for-chat" | "deny") => void;
-      toolUseMessage: ToolUseMessage;
-    } & ApproveRequest
-  >();
+  const {
+    loadedSuggestions,
+    workspaceId,
+    onOpenChat,
+    openedChatId,
+    dbSchemaForPrompt,
+    requests,
+    respond,
+    showRequestId,
+    setShowRequestId,
+    connectionId,
+  } = props;
 
-  const { db_data_permissions } = activeChat;
-  const requestApproval = useCallback(
-    async (req: ApproveRequest, toolUseMessage: ToolUseMessage) => {
-      return new Promise<ToolApproval>((resolve) => {
-        setMustApprove({
-          toolUseMessage,
-          ...req,
-          onResponse: async (toolUseResponse) => {
-            if (toolUseResponse !== "deny") {
-              const auto_approve = toolUseResponse === "for-chat";
-              if (req.type === "mcp") {
-                const { tool_id } = req;
-                if (typeof tool_id !== "number") {
-                  throw new Error("Unexpected. tool_id missing");
-                }
-                await dbs.llm_chats_allowed_mcp_tools.upsert(
-                  { chat_id: activeChatId, tool_id },
-                  {
-                    chat_id: activeChatId,
-                    tool_id,
-                    auto_approve,
-                  },
-                );
-              } else if (req.type === "prostgles-db-methods") {
-                const { server_function_id } = req;
-                await dbs.llm_chats_allowed_functions.upsert(
-                  { chat_id: activeChatId, server_function_id },
-                  {
-                    chat_id: activeChatId,
-                    server_function_id,
-                    auto_approve,
-                  },
-                );
-              } else if (req.type === "prostgles-db") {
-                await dbs.llm_chats.update(
-                  {
-                    id: activeChatId,
-                  },
-                  {
-                    db_data_permissions:
-                      req.tool_name === "execute_sql_with_commit" ?
-                        {
-                          Mode: "Run commited SQL",
-                          auto_approve,
-                        }
-                      : req.tool_name === "execute_sql_with_rollback" ?
-                        {
-                          Mode: "Run readonly SQL",
-                          auto_approve,
-                        }
-                      : {
-                          ...(db_data_permissions as Extract<
-                            typeof db_data_permissions,
-                            { Mode: "Custom" }
-                          >),
-                          auto_approve,
-                        },
-                  },
-                );
-              } else {
-                throw new Error(
-                  `Unexpected tool use request ${JSON.stringify(req)}`,
-                );
-              }
-            }
-            resolve({
-              approved: toolUseResponse !== "deny",
-              mode: toolUseResponse,
-            });
-          },
-        });
-      });
-    },
-    [
-      dbs.llm_chats_allowed_mcp_tools,
-      dbs.llm_chats_allowed_functions,
-      dbs.llm_chats,
-      activeChatId,
-      db_data_permissions,
-    ],
+  const [ignoredRequestIds, setIgnoredRequestIds] = useState<number[]>([]);
+  const nonIgnoredRequests = useMemo(
+    () => requests?.filter((r) => !ignoredRequestIds.includes(r.id)),
+    [requests, ignoredRequestIds],
   );
-  const nameParts = useMemo(
-    () => (mustApprove ? getMCPToolNameParts(mustApprove.name) : undefined),
-    [mustApprove],
-  );
+  const requestItem =
+    showRequestId ?
+      requests?.find(({ id }) => id === showRequestId)
+    : nonIgnoredRequests?.[0];
 
-  useLLMToolsApprover({ ...props, requestApproval });
+  const toolUse = useMemo(() => {
+    if (!requestItem) return;
+    const { input, tool_use_id, source, llm_messages } = requestItem;
+    const toolUseMessage = llm_messages[0];
+    if (source.type === "proxy") {
+      return { state: "ok", input } as const;
+    }
+    if (!toolUseMessage) {
+      return { state: "error" } as const;
+    }
+    const inputFromMessage = toolUseMessage.message
+      .map((content) =>
+        content.type === "tool_use" && content.id === tool_use_id ?
+          content
+        : undefined,
+      )
+      .find(isDefined)?.input;
 
-  if (!mustApprove) return null;
+    return {
+      state: "ok",
+      input: inputFromMessage,
+    } as const;
+  }, [requestItem]);
+  if (!requestItem || (openedChatId !== undefined && !showRequestId)) {
+    return null;
+  }
 
-  const { toolUseMessage, description, name } = mustApprove;
-
+  const {
+    chat_id,
+    server_name,
+    tool_name,
+    input,
+    tool_use_id,
+    mcp_server_tools,
+    source,
+  } = requestItem;
+  const { annotations } = mcp_server_tools[0] ?? {};
+  const connections = requestItem.connections as
+    | Pick<DBSSchema["connections"], "id" | "name">[]
+    | undefined;
+  const description =
+    requestItem.mcp_server_tools[0]?.description ??
+    "Could not find tool description";
+  const name = getMCPFullToolName(server_name, tool_name);
   const ToolUI = ProstglesMCPToolsWithUI[name];
+  const differentConnection =
+    requestItem.connection_id !== connectionId ?
+      connections?.find((c) => c.id === requestItem.connection_id)
+    : undefined;
+
+  const btnDestructiveToolHint: Pick<BtnProps, "title" | "color"> =
+    annotations?.readOnlyHint === false ?
+      {
+        title:
+          "Not read-only hint: This tool may perform actions that can modify data.",
+        color: "warn",
+      }
+    : annotations?.destructiveHint ?
+      {
+        title:
+          "Destructive hint: This tool may perform actions that can modify or delete data.",
+        color: "danger",
+      }
+    : {
+        color: "action",
+        title: undefined,
+      };
+
+  if (toolUse?.state === "error" || !toolUse?.input) {
+    return (
+      <ErrorComponent error="Tool use message not found for this request" />
+    );
+  }
+
   return (
     <Popup
       title={
-        mustApprove.type === "mcp" ?
-          `Allow tool from ${nameParts?.serverName} to run?`
-        : `Allow function to run?`
+        <FlexRow>
+          <div>Allow tool from {server_name} to run?</div>
+          {differentConnection && (
+            <NavLink to={getConnectionPaths(differentConnection).dashboard}>
+              {differentConnection.name}
+            </NavLink>
+          )}
+        </FlexRow>
       }
       showFullscreenToggle={{}}
       onClose={() => {
-        mustApprove.onResponse("deny");
-        setMustApprove(undefined);
+        setIgnoredRequestIds((prev) => [...prev, requestItem.id]);
+        if (showRequestId) {
+          setShowRequestId(undefined);
+        }
       }}
       clickCatchStyle={{ opacity: 1 }}
       contentStyle={{
@@ -157,41 +154,62 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
           color: "danger",
           variant: "faded",
           "data-command": "AskLLMToolApprover.Deny",
-          onClick: () => {
-            mustApprove.onResponse("deny");
-            setMustApprove(undefined);
+          onClickPromise: async () => {
+            await respond({
+              id: requestItem.id,
+              response: "deny",
+              schema: dbSchemaForPrompt,
+            });
           },
         },
+        differentConnection || requestItem.source.type === "proxy" ?
+          {
+            className: "ml-auto",
+            label: "Show chat",
+            color: "action",
+            variant: "faded",
+            "data-command": "AskLLMToolApprover.ShowChat",
+            onClick: () => {
+              onOpenChat(chat_id);
+            },
+          }
+        : undefined,
         {
-          className: "ml-auto",
           label: "Allow once",
-          color: "action",
           variant: "filled",
+          ...btnDestructiveToolHint,
           "data-command": "AskLLMToolApprover.AllowOnce",
-          onClick: () => {
-            mustApprove.onResponse("once");
-            setMustApprove(undefined);
+          onClickPromise: async () => {
+            await respond({
+              id: requestItem.id,
+              response: "approve",
+              schema: dbSchemaForPrompt,
+            });
           },
         },
         {
           label: "Allow always",
-          color: "action",
           variant: "filled",
+          ...btnDestructiveToolHint,
           "data-command": "AskLLMToolApprover.AllowAlways",
-          onClick: () => {
-            mustApprove.onResponse("for-chat");
-            setMustApprove(undefined);
+          onClickPromise: async () => {
+            await respond({
+              id: requestItem.id,
+              response: "auto-approve",
+              schema: dbSchemaForPrompt,
+            });
           },
         },
       ]}
     >
       <FlexCol className="f-1">
         <FlexRow>
-          Run <strong>{nameParts?.toolName}</strong>
-          {mustApprove.type === "mcp" && (
-            <FlexRow>
-              from <strong>{nameParts?.serverName}</strong>
-            </FlexRow>
+          Run <strong>{tool_name}</strong>
+          <FlexRow>
+            from <strong>{server_name}</strong>
+          </FlexRow>
+          {source.type === "proxy" && (
+            <Chip color="blue">Requested from container</Chip>
           )}
         </FlexRow>
         <Marked
@@ -201,19 +219,27 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
           codeHeader={undefined}
           loadedSuggestions={undefined}
           sqlHandler={undefined}
+          prgl={undefined}
         />
-        {!isEmpty(toolUseMessage.input) && (
+        {!isEmpty(input) && (
           <>
             {ToolUI ?
               <ToolUI.component
-                chatId={activeChat.id}
-                message={toolUseMessage}
-                toolUseResult={undefined}
-                workspaceId={undefined}
+                chatId={chat_id}
+                toolUseContent={{
+                  type: "tool_use",
+                  id: tool_use_id,
+                  name,
+                  input: toolUse.input,
+                }}
+                resultContent={undefined}
+                workspaceId={workspaceId}
+                loadedSuggestions={loadedSuggestions}
+                isShownInToolUseRequest={true}
               />
             : <CodeEditorWithSaveButton
                 label="Input"
-                value={JSON.stringify(toolUseMessage.input, null, 2)}
+                value={JSON.stringify(input, null, 2)}
                 language="json"
               />
             }

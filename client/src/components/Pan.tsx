@@ -26,7 +26,8 @@ export const Pan = (props: PanProps) => {
     onPress,
   } = props;
   const ref = React.useRef<HTMLDivElement>(null);
-  if ((style as React.CSSProperties | undefined)?.zIndex !== undefined) {
+  //@ts-expect-error - TS allows extra props
+  if (style?.zIndex !== undefined) {
     throw new Error(
       "Setting zIndex AND position absolute allows clicking through any popups that obscure this element.",
     );

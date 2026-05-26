@@ -110,8 +110,6 @@ export const W_SQLResults = (props: W_SQLResultsProps) => {
         </div>
       : commandResult ?
         <div className="p-1 ">{commandResult}</div>
-      : childWindow ?
-        childWindow
       : renderMode === "csv" ?
         <CSVRender cols={cols} rows={rows} />
       : renderMode === "JSON" ?

@@ -12,7 +12,7 @@ export const initialiseServices = async (
   dbs: DBS,
 ) => {
   await dbs.services
-    .insert(
+    .insertMany(
       Object.entries(prostglesServices as Record<string, ProstglesService>).map(
         ([name, service]) =>
           ({

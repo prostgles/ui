@@ -12,8 +12,9 @@ import { Label } from "@components/Label";
 import CodeExample from "../../CodeExample";
 import type { SelectRuleControlProps } from "./SelectRuleControl";
 import { getComparablePGPolicy } from "./getComparablePGPolicy";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 
-type P = Pick<SelectRuleControlProps, "table" | "userTypes" | "prgl"> &
+type P = Pick<SelectRuleControlProps, "table" | "userTypes"> &
   (
     | {
         rule: SelectRule;
@@ -36,6 +37,7 @@ type P = Pick<SelectRuleControlProps, "table" | "userTypes" | "prgl"> &
   };
 
 export const ExampleComparablePolicy = (p: P) => {
+  const { db } = usePrgl();
   const policy = usePromise(
     async () =>
       getComparablePGPolicy({
@@ -43,9 +45,10 @@ export const ExampleComparablePolicy = (p: P) => {
         checkFilterDetailed: undefined,
         forcedDataDetail: undefined,
         ...p.rule,
+        db,
         ...p,
       }),
-    [p],
+    [db, p],
   );
 
   return (

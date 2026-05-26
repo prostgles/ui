@@ -1,10 +1,9 @@
+import type { DBSSchema } from "@common/publishUtils";
+import Btn from "@components/Btn";
 import { mdiStop } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject } from "prostgles-types";
 import React, { useMemo } from "react";
-import type { DBSSchema } from "@common/publishUtils";
 import type { Prgl } from "../../App";
-import Btn from "@components/Btn";
 import {
   SmartCardList,
   type SmartCardListProps,
@@ -19,13 +18,17 @@ export const BackupsInProgress = ({
   dbsMethods,
   dbsTables,
   backupFilter,
+  dbsMethodSchema,
+  dbsSql,
 }: Prgl & {
   backupFilter: AnyObject;
 }) => {
   const props = useMemo(() => {
     return {
       style: { minHeight: "250px" },
-      filter: { $and: [backupFilter, { "status->ok": null }] },
+      filter: {
+        $and: [backupFilter, { status: { "@>": { state: "loading" } } }],
+      },
       fieldConfigs: [
         { name: "id", hide: true },
         { name: "sizeInBytes", hide: true },
@@ -48,7 +51,7 @@ export const BackupsInProgress = ({
           render: (logs: string, row) => (
             <RenderBackupLogs
               logs={logs}
-              completed={!(row.status as any)?.loading}
+              completed={row.status.state !== "loading"}
             />
           ),
         },
@@ -60,7 +63,7 @@ export const BackupsInProgress = ({
             variant="outline"
             color="danger"
             onClickPromise={async () => {
-              await dbsMethods.bkpDelete!(row.id, true);
+              await dbsMethods.bkpDelete!({ bkpId: row.id, force: true });
             }}
           >
             Stop & delete
@@ -76,8 +79,9 @@ export const BackupsInProgress = ({
 
   return (
     <SmartCardList<DBSSchema["backups"]>
-      db={dbs as DBHandlerClient}
-      methods={dbsMethods}
+      db={dbs}
+      sql={dbsSql}
+      methods={dbsMethodSchema}
       tableName="backups"
       btnColor="gray"
       title="Backup in progress:"

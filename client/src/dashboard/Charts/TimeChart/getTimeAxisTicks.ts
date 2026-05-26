@@ -13,7 +13,7 @@ import {
 import type { ChartedText, TextMeasurement } from "./../CanvasChart";
 import type { XYFunc } from "./TimeChart";
 import type { DateExtent } from "./getTimechartBinSize";
-import { getCssVariableValue } from "./onRenderTimechart";
+import { getCssVariableValue } from "./getCssVariableValue";
 
 type GetTimeTicksOpts = DateExtent & {
   leftX: number;
@@ -30,6 +30,10 @@ type DateIncrementer = {
   id: string;
   getStart: (d: Date) => Date;
   getLabel: (d: Date) => string;
+  /**
+   * If defined then this can be used to show the higher unit name.
+   */
+  getTopLabel?: (d: Date) => string;
   // getNext: (d: Date) => Date;
   dateDelta: number;
 };
@@ -95,6 +99,7 @@ export function getTimeAxisTicks(args: GetTimeTicksOpts): ChartedText[] {
       getStart: (d: Date) => new Date(d.getFullYear(), 0, 1),
       dateDelta: MONTH * 12,
       getLabel: (d: Date) => toDateStr(d, { year: "numeric" }),
+      getTopLabel: (d: Date) => toDateStr(d, { year: "numeric" }),
     },
     {
       id: "Quarter Yearly",
@@ -107,6 +112,7 @@ export function getTimeAxisTicks(args: GetTimeTicksOpts): ChartedText[] {
       getStart: (d: Date) => new Date(d.getFullYear(), d.getMonth(), 1),
       dateDelta: MONTH,
       getLabel: (d: Date) => toDateStr(d, { month: "short" }),
+      getTopLabel: (d: Date) => toDateStr(d, { month: "short" }),
     },
     {
       id: "Weekly",
@@ -114,6 +120,7 @@ export function getTimeAxisTicks(args: GetTimeTicksOpts): ChartedText[] {
       getStart: (d: Date) =>
         new Date(d.getFullYear(), d.getMonth(), d.getDate()),
       getLabel: (d: Date) => toDateStr(d, { day: "numeric" }),
+      getTopLabel: (d: Date) => toDateStr(d, { weekday: "short" }),
     },
     {
       id: "Daily",
@@ -201,35 +208,35 @@ export function getTimeAxisTicks(args: GetTimeTicksOpts): ChartedText[] {
     return [t1, t2];
   }
 
-  let incs = incrementers.map((inc) => {
-    /* Get start point v, then two consecutive v1, v2 to ensure we have a full spacing between v1 and v2 */
-    const v = inc.getStart(new Date(+lDate)),
-      v1 = new Date(+v + inc.dateDelta),
-      v2 = new Date(+v1 + inc.dateDelta),
-      tickWidth = measureText(
-        getTickText({ text: inc.getLabel(new Date(2001, 1, 1)) }),
-      ).width,
-      x1 = getScreenXY(getX(+v1), 0)[0],
-      x2 = getScreenXY(getX(+v2), 0)[0],
-      spacing = x2 - x1 - tickWidth;
+  const incrementSpacingMetrics = incrementers
+    .map((inc) => {
+      /* Get start point v, then two consecutive v1, v2 to ensure we have a full spacing between v1 and v2 */
+      const v = inc.getStart(new Date(+lDate)),
+        v1 = new Date(+v + inc.dateDelta),
+        v2 = new Date(+v1 + inc.dateDelta),
+        tickWidth = measureText(
+          getTickText({ text: inc.getLabel(new Date(2001, 1, 1)) }),
+        ).width,
+        x1 = getScreenXY(getX(+v1), 0)[0],
+        x2 = getScreenXY(getX(+v2), 0)[0],
+        spacing = x2 - x1 - tickWidth;
 
-    return {
-      inc,
-      spacing,
-      diffFromIdeal: Math.abs(spacing - IDEAL_SPACING),
-    };
-  });
+      return {
+        inc,
+        spacing,
+        diffFromIdeal: Math.abs(spacing - IDEAL_SPACING),
+      };
+    })
+    .filter((inc) => inc.spacing > MIN_SPACING)
+    .toSorted((a, b) => a.diffFromIdeal - b.diffFromIdeal);
 
-  incs = incs.filter((inc) => inc.spacing > MIN_SPACING);
+  if (!incrementSpacingMetrics.length) return [];
+  const theChosenInc = incrementSpacingMetrics[0]!.inc;
 
-  if (!incs.length) return [];
-  const theChosenInc = incs.sort(
-    (a, b) => a.diffFromIdeal - b.diffFromIdeal,
-  )[0]!.inc;
-
-  let midTicks: { x: number; v: number; label: string }[] = [];
+  type MidTick = { x: number; v: number; label: string };
+  let midTicks: MidTick[] = [];
   const getTickChartedText = (
-    tick: (typeof midTicks)[number],
+    tick: MidTick,
     i: number,
   ): ChartedText & { xRange: [number, number] } => {
     const ct: ChartedText = {
@@ -248,7 +255,7 @@ export function getTimeAxisTicks(args: GetTimeTicksOpts): ChartedText[] {
     };
   };
 
-  const getProvidedTicks = (): undefined | typeof midTicks => {
+  const getProvidedTicks = (): undefined | MidTick[] => {
     const valueTicks = values?.map((date) => {
       const v = +date;
       return {
@@ -274,20 +281,43 @@ export function getTimeAxisTicks(args: GetTimeTicksOpts): ChartedText[] {
     return !overlapsOrDuplicates ? valueTicks : undefined;
   };
 
-  const providedTicks = getProvidedTicks();
-  if (providedTicks) {
-    midTicks = providedTicks;
-  } else {
+  const addMidTicks = (
+    theChosenInc: DateIncrementer,
+    collectorArray: MidTick[],
+    useTopLabel = false,
+  ) => {
     let d = theChosenInc.getStart(lDate);
     do {
       const v = +d;
-      midTicks.push({
+      collectorArray.push({
         v,
         x: getX(v),
-        label: theChosenInc.getLabel(d),
+        label:
+          useTopLabel ? theChosenInc.getTopLabel!(d) : theChosenInc.getLabel(d),
       });
       d = new Date(+d + theChosenInc.dateDelta);
     } while (+d < +rDate);
+  };
+
+  const providedTicks = getProvidedTicks();
+  const midTicksBottom: MidTick[] = [];
+  if (providedTicks) {
+    midTicks = providedTicks;
+  } else {
+    const width = getScreenXY(rightX, 0)[0] - getScreenXY(leftX, 0)[0];
+    const groupInc = incrementSpacingMetrics.find(
+      (inc) =>
+        inc.inc.getTopLabel &&
+        theChosenInc.dateDelta < inc.inc.dateDelta &&
+        width / inc.spacing > 2,
+    );
+
+    /** Add higher unit row */
+    if (groupInc) {
+      addMidTicks(groupInc.inc, midTicksBottom, true);
+    }
+
+    addMidTicks(theChosenInc, midTicks);
   }
 
   const y_top = height - 20,
@@ -356,26 +386,40 @@ export function getTimeAxisTicks(args: GetTimeTicksOpts): ChartedText[] {
     Math.max(measureText(rt).width, measureText(rb).width) + 10;
   const leftTickMaxX = Math.max(getScreenXY(leftX, 0)[0] + leftTickMaxWidth);
   const rightTickMinX = Math.max(getScreenXY(rightX, 0)[0] - rightTickMaxWidth);
-
   return [
     lt,
     lb,
-    ...midTicks
-      .map(
-        (t, i) =>
-          ({
-            id: "midTicks" + i,
-            ...MIDTICK_STYLE,
-            text: t.label,
-            coords: [t.x, height - 10],
-          }) as ChartedText,
-      )
-      .filter((t) => {
-        /* Remove mid ticks that overlap with the end ticks */
-        const x = getScreenXY(t.coords[0], 0)[0],
-          w = measureText(t).width;
-        return x - w / 2 > leftTickMaxX && x + w / 2 < rightTickMinX;
-      }),
+    ...[midTicksBottom, midTicks].flatMap((ticks, tickRowIndex) => {
+      return ticks
+        .map((t, i) => ({
+          id: "midTicks-row-" + tickRowIndex + "-idx-" + i,
+          ...MIDTICK_STYLE,
+          text: t.label,
+          coords: [t.x, height - 10 - tickRowIndex * 15] as [number, number],
+        }))
+        .filter((t) => {
+          /* Remove mid ticks that overlap with the end ticks */
+          const x = getScreenXY(t.coords[0], 0)[0],
+            w = measureText(t).width;
+          return x - w / 2 > leftTickMaxX && x + w / 2 < rightTickMinX;
+        });
+    }),
+    // ...midTicksTop
+    //   .map(
+    //     (t, i) =>
+    //       ({
+    //         id: "midTicksTop" + i,
+    //         ...MIDTICK_STYLE,
+    //         text: t.label,
+    //         coords: [t.x, height - 25],
+    //       }) as ChartedText,
+    //   )
+    //   .filter((t) => {
+    //     /* Remove mid ticks that overlap with the end ticks */
+    //     const x = getScreenXY(t.coords[0], 0)[0],
+    //       w = measureText(t).width;
+    //     return x - w / 2 > leftTickMaxX && x + w / 2 < rightTickMinX;
+    //   }),
     rt,
     rb,
   ];

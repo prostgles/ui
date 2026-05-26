@@ -112,13 +112,29 @@ export const tableConfigUsers = {
             description: "Will hide passwordless user tips if true",
           },
           theme: { enum: ["dark", "light", "from-system"], optional: true },
-          speech_mode: {
+          speechMode: {
             optional: true,
             enum: ["off", "stt-local", "stt-web", "audio"],
           },
-          speech_send_mode: {
+          speechSendMode: {
             optional: true,
             enum: ["manual", "auto"],
+          },
+          llmChatWindowPositioning: {
+            optional: true,
+            enum: ["right-panel", "fullscreen"],
+          },
+          hideLlmLoadingCounter: {
+            type: "boolean",
+            optional: true,
+            description:
+              "Hides the loading counter that is shown when the assistant is generating a message response.",
+          },
+          lastCwd: {
+            type: "string",
+            optional: true,
+            description:
+              "Stores the last used current working directory for the user, to be used as the default path in file tree and terminal features",
           },
         },
       },

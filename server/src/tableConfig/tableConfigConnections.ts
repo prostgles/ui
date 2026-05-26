@@ -1,6 +1,7 @@
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
+import { UNIQUE_DB_COLS } from "./tableConfigDatabaseConfig";
+import { tableOptionsJsonbSchema } from "@common/mcp/tableOptionsJsonbSchema";
 
-const UNIQUE_DB_COLS = ["db_name", "db_host", "db_port"] as const;
 const UNIQUE_DB_FIELDLIST = UNIQUE_DB_COLS.join(", ");
 
 export const DB_SSL_ENUM = [
@@ -22,6 +23,15 @@ export const tableConfigConnections: TableConfig<{ en: 1 }> = {
           hint: `URL path to be used instead of the connection uuid`,
         },
       },
+      port: {
+        sqlDefinition: `INTEGER CHECK(port > 0 AND port < 65536)`,
+        info: { hint: `Port override for Prostgles connection` },
+      },
+      web_app_directory: {
+        sqlDefinition: `TEXT`,
+        info: { hint: "Path to frontend assets directory for connection" },
+      },
+      web_app_templated: "BOOLEAN DEFAULT FALSE ",
       user_id: `UUID REFERENCES users(id) ON DELETE CASCADE`,
       name: `TEXT NOT NULL CHECK(LENGTH(name) > 0)`,
       db_name: `TEXT NOT NULL CHECK(LENGTH(db_name) > 0)`,
@@ -90,35 +100,7 @@ export const tableConfigConnections: TableConfig<{ en: 1 }> = {
       },
       table_options: {
         nullable: true,
-        jsonbSchema: {
-          record: {
-            partial: true,
-            values: {
-              type: {
-                icon: { type: "string", optional: true },
-                label: { type: "string", optional: true },
-                rowIconColumn: { type: "string", optional: true },
-                columns: {
-                  optional: true,
-                  record: {
-                    partial: true,
-                    values: {
-                      type: {
-                        icon: { type: "string", optional: true },
-                      },
-                    },
-                  },
-                },
-                card: {
-                  optional: true,
-                  type: {
-                    headerColumn: { type: "string", optional: true },
-                  },
-                },
-              },
-            },
-          },
-        },
+        jsonbSchema: tableOptionsJsonbSchema,
       },
       display_options: {
         nullable: true,
@@ -140,6 +122,7 @@ export const tableConfigConnections: TableConfig<{ en: 1 }> = {
     },
     constraints: {
       unique_connection_url_path: `UNIQUE(url_path)`,
+      uniquePorts: `UNIQUE(port)`,
       uniqueConName: `UNIQUE(name, user_id)`,
       "Check connection type": `CHECK (
             type IN ('Standard', 'Connection URI', 'Prostgles') 

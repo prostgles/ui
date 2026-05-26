@@ -1,6 +1,3 @@
-import { mdiFileDocumentEditOutline } from "@mdi/js";
-import { getKeys, isObject, type AnyObject } from "prostgles-types";
-import React from "react";
 import type {
   ContextDataObject,
   TableRules,
@@ -8,6 +5,9 @@ import type {
 } from "@common/publishUtils";
 import { parseFieldFilter } from "@common/publishUtils";
 import ErrorComponent from "@components/ErrorComponent";
+import { mdiFileDocumentEditOutline } from "@mdi/js";
+import { getKeys, isObject } from "prostgles-types";
+import React from "react";
 
 import { DynamicFields } from "../OptionControllers/DynamicFields";
 import { FieldFilterControl } from "../OptionControllers/FieldFilterControl";
@@ -23,7 +23,7 @@ import { RuleExpandSection } from "./SelectRuleControl";
 
 type P = Pick<
   Required<TablePermissionControlsProps>,
-  "prgl" | "table" | "tableRules" | "userTypes"
+  "table" | "tableRules" | "userTypes"
 > & {
   rule: TableRules["update"];
   onChange: (rule: UpdateRule | undefined) => void;
@@ -38,7 +38,6 @@ export const UpdateRuleControl = (props: P) => {
     table,
     contextDataSchema,
     contextData,
-    prgl,
     userTypes,
   } = props;
   const rule: UpdateRule | undefined =
@@ -80,9 +79,6 @@ export const UpdateRuleControl = (props: P) => {
                 </div>
               </div>
             }
-            db={prgl.db}
-            methods={prgl.methods}
-            tables={prgl.tables}
             contextData={contextDataSchema}
             detailedFilter={rule.forcedFilterDetailed as SingleGroupFilter}
             tableName={table.name}
@@ -117,9 +113,6 @@ export const UpdateRuleControl = (props: P) => {
                 <div>New records must satisfy a condition</div>
               </div>
             }
-            db={prgl.db}
-            methods={prgl.methods}
-            tables={prgl.tables}
             contextData={contextDataSchema}
             detailedFilter={rule.checkFilterDetailed as SingleGroupFilter}
             tableName={table.name}
@@ -143,7 +136,6 @@ export const UpdateRuleControl = (props: P) => {
               rule={rule}
               table={table}
               userTypes={userTypes}
-              prgl={prgl}
             />
           </RuleExpandSection>
         </>

@@ -1,11 +1,10 @@
 import Btn from "@components/Btn";
 import { mdiTools } from "@mdi/js";
 import React, { type MouseEventHandler } from "react";
-
-import { SvgIcon } from "@components/SvgIcon";
+import { FlexRow } from "@components/Flex";
+import { LLMToolCallIcon } from "../LLMChatMessage/LLMToolCallIcon";
 import { ToolUseChatMessageBtnTextSummary } from "./ToolUseChatMessageBtnTextSummary";
 import { type ToolUseChatMessageState } from "./useToolUseChatMessage";
-import { FlexRow } from "@components/Flex";
 
 export const ToolUseChatMessageBtn = ({
   toolUseMessageContent: m,
@@ -23,15 +22,7 @@ export const ToolUseChatMessageBtn = ({
     <Btn
       iconPath={!iconName ? mdiTools : undefined}
       iconStyle={{ flex: "none" }}
-      iconNode={
-        !iconName ? undefined : (
-          <SvgIcon
-            icon={iconName}
-            style={{ margin: "-4px", flex: "none" }}
-            size={20}
-          />
-        )
-      }
+      iconNode={!iconName ? undefined : <LLMToolCallIcon iconName={iconName} />}
       onClick={onClick}
       variant="faded"
       size="small"

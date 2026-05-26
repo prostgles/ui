@@ -2,8 +2,11 @@ import type { DBS } from "@src/index";
 import { McpHub } from "./McpHub";
 import { fetchMCPServerConfigs } from "../fetchMCPServerConfigs";
 import { updateMcpServerTools } from "../reloadMcpServerTools";
-import type { SubscriptionHandler } from "prostgles-types";
-import { insertServerList } from "../insertServerList";
+import {
+  getSerialisableError,
+  type SubscriptionHandler,
+} from "prostgles-types";
+import { insertMcpServerList } from "../insertMcpServerList";
 import type { DBSSchema } from "@common/publishUtils";
 
 const mcpHub = new McpHub();
@@ -65,7 +68,7 @@ const mcpSubscriptions: Record<string, SubscriptionHandler | undefined> = {
 };
 
 export const setupMCPServerHub = async (dbs: DBS) => {
-  await insertServerList(dbs);
+  await insertMcpServerList(dbs);
   for (const sub of Object.values(mcpSubscriptions)) {
     await sub?.unsubscribe();
   }
@@ -78,7 +81,18 @@ export const setupMCPServerHub = async (dbs: DBS) => {
         if (!enabledMcpServers) {
           throw new Error("enabledMcpServers is undefined");
         }
-        await loadMissingTools(dbs, mcpHub, enabledMcpServers);
+        await loadMissingTools(dbs, mcpHub, enabledMcpServers).catch((err) => {
+          void dbs.alerts.insert({
+            severity: "error",
+            title: "MCP Server Hub Tool Load Error",
+            message: JSON.stringify(getSerialisableError(err)),
+            ui_path: {
+              page: "/server-settings",
+              section: "mcpServers",
+            },
+          });
+          console.error("Error loading MCP server tools", err);
+        });
       });
     }
   };

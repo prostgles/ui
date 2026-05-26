@@ -1,4 +1,3 @@
-# FROM nvidia/cuda:12.2.0-runtime-ubuntu22.04
 ARG BASE_IMAGE=python:3.11-slim
 FROM ${BASE_IMAGE}
 

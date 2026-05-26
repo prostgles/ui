@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { W_BarchartProps } from "./W_Barchart";
-import { usePromise } from "prostgles-client";
+import { usePromise, type TableHandlerClient } from "prostgles-client";
 import {
   getSerialisableError,
   includes,
@@ -15,7 +15,7 @@ export const useBarchartData = ({
   const [sort, setSort] = useState<
     { column: string; direction: "asc" | "desc" } | undefined
   >(undefined);
-  const { db } = prgl;
+  const { db, sql } = prgl;
   const { windows } = getLinksAndWindows();
   const barChartData = usePromise(async () => {
     const firstLink = myLinks[0];
@@ -33,7 +33,6 @@ export const useBarchartData = ({
         message: `Invalid link type for barchart: ${firstLink.options.type}`,
       };
     }
-    const { sql } = db;
     const { columns, statType } = linkOpts;
     const [column] = columns;
     if (!column) {
@@ -112,7 +111,10 @@ export const useBarchartData = ({
         dataSource.type === "local-table" ?
           dataSource.smartGroupFilter
         : undefined;
-      const tableHandler = !tableName ? undefined : db[tableName];
+      const tableHandler =
+        !tableName ? undefined : (
+          (db[tableName] as TableHandlerClient | undefined)
+        );
       if (!tableHandler?.find) {
         return {
           type: "error" as const,

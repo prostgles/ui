@@ -9,8 +9,10 @@ import { SvgIcon } from "@components/SvgIcon";
 import { mdiDotsHorizontal } from "@mdi/js";
 import { isObject, type AnyObject } from "prostgles-types";
 import React, { useCallback, useState } from "react";
-import type { CommonWindowProps } from "../../Dashboard/Dashboard";
-import type { DBSchemaTableColumn } from "../../Dashboard/dashboardUtils";
+import type {
+  DBSchemaTableColumn,
+  DBSchemaTableWJoins,
+} from "../../Dashboard/dashboardUtils";
 import { getPGIntervalAsText } from "../../W_SQL/customRenderers";
 import type { ColumnDisplayConfig, SmartFormProps } from "../SmartForm";
 import type {
@@ -48,7 +50,7 @@ type SmartFormFieldValue =
 
 export type SmartFormFieldProps = Pick<
   SmartFormProps,
-  "db" | "methods" | "tableName" | "jsonbSchemaWithControls"
+  "db" | "methods" | "tableName" | "jsonbSchemaWithControls" | "sql"
 > & {
   maxWidth?: string;
   value: SmartFormFieldValue | undefined;
@@ -65,8 +67,8 @@ export type SmartFormFieldProps = Pick<
   rightContent?: React.ReactNode;
   hideNullBtn?: boolean;
   sectionHeader?: string;
-  tables: CommonWindowProps["tables"];
-  table: CommonWindowProps["tables"][number];
+  tables: DBSchemaTableWJoins[];
+  table: DBSchemaTableWJoins;
   enableInsert: boolean;
   newRowDataHandler: NewRowDataHandler;
   someColumnsHaveIcons: boolean;
@@ -98,6 +100,7 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
     newRowDataHandler,
     someColumnsHaveIcons,
     loading,
+    sql,
   } = props;
 
   const onChange = useCallback(
@@ -184,7 +187,7 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
   if (column.tsDataType.endsWith("[]") && !column.tsDataType.includes("any")) {
     const elemTSType = tsDataTypeFromUdtName(column.element_udt_name as any);
     arrayType = {
-      tsDataType: elemTSType as any,
+      tsDataType: elemTSType,
       udt_name: column.element_udt_name as any,
     };
   }
@@ -297,11 +300,12 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
           row && (
             <SmartFormFieldLinkedData
               {...props}
+              sql={sql}
               state={foreignDataState.insertAndSearchState}
               action={action}
               row={row}
               column={column}
-              tableInfo={table.info}
+              tableInfo={table}
               jsonbSchemaWithControls={jsonbSchemaWithControls}
               hideNullBtn={hideNullBtn}
               newRowDataHandler={newRowDataHandler}

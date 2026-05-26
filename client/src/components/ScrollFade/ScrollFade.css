@@ -1,0 +1,4 @@
+.ScrollFade.scrollToBottomOnMount > * {
+  /* This is needed to prevent the scroll from jumping to the top when new content is added to the bottom of the scrollable area */
+  overflow-anchor: none;
+}

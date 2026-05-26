@@ -1,5 +1,5 @@
 import { mdiLock } from "@mdi/js";
-import { isEqual } from "prostgles-types";
+import { isDefined, isEqual } from "prostgles-types";
 import React, { useState } from "react";
 import { OAuthProviderOptions } from "@common/OAuthUtils";
 import { CopyToClipboardBtn } from "@components/CopyToClipboardBtn";
@@ -17,7 +17,7 @@ import {
   GoogleIcon,
   MicrosoftIcon,
 } from "../Login/SocialIcons";
-import type { AuthProviderProps } from "./AuthProvidersSetup";
+import type { AuthProviderProps } from "./AuthProvidersSetup/useProviderProps";
 
 type P = AuthProviderProps & {
   provider: keyof Omit<
@@ -49,7 +49,7 @@ export const OAuthProviderSetup = ({
       ...update,
     });
   };
-  const [error, setError] = useState<any>(undefined);
+  const [error, setError] = useState<unknown>(undefined);
   const didChange = localAuth && !isEqual(localAuth, auth);
   const providerInfo = PROVIDER_INFO[provider];
   const { name, icon } = providerInfo;
@@ -210,7 +210,7 @@ export const OAuthProviderSetup = ({
         value={returnURL}
         rightIcons={<CopyToClipboardBtn content={returnURL} />}
       />
-      {error && <ErrorComponent error={error} />}
+      {isDefined(error) && <ErrorComponent error={error} />}
       {didChange && (
         <FooterButtons
           footerButtons={[

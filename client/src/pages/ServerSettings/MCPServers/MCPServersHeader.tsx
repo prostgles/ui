@@ -1,8 +1,5 @@
 import { InfoRow } from "@components/InfoRow";
 import React from "react";
-import type { ServerSettingsProps } from "../ServerSettings";
-
-export type MCPServersProps = Pick<ServerSettingsProps, "dbsMethods">;
 
 export const MCPServersHeader = (props: {
   envInfo:

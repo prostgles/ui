@@ -1,9 +1,10 @@
+import Btn from "@components/Btn";
 import { mdiFileDocumentOutline } from "@mdi/js";
 import React, { useState } from "react";
-import Chip from "../Chip";
 import { FlexCol } from "../Flex";
+import Popup from "@components/Popup/Popup";
+import type { ContentTypes } from "@common/columnDisplayFormat.schema";
 
-export const ContentTypes = ["image", "video", "audio"] as const;
 export type ValidContentType = (typeof ContentTypes)[number];
 export type UrlInfo = {
   raw: string;
@@ -19,13 +20,16 @@ export const RenderMedia = ({
   setIsFocused,
   urlInfo,
   style,
+  title,
 }: {
+  title: string | undefined;
   contentOnly: boolean;
   urlInfo: UrlInfo | undefined;
   isFocused: boolean;
   style: React.CSSProperties | undefined;
   setIsFocused: (isFocused: boolean) => void;
 }) => {
+  const [expandedDocUrl, setExpandedDocUrl] = useState<string>();
   if (!urlInfo) return null;
 
   const { validated: url, type = "", content_type } = urlInfo;
@@ -83,18 +87,50 @@ export const RenderMedia = ({
     } else if (!isFocused && url) {
       mediaContent = (
         <FlexCol className="f-0 gap-p25">
-          {content_type && renderableContentTypes.includes(content_type) ?
-            <iframe
-              src={url}
-              style={{
-                minHeight: 0,
-              }}
-            ></iframe>
-          : <Chip
-              leftIcon={{ path: mdiFileDocumentOutline }}
-              value={content_type ?? "Not found"}
-            />
-          }
+          <Btn
+            variant="faded"
+            iconPath={mdiFileDocumentOutline}
+            value={content_type ?? "Not found"}
+            title={content_type ?? url}
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              if (
+                content_type &&
+                renderableContentTypes.includes(content_type)
+              ) {
+                setExpandedDocUrl(url);
+              } else {
+                setIsFocused(true);
+              }
+            }}
+          >
+            {title ??
+              (urlInfo.content_type ? content_type : (
+                urlInfo.forDisplay.slice(0, 100)
+              ))}
+          </Btn>
+          {content_type &&
+            renderableContentTypes.includes(content_type) &&
+            expandedDocUrl === url && (
+              <Popup
+                title={title ?? urlInfo.forDisplay}
+                positioning="fullscreen"
+                onClose={() => {
+                  setExpandedDocUrl(undefined);
+                }}
+              >
+                <iframe
+                  src={url}
+                  style={{
+                    minHeight: 0,
+                    flex: 1,
+                    width: "100%",
+                    border: "none",
+                  }}
+                ></iframe>
+              </Popup>
+            )}
         </FlexCol>
       );
     }
@@ -104,7 +140,8 @@ export const RenderMedia = ({
     const fullscreenTypes = ["video"];
     return (
       <div
-        className={`MediaViewer relative f-1 noselect flex-row min-h-0`}
+        className={`MediaViewer relative f-1 noselect flex-row min-h-0 ai-start`}
+        data-command="MediaViewer"
         style={style}
       >
         {mediaContent}

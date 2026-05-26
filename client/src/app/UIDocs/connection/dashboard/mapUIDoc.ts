@@ -1,8 +1,5 @@
 import { fixIndent } from "../../../../demo/scripts/sqlVideoDemo";
-import {
-  getCommandElemSelector,
-  getDataKeyElemSelector,
-} from "../../../../Testing";
+import { getCommandElemSelector, getDataKey } from "../../../../Testing";
 import type { UIDocElement } from "../../../UIDocs";
 import { getCommonViewHeaderUIDoc } from "../getCommonViewHeaderUIDoc";
 
@@ -18,6 +15,13 @@ export const mapUIDoc = {
     It requires the [PostGIS](https://postgis.net/) extension to be installed on your PostgreSQL database.
     It can display points, lines, and polygons based on geometry or geography columns in your tables or views.
     It supports multiple layers, custom basemaps, and various map controls for interaction.
+
+    ## Features
+
+    - **Multiple layer support**: Display multiple layers of geographical data on the same map, each with its own data source and styling options.
+    - **Data-driven styling**: Style your map layers with custom colors or icons based on the attributes of your geographical data for better visualization.
+    - **Custom basemaps**: Choose from different basemap options or add your own custom tiles for the map background.
+    - **Map controls**: Interact with the map using controls for zooming, panning, and displaying cursor coordinates.
 
     <img src="./screenshots/map.svgif.svg" alt="Map view screenshot" />
     
@@ -38,7 +42,7 @@ export const mapUIDoc = {
             selector:
               getCommandElemSelector("MenuList") +
               " " +
-              getDataKeyElemSelector("Data refresh"),
+              getDataKey("Data refresh"),
             title: "Data refresh",
             description:
               "Allows setting subscriptions or data refresh rates. By default every table subscribes to data changes.",
@@ -47,9 +51,7 @@ export const mapUIDoc = {
           {
             type: "tab",
             selector:
-              getCommandElemSelector("MenuList") +
-              " " +
-              getDataKeyElemSelector("Basemap"),
+              getCommandElemSelector("MenuList") + " " + getDataKey("Basemap"),
             title: "Basemap",
             description: "Allows setting the map tiles and projection.",
             children: [
@@ -65,9 +67,7 @@ export const mapUIDoc = {
           {
             type: "tab",
             selector:
-              getCommandElemSelector("MenuList") +
-              " " +
-              getDataKeyElemSelector("Layers"),
+              getCommandElemSelector("MenuList") + " " + getDataKey("Layers"),
             title: "Layers",
             description:
               "Allows setting the map layers data source and style. The map supports multiple layers.",
@@ -76,9 +76,7 @@ export const mapUIDoc = {
           {
             type: "tab",
             selector:
-              getCommandElemSelector("MenuList") +
-              " " +
-              getDataKeyElemSelector("Settings"),
+              getCommandElemSelector("MenuList") + " " + getDataKey("Settings"),
             title: "Settings",
             description:
               "Allows setting the map layout options: aggregation limit, click behavior, etc.",

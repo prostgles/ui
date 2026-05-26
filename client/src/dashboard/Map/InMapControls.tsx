@@ -54,14 +54,6 @@ export const InMapControls = ({
 
   return (
     <>
-      {showCursorCoords && (
-        <div
-          ref={refCursor}
-          className="absolute bg-color-0 rounded p-p25"
-          style={{ bottom: 0, left: 0, zIndex: 1 }}
-        />
-      )}
-
       {tileAttribution?.title && (
         <div
           className="text-ellipsis noselect rounded font-14"
@@ -81,12 +73,10 @@ export const InMapControls = ({
         </div>
       )}
 
-      <FlexCol
-        className="MapTopLeftControls ai-start flex-col gap-1 absolute ai-center jc-center"
-        style={{ top: "1em", left: "1em", zIndex: 1 }}
+      <FlexRow
+        className="MapBottomLeftControls absolute ai-end jc-end"
+        style={{ bottom: "1em", left: "1em", zIndex: 1, flexWrap: "nowrap" }}
       >
-        {topLeftContent}
-
         <Btn
           data-command="InMapControls.showCursorCoords"
           title="Show cursor coords"
@@ -99,17 +89,22 @@ export const InMapControls = ({
             setShowCursorCoords(!showCursorCoords);
           }}
         />
-      </FlexCol>
+        {showCursorCoords && (
+          <div ref={refCursor} className="bg-color-0 rounded p-p25" />
+        )}
+      </FlexRow>
 
       <FlexRow
-        className="MapTopControls absolute jc-center"
-        style={{ top: "1em", left: "5em", right: "1em", zIndex: 1 }}
+        className="MapTopControls absolute jc-center ai-start"
+        style={{ top: "12px", left: "12px", right: "12px", zIndex: 1 }}
       >
+        <FlexCol>{topLeftContent}</FlexCol>
         {!isDrawing && (
           <FlexRow className="in-map-hover-control mx-auto">
             <Select
               title="Map extent behavior"
               data-command="MapExtentBehavior"
+              size="small"
               fullOptions={MapExtentBehavior}
               value={options.extentBehavior}
               onChange={(extentBehavior) => {
@@ -122,6 +117,7 @@ export const InMapControls = ({
               iconPath={mdiImageFilterCenterFocus}
               onClick={fitBounds}
               className="shadow "
+              size="small"
               variant="faded"
             />
           </FlexRow>

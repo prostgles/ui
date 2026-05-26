@@ -6,7 +6,10 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import { ClickCatchOverlay } from "../ClickCatchOverlay";
+import {
+  ClickCatchOverlay,
+  ClickCatchOverlayZIndex,
+} from "../ClickCatchOverlay";
 import { DraggableLI } from "../DraggableLI";
 import { classOverride, FlexCol } from "../Flex";
 import { POPUP_CLASSES } from "../Popup/Popup";
@@ -16,6 +19,7 @@ import type {
   SearchListProps,
 } from "./SearchList";
 import { SearchListRowContent } from "./SearchListRowContent";
+import { useAutoScrollToBottom } from "@components/ScrollFade/useAutoScrollToBottom";
 
 export type SearchListItemsProps = Pick<
   SearchListProps,
@@ -26,6 +30,9 @@ export type SearchListItemsProps = Pick<
   | "endOfResultsContent"
   | "noResultsContent"
   | "onReorder"
+  | "onMultiToggle"
+  | "listStyle"
+  | "autoScrollToBottom"
 > & {
   renderedItems: ParsedListItem[];
   isSearch: boolean | undefined;
@@ -34,6 +41,7 @@ export type SearchListItemsProps = Pick<
   searchingItems: boolean;
   endSearch: (force?: boolean) => void;
   showHover: boolean;
+  showFirstItemAsFocused: boolean;
 };
 export const SearchListItems = forwardRef<
   HTMLUListElement | null,
@@ -51,17 +59,20 @@ export const SearchListItems = forwardRef<
     searchingItems,
     endSearch,
     onReorder,
+    onMultiToggle,
+    showFirstItemAsFocused,
+    autoScrollToBottom,
   } = props;
   const inputWrapper = inputWrapperRef.current;
   const notAllItemsShown =
     renderedItems.length && renderedItems.length < items.length && !searchTerm;
 
-  const [node, setNode] = useState<HTMLUListElement | null>(null);
+  const [ulNode, setNode] = useState<HTMLUListElement | null>(null);
   const handleRef = useCallback((el: HTMLUListElement | null) => {
     setNode(el);
   }, []);
-  useImperativeHandle(ref, () => node as HTMLUListElement, [node]);
-  useScrollFade(node);
+  useImperativeHandle(ref, () => ulNode as HTMLUListElement, [ulNode]);
+  useScrollFade(ulNode);
 
   const listStyle = useMemo(() => {
     return {
@@ -92,7 +103,7 @@ export const SearchListItems = forwardRef<
                 position: "fixed",
                 top,
                 left,
-                zIndex: 3,
+                zIndex: ClickCatchOverlayZIndex + 1,
                 right: bbox.right,
                 width: `${bbox.width}px`,
               };
@@ -100,6 +111,7 @@ export const SearchListItems = forwardRef<
         }),
     } satisfies React.CSSProperties;
   }, [inputWrapper, isSearch]);
+  useAutoScrollToBottom(ulNode, renderedItems.length, !!autoScrollToBottom);
 
   return (
     <div
@@ -113,22 +125,23 @@ export const SearchListItems = forwardRef<
       {isSearch && !!renderedItems.length && <ClickCatchOverlay />}
       <FlexCol
         className={
-          "f-1 max-h-fit min-h-0 min-w-0  rounded-b" +
+          "f-1 max-h-fit min-h-0 min-w-0 rounded-b" +
           (isSearch ? "  shadow bg-color-0 " : "")
         }
         style={listStyle}
       >
         <ul
           className={
-            "no-decor f-1 max-h-fit min-h-0 min-w-0 ul-search-list o-auto rounded-b  no-scroll-bar " +
+            "no-decor f-1 max-h-fit min-h-0 min-w-0 ul-search-list o-auto rounded-db  no-scroll-bar " +
             (isSearch ? "  shadow bg-color-0 " : "")
           }
           role="listbox"
           ref={handleRef}
+          style={props.listStyle}
           data-command={"SearchList.List"}
         >
           {onSearch && !props.items ? null : (
-            renderedItems.map((renderedItem, i) => {
+            renderedItems.map((renderedItem, index) => {
               const onPress: SearchListItem["onPress"] =
                 !renderedItem.onPress || renderedItem.disabledInfo ?
                   undefined
@@ -148,9 +161,12 @@ export const SearchListItems = forwardRef<
                 }
                 return "";
               };
+              const { contentTop } = renderedItem;
               return (
-                <React.Fragment key={i}>
-                  {renderedItem.contentTop}
+                <React.Fragment key={index}>
+                  {typeof contentTop === "function" ?
+                    contentTop(renderedItems, index)
+                  : contentTop}
                   <DraggableLI
                     role={onPress ? "option" : "listitem"}
                     data-command={renderedItem["data-command"]}
@@ -171,11 +187,14 @@ export const SearchListItems = forwardRef<
                       : {}),
                     }}
                     tabIndex={-1}
-                    idx={i}
+                    idx={index}
                     items={items.slice(0)}
                     onReorder={onReorder}
                     className={classOverride(
                       "noselect bg-li flex-row ai-start p-p5 min-w-0 " +
+                        (index === 0 && showFirstItemAsFocused ?
+                          " focused "
+                        : "") +
                         (renderedItem.selected ? " selected " : "") +
                         (renderedItem.disabledInfo ? " not-allowed "
                         : renderedItem.onPress ? " pointer "
@@ -206,8 +225,11 @@ export const SearchListItems = forwardRef<
           )}
           {!renderedItems.length && !searchingItems && (
             <div className="p-p5 text-1 no-data">
-              {noResultsContent ??
-                (!endOfResultsContent ? <div>No results</div> : null)}
+              {noResultsContent !== undefined ?
+                noResultsContent
+              : !endOfResultsContent ?
+                <div>No results</div>
+              : null}
             </div>
           )}
           {notAllItemsShown ?

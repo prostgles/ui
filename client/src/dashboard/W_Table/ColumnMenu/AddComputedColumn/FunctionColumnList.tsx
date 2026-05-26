@@ -1,6 +1,6 @@
 import Btn from "@components/Btn";
 import { SearchList } from "@components/SearchList/SearchList";
-import { mdiCircleHalf, mdiSetLeftCenter } from "@mdi/js";
+import { mdiSetLeftCenter } from "@mdi/js";
 import type { ValidatedColumnInfo } from "prostgles-types/lib";
 import React from "react";
 import { getColumnListItem } from "../ColumnSelect/getColumnListItem";

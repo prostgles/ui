@@ -1,8 +1,7 @@
-import { getCommandElemSelector } from "Testing";
+import { getDataKey, getCommandElemSelector } from "Testing";
 import {
   closeWorkspaceWindows,
   deleteAllWorkspaces,
-  getDataKey,
   type PageWIds,
 } from "utils/utils";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
@@ -25,37 +24,38 @@ export const tableSvgif: OnBeforeScreenshot = async (
   // );
   // return;
   await openMenuIfClosed();
-  await addSceneAnimation(getDataKey("users"));
+  await page.locator(getDataKey("users")).click();
 
   /** Show linked computed column */
   await addSceneAnimation(getCommandElemSelector("AddColumnMenu"));
 
   await addSceneAnimation(
     getCommandElemSelector("AddColumnMenu") + " " + getDataKey("Computed"),
-    undefined,
-    "fast",
+    // undefined,
+    // "fast",
   );
-  await addSceneAnimation(getDataKey("$sum"));
+  await addSceneAnimation(getDataKey("$sum"), { duration: "fast" });
   await addSceneAnimation(
     getCommandElemSelector("FunctionColumnList.SearchInput"),
-    { action: "type", text: "total", mode: "fill" },
+    { action: { action: "type", text: "total", mode: "fill" } },
   );
 
-  await addSceneAnimation(getDataKey("(id = customer_id) orders.Total Price"));
+  await addSceneAnimation(getDataKey("(id = customer_id) orders.Total Price"), {
+    duration: "fast",
+  });
   await addSceneAnimation(
     getCommandElemSelector("QuickAddComputedColumn.name"),
-    { action: "type", text: "Total Spent", mode: "fill" },
+    { action: { action: "type", text: "Total Spent", mode: "fill" } },
   );
   await addSceneAnimation(
     getCommandElemSelector("QuickAddComputedColumn.Add"),
-    undefined,
-    "fast",
+    { duration: "fast" },
   );
   await page.waitForTimeout(2000);
 
   /** Sort by computed column */
-  await addSceneAnimation(getDataKey("Total Spent"), undefined, "fast");
-  await addSceneAnimation(getDataKey("Total Spent"), undefined, "fast");
+  await addSceneAnimation(getDataKey("Total Spent"), { duration: "fast" });
+  await addSceneAnimation(getDataKey("Total Spent"), { duration: "fast" });
 
   /** Show card joined records */
   const pageParams = { page, addSceneAnimation, addScene };
@@ -76,6 +76,9 @@ export const tableSvgif: OnBeforeScreenshot = async (
   };
   // was ok up to here
   await openJoinedSection("orders");
+  await addScene({
+    svgFileName: "joined_records_linked_data",
+  });
   await addSceneAnimation({
     selector: getCommandElemSelector("SmartCard.viewEditRow"),
     nth: 0,
@@ -86,15 +89,19 @@ export const tableSvgif: OnBeforeScreenshot = async (
   await page.getByTestId("Popup.close").last().click();
 
   /** Show quick stats filter and map */
-  await addSceneAnimation(
-    `[role="columnheader"]` + getDataKey("type"),
-    "rightClick",
-  );
+  await addSceneAnimation(`[role="columnheader"]` + getDataKey("type"), {
+    action: "rightClick",
+  });
   await addSceneAnimation(getDataKey("Quick Stats"));
   await addSceneAnimation(getDataKey("rider"));
   await page.getByTestId("Popup.close").click();
 
-  return;
+  await page.waitForTimeout(2000);
+  await addScene({ animations: [{ type: "wait", duration: 1500 }] });
+
+  await addScene({ animations: [{ type: "wait", duration: 1500 }] });
+
+  await page.waitForTimeout(500);
   // await addSceneAnimation(getDataKey("orders"));
   // await addSceneAnimation(
   //   getCommandElemSelector("JoinedRecords.SectionToggle") +

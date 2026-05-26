@@ -1,6 +1,6 @@
+import { FlexCol, FlexRowWrap } from "@components/Flex";
 import { isObject, type ValidatedColumnInfo } from "prostgles-types";
 import React, { useMemo } from "react";
-import { FlexCol, FlexRowWrap } from "@components/Flex";
 import { RenderFilter, type RenderFilterProps } from "../RenderFilter";
 import { SortByControl } from "../SmartFilter/SortByControl";
 import { SmartFilterBarSearch } from "../SmartFilterBar/SmartFilterBarSearch";
@@ -24,6 +24,7 @@ export const SmartCardListHeaderControls = (
     methods,
     tableControls,
     showTopBar = true,
+    sql,
   } = props;
 
   const titleNode =
@@ -53,6 +54,21 @@ export const SmartCardListHeaderControls = (
   ) {
     return null;
   }
+
+  if (
+    !(
+      titleNode ||
+      (showTopBar &&
+        ((isObject(showTopBar) && showTopBar.leftContent) ||
+          tableControls?.willShowInsert ||
+          (showSearch && tableControls) ||
+          (tableControls?.setLocalOrderBy && showSort))) ||
+      filterProps
+    )
+  ) {
+    return null;
+  }
+
   return (
     <FlexCol className="SmartCardListControls gap-p5 aid-end py-p25">
       {titleNode}
@@ -69,6 +85,7 @@ export const SmartCardListHeaderControls = (
                 showTopBar.insert
               : {})}
               db={db}
+              sql={sql}
               tables={tables}
               methods={methods}
               tableName={tableControls.tableName}
@@ -101,9 +118,7 @@ export const SmartCardListHeaderControls = (
 
       {filterProps && (
         <RenderFilter
-          db={db}
           contextData={undefined}
-          tables={tables}
           selectedColumns={undefined}
           itemName={"filter"}
           hideOperand={true}

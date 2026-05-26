@@ -34,6 +34,7 @@ export type FormFieldTypes =
   | "integer"
   | "username"
   | "url"
+  | "date"
   | "color";
 type FormFieldNullOpt<Nullable = false, Optional = false> =
   Nullable extends true ? null
@@ -93,6 +94,7 @@ export type FormFieldProps<
     inputClassName?: string;
     wrapperStyle?: React.CSSProperties;
     inputStyle?: React.CSSProperties;
+    hintWrapperStyle?: React.CSSProperties;
     multiSelect?: boolean;
     labelAsValue?: boolean;
     onSuggest?: (term?: string) => Promise<string[]>;
@@ -295,6 +297,7 @@ export default class FormField<
       variant,
       showFullScreenToggle,
       leftIcon,
+      hintWrapperStyle,
     } = this.props;
 
     this.id ??= this.props.id ?? generateUniqueID();
@@ -488,7 +491,7 @@ export default class FormField<
       : {
           paddingBottom: "4px",
         }),
-      minHeight: window.isLowWidthScreen ? "36px" : "42px",
+      minHeight: window.isLowWidthScreen ? "36px" : "40px",
       ...inputProps.style,
       ...(rval === null && { fontStyle: "italic" }),
     };
@@ -498,7 +501,7 @@ export default class FormField<
     const inputNode =
       inputContent ? inputContent
         // : type === "file" ? <InputFile {...(inputProps as any)} />
-      : type === "checkbox" ? <Checkbox {...(inputProps as any)} />
+      : type === "checkbox" ? <Checkbox {...inputProps} />
       : readOnly ?
         <div
           className="pr-p5 py-p5 font-16 ta-left o-auto"
@@ -566,10 +569,16 @@ export default class FormField<
             }}
             iconPath={mdiClose}
             onClick={(e) => {
-              //@ts-ignore
-              onChange(optional ? undefined : null, e);
+              onChange(
+                (optional ? undefined : null) as FormFieldValueType<
+                  T,
+                  Nullable,
+                  Optional
+                >,
+                e,
+              );
             }}
-            size="small"
+            // size="small"
             className="rounded-r"
           />
         );
@@ -618,6 +627,7 @@ export default class FormField<
         onKeyDown={(e) => onFormFieldKeyDown.bind(this)(e, selectSuggestion)}
         hintWrapperStyle={{
           flex: 1,
+          ...hintWrapperStyle,
           ...(variant === "row" && { flexDirection: "row" }),
           ...(asJSON && { minWidth: "min(400px, 90vw)" }),
         }}
@@ -655,7 +665,7 @@ export default class FormField<
         inputWrapperStyle={{
           ...wrapperStyle,
           maxWidth: asTextArea ? "100%" : maxWidth,
-          ...(asJSON === "codeEditor" && { minHeight: "42px" }),
+          ...(asJSON === "codeEditor" && { minHeight: "40px" }),
           ...(((readOnly && asJSON !== "codeEditor") ||
             asJSON === "JSONBSchema") && {
             border: "unset",
@@ -705,7 +715,6 @@ export default class FormField<
             }
             asRow={variant === "row"}
             value={rawValue}
-            required={required}
             multiSelect={multiSelect}
             labelAsValue={labelAsValue}
             btnProps={{

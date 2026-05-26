@@ -1,60 +1,52 @@
-import { getEntries } from "@common/utils";
 import Btn from "@components/Btn";
-import Chip from "@components/Chip";
-import { FlexRow, FlexRowWrap } from "@components/Flex";
+import { FlexRow } from "@components/Flex";
 import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 import { Select } from "@components/Select/Select";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import React, { useState } from "react";
 import { SchemaFilter } from "../../pages/NewConnection/SchemaFilter";
-import { getCssVariableValue } from "../Charts/TimeChart/onRenderTimechart";
+import { getCssVariableValue } from "../Charts/TimeChart/getCssVariableValue";
 import type { CASCADE } from "../SQLEditor/SQLCompletion/getPGObjects";
 import {
   type ColumnColorMode,
   type ColumnDisplayMode,
 } from "./ERDSchema/ERDSchema";
-import type { SchemaGraphProps } from "./SchemaGraph";
 
 export const SchemaGraphControls = ({
   columnColorMode,
   columnDisplayMode,
   displayMode,
   setColumnColorMode,
-  connectionId,
-  dbs,
-  db,
   setColumnDisplayMode,
   setDisplayMode,
   setSchemaKey,
   schemaKey,
-  db_schema_filter,
-}: ReturnType<typeof useSchemaGraphControls> &
-  Pick<
-    SchemaGraphProps,
-    "dbs" | "db" | "connectionId" | "db_schema_filter"
-  >) => {
+  selectedTables,
+  setSelectedTables,
+}: ReturnType<typeof useSchemaGraphControls>) => {
+  const { connectionId, dbs, sql, connection, tables } = usePrgl();
+  const { db_schema_filter } = connection;
   return (
     <FlexRow
-      className="w-full"
+      className="w-full ai-start"
       key={schemaKey}
       data-command="SchemaGraph.TopControls"
     >
-      <div className="f-0">Schema diagram</div>
       <ScrollFade
-        className="flex-row gap-p5 ox-auto font-16   f-1 relative s-fit no-scroll-bar"
+        className="flex-row-wrap gap-1 ox-auto font-16   f-1 relative s-fit no-scroll-bar"
         style={{ fontWeight: "normal" }}
       >
         <SchemaFilter
-          db={db}
+          sql={sql}
           db_schema_filter={db_schema_filter}
           asSelect={{
             btnProps: {
               size: "small",
             },
             asRow: true,
-            className: "ml-auto",
           }}
           onChange={(newDbSchemaFilter) => {
-            dbs.connections.update(
+            void dbs.connections.update(
               {
                 id: connectionId,
               },
@@ -73,6 +65,18 @@ export const SchemaGraphControls = ({
           fullOptions={DISPLAY_MODES}
           onChange={setDisplayMode}
         />
+        {displayMode === "custom" && (
+          <Select
+            data-command="SchemaGraph.TopControls.tableFilter"
+            value={Array.from(selectedTables ?? [])}
+            label="Selected tables"
+            asRow={true}
+            size="small"
+            multiSelect={true}
+            fullOptions={tables.map((t) => ({ key: t.name }))}
+            onChange={(val) => setSelectedTables(new Set(val))}
+          />
+        )}
         <Select
           data-command="SchemaGraph.TopControls.columnRelationsFilter"
           value={columnDisplayMode}
@@ -91,16 +95,6 @@ export const SchemaGraphControls = ({
           fullOptions={COLUMN_COLOR_MODES}
           onChange={setColumnColorMode}
         />
-        {["on-delete", "on-update"].includes(columnColorMode) && (
-          <FlexRowWrap>
-            {" "}
-            {getEntries(CASCADE_LEGEND).map(([label, { color, title }]) => (
-              <Chip key={label} style={{ color }} title={title}>
-                {label}
-              </Chip>
-            ))}
-          </FlexRowWrap>
-        )}
 
         <Btn
           data-command="SchemaGraph.TopControls.resetLayout"
@@ -112,6 +106,7 @@ export const SchemaGraphControls = ({
           className="ml-auto"
           size="small"
           variant="faded"
+          color="warn"
           onClickPromise={async () => {
             await dbs.database_configs.update(
               {
@@ -138,6 +133,7 @@ export const SchemaGraphControls = ({
 
 export const useSchemaGraphControls = () => {
   const [displayMode, setDisplayMode] = useState<SchemaGraphDisplayMode>("all");
+  const [selectedTables, setSelectedTables] = useState<Set<string>>();
   const [columnDisplayMode, setColumnDisplayMode] =
     useState<ColumnDisplayMode>("all");
   const [columnColorMode, setColumnColorMode] =
@@ -153,6 +149,8 @@ export const useSchemaGraphControls = () => {
     setColumnColorMode,
     schemaKey,
     setSchemaKey,
+    selectedTables,
+    setSelectedTables,
   };
 };
 
@@ -164,13 +162,31 @@ const DISPLAY_MODES = [
   { key: "all", label: "all" },
   { key: "relations", label: "linked" },
   { key: "leaf", label: "orphaned" },
+  { key: "custom", label: "custom" },
 ] as const;
 
 const COLUMN_COLOR_MODES = [
-  { key: "default", subLabel: "Fixed color for all links" },
-  { key: "root", subLabel: "Links show root table color" },
-  { key: "on-delete", subLabel: "Links show on delete action" },
-  { key: "on-update", subLabel: "Links show on update action" },
+  { key: "schema", label: "By schema", subLabel: "Color by schema" },
+  {
+    key: "default",
+    label: "Single color",
+    subLabel: "Use one color for all links",
+  },
+  {
+    key: "root",
+    label: "By source table",
+    subLabel: "Color links by source table",
+  },
+  {
+    key: "on-delete",
+    label: "By ON DELETE",
+    subLabel: "Color links by ON DELETE rule",
+  },
+  {
+    key: "on-update",
+    label: "By ON UPDATE",
+    subLabel: "Color links by ON UPDATE rule",
+  },
 ] as const;
 
 const COLUMN_FILTER = [

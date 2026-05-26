@@ -1,17 +1,20 @@
-import React, { useCallback, useEffect, useState } from "react";
-import type { TestSelectors } from "../../Testing";
-import { classOverride, type DivProps } from "../Flex";
-import { useResizeObserver } from "./useResizeObserver";
 import { fixIndent, getEntries } from "@common/utils";
-import { isDefined, scrollIntoViewIfNeeded } from "../../utils/utils";
 import { isEqual } from "prostgles-types";
-import { useLocation } from "react-router-dom";
+import React, { useCallback, useEffect, useState } from "react";
+import { useLocation } from "react-router";
+import type { TestSelectors } from "../../Testing";
+import { isDefined, scrollIntoViewIfNeeded } from "../../utils/utils";
+import { classOverride, type DivProps } from "../Flex";
+import "./ScrollFade.css";
+import { useAutoScrollToBottom } from "./useAutoScrollToBottom";
+import { useResizeObserver } from "./useResizeObserver";
 
 type P = TestSelectors &
   DivProps & {
     children: React.ReactNode;
     className?: string;
     scrollRestore?: boolean;
+    scrollToBottomOnMount?: boolean;
   };
 
 type Sides = Record<"top" | "bottom" | "left" | "right", boolean>;
@@ -19,27 +22,45 @@ type Sides = Record<"top" | "bottom" | "left" | "right", boolean>;
 /**
  * Given a list of children, this component will add a fade effect to the bottom of the children if the children are scrollable
  */
-export const ScrollFade = ({ children, scrollRestore, ...divProps }: P) => {
+export const ScrollFade = ({
+  children,
+  scrollRestore,
+  scrollToBottomOnMount,
+  ...divProps
+}: P) => {
   const [elem, setElem] = useState<HTMLDivElement | null>(null);
   const handleRef = useCallback((el: HTMLDivElement | null) => {
     setElem(el);
   }, []);
   useScrollFade(elem);
   useScrollRestore(scrollRestore ? elem : undefined);
+  useAutoScrollToBottom(elem, children, scrollToBottomOnMount ?? false);
 
   return (
     <div
       ref={handleRef}
       {...divProps}
-      className={classOverride("ScrollFade", divProps.className ?? "")}
+      className={classOverride(
+        "ScrollFade " + (scrollToBottomOnMount ? "scrollToBottomOnMount" : ""),
+        divProps.className ?? "",
+      )}
     >
       {children}
+      {scrollToBottomOnMount && (
+        <div
+          className="ScrollFade-ScrollAnchor"
+          style={{ overflowAnchor: "auto", height: 0 }}
+        />
+      )}
     </div>
   );
 };
 
-export const useScrollFade = (elem: HTMLElement | null) => {
-  const [overflows, setOverflows] = React.useState({ x: false, y: false });
+export const useScrollFade = (
+  elem: HTMLElement | null,
+  ignoredSides?: Set<keyof Sides>,
+) => {
+  const [overflows, setOverflows] = useState({ x: false, y: false });
   const onScroll = useCallback(() => {
     if (!elem) return;
     const {
@@ -67,16 +88,16 @@ export const useScrollFade = (elem: HTMLElement | null) => {
     }
     const finalMask = getEntries(fadeClasses)
       .map(([k, v]) => {
-        if (v) return getGradient(k);
+        if (v && !ignoredSides?.has(k)) return getGradient(k);
       })
       .filter(isDefined)
       .join(",\n");
     elem.style.mask = finalMask;
     /** Required to ensure the masks colors stack correctly */
     elem.style["-webkit-mask-composite"] = "source-in";
-  }, [elem]);
+  }, [elem, ignoredSides]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!elem) return;
     elem.addEventListener("scroll", onScroll);
     return () => elem.removeEventListener("scroll", onScroll);

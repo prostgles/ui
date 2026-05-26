@@ -9,10 +9,11 @@ import Btn from "@components/Btn";
 import { ExpandSection } from "@components/ExpandSection";
 import PopupMenu from "@components/PopupMenu";
 import { DEFAULT_ELECTRON_CONNECTION } from "@common/electronInitTypes";
+import { FlexCol } from "./Flex";
 
 const OPERATING_SYSTEMS = [
   { key: "linux", label: "Linux", icon: mdiLinux },
-  { key: "macosx", label: "MacOs", icon: mdiApple },
+  { key: "macosx", label: "macOS", icon: mdiApple },
   { key: "windows", label: "Windows", icon: mdiMicrosoftWindows },
 ] as const;
 export type OS = (typeof OPERATING_SYSTEMS)[number]["key"];
@@ -40,38 +41,42 @@ export const PostgresInstallationInstructions = ({
       data-command="PostgresInstallationInstructions"
       button={
         <Btn
-          variant={"outline"}
+          variant={"text"}
           color="action"
-          iconPath={mdiInformationVariant}
+          style={{
+            padding: ".25em",
+            fontSize: "large",
+            textDecoration: "underline",
+          }}
         >
-          Installation steps
+          How to install Postgres
         </Btn>
       }
       render={() => (
-        <div className="flex-col p-2 font-18 gap-2 ta-left">
+        <FlexCol className="  p-1 font-18  ta-left">
           <div>
-            <h3>Postgres downloads:</h3>
-            <ul className="no-decor flex-row gap-1 jc-start">
+            <div className="p-0 font-18 bold">Postgres official downloads:</div>
+            <ul className=" ">
               {OPERATING_SYSTEMS.map(({ key, label, icon }) => (
                 <li key={key}>
-                  <Btn
+                  <a
                     href={`https://www.postgresql.org/download/${key}/`}
                     target="_blank"
                     color="action"
-                    variant={os === key ? "filled" : "outline"}
-                    iconPath={icon}
                   >
                     {label}
-                  </Btn>
+                  </a>
                 </li>
               ))}
             </ul>
           </div>
 
           <div>
-            {placement === "state-db-quick-setup" ?
-              <h3>Postgres user creation:</h3>
-            : <h3>Postgres user & database creation:</h3>}
+            <div className="mb-1 font-18 bold">
+              {placement === "state-db-quick-setup" ?
+                "prostgles-desktop user creation:"
+              : "prostgles-desktop user & database creation:"}
+            </div>
 
             <ExpandSection label="Linux/MacOs" expanded={os !== "windows"}>
               <code className="bg-terminal text-white p-1 flex-col ta-left">
@@ -100,17 +105,8 @@ export const PostgresInstallationInstructions = ({
               )}
             </ExpandSection>
           </div>
-        </div>
+        </FlexCol>
       )}
-      // footerButtons={[
-      //   {
-      //     onClickClose: true,
-      //     label: "Close",
-      //     variant: "filled",
-      //     color: "action",
-      //     "data-command": "PostgresInstallationInstructions.Close",
-      //   },
-      // ]}
     />
   );
 };

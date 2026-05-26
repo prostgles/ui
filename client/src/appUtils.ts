@@ -5,6 +5,7 @@ import type { UIDocFlat } from "./app/UIDocs";
 import type { SQLEditorRef } from "./dashboard/SQLEditor/W_SQLEditor";
 import type { getSVGif } from "./app/domToSVG/SVGif/getSVGif";
 import type { domToThemeAwareSVG } from "./app/domToSVG/domToThemeAwareSVG";
+import type { setThemeForSVGScreenshot } from "./app/domToSVG/setThemeForSVGScreenshot";
 
 type Unsubscribe = {
   unsubscribe: () => void;
@@ -53,6 +54,9 @@ export const createReactiveState = <S>(
   return rootReference;
 };
 
+/**
+ * @deprecated use createStore instead
+ */
 export const useReactiveState = <S>(store: ReactiveState<S>) => {
   const [state, setState] = useState(store.get());
   useEffect(() => {
@@ -106,6 +110,7 @@ declare global {
     isIOSDevice: boolean;
     isMobile: boolean;
     toSVG: typeof domToThemeAwareSVG;
+    setTheme: typeof setThemeForSVGScreenshot;
     getSVGif: typeof getSVGif;
     documentation: DocumentationFile[];
     flatUIDocs: UIDocFlat[];

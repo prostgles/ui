@@ -6,6 +6,7 @@ import { sliceText } from "@common/utils";
 import { Icon } from "@components/Icon/Icon";
 import type { FilterWrapperProps } from "../DetailedFilterControl/FilterWrapper";
 import "./MinimisedFilter.css";
+import { FlexRow } from "@components/Flex";
 
 type P = FilterWrapperProps &
   Pick<FilterWrapperProps, "rootFilter"> & {
@@ -128,16 +129,16 @@ export const MinimisedFilter = ({
     );
   }
   return (
-    <div
+    <FlexRow
       className={
-        "FilterWrapper_MinimisedRoot flex-row ai-center noselect pointer relative o-hidden " +
+        "FilterWrapper_MinimisedRoot noselect pointer relative o-hidden gap-p25 " +
         className
       }
       style={{
         opacity: filter.disabled ? ".8" : 1,
         ...style,
         borderRadius: "1em",
-        padding: window.isMobileDevice ? "2px 6px" : "6px 12px",
+        padding: window.isMobileDevice ? "2px 6px" : "4px 8px",
       }}
     >
       {disabledToggle}
@@ -152,7 +153,6 @@ export const MinimisedFilter = ({
         />
       )}
       <button
-        className={disabledToggle ? "ml-p5 " : ""}
         style={{
           background: "transparent",
           opacity: value === undefined || disabled ? 0.75 : 1,
@@ -203,6 +203,6 @@ export const MinimisedFilter = ({
           )}
         </div>
       </button>
-    </div>
+    </FlexRow>
   );
 };

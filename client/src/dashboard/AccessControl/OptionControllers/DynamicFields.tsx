@@ -9,16 +9,16 @@ import ErrorComponent from "@components/ErrorComponent";
 import { FlexRow } from "@components/Flex";
 import { Label } from "@components/Label";
 import { mdiClose, mdiPlus, mdiTableFilter } from "@mdi/js";
-import { useEffectAsync } from "prostgles-client";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import React, { useEffect, useState } from "react";
 import type { TablePermissionControlsProps } from "../TableRules/TablePermissionControls";
 import { FieldFilterControl } from "./FieldFilterControl";
-import type { ContextDataSchema } from "./FilterControl";
+import type { ContextDataSchema, SingleGroupFilter } from "./FilterControl";
 import { FilterControl } from "./FilterControl";
 
 type P = Pick<
   Required<TablePermissionControlsProps>,
-  "prgl" | "table" | "tableRules"
+  "table" | "tableRules"
 > & {
   rule: TableRules["update"];
   onChange: (rule: UpdateRule) => void;
@@ -31,9 +31,9 @@ export const DynamicFields = ({
   contextDataSchema,
   table,
   onChange,
-  prgl: { db, tables, methods },
   contextData,
 }: P) => {
+  const { db } = usePrgl();
   const rule: UpdateRule = r === true || !r ? { fields: "*" } : r;
 
   const setValue = (
@@ -49,7 +49,7 @@ export const DynamicFields = ({
     });
   };
 
-  const [error, setError] = useState<any>();
+  const [error, setError] = useState<unknown>();
   useEffect(() => {
     void (async () => {
       const valid = await validateDynamicFields(
@@ -114,11 +114,8 @@ export const DynamicFields = ({
                   }}
                 />
                 <FilterControl
-                  db={db}
-                  methods={methods}
                   tableName={table.name}
-                  tables={tables}
-                  detailedFilter={filterDetailed as any}
+                  detailedFilter={filterDetailed as SingleGroupFilter}
                   label={"Filter"}
                   onChange={(newFilter) => {
                     setValue(

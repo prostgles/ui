@@ -1,5 +1,5 @@
 import { mdiAlertOutline, mdiPlus } from "@mdi/js";
-import type { AnyObject, ParsedJoinPath } from "prostgles-types";
+import type { AnyObject, SubscriptionHandler } from "prostgles-types";
 import { getKeys } from "prostgles-types";
 
 import Loading from "@components/Loader/Loading";
@@ -7,7 +7,6 @@ import type { TableColumn, TableProps } from "@components/Table/Table";
 import { PAGE_SIZES, Table, closest } from "@components/Table/Table";
 import React from "react";
 import type {
-  OnAddChart,
   Query,
   WindowData,
   WindowSyncItem,
@@ -32,9 +31,10 @@ import { ColumnMenu } from "./ColumnMenu/ColumnMenu";
 import type { DetailedFilterBase } from "@common/filterUtils";
 import { matchObj } from "@common/utils";
 import { ClickCatchOverlayZIndex } from "@components/ClickCatchOverlay";
-import { FlexCol } from "@components/Flex";
+import { FlexCol, FlexRow } from "@components/Flex";
 import { Icon } from "@components/Icon/Icon";
 import type { PaginationProps } from "@components/Table/Pagination";
+import type { TableHandlerClient } from "prostgles-client";
 import { isDefined, isEqual, pickKeys } from "prostgles-types";
 import type { Command } from "../../Testing";
 import { createReactiveState } from "../../appUtils";
@@ -43,7 +43,7 @@ import { CodeEditor } from "../CodeEditor/CodeEditor";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import { SmartFilterBar } from "../SmartFilterBar/SmartFilterBar";
 import type { ProstglesQuickMenuProps } from "../W_QuickMenu";
-import Window from "../Window";
+import Window from "../Window/Window";
 import { CardView } from "./CardView/CardView";
 import { NodeCountChecker } from "./NodeCountChecker";
 import { QuickFilterGroupsControl } from "./QuickFilterGroupsControl";
@@ -67,14 +67,12 @@ import { getSort, getSortColumn, updateWCols } from "./tableUtils/tableUtils";
 export type W_TableProps = Omit<CommonWindowProps, "w"> & {
   w: WindowSyncItem<"table">;
   setLinkMenu: ProstglesQuickMenuProps["setLinkMenu"];
-  childWindow: React.ReactNode | undefined;
-  onLinkTable?: (tableName: string, path: ParsedJoinPath[]) => void;
+  childWindow: { node: React.ReactNode; w: WindowSyncItem } | undefined;
   onClickRow?: TableProps<ColumnSort>["onRowClick"];
   filter?: any;
   joinFilter?: AnyObject;
   externalFilters: AnyObject[];
   activeRow?: ActiveRow;
-  onAddChart?: OnAddChart;
   activeRowColor?: React.CSSProperties["color"];
   workspace: WorkspaceSyncItem;
 };
@@ -233,44 +231,13 @@ export default class W_Table extends RTComp<
 
   async onUnmount() {
     this.d.wSync?.$unsync();
-    await this.dataSub?.unsubscribe?.();
+    await this.dataSub?.unsubscribe();
   }
 
   /**
    * To reduce the number of unnecessary data requests let's save the query signature and allow new queries only if different
    */
   currentDataRequestSignature = "";
-  static getTableDataRequestSignature(
-    args:
-      | {
-          select?: any;
-          filter?: AnyObject;
-          having?: AnyObject;
-          barchartVals?: AnyObject;
-          joinFilter?: AnyObject;
-          externalFilters?: any;
-          orderBy?: any;
-          limit?: number | null;
-          offset?: number;
-        }
-      | { sql: string },
-    dataAge: number,
-    dependencies: any[] = [],
-  ) {
-    const argKeyObj: typeof args & { dataAge: number; dependencies: any[] } = {
-      ...args,
-      dataAge,
-      dependencies,
-    };
-    const sigData = {};
-    Object.keys(argKeyObj)
-      .sort()
-      .forEach((key) => {
-        sigData[key] = argKeyObj[key];
-      });
-
-    return JSON.stringify(sigData);
-  }
 
   onClickEditRow: OnClickEditRow = (
     filter,
@@ -287,7 +254,7 @@ export default class W_Table extends RTComp<
     });
   };
 
-  dataSub?: any;
+  dataSub?: SubscriptionHandler;
   dataSubFilter?: string;
   dataAge?: number = 0;
   autoRefresh?: any;
@@ -308,7 +275,7 @@ export default class W_Table extends RTComp<
     let ns: Partial<W_TableState> | undefined;
     if (!w || !tableName) return;
 
-    const tableHandler = db[tableName];
+    const tableHandler = db[tableName] as TableHandlerClient | undefined;
 
     /** Show count if user requires it  */
     const showCounts = !!(
@@ -318,7 +285,7 @@ export default class W_Table extends RTComp<
 
     /* Table was renamed. Replace from oid or fail gracefully */
     if (tableName && table_oid && !tableHandler) {
-      const match = this.props.tables.find((ti) => ti.info.oid === table_oid);
+      const match = this.props.tables.find((ti) => ti.oid === table_oid);
       if (match) {
         await w.$update({ table_name: match.name });
         return;
@@ -345,7 +312,7 @@ export default class W_Table extends RTComp<
 
     const { dbKey } = this.props.prgl;
     if (this.currDbKey !== dbKey) {
-      getAndFixWColumnsConfig(this.props.prgl.tables, w);
+      void getAndFixWColumnsConfig(this.props.tables, w);
       this.currDbKey = dbKey;
     }
 
@@ -397,7 +364,7 @@ export default class W_Table extends RTComp<
     /**
      * Get data
      */
-    getTableData.bind(this)(dp, ds, dd, { showCounts });
+    void getTableData.bind(this)(dp, ds, dd, { showCounts });
 
     /** Force update */
     const rerenderOPTS: (keyof typeof w.options)[] = [
@@ -454,21 +421,22 @@ export default class W_Table extends RTComp<
     };
   }
 
-  getMenu = (w, onClose) => {
-    const { prgl, onLinkTable, onAddChart } = this.props;
+  getMenu = (w: WindowSyncItem<"table">, onClose: VoidFunction) => {
+    const { prgl } = this.props;
 
     const cols = w.columns;
 
-    if (!cols) return <ErrorComponent error="Columns not defined" />;
+    if (!cols) {
+      return <ErrorComponent error="Columns not defined" />;
+    }
 
     return (
       <W_TableMenu
         prgl={prgl}
+        tables={this.props.tables}
         workspace={this.props.workspace}
-        cols={cols.filter((c) => !c.computed)}
-        onAddChart={onAddChart}
+        cols={cols}
         w={w}
-        onLinkTable={onLinkTable}
         suggestions={this.props.suggestions}
         onClose={onClose}
         externalFilters={this.props.externalFilters}
@@ -482,11 +450,10 @@ export default class W_Table extends RTComp<
     const { w } = this.d;
     if (!w) return null;
     const { table_name: tableName } = w;
-    const tableHandler = db[tableName];
+    const tableHandler = db[tableName] as TableHandlerClient | undefined;
 
     try {
-      // const columnsConfig = await getAndFixWColumnsConfig(tables, w); //columns: columnsConfig,
-      const orderBy = getSort(tables, { ...w, sort }) as any;
+      const orderBy = getSort(tables, { ...w, sort }) as ColumnSort[];
       /** Ensure the sort is valid */
       const { select } = await getTableSelect(w, tables, db, {}, true);
       await tableHandler?.find!({}, { select, limit: 0, orderBy });
@@ -538,15 +505,15 @@ export default class W_Table extends RTComp<
       setLinkMenu,
       joinFilter,
       activeRow,
-      onAddChart,
       activeRowColor,
       prgl,
       childWindow,
       workspace,
+      tables,
     } = this.props;
-    const { tables, db, dbs } = prgl;
+    const { db, dbs } = prgl;
 
-    const tableHandler = db[tableName];
+    const tableHandler = db[tableName] as TableHandlerClient | undefined;
     if (!w) {
       if (tableName && !tableHandler) {
         return showTableNotFound(tableName);
@@ -569,20 +536,18 @@ export default class W_Table extends RTComp<
       return (
         <Window
           w={w}
+          childWindow={childWindow}
+          connection={prgl.connection}
           layoutMode={workspace.layout_mode ?? "editable"}
           quickMenuProps={{
-            tables,
-            prgl,
             chartableSQL: undefined,
             dbs,
             setLinkMenu,
-            onAddChart,
             myLinks: this.props.myLinks,
             childWindows: this.props.childWindows,
+            getLinksAndWindows: this.props.getLinksAndWindows,
             show:
-              childWindow || this.props.workspace.layout_mode === "fixed" ?
-                { filter: true }
-              : undefined,
+              workspace.layout_mode === "fixed" ? { filter: true } : undefined,
           }}
           getMenu={this.getMenu}
         >
@@ -608,6 +573,7 @@ export default class W_Table extends RTComp<
         windowWidth: this.ref?.getBoundingClientRect().width,
         tables,
         db,
+        sql: prgl.sql,
         w: this.d.w,
         onClickEditRow: this.onClickEditRow,
         barchartVals: this.state.barchartVals,
@@ -625,6 +591,7 @@ export default class W_Table extends RTComp<
         );
       }
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       const canInsert = Boolean(tableHandler?.insert);
       const showInsertButton = canInsert && w.options.hideInsertButton !== true;
       const pkeys = cols
@@ -640,9 +607,6 @@ export default class W_Table extends RTComp<
             }}
           >
             <ColumnMenu
-              prgl={prgl}
-              db={db}
-              dbs={dbs}
               columnMenuState={this.columnMenuState}
               tables={tables}
               suggestions={this.props.suggestions}
@@ -658,10 +622,6 @@ export default class W_Table extends RTComp<
                 }}
               />
             )}
-            <NodeCountChecker
-              parentNode={this.ref}
-              dataAge={this.state.rowsLoaded}
-            />
 
             {!!w.options.showFilters && (
               <FlexCol
@@ -669,7 +629,7 @@ export default class W_Table extends RTComp<
                 className={`gap-p5 p-p5 bg-color-0 ${childWindow ? " bb b-color " : ""}`}
                 style={{
                   /** Ensure it covers the attached timechart layer opts button */
-                  zIndex: 2,
+                  zIndex: ClickCatchOverlayZIndex,
                 }}
                 title="Edit filters"
               >
@@ -702,9 +662,9 @@ export default class W_Table extends RTComp<
                   error={error}
                 />
               )}
-              {childWindow ?
-                childWindow
-              : cardOpts ?
+              {(
+                cardOpts // childWindow ? childWindow :
+              ) ?
                 <CardView
                   key={`${cardOpts.cardGroupBy}-${cardOpts.cardOrderBy}-${this.state.dataAge}`}
                   cols={cols}
@@ -760,25 +720,33 @@ export default class W_Table extends RTComp<
                   afterLastRowContent={
                     showInsertButton &&
                     !childWindow && (
-                      <Btn
-                        iconPath={mdiPlus}
-                        data-command="dashboard.window.rowInsert"
-                        data-key={tableName}
-                        title={t.W_Table["Insert row"]}
-                        className="shadow w-fit h-fit mt-1"
-                        color="action"
-                        variant={w.options.showFilters ? "outline" : "filled"}
+                      <FlexRow
+                        className="p-1"
                         style={{
                           position: "sticky",
-                          left: "15px",
-                          bottom: "15px",
+                          left: 0,
+                          bottom: 0,
                           /** Below the filter search clickcatch */
                           zIndex: ClickCatchOverlayZIndex - 1,
                         }}
-                        onClick={() => {
-                          this.rowPanelRState.set({ type: "insert" });
-                        }}
-                      />
+                      >
+                        <Btn
+                          iconPath={mdiPlus}
+                          data-command="dashboard.window.rowInsert"
+                          data-key={tableName}
+                          title={t.W_Table["Insert row"]}
+                          className="shadow w-fit h-fit"
+                          color="action"
+                          variant={w.options.showFilters ? "outline" : "filled"}
+                          onClick={() => {
+                            this.rowPanelRState.set({ type: "insert" });
+                          }}
+                        />
+                        <NodeCountChecker
+                          parentNode={this.ref}
+                          dataAge={this.state.rowsLoaded}
+                        />
+                      </FlexRow>
                     )
                   }
                 />
@@ -790,7 +758,6 @@ export default class W_Table extends RTComp<
             <RowCard
               showR={this.rowPanelRState}
               rows={rows}
-              prgl={prgl}
               tableName={tableName}
               tableHandler={tableHandler}
               onPrevOrNext={(newRowPanel) => {
@@ -807,17 +774,4 @@ export default class W_Table extends RTComp<
 
     return wrapInWindow(content);
   }
-}
-
-export function kFormatter(num: number) {
-  const abs = Math.abs(num);
-  if (abs > 1e12 - 1)
-    return Math.sign(num) * +(Math.abs(num) / 1e12).toFixed(1) + " T";
-  if (abs > 1e9 - 1)
-    return Math.sign(num) * +(Math.abs(num) / 1e9).toFixed(1) + " B";
-  if (abs > 1e6 - 1)
-    return Math.sign(num) * +(Math.abs(num) / 1e6).toFixed(1) + " m";
-  if (abs > 999)
-    return Math.sign(num) * +(Math.abs(num) / 1000).toFixed(1) + " k";
-  return num.toString();
 }

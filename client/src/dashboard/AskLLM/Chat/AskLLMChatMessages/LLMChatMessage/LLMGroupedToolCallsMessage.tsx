@@ -1,35 +1,37 @@
 import Btn from "@components/Btn";
-import { SvgIcon } from "@components/SvgIcon";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import { useMcpServerIcons } from "@pages/ServerSettings/MCPServers/MCPServerTools/useMcpServerIcons";
 import React, { useMemo } from "react";
 import { isDefined } from "src/utils/utils";
-import type { LLMMessageContent } from "../ToolUseChatMessage/ToolUseChatMessage";
-import { getIconForToolUseMessage } from "../ToolUseChatMessage/useToolUseChatMessage";
+import {
+  getMessageContentItems,
+  type LLMMessageGroup,
+} from "../hooks/useLLMChatMessageGrouper";
 import type { LLMChatMessageCommonProps } from "./LLMChatMessage";
 import { LLMChatMessageContentText } from "./LLMChatMessageContentText";
-import type { LLMMessageGroup } from "../hooks/useLLMChatMessageGrouper";
+import { LLMToolCallIcon } from "./LLMToolCallIcon";
 
 export const LLMGroupedToolCallsMessage = ({
-  messageContentItems,
-  mcpServerIcons,
-  db,
   loadedSuggestions,
   onToggle,
   messages,
 }: {
-  messageContentItems: LLMMessageContent[];
   messages: LLMMessageGroup["messages"];
   onToggle: VoidFunction;
-} & Pick<
-  LLMChatMessageCommonProps,
-  "mcpServerIcons" | "db" | "loadedSuggestions"
->) => {
+} & Pick<LLMChatMessageCommonProps, "loadedSuggestions">) => {
+  const messageContentItems = useMemo(() => {
+    return getMessageContentItems({ messages });
+  }, [messages]);
+
+  const { sql } = usePrgl();
+  const { getIconFromFullName } = useMcpServerIcons();
   const { icons, toolCallCount } = useMemo(() => {
     let toolCallCount = 0;
     const iconPaths = messageContentItems
       .map((m) => {
         if (m.type === "tool_use") {
           toolCallCount++;
-          return getIconForToolUseMessage(m, mcpServerIcons);
+          return getIconFromFullName(m.name);
         }
       })
       .filter(isDefined);
@@ -38,7 +40,7 @@ export const LLMGroupedToolCallsMessage = ({
       icons,
       toolCallCount,
     };
-  }, [messageContentItems, mcpServerIcons]);
+  }, [messageContentItems, getIconFromFullName]);
 
   const allMessagesAreErrored = useMemo(() => {
     let totalToolResultMessages = 0;
@@ -77,7 +79,7 @@ export const LLMGroupedToolCallsMessage = ({
       {firstTextMessage && (
         <LLMChatMessageContentText
           messageContent={firstTextMessage}
-          db={db}
+          sqlHandler={sql}
           loadedSuggestions={loadedSuggestions}
         />
       )}
@@ -88,15 +90,15 @@ export const LLMGroupedToolCallsMessage = ({
         onClick={onToggle}
         data-command="ToolUseMessage.toggleGroup"
       >
-        {icons.map((iconPath) => {
-          return <SvgIcon key={iconPath} icon={iconPath} />;
+        {icons.map((iconName) => {
+          return <LLMToolCallIcon key={iconName} iconName={iconName} />;
         })}
         {toolCallCount} tool calls
       </Btn>
       {textMessages.length > 1 && lastTextMessage && (
         <LLMChatMessageContentText
           messageContent={lastTextMessage}
-          db={db}
+          sqlHandler={sql}
           loadedSuggestions={loadedSuggestions}
         />
       )}

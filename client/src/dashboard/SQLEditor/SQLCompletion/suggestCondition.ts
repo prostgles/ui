@@ -1,7 +1,7 @@
 import { suggestSnippets } from "./CommonMatchImports";
 import { getParentFunction } from "./MatchSelect";
 import { matchNested } from "./MatchWith";
-import { getTableExpressionSuggestions } from "./completionUtils/getTableExpressionReturnTypes";
+import { getTableExpressionReturnTypes } from "./completionUtils/getTableExpressionReturnTypes";
 import type { TokenInfo } from "./completionUtils/getTokens";
 import { jsonbPathSuggest } from "./jsonbPathSuggest";
 import {
@@ -93,7 +93,7 @@ export const suggestCondition = async (
 
   const getPrevCol = async (colName: string | undefined) => {
     if (!colName) return undefined;
-    const expr = await getTableExpressionSuggestions(
+    const expr = await getTableExpressionReturnTypes(
       { parentCb, cb, ss, sql },
       "columns",
     );

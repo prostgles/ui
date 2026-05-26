@@ -47,7 +47,7 @@ export const getSVGifCursorAnimationHandler = ({
     sceneNodeAnimations: SceneNodeAnimation[];
     sceneId: string;
   }) => {
-    if (animation.type === "moveTo") {
+    if (animation.type === "moveCursor") {
       cursorMovements.push({
         fromPerc: Number(getPercent(currentPrevDuration)),
         toPerc: Number(getPercent(currentPrevDuration + animation.duration)),
@@ -61,6 +61,7 @@ export const getSVGifCursorAnimationHandler = ({
       throw new Error(`Unexpected. BBox missing`);
     }
 
+    const minMoveTime = 200;
     const {
       type,
       lingerMs = 500,
@@ -75,11 +76,11 @@ export const getSVGifCursorAnimationHandler = ({
     const cx = bbox.x + xOffset;
     const cy = bbox.y + yOffset;
 
-    if (duration < waitBeforeClick) {
+    if (duration < waitBeforeClick + minMoveTime) {
       throw new Error(
         fixIndent(`
           Duration ${duration}ms for "${type}" animation on element ${elementSelector} in SVG file ${svgFileName} is too short. 
-          It must be greater than the waitBeforeClick time of ${waitBeforeClick}ms.
+          It must be greater than the waitBeforeClick + minMoveTime time of ${waitBeforeClick + minMoveTime}ms.
         `),
       );
     }
@@ -137,10 +138,11 @@ export const getSVGifCursorAnimationHandler = ({
       target: e.target.map((v) => toFixed(v)),
     }));
     cursorMovementsFixed.forEach(
-      ({ fromPerc, toPerc, lingerPerc, target: [x, y] }, i, arr) => {
+      ({ fromPerc, toPerc, lingerPerc, target: [x, y] }, i) => {
         const translate = `transform: translate(${x}px, ${y}px)`;
         const prevTarget =
-          arr[i - 1]?.target ?? [x0, y0].map((v) => toFixed(v));
+          cursorMovementsFixed[i - 1]?.target ??
+          [x0, y0].map((v) => toFixed(v));
         const prevTranslate = `transform: translate(${prevTarget[0]}px, ${prevTarget[1]}px)`;
         cursorKeyframes.push(
           ...[

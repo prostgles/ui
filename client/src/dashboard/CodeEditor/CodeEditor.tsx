@@ -7,16 +7,18 @@ import React, {
   type KeyboardEventHandler,
 } from "react";
 
-import { useEffectDeep, usePromise } from "prostgles-client";
 import { isObject } from "@common/publishUtils";
 import { classOverride } from "@components/Flex";
 import type { MonacoEditorProps } from "@components/MonacoEditor/MonacoEditor";
 import { MonacoEditor } from "@components/MonacoEditor/MonacoEditor";
+import { useAppContext } from "@pages/AppContextProvider";
+import { useEffectDeep, usePromise } from "prostgles-client";
 import { getMonaco } from "../SQLEditor/W_SQLEditor";
 import { type editor, type Uri } from "../W_SQL/monacoEditorTypes";
 import {
   LOG_LANGUAGE_ID,
-  LOG_LANGUAGE_THEME,
+  LOG_LANGUAGE_THEME_DARK,
+  LOG_LANGUAGE_THEME_LIGHT,
   registerLogLang,
 } from "./registerLogLang";
 import { setMonacoErrorMarkers } from "./utils/setMonacoErrorMarkers";
@@ -102,7 +104,9 @@ export type LanguageConfig =
        * e.g.: 'myMethod2';
        * Must be unique for each model
        */
+      environment: "react" | "nodejs";
       modelFileName: string;
+      importedModels?: { [modelName: string]: string };
       tsLibraries?: TSLibrary[];
     }
   | {
@@ -233,6 +237,7 @@ export const CodeEditor = (props: CodeEditorProps) => {
     );
   }, [editor, languageObj]);
 
+  const { theme: appTheme } = useAppContext();
   const monacoOptions = useMemo(() => {
     return {
       readOnly: !onChange,
@@ -247,10 +252,13 @@ export const CodeEditor = (props: CodeEditorProps) => {
       }),
       ...options,
       ...(language === LOG_LANGUAGE_ID && {
-        theme: LOG_LANGUAGE_THEME,
+        theme:
+          appTheme === "light" ?
+            LOG_LANGUAGE_THEME_LIGHT
+          : LOG_LANGUAGE_THEME_DARK,
       }),
     } satisfies editor.IStandaloneEditorConstructionOptions;
-  }, [language, onChange, options]);
+  }, [language, onChange, options, appTheme]);
 
   return (
     <div
@@ -272,6 +280,7 @@ export const CodeEditor = (props: CodeEditorProps) => {
         onChange={onChange}
         onMount={onMountMonacoEditor}
         minHeight={minHeight}
+        minWidth={style?.minWidth}
       />
     </div>
   );

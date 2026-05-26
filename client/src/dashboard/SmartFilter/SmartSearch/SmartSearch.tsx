@@ -8,10 +8,10 @@ import type {
   SearchListProps,
 } from "@components/SearchList/SearchList";
 import { SearchList } from "@components/SearchList/SearchList";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject, ValidatedColumnInfo } from "prostgles-types";
 import { isObject } from "prostgles-types";
-import type { DashboardState } from "../../Dashboard/Dashboard";
+import type { Prgl } from "src/App";
+import type { DBSchemaTableWJoins } from "src/dashboard/Dashboard/dashboardUtils";
 import RTComp from "../../RTComp";
 import type { ColumnConfig } from "../../W_Table/ColumnMenu/ColumnMenu";
 import { onSearchItems } from "./onSearchItems";
@@ -21,7 +21,7 @@ export type SmartSearchOnChangeArgs = {
   /**
    * Full column value
    */
-  columnValue?: string | number | Date | boolean;
+  columnValue?: string | number | Date | boolean | null;
 
   /**
    * Column term value as used in $term_highlight
@@ -34,7 +34,7 @@ export type SmartSearchOnChangeArgs = {
 
 type P = {
   id?: string;
-  db: DBHandlerClient;
+  db: Prgl["db"];
   tableName: string;
   columns?: string[];
   column?: string | ColumnConfig;
@@ -63,7 +63,7 @@ type P = {
 
   onPressEnter?: (term: string, searchItems: SearchListItem[]) => void;
 
-  tables: Required<DashboardState>["tables"];
+  tables: DBSchemaTableWJoins[];
 
   searchOnFocus?: boolean;
   variant?: "search-no-shadow";

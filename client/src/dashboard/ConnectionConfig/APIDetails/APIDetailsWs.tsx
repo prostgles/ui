@@ -1,25 +1,25 @@
-import { mdiCodeBraces, mdiLanguageTypescript } from "@mdi/js";
-import { usePromise } from "prostgles-client";
-import React, { useMemo } from "react";
 import Btn from "@components/Btn";
 import { FlexCol, FlexRow } from "@components/Flex";
 import PopupMenu from "@components/PopupMenu";
+import { mdiCodeBraces, mdiLanguageTypescript } from "@mdi/js";
+import { usePromise } from "prostgles-client";
+import React from "react";
 import { t } from "../../../i18n/i18nUtils";
 import { download } from "../../W_SQL/W_SQL";
 import { APICodeExamples } from "./APICodeExamples";
 import type { APIDetailsProps } from "./APIDetails";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 
 export const APIDetailsWs = ({
-  dbsMethods,
   connection,
   token,
-  projectPath,
 }: APIDetailsProps & { token?: string }) => {
+  const { dbsMethods } = usePrglCore();
   const dbSchemaTypes = usePromise(async () => {
     if (connection.id) {
-      const dbSchemaTypes = await dbsMethods.getConnectionDBTypes?.(
-        connection.is_state_db ? undefined : connection.id,
-      );
+      const dbSchemaTypes = await dbsMethods.getConnectionDBTypes?.({
+        conId: connection.is_state_db ? undefined : connection.id,
+      });
       // ?.catch((e) => {
       //   console.error("Failed to get connection DB types", e);
       // });
@@ -71,7 +71,7 @@ export const APIDetailsWs = ({
           content={
             <APICodeExamples
               token={token}
-              projectPath={projectPath}
+              connection={connection}
               dbSchemaTypes={dbSchemaTypes}
             />
           }

@@ -1,17 +1,16 @@
+import Btn from "@components/Btn";
+import { FlexRow } from "@components/Flex";
 import {
   mdiClose,
   mdiFullscreen,
   mdiFullscreenExit,
-  mdiMenu,
   mdiUnfoldLessHorizontal,
   mdiUnfoldMoreHorizontal,
 } from "@mdi/js";
 import React from "react";
-import Btn from "@components/Btn";
-import type { SilverGridChildProps } from "./SilverGridChild";
 import { dataCommand } from "../../Testing";
 import { appTheme, useReactiveState } from "../../appUtils";
-import { FlexRow } from "@components/Flex";
+import type { SilverGridChildProps } from "./SilverGridChild";
 export const GridHeaderClassname = "silver-grid-item-header--title" as const;
 
 type P = SilverGridChildProps & {
@@ -96,16 +95,6 @@ export const SilverGridChildHeader = (props: P) => {
         : {}
       }
     >
-      <div
-        className="silver-grid-item-header--icon flex-row f-0 o-hidden f-1 ai-center"
-        style={{
-          maxWidth: "fit-content",
-          minWidth: "42px",
-        }}
-      >
-        {headerIcon}
-      </div>
-
       <FlexRow
         className="SilverGridChildHeader_tabs flex-row f-1 min-w-0 ws-nowrap ai-end text-ellipsiss ml-p25 o-auto  no-scroll-bar"
         style={{
@@ -141,9 +130,8 @@ export const SilverGridChildHeader = (props: P) => {
                     padding: ".5em 0 .5em .75em ",
                   }}
                   {...attrs}
-                >
-                  {title}
-                </div>
+                  children={title}
+                />
                 {isFixed ?
                   <div style={{ width: "1em" }} />
                 : <CloseButton {...props} tabId={tabId} />}
@@ -159,7 +147,7 @@ export const SilverGridChildHeader = (props: P) => {
                   onSetHeaderRef(r);
                 }
               }}
-              className={`gap-p25 pl-p5 pr-p25 ${bgActiveClass}`}
+              className={`f-0 gap-p25 pl-p5 pr-p25 ${bgActiveClass}`}
               style={{
                 height: `${height}px`,
                 lineHeight: `${lineHeight + 2}px`,
@@ -169,15 +157,13 @@ export const SilverGridChildHeader = (props: P) => {
                 marginTop: "2px",
                 /** Used to prevent unexpected scroll of tab headers */
                 overflowY: "hidden",
-                maxWidth: "max(300px, 40%)",
+                maxWidth: tabs.length === 1 ? "100%" : "max(300px, 40%)",
               }}
             >
               <div
-                className={`${GridHeaderClassname} py-p5 f-1 min-w-0 max-w-fit text-ellipsis noselect `}
+                className={`${GridHeaderClassname} f-1 min-w-0 max-w-fit text-ellipsis noselect `}
                 {...attrs}
-              >
-                {tab.title}
-              </div>
+              />
               {isFixed ?
                 <div style={{ width: "1em" }} />
               : <CloseButton {...props} tabId={tab.id} />}
@@ -186,6 +172,19 @@ export const SilverGridChildHeader = (props: P) => {
         })}
       </FlexRow>
 
+      <div
+        className="silver-grid-item-header--icon flex-row f-0 o-hidden f-1 ai-center"
+        style={{
+          maxWidth: "fit-content",
+          minWidth: "42px",
+        }}
+      >
+        {headerIcon}
+      </div>
+      <div
+        className="divider mx-p5"
+        style={{ width: "1px", height: "60%", background: "var(--b-color)" }}
+      ></div>
       {!hideButtons.minimize && (
         <Btn
           {...dataCommand("dashboard.window.collapse")}

@@ -1,19 +1,20 @@
 import Btn from "@components/Btn";
-import { FileBrowser } from "@components/FileBrowser/FileBrowser";
-import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
+import { FileTree } from "@components/FileTree/FileTree";
+import { FlexCol, FlexRow } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
 import Popup from "@components/Popup/Popup";
+import { mdiDeleteOutline } from "@mdi/js";
 import React, { useContext, useState } from "react";
-import type { DBS } from "../../../../dashboard/Dashboard/DBS";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import { useMCPServerConfigState } from "./useMCPServerConfigState";
-import { mdiDelete } from "@mdi/js";
 
 export type MCPServerEnabledConfig = { configId: number };
 
 export type MCPServerConfigProps = {
-  dbs: DBS;
   serverName: string;
-  existingConfig: { id: number; value: Record<string, string> } | undefined;
+  existingConfig:
+    | { id: number; value: Record<string, string | string[]> }
+    | undefined;
   chatId: number | undefined;
   onDone: (res: void | MCPServerEnabledConfig) => void;
 };
@@ -22,6 +23,7 @@ export const MCPServerConfig = (props: MCPServerConfigProps) => {
   const { serverName, existingConfig, onDone } = props;
   const { upsertConfig, canSave, schema, setConfig, config, existingConfigs } =
     useMCPServerConfigState(props);
+  const { dbs } = usePrglCore();
   if (!schema) return null;
 
   return (
@@ -53,16 +55,18 @@ export const MCPServerConfig = (props: MCPServerConfigProps) => {
     >
       <FlexCol className="min-h-0">
         {Object.entries(schema).map(([key, schema]) => {
-          if (schema.renderWithComponent === "FileBrowser") {
+          if (schema.renderWithComponent === "FileTree") {
+            const currentValue = config[key];
             return (
-              <FileBrowser
+              <FileTree
                 key={key}
-                title={schema.title ?? key}
-                path={config[key]}
-                onChange={(v) => {
+                mode="pick-multiple"
+                type="all"
+                value={currentValue as string[] | undefined}
+                onChange={(newValue) => {
                   setConfig({
                     ...config,
-                    [key]: v,
+                    [key]: newValue,
                   });
                 }}
               />
@@ -74,7 +78,7 @@ export const MCPServerConfig = (props: MCPServerConfigProps) => {
               key={key}
               label={schema.title ?? key}
               hint={schema.description}
-              value={config[key]}
+              value={config[key] as string | undefined}
               onChange={(v) =>
                 setConfig({
                   ...config,
@@ -85,11 +89,9 @@ export const MCPServerConfig = (props: MCPServerConfigProps) => {
           );
         })}
         {Boolean(existingConfigs.length) && (
-          <FlexCol className="pt-1 pb-2 gap-p5">
-            <div className="ta-start">
-              Or select from existing configurations:
-            </div>
-            <FlexRowWrap>
+          <FlexCol className="p-1 pb-2 gap-p5 bt b-color ml-p5">
+            <div className="ta-start mb-1">Existing configurations:</div>
+            <FlexCol>
               {existingConfigs.map((existingConfig) => {
                 const renderableTypes = ["string", "number", "boolean"];
                 const values = Object.values(existingConfig.config)
@@ -103,6 +105,7 @@ export const MCPServerConfig = (props: MCPServerConfigProps) => {
                   <FlexRow key={existingConfig.id} className="gap-0">
                     <Btn
                       variant="faded"
+                      size="small"
                       onClick={() => {
                         setConfig(existingConfig.config);
                       }}
@@ -110,10 +113,11 @@ export const MCPServerConfig = (props: MCPServerConfigProps) => {
                       {values}
                     </Btn>
                     <Btn
-                      iconPath={mdiDelete}
+                      size="small"
+                      iconPath={mdiDeleteOutline}
                       title="Delete existing config (if not used in other chats)"
                       onClickPromise={async () => {
-                        await props.dbs.mcp_server_configs.delete({
+                        await dbs.mcp_server_configs.delete({
                           id: existingConfig.id,
                         });
                       }}
@@ -121,7 +125,7 @@ export const MCPServerConfig = (props: MCPServerConfigProps) => {
                   </FlexRow>
                 );
               })}
-            </FlexRowWrap>
+            </FlexCol>
           </FlexCol>
         )}
       </FlexCol>
@@ -141,10 +145,8 @@ export const MCPServerConfigContext = React.createContext<
 
 export const MCPServerConfigProvider = ({
   children,
-  dbs,
 }: {
   children: React.ReactNode;
-  dbs: DBS;
 }) => {
   const [serverToConfigure, setServerToConfigure] =
     useState<MCPServerConfigProps>();
@@ -152,12 +154,11 @@ export const MCPServerConfigProvider = ({
   const value = React.useMemo(() => {
     return {
       setServerToConfigure: async (
-        props: Omit<MCPServerConfigProps, "onDone" | "dbs">,
+        props: Omit<MCPServerConfigProps, "onDone">,
       ) => {
         return new Promise<MCPServerEnabledConfig | void>((resolve) => {
           setServerToConfigure({
             ...props,
-            dbs,
             onDone: (enabled) => {
               resolve(enabled);
             },
@@ -165,7 +166,7 @@ export const MCPServerConfigProvider = ({
         });
       },
     };
-  }, [dbs]);
+  }, []);
 
   return (
     <MCPServerConfigContext.Provider value={value}>

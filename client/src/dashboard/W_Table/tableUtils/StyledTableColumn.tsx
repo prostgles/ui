@@ -1,33 +1,32 @@
-import type { AnyObject } from "prostgles-types";
-import { _PG_date, _PG_numbers, includes, isDefined } from "prostgles-types";
-import React from "react";
 import { FlexRow, FlexRowWrap } from "@components/Flex";
 import { CellBarchart } from "@components/ProgressBar";
+import { SvgIcon } from "@components/SvgIcon";
 import type { OnColRenderRowInfo } from "@components/Table/Table";
+import { _PG_date, _PG_numbers, includes } from "prostgles-types";
+import React from "react";
 import { RenderValue } from "../../SmartForm/SmartFormField/RenderValue";
 import type { ColumnConfig } from "../ColumnMenu/ColumnMenu";
 import type {
   ChipStyle,
   ColumnValue,
 } from "../ColumnMenu/ColumnStyleControls/ColumnStyleControls";
-import { kFormatter, type MinMax } from "../W_Table";
+import { type MinMax } from "../W_Table";
 import { blend } from "../colorBlend";
 import type { ProstglesTableColumn } from "./getTableCols";
 import type { OnRenderColumnProps } from "./onRenderColumn";
-import { SvgIcon } from "@components/SvgIcon";
+import { kFormatter } from "./kFormatter";
 
-type P = OnColRenderRowInfo &
-  Pick<OnRenderColumnProps, "maxCellChars" | "c" | "barchartVals">;
+type P = Pick<OnColRenderRowInfo, "value" | "renderedVal"> &
+  Pick<OnRenderColumnProps, "maxCellChars" | "column" | "barchartVals">;
 
 export const StyledTableColumn = ({
-  c,
+  column: c,
   value,
-  row,
   barchartVals,
   renderedVal,
 }: P) => {
   if (c.style?.type === "Icons") {
-    const valueKey = value?.toString() ?? "";
+    const valueKey = String(value?.toString() ?? "");
     const iconName = valueKey && c.style.valueToIconMap[valueKey];
     const sizeNum = c.style.size ?? 24;
     const iconNode = iconName && <SvgIcon icon={iconName} size={sizeNum} />;
@@ -49,7 +48,7 @@ export const StyledTableColumn = ({
       />
     );
   } else if (c.style?.type !== "None") {
-    const style = getCellStyle(c, c, row, barchartVals?.[c.name]);
+    const style = getCellStyle(c, c, value, barchartVals?.[c.name]);
 
     if (
       includes(["Fixed", "Conditional"], c.style?.type) &&
@@ -104,7 +103,7 @@ export const StyledCell = ({
   renderedVal,
   className = "",
 }: {
-  renderedVal: any;
+  renderedVal: React.ReactNode;
   style: ChipStyle | undefined;
   className?: string;
 }) => {
@@ -150,7 +149,7 @@ export const StyledCell = ({
 export const getCellStyle = (
   col: ColumnConfig,
   c: Pick<ProstglesTableColumn, "tsDataType" | "udt_name">,
-  row: AnyObject,
+  val: any,
   dataRange: MinMax | undefined,
 ):
   | {
@@ -166,7 +165,7 @@ export const getCellStyle = (
   } else if (style.type === "Fixed") {
     res = { ...style };
   } else if (style.type === "Conditional") {
-    const val = row[col.name];
+    // const val = row[col.name];
 
     const match = style.conditions.find(({ operator, condition }) => {
       const isNumeric =
@@ -194,7 +193,7 @@ export const getCellStyle = (
       } else if (operator === "!=") {
         return val != cval;
       } else if (operator === "in" || operator === "not in") {
-        const is_in = condition.includes(val);
+        const is_in = includes(condition, val);
 
         if (operator === "in") return is_in;
         else return !is_in;
@@ -219,14 +218,11 @@ export const getCellStyle = (
       minColor = "#63f717",
       maxColor = "#46b5d5",
     } = style;
-    const val =
-      _PG_date.includes(c.udt_name as any) ?
-        +new Date(row[col.name])
-      : +row[col.name];
+    const dateOrNumber = includes(_PG_date, c.udt_name) ? +new Date(val) : +val;
     const { max, min } = dataRange ?? {};
 
-    if (isNumber(val) && isNumber(min) && isNumber(max)) {
-      const perc = (val - min) / (max - min);
+    if (isNumber(dateOrNumber) && isNumber(min) && isNumber(max)) {
+      const perc = (dateOrNumber - min) / (max - min);
 
       res = {
         textColor,

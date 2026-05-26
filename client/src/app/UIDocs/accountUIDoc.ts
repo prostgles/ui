@@ -1,11 +1,12 @@
 import { mdiAccountOutline, mdiApplicationBracesOutline } from "@mdi/js";
 import { ROUTES } from "@common/utils";
-import { getDataKeyElemSelector } from "../../Testing";
+import { getDataKey } from "../../Testing";
 import type { UIDocContainers } from "../UIDocs";
 
 export const accountUIDoc = {
   type: "page",
   path: ROUTES.ACCOUNT,
+  componentName: "Account",
   title: "Account",
   iconPath: mdiAccountOutline,
   description:
@@ -19,7 +20,7 @@ export const accountUIDoc = {
     {
       type: "tab",
       title: "Account details",
-      selector: getDataKeyElemSelector("details"),
+      selector: getDataKey("details"),
       description: "View and update your account information.",
       children: [
         {
@@ -35,7 +36,7 @@ export const accountUIDoc = {
     {
       type: "tab",
       title: "Security",
-      selector: getDataKeyElemSelector("security"),
+      selector: getDataKey("security"),
       description: "Manage your account security settings.",
       children: [
         {
@@ -109,7 +110,7 @@ export const accountUIDoc = {
     {
       type: "tab",
       title: "API",
-      selector: getDataKeyElemSelector("api"),
+      selector: getDataKey("api"),
       iconPath: mdiApplicationBracesOutline,
       description: "View and manage your API access settings.",
       children: [

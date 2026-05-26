@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import Btn from "@components/Btn";
 import { FlexCol, FlexRow } from "@components/Flex";
 import { isEmpty } from "../utils/utils";
-import { useLocation } from "react-router-dom";
+import { useLocation } from "react-router";
 import Loading from "@components/Loader/Loading";
 
 const buttonHeights: Record<string, number> = {};

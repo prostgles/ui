@@ -1,6 +1,7 @@
 import { getFinalFilter, type DetailedFilter } from "@common/filterUtils";
 import type { BaseFilterProps } from "../SmartFilter/SmartFilter";
 import { getTableSelect } from "../W_Table/tableUtils/getTableSelect";
+import type { TableHandlerClient } from "prostgles-client";
 
 export const validateFilter = async (
   filter: DetailedFilter,

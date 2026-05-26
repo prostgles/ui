@@ -1,7 +1,7 @@
 import { mdiAlert, mdiCheck } from "@mdi/js";
 import { omitKeys, pickKeys } from "prostgles-types";
-import React from "react";
-import { NavLink } from "react-router-dom";
+import React, { useMemo } from "react";
+import { NavLink } from "react-router";
 import RTComp from "../dashboard/RTComp";
 import type { TestSelectors } from "../Testing";
 import { tout } from "../utils/utils";
@@ -13,6 +13,7 @@ import { Icon } from "./Icon/Icon";
 import { Label, type LabelProps } from "./Label";
 import Loading from "./Loader/Loading";
 import Popup from "./Popup/Popup";
+import { useOnErrorAlert } from "./AlertProvider";
 
 type ClickMessage = (
   | { err: any }
@@ -163,7 +164,7 @@ type BtnState = {
   showClickConfirmation?: boolean;
 };
 
-export default class Btn<HREF extends string | void = void> extends RTComp<
+class Button<HREF extends string | void = void> extends RTComp<
   BtnProps<HREF>,
   BtnState
 > {
@@ -241,8 +242,12 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
       if (duration < minDuration) {
         await tout(Math.max(0, minDuration - duration));
       }
-      this.clickMessage({ ok: "" });
+      this.clickMessage({ loading: 0 });
     } catch (err) {
+      if (this.props.onClickPromiseMode === "noTickIcon") {
+        this.clickMessage({ loading: 0 });
+        return;
+      }
       this.clickMessage({
         err:
           ("onClickPromiseMessage" in this.props ?
@@ -289,7 +294,11 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
 
     const isDisabled = disabledInfo || loading;
     let _className = "";
-    const { size = window.isLowWidthScreen ? "small" : "default" } = this.props;
+    const { size: sizeFromProps = "small" } = this.props;
+    const size =
+      sizeFromProps === "default" && window.isLowWidthScreen ?
+        "small"
+      : sizeFromProps;
 
     const hasBgClassname = (className + "").includes("bg-");
     _className =
@@ -419,12 +428,14 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
     if (this.props.onClickPromise) {
       const { onClickPromise } = this.props;
       onClick = (e) => {
-        !needsConfirmation() && this.setPromise(onClickPromise(e));
+        if (needsConfirmation()) return;
+        void this.setPromise(onClickPromise(e));
       };
     } else if (this.props.onClickMessage) {
       const { onClickMessage } = this.props;
       onClick = (e) => {
-        !needsConfirmation() && onClickMessage(e, this.clickMessage);
+        if (needsConfirmation()) return;
+        onClickMessage(e, this.clickMessage);
       };
     } else if (this.props.onClick) {
       onClick = (e) => {
@@ -469,7 +480,7 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
           `${_className} btn btn-${variant} btn-size-${size} btn-color-${color} ws-nowrap w-fit `,
           className,
         ),
-        ref: this.props._ref as any,
+        ref: this.props._ref,
         ...pickKeys(otherProps, ["data-id"]),
       };
 
@@ -498,7 +509,6 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
               )
             }
             to={this.props.href}
-            tabIndex={-1}
           >
             {content}
           </NavLink>,
@@ -543,8 +553,8 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
                 variant: "filled",
                 className: "ml-auto",
                 onClick: (e) => {
-                  this.setState({ showClickConfirmation: false });
                   onClick?.(e);
+                  this.setState({ showClickConfirmation: false });
                 },
               },
             ]}
@@ -556,3 +566,24 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
     );
   }
 }
+
+const Btn = <HREF extends string | void = void>(allProps: BtnProps<HREF>) => {
+  const { onClickPromise, ...props } = allProps;
+  const { onErrorAlert } = useOnErrorAlert();
+
+  const propsWithOnAlert = useMemo(() => {
+    if (!onClickPromise) return props;
+    return {
+      ...props,
+      onClickPromise: async (e) => {
+        await onErrorAlert(async () => {
+          return onClickPromise(e);
+        });
+      },
+    };
+  }, [onClickPromise, onErrorAlert, props]);
+
+  return <Button {...(propsWithOnAlert as BtnProps<string>)} />;
+};
+
+export default Btn;

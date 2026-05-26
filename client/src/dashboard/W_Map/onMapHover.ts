@@ -86,7 +86,7 @@ export function onMapHover(
                 const filter = getMapFilter(
                   layer,
                   table.columns,
-                  hoverObj.properties as any,
+                  hoverObj.properties,
                   this.props.myLinks,
                 )?.filterValue;
                 // const filter = selectData.i.$jsonb_build_object? (i as AnyObject) : {
@@ -102,7 +102,8 @@ export function onMapHover(
               }
             }
           } else if (i && typeof i === "string") {
-            hovData = (await getSQLHoverRow(layer as LayerSQL, prgl.db, i))?.d;
+            hovData = (await getSQLHoverRow(layer as LayerSQL, prgl.sql!, i))
+              ?.d;
           }
           this.hovering = undefined;
 

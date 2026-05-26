@@ -98,28 +98,41 @@ const applyConfig = (
     config,
   }: Pick<DBSSchema["mcp_server_configs"], "server_name" | "config">,
 ) => {
-  const args = [...baseArgs];
+  let args = [...baseArgs];
   const env = { ...baseEnv };
-  Object.entries({ ...config_schema }).forEach(
-    ([key, configItem], itemIndex) => {
-      if (configItem.type === "env") {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        env[key] = config[key];
-      } else {
-        const dollarArgIndexes = args
-          .map((a, i) => (a.startsWith("${") ? i : undefined))
-          .filter(isDefined);
-        const argIndex = dollarArgIndexes[configItem.index ?? itemIndex];
-        if (argIndex) {
+  Object.entries({ ...config_schema }).forEach(([key, configItem]) => {
+    if (configItem.type === "env") {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      env[key] = config[key];
+    } else {
+      const dollarArgIndexes = args
+        .map((a, i) => (a.startsWith("${") ? i : undefined))
+        .filter(isDefined);
+      if (dollarArgIndexes.length > 1) {
+        throw new Error(
+          `Config schema for server "${server_name}" has multiple args with ${"{"}...{""} syntax, which is not supported.`,
+        );
+      }
+      const argIndex = configItem.index ?? dollarArgIndexes[0];
+      if (isFinite(argIndex) && argIndex > -1) {
+        if (configItem.type === "...args" && Array.isArray(config[key])) {
+          args = [
+            ...args.slice(0, argIndex),
+            ...(config[key] as string[]),
+            ...args.slice(argIndex + 1),
+          ];
+        } else {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           args[argIndex] = config[key];
-        } else {
-          console.error(
-            `Invalid index for arg "${key}" in server "${server_name}"`,
-          );
         }
+      } else {
+        console.error(
+          `Invalid index for arg "${key}" in server "${server_name}"`,
+        );
       }
-    },
-  );
+    }
+  });
   return { args, env };
 };
+
+const isFinite = (value: unknown): value is number => Number.isFinite(value);

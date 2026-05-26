@@ -8,13 +8,41 @@ import type { SearchInputProps } from "./SearchInput";
 import "./SearchList.css";
 import { SearchListContent } from "./SearchListContent";
 
-export type SearchListItemContent = {
-  content?: React.ReactNode;
-  contentLeft?: React.ReactNode;
-  contentRight?: React.ReactNode;
-  contentBottom?: React.ReactNode;
-  contentTop?: React.ReactNode;
-};
+export type SvgIconName =
+  keyof typeof import("@mdi/js") extends `mdi${infer FuncName}` ? FuncName
+  : never;
+
+export type SearchListItemContent =
+  | {
+      content: React.ReactNode;
+      iconLeft?: undefined;
+      contentLeft?: undefined;
+      contentRight?: undefined;
+      contentBottom?: undefined;
+      contentTop?: undefined;
+    }
+  | {
+      content?: undefined;
+      iconLeft?:
+        | ({
+            type: "Icon";
+            path: string;
+            title?: string;
+            style?: React.CSSProperties;
+          } & TestSelectors)
+        | ({
+            type: "SvgIcon";
+            pathName: SvgIconName;
+            title?: string;
+            style?: React.CSSProperties;
+          } & TestSelectors);
+      contentLeft?: React.ReactNode;
+      contentRight?: React.ReactNode;
+      contentBottom?: React.ReactNode;
+      contentTop?:
+        | React.ReactNode
+        | ((renderedItems: ParsedListItem[], index: number) => React.ReactNode);
+    };
 export type SearchListItem = TestSelectors & {
   key: OptionKey;
   label?: string | React.ReactNode;
@@ -47,10 +75,16 @@ export type SearchListItem = TestSelectors & {
   disabledInfo?: string;
 } & SearchListItemContent;
 
-export type ParsedListItem = SearchListItem & {
+export type ParsedListItem = Omit<SearchListItem, "iconLeft"> & {
   node?: React.ReactNode;
   rank?: number;
 };
+
+export type OnPartialResult = (
+  searchItems: SearchListItem[],
+  finished: boolean,
+  cancel: VoidFunction,
+) => any;
 
 export type SearchListProps<M extends boolean = false> = TestSelectors & {
   defaultSearch?: string;
@@ -61,11 +95,7 @@ export type SearchListProps<M extends boolean = false> = TestSelectors & {
   onSearchItems?: (
     term: string,
     opts?: { matchCase?: boolean },
-    onPartialResult?: (
-      searchItems: SearchListItem[],
-      finished: boolean,
-      cancel: VoidFunction,
-    ) => any,
+    onPartialResult?: OnPartialResult,
   ) => Promise<SearchListItem[]>;
   onType?: (term: string, setTerm: (newTerm: string) => void) => void;
   items?: SearchListItem[];
@@ -87,6 +117,7 @@ export type SearchListProps<M extends boolean = false> = TestSelectors & {
   >;
 
   leftContent?: React.ReactNode;
+  belowSearchBoxContent?: React.ReactNode;
 
   /**
    * If provided then allows toggling all values
@@ -102,6 +133,7 @@ export type SearchListProps<M extends boolean = false> = TestSelectors & {
   noBorder?: boolean;
   selectedKey?: OptionKey;
   rootStyle?: React.CSSProperties;
+  listStyle?: React.CSSProperties;
 
   /**
    * Number of rows to slice from result
@@ -142,6 +174,7 @@ export type SearchListProps<M extends boolean = false> = TestSelectors & {
   endOfResultsContent?: React.ReactNode;
 
   rowStyleVariant?: "row-wrap";
+  autoScrollToBottom?: boolean;
 };
 
 export const SearchList = <M extends boolean = false>(

@@ -78,7 +78,7 @@ export const Section = (props: SectionProps) => {
       }
     >
       <div
-        className="Section__Header flex-row ai-center noselect pointer f-0 bb b-color bg-inherit"
+        className="Section__Header flex-row ai-center noselect pointer f-0 bb b-color bg-inherit bg-color-0"
         style={
           !open ?
             {
@@ -99,6 +99,7 @@ export const Section = (props: SectionProps) => {
             (titleRightContent ? "" : "f-1d") +
             " p-p5 ta-left font-20 bold jc-start mr-1"
           }
+          size="default"
           title="Expand section"
           disabledInfo={disabledInfo}
           style={{

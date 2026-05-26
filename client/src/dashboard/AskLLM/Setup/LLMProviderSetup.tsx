@@ -1,19 +1,16 @@
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import React, { useMemo } from "react";
 import type { DBSSchema } from "@common/publishUtils";
-import type { Prgl } from "../../../App";
 import Chip from "@components/Chip";
 import { InfoRow } from "@components/InfoRow";
+import type { DBHandlerClient } from "prostgles-client";
+import React, { useMemo } from "react";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import {
   SmartCardList,
   type SmartCardListProps,
 } from "../../SmartCardList/SmartCardList";
 
-export const LLMProviderSetup = ({
-  dbs,
-  dbsMethods,
-  dbsTables,
-}: Pick<Prgl, "dbs" | "dbsMethods" | "dbsTables">) => {
+export const LLMProviderSetup = () => {
+  const { dbsSql, dbs, dbsTables, dbsMethodSchema } = usePrglCore();
   const listProps = useMemo(() => {
     return {
       showTopBar: {
@@ -52,9 +49,10 @@ export const LLMProviderSetup = ({
     <>
       <SmartCardList
         className="mb-1 w-fit min-w-0"
-        db={dbs as DBHandlerClient}
+        sql={dbsSql}
+        db={dbs}
         tableName={"llm_credentials"}
-        methods={dbsMethods}
+        methods={dbsMethodSchema}
         tables={dbsTables}
         noDataComponent={
           <InfoRow color="info" variant="filled">

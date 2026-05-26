@@ -1,13 +1,18 @@
 import type { DBSSchema } from "@common/publishUtils";
+import Btn from "@components/Btn";
+import { Marked } from "@components/Chat/Marked";
 import { MediaViewer } from "@components/MediaViewer/MediaViewer";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import PopupMenu from "@components/PopupMenu";
+import { ScrollFade } from "@components/ScrollFade/ScrollFade";
+import { mdiFileDocument } from "@mdi/js";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import React from "react";
 import type { LoadedSuggestions } from "src/dashboard/Dashboard/dashboardUtils";
-import { LLMChatMessageContentText } from "./LLMChatMessageContentText";
 import {
   ToolUseChatMessage,
   type LLMMessageContent,
 } from "../ToolUseChatMessage/ToolUseChatMessage";
+import { LLMChatMessageContentText } from "./LLMChatMessageContentText";
 
 export const LLMChatMessageContent = ({
   messageContent,
@@ -15,8 +20,6 @@ export const LLMChatMessageContent = ({
   message,
   nextMessage,
   loadedSuggestions,
-  db,
-  mcpServerIcons,
   workspaceId,
 }: {
   messageContent: Exclude<LLMMessageContent, { type: "tool_result" }>;
@@ -24,16 +27,46 @@ export const LLMChatMessageContent = ({
   message: DBSSchema["llm_messages"];
   nextMessage: DBSSchema["llm_messages"] | undefined;
   loadedSuggestions: LoadedSuggestions | undefined;
-  db: DBHandlerClient;
   workspaceId: string | undefined;
-  mcpServerIcons: Map<string, string>;
 }) => {
-  const sqlHandler = db.sql;
+  const prgl = usePrgl();
+  const { sql: sqlHandler } = prgl;
+  if (messageContent.type === "text-document") {
+    return (
+      <PopupMenu
+        title={messageContent.fileName}
+        positioning="fullscreen"
+        button={
+          <Btn
+            data-command="LLMChatMessageContent.textDocument"
+            variant="faded"
+            iconPath={mdiFileDocument}
+          >
+            {messageContent.fileName}
+          </Btn>
+        }
+      >
+        <ScrollFade
+          style={{
+            overflow: "auto",
+          }}
+        >
+          <Marked
+            codeHeader={undefined}
+            content={messageContent.text}
+            sqlHandler={sqlHandler}
+            loadedSuggestions={loadedSuggestions}
+            prgl={prgl}
+          />
+        </ScrollFade>
+      </PopupMenu>
+    );
+  }
   if (messageContent.type === "text" && "text" in messageContent) {
     return (
       <LLMChatMessageContentText
         messageContent={messageContent}
-        db={db}
+        sqlHandler={sqlHandler}
         loadedSuggestions={loadedSuggestions}
       />
     );
@@ -45,7 +78,6 @@ export const LLMChatMessageContent = ({
         style={{
           maxHeight: "200px",
           maxWidth: "fit-content",
-          // border: "1px solid var(--b-color)",
         }}
       />
     );
@@ -59,7 +91,6 @@ export const LLMChatMessageContent = ({
       sqlHandler={sqlHandler}
       loadedSuggestions={loadedSuggestions}
       workspaceId={workspaceId}
-      mcpServerIcons={mcpServerIcons}
     />
   );
 };

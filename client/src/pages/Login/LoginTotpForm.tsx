@@ -1,13 +1,13 @@
 import React from "react";
-import type { useLoginState } from "./useLoginState";
 import FormField from "@components/FormField/FormField";
 import Btn from "@components/Btn";
+import type { useAuthState } from "prostgles-client";
 
 export const LoginTotpFormFields = ({
   formHandlers,
   onAuthCall,
   setState,
-}: ReturnType<typeof useLoginState>) => {
+}: ReturnType<typeof useAuthState>) => {
   if (
     !formHandlers ||
     (formHandlers.state !== "loginTotp" &&

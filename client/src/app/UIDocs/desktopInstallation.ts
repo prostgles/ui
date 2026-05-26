@@ -1,11 +1,10 @@
-import { fixIndent } from "../../demo/scripts/sqlVideoDemo";
 import type { UIDoc } from "../UIDocs";
 
 export const desktopInstallationUIDoc = {
   type: "info",
   title: "Installation (Desktop Version)",
   description: "Instructions for installing Prostgles UI on your desktop.",
-  docs: fixIndent(`
+  docs: `
     To get started with Prostgles Desktop, download and install the binary file that's appropriate for your operating system (Windows, macOS, or Linux) from [our website](/download).
 
     - **Linux**: We provide **.deb**, **.rpm** or **.AppImage** files to suit your distribution,
@@ -29,5 +28,5 @@ export const desktopInstallationUIDoc = {
     You will need to create a dedicated database and superuser account with a strong password for Prostgles Desktop.
 
     <img src="./screenshots/electron_setup.svgif.svg" alt="Electron Setup" />  
-`),
+`,
 } satisfies UIDoc;

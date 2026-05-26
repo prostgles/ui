@@ -2,10 +2,11 @@ import type { AnyObject } from "prostgles-types";
 import { omitKeys, pickKeys } from "prostgles-types";
 import type { DeltaOf, DeltaOfData } from "../../RTComp";
 import type { ProstglesTableD, W_TableProps, W_TableState } from "../W_Table";
-import W_Table from "../W_Table";
+import { getTableDataRequestSignature } from "../tableUtils/getTableDataRequestSignature";
 import { getTableSelect } from "../tableUtils/getTableSelect";
 import { getSort } from "../tableUtils/tableUtils";
 import { getTableFilter } from "./getTableFilter";
+import type W_Table from "../W_Table";
 
 export async function getTableData(
   this: W_Table,
@@ -64,7 +65,7 @@ export async function getTableData(
       const strFilter = JSON.stringify(tableFilterHaving);
 
       const clearSub = () => {
-        return this.dataSub?.unsubscribe?.();
+        return this.dataSub?.unsubscribe();
       };
       const clearInterval = () => {
         if (this.autoRefresh) {
@@ -141,7 +142,7 @@ export async function getTableData(
       const dataAge = delta.dataAge ?? this.dataAge ?? 0;
       const cardOpts =
         w.options.viewAs?.type === "card" ? w.options.viewAs : undefined;
-      const qSig = W_Table.getTableDataRequestSignature(
+      const qSig = getTableDataRequestSignature(
         {
           select: selectWithoutData,
           barchartVals: barchartValsWithoutData,

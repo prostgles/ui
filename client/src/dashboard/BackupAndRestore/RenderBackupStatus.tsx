@@ -18,7 +18,7 @@ export const RenderBackupStatus = ({
     border: "unset",
   };
   const total = +(
-    (status as any)?.loading?.total ||
+    (status?.state === "loading" ? status.total : undefined) ||
     row.sizeInBytes ||
     +row.dbSizeInBytes ||
     0
@@ -38,18 +38,18 @@ export const RenderBackupStatus = ({
         color="red"
         value={parsedError(status.err)}
       />
-    : status.loading ?
+    : status.state === "loading" ?
       <div className="text-1p5">
         <ProgressBar
           message={
-            !status.loading.loaded || status.loading.loaded < 0 ?
+            !status.loaded || status.loaded < 0 ?
               "Preparing..."
-            : `Processed ${bytesToSize(status.loading.loaded || 0)}/${total ? bytesToSize(total) : "unknown"}`
+            : `Processed ${bytesToSize(status.loaded || 0)}/${total ? bytesToSize(total) : "unknown"}`
           }
           style={{
             minWidth: "150px",
           }}
-          value={status.loading.loaded || 0}
+          value={status.loaded || 0}
           totalValue={total || 0}
         />
       </div>

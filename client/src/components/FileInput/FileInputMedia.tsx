@@ -62,8 +62,6 @@ export const FileInputMedia = (props: {
       key={i}
       className={"FileInputMedia relative flex-col o-hidden md-auto"}
       style={{
-        // width: `${minSize}px`,
-        // height: `${minSize}px`,
         ...style,
       }}
     >
@@ -73,12 +71,6 @@ export const FileInputMedia = (props: {
           " relative flex-col f-0 w-fit "
         }
         style={{
-          // ...(focused ?
-          //   {}
-          // : {
-          //     maxWidth: `${minSize}px`,
-          //     maxHeight: `${minSize}px`,
-          //   }),
           minWidth: "100px",
           minHeight: "100px",
           ...style,

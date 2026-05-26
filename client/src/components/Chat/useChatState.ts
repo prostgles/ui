@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-
-import { usePromise } from "prostgles-client";
 import { useFileDropZone } from "../FileInput/useFileDropZone";
 import type { ChatProps } from "./Chat";
+import { useChatFileUpload } from "./useChatFileUpload";
 import { useChatOnPaste } from "./useChatOnPaste";
-import { useDebouncedCallback } from "src/hooks/useDebouncedCallback";
 
 export type ChatState = ReturnType<typeof useChatState>;
 export const useChatState = (
@@ -19,25 +17,12 @@ export const useChatState = (
     textAreaRef: React.RefObject<HTMLTextAreaElement>;
   },
 ) => {
-  const {
-    messages,
-    onSend,
-    isLoading,
-    textAreaRef,
-    currentlyTypedMessage,
-    onCurrentlyTypedMessageChange,
-  } = props;
-
-  const [files, setFiles] = useState<File[]>([]);
-  const onAddFiles = useCallback(
-    (newFiles: File[]) => {
-      setFiles((prev) => [...prev, ...newFiles]);
-    },
-    [setFiles],
-  );
+  const { messages, onSend, isLoading, textAreaRef, currentlyTypedMessage } =
+    props;
 
   const [scrollRef, setScrollRef] = useState<HTMLDivElement | null>(null);
 
+  const lastMessageId = messages.at(-1)?.id;
   useEffect(() => {
     if (scrollRef) {
       setTimeout(() => {
@@ -45,7 +30,7 @@ export const useChatState = (
         /** Wait for base64 images to load and resize */
       }, 10);
     }
-  }, [messages, scrollRef]);
+  }, [lastMessageId, scrollRef]);
 
   const getCurrentMessage = useCallback(
     () => textAreaRef.current?.value || currentlyTypedMessage || "",
@@ -55,30 +40,38 @@ export const useChatState = (
     (msg: string) => {
       if (!textAreaRef.current) return;
       textAreaRef.current.value = msg;
+      /** Scroll to end */
+      textAreaRef.current.scrollTop = textAreaRef.current.scrollHeight;
     },
     [textAreaRef],
   );
 
   const [sendingMsg, setSendingMsg] = useState(false);
-
-  const onCurrentlyTypedMessageChangeDebounced = useDebouncedCallback(
-    (value: string) => {
-      if (sendingMsg && value) return;
-      onCurrentlyTypedMessageChange(value);
-    },
-    [onCurrentlyTypedMessageChange, sendingMsg],
-  );
+  const fileState = useChatFileUpload();
+  const {
+    filesWithInfo,
+    setFiles,
+    convertDocsToMarkdown,
+    setConvertDocsToMarkdown,
+    convertingDocumentName,
+    getConvertedDocs,
+    onAddFiles,
+    files,
+  } = fileState;
 
   const sendMsg = useCallback(async () => {
     const msg = getCurrentMessage();
 
-    if (!msg.trim() && !files.length) {
+    if (!msg.trim() && !filesWithInfo?.length) {
       return;
     }
     setSendingMsg(true);
     try {
-      await onSend(msg, files);
-      onCurrentlyTypedMessageChangeDebounced("");
+      const { otherFiles = [], docFilesMessages } = await getConvertedDocs();
+      await onSend(
+        [{ type: "text", text: msg }, ...docFilesMessages],
+        otherFiles.map((f) => f.file),
+      );
       setCurrentMessage("");
       setFiles([]);
     } catch (e) {
@@ -87,22 +80,13 @@ export const useChatState = (
     setSendingMsg(false);
   }, [
     getCurrentMessage,
-    files,
+    filesWithInfo?.length,
+    getConvertedDocs,
     onSend,
-    onCurrentlyTypedMessageChangeDebounced,
     setCurrentMessage,
+    setFiles,
   ]);
   const chatIsLoading = isLoading || sendingMsg;
-
-  const filesAsBase64 = usePromise(async () => {
-    if (!files.length) return [];
-    return Promise.all(
-      files.map(async (file) => {
-        const base64Data = await blobToBase64(file);
-        return { file, base64Data };
-      }),
-    );
-  }, [files]);
 
   const { handleOnPaste } = useChatOnPaste({
     textAreaRef: textAreaRef,
@@ -114,7 +98,7 @@ export const useChatState = (
 
   return {
     files,
-    filesAsBase64,
+    filesWithInfo,
     chatIsLoading,
     setFiles,
     sendMsg,
@@ -127,24 +111,8 @@ export const useChatState = (
     handleOnPaste,
     divHandlers,
     isEngaged,
-    onCurrentlyTypedMessageChangeDebounced,
+    convertDocsToMarkdown,
+    setConvertDocsToMarkdown,
+    convertingDocumentName,
   };
 };
-
-function blobToBase64(blob: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      // The result includes the data URL prefix (data:audio/ogg;base64,)
-      const { result } = reader;
-      if (result && typeof result !== "string") {
-        reject(new Error("Failed to convert blob to base64 string"));
-        return;
-      }
-      const base64String = result?.toString() || "";
-      resolve(base64String);
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
-}

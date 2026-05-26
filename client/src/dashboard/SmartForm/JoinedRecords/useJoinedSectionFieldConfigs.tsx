@@ -24,7 +24,7 @@ export const useJoinedSectionFieldConfigs = ({
     if (isObject(tableInfo) && tableInfo.fieldConfigs) {
       return tableInfo.fieldConfigs;
     }
-    const fileTable = tables.find((t) => t.info.isFileTable);
+    const fileTable = tables.find((t) => t.isFileTable);
     if (fileTable?.name === sectionTable.name) {
       return [
         {
@@ -55,8 +55,8 @@ export const useJoinedSectionFieldConfigs = ({
         const joinColumns = joinInfo.on.flatMap((conditions) =>
           conditions.map(([col1, col2]) => col2),
         );
-        const isOneToOneJoin = fTable.info.uniqueColumnGroups?.some(
-          (groupCols) => groupCols.every((col) => joinColumns.includes(col)),
+        const isOneToOneJoin = fTable.uniqueColumnGroups?.some((groupCols) =>
+          groupCols.every((col) => joinColumns.includes(col)),
         );
         if (!isOneToOneJoin) return;
         const textCols = getBestTextColumns(fTable, joinColumns);

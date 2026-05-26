@@ -1,6 +1,5 @@
 import {
   mdiChartBoxMultipleOutline,
-  mdiFilter,
   mdiMagnify,
   mdiSetLeftCenter,
 } from "@mdi/js";
@@ -8,19 +7,20 @@ import {
 import Btn from "@components/Btn";
 import React from "react";
 import type { CommonWindowProps } from "./Dashboard/Dashboard";
-import type { OnAddChart, WindowSyncItem } from "./Dashboard/dashboardUtils";
+import type { WindowSyncItem } from "./Dashboard/dashboardUtils";
 
 import { isJoinedFilter } from "@common/filterUtils";
-import { classOverride } from "@components/Flex";
+import { classOverride, FlexRow } from "@components/Flex";
 import { t } from "../i18n/i18nUtils";
 import type { DBS } from "./Dashboard/DBS";
 import { getLinkColorV2 } from "./W_Map/fetchData/getMapLayerQueries";
 import type { ChartableSQL } from "./W_SQL/getChartableSQL";
 import { AddChartMenu } from "./W_Table/TableMenu/AddChartMenu";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 
 export type ProstglesQuickMenuProps = Pick<
   CommonWindowProps,
-  "tables" | "prgl" | "myLinks" | "childWindows"
+  "myLinks" | "childWindows" | "getLinksAndWindows"
 > & {
   w: WindowSyncItem<"table"> | WindowSyncItem<"sql">;
   dbs: DBS;
@@ -28,7 +28,6 @@ export type ProstglesQuickMenuProps = Pick<
     w: WindowSyncItem<"table">;
     anchorEl: HTMLElement | Element;
   }) => any;
-  onAddChart?: OnAddChart;
   /**
    * If undefined then will show all
    */
@@ -40,14 +39,13 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
   const {
     w,
     setLinkMenu,
-    onAddChart,
     show,
     chartableSQL,
-    prgl,
     myLinks,
     childWindows,
+    getLinksAndWindows,
   } = props;
-  const { theme, tables } = prgl;
+  const { tables, dbs } = usePrgl();
   const table = tables.find((t) => t.name === w.table_name);
   const showLinks =
     (!show || show.link) &&
@@ -63,8 +61,6 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
     return null;
   }
 
-  const bgColorClass = theme === "light" ? "bg-color-3" : "bg-color-0";
-
   const addChartProps =
     w.type === "sql" && chartableSQL ? { w, type: w.type, chartableSQL }
     : w.type === "table" ? { w, type: w.type }
@@ -77,21 +73,20 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
 
   return (
     <>
-      <div
+      <FlexRow
         data-command="Window.W_QuickMenu"
         className={classOverride(
-          "W_QuickMenu flex-row ai-center rounded bb-color h-fit w-fit m-auto f-1 min-w-0 o-auto no-scroll-bar ",
+          "W_QuickMenu pl-p5 rounded bb-color h-fit w-fit m-auto f-1 min-w-0 o-auto no-scroll-bar ",
         )}
-        style={{ maxWidth: "fit-content", margin: "2px 0" }}
+        style={{ maxWidth: "fit-content", margin: "2px 0", gap: "1px" }}
         ref={divRef}
       >
-        {onAddChart && addChartProps && !show && (
+        {Boolean((dbs.windows as any).insert) && addChartProps && !show && (
           <AddChartMenu
             {...addChartProps}
-            tables={tables}
             childWindows={childWindows}
             myLinks={myLinks}
-            onAddChart={onAddChart}
+            getLinksAndWindows={getLinksAndWindows}
           />
         )}
         {hasMinimisedCharts && (
@@ -133,11 +128,9 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
         {table && (!show || show.filter) && w.type === "table" && (
           <Btn
             title={t.W_QuickMenu["Show/Hide filtering"]}
-            // className={bgColorClass}
             data-command="dashboard.window.toggleFilterBar"
             size="small"
             variant="faded"
-            // iconPath={mdiFilter}
             iconPath={mdiMagnify}
             color={
               (
@@ -162,7 +155,7 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
             }}
           />
         )}
-      </div>
+      </FlexRow>
     </>
   );
 };

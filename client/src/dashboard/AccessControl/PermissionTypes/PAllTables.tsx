@@ -24,7 +24,6 @@ export const PAllTables = ({
     <div className="flex-col gap-1">
       <h4 className="my-1">Allowed on {tables.length} tables:</h4>
       <TablePermissionControls
-        prgl={prgl}
         userTypes={userTypes}
         contextData={contextData}
         tablesWithRules={tablesWithRules}

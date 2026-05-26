@@ -1,4 +1,5 @@
-import type { PGDumpParams } from "@common/utils";
+import type { DBSSchema } from "@common/publishUtils";
+import { DEFAULT_DUMP_OPTS, type PGDumpParams } from "@common/utils";
 import Btn from "@components/Btn";
 import FormField from "@components/FormField/FormField";
 import { InfoRow } from "@components/InfoRow";
@@ -9,11 +10,10 @@ import {
   mdiFileUploadOutline,
   mdiStop,
 } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { usePromise } from "prostgles-client";
-import { type AnyObject } from "prostgles-types";
+import { omitKeys, type AnyObject, type FilterItem } from "prostgles-types";
 import React, { useState } from "react";
-import type { Prgl } from "../../App";
 import { dataCommand } from "../../Testing";
 import type { DBS, DBSMethods } from "../Dashboard/DBS";
 import type { Backups } from "../Dashboard/dashboardUtils";
@@ -24,7 +24,7 @@ import { AutomaticBackups } from "./AutomaticBackups";
 import { BackupsInProgress } from "./BackupsInProgress";
 import { CodeConfirmation } from "./CodeConfirmation";
 import { CompletedBackups } from "./CompletedBackups";
-import { DEFAULT_DUMP_OPTS, PGDumpOptions } from "./PGDumpOptions";
+import { PGDumpOptions } from "./PGDumpOptions";
 import { RenderBackupLogs } from "./RenderBackupLogs";
 import { RenderBackupStatus } from "./RenderBackupStatus";
 import { Restore } from "./Restore/Restore";
@@ -33,11 +33,21 @@ import { useBackupsControlsState } from "./useBackupsControlsState";
 export const orderByCreated = {
   key: "created",
   asc: false,
-  // created: false,
 } as const;
 
-export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
-  const { connectionId, serverState, dbs, dbsTables, dbsMethods, db } = prgl;
+export const BackupsControls = () => {
+  const prgl = usePrgl();
+  const {
+    connectionId,
+    serverState,
+    dbs,
+    dbsTables,
+    dbsMethods,
+    dbsMethodSchema,
+    db,
+    dbsSql,
+    sql,
+  } = prgl;
   const { getInstalledPsqlVersions, getDBSize, pgDump } = dbsMethods;
   const connection_id = connectionId;
 
@@ -52,7 +62,7 @@ export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
   const [dumpOpts, setDumpOpts] = useState<PGDumpParams>(DEFAULT_DUMP_OPTS);
 
   const dbSize = usePromise(
-    async () => getDBSize?.(connection_id),
+    async () => getDBSize?.({ conId: connection_id }),
     [getDBSize, connection_id],
   );
 
@@ -66,7 +76,7 @@ export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
     render: (logs, row) => (
       <RenderBackupLogs
         logs={logs}
-        completed={!(row.restore_status as any)?.loading}
+        completed={row.restore_status?.state !== "loading"}
       />
     ),
   };
@@ -85,8 +95,6 @@ export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
       </div>
     );
   }
-
-  const restoreStoppedError = "Stopped by user";
 
   return (
     <div className="flex-col gap-2 f-1 min-h-0 w-fit">
@@ -121,13 +129,20 @@ export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
               ...dataCommand("config.bkp.create.start"),
               onClickPromise: async (e) => {
                 try {
-                  await pgDump!(
-                    connection_id,
-                    dumpOpts.destination === "Cloud" ?
-                      dumpOpts.credentialID
-                    : null,
-                    dumpOpts,
-                  );
+                  const credId = dumpOpts.credentialID ?? null;
+                  if (
+                    dumpOpts.destination === "Cloud" &&
+                    typeof credId !== "number"
+                  ) {
+                    throw new Error(
+                      "Must select/provide a cloud credential first",
+                    );
+                  }
+                  await pgDump!({
+                    conId: connection_id,
+                    credId,
+                    opts: omitKeys(dumpOpts, ["credentialID", "destination"]),
+                  });
                 } catch (err) {
                   console.error(err);
                   throw err;
@@ -155,6 +170,7 @@ export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
                 connectionId={connection_id}
                 dbsMethods={dbsMethods}
                 dbs={dbs}
+                dbSql={dbsSql}
                 dbProject={db}
                 dbsTables={dbsTables}
                 opts={dumpOpts}
@@ -170,6 +186,7 @@ export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
         : <AutomaticBackups
             dbs={dbs}
             db={db}
+            sql={sql}
             dbsTables={dbsTables}
             connectionId={connection_id}
             dbsMethods={dbsMethods}
@@ -177,11 +194,8 @@ export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
         }
 
         <Restore
-          db={db}
-          dbs={dbs}
           connectionId={connection_id}
-          dbsMethods={dbsMethods}
-          fromFile={true}
+          mode="fromFile"
           button={
             <Btn
               color="action"
@@ -194,8 +208,9 @@ export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
         />
       </div>
       <SmartCardList
-        db={dbs as DBHandlerClient}
-        methods={dbsMethods}
+        db={dbs}
+        sql={dbsSql}
+        methods={dbsMethodSchema}
         tableName="backups"
         btnColor="gray"
         style={{ minHeight: "250px" }}
@@ -205,13 +220,11 @@ export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
         filter={{
           $and: [
             backupFilter,
-            { "restore_status.<>": null },
-            { "restore_status->loading.<>": null },
             {
               $or: [
-                { "restore_status->err": null },
-                { "restore_status->>err.<>": restoreStoppedError },
-              ],
+                { restore_status: { "@>": { state: "loading" } } },
+                { restore_status: { "@>": { state: "error" } } },
+              ] satisfies FilterItem<Backups>[],
             },
           ],
         }}
@@ -245,7 +258,12 @@ export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
               onClickPromise={async () => {
                 await dbs.backups.update(
                   { id: row.id },
-                  { restore_status: { err: restoreStoppedError } },
+                  {
+                    restore_status: {
+                      state: "stopped-by-user",
+                      timestamp: new Date().toISOString(),
+                    },
+                  },
                 );
               }}
             >
@@ -292,16 +310,14 @@ const DeleteAllBackups = ({
   dbsMethods,
   filterName,
 }: DeleteAllBackupsProps) => {
-  const onDeleteAll = async (popupClose: VoidFunction) => {
-    let bkp;
+  const onDeleteAll = async () => {
+    let bkp: DBSSchema["backups"] | undefined;
     do {
       bkp = await dbs.backups.findOne(filter);
       if (bkp) {
-        await dbsMethods.bkpDelete!(bkp.id, true);
+        await dbsMethods.bkpDelete!({ bkpId: bkp.id, force: true });
       }
     } while (bkp);
-
-    popupClose();
   };
 
   return (
@@ -320,19 +336,16 @@ const DeleteAllBackups = ({
           <strong>{filterName}</strong>. This action is not reversible!
         </InfoRow>
       }
-      confirmButton={(popupClose) => (
-        <>
-          <Btn
-            iconPath={mdiDelete}
-            variant="outline"
-            color="danger"
-            data-command="BackupControls.DeleteAll.Confirm"
-            onClickPromise={() => onDeleteAll(popupClose)}
-          >
-            Force delete backups
-          </Btn>
-        </>
-      )}
+      confirmButtons={[
+        {
+          iconPath: mdiDelete,
+          variant: "outline",
+          color: "danger",
+          "data-command": "BackupControls.DeleteAll.Confirm",
+          onClickPromise: onDeleteAll,
+          children: "Force delete backups",
+        },
+      ]}
     />
   );
 };

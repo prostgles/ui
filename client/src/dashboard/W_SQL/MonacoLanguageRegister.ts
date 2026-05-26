@@ -15,7 +15,7 @@ export const loadPSQLLanguage = async (
   loadedPSQLLanguage = true;
   const monaco = await getMonaco();
   const monacoLanguages = monaco.languages.getLanguages();
-  for await (const lang of monacoLanguages) {
+  for (const lang of monacoLanguages) {
     if (LANG === lang.id && "loader" in lang) {
       const oldLoader = lang.loader as () => Promise<{
         language: languages.IMonarchLanguage;

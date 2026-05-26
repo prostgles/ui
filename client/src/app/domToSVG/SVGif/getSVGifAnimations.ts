@@ -4,12 +4,14 @@ import { renderSvg } from "../text/textToSVG";
 import { toFixed } from "../utils/toFixed";
 import { addSVGifCaption } from "./addSVGifCaption";
 import { getSVGifCursorAnimationHandler } from "./animations/getSVGifCursorAnimationHandler";
+import { getSVGifPropertiesAnimation } from "./animations/getSVGifPropertiesAnimation";
 import { getSVGifTypeAnimation } from "./animations/getSVGifTypeAnimation";
 import { getSVGifZoomToAnimation } from "./animations/getSVGifZoomToAnimation";
 import { getAnimationProperty } from "./getSVGif";
 import type { SVGifParsedScene } from "./getSVGifParsedScenes";
 import { getSVGifRevealKeyframes } from "./getSVGifRevealKeyframes";
 import { getSVGifTargetBBox } from "./getSVGifTargetBBox";
+import { getSVGifCustomAnimation } from "./animations/getSVGifCustomAnimation";
 
 /**
  * Given an SVGifScenes, return the animations
@@ -101,7 +103,7 @@ export const getSVGifAnimations = (
     };
     for (const [animationIndex, animation] of animations.entries()) {
       const bboxInfo =
-        animation.type !== "moveTo" && animation.type !== "wait" ?
+        animation.type !== "moveCursor" && animation.type !== "wait" ?
           getSVGifTargetBBox({
             elementSelector: animation.elementSelector,
             svgDom,
@@ -110,11 +112,13 @@ export const getSVGifAnimations = (
             height,
           })
         : undefined;
+
       if (animation.type === "wait") {
+        // do nothing, just advance the timeline
       } else if (
         animation.type === "click" ||
         animation.type === "clickAppearOnHover" ||
-        animation.type === "moveTo"
+        animation.type === "moveCursor"
       ) {
         cursorHandler.addAnimation({
           currentPrevDuration,
@@ -142,7 +146,10 @@ export const getSVGifAnimations = (
             keyframes: getSVGifRevealKeyframes({
               fromPerc,
               toPerc,
-              mode: animation.type === "fadeIn" ? "opacity" : "growIn",
+              mode:
+                animation.type === "fadeIn" ?
+                  "opacity"
+                : { type: "growIn", startScale: animation.startScale },
               // mode: "top to bottom",
             }),
           });
@@ -162,8 +169,6 @@ export const getSVGifAnimations = (
           );
           sceneNodeAnimations.push(...parsedAnimations.sceneNodeAnimations);
           appendStyle(parsedAnimations.style);
-
-          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         } else if (animation.type === "zoomToElement") {
           const parsedAnimations = getSVGifZoomToAnimation(
             { height, width },
@@ -180,6 +185,38 @@ export const getSVGifAnimations = (
             true,
           );
           appendRootStyle(parsedAnimations.style);
+        } else if (animation.type === "properties") {
+          const parsedAnimations = getSVGifPropertiesAnimation(
+            { height, width },
+            { element, bbox },
+            parsedScene,
+            animation,
+            {
+              sceneId,
+              sceneIndex,
+              totalDuration: totalSvgifDuration,
+              getPercent,
+              fromTime,
+            },
+          );
+          sceneNodeAnimations.push(...parsedAnimations.sceneNodeAnimations);
+          // appendStyle(parsedAnimations.style);
+        } else if (animation.type === "custom") {
+          const parsedAnimations = getSVGifCustomAnimation(
+            { height, width },
+            { element, bbox },
+            parsedScene,
+            animation,
+            {
+              sceneId,
+              sceneIndex,
+              totalDuration: totalSvgifDuration,
+              getPercent,
+              fromTime,
+            },
+          );
+          sceneNodeAnimations.push(...parsedAnimations.sceneNodeAnimations);
+          // appendStyle(parsedAnimations.style);
         }
       }
       const isParallelAnimation = animation.type === "zoomToElement";
@@ -217,9 +254,7 @@ export const getSVGifAnimations = (
         sceneId,
       });
     }
-    const serializer = new XMLSerializer();
-    const svgString = serializer.serializeToString(svgDom);
-    appendSvgToSvg({ id: sceneId, svgFile: svgString, svgDom }, g);
+    appendSvgToSvg({ id: sceneId, svgDom }, g);
 
     const isLastScene = sceneIndex === parsedScenes.length - 1;
     sceneKeyframes.push(`${getPercent(currentPrevDuration)}% ${visible}`);
@@ -255,7 +290,7 @@ export type SceneNodeAnimation = {
 };
 
 const appendSvgToSvg = (
-  { svgFile, id, svgDom }: { svgFile: string; id: string; svgDom: SVGElement },
+  { id, svgDom }: { id: string; svgDom: SVGElement },
   g: SVGGElement,
 ) => {
   svgDom.setAttribute("id", id);

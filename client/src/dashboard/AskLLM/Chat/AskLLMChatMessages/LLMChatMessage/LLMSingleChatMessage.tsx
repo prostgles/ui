@@ -3,11 +3,10 @@ import type { LLMSingleMessage } from "../hooks/useLLMChatMessageGrouper";
 import type { LLMChatMessageCommonProps } from "./LLMChatMessage";
 import { LLMChatMessageContent } from "./LLMChatMessageContent";
 import React from "react";
+import ErrorComponent from "@components/ErrorComponent";
 
 export const LLMSingleChatMessage = ({
   messageItem,
-  db,
-  mcpServerIcons,
   workspaceId,
   loadedSuggestions,
 }: { messageItem: LLMSingleMessage } & LLMChatMessageCommonProps) => {
@@ -16,6 +15,11 @@ export const LLMSingleChatMessage = ({
   const nonToolResultMessages = filterArrInverse(message, {
     type: "tool_result",
   } as const);
+
+  if (!message.length) {
+    return <ErrorComponent error="Message has no content" />;
+  }
+
   if (!nonToolResultMessages.length) {
     return null;
   }
@@ -30,10 +34,8 @@ export const LLMSingleChatMessage = ({
             messageContentIndex={idx}
             message={llmMessage}
             nextMessage={nextMessage}
-            db={db}
             workspaceId={workspaceId}
             loadedSuggestions={loadedSuggestions}
-            mcpServerIcons={mcpServerIcons}
           />
         );
       })}

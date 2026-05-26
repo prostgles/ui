@@ -1,4 +1,4 @@
-import { Menu, type BrowserWindow } from "electron";
+import { Menu, shell, type BrowserWindow } from "electron";
 export const setContextMenu = (mainWindow: BrowserWindow) => {
   mainWindow.webContents.on(
     "context-menu",
@@ -32,9 +32,23 @@ export const setContextMenu = (mainWindow: BrowserWindow) => {
         { role: "cut", enabled: Boolean(selectionText) && isEditable },
         { role: "paste", enabled: isEditable },
         { role: "selectAll", enabled: isEditable },
+        { type: "separator" },
+        ...(selectionText ?
+          [
+            {
+              label: `Search Google for "${selectionText}"`,
+              click: () =>
+                shell.openExternal(
+                  `https://www.google.com/search?q=${encodeURIComponent(selectionText)}`,
+                ),
+            },
+            { type: "separator" } as const,
+          ]
+        : []),
         ...(isEditable ? [{ role: "toggleSpellChecker" } as const] : []),
-        { role: "toggleDevTools" },
         ...spellCheckMenuItems,
+        { type: "separator" },
+        { role: "toggleDevTools" },
       ]);
       menu.popup();
     },

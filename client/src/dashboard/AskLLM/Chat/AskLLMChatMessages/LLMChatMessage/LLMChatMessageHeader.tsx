@@ -10,6 +10,7 @@ import React, { useMemo } from "react";
 import type { DBS } from "src/dashboard/Dashboard/DBS";
 import { t } from "src/i18n/i18nUtils";
 import type { LLMMessageItem } from "../hooks/useLLMChatMessageGrouper";
+import { useOnErrorAlert } from "@components/AlertProvider";
 
 export const LLMChatMessageHeader = ({
   item,
@@ -23,7 +24,7 @@ export const LLMChatMessageHeader = ({
       let textMessageToCopy: string | undefined;
       let cost = 0;
       if (item.type === "single_message") {
-        cost = item.message.cost ? parseFloat(item.message.cost) : 0;
+        cost = item.message.cost ? parseFloat(String(item.message.cost)) : 0;
         const {
           message: { message },
         } = item;
@@ -37,12 +38,14 @@ export const LLMChatMessageHeader = ({
       } else {
         cost = item.messages.reduce((acc, curr) => {
           const currCost =
-            curr.message.cost ? parseFloat(curr.message.cost) : 0;
+            curr.message.cost ? parseFloat(String(curr.message.cost)) : 0;
           return acc + currCost;
         }, 0);
       }
       const { id, user_id, chat_id, created } =
-        item.type === "single_message" ? item.message : item.firstMessage;
+        item.type === "single_message" ?
+          item.message
+        : item.messages[0].message;
 
       const meta =
         item.type === "single_message" ?
@@ -61,8 +64,12 @@ export const LLMChatMessageHeader = ({
     }, [item]);
 
   const canCollapse = item.type === "single_message";
+
+  const { onErrorAlert } = useOnErrorAlert();
   return (
-    <FlexRow className="show-on-parent-hover f-1 gap-p25">
+    <FlexRow
+      className={"LLMChatMessageHeader show-on-parent-hover f-1 gap-p25"}
+    >
       {!user_id && (
         <Chip
           className="ml-p5"
@@ -91,16 +98,18 @@ export const LLMChatMessageHeader = ({
           children: "",
         }}
         onChange={async (option) => {
-          if (option === "thisMessage") {
-            await dbs.llm_messages.delete({ id });
-          } else {
-            await dbs.llm_messages.delete({
-              chat_id,
-              created: {
-                $gte: created,
-              },
-            });
-          }
+          await onErrorAlert(async () => {
+            if (option === "thisMessage") {
+              await dbs.llm_messages.delete({ id });
+            } else {
+              await dbs.llm_messages.delete({
+                chat_id,
+                created: {
+                  $gte: created,
+                },
+              });
+            }
+          });
         }}
         className="ml-auto"
       />

@@ -1,8 +1,6 @@
 import type { DBSSchema } from "@common/publishUtils";
 import { useMemo, useState } from "react";
 import { ProstglesMCPToolsWithUI } from "../ProstglesToolUseMessage/ProstglesToolUseMessage";
-import type { LLMMessageContent } from "../ToolUseChatMessage/ToolUseChatMessage";
-import { quickClone } from "src/utils/utils";
 
 type P = {
   llmMessages: DBSSchema["llm_messages"][] | undefined;
@@ -23,31 +21,39 @@ export const useLLMChatMessageGrouper = (props: P) => {
     const result: LLMMessageItem[] = [];
     llmMessages.forEach((message, index) => {
       const prevItem = result.at(-1);
-      const isToolResult = message.message.some(
+      const hasToolResult = message.message.some(
         (m) => m.type === "tool_result",
       );
-      if (isToolResult) return; // Skip rendering tool result messages directly
-      const hasToolUseOrResult = message.message.some(
-        (m) => m.type === "tool_use" || m.type === "tool_result",
-      );
-      const nextMessage = llmMessages[index + 1]; //quickClone(llmMessages[index + 1]);
+      if (hasToolResult) return; // Skip rendering tool result messages directly
+
+      const hasToolUse = message.message.some((m) => m.type === "tool_use");
+      const nextMessage = llmMessages[index + 1];
+      const nextNextMessage = llmMessages[index + 2];
+      const allToolUsesAreCollapsible =
+        hasToolUse &&
+        message.message.every(
+          (m) =>
+            m.type !== "tool_use" ||
+            /** TODO: allow collapsing if followed by tool retries */
+            ProstglesMCPToolsWithUI[m.name]?.displayMode !== "full" ||
+            (nextMessage?.message.some(
+              (nm) => nm.type === "tool_result" && nm.tool_use_id === m.id,
+            ) &&
+              nextNextMessage?.message.some(
+                (nnm) => nnm.type === "tool_use" && nnm.name === m.name,
+              )),
+        );
 
       /** Start or continue group */
-      if (hasToolUseOrResult) {
+      if (allToolUsesAreCollapsible) {
         /** Continue group */
         if (prevItem?.type === "tool_call_message_group") {
           prevItem.messages = [...prevItem.messages, { message, nextMessage }];
-          prevItem.messageContentItems = [
-            ...prevItem.messageContentItems,
-            ...message.message,
-          ];
         } else {
           /** Start new group */
           result.push({
             type: "tool_call_message_group",
             messages: [{ message, nextMessage }],
-            messageContentItems: [...message.message],
-            firstMessage: message,
             startId: message.id,
             onToggle: () => {
               setToggledSections((prev) => {
@@ -75,37 +81,39 @@ export const useLLMChatMessageGrouper = (props: P) => {
           return [item];
         }
 
-        const toolCalls = item.messageContentItems.filter(
+        const toolCalls = getMessageContentItems(item).filter(
           (m) => m.type === "tool_use",
         );
-        const allowMinimise =
-          toolCalls.length >= 3 &&
-          !toolCalls.some((m) => ProstglesMCPToolsWithUI[m.name]);
+        const allowMinimise = toolCalls.length >= 2;
+        // &&
+        // toolCalls.every(
+        //   /** TODO: allow collapsing if result has is_error and follows by tool retries */
+        //   (m) => ProstglesMCPToolsWithUI[m.name]?.displayMode !== "full",
+        // );
         const shouldExpand =
           !allowMinimise || toggledSections.has(item.startId);
 
-        if (shouldExpand) {
-          return item.messages.map(
-            ({ message, nextMessage }) =>
-              ({
-                type: "single_message",
-                message,
-                nextMessage,
-                onToggle:
-                  toggledSections.has(message.id) ?
-                    () => {
-                      setToggledSections((prev) => {
-                        const newSet = new Set(prev);
-                        newSet.delete(message.id);
-                        return newSet;
-                      });
-                    }
-                  : undefined,
-              }) satisfies LLMMessageItem,
-          );
+        if (!shouldExpand) {
+          return [item];
         }
-
-        return [item];
+        return item.messages.map(
+          ({ message, nextMessage }) =>
+            ({
+              type: "single_message",
+              message,
+              nextMessage,
+              onToggle:
+                toggledSections.has(message.id) ?
+                  () => {
+                    setToggledSections((prev) => {
+                      const newSet = new Set(prev);
+                      newSet.delete(message.id);
+                      return newSet;
+                    });
+                  }
+                : undefined,
+            }) satisfies LLMMessageItem,
+        );
       })
       .flat();
 
@@ -117,21 +125,23 @@ export const useLLMChatMessageGrouper = (props: P) => {
   };
 };
 
-export type LLMSingleMessage = {
-  type: "single_message";
+type LLMMessagePair = {
   message: DBSSchema["llm_messages"];
   nextMessage: DBSSchema["llm_messages"] | undefined;
+};
+export type LLMSingleMessage = LLMMessagePair & {
+  type: "single_message";
   onToggle: undefined | (() => void);
 };
+
 export type LLMMessageGroup = {
   type: "tool_call_message_group";
-  messages: {
-    message: DBSSchema["llm_messages"];
-    nextMessage: DBSSchema["llm_messages"] | undefined;
-  }[];
-  messageContentItems: LLMMessageContent[];
-  firstMessage: DBSSchema["llm_messages"];
+  messages: [LLMMessagePair, ...LLMMessagePair[]];
   startId: string;
   onToggle: () => void;
 };
+export const getMessageContentItems = ({
+  messages,
+}: Pick<LLMMessageGroup, "messages">) =>
+  messages.flatMap(({ message }) => message.message);
 export type LLMMessageItem = LLMSingleMessage | LLMMessageGroup;

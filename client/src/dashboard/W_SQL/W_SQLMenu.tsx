@@ -1,3 +1,7 @@
+import Btn from "@components/Btn";
+import FormField from "@components/FormField/FormField";
+import type { TabsProps } from "@components/Tabs";
+import Tabs from "@components/Tabs";
 import {
   mdiCodeJson,
   mdiCog,
@@ -11,24 +15,20 @@ import {
   mdiTable,
   mdiUpload,
 } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React from "react";
-import Btn from "@components/Btn";
-import FormField from "@components/FormField/FormField";
-import type { TabsProps } from "@components/Tabs";
-import Tabs from "@components/Tabs";
 import RTComp from "../RTComp";
 
-import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type {
   DBSchemaTablesWJoins,
+  DBSchemaTableWJoins,
   OnAddChart,
   WindowSyncItem,
 } from "../Dashboard/dashboardUtils";
 
-import { getJSONBSchemaAsJSONSchema } from "prostgles-types";
 import ErrorComponent from "@components/ErrorComponent";
 import { InfoRow } from "@components/InfoRow";
+import { getJSONBSchemaAsJSONSchema } from "prostgles-types";
+import type { Prgl } from "src/App";
 import { t } from "../../i18n/i18nUtils";
 import { SECOND } from "../Charts";
 import { CodeEditor } from "../CodeEditor/CodeEditor";
@@ -39,12 +39,12 @@ import { download } from "./W_SQL";
 
 type P = {
   tableName?: string;
-  db: DBHandlerClient;
+  db: Prgl["db"];
   dbs: DBS;
   onAddChart?: OnAddChart;
   w: WindowSyncItem<"sql">;
   joins: string[];
-  dbsTables: CommonWindowProps["tables"];
+  dbsTables: DBSchemaTableWJoins[];
   tables: DBSchemaTablesWJoins;
   onClose: VoidFunction;
 };

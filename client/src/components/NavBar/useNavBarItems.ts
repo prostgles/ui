@@ -5,11 +5,11 @@ import {
   mdiServerSecurity,
 } from "@mdi/js";
 import { useMemo } from "react";
-import type { PrglState } from "src/App";
+import type { AppContextProps } from "src/App";
 import { t } from "src/i18n/i18nUtils";
 import { isDefined } from "src/utils/utils";
 
-export const useNavBarItems = ({ user, serverState }: PrglState) => {
+export const useNavBarItems = ({ user, serverState }: AppContextProps) => {
   return useMemo(() => {
     return [
       {

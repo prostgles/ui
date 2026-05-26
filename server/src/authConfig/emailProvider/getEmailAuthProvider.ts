@@ -5,19 +5,18 @@ import { getEmailSenderWithMockTest } from "./getEmailSenderWithMockTest";
 import { onEmailRegistration } from "./onEmailRegistration";
 
 export const getEmailAuthProvider = async (
+  dbs: DBS,
   {
     auth_providers,
     auth_created_user_type,
   }: Pick<
-    DBSSchema["global_settings"],
+    DBSSchema["database_configs"],
     "auth_providers" | "auth_created_user_type"
   >,
-  dbs: DBS | undefined,
 ): Promise<SignupWithEmail | undefined> => {
   const { email: emailAuthConfig, website_url } = auth_providers ?? {};
   if (
     !emailAuthConfig?.enabled ||
-    !dbs ||
     emailAuthConfig.signupType !== "withPassword"
   ) {
     return undefined;

@@ -37,10 +37,14 @@ export const ChipArrayEditor = ({
   const [orderAge, setOrderAge] = useState(0);
 
   return (
-    <div className={"ChipArrayEditor flex-row-wrap gap-p5 ptd-p25 ai-center"}>
+    <ul
+      className={
+        "ChipArrayEditor flex-row-wrap gap-p5 ptd-p25 ai-center no-decor"
+      }
+      style={{ listStyle: "none" }}
+    >
       {renderedValues.map(({ value, isLastNew }, idx) => (
         //  Bad UX when selecting text
-
         <DraggableLI
           key={`${idx} ${orderAge}`}
           idx={idx}
@@ -108,7 +112,7 @@ export const ChipArrayEditor = ({
           />
         </DraggableLI>
       ))}
-    </div>
+    </ul>
   );
 };
 
@@ -130,7 +134,7 @@ const InputChip = ({
   onPaste,
 }: InputChipProps) => {
   const numberOfChars =
-    Math.max(2, (((value)?.toString() || placeholder) ?? "").length) + 2;
+    Math.max(2, ((value?.toString() || placeholder) ?? "").length) + 2;
 
   return (
     <Chip

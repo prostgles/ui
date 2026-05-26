@@ -1,21 +1,12 @@
-import type { DetailedFilter } from "@common/filterUtils";
-import type { DBSSchema } from "@common/publishUtils";
-import type { OmitDistributive } from "@common/utils";
 import { matchObj } from "@common/utils";
-import { pageReload } from "@components/Loader/Loading";
-import { type AnyObject, type ParsedJoinPath, isEmpty } from "prostgles-types";
+import { type AnyObject, isEmpty } from "prostgles-types";
 import type { ActiveRow } from "../W_Table/W_Table";
 import type {
-  ChartType,
   DBSchemaTablesWJoins,
-  Link,
   LinkSyncItem,
-  NewChartOpts,
-  WindowData,
   WindowSyncItem,
   WorkspaceSyncItem,
 } from "./dashboardUtils";
-import { PALETTE } from "./PALETTE";
 import type { ViewRenderer, ViewRendererProps } from "./ViewRenderer";
 
 type Args = ViewRendererProps & {
@@ -26,179 +17,8 @@ type Args = ViewRendererProps & {
 };
 export const getViewRendererUtils = function (
   this: ViewRenderer,
-  { prgl, workspace, windows, links, tables }: Args,
+  { windows, links, tables }: Args,
 ) {
-  const addWindow = async <CT extends ChartType>(
-    w: { type: CT } & Partial<
-      Pick<WindowData, "name" | "table_name" | "options" | "parent_window_id">
-    >,
-    filter: DetailedFilter[] = [],
-  ) => {
-    const {
-      options = {
-        showFilters: false,
-        refresh: { type: "Realtime", throttleSeconds: 1 },
-      },
-      type,
-      table_name,
-      name,
-      ...otherWindowOpts
-    } = w;
-    const res = await prgl.dbs.windows.insert(
-      {
-        ...otherWindowOpts,
-        name,
-        type,
-        table_name,
-        options,
-        filter,
-        fullscreen: false,
-        workspace_id: workspace.id,
-        limit: 500,
-      } as DBSSchema["windows"],
-      { returning: "*" },
-    );
-
-    setTimeout(() => {
-      if (
-        !document.querySelector(`[data-box-id="${res.id}"]`) &&
-        !otherWindowOpts.parent_window_id
-      ) {
-        console.error("SYNC FAIL BUG, REFRESHING");
-        pageReload("SYNC FAIL BUG");
-      }
-    }, 1000);
-
-    return res;
-  };
-
-  const addLink = (l: {
-    w1_id: string;
-    w2_id: string;
-    linkOpts: OmitDistributive<Link["options"], "color" | "colorKey">;
-  }) => {
-    const { links } = this.getOpenedLinksAndWindows();
-    const { w1_id, w2_id } = l;
-
-    const myLinks = links.filter((l) =>
-      [l.w1_id, l.w2_id].find((wid) => [w1_id, w2_id].includes(wid)),
-    );
-    const cLinkColor = myLinks
-      .map((l) => (l.options.type === "table" ? l.options.colorArr : undefined))
-      .find((c) => c);
-    const colorOpts =
-      l.linkOpts.type === "table" ?
-        {
-          colorArr: cLinkColor ?? PALETTE.c4.getDeckRGBA(),
-        }
-      : ({} as const);
-
-    const options: Link["options"] = {
-      ...colorOpts,
-      ...l.linkOpts,
-    };
-
-    return prgl.dbs.links.insert(
-      {
-        w1_id,
-        w2_id,
-        workspace_id: workspace.id,
-        options,
-        last_updated: undefined as any,
-        user_id: undefined as any,
-      },
-      { returning: "*" },
-    );
-  };
-
-  const onLinkTable = async (
-    q: WindowSyncItem,
-    tblName: string,
-    tablePath: ParsedJoinPath[],
-  ) => {
-    const w2_id = await this.props.loadTable({
-      type: "table",
-      table: tblName,
-      fullscreen: false,
-    });
-    await addLink({
-      w1_id: q.id,
-      w2_id,
-      linkOpts: { type: "table", tablePath },
-    });
-    if (q.fullscreen) q.$update({ fullscreen: false });
-  };
-
-  const onAddChart =
-    (!prgl.dbs.windows.insert as boolean) ?
-      undefined
-    : async (args: NewChartOpts, parentW: WindowData) => {
-        const { name, linkOpts } = args;
-        const type = args.linkOpts.type;
-        let extra:
-          | Pick<WindowData<"map">, "parent_window_id" | "options">
-          | Pick<WindowData<"timechart">, "parent_window_id" | "options"> = {
-          parent_window_id: null,
-        };
-
-        if (type === "map") {
-          extra = {
-            parent_window_id: parentW.id,
-            options: {
-              dataOpacity: 0.5,
-              basemapOpacity: 0.25,
-              basemapDesaturate: 0,
-              tileAttribution: {
-                title: "© OpenStreetMap",
-                url: "https://www.openstreetmap.org/",
-              },
-              aggregationMode: {
-                type: "limit",
-                limit: 2000,
-                wait: 2,
-              },
-              refresh: {
-                type: "Realtime",
-                throttleSeconds: 1,
-                intervalSeconds: 1,
-              },
-              showCardOnClick: true,
-              showAddShapeBtn: true,
-            },
-          };
-        } else if (type === "timechart") {
-          extra = {
-            parent_window_id: parentW.id,
-            options: {
-              showBinLabels: "off",
-              binValueLabelMaxDecimals: 3,
-              missingBins: "ignore",
-              refresh: {
-                type: "Realtime",
-                throttleSeconds: 1,
-                intervalSeconds: 1,
-              },
-            },
-          };
-        } else if (type === "barchart") {
-          extra = {
-            parent_window_id: parentW.id,
-          };
-        }
-        // const existingCharts = await windows.filter(cw => cw.parent_window_id === parentW.id);
-        // if(existingCharts.length){
-        //   // alert("Close existing chart before adding new one");
-        // } else {
-
-        //   const w = await addWindow({ name, type, ...extra }) as WindowData;
-        // }
-        const w =
-          windows.find(
-            (cw) => cw.type === type && cw.parent_window_id === parentW.id,
-          ) ?? ((await addWindow({ name, type, ...extra })) as WindowData);
-        await addLink({ w1_id: parentW.id, w2_id: w.id, linkOpts });
-      };
-
   type ClickRowOpts =
     | { type: "table-row" }
     | { type: "timechart"; value: ActiveRow["timeChart"] }
@@ -284,7 +104,5 @@ export const getViewRendererUtils = function (
 
   return {
     onClickRow,
-    onAddChart,
-    onLinkTable,
   };
 };

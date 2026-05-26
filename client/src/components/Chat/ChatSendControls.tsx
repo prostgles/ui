@@ -1,7 +1,7 @@
 import React, { useCallback } from "react";
 
 import { useOnErrorAlert } from "@components/AlertProvider";
-import { mdiArrowUp, mdiAttachment, mdiStopCircle } from "@mdi/js";
+import { mdiArrowUp, mdiAttachment, mdiStop } from "@mdi/js";
 import { ChatActionBarBtnStyleProps } from "src/dashboard/AskLLM/ChatActionBar/AskLLMChatActionBar";
 import { t } from "../../i18n/i18nUtils";
 import Btn from "../Btn";
@@ -35,7 +35,7 @@ export const ChatSendControls = ({
     async (audioOrTranscript: Blob | string, autoSend: boolean) => {
       if (typeof audioOrTranscript === "string") {
         if (autoSend) {
-          await onSend(audioOrTranscript, files);
+          await onSend([{ type: "text", text: audioOrTranscript }], files);
         } else {
           setCurrentMessage(audioOrTranscript);
         }
@@ -47,7 +47,7 @@ export const ChatSendControls = ({
             lastModified: Date.now(),
           });
           if (autoSend) {
-            await onSend("", [file]);
+            await onSend(undefined, [file]);
           } else {
             onAddFiles([file]);
           }
@@ -64,7 +64,7 @@ export const ChatSendControls = ({
     <div
       className={`ChatSendControls ${window.isMobile ? "flex-col" : "flex-row"} as-end ai-center jc-center gap-p5`}
     >
-      <FlexRow className="gap-0">
+      <FlexRow className="gap-0 ai-end">
         <>
           <Btn
             data-command="Chat.addFiles"
@@ -81,6 +81,8 @@ export const ChatSendControls = ({
             style={{ display: "none" }}
             onChange={(e) => {
               onAddFiles(Array.from(e.target.files || []));
+              // reset so same file can be selected again
+              e.target.value = "";
             }}
           />
         </>
@@ -91,7 +93,8 @@ export const ChatSendControls = ({
           data-command="Chat.sendStop"
           onClick={onStopSending}
           title={t.common.Stop}
-          iconPath={mdiStopCircle}
+          iconPath={mdiStop}
+          className="b bg-color-3 round"
         />
       : <Btn
           iconPath={mdiArrowUp}

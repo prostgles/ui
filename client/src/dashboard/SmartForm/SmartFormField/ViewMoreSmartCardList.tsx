@@ -12,7 +12,7 @@ import type { SmartFormFieldLinkedDataProps } from "./SmartFormFieldLinkedData";
 
 export type ViewMoreSmartCardListProps = Pick<
   SmartFormFieldLinkedDataProps,
-  "db" | "methods" | "tables"
+  "db" | "methods" | "tables" | "sql"
 > & {
   ftable: DBSchemaTableWJoins;
   searchFilter: DetailedFilter[] | undefined;
@@ -29,6 +29,7 @@ export const ViewMoreSmartCardList = ({
   searchFilter,
   getActions,
   rootTableName,
+  sql,
 }: ViewMoreSmartCardListProps) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement>();
 
@@ -53,20 +54,14 @@ export const ViewMoreSmartCardList = ({
           anchorEl={anchorEl}
           onClickClose={false}
           positioning="fullscreen"
-          showFullscreenToggle={
-            {
-              // getStyle: () => ({ maxWidth: "800px" }),
-            }
-          }
+          showFullscreenToggle={{}}
           clickCatchStyle={{ opacity: 1 }}
-
-          // rootChildStyle={{
-          //   maxWidth: "min(100vw, 800px)",
-          // }}
         >
           <SmartCardList
             showTopBar={true}
             db={db}
+            style={{ flex: 1 }}
+            sql={sql}
             methods={methods}
             tables={tables}
             tableName={ftable.name}

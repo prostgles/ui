@@ -5,18 +5,12 @@ import { Label } from "@components/Label";
 import PopupMenu from "@components/PopupMenu";
 import { Select } from "@components/Select/Select";
 import { mdiCheckAll, mdiTableEye, mdiTableFilter } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client";
-import { usePromise } from "prostgles-client";
-import {
-  omitKeys,
-  type MethodHandler,
-  type ValidatedColumnInfo,
-} from "prostgles-types";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import { usePromise, type TableHandlerClient } from "prostgles-client";
+import { omitKeys, type ValidatedColumnInfo } from "prostgles-types";
 import React, { useEffect, useMemo, useState } from "react";
-import { appTheme, useReactiveState } from "../../../App";
 import { pluralise } from "../../../pages/Connections/Connection";
 import { quickClone } from "../../../utils/utils";
-import type { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
 import { RenderFilter } from "../../RenderFilter";
 import SmartTable from "../../SmartTable";
 
@@ -30,10 +24,7 @@ export type SingleGroupFilter =
   | { $or: DetailedFilter[] };
 
 export type ForcedFilterControlProps = {
-  detailedFilter?: SingleGroupFilter;
-  db: DBHandlerClient;
-  methods: MethodHandler;
-  tables: DBSchemaTablesWJoins;
+  detailedFilter: SingleGroupFilter | undefined;
   tableName: string;
   onChange: (val?: SingleGroupFilter) => any;
   contextData: ContextDataSchema;
@@ -44,6 +35,7 @@ export type ForcedFilterControlProps = {
   containerClassname?: string;
   onSetError: (error?: string) => void;
   mode?: "forcedFilter" | "checkFilter";
+  selectedColumns?: string[];
 };
 
 const OPTS = [
@@ -80,10 +72,10 @@ export const FilterControl = (props: ForcedFilterControlProps) => {
     title,
     containerClassname = "  ",
     tableName,
-    db,
     mode = "forcedFilter",
+    selectedColumns,
   } = props;
-  const { state: theme } = useReactiveState(appTheme);
+  const { db, sql, methods, tables } = usePrgl();
   const iconPath =
     props.iconPath ?? (mode === "checkFilter" ? mdiCheckAll : mdiTableFilter);
 
@@ -106,14 +98,14 @@ export const FilterControl = (props: ForcedFilterControlProps) => {
     [detailedFilter, isAnd],
   );
 
-  const tableHandler = db[tableName];
+  const tableHandler = db[tableName] as TableHandlerClient | undefined;
   const rowCount = usePromise(async () => {
     const filter = getSmartGroupFilter(
       filters,
       undefined,
       isAnd ? "and" : "or",
     );
-    const rowCount = await tableHandler!.count!(filter);
+    const rowCount = await tableHandler?.count(filter);
     return rowCount;
   }, [tableHandler, filters, isAnd]);
   const isCheck = mode === "checkFilter";
@@ -148,10 +140,12 @@ export const FilterControl = (props: ForcedFilterControlProps) => {
                   )}
                 </div>
               )}
-              db={props.db}
-              methods={props.methods}
+              selectedColumns={selectedColumns}
+              sql={sql}
+              db={db}
+              methods={methods}
               tableName={props.tableName}
-              tables={props.tables}
+              tables={tables}
               filterOperand={isAnd ? "and" : "or"}
               filter={filters}
               onFilterChange={(newFilter) => {

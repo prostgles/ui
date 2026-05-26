@@ -1,14 +1,15 @@
 import Btn from "@components/Btn";
 import { FlexCol, FlexRow } from "@components/Flex";
 import { Select } from "@components/Select/Select";
-import { mdiPlus } from "@mdi/js";
+import { mdiDotsHorizontal, mdiPlus, mdiRobot } from "@mdi/js";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import React from "react";
 import { t } from "../../../i18n/i18nUtils";
 import { getPGIntervalAsText } from "../../W_SQL/customRenderers";
 import {
-  AskLLMChatOptions,
+  AskLLMChatSettings,
   type LLMChatOptionsProps,
-} from "./AskLLMChatOptions";
+} from "./AskLLMChatSettings";
 import type { LLMChatState } from "./useLLMChat";
 
 export const AskLLMChatHeader = (
@@ -26,13 +27,17 @@ export const AskLLMChatHeader = (
     prompts,
   } = props;
 
+  const { dbs, user } = usePrgl();
+
   return (
     <FlexRow className="AskLLMChatHeader">
-      <FlexCol className="gap-p25">
-        <div>{t.AskLLM["AI Assistant"]}</div>
-      </FlexCol>
+      {/* {!activeChat?.agent_info && (
+        <FlexCol className="gap-p25">
+          <div>{t.AskLLM["AI Assistant"]}</div>
+        </FlexCol>
+      )} */}
       <FlexRow className="gap-p25 min-w-0">
-        <AskLLMChatOptions
+        <AskLLMChatSettings
           prompts={prompts}
           activeChat={activeChat}
           activeChatId={activeChatId}
@@ -46,9 +51,13 @@ export const AskLLMChatHeader = (
             latestChats?.map((c) => ({
               key: c.id,
               label: c.name,
+              iconPath: c.agent_info ? mdiRobot : undefined,
               subLabel: getPGIntervalAsText(c.created_ago, true, true, true),
             })) ?? []
           }
+          btnProps={{
+            size: "default",
+          }}
           value={activeChatId}
           showSelectedSublabel={true}
           style={{
@@ -60,24 +69,59 @@ export const AskLLMChatHeader = (
             setActiveChat(v);
           }}
         />
-        <Btn
-          iconPath={mdiPlus}
-          title={t.AskLLMChatHeader["New chat"]}
-          data-command="AskLLMChat.NewChat"
-          variant="faded"
-          color="action"
-          disabledInfo={
-            !preferredPromptId ?
-              t.AskLLMChatHeader["No prompt found"]
-            : undefined
-          }
-          onClickPromise={async () => {
-            if (!preferredPromptId)
-              throw new Error(t.AskLLMChatHeader["No prompt found"]);
-            await createNewChat(preferredPromptId);
+        {!activeChat?.agent_info && (
+          <Btn
+            iconPath={mdiPlus}
+            title={t.AskLLMChatHeader["New chat"]}
+            data-command="AskLLMChat.NewChat"
+            variant="faded"
+            color="action"
+            size="default"
+            disabledInfo={
+              !preferredPromptId ?
+                t.AskLLMChatHeader["No prompt found"]
+              : undefined
+            }
+            onClickPromise={async () => {
+              if (!preferredPromptId)
+                throw new Error(t.AskLLMChatHeader["No prompt found"]);
+              await createNewChat(preferredPromptId);
+            }}
+          />
+        )}
+      </FlexRow>
+
+      {user && (
+        <Select
+          className="ml-auto"
+          fullOptions={[
+            { key: "right-panel", label: "Show as side panel (default)" },
+            { key: "fullscreen", label: "Show in fullscreen" },
+          ]}
+          iconPath={mdiDotsHorizontal}
+          value={user.options?.llmChatWindowPositioning ?? "right-panel"}
+          showSelected={"icon"}
+          btnProps={{
+            variant: "icon",
+          }}
+          onChange={(chatWindowPositioning) => {
+            void dbs.users.update(
+              {
+                id: user.id,
+              },
+              {
+                options: {
+                  $merge: [
+                    {
+                      llmChatWindowPositioning: chatWindowPositioning,
+                    } satisfies Partial<NonNullable<typeof user.options>>,
+                  ],
+                },
+              },
+            );
           }}
         />
-      </FlexRow>
+      )}
     </FlexRow>
   );
 };

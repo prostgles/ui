@@ -154,8 +154,7 @@ export const SmartFormFieldForeignKey = (
       return (
         <FileInput
           className={
-            "mt-p5 f-0 formfield-bg-color " +
-            (table.info.isFileTable ? "mt-2" : "")
+            "mt-p5 f-0 formfield-bg-color " + (table.isFileTable ? "mt-2" : "")
           }
           label={column.label}
           media={media}
@@ -210,7 +209,7 @@ export const SmartFormFieldForeignKey = (
           title="Remove nested insert"
           iconPath={mdiClose}
           onClick={() => {
-            onChange({ type: "nested-column", value: undefined });
+            void onChange({ type: "nested-column", value: undefined });
           }}
         />
       </FlexRow>
@@ -232,10 +231,10 @@ export const SmartFormFieldForeignKey = (
           justifyContent: "space-between",
           flex: 1,
           paddingLeft: "6px",
+          /** Handled by the parent FormField wrapper .focus-border */
+          outline: "unset",
         },
       }}
     />
   );
 };
-
-console.error("CANNOT ADD TIMECHART AI DASHBOARD SQL EDITOR");

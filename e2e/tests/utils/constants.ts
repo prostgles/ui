@@ -13,3 +13,10 @@ export const localNoAuthSetup = !!process.env.PRGL_DEV_ENV;
 export const QUERIES = {
   orders: `CREATE TABLE orders ( id SERIAL PRIMARY KEY, user_id UUID NOT NULL, status TEXT );`,
 };
+
+/**
+ * TODO: move to self-hosted workers
+ */
+export const IS_GITHUB_WORKER = process.env.CI === "true";
+
+export const demoRestaurantName = "sun cafe";

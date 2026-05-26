@@ -1,22 +1,15 @@
-import { isObject } from "@common/publishUtils";
-import { Icon } from "@components/Icon/Icon";
-import type { SearchListProps } from "@components/SearchList/SearchList";
-import { SvgIcon } from "@components/SvgIcon";
-import {
-  mdiChatQuestion,
-  mdiFunction,
-  mdiScriptTextPlay,
-  mdiTable,
-  mdiTableEdit,
-} from "@mdi/js";
+import type { DetailedFilter } from "@common/filterUtils";
+import type {
+  SearchListItem,
+  SearchListProps,
+  SvgIconName,
+} from "@components/SearchList/SearchList";
 import React, { useMemo } from "react";
 import type { ChartOptions } from "../../Dashboard/dashboardUtils";
 import type { SearchAllProps } from "../SearchAll";
-import type { SearchAllState } from "./useSearchAllState";
-import type { MethodFullDef } from "prostgles-types";
-import type { useSearchTables } from "./useSearchTables";
 import { SearchMatchRow } from "../SearchMatchRow";
-import type { DetailedFilter } from "@common/filterUtils";
+import type { SearchAllState } from "./useSearchAllState";
+import type { useSearchTables } from "./useSearchTables";
 
 export const useSearchAllListProps = ({
   mode,
@@ -46,46 +39,36 @@ export const useSearchAllListProps = ({
 
   if (mode === "views and queries") {
     /** Prioritise public schema */
-    items = tablesAndViews
-      .filter((s) => s.type === "table" && typesToSearch.includes("tables"))
+    items = (typesToSearch.includes("tables") ? tablesAndViews : [])
       .map((suggestion) => {
         const { name, type, subLabel, icon } = suggestion;
         return {
           key: name,
           label: name,
           subLabel,
-          contentLeft: (
-            <div className="f-0">
-              {icon ?
-                <SvgIcon icon={icon} className="text-1p5 p-p25" />
-              : <Icon
-                  className="text-1p5 p-p25"
-                  path={
-                    type === "table" ? mdiTable
-                    : type === "function" ?
-                      mdiFunction
-                    : mdiChatQuestion
-                  }
-                />
-              }
-            </div>
-          ),
+          iconLeft: {
+            type: "SvgIcon",
+            pathName:
+              (icon as SvgIconName | undefined) ??
+              (type === "table" ? "Table"
+              : type === "function" ? "Function"
+              : "ChatQuestion"),
+          },
           onPress: (e, term) => {
             onClose();
             onOpenDBObject(suggestion);
           },
-        };
+        } satisfies SearchListItem;
       })
       .concat(
         (typesToSearch.includes("queries") ? (queries ?? []) : []).map((q) => ({
           key: q.id,
           label: q.name,
           subLabel: q.sql || "", // sliceText(q.sql || "", 200) ,
-          contentLeft: (
-            <div className="f-0">
-              <Icon className="text-1p5 p-p25" path={mdiScriptTextPlay} />
-            </div>
-          ),
+          iconLeft: {
+            type: "SvgIcon",
+            pathName: "ScriptTextPlay",
+          },
           onPress: (e, term) => {
             onClose();
             let extra = {};
@@ -103,7 +86,7 @@ export const useSearchAllListProps = ({
                 lineNumber: lineNumber + 1,
               };
 
-              extra = { options: { ...(q.options || {}), cursorPosition } };
+              extra = { options: { ...q.options, cursorPosition } };
             }
             q.$update?.({ closed: false, ...extra }, { deepMerge: true });
           },
@@ -112,22 +95,19 @@ export const useSearchAllListProps = ({
       .concat(
         !typesToSearch.includes("actions") ?
           []
-        : Object.entries(methods as Record<string, MethodFullDef>)
-            .filter(([k, v]) => isObject(v) && (v as any).run)
-            .map(([methodKey, method]) => ({
-              key: methodKey,
-              label: methodKey,
-              subLabel: Object.keys(method.input).join(", "),
-              contentLeft: (
-                <div className="f-0">
-                  <Icon className="text-1p5 p-p25" path={mdiFunction} />
-                </div>
-              ),
-              onPress: (e, term) => {
-                onClose();
-                onOpenDBObject(undefined, methodKey);
-              },
-            })),
+        : Object.entries(methods).map(([methodKey, method]) => ({
+            key: methodKey,
+            label: methodKey,
+            subLabel: Object.keys(method.input ?? {}).join(", "),
+            iconLeft: {
+              type: "SvgIcon",
+              pathName: "Function",
+            },
+            onPress: (e, term) => {
+              onClose();
+              onOpenDBObject(undefined, methodKey);
+            },
+          })),
       );
   } else {
     onSearch = searchRows;
@@ -136,15 +116,28 @@ export const useSearchAllListProps = ({
       const icon = tableHash.get(m.table)?.icon;
       return {
         ...m,
-        key: m.$rowhash + i,
+        key: `${m.$rowhash + i}`,
         label: m.table,
-        content: (
-          <div className="f-1 flex-row ai-start" title="Open table">
-            <div className="flex-col ai-start f-0 text-1">
+        styles: {
+          rowInner: {
+            gap: ".25em",
+          },
+        },
+        iconLeft: {
+          type: "SvgIcon",
+          pathName:
+            icon ? (icon as SvgIconName)
+            : db[m.table]?.insert ? "TableEdit"
+            : "Table",
+        },
+        title: "Open table",
+        contentBottom: (
+          <div className="f-1 flex-row ai-start">
+            {/* <div className="flex-col ai-start f-0 text-1 ">
               {icon ?
                 <SvgIcon icon={icon} />
               : <Icon path={db[m.table]?.insert ? mdiTableEdit : mdiTable} />}
-            </div>
+            </div> */}
             <div className="flex-col ai-start f-1">
               <div className="font-18">{m.table}</div>
               <div

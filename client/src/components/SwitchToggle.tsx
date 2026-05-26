@@ -78,6 +78,7 @@ export const SwitchToggle: React.FC<SwitchToggleProps> = ({
       {labelProps && <Label {...labelProps} aria-checked={checked} />}
       <div
         className={`Switch-root rounded focusable ${checked ? "checked" : " "}`}
+        data-command="SwitchToggle"
       >
         <span className={"SwitchBase-root "}>
           <input
@@ -91,13 +92,16 @@ export const SwitchToggle: React.FC<SwitchToggleProps> = ({
               disabledInfo ? undefined : (
                 async (e) => {
                   if (isLoading && disableOnChangeDuringLoading) return;
+                  const onChangeResult = onChange(e.target.checked, e);
                   const isPromise =
-                    "then" in onChange && typeof onChange.then === "function";
+                    onChangeResult &&
+                    "then" in onChangeResult &&
+                    typeof onChangeResult.then === "function";
                   if (isPromise) {
                     setIsLoading(true);
                   }
                   try {
-                    await onChange(e.target.checked, e);
+                    await onChangeResult;
                   } finally {
                     setIsLoading(false);
                   }
@@ -105,9 +109,22 @@ export const SwitchToggle: React.FC<SwitchToggleProps> = ({
               )
             }
           />
-          <span className={`Switch-thumb ${isLoading ? "loading" : ""}`}>
+          <span
+            className={`Switch-thumb ${isLoading ? "loading" : ""}`}
+            style={
+              isLoading && !checked ?
+                { background: "var(--bg-color-4)" }
+              : undefined
+            }
+          >
             {isLoading && (
-              <Loading sizePx={21} style={{ color: "var(--blue)" }} />
+              <Loading
+                sizePx={21}
+                style={{
+                  transform: `scale(0.8)`,
+                  color: "var(--blue)",
+                }}
+              />
             )}
           </span>
         </span>

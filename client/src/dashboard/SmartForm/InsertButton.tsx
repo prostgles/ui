@@ -1,8 +1,8 @@
-import { mdiPlus } from "@mdi/js";
-import React, { useCallback, useState } from "react";
 import type { BtnProps } from "@components/Btn";
 import Btn from "@components/Btn";
 import { FileInput } from "@components/FileInput/FileInput";
+import { mdiPlus } from "@mdi/js";
+import React, { useCallback, useState } from "react";
 import { t } from "../../i18n/i18nUtils";
 import type { SmartFormProps } from "./SmartForm";
 import { SmartForm } from "./SmartForm";
@@ -12,6 +12,7 @@ export type InsertButtonProps = {
 } & Pick<
   SmartFormProps,
   | "db"
+  | "sql"
   | "tables"
   | "methods"
   | "tableName"
@@ -29,6 +30,7 @@ export const InsertButton = ({
   onSuccess,
   defaultData,
   fixedData,
+  sql,
 }: InsertButtonProps) => {
   const [open, setOpen] = useState(false);
   const onClose = useCallback(() => {
@@ -40,7 +42,7 @@ export const InsertButton = ({
   }
 
   const table = tables.find((t) => t.name === tableName);
-  if (table?.info.isFileTable && !defaultFileData) {
+  if (table?.isFileTable && !defaultFileData) {
     return (
       <FileInput
         maxFileCount={1}
@@ -74,6 +76,7 @@ export const InsertButton = ({
           defaultData={defaultData}
           fixedData={fixedData}
           db={db}
+          sql={sql}
           tables={tables}
           methods={methods}
           tableName={tableName}

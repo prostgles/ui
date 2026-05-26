@@ -1,8 +1,8 @@
 import type { DBSSchema } from "@common/publishUtils";
 import { type DBS } from "@src/index";
+import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
 import { type JSONB } from "prostgles-types";
 import type { McpTool } from "../AnthropicMcpHub/McpTypes";
-import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
 
 export type ProstglesMcpServerDefinition = {
   icon_path: string;
@@ -14,9 +14,10 @@ export type ProstglesMcpServerDefinition = {
       description: string;
       schema: JSONB.FieldTypeObj | undefined;
       outputSchema: JSONB.FieldType | undefined;
+      icon?: string;
+      mode?: DBSSchema["mcp_server_tools"]["mode"];
     }
   >;
-  // config_schema: JSONB.FieldType | undefined;
 };
 
 export type JSONBTypeIfDefined<Schema extends JSONB.FieldType | undefined> =
@@ -25,28 +26,46 @@ export type JSONBTypeIfDefined<Schema extends JSONB.FieldType | undefined> =
 type MaybePromise<T> = T | Promise<T>;
 
 export type McpCallContext = {
-  chat_id: DBSSchema["llm_chats"]["id"];
+  chat: DBSSchema["llm_chats"];
+  connection_id: string;
   user_id: DBSSchema["users"]["id"];
   clientReq: AuthClientRequest;
+  dbs: DBS;
+  toolUseId: string | undefined;
+  messageId: DBSSchema["llm_messages"]["id"];
 };
 
+export type McpCallContextFetchTools = {
+  mcpTools: {
+    name: string;
+    server_name: string;
+    description: string;
+    inputSchema: Record<string, unknown>;
+    outputSchema: Record<string, unknown> | null;
+  }[];
+  toolsAllowed: {
+    tool_id: number;
+    tool_name: string;
+  }[];
+};
 export type ProstglesMcpServerHandler = {
-  start: (
-    // config: unknown,
-    dbs: DBS,
-  ) => MaybePromise<ProstglesMcpServerHandlerInstance>;
+  start: (dbs: DBS) => MaybePromise<ProstglesMcpServerHandlerInstance>;
 };
 export type ProstglesMcpServerHandlerInstance = {
   stop: () => MaybePromise<void>;
   fetchTools: (
     dbs: DBS,
-    context: McpCallContext,
+    context: McpCallContextFetchTools,
   ) => MaybePromise<
-    {
-      name: string;
-      description: string;
-      inputSchema: McpTool["inputSchema"];
-    }[]
+    Record<
+      string,
+      | undefined
+      | {
+          name: string;
+          description: string;
+          inputSchema: McpTool["inputSchema"];
+        }
+    >
   >;
   tools: Record<
     string,
@@ -54,26 +73,33 @@ export type ProstglesMcpServerHandlerInstance = {
   >;
 };
 
+export type ProstglesMcpServerHandlerTypedFetchTools<
+  Tools extends ProstglesMcpServerDefinition["tools"],
+> = (
+  dbs: DBS,
+  context: McpCallContextFetchTools,
+) => MaybePromise<
+  Record<
+    keyof Tools,
+    | {
+        name: string;
+        description: string;
+        inputSchema: McpTool["inputSchema"];
+      }
+    | undefined
+  >
+>;
+
 export type ProstglesMcpServerHandlerTyped<
   ServerDefinition extends Omit<
     ProstglesMcpServerDefinition,
     "handler"
   > = ProstglesMcpServerDefinition,
 > = {
-  start: (
-    // config: JSONBTypeIfDefined<ServerDefinition["config_schema"]>,
-    dbs: DBS,
-  ) => MaybePromise<{
+  start: (dbs: DBS) => MaybePromise<{
     stop: () => MaybePromise<void>;
-    fetchTools: (
-      dbs: DBS,
-      context: McpCallContext,
-    ) => MaybePromise<
-      {
-        name: string;
-        description: string;
-        inputSchema: McpTool["inputSchema"];
-      }[]
+    fetchTools: ProstglesMcpServerHandlerTypedFetchTools<
+      ServerDefinition["tools"]
     >;
 
     tools: {
@@ -82,8 +108,19 @@ export type ProstglesMcpServerHandlerTyped<
           ServerDefinition["tools"][ToolName]["schema"]
         >,
         context: McpCallContext,
-      ) => MaybePromise<unknown>;
+      ) => MaybePromise<
+        JSONBTypeIfDefined<ServerDefinition["tools"][ToolName]["outputSchema"]>
+      >;
     };
-    // JSONBTypeIfDefined<ServerDefinition["tools"][ToolName]["outputSchema"]>
   }>;
 };
+
+export type ProstglesMcpServerTool<
+  ServerDefinition extends ProstglesMcpServerDefinition,
+  ToolName extends keyof ServerDefinition["tools"],
+> = (
+  toolArguments: JSONBTypeIfDefined<
+    ServerDefinition["tools"][ToolName]["schema"]
+  >,
+  context: McpCallContext,
+) => MaybePromise<unknown>;

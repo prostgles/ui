@@ -11,21 +11,23 @@ import { StatusMonitorConnections } from "../StatusMonitorConnections";
 import { StatusMonitorInfoHeaderCpu } from "./StatusMonitorInfoHeaderCpu";
 import { StatusMonitorInfoHeaderMemory } from "./StatusMonitorInfoHeaderMemory";
 import { useIsMounted } from "prostgles-client";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 
 export const StatusMonitorInfoHeader = (
   props: StatusMonitorProps & {
     samplingRate: number;
-    statusError: any;
-    setStatusError: (e: any) => void;
+    statusError: unknown;
+    setStatusError: (e: unknown) => void;
     setNoBash: (noBash: boolean) => void;
     setSamplingRate: (rate: number) => void;
   },
 ) => {
   const {
-    getStatus,
-    connectionId,
     dbs,
-    dbsMethods,
+    dbsMethods: { getStatus },
+  } = usePrglCore();
+  const {
+    connectionId,
     samplingRate,
     statusError,
     setStatusError,
@@ -42,7 +44,7 @@ export const StatusMonitorInfoHeader = (
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
-        const c = await getStatus(connectionId);
+        const c = await getStatus!({ connId: connectionId });
         if (!getIsMounted()) {
           return;
         }
@@ -77,7 +79,8 @@ export const StatusMonitorInfoHeader = (
 
   return (
     <>
-      {statusError && <ErrorComponent error={statusError} />}
+      {" "}
+      <ErrorComponent error={statusError} />
       <FlexRow>
         {connection && (
           <Chip variant="header" label="Server">
@@ -89,12 +92,13 @@ export const StatusMonitorInfoHeader = (
           <StatusMonitorConnections
             c={c}
             datidFilter={datidFilter}
-            dbsMethods={dbsMethods}
             connectionId={connectionId}
             onSetDatidFilter={setDatidFilter}
           />
         )}
-        <StatusMonitorInfoHeaderCpu serverStatus={c?.serverStatus} />
+        {c?.serverStatus && (
+          <StatusMonitorInfoHeaderCpu serverStatus={c.serverStatus} />
+        )}
 
         <FormFieldDebounced
           label={"Sampling rate (s)"}

@@ -20,7 +20,7 @@ import type {
   FullExtraProps,
 } from "./ProjectConnection/ProjectConnection";
 import { AskLLM } from "../dashboard/AskLLM/AskLLM";
-import { ROUTES } from "@common/utils";
+import { ROUTES, tableMightBeUndefinedDueToAccessControl } from "@common/utils";
 import { t } from "../i18n/i18nUtils";
 
 type TopControlsProps = {
@@ -69,7 +69,7 @@ export const TopControls = (props: TopControlsProps) => {
     >
       {wrapIfNeeded(
         <>
-          <FlexRow className={`max-w-fit f-1 ai-center ${paddingClass}`}>
+          <FlexRow className={`max-w-fit f-1 gap-p5 ai-center ${paddingClass}`}>
             <DashboardMenuBtn {...menuBtnProps} />
             <ConnectionConfigBtn {...prgl} location={location} />
             {!window.isMobileDevice && (
@@ -79,18 +79,18 @@ export const TopControls = (props: TopControlsProps) => {
 
           {props.location === "workspace" && <WorkspaceMenu {...props} />}
           <FlexRow
-            className={`ml-auto min-w-0 f-0 ai-start gap-1 text-1p5 w-fit ai-center noselect o-auto no-scroll-bar jc-end ${paddingClass}`}
+            className={`ml-auto min-w-0 f-0 ai-start gap-p5 text-1p5 w-fit ai-center noselect o-auto no-scroll-bar jc-end ${paddingClass}`}
             style={{
               maxWidth: "100%",
             }}
           >
-            {location === "workspace" && <AppVideoDemo {...prgl} />}
+            {location === "workspace" && <AppVideoDemo />}
 
-            {!!(prgl.dbs.alerts as any)?.subscribe && <Alerts {...prgl} />}
+            {tableMightBeUndefinedDueToAccessControl(prgl.dbs.alerts)
+              ?.subscribe && <Alerts />}
 
             {prgl.dbsMethods.askLLM && (
               <AskLLM
-                {...prgl}
                 loadedSuggestions={loadedSuggestions}
                 workspaceId={
                   props.location === "workspace" ?
@@ -99,7 +99,7 @@ export const TopControls = (props: TopControlsProps) => {
                 }
               />
             )}
-            <Feedback dbsMethods={prgl.dbsMethods} dbs={prgl.dbs} />
+            <Feedback dbsMethods={prgl.dbsMethods} />
 
             <Btn
               data-command="dashboard.goToConnections"
@@ -108,6 +108,7 @@ export const TopControls = (props: TopControlsProps) => {
               variant="faded"
               asNavLink={true}
               iconPath={mdiArrowLeft}
+              size="default"
             >
               {/* {window.isMediumWidthScreen ? null : t.TopControls.Connections} */}
             </Btn>
@@ -148,6 +149,7 @@ export const ConnectionConfigBtn = ({
             `${ROUTES.CONFIG}/${connection.id}`
           : `${ROUTES.CONNECTIONS}/${connection.id}`
         }
+        size="default"
         asNavLink={true}
         children={
           isOnWorkspace ? null : t.TopControls["Connection configuration"]

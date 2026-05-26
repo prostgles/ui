@@ -18,7 +18,7 @@ type ChipProps = TestSelectors &
     label?: string;
     subValues?: (string | number)[];
     variant?: "naked" | "header" | "outline" | "default";
-    color?: "blue" | "yellow" | "red" | "green" | "gray";
+    color?: "blue" | "yellow" | "red" | "green" | "gray" | "orange";
     onDelete?: React.MouseEventHandler<HTMLButtonElement>;
     leftIcon?: {
       path: string;

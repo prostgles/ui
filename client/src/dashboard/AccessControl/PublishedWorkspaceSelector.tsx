@@ -51,7 +51,7 @@ export const PublishedWorkspaceSelector = ({
       const workspaceIds =
         dbsPermissions?.viewPublishedWorkspaces?.workspaceIds ?? [];
       if (workspaceIds.length) {
-        const wsps = await dbs.workspaces.find({ "id.$in": workspaceIds });
+        const wsps = await dbs.workspaces.find({ id: { $in: workspaceIds } });
         if (!getIsMounted()) return;
         const missingWorkspaceIds = workspaceIds.filter(
           (wid) => !wsps.some((w) => w.id === wid),
@@ -136,7 +136,7 @@ export const PublishedWorkspaceSelector = ({
           }}
           disabledInfo={
             !publishedWorkspaces.length ?
-              "Cannot change if no published workspaces"
+              "Cannot change if there are no published workspaces"
             : undefined
           }
           label={{
@@ -156,7 +156,7 @@ export const PublishedWorkspaceSelector = ({
           disabledInfo={
             !publishedWorkspaces.length ? "No published workspaces" : undefined
           }
-          tableHandler={dbs.workspaces as any}
+          tableHandler={dbs.workspaces}
           filter={{ published: true, connection_id: connectionId }}
           allowCreate={false}
           fieldName="id"
@@ -207,7 +207,7 @@ export const getWorkspaceTables = async (
   const worspaceTableAndColumns: WorspaceTableAndColumns[] = [];
   if (dbPermissions.type === "Custom") {
     const workspaceWindows = await dbs.windows.find({
-      "workspace_id.$in": workspaceIds,
+      workspace_id: { $in: workspaceIds },
     });
     const tableWindows = workspaceWindows.filter(
       (w) => w.type === "table" && !!w.table_name,

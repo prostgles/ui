@@ -1,12 +1,8 @@
 import { Locator, Page as PG, expect } from "@playwright/test";
 import * as path from "path";
-import {
-  Command,
-  getCommandElemSelector,
-  getDataKeyElemSelector,
-} from "../Testing";
+import { Command, getCommandElemSelector, getDataKey } from "../Testing";
 import { goTo } from "./goTo";
-import { TEST_DB_NAME, USERS } from "./constants";
+import { IS_GITHUB_WORKER, TEST_DB_NAME, USERS } from "./constants";
 
 type FuncNamesReturningLocatorObj = {
   [prop in keyof PG as PG[prop] extends (...args: any) => any ?
@@ -96,7 +92,7 @@ type InputKey =
   | "Space";
 type ArrowKey = "ArrowUp" | "ArrowDown" | "ArrowLeft" | "ArrowRight";
 type ArrowKeyCombinations = `${KeyPress}+${ArrowKey | InputKey}`;
-type KeyPressOrCombination = InputKey | ArrowKeyCombinations | ArrowKey;
+export type KeyPressOrCombination = InputKey | ArrowKeyCombinations | ArrowKey;
 
 /**
  * Will overwrite all previous content
@@ -276,8 +272,18 @@ export const fillLoginFormAndSubmit = async (
   await page.locator("#username").waitFor({ state: "visible", timeout: 30e3 });
   await page.locator("#username").fill("");
   await page.locator("#username").fill(userNameAndPassword);
+  const continueBtn = page.getByRole("button", { name: "Continue" });
+  let isContinueBtnVisible = false;
+  if (await continueBtn.count()) {
+    isContinueBtnVisible = true;
+    await continueBtn.click();
+  }
   await page.locator("#password").fill(userNameAndPassword);
-  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  if (isContinueBtnVisible) {
+    await continueBtn.click();
+  } else {
+    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  }
 };
 
 export const login = async (
@@ -343,8 +349,6 @@ export const closeWorkspaceWindows = async (page: PageWIds) => {
   await page.waitForTimeout(100);
 };
 
-export const getDataKey = (key: string) =>
-  `[data-key=${JSON.stringify(key)}]` as const;
 export const getTestId = (testid: Command) =>
   `[data-command=${JSON.stringify(testid)}]` as const;
 export const getSelector = ({
@@ -525,6 +529,39 @@ export const runDbsSql = async (
   return runDbSql(page, query, args, opts, "dbs");
 };
 
+export const runDbsMethod = async (
+  page: PageWIds,
+  methodName: string,
+  args?: any,
+) => {
+  /** Wait for dbsMethod to become available */
+  await page.waitForFunction(() => {
+    return (window as any).dbsMethods !== undefined;
+  });
+
+  const result = await page.evaluate(
+    async ([methodName, args]) => {
+      const dbsMethods = (window as any).dbsMethods;
+      if (!dbsMethods) throw "dbsMethods is missing";
+      const method = dbsMethods[methodName];
+      if (!method) throw `Method ${methodName} is missing in dbsMethods`;
+      const [data, err] = await method(args)
+        .then((data: any) => [data, undefined])
+        .catch((err: any) => {
+          console.error(`Error running dbs method ${methodName}:`, err);
+          return [undefined, err];
+        });
+      return [data, err];
+    },
+    [methodName, args],
+  );
+  const [data, err] = result as any;
+  if (err) {
+    throw err;
+  }
+  return data;
+};
+
 export const runDbSql = async (
   page: PageWIds,
   query: string,
@@ -532,12 +569,19 @@ export const runDbSql = async (
   opts?: any,
   dbType: "db" | "dbs" = "db",
 ) => {
+  /** Wait for handle to become available */
+  await page.waitForFunction(
+    ({ dbType }) => {
+      return (window as any)[dbType] !== undefined;
+    },
+    { dbType },
+  );
   const [error, sqlResult] = (await page.evaluate(
     async ([query, args, opts, dbType]) => {
       try {
-        const db = (window as any)[dbType];
-        if (!db) throw dbType + " is missing";
-        const data = await db.sql(query, args, opts);
+        const sql = (window as any)[dbType === "db" ? "sql" : "dbsSql"];
+        if (!sql) throw dbType === "db" ? "db is missing" : "dbs is missing";
+        const data = await sql(query, args, opts);
         return [undefined, data];
       } catch (error) {
         return [error];
@@ -552,7 +596,11 @@ export const runDbSql = async (
   return sqlResult;
 };
 
-export const openTable = async (page: PageWIds, namePartStart: string) => {
+export const openTable = async (
+  page: PageWIds,
+  namePartStart: string,
+  exact = false,
+) => {
   await page.getByTestId("dashboard.menu").waitFor({ state: "visible" });
   await page.keyboard.press("Control+KeyP");
   await page.waitForTimeout(200);
@@ -562,20 +610,21 @@ export const openTable = async (page: PageWIds, namePartStart: string) => {
   await page.waitForTimeout(200);
   await page.keyboard.press("Enter");
   await page.waitForTimeout(500);
-  /** Ensure table_name strats with */
+
+  /** Ensure table was opened */
   const table = page.locator(
-    `[data-table-name^=${JSON.stringify(namePartStart)}]`,
+    `[data-table-name${exact ? "=" : "^="}${JSON.stringify(namePartStart)}]`,
   );
 
   /** Used for debugging */
-  if (!table.isVisible()) {
+  if (!(await table.isVisible())) {
     const v_triggers = await runDbsSql(
       page,
       `SELECT * FROM prostgles.v_triggers;`,
       {},
       { returnType: "rows" },
     );
-    console.log(JSON.stringify({ v_triggers, namePartStart }));
+    console.log(JSON.stringify({ v_triggers, namePartStart, expect }));
     await page.waitForTimeout(500);
   }
   await expect(table).toBeVisible();
@@ -691,9 +740,7 @@ export const getSearchListItem = (
   page: PageWIds | LocatorWIds,
   { dataKey }: { dataKey: string },
 ) => {
-  return page
-    .getByTestId("SearchList.List")
-    .locator(`[data-key=${JSON.stringify(dataKey)}]`);
+  return page.getByTestId("SearchList.List").locator(getDataKey(dataKey));
 };
 export const getTableWindow = (page: PageWIds, tableName: string) => {
   return page.locator(`[data-table-name=${JSON.stringify(tableName)}]`);
@@ -808,7 +855,7 @@ export const enableAskLLM = async (
   await page.getByTestId("Popup.close").click();
 };
 export const getAskLLMLastMessage = async (page: PageWIds) => {
-  const lastIncomingMessage = await page
+  const lastIncomingMessage = page
     .getByTestId("AskLLM.popup")
     .locator(".message.incoming")
     .last();
@@ -820,12 +867,13 @@ export const getAskLLMLastMessage = async (page: PageWIds) => {
 
   await Promise.all(
     [...toolCallBtns, lastIncomingMessage].map((btn) =>
-      btn.locator(".Loading").waitFor({ state: "detached", timeout: 30_000 }),
+      btn
+        .getByTestId("Loading")
+        .waitFor({ state: "detached", timeout: 30_000 }),
     ),
   );
   await page.waitForTimeout(1500);
-  const response = await lastIncomingMessage.textContent();
-  return response;
+  return lastIncomingMessage;
 };
 
 const waitForAllMatchingLocatorsToDisappear = async (
@@ -870,7 +918,8 @@ export const sendAskLLMMessage = async (
     await waitForAllMatchingLocatorsToDisappear(
       page
         .getByTestId("Chat.messageList")
-        .locator(".message.incoming .Loading")
+        .getByTestId("Loading")
+        // .locator(".message.incoming .Loading")
         .last(),
     );
   }
@@ -892,16 +941,46 @@ export const getLLMResponses = async (
 
   for (const question of questions) {
     await sendAskLLMMessage(page, question);
-    const response = await getAskLLMLastMessage(page);
+    const responseMessage = await getAskLLMLastMessage(page);
+    const response = await responseMessage.textContent();
     result.push({
       response,
       isOk: !!response?.includes("Mocked response"),
     });
+    await page.waitForTimeout(3000);
   }
   if (openWindow) {
     await page.getByTestId("Popup.close").click();
   }
   return result;
+};
+
+export const toggleMCPTools = async (
+  page: PageWIds,
+  toolNames: string[],
+  toggleAutoApprove?: boolean,
+) => {
+  await page.getByTestId("LLMChatOptions.MCPTools").click({ timeout: 10e3 });
+  await page.waitForTimeout(1000);
+  for (const toolName of toolNames) {
+    await page
+      .getByTestId("LLMChatOptions.MCPTools")
+      .getByTestId("MCPServerTools")
+      .getByText(toolName, { exact: true })
+      .click({ timeout: 30e3 });
+    await page.waitForTimeout(1500);
+  }
+  if (toggleAutoApprove) {
+    const node = page.getByTestId("MCPServers.toggleAutoApprove");
+    await node.waitFor({ state: "visible", timeout: 10e3 });
+    if ((await node.textContent())?.includes(": ON")) {
+      await node.click();
+    }
+    await page.waitForTimeout(1000);
+    await node.click();
+  }
+  await page.getByTestId("Popup.close").last().click();
+  await page.waitForTimeout(500);
 };
 
 export const openConnection = async (
@@ -910,25 +989,30 @@ export const openConnection = async (
     | "sample_database"
     | "cloud"
     | "crypto"
+    | "financial"
     | "food_delivery"
     | "Prostgles UI state"
     | "prostgles_video_demo"
+    | "db_with_owner"
     | "Prostgles UI automated tests database",
 ) => {
   await goTo(page, "/connections");
   await page
-    .locator(getDataKeyElemSelector(connectionName))
+    .locator(getDataKey(connectionName))
     .getByTestId("Connection.openConnection")
     .click();
   await page.waitForTimeout(1000);
 };
 
-export const loginWhenSignupIsEnabled = async (page: PageWIds) => {
+export const loginWhenSignupIsEnabled = async (
+  page: PageWIds,
+  userNameAndPassword = "test_user",
+) => {
   await goTo(page, "/login");
-  await page.locator("#username").fill(USERS.test_user);
+  await page.locator("#username").fill(userNameAndPassword);
   await page.getByRole("button", { name: "Continue" }).click();
   await page.locator("#password").waitFor({ state: "visible" });
-  await page.locator("#password").fill(USERS.test_user);
+  await page.locator("#password").fill(userNameAndPassword);
   await page.getByRole("button", { name: "Continue" }).click();
   await page.getByTestId("App.colorScheme").waitFor({ state: "visible" });
   await page.waitForTimeout(500);
@@ -1009,9 +1093,15 @@ export const getDashboardUtils = (page: PageWIds) => {
   };
 };
 
-export const setPromptByText = async (page: PageWIds, text: string) => {
+export const setPromptByText = async (
+  page: PageWIds,
+  text: string,
+  closePopup = true,
+) => {
   await page.getByTestId("LLMChatOptions.Prompt").click();
   await page.locator(".SmartCard").getByText(text).first().click();
+  await page.waitForTimeout(2e3); // wait for prompt tools to be set
+  if (!closePopup) return;
   await page
     .getByTestId("LLMChatOptions.Prompt")
     .getByTestId("Popup.close")
@@ -1036,7 +1126,7 @@ export const setupProstglesLLMProvider = async (page: PageWIds) => {
     `
       DELETE FROM llm_credentials WHERE provider_id = 'Prostgles';
       UPDATE llm_providers 
-      SET api_url = 'http://localhost:3004/rest-api/cloud/methods/askLLM'
+      SET api_url = 'http://localhost:3005/rest-api/methods/askLLM'
       WHERE id = 'Prostgles';
       /*
         UPDATE published_methods
@@ -1083,7 +1173,7 @@ export const deleteExistingLLMChat = async (page: PageWIds) => {
 };
 
 export const deleteAllWorkspaces = async (page: PageWIds): Promise<void> => {
-  const list = await page.getByTestId("WorkspaceMenu.list");
+  const list = page.getByTestId("WorkspaceMenu.list");
   await list.waitFor({ state: "visible", timeout: 10e3 });
   await page.waitForTimeout(1500);
   const listTextContent = await list.textContent();
@@ -1116,4 +1206,78 @@ export const setOrAddWorkspace = async (
     await page.getByTestId("WorkspaceAddBtn.Create").click();
   }
   await page.waitForTimeout(1e3);
+};
+
+export const newChat = async (page: PageWIds) => {
+  await page.getByTestId("AskLLMChat.NewChat").click();
+  await page.waitForTimeout(1e3);
+};
+
+let setupAuthCount = 0;
+export const setupMagicLinkAuth = async (page: PageWIds) => {
+  await page.getByTestId("EmailAuthSetup").locator("button").click();
+  await page.getByTestId("EmailAuthSetup.SignupType").click();
+  await page.locator(`[data-key="withMagicLink"]`).click();
+  await page.getByTestId("EmailSMTPAndTemplateSetup").locator("button").click();
+  await page.getByTestId("EmailSMTPSetup").locator("button").click();
+  await page.locator("input#smtp-Port").fill((465 + setupAuthCount).toString());
+  await page.locator(`[data-label="Host"] input`).fill("prostgles-test-mock");
+  await page.getByTestId("EmailSMTPAndTemplateSetup.save").click();
+  await page.waitForTimeout(1500);
+  const errNodeCount = await page.getByTestId("EmailAuthSetup.error").count();
+  await expect(errNodeCount).toBe(0);
+  setupAuthCount++;
+};
+
+export const clickAndWait = async (
+  btnLocator: LocatorWIds,
+  timeout = IS_GITHUB_WORKER ? 120_000 : 60_000,
+) => {
+  await btnLocator.click();
+  await btnLocator.page().waitForTimeout(200);
+  await expect(btnLocator).toBeDisabled();
+  await expect(btnLocator).toBeEnabled({ timeout }); // waits until loading finishes
+};
+
+export const enableMCPServers = async (
+  page: PageWIds,
+  serverNames: string[],
+  needsConfigSetup = false,
+  toggleOn = true,
+) => {
+  await page.getByTestId("LLMChatOptions.MCPTools").click({ timeout: 10e3 });
+  for (const serverName of serverNames) {
+    const toggleCheckbox = page
+      .locator(getDataKey(serverName))
+      .getByTestId("MCPServerFooterActions.enableToggle");
+
+    await toggleCheckbox.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(500);
+    await toggleCheckbox.click();
+    await page.waitForTimeout(500);
+    if (!needsConfigSetup) {
+      if (toggleOn) {
+        await expect(toggleCheckbox).toBeChecked({ timeout: 15e3 });
+      } else {
+        await expect(toggleCheckbox).not.toBeChecked({ timeout: 15e3 });
+      }
+    }
+  }
+};
+
+export const deletePreviousMessages = async (page: PageWIds) => {
+  const firstMessage = await page.getByTestId("AskLLM.DeleteMessage").first();
+  if (await firstMessage.count()) {
+    await firstMessage.click();
+    await page.locator(getDataKey("allToBottom")).click();
+  }
+};
+
+export const allowOnce = async (page: PageWIds, doClick = true) => {
+  const allowOnceBtn = await page
+    .getByTestId("AskLLMToolApprover.AllowOnce")
+    .last();
+  await allowOnceBtn.waitFor({ state: "visible", timeout: 15000 });
+  doClick && (await allowOnceBtn.click());
+  await page.waitForTimeout(2500);
 };

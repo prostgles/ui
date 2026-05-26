@@ -2,6 +2,7 @@ import type { PageWIds } from "utils/utils";
 import type { SVGifScene } from "./constants";
 import { saveSVGScreenshot } from "./saveSVGScreenshot";
 import type { Locator } from "@playwright/test";
+import type { SVGif } from "Testing";
 
 export const getSceneUtils = (
   page: PageWIds,
@@ -37,17 +38,34 @@ export const getSceneUtils = (
       | string
       | { svgif: string; playwright: string; nth?: number }
       | { selector: string; nth?: number },
-    action:
-      | "click"
-      | "rightClick"
-      | {
-          action: "type";
-          text: string;
-          /** Defaults to charByChar */
-          mode?: "charByChar" | "fill" | "fillZoomTo";
-        } = "click",
-    duration: "auto" | "fast" = "auto",
+    opts?: {
+      action?:
+        | "click"
+        | "rightClick"
+        | {
+            action: "type";
+            text: string;
+            /** Defaults to charByChar */
+            mode?: "charByChar" | "fill" | "fillZoomTo";
+          };
+      duration?:
+        | "auto"
+        | "fast"
+        | "faster"
+        | {
+            waitBeforeClick: number;
+          };
+      extraAnimations?: SVGif.Animation[];
+      svgFileName?: string;
+    },
   ) => {
+    const {
+      action = "click",
+      duration = "auto",
+      extraAnimations = [],
+      svgFileName,
+    } = opts ?? {};
+
     const {
       svgif: svgifSelector,
       playwright: playwrightSelector,
@@ -66,7 +84,7 @@ export const getSceneUtils = (
       Number.isFinite(nth) ?
         page.locator(playwrightSelector).nth(nth!)
       : page.locator(playwrightSelector);
-    await playwrightLocator.scrollIntoViewIfNeeded();
+    await playwrightLocator.scrollIntoViewIfNeeded({ timeout: 20_000 });
 
     const elementIsVisible = await playwrightLocator.evaluate((n) => {
       const hoverParent = n.closest(`[class*="hover"]`) as HTMLElement | null;
@@ -83,18 +101,33 @@ export const getSceneUtils = (
     }
 
     await addScene({
+      svgFileName,
       animations: [
         {
           type: "wait",
-          duration: duration === "fast" ? 800 : 1000,
+          duration:
+            duration === "faster" ? 400
+            : duration === "fast" ? 800
+            : duration === "auto" ? 1000
+            : duration.waitBeforeClick,
         },
         {
           type: elementIsVisible ? "click" : "clickAppearOnHover",
           elementSelector: svgifSelector,
-          duration: duration === "fast" ? 700 : 1000,
-          waitBeforeClick: duration === "fast" ? 200 : 500,
-          lingerMs: duration === "fast" ? 200 : 500,
+          duration:
+            duration === "faster" ? 400
+            : duration === "fast" ? 700
+            : 1000,
+          waitBeforeClick:
+            duration === "faster" ? 200
+            : duration === "fast" ? 200
+            : 500,
+          lingerMs:
+            duration === "faster" ? 100
+            : duration === "fast" ? 200
+            : 500,
         },
+        ...extraAnimations,
       ],
     });
     if (action === "click" || action === "rightClick") {
@@ -129,7 +162,9 @@ export const getSceneUtils = (
             {
               type: "type",
               elementSelector: svgifSelector,
-              zoomToElement: mode === "fillZoomTo",
+              // zoomToElement: mode === "fillZoomTo",
+              extraAnimation:
+                mode === "fillZoomTo" ? { type: "zoomToElement" } : undefined,
               duration:
                 zoomDurations + Math.max(500, action.text.length * msPerChar),
             },

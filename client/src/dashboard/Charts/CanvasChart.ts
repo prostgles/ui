@@ -5,10 +5,9 @@ import { setPan } from "../setPan";
 import { createHiPPICanvas } from "./createHiPPICanvas";
 import { drawMonotoneXCurve } from "./drawMonotoneXCurve";
 import { type ShapeV2 } from "./drawShapes/drawShapes";
+import { getTimechartGradientPeakSections } from "./drawShapes/getTimechartGradientPeakSections";
 import { roundRect } from "./roundRect";
 import type { XYFunc } from "./TimeChart/TimeChart";
-import { isDefined } from "@common/filterUtils";
-import { getTimechartGradientPeakSections } from "./drawShapes/getTimechartGradientPeakSections";
 
 export type StrokeProps = {
   lineWidth: number;
@@ -21,6 +20,7 @@ export type ShapeBase<T = void> = {
   id: string | number;
   elevation?: number;
   opacity?: number;
+  filter?: string;
 } & (T extends void ? { data?: T } : { data: T });
 
 export type Circle<T = any> = ShapeBase<T> &
@@ -64,6 +64,9 @@ export type MultiLine<T = any> = ShapeBase<T> &
     withGradient?: boolean;
     variant?: "smooth";
   };
+
+export type LinkCardinality = "one-to-one" | "one-to-many";
+
 export type LinkLine<T = any> = ShapeBase<T> &
   StrokeProps & {
     type: "linkline";
@@ -71,6 +74,7 @@ export type LinkLine<T = any> = ShapeBase<T> &
     targetId: string | number;
     sourceYOffset: number;
     targetYOffset: number;
+    cardinality: LinkCardinality;
     variant?: "smooth";
   };
 export type Image<T = any> = ShapeBase<T> & {
@@ -441,13 +445,16 @@ export class CanvasChart {
     const { textAlign = "", text = "", font = "" } = s;
     const key = [textAlign, text.length, font].join(";");
     const cached = this.measureTextCache.get(key);
-    if (cached) return cached;
+    if (cached) {
+      return cached;
+    }
+    ctx.save();
     ctx.fillStyle = s.fillStyle;
     ctx.textAlign = s.textAlign ?? ctx.textAlign;
     ctx.textBaseline = s.textBaseline ?? ctx.textBaseline;
     ctx.font = s.font || ctx.font;
     const metrics = ctx.measureText(s.text);
-
+    ctx.restore();
     const fontHeight =
       metrics.fontBoundingBoxAscent + metrics.fontBoundingBoxDescent;
     const actualHeight =
@@ -607,11 +614,6 @@ export class CanvasChart {
         const coords = getScreenCoords(s.coords);
         const { textAlign = "start" } = s;
 
-        ctx.fillStyle = s.fillStyle;
-        ctx.textAlign = textAlign;
-        ctx.textBaseline = s.textBaseline ?? ctx.textBaseline;
-        ctx.font = s.font || ctx.font;
-        ctx.save();
         if (s.background) {
           const txtSize = this.measureText(s);
           const txtPadding = s.background.padding || 6;
@@ -629,31 +631,27 @@ export class CanvasChart {
             x = coords[0] - txtSize.width - txtPadding;
           }
 
-          roundRect(
-            ctx,
-            x,
-            y,
-            txtSize.width + 2 * txtPadding,
-            txtSize.actualHeight + 2 * txtPadding,
-            s.background.borderRadius || 0,
-          );
-          ctx.closePath();
+          const w = txtSize.width + 2 * txtPadding;
+          const h = txtSize.actualHeight + 2 * txtPadding;
+          roundRect(ctx, x, y, w, h, s.background.borderRadius || 0);
           if (s.background.strokeStyle) {
             ctx.stroke();
           }
           ctx.fill();
         }
-        ctx.restore();
+
+        ctx.fillStyle = s.fillStyle;
+        ctx.textAlign = textAlign;
+        ctx.textBaseline = s.textBaseline ?? "middle";
+        ctx.font = s.font || ctx.font;
 
         const topOffsetToCenterItVertically = 2;
+
         ctx.fillText(
           s.text,
           coords[0],
           coords[1] - topOffsetToCenterItVertically,
         );
-        // s.text.split("\n").map(text => {
-        //   ctx.fillText(text, coords[0], coords[1]);
-        // })
       } else throw "Unexpected shape type: " + (s as any).type;
     });
 

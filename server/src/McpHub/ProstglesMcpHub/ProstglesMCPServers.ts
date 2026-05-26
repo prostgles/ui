@@ -1,14 +1,21 @@
 import { getKeys, includes } from "prostgles-types";
-import { DockerSandboxMCPServer } from "./ProstglesMCPServers/DockerSandbox.mcp";
-import { WebSearchMCPServer } from "./ProstglesMCPServers/WebSearch.mcp";
+import { ProstglesUiMCPServer } from "./ProstglesMCPServers/Ui.mcp";
+import { WebDevMCPServer } from "./ProstglesMCPServers/WebDev/WebDev.mcp";
+import { WebMCPServer } from "./ProstglesMCPServers/Web.mcp";
 import type {
   ProstglesMcpServerDefinition,
   ProstglesMcpServerHandler,
 } from "./ProstglesMCPServerTypes";
+import { DbMcpServer } from "./ProstglesMCPServers/Db.mcp";
+import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
+import { DocumentsMCPServer } from "./ProstglesMCPServers/Documents.mcp";
 
 export const ProstglesMCPServers = {
-  "docker-sandbox": DockerSandboxMCPServer,
-  websearch: WebSearchMCPServer,
+  web: WebMCPServer,
+  webdev: WebDevMCPServer,
+  "prostgles-ui": ProstglesUiMCPServer,
+  db: DbMcpServer,
+  documents: DocumentsMCPServer,
 } as const satisfies Record<
   string,
   {
@@ -21,4 +28,17 @@ export const getProstglesMCPServer = (serverName: string) => {
     return ProstglesMCPServers[serverName];
   }
   return undefined;
+};
+
+export const getProstglesMCPServerTool = (
+  serverName: string,
+  toolName: string,
+) => {
+  const server =
+    PROSTGLES_MCP_SERVERS_AND_TOOLS[
+      serverName as keyof typeof PROSTGLES_MCP_SERVERS_AND_TOOLS
+    ];
+  if (toolName in server) {
+    return server[toolName as keyof typeof server];
+  }
 };

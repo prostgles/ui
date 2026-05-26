@@ -48,6 +48,7 @@ export const AlertProvider = ({ children }: { children: React.ReactNode }) => {
         <Popup
           data-command="Alert"
           clickCatchStyle={{ opacity: 1 }}
+          autoFocusFirst={{ selector: "button" }}
           footerButtons={[
             {
               label: "OK",
@@ -73,18 +74,20 @@ export const useAlert = () => {
   return context;
 };
 
-export const useOnErrorAlert = () => {
+export const useOnErrorAlert = (immediateUnmount = false) => {
   const alert = useAlert();
   const getIsMounted = useIsMounted();
   const onErrorAlert = useCallback(
     async (promiseFunc: () => Promise<void>) => {
-      await promiseFunc().catch((error) => {
-        if (!getIsMounted()) return;
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        alert.addAlert({ children: <ErrorComponent error={error} /> });
+      await promiseFunc().catch((error: unknown) => {
+        if (!getIsMounted() && immediateUnmount) return;
+        alert.addAlert({
+          children: <ErrorComponent error={error} findMsg={true} />,
+        });
+        throw error;
       });
     },
-    [alert, getIsMounted],
+    [alert, getIsMounted, immediateUnmount],
   );
   return { onErrorAlert };
 };

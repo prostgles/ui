@@ -1,26 +1,28 @@
+import { getConnectionApiPaths, ROUTES } from "@common/utils";
+import type e from "express";
 import type { CloudClient } from "prostgles-server/dist/FileManager/FileManager";
 import type {
   FileTableConfig,
   ProstglesInitOptions,
 } from "prostgles-server/dist/ProstglesTypes";
-import type { DbTableInfo } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
 import type { DB, OnInitReason } from "prostgles-server/dist/initProstgles";
-import type { FileColumnConfig } from "prostgles-types";
+import type { FileColumnConfig, TableSchema } from "prostgles-types";
 import { pickKeys } from "prostgles-types";
 import ts, { ModuleKind, ModuleResolutionKind, ScriptTarget } from "typescript";
-import type { Connections, DatabaseConfigs, DBS } from "..";
-import { getConnectionPaths, ROUTES } from "@common/utils";
+import type { DatabaseConfigs, DBS } from "..";
 import { getCloudClient } from "../cloudClients/cloudClients";
 import type { ConnectionManager } from "./ConnectionManager";
+import type { ConnectionHotReloadProperties } from "./getHotReloadConfigs";
 
-export const getDatabaseConfigFilter = (c: Connections) =>
+export const getDatabaseConfigFilter = (c: ConnectionHotReloadProperties) =>
   pickKeys(c, ["db_name", "db_host", "db_port"]);
 
 type ParseTableConfigArgs = {
   dbs: DBS;
   conMgr: ConnectionManager;
-  con: Connections;
+  app: e.Express;
+  con: ConnectionHotReloadProperties;
 } & (
   | {
       type: "saved";
@@ -35,6 +37,7 @@ type ParseTableConfigArgs = {
 export const parseTableConfig = async ({
   con,
   conMgr,
+  app,
   dbs,
   type,
   newTableConfig,
@@ -96,7 +99,7 @@ export const parseTableConfig = async ({
       undefined
     : ({
         tableName: tableConfig.fileTable,
-        expressApp: conMgr.app,
+        expressApp: app,
         fileServePath: `${ROUTES.STORAGE}/${connectionId}`,
         ...(tableConfig.storageType.type === "local" ?
           {
@@ -129,15 +132,15 @@ export const getCompiledTS = (code: string) => {
 };
 
 export const getRestApiConfig = (
-  conMgr: ConnectionManager,
-  con: Connections,
-  dbConf: DatabaseConfigs,
+  app: e.Express,
+  con: ConnectionHotReloadProperties,
+  { rest_api_enabled }: Pick<DatabaseConfigs, "rest_api_enabled">,
 ) => {
   const res: ProstglesInitOptions["restApi"] =
-    dbConf.rest_api_enabled ?
+    rest_api_enabled ?
       {
-        expressApp: conMgr.app,
-        path: getConnectionPaths(con).rest,
+        expressApp: app,
+        path: getConnectionApiPaths(con).rest,
       }
     : undefined;
 
@@ -183,7 +186,7 @@ export type FileTableConfigReferences = Record<
 
 type AlertIfReferencedFileColumnsRemovedArgs = {
   reason: OnInitReason;
-  tables: DbTableInfo[];
+  tables: TableSchema[];
   connId: string;
   db: DB;
 };
@@ -192,7 +195,8 @@ export const alertIfReferencedFileColumnsRemoved = async function (
   { connId, reason, tables }: AlertIfReferencedFileColumnsRemovedArgs,
 ) {
   /** Remove dropped referenced file columns */
-  const { dbConf, isSuperUser } = this.prglConnections[connId] ?? {};
+  const { dbConf, isSuperUser } =
+    this.getActiveConnectionSilentFail(connId) ?? {};
   const referencedTables = dbConf?.file_table_config?.referencedTables as
     | FileTableConfigReferences
     | undefined;
@@ -229,6 +233,10 @@ export const alertIfReferencedFileColumnsRemoved = async function (
         message: `Some file column configs are missing from database schema: ${droppedFileColumns.map(({ tableName, missingCols }) => `${tableName}: ${missingCols.join(", ")}`).join(", ")}`,
         database_config_id: dbConf.id,
         data: droppedFileColumns,
+        ui_path: {
+          page: "/connection-config",
+          section: "file_storage",
+        },
       });
     }
   }

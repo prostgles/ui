@@ -18,6 +18,10 @@ export const tableConfigWorkspaces: TableConfig<{ en: 1 }> = {
   },
 
   workspaces: {
+    syncConfig: {
+      id_fields: ["id"],
+      synced_field: "last_updated",
+    },
     columns: {
       id: `UUID PRIMARY KEY DEFAULT gen_random_uuid()`,
       parent_workspace_id: `UUID REFERENCES workspaces(id) ON DELETE SET NULL`,

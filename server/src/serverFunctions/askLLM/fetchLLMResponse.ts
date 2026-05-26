@@ -1,0 +1,104 @@
+import type { DBSSchema } from "@common/publishUtils";
+import { getSerialisableError, type AnyObject } from "prostgles-types";
+import { getLLMRequestBody } from "./getLLMRequestBody";
+import type { MCPToolSchema } from "./getLLMToolsAllowedInThisChat";
+import {
+  parseLLMResponseObject,
+  type LLMParsedResponse,
+} from "./parseLLMResponseObject";
+import { readFetchStream } from "./readFetchStream";
+export type LLMMessageWithRole = {
+  role: "system" | "user" | "assistant" | "model";
+  content: DBSSchema["llm_messages"]["message"];
+};
+export type FetchLLMResponseArgs = {
+  llm_chat: Pick<
+    DBSSchema["llm_chats"],
+    "extra_body" | "extra_headers" | "options"
+  >;
+  llm_model: DBSSchema["llm_models"];
+  llm_provider: DBSSchema["llm_providers"];
+  llm_credential: DBSSchema["llm_credentials"];
+  tools: undefined | (MCPToolSchema & { auto_approve: boolean })[];
+  messages: LLMMessageWithRole[];
+  aborter: AbortController;
+};
+
+export const fetchLLMResponse = async (
+  args: FetchLLMResponseArgs,
+): Promise<LLMParsedResponse> => {
+  const { llm_provider, llm_credential, llm_model, aborter } = args;
+
+  const model = llm_model.name;
+  const provider = llm_provider.id;
+  const { api_key } = llm_credential;
+  const { body, headers } = getLLMRequestBody(args);
+  const api_url = llm_provider.api_url
+    .replace("$KEY", api_key)
+    .replace("$MODEL", model);
+  if (api_url === "http://localhost:3004/mocked-llm") {
+    return {
+      content: [{ type: "text", text: "Mocked response" }],
+      cost: 0,
+      total_tokens: 0,
+    };
+  }
+
+  const res = await fetch(api_url, {
+    method: "POST",
+    headers,
+    body,
+    signal: aborter.signal,
+  }).catch((err) => {
+    const serialisableError = getSerialisableError(err);
+    return Promise.reject(serialisableError);
+  });
+  if (!res.ok) {
+    const contentType = res.headers.get("content-type");
+    const errorData = {
+      statusText: res.statusText,
+      statusCode: res.status,
+      error: "" as unknown,
+    };
+    if (contentType?.includes("application/json")) {
+      errorData.error = await res.json();
+    } else {
+      errorData.error = await res.text();
+    }
+
+    throw new Error(
+      `Failed to fetch LLM response: ${res.statusText} ${JSON.stringify(errorData)}`,
+    );
+  }
+  const responseClone = res.clone();
+
+  const responseData = (await readFetchStream(res)) as AnyObject | undefined;
+  if (!responseData) {
+    throw new Error(
+      "No response data from LLM. statusText:" + responseClone.statusText,
+    );
+  }
+
+  if ("error" in responseData) {
+    throw new Error(
+      `Error response from LLM: ${JSON.stringify(responseData)} statusText:${responseClone.statusText}`,
+    );
+  }
+
+  try {
+    return parseLLMResponseObject({
+      provider,
+      responseData,
+      model: llm_model,
+    });
+  } catch (e) {
+    console.error(
+      `Error parsing LLM response from ${provider} for model ${model}`,
+      getSerialisableError(e),
+      responseData,
+    );
+    throw new Error(
+      `Error parsing LLM response from ${provider} for model ${model}: ${JSON.stringify(getSerialisableError(e))} statusText:${responseClone.statusText}`,
+    );
+  }
+};

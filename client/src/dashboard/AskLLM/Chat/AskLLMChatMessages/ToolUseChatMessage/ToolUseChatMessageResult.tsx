@@ -11,10 +11,7 @@ import type {
 
 export const ToolUseChatMessageResult = (
   props: ToolUseMessageProps & {
-    anchorEl: HTMLElement | undefined;
-    setAnchorEl: React.Dispatch<
-      React.SetStateAction<HTMLButtonElement | undefined>
-    >;
+    anchorEl: boolean;
   } & Pick<
       ToolUseChatMessageState,
       "toolUseResult" | "toolUseMessage" | "toolUseMessageContent"
@@ -26,6 +23,7 @@ export const ToolUseChatMessageResult = (
     anchorEl,
     toolUseMessageContent,
     toolUseMessage,
+    loadedSuggestions,
   } = props;
 
   const toolCallError =
@@ -39,16 +37,19 @@ export const ToolUseChatMessageResult = (
 
   return (
     <>
-      <FlexCol className="w-full">
+      <FlexCol className="ToolUseChatMessageResult f-1 min-w-0">
         {(displayMode === "full" || anchorEl) && ProstglesToolComponent && (
           <ProstglesToolComponent
             workspaceId={workspaceId}
-            message={toolUseMessageContent}
+            toolUseContent={toolUseMessageContent}
             chatId={toolUseMessage.chat_id}
-            toolUseResult={toolUseResult}
+            resultContent={toolUseResult?.toolUseResultMessage}
+            loadedSuggestions={loadedSuggestions}
           />
         )}
-        {toolCallError && <ErrorComponent error={toolCallError} />}
+        {toolCallError && !ProstglesTool?.showsError && (
+          <ErrorComponent error={toolCallError} />
+        )}
       </FlexCol>
       {anchorEl && !displayMode && <ToolUseChatMessageJSONData {...props} />}
     </>

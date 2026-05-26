@@ -65,6 +65,7 @@ export const SmartFormFooterButtons = (props: P): JSX.Element => {
           color="action"
           className=""
           variant="filled"
+          size="default"
           disabledInfo={errorMsg}
           onClick={buttons.onClickUpdate}
         >
@@ -76,6 +77,7 @@ export const SmartFormFooterButtons = (props: P): JSX.Element => {
           {...dataCommand("SmartForm.delete")}
           title="Delete record"
           color="danger"
+          size="default"
           disabledInfo={errorMsg}
           iconPath={mdiDelete}
           onClick={buttons.onClickDelete}
@@ -89,8 +91,8 @@ export const SmartFormFooterButtons = (props: P): JSX.Element => {
           {...dataCommand("SmartForm.clone")}
           iconPath={mdiContentCopy}
           variant="filled"
+          size="default"
           title="Prepare a duplicate insert that excludes primary key fields"
-          className="ml-auto"
           onClick={buttons.onClickClone}
         >
           Clone
@@ -103,6 +105,7 @@ export const SmartFormFooterButtons = (props: P): JSX.Element => {
           disabledInfo={errorMsg}
           className=" "
           variant="filled"
+          size="default"
           onClick={buttons.onClickInsert}
         >
           {parentForm?.type === "insert" ? `Add` : `Insert`}
@@ -116,6 +119,8 @@ export const SmartFormFooterButtons = (props: P): JSX.Element => {
       {onClose && (
         <Btn
           className=" bg-color-0 mr-auto"
+          size="default"
+          variant="faded"
           {...dataCommand("SmartForm.close")}
           onClick={() => onClose(true)}
         >

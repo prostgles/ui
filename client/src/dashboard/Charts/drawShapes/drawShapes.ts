@@ -2,8 +2,9 @@ import type { Point } from "../../Charts";
 import type { Image, LinkLine, Shape } from "../CanvasChart";
 import { drawMonotoneXCurve } from "../drawMonotoneXCurve";
 import { measureText } from "../TimeChart/measureText";
-import { roundRect } from "../roundRect";
+import { DEFAULT_SHADOW } from "../constants";
 import { drawLinkLine } from "./drawLinkLine";
+import { roundRect } from "../roundRect";
 // import { drawLinkLine } from "./shortestLinkLineV2";
 export type ShapeV2<T = void> = Shape<T> | LinkLine<T> | Image<T>;
 const getWH = (canvas: HTMLCanvasElement) => {
@@ -56,6 +57,9 @@ export const drawShapes = (
     }
 
     ctx.globalAlpha = s.opacity ?? 1;
+    if (s.filter) {
+      ctx.filter = s.filter;
+    }
     ctx.lineJoin = "bevel";
     if (s.type === "image") {
       ctx.drawImage(s.image, ...s.coords, s.w, s.h);
@@ -68,8 +72,22 @@ export const drawShapes = (
       const x2 = s.w + x1;
       const w = x2 - x1;
       if (s.borderRadius) {
+        const elevation = s.elevation;
         ctx.lineJoin = "round";
-        roundRect(ctx, x1, y1, w, s.h, s.borderRadius);
+        roundRect(
+          ctx,
+          x1,
+          y1,
+          w,
+          s.h,
+          s.borderRadius,
+          !elevation ? undefined : (
+            {
+              ...DEFAULT_SHADOW,
+              blur: elevation,
+            }
+          ),
+        );
       } else {
         ctx.beginPath();
         ctx.rect(x1, y1, w, s.h);

@@ -9,6 +9,7 @@ import Btn from "@components/Btn";
 import { MapOSMQuery } from "../W_Map/controls/MapOSMQuery";
 import type { Extent } from "../Map/DeckGLMap";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import { SvgIcon } from "@components/SvgIcon";
 
 export const defaultWorldExtent: Extent = [-180, -90, 180, 90];
 
@@ -33,6 +34,7 @@ export const AddChartLayer = (props: MapLayerManagerProps) => {
             key: `${t.name}.${c.name}`,
             tableName: t.name,
             column: c.name,
+            icon: t.icon,
           }));
         }
         return undefined;
@@ -55,40 +57,50 @@ export const AddChartLayer = (props: MapLayerManagerProps) => {
           key: t.key,
           label: t.tableName,
           subLabel: t.column,
+          leftContent: (
+            <SvgIcon className="text-1" icon={t.icon || "Table"} size={20} />
+          ),
         }))}
         onChange={async (key) => {
           const chartTableFromKey = chartTables.find((gt) => gt.key === key);
-          if (chartTableFromKey) {
-            const colorArr = [100, 20, 57];
+          if (!chartTableFromKey) return;
+          const colorArr = [100, 20, 57];
 
-            await dbs.links
-              .insert({
-                w1_id: w.id,
-                w2_id: w.id,
-                workspace_id: w.workspace_id,
-                options: {
-                  type,
-                  dataSource: {
-                    type: "local-table",
-                    localTableName: chartTableFromKey.tableName,
-                  },
-                  columns: [
-                    {
-                      name: chartTableFromKey.column,
-                      colorArr,
-                    },
-                  ],
+          await dbs.links
+            .insert({
+              w1_id: w.id,
+              w2_id: w.id,
+              workspace_id: w.workspace_id,
+              options: {
+                type,
+                dataSource: {
+                  type: "local-table",
+                  localTableName: chartTableFromKey.tableName,
                 },
-                last_updated: undefined as any,
-                user_id: undefined as any,
-              })
-              .catch((e) => {
-                console.error(e);
-                setError(() => {
-                  throw new Error(e);
-                });
+                ...(type === "map" &&
+                  chartTableFromKey.icon && {
+                    mapIcons: {
+                      type: "fixed",
+                      iconPath: chartTableFromKey.icon,
+                      display: "icon",
+                    },
+                  }),
+                columns: [
+                  {
+                    name: chartTableFromKey.column,
+                    colorArr,
+                  },
+                ],
+              },
+              last_updated: undefined as unknown as string,
+              user_id: undefined as unknown as string,
+            })
+            .catch((e) => {
+              console.error(e);
+              setError(() => {
+                throw new Error(e);
               });
-          }
+            });
         }}
       />
       {type === "map" && (
@@ -115,10 +127,10 @@ export const AddChartLayer = (props: MapLayerManagerProps) => {
                   options: {
                     type,
                     columns: [],
-                    osmLayerQuery,
+                    dataSource: { type: "osm", osmLayerQuery },
                   },
-                  last_updated: undefined as any,
-                  user_id: undefined as any,
+                  last_updated: undefined as unknown as string,
+                  user_id: undefined as unknown as string,
                 });
               }}
             />

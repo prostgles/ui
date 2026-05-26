@@ -82,7 +82,7 @@ export const ColumnEditor = ({
               : di.udt_name,
             label: di.name,
             subLabel: di.desc,
-          }) as Item,
+          }),
       ) ??
       dataTypes
         .concat(["SERIAL", "BIGSERIAL"].map((key) => ({ key })))

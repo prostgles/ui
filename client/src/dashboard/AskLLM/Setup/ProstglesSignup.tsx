@@ -1,24 +1,25 @@
-import React from "react";
+import { isObject } from "@common/publishUtils";
+import { getProperty } from "@common/utils";
 import { SuccessMessage } from "@components/Animations";
 import Btn from "@components/Btn";
 import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
+import { ERR_CODE_MESSAGES } from "prostgles-client";
+import React, { useState } from "react";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import type { SetupLLMCredentialsProps } from "./SetupLLMCredentials";
-import { isObject } from "@common/publishUtils";
-import { ERR_CODE_MESSAGES } from "../../../pages/Login/useLoginState";
 
 export const ProstglesSignup = ({
   setupState,
-  dbsMethods,
-  dbs,
-}: Pick<SetupLLMCredentialsProps, "setupState" | "dbs" | "dbsMethods">) => {
+}: Pick<SetupLLMCredentialsProps, "setupState">) => {
+  const { dbsMethods, dbs } = usePrglCore();
   const [email, setEmail] = React.useState(
     setupState.globalSettings?.data?.prostgles_registration?.email || "",
   );
-  const [didSendCode, setDidSendCode] = React.useState(false);
-  const [otpCode, setOtpCode] = React.useState("");
-  const [error, setError] = React.useState<any>();
+  const [didSendCode, setDidSendCode] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [error, setError] = useState<unknown>();
   return (
     <FlexCol className="ProstglesSignup">
       <div>
@@ -55,7 +56,7 @@ export const ProstglesSignup = ({
           />
         </>
       )}
-      {error && <ErrorComponent error={error} />}
+      <ErrorComponent error={error} />
       <Btn
         variant="filled"
         color="action"
@@ -65,7 +66,7 @@ export const ProstglesSignup = ({
           setError(undefined);
           try {
             const { token, host, error, hasError } =
-              await dbsMethods.prostglesSignup!(email, otpCode);
+              await dbsMethods.prostglesSignup!({ email, code: otpCode });
             if (hasError) {
               throw error;
             }
@@ -77,14 +78,13 @@ export const ProstglesSignup = ({
                 id: "Prostgles",
               },
               {
-                api_url: `${host}/rest-api/cloud/methods/askLLM`,
+                api_url: `${host}/rest-api/methods/askLLM`,
               },
             );
             await dbs.llm_credentials.insert({
               provider_id: "Prostgles",
               api_key,
-              //@ts-ignore
-              user_id: undefined,
+              user_id: undefined as unknown as string,
             });
             /** This will trigger a page reload. Keep it last to ensure any errors during token validation are shown */
             await dbs.global_settings.update(
@@ -93,7 +93,7 @@ export const ProstglesSignup = ({
             );
           } catch (err) {
             if (isObject(err) && "code" in err) {
-              setError(ERR_CODE_MESSAGES[err.code] ?? err);
+              setError(getProperty(ERR_CODE_MESSAGES, err.code) ?? err);
             } else {
               setError(err);
             }

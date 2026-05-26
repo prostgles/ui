@@ -14,6 +14,7 @@ import {
   useSearchListOnKeyUpDown,
 } from "./hooks/useSearchListOnKeyUpDown";
 import { useSearchListSearch } from "./hooks/useSearchListSearch";
+import { ClickCatchOverlayZIndex } from "@components/ClickCatchOverlay";
 
 export const SearchListContent = <M extends boolean = false>(
   props: SearchListProps<M>,
@@ -40,6 +41,7 @@ export const SearchListContent = <M extends boolean = false>(
     dataSignature,
     leftContent,
     noBorder,
+    belowSearchBoxContent,
   } = props;
   const multiSelect = !!onMultiToggle;
   const noShadow = variant?.includes("no-shadow");
@@ -73,7 +75,7 @@ export const SearchListContent = <M extends boolean = false>(
     matchCase,
   });
 
-  const noList = isSearch ? searchClosed : false; // !renderedItems.length && !searchTerm;
+  const noList = isSearch ? searchClosed : false;
 
   const wrapperStyleFinal = useMemo(() => {
     if (noBorder) {
@@ -111,7 +113,7 @@ export const SearchListContent = <M extends boolean = false>(
     }
   }, [autoFocus]);
 
-  const { onKeyDown } = useSearchListOnKeyUpDown({
+  const { onKeyDown, showFirstItemAsFocused } = useSearchListOnKeyUpDown({
     refList,
     onPressEnter,
     endSearch,
@@ -120,6 +122,7 @@ export const SearchListContent = <M extends boolean = false>(
   });
 
   const noSearch =
+    !multiSelect && // required to toggle all
     !onSearchItems &&
     items.length < noSearchLimit &&
     !searchTerm &&
@@ -132,7 +135,7 @@ export const SearchListContent = <M extends boolean = false>(
     );
   }
 
-  const hasSearch = !(noSearch || inputEl);
+  const hasSearch = !noSearch && !inputEl;
 
   const listNode =
     error ? <ErrorComponent error={error} />
@@ -147,11 +150,16 @@ export const SearchListContent = <M extends boolean = false>(
         searchingItems={searchingItems}
         endSearch={endSearch}
         showHover={showHover}
+        listStyle={props.listStyle}
+        showFirstItemAsFocused={showFirstItemAsFocused}
       />;
+
   return (
     <div
       data-command="SearchList"
-      className={"SearchList list-comp ta-left flex-col min-h-0 " + className}
+      className={
+        "SearchList list-comp ta-left flex-col min-h-0 gap-dp5 " + className
+      }
       ref={rootRef}
       onKeyDown={onKeyDown}
       style={{ ...style, ...(!isSearch ? rootStyle : {}) }}
@@ -168,38 +176,12 @@ export const SearchListContent = <M extends boolean = false>(
           (isSearch ? " " : "  ai-center  ") +
           (!hasSearch && !multiSelect ? " hidden" : "")
         }
-        style={searchStyle}
+        style={{
+          zIndex:
+            isSearch && listNode ? ClickCatchOverlayZIndex + 1 : undefined,
+          ...searchStyle,
+        }}
       >
-        {!!multiSelect && (
-          <Checkbox
-            title="Toggle all"
-            className={!renderedItems.length ? "hidden" : ""}
-            data-command="SearchList.toggleAll"
-            checked={Boolean(renderedSelected.length)}
-            onChange={(e) => {
-              const checked = e.currentTarget.checked;
-
-              const newItems = items.map((d) => {
-                /** If filteted then only update the visible items */
-                const filteredItem =
-                  !searchTerm ? d : (
-                    renderedItems.find((_d) => _d.key === d.key)
-                  );
-                return {
-                  ...d,
-                  checked:
-                    filteredItem ?
-                      d.disabledInfo ?
-                        d.checked
-                      : checked
-                    : d.checked,
-                };
-              });
-
-              onMultiToggle(newItems, e);
-            }}
-          />
-        )}
         {!hasSearch ?
           multiSelect ?
             <div className="pl-1 py-p5 noselect text-1p5 ws-nowrap">
@@ -208,7 +190,46 @@ export const SearchListContent = <M extends boolean = false>(
           : null
         : <SearchInput
             id={id}
-            leftContent={leftContent}
+            leftContent={
+              Boolean(leftContent || multiSelect) && (
+                <>
+                  {leftContent}
+                  {!!multiSelect && (
+                    <Checkbox
+                      title="Toggle all"
+                      className={"mx-p5"}
+                      disabledInfo={
+                        !renderedItems.length ? "No items to toggle" : undefined
+                      }
+                      data-command="SearchList.toggleAll"
+                      checked={Boolean(renderedSelected.length)}
+                      onChange={(e) => {
+                        const checked = e.currentTarget.checked;
+
+                        const newItems = items.map((d) => {
+                          /** If filteted then only update the visible items */
+                          const filteredItem =
+                            !searchTerm ? d : (
+                              renderedItems.find((_d) => _d.key === d.key)
+                            );
+                          return {
+                            ...d,
+                            checked:
+                              filteredItem ?
+                                d.disabledInfo ?
+                                  d.checked
+                                : checked
+                              : d.checked,
+                          };
+                        });
+
+                        onMultiToggle(newItems, e);
+                      }}
+                    />
+                  )}
+                </>
+              )
+            }
             withShadow={isSearch && !noShadow}
             inputRef={inputRef}
             inputWrapperRef={inputWrapperRef}
@@ -236,7 +257,7 @@ export const SearchListContent = <M extends boolean = false>(
                 }
               : undefined
             }
-            matchCase={
+            matchCaseState={
               props.matchCase?.hide ?
                 undefined
               : {
@@ -254,6 +275,7 @@ export const SearchListContent = <M extends boolean = false>(
           />
         }
       </div>
+      {belowSearchBoxContent}
       {listNode}
     </div>
   );

@@ -3,7 +3,6 @@ import type {
   DetailedJoinedFilter,
   FilterType,
 } from "@common/filterUtils";
-import "./FilterWrapper.css";
 import {
   CORE_FILTER_TYPES,
   DATE_FILTER_TYPES,
@@ -17,14 +16,19 @@ import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
 import { Select } from "@components/Select/Select";
 import { mdiCheckBold, mdiDelete } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import { includes } from "prostgles-types";
 import React from "react";
+import type { Prgl } from "src/App";
 import { CONTEXT_FILTER_OPERANDS } from "../AccessControl/ContextFilter";
 import RTComp from "../RTComp";
+import { JOIN_FILTER_TYPES } from "../SmartFilter/AddJoinFilter";
+import { MinimisedFilter } from "../SmartFilter/MinimisedFilter";
+import {
+  DEFAULT_VALIDATED_COLUMN_INFO,
+  type FilterColumn,
+} from "../SmartFilter/smartFilterUtils";
 import { colIs } from "../SmartForm/SmartFormField/fieldUtils";
 import type { ColumnConfig } from "../W_Table/ColumnMenu/ColumnMenu";
-import { JOIN_FILTER_TYPES } from "../SmartFilter/AddJoinFilter";
 import {
   AgeFilterTypes,
   getDefaultAgeFilter,
@@ -33,14 +37,10 @@ import {
   GeoFilterTypes,
   getDefaultGeoFilter,
 } from "./DetailedFilterBaseTypes/GeoFilter";
-import { MinimisedFilter } from "../SmartFilter/MinimisedFilter";
-import {
-  DEFAULT_VALIDATED_COLUMN_INFO,
-  type FilterColumn,
-} from "../SmartFilter/smartFilterUtils";
+import "./FilterWrapper.css";
 
 export type FilterWrapperProps = {
-  db: DBHandlerClient;
+  db: Prgl["db"];
   tableName: string;
   onChange: (filter?: DetailedFilterBase) => void;
   filter?: DetailedFilterBase;
@@ -146,11 +146,14 @@ export class FilterWrapper extends RTComp<
       <Btn
         title={(filter.disabled ? "Enable" : "Disable") + " filter"}
         iconPath={mdiCheckBold}
+        size="small"
         className={`DisableEnableToggle ${minimised ? "round" : "rounded-l"}`}
         style={{
           ...(minimised && {
             background: "transparent",
             padding: 0,
+            minHeight: 0,
+            minWidth: 0,
           }),
         }}
         onClick={() => onChange({ ...filter, disabled: !filter.disabled })}
@@ -187,6 +190,7 @@ export class FilterWrapper extends RTComp<
           color: "default",
           variant: "default",
         }}
+        size="small"
         onChange={(type) => {
           let newF: DetailedFilterBase = {
             ...filter,
@@ -286,7 +290,7 @@ export class FilterWrapper extends RTComp<
                     color: btnColor,
                     variant: "default",
                   }}
-                  showIconOnly={true}
+                  showSelected={"icon"}
                   onChange={(type) => {
                     rootFilter.onChange({
                       ...rootFilter.value,
@@ -300,6 +304,7 @@ export class FilterWrapper extends RTComp<
                 data-command="FilterWrapper_Field"
                 onClick={toggle}
                 variant="text"
+                size="small"
                 title={toggleTitle}
                 color={btnColor}
               >
@@ -313,7 +318,9 @@ export class FilterWrapper extends RTComp<
 
           <Btn
             iconPath={mdiDelete}
+            data-command="FilterWrapper.deleteFilter"
             title="Delete filter"
+            size="small"
             onClick={() => {
               onChange();
             }}

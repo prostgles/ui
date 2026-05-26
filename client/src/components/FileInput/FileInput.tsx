@@ -163,11 +163,6 @@ export class FileInput extends RTComp<
           <FileInputMedia
             file={focusedFile.file}
             i={"focused"}
-            // style={{
-            //   width: "fit-content",
-            //   height: "fit-content",
-            //   border: "unset",
-            // }}
             onClick={
               !contentType.startsWith("image") ?
                 undefined
@@ -217,7 +212,7 @@ export class FileInput extends RTComp<
             accept={accept}
             multiple={maxFileCount > 1}
             onChange={(e) => {
-              setFiles(e.target.files ?? ([] as any));
+              setFiles(e.target.files ?? []);
             }}
           />
         </label>;
@@ -228,9 +223,9 @@ export class FileInput extends RTComp<
     );
     const showRightChevron = Boolean(
       showChevrons &&
-        (!this.refWrapper?.scrollLeft ||
-          this.refWrapper.scrollWidth - 20 >
-            this.refWrapper.scrollLeft + this.refWrapper.clientWidth),
+      (!this.refWrapper?.scrollLeft ||
+        this.refWrapper.scrollWidth - 20 >
+          this.refWrapper.scrollLeft + this.refWrapper.clientWidth),
     );
 
     const scrollItem = (val: 1 | -1) => {
@@ -343,17 +338,6 @@ export class FileInput extends RTComp<
                       focusedFile: { file: mediaItem, index: i },
                     });
                   }}
-                  // style={
-                  //   !isViewerMode ?
-                  //     {}
-                  //   : {
-                  //       width: "250px",
-                  //       height: "250px",
-                  //       minWidth: `${minSize}px`,
-                  //       minHeight: `${minSize}px`,
-                  //       margin: 0,
-                  //     }
-                  // }
                 />
               );
             })}

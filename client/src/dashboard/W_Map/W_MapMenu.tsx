@@ -168,6 +168,17 @@ export const W_MapMenu = (props: ProstglesMapMenuProps) => {
                   );
                 }}
               />
+              {/* Really bad quality/UX with features missing when zoomed in */}
+              {/* <SwitchToggle
+                label={`Enable collision filter`}
+                checked={!!w.options.enableCollisionFilter}
+                onChange={(enableCollisionFilter) => {
+                  w.$update(
+                    { options: { enableCollisionFilter } },
+                    { deepMerge: true },
+                  );
+                }}
+              /> */}
             </div>
           ),
         },

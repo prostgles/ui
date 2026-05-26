@@ -4,7 +4,8 @@ import { Label } from "@components/Label";
 import PopupMenu from "@components/PopupMenu";
 import { mdiPlus, mdiSigma } from "@mdi/js";
 import React, { useState } from "react";
-import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
+import type { DBSchemaTableWithRenderInfo } from "src/dashboard/Dashboard/getTables";
+import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 import type { ColumnConfigWInfo } from "../../W_Table";
 import { getColWInfo } from "../../tableUtils/getColWInfo";
 import { getMinimalColumnInfo } from "../../tableUtils/tableUtils";
@@ -14,11 +15,10 @@ import { ColumnList } from "../ColumnList";
 import type { ColumnConfig } from "../ColumnMenu";
 import { NestedTimechartControls } from "../NestedTimechartControls";
 import type { LinkedColumnProps } from "./LinkedColumn";
-import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 
 type P = LinkedColumnProps & {
   updateNested: (newNested: Partial<ColumnConfig["nested"]>) => void;
-  table: DBSchemaTablesWJoins[number] | undefined;
+  table: DBSchemaTableWithRenderInfo | undefined;
   currentColumn: ColumnConfigWInfo | undefined;
   updateColumn: (newCol: Partial<ColumnConfig>) => void;
 };
@@ -46,11 +46,11 @@ export const LinkedColumnSelect = ({
         <PopupMenu
           data-command="LinkedColumn.ColumnListMenu"
           title="Select columns"
-          contentClassName=""
+          contentClassName="f-1 min-h-0 o-hidden"
           clickCatchStyle={{ opacity: 0.1 }}
           positioning="beneath-left"
           button={
-            <FlexCol className="gap-p25">
+            <FlexCol className="gap-p25 min-h-0">
               <Label label="Columns" variant="normal"></Label>
               <Btn
                 variant="faded"
@@ -68,7 +68,7 @@ export const LinkedColumnSelect = ({
           }
           render={(pClose) => {
             return (
-              <FlexCol>
+              <FlexCol className="min-h-0">
                 <ColumnList
                   columns={nestedColumns}
                   table={table}
@@ -122,7 +122,7 @@ export const LinkedColumnSelect = ({
               updateNested({ chart, limit: chart ? 200 : 20 });
             }}
           />
-          <div className="py-p75">OR</div>
+          <div className="py-p5">OR</div>
 
           <PopupMenu
             contentClassName="p-1 flex-col gap-1"
@@ -130,11 +130,7 @@ export const LinkedColumnSelect = ({
             positioning="beneath-left"
             data-command="QuickAddComputedColumn"
             button={
-              <Btn
-                variant="faded"
-                iconPath={mdiSigma}
-                data-command="QuickAddComputedColumn"
-              >
+              <Btn variant="faded" iconPath={mdiSigma}>
                 Row count/Aggregate
               </Btn>
             }
@@ -143,8 +139,8 @@ export const LinkedColumnSelect = ({
                 tableName={table.name}
                 existingColumn={undefined}
                 onAddColumn={(newCol) => {
+                  popupClose();
                   if (!newCol) {
-                    popupClose();
                     return;
                   }
                   const oldHiddenCols = (nestedColumns ?? []).map((c) => ({

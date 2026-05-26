@@ -1,0 +1,206 @@
+import { FlexCol, FlexRow } from "@components/Flex";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import React, { useMemo, useState } from "react";
+
+import { isDefined } from "@common/filterUtils";
+import type { DBSSchema } from "@common/publishUtils";
+import Btn from "@components/Btn";
+import { Marked } from "@components/Chat/Marked";
+import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
+import { Icon } from "@components/Icon/Icon";
+import { ScrollFade } from "@components/ScrollFade/ScrollFade";
+import { Select } from "@components/Select/Select";
+import { mdiCogOutline, mdiRobotOutline, mdiTools } from "@mdi/js";
+import { useMcpToolsSelectOptions } from "@pages/ServerSettings/MCPServers/MCPServerTools/useMcpToolsSelectOptions";
+import { isNotEmpty } from "prostgles-types";
+import { LLMModelSelector } from "src/dashboard/AskLLM/LLMModelSelector";
+import { CodeEditorWithSaveButton } from "src/dashboard/CodeEditor/CodeEditorWithSaveButton";
+import { McpToolAccess } from "./McpToolAccess";
+
+export const AgentDefinition = ({
+  config,
+  agentName,
+  onChange,
+}: {
+  config: NonNullable<
+    DBSSchema["agentic_workflows"]["definition_data"]["agentDefinitions"]
+  >[string] &
+    NonNullable<
+      NonNullable<
+        DBSSchema["agentic_workflows"]["definition_override"]
+      >["agentDefinitions"]
+    >[string];
+
+  agentName: string;
+  onChange: (updatedFields: Partial<typeof config>) => void | Promise<void>;
+}) => {
+  const prgl = usePrgl();
+  const [expanded, setExpanded] = useState(false);
+  const {
+    prompt,
+    maxIterations,
+    modelName,
+    maxTokens,
+    temperature,
+    tools: agentTools,
+  } = config;
+  const { options, tools } = useMcpToolsSelectOptions();
+
+  const agentToolsList =
+    agentTools &&
+    Object.entries(agentTools)
+      .flatMap(([mcpServerName, toolNameObj = {}]) => {
+        const toolNames = Object.keys(toolNameObj);
+        return toolNames.map((toolName) => {
+          const tool = tools?.find(
+            (t) => t.server_name === mcpServerName && t.name === toolName,
+          );
+          if (!tool) return;
+          return {
+            mcpServerName,
+            toolName,
+            id: tool.id,
+          };
+        });
+      })
+      .filter(isDefined);
+
+  const selectedToolIds = useMemo(
+    () => agentToolsList?.map((t) => t.id) ?? [],
+    [agentToolsList],
+  );
+  return (
+    <FlexCol
+      className="AgentDefinition rounded b b-color p-p5 min-w-0 relative o-auto"
+      style={{ fontWeight: "normal" }}
+    >
+      <FlexRow className="gap-p5">
+        <Icon path={mdiRobotOutline} />
+        <span style={{ fontWeight: "bold" }}>{agentName}</span>
+        <LLMModelSelector
+          modelName={modelName}
+          forAgent={true}
+          value={null}
+          onChange={(_, { name }) => {
+            void onChange({ modelName: name });
+          }}
+        />
+        <Btn
+          size="small"
+          onClick={() => setExpanded((e) => !e)}
+          iconPath={mdiCogOutline}
+          variant="faded"
+          color={expanded ? "action" : "default"}
+          style={{
+            transition: "transform 0.2s",
+            // position: "absolute",
+            right: "5px",
+            top: "5px",
+          }}
+        />
+      </FlexRow>
+      {expanded ?
+        <Select
+          value={selectedToolIds}
+          size="small"
+          multiSelect={true}
+          fullOptions={options}
+          btnProps={{
+            children:
+              agentToolsList ?
+                `${agentToolsList.length} tool${agentToolsList.length > 1 ? "s" : ""} selected`
+              : "Select tools",
+            variant: "faded",
+            iconPath: mdiTools,
+          }}
+          onChange={(newToolIds) => {
+            const newAgentTools: Partial<
+              Record<string, Partial<Record<string, 1>>>
+            > = {};
+            tools?.forEach(({ id, server_name, name }) => {
+              if (!newToolIds.includes(id)) return;
+              newAgentTools[server_name] ??= {};
+              newAgentTools[server_name][name] = 1;
+            });
+            void onChange({
+              tools: newAgentTools,
+            });
+          }}
+        />
+      : isNotEmpty(agentTools) ?
+        <McpToolAccess
+          title="Agent tools"
+          value={agentTools}
+          configs={config.mcpServerConfigs}
+          onConfigChange={(serverName, configId) => {
+            void onChange({
+              mcpServerConfigs: {
+                ...(config.mcpServerConfigs ?? {}),
+                [serverName]: { configId },
+              },
+            });
+          }}
+        />
+      : null}
+      <ScrollFade
+        className="o-auto min-w-0"
+        style={{ maxHeight: expanded ? "400px" : "150px" }}
+      >
+        {expanded ?
+          <CodeEditorWithSaveButton
+            label="Agent prompt"
+            value={prompt}
+            language="markdown"
+            onSave={(newPrompt) => {
+              void onChange({ prompt: newPrompt });
+            }}
+          />
+        : <Marked
+            style={{ fontStyle: "italic" }}
+            codeHeader={undefined}
+            content={slicePrompt(prompt)}
+            loadedSuggestions={undefined}
+            prgl={prgl}
+            sqlHandler={undefined}
+          />
+        }
+      </ScrollFade>
+      {expanded && (
+        <FlexRow>
+          <FormFieldDebounced
+            label="Max iterations"
+            value={maxIterations}
+            type="integer"
+            onChange={async (newVal) => {
+              await onChange({ maxIterations: Number(newVal) });
+            }}
+          />
+          <FormFieldDebounced
+            label="Max tokens"
+            value={maxTokens}
+            type="integer"
+            onChange={async (newVal) => {
+              await onChange({ maxTokens: Number(newVal) });
+            }}
+          />
+          <FormFieldDebounced
+            label="Temperature"
+            value={temperature}
+            type="number"
+            onChange={async (newVal) => {
+              await onChange({
+                temperature: Number(newVal),
+              });
+            }}
+          />
+        </FlexRow>
+      )}
+    </FlexCol>
+  );
+};
+
+const slicePrompt = (prompt: string | undefined) => {
+  if (!prompt) return "";
+  const sliced = prompt.split("\n").slice(0, 3).join("\n");
+  return sliced.length < prompt.length ? sliced + "..." : sliced;
+};

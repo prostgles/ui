@@ -29,7 +29,7 @@ export const createTables: DemoScript = async ({
     cols: { text: string; opts?: TypeAutoOpts }[];
   }) => {
     const newCol = async (wait = 500) => {
-      await typeText(",");
+      typeText(",");
       newLine();
       await tout(wait);
     };
@@ -50,10 +50,10 @@ export const createTables: DemoScript = async ({
         if (
           e
             .getModel()
-            ?.getLineContent(e.getPosition()?.lineNumber as any)
+            ?.getLineContent(e.getPosition()?.lineNumber ?? -2)
             .endsWith("   ")
         ) {
-          moveCursor.left();
+          await moveCursor.left();
         }
       }
     }
@@ -92,7 +92,7 @@ export const createTables: DemoScript = async ({
   /**
    * Create table plans
    */
-  fromBeginning();
+  await fromBeginning();
   await createTable({
     tableName: "plans",
     cols: [
@@ -108,7 +108,7 @@ export const createTables: DemoScript = async ({
    * Create table subscriptions
    * add referenced column
    */
-  fromBeginning();
+  await fromBeginning();
   await createTable({
     tableName: "subscriptions",
     cols: [{ text: "crea" }, { text: "pla" }],
@@ -119,7 +119,7 @@ export const createTables: DemoScript = async ({
    * Alter table users
    * Add referenced column
    */
-  fromBeginning();
+  await fromBeginning();
   await typeAuto("alt", {});
   await typeAuto(" ta", {});
   await typeAuto(" su", {});
@@ -134,7 +134,7 @@ export const createTables: DemoScript = async ({
   /**
    * Select join autocomplete
    */
-  fromBeginning();
+  await fromBeginning();
   await typeAuto("sel");
   await typeAuto(" ");
   await typeAuto("\n");
@@ -147,28 +147,28 @@ export const createTables: DemoScript = async ({
   /**
    * WITH and nested select
    */
-  fromBeginning();
+  await fromBeginning();
   await typeAuto("WITH cte1 AS ()", { nth: -1 });
-  moveCursor.left();
+  await moveCursor.left();
   await typeAuto("\nse");
   await typeAuto(" ");
   await typeAuto("\n"); // FROM
   await typeAuto(" ()", { nth: -1 });
-  moveCursor.left();
+  await moveCursor.left();
   await typeAuto("\n"); // SELECT
   await typeAuto(" ");
   await typeAuto("\n"); // FROM
   await typeAuto(" geo");
-  await typeAuto("\nwh");
+  await typeAuto("wh");
   await typeAuto(" coord");
   await typeAuto(" = 1", { nth: -1 });
-  moveCursor.down();
+  await moveCursor.down();
   await typeAuto(" t", { nth: -1 });
-  moveCursor.down();
-  await newLine();
+  await moveCursor.down();
+  newLine();
   await typeAuto("SELECT * fr");
   await typeAuto(" cte1;", { nth: -1 });
-  await newLine();
+  newLine();
   await typeAuto("SELECT st_point(1, 2)", { nth: -1 });
   await typeAuto("::geog");
   testEditorValue("nestedSelects");
@@ -176,15 +176,15 @@ export const createTables: DemoScript = async ({
   /**
    * insert cols/vals autocomplete
    */
-  fromBeginning();
+  await fromBeginning();
   await typeAuto("ins");
   await typeAuto(" pl");
   await typeAuto(" ()", { nth: -1 });
-  moveCursor.left();
+  await moveCursor.left();
   triggerParamHints();
   await typeAuto("'basic', 'basic', 10, '{}'", { msPerChar: 200, nth: -1 });
-  moveCursor.right();
-  moveCursor.right();
+  await moveCursor.right();
+  await moveCursor.right();
   await typeAuto(";", { nth: -1 });
   testEditorValue("insert");
   await runSQL();
@@ -193,24 +193,24 @@ export const createTables: DemoScript = async ({
     /**
      * Copy data to table
      */
-    fromBeginning();
+    await fromBeginning();
     await typeAuto("cop");
     await typeAuto(" p");
     await typeAuto(" ");
     newLine();
     await typeAuto("f");
     await typeAuto(" h");
-    moveCursor.left();
+    await moveCursor.left();
     await typeAuto("/");
-    moveCursor.right();
+    await moveCursor.right();
     await typeAuto(" ");
     await typeAuto("for");
     await typeAuto(" c");
     await typeAuto(", hea");
     await typeAuto(", qu");
     await typeAuto(" ", { nth: 1 });
-    moveCursor.right();
-    moveCursor.right();
+    await moveCursor.right();
+    await moveCursor.right();
     await typeAuto(";", { nth: -1 });
     // console.log({copy: e.getModel()?.getValue()})
     testEditorValue("copy");

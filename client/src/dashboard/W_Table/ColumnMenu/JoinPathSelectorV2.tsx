@@ -10,6 +10,7 @@ import CodeExample from "../../CodeExample";
 import type { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
 import type { TargetPath } from "../tableUtils/getJoinPaths";
 import { getJoinPathStr, getJoinPaths } from "../tableUtils/getJoinPaths";
+import type { SvgIconName } from "@components/SearchList/SearchList";
 type P = {
   tables: DBSchemaTablesWJoins;
   tableName: string;
@@ -130,14 +131,17 @@ export const JoinPathSelectorV2 = (props: P) => {
         return {
           ...getFullOption?.(j.path),
           key: j.label,
-          lastJoinLabel: j.labels.at(-1),
+          iconLeft: {
+            type: "SvgIcon",
+            pathName: (j.table.icon as SvgIconName | undefined) || "Table",
+          },
           ranking: (searchTerm) =>
             getSearchRanking(
               searchTerm,
               j.labels.map((l) => l.label),
             ),
           subLabel: j.table.columns.map((c) => c.name).join(", "),
-        };
+        } satisfies FullOption<string>;
       }),
     [allJoins, getFullOption],
   );
@@ -174,7 +178,8 @@ export const JoinPathSelectorV2 = (props: P) => {
       value={targetValue?.key}
       data-command="JoinPathSelectorV2"
       fullOptions={fullOptions}
-      variant={variant ? "search-list-only" : undefined}
+      noSearchLimit={0}
+      variant={!targetValue?.key || variant ? "search-list-only" : undefined}
       onChange={(key) => {
         const idx = fullOptions.findIndex((d) => d.key === key);
         const targetPath = allJoins[idx];
@@ -183,7 +188,8 @@ export const JoinPathSelectorV2 = (props: P) => {
           console.error("Path not found");
           return;
         }
-        onChange(targetPath, fullOpt.lastJoinLabel?.multiJoin);
+        const lastJoinLabel = targetPath.labels.at(-1);
+        onChange(targetPath, lastJoinLabel?.multiJoin);
       }}
     />
   );

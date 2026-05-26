@@ -4,8 +4,9 @@ import { ShorterText } from "@components/ShorterText";
 import type { ValidatedColumnInfo } from "prostgles-types";
 import { _PG_date, _PG_numbers, includes, isObject } from "prostgles-types";
 import React from "react";
-import { dateAsYMD_Time } from "../../Charts";
+import { dateAsYMD, dateAsYMD_Time } from "../../Charts";
 import { getPGIntervalAsText } from "../../W_SQL/customRenderers";
+import { RenderJson } from "./RenderValue/RenderJson";
 
 type P = {
   column:
@@ -148,10 +149,13 @@ export const RenderValue = ({
     if (c?.udt_name !== "timestamp") {
       try {
         const date = new Date(value);
+
         val =
-          dateAsYMD_Time(date) +
-          "." +
-          date.getMilliseconds().toString().padStart(3, "0");
+          c?.udt_name === "date" ?
+            dateAsYMD(date)
+          : dateAsYMD_Time(date) +
+            "." +
+            date.getMilliseconds().toString().padStart(3, "0");
       } catch (e) {
         console.error(e);
       }
@@ -163,9 +167,17 @@ export const RenderValue = ({
   }
 
   if (value && (c?.udt_name.startsWith("json") || isObject(value))) {
+    const title = (() => {
+      if (isObject(value)) {
+        try {
+          return JSON.stringify(value, null, 2);
+        } catch {}
+      }
+      return String(value);
+    })();
     return (
-      <span style={{ color: getColumnDataColor(c), ...style }}>
-        {getSliced(JSON.stringify(value))}
+      <span title={title} style={style}>
+        <RenderJson value={value} maxLength={maxLength} />
       </span>
     );
   }

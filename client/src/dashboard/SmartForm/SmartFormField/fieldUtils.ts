@@ -8,11 +8,13 @@ import {
   _PG_numbers,
   _PG_postgis,
   _PG_strings,
+  includes,
   isObject,
   TS_PG_Types,
 } from "prostgles-types";
 import type { FilterColumn } from "../../SmartFilter/smartFilterUtils";
 import { getPGIntervalAsText } from "../../W_SQL/customRenderers";
+import { getEntries } from "@common/utils";
 
 /**
  * Used in transforming a postgres/db value to a valid html <input /> OR <CodeEditor /> value
@@ -145,7 +147,7 @@ export const getInputType = (
     : ["address_line1", "address_line"].includes(c.name) ? "address-line1"
     : ["address_line2"].includes(c.name) ? "address-line2"
     : c.tsDataType === "string" ? "text"
-    : (c.tsDataType as string)
+    : (c.tsDataType)
   );
 };
 
@@ -200,9 +202,9 @@ export const tsDataTypeFromUdtName = (
   udtName: string,
 ): ValidatedColumnInfo["tsDataType"] => {
   return (
-    Object.entries(TS_PG_Types).find(([ts, pgArr]) =>
-      (pgArr as any).includes(udtName.toLowerCase()),
-    )?.[0] ?? ("string" as any)
+    getEntries(TS_PG_Types).find(([ts, pgArr]) =>
+      includes(pgArr, udtName.toLowerCase()),
+    )?.[0] ?? "string"
   );
 };
 

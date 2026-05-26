@@ -2,25 +2,34 @@ import { mdiMagnify, mdiPlus, mdiStop, mdiTools } from "@mdi/js";
 import { fixIndent } from "../../../demo/scripts/sqlVideoDemo";
 import { getCommandElemSelector } from "../../../Testing";
 import type { UIDocElement } from "../../UIDocs";
-import { DEFAULT_MCP_SERVER_NAMES } from "@common/mcp";
+import { DEFAULT_MCP_SERVER_NAMES } from "@common/mcpUtils";
 
 export const AIAssistantUIDoc = {
   type: "popup",
   selectorCommand: "AskLLM",
   title: "AI Assistant",
   description:
-    "Opens an AI assistant to help generate SQL queries, understand database schema, or perform other tasks.",
-  docs: fixIndent(`
+    "Opens an AI assistant chat to help generate SQL queries, understand database schema, or perform other tasks.",
+  docs: `
     The AI assistant is an intelligent companion that helps you work more efficiently with your PostgreSQL databases. 
     It can generate SQL queries, explain database schemas, analyze data patterns, and assist with various database-related tasks through a conversational interface.
     MCP Servers can be used to extend the AI capabilities with custom tools and integrations.
 
+    # Features
+
+    - **Agentic Workflows**: Generate, save and re-run TypeScript automations in an isolated sandbox with granular access to data, MCP tools and filesystem.
+    - **Progressive schema discovery**: Each conversation fetches only the table and tool schemas it actually needs, keeping the context window clean and focused.
+    - **Granular per-chat permissions**: Configure database access, schema visibility, and tool permissions independently for each conversation
+    - **Works with hosted and local models**: It supports OpenAI, Anthropic, Gemini, OpenRouter, Ollama, and OpenAI-compatible local models.
+    - **Multimodal input**: Attach files, convert supported documents and images into markdown context, and use speech-to-text.
+    
+
     <img src="./screenshots/ai_assistant.svgif.svg" alt="AI assistant popup screenshot" />
  
-    Supported AI Providers: OpenAI, Anthropic, Google Gemini, OpenRouter, and Local Models. 
+    Supported AI Providers: OpenAI, Anthropic, Google Gemini, OpenRouter, Ollama and any other Local Models that support the openai spec. 
 
-    *Note: AI providers are configured by administrators in Server Settings > LLM Providers*
-  `),
+    *Note: AI providers are configured in Server Settings > LLM Providers*
+  `,
   docOptions: "asSeparateFile",
   children: [
     {

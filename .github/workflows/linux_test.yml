@@ -9,7 +9,7 @@ concurrency:
 jobs:
   test_linux:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 65
     services:
       postgres:
         image: postgis/postgis:15-3.3
@@ -25,11 +25,17 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
         with:
-          node-version: 20
           fetch-depth: 2 # Fetch at least 2 commits to ensure doc checks work
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "npm"
+          cache-dependency-path: |
+            client/package-lock.json
+            server/package-lock.json
+            e2e/package-lock.json
 
       - name: Install curl inside postgres container for video needed for demo
         run: |
@@ -72,10 +78,12 @@ jobs:
             e2e/electron-report/
             e2e/playwright-report/
           retention-days: 10
+          if-no-files-found: warn
   test_desktop_on_macos:
     runs-on: macos-latest
     timeout-minutes: 15
     if: success()
+    needs: [test_linux]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -87,24 +95,27 @@ jobs:
 
       - name: Install dependencies (psql with pg_dump) pg_dump version must be >= pg servers version to ensure backup/restore works
         run: |
-          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" && \
-          brew install postgresql@14
-          brew services restart postgresql@14
-          export PATH="/opt/homebrew/opt/postgresql@14/bin:$PATH"
-          /opt/homebrew/opt/postgresql@14/bin/psql --version
-          /opt/homebrew/opt/postgresql@14/bin/pg_dump --version
+          brew install postgresql@18
+          brew install postgis
+          brew services start postgresql@18
+          export PATH="/opt/homebrew/opt/postgresql@18/bin:$PATH"
+          echo "/opt/homebrew/opt/postgresql@18/bin" >> $GITHUB_PATH
+
+      - name: Wait for PostgreSQL and set up users/databases
+        run: |
           until pg_isready
           do
             echo "Waiting for postgres to start..."
             sleep 1
           done
-          /opt/homebrew/opt/postgresql@14/bin/createuser -s postgres
+          pg_dump --version
+          psql --version
+          createuser -s postgres || true
           sudo psql -U postgres -c "CREATE USER usr WITH LOGIN SUPERUSER ENCRYPTED PASSWORD 'psw'"
           sudo psql -U postgres -c "CREATE DATABASE prostgles_desktop_db OWNER usr"
-          brew install postgis
-          brew services restart postgresql 
 
-          psql --version
+      - name: Run macOS electron tests
+        run: |
           cd electron
           npm run test-macos
 

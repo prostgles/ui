@@ -1,6 +1,10 @@
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { asName, type PG_COLUMN_UDT_DATA_TYPE } from "prostgles-types";
+import type { DBHandlerClient, TableHandlerClient } from "prostgles-client";
+import {
+  asName,
+  type PG_COLUMN_UDT_DATA_TYPE,
+  type SQLHandler,
+} from "prostgles-types";
 import type {
   DataItem,
   TimeChartLayer,
@@ -22,6 +26,7 @@ import { getTimeLayerDataSignature } from "./getTimeLayerDataSignature";
 import { getTimechartExtentFilter } from "./getTimechartExtentFilter";
 import { getMainTimeBinSizes } from "src/dashboard/Charts/TimeChart/getTimechartBinSize";
 import type { ColumnValue } from "src/dashboard/W_Table/ColumnMenu/ColumnStyleControls/ColumnStyleControls";
+import type { Prgl } from "src/App";
 
 type getTChartLayerArgs = Pick<
   W_TimeChartState,
@@ -32,7 +37,8 @@ type getTChartLayerArgs = Pick<
     bin: FetchedLayerData["binSize"];
     binSize: FetchedLayerData["binSize"] | "auto";
     desiredBinCount: number;
-    db: DBHandlerClient;
+    db: Prgl["db"];
+    sql: SQLHandler | undefined;
     w: SyncDataItem<Required<WindowData<"timechart">>, true>;
   };
 export async function fetchTimechartLayer({
@@ -41,6 +47,7 @@ export async function fetchTimechartLayer({
   desiredBinCount,
   layer,
   db,
+  sql: sqlHandler,
   w,
   tables,
   getLinksAndWindows,
@@ -152,13 +159,13 @@ export async function fetchTimechartLayer({
   } else {
     const { dateColumn, sql, withStatement, statType, groupByColumn } = layer;
 
-    if (!db.sql) {
+    if (!sqlHandler) {
       console.error("Not enough privileges to run query");
       return;
     }
 
     const queryWithoutSemicolon = getSQLQuerySemicolon(sql, false);
-    const plainResult = await db.sql(`
+    const plainResult = await sqlHandler(`
         ${withStatement}
         SELECT * FROM (
           ${queryWithoutSemicolon}
@@ -225,7 +232,7 @@ export async function fetchTimechartLayer({
       `ORDER BY 2`,
     ].join("\n");
 
-    rows = (await db.sql(
+    rows = (await sqlHandler(
       dataQuery,
       { dateColumn, bin: binInfo.unit, statField },
       { returnType: "rows" },

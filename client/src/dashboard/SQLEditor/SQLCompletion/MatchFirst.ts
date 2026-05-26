@@ -247,7 +247,7 @@ export const MatchFirst = async ({
               endLineNumber: cb.endLine,
             },
             filterText: `${c.cmd} ${c.desc}`,
-          }) as MonacoSuggestion,
+          }),
       ),
     };
   }

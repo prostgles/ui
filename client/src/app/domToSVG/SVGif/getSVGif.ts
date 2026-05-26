@@ -54,9 +54,14 @@ export const getSVGif = (
     totalDuration,
     sceneAnimations,
   });
-  addSVGifPointer({ cursorKeyframes, g, appendStyle, totalDuration });
+  addSVGifPointer({
+    cursorKeyframes,
+    g,
+    appendStyle,
+    totalDuration,
+    isDarkTheme: scenes.some((s) => s.svgFileName.includes(".dark")),
+  });
 
-  /** This appears to break/appear narrower on ios ?!! */
   compressSVGif(svg, parsedScenes);
 
   svg

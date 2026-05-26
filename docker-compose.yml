@@ -28,7 +28,7 @@ services:
     restart: unless-stopped
     build:
       context: .
-      dockerfile: DB-Dockerfile 
+      dockerfile: DB.Dockerfile 
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -76,7 +76,7 @@ services:
       DOCKER_HOST: unix:///var/run/docker.sock
     ports:
       - "${PRGL_DOCKER_IP:-127.0.0.1}:${PRGL_DOCKER_PORT:-3004}:3004"
-      - "${PRGL_DOCKER_IP:-127.0.0.1}:3009:3009"
+      - "${PRGL_DOCKER_IP:-127.0.0.1}:3089:3089"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /usr/bin/docker:/usr/bin/docker:ro
@@ -88,3 +88,7 @@ networks:
   default:
     name: prostgles-bridge-net
     driver: bridge
+  internal-bridge:
+    name: prostgles-bridge-internal-net
+    driver: bridge
+    internal: true

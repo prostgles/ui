@@ -76,7 +76,10 @@ export const ChangePassword = ({ dbsMethods }: Pick<Prgl, "dbsMethods">) => {
           variant: "filled",
           disabledInfo: issue,
           onClickPromise: async (e) => {
-            await dbsMethods.changePassword!(password, newPassword);
+            await dbsMethods.changePassword!({
+              oldPassword: password,
+              newPassword,
+            });
             setSuccess(true);
             setTimeout(() => {
               pClose!(e);

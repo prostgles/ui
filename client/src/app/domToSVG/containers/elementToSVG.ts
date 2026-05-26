@@ -38,14 +38,11 @@ export const elementToSVG = async (
   context: SVGContext,
 ) => {
   /** Ensures bbox calculations are stable */
-
   const copyAnimations = getAnimationsHandler(element);
 
   const _whatToRender = await getWhatToRenderOnSVG(element, context, parentSvg);
-
   const { elemInfo, ...whatToRender } = _whatToRender;
   const { x, y, width, height, style, isVisible } = elemInfo;
-
   if (!isVisible && !_whatToRender.mightBeHovered) {
     return whatToRender;
   }
@@ -82,6 +79,11 @@ export const elementToSVG = async (
       g.style[key] = value;
     }
   });
+
+  // if (style.transform && style.transform !== "none") {
+  //   g.style.transform = style.transform;
+  //   g.style.transformOrigin = `${toFixed(x + width / 2)}px ${toFixed(y + height / 2)}px`;
+  // }
 
   const rectElem = rectangleToSVG(
     g,
@@ -156,11 +158,9 @@ export const elementToSVG = async (
     await fontIconToSVG(g, image, context, elemInfo);
   } else if (image?.type === "img") {
     await imgToSVG(g, image.element, elemInfo, context);
-  } else if (image?.type === "maskedElement") {
+  } else if (image?.type === "maskOrBgImage") {
     const { width, height, x, y } = element.getBoundingClientRect();
-    const dataUrl = decodeURIComponent(
-      style.maskImage.split(",")[1]!.slice(0, -2),
-    );
+    const dataUrl = decodeURIComponent(image.image.split(",")[1]!.slice(0, -2));
     const parser = new DOMParser();
     const svgDoc = parser.parseFromString(dataUrl, "image/svg+xml");
     const svgElement = svgDoc.documentElement;
@@ -185,7 +185,7 @@ export const elementToSVG = async (
     parentSvg.appendChild(wrapperG);
   }
 
-  if (image?.type !== "maskedElement") {
+  if (image?.type !== "maskOrBgImage") {
     copyAnimations?.(style, rectElem?.path ?? g, context.cssDeclarations, true);
   }
 
@@ -205,6 +205,7 @@ export const elementToSVG = async (
     bboxRect.setAttribute("fill", "transparent");
     g.appendChild(bboxRect);
   }
+
   if (g.childNodes.length) {
     addOverflowClipPath(
       element,

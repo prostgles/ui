@@ -21,6 +21,7 @@ import {
   type NewRow,
 } from "./SmartFormNewRowDataHandler";
 import type { useSmartFormMode } from "./useSmartFormMode";
+import { isJoinedFilter } from "@common/filterUtils";
 
 type Args = {
   columns: ValidatedColumnInfo[];
@@ -147,7 +148,7 @@ export const useNewRowDataHandler = (args: Args) => {
             { [columnName]: newVal.value },
             { returning: "*" },
           );
-          onSuccess?.("update", newRow as any);
+          onSuccess?.("update", newRow);
         } catch (_e: any) {
           parseError(_e);
           throw _e;
@@ -161,11 +162,13 @@ export const useNewRowDataHandler = (args: Args) => {
         !confirmUpdates &&
         rowFilter &&
         column?.is_pkey &&
-        rowFilter.find((f) => f.fieldName === column.name)
+        rowFilter.find((f) => !isJoinedFilter(f) && f.fieldName === column.name)
       ) {
         setLocalRowFilter(
           rowFilter.map((f) =>
-            f.fieldName === column.name ? { ...f, value: newVal } : f,
+            !isJoinedFilter(f) && f.fieldName === column.name ?
+              { ...f, value: newVal }
+            : f,
           ),
         );
       }
@@ -295,8 +298,7 @@ export const useNewRowDataHandler = (args: Args) => {
       };
       let _errors: AnyObject | undefined;
 
-      const tableInfo = table?.info;
-
+      const tableInfo = table;
       displayedColumns
         .filter((c) => c.insert || c.update)
         .forEach((c) => {
@@ -336,7 +338,7 @@ export const useNewRowDataHandler = (args: Args) => {
           }
         });
 
-      table?.info.requiredNestedInserts?.forEach(
+      table?.publishInfo.insert?.requiredNestedInserts?.forEach(
         ({ ftable, maxRows, minRows }) => {
           const ftableData = data[ftable];
           if (!ftableData || !Array.isArray(ftableData) || !ftableData.length) {

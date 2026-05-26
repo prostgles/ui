@@ -57,9 +57,13 @@ export const FileStorageDelete = ({
               onClickMessage={async (_, setMsg) => {
                 try {
                   setMsg({ loading: 1 });
-                  await dbsMethods.setFileStorage!(connection.id, undefined, {
-                    keepS3Data,
-                    keepFileTable,
+                  await dbsMethods.setFileStorage!({
+                    connId: connection.id,
+                    tableConfig: undefined,
+                    opts: {
+                      keepS3Data,
+                      keepFileTable,
+                    },
                   });
                   setMsg({ ok: "Disabled!" }, onClose);
                 } catch (error) {

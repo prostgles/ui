@@ -7,19 +7,20 @@ import PopupMenu from "@components/PopupMenu";
 import { Table } from "@components/Table/Table";
 import type { ProstglesColumn } from "../W_SQL/W_SQL";
 import type { StatusMonitorProps } from "./StatusMonitor";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 
-type P = Pick<StatusMonitorProps, "dbsMethods" | "connectionId"> & {
+type P = Pick<StatusMonitorProps, "connectionId"> & {
   c: ConnectionStatus;
   datidFilter: number | undefined;
   onSetDatidFilter: (datid: number) => void;
 };
 export const StatusMonitorConnections = ({
   c,
-  dbsMethods,
   connectionId,
   onSetDatidFilter,
   datidFilter,
 }: P) => {
+  const { dbsMethods } = usePrglCore();
   const connectionsColumns: ProstglesColumn[] = useMemo(
     () => [
       {
@@ -44,8 +45,12 @@ export const StatusMonitorConnections = ({
             WHERE pid <> pg_backend_pid()
             AND datid = \${datid};
           `;
-              await dbsMethods.runConnectionQuery!(connectionId, query, {
-                datid,
+              await dbsMethods.runConnectionQuery!({
+                conId: connectionId,
+                query,
+                args: {
+                  datid,
+                },
               });
             }}
           />

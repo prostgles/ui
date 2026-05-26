@@ -309,7 +309,7 @@ export const getStatus = async (connId: string, dbs: DBS) => {
         { sampled_at: { "<": new Date(now - retentionMs).toISOString() } },
       ],
     });
-    await tx.stats.insert(
+    await tx.stats.insertMany(
       result.queries.map((q) => {
         const pidInfo = procInfo?.pidStats.find((p) => p.pid === q.pid);
 

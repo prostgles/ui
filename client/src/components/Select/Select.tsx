@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import "./Select.css";
 import { sliceText } from "@common/utils";
 import type { TestSelectors } from "../../Testing";
@@ -11,7 +11,11 @@ import { Icon } from "../Icon/Icon";
 import type { LabelProps } from "../Label";
 import { Label } from "../Label";
 import Popup from "../Popup/Popup";
-import type { SearchListItem, SearchListProps } from "../SearchList/SearchList";
+import type {
+  SearchListItem,
+  SearchListItemContent,
+  SearchListProps,
+} from "../SearchList/SearchList";
 import { SearchList } from "../SearchList/SearchList";
 import { SelectTriggerButton } from "./SelectTriggerButton";
 import Btn from "../Btn";
@@ -27,7 +31,8 @@ export type FullOption<O extends OptionKey = string> = Pick<
   checked?: boolean;
   disabledInfo?: string;
   rightContent?: React.ReactNode;
-} & TestSelectors &
+} & Pick<SearchListItemContent, "contentTop" | "iconLeft"> &
+  TestSelectors &
   (
     | {
         iconPath?: string;
@@ -51,19 +56,27 @@ type E =
   | React.ChangeEvent
   | KeyboardEvent;
 
-// type P<O extends FullOption, Multi extends boolean = false> = {
+type ApplyOptionality<Optional extends boolean, T> =
+  Optional extends true ? T | undefined : T;
+
+export type SelectValueFromProps<
+  O extends OptionKey,
+  Multi extends boolean,
+  Optional extends boolean,
+> = ApplyOptionality<Optional, Multi extends true ? O[] : O>;
+
 export type SelectProps<
   O extends OptionKey,
   Multi extends boolean = false,
   Optional extends boolean = false,
 > = TestSelectors & {
-  onChange?: (
-    val: Multi extends true ? O[]
-    : O | Optional extends true ? undefined
-    : O,
-    e: E,
-    option: FullOption<O> | undefined,
-  ) => void;
+  onChange:
+    | undefined
+    | ((
+        val: SelectValueFromProps<O, Multi, Optional>,
+        e: E,
+        option: FullOption<O> | undefined,
+      ) => void);
   onSearch?: (term: string) => void;
   onOpen?: (buttonAnchorEl: HTMLButtonElement) => void;
   onClose?: VoidFunction;
@@ -72,13 +85,12 @@ export type SelectProps<
   style?: React.CSSProperties;
   className?: string;
   id?: string;
-  required?: boolean;
   label?: string | Pick<LabelProps, "label" | "info">;
   /**
    * If true then will show the selected option sublabel underneath
    */
   showSelectedSublabel?: boolean;
-  showIconOnly?: boolean;
+  showSelected?: "icon" | "fullOption";
   title?: string;
   placeholder?: string;
   variant?:
@@ -124,7 +136,7 @@ export type SelectState = {
    * To prevent things moving around during multi selection
    *    we will fire onChange after the popup is closed
    */
-  multiSelection?: any[];
+  multiSelection?: unknown[];
   fixedBtnWidth?: number;
 };
 
@@ -144,13 +156,11 @@ export class Select<
 
   render() {
     const {
-      onChange: _onChange,
+      onChange: onChangeFromProps,
       className = "",
-      title,
-      value: _value,
+      value: valueFromProps,
       id = this.id,
       style = {},
-      required,
       label,
       variant = "div",
       onSearch,
@@ -162,25 +172,28 @@ export class Select<
       showTop = 3,
       sliceMax = 150,
       disabledInfo,
-      optional = false,
+      optional,
       showSelectedSublabel = false,
       placeholder = "Search...",
     } = this.props;
 
-    const value = this.state.multiSelection ?? _value;
+    const value = this.state.multiSelection ?? valueFromProps;
 
     let fullOptions: FullOption[] = [];
 
     if ("options" in this.props) {
-      fullOptions = (this.props.options as any).map((key) => ({
-        key,
-        label: key,
-        ...(multiSelect ?
-          {
-            checked: Boolean(value && (value as string[]).includes(key)),
-          }
-        : {}),
-      }));
+      fullOptions = this.props.options.map(
+        (key) =>
+          ({
+            key,
+            label: key,
+            ...(multiSelect ?
+              {
+                checked: Boolean(value && value.includes(key)),
+              }
+            : {}),
+          }) as FullOption,
+      );
     } else {
       if (
         this.props.value &&
@@ -204,10 +217,34 @@ export class Select<
       );
     }
 
-    fullOptions = fullOptions.map((o) => ({
-      ...o,
-      label: o.label ?? ((o.label as any) === null ? "NULL" : ""),
-    }));
+    fullOptions = fullOptions
+      .map((o) => ({
+        ...o,
+        label: o.label ?? ((o.label as any) === null ? "NULL" : ""),
+      }))
+      .toSorted((a, b) => {
+        /** Bring selected first */
+        if (multiSelect) {
+          if (a.checked && !b.checked) return -1;
+          if (!a.checked && b.checked) return 1;
+        } else {
+          if (a.key === value) return -1;
+          if (b.key === value) return 1;
+        }
+        return 0;
+      });
+
+    const nonUniqueKey = (() => {
+      const seen = new Set();
+      for (const fo of fullOptions) {
+        if (seen.has(fo.key)) {
+          return fo.key;
+        }
+        seen.add(fo.key);
+      }
+    })();
+
+    type OptionType = SelectValueFromProps<O, Multi, Optional>;
 
     const selectStyle: React.CSSProperties =
       !label ?
@@ -222,61 +259,65 @@ export class Select<
       : "";
     let selectedFullOptions: typeof fullOptions = [];
 
-    const onChange: typeof _onChange = (newValue, e: E) => {
-      if (JSON.stringify(value) === JSON.stringify(newValue)) {
-        return;
-      }
+    const onChange: typeof onChangeFromProps =
+      onChangeFromProps &&
+      ((newValue, e: E) => {
+        if (JSON.stringify(value) === JSON.stringify(newValue)) {
+          return;
+        }
 
-      if (Array.isArray(newValue) && this.state.popupAnchor) {
-        this.setState({ multiSelection: newValue });
-      } else {
-        _onChange?.(
-          newValue,
-          e,
-          Array.isArray(newValue) ? undefined : (
-            (fullOptions.find((fo) => fo.key === newValue) as
-              | FullOption<O>
-              | undefined)
-          ),
-        );
-      }
-    };
-    const toggleOne = (key: string, e: E) => {
-      if (multiSelect) {
-        const selected = fullOptions.filter((d) => d.checked).map((d) => d.key);
-        if (selected.includes(key)) {
-          onChange(
-            selected.filter((k) => k !== key) as Multi extends true ? O[]
-            : O | Optional extends true ? undefined
-            : O,
-            e,
-            undefined,
-          );
+        if (Array.isArray(newValue) && this.state.popupAnchor) {
+          this.setState({ multiSelection: newValue });
         } else {
-          onChange(
-            [...selected, key] as Multi extends true ? O[]
-            : O | Optional extends true ? undefined
-            : O,
+          onChangeFromProps(
+            newValue,
             e,
-            undefined,
+            Array.isArray(newValue) ? undefined : (
+              (fullOptions.find((fo) => fo.key === newValue) as
+                | FullOption<O>
+                | undefined)
+            ),
           );
         }
-      } else {
-        onChange(
-          key as any,
-          e,
-          fullOptions.find((fo) => fo.key === key) as FullOption<O> | undefined,
-        );
-      }
-    };
+      });
+    const toggleOne =
+      onChange &&
+      ((key: string, e: E) => {
+        if (multiSelect) {
+          const selected = fullOptions
+            .filter((d) => d.checked)
+            .map((d) => d.key);
+          if (selected.includes(key)) {
+            onChange(
+              selected.filter((k) => k !== key) as OptionType,
+              e,
+              undefined,
+            );
+          } else {
+            onChange([...selected, key] as OptionType, e, undefined);
+          }
+        } else {
+          onChange(
+            key as OptionType,
+            e,
+            fullOptions.find((fo) => fo.key === key) as
+              | FullOption<O>
+              | undefined,
+          );
+        }
+      });
 
     let select: React.ReactNode = null;
     const { popupAnchor, defaultSearch, fixedBtnWidth } = this.state;
 
     const closeDropDown = (e: E) => {
       this.props.onSearch?.("");
-      if (this.state.multiSelection && _onChange) {
-        _onChange(this.state.multiSelection as any, e, undefined);
+      if (this.state.multiSelection && onChangeFromProps) {
+        onChangeFromProps(
+          this.state.multiSelection as OptionType,
+          e,
+          undefined,
+        );
       }
       this.setState({
         popupAnchor: null,
@@ -341,6 +382,9 @@ export class Select<
           });
         }}
         btnLabel={btnLabel}
+        disabledInfo={
+          nonUniqueKey ? `Duplicate key: ${nonUniqueKey}` : disabledInfo
+        }
       />
     );
     let chips: React.ReactNode = null;
@@ -363,9 +407,12 @@ export class Select<
               style={{
                 fontSize: "18px",
               }}
-              onDelete={(e) => {
-                toggleOne(key, e);
-              }}
+              onDelete={
+                toggleOne &&
+                ((e) => {
+                  toggleOne(key, e);
+                })
+              }
             >
               {label ?? key}
             </Chip>
@@ -385,7 +432,7 @@ export class Select<
             borderRadius: "var(--rounded)",
           }),
         }}
-        searchStyle={variant === "search-list-only" ? {} : { margin: "0.5em" }}
+        // searchStyle={variant === "search-list-only" ? {} : { margin: "0.5em" }}
         placeholder={placeholder}
         defaultSearch={defaultSearch}
         noSearchLimit={noSearchLimit}
@@ -396,21 +443,24 @@ export class Select<
         endOfResultsContent={endOfResultsContent}
         onSearch={onSearch}
         onMultiToggle={
-          multiSelect ?
+          multiSelect && onChange ?
             (items, e) => {
               onChange(
-                items
-                  .filter((d) => d.checked)
-                  .map((d) => d.key) as Multi extends true ? O[]
-                : O | Optional extends true ? undefined
-                : O,
+                items.filter((d) => d.checked).map((d) => d.key) as OptionType,
                 e,
                 undefined,
               );
             }
           : undefined
         }
-        onChange={multiSelect ? undefined : (onChange as any)}
+        onChange={
+          multiSelect || !onChange ? undefined : (
+            (onChange as (
+              val: Multi extends true ? OptionKey[] : OptionKey,
+              e: any,
+            ) => void)
+          )
+        }
         limit={limit}
         items={fullOptions.map(
           ({
@@ -430,27 +480,33 @@ export class Select<
               label,
               subLabel,
               ranking,
-              contentLeft:
-                leftContent ? leftContent
-                : iconPath ? <Icon path={iconPath} className="text-1" />
+              iconLeft:
+                iconPath ?
+                  {
+                    type: "Icon",
+                    path: iconPath,
+                  }
                 : undefined,
+              contentLeft: iconPath ? undefined : leftContent,
               contentRight: rightContent,
               styles: {
                 subLabel: {
                   whiteSpace: "pre-wrap",
                 },
               },
-              onPress: (e) => {
-                toggleOne(key, e);
-                if (!multiSelect) {
-                  closeDropDown(e);
-                }
-              },
+              onPress:
+                toggleOne &&
+                ((e) => {
+                  toggleOne(key, e);
+                  if (!multiSelect) {
+                    closeDropDown(e);
+                  }
+                }),
               selected: key === value,
               checked,
               disabledInfo,
               ...selectorProps,
-            };
+            } satisfies SearchListItem;
           },
         )}
       />
@@ -460,17 +516,14 @@ export class Select<
       return searchList;
     }
 
-    const labelNode =
-      typeof label === "string" ?
-        <label
-          htmlFor={id}
-          className={
-            "noselect f-0 text-1 ta-left " + (asRow ? " mr-p5 " : " mb-p5 ")
-          }
-        >
-          {label}
-        </label>
-      : <Label {...label} variant="normal" className={"mb-p5"} />;
+    const labelProps = typeof label === "string" ? { label } : label;
+    const labelNode = (
+      <Label
+        {...labelProps}
+        // htmlFor={id}
+        variant="normal"
+      />
+    );
     if (variant === "button-group-vertical") {
       return (
         <FlexCol className="gap-p25">
@@ -550,7 +603,7 @@ export class Select<
       <div
         className={
           "Select w-fit " +
-          (asRow ? " flex-row ai-center " : " flex-col ") +
+          (asRow ? " flex-row ai-center gap-p25 " : " flex-col gap-p25 ") +
           className
         }
         style={style}

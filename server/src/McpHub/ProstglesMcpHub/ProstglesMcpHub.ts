@@ -1,14 +1,17 @@
-import type { McpToolCallResponse } from "@common/mcp";
+import { getMCPFullToolName } from "@common/mcpUtils";
 import type { DBS } from "@src/index";
 import {
+  getJSONBSchemaTSTypes,
   getJSONBSchemaValidationError,
   getKeys,
   getSerialisableError,
   includes,
   tryCatchV2,
 } from "prostgles-types";
+import type { McpToolCallResponse } from "../AnthropicMcpHub/McpHub";
 import type {
   McpCallContext,
+  McpCallContextFetchTools,
   ProstglesMcpServerDefinition,
   ProstglesMcpServerHandler,
 } from "./ProstglesMCPServerTypes";
@@ -90,50 +93,100 @@ const init = async (dbs: DBS) => {
     return { server, serverDefinition };
   };
 
+  const validateToolInput = (
+    serverName: string,
+    toolName: string,
+    args: unknown,
+  ) => {
+    const name = getMCPFullToolName(serverName, toolName);
+    const { server, serverDefinition } = getExpectedServer(serverName);
+    const toolDefinition = getProperty(
+      (serverDefinition.definition as ProstglesMcpServerDefinition).tools,
+      toolName,
+    );
+    const toolMethod = getProperty(server.tools, toolName);
+    if (!toolMethod || !toolDefinition) {
+      throw new Error(`MCP server tool ${name} not found`);
+    }
+    const { schema, outputSchema } = toolDefinition;
+    const validation =
+      //@ts-ignore
+      schema ? getJSONBSchemaValidationError(schema, args) : undefined;
+    if (validation?.error !== undefined) {
+      throw new Error(
+        [
+          `Invalid arguments for MCP tool ${name}: ${validation.error}.`,
+          !schema ? "" : (
+            `Expected argument structure expressed in typescript types: ${getJSONBSchemaTSTypes(schema, {}, undefined, [])}`
+          ),
+        ].join("\n"),
+      );
+    }
+
+    return { name, toolMethod, outputSchema };
+  };
+
   const callTool = async (
     serverName: string,
     toolName: string,
     args: unknown,
     context: McpCallContext,
-  ): Promise<McpToolCallResponse> => {
+  ) => {
     const result = await tryCatchV2(async () => {
-      const { server, serverDefinition } = getExpectedServer(serverName);
-      const toolDefinition = getProperty(
-        (serverDefinition.definition as ProstglesMcpServerDefinition).tools,
+      const { name, toolMethod, outputSchema } = validateToolInput(
+        serverName,
         toolName,
+        args,
       );
-      const toolMethod = getProperty(server.tools, toolName);
-      if (!toolMethod || !toolDefinition) {
-        throw new Error(`MCP server tool ${serverName}.${toolName} not found`);
-      }
-      const { schema } = toolDefinition;
-      const validation =
+      const toolCallResult = await toolMethod(args, context);
+      const outputValidation =
         //@ts-ignore
-        schema ? getJSONBSchemaValidationError(schema, args) : undefined;
-      if (validation?.error !== undefined) {
+        outputSchema ?
+          getJSONBSchemaValidationError(outputSchema, toolCallResult, {
+            allowExtraProperties: true,
+          })
+        : undefined;
+      if (outputValidation?.error !== undefined) {
         throw new Error(
-          `Invalid arguments for MCP server tool ${serverName}.${toolName}: ${validation.error}`,
+          [
+            `Invalid output from MCP tool ${name}: ${outputValidation.error}.`,
+            !outputSchema ? "" : (
+              `Expected output structure expressed in typescript types: ${getJSONBSchemaTSTypes(
+                typeof outputSchema === "string" ?
+                  { type: outputSchema }
+                : outputSchema,
+                {},
+                undefined,
+                [],
+              )}`
+            ),
+          ].join("\n"),
         );
       }
-      const res = await toolMethod(args, context);
-      return res;
+      return toolCallResult;
     });
 
+    const errorData =
+      result.hasError ? getSerialisableError(result.error) : undefined;
     return {
       content: [
         {
           type: "text",
           text:
-            result.hasError ?
-              JSON.stringify(getSerialisableError(result.error))
+            result.hasError ? JSON.stringify(getSerialisableError(result.error))
+            : typeof result.data === "string" ? result.data
             : JSON.stringify(result.data ?? {}),
         },
       ],
+      structuredContent: !result.hasError ? result.data : errorData,
       isError: result.hasError,
-    };
+    } satisfies McpToolCallResponse;
   };
 
-  const fetchTools = async (serverName: string, context: McpCallContext) => {
+  const fetchTools = (
+    serverName: string,
+    context: McpCallContextFetchTools,
+  ) => {
     const { server } = getExpectedServer(serverName);
     return server.fetchTools(dbs, context);
   };
@@ -141,7 +194,14 @@ const init = async (dbs: DBS) => {
     return sub.unsubscribe();
   };
 
-  return { destroy, callTool, fetchTools, getServer };
+  return {
+    destroy,
+    callTool,
+    validateToolInput,
+    fetchTools,
+    getServer,
+    getServers: () => Array.from(servers.entries()),
+  };
 };
 
 let inFlightInit: ReturnType<typeof init> | undefined;
@@ -155,7 +215,7 @@ const getProperty = <T extends Record<string, unknown>, K extends keyof T>(
   prop: K,
 ): T[K] | undefined => {
   if (prop in obj && includes(getKeys(obj), prop)) {
-    return obj[prop] as T[K];
+    return obj[prop];
   }
   return undefined;
 };

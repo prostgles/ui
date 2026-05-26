@@ -1,24 +1,21 @@
-import { type TableHandlerClient } from "prostgles-client/dist/prostgles";
+import { getTableFilterFromDetailedGroupFilter } from "@common/filterUtils";
+import { type TableHandlerClient } from "prostgles-client";
 import type { AnyObject } from "prostgles-types";
 import { asName, isEqual, tryCatchV2 } from "prostgles-types";
+import {
+  getTimechartBinSize,
+  type DateExtent,
+} from "src/dashboard/Charts/TimeChart/getTimechartBinSize";
 import { isDefined, quickClone } from "../../../utils/utils";
 import type {
   WindowData,
   WindowSyncItem,
 } from "../../Dashboard/dashboardUtils";
+import { getSQLQuerySemicolon } from "../../SQLEditor/SQLCompletion/completionUtils/getQueryReturnType";
 import type { ProstglesTimeChartLayer, W_TimeChart } from "../W_TimeChart";
 import type { TimeChartBinSize } from "../W_TimeChartMenu";
-import { getTimeLayerDataSignature } from "./getTimeLayerDataSignature";
-import { getSQLQuerySemicolon } from "../../SQLEditor/SQLCompletion/completionUtils/getQueryReturnType";
 import { getTimechartExtentFilter } from "./getTimechartExtentFilter";
-import {
-  getTimechartBinSize,
-  type DateExtent,
-} from "src/dashboard/Charts/TimeChart/getTimechartBinSize";
-import {
-  getSmartGroupFilter,
-  getTableFilterFromDetailedGroupFilter,
-} from "@common/filterUtils";
+import { getTimeLayerDataSignature } from "./getTimeLayerDataSignature";
 
 export const getTimeChartFilters = (
   w: WindowData<"timechart"> | WindowSyncItem<"timechart">,
@@ -58,7 +55,7 @@ async function getTimeChartLayerWithBin(
   layer: ProstglesTimeChartLayer,
 ) {
   const {
-    prgl: { db },
+    prgl: { db, sql: sqlHandler },
   } = this.props;
   const { w } = this.d;
   if (!w) return undefined;
@@ -111,7 +108,7 @@ async function getTimeChartLayerWithBin(
           : await tableHandler.subscribe(
               tableFilters,
               {
-                select: "",
+                select: "*",
                 limit: 0,
                 throttle: +realtimeOpts.throttleSeconds * 1000,
               },
@@ -168,24 +165,10 @@ async function getTimeChartLayerWithBin(
   } else {
     const { dateColumn, sql, withStatement } = layer;
 
-    if (!db.sql) {
+    if (!sqlHandler) {
       console.error("Not enough privileges to run query");
       return;
     }
-
-    // const extentFilter = "";
-    // let bin: { key: typeof optsBinSize, size: number; } | undefined = !optsBinSize? undefined : { ...MainTimeBinSizes[optsBinSize], key: optsBinSize };
-    // if(extent){
-    //   const { leftDate, rightDate } = extent;
-    //   if(leftDate && rightDate) {
-    //     extentFilter = await db.sql(
-    //       " WHERE ${dateColumn:name} >= ${leftDate} AND ${dateColumn:name} <= ${leftDate}  ",
-    //       { dateColumn, leftDate, rightDate },
-    //       { returnType: "statement" }
-    //     );
-    //     bin = this.getBin(leftDate, rightDate);
-    //   }
-    // }
 
     const escDateCol = asName(dateColumn);
 
@@ -199,7 +182,7 @@ async function getTimeChartLayerWithBin(
         ${queryWithoutSemicolon}
       ) t
     `;
-    const rows = await db.sql(
+    const rows = await sqlHandler(
       minMaxQuery,
       { dateColumn },
       { returnType: "rows" },
@@ -294,7 +277,7 @@ export const getTimeChartMinMax = async (
   tableHandler:
     | TableHandlerClient
     | Partial<TableHandlerClient<AnyObject, void>>,
-  tableFilters,
+  tableFilters: AnyObject,
   dateColumn: string,
 ) => {
   const minMax = (await tableHandler.findOne!(tableFilters, {

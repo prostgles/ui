@@ -8,12 +8,15 @@ import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 import type { ProstglesMCPToolsProps } from "../ProstglesToolUseMessage";
 
 export type InputSchema = JSONB.GetObjectType<
-  (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-db"]["execute_sql_with_commit"]["schema"]["type"]
+  (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["db"]["execute_sql"]["schema"]["type"]
 >;
 
-export const ExecuteSQL = ({ message }: ProstglesMCPToolsProps) => {
-  const initialData = message.input as InputSchema;
-  const { db } = usePrgl();
+export const ExecuteSQL = ({
+  toolUseContent,
+  resultContent,
+}: ProstglesMCPToolsProps) => {
+  const initialData = toolUseContent.input as InputSchema;
+  const { sql } = usePrgl();
   const codeString = initialData.sql;
   return (
     <FlexCol className="ExecuteSQL ai-start gap-0 f-1">
@@ -22,8 +25,9 @@ export const ExecuteSQL = ({ message }: ProstglesMCPToolsProps) => {
         codeHeader={undefined}
         language={LANG}
         codeString={codeString}
-        sqlHandler={db.sql}
+        sqlHandler={sql}
         loadedSuggestions={undefined}
+        resultContent={resultContent}
       />
     </FlexCol>
   );

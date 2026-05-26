@@ -1,21 +1,27 @@
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { useCallback, useState } from "react";
-import type { MonacoCodeInMarkdownProps } from "./MonacoCodeInMarkdown";
 import { getFieldsWithActions } from "src/dashboard/W_SQL/parseSqlResultCols";
-import { getSQLResultTableColumns } from "src/dashboard/W_SQL/getSQLResultTableColumns";
+import type { MonacoCodeInMarkdownProps } from "./MonacoCodeInMarkdown";
+import type { ProstglesColumn } from "src/dashboard/W_SQL/W_SQL";
 
 export const useOnRunSQL = ({
   codeString,
-  sqlHandler,
-}: MonacoCodeInMarkdownProps) => {
+}: Pick<MonacoCodeInMarkdownProps, "codeString">) => {
   const [sqlResult, setSqlResult] = useState<SQLResult | undefined>(undefined);
 
+  const {
+    dbsMethods: { runSql },
+    connectionId,
+  } = usePrgl();
   const onRunSQL = useCallback(
     (withCommit: boolean) => {
       const queryId = crypto.randomUUID();
       const queryWithId = `--${queryId} prostgles_ui_query_id\n${codeString}`;
       setSqlResult({ state: "loading", query: queryWithId, withCommit });
-      sqlHandler!(queryWithId, undefined, {
-        returnType: withCommit ? "arrayMode" : "default-with-rollback",
+      runSql!({
+        query: queryWithId,
+        connectionId,
+        mode: withCommit ? "default" : "readOnly",
       })
         .then((data) => {
           if (!data.fields.length) {
@@ -30,17 +36,9 @@ export const useOnRunSQL = ({
           }
           const cols = getFieldsWithActions(
             data.fields,
-            data.command?.toLowerCase() === "select",
+            (data.command as string | undefined)?.toLowerCase() === "select",
           );
-          const columns =
-            !withCommit ? cols : (
-              getSQLResultTableColumns({
-                cols,
-                tables: [],
-                maxCharsPerCell: undefined,
-                onResize: () => {},
-              })
-            );
+          const columns = cols;
           setSqlResult({
             state: "ok",
             rows: data.rows,
@@ -51,7 +49,7 @@ export const useOnRunSQL = ({
           setSqlResult({ state: "error", error: err });
         });
     },
-    [codeString, sqlHandler],
+    [codeString, connectionId, runSql],
   );
 
   return {
@@ -62,7 +60,11 @@ export const useOnRunSQL = ({
 };
 
 type SQLResult =
-  | { state: "ok"; rows: any[]; columns: any[] }
+  | {
+      state: "ok";
+      rows: any[];
+      columns: ReturnType<typeof getFieldsWithActions>;
+    }
   | { state: "ok-command-result"; commandResult: string }
   | { state: "error"; error: unknown }
   | { state: "loading"; query: string; withCommit: boolean };

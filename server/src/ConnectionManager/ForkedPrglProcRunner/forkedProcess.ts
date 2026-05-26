@@ -12,16 +12,16 @@ export const getError = (rawError: any) => {
   return getSerialisableError(rawError) || "Unknown error";
 };
 const initForkedProc = () => {
-  let _prglParams: OnReadyParamsBasic | undefined;
-  let prglParams: OnReadyParamsBasic | undefined;
+  let onReadyParams: OnReadyParamsBasic | undefined;
+  let onReadyParamsProxy: OnReadyParamsBasic | undefined;
 
   const lastToolCallId = 0;
   const toolCalls: Record<number, { cb: (err: any, res: any) => void }> = {};
   const setProxy = (params: OnReadyParamsBasic) => {
-    _prglParams = params;
-    prglParams ??= new Proxy(params, {
+    onReadyParams = params;
+    onReadyParamsProxy = new Proxy(params, {
       get(target, prop: keyof OnReadyParamsBasic, receiver) {
-        return _prglParams![prop];
+        return onReadyParams![prop];
       },
     });
   };
@@ -62,7 +62,7 @@ const initForkedProc = () => {
         } satisfies ForkedProcMessageResult);
       };
       if (msg.type === "start") {
-        if (prglParams) throw "Already started";
+        if (onReadyParamsProxy) throw "Already started";
 
         //@ts-ignore
         await prostgles({
@@ -70,17 +70,27 @@ const initForkedProc = () => {
           watchSchema: "*",
           transactions: true,
           onReady: (params) => {
-            if (prglParams) {
+            if (onReadyParamsProxy) {
               console.log("reload", params.reason);
               cb(undefined, "reload");
             } else {
               cb(undefined, "ready");
             }
-            setProxy(params as any);
+            setProxy(params as OnReadyParamsBasic);
           },
         });
       } else {
-        if (!prglParams) throw "prgl not ready";
+        if (!onReadyParamsProxy) throw "prgl not ready";
+
+        const evalSource = <T>(code: string): T => {
+          try {
+            return eval(code + "\n\n exports;") as T;
+          } catch (error) {
+            throw new Error("Error evaluating code: ", {
+              cause: error instanceof Error ? error : String(error),
+            });
+          }
+        };
 
         try {
           if (msg.type === "mcpResult") {
@@ -89,7 +99,12 @@ const initForkedProc = () => {
             delete toolCalls[callId];
           } else if (msg.type === "run") {
             const { code, validatedArgs, user, id } = msg;
-            const { run } = eval(code + "\n\n exports;");
+            const { run } = evalSource<{
+              run: (
+                args: any,
+                prglParams: OnReadyParamsBasic & { user: any },
+              ) => Promise<unknown>;
+            }>(code);
             // const callMCPServerTool = async (
             //   serverName: string,
             //   toolName: string,
@@ -111,16 +126,18 @@ const initForkedProc = () => {
             //   });
             // };
             const methodResult = await run(validatedArgs, {
-              ...prglParams,
+              ...onReadyParamsProxy,
               user,
               // callMCPServerTool,
             });
             cb(undefined, methodResult);
           } else {
             const { code } = msg;
-            const { onMount } = eval(code + "\n\n exports;");
+            const { onMount } = evalSource<{
+              onMount: (args: any) => Promise<unknown>;
+            }>(code);
 
-            const methodResult = await onMount(prglParams);
+            const methodResult = await onMount(onReadyParamsProxy);
             cb(undefined, methodResult);
           }
         } catch (rawError: any) {

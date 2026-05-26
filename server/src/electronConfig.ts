@@ -33,7 +33,6 @@ const electronConfig: {
   isElectron: false,
   electronSid: "",
   safeStorage: undefined,
-  // onReady: (actualPort: number) => {},
 };
 
 export const actualRootDir = path.join(__dirname, "/../../..");
@@ -139,6 +138,7 @@ export const start = async (params: {
         resolve(true);
       }, 1000);
     });
+    port = actualPort;
     return onReady(actualPort);
   });
 

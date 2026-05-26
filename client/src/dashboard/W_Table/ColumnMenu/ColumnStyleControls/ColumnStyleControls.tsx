@@ -1,18 +1,22 @@
 import { FlexCol, FlexRowWrap } from "@components/Flex";
 import { MINI_BARCHART_COLOR } from "@components/ProgressBar";
 import { Select } from "@components/Select/Select";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { _PG_numbers, includes } from "prostgles-types";
 import type { ValidatedColumnInfo } from "prostgles-types/lib";
 import React from "react";
 import { type Prgl } from "../../../../App";
-import { appTheme, useReactiveState } from "../../../../appUtils";
 import { ColorPicker } from "../ColorPicker";
-import { ChipStylePalette } from "../ColumnDisplayFormat/ChipStylePalette";
+import {
+  ChipStylePalette,
+  DEFAULT_CHIP_STYLE,
+} from "../ColumnDisplayFormat/ChipStylePalette";
 import { ConditionalCellIconStyleControls } from "../ColumnDisplayFormat/ConditionalCellIconStyleControls";
 import type { CONDITION_OPERATORS } from "../ColumnDisplayFormat/ConditionalCellStyleControls";
 import { ConditionalCellStyleControls } from "../ColumnDisplayFormat/ConditionalCellStyleControls";
 import type { ColumnConfig } from "../ColumnMenu";
 import { getValueColors } from "./getValueColors";
+import { UpdateColumnGlobalConfig } from "../UpdateColumnGlobalConfig";
 
 export type ColumnValue = string | number | Date | null | undefined | boolean;
 
@@ -111,7 +115,8 @@ export const ColumnStyleControls = (props: StyleColumnProps) => {
   ) => {
     setStyle({ ...style, ...newStyle } as typeof style);
   };
-  const { state: theme } = useReactiveState(appTheme);
+  const { theme } = usePrgl();
+
   return (
     <FlexCol className="ColumnStyleControls flex-col gap-1">
       <Select
@@ -156,7 +161,7 @@ export const ColumnStyleControls = (props: StyleColumnProps) => {
             <ColorPicker
               label="Text"
               className="m-p5"
-              value={style.textColor || "black"}
+              value={style.textColor || DEFAULT_CHIP_STYLE.textColor}
               onChange={(textColor) => {
                 updateStylePart({ textColor });
               }}
@@ -164,7 +169,7 @@ export const ColumnStyleControls = (props: StyleColumnProps) => {
             <ColorPicker
               label="Chip"
               className="m-p5"
-              value={style.chipColor || "red"}
+              value={style.chipColor || DEFAULT_CHIP_STYLE.color}
               onChange={(chipColor) => {
                 updateStylePart({ chipColor });
               }}
@@ -243,13 +248,7 @@ export const ColumnStyleControls = (props: StyleColumnProps) => {
           />
         </FlexRowWrap>
       : null}
+      <UpdateColumnGlobalConfig tableName={tableName} column={column} />
     </FlexCol>
   );
-};
-
-export const getRandomElement = <Arr,>(
-  items: Arr[],
-): { elem: Arr; index: number } => {
-  const randomIndex = Math.floor(Math.random() * items.length);
-  return { elem: items[randomIndex]!, index: randomIndex };
 };

@@ -1,12 +1,6 @@
 import ErrorComponent from "@components/ErrorComponent";
 import Popup from "@components/Popup/Popup";
-import {
-  mdiDownload,
-  mdiFullscreen,
-  mdiOpenInNew,
-  mdiPlay,
-  mdiStop,
-} from "@mdi/js";
+import { mdiDownload, mdiOpenInNew, mdiPlay, mdiStop } from "@mdi/js";
 import React, { useMemo, useState } from "react";
 import { download } from "../../../dashboard/W_SQL/W_SQL";
 import Btn from "../../Btn";
@@ -16,32 +10,30 @@ import type { MonacoCodeInMarkdownProps } from "./MonacoCodeInMarkdown";
 import type { useOnRunSQL } from "./useOnRunSQL";
 
 export const MarkdownMonacoCodeHeader = (
-  props: MonacoCodeInMarkdownProps & {
-    titleOrLanguage: string;
-    fullscreen: boolean;
-    setFullscreen: (val: boolean) => void;
-  } & ReturnType<typeof useOnRunSQL>,
+  props: MonacoCodeInMarkdownProps & ReturnType<typeof useOnRunSQL>,
 ) => {
   const {
     codeHeader,
     language,
     codeString,
-    fullscreen,
-    setFullscreen,
     sqlHandler,
     onRunSQL,
-    titleOrLanguage,
     sqlResult,
     setSqlResult,
+    title,
   } = props;
+
+  const titleOrLanguage = title ?? language;
   return (
-    <FlexRow className="MarkdownMonacoCodeHeader bg-color-2 p-p25">
+    <FlexRow className="MarkdownMonacoCodeHeader bg-color-2 p-0 f-1">
       <div className="text-sm text-color-4 f-1 px-1 ta-start">
         {titleOrLanguage}
       </div>
       {codeHeader && codeHeader({ language, codeString })}
       {sqlResult && sqlResult.state !== "loading" ?
-        <Btn onClick={() => setSqlResult(undefined)}>Close result</Btn>
+        <Btn size="small" onClick={() => setSqlResult(undefined)}>
+          Close result
+        </Btn>
       : <>
           {language === "sql" && sqlHandler && (
             <>
@@ -50,9 +42,10 @@ export const MarkdownMonacoCodeHeader = (
                 iconPath={mdiPlay}
                 variant="faded"
                 size="small"
+                color="warn"
                 clickConfirmation={{
                   buttonText: "Execute",
-                  color: "action",
+                  color: "warn",
                   message:
                     "This query will COMMIT (permanently save) changes. Double-check before running",
                 }}
@@ -97,7 +90,9 @@ export const MarkdownMonacoCodeHeader = (
               )}
             </>
           )}
-          {language === "html" && <OpenHTMLPreviewBtn html={codeString} />}
+          {(language === "html" || language === "xml") && (
+            <OpenHTMLPreviewBtn html={codeString} />
+          )}
           <CopyToClipboardBtn
             size="small"
             style={{
@@ -108,28 +103,29 @@ export const MarkdownMonacoCodeHeader = (
           />
           <Btn
             title="Download"
+            size="small"
             iconPath={mdiDownload}
             onClick={() => {
-              download(codeString, `code.${language}`, "text");
+              download(
+                codeString,
+                `generated_${new Date().toISOString().replace("T", "_").split(".")[0]}.${language}`,
+                "text",
+              );
             }}
           />
         </>
       }
-      <Btn
-        title="Toggle Fullscreen"
-        iconPath={mdiFullscreen}
-        onClick={() => setFullscreen(!fullscreen)}
-      />
     </FlexRow>
   );
 };
 
 const OpenHTMLPreviewBtn = ({ html }: { html: string }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [error, setError] = useState<any>();
+  const [error, setError] = useState<unknown>();
 
   const blobURL = useMemo(() => {
-    const blob = new Blob([html], { type: "text/html" });
+    const type = html.trim().startsWith("<svg") ? "image/svg+xml" : "text/html";
+    const blob = new Blob([html], { type });
     return URL.createObjectURL(blob);
   }, [html]);
   const iframeSandbox =
@@ -175,7 +171,7 @@ const OpenHTMLPreviewBtn = ({ html }: { html: string }) => {
               setError(new Error("Failed to load HTML preview"));
             }}
           />
-          {error && <ErrorComponent error={error} />}
+          <ErrorComponent error={error} />
         </Popup>
       )}
     </>

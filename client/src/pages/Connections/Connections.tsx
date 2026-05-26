@@ -1,7 +1,7 @@
 import { mdiPlus } from "@mdi/js";
 import React from "react";
 import { ROUTES } from "@common/utils";
-import type { PrglState } from "../../App";
+import type { AppContextProps } from "../../App";
 import Btn from "@components/Btn";
 import { FlexCol, FlexRow } from "@components/Flex";
 import { InfoRow } from "@components/InfoRow";
@@ -13,8 +13,8 @@ import { CreateConnection } from "./CreateConnection/CreateConnection";
 import { useConnections } from "./useConnections";
 import { useConnectionServersList } from "./useConnectionServersList";
 
-export const Connections = (props: PrglState) => {
-  const { user, dbs, dbsMethods } = props;
+export const Connections = (props: AppContextProps) => {
+  const { user, dbs, dbsMethods, dbsSql } = props;
   const state = useConnections(props);
   const { connections, isAdmin, showDbNames } = state;
   const { serverUserGroupings } = useConnectionServersList(state);
@@ -83,10 +83,11 @@ export const Connections = (props: PrglState) => {
                       connections={conns}
                       connectionGroupKey={name}
                       dbs={dbs}
+                      dbsSql={dbsSql}
                       showCreateText={Boolean(
                         isAdmin &&
-                          serverUserGroupings.length <= 1 &&
-                          !conns.filter((c) => !c.is_state_db).length,
+                        serverUserGroupings.length <= 1 &&
+                        !conns.filter((c) => !c.is_state_db).length,
                       )}
                     />
                   )}

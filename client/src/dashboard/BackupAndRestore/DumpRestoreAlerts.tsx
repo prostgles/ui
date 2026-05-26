@@ -1,15 +1,14 @@
+import { InfoRow } from "@components/InfoRow";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { usePromise } from "prostgles-client";
 import React from "react";
-import { InfoRow } from "@components/InfoRow";
-import type { FullExtraProps } from "../../pages/ProjectConnection/ProjectConnection";
 
 export const DumpRestoreAlerts = ({
-  dbsMethods,
   connectionId,
-  dbProject,
-}: Pick<FullExtraProps, "dbsMethods" | "dbProject"> & {
+}: {
   connectionId: string;
 }) => {
+  const { dbsMethods, sql: dbSql } = usePrgl();
   const versionMismatch = usePromise(async () => {
     try {
       const versions = await dbsMethods.getInstalledPsqlVersions?.();
@@ -20,7 +19,7 @@ export const DumpRestoreAlerts = ({
       if (!prglVersion) {
         return;
       }
-      let serverVersion = (await dbProject.sql?.(
+      let serverVersion = (await dbSql?.(
         `show server_version;`,
         {},
         { returnType: "value" },
@@ -58,11 +57,11 @@ export const DumpRestoreAlerts = ({
         ),
       };
     } catch {}
-  }, [dbsMethods, dbProject]);
+  }, [dbsMethods, dbSql]);
 
   const isSuperUser = usePromise(async () => {
     if (dbsMethods.getIsSuperUser && connectionId) {
-      return dbsMethods.getIsSuperUser(connectionId);
+      return dbsMethods.getIsSuperUser({ conId: connectionId });
     }
     return false;
   }, [dbsMethods, connectionId]);

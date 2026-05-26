@@ -9,7 +9,7 @@ export const pipeToCommand = (
   source: internal.Readable,
   onEnd: (err?: any) => void | Promise<void>,
   onStdout?: (
-    data: { full: any; chunk: any },
+    data: { full: string; chunk: string },
     isStdErr?: boolean,
   ) => void | Promise<void>,
 ) => {

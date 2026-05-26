@@ -12,27 +12,29 @@ import {
 } from "./utils/utils";
 import { DOCS_DIR } from "svgScreenshots/utils/constants";
 import { svgScreenshotsCompleteReferenced } from "svgScreenshots/utils/svgScreenshotsCompleteReferenced";
-import { USERS } from "utils/constants";
+import { IS_GITHUB_WORKER, USERS } from "utils/constants";
 import { goTo } from "utils/goTo";
+import { getOverviewSvgifSpecs } from "svgScreenshots/getOverviewSvgifSpecs.svgif";
+import { saveSVGifs } from "svgScreenshots/utils/saveSVGifs";
+import { setupAskLLMToolUse } from "testAskLLM/testAskLLM";
 
 test.use({
   viewport: {
     width: 900,
     height: 900,
   },
+  deviceScaleFactor: 2,
   trace: "retain-on-failure",
   launchOptions: {
     args: ["--start-maximized"],
   },
 });
 
-const IS_PIPELINE = process.env.CI === "true";
-
 test.describe("Create docs and screenshots", () => {
   test.describe.configure({
     retries: 0,
     mode: "serial",
-    timeout: 18 * MINUTE,
+    timeout: 28 * MINUTE,
   });
 
   test(`Restore databases`, async ({ page: p }) => {
@@ -64,7 +66,7 @@ test.describe("Create docs and screenshots", () => {
 
     await login(page, USERS.test_user, "/login");
 
-    if (!IS_PIPELINE) {
+    if (!IS_GITHUB_WORKER) {
       /** Delete existing markdown docs */
       if (fs.existsSync(DOCS_DIR)) {
         fs.rmSync(DOCS_DIR, { force: true, recursive: true });
@@ -83,7 +85,7 @@ test.describe("Create docs and screenshots", () => {
       const filePath = path.join(DOCS_DIR, file.fileName);
 
       const preparedFileContent = getDocWithDarkModeImgTags(file.text);
-      if (IS_PIPELINE) {
+      if (IS_GITHUB_WORKER) {
         const existingFile = fs.readFileSync(filePath, "utf-8");
         if (existingFile !== preparedFileContent) {
           console.error(existingFile, preparedFileContent);
@@ -97,9 +99,9 @@ test.describe("Create docs and screenshots", () => {
       await page.waitForTimeout(100);
     }
 
-    /** Ensure all scripts exist in the readme to ensure we don't show non-tested scripts */
-    const uiInstallationFile = fs.readFileSync(
-      path.join(DOCS_DIR, "02_Installation.md"),
+    /** Test all scripts from readme */
+    const uiInstallationDocs = fs.readFileSync(
+      path.join(DOCS_DIR, "02_Installation_(Docker).md"),
       "utf-8",
     );
     const mainReadmeFile = fs.readFileSync(
@@ -116,7 +118,7 @@ test.describe("Create docs and screenshots", () => {
         });
       return scripts;
     };
-    const docsScripts = getScripts(uiInstallationFile);
+    const docsScripts = getScripts(uiInstallationDocs);
     const readmeScripts = getScripts(mainReadmeFile);
     if (!docsScripts.length) {
       throw new Error("No scripts found in the installation file");
@@ -131,24 +133,39 @@ test.describe("Create docs and screenshots", () => {
     }
   });
 
-  test("Create screenshots", async ({ page: p }) => {
+  test("Create screenshots", async ({ page: p, browser }) => {
     const page = p as PageWIds;
 
     await login(page, USERS.test_user, "/login");
-    if (!IS_PIPELINE) {
+    if (!IS_GITHUB_WORKER) {
       await page.waitForTimeout(1100);
 
       await prepare(page);
-      const { svgifSpecs, overviewSvgifSpecs, svgifCovers } =
-        await saveSVGs(page);
+      await saveSVGs(page);
+    }
+  });
+
+  test("Create overviews and verify screenshots", async ({ page: p }) => {
+    const page = p as PageWIds;
+
+    await login(page, USERS.test_user, "/login");
+    if (!IS_GITHUB_WORKER) {
+      await page.waitForTimeout(1100);
+
+      const { svgifSpecsObj, overviewSvgifSpecs, svgifCovers } =
+        await getOverviewSvgifSpecs();
+      await saveSVGifs(page, overviewSvgifSpecs, svgifCovers);
+
       const svgFilesUsedExternally = [
         ...overviewSvgifSpecs
           .filter((s) => s.usedExternally)
           .map((s) => s.fileName + ".svgif"),
         ...svgifCovers.map((c) => c.fileName),
+        "ai_assistant_agentic_workflow_gov_api.svgif",
+        "table_timechart.svgif",
       ];
       await svgScreenshotsCompleteReferenced(
-        svgifSpecs.flatMap((s) => s.scenes),
+        Object.values(svgifSpecsObj).flat(),
         svgFilesUsedExternally,
       );
     }
@@ -171,6 +188,7 @@ const getDocWithDarkModeImgTags = (fileContent: string) => {
 };
 
 const prepare = async (page: PageWIds) => {
+  await setupAskLLMToolUse(page);
   await runDbsSql(
     page,
     "UPDATE database_configs SET table_schema_transform = $1, table_schema_positions = $2 WHERE db_name = 'prostgles_video_demo';",

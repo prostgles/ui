@@ -1,30 +1,56 @@
 import type { DBSSchema } from "@common/publishUtils";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { DBSchemaTable } from "prostgles-types";
+import type { Prgl } from "src/App";
 import { getJoinedTables } from "../W_Table/tableUtils/tableUtils";
 import type { DBSchemaTablesWJoins } from "./dashboardUtils";
 
 export const getTables = (
   schemaTables: DBSchemaTable[],
   connectionTableOptions: DBSSchema["connections"]["table_options"],
-  db: DBHandlerClient,
+  db: Prgl["db"],
   capitaliseNames = false,
 ): { tables: DBSchemaTablesWJoins } => {
+  // : { tables: DBSchemaTablesWJoins }
   const tables = schemaTables.map((t) => {
     const { columns, label, ...tableOpts } =
       connectionTableOptions?.[t.name] ?? {};
     const result = {
       ...tableOpts,
-      label:
-        label || (capitaliseNames ? convertSnakeToReadable(t.name) : t.name),
       ...t,
+      label:
+        label ?? (capitaliseNames ? convertSnakeToReadable(t.name) : t.name),
       ...getJoinedTables(schemaTables, t.name, db),
       columns: t.columns
-        .map((c) => ({
-          ...c,
-          label: capitaliseNames ? convertSnakeToReadable(c.name) : c.name,
-          icon: columns?.[c.name]?.icon,
-        }))
+        .map(
+          (c) =>
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+            ({
+              ...c,
+              label: capitaliseNames ? convertSnakeToReadable(c.name) : c.name,
+              icon: columns?.[c.name]?.icon,
+              renderAs: columns?.[c.name]?.renderAs,
+              style: columns?.[c.name]?.style,
+            }) as typeof c & {
+              icon: string;
+              renderAs?: any;
+              style?: any;
+            },
+          // as typeof c &
+          //   Partial<
+          //     Pick<
+          //       NonNullable<
+          //         NonNullable<
+          //           NonNullable<
+          //             NonNullable<
+          //               DBSSchema["connections"]["table_options"]
+          //             >[string]
+          //           >["columns"]
+          //         >[string]
+          //       >,
+          //       "icon" | "renderAs" | "style"
+          //     >
+          //   >,
+        )
         .sort((a, b) => {
           return a.ordinal_position - b.ordinal_position;
         }),
@@ -33,6 +59,10 @@ export const getTables = (
   });
   return { tables };
 };
+
+export type DBSchemaTableWithRenderInfo = ReturnType<
+  typeof getTables
+>["tables"][number];
 
 const convertSnakeToReadable = (str: string) => {
   // ^[a-z0-9]+    : Starts with one or more lowercase letters or digits

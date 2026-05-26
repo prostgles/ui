@@ -1,7 +1,7 @@
-import { useCallback, useMemo } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { COMMAND_SEARCH_ATTRIBUTE_NAME } from "../../Testing";
 import { useAlert } from "@components/AlertProvider";
+import { includes } from "prostgles-types";
+import { useCallback, useMemo } from "react";
+import { useLocation, useNavigate } from "react-router";
 import { click } from "../../demo/demoUtils";
 import { isPlaywrightTest } from "../../i18n/i18nUtils";
 import { tout } from "../../utils/utils";
@@ -12,14 +12,13 @@ import {
   type UIDocPage,
 } from "../UIDocs";
 import type { CommandSearchHighlight } from "./CommandPalette";
+import { getUIDocShortestPath } from "./getUIDocShortestPath";
 import { useHighlightDocItem } from "./useHighlightDocItem";
 import {
   getDocPagePath,
   getUIDocElements,
   getUIDocElementsAndAlertIfEmpty,
 } from "./utils";
-import { includes } from "../../dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar";
-import { getUIDocShortestPath } from "./getUIDocShortestPath";
 
 export type DocItemHighlightItemPosition = "mid" | "last";
 
@@ -84,7 +83,7 @@ export const useGoToUI = (
       } else if (doc.type === "page" || doc.type === "navbar") {
         const { isExactMatch, paths } = getDocPagePath(doc, location.pathname);
         if (!isExactMatch) {
-          navigate(paths[0]!);
+          void navigate(paths[0]!);
           await tout(400);
           if (doc.type === "page" && doc.pathItem) {
             await highlight(doc, "mid");
@@ -118,13 +117,10 @@ export const useGoToUI = (
           getUIDocShortestPath(currentPage, prevParents)
         : undefined;
       const pathItems = shortcut ?? prevParents;
-      const shouldBeOpened = includes(data.type, [
-        "link",
-        "page",
-        "tab",
-        "popup",
-        "smartform-popup",
-      ]);
+      const shouldBeOpened = includes(
+        ["link", "page", "tab", "popup", "smartform-popup"],
+        data.type,
+      );
       const finalPathItems =
         data.type === "hotkey-popup" ? [data]
         : shouldBeOpened ? [...pathItems, data]
@@ -139,10 +135,6 @@ export const useGoToUI = (
       if (!shouldBeOpened) {
         await highlight(data, "last");
       }
-      window.document.body.setAttribute(
-        COMMAND_SEARCH_ATTRIBUTE_NAME,
-        data.title,
-      );
     },
     [currentPage, highlight, goToUI],
   );

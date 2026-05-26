@@ -6,6 +6,7 @@ import { ChatFileAttachments } from "./ChatFileAttachments/ChatFileAttachments";
 import { ChatMessage } from "./ChatMessage";
 import { ChatSendControls } from "./ChatSendControls";
 import { useChatState } from "./useChatState";
+import type { LLMMessage } from "@common/llmUtils";
 
 export type Message = {
   id: number | string;
@@ -19,7 +20,10 @@ export type Message = {
 export type ChatProps = {
   style?: React.CSSProperties;
   className?: string;
-  onSend: (msg?: string, files?: File[]) => Promise<void>;
+  onSend: (
+    userMessage: LLMMessage["message"] | undefined,
+    files?: File[],
+  ) => Promise<void>;
   onStopSending: undefined | (() => void);
   messages: Message[];
   disabledInfo?: string;
@@ -55,7 +59,7 @@ export const Chat = (props: ChatProps) => {
     setFiles,
     onAddFiles,
     chatIsLoading,
-    filesAsBase64,
+    filesWithInfo,
     sendingMsg,
     setScrollRef,
     setCurrentMessage,
@@ -63,7 +67,9 @@ export const Chat = (props: ChatProps) => {
     divHandlers,
     handleOnPaste,
     isEngaged,
-    onCurrentlyTypedMessageChangeDebounced,
+    setConvertDocsToMarkdown,
+    convertDocsToMarkdown,
+    convertingDocumentName,
   } = useChatState({
     isLoading,
     messages,
@@ -72,7 +78,6 @@ export const Chat = (props: ChatProps) => {
     currentlyTypedMessage,
     onCurrentlyTypedMessageChange,
   });
-
   useEffect(() => {
     if (!isLoading && textAreaRef.current) {
       textAreaRef.current.focus();
@@ -100,6 +105,14 @@ export const Chat = (props: ChatProps) => {
           {messages.map((message) => (
             <ChatMessage key={message.id} message={message} />
           ))}
+          {/* Spacer */}
+          <div
+            style={{
+              width: "100%",
+              height: window.isMobile ? "2em" : "100px",
+              flex: "none",
+            }}
+          ></div>
         </div>
       </FlexCol>
 
@@ -128,26 +141,32 @@ export const Chat = (props: ChatProps) => {
             {...divHandlers}
           >
             <ChatFileAttachments
-              filesAsBase64={filesAsBase64}
+              filesWithInfo={filesWithInfo}
               setFiles={setFiles}
+              convertDocsToMarkdown={convertDocsToMarkdown}
+              setConvertDocsToMarkdown={setConvertDocsToMarkdown}
+              convertingDocumentName={convertingDocumentName}
             />
             <textarea
               ref={textAreaRef}
               name="chat-input"
               data-command={"Chat.textarea"}
-              className="no-scroll-bar text-0 bg-transparent"
+              className=" text-0 bg-transparent"
               rows={1}
               style={{
                 maxHeight: "50vh",
+                minHeight: "40px", // To prevent the height decrease when it's disabled
               }}
               disabled={!!disabledInfo || chatIsLoading}
-              defaultValue={getCurrentMessage() || currentlyTypedMessage || ""}
+              defaultValue={getCurrentMessage()}
               onPaste={handleOnPaste}
               onChange={({ currentTarget }) => {
-                onCurrentlyTypedMessageChangeDebounced(currentTarget.value);
+                onCurrentlyTypedMessageChange(currentTarget.value);
               }}
               onKeyDown={(e) => {
                 if (
+                  !chatIsLoading &&
+                  !disabledInfo &&
                   textAreaRef.current &&
                   !e.shiftKey &&
                   e.key.toLocaleLowerCase() === "enter"

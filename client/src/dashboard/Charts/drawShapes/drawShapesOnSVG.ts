@@ -4,9 +4,10 @@ import { hashCode } from "src/utils/hashCode";
 import type { SVGContext } from "../../../app/domToSVG/containers/elementToSVG";
 import { addImageFromDataURL } from "../../../app/domToSVG/graphics/imgToSVG";
 import type { Point } from "../../Charts";
-import type { LinkLine, Rectangle } from "../CanvasChart";
-import { DEFAULT_SHADOW } from "../roundRect";
+import type { LinkLine } from "../CanvasChart";
+import { DEFAULT_SHADOW } from "../constants";
 import type { ShapeV2 } from "./drawShapes";
+import { getLinkLines } from "./getLinkLinePoints";
 import { getTimechartGradientPeakSections } from "./getTimechartGradientPeakSections";
 
 export const drawShapesOnSVG = (
@@ -52,14 +53,14 @@ export const drawShapesOnSVG = (
       ctx.drawImage(s.image, 0, 0, s.w, s.h);
       const dataURL = localCanvas.toDataURL();
       addImageFromDataURL(g, dataURL, context, {
-        style: {} as CSSStyleDeclaration,
+        style: { opacity: opacity.toString() } as CSSStyleDeclaration,
         height: s.h,
         width: s.w,
         x,
         y,
       });
     } else if (s.type === "linkline") {
-      drawSvgLinkLine(shapes, g as SVGElement, s);
+      drawSvgLinkLine(shapes, g, s);
     } else if (s.type === "rectangle") {
       const [x, y] = s.coords.map((v) => toFixed(v)) as typeof s.coords;
       const width = toFixed(s.w);
@@ -290,6 +291,10 @@ export const drawShapesOnSVG = (
       textElement.setAttribute("opacity", opacity.toString());
       textElement.textContent = s.text;
 
+      if (s.textBaseline) {
+        textElement.setAttribute("dominant-baseline", s.textBaseline);
+      }
+
       // Handle background if present
       if (s.background) {
         const txtSize = measureSvgText(s.text, s.font || "");
@@ -339,66 +344,38 @@ export const drawShapesOnSVG = (
   });
 };
 
-/**
- * How much horizontal offset for control points (adjust for more/less curve)
- */
-const controlPointFactor = 0.4;
-
 export const drawSvgLinkLine = (
   shapes: (ShapeV2 | LinkLine)[],
   svg: SVGElement,
   linkLine: LinkLine,
 ) => {
-  const { sourceId, targetId, sourceYOffset, targetYOffset } = linkLine;
-  const r1 = shapes.find(
-    (r): r is Rectangle => r.type === "rectangle" && r.id === sourceId,
-  );
-  const r2 = shapes.find(
-    (r): r is Rectangle => r.type === "rectangle" && r.id === targetId,
-  );
-  if (!r1 || !r2) return;
-  const [x1, y1] = r1.coords;
-  const [x2, y2] = r2.coords;
+  const lines = getLinkLines(shapes, linkLine);
+  if (!lines) return;
+  lines.forEach(({ startPoint, endPoint, controlPoint1, controlPoint2 }) => {
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute(
+      "d",
+      [
+        `M ${startPoint.x},${startPoint.y}`,
+        `C ${controlPoint1.x},${controlPoint1.y}`,
+        `${controlPoint2.x},${controlPoint2.y}`,
+        `${endPoint.x},${endPoint.y}`,
+      ].join(" "),
+    );
 
-  const startP = [x1 + r1.w, y1 + sourceYOffset] as const;
-  const endP = [x2, y2 + targetYOffset] as const;
-  const startPoint = {
-    x: startP[0],
-    y: startP[1],
-  };
-  const endPoint = {
-    x: endP[0],
-    y: endP[1],
-  };
+    if (linkLine.strokeStyle) {
+      path.setAttribute("stroke", linkLine.strokeStyle);
+    }
+    if (linkLine.lineWidth) {
+      path.setAttribute("stroke-width", linkLine.lineWidth.toString());
+    }
+    path.setAttribute("fill", "none");
+    if (linkLine.opacity !== undefined) {
+      path.setAttribute("opacity", linkLine.opacity.toString());
+    }
 
-  const dx = endPoint.x - startPoint.x;
-  const horizontalOffset = Math.abs(dx) * controlPointFactor;
-  const controlPoint1 = { x: startPoint.x + horizontalOffset, y: startPoint.y };
-  const controlPoint2 = { x: endPoint.x - horizontalOffset, y: endPoint.y };
-
-  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-  path.setAttribute(
-    "d",
-    [
-      `M ${startPoint.x},${startPoint.y}`,
-      `C ${controlPoint1.x},${controlPoint1.y}`,
-      `${controlPoint2.x},${controlPoint2.y}`,
-      `${endPoint.x},${endPoint.y}`,
-    ].join(" "),
-  );
-
-  if (linkLine.strokeStyle) {
-    path.setAttribute("stroke", linkLine.strokeStyle);
-  }
-  if (linkLine.lineWidth) {
-    path.setAttribute("stroke-width", linkLine.lineWidth.toString());
-  }
-  path.setAttribute("fill", "none");
-  if (linkLine.opacity !== undefined) {
-    path.setAttribute("opacity", linkLine.opacity.toString());
-  }
-
-  svg.appendChild(path);
+    svg.appendChild(path);
+  });
 };
 
 // Helper function to create SVG elements

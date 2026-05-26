@@ -1,0 +1,6 @@
+node_modules
+playwright-report
+test-results
+.coverage-v8
+coverage
+dist-scripts

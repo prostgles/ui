@@ -1,8 +1,8 @@
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { DBSchemaTable } from "prostgles-types";
 import { getKeys, pickKeys } from "prostgles-types";
-import type { CommonWindowProps } from "../../Dashboard/Dashboard";
+import type { Prgl } from "src/App";
 import type {
+  DBSchemaTableWJoins,
   Join,
   JoinV2,
   WindowSyncItem,
@@ -74,7 +74,11 @@ export const updateWCols = (
       }),
     });
   }
-  return w.$update({ sort: [], columns: newMinimalCols });
+
+  return w.$update({
+    // sort: [],
+    columns: newMinimalCols,
+  });
 };
 
 export const getSortColumn = (
@@ -97,7 +101,7 @@ export const getSortColumn = (
 };
 
 export const getSort = (
-  tables: CommonWindowProps["tables"],
+  tables: DBSchemaTableWJoins[],
   w: Pick<WindowSyncItem<"table">, "sort" | "columns" | "table_name">,
 ): ColumnSortSQL[] => {
   const { sort } = w;
@@ -138,7 +142,7 @@ export const getSort = (
 export const getJoinedTables = (
   tables: DBSchemaTable[],
   tableName: string,
-  db: DBHandlerClient,
+  db: Prgl["db"],
 ): { joins: Join[]; joinsV2: JoinV2[] } => {
   const myCols = tables.find((t) => t.name === tableName)?.columns;
   const upsertJoin = (joins: Join[], upsertedJoin: Join) => {

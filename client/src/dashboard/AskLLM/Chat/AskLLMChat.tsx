@@ -2,42 +2,49 @@ import Btn from "@components/Btn";
 import { Chat } from "@components/Chat/Chat";
 import { FlexCol } from "@components/Flex";
 import Popup from "@components/Popup/Popup";
-import React from "react";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import React, { useEffect, useState } from "react";
+import { useDebouncedCallback } from "src/hooks/useDebouncedCallback";
 import type { Prgl } from "../../../App";
 import type { LoadedSuggestions } from "../../Dashboard/dashboardUtils";
 import { AskLLMChatActionBar } from "../ChatActionBar/AskLLMChatActionBar";
-import type { LLMSetupStateReady } from "../Setup/useLLMSetupState";
-import { AskLLMToolApprover } from "../Tools/AskLLMToolApprover";
+import type { LLMSetupStateReady } from "../Setup/LLMSetupProvider";
 import { AskLLMChatHeader } from "./AskLLMChatHeader";
 import { useAskLLMChatSend } from "./useAskLLMChatSend";
 import { useLLMChat } from "./useLLMChat";
 import { useLLMSchemaStr } from "./useLLMSchemaStr";
+import type { DBSSchema } from "@common/publishUtils";
 const CHAT_WIDTH = 900;
 
 export type AskLLMChatProps = Pick<
   Required<Prgl["dbsMethods"]>,
   "askLLM" | "stopAskLLM"
 > & {
-  prgl: Prgl;
   setupState: LLMSetupStateReady;
-  anchorEl: HTMLElement;
   onClose: VoidFunction;
   workspaceId: string | undefined;
   loadedSuggestions: LoadedSuggestions | undefined;
+  selectedChat:
+    | { type: "toolApproval"; id: number }
+    | {
+        type: "agent";
+        id: number;
+        parent_message_id: DBSSchema["llm_messages"]["id"];
+      }
+    | undefined;
 };
 
 export const AskLLMChat = (props: AskLLMChatProps) => {
   const {
-    anchorEl,
     onClose,
-    prgl,
     setupState,
     workspaceId,
     loadedSuggestions,
     askLLM,
     stopAskLLM,
+    selectedChat,
   } = props;
-  const { tables, db, user, connectionId, connection, dbs, methods } = prgl;
+  const { tables, user, connectionId, connection, dbs, sql } = usePrgl();
   const chatState = useLLMChat({
     ...setupState,
     loadedSuggestions,
@@ -45,7 +52,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
     user,
     connectionId,
     workspaceId,
-    db,
+    selectedChat,
   });
   const {
     messages,
@@ -58,25 +65,52 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
   const { preferredPromptId, createNewChat } = chatState;
   const { dbSchemaForPrompt } = useLLMSchemaStr({
     tables,
-    db,
+    sql,
     connection,
     activeChat,
   });
   const isAdmin = user?.type === "admin";
-  const { chatIsLoading, onStopSending, sendMessage, sendQuery } =
-    useAskLLMChatSend({
-      askLLM,
-      stopAskLLM,
-      activeChatId,
-      activeChat,
-      dbSchemaForPrompt,
-    });
+  const { chatIsLoading, onStopSending, sendMessage } = useAskLLMChatSend({
+    askLLM,
+    stopAskLLM,
+    activeChatId,
+    activeChat,
+    dbSchemaForPrompt,
+  });
+  const [currentlyTypedMessage, setCurrentlyTypedMessage] = useState(
+    activeChat?.currently_typed_message,
+  );
+  useEffect(() => {
+    if (chatIsLoading) {
+      setCurrentlyTypedMessage("");
+    } else {
+      setCurrentlyTypedMessage(activeChat?.currently_typed_message);
+    }
+  }, [activeChat?.currently_typed_message, chatIsLoading]);
+  const onCurrentlyTypedMessageChange = useDebouncedCallback(
+    (currently_typed_message: string) => {
+      if (!activeChatId || chatIsLoading) return;
+      void dbs.llm_chats.update(
+        { id: activeChatId },
+        { currently_typed_message },
+      );
+    },
+    [activeChatId, chatIsLoading, dbs.llm_chats],
+  );
+
+  const agentChat = selectedChat?.type === "agent" ? activeChat : undefined;
 
   /* Prevents flickering when popup is opened */
   if (!messages) return;
+
+  const showFullscreen =
+    user?.options?.llmChatWindowPositioning === "fullscreen";
+
   return (
     <Popup
+      key={showFullscreen.toString()}
       data-command="AskLLM.popup"
+      data-key={activeChat?.agent_info?.type}
       showFullscreenToggle={{
         getContentStyle: (isFullscreen) =>
           isFullscreen && !window.isLowWidthScreen ?
@@ -90,6 +124,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
               minWidth: "0",
               maxWidth: `${CHAT_WIDTH}px`,
             },
+        defaultValue: showFullscreen ? true : undefined,
       }}
       title={(rootDiv) => (
         <AskLLMChatHeader
@@ -98,11 +133,10 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
           chatRootDiv={rootDiv}
         />
       )}
-      positioning="right-panel"
-      clickCatchStyle={{ opacity: 0.1 }}
+      positioning={agentChat ? "center" : "right-panel"}
+      clickCatchStyle={{ opacity: agentChat ? 1 : 0.1 }}
       onClickClose={false}
       onClose={onClose}
-      anchorEl={anchorEl}
       contentClassName="p-0 f-1"
       rootStyle={{
         flex: 1,
@@ -134,19 +168,13 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
             disabledInfo={activeChat.disabled_message ?? undefined}
             maxWidth={CHAT_WIDTH}
             onSend={sendMessage}
-            currentlyTypedMessage={activeChat.currently_typed_message}
-            onCurrentlyTypedMessageChange={(currently_typed_message) => {
-              void dbs.llm_chats.update(
-                { id: activeChat.id },
-                { currently_typed_message },
-              );
-            }}
+            currentlyTypedMessage={currentlyTypedMessage}
+            onCurrentlyTypedMessageChange={onCurrentlyTypedMessageChange}
             isLoading={chatIsLoading}
             onStopSending={onStopSending}
             actionBar={
               isAdmin && (
                 <AskLLMChatActionBar
-                  prgl={prgl}
                   activeChat={activeChat}
                   setupState={setupState}
                   prompt={prompt}
@@ -156,20 +184,9 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
               )
             }
           />
-          {prompt && (
-            <AskLLMToolApprover
-              connection={connection}
-              dbs={dbs}
-              activeChat={activeChat}
-              messages={llmMessages ?? []}
-              methods={methods}
-              sendQuery={sendQuery}
-              db={db}
-              prompt={prompt}
-            />
-          )}
         </FlexCol>
       )}
+
       {latestChats && !activeChat && (
         <Btn
           onClickPromise={async () => createNewChat(preferredPromptId)}

@@ -12,7 +12,6 @@ import {
   mdiRefreshAuto,
 } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import { type AnyObject } from "prostgles-types";
 import React from "react";
 import type { Backups } from "../Dashboard/dashboardUtils";
@@ -28,11 +27,11 @@ import {
   BACKUP_FILTER_OPTS,
   type BackupsControlsState,
 } from "./useBackupsControlsState";
+import { t } from "src/i18n/i18nUtils";
 
-export const orderByCreated = {
+const orderByCreated = {
   key: "created",
   asc: false,
-  // created: false,
 } as const;
 
 export const CompletedBackups = ({
@@ -46,8 +45,9 @@ export const CompletedBackups = ({
   BackupsControlsState,
   "backupsFilterType" | "setBackupsFilterType" | "completedBackupsFilter"
 >) => {
-  const { connectionId, dbs, dbsTables, dbsMethods, db } = usePrgl();
-  const { pgRestore, bkpDelete } = dbsMethods;
+  const { connectionId, dbs, dbsTables, dbsMethods, dbsMethodSchema, sql } =
+    usePrgl();
+  const { bkpDelete } = dbsMethods;
   const connection_id = connectionId;
 
   // const [backupsFilterType, setBackupsFilterType] = useState<
@@ -60,19 +60,23 @@ export const CompletedBackups = ({
     render: (logs, row) => (
       <RenderBackupLogs
         logs={logs}
-        completed={!(row.restore_status as any)?.loading}
+        completed={row.restore_status?.state !== "loading"}
       />
     ),
   };
   const dumpLogsFConf: FieldConfig<Backups> = {
     name: "dump_logs",
     render: (logs, row) => (
-      <RenderBackupLogs logs={logs} completed={!(row.status as any)?.loading} />
+      <RenderBackupLogs
+        logs={logs}
+        completed={row.status.state !== "loading"}
+      />
     ),
   };
 
   return (
     <SmartCardList
+      sql={sql}
       data-command="BackupsControls.Completed"
       btnColor="gray"
       showTopBar={false}
@@ -91,8 +95,8 @@ export const CompletedBackups = ({
         </FlexCol>
       }
       onSetData={(items) => setHasBackups(!!items.length)}
-      db={dbs as DBHandlerClient}
-      methods={dbsMethods}
+      db={dbs}
+      methods={dbsMethodSchema}
       tableName="backups"
       tables={dbsTables}
       filter={completedBackupsFilter}
@@ -126,7 +130,7 @@ export const CompletedBackups = ({
           ),
         },
         {
-          name: "created",
+          name: "created_ago" as "created",
           label: "Created",
           select: { $ageNow: ["created", null, "second"] },
           render: (value: AnyObject) => <StyledInterval value={value} />,
@@ -191,7 +195,7 @@ export const CompletedBackups = ({
           <CodeConfirmation
             title={"Delete the backup file from storage"}
             data-command="BackupsControls.Completed.delete"
-            show={!row.uploaded ? "confirmButton" : undefined}
+            bypassConfirmation={!row.uploaded}
             button={
               <Btn iconPath={mdiDelete} title="Will need to confirm">
                 Delete
@@ -200,28 +204,26 @@ export const CompletedBackups = ({
             message={
               <InfoRow color="warning">This action is not reversible!</InfoRow>
             }
-            confirmButton={(popupClose) => (
-              <>
-                <Btn
-                  iconPath={mdiDelete}
-                  variant="outline"
-                  color="danger"
-                  onClickPromise={() => bkpDelete!(row.id).then(popupClose)}
-                >
-                  Delete
-                </Btn>
-                <Btn
-                  iconPath={mdiDelete}
-                  variant="outline"
-                  color="danger"
-                  onClickPromise={() =>
-                    bkpDelete!(row.id, true).then(popupClose)
-                  }
-                >
-                  Force delete
-                </Btn>
-              </>
-            )}
+            confirmButtons={[
+              {
+                iconPath: mdiDelete,
+                variant: "outline",
+                color: "danger",
+                onClickPromise: async () => {
+                  await bkpDelete!({ bkpId: row.id });
+                },
+                children: t.common.Delete,
+              },
+              {
+                iconPath: mdiDelete,
+                variant: "outline",
+                color: "danger",
+                onClickPromise: async () => {
+                  await bkpDelete!({ bkpId: row.id, force: true });
+                },
+                children: "Force delete",
+              },
+            ]}
           />
 
           <Btn
@@ -236,12 +238,10 @@ export const CompletedBackups = ({
           </Btn>
 
           <Restore
-            dbs={dbs}
-            db={db}
             backupId={row.id}
             connectionId={connection_id}
-            dbsMethods={dbsMethods}
             data-command="BackupsControls.Completed.restore"
+            mode="fromBackup"
             button={
               <Btn
                 iconPath={mdiBackupRestore}
@@ -253,21 +253,6 @@ export const CompletedBackups = ({
                 Restore...
               </Btn>
             }
-            onReadyButton={(restoreOpts, popupClose) => (
-              <Btn
-                iconPath={mdiBackupRestore}
-                variant="filled"
-                color="action"
-                onClickPromise={() =>
-                  pgRestore!(
-                    { bkpId: row.id, connId: connectionId },
-                    restoreOpts,
-                  ).then(popupClose)
-                }
-              >
-                Restore
-              </Btn>
-            )}
           />
         </div>
       )}

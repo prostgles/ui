@@ -49,7 +49,7 @@ export const domToSVG = async (node: HTMLElement) => {
   /** Add textLength to prevent bugs in ios (It uses a different font which is wider and overflows the existing rects and clip paths) */
   svg.querySelectorAll("text,tspan").forEach((_text) => {
     const text = _text as SVGTextElement | SVGTSpanElement;
-    const isMultiLine = text.textContent.includes("\n");
+    const isMultiLine = (text.textContent || "").includes("\n");
     if (
       isMultiLine ||
       /** Has tspans that we'll handle separately */
@@ -61,12 +61,14 @@ export const domToSVG = async (node: HTMLElement) => {
     const ctm = text.getCTM();
     const scaleX = !ctm ? 1 : Math.hypot(ctm.a, ctm.c);
     text.setAttribute("textLength", bbox.width / scaleX);
-    text.setAttribute("lengthAdjust", "spacingAndGlyphs");
+    text.setAttribute("lengthAdjust", "spacing");
+    // text.setAttribute("lengthAdjust", "spacingAndGlyphs");
   });
 
   /** Does not really seem effective */
   // deduplicateSVGPaths(svg);
   // await addFragmentViewBoxes(svg, 10);
+
   repositionAbsoluteFixedAndSticky(svg);
   moveBordersToTop(svg);
   removeOverflowedElements(svg);
@@ -148,13 +150,19 @@ const moveBordersToTop = (svg: SVGGElement) => {
   svg
     .querySelectorAll<SVGScreenshotNodeType>(BORDER_ELEMENT_TYPES.join(","))
     .forEach((path) => {
-      if (
-        path._purpose?.border &&
-        !path._purpose.background &&
-        path.parentElement instanceof SVGGElement
-      ) {
+      if (!path._purpose || !(path.parentElement instanceof SVGGElement)) {
+        return;
+      }
+      const { background, border, shadow } = path._purpose;
+      if (border && !background) {
         path.parentElement.appendChild(path);
       }
+      // else if (
+      //   (shadow || background) &&
+      //   path.parentElement.parentElement instanceof SVGGElement
+      // ) {
+      //   path.parentElement.parentElement.prepend(path);
+      // }
     });
 };
 

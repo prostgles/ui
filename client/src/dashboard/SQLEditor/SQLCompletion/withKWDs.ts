@@ -252,7 +252,7 @@ export const withKWDs = <KWDD extends KWD>(
       show =
         show &&
         prevTokens.some((t) =>
-          k.justAfter?.includes(t.text.toUpperCase() as never),
+          k.justAfter?.includes(t.text.toUpperCase()),
         );
     }
     const prevTextIncludes = (v: string) =>
@@ -286,7 +286,7 @@ export const withKWDs = <KWDD extends KWD>(
   });
   if (
     _remainingKWDS.some(
-      (k) => prevKWD?.kwd && k.justAfter?.includes(prevKWD.kwd as never),
+      (k) => prevKWD?.kwd && k.justAfter?.includes(prevKWD.kwd),
     )
   ) {
     _remainingKWDS = _remainingKWDS.filter(

@@ -33,14 +33,14 @@ export const ElectronSetup = ({ serverState }: ElectronSetup) => {
     <FlexCol className="ElectronSetup m-auto min-s-0">
       <div
         className={"ta-center p-2  flex-col gap-2 max-w-700 p-1 min-h-0 "}
-        style={{ width: "500px" }}
+        style={{ width: "600px" }}
       >
         {step === "1-privacy" ?
           <div>
             <h3>PRIVACY</h3>
             <section className="ta-left  font-18">
               The only data we collect is the information you send us through
-              the &quot;Send feedback&quot; button.
+              the <strong>Send feedback</strong> button.
             </section>
           </div>
         : <FlexCol className="f-1 min-s-0 ">

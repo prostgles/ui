@@ -1,31 +1,40 @@
-import { mdiAssistant } from "@mdi/js";
-import React, { useState } from "react";
-import type { Prgl } from "../../App";
 import Btn from "@components/Btn";
+import { ErrorTrap } from "@components/ErrorComponent";
+import { mdiAssistant } from "@mdi/js";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import React, { useMemo } from "react";
 import { t } from "../../i18n/i18nUtils";
 import type { LoadedSuggestions } from "../Dashboard/dashboardUtils";
 import { AskLLMChat } from "./Chat/AskLLMChat";
+import { useLLMSetup } from "./Setup/LLMSetupProvider";
 import { SetupLLMCredentials } from "./Setup/SetupLLMCredentials";
-import { useLLMSetupState } from "./Setup/useLLMSetupState";
+import { AskLLMToolApprover } from "./Tools/AskLLMToolApprover";
 
-type P = Prgl & {
+type AskLLMProps = {
   workspaceId: string | undefined;
   loadedSuggestions: LoadedSuggestions | undefined;
 };
 
-export const AskLLM = (props: P) => {
-  const { workspaceId, loadedSuggestions, ...prgl } = props;
-  const { dbsMethods } = prgl;
+export const AskLLM = (props: AskLLMProps) => {
+  const { workspaceId, loadedSuggestions } = props;
+  const { dbsMethods, connectionId } = usePrgl();
   const { askLLM, stopAskLLM } = dbsMethods;
 
-  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+  const state = useLLMSetup();
+  const { showChat, setShowChat } = state;
+  const selectedChat = useMemo(
+    () =>
+      showChat?.selectedChatId ?
+        ({ type: "toolApproval", id: showChat.selectedChatId } as const)
+      : undefined,
+    [showChat],
+  );
   const onClose = () => {
-    setAnchorEl(null);
+    setShowChat(undefined);
   };
-  const state = useLLMSetupState(prgl);
 
   return (
-    <>
+    <ErrorTrap>
       <Btn
         title={
           t.AskLLM["Chat to an AI Assistant to get help with your queries"]
@@ -34,8 +43,9 @@ export const AskLLM = (props: P) => {
         color="action"
         iconPath={mdiAssistant}
         data-command="AskLLM"
-        onClick={(e) => {
-          setAnchorEl(e.currentTarget);
+        size="default"
+        onClick={() => {
+          setShowChat({});
         }}
         loading={state.state === "loading"}
         disabledInfo={
@@ -47,26 +57,35 @@ export const AskLLM = (props: P) => {
         {/* {window.isMediumWidthScreen ? null : t.AskLLM["AI Assistant"]} */}
       </Btn>
 
-      {!anchorEl || !askLLM || !stopAskLLM ?
+      {state.state === "ready" && state.toolApprovalState && (
+        <AskLLMToolApprover
+          loadedSuggestions={loadedSuggestions}
+          workspaceId={workspaceId}
+          onOpenChat={(selectedChatId) => setShowChat({ selectedChatId })}
+          openedChatId={showChat?.selectedChatId}
+          connectionId={connectionId}
+          {...state.toolApprovalState}
+        />
+      )}
+
+      {!showChat || !askLLM || !stopAskLLM ?
         null
       : state.state !== "ready" ?
         <SetupLLMCredentials
-          {...prgl}
           asPopup={true}
           setupState={state}
           onClose={onClose}
         />
       : <AskLLMChat
           loadedSuggestions={loadedSuggestions}
-          prgl={prgl}
           askLLM={askLLM}
           stopAskLLM={stopAskLLM}
           workspaceId={workspaceId}
           setupState={state}
-          anchorEl={anchorEl}
           onClose={onClose}
+          selectedChat={selectedChat}
         />
       }
-    </>
+    </ErrorTrap>
   );
 };

@@ -22,10 +22,11 @@ import { getEditColumn } from "./getEditColumn";
 import { getFullColumnConfig } from "./getFullColumnConfig";
 import { onRenderColumn } from "./onRenderColumn";
 import { getCellStyle } from "./StyledTableColumn";
+import type { TableHandlerClient } from "prostgles-client";
 
 export type ProstglesTableColumn = ProstglesColumn & ColumnConfigWInfo;
 
-type GetTableColsArgs = Pick<W_TableProps["prgl"], "db" | "tables"> &
+type GetTableColsArgs = Pick<W_TableProps["prgl"], "db" | "tables" | "sql"> &
   Pick<CommonWindowProps, "suggestions"> & {
     data?: AnyObject[];
     w?: WindowSyncItem<"table">;
@@ -49,6 +50,7 @@ export const getTableCols = ({
   hideEditRow,
   columnMenuState,
   opts,
+  sql,
 }: GetTableColsArgs): ProstglesTableColumn[] => {
   if (!w) return [];
 
@@ -181,7 +183,7 @@ export const getTableCols = ({
       width: c.width ?? 100,
       noRightBorder: opts?.noRightBorder ?? false,
       onRender: onRenderColumn({
-        c,
+        column: c,
         table,
         tables,
         barchartVals,
@@ -196,7 +198,7 @@ export const getTableCols = ({
        */
       getCellStyle: (row) => {
         if (c.style?.type === "Scale" && barchartVals?.[c.name]) {
-          const style = getCellStyle(c, c, row, barchartVals[c.name]);
+          const style = getCellStyle(c, c, row[c.name], barchartVals[c.name]);
           if (!style?.cellColor && !style?.textColor) {
             return {};
           }
@@ -222,7 +224,7 @@ export const getTableCols = ({
 
     return tableColumn;
   });
-  const tableHandler = db[tableName];
+  const tableHandler = db[tableName] as TableHandlerClient | undefined;
 
   /* Can update table. Add update button */
   if (tableHandler && !hideEditRow && !w.options.hideEditRow) {
@@ -239,6 +241,7 @@ export const getTableCols = ({
         w,
         tables,
         db,
+        sql,
         suggestions,
         nestedColumnOpts: undefined,
       },

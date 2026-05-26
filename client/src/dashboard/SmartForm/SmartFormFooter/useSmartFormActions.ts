@@ -24,6 +24,8 @@ type Args = Pick<
   SmartFormNewRowState &
   SmartFormState;
 
+export type SmartFormActionsState = ReturnType<typeof useSmartFormActions>;
+
 export const useSmartFormActions = ({
   mode,
   fixedData,
@@ -108,7 +110,7 @@ export const useSmartFormActions = ({
               }
 
               const doInsert = async () => {
-                if (table.info.isFileTable && parentForm) {
+                if (table.isFileTable && parentForm) {
                   const { table: parentTable, rowFilter: parentRowFilter } =
                     parentForm;
                   const pkeyColumns = parentTable.columns
@@ -262,4 +264,3 @@ export const useSmartFormActions = ({
 
   return { successMessage, setSuccessMessage, confirmPopup, buttons };
 };
-export type SmartFormActionsState = ReturnType<typeof useSmartFormActions>;

@@ -3,6 +3,8 @@
 
 npm version "$(../scripts/get_version.sh ../package.json)" --force --no-git-tag-version --silent
 
+set -e  # Exit immediately if any command fails
+
 rm -rf ./ui
 rm -rf ./dist
 mkdir -p ./dist
@@ -10,6 +12,13 @@ mkdir -p ./dist
 cd ..
 
 rm -rf ./ui/*
+
+# Cleanup old builds
+# to preview: git clean -fdXn
+cd server 
+git clean -fdX
+cd ..
+
 
 mkdir -p ./ui/server/src
 mkdir -p ./ui/server/dist
@@ -33,6 +42,7 @@ cp ./server/package.json ./ui/server/
 cp ./server/package-lock.json ./ui/server/
 
 cd ./ui/server/
+
 npm run build
 cd ../../
 

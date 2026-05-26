@@ -1,22 +1,23 @@
-import React, { useCallback } from "react";
-import { useLocalSettings } from "../localSettings";
-import { debounce } from "../Map/DeckGLWrapped";
-import { CENTERED_WIDTH_CSS_VAR } from "./Dashboard";
 import { Pan } from "@components/Pan";
+import React from "react";
+import { useDebouncedCallback } from "src/hooks/useDebouncedCallback";
+import { useLocalSettings } from "../localSettings";
+import { CENTERED_WIDTH_CSS_VAR } from "./Dashboard";
 
 export const DashboardCenteredLayoutResizer = () => {
   const localSettings = useLocalSettings();
 
-  const updateCenteredLayoutWidth = useCallback(
-    debounce((newWidth: number) => {
+  const updateCenteredLayoutWidth = useDebouncedCallback(
+    (newWidth: number) => {
       localSettings.$set({
         centeredLayout: {
           enabled: localSettings.centeredLayout?.enabled ?? false,
           maxWidth: newWidth,
         },
       });
-    }, 200),
+    },
     [localSettings],
+    200,
   );
 
   if (!localSettings.centeredLayout?.enabled) {

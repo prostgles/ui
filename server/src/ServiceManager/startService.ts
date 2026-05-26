@@ -1,5 +1,5 @@
 import { spawn } from "child_process";
-import { tout } from "..";
+import { tout } from "@src/utils/tout";
 import type { ServiceManager } from "./ServiceManager";
 import {
   prostglesServices,
@@ -9,15 +9,16 @@ import {
   type ServiceInstance,
 } from "./ServiceManagerTypes";
 import { camelCaseToSkewerCase } from "./buildService";
-import { getServiceEndoints } from "./getServiceEndoints";
+import { getServiceEndpoints } from "./getServiceEndpoints";
 import { getSelectedConfigEnvs } from "./getSelectedConfigEnvs";
 import {
   executeDockerCommand,
   type ExecutionResult,
   type ProcessLog,
-} from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/DockerSandbox/executeDockerCommand";
-import { getFreePort } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/DockerSandbox/dockerMCPServerProxy/isPortFree";
+} from "@src/McpHub/DockerSandbox/executeDockerCommand";
+import { getFreePort } from "@src/utils/isPortFree";
 
+const STOPPED_REASON = "stopped";
 export async function startService(
   this: ServiceManager,
   serviceName: keyof typeof prostglesServices,
@@ -36,7 +37,7 @@ export async function startService(
   const getLogs = () => {
     return logs;
   };
-  const stop = () => abortController.abort();
+  const stop = () => abortController.abort(STOPPED_REASON);
   this.activeServices.set(serviceName, { getLogs, stop, status: "starting" });
   const imageName = camelCaseToSkewerCase(serviceName);
   const containerName = `prostgles-service-${imageName}`;
@@ -77,12 +78,17 @@ export async function startService(
     res: ExecutionResult | { type: "error"; error: unknown },
   ) => {
     const stopReason = "type" in res ? res.type : res.state;
-    const instance: ServiceInstance = {
-      status: "error",
-      error: new Error(
-        `Service ${serviceName} stopped unexpectedly with state: ${stopReason}`,
-      ),
-    };
+    const instance: ServiceInstance =
+      abortController.signal.reason === STOPPED_REASON ?
+        {
+          status: "stopped",
+        }
+      : {
+          status: "error",
+          error: new Error(
+            `Service ${serviceName} stopped unexpectedly with state: ${stopReason}`,
+          ),
+        };
     this.activeServices.set(serviceName, instance);
     this.onServiceLog(serviceName, logs);
   };
@@ -127,7 +133,9 @@ export async function startService(
     });
 
   const baseUrl = `http://${baseHost}`;
+  const startingServiceLabel = `Starting service ${JSON.stringify(serviceName)}. `;
   while (this.activeServices.get(serviceName)?.status === "starting") {
+    await tout(1000);
     const clientIp = "127.0.0.1";
     const healthCheckResponse = await fetch(
       `${baseUrl}${healthCheck.endpoint}`,
@@ -137,18 +145,24 @@ export async function startService(
           "X-Forwarded-For": clientIp,
           "X-Real-IP": clientIp,
         },
+        signal: AbortSignal.timeout(5_000),
       },
     ).catch(() => null);
+    console.log(
+      startingServiceLabel +
+        "Healthcheck" +
+        (healthCheckResponse?.ok ? " passed" : "..."),
+    );
     if (healthCheckResponse?.ok) {
       break;
     }
-    await tout(1000);
   }
 
   const serviceInstance = this.activeServices.get(serviceName);
   if (serviceInstance?.status !== "starting") {
     const error = new Error(
-      "Healthcheck not finished. Service failed to start. Current status:" +
+      startingServiceLabel +
+        "Healthcheck not finished. Service failed to start. Current status:" +
         serviceInstance?.status,
     );
     onStopped({
@@ -162,9 +176,9 @@ export async function startService(
     status: "running",
     getLogs,
     stop,
-    endpoints: getServiceEndoints({ serviceName, baseUrl, endpoints }),
+    endpoints: getServiceEndpoints({ serviceName, baseUrl, endpoints }),
   };
-  //@ts-ignore
+
   this.activeServices.set(serviceName, runningService);
   this.onServiceLog(serviceName, logs);
 

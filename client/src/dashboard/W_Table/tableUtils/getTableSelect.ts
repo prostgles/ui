@@ -1,23 +1,25 @@
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import { getSmartGroupFilter } from "@common/filterUtils";
 import type { AnyObject } from "prostgles-types";
 import { isDefined } from "prostgles-types";
-import { getSmartGroupFilter } from "@common/filterUtils";
+import type { Prgl } from "src/App";
 import { isEmpty } from "../../../utils/utils";
-import type { CommonWindowProps } from "../../Dashboard/Dashboard";
-import type { WindowData } from "../../Dashboard/dashboardUtils";
-import { getTimeChartSelectParams } from "../../W_TimeChart/fetchData/getTimeChartSelectParams";
+import type {
+  DBSchemaTableWJoins,
+  WindowData,
+} from "../../Dashboard/dashboardUtils";
 import {
   getDesiredTimeChartBinSize,
   getTimeChartMinMax,
 } from "../../W_TimeChart/fetchData/getTimeChartLayersWithBins";
+import { getTimeChartSelectParams } from "../../W_TimeChart/fetchData/getTimeChartSelectParams";
 import type { ColumnConfig } from "../ColumnMenu/ColumnMenu";
 import type { MinMax, MinMaxVals } from "../W_Table";
 import { getFullColumnConfig } from "./getFullColumnConfig";
 
 export const getTableSelect = async (
   w: Pick<WindowData<"table">, "columns" | "table_name">,
-  tables: CommonWindowProps["tables"],
-  db: DBHandlerClient,
+  tables: DBSchemaTableWJoins[],
+  db: Prgl["db"],
   filter: AnyObject,
   withoutData = false,
 ): Promise<{ barchartVals?: AnyObject; select: AnyObject }> => {
@@ -148,8 +150,8 @@ export const getComputedColumnSelect = (
 
 export const getNestedColumnSelect = async (
   c: ColumnConfig,
-  db: DBHandlerClient,
-  tables: CommonWindowProps["tables"],
+  db: Prgl["db"],
+  tables: DBSchemaTableWJoins[],
   withoutData = false,
 ): Promise<{ select: AnyObject; dateExtent?: MinMax<Date> } | undefined> => {
   if (!c.nested) throw "Impossible";
@@ -158,15 +160,20 @@ export const getNestedColumnSelect = async (
   let dateExtent: MinMax<Date> | undefined;
   if (c.nested.chart) {
     const targetTable = c.nested.path.at(-1)!.table;
+    const targetTableHandler = db[targetTable]!;
     dateExtent =
       withoutData ?
         { min: new Date(), max: new Date() }
-      : await getTimeChartMinMax(db[targetTable]!, {}, c.nested.chart.dateCol);
+      : await getTimeChartMinMax(
+          targetTableHandler,
+          {},
+          c.nested.chart.dateCol,
+        );
 
     const { bin } =
       withoutData ?
         { bin: "day" as const }
-      : await getDesiredTimeChartBinSize({
+      : getDesiredTimeChartBinSize({
           dataExtent: {
             minDate: dateExtent.min,
             maxDate: dateExtent.max,

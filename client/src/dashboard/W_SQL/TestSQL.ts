@@ -28,7 +28,7 @@ export const TestSQL = async (w: WindowSyncItem<"sql">) => {
   await testMiscAndBugs(testUtils);
   await createTables(testUtils);
   await mainTestScripts(testUtils);
-  stopWakeLock();
+  await stopWakeLock().catch(console.error);
 
   alert("Demo finished successfully");
 };
@@ -43,7 +43,7 @@ export const startWakeLock = async () => {
     stopWakeLock: async () => {
       try {
         const res = await wakeLock;
-        res?.release();
+        await res?.release();
       } catch (e) {
         console.error(e);
       }

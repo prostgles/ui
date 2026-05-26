@@ -29,6 +29,7 @@ export const SmartFilterBarRightActions = (props: SmartFilterBarProps) => {
     rowCount,
     methods: dbMethods,
     fixedData,
+    sql,
   } = props;
 
   const { filter: _fltr = [] } = "w" in props ? props.w : props;
@@ -46,7 +47,7 @@ export const SmartFilterBarRightActions = (props: SmartFilterBarProps) => {
   if (!table_name || !table) return null;
 
   const commonBtnProps = {
-    variant: "outline",
+    variant: "faded",
     className: "shadow w-fit h-fit bg-color-0",
   } as const;
 
@@ -113,21 +114,19 @@ export const SmartFilterBarRightActions = (props: SmartFilterBarProps) => {
                     </div>
                   );
                 }}
-                confirmButton={(pCLose) => (
-                  <Btn
-                    iconPath={mdiDelete}
-                    {...commonBtnProps}
-                    color="danger"
-                    title="Delete rows"
-                    onClickPromise={async () => {
+                confirmButtons={[
+                  {
+                    title: "Delete rows",
+                    iconPath: mdiDelete,
+                    ...commonBtnProps,
+                    color: "danger",
+                    onClickPromise: async () => {
                       await tableHandler.delete!(finalFilter);
                       showInsertUpdateDelete.onSuccess?.();
-                      pCLose();
-                    }}
-                  >
-                    Delete rows
-                  </Btn>
-                )}
+                    },
+                    children: "Delete rows",
+                  },
+                ]}
               />
             )}
 
@@ -151,6 +150,7 @@ export const SmartFilterBarRightActions = (props: SmartFilterBarProps) => {
                   <>
                     <SmartForm
                       db={db}
+                      sql={sql}
                       label=""
                       contentClassname="pt-1"
                       rowFilter={[]}
@@ -199,6 +199,7 @@ export const SmartFilterBarRightActions = (props: SmartFilterBarProps) => {
               ...(isObject(showInsert) && showInsert),
             }}
             db={db}
+            sql={sql}
             methods={dbMethods}
             tables={tables}
             tableName={table_name}

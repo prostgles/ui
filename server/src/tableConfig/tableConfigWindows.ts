@@ -2,12 +2,31 @@ import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig"
 
 export const tableConfigWindows = {
   windows: {
+    syncConfig: {
+      id_fields: ["id"],
+      synced_field: "last_updated",
+    },
     columns: {
       id: `UUID PRIMARY KEY DEFAULT gen_random_uuid()`,
       parent_window_id: {
         sqlDefinition: `UUID REFERENCES windows(id) ON DELETE CASCADE`,
         info: {
           hint: "If defined then this is a chart for another window and will be rendered within that parent window",
+        },
+      },
+      parent_window_options: {
+        nullable: true,
+        jsonbSchemaType: {
+          sizePercentage: {
+            optional: true,
+            type: "integer",
+            description:
+              "Percentage of the parent window the chart should take. Only used for attached charts",
+          },
+          position: {
+            optional: true,
+            enum: ["top", "bottom", "left", "right", "full"],
+          },
         },
       },
       user_id: `UUID NOT NULL REFERENCES users(id)  ON DELETE CASCADE`,

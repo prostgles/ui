@@ -1,10 +1,15 @@
-import { classOverride } from "@components/Flex";
+import { classOverride, FlexCol } from "@components/Flex";
 import { mdiClose, mdiMenuDown, mdiPencil } from "@mdi/js";
 import React from "react";
 import { RenderValue } from "../../dashboard/SmartForm/SmartFormField/RenderValue";
 import { getCommandElemSelector } from "../../Testing";
 import Btn from "../Btn";
-import type { FullOption, OptionKey, SelectProps } from "./Select";
+import type {
+  FullOption,
+  OptionKey,
+  SelectProps,
+  SelectValueFromProps,
+} from "./Select";
 
 type P<
   O extends OptionKey,
@@ -43,7 +48,7 @@ export const SelectTriggerButton = <
     btnProps,
     disabledInfo,
     optional = false,
-    showIconOnly,
+    showSelected,
     fullOptions,
     multiSelection,
     fixedBtnWidth,
@@ -62,14 +67,18 @@ export const SelectTriggerButton = <
   const noOtherOption =
     !options.length || (options.length === 1 && value === options[0]);
 
-  if (!onChange) return null;
-
   const showSelectedIcon =
-    showIconOnly ? selectedFullOptions[0]?.iconPath : undefined;
+    showSelected === "icon" ? selectedFullOptions[0]?.iconPath : undefined;
 
+  const firstSelectedOption = selectedFullOptions[0];
   const btnText = btnLabel ?? emptyLabel;
   const btnChildren =
-    chipMode || showSelectedIcon ? null
+    showSelected === "fullOption" && firstSelectedOption ?
+      <FlexCol className="gap-p25">
+        <div>{firstSelectedOption.label ?? firstSelectedOption.key}</div>
+        <div>{firstSelectedOption.subLabel}</div>
+      </FlexCol>
+    : chipMode || showSelectedIcon ? null
     : iconPath || btnProps?.children !== undefined ?
       (btnProps?.children ?? null)
     : <>
@@ -132,7 +141,7 @@ export const SelectTriggerButton = <
         }
       }}
       onKeyDown={
-        noOtherOption ? undefined : (
+        noOtherOption || !onChange ? undefined : (
           (e) => {
             const { key, currentTarget } = e;
             const isFocused = document.activeElement === currentTarget;
@@ -174,12 +183,18 @@ export const SelectTriggerButton = <
         className={`${label ? "  " : className} flex-row gap-0 ai-center ${selectClass} `}
       >
         {triggerButton}
-        {![undefined, null].includes(value) && (
+        {onChange && ![undefined, null].includes(value) && (
           <Btn
             iconPath={mdiClose}
             title="Reset selection"
             size={size}
-            onClick={(e) => onChange(undefined as any, e, undefined)}
+            onClick={(e) =>
+              onChange(
+                undefined as SelectValueFromProps<O, Multi, Optional>,
+                e,
+                undefined,
+              )
+            }
           />
         )}
       </div>

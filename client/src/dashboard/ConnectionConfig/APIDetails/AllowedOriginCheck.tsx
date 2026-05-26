@@ -1,20 +1,25 @@
-import React from "react";
-import type { APIDetailsProps } from "./APIDetails";
-import PopupMenu from "@components/PopupMenu";
-import { mdiAlert } from "@mdi/js";
+import type { DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
 import { FlexCol } from "@components/Flex";
-import { InfoRow } from "@components/InfoRow";
-import { t } from "../../../i18n/i18nUtils";
 import FormField from "@components/FormField/FormField";
+import { InfoRow } from "@components/InfoRow";
+import { Label } from "@components/Label";
+import PopupMenu from "@components/PopupMenu";
+import { mdiAlert } from "@mdi/js";
+import React, { useState } from "react";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
+import { t } from "../../../i18n/i18nUtils";
 
-export const AllowedOriginCheck = ({ dbs }: Pick<APIDetailsProps, "dbs">) => {
-  const { data: serverSettings } = dbs.global_settings.useSubscribeOne({});
-  const [allowed_origin, setAllowedOrigin] = React.useState(
-    serverSettings?.allowed_origin,
-  );
+export const AllowedOriginCheck = ({
+  databaseConfig,
+}: {
+  databaseConfig: DBSSchema["database_configs"];
+}) => {
+  const { dbs } = usePrglCore();
+  const firstAllowedOrigin = databaseConfig.cors?.allowedOrigins[0];
+  const [allowedOrigin, setAllowedOrigin] = useState(firstAllowedOrigin);
 
-  if (serverSettings?.allowed_origin) {
+  if (firstAllowedOrigin) {
     return null;
   }
 
@@ -36,11 +41,17 @@ export const AllowedOriginCheck = ({ dbs }: Pick<APIDetailsProps, "dbs">) => {
           variant: "filled",
           className: "ml-auto",
           disabledInfo:
-            !allowed_origin ?
+            !allowedOrigin ?
               t.APIDetailsWs["Allowed origin is required"]
             : undefined,
           onClickPromise: async () => {
-            await dbs.global_settings.update({}, { allowed_origin });
+            if (!allowedOrigin) {
+              throw new Error("Allowed origin is required");
+            }
+            await dbs.database_configs.update(
+              { id: databaseConfig.id },
+              { cors: { allowedOrigins: [allowedOrigin] } },
+            );
           },
         },
       ]}
@@ -71,9 +82,21 @@ export const AllowedOriginCheck = ({ dbs }: Pick<APIDetailsProps, "dbs">) => {
           <FormField
             label={t.APIDetailsWs["Allowed origin"]}
             data-command="AllowedOriginCheck.FormField"
-            value={allowed_origin}
+            value={allowedOrigin}
             onChange={setAllowedOrigin}
           />
+          <FlexCol>
+            <Label label="Suggested values" variant="normal" />
+            {[window.location.origin, "*", "null"].map((suggestedValue) => (
+              <Btn
+                key={suggestedValue}
+                variant="faded"
+                onClick={() => setAllowedOrigin(suggestedValue)}
+              >
+                {suggestedValue}
+              </Btn>
+            ))}
+          </FlexCol>
         </FlexCol>
       )}
     />

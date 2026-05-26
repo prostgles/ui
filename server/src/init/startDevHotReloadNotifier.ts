@@ -20,7 +20,7 @@ export const startDevHotReloadNotifier = ({
   );
   const showMessage = () => {
     if (showedMessage) return;
-    console.log(`\n\n${RELOAD_NOTIFICATION}:\n\n http://${host}:${port}`);
+    console.log(`\n\n${RELOAD_NOTIFICATION}:  http://${host}:${port}`);
     showedMessage = true;
   };
   if (process.env.NODE_ENV === "development") {

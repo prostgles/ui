@@ -8,7 +8,7 @@ import { getFontIconElement } from "../graphics/fontIconToSVG";
 import { getTextForSVG } from "../text/getTextForSVG";
 import { isElementVisible, isImgNode, isSVGNode } from "./isElementVisible";
 import { getForeignObject } from "../graphics/getForeignObject";
-import { includes } from "src/dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar";
+import { includes } from "prostgles-types";
 
 const attributesToKeep = [
   "data-command",
@@ -25,6 +25,7 @@ export const getWhatToRenderOnSVG = async (
   parentSvg: SVGElement | SVGGElement,
 ) => {
   const { isVisible, style, bbox } = isElementVisible(element);
+
   // Calculate absolute position
   const x = bbox.left + context.offsetX;
   const y = bbox.top + context.offsetY;
@@ -94,10 +95,16 @@ export const getWhatToRenderOnSVG = async (
   if (style.opacity && style.opacity !== "1") {
     childAffectingStyles.opacity = style.opacity;
   }
-  if (includes(style.position, ["fixed", "absolute", "relative"])) {
+  if (includes(["fixed", "absolute", "relative"], style.position)) {
     childAffectingStyles.position = style.position;
   }
 
+  if (style.backgroundImage.startsWith("url")) {
+    console.warn(
+      "Element has background image which is not supported yet",
+      element,
+    );
+  }
   const foreignObject = await getForeignObject(element, style, x, y);
   const fontIcon = getFontIconElement(element);
   const image =
@@ -111,6 +118,16 @@ export const getWhatToRenderOnSVG = async (
         type: "foreignObject" as const,
         foreignObject,
       }
+    : style.backgroundImage.startsWith("url(") ?
+      {
+        type: "maskOrBgImage" as const,
+        image: style.backgroundImage,
+      }
+    : style.maskImage.startsWith("url(") ?
+      {
+        type: "maskOrBgImage" as const,
+        image: style.maskImage,
+      }
     : fontIcon ?
       {
         type: "fontIcon" as const,
@@ -119,11 +136,6 @@ export const getWhatToRenderOnSVG = async (
     : isImgNode(element) ?
       {
         type: "img" as const,
-        element,
-      }
-    : style.maskImage.startsWith("url(") ?
-      {
-        type: "maskedElement" as const,
         element,
       }
     : undefined;
@@ -142,7 +154,7 @@ export const getWhatToRenderOnSVG = async (
     background:
       /** TODO: addNewChildren should be fixed. This is a workaround when non transparent bg appears after dark theme switch */
       element instanceof HTMLBodyElement ? style.backgroundColor
-      : backgroundSameAsRenderedParent || image?.type === "maskedElement" ?
+      : backgroundSameAsRenderedParent || image?.type === "maskOrBgImage" ?
         undefined
       : background,
     backdropFilter,

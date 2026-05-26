@@ -24,8 +24,10 @@ export const COMMANDS = {
   "config.bkp.create.start": "",
   "config.bkp.AutomaticBackups": "",
   "config.bkp.AutomaticBackups.toggle": "",
+  "config.auth": { desc: "", uiOnly: true },
   "config.ac": { desc: "", uiOnly: true },
   "config.status": "",
+  "config.security": "",
   "config.ac.create": "",
   "config.ac.save": "",
   "config.ac.removeRule": "",
@@ -53,6 +55,7 @@ export const COMMANDS = {
   "config.files.toggle.confirm": "",
   "config.api": { desc: "", uiOnly: true },
   "config.methods": "",
+  "config.webApp": "",
 
   "dashboard.window.rowInsert": "Open row insert panel",
   "dashboard.window.rowInsertTop": "Open row insert panel from top filter bar",
@@ -254,8 +257,8 @@ export const COMMANDS = {
   "Popup.content": "",
   "Popup.footer": "",
   "Popup.toggleFullscreen": "",
-  "PopupSection.fullscreen": "",
-  "PopupSection.content": "",
+  "FullscreenWrapper.toggleFullscreen": "",
+  FullscreenWrapper: "",
   "LinkedColumn.ColumnListMenu": "",
   "AddChartMenu.Map": "",
   "AddChartMenu.Timechart": "",
@@ -269,6 +272,7 @@ export const COMMANDS = {
   SchemaGraph: "",
   "SchemaGraph.TopControls": "",
   "SchemaGraph.TopControls.tableRelationsFilter": "",
+  "SchemaGraph.TopControls.tableFilter": "",
   "SchemaGraph.TopControls.columnRelationsFilter": "",
   "SchemaGraph.TopControls.linkColorMode": "",
   "SchemaGraph.TopControls.resetLayout": "",
@@ -423,11 +427,11 @@ export const COMMANDS = {
   "LLMChatOptions.Prompt": "",
   "LLMChatOptions.Model": "",
   "AskLLMChat.NewChat": "",
-  "AskLLMChat.LoadSuggestedToolsAndPrompt": "",
   "AskLLMChat.LoadSuggestedDashboards": "",
   "AskLLMChat.UnloadSuggestedDashboards": "",
   "AskLLMToolApprover.AllowAlways": "",
   "AskLLMToolApprover.AllowOnce": "",
+  "AskLLMToolApprover.ShowChat": "",
   "AskLLMToolApprover.Deny": "",
   MonacoEditor: "",
   MCPServerTools: "",
@@ -523,6 +527,67 @@ export const COMMANDS = {
   FilterWrapper_Field: "",
   "CloudStorageCredentialSelector.selectCredential": "",
   DashboardMenuContent: "",
+  "ArgumentDefinition.toggleOptional": "",
+  "WebApp.directory": "",
+  "WebAppConfig.createFromTemplate": "",
+  "WebAppConfig.build": "",
+  "WebAppConfig.test": "",
+  "AgenticWorkflow.start": "",
+  "AgenticWorkflow.stop": "",
+  AskUserQuestions: "",
+  "AskUserQuestions.confirm": "",
+  AgenticWorkflow: "",
+  "AgenticWorkflow.validationErrorLogs": "",
+  "AgenticWorkflow.openChat": "",
+  "AgenticWorkflow.openToolCall": "",
+  DatabaseAccessEditor: "",
+  "DatabaseAccessEditor.Mode": "",
+  "DatabaseAccessEditor.TableRules": "",
+  "LLMChatOptions.DatabaseAccess.schema": "",
+  RequestToolAccess: "",
+  "RequestToolAccess.Approve": "",
+  "RequestToolAccess.AutoApprove": "",
+  "DockerSandboxCreateContainer.stop": "",
+  "ChatFileAttachments.convertDocsToMarkdown": "",
+  "ChatFileAttachments.removeFile": "",
+  "LLMChatMessageContent.textDocument": "",
+  MediaViewer: "",
+  Agent: "",
+  Loading: "",
+  DockerSandboxCreateContainer: "",
+  AgenticWorkflowSchemaDrift: "",
+  "AgenticWorkflowSchemaDrift.applyPatches": "",
+  "AgenticWorkflowSchemaDrift.dropWorkflowTables": "",
+  SavedAgenticWorkflowsAndContainers: "",
+  ElectronSearchBar: "",
+  "FullscreenWrapper.toggleMinimize": "",
+  "McpToolAccess.configure": "",
+  FileTree: "",
+  FileTreeNode: "",
+  "FileTreeNode.header": "",
+  "FileTreeNode.checkbox": "",
+  "FileTreeNode.folderRow": "",
+  "FileTreeNode.fileRow": "",
+  "UserInput.Done": "",
+  "DatabaseAccessEditorCustomTables.openTable": "",
+  ToolCall: "",
+  "AgenticWorkflowActivity.openTable": "",
+  "SilverGrid.viewMoveTarget": "",
+  "FilterWrapper.deleteFilter": "",
+  McpToolAccess: "",
+  Alerts: "",
+  "AgenticWorkflowDetails.agents": "",
+  "AgenticWorkflowDetails.containerConfiguration": "",
+  "AgenticWorkflowDetails.description": "",
+  "TableAccessEditor.newTableDDL": "",
+  "AgenticWorkflowDetails.orchestrationTools": "",
+  AgenticWorkflowActions: "",
+  UserInput: "",
+  NestedTimechartControls: "",
+  DataLayerDataSourceInfo: "",
+  SilverGridChild: "",
+  App: "",
+  SwitchToggle: "",
 } as const satisfies Record<
   string,
   | string
@@ -545,10 +610,10 @@ export const dataCommand = (cmd: Command): { "data-command": Command } => ({
 export const getCommandElemSelector = (cmd: Command) => {
   return `[data-command=${JSON.stringify(cmd)}]`;
 };
-export const getDataKeyElemSelector = (key: string) => {
+export const getDataKey = (key: string) => {
   return `[data-key=${JSON.stringify(key)}]`;
 };
-export const getDataLabelElemSelector = (key: string) => {
+export const getDataLabel = (key: string) => {
   return `[data-label=${JSON.stringify(key)}]`;
 };
 
@@ -556,6 +621,7 @@ export const COMMAND_SEARCH_ATTRIBUTE_NAME = "data-command-search-ended";
 
 export const MOCK_ELECTRON_WINDOW_ATTR = "MOCK_ELECTRON_WINDOW_ATTR" as const;
 
+//@ts-ignore
 declare module "react" {
   interface HTMLAttributes<T> {
     "data-command"?: Command;
@@ -580,7 +646,7 @@ export declare namespace SVGif {
         lingerMs?: number;
       }
     | {
-        type: "moveTo";
+        type: "moveCursor";
         xy: [number, number];
         duration: number;
       };
@@ -612,6 +678,19 @@ export declare namespace SVGif {
         elementSelector: string;
         duration: number;
         type: "fadeIn" | "growIn";
+        startScale?: number;
+      }
+    | {
+        elementSelector: string;
+        duration: number;
+        type: "properties";
+        props: Record<"x" | "y" | "width" | "height", (string | number)[]>;
+      }
+    | {
+        elementSelector: string;
+        duration: number;
+        type: "custom";
+        attributes: Record<"transform", [string, string]>;
       }
     | {
         type: "wait";

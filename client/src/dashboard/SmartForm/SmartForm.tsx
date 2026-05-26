@@ -1,14 +1,18 @@
-import type { AnyObject, ValidatedColumnInfo } from "prostgles-types";
-import { omitKeys } from "prostgles-types";
-import React, { useCallback } from "react";
-import { type DetailedFilterBase } from "@common/filterUtils";
-import type { Prgl } from "../../App";
+import { type DetailedFilter } from "@common/filterUtils";
 import { SuccessMessage } from "@components/Animations";
+import type { BtnProps } from "@components/Btn";
+import Btn from "@components/Btn";
 import ErrorComponent from "@components/ErrorComponent";
 import { classOverride } from "@components/Flex";
+import type { JSONBSchemaCommonProps } from "@components/JSONBSchema/JSONBSchema";
 import Loading from "@components/Loader/Loading";
+import type { AnyObject, ValidatedColumnInfo } from "prostgles-types";
+import { includes, omitKeys } from "prostgles-types";
+import React, { useCallback, useState } from "react";
+import type { Prgl } from "../../App";
 import { ifEmpty } from "../../utils/utils";
 import type { DBSchemaTablesWJoins } from "../Dashboard/dashboardUtils";
+import type { JoinedRecordsProps } from "./JoinedRecords/JoinedRecords";
 import { SmartFormFieldList } from "./SmartFormFieldList";
 import { SmartFormFooterButtons } from "./SmartFormFooter/SmartFormFooterButtons";
 import { useSmartFormActions } from "./SmartFormFooter/useSmartFormActions";
@@ -16,10 +20,7 @@ import { type NewRowDataHandler } from "./SmartFormNewRowDataHandler";
 import { SmartFormPopupWrapper } from "./SmartFormPopup/SmartFormPopupWrapper";
 import { SmartFormUpperFooter } from "./SmartFormUpperFooter/SmartFormUpperFooter";
 import { useSmartForm, type SmartFormState } from "./useSmartForm";
-import type { BtnProps } from "@components/Btn";
-import Btn from "@components/Btn";
-import type { JoinedRecordsProps } from "./JoinedRecords/JoinedRecords";
-import type { JSONBSchemaCommonProps } from "@components/JSONBSchema/JSONBSchema";
+import { SmartFormViewAsMarkdown } from "./SmartFormPopup/SmartFormViewAsMarkdown";
 
 export type getErrorsHook = (
   cb: (
@@ -42,7 +43,7 @@ export type ColumnDisplayConfig = {
   onRender?: (value: any, setValue: (newValue: any) => void) => React.ReactNode;
 };
 
-export type SmartFormProps = Pick<Prgl, "db" | "tables" | "methods"> & {
+export type SmartFormProps = Pick<Prgl, "db" | "tables" | "methods" | "sql"> & {
   tableName: string;
 
   label?: string;
@@ -52,7 +53,7 @@ export type SmartFormProps = Pick<Prgl, "db" | "tables" | "methods"> & {
   onLoaded?: VoidFunction;
   onChange?: (newRow: AnyObject) => void;
 
-  rowFilter?: DetailedFilterBase[];
+  rowFilter?: DetailedFilter[];
   /**
    * If true will not "Update" button in bottom bar and changes will be applied immediately
    */
@@ -177,9 +178,8 @@ export const SmartForm = (props: SmartFormProps) => {
   const { tableName } = props;
   const stateOrError = useSmartForm(props);
   const { mode, error, table } = stateOrError;
-  const tableInfo = table?.info;
 
-  if (!tableInfo) {
+  if (!table) {
     return <>Table {tableName} not found.</>;
   }
 
@@ -204,9 +204,9 @@ const SmartFormWithNoError = ({
   state: SmartFormState;
 }) => {
   const { tableName, label, asPopup, className = "", onClose } = props;
+  const [showAsMarkdown, setShowAsMarkdown] = useState(false);
 
   const { mode, displayedColumns, errors, error, table, loading } = state;
-  const tableInfo = table.info;
 
   const isLoading = loading || ("loading" in mode ? mode.loading : false);
   const headerFromCardConfig =
@@ -220,7 +220,7 @@ const SmartFormWithNoError = ({
     : undefined;
   const headerText =
     label ??
-    (headerFromCardConfig || table.label || tableInfo.comment || tableName);
+    (headerFromCardConfig || table.label || table.comment || tableName);
 
   const formHeader =
     asPopup ? null
@@ -259,6 +259,8 @@ const SmartFormWithNoError = ({
       displayedColumns={displayedColumns}
       headerText={headerText}
       rowFilterObj={"rowFilterObj" in mode ? mode.rowFilterObj : undefined}
+      showAsMarkdown={showAsMarkdown}
+      setShowAsMarkdown={setShowAsMarkdown}
     >
       <div
         data-command={isLoading ? undefined : "SmartForm"}
@@ -276,7 +278,16 @@ const SmartFormWithNoError = ({
         {isLoading && <Loading variant="cover" />}
 
         {formHeader}
-        <SmartFormFieldList {...props} {...state} />
+        {showAsMarkdown ?
+          <SmartFormViewAsMarkdown
+            displayedColumns={state.displayedColumns}
+            currentRow={
+              state.mode.type === "view" || state.mode.type === "update" ?
+                state.mode.currentRow
+              : undefined
+            }
+          />
+        : <SmartFormFieldList {...props} {...state} />}
 
         <SmartFormUpperFooter {...props} {...state} />
 

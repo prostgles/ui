@@ -1,71 +1,8 @@
-export const onMount: ProstglesOnMount = async ({ dbo }) => {
-  const roadTableHandler = dbo.routes;
+export const onMount: ProstglesOnMount = async ({ dbo: db, sql }) => {
+  const roadTableHandler = db.routes;
   if (!roadTableHandler) return;
 
   const count = await roadTableHandler.count();
-  if (count) {
-    await dbo.sql(`
-      VACUUM;
-    `);
-
-    const mockLocations = async () => {
-      try {
-        await dbo.sql(`CALL mock_locations(); /* from fork */`);
-      } catch (error) {
-        console.error("Error calling mock_locations", error);
-        const funcs = await dbo.sql(
-          `
-          SELECT proname, probin, pg_get_function_arguments(oid), current_database(), (SELECT string_agg(extname, '; ') FROM pg_catalog.pg_extension) as extensions
-          FROM pg_catalog.pg_proc
-          WHERE proname = 'st_lineinterpolatepoint'
-        `,
-          {},
-          { returnType: "rows" },
-        );
-        console.error(funcs);
-        throw error;
-      }
-      mockLocations();
-    };
-    mockLocations();
-
-    setInterval(async () => {
-      const hourOfDayAverageOrders = {
-        0: 2,
-        1: 1,
-        2: 1,
-        3: 1,
-        4: 1,
-        5: 1,
-        6: 2,
-        7: 3,
-        8: 5,
-        9: 8,
-        10: 10,
-        11: 12,
-        12: 12,
-        13: 12,
-        14: 10,
-        15: 10,
-        16: 10,
-        17: 12,
-        18: 15,
-        19: 15,
-        20: 12,
-        21: 8,
-        22: 5,
-        23: 3,
-      };
-      const hourOfDay =
-        new Date().getHours() as keyof typeof hourOfDayAverageOrders;
-      const orderRatePerSecond = hourOfDayAverageOrders[hourOfDay] ?? 1;
-      await dbo.sql(`CALL mock_orders(\${orderRatePerSecond}::integer)`, {
-        orderRatePerSecond,
-      });
-    }, 3e3);
-
-    return;
-  }
 
   // const { elements } = await fetch("http://overpass-api.de/api/interpreter", {
   //   method: "POST",
@@ -74,23 +11,26 @@ export const onMount: ProstglesOnMount = async ({ dbo }) => {
   //     "Content-Type": "application/json",
   //   },
   // }).then((res) => res.json());
-  const { elements } = await fetch(
-    "https://prostgles.com/static/routes.json",
-  ).then((res) => res.json());
 
-  await dbo.routes.insert(
-    elements.map((d) => ({
-      id: d.id,
-      geometry: {
-        type: "LineString",
-        coordinates: d.geometry.map(({ lat, lon }) => [lon, lat]),
-      },
-    })),
-  );
+  if (!count) {
+    console.log("Downloading road data...");
+    const { elements } = await fetch(
+      "https://prostgles.com/static/routes.json",
+    ).then((res) => res.json());
 
-  await dbo.sql(`
-    UPDATE routes
-    SET geog = ST_SetSRID(ST_GeomFromGeoJSON(geometry), 4326);
+    console.log("Inserting road data into database...");
+    await db.routes.insert(
+      elements.map((d) => ({
+        id: d.id,
+        geometry: {
+          type: "LineString",
+          coordinates: d.geometry.map(({ lat, lon }) => [lon, lat]),
+        },
+      })),
+    );
+
+    console.log("Creating indexes...");
+    await sql(` 
 
     DELETE FROM routes
     WHERE st_isempty(geog::GEOMETRY) = true
@@ -99,5 +39,100 @@ export const onMount: ProstglesOnMount = async ({ dbo }) => {
 
     CREATE INDEX IF NOT EXISTS idx_roads 
     ON routes USING gist (geog);
+
+    CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id);
+
   `);
+
+    console.log("Indexes and mock data...");
+    for (const query of [
+      `CALL mock_users(1e5::integer, '1 year');`,
+      `CALL ensure_popular_restaurant_customer_coverage('1 month'::INTERVAL, 'Sun Cafe');`,
+      `CALL mock_orders(10::INTEGER, '1 month'::INTERVAL, 'Sun Cafe');`,
+      `CALL mock_orders(1e3::INTEGER, '6 month'::INTERVAL);`,
+      `CALL mock_orders(1e3::INTEGER, '3 month'::INTERVAL);`,
+      `CALL mock_orders(1e3::INTEGER, '2 month'::INTERVAL);`,
+      `CALL mock_orders(1e3::INTEGER, '1 month'::INTERVAL);`,
+      // `CALL mock_orders(35e3::INTEGER, '1 hour'::INTERVAL);`,
+    ]) {
+      console.log("Running query:", query);
+      await sql(query);
+    }
+    console.log("Finished inserting mock data.");
+  }
+
+  await sql(`
+      VACUUM;
+    `);
+
+  let shownProcInfo = false;
+  const mockLocations = async () => {
+    try {
+      if (!shownProcInfo) {
+        shownProcInfo = true;
+        console.log(
+          await sql(
+            `
+        SELECT pg_get_function_arguments(p.oid), postgis_full_version()
+        FROM pg_proc p
+        WHERE proname = 'st_lineinterpolatepoint';
+        `,
+            {},
+            { returnType: "rows" },
+          ),
+        );
+      }
+      await sql(`CALL mock_locations(); /* from fork */`);
+    } catch (error) {
+      console.error("Error calling mock_locations", error);
+      const funcs = await sql(
+        `
+          SELECT proname, probin, pg_get_function_arguments(oid), current_database(), (SELECT string_agg(extname, '; ') FROM pg_catalog.pg_extension) as extensions
+          FROM pg_catalog.pg_proc
+          WHERE proname = 'st_lineinterpolatepoint'
+        `,
+        {},
+        { returnType: "rows" },
+      );
+      console.error(funcs);
+      throw error;
+    }
+    mockLocations();
+  };
+  mockLocations();
+
+  setInterval(async () => {
+    const hourOfDayAverageOrders = {
+      0: 2,
+      1: 1,
+      2: 1,
+      3: 1,
+      4: 1,
+      5: 1,
+      6: 2,
+      7: 3,
+      8: 5,
+      9: 8,
+      10: 10,
+      11: 12,
+      12: 12,
+      13: 12,
+      14: 10,
+      15: 10,
+      16: 10,
+      17: 12,
+      18: 15,
+      19: 15,
+      20: 12,
+      21: 8,
+      22: 5,
+      23: 3,
+    };
+    const hourOfDay =
+      new Date().getHours() as keyof typeof hourOfDayAverageOrders;
+    const orderRatePerSecond = hourOfDayAverageOrders[hourOfDay] ?? 1;
+    await sql(`CALL mock_orders(\${orderRatePerSecond}::integer)`, {
+      orderRatePerSecond,
+    });
+  }, 3e3);
 };

@@ -3,7 +3,7 @@ import FormField from "@components/FormField/FormField";
 import { InfoRow } from "@components/InfoRow";
 import { Select } from "@components/Select/Select";
 import { FORMATS } from "../PGDumpOptions";
-import type { RestoreOpts } from "./Restore";
+import type { RestoreOpts } from "@common/utils";
 
 type P = {
   fromFile: boolean | undefined;
@@ -18,6 +18,7 @@ export const RestoreOptions = (props: P) => {
     numberOfJobs,
     format,
     clean,
+    singleTransaction,
     create,
     dataOnly,
     noOwner,
@@ -26,10 +27,12 @@ export const RestoreOptions = (props: P) => {
     excludeSchema,
   } = restoreOpts;
 
-  const formats = FORMATS.slice(0).map((_f) => {
-    const f = { ..._f };
+  const formats = FORMATS.slice(0).map((f) => {
     if (!fromFile && f.key !== format) {
-      (f as any).disabledInfo = "Can only use the same format as the dump file";
+      return {
+        ...f,
+        disabledInfo: "Can only use the same format as the dump file",
+      };
     }
     return f;
   });
@@ -70,6 +73,15 @@ export const RestoreOptions = (props: P) => {
             type="checkbox"
             onChange={(clean) => {
               setRestoreOpts({ ...restoreOpts, clean });
+            }}
+          />
+          <FormField
+            value={singleTransaction}
+            label="Single transaction"
+            hint="Restore all or nothing. If an error is encountered, the restore will be aborted and all changes rolled back."
+            type="checkbox"
+            onChange={(singleTransaction) => {
+              setRestoreOpts({ ...restoreOpts, singleTransaction });
             }}
           />
           <FormField

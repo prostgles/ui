@@ -1,6 +1,7 @@
-import { getCommandElemSelector } from "Testing";
-import { closeWorkspaceWindows, getDataKey, runDbsSql } from "utils/utils";
+import { getCommandElemSelector, getDataKey } from "Testing";
+import { closeWorkspaceWindows, runDbsSql } from "utils/utils";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
+import type { DBSSchema } from "common/publishUtils";
 
 export const backupAndRestoreSvgif: OnBeforeScreenshot = async (
   page,
@@ -9,10 +10,11 @@ export const backupAndRestoreSvgif: OnBeforeScreenshot = async (
 ) => {
   await openConnection("crypto");
   await closeWorkspaceWindows(page);
-  await addSceneAnimation(getCommandElemSelector("dashboard.goToConnConfig"));
-  await addSceneAnimation(getCommandElemSelector("config.bkp"));
+  await page.getByTestId("dashboard.goToConnConfig").click();
+  await page.getByTestId("config.bkp").click();
 
   /** Delete existing */
+  await page.waitForTimeout(3_000);
   const deleteAllBtn = page.getByTestId("BackupControls.DeleteAll");
   if (await deleteAllBtn.count()) {
     await deleteAllBtn.click();
@@ -63,25 +65,21 @@ export const backupAndRestoreSvgif: OnBeforeScreenshot = async (
   await addSceneAnimation(getDataKey("Cloud"));
   await addSceneAnimation(
     getCommandElemSelector("CloudStorageCredentialSelector.selectCredential"),
-    undefined,
-    "fast",
+    { duration: "fast" },
   );
   await addScene({ animations: [{ type: "wait", duration: 1500 }] });
   await page.keyboard.press("Escape");
-  await addSceneAnimation(getDataKey("Local"), undefined, "fast");
-  await addSceneAnimation(
-    getCommandElemSelector("config.bkp.create.name"),
-    {
+  await addSceneAnimation(getDataKey("Local"), { duration: "fast" });
+  await addSceneAnimation(getCommandElemSelector("config.bkp.create.name"), {
+    duration: "fast",
+    action: {
       action: "type",
       text: backupName,
     },
-    "fast",
-  );
-  await addSceneAnimation(
-    getCommandElemSelector("config.bkp.create.start"),
-    undefined,
-    "fast",
-  );
+  });
+  await addSceneAnimation(getCommandElemSelector("config.bkp.create.start"), {
+    duration: "fast",
+  });
   await page
     .getByTestId("BackupControls.DeleteAll")
     .waitFor({ state: "visible", timeout: 20_000 });
@@ -119,8 +117,10 @@ export const backupAndRestoreSvgif: OnBeforeScreenshot = async (
       dump_logs: logLines.slice(0, index).join("\n"),
       created,
       status: {
-        loading: { loaded: currentPercentage * totalSize, total: totalSize },
-      },
+        state: "loading",
+        loaded: currentPercentage * totalSize,
+        total: totalSize,
+      } satisfies DBSSchema["backups"]["status"],
       backupName,
     });
     await page.waitForTimeout(1500);
@@ -131,8 +131,9 @@ export const backupAndRestoreSvgif: OnBeforeScreenshot = async (
     dump_logs: logLines.join("\n"),
     created: originalCreated,
     status: {
-      ok: "1",
-    },
+      state: "finished",
+      timestamp: new Date().toISOString(),
+    } satisfies DBSSchema["backups"]["status"],
     backupName,
   });
 

@@ -1,6 +1,10 @@
-import { closeWorkspaceWindows, getDataKey, openTable } from "utils/utils";
+import { getCommandElemSelector, getDataKey } from "Testing";
+import {
+  closeWorkspaceWindows,
+  deleteAllWorkspaces,
+  openTable,
+} from "utils/utils";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
-import { getCommandElemSelector } from "Testing";
 
 export const timechartSvgif: OnBeforeScreenshot = async (
   page,
@@ -8,35 +12,27 @@ export const timechartSvgif: OnBeforeScreenshot = async (
   { addScene, addSceneAnimation },
 ) => {
   await openConnection("crypto");
+  await deleteAllWorkspaces(page);
   await closeWorkspaceWindows(page);
   await openTable(page, "futures");
   await addSceneAnimation(
     getCommandElemSelector("dashboard.window.toggleFilterBar"),
   );
   await addSceneAnimation(getCommandElemSelector("SearchList.Input"), {
-    action: "type",
-    text: "btc",
-  });
-  // await page.keyboard.press("ArrowDown");
-  // await addScene({ animations: [{ type: "wait", duration: 500 }] });
-  // await page.keyboard.press("ArrowDown");
-  // await addScene({ animations: [{ type: "wait", duration: 500 }] });
-  // await page.keyboard.press("Enter");
-  // await addScene({ animations: [{ type: "wait", duration: 500 }] });
-  await addSceneAnimation(`[data-label="BTCUSDC"]`);
-  await addSceneAnimation(getCommandElemSelector("FilterWrapper_FieldName"));
-  await addSceneAnimation(
-    getCommandElemSelector("FilterWrapper") +
-      " " +
-      getCommandElemSelector("SearchList.Input"),
-    {
+    action: {
       action: "type",
-      text: "xrp",
+      text: "btcu",
     },
-  );
+  });
+
+  await addSceneAnimation(`[data-label="BTCUSDT"]`);
+  await addSceneAnimation(getCommandElemSelector("FilterWrapper_FieldName"));
+
   await addSceneAnimation(getDataKey("XRPUSDT"));
   await addSceneAnimation(getCommandElemSelector("FilterWrapper_Field"));
-
+  await addSceneAnimation(
+    getCommandElemSelector("dashboard.window.toggleFilterBar"),
+  );
   await addSceneAnimation(getCommandElemSelector("AddChartMenu.Timechart"));
   await addSceneAnimation(
     getCommandElemSelector("AddChartMenu.Timechart") +
@@ -53,8 +49,14 @@ export const timechartSvgif: OnBeforeScreenshot = async (
   await addSceneAnimation(
     getCommandElemSelector("TimeChartLayerOptions.groupBy"),
   );
-  await addSceneAnimation(getDataKey("symbol"));
-  await addSceneAnimation(getCommandElemSelector("Popup.close"));
+  await page
+    .locator(
+      getCommandElemSelector("Popup.content") + " " + getDataKey("symbol"),
+    )
+    .click();
+  await page.getByTestId("Popup.close").click();
+  await addScene();
+  await page.getByTestId("dashboard.window.detachChart").click();
   await addScene();
   await toggleMenuPinned(false);
   await page.waitForTimeout(1500);

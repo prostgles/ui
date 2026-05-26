@@ -1,5 +1,6 @@
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
 import type { JSONB } from "prostgles-types";
+import { tableConfigAgenticWorkflow } from "../tableConfigAgenticWorkflow";
 import { tableConfigLlmChats } from "./tableConfigLlmChats";
 import { extraRequestData } from "./tableConfigLlmExtraRequestData";
 
@@ -54,6 +55,52 @@ const toolUseContent: JSONB.FieldType = {
   ],
 };
 
+export const USER_MESSAGE_CONTENT_SCHEMA_OPTIONS = [
+  {
+    type: {
+      enum: ["text"],
+    },
+    text: "string",
+    reasoning: {
+      type: "string",
+      optional: true,
+      description:
+        "Internal reasoning message used by the model to explain its thought process",
+    },
+  },
+  {
+    type: { enum: ["text-document"] },
+    fileName: "string",
+    mimeType: { enum: ["text/markdown", "text/plain"] },
+    text: "string",
+  },
+  {
+    type: {
+      enum: ["image", "audio", "video", "application", "text"],
+    },
+    source: {
+      type: {
+        type: { enum: ["base64"] },
+        media_type: "string",
+        data: "string",
+      },
+    },
+  },
+  {
+    type: { enum: ["tool_use"] },
+    id: "string",
+    name: "string",
+    input: { record: { values: "unknown" }, optional: true },
+  },
+  {
+    type: { enum: ["tool_result"] },
+    tool_use_id: "string",
+    tool_name: { type: "string" },
+    content: toolUseContent,
+    is_error: { optional: true, type: "boolean" },
+  },
+] as const satisfies JSONB.ObjectType["type"][];
+
 export const tableConfigLLM: TableConfig<{ en: 1 }> = {
   llm_providers: {
     columns: {
@@ -97,12 +144,18 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
         },
       },
       chat_suitability_rank: {
-        sqlDefinition: `NUMERIC`,
+        sqlDefinition: `INTEGER`,
         info: { hint: "Lowest number is used in new chats" },
+      },
+      agent_suitability_rank: {
+        sqlDefinition: `INTEGER`,
+        info: { hint: "Lowest number is used in new agentic workflows" },
       },
       model_created: `TIMESTAMPTZ DEFAULT NOW()`,
       mcp_tool_support: `BOOLEAN DEFAULT FALSE`,
       context_length: ` INTEGER NOT NULL DEFAULT 0`,
+      max_completion_tokens: ` INTEGER NOT NULL DEFAULT 0`,
+
       architecture: {
         nullable: true,
         jsonbSchemaType: {
@@ -191,14 +244,38 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
       description: `TEXT DEFAULT ''`,
       user_id: `UUID REFERENCES users(id) ON DELETE SET NULL`,
       prompt: `TEXT NOT NULL DEFAULT ''`,
+      icon: `TEXT`,
       options: {
         nullable: true,
         jsonbSchemaType: {
-          prompt_type: {
-            enum: ["dashboards", "tasks", "agent_workflow"],
+          max_tokens: {
+            type: "number",
+            optional: true,
+            description: "Maximum tokens the model can generate in response",
+          },
+          temperature: {
+            type: "number",
             optional: true,
             description:
-              "Internal prompt type used in controlling chat context. Some tools may not be available for all types",
+              "Controls randomness in output. Lower values make output more focused and deterministic",
+          },
+          mcp_server_tools: {
+            description:
+              "List of MCP servers and tools that will be enabled for this prompt.",
+            optional: true,
+            record: {
+              partial: true,
+              values: {
+                record: {
+                  partial: true,
+                  values: { enum: [1, "auto-approve"] },
+                },
+              },
+            },
+          },
+          database_access: {
+            optional: true,
+            enum: ["execute_readonly_sql"],
           },
         },
       },
@@ -207,7 +284,7 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
     indexes: {
       unique_llm_prompt: {
         unique: true,
-        columns: "name, user_id, prompt",
+        columns: "name",
       },
     },
   },
@@ -219,56 +296,11 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
       user_id: `UUID REFERENCES users(id) ON DELETE CASCADE`,
       llm_model_id: `INTEGER REFERENCES llm_models(id) ON DELETE SET NULL`,
       cost: `NUMERIC NOT NULL DEFAULT 0`,
+      total_tokens: `INTEGER NOT NULL CHECK (total_tokens >= 0)`,
       message: {
         jsonbSchema: {
           arrayOf: {
-            oneOf: [
-              {
-                type: {
-                  type: {
-                    enum: ["text"],
-                  },
-                  text: "string",
-                  reasoning: {
-                    type: "string",
-                    optional: true,
-                    description:
-                      "Internal reasoning message used by the model to explain its thought process",
-                  },
-                },
-              },
-              {
-                type: {
-                  type: {
-                    enum: ["image", "audio", "video", "application", "text"],
-                  },
-                  source: {
-                    type: {
-                      type: { enum: ["base64"] },
-                      media_type: "string",
-                      data: "string",
-                    },
-                  },
-                },
-              },
-              {
-                type: {
-                  type: { enum: ["tool_result"] },
-                  tool_use_id: "string",
-                  tool_name: { type: "string" },
-                  content: toolUseContent,
-                  is_error: { optional: true, type: "boolean" },
-                },
-              },
-              {
-                type: {
-                  type: { enum: ["tool_use"] },
-                  id: "string",
-                  name: "string",
-                  input: "any",
-                },
-              },
-            ],
+            oneOfType: USER_MESSAGE_CONTENT_SCHEMA_OPTIONS,
           },
         },
       },
@@ -311,4 +343,5 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
       },
     },
   },
+  ...tableConfigAgenticWorkflow,
 };

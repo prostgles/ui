@@ -8,7 +8,7 @@ export const useTablesAndViewsSearchItems = ({
   db,
 }: Pick<SearchAllProps, "tables" | "suggestions" | "db">) => {
   const tableMap: Map<number, (typeof tables)[number]> = useMemo(
-    () => new Map(tables.map((t) => [t.info.oid, t])),
+    () => new Map(tables.map((t) => [t.oid, t])),
     [tables],
   );
   const searchItems: SearchAllSuggestion[] = useMemo(
@@ -18,7 +18,7 @@ export const useTablesAndViewsSearchItems = ({
         .map((s) => {
           const { type, OID } = s;
           const isUserCreatedTable =
-            (type === "table" || type === "view") &&
+            (type === "table" || type === "view" || type === "mview") &&
             s.schema &&
             !["information_schema"].includes(s.schema) &&
             !s.schema.startsWith("pg_");

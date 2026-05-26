@@ -83,7 +83,7 @@ export const useMCPServerEnable = ({
           server_name: mcp_server.name,
           server_config_id: toolsAllowedConfigId || lastConfigId,
         }));
-        await dbs.llm_chats_allowed_mcp_tools.insert(data);
+        await dbs.llm_chats_allowed_mcp_tools.insertMany(data);
       } else {
         await dbs.llm_chats_allowed_mcp_tools.delete({
           tool_id: { $in: toolIds },

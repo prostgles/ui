@@ -1,31 +1,28 @@
-import { mdiPlus } from "@mdi/js";
-import { asName } from "prostgles-types";
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
-import type { Prgl, PrglCore } from "../../App";
 import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
 import { InfoRow } from "@components/InfoRow";
 import Popup from "@components/Popup/Popup";
 import { Select } from "@components/Select/Select";
 import { SwitchToggle } from "@components/SwitchToggle";
+import { mdiPlus } from "@mdi/js";
+import { asName } from "prostgles-types";
+import React, { useState } from "react";
+import { Link } from "react-router";
+import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 import { FileColumnConfigEditor } from "./FileColumnConfigEditor";
 import { useFileTableConfigControls } from "./useFileTableConfigControls";
-import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 
-type CreateReferencedColumnProps = Omit<PrglCore, "methods"> & {
+type CreateReferencedColumnProps = {
   fileTable: string | undefined;
   tableName?: string;
   onClose?: VoidFunction;
 };
 
 export const CreateFileColumn = ({
-  db,
-  tables,
   fileTable,
   tableName: _tableName,
   onClose,
 }: CreateReferencedColumnProps) => {
-  const prgl = usePrgl();
+  const { connectionId, tables } = usePrgl();
   const [tableName, setTableName] = useState(_tableName);
   if (!fileTable) {
     return (
@@ -39,9 +36,7 @@ export const CreateFileColumn = ({
       >
         <InfoRow variant="naked">
           Must enable{" "}
-          <Link
-            to={`/connection-config/${prgl.connectionId}?section=file_storage`}
-          >
+          <Link to={`/connection-config/${connectionId}?section=file_storage`}>
             file storage
           </Link>{" "}
           first
@@ -52,11 +47,8 @@ export const CreateFileColumn = ({
   if (tableName) {
     return (
       <CreateFileColumnOptions
-        db={db}
-        tables={tables}
         fileTable={fileTable}
         tableName={tableName}
-        prgl={prgl}
         onDone={() => {
           onClose?.();
           if (!_tableName) {
@@ -76,7 +68,7 @@ export const CreateFileColumn = ({
         iconPath: mdiPlus,
       }}
       fullOptions={tables
-        .filter((t) => !t.info.isFileTable)
+        .filter((t) => !t.isFileTable)
         .map((t) => ({
           key: t.name,
           disabledInfo:
@@ -90,17 +82,16 @@ export const CreateFileColumn = ({
 };
 
 const CreateFileColumnOptions = ({
-  db,
   fileTable,
   tableName,
   onDone,
-  prgl,
 }: Omit<CreateReferencedColumnProps, "fileTable"> & {
   fileTable: string;
   tableName: string;
   onDone: VoidFunction;
-  prgl: Prgl;
 }) => {
+  const prgl = usePrgl();
+  const { sql } = prgl;
   const [colName, setColName] = useState<string>();
   const [optional, setOptional] = useState(true);
   const {
@@ -173,9 +164,9 @@ const CreateFileColumnOptions = ({
             try {
               if (!colName) return;
               setM({ loading: 1 });
-              if (!db.sql)
+              if (!sql)
                 throw "Not enough privileges. Must be allowed to run SQL queries";
-              await db.sql(query);
+              await sql(query);
               if (canUpdate) {
                 updateRefsConfig();
               }

@@ -2,10 +2,8 @@ import type { FileTable } from "@common/utils";
 import { MediaViewer } from "@components/MediaViewer/MediaViewer";
 import { type FullOption } from "@components/Select/Select";
 import { SvgIconFromURL } from "@components/SvgIcon";
-import { type DBHandlerClient } from "prostgles-client/dist/prostgles";
 import {
   _PG_numbers,
-  _PG_numbers_str,
   includes,
   isDefined,
   isEmpty,
@@ -13,8 +11,10 @@ import {
   type ValidatedColumnInfo,
 } from "prostgles-types";
 import React from "react";
+import type { Prgl } from "src/App";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
 import type { SmartFormFieldForeignKeyProps } from "./SmartFormFieldForeignKey";
+import type { TableHandlerClient } from "prostgles-client";
 
 type FetchForeignKeyOptionsArgs = Pick<
   SmartFormFieldForeignKeyProps,
@@ -227,9 +227,9 @@ type Args = {
   textColumn: string | undefined;
   table: DBSchemaTableWJoins;
   filter: AnyObject | undefined;
-  db: DBHandlerClient;
+  db: Prgl["db"];
 };
-const fetchSearchResults = async ({
+export const fetchSearchResults = async ({
   mainColumn,
   textColumn,
   db,
@@ -237,13 +237,13 @@ const fetchSearchResults = async ({
   table,
   term,
 }: Args): Promise<FullOption[]> => {
-  const { name: tableName, rowIconColumn, info } = table;
-  const fileUrl = info.isFileTable ? "url" : undefined;
+  const { name: tableName, rowIconColumn, isFileTable } = table;
+  const fileUrl = isFileTable ? "url" : undefined;
   const extraColumns =
     rowIconColumn ? [rowIconColumn]
     : fileUrl ? [fileUrl]
     : [];
-  const tableHandler = db[tableName];
+  const tableHandler = db[tableName] as TableHandlerClient | undefined;
   if (!tableHandler?.find) return [];
   const filterColumns = [mainColumn, textColumn].filter(isDefined);
 
@@ -304,7 +304,7 @@ export const getBestTextColumns = (
   table: DBSchemaTableWJoins,
   excludeCols: string[],
 ) => {
-  if (table.info.isFileTable) {
+  if (table.isFileTable) {
     return table.columns.filter((c) =>
       includes(["original_name"] satisfies (keyof FileTable)[], c.name),
     );
@@ -322,7 +322,7 @@ export const getBestTextColumns = (
         !hasNonNullableTextCol || !c.is_nullable,
     )
     .map((column) => {
-      const shortestUnique = table.info.uniqueColumnGroups
+      const shortestUnique = table.uniqueColumnGroups
         ?.filter((g) => g.includes(column.name))
         .sort((a, b) => a.length - b.length)[0];
       return {

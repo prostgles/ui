@@ -17,12 +17,14 @@ export const getDeckLibs = async () => {
   const mvtLoader = await import(
     /* webpackChunkName: "mvtLoader" */ "@loaders.gl/mvt"
   );
-  // const extensions = await import(/* webpackChunkName: "deckglExtensions" */ "@deck.gl/extensions");
+  const extensions = await import(
+    /* webpackChunkName: "deckglExtensions" */ "@deck.gl/extensions"
+  );
 
   return {
     lib,
     MVTLoader: mvtLoader.MVTLoader,
-    // extensions
+    extensions,
   };
 };
 export type DeckGlLib = Awaited<ReturnType<typeof getDeckLibs>>["lib"];
@@ -64,10 +66,13 @@ export class DeckWrapped {
     this.opts = opts;
     this.node = node;
     const { type, initialViewState } = this.opts;
-
+    const dpr =
+      typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
+    const useDevicePixels = Math.max(1, Math.min(2, dpr));
     this.deck = new lib.Deck({
       ...(getViews({ type, lib, initialViewState }) as any),
       parent: node,
+      useDevicePixels,
       controller: true,
       ...omitKeys(opts, [
         "type",
@@ -195,9 +200,14 @@ export class DeckWrapped {
 
   /** Used in getting data */
   getExtent = (): Bounds | undefined => {
-    const b = this.deck.getViewports()[0]?.getBounds();
-    if (!b) return undefined;
-    return [b.slice(0, 2) as any, b.slice(2) as any];
+    try {
+      const b = this.deck.getViewports()[0]?.getBounds();
+      if (!b) return undefined;
+      return [b.slice(0, 2) as any, b.slice(2) as any];
+    } catch (err) {
+      console.log(err);
+    }
+    return undefined;
   };
 
   render(props: DeckProps<OrthographicView[] | MapView[]>) {
@@ -264,7 +274,7 @@ export const getViewState = <Type extends ViewType>(
     zoom: typeof state?.["zoom"] === "number" ? state["zoom"] : 0,
     ...(state && pickKeys(state as any, ["bearing", "pitch", "extent"], true)),
   };
-  return initialViewState as any;
+  return initialViewState;
 };
 
 type ViewType = DeckWrappedOpts["type"];

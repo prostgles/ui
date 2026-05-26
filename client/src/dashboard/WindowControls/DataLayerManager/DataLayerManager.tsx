@@ -1,10 +1,10 @@
 import type { BtnProps } from "@components/Btn";
 import Btn from "@components/Btn";
 import { FlexCol, FlexRow } from "@components/Flex";
-import PopupMenu from "@components/PopupMenu";
+import Popup from "@components/Popup/Popup";
 import { Select } from "@components/Select/Select";
 import { mdiLayers } from "@mdi/js";
-import React from "react";
+import React, { useState } from "react";
 import type { LinkSyncItem } from "src/dashboard/Dashboard/dashboardUtils";
 import { MapBasemapOptions } from "../../W_Map/controls/MapBasemapOptions";
 import { MapOpacityMenu } from "../../W_Map/controls/MapOpacityMenu";
@@ -35,7 +35,8 @@ export type MapLayerManagerProps = (
 // TODO: Show columns grouped by their link
 export const DataLayerManager = (props: MapLayerManagerProps) => {
   const { myLinks, type, asMenuBtn, w, layerQueries = [] } = props;
-
+  const [popupAnchor, setPopupAnchor] = useState<HTMLButtonElement>();
+  const [showLegend, setShowLegend] = useState(true);
   const sortedLayerQueries = useSortedLayerQueries({
     layerQueries,
     myLinks,
@@ -112,14 +113,45 @@ export const DataLayerManager = (props: MapLayerManagerProps) => {
 
   const title = "Manage layers";
   return (
-    <PopupMenu
-      title={title}
-      data-command="ChartLayerManager"
-      button={
-        <Btn iconPath={mdiLayers} title={title} color="action" {...asMenuBtn} />
-      }
-      contentClassName="bg-color-1 p-1"
-      render={() => content}
-    />
+    <>
+      {type === "map" && showLegend && (
+        <FlexCol
+          className="DataLayerManager_Legend gap-p5 bg-color-0 p-p5 rounded shadow ws-nowrap"
+          style={{ maxWidth: "200px", marginLeft: "-5px", marginTop: "-5px" }}
+        >
+          {(layerQueries as LayerQuery[]).map((layer) => {
+            return (
+              <DataLayer
+                {...props}
+                type="map"
+                asLegend={true}
+                key={layer._id}
+                layer={layer as LayerQuery & { link: LinkSyncItem }}
+              />
+            );
+          })}
+        </FlexCol>
+      )}
+      <Btn
+        iconPath={mdiLayers}
+        title={title}
+        data-command={popupAnchor ? undefined : "ChartLayerManager"}
+        color="action"
+        {...asMenuBtn}
+        onClick={({ currentTarget }) => setPopupAnchor(currentTarget)}
+      />
+      {popupAnchor && (
+        <Popup
+          title={title}
+          data-command="ChartLayerManager"
+          contentClassName="bg-color-1 p-1"
+          anchorEl={popupAnchor}
+          positioning="beneath-left"
+          onClose={() => setPopupAnchor(undefined)}
+        >
+          {content}
+        </Popup>
+      )}
+    </>
   );
 };
