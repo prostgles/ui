@@ -66,6 +66,7 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
         : undefined,
       )
       .find(isDefined)?.input;
+
     return {
       state: "ok",
       input: inputFromMessage,
@@ -89,8 +90,8 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
     | Pick<DBSSchema["connections"], "id" | "name">[]
     | undefined;
   const description =
-    (requestItem.mcp_server_tools as DBSSchema["mcp_server_tools"][])[0]
-      ?.description ?? "Could not find tool description";
+    requestItem.mcp_server_tools[0]?.description ??
+    "Could not find tool description";
   const name = getMCPFullToolName(server_name, tool_name);
   const ToolUI = ProstglesMCPToolsWithUI[name];
   const differentConnection =
@@ -161,16 +162,18 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
             });
           },
         },
-        {
-          className: "ml-auto",
-          label: "Show chat",
-          color: "action",
-          variant: "faded",
-          "data-command": "AskLLMToolApprover.ShowChat",
-          onClick: () => {
-            onOpenChat(chat_id);
-          },
-        },
+        differentConnection || requestItem.source.type === "proxy" ?
+          {
+            className: "ml-auto",
+            label: "Show chat",
+            color: "action",
+            variant: "faded",
+            "data-command": "AskLLMToolApprover.ShowChat",
+            onClick: () => {
+              onOpenChat(chat_id);
+            },
+          }
+        : undefined,
         {
           label: "Allow once",
           variant: "filled",

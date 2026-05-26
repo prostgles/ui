@@ -5,7 +5,6 @@ import { classOverride, FlexCol } from "@components/Flex";
 import { mdiDelete } from "@mdi/js";
 import type { AnyObject } from "prostgles-types";
 import type { Prgl } from "../../App";
-import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
 import { SmartCard } from "../SmartCard/SmartCard";
 import type { SmartFormProps } from "../SmartForm/SmartForm";
@@ -21,7 +20,7 @@ export type P = Pick<Prgl, "db" | "tables" | "methods" | "sql"> &
     className?: string;
     style?: React.CSSProperties;
     excludeNulls?: boolean;
-    tables: CommonWindowProps["tables"];
+    tables: DBSchemaTableWJoins[];
     onSuccess: SmartFormProps["onSuccess"];
     table: DBSchemaTableWJoins;
     data: AnyObject[];

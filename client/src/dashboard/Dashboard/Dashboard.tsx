@@ -42,7 +42,7 @@ import type {
   WorkspaceSyncItem,
 } from "./dashboardUtils";
 import { TopHeaderClassName } from "./dashboardUtils";
-import { getTables } from "./getTables";
+import { getTables, type DBSchemaTableWithRenderInfo } from "./getTables";
 
 const FORCED_REFRESH_PREFIX = "force-" as const;
 export const CENTERED_WIDTH_CSS_VAR = "--centered-width";
@@ -54,7 +54,7 @@ export type DashboardProps = {
   navigate: NavigateFunction;
 };
 export type DashboardState = {
-  tables?: DBSchemaTablesWJoins;
+  tables?: DBSchemaTableWithRenderInfo[];
   loading: boolean;
   minimised: boolean;
   namePopupWindow?: { w: WindowSyncItem; node: HTMLButtonElement };
@@ -436,8 +436,6 @@ export class _Dashboard extends RTComp<
 
     const { windowsSync, workspace } = this.d;
 
-    let mainContent: React.ReactNode;
-
     if (!windowsSync || !workspace || !tables) {
       let loadingMessage = "";
       if (!windowsSync || !workspace) {
@@ -455,25 +453,6 @@ export class _Dashboard extends RTComp<
             refreshPageTimeout={5000}
           />
         </div>
-      );
-    }
-
-    if (connectionId) {
-      mainContent = (
-        <ViewRendererWrapped
-          /** Do not re-render on dbKey change because it breaks sql editor */
-          // key={prgl.dbKey}
-          isReadonly={isReadonly}
-          prgl={prgl}
-          workspace={workspace}
-          links={this.d.links}
-          windows={this.d.windows}
-          tables={tables}
-          onCloseUnsavedSQL={(q, e) => {
-            this.setState({ namePopupWindow: { w: q, node: e.currentTarget } });
-          }}
-          suggestions={suggestions}
-        />
       );
     }
 
@@ -571,7 +550,23 @@ export class _Dashboard extends RTComp<
             className="Dashboard_MainContentWrapper f-1 gap-0 relative ai-none jc-none"
           >
             <DashboardCenteredLayoutResizer />
-            {mainContent}
+            {Boolean(connectionId) && (
+              <ViewRendererWrapped
+                /** Do not re-render on dbKey change because it breaks sql editor */
+                // key={prgl.dbKey}
+                isReadonly={isReadonly}
+                workspace={workspace}
+                links={this.d.links}
+                windows={this.d.windows}
+                tables={tables}
+                onCloseUnsavedSQL={(q, e) => {
+                  this.setState({
+                    namePopupWindow: { w: q, node: e.currentTarget },
+                  });
+                }}
+                suggestions={suggestions}
+              />
+            )}
           </FlexRow>
 
           <div
@@ -630,6 +625,7 @@ export type CommonWindowProps<T extends ChartType = ChartType> = Pick<
     links: LinkSyncItem[];
     windows: WindowSyncItem<ChartType>[];
   };
+
   /**
    * e is undefined when the table window was closed due to dropped table
    */

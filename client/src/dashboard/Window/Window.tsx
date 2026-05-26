@@ -52,26 +52,26 @@ type S<W extends WindowSyncItem> = {
   w?: W;
 };
 
-type D = {
-  w?: WindowSyncItem;
+type D<W> = {
+  w?: W;
   wSync?: SingleSyncHandles<WindowData>;
 };
 
 export default class Window<W extends WindowSyncItem> extends RTComp<
   P<W>,
   S<W>,
-  D
+  D<W>
 > {
   state: S<W> = {
     showMenu: undefined,
   };
 
-  d: D = {};
+  d: D<W> = {};
 
   onDelta = (dp: DeltaOf<P<W>>) => {
     const { onWChange } = this.props;
     if (dp?.onWChange && this.d.w) {
-      onWChange?.(this.d.w as W, this.d.w as DeepPartial<W>);
+      onWChange?.(this.d.w, this.d.w as DeepPartial<W>);
     }
 
     if (!this.d.wSync) {

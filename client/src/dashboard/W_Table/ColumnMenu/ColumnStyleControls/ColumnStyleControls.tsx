@@ -16,6 +16,7 @@ import type { CONDITION_OPERATORS } from "../ColumnDisplayFormat/ConditionalCell
 import { ConditionalCellStyleControls } from "../ColumnDisplayFormat/ConditionalCellStyleControls";
 import type { ColumnConfig } from "../ColumnMenu";
 import { getValueColors } from "./getValueColors";
+import { UpdateColumnGlobalConfig } from "../UpdateColumnGlobalConfig";
 
 export type ColumnValue = string | number | Date | null | undefined | boolean;
 
@@ -247,6 +248,7 @@ export const ColumnStyleControls = (props: StyleColumnProps) => {
           />
         </FlexRowWrap>
       : null}
+      <UpdateColumnGlobalConfig tableName={tableName} column={column} />
     </FlexCol>
   );
 };

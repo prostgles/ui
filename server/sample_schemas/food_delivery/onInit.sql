@@ -850,7 +850,7 @@ CREATE TABLE restaurants (
   is_popular BOOLEAN GENERATED ALWAYS AS (
     name ~* '\m(McDonald''s|KFC|Burger King|Sun Cafe|Subway|Domino''s|Pizza Hut|Starbucks|Costa|Pret A Manger|Greggs|Nando''s)\M' 
   ) STORED,
-  address_id BIGINT NOT NULL REFERENCES addresses,
+  address_id BIGINT NOT NULL REFERENCES addresses ON DELETE CASCADE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -866,7 +866,7 @@ CREATE TABLE restaurant_managers (
  
 CREATE TABLE menu_items (
   id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  restaurant_id INTEGER NOT NULL REFERENCES restaurants(id),
+  restaurant_id INTEGER NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
   name VARCHAR(100) NOT NULL,
   category VARCHAR(100) NOT NULL,
   price NUMERIC(8,2) NOT NULL,

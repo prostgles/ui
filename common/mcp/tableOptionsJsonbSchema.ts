@@ -1,3 +1,5 @@
+import { columnDisplayFormatSchema } from "../columnDisplayFormat.schema";
+
 export const tableOptionsJsonbSchema = {
   record: {
     partial: true,
@@ -13,7 +15,14 @@ export const tableOptionsJsonbSchema = {
             values: {
               type: {
                 icon: { type: "string", optional: true },
-                renderAs: { type: "string", optional: true },
+                renderAs: {
+                  ...columnDisplayFormatSchema,
+                  optional: true,
+                },
+                style: {
+                  type: "any",
+                  optional: true,
+                },
               },
             },
           },

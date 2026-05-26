@@ -6,10 +6,15 @@ import type { Prgl } from "src/App";
 import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
 import type { ColumnConfigWInfo } from "../../W_Table";
 import type { ColumnFormat } from "./columnFormatUtils";
-import { ColumnFormatSchema, getFormatOptions } from "./columnFormatUtils";
+import {
+  // columnDisplayFormatSchema,
+  getFormatOptions,
+} from "./columnFormatUtils";
 import { FlexCol } from "@components/Flex";
 import { Link } from "react-router";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import { columnDisplayFormatSchema } from "@common/columnDisplayFormat.schema";
+import { UpdateColumnGlobalConfig } from "../UpdateColumnGlobalConfig";
 
 type P = {
   db: Prgl["db"];
@@ -29,8 +34,8 @@ export const ColumnDisplayFormat = ({
   const { connection } = usePrgl();
   const schema = useMemo(() => {
     const schemaWithoutAllowedValues = {
-      ...ColumnFormatSchema,
-    } as DeepWriteable<typeof ColumnFormatSchema>;
+      ...columnDisplayFormatSchema,
+    } as DeepWriteable<typeof columnDisplayFormatSchema>;
     const allowedRenderers = getFormatOptions(
       column.info ?? column.computedConfig,
     );
@@ -79,6 +84,7 @@ export const ColumnDisplayFormat = ({
           Content Security Policy settings
         </Link>
       )}
+      <UpdateColumnGlobalConfig tableName={table.name} column={column} />
     </FlexCol>
   );
 };

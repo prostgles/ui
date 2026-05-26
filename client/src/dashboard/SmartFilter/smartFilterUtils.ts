@@ -4,7 +4,7 @@ import type { TableHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject, ValidatedColumnInfo } from "prostgles-types";
 import type { Prgl } from "src/App";
 import type { ContextDataSchema } from "../AccessControl/OptionControllers/FilterControl";
-import type { CommonWindowProps } from "../Dashboard/Dashboard";
+import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
 import type { FilterWrapperProps } from "../DetailedFilterControl/FilterWrapper";
 import type { ColumnConfig } from "../W_Table/ColumnMenu/ColumnMenu";
 
@@ -57,7 +57,7 @@ export type BaseFilterProps = Pick<FilterWrapperProps, "variant"> & {
   db: Prgl["db"];
   tableName: string;
   onChange: (filter?: DetailedFilter) => void;
-  tables: CommonWindowProps["tables"];
+  tables: DBSchemaTableWJoins[];
   column: FilterColumn;
   /**
    * Used to ensure that narrow down options based on other filters.

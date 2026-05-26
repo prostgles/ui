@@ -7,7 +7,7 @@ import type { AnyObject } from "prostgles-types";
 import React, { useMemo } from "react";
 import type { Prgl } from "src/App";
 import type { ContextDataSchema } from "../AccessControl/OptionControllers/FilterControl";
-import type { CommonWindowProps } from "../Dashboard/Dashboard";
+import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
 import { DetailedFilterControl } from "../DetailedFilterControl/DetailedFilterControl";
 import type { FilterWrapperProps } from "../DetailedFilterControl/FilterWrapper";
 import type { ColumnConfig } from "../W_Table/ColumnMenu/ColumnMenu";
@@ -18,7 +18,7 @@ export type Operand = "AND" | "OR";
 export type SmartFilterProps = Pick<FilterWrapperProps, "variant"> & {
   db: Prgl["db"];
   tableName: string;
-  tables: CommonWindowProps["tables"];
+  tables: DBSchemaTableWJoins[];
   onChange: (filter: DetailedFilter[]) => void;
   detailedFilter?: DetailedFilter[];
   operand?: Operand;

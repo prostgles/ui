@@ -1,23 +1,24 @@
-import type { DBHandlerClient } from "prostgles-client";
+import { getSmartGroupFilter } from "@common/filterUtils";
 import type { AnyObject } from "prostgles-types";
 import { isDefined } from "prostgles-types";
-import { getSmartGroupFilter } from "@common/filterUtils";
+import type { Prgl } from "src/App";
 import { isEmpty } from "../../../utils/utils";
-import type { CommonWindowProps } from "../../Dashboard/Dashboard";
-import type { WindowData } from "../../Dashboard/dashboardUtils";
-import { getTimeChartSelectParams } from "../../W_TimeChart/fetchData/getTimeChartSelectParams";
+import type {
+  DBSchemaTableWJoins,
+  WindowData,
+} from "../../Dashboard/dashboardUtils";
 import {
   getDesiredTimeChartBinSize,
   getTimeChartMinMax,
 } from "../../W_TimeChart/fetchData/getTimeChartLayersWithBins";
+import { getTimeChartSelectParams } from "../../W_TimeChart/fetchData/getTimeChartSelectParams";
 import type { ColumnConfig } from "../ColumnMenu/ColumnMenu";
 import type { MinMax, MinMaxVals } from "../W_Table";
 import { getFullColumnConfig } from "./getFullColumnConfig";
-import type { Prgl } from "src/App";
 
 export const getTableSelect = async (
   w: Pick<WindowData<"table">, "columns" | "table_name">,
-  tables: CommonWindowProps["tables"],
+  tables: DBSchemaTableWJoins[],
   db: Prgl["db"],
   filter: AnyObject,
   withoutData = false,
@@ -150,7 +151,7 @@ export const getComputedColumnSelect = (
 export const getNestedColumnSelect = async (
   c: ColumnConfig,
   db: Prgl["db"],
-  tables: CommonWindowProps["tables"],
+  tables: DBSchemaTableWJoins[],
   withoutData = false,
 ): Promise<{ select: AnyObject; dateExtent?: MinMax<Date> } | undefined> => {
   if (!c.nested) throw "Impossible";

@@ -10,10 +10,11 @@ import type {
   ChipStyle,
   ColumnValue,
 } from "../ColumnMenu/ColumnStyleControls/ColumnStyleControls";
-import { kFormatter, type MinMax } from "../W_Table";
+import { type MinMax } from "../W_Table";
 import { blend } from "../colorBlend";
 import type { ProstglesTableColumn } from "./getTableCols";
 import type { OnRenderColumnProps } from "./onRenderColumn";
+import { kFormatter } from "./kFormatter";
 
 type P = Pick<OnColRenderRowInfo, "value" | "renderedVal"> &
   Pick<OnRenderColumnProps, "maxCellChars" | "column" | "barchartVals">;

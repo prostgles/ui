@@ -4,11 +4,11 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Icon } from "../Icon/Icon";
 import Popup from "../Popup/Popup";
 import {
-  ContentTypes,
   RenderMedia,
   type UrlInfo,
   type ValidContentType,
 } from "./RenderMedia";
+import { ContentTypes } from "@common/columnDisplayFormat.schema";
 
 type P = {
   url: string;

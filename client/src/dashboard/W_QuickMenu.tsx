@@ -16,10 +16,11 @@ import type { DBS } from "./Dashboard/DBS";
 import { getLinkColorV2 } from "./W_Map/fetchData/getMapLayerQueries";
 import type { ChartableSQL } from "./W_SQL/getChartableSQL";
 import { AddChartMenu } from "./W_Table/TableMenu/AddChartMenu";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 
 export type ProstglesQuickMenuProps = Pick<
   CommonWindowProps,
-  "tables" | "prgl" | "myLinks" | "childWindows" | "getLinksAndWindows"
+  "myLinks" | "childWindows" | "getLinksAndWindows"
 > & {
   w: WindowSyncItem<"table"> | WindowSyncItem<"sql">;
   dbs: DBS;
@@ -40,12 +41,11 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
     setLinkMenu,
     show,
     chartableSQL,
-    prgl,
     myLinks,
     childWindows,
     getLinksAndWindows,
   } = props;
-  const { tables, dbs } = prgl;
+  const { tables, dbs } = usePrgl();
   const table = tables.find((t) => t.name === w.table_name);
   const showLinks =
     (!show || show.link) &&

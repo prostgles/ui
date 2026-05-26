@@ -1,3 +1,5 @@
+import type { TabItems } from "@components/Tabs";
+import Tabs from "@components/Tabs";
 import {
   mdiAccountMultiple,
   mdiCog,
@@ -11,18 +13,13 @@ import {
   mdiViewColumnOutline,
 } from "@mdi/js";
 import React from "react";
-import type { TabItems } from "@components/Tabs";
-import Tabs from "@components/Tabs";
 import RTComp from "../../RTComp";
 
-import type { ParsedJoinPath, TableInfo } from "prostgles-types";
 import FormField from "@components/FormField/FormField";
+import type { TableInfo } from "prostgles-types";
 import type { ColumnConfigWInfo, W_TableProps } from "../W_Table";
 
-import type {
-  OnAddChart,
-  WindowSyncItem,
-} from "../../Dashboard/dashboardUtils";
+import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";
 
 import ErrorComponent from "@components/ErrorComponent";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
@@ -43,7 +40,7 @@ import { getTableMeta, type W_TableInfo } from "./getTableMeta";
 
 export type W_TableMenuProps = Pick<
   W_TableProps,
-  "workspace" | "prgl" | "externalFilters" | "joinFilter"
+  "workspace" | "prgl" | "externalFilters" | "joinFilter" | "tables"
 > & {
   w: WindowSyncItem<"table">;
   cols: ColumnConfigWInfo[];
@@ -338,7 +335,10 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
                 { deepMerge: true },
               );
             } else if (l1Key === "Columns") {
-              const columnsConfig = await getAndFixWColumnsConfig(tables, w);
+              const columnsConfig = await getAndFixWColumnsConfig(
+                this.props.tables,
+                w,
+              );
               this.setState({ columnsConfig });
             } else if (l1Key === "Filter") {
               this.d.w.$update({

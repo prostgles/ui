@@ -6,7 +6,7 @@ import {
   type ValidatedColumnInfo,
 } from "prostgles-types";
 import type { Prgl } from "src/App";
-import type { DashboardState } from "../../Dashboard/Dashboard";
+import type { DBSchemaTableWJoins } from "src/dashboard/Dashboard/dashboardUtils";
 import type { ColumnConfig } from "../../W_Table/ColumnMenu/ColumnMenu";
 import {
   getComputedColumnSelect,
@@ -24,7 +24,7 @@ type Args = {
   extraFilters: AnyObject[] | undefined;
   column?: string | ColumnConfig | undefined;
   selectedColumns: ColumnConfig[] | undefined;
-  tables: Required<DashboardState>["tables"];
+  tables: DBSchemaTableWJoins[];
 };
 export type SmartSearchResultRows = {
   prgl_term_highlight: string[];

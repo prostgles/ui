@@ -1,16 +1,18 @@
-import React, { useState } from "react";
-import type { CommonWindowProps } from "../../Dashboard/Dashboard";
-import type { JoinV2 } from "../../Dashboard/dashboardUtils";
-import { FlexCol } from "@components/Flex";
 import Btn from "@components/Btn";
-import { mdiPencil } from "@mdi/js";
+import { FlexCol } from "@components/Flex";
 import Popup from "@components/Popup/Popup";
 import { SwitchToggle } from "@components/SwitchToggle";
+import { mdiPencil } from "@mdi/js";
+import React, { useState } from "react";
+import type {
+  DBSchemaTableWJoins,
+  JoinV2,
+} from "../../Dashboard/dashboardUtils";
 
 type JoinPathItemProps = JoinV2 & {
   onChange: (newJoin: JoinV2) => void;
   prevTableName: string | undefined;
-  tables: CommonWindowProps["tables"];
+  tables: DBSchemaTableWJoins[];
 };
 
 export const JoinPathItem = ({

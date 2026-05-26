@@ -27,10 +27,14 @@ export const getOverviewSvgifSpecs = async () => {
       fileName: "overview",
       scenes: [
         ...sliceScenes("sql_editor", 5, 7),
-        ...sliceScenes("schema_diagram", 1, 3),
-        ...sliceScenes("ai_assistant_agentic_workflow", 0, 1),
-        ...sliceScenes("ai_assistant_agentic_workflow", 12, 15),
-        ...sliceScenes("table_timechart", 6),
+        ...sliceScenes("schema_diagram", 1, 2),
+        ...sliceScenes("ai_assistant_agentic_workflow_gov_api", 0, 2),
+        ...sliceScenes("ai_assistant_agentic_workflow_gov_api", 5, 6),
+        // ...sliceScenes("ai_assistant_agentic_workflow_gov_api", 9, 11),
+        // ...sliceScenes("ai_assistant_agentic_workflow_gov_api", 12),
+        // ...sliceScenes("ai_assistant_agentic_workflow", 0, 1),
+        // ...sliceScenes("ai_assistant_agentic_workflow", 12, 15),
+        ...sliceScenes("table_timechart", 9, 10),
       ],
     },
     /** Overview section */

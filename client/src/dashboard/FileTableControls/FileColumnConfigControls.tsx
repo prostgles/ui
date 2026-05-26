@@ -6,8 +6,8 @@ import { mdiFileCogOutline } from "@mdi/js";
 import { type FileColumnConfig, isDefined, isEmpty } from "prostgles-types";
 import React, { useState } from "react";
 import { quickClone } from "../../utils/utils";
-import { type CommonWindowProps } from "../Dashboard/Dashboard";
 import { FileColumnConfigEditor } from "./FileColumnConfigEditor";
+import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
 
 export type FileTableConfigReferences = Record<
   string,
@@ -15,7 +15,7 @@ export type FileTableConfigReferences = Record<
 >;
 
 type FileColumnConfigControlsProps = {
-  tables: CommonWindowProps["tables"];
+  tables: DBSchemaTableWJoins[];
   refsConfig?: FileTableConfigReferences | undefined;
   onChange: (newConfig: FileTableConfigReferences) => void;
 };

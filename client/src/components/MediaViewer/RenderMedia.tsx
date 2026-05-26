@@ -3,8 +3,8 @@ import { mdiFileDocumentOutline } from "@mdi/js";
 import React, { useState } from "react";
 import { FlexCol } from "../Flex";
 import Popup from "@components/Popup/Popup";
+import type { ContentTypes } from "@common/columnDisplayFormat.schema";
 
-export const ContentTypes = ["image", "video", "audio"] as const;
 export type ValidContentType = (typeof ContentTypes)[number];
 export type UrlInfo = {
   raw: string;

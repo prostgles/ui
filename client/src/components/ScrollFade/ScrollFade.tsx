@@ -1,13 +1,13 @@
 import { fixIndent, getEntries } from "@common/utils";
 import { isEqual } from "prostgles-types";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useLocation } from "react-router";
 import type { TestSelectors } from "../../Testing";
 import { isDefined, scrollIntoViewIfNeeded } from "../../utils/utils";
 import { classOverride, type DivProps } from "../Flex";
-import { useResizeObserver } from "./useResizeObserver";
 import "./ScrollFade.css";
 import { useAutoScrollToBottom } from "./useAutoScrollToBottom";
+import { useResizeObserver } from "./useResizeObserver";
 
 type P = TestSelectors &
   DivProps & {
@@ -56,8 +56,11 @@ export const ScrollFade = ({
   );
 };
 
-export const useScrollFade = (elem: HTMLElement | null) => {
-  const [overflows, setOverflows] = React.useState({ x: false, y: false });
+export const useScrollFade = (
+  elem: HTMLElement | null,
+  ignoredSides?: Set<keyof Sides>,
+) => {
+  const [overflows, setOverflows] = useState({ x: false, y: false });
   const onScroll = useCallback(() => {
     if (!elem) return;
     const {
@@ -85,16 +88,16 @@ export const useScrollFade = (elem: HTMLElement | null) => {
     }
     const finalMask = getEntries(fadeClasses)
       .map(([k, v]) => {
-        if (v) return getGradient(k);
+        if (v && !ignoredSides?.has(k)) return getGradient(k);
       })
       .filter(isDefined)
       .join(",\n");
     elem.style.mask = finalMask;
     /** Required to ensure the masks colors stack correctly */
     elem.style["-webkit-mask-composite"] = "source-in";
-  }, [elem]);
+  }, [elem, ignoredSides]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!elem) return;
     elem.addEventListener("scroll", onScroll);
     return () => elem.removeEventListener("scroll", onScroll);

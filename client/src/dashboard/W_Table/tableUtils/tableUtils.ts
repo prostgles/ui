@@ -1,8 +1,8 @@
-import type { DBHandlerClient } from "prostgles-client";
 import type { DBSchemaTable } from "prostgles-types";
 import { getKeys, pickKeys } from "prostgles-types";
-import type { CommonWindowProps } from "../../Dashboard/Dashboard";
+import type { Prgl } from "src/App";
 import type {
+  DBSchemaTableWJoins,
   Join,
   JoinV2,
   WindowSyncItem,
@@ -10,7 +10,6 @@ import type {
 import type { ColumnConfig, ColumnSortSQL } from "../ColumnMenu/ColumnMenu";
 import { SORTABLE_CHART_COLUMNS } from "../ColumnMenu/NestedTimechartControls";
 import type { ColumnConfigWInfo } from "../W_Table";
-import type { Prgl } from "src/App";
 
 /** It's a record to ensure all keys are present */
 const COLUMN_CONFIG_KEYS: Record<keyof ColumnConfig, 1> = {
@@ -75,6 +74,7 @@ export const updateWCols = (
       }),
     });
   }
+
   return w.$update({
     // sort: [],
     columns: newMinimalCols,
@@ -101,7 +101,7 @@ export const getSortColumn = (
 };
 
 export const getSort = (
-  tables: CommonWindowProps["tables"],
+  tables: DBSchemaTableWJoins[],
   w: Pick<WindowSyncItem<"table">, "sort" | "columns" | "table_name">,
 ): ColumnSortSQL[] => {
   const { sort } = w;

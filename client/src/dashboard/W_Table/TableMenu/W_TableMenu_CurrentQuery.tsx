@@ -68,7 +68,12 @@ export const W_TableMenu_CurrentQuery = (props: W_TableMenuProps) => {
             minWidth: "500px",
             minHeight: "500px",
           }}
-          language={type === "SQL" ? "sql" : "javascript"}
+          language={
+            type === "Full config" ? "json"
+            : type === "SQL" ?
+              "sql"
+            : "javascript"
+          }
           value={query}
         />
       )}

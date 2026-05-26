@@ -18,9 +18,9 @@ import {
 import React from "react";
 import RTComp from "../RTComp";
 
-import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type {
   DBSchemaTablesWJoins,
+  DBSchemaTableWJoins,
   OnAddChart,
   WindowSyncItem,
 } from "../Dashboard/dashboardUtils";
@@ -44,7 +44,7 @@ type P = {
   onAddChart?: OnAddChart;
   w: WindowSyncItem<"sql">;
   joins: string[];
-  dbsTables: CommonWindowProps["tables"];
+  dbsTables: DBSchemaTableWJoins[];
   tables: DBSchemaTablesWJoins;
   onClose: VoidFunction;
 };

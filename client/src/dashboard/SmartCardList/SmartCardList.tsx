@@ -14,7 +14,6 @@ import type {
 import FlipMove from "react-flip-move";
 import type { Prgl } from "../../App";
 import type { TestSelectors } from "../../Testing";
-import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type { FieldConfig, SmartCardProps } from "../SmartCard/SmartCard";
 import { SmartCard } from "../SmartCard/SmartCard";
 import type { InsertButtonProps } from "../SmartForm/InsertButton";
@@ -22,6 +21,7 @@ import type { SmartFormProps } from "../SmartForm/SmartForm";
 import type { ColumnSort } from "../W_Table/ColumnMenu/ColumnMenu";
 import { SmartCardListHeaderControls } from "./SmartCardListHeaderControls";
 import { useSmartCardListState } from "./useSmartCardListState";
+import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
 
 export type SmartCardListProps<T extends AnyObject = AnyObject> = Pick<
   Prgl,
@@ -58,7 +58,7 @@ export type SmartCardListProps<T extends AnyObject = AnyObject> = Pick<
    * */
   excludeNulls?: boolean;
 
-  tables: CommonWindowProps["tables"];
+  tables: DBSchemaTableWJoins[];
   popupFixedStyle?: React.CSSProperties;
   noDataComponent?: React.ReactNode;
   /**

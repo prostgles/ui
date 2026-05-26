@@ -6,9 +6,10 @@ import type { AnyObject } from "prostgles-types";
 import React from "react";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
-import { kFormatter, type ActiveRow } from "../W_Table/W_Table";
+import { type ActiveRow } from "../W_Table/W_Table";
 import Window from "../Window/Window";
 import { useBarchartData } from "./useBarchartData";
+import { kFormatter } from "../W_Table/tableUtils/kFormatter";
 
 export type W_BarchartProps = Omit<CommonWindowProps, "w"> & {
   onClickRow: (

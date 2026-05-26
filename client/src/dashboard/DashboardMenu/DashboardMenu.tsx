@@ -4,12 +4,12 @@ import { includes } from "prostgles-types";
 import React, { useCallback, useMemo } from "react";
 import type { ReactiveState } from "../../appUtils";
 import { useReactiveState } from "../../appUtils";
+import type { DashboardProps, DashboardState } from "../Dashboard/Dashboard";
 import type {
-  CommonWindowProps,
-  DashboardProps,
-  DashboardState,
-} from "../Dashboard/Dashboard";
-import type { WindowData, Workspace } from "../Dashboard/dashboardUtils";
+  DBSchemaTableWJoins,
+  WindowData,
+  Workspace,
+} from "../Dashboard/dashboardUtils";
 import { useAddViewToWorkspace } from "../Dashboard/useAddViewToWorkspace";
 import type { SEARCH_TYPES } from "../SearchAll/SearchAll";
 import { SearchAll } from "../SearchAll/SearchAll";
@@ -19,7 +19,7 @@ import { DashboardMenuHotkeys } from "./DashboardMenuHotkeys";
 
 export type DashboardMenuProps = Pick<DashboardProps, "prgl"> & {
   suggestions: DashboardState["suggestions"];
-  tables: CommonWindowProps["tables"];
+  tables: DBSchemaTableWJoins[];
   workspace: SyncDataItem<Workspace, true>;
 };
 

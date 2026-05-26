@@ -48,10 +48,11 @@ export const documentsServiceInputSchema = {
     },
 
     page_range: {
+      /**TODO: add tuple type to JSONB schema */
       type: "integer[]",
       optional: true,
       description:
-        "Only convert a range of pages. The page number starts at 1.",
+        "Only convert a range of pages. The page number starts at 1. For example, [1, 3] will convert only the first and third pages of the document.",
     },
     do_ocr: {
       type: "boolean",

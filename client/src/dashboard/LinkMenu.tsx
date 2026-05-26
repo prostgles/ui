@@ -5,8 +5,8 @@ import type { Prgl } from "src/App";
 import { Chart } from "./Charts";
 import type { CanvasChart, Shape } from "./Charts/CanvasChart";
 import type { DBS } from "./Dashboard/DBS";
-import type { CommonWindowProps } from "./Dashboard/Dashboard";
 import type {
+  DBSchemaTableWJoins,
   Link,
   LinkSyncItem,
   WindowData,
@@ -30,7 +30,7 @@ type P = {
   anchorEl: Element;
   gridRef: Element;
 
-  tables: CommonWindowProps["tables"];
+  tables: DBSchemaTableWJoins[];
 };
 
 type S = {

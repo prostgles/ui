@@ -15,7 +15,7 @@ import {
   mdiTools,
   mdiViewColumnOutline,
 } from "@mdi/js";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 import type {
   TIMECHART_STAT_TYPES,
@@ -33,6 +33,7 @@ import { ColumnStyleControls } from "./ColumnStyleControls/ColumnStyleControls";
 
 import type { DetailedFilter } from "@common/filterUtils";
 import Popup from "@components/Popup/Popup";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { useIsMounted } from "prostgles-client";
 import {
   includes,
@@ -40,9 +41,7 @@ import {
   type ParsedJoinPath,
   type ValidatedColumnInfo,
 } from "prostgles-types";
-import type { Prgl } from "src/App";
 import { useReactiveState } from "../../../appUtils";
-import type { DBS } from "../../Dashboard/DBS";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";
 import { useEffectAsync } from "../../DashboardMenu/DashboardMenuSettings";
@@ -124,9 +123,7 @@ export type ColumnConfig = {
   width?: number;
 };
 
-type P = Pick<CommonWindowProps, "suggestions" | "tables" | "prgl"> & {
-  db: Prgl["db"];
-  dbs: DBS;
+type P = Pick<CommonWindowProps, "suggestions" | "tables"> & {
   w: WindowSyncItem<"table">;
   columnMenuState: W_Table["columnMenuState"];
 };
@@ -142,15 +139,20 @@ export type ColumnSort = Omit<ColumnSortSQL, "key"> & {
 };
 
 export const ColumnMenu = (props: P) => {
-  const { db, tables, prgl } = props;
-  const { sql } = prgl;
+  const { tables } = props;
+  const prgl = usePrgl();
+  const { sql, db } = prgl;
   const [w, setW] = useState<WindowSyncItem<"table">>(props.w);
   const tableName = w.table_name;
-  const [column, setColumn] = useState<ColumnConfigWInfo>();
   const [activeKey, setActiveKey] = useState<string | undefined>("Sort");
   const { state, setState } = useReactiveState(props.columnMenuState);
   const colName = state?.column;
   const getIsMounted = useIsMounted();
+
+  const column = useMemo(
+    () => getFullColumnConfig(tables, w).find((c) => c.name === colName),
+    [colName, tables, w],
+  );
 
   useEffect(() => {
     const wSub = props.w.$cloneSync((wdata) => {
@@ -171,7 +173,7 @@ export const ColumnMenu = (props: P) => {
       if (!column) {
         console.warn(`Column (${colName}) was not found, delete?!`);
       } else {
-        setColumn(column);
+        // setColumn(column);
       }
     }
   }, [w, colName, tables]);
@@ -211,6 +213,7 @@ export const ColumnMenu = (props: P) => {
       s.key === column.name
     : column.nested.columns.some((nc) => `${column.name}.${nc.name}`),
   );
+
   const items = {
     Sort: {
       leftIconPath: mdiSort,

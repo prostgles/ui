@@ -1,5 +1,6 @@
 import { isObject } from "@common/publishUtils";
 import Popup from "@components/Popup/Popup";
+import type { SingleSyncHandles } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import type { AnyObject, ParsedJoinPath } from "prostgles-types";
 import {
   getKeys,
@@ -23,7 +24,7 @@ import type { DeltaOfData } from "../RTComp";
 import RTComp from "../RTComp";
 import { SmartForm } from "../SmartForm/SmartForm";
 import type { ActiveRow } from "../W_Table/W_Table";
-import W_Table from "../W_Table/W_Table";
+import { getTableDataRequestSignature } from "../W_Table/tableUtils/getTableDataRequestSignature";
 import Window from "../Window/Window";
 import { DataLayerManager } from "../WindowControls/DataLayerManager/DataLayerManager";
 import { W_MapMenu } from "./W_MapMenu";
@@ -33,7 +34,6 @@ import { getMapFilter } from "./fetchData/getMapData";
 import { getMapDataExtent } from "./fetchData/getMapDataExtent";
 import type { HoveredObject } from "./onMapHover";
 import { onMapHover } from "./onMapHover";
-import type { SingleSyncHandles } from "prostgles-client/dist/SyncedTable/SyncedTable";
 
 export type LayerBase = {
   /**
@@ -177,12 +177,12 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
   };
 
   getDataSignature(
-    args: Parameters<typeof W_Table.getTableDataRequestSignature>[0],
+    args: Parameters<typeof getTableDataRequestSignature>[0],
     dataAge: number,
     layer: LayerQuery,
     other: any,
   ): { signature: string; cachedLayer?: GeoJsonLayerProps } {
-    const signature = W_Table.getTableDataRequestSignature(args, dataAge, [
+    const signature = getTableDataRequestSignature(args, dataAge, [
       layer,
       other,
     ]);

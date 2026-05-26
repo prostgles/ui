@@ -79,6 +79,12 @@ export const fetchLLMResponse = async (
     );
   }
 
+  if ("error" in responseData) {
+    throw new Error(
+      `Error response from LLM: ${JSON.stringify(responseData)} statusText:${responseClone.statusText}`,
+    );
+  }
+
   try {
     return parseLLMResponseObject({
       provider,

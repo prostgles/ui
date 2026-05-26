@@ -2,14 +2,14 @@ import type { DBSSchema } from "@common/publishUtils";
 import type { DBSchemaTable } from "prostgles-types";
 import type { Prgl } from "src/App";
 import { getJoinedTables } from "../W_Table/tableUtils/tableUtils";
-import type { DBSchemaTablesWJoins } from "./dashboardUtils";
 
 export const getTables = (
   schemaTables: DBSchemaTable[],
   connectionTableOptions: DBSSchema["connections"]["table_options"],
   db: Prgl["db"],
   capitaliseNames = false,
-): { tables: DBSchemaTablesWJoins } => {
+) => {
+  // : { tables: DBSchemaTablesWJoins }
   const tables = schemaTables.map((t) => {
     const { columns, label, ...tableOpts } =
       connectionTableOptions?.[t.name] ?? {};
@@ -24,6 +24,8 @@ export const getTables = (
           ...c,
           label: capitaliseNames ? convertSnakeToReadable(c.name) : c.name,
           icon: columns?.[c.name]?.icon,
+          renderAs: columns?.[c.name]?.renderAs,
+          style: columns?.[c.name]?.style,
         }))
         .sort((a, b) => {
           return a.ordinal_position - b.ordinal_position;
@@ -33,6 +35,10 @@ export const getTables = (
   });
   return { tables };
 };
+
+export type DBSchemaTableWithRenderInfo = ReturnType<
+  typeof getTables
+>["tables"][number];
 
 const convertSnakeToReadable = (str: string) => {
   // ^[a-z0-9]+    : Starts with one or more lowercase letters or digits

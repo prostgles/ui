@@ -8,14 +8,13 @@ import type {
   SearchListProps,
 } from "@components/SearchList/SearchList";
 import { SearchList } from "@components/SearchList/SearchList";
-import type { DBHandlerClient } from "prostgles-client";
 import type { AnyObject, ValidatedColumnInfo } from "prostgles-types";
 import { isObject } from "prostgles-types";
-import type { DashboardState } from "../../Dashboard/Dashboard";
+import type { Prgl } from "src/App";
+import type { DBSchemaTableWJoins } from "src/dashboard/Dashboard/dashboardUtils";
 import RTComp from "../../RTComp";
 import type { ColumnConfig } from "../../W_Table/ColumnMenu/ColumnMenu";
 import { onSearchItems } from "./onSearchItems";
-import type { Prgl } from "src/App";
 
 export type SmartSearchOnChangeArgs = {
   filter: DetailedFilter[];
@@ -64,7 +63,7 @@ type P = {
 
   onPressEnter?: (term: string, searchItems: SearchListItem[]) => void;
 
-  tables: Required<DashboardState>["tables"];
+  tables: DBSchemaTableWJoins[];
 
   searchOnFocus?: boolean;
   variant?: "search-no-shadow";

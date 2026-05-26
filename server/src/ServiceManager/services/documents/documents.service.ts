@@ -28,12 +28,13 @@ const outputSchema = {
   },
 } as const;
 
+const port = 5001;
+
 export const documentsService = {
   icon: "FileDocumentOutline",
   label: "Docling",
-  description:
-    "Convert documents and images to structured data using [Docling](https://www.docling.ai/)",
-  port: 5001,
+  description: `Convert documents and images to structured data using [Docling](https://www.docling.ai/). Check [UI](http://localhost:${port}/ui/) and [Swagger](http://0.0.0.0:${port}/swagger) for more information.`,
+  port,
   volumes: {
     "docling-cache": "/app/.cache",
   },

@@ -2,7 +2,6 @@ import React, { useMemo, useState } from "react";
 import { Navigate, Route, Routes as Switch } from "react-router";
 import "./App.css";
 import Loading from "./components/Loader/Loading";
-import type { CommonWindowProps } from "./dashboard/Dashboard/Dashboard";
 import { t } from "./i18n/i18nUtils";
 import { Connections } from "./pages/Connections/Connections";
 import NewConnnection from "./pages/NewConnection/NewConnnectionForm";
@@ -33,6 +32,7 @@ import { FlexCol, FlexRow } from "./components/Flex";
 import { InfoRow } from "./components/InfoRow";
 import { NavBarWrapper } from "./components/NavBar/NavBarWrapper";
 import { PostgresInstallationInstructions } from "./components/PostgresInstallationInstructions";
+import type { DBSchemaTableWJoins } from "./dashboard/Dashboard/dashboardUtils";
 import type { DBS, DBSMethods } from "./dashboard/Dashboard/DBS";
 import { MousePointer } from "./demo/MousePointer";
 import { ComponentList } from "./pages/ComponentList";
@@ -60,7 +60,7 @@ export type PrglReadyState = {
    */
   dbsKey: string;
   dbs: DBS;
-  dbsTables: CommonWindowProps["tables"];
+  dbsTables: DBSchemaTableWJoins[];
   dbsMethods: DBSMethods;
   dbsMethodSchema: ServerFunctionHandler;
   dbsSocket: Socket;
@@ -82,11 +82,10 @@ export type PrglStateCore = Pick<
 >;
 
 export type PrglCore = {
-  // db: DBHandlerClient | DBS;
   db: DBHandler;
   sql: SQLHandler | undefined;
   methods: ServerFunctionHandler;
-  tables: CommonWindowProps["tables"];
+  tables: DBSchemaTableWJoins[];
 };
 export type PrglProject = PrglCore & {
   dbKey: string;

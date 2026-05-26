@@ -9,8 +9,10 @@ import { SvgIcon } from "@components/SvgIcon";
 import { mdiDotsHorizontal } from "@mdi/js";
 import { isObject, type AnyObject } from "prostgles-types";
 import React, { useCallback, useState } from "react";
-import type { CommonWindowProps } from "../../Dashboard/Dashboard";
-import type { DBSchemaTableColumn } from "../../Dashboard/dashboardUtils";
+import type {
+  DBSchemaTableColumn,
+  DBSchemaTableWJoins,
+} from "../../Dashboard/dashboardUtils";
 import { getPGIntervalAsText } from "../../W_SQL/customRenderers";
 import type { ColumnDisplayConfig, SmartFormProps } from "../SmartForm";
 import type {
@@ -65,8 +67,8 @@ export type SmartFormFieldProps = Pick<
   rightContent?: React.ReactNode;
   hideNullBtn?: boolean;
   sectionHeader?: string;
-  tables: CommonWindowProps["tables"];
-  table: CommonWindowProps["tables"][number];
+  tables: DBSchemaTableWJoins[];
+  table: DBSchemaTableWJoins;
   enableInsert: boolean;
   newRowDataHandler: NewRowDataHandler;
   someColumnsHaveIcons: boolean;

@@ -12,7 +12,7 @@ export const useAskLLMToolApprove = () => {
     sql,
     connection,
   } = usePrgl();
-  const { data: requests } = dbs.mcp_tool_approval_requests.useSubscribe(
+  const { data: requestsUntyped } = dbs.mcp_tool_approval_requests.useSubscribe(
     {
       response: null,
     },
@@ -36,6 +36,16 @@ export const useAskLLMToolApprove = () => {
       orderBy: { created: 1 },
     },
   );
+  const requests:
+    | (DBSSchema["mcp_tool_approval_requests"] & {
+        llm_messages: Pick<DBSSchema["llm_messages"], "id" | "message">[];
+        mcp_server_tools: Pick<
+          DBSSchema["mcp_server_tools"],
+          "id" | "description" | "annotations"
+        >[];
+        connections: Pick<DBSSchema["connections"], "id" | "name">[];
+      })[]
+    | undefined = requestsUntyped;
 
   const [showRequestId, setShowRequestId] = useState<number>();
   const [firstRequest] = requests ?? [];

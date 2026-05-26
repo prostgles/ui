@@ -4,7 +4,7 @@ import { usePromise } from "prostgles-client";
 import { useMemo } from "react";
 import { bytesToSize } from "../BackupAndRestore/BackupsControls";
 import type { DBSchemaTablesWJoins } from "../Dashboard/dashboardUtils";
-import { kFormatter } from "../W_Table/W_Table";
+import { kFormatter } from "../W_Table/tableUtils/kFormatter";
 
 export type TablesWithInfo = (DBSchemaTablesWJoins[number] & {
   endText: string;

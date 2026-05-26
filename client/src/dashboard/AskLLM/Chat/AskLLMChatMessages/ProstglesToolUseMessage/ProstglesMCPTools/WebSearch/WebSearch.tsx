@@ -26,7 +26,7 @@ export const WebSearch = ({
       }}
     >
       {toolUse.data && (
-        <FlexRow className="min-w-0 py-1">
+        <FlexRow className="min-w-0 py-1 ai-start">
           <div className="ws-nowrap">Search query:</div>
           <div className="text-ellipsis f-1 min-w-0">{toolUse.data.q}</div>
         </FlexRow>

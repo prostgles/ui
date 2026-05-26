@@ -5,6 +5,7 @@ import {
   runDbsSql,
 } from "utils/utils";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
+import { clickTableRow } from "./table.svgif";
 
 const linkedSortCol = "Orders (30d)";
 
@@ -114,6 +115,21 @@ export const tableTimechartSvgif: OnBeforeScreenshot = async (
   await page.getByTestId("WorkspaceMenu.toggleWorkspaceLayoutMode").click();
 
   await page.waitForTimeout(2000);
+
+  /** Add map */
+  await page.getByTestId("AddChartMenu.Map").click();
+  await page.locator(getDataKey("orders > customers.geog")).click();
+  await page.getByTestId("DataLayerDataSourceInfo").click();
+  await page.locator(getDataKey("addresses.geog")).click();
+
+  await page.getByTestId("WorkspaceMenu.toggleWorkspaceLayoutMode").click();
+
+  await clickTableRow({ page, addScene, addSceneAnimation }, 2, undefined, 2);
+  await page.waitForTimeout(2_000);
+  await clickTableRow({ page, addScene, addSceneAnimation }, 3, undefined, 2);
+  // await addScene();
+
+  await page.getByTestId("WorkspaceMenu.toggleWorkspaceLayoutMode").click();
 };
 
 const windowConfig = {

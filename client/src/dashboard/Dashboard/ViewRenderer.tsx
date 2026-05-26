@@ -39,6 +39,7 @@ import type {
 } from "./dashboardUtils";
 import { getViewRendererUtils } from "./getViewRendererUtils";
 import { onLinkTable } from "./onLinkTable";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 
 export type ViewRendererProps = Pick<DashboardProps, "prgl"> &
   Pick<DashboardData, "workspace" | "links" | "windows"> &
@@ -470,16 +471,18 @@ export class ViewRenderer extends RTComp<
 export const ViewRendererWrapped = (
   props: Omit<
     ViewRendererProps,
-    "localSettings" | "searchParams" | "setSearchParams"
+    "localSettings" | "searchParams" | "setSearchParams" | "prgl"
   >,
 ) => {
   const localSettings = useLocalSettings();
   const [searchParams, setSearchParams] = useSearchParams();
+  const prgl = usePrgl();
 
   return (
     <ErrorTrap>
       <ViewRenderer
         {...props}
+        prgl={prgl}
         localSettings={localSettings}
         searchParams={searchParams}
         setSearchParams={setSearchParams}

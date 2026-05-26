@@ -1,11 +1,10 @@
-import type {
-  DBSchemaTableWJoins,
-  WindowData,
-} from "../../Dashboard/dashboardUtils";
+import type { DBSchemaTableWithRenderInfo } from "src/dashboard/Dashboard/getTables";
+import type { WindowData } from "../../Dashboard/dashboardUtils";
 import type { ColumnConfigWInfo } from "../W_Table";
+import { omitKeys } from "prostgles-types";
 
 export const getColWInfo = (
-  table: DBSchemaTableWJoins,
+  table: DBSchemaTableWithRenderInfo,
   cols: WindowData<"table">["columns"],
 ): ColumnConfigWInfo[] => {
   const tableColumns = table.columns.slice(0);
@@ -17,7 +16,10 @@ export const getColWInfo = (
       ...c,
       info:
         isAdditionalComputed(c) ? undefined : (
-          tableColumns.find((_c) => _c.select && _c.name === c.name)
+          omitKeys(
+            tableColumns.find((_c) => _c.select && _c.name === c.name)!,
+            ["renderAs", "style"],
+          )
         ),
     }))
     .filter((c) => {

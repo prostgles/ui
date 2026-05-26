@@ -14,18 +14,17 @@ SQL Editor and internal tool builder for Postgres
 
 ### Quick start
 
-Prostgles UI can be quickly set up through either one of these options:
+Install the desktop version using [these instructions](<./docs/03_Installation_(Desktop_Version).md>)
 
-- By installing the [desktop version](#installation---desktop-version)
-- Through [Docker Compose](#installation---docker-compose-recommended)
+For more information check [docs](./docs/01_Overview.md)
 
 ### Features
 
 - SQL Editor with context-aware schema auto-completion and documentation extracts and hints
-- AI assitant with MCP support, agentic workflow generation and granular data access permissions
-- Data exploration dashboard with customiseable layout
+- AI assistant with MCP support, agentic workflow generation and granular data access permissions
+- Data exploration dashboard with customisable grid layout
 - Table view with controls to view related data, sort, filter and cross-filter
-- Map and Time charts with aggregations
+- Map and Time charts with aggregations and multi-layer support
 - Isomorphic TypeScript API with schema types and React hooks support
 - File storage (locally or to cloud)
 - Global search and command palette

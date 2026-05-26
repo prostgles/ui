@@ -1,13 +1,11 @@
 import { quickClone } from "prostgles-client/dist/SyncedTable/SyncedTable";
-import type {
-  DBSchemaTablesWJoins,
-  WindowSyncItem,
-} from "../../Dashboard/dashboardUtils";
-import type { ColumnConfig } from "../ColumnMenu/ColumnMenu";
+import type { DBSchemaTableWithRenderInfo } from "src/dashboard/Dashboard/getTables";
 import { isDefined } from "../../../utils/utils";
+import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";
+import type { ColumnConfig } from "../ColumnMenu/ColumnMenu";
 
 const getUpdatedColumnsConfig = (
-  table: DBSchemaTablesWJoins[number],
+  table: DBSchemaTableWithRenderInfo,
   existingCols: ColumnConfig[] | null,
 ) => {
   try {
@@ -15,6 +13,8 @@ const getUpdatedColumnsConfig = (
       name: c.name,
       show: true,
       computed: false,
+      format: c.renderAs,
+      style: c.style,
     }));
 
     if (existingCols && Array.isArray(existingCols)) {
@@ -73,7 +73,7 @@ const getUpdatedColumnsConfig = (
 };
 
 export const getAndFixWColumnsConfig = async (
-  tables: DBSchemaTablesWJoins,
+  tables: DBSchemaTableWithRenderInfo[],
   w: WindowSyncItem<"table">,
 ): Promise<ColumnConfig[]> => {
   const table = tables.find((t) => t.name === w.table_name);

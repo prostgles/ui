@@ -15,7 +15,7 @@ import React from "react";
 import type { Prgl } from "src/App";
 import { bytesToSize } from "../BackupAndRestore/BackupsControls";
 import { CodeEditor } from "../CodeEditor/CodeEditor";
-import type { CommonWindowProps } from "../Dashboard/Dashboard";
+import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
 import RTComp from "../RTComp";
 import type { ProstglesColumn } from "../W_SQL/W_SQL";
 import { getFileText } from "../W_SQL/W_SQLMenu";
@@ -39,7 +39,7 @@ export type FileImporterProps = {
   id?: string;
   button?: Element;
   parentDiv?: Element;
-  tables: CommonWindowProps["tables"];
+  tables: DBSchemaTableWJoins[];
 };
 
 type HeaderType = "First row" | "Custom";

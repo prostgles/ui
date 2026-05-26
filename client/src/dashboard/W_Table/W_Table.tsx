@@ -1,5 +1,5 @@
 import { mdiAlertOutline, mdiPlus } from "@mdi/js";
-import type { AnyObject } from "prostgles-types";
+import type { AnyObject, SubscriptionHandler } from "prostgles-types";
 import { getKeys } from "prostgles-types";
 
 import Loading from "@components/Loader/Loading";
@@ -231,44 +231,13 @@ export default class W_Table extends RTComp<
 
   async onUnmount() {
     this.d.wSync?.$unsync();
-    await this.dataSub?.unsubscribe?.();
+    await this.dataSub?.unsubscribe();
   }
 
   /**
    * To reduce the number of unnecessary data requests let's save the query signature and allow new queries only if different
    */
   currentDataRequestSignature = "";
-  static getTableDataRequestSignature(
-    args:
-      | {
-          select?: any;
-          filter?: AnyObject;
-          having?: AnyObject;
-          barchartVals?: AnyObject;
-          joinFilter?: AnyObject;
-          externalFilters?: any;
-          orderBy?: any;
-          limit?: number | null;
-          offset?: number;
-        }
-      | { sql: string },
-    dataAge: number,
-    dependencies: any[] = [],
-  ) {
-    const argKeyObj: typeof args & { dataAge: number; dependencies: any[] } = {
-      ...args,
-      dataAge,
-      dependencies,
-    };
-    const sigData = {};
-    Object.keys(argKeyObj)
-      .sort()
-      .forEach((key) => {
-        sigData[key] = argKeyObj[key];
-      });
-
-    return JSON.stringify(sigData);
-  }
 
   onClickEditRow: OnClickEditRow = (
     filter,
@@ -285,7 +254,7 @@ export default class W_Table extends RTComp<
     });
   };
 
-  dataSub?: any;
+  dataSub?: SubscriptionHandler;
   dataSubFilter?: string;
   dataAge?: number = 0;
   autoRefresh?: any;
@@ -343,7 +312,7 @@ export default class W_Table extends RTComp<
 
     const { dbKey } = this.props.prgl;
     if (this.currDbKey !== dbKey) {
-      getAndFixWColumnsConfig(this.props.prgl.tables, w);
+      void getAndFixWColumnsConfig(this.props.tables, w);
       this.currDbKey = dbKey;
     }
 
@@ -395,7 +364,7 @@ export default class W_Table extends RTComp<
     /**
      * Get data
      */
-    getTableData.bind(this)(dp, ds, dd, { showCounts });
+    void getTableData.bind(this)(dp, ds, dd, { showCounts });
 
     /** Force update */
     const rerenderOPTS: (keyof typeof w.options)[] = [
@@ -464,8 +433,8 @@ export default class W_Table extends RTComp<
     return (
       <W_TableMenu
         prgl={prgl}
+        tables={this.props.tables}
         workspace={this.props.workspace}
-        // cols={cols.filter((c) => !c.computedConfig)}
         cols={cols}
         w={w}
         suggestions={this.props.suggestions}
@@ -540,8 +509,9 @@ export default class W_Table extends RTComp<
       prgl,
       childWindow,
       workspace,
+      tables,
     } = this.props;
-    const { tables, db, dbs } = prgl;
+    const { db, dbs } = prgl;
 
     const tableHandler = db[tableName] as TableHandlerClient | undefined;
     if (!w) {
@@ -570,8 +540,6 @@ export default class W_Table extends RTComp<
           connection={prgl.connection}
           layoutMode={workspace.layout_mode ?? "editable"}
           quickMenuProps={{
-            tables,
-            prgl,
             chartableSQL: undefined,
             dbs,
             setLinkMenu,
@@ -639,9 +607,6 @@ export default class W_Table extends RTComp<
             }}
           >
             <ColumnMenu
-              prgl={prgl}
-              db={db}
-              dbs={dbs}
               columnMenuState={this.columnMenuState}
               tables={tables}
               suggestions={this.props.suggestions}
@@ -809,17 +774,4 @@ export default class W_Table extends RTComp<
 
     return wrapInWindow(content);
   }
-}
-
-export function kFormatter(num: number) {
-  const abs = Math.abs(num);
-  if (abs > 1e12 - 1)
-    return Math.sign(num) * +(Math.abs(num) / 1e12).toFixed(1) + " T";
-  if (abs > 1e9 - 1)
-    return Math.sign(num) * +(Math.abs(num) / 1e9).toFixed(1) + " B";
-  if (abs > 1e6 - 1)
-    return Math.sign(num) * +(Math.abs(num) / 1e6).toFixed(1) + " m";
-  if (abs > 999)
-    return Math.sign(num) * +(Math.abs(num) / 1000).toFixed(1) + " k";
-  return num.toString();
 }
