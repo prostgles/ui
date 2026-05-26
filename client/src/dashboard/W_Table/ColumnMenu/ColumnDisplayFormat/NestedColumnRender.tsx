@@ -1,18 +1,18 @@
+import { FlexRowWrap } from "@components/Flex";
+import { MediaViewer } from "@components/MediaViewer/MediaViewer";
 import type { AnyObject } from "prostgles-types";
 import { omitKeys } from "prostgles-types";
 import React, { useMemo } from "react";
-import { FlexRowWrap } from "@components/Flex";
-import { MediaViewer } from "@components/MediaViewer/MediaViewer";
+import type { DBSchemaTableWithRenderInfo } from "src/dashboard/Dashboard/getTables";
 import {
   TimeChart,
   type TimeChartLayer,
 } from "../../../Charts/TimeChart/TimeChart";
-import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
 import { RenderValue } from "../../../SmartForm/SmartFormField/RenderValue";
 import { getYLabelFunc } from "../../../W_TimeChart/fetchData/getTimeChartData";
 import { getColWInfo } from "../../tableUtils/getColWInfo";
-import type { ColumnConfig } from "../ColumnMenu";
 import { StyledTableColumn } from "../../tableUtils/StyledTableColumn";
+import type { ColumnConfig } from "../ColumnMenu";
 
 const NESTED_LIMIT = 10;
 
@@ -25,7 +25,7 @@ type P = {
   value: (AnyObject | undefined)[] | null;
   row: AnyObject;
   nestedTimeChartMeta: NestedTimeChartMeta | undefined;
-  tables: DBSchemaTablesWJoins;
+  tables: DBSchemaTableWithRenderInfo[];
 };
 export const NestedColumnRender = ({
   value,

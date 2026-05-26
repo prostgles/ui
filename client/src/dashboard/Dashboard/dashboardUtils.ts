@@ -347,6 +347,8 @@ export type JoinV2 = Omit<Join, "on"> & { on: [string, string][][] };
 
 export type DBSchemaTableColumn = ValidatedColumnInfo & {
   icon: string | undefined;
+  renderAs?: any;
+  style?: any;
   label: string;
 };
 

@@ -7,9 +7,9 @@ import type {
 } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import React from "react";
 import type { Prgl } from "src/App";
+import type { DBSchemaTableWithRenderInfo } from "src/dashboard/Dashboard/getTables";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import type {
-  DBSchemaTableWJoins,
   WindowData,
   WindowSyncItem,
 } from "../../Dashboard/dashboardUtils";
@@ -29,7 +29,7 @@ type P = {
   sql: SQLHandler | undefined;
   w: WindowSyncItem<"table">;
   nestedColumnOpts: NestedColumnOpts | undefined;
-  tables: DBSchemaTableWJoins[];
+  tables: DBSchemaTableWithRenderInfo[];
   suggestions: CommonWindowProps["suggestions"];
   onClose: () => any;
   showAddCompute?: { colName?: string };

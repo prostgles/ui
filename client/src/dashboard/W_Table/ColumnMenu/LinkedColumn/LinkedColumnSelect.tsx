@@ -4,7 +4,8 @@ import { Label } from "@components/Label";
 import PopupMenu from "@components/PopupMenu";
 import { mdiPlus, mdiSigma } from "@mdi/js";
 import React, { useState } from "react";
-import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
+import type { DBSchemaTableWithRenderInfo } from "src/dashboard/Dashboard/getTables";
+import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 import type { ColumnConfigWInfo } from "../../W_Table";
 import { getColWInfo } from "../../tableUtils/getColWInfo";
 import { getMinimalColumnInfo } from "../../tableUtils/tableUtils";
@@ -14,11 +15,10 @@ import { ColumnList } from "../ColumnList";
 import type { ColumnConfig } from "../ColumnMenu";
 import { NestedTimechartControls } from "../NestedTimechartControls";
 import type { LinkedColumnProps } from "./LinkedColumn";
-import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 
 type P = LinkedColumnProps & {
   updateNested: (newNested: Partial<ColumnConfig["nested"]>) => void;
-  table: DBSchemaTablesWJoins[number] | undefined;
+  table: DBSchemaTableWithRenderInfo | undefined;
   currentColumn: ColumnConfigWInfo | undefined;
   updateColumn: (newCol: Partial<ColumnConfig>) => void;
 };

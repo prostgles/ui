@@ -1,7 +1,7 @@
+import { omitKeys } from "prostgles-types";
 import type { DBSchemaTableWithRenderInfo } from "src/dashboard/Dashboard/getTables";
 import type { WindowData } from "../../Dashboard/dashboardUtils";
 import type { ColumnConfigWInfo } from "../W_Table";
-import { omitKeys } from "prostgles-types";
 
 export const getColWInfo = (
   table: DBSchemaTableWithRenderInfo,

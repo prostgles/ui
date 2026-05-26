@@ -1,15 +1,13 @@
 import type { FileTable } from "@common/utils";
 import type { AnyObject } from "prostgles-types";
-import type {
-  DBSchemaTableWJoins,
-  WindowData,
-} from "../../Dashboard/dashboardUtils";
+import type { DBSchemaTableWithRenderInfo } from "src/dashboard/Dashboard/getTables";
+import type { WindowData } from "../../Dashboard/dashboardUtils";
 import type { ColumnConfigWInfo } from "../W_Table";
 import { getColWInfo } from "./getColWInfo";
 import { getColWidth } from "./getColWidth";
 
 export const getFullColumnConfig = (
-  tables: DBSchemaTableWJoins[],
+  tables: DBSchemaTableWithRenderInfo[],
   w: Pick<WindowData<"table">, "columns" | "table_name">,
   data?: AnyObject[],
   windowWidth?: number,
