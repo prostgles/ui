@@ -9,7 +9,7 @@ SQL Editor and internal tool builder for Postgres
 [More](https://prostgles.com/)
 
 <p float="left">
-  <img src="./docs/screenshots/overview.svgif.svg" width="100%" style="border: 1px solid #cecece; border-radius: 8px"/>  
+  <img src="./docs/screenshots/overview.svgif.svg" width="100%"/>  
 </p>
 
 ### Quick start

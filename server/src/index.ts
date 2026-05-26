@@ -148,6 +148,7 @@ const serveIndexIfNoCredentialsOrInitError = async (
 
   next();
 };
+console.error("THE READMEEEEEEEEEEEEEEEEEEEEE");
 app.use(serveIndexIfNoCredentialsOrInitError);
 
 /** Startup procedure
