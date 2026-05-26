@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+./scripts/check_release_ready.sh pre-tag
+
 version=$(./scripts/get_version.sh)
 tag="v$version"
 

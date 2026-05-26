@@ -9,7 +9,7 @@ x-ui-environment: &ui-environment
   PROSTGLES_UI_HOST: "0.0.0.0"
 
 x-ui-base: &ui-base
-  image: prostgles/ui:v2.2.2
+  image: prostgles/ui:v2.3.2
   restart: unless-stopped
   build:
     context: .
@@ -23,7 +23,7 @@ x-ui-base: &ui-base
 
 services:
   db:
-    image: prostgles/ui-db:v2.2.2
+    image: prostgles/ui-db:v2.3.2
     container_name: prostgles-ui-db
     restart: unless-stopped
     build:
