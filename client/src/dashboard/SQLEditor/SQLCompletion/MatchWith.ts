@@ -14,7 +14,7 @@ import {
 } from "./monacoSQLSetup/registerSuggestions";
 import { suggestKWD } from "./withKWDs";
 import { SQLMatchers } from "./getMatch";
-import { isObject } from "../../../../../common/publishUtils";
+import { isObject } from "@common/publishUtils";
 import type { IMarkdownString } from "../../W_SQL/monacoEditorTypes";
 
 const DATA_MODIF_INFO = `Trying to update the same row twice in a single statement is not supported. Only one of the modifications takes place, but it is not easy (and sometimes not possible) to reliably predict which one. This also applies to deleting a row that was already updated in the same statement: only the update is performed. Therefore you should generally avoid trying to modify a single row twice in a single statement. In particular avoid writing WITH sub-statements that could affect the same rows changed by the main statement or a sibling sub-statement. The effects of such a statement will not be predictable.`;

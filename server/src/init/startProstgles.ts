@@ -1,37 +1,26 @@
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
+import type { ProstglesInitState } from "@common/electronInitTypes";
+import { getServerFunctions } from "@src/serverFunctions/getServerFunctions";
 import type { Express } from "express";
-import path from "path";
+import path, { join } from "path";
 import type pg from "pg-promise/typescript/pg-subset";
 import prostgles from "prostgles-server";
-import { tableConfigMigrations } from "../tableConfig/tableConfigMigrations";
-import type { DB } from "prostgles-server/dist/Prostgles";
 import type { InitResult } from "prostgles-server/dist/initProstgles";
+import { getSerialisableError } from "prostgles-types";
 import type { Server } from "socket.io";
 import type { DBS } from "..";
-import { connMgr } from "..";
-import type { DBGeneratedSchema } from "../../../common/DBGeneratedSchema";
-import type { ProstglesInitState } from "../../../common/electronInitTypes";
-import BackupManager from "../BackupManager/BackupManager";
-import { addLog, setLoggerDBS } from "../Logger";
-import { setupMCPServerHub } from "../McpHub/McpHub";
-import { initUsers } from "../SecurityManager/initUsers";
-import { getAuth } from "../authConfig/getAuth";
+import { addLog } from "../Logger";
 import type { SUser } from "../authConfig/sessionUtils";
-import {
-  subscribeToAuthSetupChanges,
-  type AuthSetupDataListener,
-} from "../authConfig/subscribeToAuthSetupChanges";
 import { testDBConnection } from "../connectionUtils/testDBConnection";
 import type { DBSConnectionInfo } from "../electronConfig";
 import { actualRootDir, getElectronConfig } from "../electronConfig";
 import { DBS_CONNECTION_INFO } from "../envVars";
 import { publish } from "../publish/publish";
-import { setupLLM } from "../publishMethods/askLLM/setupLLM";
-import { publishMethods } from "../publishMethods/publishMethods";
 import { tableConfig } from "../tableConfig/tableConfig";
-import { insertStateDatabase } from "./insertStateDatabase";
+import { tableConfigMigrations } from "../tableConfig/tableConfigMigrations";
+import { prostglesOnReady } from "./prostglesOnReady";
 import { startDevHotReloadNotifier } from "./startDevHotReloadNotifier";
-import { getProstglesState } from "./tryStartProstgles";
-import { getSerialisableError } from "prostgles-types";
+import type { ConnectionDetails } from "@src/connectionUtils/getConnectionDetails";
 
 type StartArguments = {
   app: Express;
@@ -41,20 +30,11 @@ type StartArguments = {
   host: string;
 };
 
-let bkpManager: BackupManager | undefined;
-export const initBackupManager = async (db: DB, dbs: DBS) => {
-  bkpManager ??= await BackupManager.create(db, dbs, connMgr);
-  return bkpManager;
-};
-
-export const getBackupManager = () => bkpManager;
-
 export let statePrgl: InitResult<DBGeneratedSchema, SUser> | undefined;
 export type InitExtra = {
   dbs: DBS;
 };
 export type ProstglesInitStateWithDBS = ProstglesInitState<InitExtra>;
-let authSetupDataListener: AuthSetupDataListener | undefined;
 
 export const startProstgles = async ({
   app,
@@ -90,7 +70,7 @@ export const startProstgles = async ({
       return { state: "error", error, errorType: "connection" };
     }
 
-    let validatedDbConnection: pg.IConnectionParameters<pg.IClient> | undefined;
+    let validatedDbConnection: ConnectionDetails | undefined;
     try {
       const tested = await testDBConnection(con, true);
       if (tested.isSSLModeFallBack) {
@@ -122,6 +102,10 @@ export const startProstgles = async ({
       sqlFilePath: path.join(actualRootDir + "/src/init.sql"),
       io,
       tsGeneratedTypesDir,
+      tsGeneratedTypesFunctionsPath:
+        IS_PROD ? undefined : (
+          join(actualRootDir, "/src/init/startProstgles.ts")
+        ),
       watchSchema,
       watchSchemaType: "DDL_trigger",
       transactions: true,
@@ -164,7 +148,7 @@ export const startProstgles = async ({
 
           const deletedWindows = await dbo.windows.delete(
             {
-              $or: [{ deleted: true }, { closed: true, "type.<>": "sql" }],
+              $or: [{ deleted: true }, { closed: true, type: { "<>": "sql" } }],
             },
             {
               returning: { id: 1 },
@@ -200,45 +184,18 @@ export const startProstgles = async ({
         const { user } = params;
         return Boolean(user && user.type === "admin");
       },
-      publishMethods,
+      functions: getServerFunctions,
       publish,
       joins: "inferred",
-      onReady: async (params) => {
-        const { dbo: db } = params;
-        const _db: DB = params.db;
-
-        setLoggerDBS(params.dbo);
-
-        await initUsers(db, _db);
-
-        await insertStateDatabase(db, _db, con, getProstglesState().isElectron);
-        await setupLLM(db);
-        await setupMCPServerHub(db);
-
-        await connMgr.destroy();
-        await connMgr.init(db, _db);
-
-        await bkpManager?.destroy();
-        bkpManager ??= await BackupManager.create(_db, db, connMgr);
-
-        const newAuthSetupDataListener = subscribeToAuthSetupChanges(
-          db,
-          async (authData) => {
-            const auth = await getAuth(app, db, authData);
-            void prgl.update({
-              auth,
-            });
-          },
-          authSetupDataListener,
-        );
-        authSetupDataListener = newAuthSetupDataListener;
+      onReady: async (params, update) => {
+        await prostglesOnReady(params, update, app, con, port);
       },
     });
 
     statePrgl = prgl;
 
     startDevHotReloadNotifier({ io, port, host });
-    return { state: "ok", dbs: prgl.db as DBS };
+    return { state: "ok", dbs: prgl.db };
   } catch (err) {
     return { state: "error", error: err as Error, errorType: "init" };
   }

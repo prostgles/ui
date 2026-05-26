@@ -1,7 +1,7 @@
 import React from "react";
 import type { AnyObject } from "prostgles-types";
 import { getKeys, isEmpty } from "prostgles-types";
-import type { DivProps } from "../../components/Flex";
+import type { DivProps } from "@components/Flex";
 
 const SHORT_NAMES = [
   ["years", "y"],
@@ -14,7 +14,9 @@ const SHORT_NAMES = [
   ["milliseconds", "ms"],
 ] as const;
 
-type PG_Interval = Partial<Record<(typeof SHORT_NAMES)[number][0], number>>;
+export type PG_Interval = Partial<
+  Record<(typeof SHORT_NAMES)[number][0], number>
+>;
 
 export const getPGIntervalAsText = (
   v: AnyObject = {},
@@ -70,7 +72,7 @@ export const StyledInterval = ({
     gray: "-gray-500",
   };
 
-  const textParts = getShortText(v);
+  const textParts = getIntervalAsText(v);
   const shortTextParts =
     mode === "full" ? textParts.slice(0)
     : mode === "short" ? textParts.slice(0, 2)
@@ -102,8 +104,8 @@ export const StyledInterval = ({
   );
 };
 
-const getShortText = (_v: PG_Interval | null) => {
-  const v = _v ?? {};
+export const getIntervalAsText = (value: PG_Interval | null) => {
+  const v = value ?? {};
   const res = [
     ...(isEmpty(v) ? [""] : []),
     ...("years" in v && v.years ? [`${v.years}y`] : []),

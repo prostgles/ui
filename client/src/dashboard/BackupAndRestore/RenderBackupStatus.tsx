@@ -1,8 +1,8 @@
 import React from "react";
 import type { Backups } from "../Dashboard/dashboardUtils";
-import Chip from "../../components/Chip";
-import { parsedError } from "../../components/ErrorComponent";
-import { ProgressBar } from "../../components/ProgressBar";
+import Chip from "@components/Chip";
+import { parsedError } from "@components/ErrorComponent";
+import { ProgressBar } from "@components/ProgressBar";
 import { bytesToSize } from "./BackupsControls";
 
 export const RenderBackupStatus = ({
@@ -18,7 +18,7 @@ export const RenderBackupStatus = ({
     border: "unset",
   };
   const total = +(
-    (status as any)?.loading?.total ||
+    (status?.state === "loading" ? status.total : undefined) ||
     row.sizeInBytes ||
     +row.dbSizeInBytes ||
     0
@@ -38,16 +38,19 @@ export const RenderBackupStatus = ({
         color="red"
         value={parsedError(status.err)}
       />
-    : status.loading ?
+    : status.state === "loading" ?
       <div className="text-1p5">
         <ProgressBar
           message={
-            !status.loading.loaded ?
+            !status.loaded || status.loaded < 0 ?
               "Preparing..."
-            : `Processed ${bytesToSize(status.loading.loaded || 0)}/${total ? bytesToSize(total) : "unknown"}`
+            : `Processed ${bytesToSize(status.loaded || 0)}/${total ? bytesToSize(total) : "unknown"}`
           }
-          value={status.loading.loaded || 0}
-          totalValue={status.loading.total || 0}
+          style={{
+            minWidth: "150px",
+          }}
+          value={status.loaded || 0}
+          totalValue={total || 0}
         />
       </div>
     : null

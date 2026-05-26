@@ -1,5 +1,8 @@
-import React, { createContext, useContext } from "react";
+import React, { createContext, useContext, useEffect } from "react";
+import { CommandPalette } from "src/app/CommandPalette/CommandPalette";
+import { createStore } from "src/hooks/createStore";
 import type { Prgl } from "../../App";
+import { LLMSetupProvider } from "src/dashboard/AskLLM/Setup/LLMSetupProvider";
 
 const PrglContext = createContext<Prgl | undefined>(undefined);
 
@@ -10,7 +13,23 @@ export const PrglProvider = ({
   prgl: Prgl;
   children: React.ReactNode;
 }) => {
-  return <PrglContext.Provider value={prgl}>{children}</PrglContext.Provider>;
+  useEffect(() => {
+    prglStateStore.setState({ loaded: true });
+    return () => {
+      prglStateStore.setState({ loaded: false });
+    };
+  }, [prgl]);
+  return (
+    <PrglContext.Provider value={prgl}>
+      <LLMSetupProvider>
+        <CommandPalette
+          isElectron={prgl.serverState.isElectron}
+          prglLoaded={prgl}
+        />
+        {children}{" "}
+      </LLMSetupProvider>
+    </PrglContext.Provider>
+  );
 };
 
 export const usePrgl = () => {
@@ -20,3 +39,9 @@ export const usePrgl = () => {
   }
   return context;
 };
+
+export const prglStateStore = createStore<{
+  loaded: boolean;
+}>({
+  loaded: false,
+});

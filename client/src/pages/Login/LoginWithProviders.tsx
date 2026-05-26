@@ -1,8 +1,8 @@
 import { getObjectEntries } from "prostgles-types";
 import React from "react";
-import type { PrglState } from "../../App";
-import Btn from "../../components/Btn";
-import { FlexCol, FlexRow, FlexRowWrap } from "../../components/Flex";
+import type { AppContextProps } from "../../App";
+import Btn from "@components/Btn";
+import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
 import {
   FacebookIcon,
   GithubIcon,
@@ -10,7 +10,7 @@ import {
   MicrosoftIcon,
 } from "./SocialIcons";
 
-export const LoginWithProviders = ({ auth }: Pick<PrglState, "auth">) => {
+export const LoginWithProviders = ({ auth }: Pick<AppContextProps, "auth">) => {
   const { user } = auth;
   if (user && user.type !== "public") return null;
   const providerConfigs = getObjectEntries(auth.loginWithProvider ?? {});

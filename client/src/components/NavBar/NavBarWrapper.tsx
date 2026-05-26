@@ -1,6 +1,6 @@
 import React from "react";
-import { NavLink } from "react-router-dom";
-import type { PrglState } from "../../App";
+import { NavLink } from "react-router";
+import type { AppContextProps } from "../../App";
 import "../../App.css";
 import { t } from "../../i18n/i18nUtils";
 
@@ -13,7 +13,7 @@ import { useNavBarItems } from "./useNavBarItems";
 type NavBarWrapperProps = {
   children: React.ReactNode;
   needsUser: boolean;
-  extraProps: PrglState;
+  extraProps: AppContextProps;
   userThemeOption: ThemeOption;
 };
 export const NavBarWrapper = (props: NavBarWrapperProps) => {

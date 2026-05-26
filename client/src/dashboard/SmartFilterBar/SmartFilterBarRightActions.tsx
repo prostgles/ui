@@ -1,3 +1,9 @@
+import type { DetailedFilter } from "@common/filterUtils";
+import { getFinalFilterInfo, getSmartGroupFilter } from "@common/filterUtils";
+import Btn from "@components/Btn";
+import { ExpandSection } from "@components/ExpandSection";
+import { Footer } from "@components/Popup/Footer";
+import PopupMenu from "@components/PopupMenu";
 import {
   mdiChevronLeft,
   mdiChevronRight,
@@ -6,15 +12,6 @@ import {
 } from "@mdi/js";
 import { isObject, type AnyObject } from "prostgles-types";
 import React, { useState } from "react";
-import type { SmartGroupFilter } from "../../../../common/filterUtils";
-import {
-  getFinalFilterInfo,
-  getSmartGroupFilter,
-} from "../../../../common/filterUtils";
-import Btn from "../../components/Btn";
-import { ExpandSection } from "../../components/ExpandSection";
-import { Footer } from "../../components/Popup/Popup";
-import PopupMenu from "../../components/PopupMenu";
 import { pluralise } from "../../pages/Connections/Connection";
 import { CodeConfirmation } from "../BackupAndRestore/CodeConfirmation";
 import { InsertButton } from "../SmartForm/InsertButton";
@@ -32,6 +29,7 @@ export const SmartFilterBarRightActions = (props: SmartFilterBarProps) => {
     rowCount,
     methods: dbMethods,
     fixedData,
+    sql,
   } = props;
 
   const { filter: _fltr = [] } = "w" in props ? props.w : props;
@@ -43,13 +41,13 @@ export const SmartFilterBarRightActions = (props: SmartFilterBarProps) => {
   );
   const table = tables.find((t) => t.name === table_name);
 
-  const filter: SmartGroupFilter = _fltr.map((f) => ({ ...f }));
+  const filter: DetailedFilter[] = _fltr.map((f) => ({ ...f }));
   const finalFilter = getSmartGroupFilter(filter);
 
   if (!table_name || !table) return null;
 
   const commonBtnProps = {
-    variant: "outline",
+    variant: "faded",
     className: "shadow w-fit h-fit bg-color-0",
   } as const;
 
@@ -116,26 +114,25 @@ export const SmartFilterBarRightActions = (props: SmartFilterBarProps) => {
                     </div>
                   );
                 }}
-                confirmButton={(pCLose) => (
-                  <Btn
-                    iconPath={mdiDelete}
-                    {...commonBtnProps}
-                    color="danger"
-                    title="Delete rows"
-                    onClickPromise={async () => {
+                confirmButtons={[
+                  {
+                    title: "Delete rows",
+                    iconPath: mdiDelete,
+                    ...commonBtnProps,
+                    color: "danger",
+                    onClickPromise: async () => {
                       await tableHandler.delete!(finalFilter);
                       showInsertUpdateDelete.onSuccess?.();
-                      pCLose();
-                    }}
-                  >
-                    Delete rows
-                  </Btn>
-                )}
+                    },
+                    children: "Delete rows",
+                  },
+                ]}
               />
             )}
 
             {!!tableHandler.update && showupdate && (
               <PopupMenu
+                title={`Update ${rowCount} rows`}
                 positioning="right-panel"
                 button={
                   <Btn
@@ -149,11 +146,13 @@ export const SmartFilterBarRightActions = (props: SmartFilterBarProps) => {
                 contentStyle={{
                   padding: 0,
                 }}
-                render={(pClose) => (
+                render={() => (
                   <>
                     <SmartForm
-                      label={`Update ${rowCount} rows`}
                       db={db}
+                      sql={sql}
+                      label=""
+                      contentClassname="pt-1"
                       rowFilter={[]}
                       tableName={table_name}
                       tables={tables}
@@ -200,6 +199,7 @@ export const SmartFilterBarRightActions = (props: SmartFilterBarProps) => {
               ...(isObject(showInsert) && showInsert),
             }}
             db={db}
+            sql={sql}
             methods={dbMethods}
             tables={tables}
             tableName={table_name}

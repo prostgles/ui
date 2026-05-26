@@ -98,7 +98,7 @@ const getUIDocAsMarkdown = (
     `<h${hDepth} id=${JSON.stringify(toSnakeCase(doc.title))}> ${displayTitle} </h${hDepth}> \n`,
     doc.uiVersionOnly ? `>  Not available on Desktop version\n  ` : "",
     `${doc.docs ? fixIndent(doc.docs) : doc.description}\n`,
-    childrenTitle ? `### ${childrenTitle}:` : "",
+    childrenTitle ? `### ${childrenTitle}` : "",
     childrenContent,
   ]
     .filter(Boolean)

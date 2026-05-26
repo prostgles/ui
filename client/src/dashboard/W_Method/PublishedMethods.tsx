@@ -1,40 +1,39 @@
+import type { DBSSchema } from "@common/publishUtils";
+import Btn from "@components/Btn";
+import ConfirmationDialog from "@components/ConfirmationDialog";
+import { FlexCol, FlexRow } from "@components/Flex";
+import { InfoRow } from "@components/InfoRow";
+import PopupMenu from "@components/PopupMenu";
+import { SwitchToggle } from "@components/SwitchToggle";
 import { mdiDelete, mdiLanguageTypescript, mdiPencil, mdiPlus } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import type { DBHandlerClient } from "prostgles-client";
 import { isDefined } from "prostgles-types";
 import React, { useMemo, useState } from "react";
-import type { DBSSchema } from "../../../../common/publishUtils";
-import type { Prgl } from "../../App";
-import Btn from "../../components/Btn";
-import ConfirmationDialog from "../../components/ConfirmationDialog";
-import { FlexCol, FlexRow } from "../../components/Flex";
-import { InfoRow } from "../../components/InfoRow";
-import PopupMenu from "../../components/PopupMenu";
-import { SwitchToggle } from "../../components/SwitchToggle";
 import { SectionHeader } from "../AccessControl/AccessControlRuleEditor";
 import type { ValidEditedAccessRuleState } from "../AccessControl/useEditedAccessRule";
-import { SmartCardList } from "../SmartCardList/SmartCardList";
-import { ProcessLogs } from "../TableConfig/ProcessLogs";
-import { NewMethod } from "./NewMethod";
-import { FunctionLabel } from "./FunctionLabel";
 import type { DBS } from "../Dashboard/DBS";
 import type { FieldConfig } from "../SmartCard/SmartCard";
+import { SmartCardList } from "../SmartCardList/SmartCardList";
+import { ProcessLogs } from "../TableConfig/ProcessLogs";
+import { FunctionLabel } from "./FunctionLabel";
+import { NewMethod } from "./NewMethod";
 
 type P = {
   className?: string;
   style?: React.CSSProperties;
   accessRuleId: number | undefined;
-  prgl: Prgl;
   editedRule: ValidEditedAccessRuleState | undefined;
 };
 
 export const PublishedMethods = ({
   className,
   style,
-  prgl,
   accessRuleId,
   editedRule,
 }: P) => {
-  const { dbsMethods, dbsTables, dbs, connectionId } = prgl;
+  const { dbsMethods, dbsMethodSchema, dbsTables, dbs, connectionId, dbsSql } =
+    usePrgl();
   const { listProps, action, setAction } = useSmartCardListProps({
     dbs,
     connectionId,
@@ -47,8 +46,9 @@ export const PublishedMethods = ({
       <div className={`flex-col gap-1 pl-2 `}>
         <p className="p-0 m-0">Server-side user triggered functions</p>
         <SmartCardList
-          db={dbs as DBHandlerClient}
-          methods={dbsMethods}
+          sql={dbsSql}
+          db={dbs}
+          methods={dbsMethodSchema}
           tables={dbsTables}
           tableName="published_methods"
           realtime={true}
@@ -80,13 +80,7 @@ export const PublishedMethods = ({
                 clickCatchStyle={{ opacity: 0.5 }}
                 positioning="center"
               >
-                <ProcessLogs
-                  noMaxHeight={true}
-                  type="methods"
-                  connectionId={connectionId}
-                  dbs={dbs}
-                  dbsMethods={dbsMethods}
-                />
+                <ProcessLogs noMaxHeight={true} type="methods" />
               </PopupMenu>
             </FlexRow>
           }
@@ -94,10 +88,8 @@ export const PublishedMethods = ({
         <div className="flex-col f-1">
           {action && (
             <NewMethod
-              {...prgl}
               connectionId={connectionId}
               access_rule_id={accessRuleId}
-              dbs={dbs}
               onClose={() => setAction(undefined)}
               methodId={
                 action.type === "update" ? action.existingMethodId : undefined
@@ -130,8 +122,8 @@ const useSmartCardListProps = ({
       className: "trigger-hover",
     };
     const fieldConfigs: FieldConfig<DBSSchema["published_methods"]>[] = [
-      { name: "description", hide: true },
-      { name: "arguments", hide: true },
+      { name: "description" as const, hide: true },
+      { name: "arguments" as const, hide: true },
       {
         name: "name",
         renderMode: "full",
@@ -166,7 +158,7 @@ const useSmartCardListProps = ({
             />,
       } satisfies FieldConfig<DBSSchema["published_methods"]>,
       {
-        name: "id",
+        name: "id" as const,
         label: " ",
         className: "f-1 ",
         render: (v, row: DBSSchema["published_methods"]) => (
@@ -175,7 +167,7 @@ const useSmartCardListProps = ({
               <Btn
                 title="Edit function"
                 iconPath={mdiPencil}
-                onClick={async () => {
+                onClick={() => {
                   setAction({
                     type: "update",
                     existingMethodId: row.id,

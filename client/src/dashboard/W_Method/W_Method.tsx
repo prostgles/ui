@@ -1,11 +1,10 @@
-import React, { useState } from "react";
-import { useIsMounted } from "../BackupAndRestore/CredentialSelector";
+import { useIsMounted } from "prostgles-client";
+import React, { useEffect, useState } from "react";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
-import { useEffectAsync } from "../DashboardMenu/DashboardMenuSettings";
-import Window from "../Window";
-import { W_MethodMenu } from "./W_MethodMenu";
+import Window from "../Window/Window";
 import { W_MethodControls } from "./W_MethodControls";
+import { W_MethodMenu } from "./W_MethodMenu";
 
 export type W_MethodProps = Omit<CommonWindowProps, "w"> & {
   w: WindowSyncItem<"method">;
@@ -16,8 +15,8 @@ export const W_Method = (allProps: W_MethodProps) => {
   const [w, setW] = useState(allProps.w);
 
   const getIsMounted = useIsMounted();
-  useEffectAsync(async () => {
-    const wSync = await props.w.$cloneSync((newW, deltaW) => {
+  useEffect(() => {
+    const wSync = props.w.$cloneSync((newW, deltaW) => {
       if (!getIsMounted()) return;
       setW(newW);
     });
@@ -31,10 +30,12 @@ export const W_Method = (allProps: W_MethodProps) => {
 
   return (
     <Window
-      w={w as any}
+      w={w}
+      childWindow={undefined}
+      connection={props.prgl.connection}
       layoutMode={props.workspace.layout_mode ?? "editable"}
       getMenu={(w, closeMenu) => (
-        <W_MethodMenu {...allProps} w={w as any} closeMenu={closeMenu} />
+        <W_MethodMenu {...allProps} w={w} closeMenu={closeMenu} />
       )}
     >
       <W_MethodControls

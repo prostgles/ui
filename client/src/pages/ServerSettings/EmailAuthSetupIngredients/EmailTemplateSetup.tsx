@@ -1,10 +1,10 @@
 import { mdiDeleteRestore, mdiEyeCheckOutline } from "@mdi/js";
 import React from "react";
 import sanitize from "sanitize-html";
-import Btn from "../../../components/Btn";
-import { FlexCol } from "../../../components/Flex";
-import FormField from "../../../components/FormField/FormField";
-import Popup from "../../../components/Popup/Popup";
+import Btn from "@components/Btn";
+import { FlexCol } from "@components/Flex";
+import FormField from "@components/FormField/FormField";
+import Popup from "@components/Popup/Popup";
 import { CodeEditorWithSaveButton } from "../../../dashboard/CodeEditor/CodeEditorWithSaveButton";
 
 export type EmailTemplateConfig = {

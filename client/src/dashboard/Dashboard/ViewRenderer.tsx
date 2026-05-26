@@ -1,26 +1,27 @@
-import { isDefined } from "prostgles-types";
+import ErrorComponent, { ErrorTrap } from "@components/ErrorComponent";
+import { FlexCol } from "@components/Flex";
+import { isDefined, isEqual } from "prostgles-types";
 import React from "react";
-import { useSearchParams } from "react-router-dom";
-import { ErrorTrap } from "../../components/ErrorComponent";
-import { FlexCol } from "../../components/Flex";
+import { useSearchParams } from "react-router";
+import { isPlaywrightTest } from "src/i18n/i18nUtils";
 import { DashboardHotkeys } from "../DashboardMenu/DashboardHotkeys";
 import { LinkMenu } from "../LinkMenu";
 import RTComp from "../RTComp";
 import type { SilverGridProps } from "../SilverGrid/SilverGrid";
 import { SilverGridReact } from "../SilverGrid/SilverGrid";
+import { W_Barchart } from "../W_Barchart/W_Barchart";
 import W_Map from "../W_Map/W_Map";
 import {
   getLinkColorV2,
   getMapLayerQueries,
-} from "../W_Map/getMapLayerQueries";
+} from "../W_Map/fetchData/getMapLayerQueries";
 import { W_Method } from "../W_Method/W_Method";
-import { SQL_SNIPPETS } from "../W_SQL/SQLSnippets";
 import { W_SQL } from "../W_SQL/W_SQL";
 import type { ActiveRow } from "../W_Table/W_Table";
 import W_Table from "../W_Table/W_Table";
 import { W_TimeChart } from "../W_TimeChart/W_TimeChart";
-import { default as WNDOW } from "../Window";
-import { getCrossFilters } from "../joinUtils";
+import { getWindowTitle } from "../Window/Window";
+import { getCrossFilters } from "../getCrossFilters";
 import type { LocalSettings } from "../localSettings";
 import { useLocalSettings } from "../localSettings";
 import { findShortestPath, makeReversibleGraph } from "../shortestPath";
@@ -29,7 +30,6 @@ import type {
   DashboardData,
   DashboardProps,
   DashboardState,
-  _Dashboard,
 } from "./Dashboard";
 import type {
   ChartType,
@@ -38,11 +38,12 @@ import type {
   WindowSyncItem,
 } from "./dashboardUtils";
 import { getViewRendererUtils } from "./getViewRendererUtils";
+import { onLinkTable } from "./onLinkTable";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 
 export type ViewRendererProps = Pick<DashboardProps, "prgl"> &
   Pick<DashboardData, "workspace" | "links" | "windows"> &
   Pick<DashboardState, "tables" | "suggestions" | "isReadonly"> & {
-    loadTable: _Dashboard["loadTable"];
     onCloseUnsavedSQL: (
       q: WindowSyncItem<ChartType>,
       e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
@@ -87,7 +88,7 @@ export class ViewRenderer extends RTComp<
         return windows.find((w) => w.id === wid)?.table_name;
       });
       if (tableChain.every(isDefined)) {
-        return tableChain as string[];
+        return tableChain;
       }
     }
     return undefined;
@@ -120,13 +121,17 @@ export class ViewRenderer extends RTComp<
 
     if (!workspace || !tables) return;
 
-    const { onClickRow, onAddChart, onLinkTable } = getViewRendererUtils.bind(
-      this,
-    )({ ...this.props, windows, links, workspace, tables });
+    const { onClickRow } = getViewRendererUtils.bind(this)({
+      ...this.props,
+      windows,
+      links,
+      workspace,
+      tables,
+    });
 
     const getRenderedWindow = (
       w: WindowSyncItem,
-      childWindow: React.ReactNode | null,
+      childWindow: { node: React.ReactNode; w: WindowSyncItem } | undefined,
       childWindows: WindowSyncItem[],
     ) => {
       const onClose: CommonWindowProps["onClose"] = async (e) => {
@@ -145,11 +150,7 @@ export class ViewRenderer extends RTComp<
           w.type === "sql" &&
           !(w as WindowData<"sql">).options?.sqlWasSaved
         ) {
-          if (SQL_SNIPPETS.some((s) => s.sql.trim() === w.sql.trim())) {
-            await w.$update({ closed: true, deleted: true });
-          } else {
-            this.props.onCloseUnsavedSQL(w, e);
-          }
+          this.props.onCloseUnsavedSQL(w, e);
 
           /** Is table or chart. Delete permanently */
         } else {
@@ -192,7 +193,10 @@ export class ViewRenderer extends RTComp<
         "data-key": w.id,
         "data-table-name": w.table_name,
         "data-view-type": w.type,
-        "data-title": WNDOW.getTitle(w),
+        "data-links-to": myLinks
+          .map((l) => (l.w1_id === w.id ? l.w2_id : l.w1_id))
+          .join(","),
+        "data-title": getWindowTitle(w),
         w,
         workspace,
         childWindows,
@@ -207,11 +211,11 @@ export class ViewRenderer extends RTComp<
         myLinks,
         active_row: this.state.active_row,
         getLinksAndWindows: () => this.getOpenedLinksAndWindows(),
-        onAddChart: !onAddChart ? undefined : (args) => onAddChart(args, w),
       };
       const setLinkMenu =
         isReadonly ? undefined : (
-          (linkMenuWindow) => this.setState({ linkMenuWindow })
+          (linkMenuWindow: ViewRendererState["linkMenuWindow"]) =>
+            this.setState({ linkMenuWindow })
         );
 
       let result: Required<SilverGridProps>["children"][number] | null = null;
@@ -261,6 +265,20 @@ export class ViewRenderer extends RTComp<
               w={w}
             />
           );
+        } else if (w.type === "barchart") {
+          result = (
+            <W_Barchart
+              {...commonProps}
+              activeRowColor={colorStr}
+              myActiveRow={
+                active_row?.window_id === w.id ? active_row : undefined
+              }
+              onClickRow={(row, tableName, value) => {
+                onClickRow(row, tableName, w.id, { type: "barchart", value });
+              }}
+              w={w}
+            />
+          );
         } else if (w.type === "timechart") {
           result = (
             <W_TimeChart
@@ -275,27 +293,20 @@ export class ViewRenderer extends RTComp<
               w={w}
             />
           );
-        } else {
+        } else if (w.type === "table") {
           const crossF = getCrossFilters(
-            w as WindowSyncItem<"table">,
+            w,
+            undefined,
             active_row,
             links,
             windows,
           );
-
           result = (
             <W_Table
               setLinkMenu={setLinkMenu}
               activeRowColor={colorStr}
               activeRow={
                 active_row?.window_id === w.id ? active_row : undefined
-              }
-              onLinkTable={
-                this.props.isReadonly ?
-                  undefined
-                : async (tblName, path) => {
-                    onLinkTable(w, tblName, path);
-                  }
               }
               joinFilter={crossF.activeRowFilter}
               externalFilters={crossF.all}
@@ -305,8 +316,12 @@ export class ViewRenderer extends RTComp<
               childWindow={childWindow}
               {...commonProps}
               key={commonProps.key + this.props.prgl.dbKey}
-              w={w as any}
+              w={w}
             />
+          );
+        } else {
+          result = (
+            <ErrorComponent error={`Unsupported window type: ${w.type}`} />
           );
         }
       }
@@ -340,10 +355,25 @@ export class ViewRenderer extends RTComp<
         const renderedChildNode =
           latestChildWindow &&
           getRenderedWindow(latestChildWindow, undefined, []).elem;
-        return getRenderedWindow(w, renderedChildNode, latestChildWindows);
+        return getRenderedWindow(
+          w,
+          renderedChildNode && {
+            node: renderedChildNode,
+            w: latestChildWindow,
+          },
+          latestChildWindows,
+        );
       })
       .filter(isDefined);
 
+    const isCryptoDemo =
+      isPlaywrightTest && workspace.name === "Crypto markets";
+    if (isCryptoDemo) {
+      console.log(
+        "Rendered windows",
+        renderedWindows.map((r) => ({ id: r.id, title: r.title })),
+      );
+    }
     return (
       <div
         className="ViewRenderer min-h-0 f-1 flex-row relative"
@@ -384,7 +414,16 @@ export class ViewRenderer extends RTComp<
             onClose={() => this.setState({ linkMenuWindow: undefined })}
             gridRef={this.gridWrapperRef}
             onLinkTable={(tableName, path) =>
-              onLinkTable(linkMenuWindow.w, tableName, path)
+              onLinkTable({
+                q: linkMenuWindow.w,
+                tableName,
+                tablePath: path,
+                myLinks: links.filter((l) =>
+                  [l.w1_id, l.w2_id].includes(linkMenuWindow.w.id),
+                ),
+                prgl,
+                workspaceId: linkMenuWindow.w.workspace_id,
+              })
             }
           />
         )}
@@ -397,9 +436,13 @@ export class ViewRenderer extends RTComp<
           className="min-h-0 relative"
           layout={workspace.layout}
           onChange={(newLayout) => {
-            if (
-              JSON.stringify(newLayout) !== JSON.stringify(workspace.layout)
-            ) {
+            if (isCryptoDemo) {
+              console.log("Layout change", {
+                new: newLayout,
+                old: workspace.layout,
+              });
+            }
+            if (!isEqual(newLayout, workspace.layout)) {
               workspace.$update({ layout: newLayout });
             }
           }}
@@ -418,7 +461,7 @@ export class ViewRenderer extends RTComp<
             return 1;
           }}
         >
-          {renderedWindows.map((d) => d.elem!)}
+          {renderedWindows.map((d) => d.elem)}
         </SilverGridReact>
       </div>
     );
@@ -428,16 +471,18 @@ export class ViewRenderer extends RTComp<
 export const ViewRendererWrapped = (
   props: Omit<
     ViewRendererProps,
-    "localSettings" | "searchParams" | "setSearchParams"
+    "localSettings" | "searchParams" | "setSearchParams" | "prgl"
   >,
 ) => {
   const localSettings = useLocalSettings();
   const [searchParams, setSearchParams] = useSearchParams();
+  const prgl = usePrgl();
 
   return (
     <ErrorTrap>
       <ViewRenderer
         {...props}
+        prgl={prgl}
         localSettings={localSettings}
         searchParams={searchParams}
         setSearchParams={setSearchParams}

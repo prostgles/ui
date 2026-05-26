@@ -1,13 +1,14 @@
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import path from "path";
-import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import { FileManager } from "prostgles-server/dist/FileManager/FileManager";
-import type { DBGeneratedSchema } from "../../../common/DBGeneratedSchema";
 
+import { getAge, ROUTES } from "@common/utils";
+import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
 import type { Connections, DBS } from "..";
-import { getAge, ROUTES } from "../../../common/utils";
 import { getCloudClient } from "../cloudClients/cloudClients";
 import { getConnectionDetails } from "../connectionUtils/getConnectionDetails";
 import { getRootDir } from "../electronConfig";
+import type { DBSSchema } from "@common/publishUtils";
 
 export const getConnectionUri = (c: Connections) =>
   c.db_conn ||
@@ -16,9 +17,9 @@ export const getConnectionUri = (c: Connections) =>
 export async function getFileMgr(dbs: DBS, credId: number | null) {
   const localFolderPath = path.resolve(getRootDir() + ROUTES.BACKUPS);
 
-  let cred;
+  let cred: DBSSchema["credentials"] | undefined;
   if (credId) {
-    cred = await dbs.credentials.findOne({ id: credId, type: "s3" });
+    cred = await dbs.credentials.findOne({ id: credId });
     if (!cred) throw new Error("Could not find the credentials");
   }
   const fileMgr = new FileManager(
@@ -27,7 +28,8 @@ export async function getFileMgr(dbs: DBS, credId: number | null) {
         accessKeyId: cred.key_id,
         secretAccessKey: cred.key_secret,
         Bucket: cred.bucket!,
-        region: cred.region!,
+        region: cred.region || "auto",
+        endpoint: cred.endpoint_url,
       })
     : { localFolderPath },
   );

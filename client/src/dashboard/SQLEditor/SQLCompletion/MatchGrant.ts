@@ -12,7 +12,7 @@ import { withKWDs } from "./withKWDs";
 
 export const MatchGrant: SQLMatcher = {
   match: (cb) => ["grant", "revoke"].includes(cb.ftoken?.textLC as string),
-  result: async ({ cb, ss, setS, sql }) => {
+  result: ({ cb, ss, setS, sql }) => {
     const isGrant = cb.ftoken?.textLC === "grant";
 
     if (cb.ltoken?.textLC === "parameter") {
@@ -102,7 +102,7 @@ export const MatchGrant: SQLMatcher = {
           ({
             label,
             kind: getKind(
-              (label as string).split(" ")[0]?.toLowerCase?.() as any,
+              (label as string).split(" ")[0]?.toLowerCase() as any,
             ),
           }) as ONOption,
       ).filter(({ label }) => label !== "VIEW"),
@@ -207,7 +207,7 @@ export const MatchGrant: SQLMatcher = {
             options: addAll(objects).map((label) => ({
               label,
               kind: getKind(
-                (label as string).split(" ")[0]?.toLowerCase?.() as any,
+                (label as string).split(" ")[0]?.toLowerCase() as any,
               ),
             })),
           }) satisfies KWD,

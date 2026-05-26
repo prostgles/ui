@@ -1,6 +1,6 @@
 import { mdiPlus } from "@mdi/js";
 import React, { useCallback, useMemo, useState } from "react";
-import Btn, { type BtnProps } from "../../../components/Btn";
+import Btn, { type BtnProps } from "@components/Btn";
 import { SmartForm, type SmartFormProps } from "../SmartForm";
 import { useNestedInsertDefaultData } from "../SmartFormField/useNestedInsertDefaultData";
 import { NewRowDataHandler } from "../SmartFormNewRowDataHandler";
@@ -24,6 +24,7 @@ export const JoinedRecordsAddRow = (props: P) => {
     rowFilter,
     newRowData,
     row,
+    sql,
   } = props;
 
   const [insert, setInsert] = useState<{
@@ -71,7 +72,7 @@ export const JoinedRecordsAddRow = (props: P) => {
           );
         return {
           title: "Add referenced record",
-          onClick: async () => {
+          onClick: () => {
             setInsert({
               type: "manual",
               // onChange: (newRow) => {
@@ -109,7 +110,7 @@ export const JoinedRecordsAddRow = (props: P) => {
       }
       return {
         title: "Add new record",
-        onClick: async () => {
+        onClick: () => {
           if (defaultData) {
             setInsert({
               type: "auto",
@@ -123,7 +124,7 @@ export const JoinedRecordsAddRow = (props: P) => {
         },
         disabledInfo:
           !section.canInsert ?
-            section.table.info.isView ? "Cannot insert into a view"
+            section.table.isView ? "Cannot insert into a view"
             : !section.tableHandler?.insert ? "Cannot insert into this table"
             : `Cannot reference more than one ${JSON.stringify(section.tableName)}`
           : undefined,
@@ -131,7 +132,7 @@ export const JoinedRecordsAddRow = (props: P) => {
     }, [
       isInsert,
       section.canInsert,
-      section.table.info.isView,
+      section.table.isView,
       section.tableName,
       section.tableHandler,
       newRowData,
@@ -157,6 +158,7 @@ export const JoinedRecordsAddRow = (props: P) => {
         <SmartForm
           tableName={section.tableName}
           db={db}
+          sql={sql}
           methods={methods}
           tables={tables}
           asPopup={true}
@@ -168,10 +170,8 @@ export const JoinedRecordsAddRow = (props: P) => {
         {...props.btnProps}
         data-command="JoinedRecords.AddRow"
         data-key={section.tableName}
-        variant="filled"
         color="action"
         iconPath={mdiPlus}
-        children="Add"
         {...btnProps}
       />
     </>

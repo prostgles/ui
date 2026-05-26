@@ -1,15 +1,16 @@
 import { mdiFile, mdiTable, mdiTableEye } from "@mdi/js";
 import { getKeys } from "prostgles-types";
 import React, { useState } from "react";
-import type { TableRules } from "../../../../../common/publishUtils";
-import { FlexCol } from "../../../components/Flex";
-import { Icon } from "../../../components/Icon/Icon";
-import { SearchList } from "../../../components/SearchList/SearchList";
-import { SwitchToggle } from "../../../components/SwitchToggle";
+import type { TableRules } from "@common/publishUtils";
+import { FlexCol } from "@components/Flex";
+import { Icon } from "@components/Icon/Icon";
+import { SearchList } from "@components/SearchList/SearchList";
+import { SwitchToggle } from "@components/SwitchToggle";
 import type { EditedAccessRule } from "../AccessControl";
 import type { PermissionEditProps } from "../AccessControlRuleEditor";
 import type { TableInfoWithRules } from "../TableRules/TablePermissionControls";
 import { TablePermissionControls } from "../TableRules/TablePermissionControls";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 
 type DBPermissionCustomTables<
   T extends EditedAccessRule["dbPermissions"]["type"],
@@ -27,12 +28,19 @@ export const PCustomTables = ({
   dbPermissions,
   onChange,
   contextData,
-  prgl,
   userTypes,
   tablesWithRules,
   editedRule,
-}: DBPermissionEditorProps<"Custom">) => {
-  const { tables } = prgl;
+}: Pick<
+  DBPermissionEditorProps<"Custom">,
+  | "dbPermissions"
+  | "onChange"
+  | "contextData"
+  | "userTypes"
+  | "tablesWithRules"
+  | "editedRule"
+>) => {
+  const { tables } = usePrgl();
   const [hideNoRules, setHideNoRules] = useState(false);
 
   const tableRules = Object.fromEntries(
@@ -41,8 +49,7 @@ export const PCustomTables = ({
         dbPermissions.customTables.length > 0 &&
         dbPermissions.customTables.some((ct) => {
           const table = tables.find((t) => t.name === ct.tableName);
-          const ruleIsPossible =
-            table?.info.isView ? ruleType === "select" : true;
+          const ruleIsPossible = table?.isView ? ruleType === "select" : true;
           return !ruleIsPossible || ct[ruleType];
         });
       return [ruleType, allCustomTablesMatchRule];
@@ -79,7 +86,6 @@ export const PCustomTables = ({
           Toggle All ({tables.length} tables)
         </div>
         <TablePermissionControls
-          prgl={prgl}
           userTypes={userTypes}
           contextData={contextData}
           className=" pr-2  mr-p25 "
@@ -100,7 +106,7 @@ export const PCustomTables = ({
                 );
                 const tableRules = existingRule ?? { tableName: t.name };
                 const toggledRuleName = getKeys(newTableRules)[0]!;
-                if (t.info.isView && toggledRuleName !== "select") {
+                if (t.isView && toggledRuleName !== "select") {
                   // Ignore non-select rule for views
                 } else {
                   tableRules[toggledRuleName] =
@@ -121,7 +127,7 @@ export const PCustomTables = ({
         limit={200}
         items={tablesWithRules
           .filter((t) => {
-            if (!hideNoRules || t.info.isFileTable) return true;
+            if (!hideNoRules || t.isFileTable) return true;
             return (
               t.rule &&
               ["select", "insert", "update", "delete"].some((ruleType) => {
@@ -129,7 +135,7 @@ export const PCustomTables = ({
               })
             );
           })
-          .sort(
+          .toSorted(
             (a, b) =>
               initialOrder.indexOf(a.name) - initialOrder.indexOf(b.name),
           )
@@ -171,11 +177,11 @@ export const PCustomTables = ({
             };
 
             const icon =
-              t.info.isFileTable ? { path: mdiFile, title: "File table" }
-              : t.info.isView ? { title: "View", path: mdiTableEye }
+              t.isFileTable ? { path: mdiFile, title: "File table" }
+              : t.isView ? { title: "View", path: mdiTableEye }
               : { title: "Table", path: mdiTable };
             const isNotFromWorkspaceTables =
-              !t.info.isFileTable &&
+              !t.isFileTable &&
               !editedRule?.newRule?.dbsPermissions?.createWorkspaces &&
               editedRule?.worspaceTableAndColumns?.length &&
               !editedRule.worspaceTableAndColumns.some(
@@ -204,18 +210,15 @@ export const PCustomTables = ({
                 : undefined,
               title: t.name,
               rowStyle: { border: "1px solid var(--b-default)" },
-              contentLeft: (
-                <Icon
-                  className="mr-p5 text-2"
-                  title={icon.title}
-                  path={icon.path}
-                />
-              ),
+              iconLeft: {
+                type: "Icon",
+                title: icon.title,
+                path: icon.path,
+              },
               contentRight: (
                 <TablePermissionControls
                   key={t.name}
                   className={window.isLowWidthScreen ? "" : "ml-1"}
-                  prgl={prgl}
                   userTypes={userTypes}
                   contextData={contextData}
                   errors={{}}

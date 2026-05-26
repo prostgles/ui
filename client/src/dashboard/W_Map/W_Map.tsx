@@ -1,3 +1,6 @@
+import { isObject } from "@common/publishUtils";
+import Popup from "@components/Popup/Popup";
+import type { SingleSyncHandles } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import type { AnyObject, ParsedJoinPath } from "prostgles-types";
 import {
   getKeys,
@@ -6,9 +9,6 @@ import {
   reverseParsedPath,
 } from "prostgles-types";
 import React from "react";
-import ErrorComponent from "../../components/ErrorComponent";
-import Loading from "../../components/Loader/Loading";
-import Popup from "../../components/Popup/Popup";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type { WindowData, WindowSyncItem } from "../Dashboard/dashboardUtils";
 import type {
@@ -17,22 +17,23 @@ import type {
   GeoJsonLayerProps,
   HoverCoords,
   MapHandler,
+  MapState,
 } from "../Map/DeckGLMap";
 import { DeckGLMap } from "../Map/DeckGLMap";
 import type { DeltaOfData } from "../RTComp";
 import RTComp from "../RTComp";
+import { SmartForm } from "../SmartForm/SmartForm";
 import type { ActiveRow } from "../W_Table/W_Table";
-import W_Table from "../W_Table/W_Table";
-import Window from "../Window";
-import { ChartLayerManager } from "../WindowControls/ChartLayerManager";
+import { getTableDataRequestSignature } from "../W_Table/tableUtils/getTableDataRequestSignature";
+import Window from "../Window/Window";
+import { DataLayerManager } from "../WindowControls/DataLayerManager/DataLayerManager";
 import { W_MapMenu } from "./W_MapMenu";
-import { getMapDataExtent } from "./getMapDataExtent";
+import { MapInfoSection } from "./controls/MapInfoSection";
+import { fetchMapLayerData } from "./fetchData/fetchMapLayerData";
+import { getMapFilter } from "./fetchData/getMapData";
+import { getMapDataExtent } from "./fetchData/getMapDataExtent";
 import type { HoveredObject } from "./onMapHover";
 import { onMapHover } from "./onMapHover";
-import { fetchMapLayerData } from "./fetchMapLayerData";
-import { SmartForm } from "../SmartForm/SmartForm";
-import { isObject } from "../../../../common/publishUtils";
-import { getMapFilter } from "./getMapData";
 
 export type LayerBase = {
   /**
@@ -132,11 +133,11 @@ export type ClickedItem = GeoJSONFeature & {
 export type W_MapState = {
   loading: boolean;
   loadingLayers: boolean;
-  wSync: any;
+  wSync: SingleSyncHandles<Required<WindowData<"map">>, true> | null;
   minimised: boolean;
   layers?: GeoJsonLayerProps[];
   lqs: LayerQuery[];
-  error: any;
+  error: unknown;
   hoverObj?: any;
   hoverCoords?: HoverCoords;
   hovData?: any;
@@ -176,12 +177,12 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
   };
 
   getDataSignature(
-    args: Parameters<typeof W_Table.getTableDataRequestSignature>[0],
+    args: Parameters<typeof getTableDataRequestSignature>[0],
     dataAge: number,
     layer: LayerQuery,
     other: any,
   ): { signature: string; cachedLayer?: GeoJsonLayerProps } {
-    const signature = W_Table.getTableDataRequestSignature(args, dataAge, [
+    const signature = getTableDataRequestSignature(args, dataAge, [
       layer,
       other,
     ]);
@@ -196,13 +197,13 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
     const { w } = this.props;
     if (!this.state.wSync) {
       const wSync = w.$cloneSync((w, delta) => {
-        this.setData({ w }, { w: delta as any });
+        this.setData({ w }, { w: delta });
       });
       this.setState({ wSync });
     }
   }
   onUnmount() {
-    this.state.wSync?.$unsync?.();
+    this.state.wSync?.$unsync();
     this.layerSubs.map((s) => {
       s.sub.unsubscribe();
     });
@@ -230,16 +231,14 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
     }
   };
 
-  autoRefreshInterval;
+  autoRefreshInterval: NodeJS.Timeout | undefined;
   gettingExtent = false;
-  onDelta = async (
+  onDelta = (
     dp: Partial<W_MapProps>,
     ds: Partial<W_MapState>,
     dd: DeltaOfData<D>,
   ) => {
     const delta = { ...dp, ...ds, ...dd };
-
-    // console.log(delta)
 
     const ns: any = {};
 
@@ -259,9 +258,8 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
           }
         }, 600);
       }
-      const deltaOpts =
-        delta.w?.options ?? ({} as WindowData<"map">["options"]);
-      const changedOpts = getKeys(deltaOpts || {});
+      const deltaOpts = delta.w?.options ?? {};
+      const changedOpts = getKeys(deltaOpts);
       const changedWkeys = getKeys(delta.w || {});
 
       if (
@@ -271,10 +269,10 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
         changedOpts.includes("refresh") ||
         changedOpts.includes("aggregationMode")
       ) {
-        this.setLayerData(this.state.dataAge);
+        void this.setLayerData(this.state.dataAge);
 
         if (changedOpts.includes("refresh")) {
-          const { refresh } = this.d.w.options!;
+          const { refresh } = this.d.w.options;
 
           if (this.autoRefreshInterval) {
             clearInterval(this.autoRefreshInterval);
@@ -410,7 +408,7 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
   render() {
     const {
       minimised = false,
-      layers: _layers = [],
+      layers: fetchedLayers = [],
       loadingLayers,
       clickedItem,
       hoverCoords,
@@ -420,12 +418,12 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
       error,
     } = this.state;
     const { w } = this.d;
-    const { layerQueries, onClickRow, prgl } = this.props;
+    const { layerQueries, onClickRow, prgl, active_row } = this.props;
 
     if (!w) return null;
 
-    const layers: typeof _layers = [
-      ..._layers,
+    const layers: typeof fetchedLayers = [
+      ...fetchedLayers,
       ...(drawingShape ?
         [
           {
@@ -445,9 +443,6 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
         ]
       : []),
     ];
-
-    // !w?.options?.extent &&
-    // if(!this.state.layers) return <div className="relative f-1"><Loading variant="cover" /></div>
 
     let tooltipPopup: React.ReactNode = null;
     if (hovData && hoverCoords && this.ref) {
@@ -494,27 +489,9 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
       );
     }
 
-    let infoSection;
-
-    if (loadingLayers && w.options.refresh?.type !== "Realtime") {
-      infoSection = (
-        <div className="f-1 flex-col jc-center ai-center absolute pl-2 mt-1 ml-2">
-          <Loading delay={100} />
-        </div>
-      );
-    }
-
-    if (error) {
-      infoSection = (
-        <div className="f-1 flex-row relative m-2 ai-center jc-center absolute p-2 bg-color-0 rounded">
-          <ErrorComponent title="Map error" withIcon={true} error={error} />
-        </div>
-      );
-    }
-
     const geoJsonLayers = layers;
 
-    const geoJsonLayersDataFilterSignature = JSON.stringify([layerQueries]);
+    const dataFilterSignature = JSON.stringify([layerQueries]);
     let form: React.ReactNode = null;
     if (w.options.showCardOnClick && clickedItem?.properties.i) {
       const table = this.props.tables.find(
@@ -536,6 +513,7 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
               asPopup={true}
               confirmUpdates={true}
               db={prgl.db}
+              sql={prgl.sql}
               methods={prgl.methods}
               tables={prgl.tables}
               tableName={clickedItem.properties.tableName}
@@ -549,6 +527,11 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
       }
     }
 
+    const dpr =
+      typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
+    const dprRounded = dpr >= 1.5 ? 2 : 1;
+    const retinaToken = dprRounded > 1 ? "@2x" : "";
+    const scaleToken = dprRounded > 1 ? "2x" : "1x";
     const content = (
       <>
         {form}
@@ -565,18 +548,22 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
             }}
             style={isDrawing ? { cursor: "crosshair" } : {}}
           >
-            {infoSection}
+            <MapInfoSection
+              fetchedLayers={fetchedLayers}
+              error={error}
+              active_row={active_row}
+              loadingLayers={loadingLayers}
+              w={w}
+            />
             <DeckGLMap
               onLoad={(map) => {
-                this.setLayerData(this.state.dataAge);
+                void this.setLayerData(this.state.dataAge);
                 this.map = map;
               }}
-              geoJsonLayersDataFilterSignature={
-                geoJsonLayersDataFilterSignature
-              }
+              dataFilterSignature={dataFilterSignature}
               topLeftContent={
                 !w.options.hideLayersBtn && (
-                  <ChartLayerManager
+                  <DataLayerManager
                     {...this.props}
                     w={w}
                     type="map"
@@ -591,11 +578,14 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
               }
               basemapImage={w.options.basemapImage}
               projection={w.options.projection}
+              enableCollisionFilter={w.options.enableCollisionFilter}
               onClick={(e) => {
-                const object: ClickedItem | undefined = e.object as any;
+                const object = e.object as ClickedItem | undefined;
                 let rowFilter: AnyObject | undefined;
-                const filterOrHash: string | AnyObject | undefined =
-                  object?.properties.i;
+                const filterOrHash = object?.properties.i as
+                  | string
+                  | AnyObject
+                  | undefined;
                 if (object && filterOrHash) {
                   if (isObject(filterOrHash)) {
                     rowFilter = filterOrHash;
@@ -621,7 +611,7 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
                   e.object?.properties?.tableName,
                 );
 
-                const newClickedItem = e.object as any;
+                const newClickedItem = e.object as ClickedItem | undefined;
                 if (
                   JSON.stringify(newClickedItem) !==
                   JSON.stringify(this.state.clickedItem)
@@ -633,17 +623,22 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
                 v
                   .replaceAll("{Z}", "{z}")
                   .replaceAll("{X}", "{x}")
-                  .replaceAll("{Y}", "{y}"),
+                  .replaceAll("{Y}", "{y}")
+                  .replaceAll("{r}", retinaToken)
+                  .replaceAll("{dpr}", String(dprRounded))
+                  .replaceAll("{ratio}", String(dprRounded))
+                  .replaceAll("{scale}", scaleToken),
               )}
+              basemapZoomOffset={w.options.basemapZoomOffset ?? 0}
               tileSize={w.options.tileSize || 256}
               tileAttribution={w.options.tileAttribution}
               basemapOpacity={w.options.basemapOpacity ?? 0.2}
               basemapDesaturate={w.options.basemapDesaturate ?? 0}
               dataOpacity={w.options.dataOpacity ?? 0.5}
-              initialState={(w.options as any) || {}}
+              initialState={w.options as MapState}
               geoJsonLayers={geoJsonLayers}
               options={{
-                extentBehavior: w.options.extentBehavior,
+                extentBehavior: w.options.extentBehavior ?? "autoZoomToData",
               }}
               onOptionsChange={(newOpts) => {
                 w.$update({ options: newOpts }, { deepMerge: true });
@@ -688,10 +683,11 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
                       this.state.clickedItem?.properties.$rowhash ?
                         this.state.clickedItem
                       : undefined,
-                    dbProject: this.props.prgl.db,
+                    db: this.props.prgl.db,
+                    sql: this.props.prgl.sql,
                     theme: this.props.prgl.theme,
-                    dbTables: this.props.tables,
-                    dbMethods: this.props.prgl.methods,
+                    tables: this.props.tables,
+                    methods: this.props.prgl.methods,
                     layerQueries,
                     onInsertOrUpdate: () => {
                       this.setState({
@@ -718,6 +714,8 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
     return (
       <Window
         w={w}
+        childWindow={undefined}
+        connection={this.props.prgl.connection}
         getMenu={this.getMenu}
         layoutMode={this.props.workspace.layout_mode ?? "editable"}
       >

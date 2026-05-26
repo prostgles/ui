@@ -4,6 +4,7 @@ import { debounce } from "../../../Map/DeckGLWrapped";
 import type {
   editor,
   IDisposable,
+  IRange,
   languages,
   Monaco,
   Position,
@@ -60,7 +61,9 @@ export type SQLMatcherResultArgs = SQLMatchContext & {
 };
 export type SQLMatcher = {
   match: (cb: CodeBlock) => boolean;
-  result: (args: SQLMatcherResultArgs) => Promise<SQLMatcherResultType>;
+  result: (
+    args: SQLMatcherResultArgs,
+  ) => Promise<SQLMatcherResultType> | SQLMatcherResultType;
 };
 
 type PRGLMetaInfo = {
@@ -148,7 +151,8 @@ const getRespectedSortText = (
   const sortText = Array.from(
     new Set(suggestions.map((s) => s.sortText)),
   ).sort();
-  if (sortText.length === 1) return { suggestions };
+  const isSingleSortText = sortText.length === 1;
+  // if (isSingleSortText) return { suggestions };
 
   const getRangeAndFilter = (
     rawFilterText: string | undefined,
@@ -165,12 +169,17 @@ const getRespectedSortText = (
         currToken.columnNumber + currTextRaw.length,
       );
       return {
-        range: range as any,
+        range,
         filterText: `"` + rawFilterText,
       };
     }
+    if (isSingleSortText) {
+      return {
+        range: range as IRange,
+      };
+    }
     return {
-      range: range as any,
+      range: range as IRange,
       // insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
       filterText: rawFilterText,
     };
@@ -313,7 +322,7 @@ export function registerSuggestions(args: Args) {
   sqlFormattingProvider =
     monaco.languages.registerDocumentFormattingEditProvider(LANG, {
       displayName: LANG.toUpperCase(),
-      provideDocumentFormattingEdits: async (model) => {
+      provideDocumentFormattingEdits: (model) => {
         // const newText = await getFormattedSql(model);
 
         const tabWidth = model.getOptions().indentSize || 2;
@@ -355,7 +364,7 @@ export function registerSuggestions(args: Args) {
         const res = await provideCompletionItems(model, position, context);
         return res;
       },
-      resolveCompletionItem: async (item, token) => {
+      resolveCompletionItem: (item, token) => {
         hackyFixMonacoSortFilter(args.editor);
         return item;
       },

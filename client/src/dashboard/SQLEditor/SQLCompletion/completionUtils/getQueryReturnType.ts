@@ -1,9 +1,31 @@
-import type { SQLHandler } from "prostgles-types";
+import type { AnyObject, SQLHandler } from "prostgles-types";
 import { asName, includes, tryCatchV2 } from "prostgles-types";
-import type { ColType } from "../../../../../../common/utils";
+import type { ColType } from "@common/utils";
+import { parse, type Statement } from "pgsql-ast-parser";
 
-const isQueryValid = async (rawQuery: string, sql: SQLHandler) => {
+const getQueryIsValidAndDataReturning = async (
+  rawQuery: string,
+  sql: SQLHandler,
+) => {
   const queryWithSemicolon = getSQLQuerySemicolon(rawQuery, true);
+  const ast = tryCatchV2(() => {
+    return parse(queryWithSemicolon);
+  });
+  const allowedStatementTypes = [
+    "select",
+    "with",
+    "with recursive",
+  ] satisfies Statement["type"][];
+  const firstStatement = ast.data?.[0];
+  if (
+    ast.hasError ||
+    !firstStatement ||
+    !allowedStatementTypes.some(
+      (allowedType) => allowedType === firstStatement.type,
+    )
+  ) {
+    return { isValid: false, queryWithSemicolon };
+  }
   const res = await sql(
     `
       EXPLAIN
@@ -24,7 +46,10 @@ const getQueryReturnType = async (
   includeTableOid = false,
 ): Promise<ColType[]> => {
   /** Check if it's a data returning statement to avoid useless error logs */
-  const { queryWithSemicolon, isValid } = await isQueryValid(rawQuery, sql);
+  const { queryWithSemicolon, isValid } = await getQueryIsValidAndDataReturning(
+    rawQuery,
+    sql,
+  );
 
   if (!isValid) {
     return [];
@@ -70,7 +95,10 @@ const getTableExpressionReturnTypeWithTableOIDs = async (
   const queryWithoutSemicolon = getSQLQuerySemicolon(query, false);
   const result = await sql(
     `
-      ${queryWithoutSemicolon}
+      SELECT * 
+      FROM (
+        ${queryWithoutSemicolon}
+      ) prostgles_temp_table_getQueryReturnType
       LIMIT 0;
     `,
     {},
@@ -93,7 +121,7 @@ const getTableExpressionReturnTypeWithTableOIDs = async (
 
 type ExpressionResult =
   | { colTypes: ColType[]; error?: undefined }
-  | { colTypes?: undefined; error: any };
+  | { colTypes?: undefined; error: unknown };
 const cached = new Map<string, ExpressionResult>();
 
 export const getTableExpressionReturnType = async (
@@ -118,7 +146,9 @@ export const getTableExpressionReturnType = async (
     let colTypes = result.data?.colTypes;
     const { error } = result;
     if (!colTypes) {
-      if (includes(["42701", "42P16"], (error as any)?.code)) {
+      if (
+        includes(["42701", "42P16"], (error as AnyObject | undefined)?.code)
+      ) {
         colTypes = await getTableExpressionReturnTypeWithTableOIDs(
           expression,
           sql,
@@ -126,7 +156,7 @@ export const getTableExpressionReturnType = async (
       }
     }
     if (!colTypes) {
-      console.warn(error);
+      console.warn(error, expression);
       throw error ?? new Error("No columns found");
     }
     cached.set(expression, { colTypes });

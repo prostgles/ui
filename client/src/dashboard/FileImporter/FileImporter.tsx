@@ -1,17 +1,21 @@
+import Btn from "@components/Btn";
+import ErrorComponent from "@components/ErrorComponent";
+import FormField from "@components/FormField/FormField";
+import Loading from "@components/Loader/Loading";
+import Popup from "@components/Popup/Popup";
+import PopupMenu from "@components/PopupMenu";
+import { Table } from "@components/Table/Table";
 import { mdiAlertCircleOutline, mdiFormatText } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import type { AnyObject } from "prostgles-types";
+import {
+  getSerialisableError,
+  type AnyObject,
+  type SQLHandler,
+} from "prostgles-types";
 import React from "react";
-import Btn from "../../components/Btn";
-import ErrorComponent from "../../components/ErrorComponent";
-import FormField from "../../components/FormField/FormField";
-import Loading from "../../components/Loader/Loading";
-import Popup from "../../components/Popup/Popup";
-import PopupMenu from "../../components/PopupMenu";
-import { Table } from "../../components/Table/Table";
+import type { Prgl } from "src/App";
 import { bytesToSize } from "../BackupAndRestore/BackupsControls";
 import { CodeEditor } from "../CodeEditor/CodeEditor";
-import type { CommonWindowProps } from "../Dashboard/Dashboard";
+import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
 import RTComp from "../RTComp";
 import type { ProstglesColumn } from "../W_SQL/W_SQL";
 import { getFileText } from "../W_SQL/W_SQLMenu";
@@ -26,15 +30,16 @@ export const getPapa = () =>
   import(/* webpackChunkName: "papaparse" */ "papaparse");
 
 export type FileImporterProps = {
-  db: DBHandlerClient;
-  onClose: Function;
+  db: Prgl["db"];
+  sql: SQLHandler;
+  onClose: VoidFunction;
   openTable: (tableName: string) => void;
   style?: object;
   className?: string;
   id?: string;
   button?: Element;
   parentDiv?: Element;
-  tables: CommonWindowProps["tables"];
+  tables: DBSchemaTableWJoins[];
 };
 
 type HeaderType = "First row" | "Custom";
@@ -129,7 +134,7 @@ export type FileImporterState = {
     fileName: string;
     content: string;
   }[];
-  files?: File[];
+  files?: FileList | File[];
 
   streamColDelimiter: string;
 };
@@ -186,7 +191,7 @@ export class FileImporter extends RTComp<FileImporterProps, FileImporterState> {
     window.__prglIsImporting = false;
   }
 
-  onDelta = async (dP, dS, dD) => {
+  onDelta = (dP, dS, dD) => {
     const { selectedFile } = this.state;
     const delta = { ...dP, ...dS, ...dD };
 
@@ -209,7 +214,7 @@ export class FileImporter extends RTComp<FileImporterProps, FileImporterState> {
     return multiImport;
   };
 
-  setFiles = async (files: File[]) => {
+  setFiles = async (files: FileList) => {
     if (files.length > 1) {
       const allowedTypesForMultiImport = ["txt", "svg", "html", "json"];
       const arr = Array.from(files);
@@ -280,7 +285,7 @@ export class FileImporter extends RTComp<FileImporterProps, FileImporterState> {
     try {
       await importFile({
         ...this.state,
-        db: this.props.db,
+        sql: this.props.sql,
         onError,
         onProgress: (importing) => {
           if (!this.mounted) {
@@ -297,14 +302,14 @@ export class FileImporter extends RTComp<FileImporterProps, FileImporterState> {
 
   cancel = async () => {
     this.canceled = true;
-    const { onClose, db } = this.props;
+    const { onClose, sql } = this.props;
     const { importing } = this.state;
 
     /**
      * Drop table if import is canceled
      */
     if (importing && !importing.finished)
-      await db.sql!("DROP TABLE IF EXISTS " + importing.tableName);
+      await sql("DROP TABLE IF EXISTS " + importing.tableName);
 
     this.setState({
       importing: undefined,
@@ -330,7 +335,7 @@ export class FileImporter extends RTComp<FileImporterProps, FileImporterState> {
       files,
     } = this.state;
 
-    const { openTable, parentDiv, db } = this.props;
+    const { openTable, parentDiv, db, sql } = this.props;
     const { newTableName } = destination;
     let tblName = newTableName;
     if (!newTableName && selectedFile) tblName = selectedFile.file.name; //.slice(0, -4);
@@ -555,14 +560,20 @@ export class FileImporter extends RTComp<FileImporterProps, FileImporterState> {
                   {importing.tableName}
                 </span>
               </div>
-              {db.sql && (
-                <ApplySuggestedDataTypes
-                  types={importing.types}
-                  onDone={this.cancel}
-                  sql={db.sql}
-                  tableName={importing.tableName}
-                />
-              )}
+              <ApplySuggestedDataTypes
+                types={importing.types}
+                onDone={(error) => {
+                  if (error) {
+                    alert(
+                      "Error applying suggested data types: " +
+                        JSON.stringify(getSerialisableError(error)),
+                    );
+                  }
+                  void this.cancel();
+                }}
+                sql={sql}
+                tableName={importing.tableName}
+              />
             </div>
           )}
 

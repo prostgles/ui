@@ -1,9 +1,10 @@
+import Btn from "@components/Btn";
+import { FlexRow, classOverride } from "@components/Flex";
+import { SvgIcon } from "@components/SvgIcon";
+import { onWheelScroll } from "@components/Table/Table";
+import { mdiViewDashboard, mdiViewDashboardEdit } from "@mdi/js";
 import React, { useEffect, useRef } from "react";
 import type { Prgl } from "../../App";
-import Btn from "../../components/Btn";
-import { FlexRow, classOverride } from "../../components/Flex";
-import { SvgIcon } from "../../components/SvgIcon";
-import { onWheelScroll } from "../../components/Table/Table";
 import type { Command } from "../../Testing";
 import type { WorkspaceSyncItem } from "../Dashboard/dashboardUtils";
 import { useSetActiveWorkspace, useWorkspaces } from "./useWorkspaces";
@@ -57,26 +58,28 @@ export const WorkspaceMenu = (props: P) => {
         onWheel={onWheelScroll()}
         data-command={"WorkspaceMenu.list" satisfies Command}
       >
-        {renderedWorkspaces.map((w) => (
+        {renderedWorkspaces.map((wsp) => (
           <li
-            key={w.id}
+            key={wsp.id}
             className={
-              "workspace-list-item text-1 relative " +
-              (workspace.id === w.id ? "active" : "")
+              "workspace-list-item text-1 relative flex-row " +
+              (workspace.id === wsp.id ? "active" : "")
             }
           >
             <Btn
               title={
-                (w.published && !w.isMine ? "Shared workspace" : "Workspace") +
-                (w.isMine ? "" : " (readonly)")
+                (wsp.published && !wsp.isMine ?
+                  "Shared workspace"
+                : "Workspace") + (wsp.isMine ? "" : " (readonly)")
               }
-              iconNode={w.icon ? <SvgIcon icon={w.icon} /> : undefined}
+              size="default"
+              iconNode={wsp.icon ? <SvgIcon icon={wsp.icon} /> : undefined}
               style={{
                 padding: "16px",
                 borderBottomStyle: "solid",
                 borderBottomWidth: "4px",
                 borderBottomColor: "transparent",
-                ...(workspace.id === w.id && {
+                ...(workspace.id === wsp.id && {
                   borderBottomColor: "var(--active)",
                   fontWeight: 600,
                 }),
@@ -84,14 +87,33 @@ export const WorkspaceMenu = (props: P) => {
                 whiteSpace: "nowrap",
               }}
               onClick={() => {
-                setWorkspace(w);
+                setWorkspace(wsp);
               }}
             >
-              {w.name}
+              {wsp.name}
             </Btn>
           </li>
         ))}
       </ul>
+
+      {user?.type === "admin" && !window.isLowWidthScreen && (
+        <Btn
+          iconPath={
+            workspace.layout_mode === "fixed" ?
+              mdiViewDashboardEdit
+            : mdiViewDashboard
+          }
+          title={"Toggle Layout Mode"}
+          data-command="WorkspaceMenu.toggleWorkspaceLayoutMode"
+          size="default"
+          onClick={() => {
+            workspace.$update({
+              layout_mode:
+                workspace.layout_mode === "fixed" ? "editable" : "fixed",
+            });
+          }}
+        />
+      )}
       <WorkspaceMenuDropDown
         {...props}
         setWorkspace={setWorkspace}

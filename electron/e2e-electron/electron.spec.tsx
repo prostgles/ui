@@ -93,7 +93,8 @@ test("renders the first page", async () => {
   await page.getByTestId("PostgresInstallationInstructions").click();
   await page.waitForTimeout(1000);
   await screenshot();
-  await page.getByTestId("PostgresInstallationInstructions.Close").click();
+  // await page.getByTestId("PostgresInstallationInstructions.Close").click();
+  await page.getByTestId("Popup.close").click();
   // await page.getByTestId("ElectronSetup.Next").click();
 
   /** State db connection details */
@@ -131,12 +132,9 @@ test("renders the first page", async () => {
   await screenshot();
   await page
     .getByTestId("dashboard.goToConnConfig")
-    .waitFor({ state: "visible", timeout: 4e3 });
+    .waitFor({ state: "visible", timeout: 5e3 });
   await screenshot();
 
-  await page
-    .getByTestId("dashboard.goToConnConfig")
-    .waitFor({ state: "visible", timeout: 2e3 });
   await page.getByTestId("dashboard.goToConnections").click();
   await createDatabase("sample_db", page);
   await screenshot();

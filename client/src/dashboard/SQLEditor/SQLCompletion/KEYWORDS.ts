@@ -51,10 +51,7 @@ export const asSQL = (v: string, lang = "sql") =>
   "```" + lang + "\n" + v + "\n```";
 export function getTopKeywords(): TopKeyword[] {
   return (
-    STARTING_KEYWORDS as Exclude<
-      typeof STARTING_KEYWORDS,
-      keyof typeof missingKeywordDocumentation
-    >
+    STARTING_KEYWORDS
   )
     .map((label) => {
       let info;

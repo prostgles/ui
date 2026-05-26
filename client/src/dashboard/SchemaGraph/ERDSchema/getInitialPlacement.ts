@@ -11,14 +11,8 @@ type Shape = SchemaShape;
 
 export const getInitialPlacement = (shapes: Shape[]): Shape[] => {
   // Separate rectangles and links
-  const rectangles = shapes.filter((s) => s.type === "rectangle") as Extract<
-    Shape,
-    { type: "rectangle" }
-  >[];
-  const links = shapes.filter((s) => s.type === "linkline") as Extract<
-    Shape,
-    { type: "linkline" }
-  >[];
+  const rectangles = shapes.filter((s) => s.type === "rectangle");
+  const links = shapes.filter((s) => s.type === "linkline");
 
   const nodes = rectangles.map((rect) => ({
     id: rect.id,

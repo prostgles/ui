@@ -1,12 +1,12 @@
 import { mdiFunction } from "@mdi/js";
-import type { ValidatedColumnInfo } from "prostgles-types";
+import { pickKeys, type ValidatedColumnInfo } from "prostgles-types";
 import React, { useState } from "react";
-import Btn from "../../../components/Btn";
-import { FlexCol } from "../../../components/Flex";
-import Popup from "../../../components/Popup/Popup";
-import { SwitchToggle } from "../../../components/SwitchToggle";
+import Btn from "@components/Btn";
+import { FlexCol } from "@components/Flex";
+import Popup from "@components/Popup/Popup";
+import { SwitchToggle } from "@components/SwitchToggle";
 import type { ColumnConfigWInfo } from "../W_Table";
-import { FunctionSelector } from "./FunctionSelector";
+import { FunctionSelector } from "./FunctionSelector/FunctionSelector";
 
 type SummariseColumnProps = {
   tableColumns: ValidatedColumnInfo[];
@@ -72,6 +72,7 @@ export const SummariseColumn = ({
                       // name: funcDef? `${funcDef.label}(${column.name})` : column.name,
                       show: true,
                       computedConfig: {
+                        ...pickKeys(column.info!, ["tsDataType", "udt_name"]),
                         column: column.name,
                         funcDef,
                         isColumn: true,

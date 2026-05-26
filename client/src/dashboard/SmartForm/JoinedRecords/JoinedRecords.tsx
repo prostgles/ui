@@ -1,25 +1,28 @@
+import { type DetailedFilter } from "@common/filterUtils";
+import { FlexCol, FlexRow, classOverride } from "@components/Flex";
+import Loading from "@components/Loader/Loading";
+import { Section } from "@components/Section";
+import { SvgIcon } from "@components/SvgIcon";
 import { type AnyObject } from "prostgles-types";
 import React, { useEffect } from "react";
-import { type DetailedFilterBase } from "../../../../../common/filterUtils";
 import type { Prgl } from "../../../App";
-import { FlexCol, FlexRow, classOverride } from "../../../components/Flex";
-import Loading from "../../../components/Loader/Loading";
-import { Section } from "../../../components/Section";
-import { SvgIcon } from "../../../components/SvgIcon";
+import type { FieldConfig } from "../../SmartCard/SmartCard";
 import type { SmartFormProps } from "../SmartForm";
 import { ViewMoreSmartCardList } from "../SmartFormField/ViewMoreSmartCardList";
 import type { NewRow, NewRowDataHandler } from "../SmartFormNewRowDataHandler";
 import { JoinedRecordsAddRow } from "./JoinedRecordsAddRow";
 import { JoinedRecordsSection } from "./JoinedRecordsSection";
 import { useJoinedRecordsSections } from "./useJoinedRecordsSections";
-import type { FieldConfig } from "../../SmartCard/SmartCard";
 
-export type JoinedRecordsProps = Pick<Prgl, "db" | "tables" | "methods"> &
+export type JoinedRecordsProps = Pick<
+  Prgl,
+  "db" | "tables" | "methods" | "sql"
+> &
   Pick<SmartFormProps, "onSuccess" | "parentForm"> & {
     className?: string;
     style?: React.CSSProperties;
     tableName: string;
-    rowFilter?: DetailedFilterBase[];
+    rowFilter?: DetailedFilter[];
     newRowData: NewRow | undefined;
     newRowDataHandler: NewRowDataHandler | undefined;
     showRelated?: "descendants";
@@ -57,6 +60,7 @@ export const JoinedRecords = (props: JoinedRecordsProps) => {
     modeType: action,
     activeTabKey,
     onTabChange,
+    sql,
   } = props;
 
   /** Open errored section */
@@ -92,11 +96,14 @@ export const JoinedRecords = (props: JoinedRecordsProps) => {
         return (
           <Section
             key={path.join(".")}
-            className="trigger-hover pl-p5"
+            className="trigger-hover "
             btnProps={{
               ["data-command"]: "JoinedRecords.SectionToggle",
               ["data-key"]: path.join("."),
+              style: { flex: 1 },
             }}
+            data-command="JoinedRecords.Section"
+            data-key={path.join(".")}
             titleIcon={icon && <SvgIcon icon={icon} />}
             title={
               <FlexRow data-key={path.join(".")}>
@@ -108,12 +115,13 @@ export const JoinedRecords = (props: JoinedRecordsProps) => {
             }
             titleRightContent={
               props.newRowDataHandler && (
-                <FlexRow className="show-on-trigger-hover">
+                <FlexRow className="show-on-trigger-hover ml-auto gap-0">
                   {!isInsert && (
                     <ViewMoreSmartCardList
                       db={db}
                       methods={methods}
                       ftable={table}
+                      sql={sql}
                       searchFilter={section.detailedJoinFilter}
                       getActions={undefined}
                       tables={tables}

@@ -5,7 +5,7 @@ import type {
 } from "prostgles-server/dist/Auth/AuthTypes";
 import { omitKeys } from "prostgles-types";
 import type { DBS } from "..";
-import type { DBGeneratedSchema } from "../../../common/DBGeneratedSchema";
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import { createPasswordlessAdminSessionIfNeeded } from "./createPasswordlessAdminSessionIfNeeded";
 import { createPublicUserSessionIfAllowed } from "./createPublicUserSessionIfAllowed";
 import { getActiveSession } from "./getActiveSession";
@@ -13,11 +13,14 @@ import {
   PASSWORDLESS_ADMIN_ALREADY_EXISTS_ERROR,
   type SUser,
 } from "./sessionUtils";
-import type { AuthSetupData } from "./subscribeToAuthSetupChanges";
+import type { AuthConfigForStateConnection } from "./subscribeToAuthSetupChanges";
 
 type GetUser = NonNullable<AuthConfig<DBGeneratedSchema, SUser>["getUser"]>;
-export const getGetUser = (authSetupData: AuthSetupData, dbs: DBS) => {
-  const getUser: GetUser = async (sid, _, __, client, req) => {
+export const getGetUser = (
+  dbs: DBS,
+  authSetupData: AuthConfigForStateConnection,
+) => {
+  const getUser: GetUser = async (sid, _dbo, _db, client, req) => {
     const sessionInfo =
       sid &&
       (await getActiveSession(dbs, {

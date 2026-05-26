@@ -1,11 +1,13 @@
+import Btn from "@components/Btn";
+import FormField from "@components/FormField/FormField";
+import { pageReload } from "@components/Loader/Loading";
+import PopupMenu from "@components/PopupMenu";
 import React, { useState } from "react";
-import type { ClientUser, ExtraProps } from "../../App";
-import Btn from "../../components/Btn";
-import FormField from "../../components/FormField/FormField";
-import PopupMenu from "../../components/PopupMenu";
-import { pageReload } from "../../components/Loader/Loading";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
+import type { ClientUser } from "../../App";
 
-export const PasswordlessSetup = ({ dbsMethods }: ExtraProps) => {
+export const PasswordlessSetup = () => {
+  const { dbsMethods } = usePrglCore();
   type NewUser = Partial<ClientUser & { passwordconfirm?: string }>;
   const [{ username, password, passwordconfirm }, setNewUser] =
     useState<NewUser>({});
@@ -73,8 +75,12 @@ export const PasswordlessSetup = ({ dbsMethods }: ExtraProps) => {
               if (!username || !password) {
                 throw "Username or Password missing";
               }
-              await dbsMethods.disablePasswordless!({ username, password });
-              pageReload("disablePasswordless");
+              await dbsMethods.disablePasswordless!({
+                username,
+                password,
+                origin: window.location.origin,
+              });
+              await pageReload("disablePasswordless");
             },
           },
         ]}

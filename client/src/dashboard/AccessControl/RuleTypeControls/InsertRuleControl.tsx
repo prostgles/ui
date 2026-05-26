@@ -1,11 +1,8 @@
 import { mdiFileDocumentPlusOutline } from "@mdi/js";
 import { isObject } from "prostgles-types";
 import React from "react";
-import type {
-  InsertRule,
-  TableRules,
-} from "../../../../../common/publishUtils";
-import ErrorComponent from "../../../components/ErrorComponent";
+import type { InsertRule, TableRules } from "@common/publishUtils";
+import ErrorComponent from "@components/ErrorComponent";
 import { FieldFilterControl } from "../OptionControllers/FieldFilterControl";
 import type {
   ContextDataSchema,
@@ -19,7 +16,7 @@ import { RuleExpandSection } from "./SelectRuleControl";
 
 type P = Pick<
   Required<TablePermissionControlsProps>,
-  "prgl" | "table" | "tableRules" | "userTypes"
+  "table" | "tableRules" | "userTypes"
 > & {
   rule: TableRules["insert"];
   onChange: (rule: InsertRule | undefined) => void;
@@ -30,7 +27,6 @@ export const InsertRuleControl = ({
   rule: rawRule,
   onChange,
   table,
-  prgl,
   tableRules,
   contextDataSchema: contextData,
   userTypes,
@@ -92,9 +88,6 @@ export const InsertRuleControl = ({
                 <div>New records must satisfy a condition</div>
               </div>
             }
-            db={prgl.db}
-            methods={prgl.methods}
-            tables={prgl.tables}
             contextData={contextData}
             detailedFilter={rule.checkFilterDetailed as SingleGroupFilter}
             tableName={table.name}
@@ -112,7 +105,6 @@ export const InsertRuleControl = ({
               rule={rule}
               table={table}
               userTypes={userTypes}
-              prgl={prgl}
             />
           </RuleExpandSection>
         </>

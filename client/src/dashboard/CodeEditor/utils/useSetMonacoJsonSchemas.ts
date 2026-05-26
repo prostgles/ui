@@ -1,5 +1,5 @@
 import type { editor } from "monaco-editor";
-import { useEffectDeep } from "prostgles-client/dist/react-hooks";
+import { useEffectDeep } from "prostgles-client";
 import { getMonaco } from "../../SQLEditor/W_SQLEditor";
 import type { LanguageConfig } from "../CodeEditor";
 import { getMonacoJsonSchemas } from "./getMonacoJsonSchemas";
@@ -10,7 +10,7 @@ export const useSetMonacoJsonSchemas = (
   languageObj: LanguageConfig | undefined,
 ) => {
   useEffectDeep(() => {
-    setMonacoEditorJsonSchemas(editor, value, languageObj);
+    void setMonacoEditorJsonSchemas(editor, value, languageObj);
   }, [editor, languageObj]);
 };
 
@@ -44,8 +44,7 @@ export const setMonacoEditorJsonSchemas = async (
   if (!matchingModel) {
     try {
       const newModel = monaco.editor.createModel(
-        /** Why might be undefined?! */
-        (value as string | undefined) ?? editor.getValue(),
+        value,
         "json",
         mySchemas[0]?.theUri,
       );

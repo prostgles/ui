@@ -1,6 +1,6 @@
 import React from "react";
-import { FlexCol } from "../../components/Flex";
-import { Label } from "../../components/Label";
+import { FlexCol } from "@components/Flex";
+import { Label } from "@components/Label";
 import { SmartFilter } from "../SmartFilter/SmartFilter";
 import type { SmartFilterBarProps } from "./SmartFilterBar";
 import type { useSmartFilterBarState } from "./useSmartFilterBarState";

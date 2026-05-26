@@ -1,26 +1,20 @@
 import { logOutgoingHttpRequests } from "./logOutgoingHttpRequests";
 logOutgoingHttpRequests(false);
 
+import { sidKeyName } from "@common/authTypesAndConstants";
+import { API_ENDPOINTS } from "@common/utils";
+import { getAuthSetupData } from "@src/authConfig/subscribeToAuthSetupChanges";
 import cookieParser from "cookie-parser";
 import express, { json, urlencoded } from "express";
-import helmet from "helmet";
 import _http from "http";
 import path from "path";
 import { Server } from "socket.io";
-import { API_ENDPOINTS } from "../../../common/utils";
-import { withOrigin } from "../authConfig/getAuth";
-import { sidKeyName } from "../authConfig/sessionUtils";
 import { actualRootDir } from "../electronConfig";
+import { includes } from "prostgles-types";
+import { isTesting } from "./utils";
 
-export const isTesting = !!process.env.PRGL_TEST;
 export const initExpressAndIOServers = () => {
   const app = express();
-  app.use(
-    helmet({
-      crossOriginResourcePolicy: false,
-      referrerPolicy: false,
-    }),
-  );
 
   if (isTesting) {
     app.use((req, res, next) => {
@@ -45,22 +39,8 @@ export const initExpressAndIOServers = () => {
     });
   }
 
-  /**
-   * Required to ensure xenova/transformators works
-   */
-  const localLLMHeaders = ""; // `'unsafe-eval' 'wasm-unsafe-eval'`;
-  // console.error("REMOVE CSP", localLLMHeaders);
-  const renderPDFinIframe = `data: blob:`;
   app.use(json({ limit: "100mb" }));
   app.use(urlencoded({ extended: true, limit: "100mb" }));
-  app.use(function (req, res, next) {
-    /* data import (papaparse) requires: worker-src blob: 'self' */
-    res.setHeader(
-      "Content-Security-Policy",
-      ` script-src 'self' ${localLLMHeaders}; frame-src 'self' ${renderPDFinIframe} ; worker-src blob: 'self';`,
-    );
-    next();
-  });
 
   process.on("unhandledRejection", (reason, p) => {
     console.trace("Unhandled Rejection at: Promise", p, "reason:", reason);
@@ -75,22 +55,27 @@ export const initExpressAndIOServers = () => {
     }),
   );
   app.use(
-    express.static(path.resolve(actualRootDir + "/../client/static"), {
-      index: false,
-      cacheControl: false,
-    }),
-  );
-  app.use(
-    express.static(path.resolve(actualRootDir + "/../docs"), {
-      index: false,
-      cacheControl: false,
-    }),
-  );
-  app.use(
-    express.static("/icons", {
+    "/icons",
+    express.static(path.resolve(actualRootDir + "/../client/static/icons"), {
       cacheControl: true,
+      maxAge: "1y",
       index: false,
-      maxAge: 31536000,
+      fallthrough: false,
+    }),
+  );
+  app.use(
+    express.static(path.resolve(actualRootDir + "/../client/static"), {
+      cacheControl: true,
+      maxAge: "1y",
+      index: false,
+    }),
+  );
+  app.use(
+    "/screenshots",
+    express.static(path.resolve(actualRootDir + "/../docs/screenshots"), {
+      index: false,
+      cacheControl: false,
+      fallthrough: false,
     }),
   );
 
@@ -109,13 +94,28 @@ export const initExpressAndIOServers = () => {
   const io = new Server(http, {
     path: API_ENDPOINTS.WS_DBS,
     maxHttpBufferSize: 100e100,
-    cors: withOrigin,
+    cors: {
+      origin: (origin, cb) => {
+        const { stateDatabaseConfig: database_config } = getAuthSetupData();
+        const allowedOrigins = database_config?.cors?.allowedOrigins ?? [];
+        const isAllowed =
+          (origin && includes(allowedOrigins, origin)) ||
+          allowedOrigins.includes("*");
+        if (!isAllowed) {
+          console.warn(
+            `Blocked WS connection from origin: ${origin}. Allowed origins: ${allowedOrigins.join(", ")}`,
+          );
+        }
+        cb(null, isAllowed);
+      },
+    },
   });
 
   // Log server-level events
   io.engine.on("connection_error", (err) => {
     console.error("Connection error :", err);
   });
+
   return {
     app,
     io,

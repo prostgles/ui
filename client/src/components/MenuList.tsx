@@ -1,13 +1,13 @@
 import { mdiMenu } from "@mdi/js";
-import React, { useMemo } from "react";
-import type { Command, TestSelectors } from "../Testing";
+import React, { useMemo, useRef } from "react";
+import type { TestSelectors } from "../Testing";
 import { classOverride } from "./Flex";
 import { Icon } from "./Icon/Icon";
 import "./List.css";
 import { MenuListItem, type MenuListitem } from "./MenuListItem";
 import PopupMenu from "./PopupMenu";
-import Select from "./Select/Select";
 import { useScrollFade } from "./ScrollFade/ScrollFade";
+import { Select } from "./Select/Select";
 
 export type MenuListProps = TestSelectors & {
   items: MenuListitem[];
@@ -32,7 +32,7 @@ export const MenuList = (props: MenuListProps) => {
     return items.filter((d) => !d.hide);
   }, [items]);
 
-  const refList = React.useRef<HTMLUListElement>(null);
+  const refList = useRef<HTMLUListElement>(null);
   const { localVariant } = useMemo(() => {
     const isDropDown = variant === "dropdown";
     const localVariant = variant && !isDropDown ? variant : "vertical";
@@ -95,7 +95,7 @@ export const MenuList = (props: MenuListProps) => {
   }, []);
 
   const isVertical = localVariant === "vertical";
-  const overflows = useScrollFade({ ref: refList });
+  const overflows = useScrollFade(refList.current);
   const showSelect = !isVertical && overflows.x;
 
   return (

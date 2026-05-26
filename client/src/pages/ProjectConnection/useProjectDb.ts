@@ -1,14 +1,14 @@
 import {
+  useMemoDeep,
+  usePromise,
   useProstglesClient,
-  type DBHandlerClient,
   type UseProstglesClientProps,
-} from "prostgles-client/dist/prostgles";
-import { useMemoDeep, usePromise } from "prostgles-client/dist/react-hooks";
+} from "prostgles-client";
+import type { DBHandlerClient } from "prostgles-client";
 import { useMemo } from "react";
-import type { PrglProject, PrglState } from "../../App";
-import { getTables } from "../../dashboard/Dashboard/Dashboard";
+import type { AppContextProps, PrglProject } from "../../App";
+import { getTables } from "../../dashboard/Dashboard/getTables";
 import { isPlaywrightTest } from "../../i18n/i18nUtils";
-import { prgl_R } from "../../WithPrgl";
 
 type PrglProjectStateError = {
   error: any;
@@ -33,7 +33,7 @@ export type PrglProjectState =
 
 type P = {
   connId: string | undefined;
-  prglState: PrglState;
+  prglState: AppContextProps;
 };
 
 const onDebug: UseProstglesClientProps["onDebug"] = (ev) => {
@@ -47,7 +47,9 @@ const onDebug: UseProstglesClientProps["onDebug"] = (ev) => {
       Date.now(),
       "onDebug",
       ev.type,
-      Object.keys(ev.type === "schemaChanged" ? ev.data.schema : ev.data.dbo),
+      ev.type === "schemaChanged" ?
+        ev.data.tableSchema.map((s) => s.name)
+      : Object.keys(ev.data.db),
     );
   }
 };
@@ -56,10 +58,12 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
   const {
     dbsMethods: { startConnection },
     dbs,
+    dbsSql,
+    dbsTables,
+    dbsMethodSchema,
   } = prglState;
-  const connectionTableHandler = dbs.connections;
 
-  const conState = connectionTableHandler.useSubscribeOne(
+  const conState = dbs.connections.useSubscribeOne(
     {
       id: connId,
     },
@@ -87,7 +91,9 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
         error: `Could not find connection with id: ${connId}`,
       } as const;
     }
-    const databaseId = conState.data.database_configs?.[0]?.id;
+    const databaseId = conState.data.database_configs?.[0]?.id as
+      | number
+      | undefined;
     if (!databaseId) {
       return {
         state: "error",
@@ -109,43 +115,34 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
   const pathInfo = usePromise(async () => {
     if (!connectionId) return undefined;
     try {
-      const path = await startConnection?.(connectionId);
+      const { socketPath: path, socketUrl } =
+        (await startConnection?.({ connectionId })) ?? {};
       if (!path) throw "No path";
-      return { path } as const;
+      return { path, socketUrl } as const;
     } catch (error) {
       return { error, path: undefined, state: "error" } as const;
     }
   }, [startConnection, connectionId]);
 
-  // const pathInfo = useMemo(() => {
-  //   if (!path?.path || connectionInfo.state === "loading") return undefined;
-  //   if (connectionInfo.error) {
-  //     return {
-  //       ...connectionInfo,
-  //       path: undefined,
-  //       connId,
-  //     } as const;
-  //   }
-  //   return { ...path, connId } as const;
-  // }, [path, connectionInfo, connId]);
-
   const prostglesClientOpts = useMemo(
-    () => ({
-      socketOptions: {
-        path: pathInfo?.path,
-        transports: ["websocket"],
-        reconnectionDelay: 1000,
-        reconnection: true,
-      },
-      onDebug: isPlaywrightTest ? onDebug : undefined,
-      skip: !pathInfo?.path,
-    }),
-    [pathInfo?.path],
+    () =>
+      ({
+        endpoint: pathInfo?.socketUrl,
+        socketOptions: {
+          path: pathInfo?.path,
+          transports: ["websocket"],
+          reconnectionDelay: 1000,
+          reconnection: true,
+        },
+        onDebug: isPlaywrightTest ? onDebug : undefined,
+        skip: !pathInfo?.path,
+      }) satisfies UseProstglesClientProps,
+    [pathInfo?.path, pathInfo?.socketUrl],
   );
 
   const dbPrgl = useProstglesClient(prostglesClientOpts);
 
-  const dbState = usePromise(async () => {
+  const dbState = useMemo(() => {
     try {
       if (connectionInfo.state === "error") {
         return {
@@ -183,56 +180,74 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
     }
   }, [connectionInfo, dbPrgl, pathInfo]);
 
-  const connectionAndTableData = usePromise(async () => {
+  const prglProject = useMemo(() => {
     const con = conState.data;
     if (
       !dbState ||
       dbState.state !== "loaded" ||
       !con ||
       connectionInfo.state !== "loaded"
-    )
+    ) {
       return;
-    const { dbo: db, methods, tableSchema, socket } = dbState.dbPrgl;
+    }
+    const {
+      db,
+      sql,
+      methods,
+      methodSchema = {},
+      tableSchema,
+      socket,
+    } = dbState.dbPrgl;
+
     const { tables: dbTables = [] } = getTables(
       tableSchema ?? [],
       con.table_options,
-      db,
+      db as DBHandlerClient,
+      con.display_options?.prettyTableAndColumnNames ?? true,
     );
 
     const { path } = dbState;
-    const { dbs, dbsTables } = prglState;
     const { connectionId, databaseId, is_state_db } = connectionInfo;
     const prglProject: PrglProject = {
       dbKey: "db-onReady-" + Date.now(),
       databaseId,
-      db: is_state_db ? (dbs as DBHandlerClient) : db,
+      sql: is_state_db ? dbsSql : sql,
+      db: is_state_db ? dbs : (db as DBHandlerClient),
       tables: is_state_db ? dbsTables : dbTables,
-      methods: methods ?? {},
+      methods: is_state_db ? dbsMethodSchema : methodSchema,
       projectPath: path,
       connectionId,
       connection: con,
     };
-    prgl_R.set({
-      ...prglProject,
-      ...prglState,
-    });
-    (window as any).db = db;
-    (window as any).dbSocket = socket;
-    (window as any).dbMethods = methods;
+
+    if (isPlaywrightTest) {
+      (window as any).db = db;
+      (window as any).sql = sql;
+      (window as any).dbSocket = socket;
+      (window as any).dbMethods = methods;
+    }
     return prglProject;
-  }, [conState.data, dbState, connectionInfo, prglState]);
+  }, [
+    conState.data,
+    dbState,
+    connectionInfo,
+    dbsSql,
+    dbs,
+    dbsTables,
+    dbsMethodSchema,
+  ]);
 
   if (!dbState || dbState.state !== "loaded") {
     return dbState ?? { state: "loading" };
   }
 
-  if (!connectionAndTableData) {
+  if (!prglProject) {
     return {
       state: "loading",
     } as const;
   }
   return {
     ...dbState,
-    ...connectionAndTableData,
+    ...prglProject,
   };
 };

@@ -1,4 +1,4 @@
-import { tout } from "src/utils";
+import { tout } from "src/utils/utils";
 import {
   click,
   movePointer,
@@ -17,7 +17,7 @@ export const AIAssistantDemo = async () => {
     "input",
     { nth: -1 },
   );
-  await naturalType("prost", modelSearch);
+  await naturalType("sonn", modelSearch);
   pressEnter(modelSearch);
 
   const el = await waitForElement<HTMLTextAreaElement>(
@@ -53,7 +53,7 @@ const naturalType = async (text: string, el: HTMLTextAreaElement) => {
   }
 };
 
-const pressEnter = async (el: HTMLTextAreaElement) => {
+const pressEnter = (el: HTMLTextAreaElement) => {
   el.dispatchEvent(
     new KeyboardEvent("keydown", { key: "Enter", bubbles: true }),
   );

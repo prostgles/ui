@@ -1,0 +1,24 @@
+{
+  "name": "e2e",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "postinstall": "npx playwright install",
+    "test": "playwright test main.spec.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.1",
+    "@types/istanbul-lib-report": "^3.0.3",
+    "@types/istanbul-lib-source-maps": "^4.0.4",
+    "@types/istanbul-reports": "^3.0.4",
+    "@types/node": "^20.4.4",
+    "istanbul-lib-coverage": "^3.2.2",
+    "istanbul-lib-report": "^3.0.1",
+    "istanbul-reports": "^3.2.0",
+    "typescript": "^5.9.3",
+    "v8-to-istanbul": "^9.3.0"
+  },
+  "dependencies": {
+    "istanbul-lib-source-maps": "^5.0.6"
+  }
+}

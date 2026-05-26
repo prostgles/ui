@@ -1,33 +1,32 @@
+import Loading from "@components/Loader/Loading";
 import React from "react";
-import Loading from "../../components/Loader/Loading";
 
-import type { CommonWindowProps } from "../../dashboard/Dashboard/Dashboard";
 import { Dashboard } from "../../dashboard/Dashboard/Dashboard";
 
-import type {
-  DBHandlerClient,
-  MethodHandler,
-} from "prostgles-client/dist/prostgles";
-import type { ExtraProps, Prgl, PrglState } from "../../App";
+import type { AppContextProps, Prgl } from "../../App";
 
-import { useParams, useSearchParams } from "react-router-dom";
-import type { DBSSchema } from "../../../../common/publishUtils";
+import type { DBSSchema } from "@common/publishUtils";
+import type { SQLHandler } from "prostgles-client";
+import type { ClientFunctionHandler } from "prostgles-client/dist/getMethods";
+import { useParams, useSearchParams } from "react-router";
+import type { DBSchemaTableWJoins } from "src/dashboard/Dashboard/dashboardUtils";
 import { ConnectionConfig } from "../../dashboard/ConnectionConfig/ConnectionConfig";
+import { PrglProvider } from "./PrglContextProvider";
 import { ProjectConnectionError } from "./ProjectConnectionError";
 import { useProjectDb } from "./useProjectDb";
-import { PrglProvider } from "./PrglContextProvider";
 
 export type Connections = DBSSchema["connections"];
 export type ProjectProps = {
-  prglState: PrglState;
+  prglState: AppContextProps;
   showConnectionConfig?: boolean;
 };
 
-export type FullExtraProps = ExtraProps & {
+export type FullExtraProps = AppContextProps & {
   projectPath?: string;
-  dbProject: DBHandlerClient;
-  dbMethods: MethodHandler;
-  dbTables: CommonWindowProps["tables"];
+  dbProject: Prgl["db"];
+  dbMethods: ClientFunctionHandler;
+  dbTables: DBSchemaTableWJoins[];
+  dbSql: SQLHandler | undefined;
 };
 
 export const ProjectConnection = (props: ProjectProps) => {

@@ -16,15 +16,15 @@ export const loadGeneratedMap = (
     table_name: tableLayer?.table_name || "",
   };
 
-  const linkOptions: LinkOption[] = layers.map((l, i) => {
+  const linkOptions: LinkOption[] = layers.map((layer, i) => {
     const columns = [
       {
-        name: l.geoColumn,
-        colorArr: [...getPaletteRGBColor(i), 0.8],
+        name: layer.geoColumn,
+        colorArr: [...getPaletteRGBColor(i), 200],
       },
     ];
-    if ("table_name" in l) {
-      const { filter, table_name, filterOperand, quickFilterGroups } = l;
+    if ("table_name" in layer) {
+      const { filter, table_name, filterOperand, quickFilterGroups } = layer;
       const smartGroupFilter =
         filter ?
           filterOperand === "OR" ?
@@ -48,7 +48,7 @@ export const loadGeneratedMap = (
     return {
       type: "map",
       columns,
-      dataSource: { type: "sql", sql: l.sql, withStatement: "" },
+      dataSource: { type: "sql", sql: layer.sql, withStatement: "" },
     } satisfies LinkOption;
   });
   return {

@@ -1,7 +1,4 @@
-import { mdiAlertCircleOutline, mdiCog } from "@mdi/js";
-import { getKeys, isObject } from "prostgles-types";
-import React, { useState } from "react";
-import type { GroupedDetailedFilter } from "../../../../../common/filterUtils";
+import type { GroupedDetailedFilter } from "@common/filterUtils";
 import type {
   BasicTablePermissions,
   ContextDataObject,
@@ -9,9 +6,11 @@ import type {
   TableRules,
   TableRulesErrors,
   UpdateRule,
-} from "../../../../../common/publishUtils";
-import Btn from "../../../components/Btn";
-import type { CommonWindowProps } from "../../Dashboard/Dashboard";
+} from "@common/publishUtils";
+import Btn from "@components/Btn";
+import { mdiAlertCircleOutline, mdiCog } from "@mdi/js";
+import { getKeys, isObject } from "prostgles-types";
+import React, { useState } from "react";
 import type { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
 import { useFileTableRefTableRules } from "./FileTableAccessControlInfo";
 import { TableRulesPopup } from "./TableRulesPopup";
@@ -21,7 +20,7 @@ export type TableInfoWithRules = DBSchemaTablesWJoins[number] & {
   rule?: TableRules;
 };
 
-export type TablePermissionControlsProps = Pick<CommonWindowProps, "prgl"> & {
+export type TablePermissionControlsProps = {
   tableRules: TableRules;
   tablesWithRules: TableInfoWithRules[];
   variant?: "mini" | "micro";
@@ -138,7 +137,7 @@ export const TablePermissionControls = (
           : undefined;
 
         const disabledInfo =
-          table?.info.isView && ruleType !== "select" ?
+          table?.isView && ruleType !== "select" ?
             "Can only select from a view"
           : undefined;
 
@@ -163,7 +162,7 @@ export const TablePermissionControls = (
                 ...(fileRefRules ? { gap: "8px" } : {}),
               }}
               onClick={() => {
-                if (table?.info.isFileTable) {
+                if (table?.isFileTable) {
                   setEditedRuleType(ruleType);
                   return;
                 }
@@ -205,7 +204,7 @@ export const TablePermissionControls = (
                         }),
                       },
                     });
-                  } else if ((ruleType as any) === "select") {
+                  } else {
                     onChange({
                       [ruleType]: {
                         forcedFilterDetailed,

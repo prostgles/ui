@@ -12,12 +12,49 @@ const { SaveMdiIcons } = require("../setup-icons");
 const PRODUCTION = process.env.NODE_ENV === "production";
 
 const getLoader = () => {
+  const babelOptions = {
+    babelrc: false,
+    configFile: false,
+    presets: [
+      [
+        "@babel/env",
+        {
+          targets: {
+            esmodules: true,
+          },
+          modules: false,
+          bugfixes: true,
+        },
+      ],
+      "@babel/preset-react",
+      "@babel/preset-typescript",
+      ...(PRODUCTION ?
+        [
+          [
+            "minify",
+            {
+              builtIns: false,
+              evaluate: false,
+              mangle: false,
+            },
+          ],
+        ]
+      : []),
+    ],
+    plugins: ["dynamic-import-node"],
+  };
+
   const babel = {
     test: PRODUCTION ? /\.jsx?$/ : [/\.jsx?$/, /\.tsx?$/],
-    use: "babel-loader",
+    use: {
+      loader: "babel-loader",
+      options: babelOptions,
+    },
     exclude: /node_modules/,
   };
+
   if (!PRODUCTION) return [babel];
+
   return [
     babel,
     {
@@ -72,7 +109,7 @@ const debouncedProgressHandler = (percentage, message, ...args) => {
 module.exports = {
   target: ["web", "es2020"],
   resolve: {
-    extensions: [".js", ".jsx", ".ts", ".tsx"],
+    extensions: [".ts", ".tsx", ".js", ".jsx"],
     plugins: [
       new TsconfigPathsPlugin({
         /* options: see below */
@@ -131,25 +168,6 @@ module.exports = {
     ],
   },
   plugins: [
-    // new require("circular-dependency-plugin")({
-    //   // exclude detection of files based on a RegExp
-    //   exclude: /a\.js|node_modules/,
-    //   // include specific files based on a RegExp
-    //   include: /src/,
-    //   // add errors to webpack instead of warnings
-    //   failOnError: true,
-    //   // allow import cycles that include an asyncronous import,
-    //   // e.g. via import(/* webpackMode: "weak" */ './file.js')
-    //   allowAsyncCycles: false,
-    //   // set the current working directory for displaying module paths
-    //   cwd: process.cwd(),
-    //   onDetected({ module: webpackModuleRecord, paths, compilation }) {
-    //     if (paths.some((p) => p.includes("i18nUtils.ts"))) {
-    //       console.log(paths);
-    //       compilation.warnings.push(new Error(paths.join(" -> ")));
-    //     }
-    //   },
-    // }),
     new HtmlWebpackPlugin({
       template: "index.html.ejs",
       v: require("../../package.json")?.version,

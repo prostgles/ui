@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useMemo } from "react";
 import type { ValidatedColumnInfo } from "prostgles-types";
 import { isObject, getKeys } from "prostgles-types";
-import Select from "../../../components/Select/Select";
-import ErrorComponent from "../../../components/ErrorComponent";
-import type { FieldFilter } from "../../../../../common/publishUtils";
+import { Select } from "@components/Select/Select";
+import ErrorComponent from "@components/ErrorComponent";
+import type { FieldFilter } from "@common/publishUtils";
 import { mdiFilter } from "@mdi/js";
-import { Label } from "../../../components/Label";
-import { FlexCol, FlexRow } from "../../../components/Flex";
+import { Label } from "@components/Label";
+import { FlexCol, FlexRow } from "@components/Flex";
 
 type FieldFilterControlProps = {
   iconPath?: string;
@@ -21,6 +21,17 @@ type FieldFilterControlProps = {
     message: string;
   };
   title?: React.ReactNode;
+  operator?: "bool" | "int";
+};
+
+const BOOL_OPERATOR = {
+  INCLUDE: true,
+  EXCLUDE: false,
+};
+
+const INT_OPERATOR = {
+  INCLUDE: 1,
+  EXCLUDE: 0,
 };
 
 export const FieldFilterControl = ({
@@ -33,7 +44,10 @@ export const FieldFilterControl = ({
   iconPath = mdiFilter,
   expectAtLeastOne = false,
   title,
+  operator = "bool",
 }: FieldFilterControlProps) => {
+  const { INCLUDE, EXCLUDE } =
+    operator === "bool" ? BOOL_OPERATOR : INT_OPERATOR;
   const fieldOpts = [
     {
       key: "only these fields",
@@ -59,17 +73,17 @@ export const FieldFilterControl = ({
     : fieldOpts[0].key;
 
   const setFields = useCallback(
-    (fields: string[] | true, include: boolean) => {
+    (fields: string[] | true | 1, include: boolean) => {
       const newFields =
-        fields === true ? "*" : (
-          fields
+        !Array.isArray(fields) ?
+          "*"
+        : fields
             .filter((f) => columns.some((c) => c.name === f))
-            .reduce((a, v) => ({ ...a, [v]: include ? true : false }), {})
-        );
+            .reduce((a, v) => ({ ...a, [v]: include ? INCLUDE : EXCLUDE }), {});
 
       onChange(newFields);
     },
-    [columns, onChange],
+    [EXCLUDE, INCLUDE, columns, onChange],
   );
 
   const fieldList = columns.map((c) => ({
@@ -138,7 +152,7 @@ export const FieldFilterControl = ({
               onChange={(fields) => {
                 setFields(fields, !isExcept);
               }}
-              variant={"chips-lg"}
+              variant="chips-lg"
             />
           )}
 

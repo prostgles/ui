@@ -1,26 +1,38 @@
+import type { DBSSchema } from "@common/publishUtils";
 import { useEffectDeep } from "prostgles-client/dist/prostgles";
+import type { FilterItem } from "prostgles-types";
 import { useCallback, useMemo, useState } from "react";
 import type { Prgl } from "../../../App";
 import type { LoadedSuggestions } from "../../Dashboard/dashboardUtils";
-import type { LLMSetupStateReady } from "../Setup/useLLMSetupState";
-import { useLLMChatMessages } from "./AskLLMChatMessages/useLLMChatMessages";
+import type { LLMSetupStateReady } from "../Setup/LLMSetupProvider";
+import { useLLMChatMessages } from "./AskLLMChatMessages/hooks/useLLMChatMessages";
+import { setChatPrompt } from "./AskLLMChatMessages/setChatPrompt";
+import type { AskLLMChatProps } from "./AskLLMChat";
 
 export type UseLLMChatProps = LLMSetupStateReady &
-  Pick<Prgl, "dbs" | "user" | "connectionId" | "db"> & {
+  Pick<Prgl, "dbs" | "user" | "connectionId"> & {
     workspaceId: string | undefined;
     loadedSuggestions: LoadedSuggestions | undefined;
-  };
+  } & Pick<AskLLMChatProps, "selectedChat">;
 
 export type LLMChatState = ReturnType<typeof useLLMChat>;
 export const useLLMChat = (props: UseLLMChatProps) => {
-  const { dbs, credentials, firstPromptId, defaultCredential, prompts } = props;
+  const {
+    dbs,
+    credentials,
+    firstPromptId,
+    defaultCredential,
+    prompts,
+    selectedChat,
+  } = props;
   const chatsFilter = useMemo(() => {
     return {
-      /** TODO: fix $in: [string, null] types */
-      connection_id: { $in: [props.connectionId, null as any] },
-    };
-  }, [props.connectionId]);
-  const [selectedChatId, setSelectedChat] = useState<number>();
+      connection_id: { $in: [props.connectionId, null] },
+      parent_chat_message_id:
+        selectedChat?.type === "agent" ? selectedChat.parent_message_id : null,
+    } satisfies FilterItem<DBSSchema["llm_chats"]>;
+  }, [selectedChat, props.connectionId]);
+  const [selectedChatId, setSelectedChat] = useState(selectedChat?.id);
   const { data: latestChats } = dbs.llm_chats.useSubscribe(chatsFilter, {
     select: { "*": 1, created_ago: { $ageNow: ["created"] } },
     orderBy: { created: -1 },
@@ -45,26 +57,37 @@ export const useLLMChat = (props: UseLLMChatProps) => {
           return;
         }
       }
-      if (!preferredPromptId) {
+      const prompt = prompts.find((p) => p.id === promptId);
+      if (!preferredPromptId || !prompt) {
         console.warn("No prompt found", { prompts });
         return;
       }
-      await dbs.llm_chats.insert(
+      const newChat = await dbs.llm_chats.insert(
         {
           name: "New chat",
-          //@ts-ignore
-          user_id: undefined,
+          // TODO: add publish rules (forcedData) to DBHandlerClient typings
+          user_id: undefined as unknown as string,
           connection_id: props.connectionId,
           llm_prompt_id: promptId,
           model: lastModelId,
+          // options: {
+          //   /** Anthropic consumes tokens for tools json schema as opposed to openai codex? */
+          //   mcpToolSchemaMode: "hide-schemas-and-descriptions",
+          // },
         },
         { returning: "*" },
       );
+      await setChatPrompt({
+        dbs,
+        chatId: newChat.id,
+        prompt,
+        currentPrompt: undefined,
+      });
       setSelectedChat(undefined);
     },
     [
       chatsFilter,
-      dbs.llm_chats,
+      dbs,
       lastModelId,
       preferredPromptId,
       prompts,
@@ -74,9 +97,9 @@ export const useLLMChat = (props: UseLLMChatProps) => {
 
   useEffectDeep(() => {
     if (latestChats && !latestChats.length && preferredPromptId) {
-      createNewChat(preferredPromptId, true);
+      void createNewChat(preferredPromptId, true);
     }
-  }, [latestChats, preferredPromptId, defaultCredential]);
+  }, [latestChats, preferredPromptId, defaultCredential, createNewChat]);
 
   const { llmMessages, messages } = useLLMChatMessages({
     ...props,

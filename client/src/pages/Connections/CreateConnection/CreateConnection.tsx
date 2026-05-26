@@ -1,11 +1,11 @@
 import { mdiPlus } from "@mdi/js";
 import React, { useState } from "react";
-import ErrorComponent from "../../../components/ErrorComponent";
-import { FlexCol } from "../../../components/Flex";
-import FormField from "../../../components/FormField/FormField";
-import { FormFieldDebounced } from "../../../components/FormField/FormFieldDebounced";
-import Popup from "../../../components/Popup/Popup";
-import Select from "../../../components/Select/Select";
+import ErrorComponent from "@components/ErrorComponent";
+import { FlexCol } from "@components/Flex";
+import FormField from "@components/FormField/FormField";
+import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
+import Popup from "@components/Popup/Popup";
+import { Select } from "@components/Select/Select";
 import type { DBS, DBSMethods } from "../../../dashboard/Dashboard/DBS";
 import { SampleSchemas } from "../../../dashboard/SampleSchemas";
 import { t } from "../../../i18n/i18nUtils";
@@ -15,6 +15,7 @@ import {
   useCreateConnection,
   type CreateConnectionType,
 } from "./useCreateConnection";
+import type { SQLHandler } from "prostgles-client";
 
 export type CreateConnectionProps = Required<
   Pick<
@@ -23,11 +24,11 @@ export type CreateConnectionProps = Required<
     | "getSampleSchemas"
     | "createConnection"
     | "validateConnection"
-    | "getSampleSchemas"
   >
 > & {
   connId: string;
   dbs: DBS;
+  dbsSql: SQLHandler | undefined;
   connections: IConnection[];
   showCreateText: boolean;
   connectionGroupKey: string;
@@ -115,7 +116,10 @@ export const CreateConnection = (props: CreateConnectionProps) => {
               t.ConnectionServer["Create a database"]
             : t.ConnectionServer["Select a database from this server"]
           }
-          onClose={() => setAction(undefined)}
+          onClose={() => {
+            setAction(undefined);
+            setError(undefined);
+          }}
           autoFocusFirst={{ selector: "input" }}
           footerButtons={[
             { label: "Cancel", onClickClose: true },
@@ -157,6 +161,7 @@ export const CreateConnection = (props: CreateConnectionProps) => {
           {action.type === "new" ?
             <>
               <FormFieldDebounced
+                type="text"
                 label={t.ConnectionServer["New database name"]}
                 data-command="ConnectionServer.NewDbName"
                 inputProps={{ autoFocus: true }}

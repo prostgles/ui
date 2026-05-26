@@ -1,12 +1,13 @@
 import { omitKeys, type AnyObject } from "prostgles-types";
 import { useEffect, useState } from "react";
-import { DEFAULT_ELECTRON_CONNECTION } from "../../../../common/electronInitTypes";
+import { DEFAULT_ELECTRON_CONNECTION } from "@common/electronInitTypes";
 import type { AppState } from "../../App";
-import { pageReload } from "../../components/Loader/Loading";
+import { pageReload } from "@components/Loader/Loading";
 import type { Connection } from "../NewConnection/NewConnnectionForm";
 import { DEFAULT_CONNECTION } from "../NewConnection/NewConnnectionForm";
-import type { OS } from "../PostgresInstallationInstructions";
+import type { OS } from "../../components/PostgresInstallationInstructions";
 import { tout } from "./ElectronSetup";
+import { API_ENDPOINTS } from "@common/utils";
 
 type ElectronSetup = {
   serverState: AppState["serverState"];
@@ -22,30 +23,31 @@ export const getOS = () => {
 };
 
 export const useElectronSetup = ({ serverState }: ElectronSetup) => {
-  const [c, setConnection] = useState<Connection>({
+  const [connection, setConnection] = useState<Connection>({
     ...DEFAULT_CONNECTION,
     ...DEFAULT_ELECTRON_CONNECTION,
     name: "prostgles_desktop",
   });
-  const [validationWarning, setValidationWarning] = useState<any>();
+  const [validationWarning, setValidationWarning] = useState<unknown>();
 
   const [loading, setLoading] = useState(false);
   const [isQuickMode, setIsQuickMode] = useState(true);
 
-  const updateConnection = async (con: Partial<Connection>) => {
+  const updateConnection = async (connectionUpdates: Partial<Connection>) => {
     setLoading(false);
     const newData = {
-      ...c,
-      ...con,
+      ...connection,
+      ...connectionUpdates,
     };
 
-    const res = await postConnection(newData, "validate");
-
-    const { connection, warning } = res;
+    const { connection: validatedConnection, warning } = await postConnection(
+      newData,
+      "validate",
+    );
 
     setValidationWarning(warning);
-    if (connection) {
-      setConnection(connection);
+    if (validatedConnection) {
+      setConnection(validatedConnection);
     }
   };
 
@@ -78,12 +80,15 @@ export const useElectronSetup = ({ serverState }: ElectronSetup) => {
   const onPressDone = async () => {
     setLoading(true);
     try {
-      const resp = await postConnection(c, isQuickMode ? "quick" : "manual");
+      const resp = await postConnection(
+        connection,
+        isQuickMode ? "quick" : "manual",
+      );
       if (resp.warning) {
         setValidationWarning(resp.warning);
       } else {
         await tout(3000);
-        pageReload("ElectronSetup.Done");
+        void pageReload("ElectronSetup.Done");
       }
     } catch (err) {
       setValidationWarning(err);
@@ -92,7 +97,7 @@ export const useElectronSetup = ({ serverState }: ElectronSetup) => {
   };
 
   return {
-    c,
+    c: connection,
     setConnection,
     validationWarning,
     loading,
@@ -111,8 +116,8 @@ export const useElectronSetup = ({ serverState }: ElectronSetup) => {
 const postConnection = async (
   connection: Connection,
   mode: "validate" | "quick" | "manual",
-): Promise<{ connection?: Connection; warning?: any }> => {
-  const res = await post("/dbs", {
+): Promise<{ connection?: Connection; warning?: unknown }> => {
+  const res = await post(API_ENDPOINTS.DBS, {
     connection,
     mode,
   });

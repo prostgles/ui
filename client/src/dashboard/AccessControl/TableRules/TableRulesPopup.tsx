@@ -1,13 +1,10 @@
 import React, { useState } from "react";
-import type {
-  TableRules,
-  TableRulesErrors,
-} from "../../../../../common/publishUtils";
-import ErrorComponent from "../../../components/ErrorComponent";
-import { MenuList } from "../../../components/MenuList";
-import Popup from "../../../components/Popup/Popup";
+import type { TableRules, TableRulesErrors } from "@common/publishUtils";
+import ErrorComponent from "@components/ErrorComponent";
+import { MenuList } from "@components/MenuList";
+import Popup from "@components/Popup/Popup";
 import type { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
-import { FlexCol, FlexRow } from "../../../components/Flex";
+import { FlexCol, FlexRow } from "@components/Flex";
 import { FileTableAccessControlInfo } from "./FileTableAccessControlInfo";
 import { DeleteRuleControl } from "./../RuleTypeControls/DeleteRuleControl";
 import { InsertRuleControl } from "./../RuleTypeControls/InsertRuleControl";
@@ -18,10 +15,11 @@ import type {
   TablePermissionControlsProps,
 } from "./TablePermissionControls";
 import { TABLE_RULE_LABELS } from "./TablePermissionControls";
-import { Icon } from "../../../components/Icon/Icon";
+import { Icon } from "@components/Icon/Icon";
 import { mdiFile, mdiTable, mdiTableEye } from "@mdi/js";
-import { getEntries } from "../../../../../common/utils";
+import { getEntries } from "@common/utils";
 import { SyncRuleControl } from "../RuleTypeControls/SyncRuleControl";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 
 type TableRulesPopupProps = TablePermissionControlsProps & {
   table: DBSchemaTablesWJoins[number];
@@ -34,13 +32,13 @@ export const TableRulesPopup = ({
   tablesWithRules: allRules,
   tableRules,
   onChange,
-  prgl,
   table,
   tableErrors,
   userTypes,
   onClose,
   ...props
 }: TableRulesPopupProps) => {
+  const prgl = usePrgl();
   const [editedRuleType, setEditedRuleType] = useState<EditedRuleType>(
     props.editedRuleType,
   );
@@ -75,7 +73,7 @@ export const TableRulesPopup = ({
     onClose();
   };
 
-  const { info } = table;
+  const { isFileTable, isView } = table;
   const ruleWasChanged =
     JSON.stringify(tableRules[editedRuleType]) ===
     JSON.stringify(localRules[editedRuleType]);
@@ -86,15 +84,15 @@ export const TableRulesPopup = ({
           <Icon
             className="text-2"
             path={
-              info.isFileTable ? mdiFile
-              : info.isView ?
+              isFileTable ? mdiFile
+              : isView ?
                 mdiTableEye
               : mdiTable
             }
           />
           <FlexCol className="gap-p5">
             <div>{table.name}</div>
-            {table.info.isFileTable && (
+            {table.isFileTable && (
               <div className="font-14 text-2">
                 File metadata is stored in this table
               </div>

@@ -1,16 +1,13 @@
+import { ExpandSection } from "@components/ExpandSection";
+import { FlexCol, FlexRowWrap } from "@components/Flex";
+import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
+import { InfoRow } from "@components/InfoRow";
+import { Select } from "@components/Select/Select";
 import { mdiDotsHorizontal } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { appTheme, useReactiveState } from "../../../../appUtils";
-import { ExpandSection } from "../../../../components/ExpandSection";
-import { FlexCol, FlexRowWrap } from "../../../../components/Flex";
-import { FormFieldDebounced } from "../../../../components/FormField/FormFieldDebounced";
-import { InfoRow } from "../../../../components/InfoRow";
-import Select from "../../../../components/Select/Select";
-import type {
-  DBSchemaTablesWJoins,
-  WindowSyncItem,
-} from "../../../Dashboard/dashboardUtils";
+import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
+import { t } from "../../../../i18n/i18nUtils";
+import type { WindowSyncItem } from "../../../Dashboard/dashboardUtils";
 import { SmartFilterBar } from "../../../SmartFilterBar/SmartFilterBar";
 import type { ColumnConfigWInfo } from "../../W_Table";
 import { getColWInfo } from "../../tableUtils/getColWInfo";
@@ -18,12 +15,8 @@ import type { ColumnConfig } from "../ColumnMenu";
 import { JoinPathSelectorV2, getAllJoins } from "../JoinPathSelectorV2";
 import { LinkedColumnFooter } from "./LinkedColumnFooter";
 import { LinkedColumnSelect } from "./LinkedColumnSelect";
-import { t } from "../../../../i18n/i18nUtils";
-import type { DBS } from "../../../Dashboard/DBS";
 
 export type LinkedColumnProps = {
-  tables: DBSchemaTablesWJoins;
-  db: DBHandlerClient;
   w: WindowSyncItem<"table">;
   column: ColumnConfigWInfo | undefined;
   onClose: VoidFunction | undefined;
@@ -49,8 +42,8 @@ export const NESTED_COLUMN_DISPLAY_MODES = [
 ] as const;
 
 export const LinkedColumn = (props: LinkedColumnProps) => {
-  const { w, tables, db } = props;
-  const { state: theme } = useReactiveState(appTheme);
+  const { w } = props;
+  const { tables, db, sql } = usePrgl();
   const getCol = (name: string) => w.columns?.find((c) => c.name === name);
 
   const [localColumn, setLocalColumn] = useState<ColumnConfigWInfo>();
@@ -95,14 +88,18 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
   useEffect(() => {
     if (!localColumn) return;
     const shownCols = localColumn.nested?.columns.filter((c) => c.show) ?? [];
-    const width = shownCols.length > 2 || table?.info.isFileTable ? 250 : 150;
+    const width = shownCols.length > 2 || table?.isFileTable ? 250 : 150;
     if (localColumn.width !== width) {
       setLocalColumn({ ...localColumn, width });
     }
   }, [localColumn, table]);
 
   return (
-    <FlexCol className="LinkedColumn gap-2">
+    <FlexCol
+      data-command="LinkedColumn"
+      className="LinkedColumn gap-2"
+      style={{ maxWidth: "600px" }}
+    >
       <InfoRow color="info" variant="naked" className=" " iconPath="">
         {
           t.LinkedColumn[
@@ -159,12 +156,9 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
              * Show first 5 cols to improve performance
              * If fileTable show all columns to ensure the images/media preview works
              */
-            const nestedColumns = getColWInfo([table], {
-              table_name: table.name,
-              columns: null,
-            }).map((c, i) => ({
+            const nestedColumns = getColWInfo(table, null).map((c, i) => ({
               ...c,
-              show: !!table.info.isFileTable || i < 5,
+              show: !!table.isFileTable || i < 5,
             }));
             const newCol: ColumnConfig = {
               name: newColName,
@@ -198,6 +192,7 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
               <FlexRowWrap className="ai-end">
                 <Select
                   label={t.LinkedColumn["Layout"]}
+                  data-command="LinkedColumn.layoutType"
                   fullOptions={NESTED_COLUMN_DISPLAY_MODES}
                   disabledInfo={
                     currentColumn.nested.chart ?
@@ -216,6 +211,7 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
                 label={t.LinkedColumn["Join type"]}
                 value={currentColumn.nested?.joinType}
                 fullOptions={JOIN_TYPES}
+                data-command="LinkedColumn.joinType"
                 onChange={(joinType) => {
                   updateNested({ joinType });
                 }}
@@ -232,6 +228,7 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
                     step: 1,
                     max: 30,
                   }}
+                  variant="row"
                   onChange={(limit) => {
                     updateNested({
                       limit:
@@ -251,6 +248,7 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
                   table_name={table.name}
                   db={db}
                   tables={tables}
+                  sql={sql}
                   columns={currentColumn.nested.columns}
                   rowCount={-1}
                   methods={{}}

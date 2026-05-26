@@ -1,13 +1,10 @@
 import { isObject } from "prostgles-types";
 import React, { useMemo } from "react";
-import type {
-  FieldFilter,
-  TableRules,
-} from "../../../../../common/publishUtils";
-import { parseFieldFilter } from "../../../../../common/publishUtils";
-import { FlexCol } from "../../../components/Flex";
-import { InfoRow } from "../../../components/InfoRow";
-import { isDefined } from "../../../utils";
+import type { FieldFilter, TableRules } from "@common/publishUtils";
+import { parseFieldFilter } from "@common/publishUtils";
+import { FlexCol } from "@components/Flex";
+import { InfoRow } from "@components/InfoRow";
+import { isDefined } from "../../../utils/utils";
 import type { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
 import type { TableInfoWithRules } from "./TablePermissionControls";
 
@@ -85,12 +82,12 @@ export const useFileTableRefTableRules = ({
 }) => {
   const refTables = useMemo(
     () =>
-      !table?.info.isFileTable ?
+      !table?.isFileTable ?
         undefined
       : tablesWithRules
           .map((t) => {
             const refs = t.columns.filter((c) =>
-              c.references?.some((r) => r.ftable === t.info.fileTableName),
+              c.references?.some((r) => r.ftable === t.fileTableName),
             );
             if (!t.rule || !refs.length) {
               return undefined;

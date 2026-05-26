@@ -1,4 +1,4 @@
-import type { CommonWindowProps } from "../../Dashboard/Dashboard";
+import type { DBSchemaTableWJoins } from "src/dashboard/Dashboard/dashboardUtils";
 
 export type JoinTree = {
   table: string;
@@ -12,7 +12,7 @@ export type JoinTree = {
 export const getJoinTree = (args: {
   tableName: string;
   excludeTables?: string[];
-  tables: CommonWindowProps["tables"];
+  tables: DBSchemaTableWJoins[];
 }): JoinTree[] => {
   const { tables, tableName, excludeTables = [] } = args;
   const table = tables.find((t) => t.name === tableName);
@@ -37,7 +37,7 @@ export const getJoinTree = (args: {
     c.references?.forEach((r) => {
       const jt: JoinTree = {
         table: r.ftable,
-        on: r.cols.map((col, i) => [col!, r!.fcols[i]!]),
+        on: r.cols.map((col, i) => [col, r.fcols[i]!]),
       };
       addJT(jt);
     });
@@ -50,7 +50,7 @@ export const getJoinTree = (args: {
           if (r.ftable === tableName) {
             const jt: JoinTree = {
               table: t.name,
-              on: r.fcols.map((fcol, i) => [fcol!, r.cols[i]!]),
+              on: r.fcols.map((fcol, i) => [fcol, r.cols[i]!]),
             };
             addJT(jt);
           }

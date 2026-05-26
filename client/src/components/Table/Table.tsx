@@ -2,10 +2,7 @@ import React, { useRef, useState } from "react";
 import "./Table.css";
 
 import type { AnyObject } from "prostgles-types";
-import type {
-  ColumnSort,
-  ColumnSortSQL,
-} from "../../dashboard/W_Table/ColumnMenu/ColumnMenu";
+import type { ColumnSortSQL } from "../../dashboard/W_Table/ColumnMenu/ColumnMenu";
 import type { ColumnSortMenuProps } from "../../dashboard/W_Table/ColumnMenu/ColumnSortMenu";
 import type { ProstglesColumn } from "../../dashboard/W_Table/W_Table";
 import { classOverride } from "../Flex";
@@ -19,7 +16,7 @@ export const TableRootClassname = "table-component";
 export type OnColRenderRowInfo = {
   row: AnyObject;
   value: any;
-  renderedVal: any;
+  renderedVal: React.ReactNode;
   rowIndex: number;
   prevRow: AnyObject | undefined;
   nextRow: AnyObject | undefined;
@@ -27,7 +24,7 @@ export type OnColRenderRowInfo = {
 /**
  * Renders inner cell node
  */
-type OnColRender = (rowInfo: OnColRenderRowInfo) => any;
+type OnColRender = (rowInfo: OnColRenderRowInfo) => React.ReactNode;
 
 export type TableColumn = {
   key: string | number;
@@ -50,11 +47,7 @@ export type TableColumn = {
   noRightBorder?: boolean;
   /** If it's a joined column then a string array of sortable columns */
   sortable: boolean | ColumnSortMenuProps;
-  onClick?: (
-    row: AnyObject,
-    col: TableColumn,
-    e: React.MouseEvent,
-  ) => void | any;
+  onClick?: (row: AnyObject, col: TableColumn, e: React.MouseEvent) => void;
 
   onRender?: OnColRender;
 
@@ -79,7 +72,7 @@ export type TableColumn = {
   flex?: number;
 };
 
-export type TableProps<Sort extends ColumnSort | ColumnSortSQL> = {
+export type TableProps<Sort extends ColumnSortSQL> = {
   rowKeys?: string[];
   rows: AnyObject[];
   cols: ProstglesColumn[];
@@ -114,7 +107,7 @@ export type TableProps<Sort extends ColumnSort | ColumnSortSQL> = {
 export type TableState = {
   draggedCol?: { node: HTMLDivElement; idx: number; targetIdx?: number };
 };
-export const Table = <Sort extends ColumnSort | ColumnSortSQL>(
+export const Table = <Sort extends ColumnSortSQL>(
   props: TableProps<Sort> & React.HTMLAttributes<HTMLDivElement>,
 ) => {
   const {
@@ -131,13 +124,16 @@ export const Table = <Sort extends ColumnSort | ColumnSortSQL>(
 
   const cols = allCols.filter((c) => !c.hidden);
 
+  /** Do not use width for key to prevent scroll persist breaking when ordering  */
   const tableKey =
-    cols.map((c) => `${c.key}${c.width}`).join() + draggedCol?.idx;
+    cols.map((c) => `${c.key}${!!c.width}`).join() + draggedCol?.idx;
   return (
     <div
       key={tableKey}
       className={classOverride(
-        TableRootClassname + " o-auto flex-col f-1 min-h-0 min-w-0 ",
+        /** fixed-first-column disabled due to table header scroll up and out  */
+        TableRootClassname +
+          " fixed-first-column-disabled o-auto flex-col f-1 min-h-0 min-w-0 ",
         className,
       )}
       ref={ref}
@@ -179,28 +175,20 @@ export const Table = <Sort extends ColumnSort | ColumnSortSQL>(
 
 export function closest<Num extends number>(
   v: number,
-  arr: readonly Num[] | Num[],
+  arr: readonly Num[],
 ): Num | undefined {
   return arr
     .map((av) => ({ av, diff: Math.abs(v - av) }))
     .sort((a, b) => a.diff - b.diff)[0]?.av;
 }
-export function closestIndexOf<Num extends number>(
-  v: number,
-  arr: readonly Num[] | Num[],
-): Num | undefined {
-  return arr
-    .map((av, i) => ({ i, av, diff: Math.abs(v - av) }))
-    .sort((a, b) => a.diff - b.diff)[0]?.i;
-}
 
 export const onWheelScroll =
   (parentClassname?: string): React.WheelEventHandler<HTMLElement> =>
   (e: React.WheelEvent<HTMLElement>) => {
-    if (e.shiftKey || e.ctrlKey || !e.currentTarget.contains(e.target as any))
+    if (e.shiftKey || e.ctrlKey || !e.currentTarget.contains(e.target as Node))
       return;
 
-    const oFlowY = (el?: HTMLElement | null) => {
+    const hasHorizontalOverflow = (el?: HTMLElement | null) => {
       return el && el.scrollWidth > el.clientWidth;
     };
     let maxDepth = 5;
@@ -212,7 +200,7 @@ export const onWheelScroll =
         );
     let sel;
     while (maxDepth > 0) {
-      if (oFlowY(el)) {
+      if (hasHorizontalOverflow(el)) {
         sel = el;
         maxDepth = 0;
       } else {

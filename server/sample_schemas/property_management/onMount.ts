@@ -1,6 +1,6 @@
-export const onMount: ProstglesOnMount = async ({ dbo }) => {
+export const onMount: ProstglesOnMount = async ({ sql }) => {
   const createData = async () => {
-    await dbo.sql(
+    await sql(
       `
     -- Create Property Listings Table
     CREATE TABLE property_listings (

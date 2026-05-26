@@ -1,20 +1,19 @@
+import { InfoRow } from "@components/InfoRow";
+import { LabeledRow } from "@components/LabeledRow";
+import { SwitchToggle } from "@components/SwitchToggle";
+import { usePromise } from "prostgles-client";
 import React from "react";
-import { InfoRow } from "../../../components/InfoRow";
-import { LabeledRow } from "../../../components/LabeledRow";
-import { areEqual } from "../../../utils";
-import type { EditedAccessRule } from "../AccessControl";
+import { areEqual } from "../../../utils/utils";
 import type { DBPermissionEditorProps } from "./PCustomTables";
-import { SwitchToggle } from "../../../components/SwitchToggle";
-import { usePromise } from "prostgles-client/dist/react-hooks";
 
 export const PRunSQL = ({
   dbPermissions,
   onChange,
   dbsConnection,
-  prgl: { connection, db },
+  prgl: { connection, sql },
 }: DBPermissionEditorProps<"Run SQL">) => {
   const roleInfo = usePromise(async () => {
-    return (await db.sql!(
+    return (await sql!(
       `
       SELECT r.rolname, r.rolsuper, r.rolinherit, r.rolcreaterole, r.rolcreatedb, r.rolcanlogin, r.rolconnlimit, r.rolvaliduntil, r.rolreplication, r.rolbypassrls
       FROM pg_catalog.pg_roles r
@@ -72,7 +71,7 @@ export const PRunSQL = ({
                 roleInfo?.rolbypassrls && "BypassRLS",
                 roleInfo?.rolcanlogin && "Login",
                 roleInfo?.rolvaliduntil &&
-                  "Valid Until" + roleInfo.rolvaliduntil,
+                  "Valid Until" + roleInfo.rolvaliduntil.toISOString(),
               ].filter((v) => v)}
             </LabeledRow>
           }

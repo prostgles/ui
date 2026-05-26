@@ -1,0 +1,35 @@
+/**
+  SELECT cfgname
+  FROM pg_catalog.pg_ts_config
+ */
+export const FTS_LANGUAGES = [
+  "simple",
+  "arabic",
+  "armenian",
+  "basque",
+  "catalan",
+  "danish",
+  "dutch",
+  "english",
+  "finnish",
+  "french",
+  "german",
+  "greek",
+  "hindi",
+  "hungarian",
+  "indonesian",
+  "irish",
+  "italian",
+  "lithuanian",
+  "nepali",
+  "norwegian",
+  "portuguese",
+  "romanian",
+  "russian",
+  "serbian",
+  "spanish",
+  "swedish",
+  "tamil",
+  "turkish",
+  "yiddish",
+] as const;

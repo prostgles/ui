@@ -2,10 +2,10 @@ import { mdiDelete, mdiPencil, mdiPlus } from "@mdi/js";
 import type { AnyObject } from "prostgles-types";
 import { asName } from "prostgles-types";
 import React, { useMemo } from "react";
-import Btn from "../../../components/Btn";
-import { FlexCol, FlexRow } from "../../../components/Flex";
-import { InfoRow } from "../../../components/InfoRow";
-import { SwitchToggle } from "../../../components/SwitchToggle";
+import Btn from "@components/Btn";
+import { FlexCol, FlexRow } from "@components/Flex";
+import { InfoRow } from "@components/InfoRow";
+import { SwitchToggle } from "@components/SwitchToggle";
 import { SmartCardList } from "../../SmartCardList/SmartCardList";
 import type { W_TableMenuProps, W_TableMenuState } from "./W_TableMenu";
 import type { W_TableInfo } from "./getTableMeta";
@@ -157,6 +157,7 @@ export const W_TableMenu_Triggers = ({ tableMeta, onSetQuery, w, prgl }: P) => {
 
       <SmartCardList
         db={prgl.db}
+        sql={prgl.sql}
         methods={prgl.methods}
         tables={prgl.tables}
         noDataComponent={<InfoRow color="info">No triggers</InfoRow>}

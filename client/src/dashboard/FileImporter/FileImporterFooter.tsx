@@ -1,6 +1,6 @@
 import React from "react";
-import Btn from "../../components/Btn";
-import { ProgressBar } from "../../components/ProgressBar";
+import Btn from "@components/Btn";
+import { ProgressBar } from "@components/ProgressBar";
 import type { FileImporterProps, FileImporterState } from "./FileImporter";
 
 type P = FileImporterState &
@@ -25,7 +25,7 @@ export const FileImporterFooter = (props: P) => {
   return (
     <>
       <div className={"ai-center flex-row f-1 gap-1"}>
-        <Btn onClick={onCancel} className="mr-auto">
+        <Btn onClick={onCancel} className="mr-auto" size="default">
           Cancel
         </Btn>
 
@@ -35,6 +35,7 @@ export const FileImporterFooter = (props: P) => {
             onClick={onImport}
             disabledInfo={customHeadersError}
             variant="filled"
+            size="default"
             color="action"
             data-command="FileImporterFooter.import"
           >
@@ -45,8 +46,9 @@ export const FileImporterFooter = (props: P) => {
         {hideOpenTable ? null : (
           <Btn
             className="ml-1"
-            onClick={async () => {
-              openTable(importing!.tableName);
+            size="default"
+            onClick={() => {
+              openTable(importing.tableName);
               onCancel();
             }}
             disabledInfo={customHeadersError}
@@ -77,7 +79,7 @@ export const FileImporterFooter = (props: P) => {
               }
             >
               <div style={{ fontSize: "1.5em" }}>
-                {importing.progress?.toFixed(0)}%
+                {importing.progress.toFixed(0)}%
               </div>
             </div>
             <div className="flex-col ai-center">

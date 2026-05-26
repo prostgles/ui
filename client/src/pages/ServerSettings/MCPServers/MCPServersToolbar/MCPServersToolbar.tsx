@@ -1,22 +1,24 @@
-import { mdiFilter, mdiMagnify, mdiPlay, mdiPlayBox, mdiStop } from "@mdi/js";
+import type { DBSSchema } from "@common/publishUtils";
+import Btn from "@components/Btn";
+import { FlexRow } from "@components/Flex";
+import { Select } from "@components/Select/Select";
+import { mdiFilter, mdiMagnify, mdiPlay, mdiStop } from "@mdi/js";
 import React from "react";
-import type { DBSSchema } from "../../../../../../common/publishUtils";
-import Btn from "../../../../components/Btn";
-import { FlexRow } from "../../../../components/Flex";
-import Select from "../../../../components/Select/Select";
-import { AddMCPServer } from "./AddMCPServer";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import type { MCPServersProps } from "../MCPServers";
+import { useMcpToolsSelectOptions } from "../MCPServerTools/useMcpToolsSelectOptions";
+import { AddMCPServer } from "./AddMCPServer";
 
 export const MCPServersToolbar = ({
-  dbs,
   selectedTool,
   setSelectedTool,
 }: MCPServersProps & {
   selectedTool: undefined | DBSSchema["mcp_server_tools"];
   setSelectedTool: (tool: undefined | DBSSchema["mcp_server_tools"]) => void;
 }) => {
-  const { data: tools } = dbs.mcp_server_tools.useFind();
+  const { dbs } = usePrglCore();
   const globalSettings = dbs.global_settings.useSubscribeOne();
+  const { options, tools } = useMcpToolsSelectOptions();
 
   return (
     <>
@@ -34,8 +36,8 @@ export const MCPServersToolbar = ({
           iconPath={
             globalSettings.data?.mcp_servers_disabled ? mdiPlay : mdiStop
           }
-          onClick={() => {
-            dbs.global_settings.update(
+          onClickPromise={async () => {
+            await dbs.global_settings.update(
               {},
               {
                 mcp_servers_disabled:
@@ -58,11 +60,7 @@ export const MCPServersToolbar = ({
             },
           }}
           value={selectedTool?.id}
-          fullOptions={(tools ?? []).map((t) => ({
-            key: t.id,
-            label: `${t.server_name} ${t.name}`,
-            subLabel: t.description,
-          }))}
+          fullOptions={options}
           onChange={(id) => {
             setSelectedTool(tools?.find((t) => t.id === id));
           }}

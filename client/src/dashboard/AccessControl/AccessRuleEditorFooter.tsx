@@ -1,17 +1,17 @@
 import { isDefined, omitKeys } from "prostgles-types";
 import React, { useState } from "react";
-import { SuccessMessage } from "../../components/Animations";
-import type { BtnProps } from "../../components/Btn";
-import { ButtonBar } from "../../components/ButtonBar";
-import ClickCatch from "../../components/ClickCatch";
+import { SuccessMessage } from "@components/Animations";
+import type { BtnProps } from "@components/Btn";
+import { ButtonBar } from "@components/ButtonBar";
+import ClickCatch from "@components/ClickCatch";
 import type { DBS } from "../Dashboard/DBS";
 import type {
   AccessControlAction,
   AccessRule,
   EditedAccessRule,
 } from "./AccessControl";
-import { FlexCol } from "../../components/Flex";
-import ErrorComponent from "../../components/ErrorComponent";
+import { FlexCol } from "@components/Flex";
+import ErrorComponent from "@components/ErrorComponent";
 import type { ValidEditedAccessRuleState } from "./useEditedAccessRule";
 
 type P = {
@@ -20,7 +20,7 @@ type P = {
   dbs: DBS;
   connectionId: string;
   database_id: number;
-  error: any | undefined;
+  error: any;
   editedRule: ValidEditedAccessRuleState | undefined;
 };
 export const AccessRuleEditorFooter = (props: P) => {
@@ -160,14 +160,14 @@ const upsertRule = async (
     const insertRelatedData = async (access_control_id: number) => {
       await dbs.access_control_user_types.delete({ access_control_id });
       if (userGroupNames.length) {
-        await dbs.access_control_user_types.insert(
+        await dbs.access_control_user_types.insertMany(
           userGroupNames.map((user_type) => ({ access_control_id, user_type })),
         );
       }
 
       await dbs.access_control_methods.delete({ access_control_id });
       if (published_methods.length) {
-        await dbs.access_control_methods.insert(
+        await dbs.access_control_methods.insertMany(
           published_methods.map((m) => ({
             access_control_id,
             published_method_id: m.id,
@@ -177,14 +177,14 @@ const upsertRule = async (
 
       await dbs.access_control_allowed_llm.delete({ access_control_id });
       if (access_control_allowed_llm.length) {
-        await dbs.access_control_allowed_llm.insert(
+        await dbs.access_control_allowed_llm.insertMany(
           access_control_allowed_llm.map((m) => ({ ...m, access_control_id })),
         );
       }
 
       await dbs.access_control_methods.delete({ access_control_id });
       if (access_control_methods.length) {
-        await dbs.access_control_methods.insert(
+        await dbs.access_control_methods.insertMany(
           access_control_methods.map((m) => ({ ...m, access_control_id })),
         );
       }
@@ -223,7 +223,7 @@ const upsertRule = async (
       } else {
         const acontrol = await dbs.access_control.insert(
           {
-            ...(newRuleWithoutSomeExtraKeys as AccessRule),
+            ...newRuleWithoutSomeExtraKeys,
             database_id,
             access_control_connections: [
               {

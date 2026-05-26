@@ -6,17 +6,17 @@ import {
   isObject,
 } from "prostgles-types";
 import React, { useEffect } from "react";
-import ButtonGroup from "../../components/ButtonGroup";
-import { FlexCol } from "../../components/Flex";
-import FormField from "../../components/FormField/FormField";
-import { InfoRow } from "../../components/InfoRow";
-import { SearchList } from "../../components/SearchList/SearchList";
+import ButtonGroup from "@components/ButtonGroup";
+import { FlexCol } from "@components/Flex";
+import FormField from "@components/FormField/FormField";
+import { InfoRow } from "@components/InfoRow";
+import { SearchList } from "@components/SearchList/SearchList";
 import type { FileTableConfigReferences } from "./FileColumnConfigControls";
 
 const CONTENT_MODES = [
-  { key: "By basic content type", subLabel: "image, video, audio ..." },
-  { key: "By content type", subLabel: "image/jpeg, text/plain ..." },
-  { key: "By extension type", subLabel: ".pdf, .svg, .mp4 ..." },
+  { key: "Data types", subLabel: "image, video, audio ..." },
+  { key: "MIME types", subLabel: "image/jpeg, text/plain ..." },
+  { key: "Extensions", subLabel: ".pdf, .svg, .mp4 ..." },
 ] as const;
 
 type FileColumnConfigProps = {
@@ -63,7 +63,7 @@ export const FileColumnConfigEditor = ({
     getKeys(colConfig).every((k) => (k as any) === "maxFileSizeMB") ||
     ("acceptedContent" in colConfig && colConfig.acceptedContent)
   ) {
-    contentMode = "By basic content type";
+    contentMode = "Data types";
     const CONTENT_OPTIONS = [
       "audio",
       "video",
@@ -90,7 +90,7 @@ export const FileColumnConfigEditor = ({
     "acceptedContentType" in colConfig &&
     colConfig.acceptedContentType
   ) {
-    contentMode = "By content type";
+    contentMode = "MIME types";
     fullOptions = getKeys(CONTENT_TYPE_TO_EXT).map((key) => ({
       key,
       checked: isChecked(key, colConfig.acceptedContentType),
@@ -111,7 +111,7 @@ export const FileColumnConfigEditor = ({
       });
     };
   } else if ("acceptedFileTypes" in colConfig && colConfig.acceptedFileTypes) {
-    contentMode = "By extension type";
+    contentMode = "Extensions";
     fullOptions = Object.values(CONTENT_TYPE_TO_EXT)
       .flat()
       .flatMap((key) => ({
@@ -142,28 +142,37 @@ export const FileColumnConfigEditor = ({
   }, [error, onSetError]);
 
   return (
-    <FlexCol className="f-1 min-h-0 gap-2">
+    <FlexCol
+      className="f-1 min-h-0 gap-02"
+      data-command="FileColumnConfigEditor"
+    >
       <FormField
         type="number"
         label="Maximum file size in megabytes"
+        data-command="FileColumnConfigEditor.maxFileSizeMB"
         value={colConfig.maxFileSizeMB ?? 1}
         onChange={(e) => {
           updateMergeColConfig({ ...colConfig, maxFileSizeMB: +e });
         }}
       />
       <ButtonGroup
-        label={"Content filter mode"}
+        label={{
+          label: `Allowed types (${selectedOpts.length}/${fullOptions.length})`,
+          variant: "normal",
+        }}
+        className="mt-1 mb-1"
         options={CONTENT_MODES.map((cm) => cm.key)}
         value={contentMode}
+        data-command="FileColumnConfigEditor.contentMode"
         onChange={(newMode) => {
           updateMergeColConfig(
-            newMode === "By basic content type" ?
+            newMode === "Data types" ?
               {
                 acceptedContent: "*",
                 acceptedFileTypes: undefined,
                 acceptedContentType: undefined,
               }
-            : newMode === "By content type" ?
+            : newMode === "MIME types" ?
               {
                 acceptedContentType: "*",
                 acceptedFileTypes: undefined,
@@ -178,8 +187,7 @@ export const FileColumnConfigEditor = ({
         }}
       />
       <SearchList
-        label={`Allowed types (${selectedOpts.length}/${fullOptions.length})`}
-        className="w-fit f-1 min-h-0"
+        className="w-full f-1 min-h-0"
         style={{ maxHeight: "30vh", minHeight: "300px" }}
         items={fullOptions.map((o) => ({
           ...o,
@@ -199,11 +207,14 @@ export const FileColumnConfigEditor = ({
           onChangeOpts(newItems as string[]);
         }}
       />
-      {error && (
-        <InfoRow variant="filled" color="danger">
-          {error}
-        </InfoRow>
-      )}
+      <InfoRow
+        variant="filled"
+        color="danger"
+        /** To prevent layout shift we must reserve space within the popup */
+        style={{ opacity: error ? 1 : 0 }}
+      >
+        {error}
+      </InfoRow>
     </FlexCol>
   );
 };

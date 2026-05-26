@@ -1,15 +1,17 @@
+import { asRGB } from "src/utils/colorUtils";
 import type { Coords, Point } from "../Charts";
 import type { PanListeners } from "../setPan";
 import { setPan } from "../setPan";
 import { createHiPPICanvas } from "./createHiPPICanvas";
 import { drawMonotoneXCurve } from "./drawMonotoneXCurve";
-import { allLowerCase, type ShapeV2 } from "./drawShapes/drawShapes";
+import { type ShapeV2 } from "./drawShapes/drawShapes";
+import { getTimechartGradientPeakSections } from "./drawShapes/getTimechartGradientPeakSections";
 import { roundRect } from "./roundRect";
-import type { XYFunc } from "./TimeChart";
+import type { XYFunc } from "./TimeChart/TimeChart";
 
 export type StrokeProps = {
   lineWidth: number;
-  strokeStyle: CanvasGradient | string | CanvasPattern;
+  strokeStyle: string;
 };
 export type FillProps = {
   fillStyle: CanvasGradient | string | CanvasPattern;
@@ -18,6 +20,7 @@ export type ShapeBase<T = void> = {
   id: string | number;
   elevation?: number;
   opacity?: number;
+  filter?: string;
 } & (T extends void ? { data?: T } : { data: T });
 
 export type Circle<T = any> = ShapeBase<T> &
@@ -45,6 +48,7 @@ export type ChartedText<T = any> = ShapeBase<T> &
     text: string;
     font?: string;
     textAlign?: CanvasTextAlign;
+    textBaseline?: CanvasTextBaseline;
     coords: Point;
     background?: Partial<StrokeProps> &
       Partial<FillProps> & {
@@ -57,8 +61,12 @@ export type MultiLine<T = any> = ShapeBase<T> &
   StrokeProps & {
     type: "multiline";
     coords: Point[];
+    withGradient?: boolean;
     variant?: "smooth";
   };
+
+export type LinkCardinality = "one-to-one" | "one-to-many";
+
 export type LinkLine<T = any> = ShapeBase<T> &
   StrokeProps & {
     type: "linkline";
@@ -66,6 +74,7 @@ export type LinkLine<T = any> = ShapeBase<T> &
     targetId: string | number;
     sourceYOffset: number;
     targetYOffset: number;
+    cardinality: LinkCardinality;
     variant?: "smooth";
   };
 export type Image<T = any> = ShapeBase<T> & {
@@ -400,7 +409,10 @@ export class CanvasChart {
   };
 
   /** Used to get final drawing XY that takes into account panning and zooming. Used for drawing data on canvas */
-  getScreenXY: XYFunc = (xData: number, yData?: number | undefined) => {
+  getScreenXY: XYFunc = <X extends number, Y extends number>(
+    xData: X,
+    yData?: Y,
+  ) => {
     const {
       view: { xScale, yScale, xO, yO },
     } = this;
@@ -409,7 +421,7 @@ export class CanvasChart {
     if (yData !== undefined) {
       y = yData * yScale + yO;
     }
-    return [x, y] as any;
+    return [x, y] as [X, Y];
   };
 
   getExtent = (): CanvasChartViewDataExtent => {
@@ -433,12 +445,16 @@ export class CanvasChart {
     const { textAlign = "", text = "", font = "" } = s;
     const key = [textAlign, text.length, font].join(";");
     const cached = this.measureTextCache.get(key);
-    if (cached) return cached;
+    if (cached) {
+      return cached;
+    }
+    ctx.save();
     ctx.fillStyle = s.fillStyle;
     ctx.textAlign = s.textAlign ?? ctx.textAlign;
+    ctx.textBaseline = s.textBaseline ?? ctx.textBaseline;
     ctx.font = s.font || ctx.font;
     const metrics = ctx.measureText(s.text);
-
+    ctx.restore();
     const fontHeight =
       metrics.fontBoundingBoxAscent + metrics.fontBoundingBoxDescent;
     const actualHeight =
@@ -482,21 +498,18 @@ export class CanvasChart {
     if (!ctx) return;
     ctx.clearRect(0, 0, w, h);
 
-    shapes.map((s) => {
-      const getCoords = <C extends Coords>(coords: C): C => {
-        if (Array.isArray(coords[0])) {
-          return coords.map((p) => getCoords(p)) as C;
-        }
-        const point = coords as Point;
-        const [x, y] = this.getScreenXY(point[0], point[1]);
-        return [x, y] as C;
-      };
-      const coords: any = getCoords(s.coords);
-
-      if (!coords) return;
-
+    const getScreenCoords = <C extends Coords>(coords: C): C => {
+      if (Array.isArray(coords[0])) {
+        return coords.map((p) => getScreenCoords(p as Point)) as C;
+      }
+      const point = coords as Point;
+      const [x, y] = this.getScreenXY(point[0], point[1]);
+      return [x, y] as C;
+    };
+    shapes.map((s, i) => {
       ctx.lineJoin = "bevel";
       if (s.type === "rectangle") {
+        const coords = getScreenCoords(s.coords);
         ctx.fillStyle = s.fillStyle;
         ctx.lineWidth = s.lineWidth;
         ctx.strokeStyle = s.strokeStyle;
@@ -512,6 +525,7 @@ export class CanvasChart {
         ctx.fill();
         ctx.stroke();
       } else if (s.type === "circle") {
+        const coords = getScreenCoords(s.coords);
         ctx.fillStyle = s.fillStyle;
         ctx.lineWidth = s.lineWidth;
         ctx.strokeStyle = s.strokeStyle;
@@ -520,24 +534,66 @@ export class CanvasChart {
         ctx.fill();
         ctx.stroke();
       } else if (s.type === "multiline") {
+        const coords = getScreenCoords(s.coords);
+
+        if (s.withGradient && coords.length > 2) {
+          ctx.save();
+
+          const { peakSections, minY, stops } =
+            getTimechartGradientPeakSections(coords);
+
+          peakSections.forEach((sectionCoords) => {
+            if (sectionCoords.length < 2) return;
+            const gradient = ctx.createLinearGradient(0, minY, 0, h);
+            const rgba = asRGB(s.strokeStyle);
+            const rgb = rgba.slice(0, 3).join(", ");
+            stops.forEach(({ offset, opacity }) => {
+              gradient.addColorStop(offset, `rgba(${rgb}, ${opacity})`);
+            });
+            const firstPoint = sectionCoords[0]!;
+            const lastPoint = sectionCoords.at(-1)!;
+
+            ctx.beginPath();
+            ctx.moveTo(firstPoint.x, h);
+            ctx.lineTo(firstPoint.x, firstPoint.y);
+            if (s.variant === "smooth" && sectionCoords.length > 2) {
+              drawMonotoneXCurve(
+                ctx,
+                sectionCoords.map(({ x, y }) => [x, y]),
+                true,
+              );
+            } else {
+              sectionCoords.forEach(({ x, y }) => {
+                ctx.lineTo(x, y);
+              });
+            }
+            ctx.lineTo(lastPoint.x, h);
+            ctx.closePath();
+            ctx.fillStyle = gradient;
+            ctx.fill();
+          });
+          ctx.restore();
+        }
+
         ctx.lineCap = "round";
         ctx.lineWidth = s.lineWidth;
         ctx.strokeStyle = s.strokeStyle;
 
+        ctx.beginPath();
         if (s.variant === "smooth" && coords.length > 2) {
           drawMonotoneXCurve(ctx, coords);
         } else {
           coords.forEach(([x, y], i) => {
             if (!i) {
-              ctx.beginPath();
               ctx.moveTo(x, y);
             } else {
               ctx.lineTo(x, y);
             }
           });
-          ctx.stroke();
         }
+        ctx.stroke();
       } else if (s.type === "polygon") {
+        const coords = getScreenCoords(s.coords);
         ctx.fillStyle = s.fillStyle;
         ctx.lineWidth = s.lineWidth;
         ctx.strokeStyle = s.strokeStyle;
@@ -555,6 +611,7 @@ export class CanvasChart {
         ctx.fill();
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       } else if (s.type === "text") {
+        const coords = getScreenCoords(s.coords);
         const { textAlign = "start" } = s;
 
         if (s.background) {
@@ -566,7 +623,7 @@ export class CanvasChart {
           }
           ctx.lineWidth = s.background.lineWidth ?? ctx.lineWidth;
           let x = coords[0] - txtSize.width / 2 - txtPadding;
-          const y = coords[1] - txtSize.actualHeight - txtPadding;
+          const y = coords[1] - txtSize.actualHeight / 1.4 - txtPadding;
 
           if (["left", "start"].includes(textAlign)) {
             x = coords[0] - txtPadding;
@@ -574,15 +631,9 @@ export class CanvasChart {
             x = coords[0] - txtSize.width - txtPadding;
           }
 
-          roundRect(
-            ctx,
-            x,
-            y,
-            txtSize.width + 2 * txtPadding,
-            txtSize.actualHeight + 2 * txtPadding,
-            s.background.borderRadius || 0,
-          );
-          ctx.closePath();
+          const w = txtSize.width + 2 * txtPadding;
+          const h = txtSize.actualHeight + 2 * txtPadding;
+          roundRect(ctx, x, y, w, h, s.background.borderRadius || 0);
           if (s.background.strokeStyle) {
             ctx.stroke();
           }
@@ -591,16 +642,16 @@ export class CanvasChart {
 
         ctx.fillStyle = s.fillStyle;
         ctx.textAlign = textAlign;
+        ctx.textBaseline = s.textBaseline ?? "middle";
         ctx.font = s.font || ctx.font;
+
         const topOffsetToCenterItVertically = 2;
+
         ctx.fillText(
           s.text,
           coords[0],
           coords[1] - topOffsetToCenterItVertically,
         );
-        // s.text.split("\n").map(text => {
-        //   ctx.fillText(text, coords[0], coords[1]);
-        // })
       } else throw "Unexpected shape type: " + (s as any).type;
     });
 
@@ -618,7 +669,7 @@ export class CanvasChart {
 const PIXEL_STEP = 10;
 const LINE_HEIGHT = 40;
 const PAGE_HEIGHT = 800;
-function normalizeWheel(event): {
+function normalizeWheel(event: WheelEvent): {
   spinX: number;
   spinY: number;
   pixelX: number;
@@ -629,21 +680,8 @@ function normalizeWheel(event): {
     pX = 0,
     pY = 0; // pixelX, pixelY
 
-  // Legacy
-  if ("detail" in event) {
-    sY = event.detail;
-  }
-  if ("wheelDelta" in event) {
-    sY = -event.wheelDelta / 120;
-  }
-  if ("wheelDeltaY" in event) {
-    sY = -event.wheelDeltaY / 120;
-  }
-  if ("wheelDeltaX" in event) {
-    sX = -event.wheelDeltaX / 120;
-  }
-
   // side scrolling on FF with DOMMouseScroll
+  //@ts-ignore
   if ("axis" in event && event.axis === event.HORIZONTAL_AXIS) {
     sX = sY;
     sY = 0;

@@ -1,25 +1,25 @@
-import React from "react";
 import type {
+  DetailedJoinedFilter,
   JOINED_FILTER_TYPES,
-  JoinedFilter,
-} from "../../../../common/filterUtils";
-import type { DBSchemaTablesWJoins, JoinV2 } from "../Dashboard/dashboardUtils";
+} from "@common/filterUtils";
+import Btn from "@components/Btn";
+import { FlexCol, FlexRow } from "@components/Flex";
+import { Label } from "@components/Label";
+import { mdiSetCenter, mdiSetNone } from "@mdi/js";
+import React from "react";
+import type { DBSchemaTableWJoins, JoinV2 } from "../Dashboard/dashboardUtils";
 import {
-  JoinPathSelector,
   getHasJoins,
+  JoinPathSelector,
 } from "../W_Table/JoinPathSelector/JoinPathSelector";
 import { getFilterableCols } from "./SmartSearch/SmartSearch";
-import { Label } from "../../components/Label";
-import { FlexCol, FlexRow } from "../../components/Flex";
-import Btn from "../../components/Btn";
-import { mdiSetCenter, mdiSetNone } from "@mdi/js";
 
-type JoinOpts = { path: JoinV2[]; type: JoinedFilter["type"] };
+type JoinOpts = { path: JoinV2[]; type: DetailedJoinedFilter["type"] };
 type AddJoinFilterProps = {
-  tables: DBSchemaTablesWJoins;
+  tables: DBSchemaTableWJoins[];
   tableName: string;
   path?: JoinV2[];
-  type?: JoinedFilter["type"];
+  type?: DetailedJoinedFilter["type"];
   onChange: (joinOpts: undefined | JoinOpts) => void;
   disabledInfo?: string;
 };

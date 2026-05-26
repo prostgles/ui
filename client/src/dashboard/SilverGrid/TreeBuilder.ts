@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
 
-import { isDefined } from "../../utils";
+import { isDefined } from "../../utils/utils";
 import type { LayoutConfig, LayoutGroup, LayoutItem } from "./SilverGrid";
 
 export type TreeLayout = LayoutConfig & { parent?: TreeLayout };
@@ -204,13 +204,13 @@ export class TreeBuilder {
             id: Date.now().toString(),
             size: 100,
             isRoot: true,
-            type: parentType as any,
+            type: parentType as "row",
             ...(parentType === "tab" && { activeTabKey: undefined }),
             items: insertBefore ? [source, target] : [target, source],
           };
 
           this.layout = target;
-          const newTree = this.makeTree(target!);
+          const newTree = this.makeTree(target);
           this.tree = newTree;
         }
 
@@ -243,20 +243,14 @@ export class TreeBuilder {
               Math.min(
                 ...(target.parent as LayoutGroup).items.map((d) => d.size),
               ) || 50,
-            items:
-              insertBefore ?
-                [source, target as LayoutItem]
-              : [target as LayoutItem, source],
+            items: insertBefore ? [source, target] : [target, source],
           };
           target = {
             id: Date.now().toString(),
             size: target.size || 50,
-            type: parentType as any,
+            type: parentType as "row",
             ...(parentType === "tab" && { activeTabKey: undefined }),
-            items:
-              insertBefore ?
-                [source, target as LayoutItem]
-              : [target as LayoutItem, source],
+            items: insertBefore ? [source, target] : [target, source],
           };
         }
       }

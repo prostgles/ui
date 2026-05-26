@@ -1,24 +1,26 @@
+import Btn from "@components/Btn";
+import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
+import { Label } from "@components/Label";
+import PopupMenu from "@components/PopupMenu";
+import { Select } from "@components/Select/Select";
 import { mdiSigma, mdiTableColumn } from "@mdi/js";
-import { _PG_numbers, includes } from "prostgles-types";
+import { usePromise } from "prostgles-client";
+import { _PG_numbers, includes, tryCatchV2 } from "prostgles-types";
 import React from "react";
-import Btn from "../../components/Btn";
-import { FlexCol, FlexRow, FlexRowWrap } from "../../components/Flex";
-import { Label } from "../../components/Label";
-import PopupMenu from "../../components/PopupMenu";
-import Select from "../../components/Select/Select";
+import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 import type { LinkSyncItem, WindowSyncItem } from "../Dashboard/dashboardUtils";
 import { windowIs } from "../Dashboard/dashboardUtils";
-import { getTimeChartLayer } from "../W_TimeChart/getTimeChartLayers";
-import { TIMECHART_STAT_TYPES } from "../W_TimeChart/W_TimeChartMenu";
-import type { MapLayerManagerProps } from "./ChartLayerManager";
-import { SQLChartLayerEditor } from "./SQLChartLayerEditor";
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { RenderFilter } from "../RenderFilter";
 import { getTableExpressionReturnType } from "../SQLEditor/SQLCompletion/completionUtils/getQueryReturnType";
-import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
+import { getTimeChartLayer } from "../W_TimeChart/fetchData/getTimeChartLayers";
+import { TIMECHART_STAT_TYPES } from "../W_TimeChart/W_TimeChartMenu";
+import type { MapLayerManagerProps } from "./DataLayerManager/DataLayerManager";
+import { SQLChartLayerEditor } from "./SQLChartLayerEditor";
+import FormField from "@components/FormField/FormField";
 
 type TimeChartLayerOptionsProps = Pick<
   MapLayerManagerProps,
-  "tables" | "myLinks" | "getLinksAndWindows"
+  "myLinks" | "getLinksAndWindows"
 > & {
   link: LinkSyncItem;
   column: string;
@@ -28,25 +30,23 @@ type TimeChartLayerOptionsProps = Pick<
 export const TimeChartLayerOptions = ({
   link,
   column,
-  tables,
   getLinksAndWindows,
   myLinks,
   w: wMapOrTimechart,
   mode,
 }: TimeChartLayerOptionsProps) => {
-  const { db } = usePrgl();
-  const sqlHandler = db.sql;
+  const { db, sql, tables } = usePrgl();
   const linkOpts = link.options;
   const sqlDataSourceColumns = usePromise(async () => {
     if (
-      !sqlHandler ||
+      !sql ||
       linkOpts.type !== "timechart" ||
       linkOpts.dataSource?.type !== "sql"
     )
       return [];
     const { colTypes, error } = await getTableExpressionReturnType(
       linkOpts.dataSource.sql,
-      sqlHandler,
+      sql,
     );
     if (error) console.warn(error);
     return (
@@ -57,7 +57,7 @@ export const TimeChartLayerOptions = ({
         };
       }) ?? []
     );
-  }, [linkOpts, sqlHandler]);
+  }, [linkOpts, sql]);
 
   if (!windowIs(wMapOrTimechart, "timechart")) {
     return null;
@@ -129,8 +129,7 @@ export const TimeChartLayerOptions = ({
   const activeStat = TIMECHART_STAT_TYPES.find(
     (s) => s.func === statType.funcName,
   );
-  const activeStatLabel: (typeof TIMECHART_STAT_TYPES)[number]["label"] =
-    activeStat?.label ?? (statType.funcName as any);
+  const activeStatLabel = activeStat?.label ?? statType.funcName;
   const boldTextNode = (text: string) => (
     <strong style={{ margin: ".6px" }}>{text}</strong>
   );
@@ -163,15 +162,20 @@ export const TimeChartLayerOptions = ({
   return (
     <>
       <PopupMenu
-        title="Y-axis options"
+        title="Layer options"
         data-command="TimeChartLayerOptions.yAxis"
+        showFullscreenToggle={{}}
+        rootChildClassname="f-1"
+        contentClassName="p-1"
+        clickCatchStyle={{ opacity: 1 }}
         button={
-          <FlexRow style={{ gap: ".5em", fontSize: "14px" }}>
+          <FlexRow className="gap-p5 font-14">
             <Btn
               color="action"
               variant={isOnScreen ? "text" : "faded"}
               iconPath={isOnScreen ? "" : mdiSigma}
               title="Aggregate function"
+              size="small"
               data-command="TimeChartLayerOptions.aggFunc"
               style={{
                 paddingRight: isOnScreen ? "0" : undefined,
@@ -182,12 +186,21 @@ export const TimeChartLayerOptions = ({
           </FlexRow>
         }
         render={() => (
-          <FlexCol className="gap-2">
+          <FlexCol className="gap-2 f-1 ">
+            <FormField
+              type="text"
+              label={"Title (optional)"}
+              value={linkOpts.title}
+              onChange={(newTitle) => {
+                updateLinkOpts({ title: newTitle });
+              }}
+            />
             <FlexRowWrap>
               <Select
                 label="Aggregation type"
                 variant="div"
                 className="w-fit"
+                size="small"
                 data-command="TimeChartLayerOptions.aggFunc.select"
                 btnProps={{
                   iconPath: mdiSigma,
@@ -208,7 +221,7 @@ export const TimeChartLayerOptions = ({
                     statType: {
                       funcName,
                       numericColumn:
-                        statType.numericColumn ?? numericCols[0]!.name!,
+                        statType.numericColumn ?? numericCols[0]!.name,
                     },
                   });
                 }}
@@ -220,6 +233,7 @@ export const TimeChartLayerOptions = ({
                 btnProps={{
                   color: "action",
                 }}
+                size="small"
                 data-command="TimeChartLayerOptions.numericColumn"
                 fullOptions={numericCols.map((c) => ({
                   key: c.name,
@@ -245,6 +259,7 @@ export const TimeChartLayerOptions = ({
               label="Group by field"
               variant="div"
               className="w-fit "
+              size="small"
               data-command="TimeChartLayerOptions.groupBy"
               optional={true}
               disabledInfo={
@@ -274,56 +289,48 @@ export const TimeChartLayerOptions = ({
               }}
             />
             {isOnScreen && (
-              <FlexCol className="gap-p5">
+              <FlexCol
+                className={"gap-p5 " + (lq?.type === "sql" ? "f-1" : "")}
+              >
                 <Label variant="normal">
                   {lq?.type === "sql" ? "Query" : "Table"}
                 </Label>
                 {lq?.type === "sql" ?
                   <SQLChartLayerEditor link={link} />
                 : <code className="ta-start ws-pre-line bg-color-2 rounded p-p5">
-                    {lq?.tableName}
+                    {lq?.type === "table" ?
+                      (lq.joinPath?.at(-1)?.table ?? lq.tableName)
+                    : lq?.localTableName}
                   </code>
                 }
               </FlexCol>
             )}
+            {lq?.type === "local-table" &&
+              dataSource?.type === "local-table" && (
+                <FlexCol className="gap-p5">
+                  <Label variant="normal">Filter</Label>
+                  <RenderFilter
+                    title="Manage filters"
+                    mode="compact"
+                    selectedColumns={undefined}
+                    itemName="filter"
+                    contextData={undefined}
+                    onChange={(smartGroupFilter) => {
+                      updateLinkOpts({
+                        dataSource: {
+                          ...dataSource,
+                          smartGroupFilter,
+                        },
+                      });
+                    }}
+                    tableName={lq.localTableName}
+                    filter={dataSource.smartGroupFilter}
+                  />
+                </FlexCol>
+              )}
           </FlexCol>
         )}
       />
     </>
   );
-};
-
-type TryCatchResult<T> =
-  | { data: T; hasError?: false; error?: undefined; duration: number }
-  | { data?: undefined; hasError: true; error: unknown; duration: number };
-
-export const tryCatchV2 = <T,>(
-  func: () => T | Promise<T>,
-): T extends Promise<T> ? Promise<TryCatchResult<Awaited<T>>>
-: TryCatchResult<T> => {
-  const startTime = Date.now();
-  try {
-    const dataOrResult = func();
-    if (dataOrResult instanceof Promise) {
-      return new Promise(async (resolve, reject) => {
-        const duration = Date.now() - startTime;
-        const data = await dataOrResult;
-        resolve({
-          data,
-          duration,
-        });
-      }) as any;
-    }
-    return {
-      data: dataOrResult,
-      duration: Date.now() - startTime,
-    } as any;
-  } catch (error) {
-    console.error(error);
-    return {
-      error,
-      hasError: true,
-      duration: Date.now() - startTime,
-    } as any;
-  }
 };

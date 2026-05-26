@@ -28,7 +28,7 @@ export const useEditableData = <T extends Record<string, any> | undefined>(
   );
 
   const setValue = useCallback(
-    <K extends keyof NonNullable<T> & string>(
+    <K extends keyof NonNullable<T>>(
       newData: Pick<NonNullable<T>, K> | undefined,
     ) => {
       if (!value) return setError("Value is undefined. Must pass full data");

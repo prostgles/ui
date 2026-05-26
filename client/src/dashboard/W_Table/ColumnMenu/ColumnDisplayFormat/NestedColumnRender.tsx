@@ -1,13 +1,17 @@
+import { FlexRowWrap } from "@components/Flex";
+import { MediaViewer } from "@components/MediaViewer/MediaViewer";
 import type { AnyObject } from "prostgles-types";
 import { omitKeys } from "prostgles-types";
-import React from "react";
-import { FlexRowWrap } from "../../../../components/Flex";
-import { MediaViewer } from "../../../../components/MediaViewer";
-import { TimeChart } from "../../../Charts/TimeChart";
-import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
+import React, { useMemo } from "react";
+import type { DBSchemaTableWithRenderInfo } from "src/dashboard/Dashboard/getTables";
+import {
+  TimeChart,
+  type TimeChartLayer,
+} from "../../../Charts/TimeChart/TimeChart";
 import { RenderValue } from "../../../SmartForm/SmartFormField/RenderValue";
-import { getYLabelFunc } from "../../../W_TimeChart/getTimeChartData";
+import { getYLabelFunc } from "../../../W_TimeChart/fetchData/getTimeChartData";
 import { getColWInfo } from "../../tableUtils/getColWInfo";
+import { StyledTableColumn } from "../../tableUtils/StyledTableColumn";
 import type { ColumnConfig } from "../ColumnMenu";
 
 const NESTED_LIMIT = 10;
@@ -21,7 +25,7 @@ type P = {
   value: (AnyObject | undefined)[] | null;
   row: AnyObject;
   nestedTimeChartMeta: NestedTimeChartMeta | undefined;
-  tables: DBSchemaTablesWJoins;
+  tables: DBSchemaTableWithRenderInfo[];
 };
 export const NestedColumnRender = ({
   value,
@@ -31,14 +35,29 @@ export const NestedColumnRender = ({
   tables,
 }: P): JSX.Element => {
   const table = tables.find((t) => t.name === c.nested?.path.at(-1)?.table);
-  const isMedia = table?.info.isFileTable;
+  const isMedia = table?.isFileTable;
   const nestedColumns =
-    c.nested ?
-      getColWInfo(tables, {
-        table_name: c.nested!.path.at(-1)!.table,
-        columns: c.nested.columns,
-      })
-    : undefined;
+    c.nested && table ? getColWInfo(table, c.nested.columns) : undefined;
+  const layers: TimeChartLayer[] = useMemo(
+    () =>
+      !c.nested?.chart || !nestedTimeChartMeta ?
+        []
+      : [
+          {
+            label: `${Object.entries(omitKeys(row, [c.name])).map(([key, val]) => `${key}: ${JSON.stringify(val)}`)}`,
+            getYLabel: getYLabelFunc(""),
+            color: "rgb(0, 183, 255)",
+            cols: [],
+            data: value as TimeChartLayer["data"],
+            variant:
+              c.nested.chart.renderStyle === "smooth-line" ?
+                "smooth"
+              : undefined,
+            ...nestedTimeChartMeta,
+          },
+        ],
+    [c.name, c.nested?.chart, nestedTimeChartMeta, row, value],
+  );
   if (!nestedColumns) {
     return <>Unexpected issue: No nested columns</>;
   }
@@ -59,38 +78,43 @@ export const NestedColumnRender = ({
             undefined
           : c.nested.chart.renderStyle
         }
-        layers={[
-          {
-            label: `${Object.entries(omitKeys(row, [c.name])).map(([key, val]) => `${key}: ${JSON.stringify(val)}`)}`,
-            getYLabel: getYLabelFunc(""),
-            color: "rgb(0, 183, 255)",
-            cols: [],
-            data: value as any,
-            variant:
-              c.nested.chart.renderStyle === "smooth-line" ?
-                "smooth"
-              : undefined,
-            ...nestedTimeChartMeta,
-          },
-        ]}
+        layers={layers}
       />
     );
   }
   const shownNestedColumns = nestedColumns.filter((c) => c.show);
   const render = ({ key, value }: { key: string; value: any }) => {
     const columnWInfo = nestedColumns.find((c) => c.name === key);
-    const datType =
-      columnWInfo?.info ?? columnWInfo?.computedConfig?.funcDef.outType;
+    const datType = columnWInfo?.info ?? columnWInfo?.computedConfig;
     const renderedValue =
       columnWInfo ?
-        <RenderValue column={datType} value={value} />
+        <RenderValue
+          column={datType}
+          value={value}
+          getValues={() => valueList.map((v) => v?.[key])}
+        />
       : JSON.stringify(value);
+    if (columnWInfo?.style && columnWInfo.style.type !== "None") {
+      return (
+        <StyledTableColumn
+          value={value}
+          column={{
+            ...columnWInfo,
+            ...columnWInfo.info!,
+            ...datType,
+          }}
+          renderedVal={renderedValue}
+          maxCellChars={undefined}
+          barchartVals={undefined}
+        />
+      );
+    }
     return renderedValue;
   };
   const valueList = value ?? [];
-  const [firstValue, ...rest] = valueList;
+  const [firstValue, ...otherValues] = valueList;
   const isSingleValue = shownNestedColumns.length === 1;
-  if (isSingleValue && !isMedia && firstValue && !rest.length) {
+  if (isSingleValue && !isMedia && firstValue && !otherValues.length) {
     const [key, value] = Object.entries(firstValue)[0]!;
     return <>{render({ key, value })}</>;
   }

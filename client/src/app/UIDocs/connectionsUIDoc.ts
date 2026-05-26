@@ -1,6 +1,6 @@
 import { ROUTES } from "@common/utils";
 import { mdiDatabasePlusOutline, mdiFilter, mdiServerNetwork } from "@mdi/js";
-import { getCommandElemSelector, getDataKeyElemSelector } from "../../Testing";
+import { getCommandElemSelector, getDataKey } from "../../Testing";
 import type { UIDocContainers, UIDocElement } from "../UIDocs";
 import { editConnectionUIDoc } from "./editConnectionUIDoc";
 
@@ -46,7 +46,7 @@ export const connectionsUIDoc = {
     "Manage your database connections. View, add, or edit connections to your databases.",
   docs: `
     The Connections page serves as the central hub within Prostgles UI for managing all your PostgreSQL database connections. 
-    From here, you can establish new connections, modify existing ones, and gain an immediate overview of their status and associated workspaces. 
+    From here, you can add and open connections, modify existing ones, and gain an immediate overview of their status and associated workspaces. 
 
     <img src="./screenshots/connections.svg" alt="Connections page screenshot" />  
       
@@ -63,8 +63,6 @@ export const connectionsUIDoc = {
       docs: `
         Use the **New Connection** button to add a new database connection.
         
-        <img src="./screenshots/connections.svg#Connections_new" alt="New connection button" style="max-width: 200px;" />
-
         This will open a form where you can enter the connection details such as host, port, database name, user, and password.
         
         <img src="./screenshots/new_connection.svgif.svg" alt="New connection form screenshot" />
@@ -168,7 +166,7 @@ export const connectionsUIDoc = {
             },
             {
               type: "popup",
-              selector: getDataKeyElemSelector("Select existing database"),
+              selector: getDataKey("Select existing database"),
               title: "Connect to an existing database",
               description: "Selects a database from the server to connect to. ",
               docs: `
@@ -212,6 +210,7 @@ export const connectionsUIDoc = {
           description:
             "View real-time statistics, running queries, and system resource usage (CPU, RAM, Disk) for this connection.",
           children: [],
+          componentName: "StatusMonitor",
         },
         {
           type: "link",

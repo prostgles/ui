@@ -1,12 +1,9 @@
-import {
-  useAsyncEffectQueue,
-  usePromise,
-} from "prostgles-client/dist/react-hooks";
+import { getSmartGroupFilter } from "@common/filterUtils";
+import { useAsyncEffectQueue } from "prostgles-client";
 import { isObject, type AnyObject } from "prostgles-types";
 import { useEffect, useMemo, useState } from "react";
-import { getSmartGroupFilter } from "../../../../common/filterUtils";
 import { getSelectForFieldConfigs } from "../SmartCard/getSelectForFieldConfigs";
-import { getSmartCardColumns } from "../SmartCard/getSmartCardColumns";
+import { useSmartCardColumns } from "../SmartCard/useSmartCardColumns";
 import type { SmartCardListProps } from "./SmartCardList";
 
 export type SmartCardListState = ReturnType<typeof useSmartCardListState>;
@@ -14,6 +11,7 @@ export const useSmartCardListState = (
   props: Pick<
     SmartCardListProps,
     | "db"
+    | "sql"
     | "tableName"
     | "columns"
     | "onSetData"
@@ -35,6 +33,7 @@ export const useSmartCardListState = (
     orderByfields,
     tableName,
     db,
+    sql,
     columns: columnsFromProps,
     filter,
     throttle,
@@ -54,19 +53,18 @@ export const useSmartCardListState = (
   );
   const [localFilter, setLocalFilter] = useState(searchFilter);
 
-  const fetchedColumns = usePromise(async () => {
-    if (columnsFromProps) {
-      return;
-    }
-    return await getSmartCardColumns({ tableName, db });
-  }, [columnsFromProps, db, tableName]);
-  const columns = columnsFromProps ?? fetchedColumns;
+  const columns = useSmartCardColumns({
+    tableName,
+    sql,
+    tables,
+    columns: columnsFromProps,
+  });
 
   const [items, setItems] = useState<AnyObject[]>();
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
-  const [error, setError] = useState<any>(null);
+  const [error, setError] = useState<unknown>(null);
   const [totalRows, setTotalRows] = useState<number | undefined>(-1);
 
   const tableHandler =
@@ -134,15 +132,15 @@ export const useSmartCardListState = (
   /** SQL data */
   useEffect(() => {
     if (smartProps.type === "sql") {
-      if (!db.sql) {
-        console.error("db.sql missing");
+      if (!sql) {
+        console.error("sql missing");
         setLoaded(true);
         setLoading(false);
         return;
       }
       setLoading(true);
       const { sqlQuery, args } = smartProps;
-      db.sql(sqlQuery, args ?? {}, { returnType: "rows" })
+      sql(sqlQuery, args ?? {}, { returnType: "rows" })
         .then((items) => {
           setItems(items);
           setLoaded(true);
@@ -227,12 +225,12 @@ export const useSmartCardListState = (
           throw new Error("tableHandler.subscribe missing");
         }
         /** This is to not wait for the subscription to start */
-        setData();
+        void setData();
         const sub = await tableHandler.subscribe(
           fullFilter,
           { limit: 0, select, throttle },
           () => {
-            setData();
+            void setData();
           },
         );
         return sub.unsubscribe;
@@ -242,7 +240,7 @@ export const useSmartCardListState = (
         return;
       }
     } else {
-      setData();
+      void setData();
     }
   }, [tableDataHandlers, tableHandler]);
 

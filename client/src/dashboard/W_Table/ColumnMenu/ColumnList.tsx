@@ -1,17 +1,18 @@
-import { mdiDelete, mdiFunction, mdiLink, mdiPencil } from "@mdi/js";
+import Btn from "@components/Btn";
+import { FlexRow } from "@components/Flex";
+import PopupMenu from "@components/PopupMenu";
+import { SearchList } from "@components/SearchList/SearchList";
 import {
-  useMemoDeep,
-  type DBHandlerClient,
-} from "prostgles-client/dist/prostgles";
+  mdiDelete,
+  mdiFormatColorFill,
+  mdiFunction,
+  mdiLink,
+  mdiPencil,
+} from "@mdi/js";
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
-import type { ValidatedColumnInfo } from "prostgles-types";
 import { omitKeys } from "prostgles-types";
-import React, { useState } from "react";
-import type { Prgl } from "../../../App";
-import Btn from "../../../components/Btn";
-import { FlexRow } from "../../../components/Flex";
-import PopupMenu from "../../../components/PopupMenu";
-import { SearchList } from "../../../components/SearchList/SearchList";
+import React, { useMemo, useState } from "react";
+import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 import type {
   DBSchemaTablesWJoins,
   LoadedSuggestions,
@@ -20,44 +21,39 @@ import type {
 import type { ColumnConfigWInfo } from "../W_Table";
 import { AlterColumn } from "./AlterColumn/AlterColumn";
 import type { ColumnConfig } from "./ColumnMenu";
-import { getColumnListItem } from "./ColumnsMenu";
+import { getColumnListItem } from "./ColumnSelect/getColumnListItem";
 import { LinkedColumn } from "./LinkedColumn/LinkedColumn";
 import { SummariseColumn } from "./SummariseColumns";
+import { ColumnStyleControls } from "./ColumnStyleControls/ColumnStyleControls";
 
 type P = {
   columns: ColumnConfigWInfo[];
-  tableColumns: ValidatedColumnInfo[];
   onChange: (newCols: ColumnConfigWInfo[]) => void;
-  mainMenuProps:
-    | undefined
-    | {
-        prgl: Prgl;
-        w: SyncDataItem<Required<WindowData<"table">>, true>;
-        db: DBHandlerClient;
-        suggestions: LoadedSuggestions | undefined;
-        table: DBSchemaTablesWJoins[number];
-        tables: DBSchemaTablesWJoins;
-        onClose: VoidFunction;
-      };
+  w: SyncDataItem<Required<WindowData<"table">>, true>;
+  table: DBSchemaTablesWJoins[number];
+  suggestions: LoadedSuggestions | undefined;
+  onClose: VoidFunction;
   showToggle?: boolean;
 };
 
 export const ColumnList = ({
   columns: columnsWithoutInfo,
-  tableColumns,
-  mainMenuProps,
+  table,
   onChange,
   showToggle = true,
+  w,
+  onClose,
 }: P) => {
-  const { db } = mainMenuProps ?? {};
-
-  const columns: ColumnConfigWInfo[] = useMemoDeep(
+  const prgl = usePrgl();
+  const { sql } = prgl;
+  const tableColumns = table.columns;
+  const columns: ColumnConfigWInfo[] = useMemo(
     () =>
       columnsWithoutInfo.map((c) => {
         const col = tableColumns.find((tc) => tc.name === c.name);
         return { ...c, info: col };
       }),
-    [columnsWithoutInfo],
+    [columnsWithoutInfo, tableColumns],
   );
 
   /** Ensure columns do not change order when toggling */
@@ -72,14 +68,15 @@ export const ColumnList = ({
   return (
     <SearchList
       id="cols"
-      onReorder={async (nc) => {
+      onReorder={(nc) => {
         setOrder(Object.fromEntries(nc.map((d, i) => [d.key, i])));
-        await onChange(
+        onChange(
           nc.map((n) => ({ ...(n.data as ColumnConfig), show: n.checked })),
         );
       }}
       limit={200}
-      className="f-1"
+      className="f-1 p-1"
+      style={{ minWidth: "400px" }}
       onMultiToggle={
         !showToggle ? undefined : (
           (items) => {
@@ -93,7 +90,7 @@ export const ColumnList = ({
       }
       placeholder={`Search ${columns.length} columns`}
       items={columns
-        .sort(
+        .toSorted(
           (a, b) => (order[a.name] ?? Infinity) - (order[b.name] ?? Infinity),
         )
         .map((c) => {
@@ -102,16 +99,21 @@ export const ColumnList = ({
             : c.computedConfig?.isColumn ? "Remove Function"
             : c.computedConfig || c.nested ? "Remove computed field"
             : undefined;
+
+          const nestedColumn = c.nested ? c.nested : undefined;
+          const nestedColumnsToShow = nestedColumn?.columns.filter(
+            (col) => col.show,
+          );
           return {
             ...getColumnListItem({ ...c.info, name: c.name }, c),
             ...(showToggle ? { checked: c.show } : {}),
             data: c,
             rowClassname: "trigger-hover",
             contentRight:
-              !mainMenuProps || (!db?.sql && !c.computedConfig) ?
+              !sql && !c.computedConfig ?
                 null
               : <FlexRow className="mr-p5" onClick={(e) => e.stopPropagation()}>
-                  {db?.sql && !c.computedConfig && !c.nested && (
+                  {sql && !c.computedConfig && !c.nested && (
                     <PopupMenu
                       positioning="center"
                       title={`Alter ${c.name}`}
@@ -128,7 +130,67 @@ export const ColumnList = ({
                       onClickClose={false}
                       contentClassName="p-1"
                     >
-                      <AlterColumn {...mainMenuProps} field={c.name} />
+                      <AlterColumn
+                        table={table}
+                        onClose={onClose}
+                        prgl={prgl}
+                        suggestions={undefined}
+                        field={c.name}
+                      />
+                    </PopupMenu>
+                  )}
+                  {nestedColumn && nestedColumnsToShow?.length === 1 && (
+                    <PopupMenu
+                      positioning="center"
+                      title={`Alter ${c.name}`}
+                      clickCatchStyle={{ opacity: 1 }}
+                      data-command="W_TableMenu_ColumnList.alter"
+                      button={
+                        <Btn
+                          iconPath={mdiFormatColorFill}
+                          title="Style column"
+                          color="action"
+                          className="show-on-trigger-hover"
+                        />
+                      }
+                      onClickClose={false}
+                      contentClassName="p-1"
+                    >
+                      <ColumnStyleControls
+                        db={prgl.db}
+                        tableName={nestedColumn.path.at(-1)!.table}
+                        tables={prgl.tables}
+                        column={nestedColumnsToShow[0]!}
+                        onUpdate={({ style }) => {
+                          const newCols = columns.map((col) => {
+                            if (col.name === c.name && col.nested) {
+                              return {
+                                ...col,
+                                nested: {
+                                  ...col.nested,
+                                  columns: nestedColumn.columns.map((nc) =>
+                                    nc.name === nestedColumnsToShow[0]!.name ?
+                                      { ...nc, style }
+                                    : nc,
+                                  ),
+                                },
+                              };
+                            }
+                            return col;
+                          });
+                          onChange(newCols);
+                        }}
+                        tsDataType={
+                          c.info?.tsDataType ||
+                          c.computedConfig?.tsDataType ||
+                          "any"
+                        }
+                        udt_name={
+                          c.info?.udt_name ||
+                          c.computedConfig?.udt_name ||
+                          "text"
+                        }
+                      />
                     </PopupMenu>
                   )}
                   {c.nested && (
@@ -143,11 +205,7 @@ export const ColumnList = ({
                         />
                       }
                       render={(pClose) => (
-                        <LinkedColumn
-                          {...mainMenuProps}
-                          column={c}
-                          onClose={pClose}
-                        />
+                        <LinkedColumn w={w} column={c} onClose={pClose} />
                       )}
                     />
                   )}
@@ -208,7 +266,6 @@ export const ColumnList = ({
                   )}
                 </FlexRow>,
             onPress: () => {
-              //@ts-ignore
               const nc = columns
                 .slice(0)
                 .map((_c) => ({ ..._c }))

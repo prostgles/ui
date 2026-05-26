@@ -1,9 +1,15 @@
+import { classOverride, FlexCol } from "@components/Flex";
 import { mdiClose, mdiMenuDown, mdiPencil } from "@mdi/js";
 import React from "react";
 import { RenderValue } from "../../dashboard/SmartForm/SmartFormField/RenderValue";
-import Btn from "../Btn";
-import type { FullOption, OptionKey, SelectProps, SelectState } from "./Select";
 import { getCommandElemSelector } from "../../Testing";
+import Btn from "../Btn";
+import type {
+  FullOption,
+  OptionKey,
+  SelectProps,
+  SelectValueFromProps,
+} from "./Select";
 
 type P<
   O extends OptionKey,
@@ -38,12 +44,11 @@ export const SelectTriggerButton = <
     labelAsValue,
     emptyLabel = "Select...",
     iconPath,
-    buttonClassName = "",
     size,
     btnProps,
     disabledInfo,
     optional = false,
-    showIconOnly,
+    showSelected,
     fullOptions,
     multiSelection,
     fixedBtnWidth,
@@ -62,24 +67,22 @@ export const SelectTriggerButton = <
   const noOtherOption =
     !options.length || (options.length === 1 && value === options[0]);
 
-  if (!onChange) return null;
-
   const showSelectedIcon =
-    showIconOnly ? selectedFullOptions[0]?.iconPath : undefined;
+    showSelected === "icon" ? selectedFullOptions[0]?.iconPath : undefined;
 
+  const firstSelectedOption = selectedFullOptions[0];
   const btnText = btnLabel ?? emptyLabel;
   const btnChildren =
-    chipMode || showSelectedIcon ? null
+    showSelected === "fullOption" && firstSelectedOption ?
+      <FlexCol className="gap-p25">
+        <div>{firstSelectedOption.label ?? firstSelectedOption.key}</div>
+        <div>{firstSelectedOption.subLabel}</div>
+      </FlexCol>
+    : chipMode || showSelectedIcon ? null
     : iconPath || btnProps?.children !== undefined ?
       (btnProps?.children ?? null)
     : <>
-        <div
-          className={
-            " text-ellipsis " +
-            (value !== undefined ? "text-color-0" : "text-1")
-          }
-          style={{ lineHeight: "18px" }}
-        >
+        <div className={" text-ellipsis "} style={{ lineHeight: "18px" }}>
           {!labelAsValue ?
             btnText
           : <RenderValue
@@ -107,7 +110,7 @@ export const SelectTriggerButton = <
       }}
       /** Use "data-command" for content when button not needed anymore */
       data-command={popupAnchor ? undefined : props["data-command"]}
-      className={`${label ? "  " : className} Select w-fit f-0 select-button ${selectClass} ${buttonClassName}`}
+      data-key={popupAnchor ? undefined : props["data-key"]}
       size={size}
       variant={chipMode ? "icon" : "faded"}
       color={chipMode ? "action" : "default"}
@@ -115,17 +118,15 @@ export const SelectTriggerButton = <
         showSelectedIcon ?? iconPath ?? (chipMode ? mdiPencil : mdiMenuDown)
       }
       iconPosition={!btnProps?.iconPath ? "right" : "left"}
-      iconClassname={
-        btnProps?.iconPath || showSelectedIcon ? ""
-        : chipMode ?
-          undefined
-        : "text-2"
-      }
       disabledInfo={
         disabledInfo ?? (noOtherOption ? "No other option" : undefined)
       }
       disabledVariant={noOtherOption ? "no-fade" : undefined}
       {...btnProps}
+      className={classOverride(
+        `${label ? "  " : className} Select w-fit f-0 select-button ${selectClass} ${popupAnchor ? "is-open" : ""} `,
+        btnProps?.className,
+      )}
       onClick={
         noOtherOption ? undefined : (
           (e) => {
@@ -140,7 +141,7 @@ export const SelectTriggerButton = <
         }
       }}
       onKeyDown={
-        noOtherOption ? undefined : (
+        noOtherOption || !onChange ? undefined : (
           (e) => {
             const { key, currentTarget } = e;
             const isFocused = document.activeElement === currentTarget;
@@ -182,11 +183,18 @@ export const SelectTriggerButton = <
         className={`${label ? "  " : className} flex-row gap-0 ai-center ${selectClass} `}
       >
         {triggerButton}
-        {![undefined, null].includes(value) && (
+        {onChange && ![undefined, null].includes(value) && (
           <Btn
             iconPath={mdiClose}
             title="Reset selection"
-            onClick={(e) => onChange(undefined as any, e, undefined)}
+            size={size}
+            onClick={(e) =>
+              onChange(
+                undefined as SelectValueFromProps<O, Multi, Optional>,
+                e,
+                undefined,
+              )
+            }
           />
         )}
       </div>

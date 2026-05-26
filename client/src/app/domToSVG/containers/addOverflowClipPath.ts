@@ -1,10 +1,7 @@
-import { isDefined } from "prostgles-types";
 import { includes } from "../../../dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar";
-import { SVG_NAMESPACE } from "../domToSVG";
-import type { SVGContext } from "./elementToSVG";
 import type { WhatToRenderOnSVG } from "../utils/getWhatToRenderOnSVG";
 import { isElementNode } from "../utils/isElementVisible";
-import { getRectanglePath } from "./rectangleToSVG";
+import type { SVGContext } from "./elementToSVG";
 
 export const addOverflowClipPath = (
   element: HTMLElement,
@@ -39,48 +36,33 @@ export const addOverflowClipPath = (
   // const parentWithRoundedCorners = element
   const inputBorderRadius =
     element instanceof HTMLInputElement ? "8px" : style.borderRadius || "0";
-  const { path: clipRect } = getRectanglePath(
-    {
-      ...style,
-      borderTopLeftRadius: inputBorderRadius,
-      borderTopRightRadius: inputBorderRadius,
-      borderBottomRightRadius: inputBorderRadius,
-      borderBottomLeftRadius: inputBorderRadius,
-    },
-    {
-      x: x - borderWidth,
-      y: y - borderWidth,
-      width: width + 2 * borderWidth,
-      height: height + 2 * borderWidth,
-    },
-    whatToRender,
-  );
-  clipRect.setAttribute("fill", "none");
-  clipRect.setAttribute("stroke", "none");
+  const borderRadiusValue = parseFloat(inputBorderRadius);
+  const roundProperty =
+    borderRadiusValue ? ` round ${borderRadiusValue}px` : "";
+  const translate = g
+    .getAttribute("transform")
+    ?.split("translate(")[1]
+    ?.split(")")[0];
+  const [transformX = 0, transformY = 0] =
+    translate ? translate.split(",").map((v) => parseFloat(v.trim())) : [0, 0];
 
-  const clipPath = document.createElementNS(SVG_NAMESPACE, "clipPath");
-  const clipPathId = `clip-of-${context.idCounter++}`;
-  clipPath.setAttribute("id", clipPathId);
-  const transform = g.getAttribute("transform");
-  const transformParts = transform?.split(")");
-  const translate = transformParts
-    ?.map((part) => {
-      if (!part.startsWith("translate")) return;
-      const [xStr, yStr] = part.split(",");
-      if (!xStr || !yStr) return;
-      const x = parseFloat(xStr.split("(")[1]!);
-      const y = parseFloat(yStr.trim());
-      if (!Number.isFinite(x) || !Number.isFinite(y)) return;
-      return [x, y] as [number, number];
-    })
-    .find(isDefined);
-  if (translate) {
-    const [x, y] = translate;
-    clipRect.setAttribute("transform", `translate(${-x}, ${-y})`);
-  }
-  clipPath.appendChild(clipRect);
-  g.appendChild(clipPath);
-  g.setAttribute("clip-path", `url(#${clipPathId})`);
+  const top = y - borderWidth - transformY;
+  const right = context.width - x - width - borderWidth - transformX;
+  const bottom = context.height - y - height - borderWidth - transformY;
+  const left = x - borderWidth - transformX;
+
+  const insetValues = [top, right, bottom, left]
+    .map((v) => (v < 0 ? 0 : v))
+    .map((v) => `${v}px`)
+    .join(" ");
+
+  g._overflowClipPath = {
+    x,
+    y,
+    width,
+    height,
+  };
+  g.style.clipPath = `inset(${insetValues} ${roundProperty}) view-box`;
 };
 
 const mustAddClipPath = (element: HTMLElement, style: CSSStyleDeclaration) => {

@@ -33,11 +33,11 @@ export const mainTestScripts: DemoScript = async ({
     )
     SELECT * 
     FROM`);
-  fromBeginning(false, multipleCtes);
+  await fromBeginning(false, multipleCtes);
   await typeAuto(" c2");
   testResult(multipleCtes + " cte2");
 
-  fromBeginning(false, multipleCtes);
+  await fromBeginning(false, multipleCtes);
   await moveCursor.up(3);
   await moveCursor.lineEnd();
   await typeAuto("\nw");
@@ -46,7 +46,7 @@ export const mainTestScripts: DemoScript = async ({
   testResult(multipleCtes.replace("FROM orders", "FROM orders\n  WHERE id"));
 
   /** Cte joins */
-  fromBeginning(false, multipleCtes);
+  await fromBeginning(false, multipleCtes);
   await typeAuto(" c2");
   await typeAuto(" c", { nth: -1 });
   await typeAuto("\nj");
@@ -70,7 +70,7 @@ export const mainTestScripts: DemoScript = async ({
     INNER JOIN my_table mt
       ON mt.files_id = f.id
     WHERE`);
-  fromBeginning(false, script);
+  await fromBeginning(false, script);
   await moveCursor.lineEnd();
   await typeAuto(` f.n`);
   await typeAuto(` `);
@@ -83,7 +83,7 @@ export const mainTestScripts: DemoScript = async ({
     VALUES('premium', 'premium', 20, '{ "info": "plan info" }')
     ON CONFLICT DO NOTHING
   `);
-  fromBeginning(false, ``);
+  await fromBeginning(false, ``);
   await typeAuto(`s`);
   await typeAuto(` info`);
   await moveCursor.lineStart();
@@ -91,7 +91,7 @@ export const mainTestScripts: DemoScript = async ({
   await typeAuto(` `);
   await moveCursor.down();
   await moveCursor.lineEnd();
-  await newLine();
+  newLine();
   await typeAuto(`w`);
   await typeAuto(` in`);
   await typeAuto(` `);
@@ -104,7 +104,7 @@ export const mainTestScripts: DemoScript = async ({
   await triggerSuggest();
   await tout(500);
   acceptSelectedSuggestion();
-  await testResult(
+  testResult(
     fixIndent(`
     SELECT info ->>'info'
     FROM plans
@@ -118,10 +118,10 @@ export const mainTestScripts: DemoScript = async ({
     /**
      * JSONB selector autocomplete
      */
-    fromBeginning();
+    await fromBeginning();
     await typeAuto(`SEL`);
     await typeAuto(` req`);
-    moveCursor.down();
+    await moveCursor.down();
     // await typeAuto(`\nF`);
     // await typeAuto(` lo`);
     await typeAuto(`\nW`);
@@ -137,7 +137,7 @@ export const mainTestScripts: DemoScript = async ({
     /**
      * JSONB selector autocomplete
      */
-    fromBeginning();
+    await fromBeginning();
     await typeAuto(`cr`);
     await typeAuto(` pol`);
     await typeAuto(` view_own_data`, { nth: -1, msPerChar: 10 });
@@ -153,7 +153,7 @@ export const mainTestScripts: DemoScript = async ({
     await typeAuto(" id");
     await typeAuto("= curuse");
 
-    moveCursor.lineEnd();
+    await moveCursor.lineEnd();
     typeText(";");
 
     newLine(2);
@@ -176,7 +176,7 @@ export const mainTestScripts: DemoScript = async ({
   };
 
   const schemaInspect = async () => {
-    fromBeginning();
+    await fromBeginning();
     typeText("?");
     await tout(100);
     triggerSuggest();
@@ -193,7 +193,7 @@ export const mainTestScripts: DemoScript = async ({
   };
 
   const disableTrigger = async () => {
-    fromBeginning();
+    await fromBeginning();
     await typeAuto("alt");
     await typeAuto(" tab");
     await typeAuto(" app");
@@ -204,7 +204,7 @@ export const mainTestScripts: DemoScript = async ({
   };
 
   const realtime = async () => {
-    fromBeginning();
+    await fromBeginning();
     await typeAuto(`CREATE TABLE some_table(col_0 INTEGER);`, {
       nth: -1,
       msPerChar: 10,
@@ -218,6 +218,7 @@ export const mainTestScripts: DemoScript = async ({
       triggerMode: "off",
     });
     await tout(200);
+
     await typeAuto(`\nALTER TABLE some_table \nALTER COLUMN `, {
       nth: -1,
       msPerChar: 10,
@@ -236,7 +237,6 @@ export const mainTestScripts: DemoScript = async ({
       throw "Realtime not working: col_4 not found";
     }
   };
-
   await createPolicy();
   await schemaInspect();
   await jsonB();
@@ -262,7 +262,7 @@ export const SQL_TESTING_SCRIPTS = {
   jsonb:
     "\nSELECT request\nFROM logs\nWHERE request ->>'Authorization' IS NULL\nLIMIT 200",
   nestedSelects:
-    "\nWITH cte1 AS (\n  SELECT *\n  FROM (\n    SELECT *\n    FROM geography_columns\n    WHERE coord_dimension = 1\n  ) t\n)\nSELECT * FROM cte1;\nSELECT st_point(1, 2)::GEOGRAPHY",
+    "\nWITH cte1 AS (\n  SELECT *\n  FROM (\n    SELECT *\n    FROM geography_columns gc\n    WHERE gc.coord_dimension = 1\n  ) t\n)\nSELECT * FROM cte1;\nSELECT st_point(1, 2)::GEOGRAPHY",
 };
 export type SqlTestingScripts = typeof SQL_TESTING_SCRIPTS;
 

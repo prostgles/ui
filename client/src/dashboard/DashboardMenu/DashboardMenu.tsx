@@ -1,26 +1,25 @@
+import Popup from "@components/Popup/Popup";
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
+import { includes } from "prostgles-types";
 import React, { useCallback, useMemo } from "react";
 import type { ReactiveState } from "../../appUtils";
 import { useReactiveState } from "../../appUtils";
-import Popup from "../../components/Popup/Popup";
+import type { DashboardProps, DashboardState } from "../Dashboard/Dashboard";
 import type {
-  CommonWindowProps,
-  DashboardProps,
-  DashboardState,
-  _Dashboard,
-} from "../Dashboard/Dashboard";
-import type { WindowData, Workspace } from "../Dashboard/dashboardUtils";
-import type { SEARCH_TYPES } from "../SearchAll";
-import { SearchAll } from "../SearchAll";
+  DBSchemaTableWJoins,
+  WindowData,
+  Workspace,
+} from "../Dashboard/dashboardUtils";
+import { useAddViewToWorkspace } from "../Dashboard/useAddViewToWorkspace";
+import type { SEARCH_TYPES } from "../SearchAll/SearchAll";
+import { SearchAll } from "../SearchAll/SearchAll";
 import { DashboardMenuContent } from "./DashboardMenuContent";
 import { DashboardMenuHeader } from "./DashboardMenuHeader";
 import { DashboardMenuHotkeys } from "./DashboardMenuHotkeys";
-import { useTableSizeInfo } from "./useTableSizeInfo";
 
 export type DashboardMenuProps = Pick<DashboardProps, "prgl"> & {
   suggestions: DashboardState["suggestions"];
-  tables: CommonWindowProps["tables"];
-  loadTable: _Dashboard["loadTable"];
+  tables: DBSchemaTableWJoins[];
   workspace: SyncDataItem<Workspace, true>;
 };
 
@@ -42,8 +41,8 @@ export const DashboardMenu = ({
 
   const [showSearchAll, setShowSearchAll] =
     React.useState<DashboardMenuState["showSearchAll"]>();
-  const { suggestions, tables, loadTable, workspace, prgl } = props;
-  const { db, dbs } = prgl;
+  const { suggestions, tables, workspace, prgl } = props;
+  const { db, dbs, sql, methods } = prgl;
 
   const filter =
     workspace.options.showAllMyQueries ? {} : { workspace_id: workspace.id };
@@ -57,7 +56,6 @@ export const DashboardMenu = ({
       []) as SyncDataItem<WindowData<"sql">>[];
   }, [windows]);
   const anchor = { node: menuAnchor, onClose: () => setState(undefined) };
-  const { tablesWithInfo } = useTableSizeInfo({ tables, db, workspace });
 
   const onClickSearchAll = useCallback(() => {
     setShowSearchAll({
@@ -70,6 +68,7 @@ export const DashboardMenu = ({
       <DashboardMenuHotkeys {...props} setShowSearchAll={setShowSearchAll} />
     </>
   );
+  const { addViewToWorkspace } = useAddViewToWorkspace();
   if (!(dbs as any).workspaces.insert) return hotKeys;
 
   const pinnedMenu = workspace.options.pinnedMenu && !window.isLowWidthScreen;
@@ -77,81 +76,45 @@ export const DashboardMenu = ({
   const isReadonlyWorkspace =
     workspace.published && workspace.user_id !== prgl.user?.id;
   const isFixed = isReadonlyWorkspace && workspace.layout_mode === "fixed";
-  const mainContent =
-    isFixed ? null
-    : pinnedMenu ?
-      <DashboardMenuContent
-        {...props}
-        queries={queries}
-        onClickSearchAll={onClickSearchAll}
-        tablesWithInfo={tablesWithInfo}
-        onClose={undefined}
-      />
-    : anchor.node ?
-      <Popup
-        key="main menu"
-        showFullscreenToggle={{}}
-        title={
-          <DashboardMenuHeader
-            {...props}
-            onClickSearchAll={onClickSearchAll}
-            onClose={anchor.onClose}
-          />
-        }
-        onClickClose={false}
-        onClose={anchor.onClose}
-        positioning="beneath-left"
-        anchorEl={anchor.node}
-        clickCatchStyle={{
-          backdropFilter: "blur(1px)",
-          background: "rgba(var(--text-color-0), 0.11)",
-          opacity: 1,
-        }}
-        contentStyle={{
-          overflow: "hidden",
-          padding: 0,
-        }}
-        autoFocusFirst={
-          isReadonlyWorkspace ? undefined : (
-            {
-              selector: `.search-list-tables input`,
-            }
-          )
-        }
-      >
-        <DashboardMenuContent
-          {...props}
-          queries={queries}
-          tablesWithInfo={tablesWithInfo}
-          onClickSearchAll={onClickSearchAll}
-          onClose={anchor.onClose}
-        />
-      </Popup>
-    : null;
 
   return (
     <>
       {showSearchAll && (
         <SearchAll
           db={db}
-          methods={props.prgl.methods}
+          sql={sql}
+          methods={methods}
           tables={tables}
           searchType={showSearchAll.mode}
           defaultTerm={showSearchAll.term}
-          suggestions={suggestions?.searchAll}
+          suggestions={suggestions?.suggestions}
           queries={queries}
-          loadTable={loadTable}
           onOpenDBObject={(s, method_name) => {
             if (method_name) {
-              loadTable({ type: "method", method_name });
+              void addViewToWorkspace({
+                workspace_id: workspace.id,
+                type: "method",
+                method_name,
+              });
             } else if (!s) {
             } else if (s.type === "function") {
-              loadTable({ type: "sql", sql: s.definition, name: s.name });
-            } else if ((s as any).type === "table") {
+              void addViewToWorkspace({
+                workspace_id: workspace.id,
+                type: "sql",
+                sql: s.definition,
+                name: s.name,
+              });
+            } else if (includes(["table", "view", "mview"], s.type)) {
               if (db[s.name]) {
-                loadTable({ type: "table", table: s.name, name: s.name });
+                void addViewToWorkspace({
+                  workspace_id: workspace.id,
+                  type: "table",
+                  table: s.name,
+                  name: s.name,
+                });
               } else {
-                loadTable({
+                void addViewToWorkspace({
+                  workspace_id: workspace.id,
                   type: "sql",
                   sql: `SELECT *\nFROM ${s.escapedIdentifier}\nLIMIT 25`,
                   name: s.name,
@@ -162,7 +125,12 @@ export const DashboardMenu = ({
             }
           }}
           onOpen={({ filter, table }) => {
-            loadTable({ type: "table", table, filter });
+            void addViewToWorkspace({
+              workspace_id: workspace.id,
+              type: "table",
+              table,
+              filter,
+            });
           }}
           onClose={() => {
             setShowSearchAll(undefined);
@@ -170,7 +138,49 @@ export const DashboardMenu = ({
         />
       )}
       {hotKeys}
-      {mainContent}
+      {isFixed ?
+        null
+      : pinnedMenu ?
+        <DashboardMenuContent
+          {...props}
+          queries={queries}
+          onClickSearchAll={onClickSearchAll}
+          onClose={undefined}
+        />
+      : anchor.node ?
+        <Popup
+          key="main menu"
+          data-command="DashboardMenu"
+          showFullscreenToggle={{}}
+          title={
+            <DashboardMenuHeader
+              {...props}
+              onClickSearchAll={onClickSearchAll}
+              onClose={anchor.onClose}
+            />
+          }
+          onClickClose={false}
+          onClose={anchor.onClose}
+          positioning="beneath-left"
+          anchorEl={anchor.node}
+          clickCatchStyle={{
+            backdropFilter: "blur(1px)",
+            background: "rgba(var(--text-color-0), 0.11)",
+            opacity: 1,
+          }}
+          contentStyle={{
+            overflow: "hidden",
+            padding: 0,
+          }}
+        >
+          <DashboardMenuContent
+            {...props}
+            queries={queries}
+            onClickSearchAll={onClickSearchAll}
+            onClose={anchor.onClose}
+          />
+        </Popup>
+      : null}
     </>
   );
 };

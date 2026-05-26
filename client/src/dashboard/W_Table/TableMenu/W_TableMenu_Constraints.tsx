@@ -1,9 +1,9 @@
 import { mdiDelete, mdiPlus } from "@mdi/js";
 import React, { useMemo } from "react";
-import Btn from "../../../components/Btn";
-import { FlexCol, FlexRow } from "../../../components/Flex";
-import { InfoRow } from "../../../components/InfoRow";
-import Select from "../../../components/Select/Select";
+import Btn from "@components/Btn";
+import { FlexCol, FlexRow } from "@components/Flex";
+import { InfoRow } from "@components/InfoRow";
+import { Select } from "@components/Select/Select";
 import { SmartCardList } from "../../SmartCardList/SmartCardList";
 import type { W_TableMenuProps, W_TableMenuState } from "./W_TableMenu";
 import type { W_TableInfo } from "./getTableMeta";
@@ -87,6 +87,7 @@ export const W_TableMenu_Constraints = ({
       </div>
       <SmartCardList
         db={prgl.db}
+        sql={prgl.sql}
         methods={prgl.methods}
         tables={prgl.tables}
         noDataComponent={<InfoRow color="info">No constraints</InfoRow>}

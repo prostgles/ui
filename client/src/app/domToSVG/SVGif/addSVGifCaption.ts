@@ -71,30 +71,21 @@ export const addSVGifCaption = ({
   text.setAttribute("x", bgX + padding.x);
   text.setAttribute("y", bgY + bgHeight / 2 + textHeight / 3);
 
-  const progressBar = document.createElementNS(SVG_NAMESPACE, "rect");
-  const progressBarHeight = 4;
-  const barId = "caption-progress-bar-" + sceneId;
-  progressBar.setAttribute("id", barId);
-  progressBar.setAttribute("class", "caption-progress-bar");
-  progressBar.setAttribute("x", bgX);
-  progressBar.setAttribute("y", bgY + bgHeight - progressBarHeight);
-  progressBar.setAttribute("width", bgWidth);
-  progressBar.setAttribute("height", progressBarHeight);
-  progressBar.setAttribute("rx", "2");
-  progressBar.setAttribute("ry", "2");
-  captionGroup.prepend(progressBar);
+  const addProgressBar = () => {
+    const progressBar = document.createElementNS(SVG_NAMESPACE, "rect");
+    const progressBarHeight = 4;
+    const barId = "caption-progress-bar-" + sceneId;
+    progressBar.setAttribute("id", barId);
+    progressBar.setAttribute("class", "caption-progress-bar");
+    progressBar.setAttribute("x", bgX);
+    progressBar.setAttribute("y", bgY + bgHeight - progressBarHeight);
+    progressBar.setAttribute("width", bgWidth);
+    progressBar.setAttribute("height", progressBarHeight);
+    progressBar.setAttribute("rx", "2");
+    progressBar.setAttribute("ry", "2");
+    captionGroup.prepend(progressBar);
 
-  const bgRect = document.createElementNS(SVG_NAMESPACE, "rect");
-  bgRect.setAttribute("x", bgX);
-  bgRect.setAttribute("y", bgY);
-  bgRect.setAttribute("width", bgWidth);
-  bgRect.setAttribute("height", bgHeight);
-  bgRect.setAttribute("rx", borderRadius);
-  bgRect.setAttribute("ry", borderRadius);
-  bgRect.setAttribute("class", "caption-background");
-  captionGroup.prepend(bgRect);
-
-  appendStyle(`
+    appendStyle(`
     @keyframes ${barId}-anim {
       0% { width: 0; }
       ${fromPerc + 0.1}% { width: 0; }
@@ -106,4 +97,16 @@ export const addSVGifCaption = ({
       animation: ${barId}-anim ${totalDuration}ms ease-in-out infinite; 
     }
   `);
+  };
+  // addProgressBar();
+
+  const bgRect = document.createElementNS(SVG_NAMESPACE, "rect");
+  bgRect.setAttribute("x", bgX);
+  bgRect.setAttribute("y", bgY);
+  bgRect.setAttribute("width", bgWidth);
+  bgRect.setAttribute("height", bgHeight);
+  bgRect.setAttribute("rx", borderRadius);
+  bgRect.setAttribute("ry", borderRadius);
+  bgRect.setAttribute("class", "caption-background");
+  captionGroup.prepend(bgRect);
 };

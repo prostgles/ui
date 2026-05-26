@@ -5,23 +5,26 @@ import type {
   MapViewState,
   OrthographicView,
   OrthographicViewState,
+  PickingInfo,
   WebMercatorViewport,
 } from "deck.gl";
 import { isDefined, omitKeys, pickKeys } from "prostgles-types";
+import { createReactiveState } from "../../appUtils";
 import type { HoverCoords } from "./DeckGLMap";
 import { fitBounds } from "./fitBounds";
-import { createReactiveState } from "../../appUtils";
 export const getDeckLibs = async () => {
   const lib = await import(/* webpackChunkName: "deckgl" */ "deck.gl");
   const mvtLoader = await import(
     /* webpackChunkName: "mvtLoader" */ "@loaders.gl/mvt"
   );
-  // const extensions = await import(/* webpackChunkName: "deckglExtensions" */ "@deck.gl/extensions");
+  const extensions = await import(
+    /* webpackChunkName: "deckglExtensions" */ "@deck.gl/extensions"
+  );
 
   return {
     lib,
     MVTLoader: mvtLoader.MVTLoader,
-    // extensions
+    extensions,
   };
 };
 export type DeckGlLib = Awaited<ReturnType<typeof getDeckLibs>>["lib"];
@@ -63,10 +66,13 @@ export class DeckWrapped {
     this.opts = opts;
     this.node = node;
     const { type, initialViewState } = this.opts;
-
+    const dpr =
+      typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
+    const useDevicePixels = Math.max(1, Math.min(2, dpr));
     this.deck = new lib.Deck({
       ...(getViews({ type, lib, initialViewState }) as any),
       parent: node,
+      useDevicePixels,
       controller: true,
       ...omitKeys(opts, [
         "type",
@@ -89,7 +95,7 @@ export class DeckWrapped {
               opts.onHoverItem(info.object, {
                 x: info.x,
                 y: info.y,
-                coordinates: info.coordinate,
+                coordinates: info.coordinate as [number, number],
                 screenCoordinates: info.pixel,
               });
             }
@@ -194,9 +200,14 @@ export class DeckWrapped {
 
   /** Used in getting data */
   getExtent = (): Bounds | undefined => {
-    const b = this.deck.getViewports()[0]?.getBounds();
-    if (!b) return undefined;
-    return [b.slice(0, 2) as any, b.slice(2) as any];
+    try {
+      const b = this.deck.getViewports()[0]?.getBounds();
+      if (!b) return undefined;
+      return [b.slice(0, 2) as any, b.slice(2) as any];
+    } catch (err) {
+      console.log(err);
+    }
+    return undefined;
   };
 
   render(props: DeckProps<OrthographicView[] | MapView[]>) {
@@ -229,22 +240,6 @@ export class DeckWrapped {
     }
   }
 }
-
-type PickingInfo = {
-  color: Uint8Array | null;
-  layer: any | null;
-  sourceLayer?: any | null;
-  viewport?: any;
-  index: number;
-  picked: boolean;
-  object?: any;
-  x: number;
-  y: number;
-  pixel?: [number, number];
-  coordinate?: [number, number];
-  devicePixel?: [number, number];
-  pixelRatio: number;
-};
 
 export type Bounds = [[number, number], [number, number]];
 
@@ -279,7 +274,7 @@ export const getViewState = <Type extends ViewType>(
     zoom: typeof state?.["zoom"] === "number" ? state["zoom"] : 0,
     ...(state && pickKeys(state as any, ["bearing", "pitch", "extent"], true)),
   };
-  return initialViewState as any;
+  return initialViewState;
 };
 
 type ViewType = DeckWrappedOpts["type"];

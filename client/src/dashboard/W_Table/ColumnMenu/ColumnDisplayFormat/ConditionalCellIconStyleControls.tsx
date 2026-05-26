@@ -1,14 +1,14 @@
 import { mdiClose, mdiPlus } from "@mdi/js";
 import React from "react";
-import Btn from "../../../../components/Btn";
-import { FlexCol } from "../../../../components/Flex";
-import { IconPalette } from "../../../../components/IconPalette/IconPalette";
+import Btn from "@components/Btn";
+import { FlexCol } from "@components/Flex";
+import { IconPalette } from "@components/IconPalette/IconPalette";
 import { SmartSearch } from "../../../SmartFilter/SmartSearch/SmartSearch";
 import type {
   ConditionalStyleIcons,
   StyleColumnProps,
-} from "../ColumnStyleControls";
-import FormField from "../../../../components/FormField/FormField";
+} from "../ColumnStyleControls/ColumnStyleControls";
+import FormField from "@components/FormField/FormField";
 
 type P = StyleColumnProps & {
   style: ConditionalStyleIcons;
@@ -113,11 +113,16 @@ export const ConditionalCellIconStyleControls = ({
         color="action"
         variant="faded"
         iconPath={mdiPlus}
-        onClick={async () => {
+        onClickPromise={async () => {
           const firstNonNullValueRow = await db[tableName]?.findOne?.(
-            { [column.name]: { $ne: null } },
+            {
+              [column.name]: {
+                $nin: [null, ...Object.keys(style.valueToIconMap)],
+              },
+            },
             { select: { [column.name]: 1 } },
           );
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           const firstNonNullValue = firstNonNullValueRow?.[column.name];
           if (firstNonNullValue !== undefined) {
             updateCondStyle({

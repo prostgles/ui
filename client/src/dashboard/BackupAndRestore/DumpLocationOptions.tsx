@@ -1,24 +1,17 @@
+import type { PGDumpParams } from "@common/utils";
+import { DESTINATIONS } from "@common/utils";
+import { Select } from "@components/Select/Select";
 import React from "react";
-import type { PGDumpParams } from "../../../../common/utils";
-import { DESTINATIONS } from "../../../../common/utils";
-import Select from "../../components/Select/Select";
-import { CredentialSelector } from "./CredentialSelector";
-import type { DumpOptionsProps } from "./DumpOptions";
+import { CloudStorageCredentialSelector } from "./CloudStorageCredentialSelector";
 
-type P = Pick<DumpOptionsProps, "dbs" | "dbsTables" | "dbsMethods"> & {
+type P = {
   currOpts: PGDumpParams;
   onChangeCurrOpts: (
     newLocation: Pick<PGDumpParams, "credentialID" | "destination">,
   ) => void;
 };
 
-export const DumpLocationOptions = ({
-  dbs,
-  dbsTables,
-  dbsMethods,
-  currOpts,
-  onChangeCurrOpts,
-}: P) => {
+export const DumpLocationOptions = ({ currOpts, onChangeCurrOpts }: P) => {
   const { destination, credentialID } = currOpts;
   return (
     <>
@@ -26,16 +19,15 @@ export const DumpLocationOptions = ({
         className="mr-1"
         label="Destination"
         fullOptions={DESTINATIONS}
+        data-command="PGDumpOptions.destination"
         value={destination}
+        variant="button-group"
         onChange={(destination) => {
           onChangeCurrOpts({ destination, credentialID });
         }}
       />
       {destination === "Cloud" && (
-        <CredentialSelector
-          dbs={dbs}
-          dbsTables={dbsTables}
-          dbsMethods={dbsMethods}
+        <CloudStorageCredentialSelector
           selectedId={credentialID}
           onChange={(id) => {
             onChangeCurrOpts({ destination, credentialID: id });

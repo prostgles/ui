@@ -5,7 +5,7 @@ import {
   TablePermissionControls,
 } from "../TableRules/TablePermissionControls";
 import type { DBPermissionEditorProps } from "./PCustomTables";
-import type { TableRules } from "../../../../../common/publishUtils";
+import type { TableRules } from "@common/publishUtils";
 
 export const PAllTables = ({
   dbPermissions,
@@ -24,7 +24,6 @@ export const PAllTables = ({
     <div className="flex-col gap-1">
       <h4 className="my-1">Allowed on {tables.length} tables:</h4>
       <TablePermissionControls
-        prgl={prgl}
         userTypes={userTypes}
         contextData={contextData}
         tablesWithRules={tablesWithRules}

@@ -4,7 +4,7 @@ import type { SQLMatcher } from "./monacoSQLSetup/registerSuggestions";
 
 export const MatchComment: SQLMatcher = {
   match: (cb) => cb.tokens[0]?.textLC === "comment",
-  result: async ({ cb, ss }) => {
+  result: ({ cb, ss }) => {
     const { prevLC, ltoken } = cb;
 
     if (
@@ -19,7 +19,7 @@ export const MatchComment: SQLMatcher = {
     } else if (ltoken?.textLC === "on") {
       return suggestSnippets(COMMENT_ON.map((label) => ({ label })));
     } else if (prevLC.startsWith("comment on")) {
-      const expect = ltoken!.textLC!;
+      const expect = ltoken!.textLC;
       if (expect === "column") {
         return {
           suggestions: ss

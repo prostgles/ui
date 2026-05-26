@@ -1,5 +1,5 @@
 import React from "react";
-import { Hotkey } from "../../components/Hotkey";
+import { Hotkey } from "@components/Hotkey";
 import { t } from "../../i18n/i18nUtils";
 
 export const SQLHotkeys = () => {

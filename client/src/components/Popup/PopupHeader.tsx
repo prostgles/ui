@@ -42,7 +42,7 @@ export const PopupHeader = ({
     typeof title === "function" ? rootDiv && title(rootDiv) : title;
   return (
     <header
-      className={`${POPUP_CLASSES.title} ${positioning === "right-panel" ? "pl-2" : "pl-1"} py-p5 pr-p5 flex-row ai-center bb b-color gap-1`}
+      className={`${POPUP_CLASSES.title} pl-1 py-p5 pr-p5 flex-row ai-center bb b-color gap-1`}
       data-command="Popup.header"
     >
       {collapsible && (
@@ -59,7 +59,7 @@ export const PopupHeader = ({
       <FlexCol
         id="modal-headline"
         className={
-          "ai-none jc-none f-1 font-20 noselect font-medium text-0 o-hidden text-ellipsis ta-left m-0 ws-nowrap py-p25 " +
+          "ai-none jc-none f-1 font-20 noselect font-medium text-0 o-hidden text-ellipsis ta-left m-0 ws-nowrap " +
           (collapsible ? " pointer " : " ")
         }
         onClick={collapsible ? toggleContent : undefined}
@@ -67,7 +67,6 @@ export const PopupHeader = ({
         <h4
           className="m-0"
           style={{
-            // justifyItems: "start", Why was this here?
             ...(collapsible ? { paddingLeft: 0 } : {}),
           }}
           title={typeof title === "string" ? title : undefined}

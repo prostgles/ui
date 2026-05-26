@@ -1,8 +1,5 @@
 import { fixIndent } from "../../../../demo/scripts/sqlVideoDemo";
-import {
-  getCommandElemSelector,
-  getDataKeyElemSelector,
-} from "../../../../Testing";
+import { getCommandElemSelector, getDataKey } from "../../../../Testing";
 import type { UIDocElement } from "../../../UIDocs";
 import { getCommonViewHeaderUIDoc } from "../getCommonViewHeaderUIDoc";
 
@@ -12,11 +9,29 @@ export const sqlEditorUIDoc = {
   title: "SQL editor",
   description:
     "The SQL editor allows users to write and execute SQL queries against the selected database. It provides a user-friendly interface for interacting with the database.",
-  docs: fixIndent(`
-    The SQL editor is a powerful tool for executing SQL queries against your database. It supports syntax highlighting, auto-completion, and various options for managing queries.
+  docs: `
+    The SQL editor is a powerful tool for executing SQL queries against your PostgreSQL database. 
 
+    ### Features
+    
+    - **Intelligent auto-completion** with context-aware suggestions based on your schema and data with JSONB property access support
+    - **Rich suggestion details** with related objects, usage examples and documentation extracts, reducing the need to switch context
+    - **Execute current statement** functionality to run only the SQL statement where the cursor is located
+    - **Charting options** to visualize query results as timecharts or maps directly from the editor
+    - **Multiple result display modes** including table, map, timechart, JSON, and CSV formats
+    
+    To make it easier working with multiple queries, the default query execution behaviour is to execute the current statement.
+    It is highlighted by the blue vertical line to the left of the code. Press <kbd>Alt+E</kbd> or <kbd>Ctrl+Enter</kbd> or <kbd>F5</kbd> to execute it.
+    
+    The editor is based on [Monaco Editor](https://microsoft.github.io/monaco-editor/), which powers VS Code. 
+    It supports multi-cursor editing, find and replace, and many other advanced editing features.
+
+    Realtime query resource usage can be enabled in the settings to monitor CPU and memory consumption.
+    
     <img src="./screenshots/sql_editor.svgif.svg" alt="SQL editor screenshot" />
-  `),
+
+    ## Components:
+  `,
   docOptions: "asSeparateFile",
   children: [
     getCommonViewHeaderUIDoc(
@@ -31,9 +46,7 @@ export const sqlEditorUIDoc = {
           {
             type: "tab",
             selector:
-              getCommandElemSelector("MenuList") +
-              " " +
-              getDataKeyElemSelector("General"),
+              getCommandElemSelector("MenuList") + " " + getDataKey("General"),
             title: "General",
             description: "General settings for the SQL editor.",
             children: [
@@ -80,7 +93,7 @@ export const sqlEditorUIDoc = {
             selector:
               getCommandElemSelector("MenuList") +
               " " +
-              getDataKeyElemSelector("Editor options"),
+              getDataKey("Editor options"),
             title: "Editor options",
             description:
               "Settings for the SQL editor's appearance and behavior.",
@@ -100,9 +113,7 @@ export const sqlEditorUIDoc = {
           {
             type: "tab",
             selector:
-              getCommandElemSelector("MenuList") +
-              " " +
-              getDataKeyElemSelector("Hotkeys"),
+              getCommandElemSelector("MenuList") + " " + getDataKey("Hotkeys"),
             title: "Hotkeys",
             description:
               "Keyboard shortcuts for common actions in the SQL editor. This includes executing queries, saving files, and more.",

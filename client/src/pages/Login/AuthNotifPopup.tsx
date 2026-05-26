@@ -1,7 +1,7 @@
 import React from "react";
-import Popup from "../../components/Popup/Popup";
-import { SuccessMessage } from "../../components/Animations";
-import { InfoRow } from "../../components/InfoRow";
+import Popup from "@components/Popup/Popup";
+import { SuccessMessage } from "@components/Animations";
+import { InfoRow } from "@components/InfoRow";
 
 export const AuthNotifPopup = ({
   success,

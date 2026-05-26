@@ -1,7 +1,7 @@
 import { mdiChevronDown, mdiClose } from "@mdi/js";
-import { usePromise } from "prostgles-client/dist/prostgles";
+import { usePromise } from "prostgles-client";
 import React, { useEffect, useMemo, useState } from "react";
-import { isDefined } from "../../utils";
+import { isDefined } from "../../utils/utils";
 import Btn from "../Btn";
 import type { BtnProps } from "../Btn";
 import { FlexCol, FlexRow } from "../Flex";
@@ -15,20 +15,23 @@ type P = {
   iconName: string | null | undefined;
   onChange: (newIcon: string | undefined | null) => void;
   label?: BtnProps["label"];
+  suggestedIcons?: { label: string; icon: string }[];
 };
-export const IconPalette = ({ iconName, onChange, label }: P) => {
+export const IconPalette = ({
+  iconName,
+  onChange,
+  label,
+  suggestedIcons,
+}: P) => {
   const iconList = usePromise(async () => {
-    const iconsNames: string[] = await fetch("/icons/_meta.json").then((r) =>
+    const iconsNames = (await fetch("/icons/_meta.json").then((r) =>
       r.json(),
-    );
+    )) as string[];
     return iconsNames;
   }, []);
   const [searchTerm, setSearchTerm] = useState("");
   const iconSize = 55;
-  const iconStyle = {
-    width: `${iconSize}px`,
-    height: `${iconSize}px`,
-  };
+
   const displayedItemsFull = useMemo(() => {
     if (!iconList) return [];
     return iconList
@@ -71,15 +74,19 @@ export const IconPalette = ({ iconName, onChange, label }: P) => {
         <Btn
           label={label}
           variant="faded"
+          size="small"
           children={!iconName ? "Set icon..." : undefined}
           iconPath={!iconName ? mdiChevronDown : undefined}
           iconPosition={!iconName ? "right" : undefined}
-          iconNode={!iconName ? undefined : <SvgIcon icon={iconName} />}
+          iconNode={
+            !iconName ? undefined : <SvgIcon icon={iconName} size={16} />
+          }
           onClick={() => setOpen(true)}
         />
-        {![undefined, null].includes(iconName as any) && (
+        {Boolean(iconName) && (
           <Btn
             className="as-end"
+            size="small"
             iconPath={mdiClose}
             onClick={() => onChange(null)}
           />
@@ -101,8 +108,9 @@ export const IconPalette = ({ iconName, onChange, label }: P) => {
           contentClassName="p-0"
           positioning="center"
           persistInitialSize={true}
-          title="Chose icon"
+          title="Choose icon"
           onClose={() => setOpen(false)}
+          autoFocusFirst={"content"}
         >
           <FlexCol
             className="f-1 min-s-0 o-auto p-1 ai-center"
@@ -113,11 +121,32 @@ export const IconPalette = ({ iconName, onChange, label }: P) => {
             <FormFieldDebounced
               label={"Search icons"}
               value={searchTerm}
+              type="text"
               onChange={(newTerm) => {
                 setSearchTerm(newTerm);
                 setPage(0);
               }}
             />
+            {suggestedIcons?.length ?
+              <FlexRow>
+                {suggestedIcons.map(({ label, icon }) => (
+                  <Btn
+                    key={icon}
+                    variant="faded"
+                    onClick={() => {
+                      onChange(icon);
+                      setOpen(false);
+                    }}
+                    iconNode={<SvgIcon icon={icon} size={18} />}
+                    className="f-0 w-fit h-fit"
+                    size="small"
+                  >
+                    {" "}
+                    {label}
+                  </Btn>
+                ))}
+              </FlexRow>
+            : null}
             <div
               style={{
                 height: "1px",
@@ -125,7 +154,7 @@ export const IconPalette = ({ iconName, onChange, label }: P) => {
                 background: "var(--text-2)",
               }}
             ></div>
-            <ScrollFade className="text-1 min-s-0 o-auto flex-row-wrap gap-1 f-1">
+            <ScrollFade className="text-1 max-h-fit min-s-0 o-auto flex-row-wrap gap-1 f-1">
               {displayedItems.map(({ name, node }) => {
                 return (
                   <FlexCol

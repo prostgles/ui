@@ -2,9 +2,9 @@ import { mdiTextBoxSearchOutline } from "@mdi/js";
 import type { FieldFilter } from "prostgles-types";
 import { isObject } from "prostgles-types";
 import React from "react";
-import type { CustomTableRules } from "../../../../common/publishUtils";
-import Chip from "../../components/Chip";
-import { LabeledRow } from "../../components/LabeledRow";
+import type { CustomTableRules } from "@common/publishUtils";
+import Chip from "@components/Chip";
+import { LabeledRow } from "@components/LabeledRow";
 import type { EditedAccessRule } from "./AccessControl";
 
 type TableRuleSummary = {

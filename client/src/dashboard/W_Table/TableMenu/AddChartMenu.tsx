@@ -1,31 +1,27 @@
-import { mdiChartLine, mdiMap } from "@mdi/js";
+import Btn, { type BtnProps } from "@components/Btn";
+import { Icon } from "@components/Icon/Icon";
+import { getSearchRanking } from "@components/SearchList/searchMatchUtils/getSearchRanking";
+import { Select } from "@components/Select/Select";
+import { SvgIcon } from "@components/SvgIcon";
+import { mdiChartLine, mdiMap, mdiSetLeftCenter } from "@mdi/js";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { useMemoDeep } from "prostgles-client/dist/prostgles";
-import {
-  _PG_numbers,
-  includes,
-  isDefined,
-  type ParsedJoinPath,
-} from "prostgles-types";
+import { isDefined, type ParsedJoinPath } from "prostgles-types";
 import React from "react";
-import Btn, { type BtnProps } from "../../../components/Btn";
-import Select from "../../../components/Select/Select";
+import { addChart } from "src/dashboard/Dashboard/addChart";
+import type { DeckGlColor } from "src/dashboard/Map/DeckGLMap";
 import { t } from "../../../i18n/i18nUtils";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
-import type {
-  DBSchemaTablesWJoins,
-  OnAddChart,
-  WindowData,
-} from "../../Dashboard/dashboardUtils";
-import { getRandomColor } from "../../Dashboard/dashboardUtils";
+import type { WindowData } from "../../Dashboard/dashboardUtils";
 import { rgbaToString } from "../../W_Map/getMapFeatureStyle";
 import type { ChartableSQL } from "../../W_SQL/getChartableSQL";
-import { getRankingFunc } from "../ColumnMenu/JoinPathSelectorV2";
-import type { ChartColumn, ColInfo } from "./getChartCols";
+import type { ChartColumn } from "./getChartCols";
 import { getChartCols } from "./getChartCols";
 
-type P = Pick<CommonWindowProps, "myLinks" | "childWindows"> & {
-  onAddChart: OnAddChart;
-  tables: DBSchemaTablesWJoins;
+type P = Pick<
+  CommonWindowProps,
+  "myLinks" | "childWindows" | "getLinksAndWindows"
+> & {
   btnClassName?: string;
   size?: "micro";
 } & (
@@ -45,13 +41,14 @@ export const AddChartMenu = (props: P) => {
   const {
     type,
     w,
-    onAddChart,
-    tables,
     chartableSQL,
     size,
     myLinks,
     childWindows,
+    getLinksAndWindows,
   } = props;
+
+  const { tables, dbs } = usePrgl();
 
   const isMicroMode = size === "micro";
   const chartCols = useMemoDeep(() => {
@@ -65,89 +62,31 @@ export const AddChartMenu = (props: P) => {
 
   const { geoCols, dateCols, sql, withStatement = "" } = chartCols;
 
-  const tableName = w.table_name;
-  const onAdd = (
-    linkOpts: { type: "map" | "timechart"; columns: ChartColumn[] },
-    joinPath: ParsedJoinPath[] | undefined,
-  ) => {
-    const otherColumns = linkOpts.columns
-      .reduce(
-        (a, v) => {
-          v.otherColumns.forEach((vc) => {
-            if (!a.some((ac) => ac.name === vc.name)) {
-              a.push(vc);
-            }
-          });
-          return a;
-        },
-        [] as (ColInfo & { is_pkey: boolean })[],
-      )
-      .map(({ name, udt_name, is_pkey }) => ({ name, udt_name, is_pkey }));
-
-    const firstNumericColumn = otherColumns.find(
-      (c) => !c.is_pkey && includes(_PG_numbers, c.udt_name),
-    )?.name;
-    const columnList = `(${linkOpts.columns.map((c) => c.name).join()})`;
-    const name =
-      joinPath ?
-        `${[tableName, ...joinPath.slice(0).map((p) => p.table)].join(" > ")} ${columnList}`
-      : `${tableName || ""} ${columnList}`;
-    const usedColors = myLinks.flatMap((l) =>
-      l.options.type !== "table" ?
-        l.options.columns.map((c) => c.colorArr)
-      : undefined,
-    );
-    const colorArr = getRandomColor(1, "deck", usedColors);
-    const type = linkOpts.type;
-    onAddChart({
-      name,
-      linkOpts: {
-        ...(type === "timechart" ?
-          {
-            type,
-            otherColumns,
-            columns: [
-              {
-                name: linkOpts.columns[0]!.name,
-                colorArr,
-                statType:
-                  firstNumericColumn ?
-                    {
-                      funcName: "$avg",
-                      numericColumn: firstNumericColumn,
-                    }
-                  : undefined,
-              },
-            ],
-          }
-        : {
-            type,
-            columns: linkOpts.columns.map(({ name }, i) => ({
-              name,
-              colorArr,
-            })),
-          }),
-        joinPath,
-        dataSource:
-          sql ?
-            {
-              type: "sql",
-              sql,
-              withStatement,
-            }
-          : {
-              type: "table",
-              joinPath,
-            },
+  const onAdd = (linkOpts: {
+    type: "map" | "timechart" | "barchart";
+    columns: ChartColumn[];
+    joinPath: ParsedJoinPath[] | undefined;
+  }) => {
+    const { windows } = getLinksAndWindows();
+    void addChart({
+      dbs,
+      windows,
+      myLinks,
+      parentWindow: w,
+      tables,
+      newChart: {
+        ...linkOpts,
         sql,
+        withStatement,
       },
+      existingChartWindow: undefined,
     });
   };
 
   const charts: {
     cols: ChartColumn[];
     onAdd: (cols: ChartColumn[], path: ParsedJoinPath[] | undefined) => any;
-    label: "Map" | "Timechart";
+    label: "Map" | "Timechart" | "Barchart";
     iconPath: string;
   }[] = [
     {
@@ -155,7 +94,7 @@ export const AddChartMenu = (props: P) => {
       iconPath: mdiMap,
       cols: geoCols,
       onAdd: (cols, path) => {
-        onAdd({ type: "map", columns: cols }, path);
+        onAdd({ type: "map", columns: cols, joinPath: path });
       },
     },
     {
@@ -163,15 +102,27 @@ export const AddChartMenu = (props: P) => {
       iconPath: mdiChartLine,
       cols: dateCols,
       onAdd: (cols, path) => {
-        onAdd(
-          {
-            type: "timechart",
-            columns: cols,
-          },
-          path,
-        );
+        onAdd({
+          type: "timechart",
+          columns: cols,
+          joinPath: path,
+        });
       },
     },
+    // {
+    //   label: "Barchart",
+    //   iconPath: mdiChartBar,
+    //   cols: barCols,
+    //   onAdd: (cols, path) => {
+    //     onAdd(
+    //       {
+    //         type: "barchart",
+    //         columns: cols,
+    //       },
+    //       path,
+    //     );
+    //   },
+    // },
   ];
 
   return (
@@ -187,14 +138,19 @@ export const AddChartMenu = (props: P) => {
                 return undefined;
               }
 
+              const linkColumns = linkOpts.columns.map((col) => col.name);
+              const linkSql =
+                linkOpts.dataSource?.type === "sql" ?
+                  linkOpts.dataSource.sql
+                : undefined;
               const matches =
                 linkOpts.type === c.label.toLowerCase() &&
-                ((w.type === "sql" && sql?.trim() === linkOpts.sql?.trim()) ||
+                ((w.type === "sql" && sql?.trim() === linkSql?.trim()) ||
                   (w.type === "table" &&
-                    c.cols.some((col) =>
-                      linkOpts.columns.some((c) => c.name === col.name),
-                    )));
-              if (matches) return linkOpts.columns[0]?.colorArr;
+                    c.cols.some((col) => linkColumns.includes(col.name))));
+              if (matches) {
+                return linkOpts.columns[0]?.colorArr;
+              }
             })
             .find(isDefined);
 
@@ -224,10 +180,11 @@ export const AddChartMenu = (props: P) => {
               minHeight: 0,
               color:
                 layerAlreadyAdded ?
-                  rgbaToString(layerAlreadyAdded as any)
+                  rgbaToString(layerAlreadyAdded as DeckGlColor)
                 : undefined,
             },
-            "data-command": `AddChartMenu.${c.label}`,
+            "data-command":
+              c.label === "Map" ? "AddChartMenu.Map" : "AddChartMenu.Timechart",
           };
 
           /**
@@ -246,27 +203,36 @@ export const AddChartMenu = (props: P) => {
                 data-command={btnProps["data-command"]}
                 btnProps={{
                   children: "",
-                  variant: "default",
+                  variant: "icon",
                   ...btnProps,
                 }}
-                fullOptions={c.cols.map((c, i) => ({
-                  key: c.type === "joined" ? c.label : c.name,
-                  label:
-                    c.type === "joined" ? `> ${c.label} (${c.name})` : c.name,
-                  ranking: (searchTerm) =>
-                    getRankingFunc(
-                      searchTerm,
-                      c.type === "joined" ?
-                        c.path.map((p) => p.table)
-                      : [c.name],
-                    ),
-                }))}
-                onChange={(colNameOrLabel) => {
-                  const col = c.cols.find((col) =>
-                    col.type === "joined" ?
-                      col.label === colNameOrLabel
-                    : col.name === colNameOrLabel,
-                  );
+                fullOptions={c.cols.map((c) => {
+                  const targetTable =
+                    c.type === "joined" ?
+                      tables.find((t) => t.name === c.path.at(-1)?.table)
+                    : undefined;
+                  return {
+                    key: c.key,
+                    label:
+                      c.type === "joined" ? `${c.label} (${c.name})` : c.name,
+                    leftContent:
+                      targetTable ?
+                        targetTable.icon ?
+                          <SvgIcon className="text-1" icon={targetTable.icon} />
+                        : <Icon className="text-1" path={mdiSetLeftCenter} />
+                      : undefined,
+
+                    ranking: (searchTerm) =>
+                      getSearchRanking(
+                        searchTerm,
+                        c.type === "joined" ?
+                          c.path.map((p) => p.table)
+                        : [c.name],
+                      ),
+                  };
+                })}
+                onChange={(key) => {
+                  const col = c.cols.find((col) => col.key === key);
                   c.onAdd(
                     [col!],
                     col?.type === "joined" ? col.path : undefined,

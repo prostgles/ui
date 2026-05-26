@@ -1,6 +1,6 @@
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import path from "path";
 import { PassThrough } from "stream";
-import type { DBGeneratedSchema } from "../../../common/DBGeneratedSchema";
 import { getInstalledPsqlVersions } from "./getInstalledPrograms";
 import { pgDump } from "./pgDump";
 import { pgRestore } from "./pgRestore";
@@ -14,19 +14,22 @@ export type Users = Required<DBGeneratedSchema["users"]["columns"]>;
 export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
 type DBS = DBOFullyTyped<DBGeneratedSchema>;
 
+import type { InstalledPrograms } from "@common/electronInitTypes";
+import { ROUTES } from "@common/utils";
 import checkDiskSpace from "check-disk-space";
 import type { Request, Response } from "express";
-import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
+import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
 import { bytesToSize } from "prostgles-server/dist/FileManager/FileManager";
 import type { DB } from "prostgles-server/dist/Prostgles";
-import type { FilterItem, SubscriptionHandler } from "prostgles-types";
-import type { InstalledPrograms } from "../../../common/electronInitTypes";
-import { ROUTES } from "../../../common/utils";
+import type {
+  FilterItem,
+  SQLHandler,
+  SubscriptionHandler,
+} from "prostgles-types";
 import type { SUser } from "../authConfig/sessionUtils";
 import type { ConnectionManager } from "../ConnectionManager/ConnectionManager";
 import { getRootDir } from "../electronConfig";
 import { checkAutomaticBackup } from "./checkAutomaticBackup";
-import type { Filter } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
 
 export const HOUR = 3600 * 1000;
 
@@ -36,41 +39,41 @@ export default class BackupManager {
   installedPrograms: InstalledPrograms | undefined;
 
   dbs: DBS;
-  db: DB;
+  dbsSql: SQLHandler;
   automaticBackupInterval: NodeJS.Timeout;
   connMgr: ConnectionManager;
   dbConfSub?: SubscriptionHandler;
 
   constructor(
-    db: DB,
     dbs: DBS,
+    dbsSql: SQLHandler,
     connMgr: ConnectionManager,
     installedPrograms: InstalledPrograms | undefined,
   ) {
-    this.db = db;
     this.dbs = dbs;
+    this.dbsSql = dbsSql;
     this.connMgr = connMgr;
     this.installedPrograms = installedPrograms;
 
-    const checkAutomaticBkps = async () => {
+    const checkAutomaticBackupsForEachConnection = async () => {
       const connections = await this.dbs.connections.find({
         $existsJoined: {
-          database_configs: { "backups_config->>enabled": "true" },
+          database_configs: { backups_config: { "@>": { enabled: true } } },
         },
-      } as FilterItem);
+      });
       for (const con of connections) {
         await this.checkAutomaticBackup(con);
       }
     };
     this.automaticBackupInterval = setInterval(() => {
-      void checkAutomaticBkps();
+      void checkAutomaticBackupsForEachConnection();
     }, HOUR / 4);
     void (async () => {
       await this.dbConfSub?.unsubscribe();
       this.dbConfSub = await dbs.database_configs.subscribe(
         {},
         { select: { backups_config: 1 }, limit: 0 },
-        checkAutomaticBkps,
+        checkAutomaticBackupsForEachConnection,
       );
     })();
   }
@@ -85,9 +88,14 @@ export default class BackupManager {
     return `${filePath}${cmd}`;
   };
 
-  static create = async (db: DB, dbs: DBS, connMgr: ConnectionManager) => {
+  static create = async (
+    db: DB,
+    dbs: DBS,
+    dbsSql: SQLHandler,
+    connMgr: ConnectionManager,
+  ) => {
     const installedPrograms = await getInstalledPsqlVersions(db);
-    return new BackupManager(db, dbs, connMgr, installedPrograms);
+    return new BackupManager(dbs, dbsSql, connMgr, installedPrograms);
   };
 
   async destroy() {
@@ -150,7 +158,7 @@ export default class BackupManager {
           clean: true,
           format: "c",
         },
-        status: { ok: `${new Date()}` },
+        status: { state: "finished", timestamp: new Date().toISOString() },
       },
       { returning: "*" },
     );
@@ -164,7 +172,11 @@ export default class BackupManager {
         void this.dbs.backups.update(
           { id: bkp.id },
           {
-            restore_status: { loading: { total: sizeBytes, loaded: chunkSum } },
+            restore_status: {
+              state: "loading",
+              total: sizeBytes,
+              loaded: chunkSum,
+            },
           },
         );
       }
@@ -195,38 +207,38 @@ export default class BackupManager {
       res.sendStatus(401);
       return;
     }
-    const bkpId = req.path.slice(ROUTES.BACKUPS.length + 1);
-    if (!bkpId) {
+    const backupId = req.path.slice(ROUTES.BACKUPS.length + 1);
+    if (!backupId) {
       res.sendStatus(404);
       return;
     }
-    const bkp = await this.dbs.backups.findOne({ id: bkpId });
-    if (!bkp) {
+    const backup = await this.dbs.backups.findOne({ id: backupId });
+    if (!backup) {
       res.sendStatus(404);
-    } else {
-      const { fileMgr } = await getFileMgr(this.dbs, bkp.credential_id);
-      if (bkp.credential_id) {
-        /* Allow access to file for a period equivalent to a download rate of 50KBps */
-        const presignedURL = await fileMgr.getFileCloudDownloadURL(
-          bkp.id,
-          +(bkp.sizeInBytes ?? 1e6) / 50,
-        );
-        if (!presignedURL) {
-          res.sendStatus(404);
-        } else {
-          res.redirect(presignedURL);
-        }
+      return;
+    }
+    const { fileMgr } = await getFileMgr(this.dbs, backup.credential_id);
+    if (backup.credential_id) {
+      /* Allow access to file for a period equivalent to a download rate of 50KBps */
+      const presignedURL = await fileMgr.getFileCloudDownloadURL(
+        backup.id,
+        1 * 60, // 1 minute
+      );
+      if (!presignedURL) {
+        res.sendStatus(404);
       } else {
-        try {
-          res.type(bkp.content_type);
-          res.sendFile(
-            path.resolve(
-              path.join(getRootDir() + ROUTES.BACKUPS + "/" + bkp.id),
-            ),
-          );
-        } catch (err) {
-          res.sendStatus(404);
-        }
+        res.redirect(presignedURL);
+      }
+    } else {
+      try {
+        res.type(backup.content_type);
+        res.sendFile(
+          path.resolve(
+            path.join(getRootDir() + ROUTES.BACKUPS + "/" + backup.id),
+          ),
+        );
+      } catch (err) {
+        res.sendStatus(404);
       }
     }
   };
@@ -283,11 +295,11 @@ export default class BackupManager {
   getCurrentBackup = (conId: string) =>
     this.dbs.backups.findOne({
       connection_id: conId,
-      "status->loading.<>": null,
+      status: { "@>": { state: "loading" } },
       /* If not updated in last 5 minutes then consider it dead */
       // last_updated: { ">": new Date(Date.now() - HOUR/12)  }
       $filter: [{ $ageNow: ["last_updated"] }, "<", "2 seconds"],
-    } as Filter);
+    });
 
   checkAutomaticBackup = checkAutomaticBackup.bind(this);
 }

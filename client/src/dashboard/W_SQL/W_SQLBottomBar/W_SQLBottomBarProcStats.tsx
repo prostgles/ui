@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { FlexRow } from "../../../components/Flex";
+import { FlexRow } from "@components/Flex";
 import type { W_SQLBottomBarProps } from "./W_SQLBottomBar";
-import { useIsMounted } from "prostgles-client/dist/react-hooks";
-import type { DBSSchema } from "../../../../../common/publishUtils";
-import Chip from "../../../components/Chip";
+import { useIsMounted } from "prostgles-client";
+import type { DBSSchema } from "@common/publishUtils";
+import Chip from "@components/Chip";
 import type { FilterItem } from "prostgles-types";
 
 export const W_SQLBottomBarProcStats = ({
@@ -19,18 +19,18 @@ export const W_SQLBottomBarProcStats = ({
     const pid = activeQuery?.pid;
     if (!getStatus || (activeQuery?.state !== "running" && pid)) return;
     const interval = setInterval(async () => {
-      await getStatus(connectionId);
+      await getStatus({ connId: connectionId });
       const procInfo = await dbs.stats.findOne({
-        database_id: {
-          $existsJoined: {
-            connections: {
-              connectionId,
-            },
+        $existsJoined: {
+          "database_configs.connections": {
+            id: connectionId,
           },
         },
         pid,
       } as FilterItem);
-      if (!getIsMounted()) return clearInterval(interval);
+      if (!getIsMounted()) {
+        return clearInterval(interval);
+      }
       setProcStats(procInfo);
     }, 1e3);
 

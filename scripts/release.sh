@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 version=$(./scripts/get_version.sh)
 tag="v$version"

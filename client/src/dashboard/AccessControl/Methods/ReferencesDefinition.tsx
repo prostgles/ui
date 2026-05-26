@@ -1,17 +1,18 @@
 import React, { useState } from "react";
-import Btn from "../../../components/Btn";
-import FormField from "../../../components/FormField/FormField";
-import Popup from "../../../components/Popup/Popup";
-import Select from "../../../components/Select/Select";
-import { SwitchToggle } from "../../../components/SwitchToggle";
+import Btn from "@components/Btn";
+import FormField from "@components/FormField/FormField";
+import Popup from "@components/Popup/Popup";
+import { Select } from "@components/Select/Select";
+import { SwitchToggle } from "@components/SwitchToggle";
 import { omitKeys } from "prostgles-types";
-import type { ArgumentDefinitionProps } from "./ArgumentDefinition";
+import type { ArgDef } from "@common/publishUtils";
+import type { CommonWindowProps } from "src/dashboard/Dashboard/Dashboard";
 
-export const ReferencesDefinition = ({
-  onChange,
-  tables,
-  ...arg
-}: ArgumentDefinitionProps) => {
+type P = ArgDef & {
+  onChange: (newArg: ArgDef | undefined) => void;
+} & Pick<CommonWindowProps, "tables">;
+
+export const ReferencesDefinition = ({ onChange, tables, ...arg }: P) => {
   const [showRef, setShowRef] = useState(false);
 
   const refTable = tables.find((t) => t.name === arg.references?.table);
@@ -76,17 +77,15 @@ export const ReferencesDefinition = ({
             <Select
               label={arg.references?.isFullRow ? "Display column" : "column"}
               value={arg.references?.column || undefined}
-              fullOptions={
-                refTable.columns
-                  .filter((c) =>
-                    ["string", "number", "Date"].includes(c.tsDataType),
-                  )
-                  .map((t) => ({
-                    key: t.name,
-                    label: t.name,
-                    subLabel: t.data_type,
-                  }))!
-              }
+              fullOptions={refTable.columns
+                .filter((c) =>
+                  ["string", "number", "Date"].includes(c.tsDataType),
+                )
+                .map((t) => ({
+                  key: t.name,
+                  label: t.name,
+                  subLabel: t.data_type,
+                }))}
               onChange={(column) => {
                 const colInfo = refTable.columns.find(
                   (c) => c.name === column,

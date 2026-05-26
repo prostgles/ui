@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-import Btn from "../../../../components/Btn";
-import { FlexRow } from "../../../../components/Flex";
+import Btn from "@components/Btn";
+import { FlexRow } from "@components/Flex";
 import type { ColumnConfigWInfo } from "../../W_Table";
 import { updateWCols } from "../../tableUtils/tableUtils";
 import type { LinkedColumnProps } from "./LinkedColumn";
-import Select from "../../../../components/Select/Select";
+import { Select } from "@components/Select/Select";
 import { mdiCheck } from "@mdi/js";
 import { t } from "../../../../i18n/i18nUtils";
 
@@ -40,13 +40,14 @@ export const LinkedColumnFooter = ({
       )}
       <FlexRow className="mt-2">
         {onClose && (
-          <Btn onClick={onClose} variant="outline">
+          <Btn onClick={onClose} variant="outline" size="default">
             {t.common["Cancel"]}
           </Btn>
         )}
         {column?.nested && (
           <Btn
             color="danger"
+            size="default"
             onClick={() => {
               updateWCols(
                 w,
@@ -63,11 +64,12 @@ export const LinkedColumnFooter = ({
           <Btn
             color="action"
             variant="filled"
+            size="default"
             className="ml-auto"
             disabledInfo={disabledInfo}
             data-command="LinkedColumn.Add"
             iconPath={mdiCheck}
-            onClickMessage={async (e, setM) => {
+            onClickMessage={(e, setM) => {
               setM({ loading: 1 });
               if (!w.columns) throw "not possible";
               const newColumns =

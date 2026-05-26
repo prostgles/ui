@@ -56,21 +56,22 @@ const addFontFamily = async (familyName: string, context: SVGContext) => {
     return;
   }
 
-  return findFontURL(familyName).then((fontURL) => {
-    return fetch(fontURL)
-      .then((response) => response.blob())
-      .then((blob) => {
-        // Convert blob to data URL
-        return new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.readAsDataURL(blob);
-        });
-      })
-      .then((dataURL) => {
-        // Create a style element for the font
-        const styleEl = document.createElementNS(SVG_NAMESPACE, "style");
-        styleEl.textContent = `
+  const fontURL = findFontURL(familyName);
+  if (!fontURL) return;
+  return fetch(fontURL)
+    .then((response) => response.blob())
+    .then((blob) => {
+      // Convert blob to data URL
+      return new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(blob);
+      });
+    })
+    .then((dataURL) => {
+      // Create a style element for the font
+      const styleEl = document.createElementNS(SVG_NAMESPACE, "style");
+      styleEl.textContent = `
             @font-face {
               font-family: "${familyName}";
               src: url("${dataURL}");
@@ -79,17 +80,16 @@ const addFontFamily = async (familyName: string, context: SVGContext) => {
             }
           `;
 
-        context.defs.appendChild(styleEl);
+      context.defs.appendChild(styleEl);
 
-        context.fontFamilies.push(familyName);
-      });
-  });
+      context.fontFamilies.push(familyName);
+    });
 };
 
 export const getFontIconElement = (node: Node) => {
   if (!isElementNode(node)) return;
-  const beforeStyle = getComputedStyle(node as HTMLElement, ":before");
-  const afterStyle = getComputedStyle(node as HTMLElement, ":after");
+  const beforeStyle = getComputedStyle(node, ":before");
+  const afterStyle = getComputedStyle(node, ":after");
   const iconStyle =
     beforeStyle.content && !includes(beforeStyle.content, ["", "none"]) ?
       ({ type: "before", style: beforeStyle } as const)
@@ -106,7 +106,7 @@ export const getFontIconElement = (node: Node) => {
   };
 };
 
-async function findFontURL(fontFamily: string): Promise<string> {
+function findFontURL(fontFamily: string) {
   // This is a simplified approach to find the font URL
 
   for (const sheet of document.styleSheets) {

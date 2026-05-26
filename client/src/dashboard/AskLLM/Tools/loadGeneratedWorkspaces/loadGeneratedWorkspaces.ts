@@ -17,7 +17,7 @@ export const loadGeneratedWorkspaces = async (
   tool_use_id: string,
   { dbs, connectionId, tables }: Pick<Prgl, "dbs" | "connectionId" | "tables">,
 ) => {
-  const workspaces = generatedWorkspaces.map((wsp, i) => {
+  const workspaces = generatedWorkspaces.map((wsp) => {
     const windows: WindowInsertModel[] = wsp.windows.map((generatedWindow) => {
       if (generatedWindow.type === "barchart") {
         return loadGeneratedBarchart(generatedWindow, tables);
@@ -32,25 +32,28 @@ export const loadGeneratedWorkspaces = async (
           return {
             ...c,
             show: true,
-            style: c.styling && {
-              type: "Conditional",
-              conditions: c.styling.conditions.map((cond) => {
-                // "textColor": "#ffffff",
-                // "textColorDarkMode": "#2386d5",
-                // "chipColor": "#673AB7"
-                const style =
-                  Object.entries(CHIP_COLOR_NAMES).find(
-                    ([k]) => k === cond.chipColor,
-                  )?.[1] ?? CHIP_COLOR_NAMES.blue!;
-                return {
-                  condition: cond.value,
-                  operator: cond.operator,
-                  textColor: style.textColor,
-                  chipColor: style.color,
-                  textColorDarkMode: style.textColorDarkMode,
-                };
-              }),
-            },
+            style:
+              c.styling?.type === "conditional" ?
+                {
+                  type: "Conditional",
+                  conditions: c.styling.conditions.map((cond) => {
+                    // "textColor": "#ffffff",
+                    // "textColorDarkMode": "#2386d5",
+                    // "chipColor": "#673AB7"
+                    const style =
+                      Object.entries(CHIP_COLOR_NAMES).find(
+                        ([k]) => k === cond.chipColor,
+                      )?.[1] ?? CHIP_COLOR_NAMES.blue!;
+                    return {
+                      condition: cond.value,
+                      operator: cond.operator,
+                      textColor: style.textColor,
+                      chipColor: style.color,
+                      textColorDarkMode: style.textColorDarkMode,
+                    };
+                  }),
+                }
+              : c.styling,
           };
         });
         const {
@@ -58,7 +61,7 @@ export const loadGeneratedWorkspaces = async (
           filter,
           filterOperand,
           quickFilterGroups,
-          cardLayout,
+          // cardLayout,
           table_name,
           title,
         } = generatedWindow;
@@ -70,7 +73,7 @@ export const loadGeneratedWorkspaces = async (
           options: {
             filterOperand,
             quickFilterGroups,
-            cardLayout,
+            // cardLayout,
           } satisfies WindowData<"table">["options"],
           sort: sort
             ?.map((s) => {
@@ -105,8 +108,8 @@ export const loadGeneratedWorkspaces = async (
       options: {
         pinnedMenu: false,
       },
-      user_id: undefined as any,
-      last_updated: undefined as any,
+      user_id: undefined as unknown as string,
+      last_updated: undefined as unknown as string,
       connection_id: connectionId,
       windows,
       source: {
@@ -121,7 +124,7 @@ export const loadGeneratedWorkspaces = async (
     };
   });
 
-  const insertedWorkspaces = await dbs.workspaces.insert(workspaces, {
+  const insertedWorkspaces = await dbs.workspaces.insertMany(workspaces, {
     returning: "*",
   });
 
@@ -166,7 +169,7 @@ export const loadGeneratedWorkspaces = async (
                 const insertedChart: DBSSchema["windows"] | undefined =
                   insertedWindow;
                 if (insertedChart) {
-                  await dbs.links.insert(
+                  await dbs.links.insertMany(
                     generatedWindowChartOptions.linkOptions.map((options) => {
                       return {
                         w1_id: insertedChart.id,

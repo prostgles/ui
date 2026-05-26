@@ -16,7 +16,7 @@
     "strict": true,
     "outDir": "build",
     "resolveJsonModule": true,
-    "skipLibCheck": true //excludes node_modules
+    "skipLibCheck": true
   },
   "exclude": ["ui", "*.conf", "node_modules"]
 }

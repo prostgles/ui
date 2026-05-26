@@ -19,15 +19,15 @@ FROM (
     ('Picked for you', 'Soft Drinks', 'Coca-Cola® products. ', '3.49 USD'),
     ('Menu ', 'Dry Wok Spicy Beef', '', '14.95 USD'),
     ('Hold-Me-Overs', 'Chili', 'cheddar, sour cream, scallions, garlic toast', '8.0 USD'),
-    ('Burgers', 'Pastrami', 'Pastrami, Swiss cheese, spiked horseradish, and bavarian mustard sauce.', '16.0 USD'),
+    ('Burgers', 'Pastrami', 'Pastrami, Swiss cheese, spiked horseradish, and bavarian mustard sauce.', '16.0 USD'),
     ('Soup', 'Wonton Soup', 'Served with crispy noodles.', '5.99 USD'),
-    ('Mains', '9. Pork Loin Katsu Curry Udon or Rice', 'Pork Loin Katsu with Japanese Curry.\nChoice of Udon or Rice', '14.99 USD'),
+    ('Mains', '9. Pork Loin Katsu Curry Udon or Rice', 'Pork Loin Katsu with Japanese Curry. Choice of Udon or Rice', '14.99 USD'),
     ('Breakfast Sides', 'Smothered Home Fries', 'Served with onion and cheese.', '6.5 USD'),
     ('Beverages', 'Cappuccino', 'Regular (130 Cal.), Large (160 Cal.) Espresso with steamed milk, topped with a cap of foam. Allergens: Contains Milk', '4.99 USD'),
     ('Salad', 'Green Salad', '', '7.25 USD'),
     ('Sides', 'Steak Fries', 'Thick cut and fried to perfection with seasoning.', '3.49 USD'),
     ('Bowls', 'Supreme Fried Rice', 'Steak, chicken &amp; shrimp stir-fried with our signature fried rice recipe with carrots, green onions &amp; egg. ', '15.59 USD'),
-    ('Goat Entries', 'Goat Mandhakini(Mutton Mandhakini)', 'Semi gravy goat cooked with onions,chillies and chopped boiled egg.\nThe entry is served with white rice on the side. Bread can add as on order.\n\n\n', '18.99 USD'),
+    ('Goat Entries', 'Goat Mandhakini(Mutton Mandhakini)', 'Semi gravy goat cooked with onions,chillies and chopped boiled egg. The entry is served with white rice on the side. Bread can add as on order.   ', '18.99 USD'),
     ('Appetizers', 'French Fries', 'Deep fried extra crispy cut potatoes.', '5.0 USD'),
     ('Starters', 'Veg Bonda', '', '7.0 USD'),
     ('Fresh Melts®', 'Meatball Marinara Melt Footlong Melt', 'Add some melty goodness to your Meatball Marinara sub. Make it a Fresh Melt™ and get craveable meatballs and tangy marinara sauce topped with American and parmesan, all grilled to cheesy perfection. Freshly made in front of you.', '10.79 USD'),
@@ -51,7 +51,7 @@ FROM (
     ('Desserts', 'Cheesecake', '', '4.89 USD'),
     ('Chinese Entrees Seafood Combo', 'Shrimp with Asparagus', 'Served with 2 crab cheese wonton, ham fried rice, and soup.', '15.95 USD'),
     ('Dipping Sauces', 'Marinara Dip', '', '0.88 USD'),
-    ('Enjoy A Treat', 'Banana Berry Treat®', 'Bananas, Strawberries*, Raspberries, Papaya Juice Blend, Dairy Whey Blend\n*contains added sugar\n\n300 - 600 Calories\n\nAllergens:    Dairy Whey Blend (milk, egg)', '6.54 USD'),
+    (E'Enjoy A Treat', 'Banana Berry Treat®', 'Bananas, Strawberries*, Raspberries, Papaya Juice Blend, Dairy Whey Blend *contains added sugar  300 - 600 Calories  Allergens:    Dairy Whey Blend (milk, egg)', '6.54 USD'),
     ('Fried Rice and Noodles', 'Thai Lo Mien', '', '12.0 USD'),
     ('Picked for you', 'Cinnamon Sugar Churros', 'Chocolate- and caramel-filled churros with chocolate dipping sauce.', '5.99 USD'),
     ('Picked for you', 'Cajun Pasta Combo with 6 Asian Wingz', 'Cajun Alfredo Pasta with sautéed trinity shrimp and crawfish tails and Texas toast. 6 Fried Wingz tossed in our Famous Asian Sauce. ', '27.49 USD'),
@@ -60,7 +60,7 @@ FROM (
     ('Burritos', 'El Toro''s Grilled Chicken Burrito', 'A burrito filled with grilled chicken, rice, beans, lettuce, tomatoes, cheese and sour cream', '17.5 USD'),
     ('Pizza', 'Loaded Tot-zza Pizza', 'Ranch sauce topped with 100% real Wisconsin mozzarella cheese, tater tots, applewood smoked bacon, green onions and drizzled with nacho cheese.', '0.0 USD'),
     ('Soups', 'Tom Yum Soups cup', '', '4.99 USD'),
-    ('Regular FAVORITES', '#17 Ultimate Porker', 'HAM &amp; BACON lettuce, tomato &amp; mayo\n', '8.39 USD'),
+    ('Regular FAVORITES', '#17 Ultimate Porker', 'HAM &amp; BACON lettuce, tomato &amp; mayo ', '8.39 USD'),
     ('Energy &amp; Electrolyte Drinks', '5-Hour Energy Berry or Grape (1.93 oz)', '', '4.39 USD'),
     ('Picked for you', 'Dumplings (饺子) (6 pcs)', 'Steamed or pan-fried.', '8.35 USD'),
     ('Classic Roll or Hand Roll', 'Futo Maki', 'Crabstick, avocado, squash, cucumber, egg, and oshinko.', '9.0 USD'),
@@ -70,7 +70,7 @@ FROM (
     ('Full Menu', 'Trap Butter', 'Our special butter sauce with our gold seasoning at the bottom makes a great combination.', '1.2 USD'),
     ('Sandwiches', 'Baja Turkey Avocado 6 Inch Regular Sub', 'Oven-Roasted Turkey, Smashed Avocado, and crisp veggies, topped with Baja Chipotle sauce: this one is all about that bold, smoky and spicy flavor!', '11.25 USD'),
     ('Salad', 'Side Garden', '', '3.5 USD'),
-    ('Vodka', 'Grey Goose Essences Strawberry &amp; Lemongrass (ABV30%)', '0-Carbs \n0-Sugar\nAll Natural Ingredients', '36.99 USD'),
+    ('Vodka', 'Grey Goose Essences Strawberry &amp; Lemongrass (ABV30%)', '0-Carbs  0-Sugar All Natural Ingredients', '36.99 USD'),
     ('Home Health Care Solutions', 'Walgreens Diabetic Crew Socks for Women 6-10 - 1.0 pr', 'Dress For Comfort Walgreens Pharmacist Recommended√¢‚Ç¨¬† Non-Binding Extra Wide Top Helps Keep Feet Dry Smooth, Small Toe Seam Odor Resistant Women''s Shoe Size 6-10 Made in China √¢‚Ç¨¬†Walgreens Pharmacist Survey Study, November 2010.', '7.65 USD'),
     ('Drinks', 'Jarritos Pineapple', ' [Cal 140]', '3.85 USD'),
     ('Hamburgers', 'American Cheese Hamburger', 'Served with potatoes (servidos con papas).', '8.5 USD'),
@@ -86,11 +86,11 @@ FROM (
     ('SUB IN A BOWL', 'Double Chicken Cheese Steak', 'Double chicken &amp; provolone cheese with spring mix, onions, tomatoes, salt &amp; your choice of dressing', '14.35 USD'),
     ('Tandoori Special', 'Beef Chapli Kebab', 'Minced meat with chopped vegetable and spices.', '11.99 USD'),
     ('Rock and Raw', 'Red Tuna Nigiri', 'Comes with two pieces.', '4.45 USD'),
-    ('Salad', 'Larb Gai', 'Chicken salad. Minced chicken mixed with red onions and chili flakes stirred with roasted grounded rice and cilantro tossed with spicy lime dressing.\n', '8.0 USD'),
+    ('Salad', 'Larb Gai', 'Chicken salad. Minced chicken mixed with red onions and chili flakes stirred with roasted grounded rice and cilantro tossed with spicy lime dressing. ', '8.0 USD'),
     ('Pesce', 'Cacciucco', 'Mussels, clams, prawns, calamari, fish sauteed in a spicy tomato sauce.', '36.0 USD'),
     ('TO GO Sauce ', 'YUM YUM SAUCE', 'WHITE SAUCE FOR HIABCHI ', '0.25 USD'),
     ('Burritos', 'Beefy 5-Layer Burrito', 'A warm tortilla is covered in a layer of warm nacho cheese and topped with seasoned beef, refried beans, cool sour cream and shredded cheddar cheese. Then it''s wrapped creating a layer of nacho cheese all around the outside of the burrito.', '3.95 USD'),
-    ('Traditional Wings', 'Traditional Bone-In Wings 6 Pcs', '6 pieces. Enjoy our juicy traditional wings in your choice of wing sauce. Comes with a side of ranch dipping sauce.\n', '9.89 USD'),
+    ('Traditional Wings', 'Traditional Bone-In Wings 6 Pcs', '6 pieces. Enjoy our juicy traditional wings in your choice of wing sauce. Comes with a side of ranch dipping sauce. ', '9.89 USD'),
     ('Asian Street Noodles', 'Chow Fun with Chinese Broccoli', '', '15.95 USD'),
     ('Snacks', 'Hostess Donettes Frosted Chocolate 6 Count', 'Mini donuts frosted with chocolate', '3.09 USD'),
     ('Families, Groups &amp; Grocery', 'Project Sunrise Retail Coffee ', '12 oz bag of our Project Sunrise ground coffee. Buy a bag to support our female growers in Huila, Colombia!', '9.51 USD'),
@@ -139,7 +139,7 @@ FROM (
     ('Desserts', 'Chocolate Chip Cookies', 'fresh warm cookies', '3.5 USD'),
     ('A La Carte (pm)', 'Big Fish Sandwich', '', '4.79 USD'),
     ('BEVVIES ', 'Ginger Ale', '', '2.5 USD'),
-    ('Candy', 'Kit Kat Duos Dark Chocolate Mint King Size 3oz', 'Turn your KIT KAT® break up a notch with New KIT KAT® Duos', '2.59 USD'),
+    ('Candy', 'Kit Kat Duos Dark Chocolate Mint King Size 3oz', 'Turn your KIT KAT® break up a notch with New KIT KAT® Duos', '2.59 USD'),
     ('Veggies  (All vegetarian orders are cooked when ordered one hour before closing time)', 'Cabbage Roti', 'Dal Poori roti served with a choice steamed cabbage, curry potatoes or chunks (soy). Can either be served wrapped or unwrapped. Wait time of 35 mins.', '12.63 USD'),
     ('Appetizers', 'GB’s Chinese Chicken Salad', 'Chopped kale, marinated chicken, mandarin oranges, avocado, sliced peppers, roasted almonds, green onions, sesame seeds, and creamy sesame dressing (served on the side). (gluten-free)', '14.0 USD'),
     ('Side Attractions', 'Suya', 'Seasoned with hot spices and grilled to perfection topped with onions and hot pepper sauce.', '13.0 USD'),
@@ -150,8 +150,8 @@ FROM (
     ('Appetizers ', 'Zucchini Fritte', 'Hand-breaded, lightly fried and served with roasted garlic aioli ', '10.99 USD'),
     ('Picked for you', 'Shakes', 'Jumbo 20 oz. shake Made with fresh Milwaukee frozen custard. Includes 1 topping.', '8.75 USD'),
     ('Sides', 'Miss Vickie’s® Jalapeño', 'Made with jalapeño seasoning for enough heat to make things deliciously interesting. And every spicy bite is made with no artificial flavors or preservatives.', '1.29 USD'),
-    ('Melts &amp; Handhelds ', 'Cali Club Sandwich', 'Turkey breast, ham, bacon, Swiss cheese, fresh avocado, sun-dried tomato mayo, lettuce and tomato on toasted 7-grain bread. Served with wavy-cut fries.\n', '14.34 USD'),
-    ('Ice Cream', 'Haagen Dazs Vanilla Milk Chocolate Bar 3oz', 'Discover A Sweet Reward Bite By Bite With Haagen-Dazs Ice Cream', '2.5 USD'),
+    ('Melts &amp; Handhelds ', 'Cali Club Sandwich', 'Turkey breast, ham, bacon, Swiss cheese, fresh avocado, sun-dried tomato mayo, lettuce and tomato on toasted 7-grain bread. Served with wavy-cut fries. ', '14.34 USD'),
+    ('Ice Cream', 'Haagen Dazs Vanilla Milk Chocolate Bar 3oz', 'Discover A Sweet Reward Bite By Bite With Haagen-Dazs Ice Cream', '2.5 USD'),
     ('Mariscos', 'Filete Empanizado', 'Breaded filet, rice, salad, and French fries.', '15.99 USD'),
     ('Out of This World Pizza', 'Big Bang Pepperoni Jalapeno Pizza', 'Pizza with pepperoni, jalapenos, and bell peppers', '12.04 USD'),
     ('Vodka', 'New Amsterdam 100 Proof, 750mL vodka (50.0% ABV)', 'New Amsterdam vodka was born from an uncompromising passion for great vodka. This commitment to excellence delivers a great-tasting vodka with unparalleled smoothness. 5 times distilled and 3 times filtered to deliver a clean crisp taste that is smooth enough to drink straight or complement any cocktail. Our 100 proof vodka has aromas of sweet frosting and light citrus with an impressively smooth, clean finish.', '19.19 USD'),
@@ -168,7 +168,7 @@ FROM (
     ('No Bready Bowls™', 'Turkey Italiano', ' Oven Roasted Turkey, with an Italian kick. We add in pepperoni and Genoa Salami, plus Monterey cheddar cheese. You add in your favorite veggies and fixings. Mangia.', '10.19 USD'),
     ('Frozen Treat - Italian Ice', 'Banana Italian Ice', '', '5.99 USD'),
     ('🥄Rice Dishes🥢', 'Popcorn chicken Don', 'Popcorn chicken, Green onions, Tonkatsu sauce, Spicy mayo and Cabbage.', '14.0 USD'),
-    ('Combos', 'Smokehouse Combo', 'Two jumbo smoked sausage links served with 2 eggs* your way, hash browns &amp; 2 buttermilk pancakes.\n', '14.75 USD'),
+    ('Combos', 'Smokehouse Combo', 'Two jumbo smoked sausage links served with 2 eggs* your way, hash browns &amp; 2 buttermilk pancakes. ', '14.75 USD'),
     ('American Wagyu', 'Large American Wagyu Cheese Steak', 'Ultra-premium American wagyu beef, grilled with mushrooms, onions and white American cheese. Add hot or sweet peppers for even more flavor.', '23.99 USD'),
     ('Cocina / Kitchen Products  ⏲', 'I-Chef Narrow Spatula', '1 ct.', '3.39 USD'),
     ('Picked for you', 'General Tso''s Tofu', 'Hot and spicy. Served with white rice.', '8.75 USD'),
@@ -201,12 +201,12 @@ FROM (
     ('Other/ Liqueur', 'RumChata, 750mL liqueur (13.75% ABV)', '', '31.99 USD'),
     ('Sides', 'Side of Hot Sauce', '', '0.99 USD'),
     ('Burritos &amp; Bowls', 'New Mexico Chicken Burrito &amp; Bowl ', 'Grilled chicken, hickory-smoked bacon pieces, green peppers &amp; onions, tomatoes, queso sauce, shredded Jack &amp; Cheddar cheese, avocado and rice medley all wrapped up in a warm flour tortilla or layered in a bowl. Served with our salsa and choice of side.', '0.0 USD'),
-    ('Chicken ''n Biscuits', 'Southern Fried Chicken Bucket', '12 generous pieces of chicken, hand-breaded with our signature seasoning, perfectly crispy on the outside, perfectly juicy on the inside. Comes with honey for drizzling, two large sides, and hand rolled Buttermilk Biscuits. \n', '39.99 USD'),
+    ('Chicken ''n Biscuits', 'Southern Fried Chicken Bucket', '12 generous pieces of chicken, hand-breaded with our signature seasoning, perfectly crispy on the outside, perfectly juicy on the inside. Comes with honey for drizzling, two large sides, and hand rolled Buttermilk Biscuits.  ', '39.99 USD'),
     ('Appetizers', 'Sushi Cake', 'Ahi Spicy tuna tower', '15.94 USD'),
     ('Desserts', 'Ultimate Chocolate Chip Cookie', 'Pizza night just got a whole lot sweeter. Freshly baked and warm from the oven, our cookie is packed with semi-sweet chocolate chips that melt in your mouth.', '8.18 USD'),
-    ('Woodmont Famous Favorites', 'Shrimp Basket Platter', 'Served with French fries and coleslaw.\n', '15.99 USD'),
+    ('Woodmont Famous Favorites', 'Shrimp Basket Platter', 'Served with French fries and coleslaw. ', '15.99 USD'),
     ('Sides', 'Bacon', '', '3.99 USD'),
-    ('Boneless Wings', 'Buffalo Bites Entrée ', 'The full meal size of our Buffalo Bites appetizer.\n12 oz. of hand-breaded, bite-sized versions of our boneless wings. Tossed in your favorite wing sauce and served with a side.', '13.5 USD'),
+    ('Boneless Wings', 'Buffalo Bites Entrée ', 'The full meal size of our Buffalo Bites appetizer. 12 oz. of hand-breaded, bite-sized versions of our boneless wings. Tossed in your favorite wing sauce and served with a side.', '13.5 USD'),
     ('Beverages', 'Pepsi', '', '2.29 USD'),
     ('Dinner Sides', 'Balsamic Portabellas', 'Flame grilled, sweet balsamic reduction, gluten-free, and vegetarian.', '6.0 USD'),
     ('Hot Coffees', 'Clover® Starbucks Reserve® Guatemala Santa Clara Estate', 'Four generations ago, the Zelaya family established their farm in Guatemala’s renowned Antigua Valley. Today, Ricardo Zelaya proudly continues his legacy, mentoring his three daughters while producing award-winning coffee. For the family, farming is about cultivating lasting relationships, and their passion for the community is evident in the exceptional quality of this cup that features notes of red currant and coconut.', '6.25 USD'),
@@ -237,7 +237,7 @@ FROM (
     ('Appetizers', 'The Rock Wings', 'Skillet baked and tossed with your choice of ranch season dry rub, hot sauce, sweet red chili sauce or BBQ sauce', '15.95 USD'),
     ('SKIN CARE', 'CETAPHIL MOIST LOTION 16Z', 'Hydrates for 48 hours & restores the skin barrier.', '14.99 USD'),
     ('Dessert', 'Coconut Cream Pie', '', '6.59 USD'),
-    ('Salads', 'House Salad', 'Cucumbers, grape tomatoes, Cheddar cheese and croutons atop a bed of iceberg mix. Served with choice of dressing.\n', '7.78 USD'),
+    ('Salads', 'House Salad', 'Cucumbers, grape tomatoes, Cheddar cheese and croutons atop a bed of iceberg mix. Served with choice of dressing. ', '7.78 USD'),
     ('McCafé', 'Medium Strawberry Banana Smoothie', '', '4.19 USD'),
     ('Dessert', 'Chocolate Baklava', 'A savory dessert, which features flaky phyllo dough wrapped around a blend of chopped walnuts and almonds in a sweet syrup mixture topped with ribbons of chocolate. Allergen: Wheat, Milk, and Tree Nuts.', '3.49 USD'),
     ('Appetizers', 'Stuffed Grape Leaves', 'Five pieces. Dolmas filled with rice, tomatoes, and onions. ', '5.49 USD'),
@@ -247,24 +247,24 @@ FROM (
     ('Picked for you', '10 pc Buffalo Wings', 'Our Chicken is Antibiotic and Hormone Free as well as Halal. Hand tossed in your favorite sauce and Always Fresh and made to order ', '11.99 USD'),
     ('Desserts', 'Mango Ice Cream', '', '6.99 USD'),
     ('Signature Platters', '6. Beef &amp; Lamb Gyro Platter', 'Beef and Lamb Gyro + Saffron Basmati Rice + Chickpeas + Fries', '16.8 USD'),
-    ('Breakfast Burritos', 'The One', '3 slices of crispy thick-cut bacon, sauteed chicken apple sausage, triple egg omelet, chili aioli, gooey American cheese, scallions, and fried potato tots seasoned with Nashville spices all encased in a toasted flour tortilla. \n', '14.01 USD'),
-    ('CHEESESTEAKS', 'VEGGIE DELIGHT', 'Veggie lovers rejoice! Our Veggie Delight cheesesteak features grilled sliced mushrooms, crispy green peppers and savory onion grilled to perfection and served on a toasted roll. We top our Veggie Delight with smooth melted provolone, mellow shredded cheddar cheese, and sharp Swiss to enhance the flavors of our featured veggies. This is the veggie sandwich you’ve been waiting for.\nAll cheesesteaks come with optional creamy mayonnaise, juicy tomato, shredded lettuce, and crispy pickle. \nThe Veggie Delight pairs perfectly with Cheese Fries or an Original Real-Fruit Lemonade.\n', '7.19 USD'),
+    ('Breakfast Burritos', 'The One', '3 slices of crispy thick-cut bacon, sauteed chicken apple sausage, triple egg omelet, chili aioli, gooey American cheese, scallions, and fried potato tots seasoned with Nashville spices all encased in a toasted flour tortilla.  ', '14.01 USD'),
+    ('CHEESESTEAKS', 'VEGGIE DELIGHT', 'Veggie lovers rejoice! Our Veggie Delight cheesesteak features grilled sliced mushrooms, crispy green peppers and savory onion grilled to perfection and served on a toasted roll. We top our Veggie Delight with smooth melted provolone, mellow shredded cheddar cheese, and sharp Swiss to enhance the flavors of our featured veggies. This is the veggie sandwich you’ve been waiting for. All cheesesteaks come with optional creamy mayonnaise, juicy tomato, shredded lettuce, and crispy pickle.  The Veggie Delight pairs perfectly with Cheese Fries or an Original Real-Fruit Lemonade. ', '7.19 USD'),
     ('Grocery', 'Quaker Express Maple & Brown Sugar 1.69oz', 'A breakfast that literally gives you sugar and spice and everything nice. This high-protein high-fiber meal is pure heaven!', '2.29 USD'),
     ('Family Size Pig Outs', 'Gallon of Lemonade', '', '6.76 USD'),
     ('BATTERIES', 'RA ALKALINE C 4PK', 'For your C battery powered needs choose Rite Aid Home Alkaline Batteries. They are dependable, long lasting, and affordable for whatever and whenever you need them.', '9.29 USD'),
     ('Picked for you', 'General Tso''s Chicken', 'Deep fried white meat chicken pieces blended with chef’s sauce.', '18.38 USD'),
     ('Specialty Sandwiches', 'Turkey Veggie Ranch', 'Contains: Multi Grain Bread, Swiss, Ranch Dressing, Tomato, Cucumbers, Spinach, Applewood Smoked Bacon, Oven Roasted Turkey', '6.89 USD'),
     ('Frozen', 'White Castle', '', '7.68 USD'),
-    ('Starters and Salads', 'Grimaldi''s House Salad', 'Romaine Lettuce, Red Onion, Cherry Tomatoes, Oven Roasted Sweet Red Peppers, Mushrooms, Green Olives\nand Vinaigrette Dressing.', '10.0 USD'),
+    ('Starters and Salads', 'Grimaldi''s House Salad', 'Romaine Lettuce, Red Onion, Cherry Tomatoes, Oven Roasted Sweet Red Peppers, Mushrooms, Green Olives and Vinaigrette Dressing.', '10.0 USD'),
     ('Picked for you', 'NEW! Mozzarella Sticks', 'Lightly battered Mozzarella cheese, fried to perfection and served with marinara sauce.', '9.89 USD'),
     ('Picked for you', 'Spicy Chicken Sandwich Combo', 'Includes a choice of regular signature side and a drink.', '10.19 USD')
 ) AS result( "category","name","description","price");
 
 DROP FUNCTION IF EXISTS on_order_updates() CASCADE;
 
-DROP TABLE IF EXISTS fake_contacts CASCADE;
+DROP TABLE IF EXISTS customers_info CASCADE;
 SELECT first_name, last_name, email, '07' || round(random()*1e9) as phone_number
-INTO fake_contacts
+INTO customers_info
 FROM (
   VALUES 
     ('James', 'Butt', 'jbutt@gmail.com'),
@@ -770,18 +770,18 @@ FROM (
 ) AS result("first_name","last_name","email");
 
 
-CREATE OR REPLACE VIEW random_fake_contacts AS
+CREATE OR REPLACE VIEW customers_info_view AS
 SELECT first_name, last_name, email, phone_number, row_number() over() as rnum
-FROM fake_contacts;
+FROM customers_info;
 
 
-CREATE OR REPLACE FUNCTION setof_fake_contacts(num int4) RETURNS SETOF random_fake_contacts AS $$
+CREATE OR REPLACE FUNCTION setof_fake_contacts(num int4) RETURNS SETOF customers_info_view AS $$
   SELECT first_name, last_name, replace(email, '@', round(extract('epoch' from now()) - 1722705653) || '_' || rnum || '@') as email, phone_number, rnum
   FROM (
     SELECT fc.*, row_number() over() as rnum
     FROM (
       SELECT first_name, last_name, email, phone_number
-      FROM random_fake_contacts
+      FROM customers_info_view
     ) fc,
     generate_series(1, ceil(num::float/500)::int4) 
     ORDER BY random()
@@ -790,18 +790,17 @@ CREATE OR REPLACE FUNCTION setof_fake_contacts(num int4) RETURNS SETOF random_fa
 $$ LANGUAGE SQL; 
 
 CREATE TABLE user_types (
-  id TEXT PRIMARY KEY, 
-  description TEXT
+  id TEXT PRIMARY KEY
 );  
 
-INSERT INTO user_types (id, description) 
-VALUES ('customer', 'Places orders for delivery'), 
-  ('restaurant_manager', 'Represents a restaurant and manages menu items and orders'),
-  ('support', 'Provides customer support for the food delivery service'),
-  ('rider', 'Delivers orders for the food delivery service');
+INSERT INTO user_types (id) 
+VALUES ('customer'), 
+  ('restaurant_manager'),
+  ('support'),
+  ('rider');
 
 CREATE TABLE addresses (
-  id  BIGSERIAL PRIMARY KEY,
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   street VARCHAR(255) NOT NULL,
   city VARCHAR(255) NOT NULL,
   state VARCHAR(255) NOT NULL,
@@ -811,17 +810,18 @@ CREATE TABLE addresses (
 );
 
 CREATE INDEX idx_addresses ON addresses USING gist (geog);
+CREATE INDEX idx_addresses_geometry ON addresses USING gist ((geog::geometry));
 
 
 CREATE TABLE users (
-  id SERIAL PRIMARY KEY,
+  id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  type TEXT NOT NULL REFERENCES user_types, 
   email VARCHAR(100) NOT NULL ,
   password VARCHAR(100) NOT NULL,
   first_name VARCHAR(50) NOT NULL,
   last_name VARCHAR(50) NOT NULL,
   phone_number VARCHAR(20) NOT NULL,
-  type TEXT NOT NULL REFERENCES user_types, 
-  location GEOGRAPHY,
+  rider_location GEOGRAPHY,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -837,16 +837,26 @@ CREATE TABLE user_addresses (
 );
  
 CREATE TABLE restaurants (
-  id SERIAL PRIMARY KEY,
+  id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
   address VARCHAR(100) NOT NULL,
-  logo BYTEA,
-  address_id BIGINT NOT NULL REFERENCES addresses,
+  website TEXT,
+  type TEXT,
+  logo TEXT GENERATED ALWAYS AS (
+    'https://www.google.com/s2/favicons?domain=' ||
+    regexp_replace(nullif(website, ''), '^(https?://[^/]+).*$', '\1/') ||
+    '&sz=64'
+  ) STORED,
+  is_popular BOOLEAN GENERATED ALWAYS AS (
+    name ~* '\m(McDonald''s|KFC|Burger King|Sun Cafe|Subway|Domino''s|Pizza Hut|Starbucks|Costa|Pret A Manger|Greggs|Nando''s)\M' 
+  ) STORED,
+  address_id BIGINT NOT NULL REFERENCES addresses ON DELETE CASCADE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX idx_restaurants_address_id ON restaurants ( address_id );
 CREATE INDEX idx_restaurants_id_address_id ON restaurants ( id, address_id );
+CREATE INDEX idx_restaurant_name ON restaurants ( name );
 
 CREATE TABLE restaurant_managers (
   restaurant_id INTEGER REFERENCES restaurants(id),
@@ -855,8 +865,8 @@ CREATE TABLE restaurant_managers (
 );
  
 CREATE TABLE menu_items (
-  id SERIAL PRIMARY KEY,
-  restaurant_id INTEGER NOT NULL REFERENCES restaurants(id),
+  id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  restaurant_id INTEGER NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
   name VARCHAR(100) NOT NULL,
   category VARCHAR(100) NOT NULL,
   price NUMERIC(8,2) NOT NULL,
@@ -891,7 +901,7 @@ VALUES
 
  
 CREATE TABLE orders (
-  id SERIAL PRIMARY KEY,
+  id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   restaurant_id INTEGER NOT NULL REFERENCES restaurants(id),
   customer_id INTEGER NOT NULL REFERENCES users(id),
   customer_address_id INTEGER NOT NULL,
@@ -906,6 +916,8 @@ CREATE TABLE orders (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE INDEX ON orders (id, restaurant_id, customer_id, deliverer_id);
+
 CREATE INDEX ON orders (restaurant_id);
 CREATE INDEX ON orders (customer_id);
 CREATE INDEX ON orders (deliverer_id);
@@ -915,16 +927,19 @@ CREATE INDEX ON orders (customer_id, created_at);
 CREATE INDEX ON orders (deliverer_id, created_at);
 
 CREATE TABLE order_items (
-  id SERIAL PRIMARY KEY,
-  order_id INTEGER NOT NULL REFERENCES orders(id),
-  menu_item_id INTEGER NOT NULL REFERENCES menu_items(id),
+  id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  menu_item_id INTEGER NOT NULL REFERENCES menu_items(id) ON DELETE CASCADE,
   quantity INTEGER NOT NULL,
   price NUMERIC(8,2) NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE INDEX ON order_items (order_id);
+CREATE INDEX ON order_items (menu_item_id);
+
 CREATE TABLE order_updates (
-  id SERIAL PRIMARY KEY,
+  id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   order_id INTEGER NOT NULL REFERENCES orders,
   change JSONB NOT NULL,
   changed_by INTEGER REFERENCES users,
@@ -932,14 +947,14 @@ CREATE TABLE order_updates (
 );
 
 CREATE TABLE delivery_status_changes (
-  id SERIAL PRIMARY KEY,
+  id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   order_id INTEGER NOT NULL REFERENCES orders,
   delivery_status TEXT NOT NULL REFERENCES delivery_status_types,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE ratings (
-  id SERIAL PRIMARY KEY,
+  id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   restaurant_id INTEGER NOT NULL REFERENCES restaurants(id),
   customer_id INTEGER NOT NULL REFERENCES users(id),
   rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
@@ -1005,28 +1020,58 @@ CREATE TABLE IF NOT EXISTS "london_restaurants.geojson" (
 CREATE INDEX IF NOT EXISTS idx_london 
 ON "london_restaurants.geojson" USING gist (geometry);
 
+
+CREATE INDEX IF NOT EXISTS idx_london_geometry 
+ON "london_restaurants.geojson" USING gist ((geometry::geometry));
+
 /* 
   To include tag values in the CSV must ensure add "out meta" or "out body"
   https://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL#CSV_output_mode 
-*/
+
+  Retired due to intermittent failures due to Overpass API server load
+
 COPY "london_restaurants.geojson" (id, "type", lat, lon, name, postcode, amenity, website) FROM PROGRAM $$
-  curl -d "[out:csv(::id, ::type, ::lat, ::lon, name, \"addr:postcode\", amenity, website; false)];(node(51.31087184032102,-0.33782958984375,51.723200166800346,0.053558349609375)[amenity~\"pub|restaurant|bar|cafe|fast_food\"][name];); out meta;"  -X POST http://overpass-api.de/api/interpreter
+  curl --retry 5 --retry-all-errors --retry-delay 10 -d "
+    [out:csv(
+      ::id, 
+      ::type, 
+      ::lat, 
+      ::lon, 
+      name, 
+      \"addr:postcode\", 
+      amenity, 
+      website; 
+      false
+    )];
+    (
+      node(
+        51.31087184032102,
+        -0.33782958984375,
+        51.723200166800346,
+        0.053558349609375
+      )[amenity~\"pub|restaurant|bar|cafe|fast_food\"][name];
+    ); out meta;"  -X POST http://overpass-api.de/api/interpreter
+$$;
+*/
+
+COPY "london_restaurants.geojson" (id, "type", lat, lon, name, postcode, amenity, website) FROM PROGRAM $$
+  curl -f --silent --retry 5 --retry-all-errors --retry-delay 10 https://prostgles.com/static/london_restaurants.csv
 $$;
 
 UPDATE "london_restaurants.geojson"
 SET geometry = st_point(lon, lat, 4326);
 
 
-CREATE TABLE IF NOT EXISTS "roads.geojson" (
+CREATE TABLE IF NOT EXISTS routes (
   id BIGINT PRIMARY KEY,
-  geog GEOGRAPHY,
   deliverer_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
-  geometry JSONB
+  geometry JSONB,
+  geog GEOGRAPHY GENERATED ALWAYS AS (ST_SetSRID(ST_GeomFromGeoJSON(geometry), 4326)) STORED
 );
 
 /* Create ~14k restaurants in London */
 WITH raddr as (
-  SELECT name, st_centroid(geometry)::GEOGRAPHY AS geog, 'restaurant' as type, postcode
+  SELECT name, website, amenity, st_centroid(geometry)::GEOGRAPHY AS geog, 'restaurant' as type, postcode
   FROM "london_restaurants.geojson"
   WHERE name IS NOT NULL
   -- AND postcode IS NOT NULL
@@ -1038,8 +1083,8 @@ iaddr as (
   RETURNING *
 ), 
 ires AS (
-  INSERT INTO restaurants (name, address, address_id)
-  SELECT r.name, 'London', a.id
+  INSERT INTO restaurants (name, address, type, website, address_id)
+  SELECT r.name, 'London', r.amenity, website, a.id
   FROM iaddr a
   INNER JOIN raddr r 
     ON a.geog::TEXT = r.geog::TEXT
@@ -1071,27 +1116,64 @@ AS $$
     number_of_riders INTEGER;
 BEGIN
 
-  WITH uadd as (
-    INSERT INTO addresses (street, city, state, postal_code, country, geog)
-    SELECT 'West street', 'London', 'UK', 'England', postal_code,
-      (
-        st_dump( 
-          st_generatepoints(
-            st_buffer(geog::GEOMETRY, 0.05, 'quad_segs=8'), 
-            100
-          )
-        )
-      ).geom::GEOGRAPHY
-    FROM addresses a
-    WHERE EXISTS (
-      SELECT * 
-      FROM restaurants r
-      WHERE r.address_id = a.id
+  -- WITH uadd as (
+  --   INSERT INTO addresses (street, city, state, postal_code, country, geog)
+  --   SELECT 'West street', 'London', 'UK', 'England', postal_code,
+  --     (
+  --       st_dump( 
+  --         st_generatepoints(
+  --           st_buffer(geog::GEOMETRY, 0.1, 'quad_segs=8'), 
+  --           100
+  --         )
+  --       )
+  --     ).geom::GEOGRAPHY
+  --   FROM addresses a
+  --   WHERE EXISTS (
+  --     SELECT * 
+  --     FROM restaurants r
+  --     WHERE r.address_id = a.id
+  --   )
+  --   ORDER BY random()
+  --   LIMIT number_of_users
+  --   RETURNING *
+  -- ), 
+  WITH road_points AS (
+    SELECT
+      ST_LineInterpolatePoint(r.geog::geometry, random())::geography AS road_geog
+    FROM routes r
+    WHERE r.geog IS NOT NULL
+    AND EXISTS (
+      SELECT 1
+      FROM v_restaurants res
+      WHERE is_popular 
+      AND ST_DWithin(res.geog, r.geog, 5000) -- within 5km of a restaurant
     )
     ORDER BY random()
     LIMIT number_of_users
+  ),
+  uadd AS (
+    INSERT INTO addresses (street, city, state, postal_code, country, geog)
+    SELECT
+      'West street',
+      'London',
+      'UK',
+      COALESCE(NULLIF(near_addr.postal_code,''), 'N/A'),
+      'England',
+      ST_Project(
+        rp.road_geog,
+        8 + random() * 25,
+        random() * 2 * pi()
+      )::geography
+    FROM road_points rp
+    LEFT JOIN LATERAL (
+      SELECT a.postal_code
+      FROM addresses a
+      WHERE a.geog IS NOT NULL
+      ORDER BY a.geog <-> rp.road_geog
+      LIMIT 1
+    ) near_addr ON TRUE
     RETURNING *
-  ), 
+  ),
   new_users AS (
     SELECT fk.*, 'pwd' as pwd, 'customer' as type, 
       geog, id as address_id
@@ -1107,17 +1189,12 @@ BEGIN
     SELECT email, pwd, first_name, last_name, phone_number, type,  now() - (random() * period)
     FROM new_users
     RETURNING *
-  )
-  -- , 
-  -- uains AS (
+  ) 
     INSERT INTO user_addresses (user_id, address_id)
     SELECT u.id, nu.address_id 
     FROM uins u 
     INNER JOIN new_users nu
-      ON u.email = nu.email
-  --   RETURNING *
-  -- )
-  -- SELECT * FROM uains
+      ON u.email = nu.email 
   ;
 
   number_of_riders := GREATEST(CEIL(number_of_users / 5), 1);
@@ -1129,9 +1206,8 @@ BEGIN
   LIMIT number_of_riders;
 END $$;
 
-CALL mock_users(1e5::integer, '1 year');
 
-CREATE OR REPLACE VIEW v_users AS
+CREATE OR REPLACE VIEW customers AS
 WITH order_stats AS (
   SELECT customer_id, max(created_at) as last_order, count(*) as total_orders
   FROM orders
@@ -1188,67 +1264,90 @@ WHERE rnum < 50; --number of menu items per restaurant
 
 
 
-CREATE OR REPLACE PROCEDURE mock_orders(number_of_orders INTEGER DEFAULT 1e4, period INTERVAL DEFAULT '1 second')
+CREATE OR REPLACE PROCEDURE mock_orders(
+  number_of_orders INTEGER DEFAULT 1e4, 
+  period INTERVAL DEFAULT '1 second',
+  restaurant_name TEXT DEFAULT NULL
+)
 LANGUAGE plpgsql
 AS $$  
 BEGIN
  
-  INSERT INTO orders (
-    customer_id, 
-    customer_address_id, 
-    restaurant_id, 
-    deliverer_id, 
-    status, 
-    delivery_fee, 
-    service_fee, 
-    total_price, 
-    created_at
-  )
-  SELECT 
-    u.id as customer_id, 
-    u.address_id as customer_address_id, 
-    r.id as restaurant_id, 
-    rider.id as deliverer_id,  
-    CASE WHEN random() < 0.5 THEN 'preparing' ELSE 'picked_up' END as order_status,
-    round(r.dist/1000) as delivery_fee, 
-    1 as service_fee, 
-    round(random() * 100) as total_price, 
-    now() - (random() * period) as created_at
-  FROM (
-    SELECT *, row_number() over() as rnum
+  WITH filtered_restaurants AS (
+    SELECT id, geog
+    FROM v_restaurants
+    WHERE geog IS NOT NULL
+      AND is_popular = true
+      AND CASE 
+        WHEN restaurant_name IS NOT NULL 
+          THEN name ilike restaurant_name 
+        ELSE logo IS NOT NULL 
+      END
+  ),
+  chosen_customers AS (
+    SELECT c.*, row_number() OVER () AS rnum
     FROM (
-      SELECT *
-      FROM v_users
-      ORDER BY last_order
+      SELECT c.*
+      FROM customers c
+      WHERE c.geog IS NOT NULL
+        AND EXISTS (
+          SELECT 1
+          FROM filtered_restaurants fr
+          WHERE ST_DWithin(c.geog, fr.geog, 5000)
+        )
+      ORDER BY c.last_order
       LIMIT number_of_orders
-    ) unested
-  ) u
-  INNER JOIN ( 
-    SELECT *, row_number() over(ORDER BY random()) as rnum
-    FROM v_riders, 
+    ) c
+  ),
+  chosen_riders AS (
+    SELECT *, row_number() OVER (ORDER BY random()) AS rnum
+    FROM v_riders,
       generate_series(
-        1, 
-        greatest(ceil(number_of_orders/(select count(*) from v_riders)), 1)::BIGINT
+        1,
+        greatest(ceil(number_of_orders / (SELECT count(*) FROM v_riders)), 1)::bigint
       )
     LIMIT number_of_orders
-  ) rider
-  ON rider.rnum = u.rnum
-  LEFT JOIN LATERAL (
-    SELECT *
-      , st_distance(u.geog, ri.geog) as dist
-    FROM v_restaurants ri
-    WHERE st_distance(u.geog, ri.geog) < 7000
-    ORDER BY u.geog <-> ri.geog
-    LIMIT 1
-  ) r ON TRUE; 
- 
-
+  ),
+  new_orders AS (
+    INSERT INTO orders (
+      customer_id, 
+      customer_address_id, 
+      restaurant_id, 
+      deliverer_id, 
+      status, 
+      delivery_fee, 
+      service_fee, 
+      total_price, 
+      created_at
+    )
+    SELECT 
+      u.id , 
+      u.address_id , 
+      r.id  , 
+      rider.id  ,  
+      CASE WHEN random() < 0.5 THEN 'preparing' ELSE 'picked_up' END as order_status,
+      round(r.dist/1000) as delivery_fee, 
+      1 as service_fee, 
+      round(random() * 100) as total_price, 
+      now() - (random() * period) as created_at
+    FROM chosen_customers u
+    JOIN chosen_riders rider
+      ON rider.rnum = u.rnum
+    JOIN LATERAL (
+      SELECT fr.id, ST_Distance(u.geog, fr.geog) AS dist
+      FROM filtered_restaurants fr
+      WHERE ST_DWithin(u.geog, fr.geog, 7000)
+      ORDER BY u.geog <-> fr.geog
+      LIMIT 1
+    ) r ON TRUE
+    RETURNING *
+  )
   /* Create 5 items per order  */
   INSERT INTO order_items (order_id, menu_item_id, quantity, price, created_at)
   SELECT id, item_id, 1, price, now() - (random() * period)
   FROM (
     SELECT  o.id, o.restaurant_id, mi.id as item_id, mi.price, row_number() over(PARTITION BY o.id ) as urnum
-    FROM orders o
+    FROM new_orders o
     INNER JOIN (
       SELECT id, restaurant_id, price
       FROM menu_items
@@ -1284,8 +1383,6 @@ BEGIN
 
 END $$;
 
-CALL mock_orders(1e5::INTEGER, '1 year'::INTERVAL);
-CALL mock_orders(35e3::INTEGER, '1 hour'::INTERVAL);
 
 
 
@@ -1321,7 +1418,7 @@ BEGIN
       FROM ordrs o
       JOIN LATERAL (
         SELECT *
-        FROM "roads.geojson" r
+        FROM routes r
         -- WHERE properties::TEXT not ilike '%footway%'
         -- AND st_isempty(geog::GEOMETRY) = false 
         -- AND st_length(geog) > 100
@@ -1334,7 +1431,7 @@ BEGIN
         r.id, 
         r.geog <-> o.user_geog
     )
-  UPDATE "roads.geojson" r
+  UPDATE routes r
   SET deliverer_id = l.deliverer_id
   FROM locations l
   WHERE r.id = l.road_id;
@@ -1342,8 +1439,8 @@ BEGIN
   WHILE now() < end_time AND progress < 1 LOOP
 
     UPDATE users u
-    SET location = st_lineinterpolatepoint(r.geog, progress - (random() * 0.1), true)
-    FROM "roads.geojson" r
+    SET rider_location = st_lineinterpolatepoint(r.geog::geometry, progress - (random() * 0.1), true)::geography
+    FROM routes r
     WHERE u.id = r.deliverer_id;
     
     COMMIT;
@@ -1352,3 +1449,61 @@ BEGIN
     PERFORM pg_sleep(random() * 1);  
   END LOOP;
 END $$; 
+
+CREATE OR REPLACE PROCEDURE ensure_popular_restaurant_customer_coverage(
+  period INTERVAL DEFAULT '1 day',
+  restaurant_name TEXT DEFAULT NULL
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  r RECORD;
+  new_address_id BIGINT;
+  new_user_id INT;
+  seed_email TEXT;
+BEGIN
+  FOR r IN
+    SELECT vr.id, vr.name, vr.geog
+    FROM v_restaurants vr
+    WHERE vr.name ilike restaurant_name
+  LOOP
+    IF NOT EXISTS (
+      SELECT 1
+      FROM customers c
+      WHERE c.geog IS NOT NULL
+        AND ST_DWithin(c.geog, r.geog, 5000)
+    ) THEN
+      INSERT INTO addresses (street, city, state, postal_code, country, geog)
+      VALUES (
+        'Near ' || left(r.name, 200),
+        'London',
+        'UK',
+        'N/A',
+        'England',
+        ST_Project(
+          r.geog,
+          100 + random() * 4500,   -- always <= 4.6km
+          random() * 2 * pi()
+        )::geography
+      )
+      RETURNING id INTO new_address_id;
+
+      seed_email := 'seed_pop_' || r.id || '_' || floor(extract(epoch from clock_timestamp()))::text || '@local.test';
+
+      INSERT INTO users (type, email, password, first_name, last_name, phone_number, created_at)
+      VALUES (
+        'customer',
+        seed_email,
+        'pwd',
+        'Seed',
+        'Customer',
+        '07000000000',
+        now() - (random() * period)
+      )
+      RETURNING id INTO new_user_id;
+
+      INSERT INTO user_addresses (user_id, address_id)
+      VALUES (new_user_id, new_address_id);
+    END IF;
+  END LOOP;
+END $$;

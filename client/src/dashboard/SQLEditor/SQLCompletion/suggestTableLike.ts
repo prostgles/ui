@@ -1,7 +1,8 @@
+import { includes } from "prostgles-types";
 import type { SQLSuggestion } from "../W_SQLEditor";
 import type { CodeBlock } from "./completionUtils/getCodeBlock";
-import { getTableExpressionSuggestions } from "./completionUtils/getTableExpressionReturnTypes";
-import { getJoinSuggestions } from "./getJoinSuggestions";
+import { getTableExpressionReturnTypes } from "./completionUtils/getTableExpressionReturnTypes";
+import { getJoinSuggestions, getStartingLetters } from "./getJoinSuggestions";
 import type {
   ParsedSQLSuggestion,
   SQLMatchContext,
@@ -41,7 +42,7 @@ export const suggestTableLike = async (
     : parentCb?.ftoken?.textLC === "with" ? parentCb
     : undefined;
   if (withCb) {
-    const tableExpressions = await getTableExpressionSuggestions(
+    const tableExpressions = await getTableExpressionReturnTypes(
       { cb: withCb, ss, sql },
       "table",
     );
@@ -65,7 +66,16 @@ export const suggestTableLike = async (
               )
             ),
         )
-        .map((s) => ({ ...s, sortText: s.schema === "public" ? "b" : "c" }))
+        .map((s) => {
+          const canAddAlias = includes(["from", "join"], cb.ltoken?.textLC);
+          return {
+            ...s,
+            ...(canAddAlias && {
+              insertText: `${s.insertText} ${getStartingLetters(s.name)}\n`,
+            }),
+            sortText: s.schema === "public" ? "b" : "c",
+          };
+        })
     );
   const tables = [...schemaTables, ...aliasedTables];
 
@@ -78,11 +88,10 @@ export const suggestTableLike = async (
     })
     .map((s) => ({ ...s, sortText: "c" }));
 
-  const { joinSuggestions = [] } = getJoinSuggestions({
+  const joinSuggestions = getJoinSuggestions({
     ss,
     rawExpect: "tableOrView",
     cb,
-    tableSuggestions: ss.filter((s) => s.type === "table"),
   });
 
   return {

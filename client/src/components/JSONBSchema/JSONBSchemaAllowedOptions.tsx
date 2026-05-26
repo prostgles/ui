@@ -1,4 +1,4 @@
-import type { JSONB } from "prostgles-types";
+import type { AllowedValueType, JSONB } from "prostgles-types";
 import { isObject } from "prostgles-types";
 import React from "react";
 import FormField from "../FormField/FormField";
@@ -54,6 +54,7 @@ export const JSONBSchemaAllowedOptions = ({
         onChange(newVal);
       }}
       error={error}
+      hintWrapperStyle={{ gap: 0 }}
     />
   );
 };
@@ -74,7 +75,11 @@ const getFullOptions = (
     const fullOptions =
       isObject(firstValue) ?
         (
-          s.allowedValues as { label: string; value: any; subLabel?: string }[]
+          s.allowedValues as {
+            label: string;
+            value: AllowedValueType;
+            subLabel?: string;
+          }[]
         ).map(({ value, label, subLabel }) => ({
           key: value,
           label,
@@ -82,11 +87,12 @@ const getFullOptions = (
         }))
       : s.allowedValues.map((key) => ({ key }));
     return {
+      //@ts-ignore
       fullOptions,
       isMulti: typeof s.type === "string" && s.type.endsWith("[]"),
     };
   } else if (s.oneOf?.every((ss) => isObject(ss) && ss.enum)) {
-    const fullOptions = s.oneOf!.flatMap((_ss) => {
+    const fullOptions = s.oneOf.flatMap((_ss) => {
       const ss = _ss as JSONB.EnumType;
       return ss.enum.map((key) => {
         return {

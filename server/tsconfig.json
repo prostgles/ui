@@ -3,7 +3,7 @@
 	"compilerOptions": {
 		"outDir": "dist",
 		"target": "ES2022",
-		"lib": [ "ES2017", "es2019", "ES2021.String", "ES2022" ],
+		"lib": [ "ES2017", "es2019", "ES2021.String", "ES2023" ],
 		"esModuleInterop" : true,
 		"allowSyntheticDefaultImports": true,
 		"allowJs": true,
@@ -15,8 +15,12 @@
 		"ignoreDeprecations": "5.0",
 		"strict": true,
 		"skipLibCheck": true,
+		"strictFunctionTypes": true,
+		"noImplicitAny": true,
 		"noUncheckedIndexedAccess": true,
 		"baseUrl": ".",
+		"importHelpers":true,
+		"noEmitHelpers": true,
 		"paths": {
 			"@common/*": [
 				"../common/*"
@@ -24,15 +28,17 @@
 			"@src/*": [
 				"src/*"
 			],
-		},
+		}
 	},
 	"exclude": [
 		"dist",
 		"DBoGenerated.ts",
 		"*.conf",
-		"prostgles_mcp"
+		"prostgles_mcp",
+		"src/ServiceManager/services/**/src",
 	],
 	"include": [
-		"src"
-	]
+		"src",
+		"**/*.spec.ts"
+, "../common/getJsonSchemaAsTs.ts", "../common/startAgenticWorkflowSchema.ts"	]
 }

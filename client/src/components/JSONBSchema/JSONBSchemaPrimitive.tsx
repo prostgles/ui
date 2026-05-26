@@ -1,12 +1,15 @@
-import type { JSONB, ValidatedColumnInfo } from "prostgles-types";
+import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
+import {
+  getProperty,
+  type JSONB,
+  type ValidatedColumnInfo,
+} from "prostgles-types";
 import React from "react";
 import { getInputType } from "../../dashboard/SmartForm/SmartFormField/fieldUtils";
 import type { FormFieldProps } from "../FormField/FormField";
-import FormField from "../FormField/FormField";
 import type { FullOption } from "../Select/Select";
 import type { JSONBSchemaCommonProps } from "./JSONBSchema";
 import { isCompleteJSONB } from "./isCompleteJSONB";
-import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
 
 type Schema = JSONB.BasicType | JSONB.EnumType;
 type P = JSONBSchemaCommonProps & {
@@ -38,13 +41,13 @@ export const JSONBSchemaPrimitive = ({
   }
 
   const transformedType = {
-    ...(schemaTypeToColType[schema.type as any] ?? {
+    ...((schema.type && getProperty(schemaTypeToColType, schema.type)) ?? {
       tsDataType: "string",
       udt_name: "text",
     }),
   };
 
-  let arrayType: FormFieldProps["arrayType"];
+  let arrayType: FormFieldProps<"text">["arrayType"];
   if (schema.type?.endsWith("[]")) {
     const tsDataType = schema.type.slice(0, -2) as any;
     arrayType = {
@@ -78,11 +81,11 @@ export const JSONBSchemaPrimitive = ({
       value={value}
       placeholder={noLabels ? schema.title : undefined}
       className={"JSONBSchemaPrimitive f-0"}
+      //@ts-ignore
       type={inputType}
       nullable={schema.nullable}
       optional={schema.optional}
       arrayType={arrayType}
-      // variant="row"
       inputProps={schema.type === "integer" ? { step: 1 } : undefined}
       fullOptions={fullOptions}
       multiSelect={!!schema.allowedValues?.length && schema.type.endsWith("[]")}
@@ -174,6 +177,30 @@ const schemaTypeToColType: Record<
   "any[]": {
     tsDataType: "any",
     udt_name: "text",
+  },
+  unknown: {
+    tsDataType: "any",
+    udt_name: "text",
+  },
+  "unknown[]": {
+    tsDataType: "any",
+    udt_name: "text",
+  },
+  Blob: {
+    tsDataType: "any",
+    udt_name: "bytea",
+  },
+  "Blob[]": {
+    tsDataType: "any",
+    udt_name: "bytea",
+  },
+  FileLike: {
+    tsDataType: "any",
+    udt_name: "bytea",
+  },
+  "FileLike[]": {
+    tsDataType: "any",
+    udt_name: "bytea",
   },
 };
 

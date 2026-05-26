@@ -1,6 +1,6 @@
 import React from "react";
 import RTComp from "../../dashboard/RTComp";
-import type { FormFieldProps } from "./FormField";
+import type { FormFieldProps, FormFieldTypes } from "./FormField";
 import FormField from "./FormField";
 
 type S = {
@@ -8,7 +8,11 @@ type S = {
   debouncing?: boolean;
 };
 
-export class FormFieldDebounced extends RTComp<FormFieldProps, S> {
+export class FormFieldDebounced<
+  T extends FormFieldTypes,
+  Nullable extends boolean = false,
+  Optional extends boolean = false,
+> extends RTComp<FormFieldProps<T, Nullable, Optional>, S> {
   constructor(props) {
     super(props);
 

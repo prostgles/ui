@@ -1,28 +1,31 @@
+import { type DetailedFilter } from "@common/filterUtils";
+import { SuccessMessage } from "@components/Animations";
+import type { BtnProps } from "@components/Btn";
+import Btn from "@components/Btn";
+import ErrorComponent from "@components/ErrorComponent";
+import { classOverride } from "@components/Flex";
+import type { JSONBSchemaCommonProps } from "@components/JSONBSchema/JSONBSchema";
+import Loading from "@components/Loader/Loading";
 import type { AnyObject, ValidatedColumnInfo } from "prostgles-types";
-import { omitKeys } from "prostgles-types";
-import React, { useCallback } from "react";
-import { type DetailedFilterBase } from "../../../../common/filterUtils";
+import { includes, omitKeys } from "prostgles-types";
+import React, { useCallback, useState } from "react";
 import type { Prgl } from "../../App";
-import { SuccessMessage } from "../../components/Animations";
-import ErrorComponent from "../../components/ErrorComponent";
-import { classOverride } from "../../components/Flex";
-import Loading from "../../components/Loader/Loading";
-import { ifEmpty } from "../../utils";
+import { ifEmpty } from "../../utils/utils";
 import type { DBSchemaTablesWJoins } from "../Dashboard/dashboardUtils";
+import type { JoinedRecordsProps } from "./JoinedRecords/JoinedRecords";
 import { SmartFormFieldList } from "./SmartFormFieldList";
 import { SmartFormFooterButtons } from "./SmartFormFooter/SmartFormFooterButtons";
 import { useSmartFormActions } from "./SmartFormFooter/useSmartFormActions";
 import { type NewRowDataHandler } from "./SmartFormNewRowDataHandler";
 import { SmartFormPopupWrapper } from "./SmartFormPopup/SmartFormPopupWrapper";
-import { SmartFormUpperFooter } from "./SmartFormUpperFooter";
+import { SmartFormUpperFooter } from "./SmartFormUpperFooter/SmartFormUpperFooter";
 import { useSmartForm, type SmartFormState } from "./useSmartForm";
-import type { BtnProps } from "../../components/Btn";
-import Btn from "../../components/Btn";
-import type { JoinedRecordsProps } from "./JoinedRecords/JoinedRecords";
-import type { JSONBSchemaCommonProps } from "../../components/JSONBSchema/JSONBSchema";
+import { SmartFormViewAsMarkdown } from "./SmartFormPopup/SmartFormViewAsMarkdown";
 
 export type getErrorsHook = (
-  cb: (newRow: AnyObject) => SmartFormState["error"] | undefined,
+  cb: (
+    newRow: AnyObject,
+  ) => Promise<SmartFormState["error"] | void> | SmartFormState["error"] | void,
 ) => void;
 
 export type GetRefHooks = {
@@ -35,11 +38,12 @@ export type GetRefHooks = {
 export type GetRefCB = (hooks: GetRefHooks) => void;
 
 export type ColumnDisplayConfig = {
+  hideLabel?: boolean;
   sectionHeader?: string;
   onRender?: (value: any, setValue: (newValue: any) => void) => React.ReactNode;
 };
 
-export type SmartFormProps = Pick<Prgl, "db" | "tables" | "methods"> & {
+export type SmartFormProps = Pick<Prgl, "db" | "tables" | "methods" | "sql"> & {
   tableName: string;
 
   label?: string;
@@ -49,7 +53,7 @@ export type SmartFormProps = Pick<Prgl, "db" | "tables" | "methods"> & {
   onLoaded?: VoidFunction;
   onChange?: (newRow: AnyObject) => void;
 
-  rowFilter?: DetailedFilterBase[];
+  rowFilter?: DetailedFilter[];
   /**
    * If true will not "Update" button in bottom bar and changes will be applied immediately
    */
@@ -174,14 +178,13 @@ export const SmartForm = (props: SmartFormProps) => {
   const { tableName } = props;
   const stateOrError = useSmartForm(props);
   const { mode, error, table } = stateOrError;
-  const tableInfo = table?.info;
 
-  if (!tableInfo) {
+  if (!table) {
     return <>Table {tableName} not found.</>;
   }
 
   if (!mode) {
-    return error || "Mode missing";
+    return <> {error || "Mode missing"}</>;
   }
 
   const state: SmartFormState = {
@@ -201,9 +204,9 @@ const SmartFormWithNoError = ({
   state: SmartFormState;
 }) => {
   const { tableName, label, asPopup, className = "", onClose } = props;
+  const [showAsMarkdown, setShowAsMarkdown] = useState(false);
 
   const { mode, displayedColumns, errors, error, table, loading } = state;
-  const tableInfo = table.info;
 
   const isLoading = loading || ("loading" in mode ? mode.loading : false);
   const headerFromCardConfig =
@@ -213,11 +216,11 @@ const SmartFormWithNoError = ({
       mode.currentRow &&
       table.card.headerColumn in mode.currentRow
     ) ?
-      mode.currentRow[table.card.headerColumn]
+      (mode.currentRow[table.card.headerColumn] as string)
     : undefined;
   const headerText =
     label ??
-    (headerFromCardConfig || table.label || tableInfo.comment || tableName);
+    (headerFromCardConfig || table.label || table.comment || tableName);
 
   const formHeader =
     asPopup ? null
@@ -256,6 +259,8 @@ const SmartFormWithNoError = ({
       displayedColumns={displayedColumns}
       headerText={headerText}
       rowFilterObj={"rowFilterObj" in mode ? mode.rowFilterObj : undefined}
+      showAsMarkdown={showAsMarkdown}
+      setShowAsMarkdown={setShowAsMarkdown}
     >
       <div
         data-command={isLoading ? undefined : "SmartForm"}
@@ -273,7 +278,16 @@ const SmartFormWithNoError = ({
         {isLoading && <Loading variant="cover" />}
 
         {formHeader}
-        <SmartFormFieldList {...props} {...state} />
+        {showAsMarkdown ?
+          <SmartFormViewAsMarkdown
+            displayedColumns={state.displayedColumns}
+            currentRow={
+              state.mode.type === "view" || state.mode.type === "update" ?
+                state.mode.currentRow
+              : undefined
+            }
+          />
+        : <SmartFormFieldList {...props} {...state} />}
 
         <SmartFormUpperFooter {...props} {...state} />
 

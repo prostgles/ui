@@ -1,17 +1,13 @@
-import type {
-  DetailedFilterBase,
-  SimpleFilter,
-  SmartGroupFilter,
-} from "../../../../../common/filterUtils";
-import { isDefined } from "../../../utils";
+import type { DetailedFilter, DetailedFilterBase } from "@common/filterUtils";
+import { isDefined } from "../../../utils/utils";
 
 export const getJoinFilter = function (
   path: string[],
   tableName: string,
   rowFilter: DetailedFilterBase[] = [],
-  opts?: Pick<SimpleFilter, "minimised" | "disabled">,
-): SmartGroupFilter {
-  const f: SmartGroupFilter = rowFilter.map(({ fieldName, type, value }) => {
+  opts?: Pick<DetailedFilter, "minimised" | "disabled">,
+): DetailedFilter[] {
+  const f: DetailedFilter[] = rowFilter.map(({ fieldName, type, value }) => {
     const filter = {
       fieldName,
       value,

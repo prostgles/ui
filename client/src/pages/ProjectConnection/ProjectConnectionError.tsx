@@ -1,19 +1,19 @@
 import { mdiArrowLeft, mdiLogin } from "@mdi/js";
 import React from "react";
-import ErrorComponent from "../../components/ErrorComponent";
-import type { PrglState } from "../../App";
-import Btn from "../../components/Btn";
+import ErrorComponent from "@components/ErrorComponent";
+import type { AppContextProps } from "../../App";
+import Btn from "@components/Btn";
 
-import { useParams } from "react-router-dom";
-import { ROUTES } from "../../../../common/utils";
+import { useParams } from "react-router";
+import { ROUTES } from "@common/utils";
 import type { Command } from "../../Testing";
-import { FlexCol, FlexRow } from "../../components/Flex";
+import { FlexCol, FlexRow } from "@components/Flex";
 import { t } from "../../i18n/i18nUtils";
 import { type PrglProjectState } from "./useProjectDb";
 
 type P = {
   projectDb: Extract<PrglProjectState, { state: "error" }>;
-  prglState: PrglState;
+  prglState: AppContextProps;
 };
 export const ProjectConnectionError = (props: P) => {
   const params = useParams();

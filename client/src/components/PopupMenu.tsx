@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import type { Command } from "../Testing";
 import type { PopupProps } from "./Popup/Popup";
 import Popup, { POPUP_ZINDEX } from "./Popup/Popup";
+import { classOverride } from "./Flex";
 
 type P<State extends AnyObject> = {
   button: React.ReactNode;
@@ -58,7 +59,10 @@ export default function <S extends AnyObject>(
           ...style,
           ...(raiseButton && open && { zIndex: POPUP_ZINDEX + 1 }),
         }}
-        className={"PopupMenu_triggerWrapper h-fit w-fit " + className}
+        className={classOverride(
+          `PopupMenu_triggerWrapper h-fit w-fit ${open ? "is-open" : ""} `,
+          className,
+        )}
         data-command={
           open ? undefined : (
             (props["data-command"] satisfies Command | undefined)

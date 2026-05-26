@@ -1,3 +1,9 @@
+import Btn from "@components/Btn";
+import type { DivProps } from "@components/Flex";
+import { classOverride, FlexRow } from "@components/Flex";
+import { Icon } from "@components/Icon/Icon";
+import { InfoRow } from "@components/InfoRow";
+import PopupMenu from "@components/PopupMenu";
 import {
   mdiApple,
   mdiAppleSafari,
@@ -10,25 +16,20 @@ import {
   mdiMicrosoftEdge,
   mdiMicrosoftWindows,
 } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import type { AnyObject } from "prostgles-types";
 import React, { useMemo } from "react";
 import type { Prgl } from "../../App";
-import Btn from "../../components/Btn";
-import type { DivProps } from "../../components/Flex";
-import { classOverride, FlexRow } from "../../components/Flex";
-import { Icon } from "../../components/Icon/Icon";
-import { InfoRow } from "../../components/InfoRow";
-import PopupMenu from "../../components/PopupMenu";
+import type { FieldConfig } from "../../dashboard/SmartCard/SmartCard";
 import { SmartCardList } from "../../dashboard/SmartCardList/SmartCardList";
 import {
   getPGIntervalAsText,
   StyledInterval,
 } from "../../dashboard/W_SQL/customRenderers";
 import { t } from "../../i18n/i18nUtils";
-import type { FieldConfig } from "../../dashboard/SmartCard/SmartCard";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 
-type SessionsProps = Pick<Prgl, "dbs" | "dbsTables" | "user" | "dbsMethods"> & {
+type SessionsProps = {
   displayType: "web_session" | "api_token";
   className?: string;
 };
@@ -44,14 +45,8 @@ export const getActiveTokensFilter = (
     active: true,
   }) as AnyObject;
 
-export const Sessions = ({
-  dbs,
-  dbsTables,
-  user,
-  displayType,
-  className = "",
-  dbsMethods,
-}: SessionsProps) => {
+export const Sessions = ({ displayType, className = "" }: SessionsProps) => {
+  const { dbs, dbsTables, user, dbsMethodSchema, dbsSql } = usePrglCore();
   const tokenMode = displayType === "api_token";
   const sessionLabel =
     tokenMode ? t.Sessions["API tokens"] : t.Sessions["Sessions"];
@@ -59,7 +54,7 @@ export const Sessions = ({
   const listProps = useMemo(
     () => ({
       title: tokenMode ? undefined : ({ count }) => `${sessionLabel} ${count}`,
-      filter: getActiveTokensFilter(displayType, user?.id) as AnyObject,
+      filter: getActiveTokensFilter(displayType, user?.id),
       style: {
         maxHeight: "40vh",
       },
@@ -191,8 +186,9 @@ export const Sessions = ({
   return (
     <SmartCardList
       className={"min-h-0 f-1 " + className}
-      db={dbs as DBHandlerClient}
-      methods={dbsMethods}
+      db={dbs}
+      sql={dbsSql}
+      methods={dbsMethodSchema}
       tableName="sessions"
       tables={dbsTables}
       realtime={true}

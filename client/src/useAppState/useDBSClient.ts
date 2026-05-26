@@ -1,15 +1,16 @@
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
+import type { ProstglesState } from "@common/electronInitTypes";
+import { API_ENDPOINTS, ROUTES } from "@common/utils";
+import { pageReload } from "@components/Loader/Loading";
 import {
   useProstglesClient,
   type UseProstglesClientProps,
 } from "prostgles-client/dist/prostgles";
 import { useEffect, useMemo } from "react";
-import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
-import type { ProstglesState } from "@common/electronInitTypes";
-import { API_ENDPOINTS, ROUTES } from "@common/utils";
+import type { DBSMethods } from "src/dashboard/Dashboard/DBS";
 import type { ClientUser } from "../App";
-import { pageReload } from "@components/Loader/Loading";
 import { isPlaywrightTest } from "../i18n/i18nUtils";
-import { playwrightTestLogs } from "../utils";
+import { playwrightTestLogs } from "../utils/utils";
 
 export const useDBSClient = (
   onDisconnect: (isDisconnected: boolean) => void,
@@ -33,16 +34,18 @@ export const useDBSClient = (
       onReconnect: () => {
         onDisconnect(false);
         if (window.location.pathname.startsWith(ROUTES.CONNECTIONS + "/")) {
-          pageReload("sync reconnect bug");
+          void pageReload("sync reconnect bug");
         }
       },
     };
     return clientProps;
   }, [onDisconnect, serverState?.initState.state]);
 
-  const dbsClient = useProstglesClient<DBGeneratedSchema, ClientUser>(
-    clientProps,
-  );
+  const dbsClient = useProstglesClient<
+    DBGeneratedSchema,
+    DBSMethods,
+    ClientUser
+  >(clientProps);
 
   const socket =
     !dbsClient.hasError && !dbsClient.isLoading && dbsClient.socket;
@@ -51,13 +54,17 @@ export const useDBSClient = (
     if (!socket) return;
 
     socket.on("infolog", console.log);
-    socket.on("server-restart-request", (_sure) => {
-      setTimeout(() => {
-        pageReload("server-restart-request");
-      }, 2000);
+    socket.on("server-restart-request", (withDelay) => {
+      setTimeout(
+        () => {
+          void pageReload("server-restart-request");
+        },
+        withDelay ? 200 : 0,
+      );
     });
     socket.on("redirect", (newLocation) => {
-      window.location = newLocation;
+      if (typeof newLocation !== "string") return;
+      window.location.href = newLocation;
     });
   }, [socket]);
 

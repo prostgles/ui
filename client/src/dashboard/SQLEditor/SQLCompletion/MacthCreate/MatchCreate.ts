@@ -112,7 +112,7 @@ export const MatchCreate: SQLMatcher = {
             .map((s) => ({
               ...s,
               sortText: s.schema === "public" ? "a" : "b",
-              insertText: s.definition!.slice(27)!,
+              insertText: s.definition!.slice(27),
               insertTextRules:
                 monaco.languages.CompletionItemInsertTextRule.None,
             })),
@@ -124,7 +124,7 @@ export const MatchCreate: SQLMatcher = {
             .map((s) => ({
               ...s,
               sortText: s.schema === "public" ? "a" : "b",
-              insertText: `${s.escapedIdentifier}  AS \n ${s.view!.definition!}`,
+              insertText: `${s.escapedIdentifier}  AS \n ${s.view!.definition}`,
               insertTextRules:
                 monaco.languages.CompletionItemInsertTextRule.None,
             }))
@@ -173,7 +173,7 @@ export const MatchCreate: SQLMatcher = {
         CREATE_SNIPPETS.map((s) => ({
           ...s,
           kind: getKind(
-            (s.label as string).split(" ")[0]?.toLowerCase?.() as any,
+            (s.label as string).split(" ")[0]?.toLowerCase() as any,
           ),
         })),
       );

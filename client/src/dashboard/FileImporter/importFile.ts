@@ -1,4 +1,4 @@
-import type { AnyObject, DBHandler } from "prostgles-types";
+import type { AnyObject, DBHandler, SQLHandler } from "prostgles-types";
 import { asName } from "prostgles-types";
 import type { FileImporterState } from "./FileImporter";
 import { getPapa, streamBIGFile } from "./FileImporter";
@@ -29,12 +29,12 @@ type Args = Pick<
   | "streamColDelimiter"
   | "inferAndApplyDataTypes"
 > & {
-  db: DBHandler;
+  sql: SQLHandler;
   onError: (err: any) => void;
   onProgress: (stats: ImportProgress) => { canContinue: boolean };
 };
 export const importFile = async (args: Args) => {
-  const { selectedFile, db, destination, streamBatchMb, onError } = args;
+  const { selectedFile, sql, destination, streamBatchMb, onError } = args;
 
   let canceled = false;
   const onProgress: typeof args.onProgress = (stats) => {
@@ -104,7 +104,7 @@ export const importFile = async (args: Args) => {
     const errors: any[] = [];
     try {
       const insertRowsObj = (rowsObj: Record<string, any[]>) => {
-        return db.sql!(
+        return sql(
           `${insertQueryPrefix} ${Object.keys(rowsObj)
             .map((key) => `(\${${key}:csv})`)
             .join(", ")}`,
@@ -161,11 +161,11 @@ export const importFile = async (args: Args) => {
             console.error(error);
           },
           onDone: async () => {
-            let types = await getTextColumnPotentialDataTypes(db.sql!, {
+            let types = await getTextColumnPotentialDataTypes(sql, {
               tableName,
             });
             if (args.inferAndApplyDataTypes) {
-              await applySuggestedDataTypes({ types, sql: db.sql!, tableName });
+              await applySuggestedDataTypes({ types, sql, tableName });
               types = [];
             }
             onProgress({
@@ -235,14 +235,10 @@ const createTable = async (
   insertQueryPrefix: string;
   columns: string[];
 }> => {
-  const { db, selectedFile, destination, reCreateTable, insertAs } = args;
+  const { sql, selectedFile, destination, reCreateTable, insertAs } = args;
 
   if (!selectedFile?.preview) {
     throw "selectedFile missing";
-  }
-
-  if (!db.sql) {
-    throw "Cannot create new table";
   }
 
   /** There is a maximum length on table name in postgresql which is 63 characters */
@@ -250,11 +246,11 @@ const createTable = async (
     0,
     63,
   );
-  const escapedTableName = await db.sql(`SELECT quote_ident($1)`, [tableName], {
+  const escapedTableName = await sql(`SELECT quote_ident($1)`, [tableName], {
     returnType: "value",
   });
-  if (reCreateTable && db[tableName]) {
-    await db.sql("DROP TABLE IF EXISTS " + escapedTableName);
+  if (reCreateTable) {
+    await sql("DROP TABLE IF EXISTS " + escapedTableName);
   }
 
   let create = "CREATE TABLE " + escapedTableName + " ( \n";
@@ -290,13 +286,13 @@ const createTable = async (
     escapedColnames = cols
       .filter((c) => c.dataType !== "BIGSERIAL")
       .map((col, i) => col.escapedName),
-    insertQueryPrefix = await db.sql(
+    insertQueryPrefix = await sql(
       "INSERT INTO " + escapedTableName + " (${colTypes:raw}) VALUES ",
       { colTypes: escapedColnames.join(", ") },
       { returnType: "statement" },
     );
 
-  await db.sql(_q);
+  await sql(_q);
 
   return {
     tableName,

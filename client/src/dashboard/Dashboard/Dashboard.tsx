@@ -1,29 +1,27 @@
+import Loading from "@components/Loader/Loading";
 import type {
   MultiSyncHandles,
   SingleSyncHandles,
 } from "prostgles-client/dist/SyncedTable/SyncedTable";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import type { DBSchemaTable } from "prostgles-types";
 import React from "react";
-import Loading from "../../components/Loader/Loading";
-import RTComp, { type DeltaOfData } from "../RTComp";
+import RTComp, { type DeepPartial, type DeltaOfData } from "../RTComp";
 import { getSqlSuggestions } from "../SQLEditor/SQLEditorSuggestions";
-import type { DBObject } from "../SearchAll";
+import type { DBObject } from "../SearchAll/SearchAll";
 
+import { getConnectionPaths } from "@common/utils";
+import Btn from "@components/Btn";
+import ErrorComponent from "@components/ErrorComponent";
+import { FlexCol, FlexRow } from "@components/Flex";
 import { mdiArrowLeft } from "@mdi/js";
 import { isEmpty } from "prostgles-types";
-import type { NavigateFunction } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
-import type { DBSSchema } from "../../../../common/publishUtils";
+import type { NavigateFunction } from "react-router";
+import { useNavigate } from "react-router";
 import type { Prgl } from "../../App";
 import { createReactiveState } from "../../appUtils";
-import Btn from "../../components/Btn";
-import ErrorComponent from "../../components/ErrorComponent";
-import { FlexCol, FlexRow } from "../../components/Flex";
+import { usePrgl } from "../../pages/ProjectConnection/PrglContextProvider";
 import { TopControls } from "../../pages/TopControls";
 import { DashboardMenu } from "../DashboardMenu/DashboardMenu";
 import type { ActiveRow } from "../W_Table/W_Table";
-import { getJoinedTables } from "../W_Table/tableUtils/tableUtils";
 import { getWorkspacePath } from "../WorkspaceMenu/useWorkspaces";
 import type { LocalSettings } from "../localSettings";
 import { useLocalSettings } from "../localSettings";
@@ -37,7 +35,6 @@ import type {
   DBSchemaTablesWJoins,
   LinkSyncItem,
   LoadedSuggestions,
-  OnAddChart,
   WindowData,
   WindowSyncItem,
   Workspace,
@@ -45,9 +42,7 @@ import type {
   WorkspaceSyncItem,
 } from "./dashboardUtils";
 import { TopHeaderClassName } from "./dashboardUtils";
-import { loadTable, type LoadTableArgs } from "./loadTable";
-import { ROUTES } from "../../../../common/utils";
-import { usePrgl } from "../../pages/ProjectConnection/PrglContextProvider";
+import { getTables, type DBSchemaTableWithRenderInfo } from "./getTables";
 
 const FORCED_REFRESH_PREFIX = "force-" as const;
 export const CENTERED_WIDTH_CSS_VAR = "--centered-width";
@@ -59,7 +54,7 @@ export type DashboardProps = {
   navigate: NavigateFunction;
 };
 export type DashboardState = {
-  tables?: DBSchemaTablesWJoins;
+  tables?: DBSchemaTableWithRenderInfo[];
   loading: boolean;
   minimised: boolean;
   namePopupWindow?: { w: WindowSyncItem; node: HTMLButtonElement };
@@ -71,8 +66,8 @@ export type DashboardState = {
 
   db_objects?: DBObject[];
 
-  wspError?: any;
-  error?: any;
+  wspError?: unknown;
+  error?: unknown;
   reRender?: number;
 
   /**
@@ -82,7 +77,7 @@ export type DashboardState = {
 };
 export type DashboardData = {
   links: LinkSyncItem[];
-  linksSync?: any;
+  linksSync?: MultiSyncHandles<LinkSyncItem>;
   closedWindows: WindowSyncItem[];
   allWindows: WindowSyncItem[];
   windows: WindowSyncItem[];
@@ -106,15 +101,15 @@ export class _Dashboard extends RTComp<
     allWindows: [],
     windows: [],
     links: [],
-    linksSync: null,
+    linksSync: undefined,
   };
 
   onUnmount() {
     const { workspaceSync, windowsSync, linksSync } = this.d;
 
-    [workspaceSync, windowsSync, linksSync].map((s) => {
-      if (s && s.unsync) s.unsync();
-    });
+    workspaceSync?.$unsync();
+    windowsSync?.$unsync();
+    linksSync?.$unsync();
   }
 
   loadingSchema: DashboardState["suggestions"];
@@ -124,6 +119,7 @@ export class _Dashboard extends RTComp<
       connectionId,
       tables: dbSchemaTables,
       connection,
+      sql,
     } = this.props.prgl;
     const workspace = this.d.workspace;
     const dbKey =
@@ -158,20 +154,15 @@ export class _Dashboard extends RTComp<
       };
 
       try {
-        if (db.sql) {
-          const { sql } = db;
-
-          const suggestions = await getSqlSuggestions({ sql });
+        if (sql) {
+          const suggestions = await getSqlSuggestions(sql);
           const schema = {
             ...suggestions,
             connectionId,
             dbKey,
-            searchAll: suggestions.suggestions.filter((s) =>
-              ["table", "function"].includes(s.type),
-            ) as any,
           };
-          this.loadingSchema = { ...this.loadingSchema!, ...schema };
-          ns.suggestions = { ...this.loadingSchema! };
+          this.loadingSchema = { ...this.loadingSchema, ...schema };
+          ns.suggestions = { ...this.loadingSchema };
         }
       } catch (e) {
         this.loadingSchema = undefined;
@@ -219,16 +210,16 @@ export class _Dashboard extends RTComp<
       }
       let wsp: Workspace | undefined;
       try {
-        wsp = (await workspaces.findOne(
+        wsp = await workspaces.findOne(
           workspaceId ? { id: workspaceId, ...wspFilter } : wspFilter,
           { orderBy: { last_used: -1 } },
-        )) as Workspace;
+        );
 
         await cloneEditableWorkpsaces({ dbs, user_id });
 
         /** If this is an editable workspace then ensure we're working on a clone */
         if (
-          wsp.published &&
+          wsp?.published &&
           wsp.user_id !== this.props.prgl.user?.id &&
           wsp.layout_mode !== "fixed"
         ) {
@@ -248,7 +239,7 @@ export class _Dashboard extends RTComp<
         return;
       }
 
-      if (!wsp as any) {
+      if (!wsp) {
         this.setState({ wspError: true });
         return;
       }
@@ -298,7 +289,7 @@ export class _Dashboard extends RTComp<
         { workspace_id: wsp.id },
         { handlesOnData: true, select: "*", patchText: false },
         (_wnds, deltas) => {
-          const wnds: WindowSyncItem[] = _wnds as any;
+          const wnds = _wnds as WindowSyncItem[];
           if (!this.mounted) return;
 
           const windows = wnds.sort(
@@ -313,7 +304,18 @@ export class _Dashboard extends RTComp<
            * Maybe ....
            */
           const stringOpts = (w: WindowSyncItem) =>
-            `${w.id} ${w.type} ${w.fullscreen} ${JSON.stringify(w.filter)} ${JSON.stringify(w.having)} ${w.parent_window_id} ${w.minimised} ${w.created}`; // ${JSON.stringify((w as any).options?.extent ?? {})}
+            [
+              w.id,
+              w.type,
+              w.fullscreen,
+              JSON.stringify(w.filter),
+              JSON.stringify(w.having),
+              w.parent_window_id,
+              w.minimised,
+              w.created,
+              w.parent_window_options?.position,
+              w.parent_window_options?.sizePercentage,
+            ].join();
           if (
             this.d.windows.map(stringOpts).sort().join() ===
             openWindows.map(stringOpts).sort().join()
@@ -322,7 +324,7 @@ export class _Dashboard extends RTComp<
           }
           this.setData(
             { allWindows: windows, windows: openWindows, closedWindows },
-            { windows: deltas as any },
+            { windows: deltas as DeepPartial<WindowSyncItem[]> },
           );
         },
       );
@@ -332,20 +334,21 @@ export class _Dashboard extends RTComp<
       );
     }
 
-    this.checkIfNoOpenWindows();
+    void this.checkIfNoOpenWindows();
 
     const needToRecalculateCounts =
       "workspace" in delta &&
       ((delta.workspace && "hideCounts" in delta.workspace) ||
         delta.workspace?.options?.tableListEndInfo ||
         delta.workspace?.options?.tableListSortBy);
-    const schemaChanged = this.props.prgl.dbKey !== this.loadingSchema?.dbKey; //  !this.loadingSchema?.dbKey.startsWith(FORCED_REFRESH_PREFIX) &&
+    const schemaChanged = this.props.prgl.dbKey !== this.loadingSchema?.dbKey;
     const dataWasImported = !!delta.imported;
+
     if (
       workspace &&
       (schemaChanged || needToRecalculateCounts || dataWasImported)
     ) {
-      this.loadSchema();
+      void this.loadSchema();
     }
 
     if (dd) {
@@ -359,15 +362,6 @@ export class _Dashboard extends RTComp<
     if (!isEmpty(ns)) {
       this.setState(ns as any);
     }
-  };
-
-  loadTable = async (
-    args: Omit<LoadTableArgs, "db" | "dbs" | "workspace_id">,
-  ): Promise<string> => {
-    const { db, dbs } = this.props.prgl;
-    const { workspace } = this.d;
-    if (!workspace) throw new Error("Workspace not found");
-    return loadTable({ ...args, db, dbs, workspace_id: workspace.id });
   };
 
   checkedIfNoOpenWindows = false;
@@ -408,7 +402,7 @@ export class _Dashboard extends RTComp<
   isOk = false;
   render() {
     const { localSettings, prgl } = this.props;
-    const { connectionId } = prgl;
+    const { connectionId, connection } = prgl;
     const {
       tables,
       loading,
@@ -430,7 +424,7 @@ export class _Dashboard extends RTComp<
               color="action"
               variant="filled"
               asNavLink={true}
-              href={`${ROUTES.CONNECTIONS}/${connectionId}`}
+              href={getConnectionPaths(connection).dashboard}
               iconPath={mdiArrowLeft}
             >
               Go back
@@ -441,8 +435,6 @@ export class _Dashboard extends RTComp<
     }
 
     const { windowsSync, workspace } = this.d;
-
-    let mainContent: React.ReactNode;
 
     if (!windowsSync || !workspace || !tables) {
       let loadingMessage = "";
@@ -464,26 +456,6 @@ export class _Dashboard extends RTComp<
       );
     }
 
-    if (connectionId) {
-      mainContent = (
-        <ViewRendererWrapped
-          /** Do not re-render on dbKey change because it breaks sql editor */
-          // key={prgl.dbKey}
-          isReadonly={isReadonly}
-          prgl={prgl}
-          workspace={workspace}
-          loadTable={this.loadTable}
-          links={this.d.links}
-          windows={this.d.windows}
-          tables={tables}
-          onCloseUnsavedSQL={(q, e) => {
-            this.setState({ namePopupWindow: { w: q, node: e.currentTarget } });
-          }}
-          suggestions={suggestions}
-        />
-      );
-    }
-
     this.isOk = true;
 
     const pinnedMenu = getIsPinnedMenu(workspace);
@@ -495,7 +467,6 @@ export class _Dashboard extends RTComp<
         menuAnchorState={this.menuAnchorState}
         prgl={prgl}
         suggestions={suggestions}
-        loadTable={this.loadTable}
         tables={tables}
         workspace={workspace}
       />
@@ -579,7 +550,23 @@ export class _Dashboard extends RTComp<
             className="Dashboard_MainContentWrapper f-1 gap-0 relative ai-none jc-none"
           >
             <DashboardCenteredLayoutResizer />
-            {mainContent}
+            {Boolean(connectionId) && (
+              <ViewRendererWrapped
+                /** Do not re-render on dbKey change because it breaks sql editor */
+                // key={prgl.dbKey}
+                isReadonly={isReadonly}
+                workspace={workspace}
+                links={this.d.links}
+                windows={this.d.windows}
+                tables={tables}
+                onCloseUnsavedSQL={(q, e) => {
+                  this.setState({
+                    namePopupWindow: { w: q, node: e.currentTarget },
+                  });
+                }}
+                suggestions={suggestions}
+              />
+            )}
           </FlexRow>
 
           <div
@@ -622,14 +609,23 @@ export type CommonWindowProps<T extends ChartType = ChartType> = Pick<
   key: string;
   "data-key": string;
   "data-table-name": string | null;
-  "data-view-type": "table" | "map" | "timechart" | "sql" | "card" | "method";
+  "data-view-type":
+    | "table"
+    | "map"
+    | "timechart"
+    | "sql"
+    | "card"
+    | "method"
+    | "barchart";
   "data-title": string;
+  "data-links-to": string;
   w: WindowSyncItem<T>;
   childWindows: WindowSyncItem[];
   getLinksAndWindows: () => {
     links: LinkSyncItem[];
     windows: WindowSyncItem<ChartType>[];
   };
+
   /**
    * e is undefined when the table window was closed due to dropped table
    */
@@ -645,56 +641,9 @@ export type CommonWindowProps<T extends ChartType = ChartType> = Pick<
   isReadonly: boolean;
   suggestions: LoadedSuggestions | undefined;
   myLinks: LinkSyncItem[];
-  onAddChart: OnAddChart | undefined;
   active_row: ActiveRow | undefined;
   workspace: WorkspaceSyncItem;
 } & Pick<ViewRendererProps, "searchParams" | "setSearchParams">;
-
-export const getTables = (
-  schemaTables: DBSchemaTable[],
-  connectionTableOptions: DBSSchema["connections"]["table_options"],
-  db: DBHandlerClient,
-  capitaliseMissingTableNames = false,
-): { tables: DBSchemaTablesWJoins } => {
-  const tables = schemaTables.map((t) => {
-    const { columns, label, ...tableOpts } =
-      connectionTableOptions?.[t.name] ?? {};
-    const result = {
-      ...tableOpts,
-      label:
-        label ||
-        (capitaliseMissingTableNames ? convertSnakeToReadable(t.name) : t.name),
-      ...t,
-      ...getJoinedTables(schemaTables, t.name, db),
-      columns: t.columns
-        .map((c) => ({
-          ...c,
-          icon: columns?.[c.name]?.icon,
-        }))
-        .sort((a, b) => {
-          return a.ordinal_position - b.ordinal_position;
-        }),
-    };
-    return result;
-  });
-  return { tables };
-};
-
-const convertSnakeToReadable = (str: string) => {
-  // ^[a-z0-9]+    : Starts with one or more lowercase letters or digits
-  // (?:_[a-z0-9]+)* : Followed by zero or more groups of an underscore and one or more lowercase letters/digits
-  // $             : Ends the string
-  const snakeCaseRegex = /^[a-z0-9]+(?:_[a-z0-9]+)*$/;
-
-  if (str && snakeCaseRegex.test(str)) {
-    const words = str.split("_");
-    const readableWords = words.map((word) => {
-      return word.charAt(0).toUpperCase() + word.slice(1);
-    });
-    return readableWords.join(" ");
-  }
-  return str;
-};
 
 export const getIsPinnedMenu = (workspace: WorkspaceSyncItem) => {
   return workspace.options.pinnedMenu && !window.isLowWidthScreen;
@@ -713,7 +662,7 @@ const cloneEditableWorkpsaces = async ({
       []
     : await dbs.workspaces.find({
         published: true,
-        user_id: { $ne: user_id! },
+        user_id: { $ne: user_id },
         layout_mode: { $isDistinctFrom: "fixed" },
         $notExistsJoined: {
           workspaces: {

@@ -1,190 +1,29 @@
+import {
+  CONNECTION_CONFIG_SECTIONS,
+  ROUTES,
+  SERVER_SETTINGS_SECTIONS,
+} from "@common/utils";
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
-import type { JSONB } from "prostgles-types";
-import { CONNECTION_CONFIG_SECTIONS } from "../../../common/utils";
 import { loggerTableConfig } from "../Logger";
+import { tableConfigAccessControl } from "./tableConfigAccessControl";
+import { tableConfigBackups } from "./tableConfigBackups";
 import { tableConfigConnections } from "./tableConfigConnections";
+import { tableConfigDatabaseConfig } from "./tableConfigDatabaseConfig";
 import { tableConfigGlobalSettings } from "./tableConfigGlobalSettings";
+import { tableConfigLinks } from "./tableConfigLinks";
+import { tableConfigLLM } from "./tableConfigLlm/tableConfigLlm";
+import { tableConfigMCPServers } from "./tableConfigMCPServers";
 import { tableConfigPublishedMethods } from "./tableConfigPublishedMethods";
 import { tableConfigUsers } from "./tableConfigUsers";
-import { tableConfigLLM } from "./tableConfigLlm";
-import { tableConfigMCPServers } from "./tableConfigMCPServers";
-import { DUMP_OPTIONS_SCHEMA, tableConfigBackups } from "./tableConfigBackups";
-
-export const UNIQUE_DB_COLS = ["db_name", "db_host", "db_port"] as const;
-const UNIQUE_DB_FIELDLIST = UNIQUE_DB_COLS.join(", ");
-
-const FieldFilterSchema = {
-  oneOf: [
-    "string[]",
-    { enum: ["*", ""] },
-    {
-      record: {
-        values: { enum: [1, true] },
-      },
-    },
-    {
-      record: {
-        values: { enum: [0, false] },
-      },
-    },
-  ],
-} satisfies JSONB.FieldType;
-
-const tableConfigSchema: JSONB.JSONBSchema = {
-  record: {
-    values: {
-      oneOfType: [
-        {
-          isLookupTable: {
-            type: {
-              values: {
-                record: { values: { type: "string", optional: true } },
-              },
-            },
-          },
-        },
-        {
-          columns: {
-            description: "Column definitions and hints",
-            record: {
-              values: {
-                oneOf: [
-                  "string",
-                  {
-                    type: {
-                      hint: { type: "string", optional: true },
-                      nullable: { type: "boolean", optional: true },
-                      isText: { type: "boolean", optional: true },
-                      trimmed: { type: "boolean", optional: true },
-                      defaultValue: { type: "any", optional: true },
-                    },
-                  },
-                  {
-                    type: {
-                      jsonbSchema: {
-                        oneOfType: [
-                          {
-                            type: {
-                              enum: [
-                                "string",
-                                "number",
-                                "boolean",
-                                "Date",
-                                "time",
-                                "timestamp",
-                                "string[]",
-                                "number[]",
-                                "boolean[]",
-                                "Date[]",
-                                "time[]",
-                                "timestamp[]",
-                              ],
-                            },
-                            optional: { type: "boolean", optional: true },
-                            description: { type: "string", optional: true },
-                          },
-                          {
-                            type: {
-                              enum: ["Lookup", "Lookup[]"],
-                            },
-                            optional: { type: "boolean", optional: true },
-                            description: { type: "string", optional: true },
-                          },
-                          {
-                            type: {
-                              enum: ["object"],
-                            },
-                            optional: { type: "boolean", optional: true },
-                            description: { type: "string", optional: true },
-                          },
-                        ],
-                      },
-                    },
-                  },
-                ],
-              },
-            },
-          },
-        },
-      ],
-    },
-  },
-};
+import { tableConfigWindows } from "./tableConfigWindows";
+import { tableConfigWorkspaces } from "./tableConfigWorkspaces";
+import { tableConfigServices } from "./tableConfigServices";
 
 const SESSION_TYPE = {
   enum: ["web", "api_token", "mobile"],
   defaultValue: "web",
   nullable: false,
 } as const;
-
-const CommonLinkOpts = {
-  colorArr: { type: "number[]", optional: true },
-} as const;
-
-const filter = {
-  oneOfType: [{ $and: "any[]" }, { $or: "any[]" }],
-  optional: true,
-} as const;
-
-const joinPath = {
-  description:
-    "When adding a chart this allows showing data from a table that joins to the current table",
-  arrayOfType: {
-    table: "string",
-    on: { arrayOf: { record: { values: "any" } } },
-  },
-  optional: true,
-} as const satisfies JSONB.FieldTypeObj;
-const CommonChartLinkOpts = {
-  dataSource: {
-    optional: true,
-    oneOfType: [
-      {
-        type: {
-          enum: ["sql"],
-          description:
-            "Show data from an SQL query within an editor. Will not reflect latest changes to that query (must be re-added)",
-        },
-        sql: "string",
-        withStatement: "string",
-      },
-      {
-        type: {
-          enum: ["table"],
-          description:
-            "Shows data from an opened table window. Any filters from that table will apply to the chart as well",
-        },
-        joinPath,
-      },
-      {
-        type: {
-          enum: ["local-table"],
-          description:
-            "Shows data from postgres table not connected to any window (w1_id === w2_id === current chart window). Custom filters can be added",
-        },
-        localTableName: {
-          type: "string",
-          description: "Local layer (w1_id === w2_id === current chart window)",
-        },
-        smartGroupFilter: filter,
-      },
-    ],
-  },
-  smartGroupFilter: filter,
-  joinPath,
-  localTableName: {
-    type: "string",
-    optional: true,
-    description:
-      "If provided then this is a local layer (w1_id === w2_id === current chart window)",
-  },
-  sql: {
-    description: "Defined if chart links to SQL statement",
-    optional: true,
-    type: "string",
-  },
-  title: { type: "string", optional: true },
-} as const satisfies JSONB.ObjectType["type"];
 
 export const tableConfig: TableConfig<{ en: 1 }> = {
   user_types: {
@@ -221,7 +60,7 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
   },
   user_statuses: {
     isLookupTable: {
-      values: { active: {}, disabled: {} },
+      values: { active: {}, disabled: {}, public: {} },
     },
   },
 
@@ -248,8 +87,8 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
       ip_address: `INET NOT NULL`,
       type: `TEXT NOT NULL REFERENCES session_types`,
       user_agent: "TEXT",
-      created: `TIMESTAMP DEFAULT NOW()`,
-      last_used: `TIMESTAMP DEFAULT NOW()`,
+      created: `TIMESTAMPTZ DEFAULT NOW()`,
+      last_used: `TIMESTAMPTZ DEFAULT NOW()`,
       expires: `BIGINT NOT NULL`,
     },
   },
@@ -272,7 +111,7 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
         ],
       },
       username: "TEXT",
-      created: `TIMESTAMP DEFAULT NOW()`,
+      created: `TIMESTAMPTZ DEFAULT NOW()`,
       failed: "BOOLEAN",
       magic_link_id: "TEXT",
       sid: "TEXT",
@@ -285,156 +124,12 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
       info: "TEXT",
     },
   },
-  database_configs: {
-    constraints: {
-      uniqueDatabase: { type: "UNIQUE", content: UNIQUE_DB_FIELDLIST },
-    },
-    columns: {
-      id: `SERIAL PRIMARY KEY`,
-      db_name: `TEXT NOT NULL`,
-      db_host: `TEXT NOT NULL`,
-      db_port: `INTEGER NOT NULL`,
-      rest_api_enabled: `BOOLEAN DEFAULT FALSE`,
-      sync_users: `BOOLEAN DEFAULT FALSE`,
-      table_config: {
-        info: { hint: `Table configurations` },
-        nullable: true,
-        jsonbSchema: tableConfigSchema,
-      },
-      table_config_ts: {
-        sqlDefinition: "TEXT",
-        info: {
-          hint: `Table configurations from typescript. Must export const tableConfig`,
-        },
-      },
-      table_config_ts_disabled: {
-        sqlDefinition: "BOOLEAN",
-        info: {
-          hint: `If true then Table configurations will not be executed`,
-        },
-      },
-      table_schema_positions: {
-        nullable: true,
-        jsonbSchema: {
-          record: {
-            partial: true,
-            values: {
-              type: {
-                x: "number",
-                y: "number",
-              },
-            },
-          },
-        },
-      },
-      table_schema_transform: {
-        nullable: true,
-        jsonbSchemaType: {
-          translate: {
-            type: {
-              x: "number",
-              y: "number",
-            },
-          },
-          scale: "number",
-        },
-      },
-      file_table_config: {
-        info: { hint: `File storage configurations` },
-        nullable: true,
-        jsonbSchemaType: {
-          fileTable: { type: "string", optional: true },
-          storageType: {
-            oneOfType: [
-              { type: { enum: ["local"] } },
-              {
-                type: { enum: ["S3"] },
-                credential_id: { type: "number" },
-              },
-            ],
-          },
-          referencedTables: { type: "any", optional: true },
-          delayedDelete: {
-            optional: true,
-            type: {
-              /**
-               * Minimum amount of time measured in days for which the files will not be deleted after requesting delete
-               */
-              deleteAfterNDays: { type: "number" },
-              /**
-               * How freuquently the files will be checked for deletion delay
-               */
-              checkIntervalHours: { type: "number", optional: true },
-            },
-          },
-        },
-      },
 
-      backups_config: {
-        nullable: true,
-        info: { hint: `Automatic backups configurations` },
-        jsonbSchemaType: {
-          enabled: { type: "boolean", optional: true },
-          cloudConfig: {
-            nullable: true,
-            type: {
-              /**
-               * If not provided then save to current server
-               */
-              credential_id: { type: "number", nullable: true, optional: true },
-            },
-          },
-          frequency: { enum: ["daily", "monthly", "weekly", "hourly"] },
-
-          /**
-           * If provided then will do the backup during that hour (24 hour format). Unless the backup frequency is less than a day
-           */
-          hour: { type: "integer", optional: true },
-
-          /**
-           * If provided then will do the backup during that hour (1-7: Mon to Sun). Unless the backup frequency is less than a day
-           */
-          dayOfWeek: { type: "integer", optional: true },
-
-          /**
-           * If provided then will do the backup during that day (1-31) or earlier if the month is shorter. Unless the backup frequency is not monthly
-           */
-          dayOfMonth: { type: "integer", optional: true },
-
-          /**
-           * If provided then will keep the latest N backups and delete the older ones
-           */
-          keepLast: { type: "integer", optional: true },
-
-          /**
-           * If not enough space will show this error
-           */
-          err: { type: "string", optional: true, nullable: true },
-
-          dump_options: DUMP_OPTIONS_SCHEMA.jsonbSchema,
-        },
-      },
-    },
-  },
-  database_config_logs: {
-    columns: {
-      id: `SERIAL PRIMARY KEY REFERENCES database_configs (id) ON DELETE CASCADE`,
-      on_mount_logs: {
-        sqlDefinition: "TEXT",
-        info: { hint: `On mount logs` },
-      },
-      table_config_logs: {
-        sqlDefinition: "TEXT",
-        info: { hint: `On mount logs` },
-      },
-      on_run_logs: {
-        sqlDefinition: "TEXT",
-        info: { hint: `On mount logs` },
-      },
-    },
-  },
+  ...tableConfigDatabaseConfig,
 
   ...tableConfigConnections,
+
+  ...tableConfigServices,
 
   alerts: {
     columns: {
@@ -445,9 +140,23 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
       database_config_id:
         "INTEGER REFERENCES database_configs(id) ON DELETE SET NULL",
       connection_id: "UUID REFERENCES connections(id) ON DELETE SET NULL",
-      section: { enum: CONNECTION_CONFIG_SECTIONS, nullable: true },
+      ui_path: {
+        jsonbSchema: {
+          oneOfType: [
+            {
+              page: { enum: [ROUTES.CONFIG] },
+              section: { enum: CONNECTION_CONFIG_SECTIONS },
+            },
+            {
+              page: { enum: [ROUTES.SERVER_SETTINGS] },
+              section: { enum: SERVER_SETTINGS_SECTIONS },
+            },
+          ],
+        },
+        nullable: true,
+      },
       data: "JSONB",
-      created: "TIMESTAMP DEFAULT NOW()",
+      created: "TIMESTAMPTZ DEFAULT NOW()",
     },
   },
   alert_viewed_by: {
@@ -455,218 +164,37 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
       id: `BIGSERIAL PRIMARY KEY`,
       alert_id: "BIGINT REFERENCES alerts(id) ON DELETE CASCADE",
       user_id: "UUID REFERENCES users(id) ON DELETE CASCADE",
-      viewed: "TIMESTAMP DEFAULT NOW()",
-    },
-  },
-
-  access_control: {
-    // dropIfExistsCascade: true,
-    columns: {
-      id: `SERIAL PRIMARY KEY`,
-      name: "TEXT",
-      database_id: `INTEGER NOT NULL REFERENCES database_configs(id) ON DELETE CASCADE`,
-      llm_daily_limit: {
-        sqlDefinition: `INTEGER NOT NULL DEFAULT 0 CHECK(llm_daily_limit >= 0)`,
-        info: { hint: "Maximum amount of queires per user/ip per 24hours" },
-      },
-      dbsPermissions: {
-        info: { hint: "Permission types and rules for the state database" },
-        nullable: true,
-        jsonbSchemaType: {
-          createWorkspaces: { type: "boolean", optional: true },
-          viewPublishedWorkspaces: {
-            optional: true,
-            type: {
-              workspaceIds: "string[]",
-            },
-          },
-        },
-      },
-      dbPermissions: {
-        info: {
-          hint: "Permission types and rules for this (connection_id) database",
-        },
-        jsonbSchema: {
-          oneOfType: [
-            {
-              type: {
-                enum: ["Run SQL"],
-                description: "Allows complete access to the database",
-              },
-              allowSQL: { type: "boolean", optional: true },
-            },
-            {
-              type: {
-                enum: ["All views/tables"],
-                description: "Custom access (View/Edit/Remove) to all tables",
-              },
-              allowAllTables: {
-                type: "string[]",
-                allowedValues: ["select", "insert", "update", "delete"],
-              },
-            },
-            {
-              type: {
-                enum: ["Custom"],
-                description: "Fine grained access to specific tables",
-              },
-              customTables: {
-                arrayOfType: {
-                  tableName: "string",
-                  select: {
-                    optional: true,
-                    description: "Allows viewing data",
-                    oneOf: [
-                      "boolean",
-                      {
-                        type: {
-                          fields: FieldFilterSchema,
-                          forcedFilterDetailed: { optional: true, type: "any" },
-                          subscribe: {
-                            optional: true,
-                            type: {
-                              throttle: { optional: true, type: "integer" },
-                            },
-                          },
-                          filterFields: {
-                            optional: true,
-                            ...FieldFilterSchema,
-                          },
-                          orderByFields: {
-                            optional: true,
-                            ...FieldFilterSchema,
-                          },
-                        },
-                      },
-                    ],
-                  },
-                  update: {
-                    optional: true,
-                    oneOf: [
-                      "boolean",
-                      {
-                        type: {
-                          fields: FieldFilterSchema,
-                          forcedFilterDetailed: { optional: true, type: "any" },
-                          checkFilterDetailed: { optional: true, type: "any" },
-                          filterFields: {
-                            optional: true,
-                            ...FieldFilterSchema,
-                          },
-                          orderByFields: {
-                            optional: true,
-                            ...FieldFilterSchema,
-                          },
-                          forcedDataDetail: { optional: true, type: "any[]" },
-                          dynamicFields: {
-                            optional: true,
-                            arrayOfType: {
-                              filterDetailed: "any",
-                              fields: FieldFilterSchema,
-                            },
-                          },
-                        },
-                      },
-                    ],
-                  },
-                  insert: {
-                    optional: true,
-                    oneOf: [
-                      "boolean",
-                      {
-                        type: {
-                          fields: FieldFilterSchema,
-                          forcedDataDetail: { optional: true, type: "any[]" },
-                          checkFilterDetailed: { optional: true, type: "any" },
-                        },
-                      },
-                    ],
-                  },
-                  delete: {
-                    optional: true,
-                    oneOf: [
-                      "boolean",
-                      {
-                        type: {
-                          filterFields: FieldFilterSchema,
-                          forcedFilterDetailed: { optional: true, type: "any" },
-                        },
-                      },
-                    ],
-                  },
-                  sync: {
-                    optional: true,
-                    type: {
-                      id_fields: { type: "string[]" },
-                      synced_field: { type: "string" },
-                      throttle: { optional: true, type: "integer" },
-                      allow_delete: { type: "boolean", optional: true },
-                    },
-                  },
-                },
-              },
-            },
-          ],
-        },
-      },
-
-      created: { sqlDefinition: `TIMESTAMP DEFAULT NOW()` },
+      viewed: "TIMESTAMPTZ DEFAULT NOW()",
     },
   },
 
   ...tableConfigPublishedMethods,
 
-  access_control_user_types: {
-    columns: {
-      access_control_id: `INTEGER NOT NULL REFERENCES access_control(id)  ON DELETE CASCADE`,
-      user_type: `TEXT NOT NULL REFERENCES user_types(id)  ON DELETE CASCADE`,
-    },
-    constraints: {
-      NoDupes: "UNIQUE(access_control_id, user_type)",
-    },
-  },
+  ...tableConfigAccessControl,
 
-  access_control_methods: {
-    // dropIfExistsCascade: true,
-    columns: {
-      published_method_id: `INTEGER NOT NULL REFERENCES published_methods  ON DELETE CASCADE`,
-      access_control_id: `INTEGER NOT NULL REFERENCES access_control  ON DELETE CASCADE`,
-    },
-    constraints: {
-      pkey: {
-        type: "PRIMARY KEY",
-        content: "published_method_id, access_control_id",
-      },
-    },
-  },
-  access_control_connections: {
-    columns: {
-      connection_id: `UUID NOT NULL REFERENCES connections(id) ON DELETE CASCADE`,
-      access_control_id: `INTEGER NOT NULL REFERENCES access_control  ON DELETE CASCADE`,
-    },
-    indexes: {
-      unique_connection_id: {
-        unique: true,
-        columns: "connection_id, access_control_id",
-      },
-    },
-  },
   magic_links: {
     // dropIfExistsCascade: true,
     columns: {
       id: `TEXT PRIMARY KEY DEFAULT gen_random_uuid()`,
       user_id: `UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE`,
       magic_link: `TEXT`,
-      magic_link_used: `TIMESTAMP`,
+      magic_link_used: `TIMESTAMPTZ`,
       expires: `BIGINT NOT NULL`,
       session_expires: `BIGINT NOT NULL DEFAULT 0`,
     },
   },
 
   credential_types: {
-    // dropIfExists: true,
+    // dropIfExistsCascade: true,
     isLookupTable: {
-      values: { s3: {} },
+      values: {
+        AWS: {
+          description: "S3",
+        },
+        Cloudflare: {
+          description: "R2",
+        },
+      },
     },
   },
 
@@ -674,367 +202,29 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
     // dropIfExists: true,
     columns: {
       id: `SERIAL PRIMARY KEY`,
-      name: `TEXT NOT NULL DEFAULT ''`,
+      name: { sqlDefinition: `TEXT`, info: { hint: "optional" } },
       user_id: `UUID REFERENCES users(id) ON DELETE SET NULL`,
-      type: `TEXT NOT NULL REFERENCES credential_types(id) DEFAULT 's3'`,
+      type: {
+        label: "Provider",
+        sqlDefinition: `TEXT NOT NULL REFERENCES credential_types(id) `,
+      },
       key_id: `TEXT NOT NULL`,
       key_secret: `TEXT NOT NULL`,
-      bucket: `TEXT`,
-      region: `TEXT`,
-    },
-    constraints: {
-      "Bucket or Region missing":
-        "CHECK(type <> 's3' OR (bucket IS NOT NULL AND region IS NOT NULL))",
+      endpoint_url: `TEXT NOT NULL DEFAULT ''`,
+      bucket: { sqlDefinition: `TEXT` },
+      region: { sqlDefinition: `TEXT`, info: { hint: "e.g. auto, us-east-1" } },
     },
   },
 
   ...tableConfigBackups,
 
-  workspace_layout_modes: {
-    isLookupTable: {
-      values: {
-        fixed: {
-          en: "Fixed",
-          description: "The workspace layout is fixed. Only admins can edit",
-        },
-        editable: {
-          en: "Editable",
-          description:
-            "The workspace will be cloned for each user to allow editing",
-        },
-      },
-    },
-  },
+  ...tableConfigWorkspaces,
 
-  workspaces: {
-    columns: {
-      id: `UUID PRIMARY KEY DEFAULT gen_random_uuid()`,
-      parent_workspace_id: `UUID REFERENCES workspaces(id) ON DELETE SET NULL`,
-      user_id: `UUID NOT NULL REFERENCES users(id)  ON DELETE CASCADE`,
-      connection_id: `UUID NOT NULL REFERENCES connections(id)  ON DELETE CASCADE`,
-      name: `TEXT NOT NULL DEFAULT 'default workspace'`,
-      created: `TIMESTAMP DEFAULT NOW()`,
-      active_row: `JSONB DEFAULT '{}'::jsonb`,
-      layout: `JSONB`,
-      icon: `TEXT`,
-      options: {
-        defaultValue: {
-          defaultLayoutType: "tab",
-          tableListEndInfo: "size",
-          tableListSortBy: "extraInfo",
-          hideCounts: false,
-          pinnedMenu: true,
-        },
-        jsonbSchemaType: {
-          hideCounts: {
-            optional: true,
-            type: "boolean",
-          },
-          tableListEndInfo: {
-            optional: true,
-            enum: ["none", "count", "size"],
-          },
-          tableListSortBy: {
-            optional: true,
-            enum: ["name", "extraInfo"],
-          },
-          showAllMyQueries: {
-            optional: true,
-            type: "boolean",
-          },
-          defaultLayoutType: {
-            optional: true,
-            enum: ["row", "tab", "col"],
-          },
-          pinnedMenu: {
-            optional: true,
-            type: "boolean",
-          },
-          pinnedMenuWidth: {
-            optional: true,
-            type: "number",
-          },
-        },
-      },
-      last_updated: `BIGINT NOT NULL`,
-      last_used: `TIMESTAMP NOT NULL DEFAULT now()`,
-      deleted: `BOOLEAN NOT NULL DEFAULT FALSE`,
-      url_path: `TEXT`,
-      published: {
-        sqlDefinition: `BOOLEAN NOT NULL DEFAULT FALSE, CHECK(parent_workspace_id IS NULL OR published = FALSE)`,
-        info: {
-          hint: "If true then this workspace can be shared with other users through Access Control",
-        },
-      },
-      layout_mode: {
-        nullable: true,
-        references: { tableName: "workspace_layout_modes" },
-      },
-      source: {
-        nullable: true,
-        jsonbSchemaType: {
-          tool_use_id: "string",
-        },
-      },
-    },
-    constraints: {
-      unique_url_path: `UNIQUE(url_path)`,
-      unique_name_per_user_perCon: `UNIQUE(connection_id, user_id, name)`,
-    },
-  },
-
-  windows: {
-    columns: {
-      id: `UUID PRIMARY KEY DEFAULT gen_random_uuid()`,
-      parent_window_id: {
-        sqlDefinition: `UUID REFERENCES windows(id) ON DELETE CASCADE`,
-        info: {
-          hint: "If defined then this is a chart for another window and will be rendered within that parent window",
-        },
-      },
-      user_id: `UUID NOT NULL REFERENCES users(id)  ON DELETE CASCADE`,
-      /*   ON DELETE SET NULL is used to ensure we don't delete saved SQL queries */
-      workspace_id: `UUID REFERENCES workspaces(id) ON DELETE SET NULL`,
-      // type: `TEXT NOT NULL CHECK(type IN ('map', 'sql', 'table', 'timechart', 'card', 'method'))`,
-      type: {
-        nullable: true,
-        enum: ["map", "sql", "table", "timechart", "card", "method"],
-      },
-      table_name: `TEXT`,
-      method_name: `TEXT`,
-      table_oid: `INTEGER`,
-      sql: `TEXT NOT NULL DEFAULT ''`,
-      selected_sql: `TEXT NOT NULL DEFAULT ''`,
-      name: `TEXT`,
-      title: {
-        sqlDefinition: `TEXT`,
-        info: {
-          hint: "Override name. Accepts ${rowCount} variable",
-        },
-      }, // Hacky way to set a fixed title
-      limit: `INTEGER DEFAULT 1000 CHECK("limit" > -1 AND "limit" < 100000)`,
-      closed: `BOOLEAN DEFAULT FALSE`,
-      deleted: `BOOLEAN DEFAULT FALSE CHECK(NOT (type = 'sql' AND deleted = TRUE AND (options->>'sqlWasSaved')::boolean = true))`,
-      show_menu: `BOOLEAN DEFAULT FALSE`,
-      minimised: {
-        info: { hint: "Used for attached charts to hide them" },
-        sqlDefinition: `BOOLEAN DEFAULT FALSE`,
-      },
-      fullscreen: `BOOLEAN DEFAULT TRUE`,
-      sort: "JSONB DEFAULT '[]'::jsonb",
-      filter: `JSONB NOT NULL DEFAULT '[]'::jsonb`,
-      having: `JSONB NOT NULL DEFAULT '[]'::jsonb`,
-      options: `JSONB NOT NULL DEFAULT '{}'::jsonb`,
-      sql_options: {
-        defaultValue: {
-          executeOptions: "block",
-          errorMessageDisplay: "both",
-          tabSize: 2,
-        },
-        jsonbSchemaType: {
-          executeOptions: {
-            optional: true,
-            description:
-              "Behaviour of execute (ALT + E). Defaults to 'block' \nfull = run entire sql   \nblock = run code block where the cursor is",
-            enum: ["full", "block", "smallest-block"],
-          },
-          errorMessageDisplay: {
-            optional: true,
-            description:
-              "Error display locations. Defaults to 'both' \ntooltip = show within tooltip only   \nbottom = show in bottom control bar only   \nboth = show in both locations",
-            enum: ["tooltip", "bottom", "both"],
-          },
-          tabSize: {
-            type: "integer",
-            optional: true,
-          },
-          lineNumbers: {
-            optional: true,
-            enum: ["on", "off"],
-          },
-          renderMode: {
-            optional: true,
-            description: "Show query results in a table or a JSON",
-            enum: ["table", "csv", "JSON"],
-          },
-          minimap: {
-            optional: true,
-            description: "Shows a vertical code minimap to the right",
-            type: { enabled: { type: "boolean" } },
-          },
-          acceptSuggestionOnEnter: {
-            description: "Insert suggestions on Enter. Tab is the default key",
-            optional: true,
-            enum: ["on", "smart", "off"],
-          },
-          expandSuggestionDocs: {
-            optional: true,
-            description:
-              "Toggle suggestions documentation tab. Requires page refresh. Enabled by default",
-            type: "boolean",
-          },
-          maxCharsPerCell: {
-            type: "integer",
-            optional: true,
-            description:
-              "Defaults to 1000. Maximum number of characters to display for each cell. Useful in improving performance",
-          },
-          theme: {
-            optional: true,
-            enum: ["vs", "vs-dark", "hc-black", "hc-light"],
-          },
-          showRunningQueryStats: {
-            optional: true,
-            description:
-              "(Experimental) Display running query stats (CPU and Memory usage) in the bottom bar",
-            type: "boolean",
-          },
-        },
-      },
-      columns: `JSONB`,
-      nested_tables: `JSONB`,
-      created: `TIMESTAMP NOT NULL DEFAULT NOW()`,
-      last_updated: `BIGINT NOT NULL`,
-    },
-  },
+  ...tableConfigWindows,
 
   ...tableConfigGlobalSettings,
 
-  links: {
-    columns: {
-      id: `UUID PRIMARY KEY DEFAULT gen_random_uuid()`,
-      user_id: `UUID NOT NULL REFERENCES users(id)  ON DELETE CASCADE`,
-      w1_id: `UUID NOT NULL REFERENCES windows(id)  ON DELETE CASCADE`,
-      w2_id: `UUID NOT NULL REFERENCES windows(id)  ON DELETE CASCADE`,
-      workspace_id: `UUID REFERENCES workspaces(id) ON DELETE SET NULL`,
-      disabled: "boolean",
-      options: {
-        jsonbSchema: {
-          oneOfType: [
-            {
-              type: { enum: ["table"] },
-              ...CommonLinkOpts,
-              tablePath: {
-                ...joinPath,
-                optional: false,
-                description: "Table path from w1.table_name to w2.table_name",
-              },
-            },
-            {
-              type: { enum: ["map"] },
-              ...CommonChartLinkOpts,
-              osmLayerQuery: {
-                type: "string",
-                optional: true,
-                description:
-                  "If provided then this is a OSM layer (w1_id === w2_id === current chart window)",
-              },
-              mapIcons: {
-                optional: true,
-                oneOfType: [
-                  {
-                    type: { enum: ["fixed"] },
-                    display: { enum: ["icon", "icon+circle"], optional: true },
-                    iconPath: "string",
-                  },
-                  {
-                    type: { enum: ["conditional"] },
-                    display: { enum: ["icon", "icon+circle"], optional: true },
-                    columnName: "string",
-                    conditions: {
-                      arrayOfType: {
-                        value: "any",
-                        iconPath: "string",
-                      },
-                    },
-                  },
-                ],
-              },
-              mapColorMode: {
-                optional: true,
-                oneOfType: [
-                  {
-                    type: { enum: ["fixed"] },
-                    colorArr: "number[]",
-                  },
-                  {
-                    type: { enum: ["scale"] },
-                    columnName: "string",
-                    min: "number",
-                    max: "number",
-                    minColorArr: "number[]",
-                    maxColorArr: "number[]",
-                  },
-                  {
-                    type: { enum: ["conditional"] },
-                    columnName: "string",
-                    conditions: {
-                      arrayOfType: {
-                        value: "any",
-                        colorArr: "number[]",
-                      },
-                    },
-                  },
-                ],
-              },
-              mapShowText: {
-                optional: true,
-                type: {
-                  columnName: { type: "string" },
-                },
-              },
-              columns: {
-                arrayOfType: {
-                  name: {
-                    type: "string",
-                    description: "Geometry/Geography column",
-                  },
-                  colorArr: "number[]",
-                },
-              },
-            },
-            {
-              type: { enum: ["timechart"] },
-              ...CommonChartLinkOpts,
-              groupByColumn: {
-                type: "string",
-                optional: true,
-                description: "Used by timechart",
-              },
-              otherColumns: {
-                arrayOfType: {
-                  name: "string",
-                  label: { type: "string", optional: true },
-                  udt_name: "string",
-                  is_pkey: { type: "boolean", optional: true },
-                },
-                optional: true,
-              },
-              columns: {
-                arrayOfType: {
-                  name: { type: "string", description: "Date column" },
-                  colorArr: "number[]",
-                  statType: {
-                    optional: true,
-                    type: {
-                      funcName: {
-                        enum: ["$min", "$max", "$countAll", "$avg", "$sum"],
-                      },
-                      numericColumn: "string",
-                    },
-                  },
-                },
-              },
-            },
-          ],
-        },
-      },
-      closed: `BOOLEAN DEFAULT FALSE`,
-      deleted: `BOOLEAN DEFAULT FALSE`,
-      created: `TIMESTAMP DEFAULT NOW()`,
-      last_updated: `BIGINT NOT NULL`,
-    },
-  },
+  ...tableConfigLinks,
 
   stats: {
     columns: {
@@ -1085,7 +275,7 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
         },
       },
       query_start: {
-        sqlDefinition: "TIMESTAMP",
+        sqlDefinition: "TIMESTAMPTZ",
         info: {
           hint: `Time when the currently active query was started, or if state is not active, when the last query was started`,
         },
@@ -1170,7 +360,7 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
         info: { hint: `Command with all its arguments as a string` },
       },
       sampled_at: {
-        sqlDefinition: "TIMESTAMP NOT NULL DEFAULT NOW()",
+        sqlDefinition: "TIMESTAMPTZ NOT NULL DEFAULT NOW()",
         info: { hint: `When the statistics were collected` },
       },
     },

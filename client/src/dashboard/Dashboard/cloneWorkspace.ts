@@ -25,7 +25,7 @@ export const cloneWorkspace = async (
   const clonedWsp = await dbs.workspaces.insert(
     {
       ...omitKeys(wsp, ["id", "user_id", "layout_mode", "published"]),
-      user_id: undefined as any,
+      user_id: undefined as unknown as string,
       name: keepName ? wsp.name : newName,
       published: false,
       parent_workspace_id: wsp.id,
@@ -40,7 +40,7 @@ export const cloneWorkspace = async (
       const win = {
         ...omitKeys(w, ["id", "parent_window_id", "user_id"]),
         workspace_id: clonedWsp.id,
-        user_id: undefined as any,
+        user_id: undefined as unknown as string,
       };
       const clonedWindow = await dbs.windows.insert(win, { returning: "*" });
       return clonedWindow;
@@ -56,7 +56,7 @@ export const cloneWorkspace = async (
       );
       const parent = clonedWindows[parentIndex];
       if (!parent) throw new Error("parent not found");
-      dbs.windows.update(
+      void dbs.windows.update(
         { id: clonedWindow.id },
         { parent_window_id: parent.id },
       );
@@ -68,8 +68,8 @@ export const cloneWorkspace = async (
       const lin: typeof l = {
         ...omitKeys(l, ["id", "user_id"]),
         workspace_id: clonedWsp.id,
-        user_id: undefined as any,
-        id: undefined as any,
+        user_id: undefined as unknown as string,
+        id: undefined as unknown as string,
         w1_id: clonedWindows[windows.findIndex((w) => w.id === l.w1_id)]!.id,
         w2_id: clonedWindows[windows.findIndex((w) => w.id === l.w2_id)]!.id,
       };

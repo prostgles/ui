@@ -1,25 +1,23 @@
 import { mdiPlus } from "@mdi/js";
 import { isDefined } from "prostgles-types";
 import React, { useMemo, useState } from "react";
-import Select from "../../components/Select/Select";
-import type { MapLayerManagerProps } from "./ChartLayerManager";
-import { FlexRow } from "../../components/Flex";
-import PopupMenu from "../../components/PopupMenu";
-import Btn from "../../components/Btn";
-import { MapOSMQuery } from "../W_Map/MapOSMQuery";
+import { Select } from "@components/Select/Select";
+import type { MapLayerManagerProps } from "./DataLayerManager/DataLayerManager";
+import { FlexRow } from "@components/Flex";
+import PopupMenu from "@components/PopupMenu";
+import Btn from "@components/Btn";
+import { MapOSMQuery } from "../W_Map/controls/MapOSMQuery";
 import type { Extent } from "../Map/DeckGLMap";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import { SvgIcon } from "@components/SvgIcon";
 
 export const defaultWorldExtent: Extent = [-180, -90, 180, 90];
 
 export const AddChartLayer = (props: MapLayerManagerProps) => {
-  const {
-    tables,
-    type,
-    prgl: { dbs },
-    w,
-  } = props;
+  const { type, w } = props;
   const isMap = type === "map";
-  let osmBbox = ""; // w.type === "map"? w.options.extent?.join(",") : "";
+  let osmBbox = "";
+  const { dbs, tables } = usePrgl();
   if (w.type === "map") {
     const [b, a, b1, a1] = w.options.extent ?? defaultWorldExtent;
     osmBbox = [a, b, a1, b1].join(",");
@@ -36,6 +34,7 @@ export const AddChartLayer = (props: MapLayerManagerProps) => {
             key: `${t.name}.${c.name}`,
             tableName: t.name,
             column: c.name,
+            icon: t.icon,
           }));
         }
         return undefined;
@@ -58,40 +57,50 @@ export const AddChartLayer = (props: MapLayerManagerProps) => {
           key: t.key,
           label: t.tableName,
           subLabel: t.column,
+          leftContent: (
+            <SvgIcon className="text-1" icon={t.icon || "Table"} size={20} />
+          ),
         }))}
         onChange={async (key) => {
           const chartTableFromKey = chartTables.find((gt) => gt.key === key);
-          if (chartTableFromKey) {
-            const colorArr = [100, 20, 57];
+          if (!chartTableFromKey) return;
+          const colorArr = [100, 20, 57];
 
-            await dbs.links
-              .insert({
-                w1_id: w.id,
-                w2_id: w.id,
-                workspace_id: w.workspace_id,
-                options: {
-                  type,
-                  dataSource: {
-                    type: "local-table",
-                    localTableName: chartTableFromKey.tableName,
-                  },
-                  columns: [
-                    {
-                      name: chartTableFromKey.column,
-                      colorArr,
-                    },
-                  ],
+          await dbs.links
+            .insert({
+              w1_id: w.id,
+              w2_id: w.id,
+              workspace_id: w.workspace_id,
+              options: {
+                type,
+                dataSource: {
+                  type: "local-table",
+                  localTableName: chartTableFromKey.tableName,
                 },
-                last_updated: undefined as any,
-                user_id: undefined as any,
-              })
-              .catch((e) => {
-                console.error(e);
-                setError(() => {
-                  throw new Error(e);
-                });
+                ...(type === "map" &&
+                  chartTableFromKey.icon && {
+                    mapIcons: {
+                      type: "fixed",
+                      iconPath: chartTableFromKey.icon,
+                      display: "icon",
+                    },
+                  }),
+                columns: [
+                  {
+                    name: chartTableFromKey.column,
+                    colorArr,
+                  },
+                ],
+              },
+              last_updated: undefined as unknown as string,
+              user_id: undefined as unknown as string,
+            })
+            .catch((e) => {
+              console.error(e);
+              setError(() => {
+                throw new Error(e);
               });
-          }
+            });
         }}
       />
       {type === "map" && (
@@ -111,17 +120,17 @@ export const AddChartLayer = (props: MapLayerManagerProps) => {
               {...props}
               bbox={osmBbox}
               onData={(_, osmLayerQuery) => {
-                dbs.links.insert({
+                void dbs.links.insert({
                   w1_id: w.id,
                   w2_id: w.id,
                   workspace_id: w.workspace_id,
                   options: {
                     type,
                     columns: [],
-                    osmLayerQuery,
+                    dataSource: { type: "osm", osmLayerQuery },
                   },
-                  last_updated: undefined as any,
-                  user_id: undefined as any,
+                  last_updated: undefined as unknown as string,
+                  user_id: undefined as unknown as string,
                 });
               }}
             />
@@ -130,101 +139,4 @@ export const AddChartLayer = (props: MapLayerManagerProps) => {
       )}
     </FlexRow>
   );
-};
-
-type Linkz = {
-  is_view: false;
-  select: true;
-  insert: true;
-  update: true;
-  delete: true;
-  columns: {
-    closed?: null | boolean;
-    created?: null | string;
-    deleted?: null | boolean;
-    disabled?: null | boolean;
-    id?: string;
-    last_updated: string;
-    options:
-      | {
-          type: "table";
-          colorArr?: number[];
-          tablePath: { table: string; on: Record<string, any>[] }[];
-        }
-      | {
-          type: "map";
-          dataSource?:
-            | { type: "sql"; sql: string; withStatement: string }
-            | {
-                type: "table";
-                joinPath?: { table: string; on: Record<string, any>[] }[];
-              }
-            | {
-                type: "local-table";
-                localTableName: string;
-                smartGroupFilter?: { $and: any[] } | { $or: any[] };
-              };
-          smartGroupFilter?: { $and: any[] } | { $or: any[] };
-          joinPath?: { table: string; on: Record<string, any>[] }[];
-          localTableName?: string;
-          sql?: string;
-          osmLayerQuery?: string;
-          mapIcons?:
-            | { type: "fixed"; iconPath: string }
-            | {
-                type: "conditional";
-                columnName: string;
-                conditions: { value: any; iconPath: string }[];
-              };
-          mapColorMode?:
-            | { type: "fixed"; colorArr: number[] }
-            | {
-                type: "scale";
-                columnName: string;
-                min: number;
-                max: number;
-                minColorArr: number[];
-                maxColorArr: number[];
-              }
-            | {
-                type: "conditional";
-                columnName: string;
-                conditions: { value: any; colorArr: number[] }[];
-              };
-          mapShowText?: { columnName: string };
-          columns: { name: string; colorArr: number[] }[];
-        }
-      | {
-          type: "timechart";
-          dataSource?:
-            | { type: "sql"; sql: string; withStatement: string }
-            | {
-                type: "table";
-                joinPath?: { table: string; on: Record<string, any>[] }[];
-              }
-            | {
-                type: "local-table";
-                localTableName: string;
-                smartGroupFilter?: { $and: any[] } | { $or: any[] };
-              };
-          smartGroupFilter?: { $and: any[] } | { $or: any[] };
-          joinPath?: { table: string; on: Record<string, any>[] }[];
-          localTableName?: string;
-          sql?: string;
-          groupByColumn?: string;
-          otherColumns?: { name: string; label?: string; udt_name: string }[];
-          columns: {
-            name: string;
-            colorArr: number[];
-            statType?: {
-              funcName: "$min" | "$max" | "$countAll" | "$avg" | "$sum";
-              numericColumn: string;
-            };
-          }[];
-        };
-    user_id: string;
-    w1_id: string;
-    w2_id: string;
-    workspace_id?: null | string;
-  };
 };

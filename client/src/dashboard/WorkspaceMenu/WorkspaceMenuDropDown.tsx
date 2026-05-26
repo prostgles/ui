@@ -1,24 +1,20 @@
+import Btn from "@components/Btn";
+import { FlexCol } from "@components/Flex";
+import PopupMenu from "@components/PopupMenu";
 import {
-  mdiAccountMultiple,
-  mdiChevronDown,
-  mdiContentCopy,
-  mdiViewCarousel,
-} from "@mdi/js";
+  SearchList,
+  type SvgIconName,
+} from "@components/SearchList/SearchList";
+import { mdiAccountMultiple, mdiChevronDown, mdiContentCopy } from "@mdi/js";
 import React, { useMemo } from "react";
-import Btn from "../../components/Btn";
-import { FlexCol } from "../../components/Flex";
-import { Icon } from "../../components/Icon/Icon";
-import PopupMenu from "../../components/PopupMenu";
-import { SearchList } from "../../components/SearchList/SearchList";
-import { SvgIcon } from "../../components/SvgIcon";
+import type { Prgl } from "src/App";
 import { cloneWorkspace } from "../Dashboard/cloneWorkspace";
+import type { WorkspaceSyncItem } from "../Dashboard/dashboardUtils";
+import type { useSetActiveWorkspace, useWorkspaces } from "./useWorkspaces";
 import { WorkspaceAddBtn } from "./WorkspaceAddBtn";
 import { WorkspaceDeleteBtn } from "./WorkspaceDeleteBtn";
 import "./WorkspaceMenu.css";
 import { WorkspaceSettings } from "./WorkspaceSettings";
-import type { WorkspaceSyncItem } from "../Dashboard/dashboardUtils";
-import type { Prgl } from "src/App";
-import type { useSetActiveWorkspace, useWorkspaces } from "./useWorkspaces";
 
 type P = {
   workspace: WorkspaceSyncItem;
@@ -32,7 +28,7 @@ export const WorkspaceMenuDropDown = ({
   workspaces,
   setWorkspace,
 }: P) => {
-  const { dbs, dbsTables, dbsMethods, user } = prgl;
+  const { dbs, dbsTables, dbsMethodSchema, user } = prgl;
   const isAdmin = user?.type === "admin";
   const sortedWorkspaces = useMemo(
     () =>
@@ -56,10 +52,8 @@ export const WorkspaceMenuDropDown = ({
           title="Manage Workspaces"
           iconPath={mdiChevronDown}
           className={"text-0"}
+          size="default"
           data-command="WorkspaceMenuDropDown"
-          style={{
-            padding: "12px",
-          }}
         />
       }
       contentStyle={{
@@ -89,26 +83,24 @@ export const WorkspaceMenuDropDown = ({
                 key: w.name,
                 label: w.name,
                 labelStyle: {},
-                rowStyle:
-                  workspace.id === w.id ?
-                    {
-                      background: "var(--bg-li-selected)",
-                    }
-                  : {},
-                contentLeft: (
-                  <div
-                    className="flex-col ai-start f-0 mr-1 text-2"
-                    style={
-                      workspace.id === w.id ?
-                        { color: "var(--active)" }
-                      : undefined
-                    }
-                  >
-                    {w.icon ?
-                      <SvgIcon icon={w.icon} />
-                    : <Icon path={mdiViewCarousel} size={1} />}
-                  </div>
-                ),
+                rowStyle: {
+                  background:
+                    workspace.id === w.id ? "var(--bg-li-selected)" : undefined,
+                },
+                styles: {
+                  rowInner: {
+                    alignItems: "center",
+                  },
+                },
+                iconLeft: {
+                  type: "SvgIcon",
+                  pathName:
+                    (w.icon as SvgIconName | undefined) || "ViewCarousel",
+                  style:
+                    workspace.id === w.id ?
+                      { color: "var(--active)" }
+                    : undefined,
+                },
                 contentRight: (
                   <div className="flex-row gap-p5 pl-1 show-on-parent-hover">
                     {w.published && isAdmin && (
@@ -117,6 +109,7 @@ export const WorkspaceMenuDropDown = ({
                         iconPath={mdiAccountMultiple}
                         color="action"
                         asNavLink={true}
+                        size="small"
                         href={`/connection-config/${w.connection_id}?section=access_control`}
                       />
                     )}
@@ -134,6 +127,7 @@ export const WorkspaceMenuDropDown = ({
                       iconPath={mdiContentCopy}
                       title="Clone workspace"
                       data-command="WorkspaceMenu.CloneWorkspace"
+                      size="small"
                       onClickPromise={async () => {
                         await cloneWorkspace(dbs, w.id).then((d) => {
                           setWorkspace(d.clonedWsp);
@@ -145,8 +139,9 @@ export const WorkspaceMenuDropDown = ({
                         <WorkspaceSettings
                           w={w}
                           dbs={prgl.dbs}
+                          dbsSql={prgl.dbsSql}
                           dbsTables={dbsTables}
-                          dbsMethods={dbsMethods}
+                          dbsMethodSchema={dbsMethodSchema}
                         />
                       </>
                     )}
@@ -175,8 +170,6 @@ export const WorkspaceMenuDropDown = ({
       )}
       footer={() => (
         <WorkspaceAddBtn
-          dbs={dbs}
-          connection_id={workspace.connection_id}
           setWorkspace={setWorkspace}
           btnProps={{
             children: "New workspace",

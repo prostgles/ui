@@ -1,5 +1,5 @@
 import React from "react";
-import { isDefined } from "../utils";
+import { isDefined } from "../utils/utils";
 import { FlexCol, classOverride } from "./Flex";
 import { Label } from "./Label";
 import "./Slider.css";

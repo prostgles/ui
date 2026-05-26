@@ -1,5 +1,5 @@
 import { isDefined } from "./filterUtils";
-import { DBSSchema } from "./publishUtils";
+import { DBSSchema, type DBSSchemaForInsert } from "./publishUtils";
 
 export const SECOND = 1000;
 export const MINUTE = SECOND * 60;
@@ -17,6 +17,16 @@ export type AGE = {
   seconds?: number;
   milliseconds?: number;
 };
+export type StrictOmit<T, K extends keyof T> = Omit<T, K>;
+
+export type ExtractBy<U, D extends keyof U, V extends U[D]> =
+  U extends any ?
+    D extends keyof U ?
+      U[D] extends V ? U
+      : V extends U[D] ? Omit<U, D> & Record<D, V>
+      : never
+    : never
+  : never;
 
 export const EXCLUDE_FROM_SCHEMA_WATCH =
   "prostgles internal query that should be excluded from schema watch ";
@@ -79,6 +89,32 @@ export type PGDumpParams = {
   destination: (typeof DESTINATIONS)[number]["key"];
   initiator?: string;
   name?: string;
+};
+
+export const DEFAULT_DUMP_OPTS: PGDumpParams = {
+  options: {
+    command: "pg_dump",
+    excludeSchema: "prostgles",
+    format: "c",
+    clean: true,
+    ifExists: true,
+    keepLogs: true,
+  },
+  destination: "Local",
+};
+
+export type RestoreOpts = DBSSchema["backups"]["restore_options"];
+
+export const DEFAULT_RESTORE_OPTS: RestoreOpts = {
+  clean: true,
+  create: false,
+  dataOnly: false,
+  noOwner: false,
+  command: "pg_restore",
+  excludeSchema: "prostgles",
+  ifExists: true,
+  format: "c",
+  keepLogs: false,
 };
 
 export type DeepWriteable<T> = {
@@ -204,7 +240,9 @@ export type SampleSchemaDir = {
   tableConfigTs: string;
   onMountTs: string;
   onInitSQL: string;
-  workspaceConfig: { workspaces: DBSSchema["workspaces"][] } | undefined;
+  workspaceConfig:
+    | { workspaces: DBSSchemaForInsert["workspaces"][] }
+    | undefined;
   connection:
     | Pick<
         DBSSchema["connections"],
@@ -292,7 +330,13 @@ export const SPOOF_TEST_VALUE = "trustme";
 export const getEntries = <T extends AnyObject>(obj: T) =>
   Object.entries(obj) as [keyof T, T[keyof T]][];
 
+export const fromEntries = <K extends string | number | symbol, V>(
+  entries: readonly (readonly [K, V])[],
+): Record<K, V> => {
+  return Object.fromEntries(entries) as Record<K, V>;
+};
 export const CONNECTION_CONFIG_SECTIONS = [
+  "authentication",
   "access_control",
   "backups",
   "table_config",
@@ -301,6 +345,17 @@ export const CONNECTION_CONFIG_SECTIONS = [
   "methods",
   "file_storage",
   "API",
+  "webApp",
+  "security",
+] as const;
+
+export const SERVER_SETTINGS_SECTIONS = [
+  "security",
+  "auth",
+  "cloud",
+  "mcpServers",
+  "llmProviders",
+  "services",
 ] as const;
 
 /**
@@ -326,29 +381,42 @@ export const fixIndent = (_str: string | TemplateStringsArray): string => {
     .trim();
 };
 
-export const getConnectionPaths = ({
+export const getConnectionApiPaths = ({
   id,
   url_path,
-}: {
-  id: string;
-  url_path: string | null;
-}) => {
+  port,
+  is_state_db,
+}: Pick<
+  DBSSchema["connections"],
+  "id" | "url_path" | "port" | "is_state_db"
+>) => {
+  const { REST, WS_DB } = API_ENDPOINTS;
   return {
-    rest: `${API_ENDPOINTS.REST}/${url_path || id}`,
-    ws: `${API_ENDPOINTS.WS_DB}/${url_path || id}`,
-    dashboard: `${ROUTES.CONNECTIONS}/${id}`,
-    config: `${ROUTES.CONFIG}/${id}`,
+    rest: port && !is_state_db ? REST : `${REST}/${url_path || id}`,
+    ws: port && !is_state_db ? WS_DB : `${WS_DB}/${url_path || id}`,
+  };
+};
+export const getConnectionPaths = (
+  { id }: Pick<DBSSchema["connections"], "id">,
+  sectionName?: string,
+) => {
+  const ending = sectionName ? `${id}?section=${sectionName}` : id;
+  return {
+    dashboard: `${ROUTES.CONNECTIONS}/${ending}`,
+    config: `${ROUTES.CONFIG}/${ending}`,
+    webAppTests: `${ROUTES.PLAYWRIGHT_REPORT}/${ending}`,
   };
 };
 
 export const API_ENDPOINTS = {
   REST: "/rest-api",
-  WS_DB: "/ws-api-db",
+  WS_DB: "/ws-api",
   WS_DBS: "/ws-api-dbs",
+  MAGIC_LINK: "/magic-link",
+  DBS: "/dbs",
 } as const;
 
 export const ROUTES = {
-  MAGIC_LINK: "/magic-link",
   LOGIN: "/login",
   LOGOUT: "/logout",
   ACCOUNT: "/account",
@@ -362,6 +430,7 @@ export const ROUTES = {
   USERS: "/users",
   BACKUPS: "/prostgles_backups",
   STORAGE: "/prostgles_storage",
+  PLAYWRIGHT_REPORT: "/playwright-report",
 } as const;
 
 const testForDuplicateValues = <T extends AnyObject>(obj: T, name: string) => {
@@ -377,17 +446,6 @@ testForDuplicateValues(ROUTES, "ROUTES");
 export const PROSTGLES_CLOUD_URL = "https://cloud1.prostgles.com";
 
 export const FORKED_PROC_ENV_NAME = "IS_FORKED_PROC" as const;
-
-type ValueOf<T> = T[keyof T];
-export const getProperty = <
-  O extends AnyObject,
-  K extends (keyof O & string) | string,
->(
-  o: O,
-  k: K,
-): ValueOf<O> | undefined => {
-  return o[k] as ValueOf<O> | undefined;
-};
 
 export function debouncePromise<Args extends any[], T>(
   promiseFuncDef: (...pArgs: Args) => Promise<T>,
@@ -416,4 +474,50 @@ export const getCaller = () => {
   const stackLines = error.stack?.split("\n") ?? [];
   const callerLine = stackLines[2] ?? "";
   return stackLines;
+};
+
+//TODO: add file table column info to prostgles-types
+export type FileTable = {
+  original_name: string;
+};
+
+export const getProperty = <T extends object, K extends string>(
+  obj: T,
+  key: K | string,
+): K extends keyof T ? T[K]
+: K extends string ? T[keyof T] | undefined
+: undefined => {
+  if (!Object.keys(obj).includes(key))
+    return undefined as K extends keyof T ? T[K] : undefined;
+  return obj[key as keyof T] as K extends keyof T ? T[K] : undefined;
+};
+
+type OptionalKeys<T> = {
+  [K in keyof T]-?: {} extends Pick<T, K> ? K : never;
+}[keyof T];
+
+type RequiredKeys<T> = Exclude<keyof T, OptionalKeys<T>>;
+
+type Simplify<T> = { [K in keyof T]: T[K] };
+
+export type RequiredKeepUndefined<T> = Simplify<
+  { [K in RequiredKeys<T>]: T[K] } & {
+    [K in OptionalKeys<T>]: T[K] | undefined;
+  }
+>;
+
+export const getRandomElement = <Arr>(
+  items: Arr[],
+): { elem: Arr; index: number } => {
+  const randomIndex = Math.floor(Math.random() * items.length);
+  return { elem: items[randomIndex]!, index: randomIndex };
+};
+
+/**
+ * TODO: find a compile time solution
+ */
+export const tableMightBeUndefinedDueToAccessControl = <T>(
+  tableHandler: T,
+): T | undefined => {
+  return tableHandler;
 };

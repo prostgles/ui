@@ -1,32 +1,12 @@
-# Prostgles Desktop
-
-Electron Wrapper for Prostgles UI
-
 ## Overview
 
-Prostgles Desktop is a cross platform PostgreSQL database tool. The focus is on providing one of the best sql writing and data exploration experience for PostgreSQL for free
-
-### Demo
-
-Visit https://playground.prostgles.com
-
-### Features
-
-- SQL Editor with context-aware schema auto-completion and documentation extracts and hints
-- Realtime data exploration dashboard with versatile layout system (tab and side-by-side view)
-- Table view with controls to view related data, sort, filter and cross-filter
-- Map and Time charts with aggregations
-- Data insert/update forms with autocomplete
-- Search all tables from public schema
-- Media file display (audio/video/image/html/svg)
-- Data import (CSV, JSON and GeoJSON)
-- Backup/Restore (locally or to cloud)
-- TypeScript server-side functions (experimental)
-- LISTEN NOTIFY support
+**Prostgles Desktop** is a native desktop application based on Electron available for Linux, MacOS and Windows.
+It has a subset of the core features from [Prostgles UI](../README.md) for data exploration and database management.
+User Management and other multi-user focused features are not available in the desktop version.
 
 ### Installation
 
-Visit our [releases page](https://github.com/prostgles/ui/releases) to download the latest installation binaries.
+Pre-built installation files can be installed as described [here](<../docs/03_Installation_(Desktop_Version).md>)
 
 ### Building
 
@@ -37,17 +17,17 @@ git clone https://github.com/prostgles/ui.git
 cd ui/electron
 ```
 
-The build commands are specific to your operating system: build-linux, build-macos or build-win.
+The build commands are specific to your operating system: `build-linux`, `build-macos` or `build-win`.
 
 Consult [our workflow file](../.github/workflows/on_release.yml) to get up to date build commands for your platform
 
-MacOS build
+For example, the command to build for MacOS is:
 
 ```
 npm run build-macos
 ```
 
-Go to build files
+Which will build and save the installation files in the `./dist` directory
 
 ```
 cd dist

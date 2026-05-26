@@ -1,21 +1,20 @@
 import type { SQLResult } from "prostgles-client/dist/prostgles";
-import type {
-  SQLHandler,
-  SQLResultInfo,
-  SocketSQLStreamHandlers,
+import {
+  includes,
+  type SocketSQLStreamHandlers,
+  type SQLResultInfo,
 } from "prostgles-types";
 import type { WindowData } from "../../Dashboard/dashboardUtils";
 import { STARTING_KEYWORDS } from "../../SQLEditor/SQLCompletion/CommonMatchImports";
 import type { ColumnSortSQL } from "../../W_Table/ColumnMenu/ColumnMenu";
-import type { W_SQL_ActiveQuery, W_SQLState } from "../W_SQL";
-import type { W_SQL } from "../W_SQL";
+import type { W_SQL, W_SQLState } from "../W_SQL";
 import { SQL_NOT_ALLOWED } from "../W_SQL";
+import { parseExplainResult } from "../parseExplainResult";
 import { parseSQLError } from "../parseSQLError";
 import {
   getFieldsWithActions,
   parseSqlResultCols,
 } from "../parseSqlResultCols";
-import { parseExplainResult } from "../parseExplainResult";
 import { getQueryTotalRowCount } from "./getQueryTotalRowCount";
 
 export async function runSQL(this: W_SQL, sort: ColumnSortSQL[] = []) {
@@ -29,16 +28,16 @@ export async function runSQL(this: W_SQL, sort: ColumnSortSQL[] = []) {
     this.sqlRef?.getSelectedText() ||
     (await this.sqlRef?.getCurrentCodeBlock())?.text;
   const sql = selected_sql || this.d.w?.sql || "";
-  const { db } = this.props.prgl;
+  const { sql: sqlHandler } = this.props.prgl;
   const w = this.d.w;
   if (w && w.selected_sql !== selected_sql) {
     w.$update({ selected_sql });
   }
 
-  if (!w || !db.sql) {
+  if (!w || !sqlHandler) {
     this.setState({
       error:
-        !db.sql ? SQL_NOT_ALLOWED : (
+        !sqlHandler ? SQL_NOT_ALLOWED : (
           "Internal error (w is missing). Try refreshing the page"
         ),
     });
@@ -102,9 +101,9 @@ export async function runSQL(this: W_SQL, sort: ColumnSortSQL[] = []) {
          *    this.hashedSQL = `DO $SYNTAX_CHECK$ BEGIN RETURN; \n ${_sqlLimited} \nEND; $SYNTAX_CHECK$;`
          */
         this.hashedSQL = `EXPLAIN ${sqlSorted}`;
-        await db.sql(this.hashedSQL);
+        await sqlHandler(this.hashedSQL);
         this.hashedSQL = ` SELECT * FROM (\n ${sqlSorted} \n ) t LIMIT 0`;
-        const { fields } = await db.sql(
+        const { fields } = await sqlHandler(
           this.hashedSQL,
           {},
           { returnType: "default-with-rollback" },
@@ -116,11 +115,11 @@ export async function runSQL(this: W_SQL, sort: ColumnSortSQL[] = []) {
             .map(
               (s) =>
                 `${(s.key as number) + 1}` +
-                ([1, true].includes(s.asc as any) ? " ASC " : " DESC "),
+                (includes([1, true], s.asc) ? " ASC " : " DESC "),
             )
             .join(", ") || " TRUE::BOOLEAN ";
 
-        await db.sql(
+        await sqlHandler(
           ` SELECT * FROM (\n ${sqlSorted} \n ) t ORDER BY ${orderBy} LIMIT 0`,
         );
         sqlSorted = ` SELECT * FROM (\n ${sqlSorted} \n ) t ORDER BY ${orderBy}`;
@@ -165,7 +164,7 @@ export async function runSQL(this: W_SQL, sort: ColumnSortSQL[] = []) {
     let fields: SQLResult<"stream">["fields"] | undefined = undefined;
     let info: SQLResultInfo | undefined = undefined;
     let rows: any[] = [];
-    const stream = await db.sql(hashedSQL, undefined, {
+    const stream = await sqlHandler(hashedSQL, undefined, {
       returnType: "stream",
       persistStreamConnection: true,
       hasParams: false,
@@ -178,7 +177,7 @@ export async function runSQL(this: W_SQL, sort: ColumnSortSQL[] = []) {
         : undefined;
       if (!runningQuery && packet.type !== "error") {
         if (w.$get()?.closed) {
-          handler.stop();
+          await handler.stop();
         } else {
           console.error(this.state.activeQuery, sql, packet);
           alert(
@@ -195,7 +194,7 @@ export async function runSQL(this: W_SQL, sort: ColumnSortSQL[] = []) {
       };
       const { trimmedSql, hashedSQL } = runningQuery ?? defaultRunningQuery;
       if (packet.type === "error") {
-        this.state.handler?.stop();
+        void this.state.handler?.stop();
         const sqlError = await parseSQLError.bind(this)({
           sql: trimmedSql,
           err: packet.error,
@@ -225,7 +224,7 @@ export async function runSQL(this: W_SQL, sort: ColumnSortSQL[] = []) {
          */
         if (packet.fields) fields = packet.fields;
         if (fields || packet.ended) {
-          let cols: typeof this.state.cols | undefined = this.state.cols;
+          let cols: typeof this.state.cols = this.state.cols;
 
           /* For WITH command must wait for response command to work out if it's a SELECT  */
           isSelect = isSelect || packet.info?.command === "SELECT";
@@ -262,7 +261,7 @@ export async function runSQL(this: W_SQL, sort: ColumnSortSQL[] = []) {
           });
           if (packet.ended) {
             if (packet.info?.command === "LISTEN") {
-              const sqlRes = await db.sql!(hashedSQL, undefined, {
+              const sqlRes = await sqlHandler(hashedSQL, undefined, {
                 returnType: "arrayMode",
                 allowListen: true,
                 hasParams: false,
@@ -273,7 +272,7 @@ export async function runSQL(this: W_SQL, sort: ColumnSortSQL[] = []) {
                   dataType: "json",
                   udt_name: "json",
                   tsDataType: "any",
-                };
+                } as const;
 
                 this.setState({
                   cols: getFieldsWithActions(
@@ -285,7 +284,7 @@ export async function runSQL(this: W_SQL, sort: ColumnSortSQL[] = []) {
                   ),
                   rows: [],
                   activeQuery: undefined,
-                  notifEventSub: await sqlRes.addListener((ev) => {
+                  notifEventSub: sqlRes.addListener((ev) => {
                     console.log(ev);
                     return this.notifEventListener(ev);
                   }),
@@ -342,23 +341,25 @@ export async function runSQL(this: W_SQL, sort: ColumnSortSQL[] = []) {
             if (limit && rowCount && limit > rowCount) {
               activeQuery.totalRowCount = rowCount;
             } else {
-              getQueryTotalRowCount(db.sql!, activeQuery, limit, isSelect).then(
-                (fetchedTotalRowCount) => {
-                  if (
-                    isFinite(fetchedTotalRowCount) &&
-                    activeQuery.hashedSQL ===
-                      this.state.activeQuery?.hashedSQL &&
-                    this.state.activeQuery.state === "ended"
-                  ) {
-                    this.setState({
-                      activeQuery: {
-                        ...this.state.activeQuery,
-                        totalRowCount: fetchedTotalRowCount,
-                      },
-                    });
-                  }
-                },
-              );
+              void getQueryTotalRowCount(
+                sqlHandler,
+                activeQuery,
+                limit,
+                isSelect,
+              ).then((fetchedTotalRowCount) => {
+                if (
+                  isFinite(fetchedTotalRowCount) &&
+                  activeQuery.hashedSQL === this.state.activeQuery?.hashedSQL &&
+                  this.state.activeQuery.state === "ended"
+                ) {
+                  this.setState({
+                    activeQuery: {
+                      ...this.state.activeQuery,
+                      totalRowCount: fetchedTotalRowCount,
+                    },
+                  });
+                }
+              });
             }
 
             this.setState({
@@ -378,7 +379,7 @@ export async function runSQL(this: W_SQL, sort: ColumnSortSQL[] = []) {
     setRunningQuery({ handler });
   } catch (err: any) {
     const started = this.state.activeQuery?.started || new Date();
-    this.state.handler?.stop();
+    void this.state.handler?.stop();
     this.setState({
       isSelect: false,
       notifEventSub: undefined,

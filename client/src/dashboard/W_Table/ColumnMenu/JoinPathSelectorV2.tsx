@@ -1,14 +1,16 @@
+import type { BtnProps } from "@components/Btn";
+import { FlexCol } from "@components/Flex";
+import { getSearchRanking } from "@components/SearchList/searchMatchUtils/getSearchRanking";
+import type { FullOption } from "@components/Select/Select";
+import { Select } from "@components/Select/Select";
+import type { ParsedJoinPath } from "prostgles-types";
 import React, { useMemo } from "react";
+import { isDefined } from "../../../utils/utils";
+import CodeExample from "../../CodeExample";
 import type { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
 import type { TargetPath } from "../tableUtils/getJoinPaths";
 import { getJoinPathStr, getJoinPaths } from "../tableUtils/getJoinPaths";
-import type { ParsedJoinPath } from "prostgles-types";
-import type { FullOption } from "../../../components/Select/Select";
-import Select from "../../../components/Select/Select";
-import { isDefined } from "../../../utils";
-import CodeExample from "../../CodeExample";
-import { FlexCol } from "../../../components/Flex";
-import type { BtnProps } from "../../../components/Btn";
+import type { SvgIconName } from "@components/SearchList/SearchList";
 type P = {
   tables: DBSchemaTablesWJoins;
   tableName: string;
@@ -41,7 +43,7 @@ export const getJoinPathLabel = (
       : hasMultiFkeys(tables, p.table, prevPath.table);
     let label = p.table;
     if (hasMultipleFkeyConstraints) {
-      label = `(${Object.entries(p.on![0]!)
+      label = `(${Object.entries(p.on[0]!)
         .map(([l, r]) => `${l} = ${r}`)
         .join(" AND ")}) ${p.table}`;
     }
@@ -49,7 +51,7 @@ export const getJoinPathLabel = (
       label,
       multiJoin: hasMultipleFkeyConstraints && {
         value: hasMultipleFkeyConstraints,
-        chosen: Object.entries(p.on![0]!),
+        chosen: Object.entries(p.on[0]!),
       },
     };
   });
@@ -85,32 +87,17 @@ export const getAllJoins = ({
   };
 };
 
-export const getRankingFunc = (searchTerm: string, labels: string[]) => {
-  if (searchTerm) {
-    const matchedLabelRank = labels
-      .map((l, i) => {
-        const idx = l.toLowerCase().indexOf(searchTerm.toLowerCase());
-        const rank =
-          idx === -1 ? undefined : (
-            Number(`${i}.${idx.toString().padStart(3, "0")}`)
-          );
-        return rank;
-      })
-      .filter(isDefined)[0];
-    return matchedLabelRank ?? Infinity;
-  }
-  return Infinity;
-};
+export const JoinPathSelectorV2 = (props: P) => {
+  const {
+    tables,
+    tableName,
+    value,
+    onChange,
+    variant,
+    getFullOption,
+    btnProps,
+  } = props;
 
-export const JoinPathSelectorV2 = ({
-  tables,
-  tableName,
-  value,
-  onChange,
-  variant,
-  getFullOption,
-  btnProps,
-}: P) => {
   const { allJoins, targetPathIdx } = useMemo(
     () => getAllJoins({ tableName, tables, value }),
     [tableName, tables, value],
@@ -138,19 +125,27 @@ export const JoinPathSelectorV2 = ({
     ].join("\n");
   }, [value, tableName]);
 
-  const fullOptions = allJoins.map((j) => {
-    return {
-      ...getFullOption?.(j.path),
-      key: j.label,
-      lastJoinLabel: j.labels.at(-1),
-      ranking: (searchTerm) =>
-        getRankingFunc(
-          searchTerm,
-          j.labels.map((l) => l.label),
-        ),
-      subLabel: j.table.columns.map((c) => c.name).join(", "),
-    };
-  });
+  const fullOptions = useMemo(
+    () =>
+      allJoins.map((j) => {
+        return {
+          ...getFullOption?.(j.path),
+          key: j.label,
+          iconLeft: {
+            type: "SvgIcon",
+            pathName: (j.table.icon as SvgIconName | undefined) || "Table",
+          },
+          ranking: (searchTerm) =>
+            getSearchRanking(
+              searchTerm,
+              j.labels.map((l) => l.label),
+            ),
+          subLabel: j.table.columns.map((c) => c.name).join(", "),
+        } satisfies FullOption<string>;
+      }),
+    [allJoins, getFullOption],
+  );
+
   const targetValue =
     isDefined(targetPathIdx) ? fullOptions[targetPathIdx] : undefined;
 
@@ -183,7 +178,8 @@ export const JoinPathSelectorV2 = ({
       value={targetValue?.key}
       data-command="JoinPathSelectorV2"
       fullOptions={fullOptions}
-      variant={variant ? "search-list-only" : undefined}
+      noSearchLimit={0}
+      variant={!targetValue?.key || variant ? "search-list-only" : undefined}
       onChange={(key) => {
         const idx = fullOptions.findIndex((d) => d.key === key);
         const targetPath = allJoins[idx];
@@ -192,7 +188,8 @@ export const JoinPathSelectorV2 = ({
           console.error("Path not found");
           return;
         }
-        onChange(targetPath, fullOpt.lastJoinLabel?.multiJoin);
+        const lastJoinLabel = targetPath.labels.at(-1);
+        onChange(targetPath, lastJoinLabel?.multiJoin);
       }}
     />
   );

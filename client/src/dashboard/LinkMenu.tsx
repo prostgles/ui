@@ -1,23 +1,23 @@
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import Popup from "@components/Popup/Popup";
 import type { ParsedJoinPath } from "prostgles-types";
 import React from "react";
-import Popup from "../components/Popup/Popup";
+import type { Prgl } from "src/App";
 import { Chart } from "./Charts";
 import type { CanvasChart, Shape } from "./Charts/CanvasChart";
 import type { DBS } from "./Dashboard/DBS";
-import type { CommonWindowProps } from "./Dashboard/Dashboard";
 import type {
+  DBSchemaTableWJoins,
   Link,
   LinkSyncItem,
   WindowData,
   WindowSyncItem,
 } from "./Dashboard/dashboardUtils";
 import RTComp from "./RTComp";
+import { getLinkColorV2 } from "./W_Map/fetchData/getMapLayerQueries";
 import { JoinPathSelectorV2 } from "./W_Table/ColumnMenu/JoinPathSelectorV2";
-import { getLinkColorV2 } from "./W_Map/getMapLayerQueries";
 
 type P = {
-  db: DBHandlerClient;
+  db: Prgl["db"];
   dbs: DBS;
   onClose: VoidFunction;
 
@@ -30,7 +30,7 @@ type P = {
   anchorEl: Element;
   gridRef: Element;
 
-  tables: CommonWindowProps["tables"];
+  tables: DBSchemaTableWJoins[];
 };
 
 type S = {
@@ -45,46 +45,13 @@ export class LinkMenu extends RTComp<P, S> {
     chartRef: undefined,
   };
 
-  static getMyLinks = (
-    _links: Link[],
-    w: WindowData,
-    windows: WindowData[],
-  ) => {
-    const getLinks = (links: Link[], allLinks: Link[]) => {
-      return allLinks.filter((al) =>
-        [al.w1_id, al.w2_id].some((alid) =>
-          links.some((l) => [l.w1_id, l.w2_id].includes(alid)),
-        ),
-      );
-    };
-    const links = _links.filter((l) =>
-      [l.w1_id, l.w2_id].every((wid) =>
-        windows.some((w) => wid === w.id && !w.closed && !w.deleted),
-      ),
-    );
-
-    let currLinks = links.filter((l) => [l.w1_id, l.w2_id].includes(w.id));
-    let prevLinks = currLinks;
-    let myLinks = [...currLinks];
-    do {
-      currLinks = getLinks(
-        prevLinks,
-        links.filter((l) => !myLinks.find((ml) => ml.id === l.id)),
-      );
-      prevLinks = currLinks;
-      myLinks = myLinks.concat(currLinks);
-    } while (currLinks.length);
-
-    return myLinks;
-  };
-
   loadShapes = () => {
-    const { w, links, gridRef, windows, tables } = this.props;
+    const { w, links, gridRef, windows } = this.props;
 
     if (w.table_name && this.rootRef) {
       const shapes: Shape[] = [];
 
-      const myLinks = LinkMenu.getMyLinks(links, w, windows); // links.filter(l => [l.w1_id, l.w2_id].includes(w.id));
+      const myLinks = getMyLinks(links, w, windows); // links.filter(l => [l.w1_id, l.w2_id].includes(w.id));
       // const myWindows = windows.filter(w => !w.closed && !w.deleted && myLinks.some(l =>  [l.w1_id, l.w2_id].includes(w.id)));
 
       /**
@@ -129,7 +96,13 @@ export class LinkMenu extends RTComp<P, S> {
             if (l.options.type === "table") {
               return w.table_name!;
             } else {
-              return `${l.options.joinPath?.at(-1)?.table ?? w.table_name ?? otherW?.table_name} (${l.options.columns.map((c) => c.name)})`;
+              const { dataSource } = l.options;
+              const chartedColumnsLabel = l.options.columns.map((c) => c.name);
+              const chartedTableLabel =
+                dataSource?.type === "table" ?
+                  (dataSource.joinPath?.at(-1)?.table ?? dataSource.tableName)
+                : (w.table_name ?? otherW?.table_name);
+              return `${chartedTableLabel} (${chartedColumnsLabel})`;
             }
           };
           const textStyle = {
@@ -186,9 +159,10 @@ export class LinkMenu extends RTComp<P, S> {
             Math.abs(w1r.y - w2r.y) > Math.abs(w1r.x - w2r.x) ? "y" : "x";
 
           const parsedPath =
-            l.options.type === "table" ?
-              l.options.tablePath
-            : l.options.joinPath;
+            l.options.type === "table" ? l.options.tablePath
+            : l.options.dataSource?.type === "table" ?
+              l.options.dataSource.joinPath
+            : undefined;
           joinTextLines =
             parsedPath?.flatMap((p) => [
               {
@@ -246,7 +220,7 @@ export class LinkMenu extends RTComp<P, S> {
     }
   };
 
-  onDelta = async (dP, dS, dD) => {
+  onDelta = (dP, dS, dD) => {
     if (!this.state.shapes) {
       this.loadShapes();
     }
@@ -281,16 +255,15 @@ export class LinkMenu extends RTComp<P, S> {
         <Popup
           onClose={onClose}
           title={canJoin ? "Add joined table" : undefined}
-          collapsible={true}
+          collapsible={{ defaultValue: Boolean(links.length) }}
           anchorEl={anchorEl}
           positioning="beneath-left"
           clickCatchStyle={{ opacity: 0, zIndex: 14 }}
-          contentStyle={canJoin ? { padding: 0 } : { display: "none" }}
+          contentStyle={canJoin ? { padding: "1em" } : { display: "none" }}
           rootStyle={{ zIndex: 14, maxWidth: "500px" }}
         >
           {canJoin && (
             <JoinPathSelectorV2
-              // className="w-full"
               tableName={w.table_name!}
               value={undefined}
               tables={tables}
@@ -328,3 +301,32 @@ export class LinkMenu extends RTComp<P, S> {
     );
   }
 }
+
+const getMyLinks = (_links: Link[], w: WindowData, windows: WindowData[]) => {
+  const getLinks = (links: Link[], allLinks: Link[]) => {
+    return allLinks.filter((al) =>
+      [al.w1_id, al.w2_id].some((alid) =>
+        links.some((l) => [l.w1_id, l.w2_id].includes(alid)),
+      ),
+    );
+  };
+  const links = _links.filter((l) =>
+    [l.w1_id, l.w2_id].every((wid) =>
+      windows.some((w) => wid === w.id && !w.closed && !w.deleted),
+    ),
+  );
+
+  let currLinks = links.filter((l) => [l.w1_id, l.w2_id].includes(w.id));
+  let prevLinks = currLinks;
+  let myLinks = [...currLinks];
+  do {
+    currLinks = getLinks(
+      prevLinks,
+      links.filter((l) => !myLinks.find((ml) => ml.id === l.id)),
+    );
+    prevLinks = currLinks;
+    myLinks = myLinks.concat(currLinks);
+  } while (currLinks.length);
+
+  return myLinks;
+};

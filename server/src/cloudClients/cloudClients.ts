@@ -17,6 +17,7 @@ import { pickKeys } from "prostgles-types";
 type S3Config = {
   Bucket: string;
   region: string;
+  endpoint?: string;
   accessKeyId: string;
   secretAccessKey: string;
 };
@@ -26,7 +27,8 @@ const getS3CloudClient = (s3Config: S3Config): CloudClient => {
   // Initialize S3 client
   const s3Client = new S3Client({
     credentials: pickKeys(s3Config, ["accessKeyId", "secretAccessKey"]),
-    region: s3Config.region,
+    region: s3Config.region || "auto",
+    endpoint: s3Config.endpoint,
   });
 
   // Helper function to upload a file to S3 and track progress
@@ -66,16 +68,26 @@ const getS3CloudClient = (s3Config: S3Config): CloudClient => {
       const headCommand = new GetObjectCommand({ ...bucket, Key: objectKey });
       const headResponse = await s3Client.send(headCommand);
 
+      const endpoint =
+        s3Config.endpoint || `https://${bucketName}.s3.amazonaws.com/`;
+
       const uploadedFile: UploadedCloudFile = {
-        cloud_url: `https://${bucketName}.s3.amazonaws.com/${objectKey}`,
+        cloud_url: `${endpoint}${objectKey}`,
         etag: headResponse.ETag || "",
         content_length: headResponse.ContentLength || 0,
       };
 
       onFinish(undefined, uploadedFile);
     } catch (error: unknown) {
-      //@ts-ignore
-      onFinish(error ?? new Error("Error"), undefined);
+      if (error instanceof Error) {
+        onFinish(error, undefined);
+      } else {
+        console.error("Unknown error in uploadToS3 ", error);
+        onFinish(
+          new Error("Unknown error in uploadToS3. Check logs"),
+          undefined,
+        );
+      }
     }
   };
 
@@ -124,4 +136,4 @@ const getS3CloudClient = (s3Config: S3Config): CloudClient => {
   };
 };
 
-export const getCloudClient = (config: S3Config) => getS3CloudClient(config);
+export const getCloudClient = getS3CloudClient;

@@ -3,12 +3,12 @@ import type {
   TableInfo,
   ValidatedColumnInfo,
 } from "prostgles-types";
-import { getPossibleNestedInsert } from "prostgles-types";
+import { getPossibleNestedInsert, isObject } from "prostgles-types";
 import React, { useMemo, useState } from "react";
 import type { SmartFormProps } from "../SmartForm";
 import { type NewRowDataHandler } from "../SmartFormNewRowDataHandler";
 import type { SmartFormFieldProps } from "./SmartFormField";
-import { SmartFormFieldLinkedDataInsert } from "./SmartFormFieldLinkedDataInsert";
+import { SmartFormFieldLinkedDataInsert } from "./SmartFormFieldLinkedDataInsert/SmartFormFieldLinkedDataInsert";
 import { SmartFormFieldLinkedDataSearch } from "./SmartFormFieldLinkedDataSearch";
 
 export type SmartFormFieldLinkedDataProps = Pick<
@@ -16,6 +16,7 @@ export type SmartFormFieldLinkedDataProps = Pick<
   | "db"
   | "tables"
   | "methods"
+  | "sql"
   | "hideNullBtn"
   | "enableInsert"
   | "onSuccess"
@@ -47,6 +48,7 @@ export const SmartFormFieldLinkedData = (
     column,
     newRowDataHandler,
     tableName,
+    sql,
   } = props;
 
   if (!state) return null;
@@ -57,6 +59,7 @@ export const SmartFormFieldLinkedData = (
           tables={tables}
           methods={methods}
           db={db}
+          sql={sql}
           readOnly={readOnly}
           row={row}
           column={column}
@@ -83,14 +86,17 @@ const useSmartFieldForeignKeyOptionsState = ({
   enableInsert,
   setShowNestedInsertForm,
   showNestedInsertForm,
+  row,
 }: Pick<
   SmartFormFieldProps,
-  "column" | "action" | "db" | "tables" | "enableInsert"
+  "column" | "action" | "db" | "tables" | "enableInsert" | "row"
 > &
   SmartFormFieldLinkedDataInsertState) => {
+  const value = row ? row[column.name] : undefined;
+  const isUpsertingFile = column.file && action !== "view" && isObject(value);
   return useMemo(() => {
     const ref = getPossibleNestedInsert(column, tables);
-    const fileTableName = tables[0]?.info.fileTableName;
+    const fileTableName = tables[0]?.fileTableName;
     const ftable =
       ref?.ftable ?? (column.file && fileTableName ? fileTableName : undefined);
     const ftableInfo =
@@ -120,7 +126,12 @@ const useSmartFieldForeignKeyOptionsState = ({
     const hasMultipleCols = fTableCols && fTableCols.length > 1;
     /** No point showing full table search when there is only 1 column */
     const showSearchState =
-      action !== "view" && ftableHandler?.find && hasMultipleCols ?
+      (
+        action !== "view" &&
+        ftableHandler?.find &&
+        hasMultipleCols &&
+        !isUpsertingFile
+      ) ?
         { ftable, ftableInfo, fcol }
       : undefined;
 
@@ -141,6 +152,7 @@ const useSmartFieldForeignKeyOptionsState = ({
     action,
     setShowNestedInsertForm,
     showNestedInsertForm,
+    isUpsertingFile,
   ]);
 };
 export type SmartFieldForeignKeyOptionsState = ReturnType<
@@ -171,6 +183,7 @@ export const useSmartFormFieldForeignDataState = ({
     enableInsert,
     setShowNestedInsertForm,
     showNestedInsertForm,
+    row,
   });
   const showSmartFormFieldLinkedData = !readOnly && action && row;
 

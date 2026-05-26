@@ -1,48 +1,48 @@
-import { useIsMounted } from "prostgles-client/dist/react-hooks";
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import type { ProcStats } from "../../../../common/utils";
-import { getAgeFromDiff } from "../../../../common/utils";
-import type { Prgl } from "../../App";
-import Chip from "../../components/Chip";
-import { FlexCol, FlexRow } from "../../components/Flex";
-import { Label } from "../../components/Label";
-import { CodeEditorWithSaveButton } from "../CodeEditor/CodeEditorWithSaveButton";
+import type { ProcStats } from "@common/utils";
+import { getAgeFromDiff } from "@common/utils";
+import Chip from "@components/Chip";
+import { FlexCol, FlexRow } from "@components/Flex";
+import { MonacoLogsWithFullscreen } from "@components/MonacoLogs/MonacoLogsWithFullscreen";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import { useIsMounted } from "prostgles-client";
+import type { FilterItem } from "prostgles-types";
+import React, { useEffect, useState } from "react";
 import { getPGIntervalAsText } from "../W_SQL/customRenderers";
-import type { editor } from "../W_SQL/monacoEditorTypes";
 
-type P = Pick<Prgl, "dbsMethods" | "connectionId" | "dbs"> & {
+type P = {
   type: "tableConfig" | "onMount" | "methods";
   noMaxHeight?: boolean;
 };
 export const ProcessLogs = (props: P) => {
-  const { dbsMethods, connectionId, dbs, type } = props;
+  const { type } = props;
+  const { dbsMethods, connectionId, dbs } = usePrgl();
   const { data: conn } = dbs.connections.useSubscribeOne({ id: connectionId });
   const { data: dbConf } = dbs.database_configs.useSubscribeOne({
-    $existsJoined: { connections: { id: connectionId } } as any,
+    $existsJoined: { connections: { id: connectionId } },
   });
   const { data: dbConfLogs } = dbs.database_config_logs.useSubscribeOne({
     $existsJoined: {
       "database_configs.connections": { id: connectionId },
-    } as any,
-  });
+    },
+  } as FilterItem);
   const getIsMounted = useIsMounted();
-  const [editorKey, setEditorKey] = useState(Date.now().toString());
   const [procStats, setProcStats] = useState<ProcStats & { error?: any }>();
-  const editorRef = useRef<editor.IStandaloneCodeEditor>();
   const hasCode =
     type === "tableConfig" ? !!dbConf?.table_config_ts
     : type === "onMount" ? !!conn?.on_mount_ts
     : true;
   const isDisabled =
+    conn?.is_state_db ||
     (type === "tableConfig" ? dbConf?.table_config_ts_disabled
     : type === "onMount" ? conn?.on_mount_ts_disabled
-    : false) || !hasCode;
+    : false) ||
+    !hasCode;
 
   useEffect(() => {
     if (isDisabled) return;
     const interval = setInterval(async () => {
       try {
-        const stats = await dbsMethods.getForkedProcStats?.(connectionId);
+        const stats = await dbsMethods.getForkedProcStats?.({ connectionId });
         if (!getIsMounted()) return;
         setProcStats(
           type === "tableConfig" ? stats?.tableConfigRunner
@@ -71,31 +71,18 @@ export const ProcessLogs = (props: P) => {
     : type === "onMount" ? dbConfLogs?.on_mount_logs
     : dbConfLogs?.on_run_logs;
 
-  /* Fix bug where logs are not rendered */
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      if (!editorRef.current || !getIsMounted()) return;
-      if (!editorRef.current.getDomNode()?.innerText.length && logs?.length) {
-        setEditorKey(Date.now().toString());
-      }
-    }, 1000);
-
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, [editorRef, logs, setEditorKey, getIsMounted]);
-
-  const onMonacoEditorMount = useCallback(
-    (editor: editor.IStandaloneCodeEditor) => {
-      editorRef.current = editor;
-    },
-    [],
-  );
-
+  if (conn?.is_state_db) {
+    return (
+      <FlexCol className="f-1 relative">
+        <div className="p-2">
+          Process logs are not available for state database connection.
+        </div>
+      </FlexCol>
+    );
+  }
   return (
     <FlexCol className="f-1 relative">
-      <CodeEditorWithSaveButton
-        key={editorKey}
+      <MonacoLogsWithFullscreen
         label={
           <FlexRow className="px-p5">
             {isDisabled || !procStats ?
@@ -120,16 +107,9 @@ export const ProcessLogs = (props: P) => {
                 </Chip>
               </>
             }
-            <Label variant="normal">
-              {isDisabled || !procStats ? "Log history:" : "Logs:"}
-            </Label>
           </FlexRow>
         }
-        onMount={onMonacoEditorMount}
-        options={options}
-        // style={{ minHeight: "200px", maxHeight: noMaxHeight? undefined : "300px" }}
-        language="bash"
-        value={logs ?? ""}
+        logs={logs ?? ""}
       />
     </FlexCol>
   );

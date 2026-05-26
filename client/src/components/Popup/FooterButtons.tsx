@@ -1,6 +1,6 @@
 import React from "react";
 import type { PopupProps } from "./Popup";
-import { Footer } from "./Popup";
+import { Footer } from "./Footer";
 import { isDefined, omitKeys } from "prostgles-types";
 import Btn, { type BtnProps } from "../Btn";
 import type { TestSelectors } from "../../Testing";
@@ -35,14 +35,15 @@ export const FooterButtons = ({
     return null;
   }
   return (
-    <Footer {...divProps}>
+    <Footer {...divProps} style={{ padding: "1em", ...divProps.style }}>
       {footer}
-      {bottomBtns.map((b, i: any) => {
+      {bottomBtns.map((b, i) => {
         if ("node" in b)
           return <React.Fragment key={i}>{b.node}</React.Fragment>;
         return (
           <Btn
             key={i}
+            size="default"
             {...(omitKeys(b, ["label", "onClickClose", "onClick"]) as any)}
             onClick={(e) => {
               if (b.onClickClose && onClose) onClose(e);

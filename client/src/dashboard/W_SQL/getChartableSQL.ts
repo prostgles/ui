@@ -22,6 +22,7 @@ export type ChartableSQL = {
   columns: ColInfo[];
   geoCols: ChartColumn[];
   dateCols: ChartColumn[];
+  barCols: ChartColumn[];
   text: string;
 };
 
@@ -41,17 +42,26 @@ export const getChartableSQL = async (
     sql: "",
     dateCols: [],
     geoCols: [],
+    barCols: [],
     columns: [],
   };
 
   const sql = cleanSql(text);
-  const { dateCols, geoCols, columns } = await getChartColsFromSql(
+  const { dateCols, geoCols, barCols, columns } = await getChartColsFromSql(
     sql,
     sqlHandler,
     tables,
   );
   if (ftoken?.textLC === "select") {
-    return { text, withStatement: "", sql, dateCols, geoCols, columns };
+    return {
+      text,
+      withStatement: "",
+      sql,
+      dateCols,
+      barCols,
+      geoCols,
+      columns,
+    };
   }
 
   /**
@@ -108,6 +118,7 @@ export const getChartableSQL = async (
     sql: lastSelectStatement,
     dateCols,
     geoCols,
+    barCols,
     columns,
   };
 };
@@ -135,7 +146,7 @@ const getChartColsFromSql = async (
     is_pkey:
       Boolean(c.table_oid) &&
       tables.some(
-        ({ info: { oid }, columns }) =>
+        ({ oid, columns }) =>
           oid === c.table_oid &&
           columns.some((col) => col.is_pkey && col.name === c.column_name),
       ),
@@ -143,6 +154,7 @@ const getChartColsFromSql = async (
   }));
   const allCols: ChartColumn[] = _allCols.map((c) => ({
     ...c,
+    key: c.name,
     type: "normal",
     otherColumns: _allCols.filter((c) => !isGeoCol(c) && !isDateCol(c)),
   }));
@@ -151,6 +163,7 @@ const getChartColsFromSql = async (
     sql: trimmedSql,
     geoCols: allCols.filter((c) => isGeoCol(c)),
     dateCols: allCols.filter((c) => isDateCol(c)),
+    barCols: allCols,
     columns: allCols,
   };
 };

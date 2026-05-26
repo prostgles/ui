@@ -1,13 +1,14 @@
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type {
   LoginClientInfo,
   LoginParams,
   LoginSignupConfig,
 } from "prostgles-server/dist/Auth/AuthTypes";
-import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
-import type { DBGeneratedSchema } from "../../../../common/DBGeneratedSchema";
-import { upsertSession } from "../upsertSession";
+import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
 import type { SUser } from "../sessionUtils";
 import { startRateLimitedLoginAttempt } from "../startRateLimitedLoginAttempt";
+import { upsertSession } from "../upsertSession";
+import type { AuthConfigForStateConnection } from "../subscribeToAuthSetupChanges";
 
 type LoginReturnType = ReturnType<
   Required<LoginSignupConfig<DBGeneratedSchema, SUser>>["login"]
@@ -17,6 +18,7 @@ export const loginWithProvider = async (
   loginParams: Extract<LoginParams, { type: "OAuth" }>,
   db: DBOFullyTyped<DBGeneratedSchema>,
   clientInfo: LoginClientInfo,
+  database_config: AuthConfigForStateConnection["stateDatabaseConfig"],
 ): Promise<LoginReturnType> => {
   const { user_agent } = clientInfo;
   const { provider, profile } = loginParams;
@@ -51,10 +53,10 @@ export const loginWithProvider = async (
       ip,
       user_agent,
       db,
+      database_config,
     });
     return { session, response: { success: true } };
   } else {
-    const globalSettings = await db.global_settings.findOne();
     const newUser = await db.users
       .insert(
         {
@@ -70,7 +72,7 @@ export const loginWithProvider = async (
             profile,
             user_id: auth_provider_user_id,
           },
-          type: globalSettings?.auth_providers?.created_user_type || "default",
+          type: database_config.auth_created_user_type ?? "default",
           status: "active",
           password: "",
         },
@@ -85,6 +87,7 @@ export const loginWithProvider = async (
       ip,
       db,
       user_agent,
+      database_config,
     });
     return { session, response: { success: true } };
   }

@@ -1,48 +1,57 @@
-import React, { useCallback, useRef } from "react";
-import { FlexCol } from "../../../components/Flex";
-import type { SchemaGraphProps } from "../SchemaGraph";
-import type { useSchemaGraphControls } from "../SchemaGraphControls";
+import { FlexCol } from "@components/Flex";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import React, { useCallback, useMemo, useRef } from "react";
+import {
+  CASCADE_LEGEND,
+  type useSchemaGraphControls,
+} from "../SchemaGraphControls";
 import { useCanvasPanZoom } from "./useCanvasPanZoom";
 import { useDrawSchemaShapes } from "./useDrawSchemaShapes";
 import { useSetPanShapes } from "./usePanShapes";
 import { useSchemaShapes, type SchemaShape } from "./useSchemaShapes";
+import { getEntries } from "@common/utils";
+import Chip from "@components/Chip";
 
 export type ColumnDisplayMode = "none" | "all" | "references";
-export type ColumnColorMode = "default" | "root" | "on-update" | "on-delete";
-export type ERDSchemaProps = Omit<
-  SchemaGraphProps,
-  "theme" | "db_schema_filter"
-> &
-  Pick<
-    ReturnType<typeof useSchemaGraphControls>,
-    "displayMode" | "columnDisplayMode" | "columnColorMode"
-  >;
+export type ColumnColorMode =
+  | "schema"
+  | "default"
+  | "root"
+  | "on-update"
+  | "on-delete";
+export type ERDSchemaProps = Pick<
+  ReturnType<typeof useSchemaGraphControls>,
+  "displayMode" | "columnDisplayMode" | "columnColorMode" | "selectedTables"
+>;
 export const ERDSchema = ({
-  tables,
-  db,
-  dbs,
-  connectionId,
   displayMode,
   columnDisplayMode,
   columnColorMode,
-}: ERDSchemaProps & Pick<SchemaGraphProps, "db_schema_filter">) => {
+  selectedTables,
+}: ERDSchemaProps) => {
+  const { dbs, theme } = usePrgl();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
   const divRef = useRef<HTMLDivElement>(null);
 
-  const { shapesRef, dbConfId, shapesVersion, canAutoPosition, dbConf } =
-    useSchemaShapes({
-      tables,
-      db,
-      dbs,
-      connectionId,
-      canvasRef,
-      displayMode,
-      columnDisplayMode,
-      columnColorMode,
-    });
+  const {
+    shapesRef,
+    schemaInfo,
+    dbConfId,
+    shapesVersion,
+    canAutoPosition,
+    dbConf,
+  } = useSchemaShapes({
+    canvasRef,
+    displayMode,
+    columnDisplayMode,
+    columnColorMode,
+    selectedTables,
+  });
 
   const { onRenderShapes, positionRef, scaleRef, setScaleAndPosition } =
     useDrawSchemaShapes({
+      svgRef,
       shapesRef,
       canvasRef,
       shapesVersion,
@@ -76,7 +85,7 @@ export const ERDSchema = ({
         {} as Record<string, { x: number; y: number }>,
       );
     if (!dbConfId || displayMode !== "all") return;
-    dbs.database_configs.update(
+    void dbs.database_configs.update(
       {
         id: dbConfId,
       },
@@ -108,13 +117,54 @@ export const ERDSchema = ({
     onRenderShapes,
     onPanEnded,
   });
+
+  const legendItems = useMemo(() => {
+    const { schemaColorMap } = schemaInfo || {};
+    if (columnColorMode === "schema" && schemaColorMap) {
+      return Array.from(schemaColorMap.entries()).map(([schema, color]) => ({
+        label: schema,
+        color,
+      }));
+    } else if (["on-delete", "on-update"].includes(columnColorMode)) {
+      return getEntries(CASCADE_LEGEND).map(([label, { color, title }]) => ({
+        label,
+        color,
+        title,
+      }));
+    }
+  }, [columnColorMode, schemaInfo]);
+
   return (
     <FlexCol
+      key={theme}
       ref={divRef}
       className="f-1 bg-color-1"
       style={{ overflow: "hidden" }}
     >
-      <canvas onWheel={handleWheel} className="f-1" ref={canvasRef} />
+      <canvas ref={canvasRef} onWheel={handleWheel} className="f-1" />
+      <svg
+        ref={svgRef}
+        className="text-search-svg absolute w-full h-full"
+        style={{ pointerEvents: "none" }}
+      />
+      {legendItems && (
+        <FlexCol
+          className="p-1 rounded gap-p5"
+          style={{
+            position: "absolute",
+            right: 0,
+            top: 0,
+            backdropFilter: "blur(2px)",
+          }}
+        >
+          {" "}
+          {legendItems.map(({ color, label }) => (
+            <Chip key={label} style={{ color }} className="shadow">
+              {label}
+            </Chip>
+          ))}
+        </FlexCol>
+      )}
     </FlexCol>
   );
 };

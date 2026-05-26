@@ -1,10 +1,10 @@
 import { useCallback, useMemo, useState } from "react";
-import { getSmartGroupFilter } from "../../../../../common/filterUtils";
-import type { ConfirmDialogProps } from "../../../components/ConfirmationDialog";
+import { getSmartGroupFilter } from "@common/filterUtils";
+import type { ConfirmDialogProps } from "@components/ConfirmationDialog";
 import type { SmartFormProps } from "../SmartForm";
 import type { SmartFormNewRowState } from "../useNewRowDataHandler";
 import type { SmartFormState } from "../useSmartForm";
-import { areEqual } from "../../../utils";
+import { areEqual } from "../../../utils/utils";
 
 type ConfirmationPopup = Pick<
   ConfirmDialogProps,
@@ -23,6 +23,8 @@ type Args = Pick<
 > &
   SmartFormNewRowState &
   SmartFormState;
+
+export type SmartFormActionsState = ReturnType<typeof useSmartFormActions>;
 
 export const useSmartFormActions = ({
   mode,
@@ -47,9 +49,9 @@ export const useSmartFormActions = ({
   confirmPopup: ConfirmationPopup | undefined;
   buttons:
     | {
-        onClickInsert?: () => Promise<void>;
+        onClickInsert?: () => void;
         onClickUpdate?: () => Promise<void>;
-        onClickDelete?: () => Promise<void>;
+        onClickDelete?: () => void;
         onClickClone?: () => void;
       }
     | undefined;
@@ -58,7 +60,7 @@ export const useSmartFormActions = ({
   const [successMessage, setSuccessMessage] = useState<string>();
 
   const performAction = useCallback(
-    async (action: () => Promise<void>) => {
+    async (action: () => Promise<void> | void) => {
       setLoading(true);
       try {
         await action();
@@ -98,8 +100,8 @@ export const useSmartFormActions = ({
     }
     if (mode.type === "insert") {
       return {
-        onClickInsert: async () => {
-          getErrors(async () => {
+        onClickInsert: () => {
+          return getErrors(() => {
             return performAction(async () => {
               if (!newRow) throw "No row data to insert";
               if (parentForm?.type === "insert") {
@@ -108,7 +110,7 @@ export const useSmartFormActions = ({
               }
 
               const doInsert = async () => {
-                if (table.info.isFileTable && parentForm) {
+                if (table.isFileTable && parentForm) {
                   const { table: parentTable, rowFilter: parentRowFilter } =
                     parentForm;
                   const pkeyColumns = parentTable.columns
@@ -170,7 +172,7 @@ export const useSmartFormActions = ({
       ) {
         return {
           onClickUpdate: async () => {
-            return performAction(async () => {
+            return performAction(() => {
               setConfirmPopup({
                 message: "Are you sure you want to update?",
                 acceptBtn: {
@@ -192,7 +194,7 @@ export const useSmartFormActions = ({
                     if (!nr?.length) {
                       throw "No rows were updated. Access rules may not allow this update.";
                     }
-                    onSuccess?.("update", nr as any);
+                    onSuccess?.("update", nr);
                     setSuccessMessage("Updated");
                   });
                 },
@@ -207,7 +209,7 @@ export const useSmartFormActions = ({
       onClickDelete:
         !tableHandlerDelete || disabledActions?.includes("delete") ?
           undefined
-        : async () => {
+        : () => {
             setConfirmPopup({
               message: "Are you sure you want to delete this?",
               acceptBtn: {
@@ -262,4 +264,3 @@ export const useSmartFormActions = ({
 
   return { successMessage, setSuccessMessage, confirmPopup, buttons };
 };
-export type SmartFormActionsState = ReturnType<typeof useSmartFormActions>;

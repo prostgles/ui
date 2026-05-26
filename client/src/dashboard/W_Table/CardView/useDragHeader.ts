@@ -1,6 +1,6 @@
+import { getSmartGroupFilter } from "@common/filterUtils";
 import { useCallback, useEffect, useRef } from "react";
-import { getSmartGroupFilter } from "../../../../../common/filterUtils";
-import { isEmpty } from "../../../utils";
+import { isEmpty } from "../../../utils/utils";
 import { getDistanceBetweenBoxes } from "../../SilverGrid/SilverGridChild";
 import { getRowFilter } from "../tableUtils/getRowFilter";
 import type { KanBanDraggedRow } from "./CardViewRow";
@@ -28,7 +28,7 @@ export const useDragHeader = (props: DragHeaderProps) => {
     } & KanBanDraggedRow
   >();
   useEffect(() => {
-    if (!draggedRow || draggedRow.index !== draggedRowRef.current?.index) {
+    if (draggedRow?.index !== draggedRowRef.current?.index) {
       draggedRowRef.current = undefined;
     }
   }, [draggedRow]);
@@ -98,7 +98,9 @@ export const useDragHeader = (props: DragHeaderProps) => {
   const onPan = useCallback(
     ({ xDiff, yDiff, x, y, node }, e) => {
       const draggedRow = draggedRowRef.current;
-      if (!draggedRow) return;
+      if (!draggedRow) {
+        return;
+      }
       const { targetSibling, rowNode, groupNode } = getNodes(node);
 
       rowNode.style.position = "absolute";
@@ -110,7 +112,7 @@ export const useDragHeader = (props: DragHeaderProps) => {
       const targetIndex =
         targetSibling ? parseInt(targetSibling.n.dataset.rowIndex!) : undefined;
       const targetIRow = allIndexedRows.find((d) => d.index === targetIndex);
-      console.log(targetIRow);
+      // console.log(targetIRow);
       if (draggedRow.target?.index !== targetIndex) {
         draggedRowRef.current = {
           ...draggedRow,
@@ -124,6 +126,7 @@ export const useDragHeader = (props: DragHeaderProps) => {
     },
     [allIndexedRows, getNodes, setDraggedRow],
   );
+
   const onPanEnd = useCallback(
     ({ node }, e) => {
       const draggedRow = draggedRowRef.current;

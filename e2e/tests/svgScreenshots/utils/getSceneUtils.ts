@@ -1,0 +1,199 @@
+import type { PageWIds } from "utils/utils";
+import type { SVGifScene } from "./constants";
+import { saveSVGScreenshot } from "./saveSVGScreenshot";
+import type { Locator } from "@playwright/test";
+import type { SVGif } from "Testing";
+
+export const getSceneUtils = (
+  page: PageWIds,
+  fileName: string,
+  svgifScenes: SVGifScene[],
+) => {
+  const addScene = async (partialScene?: Partial<SVGifScene>) => {
+    svgifScenes ??= [];
+    const sceneFileName = [
+      fileName,
+      svgifScenes.length.toString().padStart(2, "0"),
+      partialScene?.svgFileName,
+    ]
+      .filter(Boolean)
+      .join("_");
+    const animations = partialScene?.animations ?? [
+      {
+        type: "wait",
+        duration: 3000,
+      },
+    ];
+    const scene: SVGifScene = {
+      ...partialScene,
+      svgFileName: sceneFileName,
+      animations,
+    };
+    svgifScenes.push(scene);
+    await saveSVGScreenshot(page, sceneFileName, scene);
+  };
+
+  const addSceneAnimation = async (
+    selector:
+      | string
+      | { svgif: string; playwright: string; nth?: number }
+      | { selector: string; nth?: number },
+    opts?: {
+      action?:
+        | "click"
+        | "rightClick"
+        | {
+            action: "type";
+            text: string;
+            /** Defaults to charByChar */
+            mode?: "charByChar" | "fill" | "fillZoomTo";
+          };
+      duration?:
+        | "auto"
+        | "fast"
+        | "faster"
+        | {
+            waitBeforeClick: number;
+          };
+      extraAnimations?: SVGif.Animation[];
+      svgFileName?: string;
+    },
+  ) => {
+    const {
+      action = "click",
+      duration = "auto",
+      extraAnimations = [],
+      svgFileName,
+    } = opts ?? {};
+
+    const {
+      svgif: svgifSelector,
+      playwright: playwrightSelector,
+      nth,
+    } = typeof selector === "string" ?
+        { svgif: selector, playwright: selector, nth: undefined }
+      : "selector" in selector ?
+        {
+          svgif: selector.selector,
+          playwright: selector.selector,
+          nth: selector.nth,
+        }
+      : selector;
+
+    const playwrightLocator =
+      Number.isFinite(nth) ?
+        page.locator(playwrightSelector).nth(nth!)
+      : page.locator(playwrightSelector);
+    await playwrightLocator.scrollIntoViewIfNeeded({ timeout: 20_000 });
+
+    const elementIsVisible = await playwrightLocator.evaluate((n) => {
+      const hoverParent = n.closest(`[class*="hover"]`) as HTMLElement | null;
+      const parentIsNotVisible =
+        hoverParent && getComputedStyle(hoverParent).opacity == "0";
+      const isVisible =
+        getComputedStyle(n).opacity != "0" && !parentIsNotVisible;
+
+      return isVisible;
+    });
+
+    if (!elementIsVisible) {
+      await moveCursorToElement(page, playwrightLocator);
+    }
+
+    await addScene({
+      svgFileName,
+      animations: [
+        {
+          type: "wait",
+          duration:
+            duration === "faster" ? 400
+            : duration === "fast" ? 800
+            : duration === "auto" ? 1000
+            : duration.waitBeforeClick,
+        },
+        {
+          type: elementIsVisible ? "click" : "clickAppearOnHover",
+          elementSelector: svgifSelector,
+          duration:
+            duration === "faster" ? 400
+            : duration === "fast" ? 700
+            : 1000,
+          waitBeforeClick:
+            duration === "faster" ? 200
+            : duration === "fast" ? 200
+            : 500,
+          lingerMs:
+            duration === "faster" ? 100
+            : duration === "fast" ? 200
+            : 500,
+        },
+        ...extraAnimations,
+      ],
+    });
+    if (action === "click" || action === "rightClick") {
+      await playwrightLocator.click({
+        button: action === "rightClick" ? "right" : "left",
+      });
+    } else {
+      const { mode = "charByChar" } = action;
+
+      /** This way we can correctly show any filtered items */
+      if (mode === "charByChar") {
+        await playwrightLocator.fill("");
+
+        for (const char of action.text) {
+          await page.keyboard.press(char);
+          await page.waitForTimeout(200);
+          await addScene({ animations: [{ type: "wait", duration: 50 }] });
+        }
+      } else {
+        /** Set value without triggering search */
+        await playwrightLocator.evaluate((n, val) => {
+          (n as HTMLInputElement).value = val;
+        }, action.text);
+
+        await page.waitForTimeout(100);
+        const msPerChar = 30;
+        const zoomDurations = mode === "fillZoomTo" ? 500 + 500 + 300 : 0; // zoom in + zoom out + wait before zoom out
+
+        await addScene({
+          animations: [
+            // { type: "wait", duration: duration === "fast" ? 700 : 1000 },
+            {
+              type: "type",
+              elementSelector: svgifSelector,
+              // zoomToElement: mode === "fillZoomTo",
+              extraAnimation:
+                mode === "fillZoomTo" ? { type: "zoomToElement" } : undefined,
+              duration:
+                zoomDurations + Math.max(500, action.text.length * msPerChar),
+            },
+          ],
+        });
+        await playwrightLocator.fill(action.text);
+        await addScene({ animations: [{ type: "wait", duration: 500 }] });
+      }
+    }
+    /** prevent hover from showing hidden elements */
+    await page.mouse.move(-100, -100);
+
+    await page.waitForTimeout(1000);
+  };
+
+  return {
+    addScene,
+    addSceneAnimation,
+    svgifScenes,
+  };
+};
+
+const moveCursorToElement = async (page: PageWIds, el: Locator) => {
+  const box = await el.boundingBox();
+  if (!box)
+    throw new Error("Element has no bounding box (possibly off-screen).");
+
+  const x = box.x + box.width / 2;
+  const y = box.y + box.height / 2;
+
+  await page.mouse.move(x, y);
+};

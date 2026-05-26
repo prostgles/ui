@@ -1,15 +1,15 @@
 import React from "react";
 import type { AccessRule } from "./AccessControl";
-import Chip from "../../components/Chip";
-import { InfoRow } from "../../components/InfoRow";
+import Chip from "@components/Chip";
+import { InfoRow } from "@components/InfoRow";
 import { mdiAccount, mdiFunction, mdiViewCarousel } from "@mdi/js";
-import { LabeledRow } from "../../components/LabeledRow";
+import { LabeledRow } from "@components/LabeledRow";
 import { pluralise } from "../../pages/Connections/Connection";
 import { AccessRuleSummary } from "./AccessRuleSummary";
 import type { Workspace } from "../Dashboard/dashboardUtils";
-import { SwitchToggle } from "../../components/SwitchToggle";
+import { SwitchToggle } from "@components/SwitchToggle";
 import type { Prgl } from "../../App";
-import { FlexRow } from "../../components/Flex";
+import { FlexRow } from "@components/Flex";
 
 type ExistingAccessRulesProps = {
   onSelect: (rule: AccessRule) => void;
@@ -98,16 +98,16 @@ export const AccessControlRules = ({
                       title={
                         r.isApplied ? "Click to disable" : "Click to enable"
                       }
-                      onChange={(isApplied, e) => {
+                      onChange={async (isApplied, e) => {
                         e.stopPropagation();
                         e.preventDefault();
                         if (isApplied) {
-                          dbs.access_control_connections.insert({
+                          await dbs.access_control_connections.insert({
                             connection_id: connectionId,
                             access_control_id: r.id,
                           });
                         } else {
-                          dbs.access_control_connections.delete({
+                          await dbs.access_control_connections.delete({
                             connection_id: connectionId,
                             access_control_id: r.id,
                           });

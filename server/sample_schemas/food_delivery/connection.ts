@@ -18,7 +18,7 @@ const table_options = {
     icon: "ClipboardListOutline",
   },
   restaurants: {
-    icon: "StoreMarker",
+    icon: "SilverwareForkKnife",
   },
   user_addresses: {
     icon: "MapMarkerAccount",
@@ -29,7 +29,10 @@ const table_options = {
   restaurant_managers: {
     icon: "AccountStar",
   },
-};
+  customers: {
+    icon: "AccountCashOutline",
+  },
+} satisfies typeof import("../../../common/DBGeneratedSchema");
 
 export default {
   table_options,

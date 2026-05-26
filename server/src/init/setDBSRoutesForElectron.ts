@@ -8,11 +8,12 @@ import {
   tryCatchV2,
 } from "prostgles-types";
 import type { Server } from "socket.io";
-import { DEFAULT_ELECTRON_CONNECTION } from "../../../common/electronInitTypes";
+import { DEFAULT_ELECTRON_CONNECTION } from "@common/electronInitTypes";
 import { testDBConnection } from "../connectionUtils/testDBConnection";
 import { validateConnection } from "../connectionUtils/validateConnection";
 import { getElectronConfig } from "../electronConfig";
 import { getProstglesState, tryStartProstgles } from "./tryStartProstgles";
+import { API_ENDPOINTS } from "@common/utils";
 
 /**
  * Used in Electron to set the DB connection and show any connection errors
@@ -31,8 +32,8 @@ export const setDBSRoutesForElectron = (
     throw "Electron sid missing";
   }
 
-  removeExpressRoute(app, ["/dbs"], "post");
-  app.post("/dbs", onPostDBSRequestHandler(app, io, port, host));
+  removeExpressRoute(app, [API_ENDPOINTS.DBS], "post");
+  app.post(API_ENDPOINTS.DBS, onPostDBSRequestHandler(app, io, port, host));
 };
 
 const onPostDBSRequestHandler =
@@ -43,29 +44,20 @@ const onPostDBSRequestHandler =
       if (!electronConfig?.isElectron) {
         throw "Not an electron app";
       }
-      const data = pickKeys(req.body, ["connection", "mode"]);
+      const dataRaw = pickKeys(req.body, ["connection", "mode"]);
+      // TODO: should add allow extra props to jsonb validation
+      const data = {
+        ...dataRaw,
+        connection: pickKeys(
+          dataRaw.connection || {},
+          Object.keys(connectionSchema),
+        ),
+      };
+
       assertJSONBObjectAgainstSchema(
         {
           connection: {
-            type: {
-              type: { enum: ["Standard"] },
-              db_conn: { type: "string" },
-              db_host: { type: "string" },
-              db_port: { type: "number" },
-              db_user: { type: "string" },
-              db_name: { type: "string" },
-              db_pass: { type: "string" },
-              db_ssl: {
-                enum: [
-                  "disable",
-                  "allow",
-                  "prefer",
-                  "require",
-                  "verify-ca",
-                  "verify-full",
-                ],
-              },
-            },
+            type: connectionSchema,
           },
           mode: { enum: ["validate", "quick", "manual"] },
         } as const,
@@ -199,3 +191,16 @@ const onPostDBSRequestHandler =
       electronConfig?.setCredentials(undefined);
     }
   };
+
+const connectionSchema = {
+  type: { enum: ["Standard"] },
+  db_conn: { type: "string" },
+  db_host: { type: "string" },
+  db_port: { type: "number" },
+  db_user: { type: "string" },
+  db_name: { type: "string" },
+  db_pass: { type: "string" },
+  db_ssl: {
+    enum: ["disable", "allow", "prefer", "require", "verify-ca", "verify-full"],
+  },
+} as const;

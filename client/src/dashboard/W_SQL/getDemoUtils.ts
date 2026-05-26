@@ -1,6 +1,6 @@
 import { includes, type SQLHandler } from "prostgles-types";
 import { getCommandElemSelector } from "../../Testing";
-import { tout } from "../../utils";
+import { tout } from "../../utils/utils";
 import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
 import { triggerCharacters } from "../SQLEditor/SQLCompletion/monacoSQLSetup/registerSuggestions";
 
@@ -35,7 +35,7 @@ export type TypeAutoOpts = {
 
 export const runDbSQL: SQLHandler = async (...args: any[]) => {
   try {
-    return await (window as any).db?.sql(...args);
+    return await (window as any)?.sql(...args);
   } catch (e) {
     console.error(e);
     throw e;
@@ -196,11 +196,13 @@ export const getDemoUtils = (w: Pick<WindowSyncItem<"sql">, "id">) => {
     await tout(1300);
   };
   const runSQL = async () => sqlAction("run");
-  const fromBeginning = (withNewline = true, text?: string) => {
+  const fromBeginning = async (withNewline = true, text?: string) => {
+    await tout(100);
     const editorOpts = getEditor();
     editorOpts.e.setValue(text ?? "");
+    await tout(100);
     if (text) {
-      moveCursor.pageDown();
+      await moveCursor.pageDown();
     }
     if (withNewline) {
       newLine();
@@ -210,7 +212,7 @@ export const getDemoUtils = (w: Pick<WindowSyncItem<"sql">, "id">) => {
   const testResult = (expected: string, editorValue?: string): void => {
     const model = getEditor().e.getModel();
     const actual =
-      editorValue ?? model?.getValue()?.replaceAll(model.getEOL(), "\n") ?? "";
+      editorValue ?? model?.getValue().replaceAll(model.getEOL(), "\n") ?? "";
     if (!expected) {
       throw "empty expected value";
     }

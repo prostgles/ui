@@ -1,17 +1,20 @@
+import Btn from "@components/Btn";
+import FormField from "@components/FormField/FormField";
+import { pageReload } from "@components/Loader/Loading";
+import PopupMenu from "@components/PopupMenu";
+import { SwitchToggle } from "@components/SwitchToggle";
 import { mdiCog, mdiTable, mdiViewGridPlus } from "@mdi/js";
+import { useEffectAsync, usePromise } from "prostgles-client";
+import type { DBHandlerClient } from "prostgles-client";
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
-import { useEffectAsync, usePromise } from "prostgles-client/dist/react-hooks";
-import React from "react";
-import Btn from "../../components/Btn";
-import FormField from "../../components/FormField/FormField";
-import { pageReload } from "../../components/Loader/Loading";
-import PopupMenu from "../../components/PopupMenu";
-import { SwitchToggle } from "../../components/SwitchToggle";
+import React, { useMemo } from "react";
 import type { DashboardProps } from "../Dashboard/Dashboard";
 import type { Workspace } from "../Dashboard/dashboardUtils";
 import { useLocalSettings } from "../localSettings";
+import { SmartForm, type SmartFormProps } from "../SmartForm/SmartForm";
 import { DashboardHotkeys } from "./DashboardHotkeys";
 import { SettingsSection } from "./SettingsSection";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 export { useEffectAsync };
 
 const layoutType = [
@@ -20,20 +23,51 @@ const layoutType = [
   { key: "row", label: "Rows", subLabel: "Windows placed left to right" },
 ];
 
-type P = Pick<DashboardProps, "prgl"> & {
+type P = {
   workspace: SyncDataItem<Workspace, true>;
 };
 
-export const DashboardMenuSettings = ({
-  workspace,
-  prgl: { dbsMethods },
-}: P) => {
-  const dbSize = usePromise(
-    async () => dbsMethods.getDBSize?.(workspace.connection_id),
-    [dbsMethods, workspace],
-  );
+export const DashboardMenuSettings = ({ workspace }: P) => {
+  const {
+    dbsMethods: { getDBSize },
+    dbsMethodSchema,
+    dbs,
+    dbsTables,
+    dbsSql,
+  } = usePrgl();
+  const dbSize = usePromise(async () => {
+    if (!getDBSize) return;
+    return getDBSize({ conId: workspace.connection_id }).catch(() => {
+      console.error(
+        "Failed to get DB size for ",
+        workspace.connection_id,
+        workspace,
+      );
+      return undefined;
+    });
+  }, [getDBSize, workspace]);
 
   const localSettings = useLocalSettings();
+
+  const smartFormProps = useMemo(() => {
+    return {
+      columns: {
+        display_options: {
+          hideLabel: true,
+        },
+      },
+      rowFilter: [
+        {
+          fieldName: "id",
+          value: workspace.connection_id,
+        },
+      ],
+      jsonbSchemaWithControls: { noLabels: false },
+    } satisfies Pick<
+      SmartFormProps,
+      "rowFilter" | "columns" | "jsonbSchemaWithControls"
+    >;
+  }, [workspace.connection_id]);
 
   return (
     <PopupMenu
@@ -53,6 +87,20 @@ export const DashboardMenuSettings = ({
       render={() => {
         return (
           <div className="flex-col gap-2 p-1">
+            <SettingsSection title="Display options" iconPath={mdiTable}>
+              <SmartForm
+                tableName="connections"
+                label=""
+                db={dbs}
+                sql={dbsSql}
+                {...smartFormProps}
+                contentClassname="p-0"
+                methods={dbsMethodSchema}
+                tables={dbsTables}
+                confirmUpdates={false}
+                showJoinedTables={false}
+              />
+            </SettingsSection>
             <SettingsSection title="Dashboard menu" iconPath={mdiTable}>
               <FormField
                 label={{

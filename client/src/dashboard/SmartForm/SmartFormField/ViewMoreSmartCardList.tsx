@@ -1,21 +1,21 @@
+import type { DetailedFilter } from "@common/filterUtils";
+import Btn from "@components/Btn";
+import { InfoRow } from "@components/InfoRow";
+import Popup from "@components/Popup/Popup";
 import { mdiSearchWeb } from "@mdi/js";
+import type { AnyObject } from "prostgles-types";
 import React, { useState } from "react";
-import type { SmartGroupFilter } from "../../../../../common/filterUtils";
-import Btn from "../../../components/Btn";
-import { InfoRow } from "../../../components/InfoRow";
-import Popup from "../../../components/Popup/Popup";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
 import { SmartCardList } from "../../SmartCardList/SmartCardList";
 import { useJoinedSectionFieldConfigs } from "../JoinedRecords/useJoinedSectionFieldConfigs";
 import type { SmartFormFieldLinkedDataProps } from "./SmartFormFieldLinkedData";
-import type { AnyObject } from "prostgles-types";
 
 export type ViewMoreSmartCardListProps = Pick<
   SmartFormFieldLinkedDataProps,
-  "db" | "methods" | "tables"
+  "db" | "methods" | "tables" | "sql"
 > & {
   ftable: DBSchemaTableWJoins;
-  searchFilter: SmartGroupFilter | undefined;
+  searchFilter: DetailedFilter[] | undefined;
   getActions:
     | ((row: AnyObject, onClosePopup: VoidFunction) => React.ReactNode)
     | undefined;
@@ -29,6 +29,7 @@ export const ViewMoreSmartCardList = ({
   searchFilter,
   getActions,
   rootTableName,
+  sql,
 }: ViewMoreSmartCardListProps) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement>();
 
@@ -43,6 +44,7 @@ export const ViewMoreSmartCardList = ({
       <Btn
         iconPath={mdiSearchWeb}
         title="View more"
+        data-command="ViewMoreSmartCardList"
         onClick={({ currentTarget }) => setAnchorEl(currentTarget)}
       />
       {anchorEl && (
@@ -51,16 +53,15 @@ export const ViewMoreSmartCardList = ({
           onClose={() => setAnchorEl(undefined)}
           anchorEl={anchorEl}
           onClickClose={false}
-          positioning="left"
+          positioning="fullscreen"
           showFullscreenToggle={{}}
           clickCatchStyle={{ opacity: 1 }}
-          rootChildStyle={{
-            maxWidth: "min(100vw, 800px)",
-          }}
         >
           <SmartCardList
             showTopBar={true}
             db={db}
+            style={{ flex: 1 }}
+            sql={sql}
             methods={methods}
             tables={tables}
             tableName={ftable.name}

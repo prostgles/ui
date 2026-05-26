@@ -1,15 +1,13 @@
-import React from "react";
-import type { ParsedFieldConfig, SmartCardProps } from "./SmartCard";
-import { usePromise } from "prostgles-client/dist/react-hooks";
-import { getSmartCardColumns } from "./getSmartCardColumns";
+import { isDefined } from "../../utils/utils";
 import { getDefaultFieldConfig, parseFieldConfigs } from "./parseFieldConfigs";
-import { isDefined } from "../../utils";
+import type { ParsedFieldConfig, SmartCardProps } from "./SmartCard";
+import { useSmartCardColumns } from "./useSmartCardColumns";
 
 export const useFieldConfigParser = (props: SmartCardProps) => {
   const {
     fieldConfigs: _fieldConfigs,
     tableName,
-    db,
+    sql,
     columns: columnsFromProps,
     hideColumns,
     tables,
@@ -17,11 +15,12 @@ export const useFieldConfigParser = (props: SmartCardProps) => {
     defaultData,
   } = props;
 
-  const fetchedColumns = usePromise(async () => {
-    if (columnsFromProps) return undefined;
-    return await getSmartCardColumns({ tableName, db });
-  }, [columnsFromProps, tableName, db]);
-  const cardColumns = columnsFromProps ?? fetchedColumns;
+  const cardColumns = useSmartCardColumns({
+    tableName,
+    sql,
+    tables,
+    columns: columnsFromProps,
+  });
 
   const displayedColumns =
     hideColumns ?

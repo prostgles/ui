@@ -1,13 +1,12 @@
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import FormField from "@components/FormField/FormField";
+import { Select, type SelectProps } from "@components/Select/Select";
+import { usePromise, type SQLHandler } from "prostgles-client";
 import React, { useMemo } from "react";
-import FormField from "../../components/FormField/FormField";
-import Select, { type SelectProps } from "../../components/Select/Select";
 import { t } from "../../i18n/i18nUtils";
 import type { Connection } from "./NewConnnectionForm";
 
 type P = Pick<Connection, "db_schema_filter"> & {
-  db: DBHandlerClient | undefined;
+  sql: SQLHandler | undefined;
   onChange: (newSchemaFilter: Connection["db_schema_filter"]) => void;
   asSelect:
     | Pick<
@@ -18,15 +17,15 @@ type P = Pick<Connection, "db_schema_filter"> & {
 };
 
 export const SchemaFilter = ({
-  db,
+  sql,
   db_schema_filter,
   onChange,
   asSelect,
 }: P) => {
   const schemas = usePromise(async () => {
-    if (!db?.sql) return;
+    if (!sql) return;
 
-    const schemas = (await db.sql(
+    const schemas = (await sql(
       `
         SELECT schema_name, schema_owner
         FROM information_schema.schemata
@@ -41,7 +40,7 @@ export const SchemaFilter = ({
       { returnType: "rows" },
     )) as { schema_name: string; schema_owner: string }[];
     return schemas;
-  }, [db]);
+  }, [sql]);
 
   const commonProps = useMemo(() => {
     const value = db_schema_filter || { public: 1 };

@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import { getModalRoot } from "../components/Popup/Popup";
+import { getModalRoot } from "@components/Popup/Popup";
 import { setPointer } from "./demoUtils";
 
 const mousePointerStyle: React.CSSProperties = {

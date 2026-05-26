@@ -1,14 +1,16 @@
 import React from "react";
-import { DEFAULT_ELECTRON_CONNECTION } from "../../../../common/electronInitTypes";
-import { FlexCol } from "../../components/Flex";
-import FormField from "../../components/FormField/FormField";
-import Tabs from "../../components/Tabs";
+import { DEFAULT_ELECTRON_CONNECTION } from "@common/electronInitTypes";
+import { FlexCol } from "@components/Flex";
+import FormField from "@components/FormField/FormField";
+import Tabs from "@components/Tabs";
 import { t } from "../../i18n/i18nUtils";
 import { NewConnectionForm } from "../NewConnection/NewConnectionFormFields";
 import type { useElectronSetup } from "./useElectronSetup";
-import { PostgresInstallationInstructions } from "../PostgresInstallationInstructions";
-import ErrorComponent from "../../components/ErrorComponent";
-import { ScrollFade } from "../../components/ScrollFade/ScrollFade";
+import { PostgresInstallationInstructions } from "../../components/PostgresInstallationInstructions";
+import ErrorComponent from "@components/ErrorComponent";
+import { ScrollFade } from "@components/ScrollFade/ScrollFade";
+import { InfoRow } from "@components/InfoRow";
+import ButtonGroup from "@components/ButtonGroup";
 
 export const ElectronSetupStateDB = ({
   state,
@@ -25,25 +27,18 @@ export const ElectronSetupStateDB = ({
   } = state;
 
   return (
-    <ScrollFade className="px-p25 min-s-0 flex-col f-1 oy-auto">
+    <ScrollFade className="px-p25 min-s-0 flex-col f-1 oy-auto no-scroll-bar">
       <h2>State database</h2>
       <section className="ta-left font-18">
-        <strong>Prostgles Desktop</strong> requires full access to a postgres
-        database.
-        <p>
-          This database will be used to manage and store all connection and
-          state data (database connection details, sql queries, workspaces,
-          etc).
-        </p>
-        <p className="m-0 mt-p5">
+        <strong>Prostgles Desktop</strong> needs a PostgreSQL database to
+        securely store your workspace and connection settings.
+        <p className="m-0 my-p5">
           For best experience we recommend using a locally installed database
         </p>
-        <div className="flex-row-wrap gap-2 f-1 mt-1">
-          <PostgresInstallationInstructions
-            os={os}
-            placement="state-db-quick-setup"
-          />
-        </div>
+        <PostgresInstallationInstructions
+          os={os}
+          placement="state-db-quick-setup"
+        />
       </section>
       <Tabs
         className="mt-2"
@@ -51,15 +46,16 @@ export const ElectronSetupStateDB = ({
         onChange={(key) => {
           setIsQuickMode(key === "quick");
         }}
-        contentClass="ta-left p-2"
+        contentClass="ta-left py-2"
         items={{
           quick: {
             label: "Quick setup",
             content: (
               <FlexCol>
                 <div>
-                  Provide superuser credentials for the locally running postgres
-                  server.
+                  Enter the credentials of your local PostgreSQL superuser
+                  (often postgres). These will be used once to create the
+                  Prostgles Desktop database.
                 </div>
                 <div>
                   Will create a{" "}
@@ -94,18 +90,18 @@ export const ElectronSetupStateDB = ({
                 />
                 <FormField
                   id="pass"
-                  value={c.db_pass}
+                  value={c.db_pass ?? ""}
                   label={t.NewConnectionForm["Password"]}
                   type="text"
                   autoComplete="off"
                   onChange={(db_pass) => updateConnection({ db_pass })}
                 />
-                {validationWarning && (
+                {
                   <ErrorComponent
                     error={validationWarning}
                     style={{ minWidth: 0 }}
                   />
-                )}
+                }
               </FlexCol>
             ),
           },
@@ -117,6 +113,10 @@ export const ElectronSetupStateDB = ({
                   Provide the connection details to an existing database that
                   will be used as the state database
                 </div>
+                <InfoRow color="danger">
+                  <strong>This database will be modified.</strong> Required
+                  metadata tables will be created in this database.
+                </InfoRow>
                 <FlexCol className="min-s-0 o-auto px-p5">
                   <NewConnectionForm
                     mode="insert"

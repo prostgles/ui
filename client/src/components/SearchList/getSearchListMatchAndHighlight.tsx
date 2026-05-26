@@ -1,4 +1,5 @@
 import React from "react";
+import { isDefined } from "src/utils/utils";
 
 export const getSearchListMatchAndHighlight = (args: {
   ranking?: number;
@@ -131,27 +132,27 @@ export const getSearchListMatchAndHighlight = (args: {
     rootStyle,
     ranking,
   } = args;
-  const node1 = getNode({ term, text, key, matchCase, style, ranking });
+  const titleNode = getNode({ term, text, key, matchCase, style, ranking });
 
-  const result = node1;
+  const result = titleNode;
   if (subLabel) {
-    const node2 = getNode({
+    const subTitleNode = getNode({
       term,
       text: subLabel,
       key: subLabel,
       isSublabel: true,
       matchCase,
       style: subLabelStyle,
-      // ranking: 1, // Why was this here?
     });
     result.node = (
       <div className="flex-col f-1" style={rootStyle}>
-        {node1.node}
-        {node2.node}
+        {titleNode.node}
+        {subTitleNode.node}
       </div>
     );
-    let rank = Math.min(node1.rank, node2.rank + 5);
-    if (node1.rank !== Infinity && node2.rank !== Infinity) {
+    let rank = ranking ?? Math.min(titleNode.rank, subTitleNode.rank + 5);
+    if (isDefined(ranking)) {
+    } else if (titleNode.rank !== Infinity && subTitleNode.rank !== Infinity) {
       rank /= 2;
     }
 

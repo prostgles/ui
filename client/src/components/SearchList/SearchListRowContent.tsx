@@ -1,16 +1,24 @@
-import Checkbox from "@components/Checkbox";
+import { Checkbox } from "@components/Checkbox";
 import React from "react";
 import type { ParsedListItem } from "./SearchList";
 
 export const SearchListRowContent = ({ item }: { item: ParsedListItem }) => {
-  if ("content" in item) return item.content;
+  if (item.content !== undefined) return item.content;
   const { contentLeft, contentBottom, contentRight } = item;
 
   return (
     <div
-      className="ROWINNER flex-row ai-center f-1 "
+      className="ROWINNER flex-row ai-start f-1 gap-p5 "
       style={item.styles?.rowInner}
     >
+      {typeof item.checked === "boolean" && (
+        <Checkbox
+          id={item.id}
+          className="f-0 no-pointer-events"
+          checked={item.checked}
+          onChange={() => {}}
+        />
+      )}
       {contentLeft || null}
       <div
         className="LABELWRAPPER flex-col ai-start f-1"
@@ -30,15 +38,6 @@ export const SearchListRowContent = ({ item }: { item: ParsedListItem }) => {
         {contentBottom}
       </div>
       {contentRight || null}
-      {typeof item.checked === "boolean" ?
-        <Checkbox
-          id={item.id}
-          className="f-0 no-pointer-events"
-          checked={item.checked}
-          style={{ marginRight: "12px" }}
-          onChange={() => {}}
-        />
-      : null}
     </div>
   );
 };

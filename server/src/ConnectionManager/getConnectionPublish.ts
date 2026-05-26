@@ -4,9 +4,9 @@ import type {
 } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
 import { isDefined, omitKeys } from "prostgles-types";
 import type { DBS } from "..";
-import type { DBSSchema } from "../../../common/publishUtils";
-import { parseTableRules } from "../../../common/publishUtils";
-import { getEntries } from "../../../common/utils";
+import type { DBSSchema } from "@common/publishUtils";
+import { parseTableRules } from "@common/publishUtils";
+import { getEntries } from "@common/utils";
 import type { SUser } from "../authConfig/sessionUtils";
 import { getAccessRule } from "./startConnection";
 import { publish } from "../publish/publish";
@@ -23,9 +23,6 @@ export const getConnectionPublish = ({
   connection,
 }: Args): Publish<void, SUser> | undefined => {
   if (connection.is_state_db) {
-    // throw new Error(
-    //   "Cannot publish state database. Must be used from useDBSConnection",
-    // );
     return publish as Publish<void, SUser>;
   }
   const connectionId = connection.id;
@@ -66,7 +63,7 @@ export const getConnectionPublish = ({
             ...acc,
             [tableName]: {
               select: allowAllTables.includes("select") ? "*" : undefined,
-              ...(!(tableHandler.is_view as boolean) && {
+              ...(!(tableHandler.isView as boolean) && {
                 update: allowAllTables.includes("update") ? "*" : undefined,
                 insert: allowAllTables.includes("insert") ? "*" : undefined,
                 delete: allowAllTables.includes("delete") ? "*" : undefined,
@@ -95,7 +92,7 @@ export const getConnectionPublish = ({
         (acc, { table, rule, tableHandler }) => {
           const parsedRule = parseTableRules(
             omitKeys(rule, ["tableName"]),
-            tableHandler.is_view,
+            tableHandler.isView,
             table.columns.map((c) => c.name),
             { user },
           );

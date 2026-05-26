@@ -1,24 +1,35 @@
+import { mdiMagnify, mdiPlus, mdiStop, mdiTools } from "@mdi/js";
 import { fixIndent } from "../../../demo/scripts/sqlVideoDemo";
 import { getCommandElemSelector } from "../../../Testing";
 import type { UIDocElement } from "../../UIDocs";
+import { DEFAULT_MCP_SERVER_NAMES } from "@common/mcpUtils";
 
 export const AIAssistantUIDoc = {
   type: "popup",
   selectorCommand: "AskLLM",
   title: "AI Assistant",
   description:
-    "Opens an AI assistant to help generate SQL queries, understand database schema, or perform other tasks.",
-  docs: fixIndent(`
+    "Opens an AI assistant chat to help generate SQL queries, understand database schema, or perform other tasks.",
+  docs: `
     The AI assistant is an intelligent companion that helps you work more efficiently with your PostgreSQL databases. 
     It can generate SQL queries, explain database schemas, analyze data patterns, and assist with various database-related tasks through a conversational interface.
     MCP Servers can be used to extend the AI capabilities with custom tools and integrations.
 
+    # Features
+
+    - **Agentic Workflows**: Generate, save and re-run TypeScript automations in an isolated sandbox with granular access to data, MCP tools and filesystem.
+    - **Progressive schema discovery**: Each conversation fetches only the table and tool schemas it actually needs, keeping the context window clean and focused.
+    - **Granular per-chat permissions**: Configure database access, schema visibility, and tool permissions independently for each conversation
+    - **Works with hosted and local models**: It supports OpenAI, Anthropic, Gemini, OpenRouter, Ollama, and OpenAI-compatible local models.
+    - **Multimodal input**: Attach files, convert supported documents and images into markdown context, and use speech-to-text.
+    
+
     <img src="./screenshots/ai_assistant.svgif.svg" alt="AI assistant popup screenshot" />
  
-    Supported AI Providers: OpenAI, Anthropic, Google Gemini, OpenRouter, and Local Models. 
+    Supported AI Providers: OpenAI, Anthropic, Google Gemini, OpenRouter, Ollama and any other Local Models that support the openai spec. 
 
-    *Note: AI providers are configured by administrators in Server Settings > LLM Providers*
-  `),
+    *Note: AI providers are configured in Server Settings > LLM Providers*
+  `,
   docOptions: "asSeparateFile",
   children: [
     {
@@ -87,25 +98,25 @@ export const AIAssistantUIDoc = {
           type: "input",
           inputType: "text",
           title: "Message input",
-          description: "Input field for entering messages to the AI assistant.",
+          description:
+            "Input field for entering messages to the AI assistant. Pressing Shift+Enter creates a new line.",
           selector: getCommandElemSelector("Chat.textarea"),
-        },
-        {
-          type: "button",
-          title: "Send message",
-          description: "Sends the entered message to the AI assistant.",
-          selector: getCommandElemSelector("Chat.send"),
         },
         {
           type: "popup",
           title: "MCP tools allowed",
-          description: "Opens the MCP tools menu for the current chat.",
+          iconPath: mdiTools,
+          description: `Opens the MCP tools menu for the current chat. Default tools: ${DEFAULT_MCP_SERVER_NAMES.join(", ")}`,
+          docs: `
+            MCP Servers extend the capabilities of the AI assistant by providing custom tools and integrations.
+          `,
           selector: getCommandElemSelector("LLMChatOptions.MCPTools"),
           children: [
             {
               type: "popup",
               selector: getCommandElemSelector("AddMCPServer.Open"),
               title: "Add MCP server",
+              iconPath: mdiPlus,
               description:
                 "Opens the form to add a new MCP server for the current chat.",
               children: [
@@ -121,11 +132,12 @@ export const AIAssistantUIDoc = {
                     getCommandElemSelector("MonacoEditor"),
                 },
                 {
-                  type: "button",
+                  type: "popup",
                   title: "Add MCP server",
                   description:
                     "Adds the specified MCP server to the current chat.",
                   selector: getCommandElemSelector("AddMCPServer.Add"),
+                  children: [],
                 },
               ],
             },
@@ -136,6 +148,7 @@ export const AIAssistantUIDoc = {
               selector: getCommandElemSelector(
                 "MCPServersToolbar.stopAllToggle",
               ),
+              iconPath: mdiStop,
             },
             {
               type: "button",
@@ -143,10 +156,12 @@ export const AIAssistantUIDoc = {
               description:
                 "Searches for specific MCP tools in the list of available tools.",
               selector: getCommandElemSelector("MCPServersToolbar.searchTools"),
+              iconPath: mdiMagnify,
             },
             {
               type: "list",
               title: "MCP tools",
+              iconPath: mdiTools,
               description:
                 "List of available MCP tools. To allow a tool to be used in the current chat it must be ticked. Each tool represents a specific functionality or integration.",
               selector:
@@ -232,14 +247,61 @@ export const AIAssistantUIDoc = {
           description:
             "Opens the prompt details for the current chat, allowing you to manage the prompt template and other related settings.",
           selector: getCommandElemSelector("LLMChatOptions.Prompt"),
+          children: [
+            {
+              type: "popup",
+              selectorCommand: "LLMChatOptions.Prompt.Preview",
+              title: "Prompt preview",
+              description:
+                "Preview of the prompt with context variables filled in.",
+              children: [],
+            },
+          ],
+        },
+        {
+          type: "popup",
+          title: "LLM Model",
+          description:
+            "Selects the LLM model to be used for the current chat. Different models may have different capabilities and performance. ",
+          selector: getCommandElemSelector("LLMChatOptions.Model"),
+          children: [
+            {
+              type: "button",
+              selector: `${getCommandElemSelector("LLMChatOptions.Model")} .LABELWRAPPER`,
+              title: "Select model",
+              description: "Selects this LLM model for the current chat.",
+            },
+            {
+              type: "smartform-popup",
+              title: "Add model credentials",
+              description:
+                "Opens the form to add llm provider credentials for the selected LLM model.",
+              selectorCommand: "LLMChatOptions.Model.AddCredentials",
+              tableName: "llm_credentials",
+            },
+          ],
+        },
+        {
+          type: "input",
+          inputType: "file",
+          selectorCommand: "Chat.addFiles",
+          title: "Attach files",
+          description:
+            "Attaches files to be sent to the AI assistant along with the message. Supported file types may vary depending on the AI model and configuration.",
+        },
+        {
+          type: "popup",
+          title: "Speech to Text",
+          selectorCommand: "Chat.speech",
+          description:
+            "Opens the speech-to-text input options, allowing you to send audio recordings or transcribe audio messages to send to the AI assistant. Right click to open speech-to-text settings.",
           children: [],
         },
         {
-          type: "select",
-          title: "LLM Model",
-          description:
-            "Selects the LLM model to be used for the current chat. Different models may have different capabilities and performance.",
-          selector: getCommandElemSelector("LLMChatOptions.Model"),
+          type: "button",
+          title: "Send message",
+          description: "Sends the entered message to the AI assistant.",
+          selector: getCommandElemSelector("Chat.send"),
         },
       ],
     },

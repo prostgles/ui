@@ -1,20 +1,19 @@
+import type { ProstglesState } from "@common/electronInitTypes";
+import { tout } from "@src/utils/tout";
 import type { Express } from "express";
 import { isEqual } from "prostgles-types";
 import type { Server } from "socket.io";
-import { tout } from "..";
-import type { ProstglesState } from "../../../common/electronInitTypes";
 import type { DBSConnectionInfo } from "../electronConfig";
 import { getElectronConfig } from "../electronConfig";
 import { DBS_CONNECTION_INFO } from "../envVars";
 import { cleanupTestDatabases } from "./cleanupTestDatabases";
 import { isRetryableError } from "./isRetryableError";
-import { setDBSRoutesForElectron } from "./setDBSRoutesForElectron";
 import {
   startProstgles,
   type InitExtra,
   type ProstglesInitStateWithDBS,
 } from "./startProstgles";
-import { testDashboardTypesContent } from "./testDashboardTypesContent";
+import { saveTypescriptFilesForProduction } from "./saveTypescriptFilesForProduction";
 
 type StartArguments = {
   app: Express;
@@ -44,7 +43,7 @@ export const startupState: {
   },
   onReady: (cb: StateListener) => {
     if (startupState.state.state !== "loading") {
-      cb(startupState.state as FinishedState);
+      cb(startupState.state);
       return;
     }
     startupState.listeners.push(cb);
@@ -92,8 +91,6 @@ const _tryStartProstgles = async ({
   /** Cleanup state for local tests */
   await cleanupTestDatabases(con);
 
-  setDBSRoutesForElectron(app, io, port, host);
-
   let lastError:
     | Extract<ProstglesInitStateWithDBS, { state: "error" }>
     | undefined = undefined;
@@ -101,7 +98,7 @@ const _tryStartProstgles = async ({
 
   const connHistoryItem = JSON.stringify(con);
   if (connHistory.includes(connHistoryItem)) {
-    console.error("DUPLICATE UNFINISHED CONNECTION");
+    console.error("Duplicate connection attempt");
     return {
       state: "error",
       error: "Duplicate connection attempt",
@@ -177,6 +174,4 @@ export const getProstglesState = (): ProstglesState<InitExtra> => {
   };
 };
 
-if (process.env.NODE_ENV !== "production") {
-  testDashboardTypesContent();
-}
+void saveTypescriptFilesForProduction();

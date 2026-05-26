@@ -1,19 +1,29 @@
-import React, { useEffect, useState } from "react";
-import Btn from "../../components/Btn";
-import FormField from "../../components/FormField/FormField";
-import Loading from "../../components/Loader/Loading";
-import type { PopupProps } from "../../components/Popup/Popup";
-import PopupMenu from "../../components/PopupMenu";
-import { useIsMounted } from "./CredentialSelector";
+import React, { useEffect, useMemo, useState } from "react";
+import Btn, { type BtnProps } from "@components/Btn";
+import FormField from "@components/FormField/FormField";
+import Loading from "@components/Loader/Loading";
+import type { PopupProps } from "@components/Popup/Popup";
+import PopupMenu from "@components/PopupMenu";
 import type { TestSelectors } from "../../Testing";
+import { useIsMounted } from "prostgles-client";
 
-type CodeConfirmationProps = TestSelectors & {
+export type CodeConfirmationProps = TestSelectors & {
   button: React.ReactNode;
   message: React.ReactNode | (() => Promise<React.ReactNode>);
-  confirmButton: (popupClose) => React.ReactNode;
-  topContent?: (popupClose) => React.ReactNode;
+  confirmButtons: Pick<
+    BtnProps,
+    | "title"
+    | "className"
+    | "children"
+    | "iconPath"
+    | "variant"
+    | "onClickPromise"
+    | "color"
+    | "data-command"
+  >[];
+  topContent?: (popupClose: VoidFunction) => React.ReactNode;
   title?: React.ReactNode;
-  show?: "button" | "confirmButton";
+  bypassConfirmation?: boolean;
   className?: string;
   style?: React.CSSProperties;
   contentClassName?: string;
@@ -25,9 +35,9 @@ type CodeConfirmationProps = TestSelectors & {
 const getCode = () => Math.random().toFixed(3).slice(2, 5);
 export const CodeConfirmation = ({
   button,
-  confirmButton,
+  confirmButtons,
   message: rawMessage,
-  show,
+  bypassConfirmation,
   topContent,
   className,
   style,
@@ -44,7 +54,7 @@ export const CodeConfirmation = ({
   const getIsMounted = useIsMounted();
   useEffect(() => {
     if (typeof rawMessage === "function") {
-      (async () => {
+      void (async () => {
         const message = await rawMessage();
         if (!getIsMounted()) return;
         setMessage(message);
@@ -54,12 +64,31 @@ export const CodeConfirmation = ({
     }
   }, [rawMessage, getIsMounted]);
 
-  const isMounted = useIsMounted();
   const [key, setKey] = useState(getCode());
   const [hasConfirmed, setHasConfirmed] = useState(false);
 
-  if (show) {
-    return show === "button" ? <>{button} </> : <>{confirmButton(() => {})} </>;
+  const confirmButtonsFullProps = useMemo(
+    () =>
+      confirmButtons.map(
+        (confirmButton) =>
+          ({
+            ...confirmButton,
+            onClickPromise: async (e) => {
+              await confirmButton.onClickPromise?.(e);
+            },
+          }) satisfies BtnProps,
+      ),
+    [confirmButtons],
+  );
+
+  if (bypassConfirmation) {
+    return (
+      <>
+        {confirmButtonsFullProps.map((btnProps, i) => (
+          <Btn key={i} {...btnProps} />
+        ))}
+      </>
+    );
   }
 
   return (
@@ -79,7 +108,7 @@ export const CodeConfirmation = ({
       contentClassName="p-1"
       render={(_popupClose) => {
         const popupClose = () => {
-          if (!isMounted()) return;
+          if (!getIsMounted()) return;
           setKey(getCode());
           setHasConfirmed(false);
         };
@@ -101,10 +130,27 @@ export const CodeConfirmation = ({
                   onChange={setHasConfirmed}
                 />
                 <div className="flex-row gap-1 ai-center mt-1  w-full">
-                  <Btn onClick={popupClose} variant="outline">
+                  <Btn onClick={popupClose} variant="outline" size="default">
                     Close
                   </Btn>
-                  {hasConfirmed && confirmButton(popupClose)}
+                  <>
+                    {confirmButtonsFullProps.map((btnProps, i) => (
+                      <Btn
+                        key={i}
+                        size="default"
+                        {...btnProps}
+                        onClickPromise={async (...args) => {
+                          await btnProps.onClickPromise(...args);
+                          popupClose();
+                        }}
+                        disabledInfo={
+                          !hasConfirmed ?
+                            "Must confirm the code above"
+                          : undefined
+                        }
+                      />
+                    ))}
+                  </>
                 </div>
               </>
             )}

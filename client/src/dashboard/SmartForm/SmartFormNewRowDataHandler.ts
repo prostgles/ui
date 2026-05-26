@@ -5,7 +5,7 @@ import {
   isEqual,
   type AnyObject,
 } from "prostgles-types";
-import type { Media } from "../../components/FileInput/FileInput";
+import type { Media } from "@components/FileInput/FileInput";
 
 export type NewRow = Record<string, ColumnData>;
 
@@ -21,11 +21,16 @@ export class NewRowDataHandler {
   private newRow: NewRow | undefined;
   private onChange: Opts["onChange"];
   private onChanged: Opts["onChanged"];
-  constructor(newRow: NewRow | undefined, { onChange, onChanged }: Opts) {
+  constructor(newRow: NewRow | undefined, opts: Opts) {
     this.newRow = newRow;
-    this.onChanged = (newRow) => onChanged({ ...newRow });
-    this.onChange = onChange;
+    this.onChanged = (newRow) => opts.onChanged({ ...newRow });
+    this.onChange = opts.onChange;
   }
+
+  setHandlers = (opts: Opts) => {
+    this.onChanged = (newRow) => opts.onChanged({ ...newRow });
+    this.onChange = opts.onChange;
+  };
 
   getNewRow = () => ({ ...this.newRow });
 
@@ -55,6 +60,15 @@ export class NewRowDataHandler {
   ) => {
     this.setColumnData(columnName, {
       type: "nested-column",
+      value,
+    });
+  };
+  setNestedFileColumn = (
+    columnName: string,
+    value: Extract<ColumnData, { type: "nested-file-column" }>["value"],
+  ) => {
+    this.setColumnData(columnName, {
+      type: "nested-file-column",
       value,
     });
   };

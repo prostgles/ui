@@ -32,7 +32,7 @@ export const ExpandSection = ({
   const button = (
     <Btn
       iconPosition={piconP ? "left" : "right"}
-      className={className + " flex-row "}
+      className={className + " ExpandSection flex-row "}
       style={style}
       variant="text"
       title={title}

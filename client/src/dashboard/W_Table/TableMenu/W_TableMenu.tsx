@@ -1,3 +1,5 @@
+import type { TabItems } from "@components/Tabs";
+import Tabs from "@components/Tabs";
 import {
   mdiAccountMultiple,
   mdiCog,
@@ -11,20 +13,15 @@ import {
   mdiViewColumnOutline,
 } from "@mdi/js";
 import React from "react";
-import type { TabItems } from "../../../components/Tabs";
-import Tabs from "../../../components/Tabs";
 import RTComp from "../../RTComp";
 
-import type { ParsedJoinPath, TableInfo } from "prostgles-types";
-import FormField from "../../../components/FormField/FormField";
+import FormField from "@components/FormField/FormField";
+import type { TableInfo } from "prostgles-types";
 import type { ColumnConfigWInfo, W_TableProps } from "../W_Table";
 
-import type {
-  OnAddChart,
-  WindowSyncItem,
-} from "../../Dashboard/dashboardUtils";
+import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";
 
-import ErrorComponent from "../../../components/ErrorComponent";
+import ErrorComponent from "@components/ErrorComponent";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import { SQLSmartEditor } from "../../SQLEditor/SQLSmartEditor";
 import type { ColumnConfig } from "../ColumnMenu/ColumnMenu";
@@ -43,11 +40,9 @@ import { getTableMeta, type W_TableInfo } from "./getTableMeta";
 
 export type W_TableMenuProps = Pick<
   W_TableProps,
-  "workspace" | "prgl" | "externalFilters" | "joinFilter"
+  "workspace" | "prgl" | "externalFilters" | "joinFilter" | "tables"
 > & {
-  onAddChart?: OnAddChart;
   w: WindowSyncItem<"table">;
-  onLinkTable?: (tableName: string, path: ParsedJoinPath[]) => any;
   cols: ColumnConfigWInfo[];
   suggestions: CommonWindowProps["suggestions"];
   onClose: () => any;
@@ -81,7 +76,7 @@ export type W_TableMenuState = {
   l2Key?: string;
   running?: boolean;
   error?: any;
-  initError?: any;
+  initError?: unknown;
   hint?: string;
   columnsConfig?: ColumnConfig[];
   infoQuery?: {
@@ -132,12 +127,12 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
 
   getTableInfo() {
     const {
-      prgl: { db, dbs, databaseId },
+      prgl: { sql, dbs, databaseId },
       w,
     } = this.props;
-    if (w.table_name && db.sql) {
-      getTableMeta(db, dbs, databaseId, w.table_name, w.table_oid)
-        .then(async (tableMeta) => {
+    if (w.table_name && sql) {
+      getTableMeta(sql, dbs, databaseId, w.table_name, w.table_oid)
+        .then((tableMeta) => {
           this.setState({ tableMeta });
         })
         .catch((initError) => {
@@ -170,7 +165,7 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
     const {
       onClose,
       w,
-      prgl: { db, dbs, tables },
+      prgl: { db, sql, dbs, tables },
       suggestions,
     } = this.props;
 
@@ -194,7 +189,7 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
       queryForm = (
         <SQLSmartEditor
           key={query.sql}
-          sql={db.sql!}
+          sql={sql!}
           query={query.sql}
           title={query.title || "Query"}
           contentTop={query.contentTop}
@@ -222,9 +217,9 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
       l1Opts = {
         ...(tableMeta && {
           "Table info": {
-            label: table?.info.isView ? "View info" : undefined,
+            label: table?.isView ? "View info" : undefined,
             leftIconPath: mdiInformationOutline,
-            disabledText: db.sql ? undefined : "Not enough privileges",
+            disabledText: sql ? undefined : "Not enough privileges",
             content: <W_TableMenu_TableInfo {...commonProps} />,
           },
         }),
@@ -236,6 +231,7 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
               nestedColumnOpts={undefined}
               w={w}
               db={db}
+              sql={sql}
               tables={tables}
               onClose={onClose}
               suggestions={suggestions}
@@ -255,7 +251,7 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
         ...(tableMeta && {
           Triggers: {
             label: "Triggers " + tableMeta.triggers.length,
-            disabledText: db.sql ? undefined : "Not enough privileges",
+            disabledText: sql ? undefined : "Not enough privileges",
             leftIconPath: mdiFlash,
             content: <W_TableMenu_Triggers {...commonProps} />,
           },
@@ -263,21 +259,21 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
           Constraints: {
             label: "Constraints " + tableMeta.constraints.length,
             leftIconPath: mdiContentSaveCogOutline,
-            disabledText: db.sql ? undefined : "Not enough privileges",
+            disabledText: sql ? undefined : "Not enough privileges",
             content: <W_TableMenu_Constraints {...commonProps} />,
           },
 
           Indexes: {
             label: "Indexes " + tableMeta.indexes.length,
             leftIconPath: mdiDatabaseSearch,
-            disabledText: db.sql ? undefined : "Not enough privileges",
+            disabledText: sql ? undefined : "Not enough privileges",
             content: <W_TableMenu_Indexes {...commonProps} />,
           },
 
           Policies: {
             label: "Policies " + tableMeta.policiesCount,
             leftIconPath: mdiShieldAccount,
-            disabledText: db.sql ? undefined : "Not enough privileges",
+            disabledText: sql ? undefined : "Not enough privileges",
             content: <W_TableMenu_Policies {...commonProps} />,
           },
 
@@ -318,6 +314,7 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
             (l1Key !== "Columns" ? " p-1 " : "") +
             (l1Key === "Columns" ? " " : " ")
           }
+          defaultActiveKey={Object.keys(l1Opts ?? {})[0]}
           items={l1Opts ?? {}}
           compactMode={window.isMobileDevice ? "hide-inactive" : undefined}
           activeKey={l1Key}
@@ -338,7 +335,10 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
                 { deepMerge: true },
               );
             } else if (l1Key === "Columns") {
-              const columnsConfig = await getAndFixWColumnsConfig(tables, w);
+              const columnsConfig = await getAndFixWColumnsConfig(
+                this.props.tables,
+                w,
+              );
               this.setState({ columnsConfig });
             } else if (l1Key === "Filter") {
               this.d.w.$update({
@@ -348,7 +348,7 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
             }
           }}
         />
-        {l1Key === "Columns" && tableName && db.sql && infoQuery && (
+        {l1Key === "Columns" && tableName && sql && infoQuery && (
           <div className="flex-col o-auto p-1">
             <FormField
               className="mb-1"

@@ -1,17 +1,14 @@
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { useRef } from "react";
 import "./Table.css";
 
-import type {
-  ColumnSort,
-  ColumnSortSQL,
-} from "../../dashboard/W_Table/ColumnMenu/ColumnMenu";
+import type { ColumnSortSQL } from "../../dashboard/W_Table/ColumnMenu/ColumnMenu";
 import { classOverride } from "../Flex";
 import { Pagination } from "./Pagination";
 import { closest, PAGE_SIZES, type TableProps, type TableState } from "./Table";
 import { TableRow } from "./TableRow";
 import { useVirtualisedRows } from "./useVirtualisedRows";
 
-export const TableBody = <Sort extends ColumnSort | ColumnSortSQL>(
+export const TableBody = <Sort extends ColumnSortSQL>(
   props: Pick<
     TableProps<Sort>,
     | "rowClass"
@@ -86,6 +83,7 @@ export const TableBody = <Sort extends ColumnSort | ColumnSortSQL>(
 
   return (
     <div
+      data-command="TableBody"
       className={classOverride(
         "TableBody b-y b-default f-1 oy-auto ox-hidden flex-col min-w-fit relative " +
           (rawPagination === "virtual" ? "" : "no-scroll-bar"),

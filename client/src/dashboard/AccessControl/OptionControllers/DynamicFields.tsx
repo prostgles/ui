@@ -1,24 +1,24 @@
-import { mdiClose, mdiPlus, mdiTableFilter } from "@mdi/js";
-import React, { useEffect, useState } from "react";
 import type {
   ContextDataObject,
   TableRules,
   UpdateRule,
-} from "../../../../../common/publishUtils";
-import { validateDynamicFields } from "../../../../../common/publishUtils";
-import Btn from "../../../components/Btn";
-import ErrorComponent from "../../../components/ErrorComponent";
-import { Label } from "../../../components/Label";
+} from "@common/publishUtils";
+import { validateDynamicFields } from "@common/publishUtils";
+import Btn from "@components/Btn";
+import ErrorComponent from "@components/ErrorComponent";
+import { FlexRow } from "@components/Flex";
+import { Label } from "@components/Label";
+import { mdiClose, mdiPlus, mdiTableFilter } from "@mdi/js";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import React, { useEffect, useState } from "react";
 import type { TablePermissionControlsProps } from "../TableRules/TablePermissionControls";
 import { FieldFilterControl } from "./FieldFilterControl";
-import type { ContextDataSchema } from "./FilterControl";
+import type { ContextDataSchema, SingleGroupFilter } from "./FilterControl";
 import { FilterControl } from "./FilterControl";
-import { FlexRow } from "../../../components/Flex";
-import { useEffectAsync } from "prostgles-client/dist/react-hooks";
 
 type P = Pick<
   Required<TablePermissionControlsProps>,
-  "prgl" | "table" | "tableRules"
+  "table" | "tableRules"
 > & {
   rule: TableRules["update"];
   onChange: (rule: UpdateRule) => void;
@@ -31,9 +31,9 @@ export const DynamicFields = ({
   contextDataSchema,
   table,
   onChange,
-  prgl: { db, tables, methods },
   contextData,
 }: P) => {
+  const { db } = usePrgl();
   const rule: UpdateRule = r === true || !r ? { fields: "*" } : r;
 
   const setValue = (
@@ -49,13 +49,12 @@ export const DynamicFields = ({
     });
   };
 
-  const [error, setError] = useState<any>();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffectAsync(async () => {
-    (async () => {
+  const [error, setError] = useState<unknown>();
+  useEffect(() => {
+    void (async () => {
       const valid = await validateDynamicFields(
         rule.dynamicFields,
-        db[table.name] as any,
+        db[table.name],
         contextData,
         table.columns.map((c) => c.name),
       );
@@ -115,11 +114,8 @@ export const DynamicFields = ({
                   }}
                 />
                 <FilterControl
-                  db={db}
-                  methods={methods}
                   tableName={table.name}
-                  tables={tables}
-                  detailedFilter={filterDetailed as any}
+                  detailedFilter={filterDetailed as SingleGroupFilter}
                   label={"Filter"}
                   onChange={(newFilter) => {
                     setValue(

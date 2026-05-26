@@ -1,44 +1,41 @@
-import { mdiPlus } from "@mdi/js";
+import Btn from "@components/Btn";
+import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
+import { Label } from "@components/Label";
+import PopupMenu from "@components/PopupMenu";
+import { mdiPlus, mdiSigma } from "@mdi/js";
 import React, { useState } from "react";
-import { WithPrgl } from "../../../../WithPrgl";
-import Btn from "../../../../components/Btn";
-import { FlexCol, FlexRow, FlexRowWrap } from "../../../../components/Flex";
-import { Label } from "../../../../components/Label";
-import PopupMenu from "../../../../components/PopupMenu";
-import { AddComputedColMenu } from "../AddComputedColumn/AddComputedColMenu";
-import { QuickAddComputedColumn } from "../AddComputedColumn/QuickAddComputedColumn";
-import { ColumnList } from "../ColumnList";
-import { NestedTimechartControls } from "../NestedTimechartControls";
-import type { ColumnConfig } from "../ColumnMenu";
-import type { LinkedColumnProps } from "./LinkedColumn";
+import type { DBSchemaTableWithRenderInfo } from "src/dashboard/Dashboard/getTables";
+import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 import type { ColumnConfigWInfo } from "../../W_Table";
 import { getColWInfo } from "../../tableUtils/getColWInfo";
 import { getMinimalColumnInfo } from "../../tableUtils/tableUtils";
-import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
+import { AddComputedColMenu } from "../AddComputedColumn/AddComputedColMenu";
+import { QuickAddComputedColumn } from "../AddComputedColumn/QuickAddComputedColumn";
+import { ColumnList } from "../ColumnList";
+import type { ColumnConfig } from "../ColumnMenu";
+import { NestedTimechartControls } from "../NestedTimechartControls";
+import type { LinkedColumnProps } from "./LinkedColumn";
 
 type P = LinkedColumnProps & {
   updateNested: (newNested: Partial<ColumnConfig["nested"]>) => void;
-  table: DBSchemaTablesWJoins[number] | undefined;
+  table: DBSchemaTableWithRenderInfo | undefined;
   currentColumn: ColumnConfigWInfo | undefined;
   updateColumn: (newCol: Partial<ColumnConfig>) => void;
 };
 export const LinkedColumnSelect = ({
-  tables,
   w,
-  db,
   table,
   currentColumn,
   column,
   updateNested,
   updateColumn,
 }: P) => {
+  const { tables, db } = usePrgl();
   const nestedColumns = currentColumn?.nested?.columns;
   const updateNestedColumns = (newCols: ColumnConfigWInfo[]) => {
     if (!table) throw "not ok";
     updateNested({
-      columns: getMinimalColumnInfo(
-        getColWInfo(tables, { table_name: table.name, columns: newCols }),
-      ),
+      columns: getMinimalColumnInfo(getColWInfo(table, newCols)),
     });
   };
   const [showAddComputedCol, setShowAddComputedCol] = useState(false);
@@ -49,11 +46,11 @@ export const LinkedColumnSelect = ({
         <PopupMenu
           data-command="LinkedColumn.ColumnListMenu"
           title="Select columns"
-          contentClassName=""
+          contentClassName="f-1 min-h-0 o-hidden"
           clickCatchStyle={{ opacity: 0.1 }}
           positioning="beneath-left"
           button={
-            <FlexCol className="gap-p25">
+            <FlexCol className="gap-p25 min-h-0">
               <Label label="Columns" variant="normal"></Label>
               <Btn
                 variant="faded"
@@ -71,24 +68,14 @@ export const LinkedColumnSelect = ({
           }
           render={(pClose) => {
             return (
-              <FlexCol>
-                <WithPrgl
-                  onRender={(prgl) => (
-                    <ColumnList
-                      columns={nestedColumns}
-                      tableColumns={table.columns}
-                      mainMenuProps={{
-                        db,
-                        onClose: pClose,
-                        suggestions: undefined,
-                        table,
-                        tables,
-                        w,
-                        prgl,
-                      }}
-                      onChange={updateNestedColumns}
-                    />
-                  )}
+              <FlexCol className="min-h-0">
+                <ColumnList
+                  columns={nestedColumns}
+                  table={table}
+                  onClose={pClose}
+                  suggestions={undefined}
+                  w={w}
+                  onChange={updateNestedColumns}
                 />
 
                 <FlexRow className="p-1">
@@ -134,20 +121,37 @@ export const LinkedColumnSelect = ({
             onChange={(chart) => {
               updateNested({ chart, limit: chart ? 200 : 20 });
             }}
-            tables={tables}
           />
-          <div className="py-p75">OR</div>
-          <QuickAddComputedColumn
-            tables={tables}
-            tableName={table.name}
-            onAddColumn={(newCol) => {
-              const oldHiddenCols = (nestedColumns ?? []).map((c) => ({
-                ...c,
-                show: false,
-              }));
-              const newCols = [newCol, ...oldHiddenCols];
-              updateNested({ displayMode: "no-headers", columns: newCols });
-            }}
+          <div className="py-p5">OR</div>
+
+          <PopupMenu
+            contentClassName="p-1 flex-col gap-1"
+            title="Add computed column"
+            positioning="beneath-left"
+            data-command="QuickAddComputedColumn"
+            button={
+              <Btn variant="faded" iconPath={mdiSigma}>
+                Row count/Aggregate
+              </Btn>
+            }
+            render={(popupClose) => (
+              <QuickAddComputedColumn
+                tableName={table.name}
+                existingColumn={undefined}
+                onAddColumn={(newCol) => {
+                  popupClose();
+                  if (!newCol) {
+                    return;
+                  }
+                  const oldHiddenCols = (nestedColumns ?? []).map((c) => ({
+                    ...c,
+                    show: false,
+                  }));
+                  const newCols = [newCol, ...oldHiddenCols];
+                  updateNested({ displayMode: "no-headers", columns: newCols });
+                }}
+              />
+            )}
           />
         </>
       )}

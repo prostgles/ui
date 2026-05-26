@@ -8,27 +8,24 @@ import {
 } from "@mdi/js";
 import type { SQLHandler, ValidatedColumnInfo } from "prostgles-types";
 import React from "react";
-import Btn from "../../components/Btn";
-import ErrorComponent from "../../components/ErrorComponent";
-import { Label } from "../../components/Label";
-import { PopupMenuList } from "../../components/PopupMenuList";
+import Btn from "@components/Btn";
+import ErrorComponent from "@components/ErrorComponent";
+import { Label } from "@components/Label";
+import { PopupMenuList } from "@components/PopupMenuList";
 import { download } from "./W_SQL";
 import type { Unpromise } from "./W_SQLMenu";
-import { isObject } from "../../../../common/publishUtils";
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { isObject } from "@common/publishUtils";
+import { usePromise } from "prostgles-client";
 import { getPapa } from "../FileImporter/FileImporter";
-import { sliceText } from "../../../../common/utils";
-import { isDefined } from "../../utils";
+import { sliceText } from "@common/utils";
+import { isDefined } from "../../utils/utils";
 
-const getValidPGColumnNames = async (
-  v: string[],
-  sql: SQLHandler,
-): Promise<{ name: string; escaped: string }[]> => {
+const getValidPGColumnNames = async (v: string[], sql: SQLHandler) => {
   return sql(
     "SELECT name, format('%I', name) as escaped FROM unnest($1::TEXT[]) as name",
     [v],
     { returnType: "rows" },
-  ) as any;
+  ) as Promise<{ name: string; escaped: string }[]>;
 };
 
 type Outputs = {
@@ -58,21 +55,19 @@ export const CopyResultBtn = (props: {
       } catch (err) {
         console.error(err, cols);
       }
-      const _cols = await Promise.all(
-        cols.map(async (c, ci) => {
-          const name: string =
-            escapedNames.find((en) => en.name === c.name)?.escaped ??
-            JSON.stringify(c.name);
+      const _cols = cols.map((c, ci) => {
+        const name: string =
+          escapedNames.find((en) => en.name === c.name)?.escaped ??
+          JSON.stringify(c.name);
 
-          const vals = rows.map((r) => r[ci]);
-          return {
-            ...c,
-            name,
-            nullable: vals.includes(null) ? " | null" : "",
-            undef: vals.includes(undefined) ? " | undefined" : "",
-          };
-        }),
-      );
+        const vals = rows.map((r) => r[ci]);
+        return {
+          ...c,
+          name,
+          nullable: vals.includes(null) ? " | null" : "",
+          undef: vals.includes(undefined) ? " | undefined" : "",
+        };
+      });
 
       const ts = `type Result = { \n${_cols.map((c) => `  ${c.name}: ${c.tsDataType}${c.nullable}${c.undef};`).join("\n")} \n}`;
       const tsv = [cols.map((c) => JSON.stringify(c.name)), ...rows]

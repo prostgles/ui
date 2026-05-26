@@ -1,7 +1,7 @@
-export const onMount: ProstglesOnMount = async ({ dbo }) => {
-  if (!dbo.cities) {
+export const onMount: ProstglesOnMount = async ({ dbo: db, sql }) => {
+  if (!db.cities) {
     console.warn("Creating tables...");
-    await dbo.sql(`
+    await sql(`
       CREATE EXTENSION IF NOT EXISTS postgis;
 
       CREATE TABLE airports (
@@ -66,22 +66,22 @@ export const onMount: ProstglesOnMount = async ({ dbo }) => {
   }
 
   const addForecasts = async () => {
-    if (!dbo.weather_forecasts) return;
-    const citiesCount = await dbo.cities.count();
+    if (!db.weather_forecasts) return;
+    const citiesCount = await db.cities.count();
     console.log("Cities in DB:", citiesCount);
     if (!+citiesCount) {
       console.log("Adding cities and airports...");
-      await dbo.sql(`
+      await sql(`
         TRUNCATE weather_forecasts RESTART IDENTITY CASCADE;
         TRUNCATE airports RESTART IDENTITY CASCADE; 
       `);
       const airports = await fetchAirports();
-      await dbo.airports.insert(airports);
+      await db.airports.insert(airports);
 
       const cities = await fetchCities();
-      await dbo.cities.insert(cities);
+      await db.cities.insert(cities);
     }
-    const cities = await dbo.cities.find({
+    const cities = await db.cities.find({
       name_en: {
         $in: [
           "London",
@@ -96,7 +96,7 @@ export const onMount: ProstglesOnMount = async ({ dbo }) => {
       },
     });
 
-    const lastAdded = await dbo.weather_forecasts.findOne(
+    const lastAdded = await db.weather_forecasts.findOne(
       {},
       { orderBy: [{ forecast_time: -1 }] },
     );
@@ -123,7 +123,7 @@ export const onMount: ProstglesOnMount = async ({ dbo }) => {
         humidity: entry.data.instant.details.relative_humidity,
       }));
 
-      await dbo.weather_forecasts.insert(forecasts);
+      await db.weather_forecasts.insert(forecasts);
     }
   };
 

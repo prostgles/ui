@@ -1,16 +1,16 @@
-import { useIsMounted, usePromise } from "prostgles-client/dist/react-hooks";
+import { useIsMounted, usePromise } from "prostgles-client";
 import type { Prgl } from "../../App";
 import { getCanCreateTables } from "./FileTableConfigControls";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import type { FileTableConfigReferences } from "./FileColumnConfigControls";
 
 export type UseFileTableConfigControlsArgs = Pick<
   Prgl,
-  "dbs" | "db" | "connectionId" | "dbsMethods"
+  "dbs" | "db" | "connectionId" | "dbsMethods" | "sql"
 >;
 export const useFileTableConfigControls = ({
   dbs,
-  db,
+  sql: sqlHandler,
   dbsMethods,
   connectionId,
 }: UseFileTableConfigControlsArgs) => {
@@ -21,21 +21,40 @@ export const useFileTableConfigControls = ({
     $existsJoined: { connections: connectionFilter },
   });
 
-  const canCreateTables = usePromise(() => getCanCreateTables(db.sql!));
+  const canCreateTables = usePromise(() => getCanCreateTables(sqlHandler!));
   const savedRefsConfig: FileTableConfigReferences =
     database_config?.file_table_config?.referencedTables ?? {};
 
   const [localRefsConfig, setRefsConfig] =
     useState<FileTableConfigReferences>();
   const refsConfig = localRefsConfig ?? savedRefsConfig;
+  const { storageType, delayedDelete, fileTable } =
+    database_config?.file_table_config || {};
   const getIsMounted = useIsMounted();
-  const updateRefsConfig = async (newRefs?: FileTableConfigReferences) => {
-    await dbsMethods.setFileStorage!(connectionId, {
-      referencedTables: newRefs ?? refsConfig,
-    });
-    if (!getIsMounted()) return;
-    setRefsConfig(undefined);
-  };
+  const updateRefsConfig = useCallback(
+    async (newRefs?: FileTableConfigReferences) => {
+      await dbsMethods.setFileStorage!({
+        connId: connectionId,
+        tableConfig: storageType && {
+          fileTable,
+          delayedDelete,
+          storageType,
+          referencedTables: newRefs ?? refsConfig,
+        },
+      });
+      if (!getIsMounted()) return;
+      setRefsConfig(undefined);
+    },
+    [
+      dbsMethods.setFileStorage,
+      connectionId,
+      storageType,
+      fileTable,
+      delayedDelete,
+      refsConfig,
+      getIsMounted,
+    ],
+  );
   const canUpdateRefColumns =
     JSON.stringify(savedRefsConfig) !== JSON.stringify(refsConfig);
 

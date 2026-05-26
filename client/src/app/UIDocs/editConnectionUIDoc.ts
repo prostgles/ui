@@ -1,4 +1,4 @@
-import { ROUTES } from "../../../../common/utils";
+import { ROUTES } from "@common/utils";
 import type { UIDocContainers } from "../UIDocs";
 
 export const editConnectionUIDoc = {

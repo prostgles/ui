@@ -1,68 +1,45 @@
+import {
+  DEFAULT_RESTORE_OPTS,
+  sliceText,
+  type RestoreOpts,
+} from "@common/utils";
+import FormField from "@components/FormField/FormField";
+import { InfoRow } from "@components/InfoRow";
+import { Section } from "@components/Section";
 import { mdiBackupRestore } from "@mdi/js";
-import { useEffectDeep, usePromise } from "prostgles-client/dist/react-hooks";
-import React, { useEffect, useState } from "react";
-import type { DBSSchema } from "../../../../../common/publishUtils";
-import { sliceText } from "../../../../../common/utils";
-import type { Prgl } from "../../../App";
-import Btn from "../../../components/Btn";
-import FormField from "../../../components/FormField/FormField";
-import { InfoRow } from "../../../components/InfoRow";
-import { Section } from "../../../components/Section";
-import Select from "../../../components/Select/Select";
-import type { DBS } from "../../Dashboard/DBS";
-import { CodeConfirmation } from "../CodeConfirmation";
-import { FORMATS } from "../DumpOptions";
-import { DumpRestoreAlerts } from "../DumpRestoreAlerts";
-import { FlexCol } from "../../../components/Flex";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import { useEffectDeep, usePromise } from "prostgles-client";
+import React, { useMemo, useState } from "react";
 import { t } from "../../../i18n/i18nUtils";
+import {
+  CodeConfirmation,
+  type CodeConfirmationProps,
+} from "../CodeConfirmation";
+import { DumpRestoreAlerts } from "../DumpRestoreAlerts";
 import { RestoreOptions } from "./RestoreOptions";
+import { useRestoreDatabaseFromFile } from "./useRestoreDatabaseFromFile";
 
-export type RestoreOpts = DBSSchema["backups"]["restore_options"];
-
-const DEFAULT_RESTORE_OPTS: RestoreOpts = {
-  clean: true,
-  create: false,
-  dataOnly: false,
-  noOwner: false,
-  command: "pg_restore",
-  excludeSchema: "prostgles",
-  ifExists: true,
-  format: "c",
-  keepLogs: false,
-};
-
-export type RestoreProps = Pick<Prgl, "dbsMethods" | "db"> & {
+export type RestoreProps = {
   button: React.ReactNode;
   defaultOpts?: RestoreOpts;
-  dbs: DBS;
-  backupId?: string;
   connectionId: string;
 } & (
-    | {
-        fromFile?: true;
-        onReadyButton?: undefined;
-      }
-    | {
-        fromFile?: undefined;
-        onReadyButton: (
-          opts: RestoreOpts,
-          popupClose: () => void,
-        ) => React.ReactNode;
-      }
-  );
+  | {
+      mode: "fromFile";
+      backupId?: undefined;
+    }
+  | {
+      mode: "fromBackup";
+      backupId: string;
+    }
+);
 export const Restore = (props: RestoreProps) => {
   const {
-    defaultOpts,
-    button,
     dbs,
-    db,
-    backupId,
-    connectionId,
-    dbsMethods,
-    fromFile,
-    onReadyButton,
-  } = props;
-
+    dbsMethods: { pgRestore },
+  } = usePrgl();
+  const { defaultOpts, button, backupId, connectionId, mode } = props;
+  const fromFile = mode === "fromFile";
   type FileOrMaybeItsNothing = File | null | undefined;
   const [file, setFile] = useState<FileOrMaybeItsNothing | void>();
   const [restoreOpts, setRestoreOpts] = useState(
@@ -79,46 +56,10 @@ export const Restore = (props: RestoreProps) => {
     }
   }, [file, restoreOpts]);
 
-  const restoreFile = async (popupClose: () => void) => {
-    if (!dbsMethods.streamBackupFile) return;
-    const { streamBackupFile } = dbsMethods;
-
-    const f = file;
-    if (!f) return;
-
-    const stream = f.stream();
-    const streamId = await streamBackupFile(
-      "start",
-      f.name,
-      connectionId,
-      null,
-      f.size,
-      restoreOpts,
-    );
-
-    const writableStream = new WritableStream({
-      start(controller) {},
-      async write(chunk, controller) {
-        try {
-          await streamBackupFile("chunk", streamId, null, chunk, undefined);
-        } catch (err) {
-          console.error(err);
-          controller.error(err);
-          writableStream.abort(err);
-        }
-      },
-      async close() {
-        (async () => {
-          await streamBackupFile("end", streamId, null, undefined, undefined);
-        })();
-      },
-      abort(reason) {
-        console.error("[abort]", reason);
-      },
-    });
-    stream.pipeTo(writableStream);
-    popupClose();
-  };
+  const { restoreFile } = useRestoreDatabaseFromFile({
+    connectionId,
+    restoreOpts,
+  });
 
   const backup = usePromise(async () => {
     const bkp = await dbs.backups.findOne({ id: backupId });
@@ -140,6 +81,52 @@ export const Restore = (props: RestoreProps) => {
     </InfoRow>
   );
 
+  const confirmButtons = useMemo(() => {
+    if (fromFile) {
+      return [
+        {
+          iconPath: mdiBackupRestore,
+          color: "action",
+          variant: "filled",
+          onClickPromise: () => {
+            if (!file) {
+              throw new Error("No file selected for restore");
+            }
+            return restoreFile(file);
+          },
+          children: "Restore",
+        },
+      ] satisfies CodeConfirmationProps["confirmButtons"];
+    }
+
+    return [
+      {
+        iconPath: mdiBackupRestore,
+        variant: "filled",
+        color: "action",
+        onClickPromise: async () => {
+          if (!pgRestore) {
+            throw new Error("pgRestore method not available");
+          }
+          await pgRestore({
+            bkpId: backupId,
+            connId: connectionId,
+            opts: restoreOpts,
+          });
+        },
+        children: "Restore",
+      },
+    ] satisfies CodeConfirmationProps["confirmButtons"];
+  }, [
+    backupId,
+    connectionId,
+    file,
+    fromFile,
+    pgRestore,
+    restoreFile,
+    restoreOpts,
+  ]);
+
   return (
     <CodeConfirmation
       contentStyle={{
@@ -153,20 +140,9 @@ export const Restore = (props: RestoreProps) => {
         </InfoRow>
       }
       button={button}
-      confirmButton={(popupClose) =>
-        onReadyButton ?
-          onReadyButton(restoreOpts, popupClose)
-        : <Btn
-            iconPath={mdiBackupRestore}
-            color="action"
-            variant="filled"
-            onClick={() => restoreFile(popupClose)}
-          >
-            Restore
-          </Btn>
-      }
+      confirmButtons={confirmButtons}
       hideConfirm={!!(fromFile && !file)}
-      topContent={(popupClose) => (
+      topContent={() => (
         <>
           <InfoRow
             variant="naked"
@@ -196,14 +172,14 @@ export const Restore = (props: RestoreProps) => {
               </>
             }
           </InfoRow>
-          <DumpRestoreAlerts {...{ dbsMethods, connectionId, dbProject: db }} />
+          <DumpRestoreAlerts connectionId={connectionId} />
           {plainFormatAlert}
           {fromFile && (
             <FormField
               type="file"
               label="File"
-              onChange={(files) => {
-                const f: FileOrMaybeItsNothing = files[0];
+              onChange={(files: FileList) => {
+                const f: FileOrMaybeItsNothing = files[0]; // ??? is this a FormField bug?
                 setFile(f);
               }}
             />

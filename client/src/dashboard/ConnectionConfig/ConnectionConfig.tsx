@@ -1,26 +1,33 @@
 import {
+  tableMightBeUndefinedDueToAccessControl,
+  type CONNECTION_CONFIG_SECTIONS,
+} from "@common/utils";
+import { FlexRow } from "@components/Flex";
+import { Icon } from "@components/Icon/Icon";
+import type { TabItem } from "@components/Tabs";
+import Tabs from "@components/Tabs";
+import {
+  mdiAccountKey,
   mdiAccountMultiple,
   mdiApplicationBracesOutline,
+  mdiApplicationBracketsOutline,
   mdiChartLine,
   mdiDatabaseSync,
   mdiImage,
   mdiLanguageTypescript,
   mdiPencil,
+  mdiSecurity,
   mdiTableEdit,
 } from "@mdi/js";
+import { AuthProviderSetup } from "@pages/ServerSettings/AuthProvidersSetup/AuthProvidersSetup";
+import { SecuritySettings } from "@pages/ServerSettings/SecuritySettings";
 import React, { useMemo } from "react";
-import type { CONNECTION_CONFIG_SECTIONS } from "../../../../common/utils";
-import { dataCommand } from "../../Testing";
-import { FlexRow } from "../../components/Flex";
-import { Icon } from "../../components/Icon/Icon";
-import type { TabItem } from "../../components/Tabs";
-import Tabs from "../../components/Tabs";
 import { t } from "../../i18n/i18nUtils";
 import NewConnection from "../../pages/NewConnection/NewConnnectionForm";
 import { usePrgl } from "../../pages/ProjectConnection/PrglContextProvider";
 import type { Connections } from "../../pages/ProjectConnection/ProjectConnection";
 import { TopControls } from "../../pages/TopControls";
-import { getKeys } from "../../utils";
+import { dataCommand } from "../../Testing";
 import { AccessControl } from "../AccessControl/AccessControl";
 import { useAccessControlSearchParams } from "../AccessControl/useAccessControlSearchParams";
 import { BackupsControls } from "../BackupAndRestore/BackupsControls";
@@ -30,6 +37,7 @@ import { StatusMonitor } from "../StatusMonitor/StatusMonitor";
 import { TableConfig } from "../TableConfig/TableConfig";
 import { ServerSideFunctions } from "./ServerSideFunctions";
 import { useConnectionConfigSearchParams } from "./useConnectionConfigSearchParams";
+import { WebAppConfig } from "./WebApp/WebAppConfig";
 
 type ConnectionConfigProps = Pick<
   React.HTMLAttributes<HTMLDivElement>,
@@ -44,7 +52,7 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
   const { serverState, dbs, connectionId, db, dbsMethods } = prgl;
   const propsWithPrgl = useMemo(() => ({ ...props, prgl }), [props, prgl]);
   const disabledText =
-    (dbs.access_control as any)?.update ?
+    tableMightBeUndefinedDueToAccessControl(dbs.access_control)?.update ?
       undefined
     : t.ConnectionConfig["Must be admin to access this"];
   const stateDisabledInfo =
@@ -68,6 +76,7 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
               prglState={prgl}
               contentOnly={true}
               db={db}
+              sql={prgl.sql}
               connectionId={connectionId}
             />
           ),
@@ -81,11 +90,7 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
           content:
             !dbsMethods.getStatus || !dbsMethods.runConnectionQuery ?
               null
-            : <StatusMonitor
-                {...prgl}
-                getStatus={dbsMethods.getStatus}
-                runConnectionQuery={dbsMethods.runConnectionQuery}
-              />,
+            : <StatusMonitor connectionId={connectionId} />,
         },
         access_control: {
           label: t.ConnectionConfig["Access control"],
@@ -111,16 +116,43 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
           listProps: dataCommand("config.bkp"),
           leftIconPath: mdiDatabaseSync,
           disabledText,
-          content: <BackupsControls {...propsWithPrgl} />,
+          content: <BackupsControls />,
+        },
+        authentication: {
+          label: t.ServerSettings.Authentication,
+          listProps: dataCommand("config.auth"),
+
+          disabledText:
+            disabledText ||
+            stateDisabledInfo ||
+            (isElectron ? "Not available for desktop" : undefined),
+
+          hide: serverState.isElectron,
+          leftIconPath: mdiAccountKey,
+          content: <AuthProviderSetup connectionId={connectionId} />,
         },
         API: {
           label: t.ConnectionConfig["API"],
           listProps: dataCommand("config.api"),
           leftIconPath: mdiApplicationBracesOutline,
-          disabledText:
-            disabledText ||
-            (isElectron ? "Not available for desktop" : undefined),
+          disabledText: disabledText,
+          //  ||
+          // (isElectron ? "Not available for desktop" : undefined),
           content: <APIDetails {...prgl} />,
+        },
+        webApp: {
+          label: "Web App",
+          listProps: dataCommand("config.webApp"),
+          leftIconPath: mdiApplicationBracketsOutline,
+          disabledText: disabledText || stateDisabledInfo,
+          content: <WebAppConfig />,
+        },
+        security: {
+          label: t.ServerSettings["Security"],
+          listProps: dataCommand("config.security"),
+          hide: serverState.isElectron,
+          leftIconPath: mdiSecurity,
+          content: <SecuritySettings connectionId={connectionId} />,
         },
         table_config: {
           label: (
@@ -148,7 +180,7 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
           disabledText: disabledText || stateDisabledInfo,
           listProps: dataCommand("config.methods"),
           leftIconPath: mdiLanguageTypescript,
-          content: <ServerSideFunctions {...prgl} />,
+          content: <ServerSideFunctions />,
         },
       }) as const satisfies Record<
         (typeof CONNECTION_CONFIG_SECTIONS)[number],
@@ -164,12 +196,12 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
       isElectron,
       prgl,
       propsWithPrgl,
+      serverState.isElectron,
       stateDisabledInfo,
     ],
   );
-  const { activeSection, setSection } = useConnectionConfigSearchParams(
-    getKeys(sectionItems),
-  );
+  const { activeSection, setSection } =
+    useConnectionConfigSearchParams(sectionItems);
 
   return (
     <div className={`flex-col f-1 min-s-0 ${className}`} style={style}>

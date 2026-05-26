@@ -1,22 +1,22 @@
+import { SuccessMessage } from "@components/Animations";
+import Btn from "@components/Btn";
+import { FlexCol, FlexRow } from "@components/Flex";
+import FormField from "@components/FormField/FormField";
+import { InfoRow } from "@components/InfoRow";
+import Popup from "@components/Popup/Popup";
 import { mdiPlus } from "@mdi/js";
 import React, { useMemo, useState } from "react";
-import { SuccessMessage } from "../../components/Animations";
-import Btn from "../../components/Btn";
-import { FlexCol, FlexRow } from "../../components/Flex";
-import FormField from "../../components/FormField/FormField";
-import { InfoRow } from "../../components/InfoRow";
-import Popup from "../../components/Popup/Popup";
-import { isDefined } from "../../utils";
+import { isDefined } from "../../utils/utils";
 import { SQLSmartEditor } from "../SQLEditor/SQLSmartEditor";
 import type { ColumnOptions } from "../W_Table/ColumnMenu/AlterColumn/ColumnEditor";
 import { ColumnEditor } from "../W_Table/ColumnMenu/AlterColumn/ColumnEditor";
 import { getColumnDefinitionQuery } from "../W_Table/ColumnMenu/AlterColumn/CreateColumn";
 import { getReferencesQuery } from "../W_Table/ColumnMenu/AlterColumn/ReferenceEditor";
-import { getColumnIconPath } from "../W_Table/ColumnMenu/ColumnsMenu";
+import { getColumnIconPath } from "../W_Table/ColumnMenu/ColumnSelect/getColumnListItem";
 import type { DashboardMenuProps } from "./DashboardMenu";
 
 export const CreateTable = ({
-  prgl: { db, tables },
+  prgl: { sql, tables },
   onClose,
   suggestions,
 }: DashboardMenuProps & { onClose: VoidFunction }) => {
@@ -271,7 +271,7 @@ export const CreateTable = ({
                   setTableOpts((topts) => ({ ...topts, finished: false }))
                 }
                 key={query}
-                sql={db.sql!}
+                sql={sql!}
                 query={query}
                 suggestions={suggestions}
                 onSuccess={() => {
@@ -285,6 +285,7 @@ export const CreateTable = ({
                 variant="filled"
                 color="action"
                 className="ml-auto"
+                size="default"
                 data-command="dashboard.menu.createTable.confirm"
                 disabledInfo={
                   !tableOpts.name?.trim().length ?

@@ -1,12 +1,12 @@
 import { isObject } from "prostgles-types";
 import { suggestSnippets } from "./CommonMatchImports";
 import { asSQL } from "./KEYWORDS";
-import { getTableExpressionSuggestions } from "./completionUtils/getTableExpressionReturnTypes";
+import { getTableExpressionReturnTypes } from "./completionUtils/getTableExpressionReturnTypes";
 import {
   type SQLMatcherResultArgs,
   getKind,
 } from "./monacoSQLSetup/registerSuggestions";
-import { isDefined } from "../../../utils";
+import { isDefined } from "../../../utils/utils";
 export const jsonbPathSuggest = async ({
   cb,
   ss,
@@ -41,7 +41,7 @@ export const jsonbPathSuggest = async ({
         .slice(0)
         .reverse()
         .find((t) => t.type.includes("identifier"));
-    const { columnsWithAliasInfo } = await getTableExpressionSuggestions(
+    const { columnsWithAliasInfo } = await getTableExpressionReturnTypes(
       { parentCb, cb, ss, sql },
       "columns",
     );

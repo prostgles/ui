@@ -1,22 +1,15 @@
+import { FlexCol } from "@components/Flex";
 import React, { useState } from "react";
-import type { PrglState } from "../../App";
-import { FlexCol } from "../../components/Flex";
-import type { DBSMethods } from "../Dashboard/DBS";
-import { StatusMonitorHeader } from "./StatusMonitorHeader";
+import { StatusMonitorInfoHeader } from "./StatusMonitorInfoHeader/StatusMonitorInfoHeader";
 import { StatusMonitorProcList } from "./StatusMonitorProcList";
 
-export type StatusMonitorProps = Pick<
-  PrglState,
-  "dbs" | "dbsMethods" | "dbsTables"
-> & {
+export type StatusMonitorProps = {
   connectionId: string;
-  getStatus: Required<DBSMethods>["getStatus"];
-  runConnectionQuery: Required<DBSMethods>["runConnectionQuery"];
 };
 
 export const StatusMonitor = (props: StatusMonitorProps) => {
   const [samplingRate, setSamplingRate] = useState(0.5);
-  const [statusError, setStatusError] = useState<any>();
+  const [statusError, setStatusError] = useState<unknown>();
   const [noBash, setNoBash] = useState(false);
 
   // const [shellResult, setShellResult] = useState("");
@@ -29,7 +22,7 @@ export const StatusMonitor = (props: StatusMonitorProps) => {
 
   return (
     <FlexCol className="StatusMonitor w-fit min-w-0 jc-start ">
-      <StatusMonitorHeader
+      <StatusMonitorInfoHeader
         {...props}
         samplingRate={samplingRate}
         statusError={statusError}

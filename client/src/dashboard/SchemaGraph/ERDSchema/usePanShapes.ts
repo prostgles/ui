@@ -1,5 +1,5 @@
 import { useCallback, useEffect } from "react";
-import { quickClone } from "../../../utils";
+import { quickClone } from "../../../utils/utils";
 import type { Rectangle } from "../../Charts/CanvasChart";
 import type { ShapeV2 } from "../../Charts/drawShapes/drawShapes";
 import { setPan, type PanEvent } from "../../setPan";
@@ -149,7 +149,7 @@ const pointInRect = (
   );
 };
 
-const moveToEnd = (array: any[], index: number) => {
+const moveToEnd = (array: unknown[], index: number) => {
   if (index < 0 || index >= array.length) return array;
 
   const element = array.splice(index, 1)[0];

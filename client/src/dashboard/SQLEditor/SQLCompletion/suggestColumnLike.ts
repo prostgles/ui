@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
 import { suggestSnippets } from "./CommonMatchImports";
-import { getTableExpressionSuggestions } from "./completionUtils/getTableExpressionReturnTypes";
+import { getTableExpressionReturnTypes } from "./completionUtils/getTableExpressionReturnTypes";
 import {
   getKind,
   type ParsedSQLSuggestion,
@@ -38,7 +38,7 @@ export const suggestColumnLike = async (
     cb.currNestingFunc?.textLC === "as" &&
     cb.currNestingFunc.nestingId.length === 0 &&
     parentCb?.ftoken?.textLC === "with";
-  const expression = await getTableExpressionSuggestions(
+  const expression = await getTableExpressionReturnTypes(
     { parentCb, cb, ss, sql },
     "columns",
     onlyColumnsFromExpression,
@@ -171,7 +171,9 @@ export const suggestColumnLike = async (
       ...(s.type === "function" &&
         s.insertText &&
         activeSchema && {
-          insertText: s.insertText?.split(`${activeSchema}.`).join(""),
+          insertText: s.insertText
+            ?.split(`${activeSchema.insertText}.`)
+            .join(""),
         }),
       sortText,
     };

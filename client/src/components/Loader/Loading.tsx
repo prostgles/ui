@@ -1,9 +1,8 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import "./Loading.css";
+import React from "react";
 import RTComp from "../../dashboard/RTComp";
+import { tout } from "../../utils/utils";
 import { classOverride, FlexRow } from "../Flex";
-import { tout } from "../../utils";
-import { SpinnerV2 } from "./SpinnerV2";
+import "./Loading.css";
 import { SpinnerV4 } from "./SpinnerV4";
 export const pageReload = async (reason: string) => {
   console.log("pageReload due to: ", reason);
@@ -62,7 +61,7 @@ export default class Loading extends RTComp<P, S> {
     const wasShownRecently =
       id !== undefined &&
       loaderIdLastShown[id] &&
-      Date.now() - loaderIdLastShown[id]! < delay;
+      Date.now() - loaderIdLastShown[id] < delay;
     return !delay || wasShownRecently || this.state.ready;
   }
 
@@ -183,9 +182,15 @@ export default class Loading extends RTComp<P, S> {
     const rootStyle: React.CSSProperties =
       !message ? { width: size, height: size } : {};
 
+    const fullStyle = {
+      ...style,
+      ...rootStyle,
+      ...commonStyle,
+    };
     return (
       <div
-        style={{ ...style, ...rootStyle, ...commonStyle }}
+        style={fullStyle}
+        data-command="Loading"
         className={classOverride(
           "Loading spinner-loader ws-nowrap flex-row gap-1 ai-center ",
           className,
@@ -213,6 +218,7 @@ export default class Loading extends RTComp<P, S> {
 */
 
 const Spinner = ({ size }: { size: string; colorAnimation: boolean }) => {
+  // return <SpinnerV3 size={size} />;
   return <SpinnerV4 size={size} />;
   // return <SpinnerV2 size={size} />;
 

@@ -1,9 +1,13 @@
 import React from "react";
-import { FlexRowWrap } from "../../../../components/Flex";
+import { FlexRowWrap } from "@components/Flex";
 import { StyledCell } from "../../tableUtils/StyledTableColumn";
 
 type ChipStylePaletteProps = {
-  onChange: (chipStyle: (typeof chipColors)[number]) => void;
+  onChange: (chipStyle: {
+    color: string;
+    borderColor: string | undefined;
+    textColor: string;
+  }) => void;
 };
 
 export const chipColors = [
@@ -84,6 +88,8 @@ export const CHIP_COLOR_NAMES = {
   yellow: chipColorsFadedBorder[6],
   gray: chipColorsFadedBorder[7],
 };
+
+export const DEFAULT_CHIP_STYLE = chipColorsFadedBorder[0]!;
 
 const chipColorsFaded = chipColorsFadedBorder.map((c) => ({
   ...c,

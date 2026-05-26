@@ -1,25 +1,22 @@
-import { useEffectDeep, useMemoDeep } from "prostgles-client/dist/react-hooks";
-import {
-  getKeys,
-  isEqual,
-  isObject,
-  omitKeys,
-  pickKeys,
-} from "prostgles-types";
+import { useEffectDeep, useMemoDeep } from "prostgles-client";
+import { getKeys, isEqual, pickKeys, type AnyObject } from "prostgles-types";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { appTheme, useReactiveState } from "../../appUtils";
 import type { LoadedSuggestions } from "../../dashboard/Dashboard/dashboardUtils";
 
+import type { TestSelectors } from "src/Testing";
 import {
   CUSTOM_MONACO_SQL_THEMES,
   defineCustomMonacoSQLTheme,
 } from "../../dashboard/SQLEditor/defineCustomMonacoSQLTheme";
-import { getMonaco, LANG } from "../../dashboard/SQLEditor/W_SQLEditor";
+import { getMonaco } from "../../dashboard/SQLEditor/W_SQLEditor";
 import type { editor, Monaco } from "../../dashboard/W_SQL/monacoEditorTypes";
 import { loadPSQLLanguage } from "../../dashboard/W_SQL/MonacoLanguageRegister";
 import { isPlaywrightTest } from "../../i18n/i18nUtils";
-import type { TestSelectors } from "src/Testing";
-import { useWhyDidYouUpdate } from "./useWhyDidYouUpdate";
+import {
+  hackyFixOptionmatchOnWordStartOnly,
+  hackyShowDocumentationBecauseStorageServiceIsBrokenSinceV42,
+} from "./monacoHackyFixes";
 import { useMonacoEditorAddActions } from "./useMonacoEditorAddActions";
 
 export type MonacoEditorProps = Pick<TestSelectors, "data-command"> & {
@@ -39,6 +36,11 @@ export type MonacoEditorProps = Pick<TestSelectors, "data-command"> & {
   onMount?: (editor: editor.IStandaloneCodeEditor) => void;
   style?: React.CSSProperties;
   loadedSuggestions: LoadedSuggestions | undefined;
+  /**
+   * @default 200
+   */
+  minHeight?: number;
+  minWidth?: number | string;
 };
 
 let monacoPromise: Promise<Monaco> | undefined;
@@ -47,7 +49,7 @@ const useMonacoSingleton = () => {
   const [monaco, setMonaco] = useState(monacoResolved);
   useEffect(() => {
     if (!monacoResolved) {
-      (async () => {
+      void (async () => {
         monacoPromise ??= getMonaco();
         monacoResolved = await monacoPromise;
         await defineCustomMonacoSQLTheme();
@@ -68,7 +70,7 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
 
   const [loadedLanguage, setLoadedLanguage] = useState(false);
   useEffect(() => {
-    loadPSQLLanguage(loadedSuggestions).then(() => {
+    void loadPSQLLanguage(loadedSuggestions).then(() => {
       setLoadedLanguage(true);
     });
   }, [loadedSuggestions]);
@@ -91,9 +93,11 @@ const MonacoEditorWithoutLanguage = (props: MonacoEditorProps) => {
     onMount,
     onChange,
     expandSuggestionDocs = true,
+    minHeight = 200,
+    minWidth = `min(600px, calc(100vw - 100px))`,
   } = props;
 
-  const valueRef = React.useRef(value);
+  const valueRef = useRef(value);
 
   const monacoRef = useRef<Monaco>();
 
@@ -144,6 +148,7 @@ const MonacoEditorWithoutLanguage = (props: MonacoEditorProps) => {
     return () => {
       newEditor.dispose();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     monaco,
     language,
@@ -182,7 +187,8 @@ const MonacoEditorWithoutLanguage = (props: MonacoEditorProps) => {
   useEffect(() => {
     if (!editor) return;
     /** For some reason getRawOptions() returns stale theme from time to time */
-    const theme =
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const theme: string =
       //@ts-ignore
       editor._themeService?.getColorTheme().themeName ?? fullOptions.theme;
     const currentEditorOptions = pickKeys(
@@ -213,11 +219,12 @@ const MonacoEditorWithoutLanguage = (props: MonacoEditorProps) => {
      */
     return {
       textAlign: "initial",
+      minWidth,
       minHeight:
-        Math.min(200, (2 + value.trim().split("\n").length) * 20) + "px",
+        Math.min(minHeight, (2 + value.trim().split("\n").length) * 20) + "px",
       flex: "f-1",
     };
-  }, [value, style]);
+  }, [style, minWidth, minHeight, value]);
 
   return (
     <div
@@ -241,60 +248,13 @@ const valueIsDifferentFromEditor = (
     if (valuesDiffer) {
       const lang = editor.getModel()?.getLanguageId();
       if (lang !== "json") return valuesDiffer;
-      const o1 = JSON.parse(v1);
-      const o2 = JSON.parse(v2);
+      const o1 = JSON.parse(v1) as AnyObject;
+      const o2 = JSON.parse(v2) as AnyObject;
       const valuesMatch = isEqual(o1, o2);
       return !valuesMatch;
     }
-  } catch (error) {}
+  } catch {}
   return valuesDiffer;
-};
-
-const hackyShowDocumentationBecauseStorageServiceIsBrokenSinceV42 = (
-  editor: editor.IStandaloneCodeEditor,
-  expandSuggestionDocs = true,
-) => {
-  const sc = editor.getContribution("editor.contrib.suggestController") as any;
-  if (sc?.widget) {
-    const suggestWidget = sc.widget.value;
-    if (suggestWidget && suggestWidget._setDetailsVisible) {
-      // This will default to visible details. But when user switches it off
-      // they will remain switched off:
-      suggestWidget._setDetailsVisible(expandSuggestionDocs);
-    }
-    // I also wanted my widget to be shorter by default:
-    if (suggestWidget && suggestWidget._persistedSize) {
-      // suggestWidget._persistedSize.store({width: 200, height: 256});
-    }
-  }
-};
-
-const hackyFixOptionmatchOnWordStartOnly = (
-  editor: editor.IStandaloneCodeEditor,
-) => {
-  try {
-    /* 
-      118 for 0.50 
-      119 for 0.52.0
-      133 for 0.53 
-    */
-    const indexOfConfig = 133;
-    // ensure typing name matches relname
-    // suggestModel.js:420
-    //@ts-ignore
-    const confObj = editor._configuration?.options?._values?.[indexOfConfig];
-    if (!isObject(confObj)) {
-      console.error(
-        "new monaco version might have broken hackyFixOptionmatchOnWordStartOnly again",
-      );
-    }
-    if (confObj && "matchOnWordStartOnly" in confObj) {
-      //@ts-ignore
-      editor._configuration.options._values[
-        indexOfConfig
-      ].matchOnWordStartOnly = false;
-    }
-  } catch (e) {}
 };
 
 export const MONACO_READONLY_DEFAULT_OPTIONS = {
@@ -306,4 +266,8 @@ export const MONACO_READONLY_DEFAULT_OPTIONS = {
   automaticLayout: true,
   lineHeight: 19,
   readOnly: true,
+  /** prevent long single lines in json strings */
+  wordWrap: "on",
+  wrappingIndent: "same",
+  lineNumbersMinChars: 4,
 } satisfies editor.IStandaloneEditorConstructionOptions;

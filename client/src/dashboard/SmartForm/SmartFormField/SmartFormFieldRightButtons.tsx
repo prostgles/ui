@@ -1,8 +1,8 @@
 import { mdiCalendar, mdiCrosshairsGps, mdiFormatText } from "@mdi/js";
 import { _PG_date } from "prostgles-types";
 import React from "react";
-import Btn from "../../../components/Btn";
-import PopupMenu from "../../../components/PopupMenu";
+import Btn from "@components/Btn";
+import PopupMenu from "@components/PopupMenu";
 import type { SmartFormFieldProps } from "./SmartFormField";
 
 type P = Omit<SmartFormFieldProps, "onChange"> & {
@@ -26,9 +26,7 @@ export const getSmartFormFieldRightButtons = ({
         title={showDateInput.value ? "Edit as text" : "Edit with picker"}
         iconPath={showDateInput.value ? mdiFormatText : mdiCalendar}
         className="h-full"
-        // color={showDateInput? "action" : undefined}
         onClick={() => showDateInput.onChange(!showDateInput.value)}
-        size="small"
       />
     );
   } else if (isGeoData) {
@@ -64,7 +62,6 @@ export const getSmartFormFieldRightButtons = ({
         <PopupMenu
           style={{
             height: "100%",
-            borderRight: `1px solid var(--gray-300)`,
           }}
           button={
             <Btn
@@ -72,7 +69,6 @@ export const getSmartFormFieldRightButtons = ({
               iconPath={mdiCrosshairsGps}
               className={`h-full rounded-${column.is_nullable ? 0 : "r"}`}
               onClick={() => showDateInput.onChange(!showDateInput.value)}
-              size="small"
             />
           }
           content={

@@ -1,12 +1,12 @@
+import type { DBSSchema } from "@common/publishUtils";
+import Btn from "@components/Btn";
+import { FlexCol } from "@components/Flex";
+import { pageReload } from "@components/Loader/Loading";
 import React from "react";
-import type { DBSSchema } from "../../../../common/publishUtils";
-import type { Prgl, PrglCore } from "../../App";
-import Btn from "../../components/Btn";
-import { FlexCol } from "../../components/Flex";
+import type { PrglCore } from "../../App";
 import { CreateFileColumn } from "./CreateFileColumn";
 import { FileColumnConfigControls } from "./FileColumnConfigControls";
 import type { useFileTableConfigControls } from "./useFileTableConfigControls";
-import { pageReload } from "../../components/Loader/Loading";
 
 type FileStorageReferencedTablesConfigProps = Pick<PrglCore, "tables" | "db"> &
   Pick<
@@ -18,7 +18,6 @@ type FileStorageReferencedTablesConfigProps = Pick<PrglCore, "tables" | "db"> &
     | "refsConfig"
   > & {
     file_table_config: DBSSchema["database_configs"]["file_table_config"];
-    prgl: Prgl;
   };
 
 export const FileStorageReferencedTablesConfig = ({
@@ -29,7 +28,6 @@ export const FileStorageReferencedTablesConfig = ({
   refsConfig,
   updateRefsConfig,
   canUpdateRefColumns,
-  prgl,
 }: FileStorageReferencedTablesConfigProps) => {
   const tc = file_table_config;
   if (!tc?.fileTable) return null;
@@ -51,12 +49,7 @@ export const FileStorageReferencedTablesConfig = ({
         refsConfig={refsConfig}
         onChange={setRefsConfig}
       />
-      <CreateFileColumn
-        db={db}
-        tables={tables}
-        fileTable={file_table_config?.fileTable}
-        prgl={prgl}
-      />
+      <CreateFileColumn fileTable={file_table_config?.fileTable} />
 
       {canUpdateRefColumns && (
         <div className="my-1">
@@ -69,7 +62,7 @@ export const FileStorageReferencedTablesConfig = ({
                 await updateRefsConfig();
                 setMsg({ ok: "Updated!" });
                 setTimeout(() => {
-                  pageReload(
+                  void pageReload(
                     "FileStorageReferencedTablesConfig updateRefsConfig",
                   );
                 }, 500);

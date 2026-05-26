@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
-import PopupMenu from "../../components/PopupMenu";
-import Btn from "../../components/Btn";
+import PopupMenu from "@components/PopupMenu";
+import Btn from "@components/Btn";
 import { mdiAlertOutline } from "@mdi/js";
-import { InfoRow } from "../../components/InfoRow";
+import { InfoRow } from "@components/InfoRow";
+
+const MAX_NODE_COUNT = 3e3;
 
 export const NodeCountChecker = ({
   parentNode,
@@ -20,7 +22,7 @@ export const NodeCountChecker = ({
     const count = parentNode?.querySelectorAll("*").length ?? 0;
     setNodeCount({
       count,
-      tooHigh: count > 3e3,
+      tooHigh: count > MAX_NODE_COUNT,
       checked: Date.now(),
     });
   }, [parentNode, setNodeCount, dataAge]);
@@ -30,12 +32,12 @@ export const NodeCountChecker = ({
   return (
     <PopupMenu
       positioning="beneath-left"
-      style={{
-        position: "absolute",
-        bottom: "1em",
-        left: "1em",
-        zIndex: 1,
-      }}
+      // style={{
+      //   position: "absolute",
+      //   bottom: "1em",
+      //   left: "4em",
+      //   zIndex: 1,
+      // }}
       clickCatchStyle={{ opacity: 0.1 }}
       button={
         <Btn

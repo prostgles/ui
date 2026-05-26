@@ -1,23 +1,24 @@
+import { fromEntries, getEntries } from "@common/utils";
+import Btn from "@components/Btn";
+import ErrorComponent from "@components/ErrorComponent";
+import { FlexCol, FlexRow } from "@components/Flex";
+import { isCompleteJSONB } from "@components/JSONBSchema/isCompleteJSONB";
+import { JSONBSchema } from "@components/JSONBSchema/JSONBSchema";
+import Loading from "@components/Loader/Loading";
+import { SwitchToggle } from "@components/SwitchToggle";
 import { mdiChevronDown, mdiPlay } from "@mdi/js";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
-import type { AnyObject, JSONB, MethodFullDef } from "prostgles-types";
-import { isEmpty } from "prostgles-types";
-import { getKeys } from "prostgles-types";
+import type { AnyObject, ClientServerFunction, JSONB } from "prostgles-types";
+import { getKeys, getProperty, isEmpty, omitKeys } from "prostgles-types";
 import React, { useState } from "react";
-import { useReactiveState, type Prgl } from "../../App";
-import Btn from "../../components/Btn";
-import ErrorComponent from "../../components/ErrorComponent";
-import { isCompleteJSONB } from "../../components/JSONBSchema/isCompleteJSONB";
-import { JSONBSchema } from "../../components/JSONBSchema/JSONBSchema";
-import { SwitchToggle } from "../../components/SwitchToggle";
-import { omitKeys } from "prostgles-types";
+import { type Prgl } from "../../App";
+import { MethodDefinition } from "../AccessControl/Methods/MethodDefinition";
 import { CodeEditor } from "../CodeEditor/CodeEditor";
 import type { WindowData } from "../Dashboard/dashboardUtils";
 import SmartTable from "../SmartTable";
-import { FlexCol, FlexRow } from "../../components/Flex";
-import { MethodDefinition } from "../AccessControl/Methods/MethodDefinition";
-import { prgl_R } from "../../WithPrgl";
 import { ProcessLogs } from "../TableConfig/ProcessLogs";
+import type { ColumnValue } from "../W_Table/ColumnMenu/ColumnStyleControls/ColumnStyleControls";
 
 type P = Pick<Prgl, "db" | "methods" | "tables"> & {
   method_name: string;
@@ -44,45 +45,55 @@ export const W_MethodControls = ({
   fixedRowArgument,
   ...otherProps
 }: P) => {
-  const { state: prgl } = useReactiveState(prgl_R);
+  const prgl = usePrgl();
 
-  const [result, setResult] = useState<AnyObject | void>();
+  const [result, setResult] = useState<unknown>();
   const [showResults, setShowResults] = useState(true);
-  const m: MethodFullDef | undefined =
-    method_name && typeof methods[method_name] !== "function" ?
-      (methods[method_name] as any)
-    : undefined;
-  const [error, setError] = useState<any>(
-    !m ? `Method named "${method_name}" not found` : undefined,
+  const methodFromSchema = getProperty(methods, method_name) as
+    | ClientServerFunction
+    | undefined;
+  const [error, setError] = useState<unknown>(
+    !methodFromSchema ? `Method named "${method_name}" not found` : undefined,
   );
   const [expandControls, setExpandControls] = useState(true);
   const [showJSONBErrors, setshowJSONBErrors] = useState(false);
-  const { dbs, connectionId } = prgl!;
-  const { data: method } = dbs.published_methods.useSubscribeOne(
-    { name: w?.method_name, connection_id: connectionId },
-    { limit: w?.method_name ? 1 : 0 },
-  );
+  const { dbs, connectionId, sql } = prgl;
+  const { data: methodFullData, isLoading } =
+    dbs.published_methods.useSubscribeOne(
+      { name: w?.method_name, connection_id: connectionId },
+      { limit: w?.method_name ? 1 : 0 },
+    );
+  const methodFullDataArgs =
+    methodFullData &&
+    fromEntries(methodFullData.arguments.map((m) => [m.name, m]));
 
   const [loading, setLoading] = useState(false);
 
-  const argDefaults: AnyObject = {};
+  const argDefaults: Record<string, ColumnValue> = {};
   const disabledArgsDefaults: string[] = [];
-  if (m) {
-    getKeys(m.input).map((argName) => {
-      const arg = m.input[argName]!;
-      const ref = arg.lookup?.type === "data" ? arg.lookup : undefined;
-      if ((arg as any).optional) {
-        disabledArgsDefaults.push(argName);
-      }
-      if (fixedRowArgument?.argName === argName) {
-        argDefaults[argName] =
-          ref?.isFullRow ? fixedRowArgument.row
-          : ref?.column ? fixedRowArgument.row[ref.column]
-          : undefined;
-      } else if (arg.defaultValue !== undefined && !ref?.isFullRow) {
-        argDefaults[argName] = arg.defaultValue;
-      }
-    });
+  if (methodFromSchema) {
+    getEntries(methodFromSchema.input ?? {}).forEach(
+      ([argName, stringOrObj]) => {
+        const arg =
+          typeof stringOrObj === "string" ? { type: stringOrObj } : stringOrObj;
+        const ref = arg.lookup?.type === "data" ? arg.lookup : undefined;
+        const argFullDetails = methodFullDataArgs?.[argName];
+        if (arg.optional) {
+          disabledArgsDefaults.push(argName);
+        }
+        if (fixedRowArgument?.argName === argName) {
+          argDefaults[argName] =
+            ref?.isFullRow ? fixedRowArgument.row
+            : ref?.column ? fixedRowArgument.row[ref.column]
+            : undefined;
+        } else if (
+          argFullDetails?.defaultValue !== undefined &&
+          !ref?.isFullRow
+        ) {
+          argDefaults[argName] = argFullDetails.defaultValue;
+        }
+      },
+    );
   }
 
   const args = otherProps.state.args ?? argDefaults;
@@ -93,10 +104,11 @@ export const W_MethodControls = ({
     otherProps.setState({ args: newArgs });
   };
 
-  const inputSchema = m?.input ?? {};
+  const inputSchema = methodFromSchema?.input ?? {};
   const mArgs = getKeys(inputSchema).reduce((a, k) => {
     const v: keyof typeof inputSchema = k;
-    const arg = inputSchema[v];
+    const rawArg = inputSchema[v];
+    const arg = typeof rawArg === "string" ? { type: rawArg } : rawArg;
     return {
       ...a,
       [v]:
@@ -110,44 +122,65 @@ export const W_MethodControls = ({
           }
         : inputSchema[v],
     };
-  }, {});
+  }, {} as JSONB.FieldTypeObj);
 
   const argSchema: JSONB.JSONBSchema = {
     type: {
-      ...omitKeys(mArgs as any, hiddenArgs),
+      ...omitKeys(mArgs, hiddenArgs as (keyof typeof mArgs)[]),
     },
-    defaultValue: Object.entries(m?.input ?? {})
-      .filter(([k, v]) => v.defaultValue !== undefined)
-      .reduce((a, [k, v]) => ({ ...a, [k]: v.defaultValue }), {}),
+    defaultValue: Object.entries(methodFromSchema?.input ?? {})
+      .filter(
+        ([argName]) =>
+          methodFullDataArgs?.[argName]?.defaultValue !== undefined,
+      )
+      .reduce(
+        (a, [argName]) => ({
+          ...a,
+          [argName]: methodFullDataArgs?.[argName]?.defaultValue,
+        }),
+        {},
+      ),
   };
 
   const hasErrors = !isCompleteJSONB(args, argSchema);
 
   const outputTableInfo =
-    m?.outputTable ? tables.find((t) => t.name === m.outputTable) : undefined;
+    methodFullData?.outputTable ?
+      tables.find((t) => t.name === methodFullData.outputTable)
+    : undefined;
   const { showCode = false, showLogs } = w?.options ?? {};
 
-  if (!prgl) {
-    return <>prgl missing</>;
+  if (isLoading) {
+    return <Loading />;
   }
+
   return (
     <FlexCol
       className="W_MethodControls f-1  min-s-0 o-auto bg-color-2"
       style={{ gap: "2px" }}
     >
-      {showCode && method && (
-        <MethodDefinition
-          renderMode="Code"
-          {...prgl}
-          db={db}
-          tables={tables}
-          method={method}
-          onChange={(code) => {
-            dbs.published_methods.update({ id: method.id }, { run: code.run });
-          }}
-        />
-      )}
-      {m && (
+      {showCode ?
+        !methodFullData ?
+          <ErrorComponent
+            title="Cannot display method definition"
+            error={"Could not find method data"}
+          />
+        : <MethodDefinition
+            renderMode="Code"
+            {...prgl}
+            db={db}
+            tables={tables}
+            method={methodFullData}
+            onChange={(code) => {
+              void dbs.published_methods.update(
+                { id: methodFullData.id },
+                { run: code.run },
+              );
+            }}
+          />
+
+      : null}
+      {methodFromSchema && (
         <div
           className="flex-col gap-1 p-1 shadow bg-color-0"
           style={{
@@ -162,9 +195,9 @@ export const W_MethodControls = ({
           >
             <JSONBSchema
               schema={argSchema}
-              value={args as any}
+              value={args}
               onChange={(v) => {
-                setArgs(v as any) as any;
+                setArgs(v);
               }}
               db={db}
               tables={tables}
@@ -189,10 +222,12 @@ export const W_MethodControls = ({
 
                   setLoading(true);
                   setError(undefined);
-                  const res = await m.run(params);
-                  if (m.outputTable) {
+                  const res = await methodFromSchema.run(
+                    !methodFullData?.arguments.length ? undefined : params,
+                  );
+                  if (outputTableInfo) {
                     w?.$update({
-                      name: `${method_name} - ${await db[m.outputTable]?.count?.()}`,
+                      name: `${method_name} - ${await db[outputTableInfo.name]?.count?.()}`,
                     });
                   }
 
@@ -256,26 +291,27 @@ export const W_MethodControls = ({
               onChange={setShowResults}
               variant="row"
               disabledInfo={
-                result || m.outputTable ? undefined : "No results to show"
+                result || outputTableInfo ? undefined : "No results to show"
               }
             />
           </FlexRow>
         </div>
       )}
-      {m?.outputTable && !outputTableInfo && (
+      {methodFullData?.outputTable && !outputTableInfo && (
         <ErrorComponent
-          error={`Results table ( ${m.outputTable} ) missing or not allowed`}
+          error={`Results table ( ${methodFullData.outputTable} ) missing or not allowed`}
           className="m-1"
         />
       )}
-      {showResults && !error && (
+      {showResults && !error && result !== undefined && (
         <div className="flex-row f-1">
-          {m?.outputTable && outputTableInfo ?
+          {outputTableInfo ?
             <SmartTable
               title=""
               db={db}
+              sql={sql}
               methods={methods}
-              tableName={m.outputTable}
+              tableName={outputTableInfo.name}
               tables={tables}
               realtime={{}}
             />
@@ -289,14 +325,7 @@ export const W_MethodControls = ({
           : null}
         </div>
       )}
-      {showLogs && (
-        <ProcessLogs
-          connectionId={connectionId}
-          dbs={dbs}
-          dbsMethods={prgl.dbsMethods}
-          type="methods"
-        />
-      )}
+      {showLogs && <ProcessLogs type="methods" />}
       <ErrorComponent
         error={error}
         findMsg={true}

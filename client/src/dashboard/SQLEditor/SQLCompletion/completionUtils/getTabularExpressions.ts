@@ -4,7 +4,7 @@ import type {
   SQLMatchContext,
 } from "../monacoSQLSetup/registerSuggestions";
 import type { CodeBlock } from "./getCodeBlock";
-import type { GetTableExpressionSuggestionsArgs } from "./getTableExpressionReturnTypes";
+import type { TableExpressionSuggestionArgs } from "./getTableExpressionReturnTypes";
 import type { TokenInfo } from "./getTokens";
 
 const getAliasToken = (
@@ -70,7 +70,7 @@ export const getTabularExpressions = (
     cb: _cb,
     ss,
     parentCb,
-  }: Pick<GetTableExpressionSuggestionsArgs, "ss" | "cb" | "parentCb">,
+  }: Pick<TableExpressionSuggestionArgs, "ss" | "cb" | "parentCb">,
   require: "columns" | "table",
   onlyCurrentBlock = false,
 ) => {
@@ -128,6 +128,20 @@ export const getTabularExpressions = (
       ).filter((e) => e.endOffset < parentCb.currOffset);
       expressions = [...prevExpressions];
     }
+  }
+
+  const funcsThatAllowUsingParentScope = ["any", "all", "exists"];
+  if (
+    !onlyCurrentBlock &&
+    parentCb &&
+    _cb.currNestingFunc &&
+    funcsThatAllowUsingParentScope.includes(_cb.currNestingFunc.textLC)
+  ) {
+    const prevExpressions = getTabularExpressions(
+      { cb: parentCb, ss },
+      require,
+    ).filter((e) => e.endOffset < parentCb.currOffset);
+    expressions = [...prevExpressions];
   }
 
   expressions = [...expressions, ...getExpressions(tokens, _cb, ss, parentCb)];

@@ -1,7 +1,8 @@
 import { SVG_NAMESPACE } from "../domToSVG";
+import type { SVGScreenshotNodeType } from "../domToThemeAwareSVG";
 import { toFixed } from "../utils/toFixed";
 
-export function hasBorder(style) {
+export function hasBorder(style: CSSStyleDeclaration) {
   return (
     style.borderTopWidth !== "0px" ||
     style.borderRightWidth !== "0px" ||
@@ -11,11 +12,11 @@ export function hasBorder(style) {
 }
 
 export const addSpecificBorders = (
-  g,
-  x,
-  y,
-  width,
-  height,
+  g: SVGGElement,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
   style: CSSStyleDeclaration,
 ) => {
   const drawBorder = (
@@ -26,7 +27,11 @@ export const addSpecificBorders = (
     color: string,
     width: number,
   ) => {
-    const border = document.createElementNS(SVG_NAMESPACE, "line");
+    const border = document.createElementNS(SVG_NAMESPACE, "line") as Extract<
+      SVGScreenshotNodeType,
+      SVGLineElement
+    >;
+    border._purpose = { border: true };
     border.setAttribute("x1", x1);
     border.setAttribute("y1", y1);
     border.setAttribute("x2", x2);
@@ -103,7 +108,22 @@ export const addSpecificBorders = (
 };
 
 export function getBackgroundColor(style: CSSStyleDeclaration) {
-  const { backgroundColor } = style;
+  const { backgroundColor, backgroundImage } = style;
+  if (backgroundImage.includes("gradient")) {
+    console.warn("TODO: handle gradients");
+    // TODO: handle gradients
+    // return backgroundImage
+    //   .split("var(--")
+    //   .map((cssVar, index) => {
+    //     if (!index) return cssVar;
+    //     const [varName, ...endParts] = cssVar.split(")");
+    //     const value = getComputedStyle(document.documentElement)
+    //       .getPropertyValue("--" + varName)
+    //       .trim();
+    //     return value + endParts.join(")");
+    //   })
+    //   .join("");
+  }
   if (backgroundColor.startsWith("rgba") && backgroundColor.endsWith("0)")) {
     return undefined;
   }

@@ -1,4 +1,4 @@
-export interface Node {
+export type SchemaGraphNode = {
   id: string;
   x: number;
   y: number;
@@ -15,15 +15,15 @@ export interface Node {
     label: string;
     color: string;
   }>;
-}
+};
 
-export interface Link {
+export type SchemaGraphLink = {
   id: string;
-  source: Node;
-  target: Node;
+  source: SchemaGraphNode;
+  target: SchemaGraphNode;
   color: string;
   sourceColIndex: number;
   targetColIndex: number;
-  sourceNode: Node;
-  targetNode: Node;
-} 
+  sourceNode: SchemaGraphNode;
+  targetNode: SchemaGraphNode;
+};

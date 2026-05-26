@@ -1,38 +1,67 @@
 const SECOND = 1e3;
 import { WebSocket } from "ws";
 
-export const onMount: ProstglesOnMount = async ({ dbo }) => {
+const FUNDING_SYMBOLS = [
+  "BTCUSDT",
+  "ETHUSDT",
+  "BNBUSDT",
+  "SOLUSDT",
+  "XRPUSDT",
+  "TAOUSDT",
+] as const;
+
+let loadGasPrices = false;
+let realtimeFutures = false;
+
+export const onMount: ProstglesOnMount = async ({ dbo: db, sql }) => {
   const getMarketCaps = async () => {
     const marketCaps = await fetch(
-      "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250",
+      "https://prostgles.com/static/market_caps.json",
+      // "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250",
     ).then((d) => d.json());
     const batchUpdate = marketCaps.map(({ id, ...otherData }) => [
       { id },
       otherData,
     ]);
-    await dbo.market_caps.updateBatch(batchUpdate);
-    await dbo.market_caps.insert(marketCaps, { onConflict: "DoUpdate" });
+    console.log(`marketCaps ${marketCaps.length} items`);
+    console.log(`batchUpdate ${batchUpdate.length} items`);
+    await db.market_caps.updateBatch(batchUpdate);
+    await db.market_caps.insertMany(marketCaps, { onConflict: "DoUpdate" });
   };
   setInterval(getMarketCaps, 30 * SECOND);
   getMarketCaps();
 
-  const socket = new WebSocket(
-    "wss://fstream.binance.com/ws/!markPrice@arr@1s",
-  );
+  await db.symbols.insertMany([...FUNDING_SYMBOLS.map((pair) => ({ pair }))], {
+    onConflict: "DoNothing",
+  });
+  if (!+(await db.futures.count())) {
+    await loadHistorcalFutures(db);
+    await loadHistoricalFundingRates(db);
+  }
 
-  socket.onmessage = async (rawData) => {
-    const dataItems = JSON.parse(rawData.data as string);
-    const data = dataItems.map((data) => ({
-      symbol: data.s,
-      price: data.p,
-      timestamp: new Date(data.E),
-    }));
-    await dbo.symbols.insert(
-      data.map(({ symbol }) => ({ pair: symbol })),
-      { onConflict: "DoNothing" },
+  if (realtimeFutures) {
+    const socket = new WebSocket(
+      "wss://fstream.binance.com/ws/!markPrice@arr@1s",
     );
-    await dbo.futures.insert(data);
-  };
+    socket.onmessage = async (rawData) => {
+      const dataItems = JSON.parse(rawData.data as string) as any[];
+      const data = dataItems.map((data) => ({
+        symbol: data.s,
+        price: data.p,
+        timestamp: new Date(data.E),
+      }));
+      console.log(`db.symbols.insert ${data.length} items`);
+      await db.symbols.insertMany(
+        [
+          ...data.map(({ symbol }) => ({ pair: symbol })),
+          ...FUNDING_SYMBOLS.map((pair) => ({ pair })),
+        ],
+        { onConflict: "DoNothing" },
+      );
+
+      await db.futures.insertMany(data);
+    };
+  }
 
   const frequency = 20 * SECOND;
 
@@ -45,102 +74,213 @@ export const onMount: ProstglesOnMount = async ({ dbo }) => {
     }))
     .filter((d) => d.rpcNode);
 
-  const marketsCount = await dbo.markets.count();
+  const marketsCount = await db.markets.count();
   if (!marketsCount) {
     // const marketAthCharts = Array.from({ length: 250 }, (_, i) => i + 1).map(i => ({
-    await dbo.markets.insert(markets);
+    await db.markets.insertMany(markets);
   }
 
-  setInterval(async () => {
-    const markets = await dbo.markets.find();
-    markets.forEach(async (market) => {
-      const { id, rpcNode } = market;
-      const setPrice = async (price_gwei: any) => {
-        if (Number.isFinite(price_gwei)) {
-          await dbo.gas_prices.insert({ market: id, price_gwei });
-          await dbo.markets.update({ id }, { current_price: price_gwei });
+  if (loadGasPrices) {
+    setInterval(async () => {
+      const markets = await db.markets.find();
+      markets.forEach(async (market) => {
+        const { id, rpcNode } = market;
+        const setPrice = async (price_gwei: any) => {
+          if (Number.isFinite(price_gwei)) {
+            await db.gas_prices.insert({ market: id, price_gwei });
+            await db.markets.update({ id }, { current_price: price_gwei });
+          }
+        };
+        if (id === "btc") {
+          const resp = await fetch(
+            "https://mempool.space/api/v1/fees/recommended",
+          );
+          let price_gwei = NaN;
+          try {
+            price_gwei = await resp.json().then((d) => Number(d.hourFee));
+          } catch (e) {
+            console.log(resp);
+            throw e;
+          }
+          setPrice(price_gwei);
+          return;
         }
-      };
-      if (id === "btc") {
-        const resp = await fetch(
-          "https://mempool.space/api/v1/fees/recommended",
-        );
-        let price_gwei = NaN;
+        let resp;
         try {
-          price_gwei = await resp.json().then((d) => Number(d.hourFee));
-        } catch (e) {
-          console.log(resp);
-          throw e;
+          resp = await fetch(rpcNode, {
+            method: "POST",
+            headers: {
+              "Content-type": "application/json",
+            },
+            body: JSON.stringify({
+              jsonrpc: "2.0",
+              id: 1,
+              method: "eth_gasPrice",
+              params: [],
+            }),
+          });
+          let price_gwei = NaN;
+          try {
+            price_gwei = await resp.json().then((d) => Number(d.result) / 1e9);
+          } catch (e) {
+            console.log(resp);
+            throw e;
+          }
+          setPrice(price_gwei);
+        } catch (error) {
+          console.log(id, error, resp);
+          await db.markets.update(
+            { id },
+            { fail_info: { error: error.message } },
+          );
         }
-        setPrice(price_gwei);
-        return;
-      }
-      let resp;
-      try {
-        resp = await fetch(rpcNode, {
-          method: "POST",
-          headers: {
-            "Content-type": "application/json",
-          },
-          body: JSON.stringify({
-            jsonrpc: "2.0",
-            id: 1,
-            method: "eth_gasPrice",
-            params: [],
-          }),
-        });
-        let price_gwei = NaN;
-        try {
-          price_gwei = await resp.json().then((d) => Number(d.result) / 1e9);
-        } catch (e) {
-          console.log(resp);
-          throw e;
-        }
-        setPrice(price_gwei);
-      } catch (error) {
-        console.log(id, error, resp);
-        await dbo.markets.update(
-          { id },
-          { fail_info: { error: error.message } },
-        );
-      }
-    });
-  }, frequency);
+      });
+    }, frequency);
+  }
 
   setInterval(
     async () => {
-      await dbo.sql(
-        `
-      DELETE FROM gas_prices
-      WHERE id IN (
-        SELECT id
-        FROM (
-          SELECT *, row_number() over( PARTITION BY market, price_gwei ORDER BY "timestamp" ) as dupeno
-          FROM gas_prices
-        ) t
-        WHERE dupeno > 3
-      )
-      `,
-      );
+      if (!loadGasPrices && !realtimeFutures) return;
+      if (loadGasPrices) {
+        await sql(`
+          DELETE FROM gas_prices
+          WHERE id IN (
+            SELECT id
+            FROM (
+              SELECT *, row_number() over( PARTITION BY market, price_gwei ORDER BY "timestamp" ) as dupeno
+              FROM gas_prices
+            ) t
+            WHERE dupeno > 3
+          )
+          `);
+      }
 
-      const { futures_id, gas_id } = await dbo.sql(
+      const { futures_id, gas_id } = await sql(
         "SELECT (SELECT MAX(id) FROM futures) as futures_id, (SELECT MAX(id) FROM gas_prices) as gas_id",
         {},
         { returnType: "row" },
       );
       let truncateQuery = "";
-      if (futures_id > 1e5) {
+      if (futures_id > 10e6 && realtimeFutures) {
         truncateQuery += `TRUNCATE futures RESTART IDENTITY;\n`;
       }
-      if (gas_id > 1e5) {
+      if (gas_id > 10e5 && loadGasPrices) {
         truncateQuery += `TRUNCATE gas_prices RESTART IDENTITY;\n`;
       }
       if (truncateQuery) {
-        await dbo.sql(truncateQuery);
+        await sql(truncateQuery);
       }
     },
     60 * 60 * SECOND,
   );
+};
+const HISTORICAL_DATA_START = Date.now() - 7 * 24 * 60 * 60 * 1000; // 7 days ago
+const loadHistorcalFutures = async (db) => {
+  for (const pair of FUNDING_SYMBOLS) {
+    const data = await fetchHistoricalFutures(
+      pair,
+      "1m",
+      HISTORICAL_DATA_START,
+      Date.now(),
+    );
+    console.log(`Loaded ${data.length} historical futures for ${pair}`);
+    if (!data.length) continue;
+    await db.futures.insertMany(data);
+  }
+};
+
+const fetchHistoricalFutures = async (
+  symbol: string,
+  interval: string,
+  startTime: number,
+  endTime: number,
+) => {
+  const allData: any[][] = [];
+  let currentStart = startTime;
+
+  while (currentStart < endTime) {
+    const url = `https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=${interval}&startTime=${currentStart}&endTime=${endTime}&limit=1500`;
+    const res = await fetch(url, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    const data = (await res.json()) as any[];
+    if (!res.ok) {
+      console.error("Error fetching historical futures:", res.statusText, data);
+      break;
+    }
+    if (!data.length) {
+      console.log("No more data to fetch for", symbol);
+      break;
+    }
+
+    allData.push(...data);
+
+    // Move start to after the last candle
+    const lastCandleOpenTime = data[data.length - 1][0];
+    currentStart = lastCandleOpenTime + 1;
+
+    // Avoid rate limits
+    await new Promise((r) => setTimeout(r, 150));
+  }
+
+  return allData.map(([openTime, open, high, low, close, volume]) => ({
+    timestamp: new Date(openTime),
+    // open: parseFloat(open),
+    // high: parseFloat(high),
+    // low: parseFloat(low),
+    symbol,
+    // close: parseFloat(close),
+    price: parseFloat(close),
+    // volume: parseFloat(volume),
+  }));
+};
+
+const loadHistoricalFundingRates = async (db) => {
+  for (const symbol of FUNDING_SYMBOLS) {
+    const data = await fetchHistoricalFundingRates(
+      symbol,
+      HISTORICAL_DATA_START,
+      Date.now(),
+    );
+    console.log(`Fetched ${data.length} funding rates for ${symbol}`);
+    await db.futures_funding_rates.insertMany(data, {
+      onConflict: "DoNothing",
+    });
+    console.log(`Loaded ${data.length} funding rates for ${symbol}`);
+  }
+};
+
+const fetchHistoricalFundingRates = async (
+  symbol: string,
+  startTime: number,
+  endTime: number,
+) => {
+  const allData: any[] = [];
+  let currentStart = startTime;
+
+  while (currentStart < endTime) {
+    const url = `https://fapi.binance.com/fapi/v1/fundingRate?symbol=${symbol}&startTime=${currentStart}&endTime=${endTime}&limit=1000`;
+    const res = await fetch(url);
+    const data = (await res.json()) as any[];
+
+    if (!data.length) break;
+
+    allData.push(...data);
+
+    const lastFundingTime = data[data.length - 1].fundingTime;
+    currentStart = lastFundingTime + 1;
+
+    await new Promise((r) => setTimeout(r, 100));
+  }
+
+  return allData.map(({ symbol, fundingTime, fundingRate, markPrice }) => ({
+    symbol,
+    funding_rate: parseFloat(fundingRate),
+    mark_price: parseFloat(markPrice),
+    funding_time: new Date(fundingTime),
+  }));
 };
 
 const MARKETS = {

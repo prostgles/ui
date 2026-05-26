@@ -1,15 +1,15 @@
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import Btn from "@components/Btn";
+import { FlexCol } from "@components/Flex";
+import { InfoRow } from "@components/InfoRow";
+import PopupMenu from "@components/PopupMenu";
+import { usePromise } from "prostgles-client";
 import React from "react";
 import type { Prgl } from "../../../App";
-import Btn from "../../../components/Btn";
-import { FlexCol } from "../../../components/Flex";
-import { InfoRow } from "../../../components/InfoRow";
-import PopupMenu from "../../../components/PopupMenu";
+import { fixIndent } from "../../../demo/scripts/sqlVideoDemo";
 import CodeExample from "../../CodeExample";
 import type { EditedAccessRule } from "../AccessControl";
 import { ACCESS_RULE_METHODS } from "../AccessRuleSummary";
 import { getComparablePGPolicy } from "./getComparablePGPolicy";
-import { fixIndent } from "../../../demo/scripts/sqlVideoDemo";
 
 export const ComparablePGPolicies = ({
   prgl,
@@ -19,7 +19,7 @@ export const ComparablePGPolicies = ({
   rule: EditedAccessRule;
 }) => {
   const policies = usePromise(async () => {
-    const { tables } = prgl;
+    const { tables, db } = prgl;
     const userTypes = rule.access_control_user_types[0]?.ids ?? [];
     const r = rule.dbPermissions;
     if (r.type === "Run SQL") {
@@ -34,7 +34,7 @@ export const ComparablePGPolicies = ({
                 excludeRLSStatement: true,
                 table,
                 userTypes,
-                prgl,
+                db,
                 forcedFilterDetailed: { $and: [] },
                 checkFilterDetailed: undefined,
                 forcedDataDetail: undefined,

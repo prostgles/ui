@@ -1,30 +1,27 @@
+import Popup, { POPUP_CLASSES } from "@components/Popup/Popup";
+import type { FullOption } from "@components/Select/Select";
+import { Select } from "@components/Select/Select";
 import {
   mdiFunction,
   mdiLink,
   mdiTableColumnPlusAfter,
   mdiTableEdit,
 } from "@mdi/js";
-import {
-  useMemoDeep,
-  type DBHandlerClient,
-} from "prostgles-client/dist/prostgles";
-import React, { useState } from "react";
-import { WithPrgl } from "../../../WithPrgl";
-import Popup, { POPUP_CLASSES } from "../../../components/Popup/Popup";
-import type { FullOption } from "../../../components/Select/Select";
-import Select from "../../../components/Select/Select";
+import type { SQLHandler } from "prostgles-client";
+import React, { useMemo, useState } from "react";
+import type { Prgl } from "src/App";
+import { t } from "../../../i18n/i18nUtils";
 import type {
   DBSchemaTablesWJoins,
   LoadedSuggestions,
   WindowSyncItem,
 } from "../../Dashboard/dashboardUtils";
 import { CreateFileColumn } from "../../FileTableControls/CreateFileColumn";
-import { AddComputedColMenu } from "./AddComputedColumn/AddComputedColMenu";
+import { updateWCols } from "../tableUtils/tableUtils";
+import { QuickAddComputedColumn } from "./AddComputedColumn/QuickAddComputedColumn";
 import { CreateColumn } from "./AlterColumn/CreateColumn";
-import { t } from "../../../i18n/i18nUtils";
 import { LinkedColumn } from "./LinkedColumn/LinkedColumn";
 import type { NestedColumnOpts } from "./getNestedColumnTable";
-import type { DBS } from "../../Dashboard/DBS";
 
 const options = [
   {
@@ -58,7 +55,8 @@ const options = [
 export type AddColumnMenuProps = {
   w: WindowSyncItem<"table">;
   tables: DBSchemaTablesWJoins;
-  db: DBHandlerClient;
+  db: Prgl["db"];
+  sql: SQLHandler | undefined;
   suggestions: LoadedSuggestions | undefined;
   variant?: "detailed";
   nestedColumnOpts: NestedColumnOpts | undefined;
@@ -67,10 +65,10 @@ export type AddColumnMenuProps = {
 export const AddColumnMenu = ({
   w,
   tables,
-  db,
   variant,
   nestedColumnOpts,
   suggestions,
+  sql,
 }: AddColumnMenuProps) => {
   const table = tables.find((t) => t.name === w.table_name);
   const [colType, setColType] = useState<
@@ -82,7 +80,7 @@ export const AddColumnMenu = ({
    * Root query aggregation AND nested joins not allowed
    */
   const wCols = w.columns;
-  const dissallow = useMemoDeep(() => {
+  const dissallow = useMemo(() => {
     return (
       (
         wCols?.some(
@@ -102,11 +100,12 @@ export const AddColumnMenu = ({
   }
 
   const cannotCreateColumns =
-    !db.sql ? t.AddColumnMenu["Not enough privileges"]
-    : table.info.isView ?
+    !sql ? t.AddColumnMenu["Not enough privileges"]
+    : table.isView ?
       t.AddColumnMenu["This is a view. Cannot create columns, must recreate"]
     : undefined;
   const onClose = () => setColType();
+
   return (
     <>
       <Select
@@ -132,36 +131,24 @@ export const AddColumnMenu = ({
               t.AddColumnMenu[
                 "Aggregates and/or Count not allowed with linked "
               ]
+            : o.key === "CreateFileColumn" && table.isFileTable ?
+              "Cannot add file column to a file table"
             : undefined,
         }))}
         onChange={(type) => setColType(type)}
       />
       {!colType || !anchorEl ?
         null
-      : colType === "Computed" ?
-        <AddComputedColMenu
-          db={db}
-          w={w}
-          tables={tables}
-          onClose={onClose}
-          nestedColumnOpts={nestedColumnOpts}
-        />
       : colType === "CreateFileColumn" ?
-        <WithPrgl
-          onRender={(prgl) => (
-            <CreateFileColumn
-              db={db}
-              tables={tables}
-              fileTable={tables[0]?.info.fileTableName}
-              tableName={table.name}
-              prgl={prgl}
-              onClose={() => setColType(undefined)}
-            />
-          )}
+        <CreateFileColumn
+          fileTable={tables[0]?.fileTableName}
+          tableName={table.name}
+          onClose={() => setColType(undefined)}
         />
       : <Popup
           title={
-            colType === "Create" ?
+            colType === "Computed" ? t.AddColumnMenu[`Add Computed Field`]
+            : colType === "Create" ?
               t.AddColumnMenu[`Create new column`]
             : t.AddColumnMenu["Add Referenced/Linked Fields"]
           }
@@ -170,24 +157,35 @@ export const AddColumnMenu = ({
           onClose={onClose}
           autoFocusFirst={{ selector: `.${POPUP_CLASSES.content} input` }}
           clickCatchStyle={{ opacity: 0.5 }}
+          contentClassName="p-1"
         >
-          {colType === "Create" ?
+          {colType === "Computed" ?
+            <QuickAddComputedColumn
+              existingColumn={undefined}
+              tableName={table.name}
+              onAddColumn={(computedColumn) => {
+                if (!computedColumn) {
+                  setAnchorEl(undefined);
+                  return;
+                }
+                updateWCols(
+                  w,
+                  [computedColumn, ...(w.columns ?? [])],
+                  undefined,
+                );
+                setAnchorEl(undefined);
+              }}
+            />
+          : colType === "Create" ?
             <CreateColumn
-              db={db}
+              sql={sql!}
               field=""
               table={table}
               tables={tables}
               suggestions={suggestions}
               onClose={onClose}
             />
-          : <LinkedColumn
-              db={db}
-              column={undefined}
-              onClose={onClose}
-              tables={tables}
-              w={w}
-            />
-          }
+          : <LinkedColumn column={undefined} onClose={onClose} w={w} />}
         </Popup>
       }
     </>

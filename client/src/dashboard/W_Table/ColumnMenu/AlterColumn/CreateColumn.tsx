@@ -1,29 +1,31 @@
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import type { DBSchemaTable } from "prostgles-types";
+import Btn from "@components/Btn";
+import { FlexCol, FlexRow } from "@components/Flex";
+import type {
+  DBSchemaTable,
+  PG_COLUMN_UDT_DATA_TYPE,
+  SQLHandler,
+} from "prostgles-types";
 import { isDefined } from "prostgles-types";
 import React, { useState } from "react";
-import Btn from "../../../../components/Btn";
-import { FlexCol, FlexRow } from "../../../../components/Flex";
+import { t } from "../../../../i18n/i18nUtils";
 import type { CommonWindowProps } from "../../../Dashboard/Dashboard";
 import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
+import { colIs } from "../../../SmartForm/SmartFormField/fieldUtils";
 import { SQLSmartEditor } from "../../../SQLEditor/SQLSmartEditor";
 import type { ColumnOptions } from "./ColumnEditor";
 import { ColumnEditor } from "./ColumnEditor";
 import { getAlterFkeyQuery } from "./ReferenceEditor";
-import { t } from "../../../../i18n/i18nUtils";
-import { colIs } from "../../../SmartForm/SmartFormField/fieldUtils";
-import type { DBS } from "../../../Dashboard/DBS";
 
 export type CreateColumnProps = Pick<CommonWindowProps, "suggestions"> & {
   table: DBSchemaTable;
   field: string | undefined;
-  db: DBHandlerClient;
+  sql: SQLHandler;
   tables: DBSchemaTablesWJoins;
   onClose: VoidFunction;
 };
 
 export const CreateColumn = ({
-  db,
+  sql,
   onClose,
   suggestions,
   table,
@@ -33,7 +35,7 @@ export const CreateColumn = ({
   const [query, setQuery] = useState("");
 
   return (
-    <FlexCol className="CreateColumn gap-2">
+    <FlexCol data-command="CreateColumn" className="CreateColumn gap-2">
       {!query ?
         <ColumnEditor
           {...col}
@@ -68,7 +70,7 @@ export const CreateColumn = ({
       : <SQLSmartEditor
           asPopup={false}
           query={query}
-          sql={db.sql!}
+          sql={sql}
           title={t.CreateColumn["Create column query"]}
           suggestions={suggestions}
           onCancel={() => {
@@ -87,6 +89,7 @@ export const CreateColumn = ({
         </Btn>
         <Btn
           title={t.CreateColumn["Show create column query"]}
+          data-command="CreateColumn.next"
           className="ml-auto"
           disabledInfo={
             !col.name ? t.CreateColumn["New column name missing"]
@@ -118,7 +121,12 @@ export const getColumnDefinitionQuery = ({
   notNull,
 }: ColumnOptions) => {
   const defVal =
-    colIs({ udt_name: dataType as any }, ["_PG_numbers", "_PG_bool"]) ?
+    (
+      colIs({ udt_name: dataType as PG_COLUMN_UDT_DATA_TYPE }, [
+        "_PG_numbers",
+        "_PG_bool",
+      ])
+    ) ?
       defaultValue
     : `'${defaultValue}'`;
   return `${JSON.stringify(name)} ${dataType ?? ""}${isPkey ? " PRIMARY KEY " : ""}${notNull ? " NOT NULL " : ""}${defaultValue ? ` DEFAULT ${defVal}` : ""}`;

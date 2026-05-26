@@ -1,9 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  isObject,
-  type DBSSchema,
-} from "../../../../../../common/publishUtils";
-import { isEmpty } from "../../../../utils";
+import { isObject, type DBSSchema } from "@common/publishUtils";
+import { isEmpty } from "../../../../utils/utils";
 
 type NewMCPServer = Pick<
   DBSSchema["mcp_servers"],
@@ -55,7 +52,7 @@ export const useAddMCPServer = (showAddServer: boolean) => {
               description: schema.description,
               index: schema.index,
             } satisfies {
-              type: "arg";
+              type: "arg" | "...args";
               title?: string;
               optional?: boolean;
               description?: string;

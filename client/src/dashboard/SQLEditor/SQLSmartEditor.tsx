@@ -1,15 +1,15 @@
 import { mdiPlay } from "@mdi/js";
 import type { SQLHandler } from "prostgles-types";
 import React, { useState } from "react";
-import ErrorComponent from "../../components/ErrorComponent";
-import { InfoRow } from "../../components/InfoRow";
-import Popup from "../../components/Popup/Popup";
-import { useIsMounted } from "../BackupAndRestore/CredentialSelector";
+import ErrorComponent from "@components/ErrorComponent";
+import { InfoRow } from "@components/InfoRow";
+import Popup from "@components/Popup/Popup";
 import type { DashboardState } from "../Dashboard/Dashboard";
 import { W_SQLEditor } from "./W_SQLEditor";
-import { FlexCol, FlexRow } from "../../components/Flex";
-import type { BtnProps } from "../../components/Btn";
-import Btn from "../../components/Btn";
+import { FlexCol, FlexRow } from "@components/Flex";
+import type { BtnProps } from "@components/Btn";
+import Btn from "@components/Btn";
+import { useIsMounted } from "prostgles-client";
 
 type SQLSmartEditorProps = {
   title: string;

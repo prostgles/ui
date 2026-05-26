@@ -1,12 +1,10 @@
 import React from "react";
 
+import Btn from "@components/Btn";
+import { classOverride, FlexCol } from "@components/Flex";
 import { mdiDelete } from "@mdi/js";
-import { type DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject } from "prostgles-types";
 import type { Prgl } from "../../App";
-import Btn from "../../components/Btn";
-import { classOverride, FlexCol } from "../../components/Flex";
-import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
 import { SmartCard } from "../SmartCard/SmartCard";
 import type { SmartFormProps } from "../SmartForm/SmartForm";
@@ -17,12 +15,12 @@ import {
   type SmartCardListProps,
 } from "./SmartCardList";
 
-export type P = Pick<Prgl, "db" | "tables" | "methods"> &
+export type P = Pick<Prgl, "db" | "tables" | "methods" | "sql"> &
   Pick<SmartCardListProps, "noDataComponent" | "noDataComponentMode"> & {
     className?: string;
     style?: React.CSSProperties;
     excludeNulls?: boolean;
-    tables: CommonWindowProps["tables"];
+    tables: DBSchemaTableWJoins[];
     onSuccess: SmartFormProps["onSuccess"];
     table: DBSchemaTableWJoins;
     data: AnyObject[];
@@ -43,6 +41,7 @@ export const SmartCardListJoinedNewRecords = (props: P) => {
     table,
     noDataComponent,
     noDataComponentMode,
+    sql,
   } = props;
   const smartCardListStyle = useSmartCardListStyle(style);
 
@@ -63,11 +62,12 @@ export const SmartCardListJoinedNewRecords = (props: P) => {
       data-command="SmartCardList"
       style={smartCardListStyle}
     >
-      {data.map((defaultData, i) => {
+      {data.map((defaultData, index) => {
         return (
           <div key={getKeyForRowData(defaultData, keyCols)}>
             <SmartCard
-              db={db as DBHandlerClient}
+              db={db}
+              sql={sql}
               methods={methods}
               tables={tables}
               tableName={table.name}
@@ -75,6 +75,10 @@ export const SmartCardListJoinedNewRecords = (props: P) => {
               columns={table.columns}
               excludeNulls={excludeNulls}
               smartFormProps={{ onSuccess }}
+              fullData={{
+                index,
+                rows: data,
+              }}
             />
             <Btn
               iconPath={mdiDelete}
@@ -82,7 +86,7 @@ export const SmartCardListJoinedNewRecords = (props: P) => {
               className="absolute"
               style={{ top: "5px", right: "5px" }}
               onClick={() => {
-                onChange(props.data.filter((_, di) => di !== i));
+                onChange(props.data.filter((_, di) => di !== index));
               }}
             />
           </div>

@@ -1,3 +1,8 @@
+/**
+ * IMPORTANT: all table names in this file MUST be after quote_ident() has been applied.
+ * For example, MY_Table will appear as '"MY_Table"' in any of the table name related properties below.
+ */
+
 export type LayoutItem = {
   /**
    * UUID of the window
@@ -8,6 +13,9 @@ export type LayoutItem = {
   /**
    * Table name after quote_ident() has been applied.
    * This means that any table names with uppercase letters or special characters will be quoted.
+   * @example
+   *  '"MY_Table"'
+   *  'my_table'
    */
   tableName: string | null;
   viewType: "table" | "map" | "timechart" | "sql" | "barchart";
@@ -158,15 +166,16 @@ type ColumnFilter = BasicFilter | ComplexColumnFilter;
 /**
  * Filter that matches rows based on existence of related rows in another table
  */
-type JoinedFilter = {
-  $existsJoined: {
+type JoinedFilter = Record<
+  "$existsJoined" | "$notExistsJoined",
+  {
     path: TableJoin[];
     /**
      * Filter that will be applied to the joined table (last table in the path)
      */
     filter: ColumnFilter;
-  };
-};
+  }
+>;
 
 type FilterItem = ColumnFilter | JoinedFilter;
 
@@ -187,6 +196,7 @@ type Filtering = {
   /**
    * Predefined quick filters that the user can toggle on/off
    * These are shown in the filter bar under "Quick Filters"
+   * MUST ENSURE FILTER VALUES FOR FOREIGN KEYS EXIST IN THE DATABASE
    */
   quickFilterGroups?: {
     [groupName: string]: {
@@ -196,28 +206,6 @@ type Filtering = {
       };
     };
   };
-};
-
-/**
- * Represents a rendered cell in a card layout
- */
-type CardLayoutRowColumnValue = {
-  type: "row-column";
-  columnName: string;
-  /**
-   * If true, label will be hidden and only value will be shown
-   */
-  hideLabel?: boolean;
-};
-/**
- * Renders a div element with specified style and contents
- */
-export type CardLayout = {
-  /**
-   * React.CSSProperties;
-   */
-  style?: Record<string, string | number>;
-  children: (CardLayout | CardLayoutRowColumnValue)[];
 };
 
 type TableColumn = {
@@ -242,22 +230,34 @@ type TableColumn = {
    * Render column value in a chip
    * Cannot be used with nested
    */
-  styling?: {
-    type: "conditional";
-    conditions: {
-      chipColor:
-        | "red"
-        | "pink"
-        | "purple"
-        | "blue"
-        | "indigo"
-        | "green"
-        | "yellow"
-        | "gray";
-      operator: "=" | "!=" | ">" | "<" | ">=" | "<=";
-      value: string;
-    }[];
-  };
+  styling?:
+    | {
+        type: "conditional";
+        conditions: {
+          chipColor:
+            | "red"
+            | "pink"
+            | "purple"
+            | "blue"
+            | "indigo"
+            | "green"
+            | "yellow"
+            | "gray";
+          operator: "=" | "!=" | ">" | "<" | ">=" | "<=";
+          value: string;
+        }[];
+      }
+    | {
+        type: "Icons";
+        /**
+         * Column value will be mapped to a mdi icon name.
+         * @example:
+         * {
+         *   bar: "GlassCocktail";
+         * }
+         */
+        valueToIconMap: Record<string, string>;
+      };
 
   /**
    * If set, column value will rendered in a specific way
@@ -339,11 +339,6 @@ export type TableWindowInsertModel = Filtering & {
         asc: boolean;
         nulls: "first" | "last";
       }[];
-
-  /**
-   * If set, will render the table in a card layout where each row is shown as a card.
-   */
-  cardLayout?: CardLayout;
 };
 
 type LayerDataSource =
@@ -401,8 +396,8 @@ export type TimechartWindowInsertModel = {
     yAxis:
       | "count(*)"
       | {
-          column: string;
           aggregation: "sum" | "avg" | "min" | "max" | "count";
+          column: string;
         };
   })[];
 };
@@ -417,12 +412,15 @@ export type BarchartWindowInsertModel = (
   id: string;
   type: "barchart";
   title?: string;
-  xAxis:
-    | "count(*)"
-    | {
-        column: string;
-        aggregation: "sum" | "avg" | "min" | "max" | "count";
-      };
+  xAxis: {
+    column: string;
+    aggregation: "sum" | "avg" | "min" | "max" | "count" | "count(*)";
+    /**
+     * Join to linked table (table_name is root table).
+     * The xAxis.column must be from the end table while the filters are from the root table (table_name).
+     */
+    joinPath?: TableJoin[];
+  };
   yAxisColumn: string;
 };
 

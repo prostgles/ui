@@ -5,6 +5,7 @@ import type { DBS } from "../..";
 import { getPasswordHash } from "../authUtils";
 import type { EmailClient } from "./getEmailSenderWithMockTest";
 import { startRateLimitedLoginAttempt } from "../startRateLimitedLoginAttempt";
+import type { DBSSchema } from "@common/publishUtils";
 
 export const onEmailRegistration = async (
   {
@@ -21,7 +22,7 @@ export const onEmailRegistration = async (
   }: {
     dbs: DBS;
     mailClient: EmailClient;
-    newUserType: string;
+    newUserType: DBSSchema["users"]["type"];
     websiteUrl: string;
   },
 ): Promise<ReturnType<SignupWithEmail["onRegister"]>> => {
@@ -69,8 +70,8 @@ export const onEmailRegistration = async (
     }) as const;
   if (existingUser) {
     if (
-      existingUser.registration?.type !== "password-w-email-confirmation" &&
-      existingUser.status !== "confirmed"
+      existingUser.registration?.type !== "password-w-email-confirmation" ||
+      existingUser.registration.email_confirmation.status === "confirmed"
     ) {
       return withErrorCode("user-already-registered");
     }

@@ -122,7 +122,7 @@ export function registerFunctionSuggestions(
             insertLine
               ?.replace("VALUES(", "")
               .split("(")[1]
-              ?.split(")")?.[0]
+              ?.split(")")[0]
               ?.split(",") ?? [];
 
           if (

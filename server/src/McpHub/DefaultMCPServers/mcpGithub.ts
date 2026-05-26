@@ -1,4 +1,4 @@
-import type { MCPServerInfo } from "../../../../common/mcp";
+import type { MCPServerInfo } from "@common/mcpUtils";
 
 export const mcpGithub: MCPServerInfo = {
   icon_path: "Github",
@@ -46,7 +46,6 @@ export const mcpGithub: MCPServerInfo = {
           },
         },
       },
-      autoApprove: false,
     },
     {
       name: "create_branch",
@@ -73,7 +72,6 @@ export const mcpGithub: MCPServerInfo = {
           },
         },
       },
-      autoApprove: false,
     },
     {
       name: "create_issue",
@@ -118,7 +116,6 @@ export const mcpGithub: MCPServerInfo = {
           },
         },
       },
-      autoApprove: false,
     },
     {
       name: "create_or_update_file",
@@ -157,7 +154,6 @@ export const mcpGithub: MCPServerInfo = {
           },
         },
       },
-      autoApprove: false,
     },
     {
       name: "create_pull_request",
@@ -200,7 +196,6 @@ export const mcpGithub: MCPServerInfo = {
           },
         },
       },
-      autoApprove: false,
     },
     {
       name: "create_pull_request_review",
@@ -260,7 +255,6 @@ export const mcpGithub: MCPServerInfo = {
           },
         },
       },
-      autoApprove: false,
     },
     {
       name: "create_repository",
@@ -287,7 +281,6 @@ export const mcpGithub: MCPServerInfo = {
           },
         },
       },
-      autoApprove: false,
     },
     {
       name: "fork_repository",
@@ -311,7 +304,6 @@ export const mcpGithub: MCPServerInfo = {
           },
         },
       },
-      autoApprove: false,
     },
     {
       name: "get_code_scanning_alert",
@@ -335,7 +327,6 @@ export const mcpGithub: MCPServerInfo = {
           },
         },
       },
-      autoApprove: false,
     },
     {
       name: "get_file_contents",
@@ -363,7 +354,6 @@ export const mcpGithub: MCPServerInfo = {
           },
         },
       },
-      autoApprove: false,
     },
     {
       name: "get_issue",
@@ -386,7 +376,6 @@ export const mcpGithub: MCPServerInfo = {
           },
         },
       },
-      autoApprove: false,
     },
     {
       name: "get_me",
@@ -401,7 +390,6 @@ export const mcpGithub: MCPServerInfo = {
           },
         },
       },
-      autoApprove: false,
     },
     {
       name: "get_pull_request",
@@ -424,7 +412,6 @@ export const mcpGithub: MCPServerInfo = {
           },
         },
       },
-      autoApprove: false,
     },
     {
       name: "get_pull_request_comments",
@@ -447,7 +434,6 @@ export const mcpGithub: MCPServerInfo = {
           },
         },
       },
-      autoApprove: false,
     },
     {
       name: "get_pull_request_files",
@@ -470,7 +456,6 @@ export const mcpGithub: MCPServerInfo = {
           },
         },
       },
-      autoApprove: false,
     },
     {
       name: "get_pull_request_reviews",
@@ -493,7 +478,6 @@ export const mcpGithub: MCPServerInfo = {
           },
         },
       },
-      autoApprove: false,
     },
     {
       name: "get_pull_request_status",
@@ -517,7 +501,6 @@ export const mcpGithub: MCPServerInfo = {
           },
         },
       },
-      autoApprove: false,
     },
     {
       name: "list_code_scanning_alerts",
@@ -551,7 +534,6 @@ export const mcpGithub: MCPServerInfo = {
           },
         },
       },
-      autoApprove: false,
     },
     {
       name: "list_commits",
@@ -582,7 +564,6 @@ export const mcpGithub: MCPServerInfo = {
           },
         },
       },
-      autoApprove: false,
     },
     {
       name: "list_issues",
@@ -635,7 +616,6 @@ export const mcpGithub: MCPServerInfo = {
           },
         },
       },
-      autoApprove: false,
     },
     {
       name: "list_pull_requests",
@@ -683,7 +663,6 @@ export const mcpGithub: MCPServerInfo = {
           },
         },
       },
-      autoApprove: false,
     },
     {
       name: "merge_pull_request",
@@ -718,7 +697,6 @@ export const mcpGithub: MCPServerInfo = {
           },
         },
       },
-      autoApprove: false,
     },
     {
       name: "push_files",
@@ -766,7 +744,6 @@ export const mcpGithub: MCPServerInfo = {
           },
         },
       },
-      autoApprove: false,
     },
     {
       name: "search_code",
@@ -801,7 +778,6 @@ export const mcpGithub: MCPServerInfo = {
           },
         },
       },
-      autoApprove: false,
     },
     {
       name: "search_issues",
@@ -850,7 +826,6 @@ export const mcpGithub: MCPServerInfo = {
           },
         },
       },
-      autoApprove: false,
     },
     {
       name: "search_repositories",
@@ -873,7 +848,6 @@ export const mcpGithub: MCPServerInfo = {
           },
         },
       },
-      autoApprove: false,
     },
     {
       name: "search_users",
@@ -909,7 +883,6 @@ export const mcpGithub: MCPServerInfo = {
           },
         },
       },
-      autoApprove: false,
     },
     {
       name: "update_issue",
@@ -963,7 +936,6 @@ export const mcpGithub: MCPServerInfo = {
           },
         },
       },
-      autoApprove: false,
     },
     {
       name: "update_pull_request_branch",
@@ -991,7 +963,6 @@ export const mcpGithub: MCPServerInfo = {
           },
         },
       },
-      autoApprove: false,
     },
   ],
 };

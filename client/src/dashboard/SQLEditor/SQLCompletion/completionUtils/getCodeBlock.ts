@@ -4,7 +4,7 @@ import { STARTING_KWDS } from "../KEYWORDS";
 import { getPrevTokensNoParantheses } from "../getPrevTokensNoParantheses";
 import type { TokenInfo } from "./getTokens";
 import { getTokens } from "./getTokens";
-import { isDefined } from "../../../../utils";
+import { isDefined } from "../../../../utils/utils";
 import { getMonaco } from "../../W_SQLEditor";
 import { checkIfInsideDollarFunctionDefinition } from "./checkIfInsideDollarFunctionDefinition";
 import { checkIfUnfinishedParenthesis } from "./checkIfUnfinishedParenthesis";
@@ -93,6 +93,11 @@ export const getCurrentCodeBlock = async (
     return interrupted;
   };
   const editor = (await getMonaco()).editor;
+  const editorForModel = editor
+    .getEditors()
+    .find((e) => e.getModel() === model);
+  const editorSelection = editorForModel?.getSelection();
+
   /** Ignore comments */
   if (allLines.some((l) => l.v.includes(`/*`) || l.v.includes(`--`))) {
     const { tokens: allTokens } = getTokens({
@@ -178,6 +183,15 @@ export const getCurrentCodeBlock = async (
   if (nestingLimits) {
     startLineNumber = nestingLimits.startLineNumber;
     endLineNumber = nestingLimits.endLineNumber;
+  }
+
+  /** Selected text becomes the active codeblock */
+  if (
+    editorSelection &&
+    editorSelection.startLineNumber < editorSelection.endLineNumber
+  ) {
+    startLineNumber = editorSelection.startLineNumber;
+    endLineNumber = editorSelection.endLineNumber;
   }
 
   const startLine = allLines.find((l) => l.n === startLineNumber);

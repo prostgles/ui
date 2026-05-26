@@ -1,6 +1,6 @@
 {
   "name": "prostgles-desktop",
-  "version": "2.2.3",
+  "version": "2.3.0",
   "homepage": "https://prostgles.com/desktop",
   "description": "Realtime Dashboard and SQL editor for PostgreSQL",
   "author": "Prostgles LTD  <office@prostgles.com>",
@@ -21,7 +21,7 @@
     "dev": "DEBUG=* && NODE_OPTIONS='--max-old-space-size=2048' npm i && tsc-watch  --onSuccess \"electron --inspect-brk=9228 ./build/main.js \"",
     "start": "tsc && electron ./build/main.js .",
     "package": "electron-forge package",
-    "postinstall": "electron-builder install-app-deps",
+    "postinstall": "electron-builder install-app-deps && node scripts/patch-builder.mjs",
     "make": "rm -rf ./out && rm -rf ./packed && npx tsc && rm -rf ./out && electron-forge make",
     "build": "DEBUG=* electron-builder -l",
     "build-tsc": "tsc",
@@ -41,12 +41,12 @@
     "url": "https://github.com/prostgles/ui/issues/new/choose"
   },
   "devDependencies": {
-    "@playwright/test": "^1.47.0",
-    "electron": "^38.3.0",
-    "electron-builder": "^26.0.12",
+    "@playwright/test": "^1.58.2",
+    "electron": "^38.8.4",
+    "electron-builder": "^26.8.1",
     "electron-squirrel-startup": "^1.0.1",
-    "tsc-watch": "^7.1.1",
-    "typescript": "^5.0.3"
+    "tsc-watch": "^7.2.0",
+    "typescript": "^5.9.3"
   },
   "dependencies": {
     "electron-unhandled": "^4.0.1"

@@ -1,20 +1,19 @@
-import type { DBGeneratedSchema } from "../../../common/DBGeneratedSchema";
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
 import { ConnectionString } from "connection-string";
+import type { ISSLConfig } from "pg-promise/typescript/pg-subset";
 import type pg from "pg-promise/typescript/pg-subset";
 
-type ConnectionDetails = Required<
-  Pick<
-    pg.IConnectionParameters<pg.IClient>,
-    | "application_name"
-    | "host"
-    | "port"
-    | "password"
-    | "user"
-    | "ssl"
-    | "database"
-  >
-> & { password: string; connectionTimeoutMillis?: number };
+export type ConnectionDetails = {
+  ssl: boolean | Omit<ISSLConfig, "checkServerIdentity">;
+  application_name: string;
+  host: string;
+  port: number;
+  user: string;
+  database: string;
+  password: string;
+  connectionTimeoutMillis?: number;
+};
 
 export const getConnectionDetails = (c: Connections): ConnectionDetails => {
   /**

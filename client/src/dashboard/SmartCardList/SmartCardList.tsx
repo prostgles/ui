@@ -1,6 +1,11 @@
 import React, { useMemo } from "react";
 
-import { type DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DetailedFilter } from "@common/filterUtils";
+import ErrorComponent from "@components/ErrorComponent";
+import { classOverride } from "@components/Flex";
+import Loading from "@components/Loader/Loading";
+import { ScrollFade } from "@components/ScrollFade/ScrollFade";
+import { Pagination, usePagination } from "@components/Table/Pagination";
 import type {
   AnyObject,
   FilterItem,
@@ -8,25 +13,19 @@ import type {
 } from "prostgles-types";
 import FlipMove from "react-flip-move";
 import type { Prgl } from "../../App";
-import ErrorComponent from "../../components/ErrorComponent";
-import { classOverride, FlexCol } from "../../components/Flex";
-import Loading from "../../components/Loader/Loading";
-import { Pagination, usePagination } from "../../components/Table/Pagination";
-import type { CommonWindowProps } from "../Dashboard/Dashboard";
+import type { TestSelectors } from "../../Testing";
 import type { FieldConfig, SmartCardProps } from "../SmartCard/SmartCard";
 import { SmartCard } from "../SmartCard/SmartCard";
+import type { InsertButtonProps } from "../SmartForm/InsertButton";
 import type { SmartFormProps } from "../SmartForm/SmartForm";
 import type { ColumnSort } from "../W_Table/ColumnMenu/ColumnMenu";
 import { SmartCardListHeaderControls } from "./SmartCardListHeaderControls";
 import { useSmartCardListState } from "./useSmartCardListState";
-import type { SmartGroupFilter } from "../../../../common/filterUtils";
-import type { InsertButtonProps } from "../SmartForm/InsertButton";
-import type { TestSelectors } from "../../Testing";
-import { ScrollFade } from "@components/ScrollFade/ScrollFade";
+import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
 
 export type SmartCardListProps<T extends AnyObject = AnyObject> = Pick<
   Prgl,
-  "db" | "tables" | "methods"
+  "db" | "tables" | "methods" | "sql"
 > & {
   tableName:
     | string
@@ -59,7 +58,7 @@ export type SmartCardListProps<T extends AnyObject = AnyObject> = Pick<
    * */
   excludeNulls?: boolean;
 
-  tables: CommonWindowProps["tables"];
+  tables: DBSchemaTableWJoins[];
   popupFixedStyle?: React.CSSProperties;
   noDataComponent?: React.ReactNode;
   /**
@@ -95,10 +94,10 @@ export type SmartCardListProps<T extends AnyObject = AnyObject> = Pick<
   limit?: number;
   filter?:
     | AnyObject
-    | FilterItem<T & AnyObject>
-    | { $and: FilterItem<T & AnyObject>[] }
-    | { $or: FilterItem<T & AnyObject>[] };
-  searchFilter?: SmartGroupFilter;
+    | FilterItem<T>
+    | { $and: FilterItem<T>[] }
+    | { $or: FilterItem<T>[] };
+  searchFilter?: DetailedFilter[];
   orderBy?: ColumnSort | ColumnSort[];
   realtime?: boolean;
   throttle?: number;
@@ -129,6 +128,7 @@ export const SmartCardList = <T extends AnyObject>(
     enableListAnimations = false,
     getActions,
     limit = 25,
+    sql,
     "data-command": dataCommand = "SmartCardList",
   } = props;
 
@@ -186,7 +186,7 @@ export const SmartCardList = <T extends AnyObject>(
       >
         {showNoDataComponent ?
           noDataComponent
-        : items.map((defaultData, i) => {
+        : items.map((defaultData, index) => {
             const key = getKeyForRowData(defaultData, keyCols);
             return (
               /** SmartCard wrapped in div to ensure MaybeFlipMove works */
@@ -195,7 +195,8 @@ export const SmartCardList = <T extends AnyObject>(
                   key={key}
                   contentClassname={rowProps?.className}
                   contentStyle={rowProps?.style}
-                  db={db as DBHandlerClient}
+                  db={db}
+                  sql={sql}
                   methods={methods}
                   tables={tables}
                   tableName={tableName}
@@ -207,6 +208,10 @@ export const SmartCardList = <T extends AnyObject>(
                   footer={getRowFooter}
                   getActions={getActions}
                   smartFormProps={{ onSuccess }}
+                  fullData={{
+                    index,
+                    rows: items as T[],
+                  }}
                   showViewEditBtn={
                     "showEdit" in props ? props.showEdit : undefined
                   }
@@ -274,13 +279,13 @@ export const useGetRowKeyCols = (
 export const useSmartCardListStyle = (style: React.CSSProperties) =>
   useMemo(
     () => ({
-      ...style,
       /**
        * To ensure shadow is not clipped by parent
        */
       padding: "2px",
       margin: "-2px",
       flex: "0 1 auto", // Allow the body to grow with content, ensuring height is always not greater than content
+      ...style,
     }),
     [style],
   );

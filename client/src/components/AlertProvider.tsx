@@ -6,6 +6,8 @@ import React, {
   useState,
 } from "react";
 import Popup, { type PopupProps } from "./Popup/Popup";
+import ErrorComponent from "./ErrorComponent";
+import { useIsMounted } from "prostgles-client";
 
 type AlertDialogProps = Pick<
   PopupProps,
@@ -46,6 +48,7 @@ export const AlertProvider = ({ children }: { children: React.ReactNode }) => {
         <Popup
           data-command="Alert"
           clickCatchStyle={{ opacity: 1 }}
+          autoFocusFirst={{ selector: "button" }}
           footerButtons={[
             {
               label: "OK",
@@ -69,4 +72,22 @@ export const useAlert = () => {
     throw new Error("useAlert must be used within an AlertProvider");
   }
   return context;
+};
+
+export const useOnErrorAlert = (immediateUnmount = false) => {
+  const alert = useAlert();
+  const getIsMounted = useIsMounted();
+  const onErrorAlert = useCallback(
+    async (promiseFunc: () => Promise<void>) => {
+      await promiseFunc().catch((error: unknown) => {
+        if (!getIsMounted() && immediateUnmount) return;
+        alert.addAlert({
+          children: <ErrorComponent error={error} findMsg={true} />,
+        });
+        throw error;
+      });
+    },
+    [alert, getIsMounted, immediateUnmount],
+  );
+  return { onErrorAlert };
 };

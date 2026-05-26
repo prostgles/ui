@@ -3,7 +3,7 @@ import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import { isObject } from "@common/publishUtils";
 import { useAlert } from "@components/AlertProvider";
 import Btn from "@components/Btn";
-import { MarkdownMonacoCode } from "@components/Chat/MarkdownMonacoCode";
+import { MonacoCodeInMarkdown } from "@components/Chat/MonacoCodeInMarkdown/MonacoCodeInMarkdown";
 import Chip from "@components/Chip";
 import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
 import { pageReload } from "@components/Loader/Loading";
@@ -13,30 +13,36 @@ import { mdiAlert, mdiDelete, mdiOpenInNew, mdiViewCarousel } from "@mdi/js";
 import { tryCatchV2, type JSONB } from "prostgles-types";
 import React, { useMemo } from "react";
 import { usePrgl } from "../../../../../../pages/ProjectConnection/PrglContextProvider";
-import { isDefined } from "../../../../../../utils";
+import { isDefined } from "../../../../../../utils/utils";
 import {
   useSetActiveWorkspace,
   useWorkspacesSync,
 } from "../../../../../WorkspaceMenu/useWorkspaces";
 import { loadGeneratedWorkspaces } from "../../../../Tools/loadGeneratedWorkspaces/loadGeneratedWorkspaces";
 import type { ProstglesMCPToolsProps } from "../ProstglesToolUseMessage";
+import ErrorComponent from "@components/ErrorComponent";
+import { useLLMSetup } from "src/dashboard/AskLLM/Setup/LLMSetupProvider";
 
 export const LoadSuggestedDashboards = ({
   workspaceId,
-  message,
+  toolUseContent,
+  resultContent,
 }: ProstglesMCPToolsProps) => {
   const { setWorkspace } = useSetActiveWorkspace(workspaceId);
   const { dbs, connectionId, tables } = usePrgl();
 
+  const { setShowChat } = useLLMSetup();
   const workspaces = useWorkspacesSync(dbs, connectionId);
   const alreadyLoadedWorkspaceIds = useMemo(() => {
     return workspaces
-      .map((w) => (w.source?.tool_use_id === message.id ? w.id : undefined))
+      .map((w) =>
+        w.source?.tool_use_id === toolUseContent.id ? w.id : undefined,
+      )
       .filter(isDefined);
-  }, [message.id, workspaces]);
-  const json = message.input as
+  }, [toolUseContent.id, workspaces]);
+  const json = toolUseContent.input as
     | JSONB.GetObjectType<
-        (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["suggest_dashboards"]["schema"]["type"]
+        (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["create_dashboards"]["schema"]["type"]
       >
     | undefined;
   const { addAlert } = useAlert();
@@ -54,6 +60,15 @@ export const LoadSuggestedDashboards = ({
       </FlexCol>
     );
   }
+
+  if (!resultContent) {
+    return null;
+  }
+
+  if (resultContent.is_error) {
+    return <ErrorComponent error={"Failed to validate response"} />;
+  }
+
   const prostglesWorkspaces =
     json.prostglesWorkspaces as WorkspaceInsertModel[];
   return (
@@ -63,22 +78,24 @@ export const LoadSuggestedDashboards = ({
           <PopupMenu
             key={`${w.name}${i}-input`}
             title={`Suggested Dashboard: ${w.name}`}
+            positioning="fullscreen"
             onClickClose={false}
             button={
-              <Chip
+              <Btn
                 key={i}
-                color="blue"
-                leftIcon={w.icon ? undefined : { path: mdiViewCarousel }}
-                style={{ borderRadius: "8px", cursor: "pointer" }}
+                variant="faded"
+                color="action"
+                size="small"
+                iconNode={
+                  w.icon ? <SvgIcon size={18} icon={w.icon} /> : undefined
+                }
+                iconPath={w.icon ? undefined : mdiViewCarousel}
               >
-                <FlexRow className="gap-p5 pr-p25">
-                  {w.icon && <SvgIcon icon={w.icon} />}
-                  {w.name}
-                </FlexRow>
-              </Chip>
+                {w.name}
+              </Btn>
             }
           >
-            <MarkdownMonacoCode
+            <MonacoCodeInMarkdown
               codeString={
                 tryCatchV2(() => JSON.stringify(w, null, 2)).data ?? ""
               }
@@ -96,6 +113,7 @@ export const LoadSuggestedDashboards = ({
           color="action"
           iconPath={mdiOpenInNew}
           variant="filled"
+          size="small"
           data-command="AskLLMChat.LoadSuggestedDashboards"
           disabledInfo={
             !json.prostglesWorkspaces.length ?
@@ -103,7 +121,7 @@ export const LoadSuggestedDashboards = ({
             : undefined
           }
           onClick={() => {
-            loadGeneratedWorkspaces(prostglesWorkspaces, message.id, {
+            loadGeneratedWorkspaces(prostglesWorkspaces, toolUseContent.id, {
               dbs,
               connectionId,
               tables,
@@ -112,6 +130,7 @@ export const LoadSuggestedDashboards = ({
                 const [first] = insertedWorkspaces;
                 if (first) {
                   setWorkspace(first);
+                  setShowChat(undefined);
                 }
               })
               .catch((error) => {
@@ -133,6 +152,7 @@ export const LoadSuggestedDashboards = ({
           iconPath={mdiDelete}
           variant="faded"
           color="danger"
+          size="small"
           title="Delete already loaded workspaces"
           data-command="AskLLMChat.UnloadSuggestedDashboards"
           onClickPromise={async () => {
@@ -141,7 +161,7 @@ export const LoadSuggestedDashboards = ({
               { deleted: true },
             );
             setWorkspace(undefined);
-            pageReload("Workspaces deleted");
+            await pageReload("Workspaces deleted");
           }}
         >
           Remove suggested workspaces

@@ -1,10 +1,10 @@
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
+import type { DBSSchema } from "@common/publishUtils";
+import { HOUR } from "@common/utils";
 import type { LoginClientInfo } from "prostgles-server/dist/Auth/AuthTypes";
-import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
+import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
 import { type AuthResponse, isEmpty, pickKeys } from "prostgles-types";
-import type { DBGeneratedSchema } from "../../../common/DBGeneratedSchema";
-import type { DBSSchema } from "../../../common/publishUtils";
-import { HOUR } from "../../../common/utils";
-import { waitForGlobalSettings } from "./subscribeToAuthSetupChanges";
+import { waitForDatabaseConfig } from "./subscribeToAuthSetupChanges";
 
 type FailedAttemptsInfo =
   | {
@@ -27,10 +27,10 @@ export const getFailedTooManyTimes = async (
   clientInfo: LoginClientInfo,
 ): Promise<FailedAttemptsInfo | AuthResponse.AuthFailure> => {
   const lastHour = new Date(Date.now() - 1 * HOUR).toISOString();
-  const globalSettings = await waitForGlobalSettings();
+  const database_config = await waitForDatabaseConfig();
   const { ip, ipFromMatchByFilterKey, matchByFilterKey } = getIPsFromClientInfo(
     clientInfo,
-    globalSettings,
+    database_config,
   );
   if (!ipFromMatchByFilterKey) {
     return {
@@ -54,11 +54,11 @@ export const getFailedTooManyTimes = async (
   const previousFails = await db.login_attempts.find({
     ...matchByFilter,
     failed: true,
-    "created.>=": lastHour,
+    created: { ">=": lastHour },
   });
   const maxAttemptsPerHour = Math.max(
     1,
-    globalSettings.login_rate_limit.maxAttemptsPerHour,
+    database_config.login_rate_limit.maxAttemptsPerHour,
   );
   if (previousFails.length >= maxAttemptsPerHour) {
     return { ip, matchByFilter, failedTooManyTimes: true };
@@ -157,7 +157,7 @@ export const startRateLimitedLoginAttempt = async (
           ...matchByFilter,
           username,
           failed: true,
-          "created.>=": new Date(Date.now() - 24 * HOUR).toISOString(),
+          created: { ">=": new Date(Date.now() - 24 * HOUR).toISOString() },
         });
       }
     },
@@ -166,13 +166,16 @@ export const startRateLimitedLoginAttempt = async (
 
 export const getIPsFromClientInfo = (
   clientInfo: LoginClientInfo,
-  globalSettings: DBSSchema["global_settings"],
-) => {
-  const { ip_address } = clientInfo;
-  const {
+  {
     login_rate_limit: { groupBy },
     login_rate_limit_enabled,
-  } = globalSettings;
+  }: Pick<
+    DBSSchema["database_configs"],
+    "login_rate_limit_enabled" | "login_rate_limit"
+  >,
+) => {
+  const { ip_address } = clientInfo;
+
   if (!login_rate_limit_enabled) {
     return {
       ip:

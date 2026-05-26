@@ -12,7 +12,7 @@ CREATE TABLE users (
 CREATE TABLE institutions (
   id SERIAL PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
-  logo BYTEA,
+  logo TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
  

@@ -1,17 +1,18 @@
+import type { DBSSchema } from "@common/publishUtils";
 import { mdiAccountOutline, mdiAccountQuestion, mdiAccountStar } from "@mdi/js";
+import type { TableHandlerClient } from "prostgles-client";
 import React from "react";
 import type { TestSelectors } from "../../Testing";
-import { Icon } from "../../components/Icon/Icon";
 import type { DBS } from "../Dashboard/DBS";
 import { SmartSelect } from "../SmartSelect";
-import type { TableHandlerClient } from "prostgles-client/dist/prostgles";
+import type { UserType } from "./useEditedAccessRule";
 
 type P = {
   dbs: DBS;
-  userTypes: string[];
+  userTypes: DBSSchema["user_types"]["id"][];
   connectionId: string;
   database_id: number;
-  onChange: (userTypes: string[]) => void;
+  onChange: (userTypes: DBSSchema["user_types"]["id"][]) => void;
 
   /**
    * Excluded from disabledInfo
@@ -42,9 +43,10 @@ export const UserTypeSelect = (props: P) => {
       placeholder="New or existing user type"
       fieldName="id"
       onChange={onChange}
-      tableHandler={dbs.user_types as TableHandlerClient}
+      tableHandler={dbs.user_types}
       values={userTypes}
-      getLabel={(id) => {
+      getLabel={(_id) => {
+        const id = _id as UserType;
         let subLabel = "",
           disabledInfo = "";
         if (id === "admin") {
@@ -69,19 +71,14 @@ export const UserTypeSelect = (props: P) => {
         return {
           subLabel,
           disabledInfo,
-          contentLeft: (
-            <Icon
-              className="mr-1"
-              style={{ opacity: 0.75 }}
-              path={
-                id === "admin" ? mdiAccountStar
-                : id === "public" ?
-                  mdiAccountQuestion
-                : mdiAccountOutline
-              }
-              size={1}
-            />
-          ),
+          iconLeft: {
+            type: "Icon",
+            style: { opacity: 0.75 },
+            path:
+              id === "admin" ? mdiAccountStar
+              : id === "public" ? mdiAccountQuestion
+              : mdiAccountOutline,
+          },
         };
       }}
     />

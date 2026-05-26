@@ -47,7 +47,7 @@ export const DraggableLI = <T extends any[]>({
             }
 
             const elem = e.currentTarget;
-            const p = elem.parentElement as ListParent;
+            const p: ListParent = elem.parentElement;
             // Lock parent size to prevent jitter
 
             if (!p) {
@@ -132,7 +132,7 @@ export const DraggableLI = <T extends any[]>({
             }
 
             const elem = e.currentTarget;
-            const p = elem.parentElement as ListParent;
+            const p: ListParent = elem.parentElement;
 
             if (!p) {
               throw "Not possible 138";

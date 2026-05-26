@@ -1,13 +1,13 @@
 import { mdiSync } from "@mdi/js";
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client";
 import type { ValidatedColumnInfo } from "prostgles-types";
 import React, { useCallback, useState } from "react";
 import type { Prgl } from "../../App";
-import Btn from "../../components/Btn";
-import ErrorComponent from "../../components/ErrorComponent";
-import { FlexCol } from "../../components/Flex";
-import PopupMenu from "../../components/PopupMenu";
-import { SwitchToggle } from "../../components/SwitchToggle";
+import Btn from "@components/Btn";
+import ErrorComponent from "@components/ErrorComponent";
+import { FlexCol } from "@components/Flex";
+import PopupMenu from "@components/PopupMenu";
+import { SwitchToggle } from "@components/SwitchToggle";
 import { getSqlSuggestions } from "../SQLEditor/SQLEditorSuggestions";
 import { SQLSmartEditor } from "../SQLEditor/SQLSmartEditor";
 
@@ -32,7 +32,7 @@ export const UserSyncConfig = ({
   dbs,
   dbsTables,
   tables,
-  db,
+  sql,
   dbKey,
   connectionId,
 }: Prgl) => {
@@ -79,9 +79,9 @@ export const UserSyncConfig = ({
   }, [tables, dbsTable]);
 
   const suggestions = usePromise(async () => {
-    const suggestions = await getSqlSuggestions({ sql: db.sql! });
+    const suggestions = await getSqlSuggestions(sql!);
     return suggestions;
-  }, [db.sql]);
+  }, [sql]);
   const [localState, setLocalState] = useState<ReturnType<typeof getState>>();
 
   if (localState?.err === "no-dbs-users-table") {
@@ -98,14 +98,17 @@ export const UserSyncConfig = ({
       <SQLSmartEditor
         asPopup={false}
         key={localState.query}
-        sql={db.sql!}
+        sql={sql!}
         query={localState.query}
         title={title}
         contentTop={<p className="ta-left m-0 p-0">{title}</p>}
         suggestions={{ dbKey, connectionId, onRenew: () => {}, ...suggestions }}
         onSuccess={() => {
           setLocalState(undefined);
-          dbs.database_configs.update({ id: databaseId }, { sync_users: true });
+          void dbs.database_configs.update(
+            { id: databaseId },
+            { sync_users: true },
+          );
         }}
         onCancel={() => {
           setLocalState(undefined);

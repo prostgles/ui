@@ -1,8 +1,13 @@
 import pluginSecurity from "eslint-plugin-security";
 import eslint from "@eslint/js";
 import tseslint from "typescript-eslint";
+import { defineConfig } from "eslint/config";
 
-export default tseslint.config(
+export default defineConfig(
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+  pluginSecurity.configs.recommended,
+  eslint.configs.recommended,
+  tseslint.configs.recommendedTypeChecked,
   {
     ignores: [
       "node_modules",
@@ -15,12 +20,9 @@ export default tseslint.config(
       "sample_schemas",
       "**/*.d.ts",
       "**/*.js",
+      "src/ServiceManager/services/*/src",
     ],
   },
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-  pluginSecurity.configs.recommended,
-  eslint.configs.recommended,
-  tseslint.configs.recommendedTypeChecked,
   {
     languageOptions: {
       parserOptions: {
@@ -33,7 +35,6 @@ export default tseslint.config(
   },
   {
     files: ["**/*.js", "**/*.ts"],
-    extends: [tseslint.configs.recommendedTypeChecked],
     rules: {
       "no-cond-assign": "error",
       "@typescript-eslint/no-namespace": "off",
@@ -65,6 +66,10 @@ export default tseslint.config(
       "@typescript-eslint/await-thenable": "warn",
       "@typescript-eslint/no-unsafe-member-access": "warn",
       "@typescript-eslint/no-unsafe-call": "warn",
+      "@typescript-eslint/restrict-template-expressions": [
+        "warn",
+        { allowNumber: true, allowArray: true },
+      ],
       "@typescript-eslint/no-unused-vars": [
         "warn",
         {

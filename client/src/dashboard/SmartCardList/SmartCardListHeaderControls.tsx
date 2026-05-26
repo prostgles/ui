@@ -1,8 +1,8 @@
+import { FlexCol, FlexRowWrap } from "@components/Flex";
 import { isObject, type ValidatedColumnInfo } from "prostgles-types";
 import React, { useMemo } from "react";
-import { FlexCol, FlexRowWrap } from "../../components/Flex";
 import { RenderFilter, type RenderFilterProps } from "../RenderFilter";
-import SortByControl from "../SmartFilter/SortByControl";
+import { SortByControl } from "../SmartFilter/SortByControl";
 import { SmartFilterBarSearch } from "../SmartFilterBar/SmartFilterBarSearch";
 import { InsertButton } from "../SmartForm/InsertButton";
 import type { SmartCardListProps } from "./SmartCardList";
@@ -16,14 +16,22 @@ export const SmartCardListHeaderControls = (
     tableControls: SmartCardListState["tableControls"];
   },
 ) => {
-  const { title, totalRows, db, tables, methods, tableControls, showTopBar } =
-    props;
+  const {
+    title,
+    totalRows,
+    db,
+    tables,
+    methods,
+    tableControls,
+    showTopBar = true,
+    sql,
+  } = props;
 
   const titleNode =
     typeof title === "string" ? <h4 className="m-0">{title}</h4>
     : typeof title === "function" ? title({ count: totalRows ?? -1 })
     : title;
-  const showSearch = tableControls?.localFilter?.length ? true : tableControls; //&& Boolean(totalRows && totalRows > 8)
+  const showSearch = tableControls?.localFilter?.length ? true : tableControls;
 
   const filterProps = useMemo(() => {
     if (!tableControls || !tableControls.localFilter?.length) return;
@@ -39,60 +47,78 @@ export const SmartCardListHeaderControls = (
 
   const showSort = isObject(showTopBar) ? showTopBar.sort : showTopBar;
   if (
-    !showTopBar ||
-    (!titleNode && !showSearch && !tableControls?.willShowInsert)
+    !showTopBar &&
+    !titleNode &&
+    !showSearch &&
+    !tableControls?.willShowInsert
   ) {
     return null;
   }
+
+  if (
+    !(
+      titleNode ||
+      (showTopBar &&
+        ((isObject(showTopBar) && showTopBar.leftContent) ||
+          tableControls?.willShowInsert ||
+          (showSearch && tableControls) ||
+          (tableControls?.setLocalOrderBy && showSort))) ||
+      filterProps
+    )
+  ) {
+    return null;
+  }
+
   return (
     <FlexCol className="SmartCardListControls gap-p5 aid-end py-p25">
       {titleNode}
 
-      <FlexRowWrap className=" ">
-        {isObject(showTopBar) && showTopBar.leftContent}
-        {tableControls?.willShowInsert && (
-          <InsertButton
-            buttonProps={{
-              children: "Add",
-            }}
-            {...(isObject(showTopBar) && isObject(showTopBar.insert) ?
-              showTopBar.insert
-            : {})}
-            db={db}
-            tables={tables}
-            methods={methods}
-            tableName={tableControls.tableName}
-          />
-        )}
-        {showSearch && tableControls && (
-          <SmartFilterBarSearch
-            db={db}
-            tableName={tableControls.tableName}
-            tables={tables}
-            onFilterChange={tableControls.setLocalFilter}
-            filter={tableControls.localFilter ?? []}
-            extraFilters={undefined}
-            style={{
-              width: "unset",
-              margin: "unset",
-              flex: "1",
-            }}
-          />
-        )}
-        {tableControls?.setLocalOrderBy && showSort && (
-          <SortByControl
-            value={tableControls.localOrderBy}
-            columns={props.columns}
-            onChange={tableControls.setLocalOrderBy}
-          />
-        )}
-      </FlexRowWrap>
+      {showTopBar && (
+        <FlexRowWrap className=" ">
+          {isObject(showTopBar) && showTopBar.leftContent}
+          {tableControls?.willShowInsert && (
+            <InsertButton
+              buttonProps={{
+                children: "Add",
+              }}
+              {...(isObject(showTopBar) && isObject(showTopBar.insert) ?
+                showTopBar.insert
+              : {})}
+              db={db}
+              sql={sql}
+              tables={tables}
+              methods={methods}
+              tableName={tableControls.tableName}
+            />
+          )}
+          {showSearch && tableControls && (
+            <SmartFilterBarSearch
+              db={db}
+              tableName={tableControls.tableName}
+              tables={tables}
+              onFilterChange={tableControls.setLocalFilter}
+              filter={tableControls.localFilter ?? []}
+              extraFilters={undefined}
+              style={{
+                width: "unset",
+                margin: "unset",
+                flex: "1",
+              }}
+            />
+          )}
+          {tableControls?.setLocalOrderBy && showSort && (
+            <SortByControl
+              value={tableControls.localOrderBy}
+              columns={props.columns}
+              onChange={tableControls.setLocalOrderBy}
+            />
+          )}
+        </FlexRowWrap>
+      )}
 
       {filterProps && (
         <RenderFilter
-          db={db}
           contextData={undefined}
-          tables={tables}
           selectedColumns={undefined}
           itemName={"filter"}
           hideOperand={true}

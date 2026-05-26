@@ -3,22 +3,22 @@ import type {
   LoginClientInfo,
 } from "prostgles-server/dist/Auth/AuthTypes";
 import type { DBS } from "..";
-import { debouncePromise, YEAR } from "../../../common/utils";
-import { activePasswordlessAdminFilter } from "../SecurityManager/initUsers";
+import { debouncePromise, YEAR } from "@common/utils";
+import { activePasswordlessAdminFilter } from "../init/initUsers";
 import type { NewRedirectSession } from "./getUser";
 import { makeSession } from "./sessionUtils";
 import { getIPsFromClientInfo } from "./startRateLimitedLoginAttempt";
-import type { AuthSetupData } from "./subscribeToAuthSetupChanges";
+import type { AuthConfigForStateConnection } from "./subscribeToAuthSetupChanges";
 
 export const createPasswordlessAdminSessionIfNeeded = debouncePromise(
   async (
-    authSetupData: AuthSetupData,
+    authSetupData: AuthConfigForStateConnection,
     dbs: DBS,
     client: LoginClientInfo,
     reqInfo: AuthClientRequest,
   ): Promise<NewRedirectSession | undefined> => {
-    const { passwordlessAdmin, globalSettings } = authSetupData;
-    if (!passwordlessAdmin || !globalSettings || !reqInfo.httpReq) {
+    const { passwordlessAdmin, stateDatabaseConfig } = authSetupData;
+    if (!passwordlessAdmin || !reqInfo.httpReq) {
       return;
     }
 
@@ -44,7 +44,7 @@ export const createPasswordlessAdminSessionIfNeeded = debouncePromise(
       return;
     }
 
-    const { ip } = getIPsFromClientInfo(client, globalSettings);
+    const { ip } = getIPsFromClientInfo(client, stateDatabaseConfig);
     /** Ensure multiple passwordlessAdmin sessions are not allowed */
     const session = await dbs.tx(async (dbsTx) => {
       const isStillActive = await dbsTx.users.findOne(
@@ -68,7 +68,7 @@ export const createPasswordlessAdminSessionIfNeeded = debouncePromise(
           type: "web",
         },
         dbsTx as DBS,
-        Date.now() + Number(10 * YEAR),
+        Date.now() + Number(1 * YEAR),
       );
     });
 

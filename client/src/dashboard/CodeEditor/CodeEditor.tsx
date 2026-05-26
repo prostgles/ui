@@ -4,16 +4,23 @@ import React, {
   useMemo,
   useRef,
   useState,
+  type KeyboardEventHandler,
 } from "react";
 
-import { useEffectDeep, usePromise } from "prostgles-client/dist/react-hooks";
-import { isObject } from "../../../../common/publishUtils";
-import { classOverride } from "../../components/Flex";
-import type { MonacoEditorProps } from "../../components/MonacoEditor/MonacoEditor";
-import { MonacoEditor } from "../../components/MonacoEditor/MonacoEditor";
+import { isObject } from "@common/publishUtils";
+import { classOverride } from "@components/Flex";
+import type { MonacoEditorProps } from "@components/MonacoEditor/MonacoEditor";
+import { MonacoEditor } from "@components/MonacoEditor/MonacoEditor";
+import { useAppContext } from "@pages/AppContextProvider";
+import { useEffectDeep, usePromise } from "prostgles-client";
 import { getMonaco } from "../SQLEditor/W_SQLEditor";
 import { type editor, type Uri } from "../W_SQL/monacoEditorTypes";
-import { registerLogLang } from "./registerLogLang";
+import {
+  LOG_LANGUAGE_ID,
+  LOG_LANGUAGE_THEME_DARK,
+  LOG_LANGUAGE_THEME_LIGHT,
+  registerLogLang,
+} from "./registerLogLang";
 import { setMonacoErrorMarkers } from "./utils/setMonacoErrorMarkers";
 import {
   setMonacoEditorJsonSchemas,
@@ -97,7 +104,9 @@ export type LanguageConfig =
        * e.g.: 'myMethod2';
        * Must be unique for each model
        */
+      environment: "react" | "nodejs";
       modelFileName: string;
+      importedModels?: { [modelName: string]: string };
       tsLibraries?: TSLibrary[];
     }
   | {
@@ -107,14 +116,17 @@ export type LanguageConfig =
 
 export type CodeEditorJsonSchema = { id: string; schema: any };
 
-export type CodeEditorProps = Pick<MonacoEditorProps, "options" | "value"> & {
+export type CodeEditorProps = Pick<
+  MonacoEditorProps,
+  "options" | "value" | "minHeight"
+> & {
   value: string;
-  onChange?: (newValue: string) => any | void;
+  onChange?: (newValue: string) => void;
   language: LanguageConfig | string;
   /**
    * If true then will allow saving on CTRL+S
    */
-  onSave?: (code: string) => any | void;
+  onSave?: (code: string) => void;
   error?: MonacoError;
   style?: React.CSSProperties;
   className?: string;
@@ -123,10 +135,6 @@ export type CodeEditorProps = Pick<MonacoEditorProps, "options" | "value"> & {
   onTSLibraryChange?: (tsLibraries: TSLibrary[]) => void;
   contentTop?: React.ReactNode;
 };
-
-const getSelectedText = (
-  editor: editor.IStandaloneCodeEditor | editor.ICodeEditor,
-) => editor.getModel()?.getValueInRange(editor.getSelection()!);
 
 export const CodeEditor = (props: CodeEditorProps) => {
   const {
@@ -142,6 +150,7 @@ export const CodeEditor = (props: CodeEditorProps) => {
     error,
     onTSLibraryChange,
     contentTop,
+    minHeight,
   } = props;
 
   const language =
@@ -169,7 +178,7 @@ export const CodeEditor = (props: CodeEditorProps) => {
   );
 
   useEffect(() => {
-    if (monaco && language === "log") {
+    if (monaco && language === LOG_LANGUAGE_ID) {
       registerLogLang(monaco);
     }
   }, [language, monaco]);
@@ -177,12 +186,12 @@ export const CodeEditor = (props: CodeEditorProps) => {
   useEffectDeep(() => {
     if (!editor || !monaco) return;
     setMonacoErrorMarkers(editor, monaco, { error });
-  }, [error, monaco]);
+  }, [editor, error, monaco]);
 
   useEffectDeep(() => {
     if (!editor || !monaco) return;
     setMonacoErrorMarkers(editor, monaco, { markers });
-  }, [markers, monaco]);
+  }, [editor, markers, monaco]);
 
   const onMountMonacoEditor = useCallback(
     (newEditor: editor.IStandaloneCodeEditor) => {
@@ -192,16 +201,17 @@ export const CodeEditor = (props: CodeEditorProps) => {
     [onMount],
   );
 
-  const onKeyDown = useCallback(
+  const onKeyDown: KeyboardEventHandler<HTMLDivElement> = useCallback(
     (e) => {
-      const _domElement =
-        (editor as any)?._domElement ?? ({} as HTMLDivElement);
+      const _domElement = (
+        editor as { _domElement?: HTMLDivElement } | undefined
+      )?._domElement;
       if (
         onSave &&
         editor &&
         e.ctrlKey &&
         e.key === "s" &&
-        _domElement?.contains(e.target)
+        _domElement?.contains(e.target as Node)
       ) {
         e.preventDefault();
         onSave(editor.getValue());
@@ -220,9 +230,14 @@ export const CodeEditor = (props: CodeEditorProps) => {
     }
 
     /** This is needed to ensure jsonschema works. Otherwise only the first editor schema will work */
-    setMonacoEditorJsonSchemas(editor, latestValueRef.current, languageObj);
+    void setMonacoEditorJsonSchemas(
+      editor,
+      latestValueRef.current,
+      languageObj,
+    );
   }, [editor, languageObj]);
 
+  const { theme: appTheme } = useAppContext();
   const monacoOptions = useMemo(() => {
     return {
       readOnly: !onChange,
@@ -236,11 +251,14 @@ export const CodeEditor = (props: CodeEditorProps) => {
         autoIndent: "full",
       }),
       ...options,
-      ...(language === "log" && {
-        theme: "logview",
+      ...(language === LOG_LANGUAGE_ID && {
+        theme:
+          appTheme === "light" ?
+            LOG_LANGUAGE_THEME_LIGHT
+          : LOG_LANGUAGE_THEME_DARK,
       }),
     } satisfies editor.IStandaloneEditorConstructionOptions;
-  }, [language, onChange, options]);
+  }, [language, onChange, options, appTheme]);
 
   return (
     <div
@@ -261,6 +279,8 @@ export const CodeEditor = (props: CodeEditorProps) => {
         options={monacoOptions}
         onChange={onChange}
         onMount={onMountMonacoEditor}
+        minHeight={minHeight}
+        minWidth={style?.minWidth}
       />
     </div>
   );

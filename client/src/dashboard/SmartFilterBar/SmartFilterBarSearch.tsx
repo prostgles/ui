@@ -1,21 +1,18 @@
-import { useMemoDeep } from "prostgles-client/dist/react-hooks";
+import type { DetailedFilter } from "@common/filterUtils";
+import { isJoinedFilter } from "@common/filterUtils";
+import ErrorComponent from "@components/ErrorComponent";
+import { useMemoDeep } from "prostgles-client";
 import type { AnyObject } from "prostgles-types";
 import React from "react";
-import type {
-  SimpleFilter,
-  SmartGroupFilter,
-} from "../../../../common/filterUtils";
-import { isJoinedFilter } from "../../../../common/filterUtils";
-import ErrorComponent from "../../components/ErrorComponent";
 import { SmartSearch } from "../SmartFilter/SmartSearch/SmartSearch";
-import type { SmartFilterBarProps } from "./SmartFilterBar";
 import { colIs } from "../SmartForm/SmartFormField/fieldUtils";
+import type { SmartFilterBarProps } from "./SmartFilterBar";
 
 type P = Pick<SmartFilterBarProps, "db" | "tables" | "style"> & {
   tableName: string;
-  filter: SmartGroupFilter;
+  filter: DetailedFilter[];
   extraFilters: AnyObject[] | undefined;
-  onFilterChange: (newFilter: SmartGroupFilter) => void;
+  onFilterChange: (newFilter: DetailedFilter[]) => void;
 };
 
 export const SmartFilterBarSearch = ({
@@ -50,7 +47,7 @@ export const SmartFilterBarSearch = ({
       extraFilters={extraFilters}
       onPressEnter={(term) => {
         let newGroupFilter = filter.slice(0);
-        const newF: SimpleFilter = {
+        const newF: DetailedFilter = {
           fieldName: "*",
           type: "$term_highlight",
           value: term,
@@ -78,7 +75,7 @@ export const SmartFilterBarSearch = ({
           col &&
           (colIs(col, "_PG_date") || colIs(col, "_PG_numbers"))
         ) {
-          const newF: SimpleFilter = {
+          const newF: DetailedFilter = {
             fieldName: colName,
             minimised: true,
             ...(colIs(col, "_PG_date") ?
@@ -101,7 +98,7 @@ export const SmartFilterBarSearch = ({
 };
 
 export const toggleAllFilters = (
-  filters: SimpleFilter[],
+  filters: DetailedFilter[],
   minimised?: boolean,
 ) => {
   const someFiltersExpanded = minimised ?? filters.some((f) => !f.minimised);

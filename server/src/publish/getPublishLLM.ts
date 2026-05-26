@@ -1,15 +1,17 @@
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
+import type { DBSSchema } from "@common/publishUtils";
+import { refreshModels } from "@src/serverFunctions/askLLM/refreshModels";
 import type { Publish } from "prostgles-server/dist/PublishParser/PublishParser";
-import type { DBGeneratedSchema } from "../../../common/DBGeneratedSchema";
-import type { DBSSchema } from "../../../common/publishUtils";
-import { testMCPServerConfig } from "../McpHub/McpHub";
-import { getBestLLMChatModel } from "../publishMethods/askLLM/askLLM";
-import { fetchLLMResponse } from "../publishMethods/askLLM/fetchLLMResponse";
-import type { Filter } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
+import type { DBS } from "..";
+import { getBestLLMChatModel } from "../serverFunctions/askLLM/askLLM";
+import { fetchLLMResponse } from "../serverFunctions/askLLM/fetchLLMResponse";
+import { getPublishLlmChats } from "./getPublishLlmChats";
 
 export const getPublishLLM = (
   user_id: string,
   isAdmin: boolean,
   accessRules: undefined | DBSSchema["access_control"][],
+  dbs: DBS,
 ) => {
   const forcedData = { user_id };
   const forcedFilter = { user_id };
@@ -80,11 +82,12 @@ export const getPublishLLM = (
             llm_chat: {
               extra_body: {},
               extra_headers: {},
+              options: {},
             },
             llm_model: preferredModel,
             llm_provider: provider,
             llm_credential: row,
-            tools: undefined,
+            tools: [],
             messages: [
               {
                 role: "system",
@@ -95,7 +98,12 @@ export const getPublishLLM = (
                 content: [{ type: "text", text: "Hey" }],
               },
             ],
+            aborter: new AbortController(),
           });
+
+          if (row.provider_id === "OpenRouter") {
+            void refreshModels(dbs);
+          }
         },
       },
       update: isAdmin && {
@@ -121,35 +129,7 @@ export const getPublishLLM = (
         forcedData,
       },
     },
-    llm_chats: {
-      select: {
-        fields: "*",
-        forcedFilter,
-      },
-      delete: isAdmin && "*",
-      insert: {
-        fields: "*",
-        forcedData,
-        preValidate: async ({ row, dbx }) => {
-          if (row.model) return row;
-
-          const preferredChatModel = await getBestLLMChatModel(dbx, {
-            $existsJoined: {
-              "llm_providers.llm_credentials": {},
-            },
-          } as Filter);
-          return {
-            ...row,
-            model: preferredChatModel.id,
-          };
-        },
-      },
-      update: {
-        fields: { created: 0, user_id: 0, connection_id: 0 },
-        forcedData,
-        forcedFilter,
-      },
-    },
+    ...getPublishLlmChats(user_id, isAdmin),
     llm_messages: {
       select: {
         fields: "*",
@@ -164,6 +144,16 @@ export const getPublishLLM = (
       update: isAdmin && {
         fields: "*",
         forcedFilter: userOwnsRelatedChat,
+      },
+    },
+    mcp_tool_approval_requests: {
+      select: {
+        fields: "*",
+        forcedFilter,
+      },
+      update: {
+        fields: "*",
+        forcedFilter,
       },
     },
     mcp_servers:
@@ -203,19 +193,8 @@ export const getPublishLLM = (
         }
       ),
     mcp_server_configs: isAdmin && {
-      insert: {
-        fields: "*",
-        postValidate: async ({ row, dbx }) => {
-          await testMCPServerConfig(dbx, row);
-        },
-      },
-      update: {
-        fields: "*",
-        postValidate: async ({ row, dbx }) => {
-          await testMCPServerConfig(dbx, row);
-          // await startMcpHub(dbx, row);
-        },
-      },
+      insert: "*",
+      update: "*",
       select: "*",
       delete: "*",
     },

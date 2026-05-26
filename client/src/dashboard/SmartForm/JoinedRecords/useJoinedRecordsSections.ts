@@ -1,18 +1,16 @@
-import type {
-  TableHandlerClient,
-  ViewHandlerClient,
-} from "prostgles-client/dist/prostgles";
-import { usePromise } from "prostgles-client/dist/react-hooks";
-import { useMemo, useRef, useState } from "react";
 import {
   getSmartGroupFilter,
-  type SmartGroupFilter,
-} from "../../../../../common/filterUtils";
-import { isDefined } from "../../../utils";
+  isJoinedFilter,
+  type DetailedFilter,
+} from "@common/filterUtils";
+import type { TableHandlerClient } from "prostgles-client/dist/prostgles";
+import { usePromise } from "prostgles-client";
+import type { AnyObject } from "prostgles-types";
+import { useMemo, useRef, useState } from "react";
+import { isDefined } from "../../../utils/utils";
+import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
 import { getJoinFilter } from "./getJoinFilter";
 import type { JoinedRecordsProps } from "./JoinedRecords";
-import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
-import type { AnyObject } from "prostgles-types";
 
 const getAllParentTableNames = (
   parentForm: JoinedRecordsProps["parentForm"],
@@ -33,7 +31,7 @@ export type JoinedRecordSection = {
   canInsert?: boolean;
   error?: string;
   joinFilter: AnyObject;
-  detailedJoinFilter: SmartGroupFilter;
+  detailedJoinFilter: DetailedFilter[];
   count: number;
   table: DBSchemaTableWJoins;
   tableHandler: Partial<TableHandlerClient> | undefined;
@@ -94,7 +92,7 @@ export const useJoinedRecordsSections = (props: JoinedRecordsProps) => {
             d.type === "nested-table" ? [k, d.value] : undefined,
           )
           .filter(isDefined),
-      ),
+      ) as Record<string, AnyObject[]>,
     [newRowData],
   );
 
@@ -105,15 +103,18 @@ export const useJoinedRecordsSections = (props: JoinedRecordsProps) => {
         const canInsert = db[j.tableName]?.insert && j.hasFkeys;
         if (action === "insert" && !canInsert) return;
         const path = [j.tableName];
-        const detailedJoinFilter = getJoinFilter(path, tableName, rowFilter, {
-          minimised: true,
-        });
+        const detailedJoinFilter = getJoinFilter(
+          path,
+          tableName,
+          rowFilter?.filter((f) => !isJoinedFilter(f)),
+          {
+            minimised: true,
+          },
+        );
         const joinFilter = getSmartGroupFilter(detailedJoinFilter);
         let countStr = "0";
         let countError: string | undefined;
-        const tableHandler = db[j.tableName] as
-          | undefined
-          | Partial<TableHandlerClient | ViewHandlerClient>;
+        const tableHandler = db[j.tableName];
         try {
           if (!isInsert) {
             countStr =
@@ -127,7 +128,7 @@ export const useJoinedRecordsSections = (props: JoinedRecordsProps) => {
 
         const count =
           (isInsert ?
-            nestedInsertData?.[j.tableName]?.length
+            nestedInsertData[j.tableName]?.length
           : existingDataCount) ?? 0;
 
         const table = tablesMap.get(j.tableName);

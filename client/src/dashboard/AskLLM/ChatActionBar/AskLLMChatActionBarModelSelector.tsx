@@ -1,203 +1,238 @@
-import { mdiAccountKey, mdiPencil, mdiPlus, mdiRefresh } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import type { DetailedJoinSelect } from "prostgles-types";
-import React, { useMemo, useState } from "react";
-import type { DetailedFilterBase } from "../../../../../common/filterUtils";
-import type { DBSSchema } from "../../../../../common/publishUtils";
-import Btn from "../../../components/Btn";
-import Chip from "../../../components/Chip";
-import { FlexCol, FlexRowWrap } from "../../../components/Flex";
-import Select, { type FullOption } from "../../../components/Select/Select";
-import { SvgIconFromURL } from "../../../components/SvgIcon";
-import { SmartForm, SmartFormPopup } from "../../SmartForm/SmartForm";
+import { type DBSSchema } from "@common/publishUtils";
+import Btn from "@components/Btn";
+import Chip from "@components/Chip";
+import { FlexRow } from "@components/Flex";
+import FormField from "@components/FormField/FormField";
+import Popup from "@components/Popup/Popup";
+import { ProgressBar } from "@components/ProgressBar";
+import { Select } from "@components/Select/Select";
+import { SwitchToggle } from "@components/SwitchToggle";
+import { mdiCircleOutline, mdiDotsVertical } from "@mdi/js";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import React, { useCallback, useMemo, useState } from "react";
+import { nFormatter } from "src/utils/utils";
 import type { AskLLMChatProps } from "../Chat/AskLLMChat";
-import { btnStyleProps } from "./AskLLMChatActionBar";
+import { LLMModelSelector } from "../LLMModelSelector";
+import { ChatActionBarBtnStyleProps } from "./AskLLMChatActionBar";
 
 export const AskLLMChatActionBarModelSelector = (
-  props: Pick<AskLLMChatProps, "prgl" | "setupState"> & {
+  props: Pick<AskLLMChatProps, "setupState"> & {
     activeChat: DBSSchema["llm_chats"];
     dbSchemaForPrompt: string;
     llmMessages: DBSSchema["llm_messages"][];
   },
 ) => {
-  const { prgl, activeChat, llmMessages } = props;
-  const activeChatId = activeChat.id;
-  const { dbs, dbsMethods } = prgl;
+  const { activeChat, llmMessages } = props;
+  const { extra_body } = activeChat;
+  const { dbs } = usePrgl();
 
-  const { data: models } = dbs.llm_models.useSubscribe(
-    {},
-    {
-      select: {
-        "*": 1,
-        llm_providers: {
-          logo_url: 1,
-        },
-        llm_credentials: {
-          $leftJoin: ["llm_providers", "llm_credentials"],
-          select: "*",
-          limit: 1,
-        } satisfies DetailedJoinSelect,
+  const [show, setShow] = useState(false);
+
+  const totalUsage = useMemo(() => {
+    return llmMessages.reduce(
+      (acc, msg) => {
+        const cost = parseFloat(String(msg.cost));
+        acc.cost += cost;
+        acc.tokens += msg.total_tokens;
+        return acc;
       },
+      { cost: 0, tokens: 0 },
+    );
+  }, [llmMessages]);
+
+  const { data: model } = dbs.llm_models.useFindOne(
+    { id: activeChat.model ?? undefined },
+    { select: { name: 1, context_length: 1 } },
+    {
+      skip: !activeChat.model,
+      deps: [totalUsage.tokens],
     },
   );
+  const context_length = model?.context_length;
+  const usageRatio =
+    context_length && context_length > 0 ?
+      Math.min(1, totalUsage.tokens / context_length)
+    : 0;
 
-  const [addProviderCredentials, setAddProviderCredentials] = useState("");
-  const [viewModelForm, setViewModelForm] = useState<DetailedFilterBase>();
-  const totalCost = useMemo(() => {
-    return llmMessages.reduce((acc, msg) => {
-      const cost = parseFloat(msg.cost);
-      return acc + cost;
-    }, 0);
-  }, [llmMessages]);
-  return (
-    <>
-      {viewModelForm && (
-        <SmartForm
-          asPopup={true}
-          db={dbs as DBHandlerClient}
-          tableName="llm_models"
-          rowFilter={[viewModelForm]}
-          tables={prgl.dbsTables}
-          methods={prgl.dbsMethods}
-          onClose={() => setViewModelForm(undefined)}
-        />
-      )}
-      {addProviderCredentials && (
-        <SmartForm
-          label={"Add LLM credentials for " + addProviderCredentials}
-          asPopup={true}
-          tableName="llm_credentials"
-          db={dbs as DBHandlerClient}
-          methods={prgl.dbsMethods}
-          defaultData={{
-            provider_id: addProviderCredentials,
-          }}
-          onClose={() => setAddProviderCredentials("")}
-          tables={prgl.dbsTables}
-          showJoinedTables={false}
-        />
-      )}
-      <Select
-        data-command="LLMChatOptions.Model"
-        fullOptions={
-          models
-            ?.map(
-              ({
-                id,
-                name,
-                provider_id,
-                llm_credentials,
-                llm_providers,
-                pricing_info,
-              }) => {
-                const noCredentials = !llm_credentials.length;
-                const iconUrl = llm_providers[0]?.logo_url;
-                const isFree = Object.values(pricing_info ?? {}).every(
-                  (v) => v === 0,
-                );
-                return {
-                  key: id,
-                  label: name + (isFree ? " (free)" : ""),
-                  subLabel: provider_id,
-                  leftContent:
-                    !iconUrl ? undefined : (
-                      <SvgIconFromURL
-                        url={iconUrl}
-                        className="mr-p5 text-0"
-                        style={{
-                          width: "24px",
-                          height: "24px",
-                        }}
-                      />
-                    ),
-                  rightContent:
-                    noCredentials ?
-                      <Btn
-                        title="Add provider API Key"
-                        onClick={() => setAddProviderCredentials(provider_id)}
-                        color="action"
-                        iconPath={mdiAccountKey}
-                      />
-                    : <Btn
-                        title="View info"
-                        className="show-on-parent-hover"
-                        onClick={() =>
-                          setViewModelForm({ fieldName: "id", value: id })
-                        }
-                        color="action"
-                        iconPath={mdiPencil}
-                      />,
-                  disabledInfo: noCredentials ? "No credentials" : undefined,
-                } satisfies FullOption<number>;
-              },
-            )
-            .slice()
-            .sort(
-              (a, b) =>
-                (a.disabledInfo?.length ?? 0) - (b.disabledInfo?.length ?? 0) ||
-                a.label.localeCompare(b.label),
-            ) ?? []
-        }
-        size="small"
-        btnProps={{
-          ...btnStyleProps,
-          iconPath: "",
+  const usageColor =
+    usageRatio > 0.9 ? "var(--danger, #dc2626)"
+    : usageRatio > 0.75 ? "var(--text-warning, #f59e0b)"
+    : "var(--action, #16a34a)";
+
+  const deg = usageRatio * 360;
+
+  const contextIcon =
+    context_length ?
+      <div
+        style={{
+          width: 14,
+          height: 14,
+          borderRadius: "50%",
+          background: `conic-gradient(${usageColor} 0 ${deg}deg, rgba(127,127,127,.25) ${deg}deg 360deg)`,
+          display: "grid",
+          placeItems: "center",
         }}
-        title="Model"
-        emptyLabel="Select model..."
-        className="ml-auto text-2"
-        multiSelect={false}
+      >
+        <div
+          style={{
+            width: 8,
+            height: 8,
+            borderRadius: "50%",
+            background: "var(--bg-color, #fff)",
+          }}
+        />
+      </div>
+    : undefined;
+  const updateExtraBody = useCallback(
+    async (newBody: Partial<DBSSchema["llm_chats"]["extra_body"]>) => {
+      await dbs.llm_chats.update(
+        { id: activeChat.id },
+        {
+          extra_body: {
+            ...extra_body,
+            ...newBody,
+          },
+        },
+      );
+    },
+    [activeChat.id, dbs.llm_chats, extra_body],
+  );
+
+  const tokensUsed = nFormatter(totalUsage.tokens, 0);
+  const contextUsedMessage =
+    !context_length ?
+      `${tokensUsed} tokens used`
+    : `${tokensUsed} / ${nFormatter(context_length, 0)} tokens used (${Math.round(usageRatio * 100)}%)`;
+  return (
+    <FlexRow className="ml-auto text-2 gap-p25">
+      {show && (
+        <Popup
+          title="LLM model settings"
+          positioning="center"
+          clickCatchStyle={{ opacity: 1 }}
+          onClose={() => setShow(false)}
+          contentClassName="flex-col gap-1 p-1"
+        >
+          <ProgressBar
+            messageTop={<div className="bold w-fit">Context usage</div>}
+            message={<div className="font-14">{contextUsedMessage}</div>}
+            totalValue={context_length || totalUsage.tokens + 1}
+            value={totalUsage.tokens}
+          />
+          <FormField
+            label={"Max tokens"}
+            type="integer"
+            value={extra_body?.max_tokens ?? undefined}
+            onChange={async (newValue) => {
+              await updateExtraBody({
+                max_tokens: newValue,
+              });
+            }}
+          />
+          <FormField
+            label={"Temperature"}
+            type="integer"
+            value={activeChat.extra_body?.temperature ?? undefined}
+            onChange={async (newValue) => {
+              await updateExtraBody({
+                temperature: newValue,
+              });
+            }}
+          />
+          <SwitchToggle
+            label={"Thinking"}
+            variant="col"
+            checked={activeChat.extra_body?.think ?? false}
+            onChange={async (newValue) => {
+              await updateExtraBody({
+                think: newValue,
+              });
+            }}
+          />
+          <Select
+            label={"Reasoning"}
+            value={
+              extra_body?.reasoning && "effort" in extra_body.reasoning ?
+                extra_body.reasoning.effort
+              : undefined
+            }
+            options={["low", "medium", "high"]}
+            onChange={async (effort) => {
+              await updateExtraBody({
+                reasoning: { effort },
+              });
+            }}
+          />
+
+          <Select
+            label={"MCP tool options"}
+            value={activeChat.options?.mcpToolSchemaMode}
+            fullOptions={
+              [
+                {
+                  key: "ts-types-in-description",
+                  label: "Show as Typescript types",
+                  subLabel:
+                    "Will append tool input and output schemas as Typescript types in the tool description while removing Json Schema",
+                },
+                {
+                  key: "hide-schemas-and-descriptions",
+                  label: "Hide schemas and descriptions",
+                  subLabel:
+                    "Removes tool input and output schemas and descriptions from the tool description. Full tool info available by using get_specific_tool_schemas",
+                },
+              ] as const
+            }
+            optional={true}
+            onChange={async (newValue) => {
+              await dbs.llm_chats.update(
+                { id: activeChat.id },
+                {
+                  options: {
+                    ...activeChat.options,
+                    mcpToolSchemaMode: newValue,
+                  },
+                },
+              );
+            }}
+          />
+        </Popup>
+      )}
+      <LLMModelSelector
+        className=" text-2"
         value={activeChat.model}
+        btnProps={{ ...ChatActionBarBtnStyleProps, iconPath: "" }}
         onChange={(model) => {
-          if (!activeChatId) return;
-          dbs.llm_chats.update(
-            { id: activeChatId },
+          void dbs.llm_chats.update(
+            { id: activeChat.id },
             {
               model,
             },
           );
         }}
-        endOfResultsContent={
-          <FlexCol className="p-1">
-            <div className="text-1">End of results.</div>
-            <FlexRowWrap>
-              <Btn
-                title="Refresh models"
-                iconPath={mdiRefresh}
-                onClickPromise={async () => await dbsMethods.refreshModels?.()}
-                color="action"
-                variant="faded"
-              >
-                Refresh models
-              </Btn>
-              <SmartFormPopup
-                asPopup={true}
-                label="Add model"
-                db={dbs as DBHandlerClient}
-                tableName="llm_models"
-                methods={prgl.dbsMethods}
-                tables={prgl.dbsTables}
-                triggerButton={{
-                  iconPath: mdiPlus,
-                  title: "Add model",
-                  color: "action",
-                  children: "Add model",
-                  variant: "faded",
-                }}
-              />
-            </FlexRowWrap>
-          </FlexCol>
-        }
       />
-      {!!totalCost && (
+      {!!totalUsage.cost && (
         <Chip
-          title={"Total cost: " + totalCost}
+          title={"Total cost: " + totalUsage.cost}
           style={{ fontSize: "12px", background: "transparent", opacity: 0.75 }}
           className="pointer"
         >
-          ${totalCost.toFixed(2)}
+          ${totalUsage.cost.toFixed(2)}
         </Chip>
       )}
-    </>
+      <Btn
+        title={!context_length ? "Model settings. " : contextUsedMessage}
+        className=" text-2"
+        size="small"
+        iconNode={!context_length ? null : contextIcon}
+        iconPath={
+          !context_length ? mdiDotsVertical
+          : !contextIcon ?
+            mdiCircleOutline
+          : undefined
+        }
+        onClick={() => setShow(true)}
+      />
+    </FlexRow>
   );
 };

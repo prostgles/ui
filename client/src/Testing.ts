@@ -24,8 +24,10 @@ export const COMMANDS = {
   "config.bkp.create.start": "",
   "config.bkp.AutomaticBackups": "",
   "config.bkp.AutomaticBackups.toggle": "",
+  "config.auth": { desc: "", uiOnly: true },
   "config.ac": { desc: "", uiOnly: true },
   "config.status": "",
+  "config.security": "",
   "config.ac.create": "",
   "config.ac.save": "",
   "config.ac.removeRule": "",
@@ -53,6 +55,7 @@ export const COMMANDS = {
   "config.files.toggle.confirm": "",
   "config.api": { desc: "", uiOnly: true },
   "config.methods": "",
+  "config.webApp": "",
 
   "dashboard.window.rowInsert": "Open row insert panel",
   "dashboard.window.rowInsertTop": "Open row insert panel from top filter bar",
@@ -141,6 +144,10 @@ export const COMMANDS = {
   "FormField.clear": "Clear a FormField",
 
   SmartForm: "",
+  "SmartForm.header.tableIconAndName": "",
+  "SmartForm.header.previousRow": "",
+  "SmartForm.header.nextRow": "",
+
   "SmartForm.close": "Close dialog",
   "SmartForm.delete": "Deletes row",
   "SmartForm.delete.confirm": "Confirms Deleting a row",
@@ -154,7 +161,8 @@ export const COMMANDS = {
   "SearchList.toggleAll": "",
   "SearchList.List": "",
   "SearchList.Input": "",
-
+  ViewMoreSmartCardList: "",
+  "Section.toggleFullscreen": "",
   FieldFilterControl: "",
   "FieldFilterControl.type": "",
   "FieldFilterControl.type.custom": "",
@@ -187,7 +195,7 @@ export const COMMANDS = {
   SearchAll: "",
   SmartAddFilter: "",
   FilterWrapper: "",
-
+  "FilterWrapper.typeSelect": "",
   FileBtn: "",
 
   "ForcedDataControl.toggle": "",
@@ -233,6 +241,7 @@ export const COMMANDS = {
   "WorkspaceMenuDropDown.WorkspaceAddBtn": "",
   "WorkspaceMenu.SearchList": "",
   "WorkspaceMenu.CloneWorkspace": "",
+  "WorkspaceMenu.toggleWorkspaceLayoutMode": "",
   WorkspaceDeleteBtn: "",
   "WorkspaceDeleteBtn.Confirm": "",
 
@@ -248,6 +257,8 @@ export const COMMANDS = {
   "Popup.content": "",
   "Popup.footer": "",
   "Popup.toggleFullscreen": "",
+  "FullscreenWrapper.toggleFullscreen": "",
+  FullscreenWrapper: "",
   "LinkedColumn.ColumnListMenu": "",
   "AddChartMenu.Map": "",
   "AddChartMenu.Timechart": "",
@@ -261,6 +272,7 @@ export const COMMANDS = {
   SchemaGraph: "",
   "SchemaGraph.TopControls": "",
   "SchemaGraph.TopControls.tableRelationsFilter": "",
+  "SchemaGraph.TopControls.tableFilter": "",
   "SchemaGraph.TopControls.columnRelationsFilter": "",
   "SchemaGraph.TopControls.linkColorMode": "",
   "SchemaGraph.TopControls.resetLayout": "",
@@ -333,6 +345,7 @@ export const COMMANDS = {
   JoinedRecords: "",
   "JoinedRecords.AddRow": "",
   "JoinedRecords.SectionToggle": "",
+  "JoinedRecords.Section": "",
   "SmartCard.viewEditRow": "",
   "TimeChartLayerOptions.yAxis": "",
   "TimeChartLayerOptions.aggFunc": "",
@@ -347,8 +360,10 @@ export const COMMANDS = {
   "Chat.messageList": "",
   "Chat.sendWrapper": "",
   "Chat.send": "",
+  "Chat.sendStop": "",
   "Chat.addFiles": "",
   "Chat.textarea": "",
+  "Chat.speech": "",
   AskLLM: "",
   "AskLLM.popup": "",
   SetupLLMCredentials: "",
@@ -412,11 +427,11 @@ export const COMMANDS = {
   "LLMChatOptions.Prompt": "",
   "LLMChatOptions.Model": "",
   "AskLLMChat.NewChat": "",
-  "AskLLMChat.LoadSuggestedToolsAndPrompt": "",
   "AskLLMChat.LoadSuggestedDashboards": "",
   "AskLLMChat.UnloadSuggestedDashboards": "",
   "AskLLMToolApprover.AllowAlways": "",
   "AskLLMToolApprover.AllowOnce": "",
+  "AskLLMToolApprover.ShowChat": "",
   "AskLLMToolApprover.Deny": "",
   MonacoEditor: "",
   MCPServerTools: "",
@@ -427,6 +442,7 @@ export const COMMANDS = {
   MCPServerConfigButton: "",
   MCPServerConfig: "",
   "MCPServerConfig.save": "",
+  "MCPServers.toggleAutoApprove": "",
   Feedback: "",
   "FileImporterFooter.import": "",
 
@@ -440,6 +456,7 @@ export const COMMANDS = {
   "Window.W_QuickMenu.addCrossFilteredTable": "Add cross-filtered table",
   Alert: "Alert popup",
   ErrorComponent: "",
+  ToolUseMessage: "",
   "ToolUseMessage.toggle": "",
   "ToolUseMessage.Popup": "",
   MarkdownMonacoCode: "",
@@ -456,6 +473,121 @@ export const COMMANDS = {
   APIDetailsTokens: "",
   "AskLLM.DeleteMessage": "",
   "DockerSandboxCreateContainer.Logs": "",
+  TableBody: "",
+  "ServerSideFunctions.onMountEnabled": "",
+  DashboardMenu: "",
+  "SearchAll.Popup": "",
+
+  AddComputedColMenu: "",
+  "AddComputedColMenu.countOfAllRows": "",
+  "AddComputedColMenu.addBtn": "",
+  "AddComputedColMenu.name": "",
+  "AddComputedColMenu.addTo": "",
+  "LinkedColumn.joinType": "",
+  "LinkedColumn.layoutType": "",
+  "CreateColumn.next": "",
+  FileColumnConfigEditor: "",
+  "FileColumnConfigEditor.maxFileSizeMB": "",
+  "FileColumnConfigEditor.contentMode": "",
+  CreateFileColumn: "",
+  ColumnQuickStats: "",
+  "ColumnQuickStats.addFilter": "",
+  "QuickAddComputedColumn.Add": "",
+  "QuickAddComputedColumn.name": "",
+  "LLMChatOptions.Prompt.Preview": "",
+  "FunctionColumnList.SearchInput": "",
+  "LLMChatOptions.Model.AddCredentials": "",
+  QuickFilterGroupsControl: "",
+  LinkedColumn: "",
+  CreateColumn: "",
+  "ToolUseMessage.toggleGroup": "",
+  "PGDumpOptions.format": "",
+  "PGDumpOptions.destination": "",
+  "PGDumpOptions.numberOfJobs": "",
+  "PGDumpOptions.compressionLevel": "",
+  "PGDumpOptions.excludeSchema": "",
+  "PGDumpOptions.noOwner": "",
+  "PGDumpOptions.create": "",
+  "PGDumpOptions.globalsOnly": "",
+  "PGDumpOptions.rolesOnly": "",
+  "PGDumpOptions.schemaOnly": "",
+  "PGDumpOptions.encoding": "",
+  "PGDumpOptions.clean": "",
+  "PGDumpOptions.dataOnly": "",
+  "PGDumpOptions.ifExists": "",
+  "PGDumpOptions.keepLogs": "",
+  "BackupControls.backupsInProgress": "",
+  "BackupsControls.Completed.delete": "",
+  "BackupsControls.Completed.download": "",
+  "BackupsControls.Completed.restore": "",
+  "BackupsControls.Completed.deleteAll": "",
+  "BackupsControls.restoreFromFile": "",
+  BackupLogs: "",
+  FilterWrapper_FieldName: "",
+  FilterWrapper_Field: "",
+  "CloudStorageCredentialSelector.selectCredential": "",
+  DashboardMenuContent: "",
+  "ArgumentDefinition.toggleOptional": "",
+  "WebApp.directory": "",
+  "WebAppConfig.createFromTemplate": "",
+  "WebAppConfig.build": "",
+  "WebAppConfig.test": "",
+  "AgenticWorkflow.start": "",
+  "AgenticWorkflow.stop": "",
+  AskUserQuestions: "",
+  "AskUserQuestions.confirm": "",
+  AgenticWorkflow: "",
+  "AgenticWorkflow.validationErrorLogs": "",
+  "AgenticWorkflow.openChat": "",
+  "AgenticWorkflow.openToolCall": "",
+  DatabaseAccessEditor: "",
+  "DatabaseAccessEditor.Mode": "",
+  "DatabaseAccessEditor.TableRules": "",
+  "LLMChatOptions.DatabaseAccess.schema": "",
+  RequestToolAccess: "",
+  "RequestToolAccess.Approve": "",
+  "RequestToolAccess.AutoApprove": "",
+  "DockerSandboxCreateContainer.stop": "",
+  "ChatFileAttachments.convertDocsToMarkdown": "",
+  "ChatFileAttachments.removeFile": "",
+  "LLMChatMessageContent.textDocument": "",
+  MediaViewer: "",
+  Agent: "",
+  Loading: "",
+  DockerSandboxCreateContainer: "",
+  AgenticWorkflowSchemaDrift: "",
+  "AgenticWorkflowSchemaDrift.applyPatches": "",
+  "AgenticWorkflowSchemaDrift.dropWorkflowTables": "",
+  SavedAgenticWorkflowsAndContainers: "",
+  ElectronSearchBar: "",
+  "FullscreenWrapper.toggleMinimize": "",
+  "McpToolAccess.configure": "",
+  FileTree: "",
+  FileTreeNode: "",
+  "FileTreeNode.header": "",
+  "FileTreeNode.checkbox": "",
+  "FileTreeNode.folderRow": "",
+  "FileTreeNode.fileRow": "",
+  "UserInput.Done": "",
+  "DatabaseAccessEditorCustomTables.openTable": "",
+  ToolCall: "",
+  "AgenticWorkflowActivity.openTable": "",
+  "SilverGrid.viewMoveTarget": "",
+  "FilterWrapper.deleteFilter": "",
+  McpToolAccess: "",
+  Alerts: "",
+  "AgenticWorkflowDetails.agents": "",
+  "AgenticWorkflowDetails.containerConfiguration": "",
+  "AgenticWorkflowDetails.description": "",
+  "TableAccessEditor.newTableDDL": "",
+  "AgenticWorkflowDetails.orchestrationTools": "",
+  AgenticWorkflowActions: "",
+  UserInput: "",
+  NestedTimechartControls: "",
+  DataLayerDataSourceInfo: "",
+  SilverGridChild: "",
+  App: "",
+  SwitchToggle: "",
 } as const satisfies Record<
   string,
   | string
@@ -478,15 +610,18 @@ export const dataCommand = (cmd: Command): { "data-command": Command } => ({
 export const getCommandElemSelector = (cmd: Command) => {
   return `[data-command=${JSON.stringify(cmd)}]`;
 };
-export const getDataKeyElemSelector = (key: string) => {
+export const getDataKey = (key: string) => {
   return `[data-key=${JSON.stringify(key)}]`;
 };
-export const getDataLabelElemSelector = (key: string) => {
+export const getDataLabel = (key: string) => {
   return `[data-label=${JSON.stringify(key)}]`;
 };
 
 export const COMMAND_SEARCH_ATTRIBUTE_NAME = "data-command-search-ended";
 
+export const MOCK_ELECTRON_WINDOW_ATTR = "MOCK_ELECTRON_WINDOW_ATTR" as const;
+
+//@ts-ignore
 declare module "react" {
   interface HTMLAttributes<T> {
     "data-command"?: Command;
@@ -494,12 +629,12 @@ declare module "react" {
 }
 
 export declare namespace SVGif {
-  export type Animation =
+  export type CursorAnimation =
     | {
         elementSelector: string;
         offset?: { x: number; y: number };
         duration: number;
-        type: "click" | "zoomTo" | "type" | "reveal-list";
+        type: "click" | "clickAppearOnHover";
 
         /**
          * Time to wait before clicking after reaching the final position
@@ -509,6 +644,53 @@ export declare namespace SVGif {
          * Time to stay on the final position after clicking
          */
         lingerMs?: number;
+      }
+    | {
+        type: "moveCursor";
+        xy: [number, number];
+        duration: number;
+      };
+  export type Animation =
+    | CursorAnimation
+    | {
+        elementSelector: string;
+        duration: number;
+        type: "type";
+        extraAnimation?:
+          | { type: "zoomToElement" }
+          | { type: "bringToFront"; elementSelector: string };
+        /**
+         * Maximum scale to zoom in while typing
+         */
+        maxScale?: number;
+      }
+    | {
+        elementSelector: string;
+        duration: number;
+        type: "zoomToElement" | "bringToFront";
+        bringToFrontSelector?: string;
+        /**
+         * Maximum scale to zoom in
+         */
+        maxScale?: number;
+      }
+    | {
+        elementSelector: string;
+        duration: number;
+        type: "fadeIn" | "growIn";
+        startScale?: number;
+      }
+    | {
+        elementSelector: string;
+        duration: number;
+        type: "properties";
+        props: Record<"x" | "y" | "width" | "height", (string | number)[]>;
+      }
+    | {
+        elementSelector: string;
+        duration: number;
+        type: "custom";
+        attributes: Record<"transform", [string, string]>;
       }
     | {
         type: "wait";
@@ -522,5 +704,5 @@ export declare namespace SVGif {
 }
 
 /**
- * Forbid imports to ensure this file is portable
+ * TODO: Forbid imports to ensure this file is portable
  */

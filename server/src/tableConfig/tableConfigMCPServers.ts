@@ -1,4 +1,12 @@
+import type { DBSSchema } from "@common/publishUtils";
+import { testMCPServerConfig } from "@src/McpHub/testMCPServerConfig";
+import type {
+  ValidateRowArgsCommon,
+  ValidateRowsArgsCommon,
+} from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
+import { isDefined } from "prostgles-types";
+import type { DBS } from "..";
 
 export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
   mcp_servers: {
@@ -43,12 +51,14 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
               oneOfType: [
                 {
                   type: { enum: ["env"] },
+                  renderWithComponent: { type: "string", optional: true },
                   title: { type: "string", optional: true },
                   optional: { type: "boolean", optional: true },
                   description: { type: "string", optional: true },
                 },
                 {
-                  type: { enum: ["arg"] },
+                  type: { enum: ["arg", "...args"] },
+                  renderWithComponent: { type: "string", optional: true },
                   title: { type: "string", optional: true },
                   optional: { type: "boolean", optional: true },
                   description: { type: "string", optional: true },
@@ -73,8 +83,8 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
       },
       env_from_main_process: `TEXT[]`,
       enabled: `BOOLEAN NOT NULL DEFAULT FALSE`,
-      created: `TIMESTAMP DEFAULT NOW()`,
-      installed: `TIMESTAMP`,
+      created: `TIMESTAMPTZ DEFAULT NOW()`,
+      installed: `TIMESTAMPTZ`,
     },
   },
   mcp_server_configs: {
@@ -82,19 +92,98 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
       id: `SERIAL PRIMARY KEY`,
       server_name: `TEXT NOT NULL REFERENCES mcp_servers(name) ON DELETE CASCADE`,
       config: { jsonbSchema: { record: { values: "any" } } },
-      created: `TIMESTAMP DEFAULT NOW()`,
-      last_updated: `TIMESTAMP DEFAULT NOW()`,
+      created: `TIMESTAMPTZ DEFAULT NOW()`,
+      last_updated: `TIMESTAMPTZ DEFAULT NOW()`,
+    },
+    constraints: {
+      unique_server_and_config: {
+        type: "UNIQUE",
+        content: "server_name, config",
+      },
+      unique_server_and_id: {
+        type: "UNIQUE",
+        content: "server_name, id",
+      },
+    },
+    hooks: {
+      afterEach: [
+        {
+          commands: { update: 1 },
+          validate: async (args) => {
+            const { dbx, row } = args as unknown as ValidateRowArgsCommon<
+              DBSSchema["mcp_server_configs"],
+              DBS
+            >;
+            await testMCPServerConfig(dbx, row);
+          },
+        },
+      ],
     },
   },
   mcp_server_tools: {
     columns: {
       id: `SERIAL PRIMARY KEY`,
       name: `TEXT NOT NULL`,
+      icon: `TEXT`,
       description: `TEXT NOT NULL`,
       server_name: `TEXT NOT NULL REFERENCES mcp_servers(name) ON DELETE CASCADE`,
-      inputSchema: `JSONB`,
-      annotations: `JSONB`,
-      autoApprove: `BOOLEAN DEFAULT FALSE`,
+      inputSchema: {
+        jsonbSchema: { record: { values: { type: "unknown" } } },
+      },
+      outputSchema: {
+        nullable: true,
+        jsonbSchema: { record: { values: { type: "unknown" } } },
+      },
+      annotations: {
+        jsonbSchemaType: {
+          title: {
+            type: "string",
+            optional: true,
+            title: "Human-readable title for the tool",
+          },
+          readOnlyHint: {
+            type: "boolean",
+            optional: true,
+            title:
+              "If true, tool does not modify its environment (read-only). ",
+          },
+          openWorldHint: {
+            type: "boolean",
+            optional: true,
+            title: "If true, tool interacts with external entities",
+          },
+          idempotentHint: {
+            type: "boolean",
+            optional: true,
+            title:
+              "If true, repeated calls with same args have no additional effect",
+          },
+          destructiveHint: {
+            type: "boolean",
+            optional: true,
+            title: "If true, the tool may perform destructive updates",
+          },
+        },
+        nullable: true,
+      },
+      mode: {
+        info: { hint: "Used by prostgles mcp tools" },
+        nullable: true,
+        /**
+         * - auto-approved-user-actionable:
+         *        The tool is executed without approval and result is not passed to the llm.
+         *        Input and/or output can then be displayed to the user to take actions on it.
+         *        Tool result can be overwritten by the user and that overwritten and passed to the llm.
+         * - user-provides-response:
+         *        The tool input is provided to the user to interact with and give feedback (which will be incorporated into the tool result).
+         *        No execution logic and mostly used for structured questions and answers
+         */
+        enum: [
+          "auto-approved-user-actionable",
+          "user-provides-response",
+          "always-needs-approval",
+        ],
+      },
     },
     indexes: {
       unique_server_name_tool_name: {
@@ -111,21 +200,7 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
       error: `TEXT`,
       install_log: `TEXT`,
       install_error: `TEXT`,
-      last_updated: `TIMESTAMP DEFAULT NOW()`,
-    },
-  },
-  mcp_server_tool_calls: {
-    columns: {
-      id: `SERIAL PRIMARY KEY`,
-      chat_id: `INTEGER REFERENCES llm_chats(id) ON DELETE SET NULL`,
-      user_id: `UUID REFERENCES users(id) ON DELETE SET NULL`,
-      mcp_server_name: `TEXT REFERENCES mcp_servers(name) ON DELETE SET NULL`,
-      mcp_tool_name: `TEXT, FOREIGN KEY  (mcp_server_name, mcp_tool_name) REFERENCES mcp_server_tools(server_name, name) ON DELETE SET NULL`,
-      input: `JSONB`,
-      output: `JSONB`,
-      error: `JSON`,
-      called: `TIMESTAMP DEFAULT NOW()`,
-      duration: `INTERVAL NOT NULL`,
+      last_updated: `TIMESTAMPTZ DEFAULT NOW()`,
     },
   },
   llm_chats_allowed_mcp_tools: {
@@ -134,7 +209,9 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
     },
     columns: {
       chat_id: `INTEGER NOT NULL REFERENCES llm_chats(id) ON DELETE CASCADE`,
+      server_name: `TEXT NOT NULL REFERENCES mcp_servers ON DELETE CASCADE`,
       tool_id: `INTEGER NOT NULL REFERENCES mcp_server_tools(id) ON DELETE CASCADE`,
+      server_config_id: `INTEGER REFERENCES mcp_server_configs ON DELETE CASCADE`,
       auto_approve: `BOOLEAN DEFAULT FALSE`,
     },
     indexes: {
@@ -142,6 +219,149 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
         unique: true,
         columns: "chat_id, tool_id",
       },
+    },
+    hooks: {
+      afterAll: [
+        {
+          commands: { insert: 1, update: 1 },
+          validate: async (args) => {
+            const { dbx: dbs, data } =
+              args as unknown as ValidateRowsArgsCommon<
+                DBSSchema["llm_chats_allowed_mcp_tools"],
+                DBS
+              >;
+            const serverNames = Array.from(
+              new Set(data.map((row) => row.server_name).filter(isDefined)),
+            );
+            const serversWithoutConfigId = Array.from(
+              new Set(
+                data
+                  .map((row) =>
+                    row.server_config_id ? undefined : row.server_name,
+                  )
+                  .filter(isDefined),
+              ),
+            );
+            const serversThatNeedConfigs = await dbs.mcp_servers.find(
+              {
+                name: { $in: serversWithoutConfigId },
+                config_schema: { $ne: null },
+              },
+              { select: { name: 1 } },
+            );
+            if (serversThatNeedConfigs.length) {
+              throw new Error(
+                `MCP Servers ${serversThatNeedConfigs
+                  .map((s) => s.name)
+                  .join(
+                    ", ",
+                  )} require a server_config_id to be set for allowed tools. Please provide a valid server_config_id.`,
+              );
+            }
+            if (serverNames.length) {
+              await dbs.mcp_servers.update(
+                {
+                  name: { $in: serverNames },
+                  enabled: false,
+                },
+                {
+                  enabled: true,
+                },
+              );
+            }
+          },
+        },
+      ],
+    },
+  },
+  mcp_tool_approval_requests: {
+    columns: {
+      id: `SERIAL PRIMARY KEY`,
+      chat_id: `INTEGER NOT NULL REFERENCES llm_chats(id) ON DELETE CASCADE`,
+      user_id: `UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE`,
+      connection_id: `UUID REFERENCES connections(id) ON DELETE CASCADE`,
+      message_id: `int8 REFERENCES llm_messages(id) ON DELETE CASCADE`,
+      source: {
+        jsonbSchema: {
+          oneOfType: [
+            {
+              type: { enum: ["chat"] },
+              responseCount: {
+                type: "integer",
+                description:
+                  "Total number of responses needed for the message to be considered fully responded to. Used to determine when to run requests and respond to AI",
+              },
+            },
+            {
+              type: { enum: ["proxy"] },
+              parentToolUseMessageId: "string",
+            },
+          ],
+        },
+      },
+      tool_name: `TEXT NOT NULL`,
+      input: { jsonbSchema: { record: { values: "unknown" } } },
+      server_name: `TEXT NOT NULL`,
+      tool_use_id: `TEXT NOT NULL`,
+      /** TODO: finish multi-config */
+      server_config_id: `INTEGER REFERENCES mcp_server_configs(id) ON DELETE SET NULL`,
+      response: {
+        nullable: true,
+        enum: ["approve", "deny", "auto-approve", "timed-out"],
+      },
+      created: `TIMESTAMPTZ DEFAULT NOW()`,
+      updated: `TIMESTAMPTZ DEFAULT NOW()`,
+    },
+    constraints: {
+      tool_name_server_name_fk:
+        "FOREIGN KEY (server_name, tool_name) REFERENCES mcp_server_tools(server_name, name) ON DELETE CASCADE",
+    },
+  },
+  mcp_server_tool_calls: {
+    columns: {
+      id: `SERIAL PRIMARY KEY `,
+      chat_id: `INTEGER REFERENCES llm_chats(id) ON DELETE SET NULL`,
+      user_id: `UUID REFERENCES users(id) ON DELETE SET NULL`,
+      mcp_tool_approval_requests_id: `INTEGER REFERENCES mcp_tool_approval_requests(id) ON DELETE SET NULL`,
+      mcp_server_name: `TEXT REFERENCES mcp_servers(name) ON DELETE SET NULL`,
+      mcp_tool_name: `TEXT`,
+      tool_use_id: `TEXT DEFAULT ''`,
+      mcp_server_config_id: `INTEGER`,
+      mcp_full_tool_name: `TEXT NOT NULL`,
+      input: {
+        nullable: true,
+        jsonbSchema: {
+          record: {
+            values: {
+              type: "unknown",
+            },
+          },
+        },
+      },
+      output: {
+        nullable: true,
+        jsonbSchema: {
+          record: {
+            values: {
+              type: "unknown",
+            },
+          },
+        },
+      },
+      error: {
+        nullable: true,
+        jsonbSchema: {
+          type: "unknown",
+        },
+      },
+      called_at: `TIMESTAMPTZ NOT NULL DEFAULT NOW()`,
+      finished_at: `TIMESTAMPTZ`,
+    },
+    constraints: {
+      mcp_tool_name_server_name_fk:
+        "FOREIGN KEY (mcp_server_name, mcp_tool_name) REFERENCES mcp_server_tools(server_name, name) ON DELETE SET NULL",
+      mcp_server_config_id_fk:
+        "FOREIGN KEY (mcp_server_name, mcp_server_config_id) REFERENCES mcp_server_configs(server_name, id) ON DELETE SET NULL",
     },
   },
 };

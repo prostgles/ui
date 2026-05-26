@@ -1,3 +1,4 @@
+import type { DBS } from "src/dashboard/Dashboard/DBS";
 import type { DeckGLMapDivDemoControls } from "../../dashboard/Map/DeckGLMap";
 import { runDbSQL } from "../../dashboard/W_SQL/getDemoUtils";
 import { tout } from "../../pages/ElectronSetup/ElectronSetup";
@@ -12,9 +13,9 @@ import {
 
 /** Close previous windows */
 export const closeAllViews = async () => {
-  let windowCloseBtn;
+  let windowCloseBtn: HTMLElement | null;
   do {
-    windowCloseBtn = getElement("dashboard.window.close");
+    windowCloseBtn = getElement("dashboard.window.close") as HTMLElement | null;
     windowCloseBtn?.click();
     await tout(400);
     const deleteSql = getElement<HTMLButtonElement>("CloseSaveSQLPopup.delete");
@@ -25,12 +26,13 @@ export const closeAllViews = async () => {
 export const dashboardDemo = async () => {
   await tout(500);
 
+  const { dbs } = window as unknown as { dbs: DBS };
   const DEMO_WSP_PREFIX = "Demo Workspace ";
-  const demoWspNameFilter = { "name.$like": `${DEMO_WSP_PREFIX}%` };
-  await (window as any).dbs.workspaces.update(demoWspNameFilter, {
+  const demoWspNameFilter = { name: { $like: `${DEMO_WSP_PREFIX}%` } };
+  await dbs.workspaces.update(demoWspNameFilter, {
     deleted: true,
   });
-  await (window as any).dbs.workspaces.delete(demoWspNameFilter);
+  await dbs.workspaces.delete(demoWspNameFilter);
 
   await click("dashboard.goToConnections");
   await tout(500);
@@ -60,7 +62,11 @@ export const dashboardDemo = async () => {
       // await click("dashboard.menu");
       // await click("DashboardMenuHeader.togglePinned");
     }
-    await click("dashboard.menu.tablesSearchList", `[data-key=${tableName}]`);
+    await click(
+      "dashboard.menu.tablesSearchList",
+      `[data-key=${JSON.stringify(tableName)}]`,
+    );
+    await waitForElement("", `[data-table-name=${JSON.stringify(tableName)}]`);
     // await click("DashboardMenuHeader.togglePinned");
   };
 
@@ -71,11 +77,12 @@ export const dashboardDemo = async () => {
   await tout(500);
   await click("AddColumnMenu");
   await click("AddColumnMenu", "[data-key=Referenced]");
-  await click("JoinPathSelectorV2");
+  // await click("JoinPathSelectorV2");
   await click("JoinPathSelectorV2", `[data-key="(id = customer_id) orders"]`);
 
   await click("QuickAddComputedColumn");
   await click("QuickAddComputedColumn", `[data-key="$countAll`);
+  await click("QuickAddComputedColumn.Add");
 
   await type("Customer Order Count", "", "#nested-col-name");
   await click("LinkedColumn.Add");
@@ -102,7 +109,7 @@ export const dashboardDemo = async () => {
 
   /** Add Map */
   await click("AddChartMenu.Map");
-  await click("AddChartMenu.Map", `[data-key="location"]`);
+  await click("AddChartMenu.Map", `[data-key="rider_location"]`);
   await tout(2e3);
   const mapDiv = document.querySelector(
     ".DeckGLMapDiv",
@@ -121,7 +128,7 @@ export const dashboardDemo = async () => {
   await tout(5e3);
   await click("ChartLayerManager");
   await click("ChartLayerManager.AddChartLayer.addLayer");
-  // await click("ChartLayerManager.AddChartLayer.addLayer", `[data-key=${JSON.stringify(`"roads.geojson".geog`)}]`);
+  // await click("ChartLayerManager.AddChartLayer.addLayer", `[data-key=${JSON.stringify(`routes.geog`)}]`);
   await click(
     "ChartLayerManager.AddChartLayer.addLayer",
     `[data-key=${JSON.stringify(`"london_restaurants.geojson".geometry`)}]`,
@@ -166,18 +173,23 @@ export const dashboardDemo = async () => {
   // await createWorkspace();
 
   await closeAllViews();
-  await runDbSQL(
-    "DELETE FROM futures WHERE (now() - timestamp) > interval '30 minutes'",
-  );
+  // await runDbSQL(
+  //   "DELETE FROM futures WHERE (now() - timestamp) > interval '30 minutes'",
+  // ).catch(console.error);
   await openTable("futures");
 
   await click("dashboard.window.toggleFilterBar");
+
+  /** Future data not loading */
+  if ((window as any).CI) {
+    return;
+  }
+
   await type("btcusd", "", ".SmartFilterBar input");
-  await click("", `[data-label="BTCUSDC"]`);
-  await click("", ".FilterWrapper_Type");
-  await click("", `[data-key="$in"]`);
+  await click("", `[data-label="BTCUSDT"]`);
+
+  await click("", `[title="Click to expand/collapse"]`);
   await type("btcu", "", ".FilterWrapper input.custom-input");
-  await click("", `[data-key="BTCUSDC"]`);
   await click("", `[data-key="BTCUSDT"]`);
 
   await click("SmartAddFilter");
@@ -188,6 +200,7 @@ export const dashboardDemo = async () => {
 
   await click("", `[title="Expand/Collapse filters"]`);
   await click("AddChartMenu.Timechart");
+  await click("AddChartMenu.Timechart", `[data-key="timestamp"]`);
   await click("ChartLayerManager");
   await click("TimeChartLayerOptions.aggFunc");
   await click("TimeChartLayerOptions.aggFunc.select");

@@ -1,14 +1,13 @@
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import Btn from "@components/Btn";
+import ErrorComponent from "@components/ErrorComponent";
+import { FlexCol, FlexRow } from "@components/Flex";
+import { IconPalette } from "@components/IconPalette/IconPalette";
 import type { DBSchemaTable } from "prostgles-types";
 import { asName, getKeys } from "prostgles-types";
 import React from "react";
 import type { Prgl } from "../../../../App";
-import Btn from "../../../../components/Btn";
-import ErrorComponent from "../../../../components/ErrorComponent";
-import { FlexCol, FlexRow } from "../../../../components/Flex";
-import { getStringFormat } from "../../../../utils";
+import { getStringFormat } from "../../../../utils/utils";
 import type { CommonWindowProps } from "../../../Dashboard/Dashboard";
-import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
 import { debounce } from "../../../Map/DeckGLWrapped";
 import type { DeltaOf } from "../../../RTComp";
 import RTComp from "../../../RTComp";
@@ -20,14 +19,11 @@ import {
 } from "./alterColumnUtilts";
 import { ColumnEditor } from "./ColumnEditor";
 import { getAlterFkeyQuery } from "./ReferenceEditor";
-import { IconPalette } from "../../../../components/IconPalette/IconPalette";
 
 export type AlterColumnProps = Pick<CommonWindowProps, "suggestions"> & {
   prgl: Prgl;
   table: DBSchemaTable;
   field: string;
-  db: DBHandlerClient;
-  tables: DBSchemaTablesWJoins;
   onClose: VoidFunction;
 };
 
@@ -76,15 +72,17 @@ export class AlterColumn extends RTComp<AlterColumnProps, S> {
   };
 
   setConstraints = debounce(async () => {
-    const { table, db, field } = this.props;
-    if (!db.sql || !field) return;
-    const constraints = await getColumnConstraints(table.name, field, db.sql);
+    const {
+      table,
+      prgl: { sql },
+      field,
+    } = this.props;
+    if (!sql || !field) return;
+    const constraints = await getColumnConstraints(table.name, field, sql);
     this.setState({ constraints });
   }, 100);
 
-  async onDeltaCombined(
-    delta: DeltaOf<AlterColumnProps> & DeltaOf<S>,
-  ): Promise<void> {
+  onDeltaCombined(delta: DeltaOf<AlterColumnProps> & DeltaOf<S>) {
     const deltaKeys = getKeys(delta ?? {});
     if (deltaKeys.includes("queryAge") || !this.state.constraints) {
       this.setConstraints();
@@ -94,7 +92,10 @@ export class AlterColumn extends RTComp<AlterColumnProps, S> {
   onNewDataType = async (
     args: Pick<Required<S>["edited"], "dataType" | "notNull" | "defaultValue">,
   ) => {
-    const { table, db } = this.props;
+    const {
+      table,
+      prgl: { sql },
+    } = this.props;
 
     const field = JSON.stringify(this.state.field || this.props.field);
 
@@ -123,7 +124,7 @@ export class AlterColumn extends RTComp<AlterColumnProps, S> {
       if (newType.startsWith("TIMESTAMP") || newType === "DATE") {
         using = `USING to_timestamp(${usingCol}, 'YYYY-MM-DD HH:MI:SS')::${newType}`;
 
-        const value = await db.sql!(
+        const value = await sql!(
           `SELECT ${field} FROM ${tableName} WHERE  ${field} IS NOT NULL LIMIT 1`,
           {},
           { returnType: "value" },
@@ -211,7 +212,8 @@ export class AlterColumn extends RTComp<AlterColumnProps, S> {
   };
 
   render() {
-    const { table, db, tables, prgl } = this.props;
+    const { table, prgl } = this.props;
+    const { sql, tables } = prgl;
 
     const isCreate = !this.props.field;
     const field = this.state.field || this.props.field;
@@ -231,7 +233,7 @@ export class AlterColumn extends RTComp<AlterColumnProps, S> {
       this.setState({ edited: undefined, query: "" });
     };
 
-    const dropConstraint = async (conName: string, endQuery = "") => {
+    const dropConstraint = (conName: string, endQuery = "") => {
       const pkCon = constraints?.find((c) => c.constraint_name === conName);
       if (pkCon) {
         this.setState({
@@ -287,7 +289,7 @@ export class AlterColumn extends RTComp<AlterColumnProps, S> {
                   query: `ALTER TABLE ${tName} \nRENAME COLUMN ${JSON.stringify(field)} \nTO ${JSON.stringify(newName)} `,
                 });
               } else if (k === "dataType") {
-                this.onNewDataType({ dataType: val.dataType });
+                void this.onNewDataType({ dataType: val.dataType });
               } else if (k === "isPkey") {
                 if (!pkeyCons) {
                   this.setState({
@@ -331,7 +333,7 @@ export class AlterColumn extends RTComp<AlterColumnProps, S> {
               }
             }}
           />
-          {table.info.fileTableName && (
+          {table.fileTableName && (
             <AlterColumnFileOptions
               columnName={col.name}
               tableName={tableName}
@@ -388,7 +390,7 @@ export class AlterColumn extends RTComp<AlterColumnProps, S> {
         {query && (!isCreate || showCreateQuery) && (
           <SQLSmartEditor
             query={query}
-            sql={db.sql!}
+            sql={sql!}
             title={isCreate ? "Create column query" : "Alter column query"}
             suggestions={this.props.suggestions}
             onCancel={() => {

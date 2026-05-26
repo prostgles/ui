@@ -18,7 +18,7 @@ type ChipProps = TestSelectors &
     label?: string;
     subValues?: (string | number)[];
     variant?: "naked" | "header" | "outline" | "default";
-    color?: "blue" | "yellow" | "red" | "green" | "gray";
+    color?: "blue" | "yellow" | "red" | "green" | "gray" | "orange";
     onDelete?: React.MouseEventHandler<HTMLButtonElement>;
     leftIcon?: {
       path: string;
@@ -64,7 +64,7 @@ export default class Chip extends React.Component<ChipProps> {
         {...divProps}
         style={{
           ...(!asHeader && {
-            padding: "6px",
+            padding: "6px 12px",
             ...(onDelete && {
               paddingLeft: "12px",
             }),

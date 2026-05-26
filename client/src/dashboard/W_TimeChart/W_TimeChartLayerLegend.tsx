@@ -1,22 +1,24 @@
+import Btn from "@components/Btn";
+import { FlexRow } from "@components/Flex";
+import { ScrollFade } from "@components/ScrollFade/ScrollFade";
+import { mdiClose } from "@mdi/js";
 import React from "react";
-import { FlexRow } from "../../components/Flex";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
-import { useSortedLayerQueries } from "../WindowControls/ChartLayerManager";
-import { ColorByLegend } from "../WindowControls/ColorByLegend";
-import { LayerColorPicker } from "../WindowControls/LayerColorPicker";
+import { ColorByLegend } from "../WindowControls/ColorByLegend/ColorByLegend";
+import type { ChartLinkOptions } from "../WindowControls/DataLayerManager/DataLayer";
+import { DataLayerDataSource } from "../WindowControls/DataLayerManager/DataLayerDataSource";
+import { LayerColorPicker } from "../WindowControls/DataLayerManager/LayerColorPicker";
+import { useSortedLayerQueries } from "../WindowControls/DataLayerManager/useSortedLayerQueries";
 import { TimeChartLayerOptions } from "../WindowControls/TimeChartLayerOptions";
 import type {
   ProstglesTimeChartLayer,
-  ProstglesTimeChartStateLayer,
+  W_TimeChartStateLayer,
 } from "./W_TimeChart";
-import Btn from "../../components/Btn";
-import { mdiClose } from "@mdi/js";
-import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 
-type P = Pick<CommonWindowProps, "getLinksAndWindows" | "myLinks" | "prgl"> & {
+type P = Pick<CommonWindowProps, "getLinksAndWindows" | "myLinks"> & {
   layerQueries: ProstglesTimeChartLayer[];
-  layers: ProstglesTimeChartStateLayer[];
+  layers: W_TimeChartStateLayer[];
   onChanged: VoidFunction;
   w: WindowSyncItem<"timechart">;
 };
@@ -27,11 +29,7 @@ export const W_TimeChartLayerLegend = ({
   onChanged,
   ...props
 }: P) => {
-  const {
-    w,
-    myLinks,
-    prgl: { tables },
-  } = props;
+  const { w, myLinks } = props;
 
   const activeLayerQueries = useSortedLayerQueries({
     layerQueries,
@@ -40,57 +38,62 @@ export const W_TimeChartLayerLegend = ({
 
   return (
     <ScrollFade className="W_TimeChartLayerLegend flex-row gap-1 min-w-0 o-auto no-scroll-bar">
-      {activeLayerQueries.map(
-        ({ _id, linkId, dateColumn, groupByColumn, link }) => {
-          return (
-            <FlexRow key={_id} className="W_TimeChartLayerLegend_Item gap-0">
-              {!groupByColumn && (
-                <LayerColorPicker
-                  btnProps={{ size: "micro" }}
-                  title={"layerDesc"}
-                  column={dateColumn}
-                  link={link}
-                  myLinks={myLinks}
-                  tables={tables}
-                  w={w}
-                  getLinksAndWindows={props.getLinksAndWindows}
-                />
-              )}
-
-              <TimeChartLayerOptions
-                w={w}
-                getLinksAndWindows={props.getLinksAndWindows}
-                link={link}
-                myLinks={myLinks}
-                tables={tables}
+      {activeLayerQueries.map((layer) => {
+        const { _id, linkId, dateColumn, groupByColumn, link } = layer;
+        return (
+          <FlexRow key={_id} className="W_TimeChartLayerLegend_Item gap-p5">
+            {!groupByColumn && (
+              <LayerColorPicker
+                btnProps={{ size: "nano", style: { padding: "1px" } }}
+                title={"layerDesc"}
                 column={dateColumn}
-                mode="on-screen"
-              />
-              {groupByColumn && (
-                <ColorByLegend
-                  {...props}
-                  className="ml-1"
-                  layers={layers}
-                  layerLinkId={linkId}
-                  groupByColumn={groupByColumn}
-                  onChanged={onChanged}
-                />
-              )}
-              <Btn
-                iconPath={mdiClose}
-                size="micro"
-                onClick={() => {
-                  const isLastLayer = activeLayerQueries.length === 1;
-                  link.$update({ closed: true, deleted: true });
-                  if (isLastLayer && w.parent_window_id) {
-                    w.$update({ closed: true, deleted: true });
-                  }
+                linkOptions={link.options as ChartLinkOptions}
+                onChange={(newOptions) => {
+                  link.$update({ options: newOptions }, { deepMerge: true });
                 }}
               />
-            </FlexRow>
-          );
-        },
-      )}
+            )}
+
+            <DataLayerDataSource
+              type={w.type}
+              w={w}
+              getLinksAndWindows={props.getLinksAndWindows}
+              layer={layer}
+              myLinks={myLinks}
+              hideDesc={true}
+            />
+            <TimeChartLayerOptions
+              w={w}
+              getLinksAndWindows={props.getLinksAndWindows}
+              link={link}
+              myLinks={myLinks}
+              column={dateColumn}
+              mode="on-screen"
+            />
+            {groupByColumn && (
+              <ColorByLegend
+                {...props}
+                className="ml-1"
+                layers={layers}
+                layerLinkId={linkId}
+                groupByColumn={groupByColumn}
+                onChanged={onChanged}
+              />
+            )}
+            <Btn
+              iconPath={mdiClose}
+              size="micro"
+              onClick={() => {
+                const isLastLayer = activeLayerQueries.length === 1;
+                link.$update({ closed: true, deleted: true });
+                if (isLastLayer && w.parent_window_id) {
+                  w.$update({ closed: true, deleted: true });
+                }
+              }}
+            />
+          </FlexRow>
+        );
+      })}
     </ScrollFade>
   );
 };

@@ -1,10 +1,10 @@
+import Btn from "@components/Btn";
+import { InfoRow } from "@components/InfoRow";
+import PopupMenu from "@components/PopupMenu";
+import { Select } from "@components/Select/Select";
 import { mdiRefreshAuto } from "@mdi/js";
 import React, { useState } from "react";
-import type { ExtraProps, Prgl } from "../../App";
-import Btn from "../../components/Btn";
-import { InfoRow } from "../../components/InfoRow";
-import PopupMenu from "../../components/PopupMenu";
-import Select from "../../components/Select/Select";
+import type { Prgl } from "../../App";
 
 const DESTINATIONS = [
   { key: "Local", subLabel: "Saved locally (server in address bar)" },
@@ -27,13 +27,13 @@ const DAYS_OF_WEEK = [
   { key: 7, label: "Sunday" },
 ] as const;
 
-import type { DBSSchema } from "../../../../common/publishUtils";
-import type { PGDumpParams } from "../../../../common/utils";
-import FormField from "../../components/FormField/FormField";
-import { CredentialSelector } from "./CredentialSelector";
-import { DEFAULT_DUMP_OPTS, DumpOptions } from "./DumpOptions";
+import type { DBSSchema } from "@common/publishUtils";
+import { DEFAULT_DUMP_OPTS, type PGDumpParams } from "@common/utils";
+import FormField from "@components/FormField/FormField";
+import { CloudStorageCredentialSelector } from "./CloudStorageCredentialSelector";
+import { PGDumpOptions } from "./PGDumpOptions";
 
-type P = Pick<Prgl, "db" | "dbs" | "dbsMethods" | "dbsTables"> & {
+type P = Pick<Prgl, "db" | "dbs" | "dbsMethods" | "dbsTables" | "sql"> & {
   connectionId: string;
 };
 export const AutomaticBackups = ({
@@ -42,6 +42,7 @@ export const AutomaticBackups = ({
   dbsMethods,
   connectionId: connection_id,
   db,
+  sql,
 }: P) => {
   const [dumpOpts, setDumpOpts] = useState<PGDumpParams>(DEFAULT_DUMP_OPTS);
 
@@ -128,10 +129,7 @@ export const AutomaticBackups = ({
             }}
           />
           {!!database_config?.backups_config?.cloudConfig && (
-            <CredentialSelector
-              dbs={dbs}
-              dbsTables={dbsTables}
-              dbsMethods={dbsMethods}
+            <CloudStorageCredentialSelector
               selectedId={
                 database_config.backups_config.cloudConfig.credential_id ||
                 undefined
@@ -194,10 +192,11 @@ export const AutomaticBackups = ({
                   }}
                 />
               )}
-              <DumpOptions
+              <PGDumpOptions
                 connectionId={connection_id}
                 dbsMethods={dbsMethods}
                 dbs={dbs}
+                dbSql={sql}
                 dbProject={db}
                 dbsTables={dbsTables}
                 opts={dumpOpts}

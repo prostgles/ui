@@ -1,18 +1,18 @@
+import Btn from "@components/Btn";
+import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
+import PopupMenu from "@components/PopupMenu";
+import { Select } from "@components/Select/Select";
 import { mdiClose, mdiPlus } from "@mdi/js";
 import React from "react";
-import Btn from "../../../../components/Btn";
-import { FlexCol, FlexRow, FlexRowWrap } from "../../../../components/Flex";
-import PopupMenu from "../../../../components/PopupMenu";
-import Select from "../../../../components/Select/Select";
+import { isDefined } from "prostgles-types";
 import { SmartSearch } from "../../../SmartFilter/SmartSearch/SmartSearch";
 import { StyledCell } from "../../tableUtils/StyledTableColumn";
 import { ColorPicker } from "../ColorPicker";
 import type {
   ConditionalStyle,
   StyleColumnProps,
-} from "../ColumnStyleControls";
-import { ChipStylePalette } from "./ChipStylePalette";
-import { isDefined } from "../../../../utils";
+} from "../ColumnStyleControls/ColumnStyleControls";
+import { ChipStylePalette, DEFAULT_CHIP_STYLE } from "./ChipStylePalette";
 
 export const CONDITION_OPERATORS = [
   "=",
@@ -53,12 +53,18 @@ export const ConditionalCellStyleControls = ({
     if (!newStyle) {
       newConditions = newConditions.filter((_c, _i) => _i !== idx);
     } else if (idx === undefined) {
-      newConditions.push({ chipColor: "red", operator: "=", condition: "" });
+      newConditions.push({
+        chipColor: DEFAULT_CHIP_STYLE.color,
+        textColor: DEFAULT_CHIP_STYLE.textColor,
+        borderColor: DEFAULT_CHIP_STYLE.borderColor,
+        operator: "=",
+        condition: "",
+      });
     } else {
       newConditions = newConditions.map((cs, i) => {
         if (i === idx) return { ...cs, ...newStyle };
         return cs;
-      }) as any;
+      }) as typeof newConditions;
     }
     updateStyle({ conditions: newConditions });
   };
@@ -112,7 +118,7 @@ export const ConditionalCellStyleControls = ({
             <Btn
               title="Remove style"
               iconPath={mdiClose}
-              onClick={(e) => {
+              onClick={() => {
                 updateCondStyle(null, condIdx);
               }}
             />
@@ -148,7 +154,9 @@ export const ConditionalCellStyleControls = ({
                   <ColorPicker
                     label="Text:"
                     value={
-                      cs.textColor ?? style.defaultStyle?.textColor ?? "black"
+                      cs.textColor ??
+                      style.defaultStyle?.textColor ??
+                      DEFAULT_CHIP_STYLE.textColor
                     }
                     onChange={(textColor) => {
                       updateStyle({

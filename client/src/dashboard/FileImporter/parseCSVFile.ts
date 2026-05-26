@@ -1,6 +1,6 @@
 import type { AnyObject } from "prostgles-types";
 import { asName } from "prostgles-types";
-import { getStringFormat } from "../../utils";
+import { getStringFormat } from "../../utils/utils";
 import type { FileImporterState } from "./FileImporter";
 import { getCSVFirstChunk, getPapa } from "./FileImporter";
 
@@ -14,7 +14,7 @@ export async function parseCSVFile(
   cols: Col[];
   header: boolean;
 }> {
-  const hasHeaders = async (dataPreview: string[][]) => {
+  const hasHeaders = (dataPreview: string[][]) => {
     /** check if headers are in first row */
     const [r0, r1] = dataPreview;
 

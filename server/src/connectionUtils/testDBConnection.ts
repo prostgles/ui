@@ -1,5 +1,8 @@
-import type { DBGeneratedSchema } from "../../../common/DBGeneratedSchema";
-import { getConnectionDetails } from "./getConnectionDetails";
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
+import {
+  getConnectionDetails,
+  type ConnectionDetails,
+} from "./getConnectionDetails";
 import { validateConnection, type ConnectionInfo } from "./validateConnection";
 export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
 
@@ -30,7 +33,7 @@ export const testDBConnection = (
   check?: (c: pgPromise.IConnected<{}, pg.IClient>) => any,
 ): Promise<{
   prostglesSchemaVersion: string | undefined;
-  connectionInfo: pg.IConnectionParameters<pg.IClient>;
+  connectionInfo: ConnectionDetails;
   canCreateDb: boolean | undefined;
   isSSLModeFallBack?: boolean;
 }> => {
@@ -85,9 +88,11 @@ export const testDBConnection = (
         await c.done();
       })
       .catch((err) => {
-        console.error("Error connecting to database", con.db_host, err);
         const errRes = err instanceof Error ? err.message : JSON.stringify(err);
         if (errRes === NO_SSL_SUPPORT_ERROR && _c.db_ssl === "prefer") {
+          console.warn(
+            `Falling back to sslmode=disable for host ${con.db_host} as sslmode=prefer is not supported by the server.`,
+          );
           return resolve(
             testDBConnection(
               {
@@ -98,6 +103,11 @@ export const testDBConnection = (
               (expectSuperUser = false),
               check,
             ).then((res) => ({ ...res, isSSLModeFallBack: true })),
+          );
+        } else {
+          console.error(
+            `Error connecting to database ${JSON.stringify(con.db_host)}`,
+            err,
           );
         }
         const localHosts = [

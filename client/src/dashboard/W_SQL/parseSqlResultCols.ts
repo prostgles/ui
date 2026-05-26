@@ -1,4 +1,5 @@
-import { PALETTE } from "../Dashboard/dashboardUtils";
+import type { SQLResult } from "prostgles-client/dist/prostgles";
+import { PALETTE } from "../Dashboard/PALETTE";
 import { getColWidth } from "../W_Table/tableUtils/getColWidth";
 import type { W_SQL } from "./W_SQL";
 
@@ -11,8 +12,8 @@ export const parseSqlResultCols = function (
     sql,
     trimmedSql,
   }: {
-    rows: any[];
-    fields: any[];
+    rows: string[][];
+    fields: SQLResult<"stream">["fields"];
     isSelect: boolean;
     trimmedSql: string;
     sql: string;
@@ -50,7 +51,7 @@ export const parseSqlResultCols = function (
           if (!newCols.some((nc) => nc.name === c.name)) {
             newCols.push({
               name: c.name,
-              colorArr: PALETTE.c1.get(1, "deck"),
+              colorArr: PALETTE.c1.getDeckRGBA(),
             });
           }
         });
@@ -59,7 +60,11 @@ export const parseSqlResultCols = function (
           options: {
             ...l.options,
             columns: newCols,
-            sql,
+            dataSource: {
+              type: "sql",
+              sql,
+              withStatement: "",
+            },
           },
         });
       }
@@ -68,7 +73,10 @@ export const parseSqlResultCols = function (
   return cols;
 };
 
-export const getFieldsWithActions = (fields: any[], isSelect: boolean) =>
+export const getFieldsWithActions = (
+  fields: SQLResult<"stream">["fields"],
+  isSelect: boolean,
+) =>
   fields.map((f, idx) => ({
     ...f,
     idx,

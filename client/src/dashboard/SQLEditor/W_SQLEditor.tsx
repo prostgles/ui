@@ -8,14 +8,14 @@ import { registerSuggestions } from "./SQLCompletion/monacoSQLSetup/registerSugg
 export const LANG = "sql";
 
 let monacoPromise:
-  | Promise<typeof import("monaco-editor/esm/vs/editor/editor.api.js")>
+  | Promise<typeof import("monaco-editor/esm/vs/editor/editor.api")>
   | undefined;
 /**
  * This option seems to start downloading monaco (870.js) from the start: webpackPrefetch: true
  */
 export const getMonaco = async () => {
   monacoPromise ??= import(
-    /* webpackChunkName: "monaco_editor" */ /*  webpackPrefetch: 99 */ "monaco-editor/esm/vs/editor/editor.api.js"
+    /* webpackChunkName: "monaco_editor" */ /*  webpackPrefetch: 99 */ "monaco-editor/esm/vs/editor/editor.api"
   );
   const monaco = await monacoPromise;
   return monaco;
@@ -156,6 +156,7 @@ export type SQLSuggestion = {
   constraintInfo?: PGConstraint;
 
   topKwd?: TopKeyword;
+  keywordInfo?: PG_Keyword;
   colInfo?: PG_Table["cols"][number];
 
   /**
@@ -176,22 +177,26 @@ export type MonacoError = Pick<
   length?: number;
 };
 
-import { mdiPlay } from "@mdi/js";
-import { isEqual } from "prostgles-types";
-import type { SQLHandler } from "prostgles-types";
-import Btn from "../../components/Btn";
-import { getDataTransferFiles } from "../../components/FileInput/DropZone";
-import { FlexCol } from "../../components/Flex";
+import Btn from "@components/Btn";
+import { getDataTransferFiles } from "@components/FileInput/useFileDropZone";
+import { FlexCol } from "@components/Flex";
 import {
   MonacoEditor,
   type MonacoEditorProps,
-} from "../../components/MonacoEditor/MonacoEditor";
-import { isEmpty, omitKeys } from "prostgles-types";
+} from "@components/MonacoEditor/MonacoEditor";
+import { getSelectedText } from "@components/MonacoEditor/useMonacoEditorAddActions";
+import { mdiPlay } from "@mdi/js";
+import type {
+  IPosition,
+  Position,
+} from "monaco-editor/esm/vs/editor/editor.api";
+import type { SQLHandler } from "prostgles-types";
+import { isEmpty, isEqual, omitKeys } from "prostgles-types";
 import { SECOND } from "../Charts";
 import type { DashboardState } from "../Dashboard/Dashboard";
 import type { WindowData } from "../Dashboard/dashboardUtils";
 import RTComp from "../RTComp";
-import type { IRange, editor } from "../W_SQL/monacoEditorTypes";
+import type { editor } from "../W_SQL/monacoEditorTypes";
 import type { TopKeyword } from "./SQLCompletion/KEYWORDS";
 import type { CodeBlock } from "./SQLCompletion/completionUtils/getCodeBlock";
 import {
@@ -205,6 +210,7 @@ import type {
   PG_DataType,
   PG_EventTrigger,
   PG_Function,
+  PG_Keyword,
   PG_Policy,
   PG_Role,
   PG_Rule,
@@ -213,12 +219,10 @@ import type {
   PG_Trigger,
 } from "./SQLCompletion/getPGObjects";
 import { addSqlEditorFunctions } from "./addSqlEditorFunctions";
-import { defineCustomMonacoSQLTheme } from "./defineCustomMonacoSQLTheme";
 import type { GetFuncs } from "./registerFunctionSuggestions";
 import { registerFunctionSuggestions } from "./registerFunctionSuggestions";
 import { scrollToLineIfNeeded } from "./utils/scrollToLineIfNeeded";
 import { setMonacEditorError } from "./utils/setMonacEditorError";
-import { getSelectedText } from "@components/MonacoEditor/useMonacoEditorAddActions";
 
 export type SQLEditorRef = {
   editor: editor.IStandaloneCodeEditor;
@@ -228,9 +232,9 @@ export type SQLEditorRef = {
 
 type P = {
   value: string;
-  onChange: (newValue: string, cursorPosition: any) => any | void;
+  onChange: (newValue: string, cursorPosition: any) => void;
   debounce?: number;
-  onRun?: (code: string, isSelected: boolean) => any | void;
+  onRun?: (code: string, isSelected: boolean) => void;
   suggestions?: DashboardState["suggestions"] & {
     onLoaded?: VoidFunction;
   };
@@ -242,8 +246,12 @@ type P = {
   onStopQuery?: (terminate: boolean) => any;
   sql?: SQLHandler;
   onMount?: (ref: SQLEditorRef) => void;
-  onUnmount?: (editor: any, cursorPosition: any) => void | Promise<void>;
-  cursorPosition?: any;
+  onUnmount?: (
+    editor: any,
+    cursorPosition: Position | undefined,
+  ) => void | Promise<void>;
+  cursorPosition?: IPosition;
+  onDidSetCursorPosition?: () => void;
   style?: React.CSSProperties;
   className?: string;
   autoFocus?: boolean;
@@ -262,18 +270,18 @@ export class W_SQLEditor extends RTComp<P, S> {
   error?: MonacoError;
   value?: string;
 
-  constructor(props) {
+  constructor(props: P) {
     super(props);
     this.state = {
-      value: props.value ?? "",
+      value: props.value,
       editorMounted: false,
     };
   }
 
-  async onMount() {
+  onMount() {
     window.addEventListener(
       "beforeunload",
-      async (e) => {
+      async () => {
         await this.onUnmount();
       },
       false,
@@ -281,7 +289,10 @@ export class W_SQLEditor extends RTComp<P, S> {
   }
 
   async onUnmount() {
-    await this.props.onUnmount?.(this.editor, this.editor?.getPosition());
+    await this.props.onUnmount?.(
+      this.editor,
+      this.editor?.getPosition() || undefined,
+    );
     if (this.rootRef) this.resizeObserver?.unobserve(this.rootRef);
   }
 
@@ -289,7 +300,7 @@ export class W_SQLEditor extends RTComp<P, S> {
   loadedSuggestions: DashboardState["suggestions"];
   loadedFuncs = false;
   resizeObserver?: ResizeObserver;
-  onDelta = async (dp, ds) => {
+  onDelta = async () => {
     const {
       error,
       getFuncDef,
@@ -306,7 +317,7 @@ export class W_SQLEditor extends RTComp<P, S> {
     }
 
     if (!this.resizeObserver && this.rootRef) {
-      this.resizeObserver = new ResizeObserver((entries) => {
+      this.resizeObserver = new ResizeObserver(() => {
         this.editor?.revealLineInCenterIfOutsideViewport(
           this.editor.getPosition()?.lineNumber ?? value.split(EOL).length,
         );
@@ -348,7 +359,7 @@ export class W_SQLEditor extends RTComp<P, S> {
     /* SET ERROR */
     if (this.editor && !isEqual(error, this.error)) {
       this.error = error;
-      setMonacEditorError(
+      void setMonacEditorError(
         this.editor,
         monaco,
         this.getCurrentCodeBlock,
@@ -358,7 +369,7 @@ export class W_SQLEditor extends RTComp<P, S> {
     }
   };
 
-  inDebounce: any;
+  inDebounce: ReturnType<typeof setTimeout> | null = null;
   curVal?: string;
   onChange = (val: string) => {
     const { onChange, debounce = 300 } = this.props;
@@ -443,7 +454,7 @@ export class W_SQLEditor extends RTComp<P, S> {
 
   onMonacoEditorMount = (editor: editor.IStandaloneCodeEditor) => {
     const { onMount, sqlOptions } = this.props;
-    addSqlEditorFunctions(
+    void addSqlEditorFunctions(
       editor,
       sqlOptions?.executeOptions === "smallest-block",
     );
@@ -457,23 +468,26 @@ export class W_SQLEditor extends RTComp<P, S> {
       });
     }
     this.editor = editor;
-    setActions(editor, this);
-    editor.onDidChangeModelContent((e) => {
+    void setActions(editor, this);
+    editor.onDidChangeModelContent(() => {
       this.onChange(editor.getValue());
-      setActiveCodeBlock.bind(this)(undefined);
+      void setActiveCodeBlock.bind(this)(undefined);
     });
-    editor.onDidChangeCursorPosition(async (e) => {
-      setActiveCodeBlock.bind(this)(e);
+    editor.onDidChangeCursorPosition((e) => {
+      void setActiveCodeBlock.bind(this)(e);
     });
 
-    const { cursorPosition } = this.props;
+    const { cursorPosition, onDidSetCursorPosition } = this.props;
     if (cursorPosition && !isEmpty(cursorPosition)) {
       this.editor.setPosition(cursorPosition);
 
       setTimeout(() => {
         if (!this.mounted || !this.editor) return;
         scrollToLineIfNeeded(this.editor, cursorPosition.lineNumber || 1);
+        onDidSetCursorPosition?.();
       }, SECOND / 2);
+    } else {
+      onDidSetCursorPosition?.();
     }
   };
 
@@ -502,6 +516,8 @@ export class W_SQLEditor extends RTComp<P, S> {
             style={{
               /** Ensures we can click add chart btn */
               zIndex: 2,
+              /* Align with first line */
+              marginTop: "-2px",
             }}
           >
             <Btn
@@ -521,7 +537,9 @@ export class W_SQLEditor extends RTComp<P, S> {
     return (
       <div
         className={
-          "sqleditor f-1 min-h-0 min-w-0 flex-col relative " + className
+          /** o-hidden is required to ensure monaco code is not visible in W_SQLBottomBar when results are shown in a low height (220px) table */
+          "sqleditor f-1 min-h-0 min-w-0 flex-col relative o-hidden " +
+          className
         }
         ref={(e) => {
           if (e) this.rootRef = e;

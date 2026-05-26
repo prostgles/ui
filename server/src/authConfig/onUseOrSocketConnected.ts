@@ -1,26 +1,21 @@
 import type { AuthConfig } from "prostgles-server/dist/Auth/AuthTypes";
-import { tout, type DBS } from "..";
-import { checkClientIP, sidKeyName } from "./sessionUtils";
-import type { AuthSetupData } from "./subscribeToAuthSetupChanges";
+
+import { sidKeyName } from "@common/authTypesAndConstants";
+import type { DB } from "prostgles-server/dist/initProstgles";
 import { getElectronConfig } from "../electronConfig";
+import { checkClientIP } from "./sessionUtils";
+import type { AuthConfigForStateOrConnection } from "./subscribeToAuthSetupChanges";
 
 export const getOnUseOrSocketConnected = (
-  dbs: DBS,
-  authSetupData: AuthSetupData,
+  _dbs: DB,
+  authSetupData: AuthConfigForStateOrConnection,
 ) => {
   const onUseOrSocketConnected: AuthConfig["onUseOrSocketConnected"] = async (
     sid,
-    client,
+    _client,
     reqInfo,
   ) => {
-    while (!authSetupData.globalSettings) {
-      console.warn(
-        "Delaying user request until globalSettings is ready",
-        reqInfo,
-      );
-      await tout(2000);
-    }
-    const { globalSettings } = authSetupData;
+    const { stateDatabaseConfig: database_config } = authSetupData;
 
     /** Is this needed? */
     const electronConfig = getElectronConfig();
@@ -34,8 +29,12 @@ export const getOnUseOrSocketConnected = (
       };
     }
 
-    if (globalSettings.allowed_ips_enabled) {
-      const ipCheck = await checkClientIP(dbs, reqInfo, globalSettings);
+    if (database_config.allowed_ips_enabled) {
+      const ipCheck = await checkClientIP(
+        _dbs,
+        reqInfo,
+        authSetupData.stateDatabaseConfig,
+      );
       if (!ipCheck.isAllowed) {
         return { error: "Your IP is not allowed", httpCode: 403 };
       }

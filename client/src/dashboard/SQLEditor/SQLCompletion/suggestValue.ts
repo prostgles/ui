@@ -1,7 +1,7 @@
-import { isDefined } from "../../../utils";
+import { isDefined } from "../../../utils/utils";
 import type { ColInfo } from "../../W_Table/TableMenu/getChartCols";
 import { suggestSnippets } from "./CommonMatchImports";
-import { getTableExpressionSuggestions } from "./completionUtils/getTableExpressionReturnTypes";
+import { getTableExpressionReturnTypes } from "./completionUtils/getTableExpressionReturnTypes";
 import type { TokenInfo } from "./completionUtils/getTokens";
 import {
   KNDS as KindMap,
@@ -65,7 +65,7 @@ export const suggestValue = async (
     };
     let query = "";
     if (!matchingTable) {
-      const { columnsWithAliasInfo } = await getTableExpressionSuggestions(
+      const { columnsWithAliasInfo } = await getTableExpressionReturnTypes(
         { parentCb, cb, ss, sql },
         "columns",
       );

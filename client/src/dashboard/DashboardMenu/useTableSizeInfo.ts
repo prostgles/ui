@@ -1,27 +1,26 @@
-import { usePromise } from "prostgles-client/dist/react-hooks";
-import type { DashboardMenuProps } from "./DashboardMenu";
-import { kFormatter } from "../W_Table/W_Table";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBSSchema } from "@common/publishUtils";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import { usePromise } from "prostgles-client";
 import { useMemo } from "react";
 import { bytesToSize } from "../BackupAndRestore/BackupsControls";
 import type { DBSchemaTablesWJoins } from "../Dashboard/dashboardUtils";
-import type { DBS } from "../Dashboard/DBS";
+import { kFormatter } from "../W_Table/tableUtils/kFormatter";
 
-type Args = Pick<DashboardMenuProps, "workspace" | "tables"> & {
-  db: DBHandlerClient;
-};
 export type TablesWithInfo = (DBSchemaTablesWJoins[number] & {
   endText: string;
   endTitle: string;
   count: number;
   sizeNum: number;
 })[];
-export const useTableSizeInfo = ({
-  workspace,
-  tables,
-  db,
-}: Args): { tablesWithInfo: TablesWithInfo } => {
-  const { tableListEndInfo, tableListSortBy } = workspace.options;
+
+/**
+ * TODO: move up to Dashboard level and provide via context to avoid fetching every time
+ */
+export const useTableSizeInfo = (
+  workspaceOptions: DBSSchema["workspaces"]["options"],
+) => {
+  const { tables, db } = usePrgl();
+  const { tableListEndInfo, tableListSortBy } = workspaceOptions;
   const tablesWithInfoNonSorted = usePromise(async () => {
     return await Promise.all(
       tables.map(async (t) => {
@@ -69,7 +68,7 @@ export const useTableSizeInfo = ({
     );
   }, [tables, tableListEndInfo, db]);
 
-  const tablesWithInfo = useMemo(() => {
+  const tablesWithInfo: TablesWithInfo = useMemo(() => {
     if (!tablesWithInfoNonSorted) {
       const tablesWithEmptyInfo = tables.map((t) => ({
         ...t,
@@ -94,5 +93,6 @@ export const useTableSizeInfo = ({
 
   return {
     tablesWithInfo,
+    isLoading: !tablesWithInfoNonSorted,
   };
 };

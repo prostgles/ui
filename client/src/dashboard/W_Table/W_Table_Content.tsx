@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import type { DivProps } from "../../components/Flex";
+import type { DivProps } from "@components/Flex";
 
 type P = Pick<DivProps, "children"> & {
   runningQuerySince: number | undefined;

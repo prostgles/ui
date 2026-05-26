@@ -3,7 +3,7 @@ import React, { useCallback, useMemo, useRef } from "react";
 import { CodeEditorWithSaveButton } from "../../CodeEditor/CodeEditorWithSaveButton";
 import type { MethodDefinitionProps } from "./MethodDefinition";
 import { useCodeEditorTsTypes } from "./useCodeEditorTsTypes";
-import Loading from "../../../components/Loader/Loading";
+import Loading from "@components/Loader/Loading";
 
 export const MethodFunctionDefinition = (props: MethodDefinitionProps) => {
   const {
@@ -76,7 +76,7 @@ function useCallbackDeep<T extends (...args: any[]) => any>(
     ref.current = {
       deps: dependencies,
       cb: callback,
-      wrapper: callback as T,
+      wrapper: callback,
     };
   }
 

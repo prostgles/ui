@@ -1,4 +1,4 @@
-import { isDefined } from "../../../utils";
+import { isDefined } from "../../../utils/utils";
 import { nameMatches } from "./CommonMatchImports";
 import { getParentFunction } from "./MatchSelect";
 import type {
@@ -40,7 +40,7 @@ export const suggestFuncArgs = async ({
         const { suggestions } = (await suggestColumnLike(
           { cb, parentCb, ss, setS, sql },
           false,
-        )) as { suggestions: ParsedSQLSuggestion[] };
+        ));
         const activeArgIndex = insideFunc.prevArgs.length;
         const activeArgs = funcDefs
           .map((f) => f.funcInfo?.arg_udt_names?.[activeArgIndex])

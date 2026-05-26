@@ -8,19 +8,19 @@ import {
   mdiTableAccount,
   mdiTableLock,
 } from "@mdi/js";
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client";
 import type {
   ContextDataObject,
   DBSSchema,
   TableRulesErrors,
-} from "../../../../common/publishUtils";
+} from "@common/publishUtils";
 import { dataCommand } from "../../Testing";
-import Btn from "../../components/Btn";
-import ButtonGroup from "../../components/ButtonGroup";
-import ErrorComponent from "../../components/ErrorComponent";
-import { FlexCol, FlexRow, classOverride } from "../../components/Flex";
-import { Icon } from "../../components/Icon/Icon";
-import Loading from "../../components/Loader/Loading";
+import Btn from "@components/Btn";
+import ButtonGroup from "@components/ButtonGroup";
+import ErrorComponent from "@components/ErrorComponent";
+import { FlexCol, FlexRow, classOverride } from "@components/Flex";
+import { Icon } from "@components/Icon/Icon";
+import Loading from "@components/Loader/Loading";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import { PublishedMethods } from "../W_Method/PublishedMethods";
 import type {
@@ -40,7 +40,7 @@ import { useAccessControlSearchParams } from "./useAccessControlSearchParams";
 import type { ValidEditedAccessRuleState } from "./useEditedAccessRule";
 import { useEditedAccessRule } from "./useEditedAccessRule";
 import { AskLLMAccessControl } from "../AskLLM/Setup/AskLLMAccessControl";
-import { ScrollFade } from "../../components/ScrollFade/ScrollFade";
+import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 
 const ACCESS_TYPES = ["Custom", "All views/tables", "Run SQL"] as const;
 export type PermissionEditProps = Pick<
@@ -70,18 +70,25 @@ export const AccessControlRuleEditor = ({
   dbsConnection,
   onCancel,
 }: UserGroupRuleEditorProps) => {
-  const { dbs, dbsTables, dbsMethods, connection, tables } = prgl;
+  const {
+    dbs,
+    sql,
+    dbsTables,
+    dbsMethods,
+    connection,
+    tables,
+    dbsMethodSchema,
+  } = prgl;
   const editedRule = useEditedAccessRule({ action, prgl });
   const { setAction } = useAccessControlSearchParams();
   const [wspErrors, setWspErrors] = useState<string>();
 
-  const currentSQLUser: string | undefined = usePromise(
+  const currentSQLUser = usePromise(
     async () =>
-      await prgl.db.sql?.(
-        `SELECT "current_user"()`,
-        {},
-        { returnType: "value" },
-      ),
+      (await sql?.(`SELECT "current_user"()`, {}, { returnType: "value" })) as
+        | string
+        | undefined,
+    [sql],
   );
   const type = editedRule?.type;
   if (!editedRule) {
@@ -160,8 +167,10 @@ export const AccessControlRuleEditor = ({
           <UserStats
             theme={prgl.theme}
             dbs={dbs}
+            dbsSql={prgl.dbsSql}
             dbsTables={dbsTables}
             dbsMethods={dbsMethods}
+            dbsMethodSchema={dbsMethodSchema}
           />
         </FlexRow>
 
@@ -270,7 +279,7 @@ export const AccessControlRuleEditor = ({
                 onChange({
                   ...rule,
                   ...newRule,
-                } as any);
+                } as AccessRule);
               }}
             />
 
@@ -304,7 +313,6 @@ export const AccessControlRuleEditor = ({
 
             <PublishedMethods
               className="my-2 PublishedMethods"
-              prgl={prgl}
               editedRule={editedRule}
               accessRuleId={
                 action.type === "edit" ? action.selectedRuleId : undefined

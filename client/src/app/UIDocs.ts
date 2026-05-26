@@ -1,10 +1,10 @@
 import { filterArrInverse } from "@common/llmUtils";
 import type { DBSSchema } from "@common/publishUtils";
 import type { ROUTES } from "@common/utils";
-import type { Route } from "react-router-dom";
+import type { Route } from "react-router";
 import { isPlaywrightTest } from "../i18n/i18nUtils";
 import type { Command } from "../Testing";
-import { isDefined } from "../utils";
+import { isDefined } from "../utils/utils";
 import { domToThemeAwareSVG } from "./domToSVG/domToThemeAwareSVG";
 import { accountUIDoc } from "./UIDocs/accountUIDoc";
 import { commandPaletteUIDoc } from "./UIDocs/commandPaletteUIDoc";
@@ -17,6 +17,8 @@ import { overviewUIDoc } from "./UIDocs/overviewUIDoc";
 import { serverSettingsUIDoc } from "./UIDocs/serverSettingsUIDoc";
 import { UIInstallation } from "./UIDocs/UIInstallationUIDoc";
 import { getSVGif } from "./domToSVG/SVGif/getSVGif";
+import type { DynamicComponentRegistry } from "./CommandPalette/DynamicComponent";
+import { setThemeForSVGScreenshot } from "./domToSVG/setThemeForSVGScreenshot";
 
 /**
  * The purpose of UIDocs is to provide structured metadata about the UI elements.
@@ -53,9 +55,9 @@ type UIDocCommon = {
   childrenTitle?: string;
 
   docOptions?: /**
-   * If docs is defined, then it will be rendered as a separate header in the documentation with this title.
-   */
-  | { title: string }
+     * If docs is defined, then it will be rendered as a separate header in the documentation with this title.
+     */
+    | { title: string }
     /**
      * If "asSeparateFile" AND docs is defined, this will be saved as a separate file in the documentation.
      * By default, a single file is generated for each root UIDoc with child items with docs appended to the bottom.
@@ -68,6 +70,8 @@ type UIDocCommon = {
 
   /** If true then this is not available for Prostgles Desktop */
   uiVersionOnly?: true;
+
+  componentName?: keyof DynamicComponentRegistry;
 };
 
 /**
@@ -134,6 +138,11 @@ export type UIDocElement =
     }>
   | UIDocBase<{
       type: "popup";
+      triggerMode?: "click" | "contextmenu";
+      /**
+       * Used in detecting if popup is shown
+       */
+      contentSelectorCommand?: Command;
       children: UIDocElement[];
     }>
   | UIDocBase<{
@@ -256,5 +265,6 @@ window.flatUIDocs = flatUIDocs;
 
 if (isPlaywrightTest) {
   window.toSVG = domToThemeAwareSVG;
+  window.setTheme = setThemeForSVGScreenshot;
   window.getSVGif = getSVGif;
 }

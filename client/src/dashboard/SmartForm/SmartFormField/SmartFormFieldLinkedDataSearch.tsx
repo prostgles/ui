@@ -1,7 +1,7 @@
 import { mdiCheckCircle, mdiCheckCircleOutline } from "@mdi/js";
 import React, { useMemo } from "react";
-import Btn from "../../../components/Btn";
-import { tout } from "../../../utils";
+import Btn from "@components/Btn";
+import { tout } from "../../../utils/utils";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
 import type { SmartFormFieldLinkedDataProps } from "./SmartFormFieldLinkedData";
 import {
@@ -11,7 +11,7 @@ import {
 
 type P = Pick<
   SmartFormFieldLinkedDataProps,
-  "db" | "methods" | "tables" | "row" | "column" | "tableName"
+  "db" | "methods" | "tables" | "row" | "column" | "tableName" | "sql"
 > & {
   ftable: DBSchemaTableWJoins;
   fcol: string;
@@ -30,8 +30,10 @@ export const SmartFormFieldLinkedDataSearch = ({
   readOnly,
   onChange,
   tableName,
+  sql,
 }: P) => {
   const listProps = useMemo(() => {
+    const searchFilterValue = row[column.name];
     return {
       getActions:
         readOnly ? undefined : (
@@ -63,19 +65,22 @@ export const SmartFormFieldLinkedDataSearch = ({
             );
           }
         ),
-      searchFilter: [
-        {
-          fieldName: fcol,
-          value: row[column.name],
-          minimised: true,
-        },
-      ],
+      searchFilter:
+        searchFilterValue === null ?
+          []
+        : [
+            {
+              fieldName: fcol,
+              value: searchFilterValue,
+              minimised: true,
+            },
+          ],
     } satisfies Pick<ViewMoreSmartCardListProps, "searchFilter" | "getActions">;
   }, [row, column.name, fcol, onChange, readOnly]);
-
   return (
     <ViewMoreSmartCardList
       db={db}
+      sql={sql}
       tables={tables}
       methods={methods}
       ftable={ftable}

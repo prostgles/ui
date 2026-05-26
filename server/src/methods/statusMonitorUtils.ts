@@ -3,7 +3,7 @@ import {
   EXCLUDE_FROM_SCHEMA_WATCH,
   STATUS_MONITOR_IGNORE_QUERY,
   type ServerStatus,
-} from "../../../common/utils";
+} from "@common/utils";
 import { getCDB } from "../ConnectionManager/ConnectionManager";
 
 export const execPSQLBash = (

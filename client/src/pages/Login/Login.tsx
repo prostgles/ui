@@ -1,18 +1,18 @@
 import React from "react";
 import type { Prgl } from "../../App";
-import Btn from "../../components/Btn";
-import ErrorComponent from "../../components/ErrorComponent";
-import { FlexCol } from "../../components/Flex";
-import FormField from "../../components/FormField/FormField";
+import Btn from "@components/Btn";
+import ErrorComponent from "@components/ErrorComponent";
+import { FlexCol } from "@components/Flex";
+import FormField from "@components/FormField/FormField";
 import { AuthNotifPopup } from "./AuthNotifPopup";
 import { LoginTotpFormFields } from "./LoginTotpForm";
 import { LoginWithProviders } from "./LoginWithProviders";
-import { useLoginState } from "./useLoginState";
+import { useAuthState } from "prostgles-client";
 
 export type LoginFormProps = Pick<Prgl, "auth">;
 
 export const Login = ({ auth }: LoginFormProps) => {
-  const authState = useLoginState({ auth });
+  const authState = useAuthState({ auth });
   const {
     formHandlers,
     isOnLogin,

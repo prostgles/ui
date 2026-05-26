@@ -1,53 +1,79 @@
 import React from "react";
 import "./ProgressBar.css";
 import type { DivProps } from "./Flex";
-import { classOverride } from "./Flex";
+import { classOverride, FlexRow } from "./Flex";
 
 type P = {
+  messageTop?: React.ReactNode;
   message?: React.ReactNode;
+  style?: React.CSSProperties;
   value: number;
   totalValue: number;
-  variant?: "responsive-barchart";
-};
-export const MINI_BARCHART_COLOR = "#05b0df";
+  endContent?: React.ReactNode;
+  color?: "active" | "gray";
+} & Omit<DivProps, "children">;
 
-export const ProgressBar = ({ message, value, totalValue, variant }: P) => {
-  const isBarchart = variant === "responsive-barchart";
-  const perc = totalValue > value ? Math.round((100 * value) / totalValue) : -1;
-  const lightColor = "#ddf8ff";
-  const height = isBarchart ? 8 : 2;
-  const progressBar = (
-    <div
-      className={isBarchart ? "shadow" : ""}
-      style={{
-        borderRadius: `${height / 2}px`,
-        height: `${height}px`,
-        ...(isBarchart ?
-          {
-            background: MINI_BARCHART_COLOR,
-            flex: 1,
-            minHeight: `${height}px`,
-            width: `${perc}%`,
-          }
-        : {
-            backgroundImage:
-              perc > -1 ?
-                `linear-gradient(90deg,  ${MINI_BARCHART_COLOR} 0%, ${MINI_BARCHART_COLOR} ${perc}%, ${lightColor} ${perc}%, ${lightColor})`
-              : `linear-gradient(90deg,  ${MINI_BARCHART_COLOR} 40%,  ${lightColor} 40%, ${lightColor})`,
-            width: "200px",
-            animation:
-              perc > -1 ? undefined : (
-                "indeterminateAnimation 1s infinite linear"
-              ),
-          }),
-      }}
-    ></div>
-  );
+export const MINI_BARCHART_COLOR = "var(--active)";
+
+export const ProgressBar = ({
+  messageTop,
+  message,
+  value,
+  totalValue,
+  endContent,
+  color,
+  ...divProps
+}: P) => {
+  const perc =
+    value === 0 ? 0
+    : totalValue >= value ? Math.round((100 * value) / totalValue)
+    : -1;
+  const lightColor = "var(--bg-action)";
+  const height = 4;
+  const isIndeterminate = perc === -1;
 
   return (
-    <div className="ProgressBar flex-col gap-p25">
-      {progressBar}
-      <div className={"text-1 " + (isBarchart ? "ta-left" : "")}>{message}</div>
+    <div
+      {...divProps}
+      className={classOverride(
+        "ProgressBar flex-col gap-p25",
+        divProps.className,
+      )}
+    >
+      {messageTop}
+      <div
+        className="ProgressBarOuter shadow"
+        style={{
+          background: lightColor,
+          overflow: "hidden",
+        }}
+      >
+        <div
+          className="ProgressBarInner shadow"
+          style={{
+            borderRadius: `${height / 2}px`,
+            height: `${height}px`,
+            background: { active: MINI_BARCHART_COLOR, gray: "var(--text-2)" }[
+              color ?? "active"
+            ],
+            minHeight: `${height}px`,
+            minWidth: "2px",
+            ...(isIndeterminate ?
+              {
+                animation: "indeterminateTranslateX 1s infinite linear",
+                willChange: "transform",
+                width: `${50}%`,
+              }
+            : {
+                width: `${perc}%`,
+              }),
+          }}
+        />
+      </div>
+      <FlexRow>
+        <div className={"text-1 "}>{message}</div>
+        {endContent}
+      </FlexRow>
     </div>
   );
 };

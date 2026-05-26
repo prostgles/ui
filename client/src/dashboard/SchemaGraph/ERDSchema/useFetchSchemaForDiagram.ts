@@ -1,25 +1,19 @@
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { fetchNamedSVG } from "@components/SvgIcon";
+import { usePromise } from "prostgles-client";
 import { isEmpty } from "prostgles-types";
-import { fetchNamedSVG } from "../../../components/SvgIcon";
-import { getCssVariableValue } from "../../Charts/onRenderTimechart";
+import { getCssVariableValue } from "../../Charts/TimeChart/getCssVariableValue";
 import { PG_OBJECT_QUERIES } from "../../SQLEditor/SQLCompletion/getPGObjects";
 import { COLOR_PALETTE } from "../../W_Table/ColumnMenu/ColorPicker";
 import type { ERDSchemaProps } from "./ERDSchema";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 
 export const useFetchSchemaForDiagram = (
   props: ERDSchemaProps & {
     canvasRef: React.RefObject<HTMLCanvasElement>;
   },
 ) => {
-  const {
-    db,
-    dbs,
-    connectionId,
-    tables: dbTables,
-    columnColorMode,
-    columnDisplayMode,
-    displayMode,
-  } = props;
+  const { columnColorMode, columnDisplayMode, displayMode } = props;
+  const { connectionId, dbs, sql, tables: dbTables } = usePrgl();
   const { data: dbConf } = dbs.database_configs.useFindOne(
     {
       $existsJoined: {
@@ -34,7 +28,6 @@ export const useFetchSchemaForDiagram = (
 
   const schemaInfo = usePromise(async () => {
     if (!dbConf) return;
-    const { sql } = db;
     const constraints =
       !sql ?
         []
@@ -64,7 +57,7 @@ export const useFetchSchemaForDiagram = (
             tableName,
         )
         .map((c) =>
-          relType === "referencedBy" ? c.table_name! : c.ftable_name!,
+          relType === "referencedBy" ? c.table_name : c.ftable_name!,
         );
     };
 
@@ -90,12 +83,22 @@ export const useFetchSchemaForDiagram = (
       });
 
     const colors = COLOR_PALETTE.slice(0);
+    const schemaColorMap = new Map<string, string>();
+    const upsertSchemaColorMap = (schema: string) => {
+      if (schemaColorMap.has(schema)) return schemaColorMap.get(schema)!;
+      const color = colors.shift() ?? getCssVariableValue("--text-2");
+      schemaColorMap.set(schema, color);
+      return color;
+    };
     const allTablesWithRootColor = allTableMostReferencedTop.map((t) => ({
       ...t,
       /** Root color assigned to top most referenced tables  */
-      rootColor: colors.shift(),
+      rootColor:
+        columnColorMode === "schema" ?
+          upsertSchemaColorMap(t.qualifiedNameParts.schema)
+        : t.references.length || t.referencedBy.length ? colors.shift()
+        : undefined,
     }));
-
     const allTables = await Promise.all(
       allTablesWithRootColor.map(async (t) => {
         return {
@@ -104,7 +107,7 @@ export const useFetchSchemaForDiagram = (
             !t.icon ? undefined : (
               await fetchSVGImage(
                 t.icon,
-                columnColorMode === "root" ?
+                columnColorMode === "root" || columnColorMode === "schema" ?
                   (t.rootColor ?? defaultIconColor)
                 : defaultIconColor,
               )
@@ -192,8 +195,9 @@ export const useFetchSchemaForDiagram = (
       tablesWithPositions,
       fkeys,
       columnConstraintIcons,
+      schemaColorMap,
     };
-  }, [columnColorMode, db, dbConf, dbTables]);
+  }, [columnColorMode, dbConf, dbTables, sql]);
 
   return { schemaInfo, dbConfId: dbConf?.id, dbConf };
 };

@@ -1,11 +1,12 @@
+import { classOverride, FlexCol } from "@components/Flex";
+import { Label } from "@components/Label";
+import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 import {
   getPossibleNestedInsert,
   isObject,
   type AnyObject,
 } from "prostgles-types";
 import React, { useMemo } from "react";
-import { classOverride, FlexCol } from "../../components/Flex";
-import { Label } from "../../components/Label";
 import type { DBSchemaTablesWJoins } from "../Dashboard/dashboardUtils";
 import type { SmartFormProps } from "./SmartForm";
 import {
@@ -16,11 +17,10 @@ import { SmartFormFileSection } from "./SmartFormFileSection";
 import type { NewRow, NewRowDataHandler } from "./SmartFormNewRowDataHandler";
 import type { SmartFormState } from "./useSmartForm";
 import type { SmartFormModeState } from "./useSmartFormMode";
-import { ScrollFade } from "../../components/ScrollFade/ScrollFade";
-import { includes } from "../W_SQL/W_SQLBottomBar/W_SQLBottomBar";
 
 type P = Pick<
   SmartFormProps,
+  | "sql"
   | "tableName"
   | "tables"
   | "db"
@@ -59,12 +59,10 @@ export const SmartFormFieldList = (props: P) => {
     modeType,
     methods,
     newRowData,
+    sql,
   } = props;
 
   const hideNullBtn = mode.type === "view" || props.hideNullBtn;
-
-  const tableInfo = table.info;
-
   const someColumnsHaveIcons = useMemo(() => {
     return displayedColumns.some((c) => {
       if (c.icon) return true;
@@ -78,7 +76,7 @@ export const SmartFormFieldList = (props: P) => {
   return (
     <ScrollFade
       className={classOverride(
-        "SmartFormFieldList flex-col f-1 o-auto min-h-0 min-w-0 pb-1 gap-1 px-2",
+        "SmartFormFieldList flex-col f-1 o-auto min-h-0 min-w-0 pb-1 gap-1 pl-1 pr-2",
         contentClassname,
       )}
     >
@@ -98,14 +96,14 @@ export const SmartFormFieldList = (props: P) => {
           geoJsonLayersDataFilterSignature=""
         />
       )} */}
-      {tableInfo.isFileTable && tableInfo.fileTableName && (
+      {table.isFileTable && table.fileTableName && (
         <SmartFormFileSection
           {...props}
           table={table}
           newRowDataHandler={newRowDataHandler}
           row={row}
           mode={mode}
-          mediaTableName={tableInfo.fileTableName}
+          mediaTableName={table.fileTableName}
         />
       )}
       {displayedColumns.map((c, i) => {
@@ -133,6 +131,7 @@ export const SmartFormFieldList = (props: P) => {
           <SmartFormField
             key={i}
             tables={tables}
+            sql={sql}
             db={db}
             tableName={tableName}
             table={table}

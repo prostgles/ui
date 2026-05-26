@@ -1,3 +1,16 @@
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
+import type { DBSSchema } from "@common/publishUtils";
+import { isObject } from "@common/publishUtils";
+import { ROUTES } from "@common/utils";
+import Btn from "@components/Btn";
+import ErrorComponent, { getErrorMessage } from "@components/ErrorComponent";
+import { FlexCol } from "@components/Flex";
+import { Icon } from "@components/Icon/Icon";
+import { InfoRow } from "@components/InfoRow";
+import Loading from "@components/Loader/Loading";
+import { ScrollFade } from "@components/ScrollFade/ScrollFade";
+import { Section } from "@components/Section";
+import { SwitchToggle } from "@components/SwitchToggle";
 import {
   mdiArrowLeft,
   mdiCheck,
@@ -5,34 +18,19 @@ import {
   mdiDeleteOutline,
   mdiPlus,
 } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client";
 import React from "react";
-import { NavLink, useNavigate, useParams } from "react-router-dom";
-import type { DBGeneratedSchema } from "../../../../common/DBGeneratedSchema";
-import type { DBSSchema } from "../../../../common/publishUtils";
-import { isObject } from "../../../../common/publishUtils";
-import type { ExtraProps } from "../../App";
-import Btn from "../../components/Btn";
-import ErrorComponent, {
-  getErrorMessage,
-} from "../../components/ErrorComponent";
-import { FlexCol } from "../../components/Flex";
-import { Icon } from "../../components/Icon/Icon";
-import { InfoRow } from "../../components/InfoRow";
-import Loading from "../../components/Loader/Loading";
-import { Section } from "../../components/Section";
-import { SwitchToggle } from "../../components/SwitchToggle";
+import { NavLink, useNavigate, useParams } from "react-router";
+import type { AppContextProps, Prgl } from "../../App";
+import { PostgresInstallationInstructions } from "../../components/PostgresInstallationInstructions";
 import { CodeConfirmation } from "../../dashboard/BackupAndRestore/CodeConfirmation";
 import RTComp from "../../dashboard/RTComp";
 import { JoinedRecords } from "../../dashboard/SmartForm/JoinedRecords/JoinedRecords";
 import { t } from "../../i18n/i18nUtils";
-import { get } from "../../utils";
+import { get } from "../../utils/utils";
 import { getBrowserOS } from "../ElectronSetup/ElectronSetup";
-import { PostgresInstallationInstructions } from "../PostgresInstallationInstructions";
 import type { FullExtraProps } from "../ProjectConnection/ProjectConnection";
 import { NewConnectionForm } from "./NewConnectionFormFields";
-import { ROUTES } from "../../../../common/utils";
-import { ScrollFade } from "../../components/ScrollFade/ScrollFade";
 
 export const getSqlErrorText = (e: any) => {
   let objDetails: [string, any][] = [];
@@ -88,11 +86,18 @@ export const DEFAULT_CONNECTION = {
 } as const;
 
 type NewConnectionProps = {
-  db: FullExtraProps["dbProject"] | undefined;
+  db: Prgl["db"] | undefined;
+  sql: Prgl["sql"] | undefined;
   connectionId: string | undefined;
   prglState: Pick<
-    ExtraProps,
-    "dbs" | "dbsMethods" | "dbsTables" | "user" | "theme"
+    AppContextProps,
+    | "dbs"
+    | "dbsMethods"
+    | "dbsMethodSchema"
+    | "dbsTables"
+    | "user"
+    | "theme"
+    | "dbsSql"
   >;
   onDeleted?: () => void;
   onUpserted?: (connection: Required<Connection>) => void;
@@ -101,7 +106,7 @@ type NewConnectionProps = {
 };
 
 type NewConnectionState = {
-  error?: any;
+  error?: unknown;
   nameErr: string;
   connection: Connection;
   originalConnection?: DBSSchema["connections"];
@@ -160,7 +165,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
     const { dbsMethods } = prglState;
     this.setState({ status: "" });
     try {
-      const res = await dbsMethods.testDBConnection!(connection!);
+      const res = await dbsMethods.testDBConnection!({ connection });
       this.setState({
         status:
           "OK" +
@@ -181,7 +186,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
 
     const { dbsMethods } = prglState;
     try {
-      await dbsMethods.deleteConnection!(c.id!, { dropDatabase });
+      await dbsMethods.deleteConnection!({ id: c.id!, dropDatabase });
       /** Hacky way to prevent reconnections to dropped connection */
       (window as any).dbSocket?.disconnect();
       onDeleted?.();
@@ -240,7 +245,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
       };
 
       /** Validated connection only after some crucial info is provided */
-      let { connection, warning } =
+      let { validatedConnection: connection, warning } =
         (
           newData.db_host ||
           newData.db_user ||
@@ -249,10 +254,12 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
           mode === "edit" ||
           mode === "insert"
         ) ?
-          await dbsMethods.validateConnection!(newData).catch((error) => {
-            return { warning: error, connection };
-          })
-        : { connection: newData, warning: undefined };
+          await dbsMethods.validateConnection!({ connection: newData })
+            .then((d) => ({ ...d, warning: "" }))
+            .catch((error) => {
+              return { warning: error, validatedConnection: connection };
+            })
+        : { validatedConnection: newData, warning: undefined };
 
       if (mode !== "edit" && !this.addedName && !connection.name) {
         connection.name = connection.db_name;
@@ -307,9 +314,9 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
         >
           <ScrollFade
             className="flex-col gap-1 f-1 o-auto min-h-0 p-p25 no-scroll-bar"
-            style={{
-              margin: "-.25em" /* Used to ensure focus border is visible */,
-            }}
+            // style={{
+            //   margin: "-.25em" /* Used to ensure focus border is visible */,
+            // }}
           >
             {mode === "clone" && origCon && (
               <InfoRow color="action">
@@ -337,6 +344,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                     dbsTables: this.props.prglState.dbsTables,
                     origCon: c,
                     dbsMethods: this.props.prglState.dbsMethods,
+                    sql: this.props.sql,
                   }
                 : undefined
               }
@@ -356,7 +364,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
             style={{ background: "white", padding: "1em" }}
             withIcon={true}
           />
-          <div className="flex-row-wrap ai-center mt-1 gap-1 ">
+          <div className="flex-row-wrap ai-center pt-1 gap-1 bt b-color-0 bg-color-0">
             {mode === "edit" && (
               <CodeConfirmation
                 positioning="center"
@@ -366,7 +374,8 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                   <Btn
                     iconPath={mdiDeleteOutline}
                     color="danger"
-                    variant="outline"
+                    size="default"
+                    variant="faded"
                     data-command="Connection.edit.delete"
                   >
                     {t.common.Delete}...
@@ -382,7 +391,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                       }
                     </InfoRow>
                     <Section
-                      title={t.NewConnection["Related data"]}
+                      title={t.common["Related data"]}
                       disableFullScreen={true}
                       style={{
                         maxWidth: "min(100%, 600px)",
@@ -396,12 +405,13 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                         newRowDataHandler={undefined}
                         newRowData={undefined}
                         style={{ padding: 0 }}
-                        db={prglState.dbs as DBHandlerClient}
+                        db={prglState.dbs}
+                        sql={prglState.dbsSql}
                         rowFilter={[{ fieldName: "id", value: this.conId }]}
                         showRelated="descendants"
                         tableName={"connections"}
                         tables={prglState.dbsTables}
-                        methods={prglState.dbsMethods}
+                        methods={prglState.dbsMethodSchema}
                         errors={{}}
                       />
                     </Section>
@@ -429,24 +439,23 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                     <ErrorComponent error={error} />
                   </FlexCol>
                 }
-                confirmButton={(popupClose) => (
-                  <Btn
-                    color="danger"
-                    variant="filled"
-                    iconPath={mdiDeleteOutline}
-                    className="ml-auto"
-                    data-command="Connection.edit.delete.confirm"
-                    onClickMessage={async (e, setMsg) => {
-                      setMsg({ loading: 1, delay: 0 });
+                confirmButtons={[
+                  {
+                    color: "danger",
+                    variant: "filled",
+                    iconPath: mdiDeleteOutline,
+                    className: "ml-auto",
+                    "data-command": "Connection.edit.delete.confirm",
+                    onClickPromise: async () => {
                       try {
-                        await this.onClickDelete().then(popupClose);
-                      } catch (e) {}
-                      setMsg({ loading: 0 });
-                    }}
-                  >
-                    {t.common.Delete}
-                  </Btn>
-                )}
+                        await this.onClickDelete();
+                      } catch (e) {
+                        console.error(e);
+                      }
+                    },
+                    children: t.common.Delete,
+                  },
+                ]}
               />
             )}
 
@@ -454,12 +463,14 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
               <Btn
                 title={t.NewConnection["Clone connection"]}
                 className={"f-0 mx-1 w-fit "}
-                variant="outline"
+                variant="faded"
                 color="action"
+                size="default"
                 iconPath={mdiContentDuplicate}
-                onClick={async (e) => {
-                  if (c.name) updateConnection({ name: c.name + " (copy)" });
-                  updateConnection({ created: null, is_state_db: null });
+                onClick={() => {
+                  if (c.name)
+                    void updateConnection({ name: c.name + " (copy)" });
+                  void updateConnection({ created: null, is_state_db: null });
                   this.setState({ mode: "clone" });
                 }}
               >
@@ -473,6 +484,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
               color="action"
               data-command="Connection.edit.updateOrCreateConfirm"
               iconPath={mode === "edit" ? mdiCheck : mdiPlus}
+              size="default"
               disabledInfo={
                 (
                   mode === "edit" &&
@@ -488,9 +500,9 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                   setMsg({ loading: 1 });
                   if (
                     c.name &&
-                    (await dbs!.connections.findOne({
+                    (await dbs.connections.findOne({
                       name: c.name,
-                      "id.<>": conn.id,
+                      id: { "<>": conn.id },
                     }))
                   ) {
                     this.setState({
@@ -500,8 +512,10 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                     return;
                   }
 
-                  const { connection } =
-                    await dbsMethods.createConnection!(conn);
+                  const { connection } = await dbsMethods.createConnection!({
+                    connection: conn,
+                    origin: window.location.origin,
+                  });
 
                   onUpserted?.(connection);
                   setMsg({

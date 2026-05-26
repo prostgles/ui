@@ -1,11 +1,11 @@
 <h1 id="connections"> Connections </h1> 
 
 The Connections page serves as the central hub within Prostgles UI for managing all your PostgreSQL database connections. 
-From here, you can establish new connections, modify existing ones, and gain an immediate overview of their status and associated workspaces. 
+From here, you can add and open connections, modify existing ones, and gain an immediate overview of their status and associated workspaces. 
 
 <img src="./screenshots/connections.svg" alt="Connections page screenshot" style="border: 1px solid; margin: 1em 0;" />
 
-### Connection controls:
+### Connection controls
 - <a href="#new_connection">New connection</a>: Opens the form to add a new database connection.  
 - **Display options**: Customize how the list of connections is displayed (e.g., show/hide state database, show database names).  
 - <a href="#connection_list">Connection list</a>: Controls to open and manage your database connections.  
@@ -14,13 +14,11 @@ From here, you can establish new connections, modify existing ones, and gain an 
 
 Use the **New Connection** button to add a new database connection.
 
-<img src="./screenshots/connections.svg#Connections_new" alt="New connection button" style="max-width: 200px;" style="border: 1px solid; margin: 1em 0;" />
-
 This will open a form where you can enter the connection details such as host, port, database name, user, and password.
 
 <img src="./screenshots/new_connection.svgif.svg" alt="New connection form screenshot" style="border: 1px solid; margin: 1em 0;" />
 
-### New connection form fields:
+### New connection form fields
   - **PostgreSQL Installation Instructions**: Instructions for installing PostgreSQL on your system.  
   - **Connection Name**: The name of the connection.  
   - **Connection Type**: Allows you change the connection details format: standard or connection string.  
@@ -44,7 +42,7 @@ The connection list displays all your database connections grouped by database h
 
 <img src="./screenshots/connections.svg" alt="Connections list screenshot" style="border: 1px solid; margin: 1em 0;" />
 
-### Connection actions:
+### Connection actions
   - **Open connection**: Opens the selected connection dashboard on the default workspace.  
   - **Add new database**: Adds a new connection to the selected server.   
     - <a href="#create_new_database">Create new database</a>: Create a new database within the server.  
@@ -62,7 +60,7 @@ Allows you to create a new database in the selected server.
 It will use the first connection details from the group connection.
 If no adequate account is found (no superuser or rolcreatedb), it will be greyed out with with an appropriate explanation tooltip text.
 
-### New database options:
+### New database options
   - **Database Name**: The name of the new database.  
   - **Sample Schemas**: Select a sample schema to create the database with.  
   - **Create database owner**: If checked, a new owner will be created for the database. Useful for ensuring the database is owned by a non-superuser account.  

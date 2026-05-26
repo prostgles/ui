@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useIsMounted } from "../../../dashboard/BackupAndRestore/CredentialSelector";
 import type { SearchListItem, SearchListProps } from "../SearchList";
 import { getValueAsText } from "../SearchListContent";
+import { useIsMounted } from "prostgles-client";
 
 export const useSearchListSearch = (
   props: Pick<
@@ -14,9 +14,8 @@ export const useSearchListSearch = (
     | "matchCase"
     | "defaultValue"
     | "defaultSearch"
-  > & {
-    isSearch: boolean | undefined;
-  },
+    | "variant"
+  >,
 ) => {
   const [searchTerm, setSearchTerm] = useState("");
   const getIsMounted = useIsMounted();
@@ -26,10 +25,11 @@ export const useSearchListSearch = (
     dataSignature,
     onSearch,
     onType,
-    isSearch,
+    variant,
     defaultValue,
     defaultSearch,
   } = props;
+  const isSearch = variant?.startsWith("search");
 
   const searching = useRef<{
     term: string;
@@ -42,7 +42,7 @@ export const useSearchListSearch = (
     searchItems: SearchListItem[];
     searchingItems: boolean;
     searchClosed: boolean;
-    error?: any;
+    error?: unknown;
     dataSignature?: string;
     term?: string;
   }>({
@@ -82,7 +82,7 @@ export const useSearchListSearch = (
   );
 
   const onStartSearch = useCallback(
-    async (term: string) => {
+    (term: string) => {
       if (!onSearchItems) return;
 
       if (searching.current) {
@@ -96,7 +96,7 @@ export const useSearchListSearch = (
       if (typeof term !== "string" || (!searchEmpty && !term)) {
         updateSearchState({ searchItems: [], searchingItems: false });
 
-        onSearchItems(term);
+        void onSearchItems(term);
       } else {
         updateSearchState({ searchingItems: true });
 
@@ -104,12 +104,12 @@ export const useSearchListSearch = (
           dataSignature,
           term,
           cancelCurrentSearch: undefined,
-          timeout: setTimeout(async () => {
+          timeout: setTimeout(() => {
             if (!getIsMounted()) return;
 
             updateSearchState({ searchingItems: true });
             try {
-              onSearchItems(
+              void onSearchItems(
                 term,
                 { matchCase },
                 (searchItems, finished, cancel) => {
@@ -159,7 +159,12 @@ export const useSearchListSearch = (
   );
 
   const onSetTerm = useCallback(
-    (searchTerm, e?: any) => {
+    (
+      searchTerm: string,
+      e?:
+        | React.ChangeEvent<HTMLInputElement>
+        | React.MouseEvent<HTMLDivElement, MouseEvent>,
+    ) => {
       onType?.(searchTerm, (newTerm) => {
         searchTerm = newTerm;
       });
@@ -175,7 +180,7 @@ export const useSearchListSearch = (
     if (typeof defaultValueText === "string" && defaultValueText) {
       setSearchTerm(defaultValueText);
     } else if (typeof defaultSearch === "string" && defaultSearch) {
-      onSetTerm(defaultSearch, {});
+      onSetTerm(defaultSearch, undefined);
     }
   }, [defaultSearch, defaultValue, onSetTerm, setSearchTerm]);
 
@@ -199,6 +204,7 @@ export const useSearchListSearch = (
     searchTerm,
     endSearch,
     setSearchClosed,
+    isSearch,
     ...searchState,
   };
 };

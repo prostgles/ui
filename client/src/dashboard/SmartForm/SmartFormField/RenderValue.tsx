@@ -1,13 +1,17 @@
-import React from "react";
+import { getProperty, sliceText } from "@common/utils";
+import type { LocalMedia } from "@components/FileInput/FileInput";
+import { ShorterText } from "@components/ShorterText";
 import type { ValidatedColumnInfo } from "prostgles-types";
-import { isObject, _PG_date, _PG_numbers, includes } from "prostgles-types";
-import { ShorterText } from "../../../components/ShorterText";
+import { _PG_date, _PG_numbers, includes, isObject } from "prostgles-types";
+import React from "react";
+import { dateAsYMD, dateAsYMD_Time } from "../../Charts";
 import { getPGIntervalAsText } from "../../W_SQL/customRenderers";
-import { dateAsYMD_Time } from "../../Charts";
-import { sliceText } from "../../../../../common/utils";
+import { RenderJson } from "./RenderValue/RenderJson";
 
 type P = {
-  column: Pick<ValidatedColumnInfo, "udt_name" | "tsDataType"> | undefined;
+  column:
+    | Pick<ValidatedColumnInfo, "udt_name" | "tsDataType" | "file">
+    | undefined;
   value: any;
   /**
    * Defaults to true
@@ -15,6 +19,7 @@ type P = {
   showTitle?: boolean;
   maxLength?: number;
   maximumFractionDigits?: number;
+  getValues?: () => any[];
   style?: React.CSSProperties;
 };
 export const renderNull = (
@@ -44,6 +49,7 @@ export const RenderValue = ({
   maxLength,
   style,
   maximumFractionDigits = 3,
+  getValues,
 }: P): JSX.Element => {
   const nullRender = renderNull(value, style, showTitle);
   if (nullRender) return nullRender;
@@ -54,6 +60,11 @@ export const RenderValue = ({
 
     return v;
   };
+
+  if (c?.file && isObject(value)) {
+    const media = value as LocalMedia;
+    return <div>{media.name}</div>;
+  }
 
   if (c?.udt_name === "uuid" && value) {
     return <ShorterText style={style} value={value} column={c} />;
@@ -86,6 +97,14 @@ export const RenderValue = ({
     value !== undefined &&
     value !== null
   ) {
+    const maxDecimalsFromValues = getValues?.()
+      .map((v) => {
+        if (v === null || v === undefined) return 0;
+        const num = +v;
+        if (isNaN(num)) return 0;
+        return countDecimals(num);
+      })
+      .reduce((a, b) => Math.max(a, b), 0);
     const getValue = () => {
       const isFloat =
         udt_name === "float4" ||
@@ -97,7 +116,8 @@ export const RenderValue = ({
         +value < 1 && +value > -1 ? actualDecimals + 1 : maximumFractionDigits;
       const slicedValue = getSliced(
         (+value).toLocaleString(undefined, {
-          minimumFractionDigits: maxDecimals, // Math.min(maxDecimals, actualDecimals),
+          minimumFractionDigits:
+            maxDecimalsFromValues ?? Math.min(maxDecimals, actualDecimals),
         }),
       );
       return slicedValue;
@@ -129,10 +149,13 @@ export const RenderValue = ({
     if (c?.udt_name !== "timestamp") {
       try {
         const date = new Date(value);
+
         val =
-          dateAsYMD_Time(date) +
-          "." +
-          date.getMilliseconds().toString().padStart(3, "0");
+          c?.udt_name === "date" ?
+            dateAsYMD(date)
+          : dateAsYMD_Time(date) +
+            "." +
+            date.getMilliseconds().toString().padStart(3, "0");
       } catch (e) {
         console.error(e);
       }
@@ -144,9 +167,17 @@ export const RenderValue = ({
   }
 
   if (value && (c?.udt_name.startsWith("json") || isObject(value))) {
+    const title = (() => {
+      if (isObject(value)) {
+        try {
+          return JSON.stringify(value, null, 2);
+        } catch {}
+      }
+      return String(value);
+    })();
     return (
-      <span style={{ color: getColumnDataColor(c), ...style }}>
-        {getSliced(JSON.stringify(value))}
+      <span title={title} style={style}>
+        <RenderJson value={value} maxLength={maxLength} />
       </span>
     );
   }
@@ -225,7 +256,7 @@ export const getColumnDataColor = (
     return "var(--color-date)";
   }
 
-  if (c && _PG_numbers.includes(c.udt_name as any)) {
+  if (c && includes(_PG_numbers, c.udt_name)) {
     return "var(--color-number)";
   }
 
@@ -235,7 +266,8 @@ export const getColumnDataColor = (
   } as const;
 
   return (
-    (c?.tsDataType ? TS_COL_TYPE_TO_COLOR[c.tsDataType] : undefined) ??
-    fallBackColor
+    (c?.tsDataType ?
+      getProperty(TS_COL_TYPE_TO_COLOR, c.tsDataType)
+    : undefined) ?? fallBackColor
   );
 };

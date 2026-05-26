@@ -1,10 +1,9 @@
 import { mdiViewQuilt } from "@mdi/js";
 import type { ValidatedColumnInfo } from "prostgles-types";
 import React, { useEffect } from "react";
-import { FlexCol } from "../../components/Flex";
-import { SwitchToggle } from "../../components/SwitchToggle";
-import { isDefined } from "../../utils";
-import { useIsMounted } from "../BackupAndRestore/CredentialSelector";
+import { FlexCol } from "@components/Flex";
+import { SwitchToggle } from "@components/SwitchToggle";
+import { isDefined } from "../../utils/utils";
 import type { DBS } from "../Dashboard/DBS";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type {
@@ -15,6 +14,7 @@ import type { DeepPartial } from "../RTComp";
 import { SmartSelect } from "../SmartSelect";
 import type { AccessRule } from "./AccessControl";
 import { SectionHeader } from "./AccessControlRuleEditor";
+import { useIsMounted } from "prostgles-client";
 
 type P = Pick<CommonWindowProps, "prgl"> & {
   dbsPermissions: DeepPartial<AccessRule["dbsPermissions"]>;
@@ -46,12 +46,12 @@ export const PublishedWorkspaceSelector = ({
   const getIsMounted = useIsMounted();
 
   useEffect(() => {
-    (async () => {
+    void (async () => {
       let wspErrors: string | undefined = undefined;
       const workspaceIds =
         dbsPermissions?.viewPublishedWorkspaces?.workspaceIds ?? [];
       if (workspaceIds.length) {
-        const wsps = await dbs.workspaces.find({ "id.$in": workspaceIds });
+        const wsps = await dbs.workspaces.find({ id: { $in: workspaceIds } });
         if (!getIsMounted()) return;
         const missingWorkspaceIds = workspaceIds.filter(
           (wid) => !wsps.some((w) => w.id === wid),
@@ -136,7 +136,7 @@ export const PublishedWorkspaceSelector = ({
           }}
           disabledInfo={
             !publishedWorkspaces.length ?
-              "Cannot change if no published workspaces"
+              "Cannot change if there are no published workspaces"
             : undefined
           }
           label={{
@@ -156,7 +156,7 @@ export const PublishedWorkspaceSelector = ({
           disabledInfo={
             !publishedWorkspaces.length ? "No published workspaces" : undefined
           }
-          tableHandler={dbs.workspaces as any}
+          tableHandler={dbs.workspaces}
           filter={{ published: true, connection_id: connectionId }}
           allowCreate={false}
           fieldName="id"
@@ -207,7 +207,7 @@ export const getWorkspaceTables = async (
   const worspaceTableAndColumns: WorspaceTableAndColumns[] = [];
   if (dbPermissions.type === "Custom") {
     const workspaceWindows = await dbs.windows.find({
-      "workspace_id.$in": workspaceIds,
+      workspace_id: { $in: workspaceIds },
     });
     const tableWindows = workspaceWindows.filter(
       (w) => w.type === "table" && !!w.table_name,
@@ -256,7 +256,7 @@ export const getWorkspaceTables = async (
       type: "Custom",
       customTables: validMissingWindowTables
         .map(({ table_name, tableWindowColumns, table }) => {
-          const windowFields = tableWindowColumns!.map((c) => c.name);
+          const windowFields = tableWindowColumns.map((c) => c.name);
           const fields =
             windowFields.length === table.columns.length ?
               ("*" as const)

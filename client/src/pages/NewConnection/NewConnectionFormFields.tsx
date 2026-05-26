@@ -1,26 +1,28 @@
 import { mdiConnection, mdiDotsHorizontal, mdiPlus } from "@mdi/js";
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { usePromise, type SQLHandler } from "prostgles-client";
 import React, { useEffect, useRef } from "react";
-import Btn from "../../components/Btn";
-import ButtonGroup from "../../components/ButtonGroup";
-import { ExpandSection } from "../../components/ExpandSection";
-import { FlexRow } from "../../components/Flex";
-import FormField from "../../components/FormField/FormField";
-import { FormFieldDebounced } from "../../components/FormField/FormFieldDebounced";
-import { InfoRow } from "../../components/InfoRow";
-import PopupMenu from "../../components/PopupMenu";
-import { SwitchToggle } from "../../components/SwitchToggle";
+import Btn from "@components/Btn";
+import ButtonGroup from "@components/ButtonGroup";
+import { ExpandSection } from "@components/ExpandSection";
+import { FlexRow } from "@components/Flex";
+import FormField from "@components/FormField/FormField";
+import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
+import { InfoRow } from "@components/InfoRow";
+import PopupMenu from "@components/PopupMenu";
+import { SwitchToggle } from "@components/SwitchToggle";
 import CodeExample from "../../dashboard/CodeExample";
 import type { Connection } from "./NewConnnectionForm";
 import type { FullExtraProps } from "../ProjectConnection/ProjectConnection";
-import ErrorComponent from "../../components/ErrorComponent";
+import ErrorComponent from "@components/ErrorComponent";
 import { t } from "../../i18n/i18nUtils";
 import { getDBCloneQuery, SSL_MODES } from "./newConnectionUtils";
 import { SchemaFilter } from "./SchemaFilter";
+import type { Prgl } from "src/App";
 
 type DBProps = {
   origCon: Partial<Connection>;
-  dbProject: FullExtraProps["dbProject"];
+  dbProject: Prgl["db"];
+  sql: SQLHandler | undefined;
   dbsTables: FullExtraProps["dbsTables"];
   dbsMethods: FullExtraProps["dbsMethods"];
 };
@@ -58,17 +60,17 @@ export const NewConnectionForm = ({
   }, [test.status]);
   const sslmode = "db_ssl" in c ? c.db_ssl || "disable" : "disabled";
 
-  const { dbsTables, dbProject, origCon, dbsMethods } = dbProps ?? {};
+  const { dbsTables, dbProject, origCon, dbsMethods, sql } = dbProps ?? {};
 
   const cTable = dbsTables?.find((t) => t.name === "connections");
 
   const { type } = c;
 
   const suggestions = usePromise(async () => {
-    if (!dbProject?.sql) return {};
+    if (!sql) return {};
 
     try {
-      const databases = (await dbProject.sql(
+      const databases = (await sql(
         `
       SELECT datname
       FROM pg_catalog.pg_database
@@ -77,7 +79,7 @@ export const NewConnectionForm = ({
         { returnType: "values" },
       )) as string[];
 
-      const users = (await dbProject.sql(
+      const users = (await sql(
         `
         SELECT rolname, rolsuper
         FROM pg_catalog.pg_roles`,
@@ -88,7 +90,7 @@ export const NewConnectionForm = ({
         rolsuper: boolean;
       }[];
 
-      const schemas = (await dbProject.sql(
+      const schemas = (await sql(
         `
         SELECT schema_name, schema_owner
         FROM information_schema.schemata
@@ -107,7 +109,7 @@ export const NewConnectionForm = ({
     } catch (e) {
       console.error("Failed getting user & db suggestions", e);
     }
-  }, [dbProject]);
+  }, [sql]);
 
   return (
     <>
@@ -144,7 +146,7 @@ export const NewConnectionForm = ({
             label={t.NewConnectionForm["Socket URL"]}
             type="url"
             required={true}
-            value={c.prgl_url}
+            value={c.prgl_url || ""}
             onChange={(val: string) => {
               updateConnection({ prgl_url: val });
             }}
@@ -168,7 +170,7 @@ export const NewConnectionForm = ({
             type="text"
             hint="postgres://user:pass@host:port/database?sslmode=require"
             required={true}
-            value={c.db_conn}
+            value={c.db_conn || ""}
             onChange={(db_conn: string) => {
               updateConnection({ db_conn });
             }}
@@ -208,7 +210,7 @@ export const NewConnectionForm = ({
           />
           <FormField
             id="pass"
-            value={c.db_pass}
+            value={c.db_pass ?? ""}
             label={t.NewConnectionForm["Password"]}
             data-command="NewConnectionForm.db_pass"
             type="text"
@@ -225,7 +227,7 @@ export const NewConnectionForm = ({
             options={suggestions?.databases}
             autoComplete="off"
             onChange={(db_name) => {
-              updateConnection({ db_name });
+              void updateConnection({ db_name });
             }}
             rightContentAlwaysShow={true}
             rightIcons={
@@ -243,20 +245,15 @@ export const NewConnectionForm = ({
                     ></Btn>
                   }
                   initialState={
-                    { query: "", action: "create" } as {
-                      query: string;
-                      action: "create" | "clone";
-                    }
+                    { query: "", action: "create" }
                   }
                   render={(pClose, { query, action }, setState) => {
                     if (action === "clone" && origCon?.db_name) {
-                      getDBCloneQuery(
-                        origCon.db_name,
-                        c.db_name!,
-                        dbProject.sql!,
-                      ).then((newQuery) => {
-                        if (newQuery !== query) setState({ query: newQuery });
-                      });
+                      getDBCloneQuery(origCon.db_name, c.db_name, sql!).then(
+                        (newQuery) => {
+                          if (newQuery !== query) setState({ query: newQuery });
+                        },
+                      );
                     } else {
                       const newQuery = `CREATE DATABASE ${c.db_name}; `;
                       if (newQuery !== query) setState({ query: newQuery });
@@ -297,9 +294,7 @@ export const NewConnectionForm = ({
                         <Btn
                           variant="filled"
                           color="action"
-                          onClickPromise={() =>
-                            dbProject.sql!(query).then(pClose)
-                          }
+                          onClickPromise={() => sql!(query).then(pClose)}
                         >
                           {t.common.Run}
                         </Btn>
@@ -328,7 +323,7 @@ export const NewConnectionForm = ({
           >
             <SchemaFilter
               db_schema_filter={c.db_schema_filter}
-              db={dbProject}
+              sql={sql}
               onChange={(newDbSchemaFilter) => {
                 updateConnection({
                   type: "Standard",
@@ -354,13 +349,13 @@ export const NewConnectionForm = ({
               fullOptions={SSL_MODES}
               required={true}
               value={c.db_ssl}
-              onChange={async (db_ssl: (typeof SSL_MODES)[number]["key"]) => {
+              onChange={(db_ssl: (typeof SSL_MODES)[number]["key"]) => {
                 // if(c.type === "Connection URI"){
                 //   const con = await dbsMethods?.validateConnection?.({ ...c, db_ssl, type: "Standard" });
                 //   console.log(con);
                 // }
                 /** Switch to standard to ensure the db_conn is updated accordingly */
-                updateConnection({ db_ssl, type: "Standard" });
+                void updateConnection({ db_ssl, type: "Standard" });
               }}
             />
             {[
@@ -369,7 +364,7 @@ export const NewConnectionForm = ({
               "require",
               "prefer",
               "allow",
-            ].includes(sslmode!) && (
+            ].includes(sslmode) && (
               <>
                 <FormField
                   id="ssl_cert"
@@ -377,8 +372,8 @@ export const NewConnectionForm = ({
                   type="file"
                   labelStyle={{ flex: "unset" }}
                   onChange={async (files) => {
-                    const file: File | null = files[0];
-                    updateConnection({
+                    const file = files[0];
+                    void updateConnection({
                       ssl_certificate: (await file?.text()) ?? undefined,
                     });
                   }}
@@ -389,8 +384,8 @@ export const NewConnectionForm = ({
                   type="file"
                   labelStyle={{ flex: "unset" }}
                   onChange={async (files) => {
-                    const file: File | null = files[0];
-                    updateConnection({
+                    const file = files[0];
+                    void updateConnection({
                       ssl_client_certificate: (await file?.text()) ?? undefined,
                     });
                   }}
@@ -401,8 +396,8 @@ export const NewConnectionForm = ({
                   type="file"
                   labelStyle={{ flex: "unset" }}
                   onChange={async (files) => {
-                    const file: File | null = files[0];
-                    updateConnection({
+                    const file = files[0];
+                    void updateConnection({
                       ssl_client_certificate_key:
                         (await file?.text()) ?? undefined,
                     });
@@ -413,6 +408,7 @@ export const NewConnectionForm = ({
                   label={t.NewConnectionForm["Reject unauthorized"]}
                   type="checkbox"
                   labelStyle={{ flex: "unset" }}
+                  nullable={true}
                   value={c.ssl_reject_unauthorized}
                   onChange={(ssl_reject_unauthorized) => {
                     updateConnection({ ssl_reject_unauthorized });
@@ -445,7 +441,9 @@ export const NewConnectionForm = ({
                 />
                 {dbsMethods?.reloadSchema && (
                   <Btn
-                    onClickPromise={() => dbsMethods.reloadSchema!(c.id!)}
+                    onClickPromise={() =>
+                      dbsMethods.reloadSchema!({ conId: c.id! })
+                    }
                     color="action"
                   >
                     {t.NewConnectionForm["Reload schema"]}

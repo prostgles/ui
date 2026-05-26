@@ -1,12 +1,17 @@
 import type { editor } from "monaco-editor";
-import type { CodeEditorProps, LanguageConfig } from "../CodeEditor";
+import { useEffectDeep, useIsMounted, usePromise } from "prostgles-client";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
+import type { CodeEditorProps, LanguageConfig, TSLibrary } from "../CodeEditor";
+import { installGoToDefinition } from "./installGoToDefinition";
 import { useEffect } from "react";
-import { useIsMounted } from "../../BackupAndRestore/CredentialSelector";
-import { useEffectDeep } from "prostgles-client/dist/react-hooks";
 
 export type MonacoEditorImport = typeof import("monaco-editor");
 
-export const useSetMonacoTsLibraries = async (
+let cachedNodeLibs: TSLibrary[] | undefined;
+
+let lastLoadedLibsEditor: editor.IStandaloneCodeEditor | undefined;
+
+export const useSetMonacoTsLibraries = (
   editor: editor.IStandaloneCodeEditor | undefined,
   languageObj: LanguageConfig | undefined,
   monaco: MonacoEditorImport | undefined,
@@ -14,40 +19,95 @@ export const useSetMonacoTsLibraries = async (
   onTSLibraryChange: CodeEditorProps["onTSLibraryChange"],
 ) => {
   const getIsMounted = useIsMounted();
+  const { dbsMethods } = usePrglCore();
+  const isNodeEnv =
+    languageObj?.lang === "typescript" && languageObj.environment === "nodejs";
+  const nodeLibs = usePromise(async () => {
+    if (!isNodeEnv) return;
+    const nodeTypes =
+      cachedNodeLibs ?? (await dbsMethods.getNodeTypes?.()) ?? [];
+    cachedNodeLibs = nodeTypes;
+    const badPathRecord = nodeTypes.find(
+      (t) => !t.filePath.startsWith("/node_modules/"),
+    );
+    if (badPathRecord) {
+      console.warn(
+        `Warning: The filePath for ${badPathRecord.filePath} does not start with /node_modules/. This may cause issues with Monaco's module resolution. Please ensure that the server is returning correct file paths for node types.`,
+      );
+    }
+    return nodeTypes.map((t) => ({
+      content: t.content,
+      filePath: `file://${t.filePath}`,
+    }));
+  });
   useEffect(() => {
     if (!monaco) return;
     setTSoptions(monaco);
-  }, [monaco]);
+  }, [monaco, dbsMethods]);
 
   useEffectDeep(() => {
     if (!monaco || !editor || languageObj?.lang !== "typescript") return;
-    const { tsLibraries, modelFileName } = languageObj;
-    if (!tsLibraries) return;
-    monaco.languages.typescript.typescriptDefaults.setExtraLibs(tsLibraries);
+    const {
+      environment,
+      tsLibraries,
+      modelFileName,
+      importedModels = {},
+    } = languageObj;
+    const extraLibs =
+      environment === "nodejs" ?
+        [...(nodeLibs ?? []), ...(tsLibraries ?? [])]
+      : tsLibraries;
+    if (!extraLibs) return;
+    const setExtraLibs = () => {
+      monaco.languages.typescript.typescriptDefaults.setExtraLibs(extraLibs);
+      lastLoadedLibsEditor = editor;
+    };
+    editor.onDidFocusEditorText(() => {
+      if (lastLoadedLibsEditor !== editor) {
+        setExtraLibs();
+      }
+    });
+    setExtraLibs();
     /* 
         THIS CLOSES ALL OTHER EDITORS 
         This is/was? needed to prevent this error: Type annotations can only be used in TypeScript files. 
       */
     // monaco.editor.getModels().forEach(model => model.dispose());
 
-    const modelUri = monaco.Uri.parse(`file:///${modelFileName}.ts`);
-    const existingModel = monaco.editor
-      .getModels()
-      .find((m) => m.uri.path === modelUri.path);
-    const model =
-      existingModel ?? monaco.editor.createModel(value, "typescript", modelUri);
+    const getExistingModelOrCreate = (fileName: string, content: string) => {
+      const modelUri = monaco.Uri.file(fileName);
+      const existingModel = monaco.editor
+        .getModels()
+        .find((m) => m.uri.path === modelUri.path);
+      return (
+        existingModel ??
+        monaco.editor.createModel(content, "typescript", modelUri)
+      );
+    };
+    Object.entries(importedModels).forEach(([modelName, modelContent]) => {
+      getExistingModelOrCreate(modelName, modelContent);
+    });
+
+    const model = getExistingModelOrCreate(modelFileName, value);
+    // const modelUri = monaco.Uri.parse(`file:///${modelFileName}`);
+    // const existingModel = monaco.editor
+    //   .getModels()
+    //   .find((m) => m.uri.path === modelUri.path);
+    // const model =
+    //   existingModel ?? monaco.editor.createModel(value, "typescript", modelUri);
 
     if (!getIsMounted()) return;
     try {
       editor.setModel(model);
+      void installGoToDefinition(editor);
     } catch (e) {
       console.error(e);
     }
-    onTSLibraryChange?.(tsLibraries);
-  }, [editor, monaco, languageObj, onTSLibraryChange]);
+    onTSLibraryChange?.(extraLibs);
+  }, [editor, monaco, languageObj, onTSLibraryChange, getIsMounted, nodeLibs]);
 };
 
-const setTSoptions = async (monaco: MonacoEditorImport) => {
+const setTSoptions = (monaco: MonacoEditorImport) => {
   monaco.languages.typescript.typescriptDefaults.setEagerModelSync(true);
 
   monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
@@ -61,8 +121,10 @@ const setTSoptions = async (monaco: MonacoEditorImport) => {
     esModule: false,
     experimentalDecorators: true,
     keyofStringsOnly: true,
+    jsx: monaco.languages.typescript.JsxEmit.React,
+    reactNamespace: "React",
     /** Adding this line breaks inbuild functions (setTimeout, etc) */
-    // lib: ["ES2017", "es2019", "ES2021.String", "ES2020", "ES2022"],
+    // lib: ["DOM", "ES2017", "es2019", "ES2021.String", "ES2020", "ES2022"],
     esModuleInterop: true,
     allowSyntheticDefaultImports: true,
     declaration: true,

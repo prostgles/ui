@@ -1,13 +1,15 @@
 import type { Deck, MapView, OrthographicView } from "deck.gl";
 import { useCallback, useEffect, useRef } from "react";
-import { isDefined } from "../../../utils";
+import { createHiPPICanvas } from "src/dashboard/Charts/createHiPPICanvas";
+import { isDefined } from "../../../utils/utils";
 import type { LinkLine, Rectangle } from "../../Charts/CanvasChart";
 import { drawShapes, type ShapeV2 } from "../../Charts/drawShapes/drawShapes";
-import { getCssVariableValue } from "../../Charts/onRenderTimechart";
+import { getCssVariableValue } from "../../Charts/TimeChart/getCssVariableValue";
 import type { ColumnColorMode } from "./ERDSchema";
-import { getInitialPlacement } from "./getInitialPlacement";
+// import { getInitialPlacement } from "./getInitialPlacement";
+import { getInitialPlacement } from "./getInitialPlacementV2";
 import type { SchemaShape, useSchemaShapes } from "./useSchemaShapes";
-import { createHiPPICanvas } from "src/dashboard/Charts/createHiPPICanvas";
+import { useDrawHiddenSvgForNativeTextSearch } from "./useDrawHiddenSvgForNativeTextSearch";
 
 export const minScale = 0.1;
 export const maxScale = 5;
@@ -24,6 +26,7 @@ export const useDrawSchemaShapes = (
     "shapesRef" | "shapesVersion" | "canAutoPosition" | "dbConf"
   > & {
     canvasRef: React.RefObject<HTMLCanvasElement>;
+    svgRef: React.RefObject<SVGSVGElement>;
     columnColorMode: ColumnColorMode;
   },
 ) => {
@@ -34,6 +37,7 @@ export const useDrawSchemaShapes = (
     columnColorMode,
     canAutoPosition,
     dbConf,
+    svgRef,
   } = props;
   const positionRef = useRef({ x: 0, y: 0 });
   const scaleRef = useRef(1);
@@ -74,6 +78,10 @@ export const useDrawSchemaShapes = (
     return shapesRef.current;
   }, [shapesRef]);
 
+  const { drawShapesOnHiddenSvg } = useDrawHiddenSvgForNativeTextSearch(
+    svgRef,
+    canvasRef,
+  );
   const onRenderShapes = useCallback(
     (hoveredRectangle?: Rectangle) => {
       const render = () => {
@@ -121,10 +129,24 @@ export const useDrawSchemaShapes = (
                   : getCssVariableValue("--active"),
               });
             } else {
-              otherShapes.push({
-                ...s,
-                opacity: 0.4,
-              });
+              /**
+               * Ensure the rectangles themselves are opaque
+               * to prevent text bleed on overlapping rectangles
+               * */
+              otherShapes.push(
+                s.type === "rectangle" ?
+                  {
+                    ...s,
+                    children: s.children?.map((c) => ({
+                      ...c,
+                      opacity: 0.2,
+                    })),
+                  }
+                : {
+                    ...s,
+                    opacity: 0.1,
+                  },
+              );
             }
           });
           drawnShapes = [...otherShapes, ...relatedShapes];
@@ -139,13 +161,14 @@ export const useDrawSchemaShapes = (
           translate: positionRef.current,
         };
         canvas._drawn = _drawn;
+        drawShapesOnHiddenSvg();
         if (animationRef.current.progress < 1) {
           requestAnimationFrame(() => onRenderShapes());
         }
       };
       requestAnimationFrame(render);
     },
-    [canvasRef, getShapes, columnColorMode],
+    [canvasRef, getShapes, columnColorMode, drawShapesOnHiddenSvg],
   );
 
   const prevdbConf = useRef(dbConf);

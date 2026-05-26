@@ -1,5 +1,5 @@
 import React from "react";
-import Checkbox from "./Checkbox";
+import { Checkbox } from "./Checkbox";
 import { DraggableLI } from "./DraggableLI";
 import Popup from "./Popup/Popup";
 import type { OptionKey } from "./Select/Select";
@@ -27,23 +27,11 @@ export type ListProps = {
   className?: string;
 
   onClose: VoidFunction;
-  // } & (
-  //   | {
-  // onSelect: (value: string, index: number) => void;
   selectedValue?: string;
-  // } |
-  // {
-  // onCheck: (checkedValues: string[]) => void;
   checkedValues?: OptionKey[];
-  //   }
-  // ) & (
-  //   {
   anchorRef?: HTMLElement;
-  // } |
-  // {
   anchorContent?: React.ReactChild;
 };
-// );
 
 export default class List extends React.Component<ListProps, any> {
   refList?: HTMLUListElement;

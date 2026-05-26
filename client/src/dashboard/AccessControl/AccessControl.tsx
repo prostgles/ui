@@ -1,17 +1,17 @@
 import React from "react";
 
-import type { DBSSchema } from "../../../../common/publishUtils";
+import type { DBSSchema } from "@common/publishUtils";
 import type { Prgl } from "../../App";
-import Btn from "../../components/Btn";
-import { FlexCol, FlexRow } from "../../components/Flex";
-import { InfoRow } from "../../components/InfoRow";
-import Loading from "../../components/Loader/Loading";
+import Btn from "@components/Btn";
+import { FlexCol, FlexRow } from "@components/Flex";
+import { InfoRow } from "@components/InfoRow";
+import Loading from "@components/Loader/Loading";
 import { AccessControlRuleEditor } from "./AccessControlRuleEditor";
 import { AccessControlRules } from "./ExistingAccessRules";
 import type { useAccessControlSearchParams } from "./useAccessControlSearchParams";
 import { mdiAccountCog, mdiPlus } from "@mdi/js";
 import { UserSyncConfig } from "./UserSyncConfig";
-import { ROUTES } from "../../../../common/utils";
+import { ROUTES, tableMightBeUndefinedDueToAccessControl } from "@common/utils";
 
 type P = ReturnType<typeof useAccessControlSearchParams> & {
   prgl: Prgl;
@@ -20,7 +20,7 @@ type P = ReturnType<typeof useAccessControlSearchParams> & {
 
 export type AccessRule = Required<DBSSchema["access_control"]> & {
   access_control_user_types: {
-    ids: string[];
+    ids: DBSSchema["user_types"]["id"][];
   }[];
   isApplied: boolean | undefined;
   published_methods: Required<DBSSchema["published_methods"]>[];
@@ -59,7 +59,10 @@ export const AccessControl = (props: P) => {
     useGetAccessRules(props.prgl);
   const { className, prgl, action, setAction } = props;
 
-  if (!(prgl.dbs.access_control_user_types as any)?.subscribe) {
+  if (
+    !tableMightBeUndefinedDueToAccessControl(prgl.dbs.access_control_user_types)
+      ?.subscribe
+  ) {
     return (
       <InfoRow className="f-0 h-fit">
         Must be admin to access this section{" "}

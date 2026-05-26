@@ -1,10 +1,9 @@
-import React from "react";
+import ErrorComponent from "@components/ErrorComponent";
 import type { ValidatedColumnInfo } from "prostgles-types";
 import { getJSONBSchemaAsJSONSchema } from "prostgles-types";
+import React from "react";
 import type { CodeEditorProps } from "./CodeEditor/CodeEditor";
 import { CodeEditor } from "./CodeEditor/CodeEditor";
-import { appTheme, useReactiveState } from "../App";
-import ErrorComponent from "../components/ErrorComponent";
 
 type P = {
   style?: React.CSSProperties;

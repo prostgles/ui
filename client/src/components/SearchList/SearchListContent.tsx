@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo } from "react";
 import { isObject } from "@common/publishUtils";
-import Checkbox from "../Checkbox";
+import React, { useEffect, useMemo } from "react";
+import { Checkbox } from "../Checkbox";
 import ErrorComponent from "../ErrorComponent";
 import { generateUniqueID } from "../FileInput/FileInput";
 import { Label } from "../Label";
@@ -14,6 +14,7 @@ import {
   useSearchListOnKeyUpDown,
 } from "./hooks/useSearchListOnKeyUpDown";
 import { useSearchListSearch } from "./hooks/useSearchListSearch";
+import { ClickCatchOverlayZIndex } from "@components/ClickCatchOverlay";
 
 export const SearchListContent = <M extends boolean = false>(
   props: SearchListProps<M>,
@@ -40,15 +41,15 @@ export const SearchListContent = <M extends boolean = false>(
     dataSignature,
     leftContent,
     noBorder,
+    belowSearchBoxContent,
   } = props;
   const multiSelect = !!onMultiToggle;
-  const isSearch = variant?.startsWith("search");
   const noShadow = variant?.includes("no-shadow");
   const rootRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
   const inputWrapperRef = React.useRef<HTMLDivElement>(null);
   const refList = React.useRef<HTMLUListElement>(null);
-  const idRef = React.useRef(props.id ?? generateUniqueID());
+  const idRef = React.useRef(props.id ?? inputID ?? generateUniqueID());
   const id = idRef.current;
   const showHover = Boolean(onChange || onMultiToggle || onPressEnter);
   const {
@@ -64,7 +65,8 @@ export const SearchListContent = <M extends boolean = false>(
     onStartSearch,
     searching,
     setSearchClosed,
-  } = useSearchListSearch({ ...props, isSearch });
+    isSearch,
+  } = useSearchListSearch(props);
 
   const { renderedItems, allSelected, renderedSelected } = useSearchListItems({
     ...props,
@@ -73,15 +75,16 @@ export const SearchListContent = <M extends boolean = false>(
     matchCase,
   });
 
-  const noList = isSearch ? searchClosed : !renderedItems.length && !searchTerm;
+  const noList = isSearch ? searchClosed : false;
 
   const wrapperStyleFinal = useMemo(() => {
-    if (noBorder)
+    if (noBorder) {
       return {
         borderRadius: 0,
         borderTop: "unset",
         borderBottom: "unset",
       };
+    }
     if (searchClosed) return {};
     return {
       ...{
@@ -110,7 +113,7 @@ export const SearchListContent = <M extends boolean = false>(
     }
   }, [autoFocus]);
 
-  const { onKeyDown } = useSearchListOnKeyUpDown({
+  const { onKeyDown, showFirstItemAsFocused } = useSearchListOnKeyUpDown({
     refList,
     onPressEnter,
     endSearch,
@@ -119,16 +122,26 @@ export const SearchListContent = <M extends boolean = false>(
   });
 
   const noSearch =
-    !onSearchItems && items.length < noSearchLimit && !searchTerm;
+    !multiSelect && // required to toggle all
+    !onSearchItems &&
+    items.length < noSearchLimit &&
+    !searchTerm &&
+    /** Ensure leftContent is shown even if search is not necessary */
+    !leftContent;
 
-  const hasSearch = !(noSearch || inputEl);
+  if (props.noSearchLimit && leftContent) {
+    console.warn(
+      "SearchList: noSearchLimit is ignored when leftContent is provided",
+    );
+  }
+
+  const hasSearch = !noSearch && !inputEl;
 
   const listNode =
     error ? <ErrorComponent error={error} />
     : noList ? null
     : <SearchListItems
         {...props}
-        id={id}
         ref={refList}
         renderedItems={renderedItems}
         isSearch={isSearch}
@@ -137,30 +150,38 @@ export const SearchListContent = <M extends boolean = false>(
         searchingItems={searchingItems}
         endSearch={endSearch}
         showHover={showHover}
+        listStyle={props.listStyle}
+        showFirstItemAsFocused={showFirstItemAsFocused}
       />;
+
   return (
     <div
       data-command="SearchList"
-      className={"SearchList list-comp ta-left flex-col min-h-0 " + className}
+      className={
+        "SearchList list-comp ta-left flex-col min-h-0 gap-dp5 " + className
+      }
       ref={rootRef}
       onKeyDown={onKeyDown}
-      style={{ ...style, ...(!isSearch ? rootStyle : {}) }} // maxHeight: "50vh",
+      style={{ ...style, ...(!isSearch ? rootStyle : {}) }}
     >
       {!!label && (
-        <Label className="ml-p5 mb-p25" variant="normal">
+        <Label className="mb-p25" variant="normal">
           {label}
         </Label>
       )}
       <div
         className={
-          "f-0 min-h-0 min-w-0 flex-row jc-start relative " +
+          "SearchListInput f-0 min-h-0 min-w-0 flex-row gap-p5 jc-start relative " +
           (!hasSearch && multiSelect ? " bg-color-2 " : "") +
           (isSearch ? " " : "  ai-center  ") +
           (!hasSearch && !multiSelect ? " hidden" : "")
         }
-        style={searchStyle}
+        style={{
+          zIndex:
+            isSearch && listNode ? ClickCatchOverlayZIndex + 1 : undefined,
+          ...searchStyle,
+        }}
       >
-        {leftContent}
         {!hasSearch ?
           multiSelect ?
             <div className="pl-1 py-p5 noselect text-1p5 ws-nowrap">
@@ -168,13 +189,53 @@ export const SearchListContent = <M extends boolean = false>(
             </div>
           : null
         : <SearchInput
-            id={inputID}
+            id={id}
+            leftContent={
+              Boolean(leftContent || multiSelect) && (
+                <>
+                  {leftContent}
+                  {!!multiSelect && (
+                    <Checkbox
+                      title="Toggle all"
+                      className={"mx-p5"}
+                      disabledInfo={
+                        !renderedItems.length ? "No items to toggle" : undefined
+                      }
+                      data-command="SearchList.toggleAll"
+                      checked={Boolean(renderedSelected.length)}
+                      onChange={(e) => {
+                        const checked = e.currentTarget.checked;
+
+                        const newItems = items.map((d) => {
+                          /** If filteted then only update the visible items */
+                          const filteredItem =
+                            !searchTerm ? d : (
+                              renderedItems.find((_d) => _d.key === d.key)
+                            );
+                          return {
+                            ...d,
+                            checked:
+                              filteredItem ?
+                                d.disabledInfo ?
+                                  d.checked
+                                : checked
+                              : d.checked,
+                          };
+                        });
+
+                        onMultiToggle(newItems, e);
+                      }}
+                    />
+                  )}
+                </>
+              )
+            }
             withShadow={isSearch && !noShadow}
             inputRef={inputRef}
             inputWrapperRef={inputWrapperRef}
-            onClickWrapper={() => {
+            onClickWrapper={(e) => {
               if (!listNode && searchEmpty) {
-                onSetTerm(searchTerm || "", {});
+                onSetTerm(searchTerm || "", e);
               }
             }}
             wrapperStyle={wrapperStyleFinal}
@@ -196,7 +257,7 @@ export const SearchListContent = <M extends boolean = false>(
                 }
               : undefined
             }
-            matchCase={
+            matchCaseState={
               props.matchCase?.hide ?
                 undefined
               : {
@@ -213,46 +274,12 @@ export const SearchListContent = <M extends boolean = false>(
             isLoading={isSearch && searchingItems}
           />
         }
-        {!!multiSelect && (
-          <Checkbox
-            id={id}
-            style={{
-              paddingLeft: "1em",
-              paddingRight: "20px",
-              marginLeft: "auto",
-            }}
-            className={!renderedItems.length ? "hidden" : ""}
-            data-command="SearchList.toggleAll"
-            checked={Boolean(renderedSelected.length)}
-            onChange={(e) => {
-              const checked = e.currentTarget.checked;
-
-              const newItems = items.map((d) => {
-                /** If filteted then only update the visible items */
-                const filteredItem =
-                  !searchTerm ? d : (
-                    renderedItems.find((_d) => _d.key === d.key)
-                  );
-                return {
-                  ...d,
-                  checked:
-                    filteredItem ?
-                      d.disabledInfo ?
-                        d.checked
-                      : checked
-                    : d.checked,
-                };
-              });
-
-              onMultiToggle(newItems, e);
-            }}
-          />
-        )}
       </div>
+      {belowSearchBoxContent}
       {listNode}
     </div>
   );
 };
 
-export const getValueAsText = (v): string | null | undefined =>
+export const getValueAsText = (v: unknown): string | null | undefined =>
   v && (isObject(v) || Array.isArray(v)) ? JSON.stringify(v) : v?.toString();

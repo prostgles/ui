@@ -1,7 +1,7 @@
 import { useState } from "react";
-import type { PrglState } from "../../App";
-import { usePromise } from "prostgles-client/dist/react-hooks";
-import type { DBSSchema } from "../../../../common/publishUtils";
+import type { AppContextProps } from "../../App";
+import { usePromise } from "prostgles-client";
+import type { DBSSchema } from "@common/publishUtils";
 import type { Workspace } from "../../dashboard/Dashboard/dashboardUtils";
 import type { FilterItem } from "prostgles-types";
 
@@ -14,7 +14,7 @@ type CommonConnectionInfo = Pick<DBSSchema["connections"], "created"> & {
 
 export type BasicConnectionModel = Pick<
   Required<DBSSchema["connections"]>,
-  "id" | "name" | "is_state_db"
+  "id" | "name" | "is_state_db" | "url_path"
 > &
   CommonConnectionInfo & { db_name?: undefined };
 
@@ -22,7 +22,7 @@ export type AdminConnectionModel = Required<DBSSchema["connections"]> &
   CommonConnectionInfo;
 
 export type IConnection = BasicConnectionModel | AdminConnectionModel;
-export const useConnections = (props: PrglState) => {
+export const useConnections = (props: AppContextProps) => {
   const [showStateConfirm, setShowStateConfirm] = useState<HTMLInputElement>();
   const [showDbNames, setShowDbNames] = useState(false);
   const { dbs, user, dbsMethods } = props;

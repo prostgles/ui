@@ -11,9 +11,9 @@ import type {
 } from "./SmartCard";
 import React from "react";
 import { RenderValue } from "../SmartForm/SmartFormField/RenderValue";
-import Checkbox from "../../components/Checkbox";
+import { Checkbox } from "@components/Checkbox";
 import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
-import { SvgIconFromURL } from "../../components/SvgIcon";
+import { SvgIconFromURL } from "@components/SvgIcon";
 export const parseFieldConfigs = (
   configs?: FieldConfigNested[],
   cols?: ValidatedColumnInfo[],
@@ -98,7 +98,7 @@ export const getDefaultFieldConfig = (
           .filter((c) => c.references?.length)
           .flatMap((c) =>
             c.references!.map((r) => ({
-              name: r.ftable!,
+              name: r.ftable,
               fieldConfigs: ["*"],
             })),
           ),

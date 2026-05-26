@@ -1,15 +1,16 @@
 import { mdiAlertOutline, mdiClose } from "@mdi/js";
 import type { ReactNode } from "react";
 import React from "react";
-import { isObject } from "../../../common/publishUtils";
+import { isObject } from "@common/publishUtils";
 import type { TestSelectors } from "../Testing";
-import { isEmpty, scrollIntoViewIfNeeded } from "../utils";
+import { isEmpty, scrollIntoViewIfNeeded } from "../utils/utils";
 import Btn from "./Btn";
 import { classOverride, FlexCol, FlexRow } from "./Flex";
 import { Icon } from "./Icon/Icon";
+import { getSerialisableError, isEqual } from "prostgles-types";
 
 type P = TestSelectors & {
-  error: any;
+  error: unknown;
   className?: string;
   noScroll?: boolean;
   style?: React.CSSProperties;
@@ -29,19 +30,22 @@ type P = TestSelectors & {
   autoScrollIntoView?: boolean;
 };
 export default class ErrorComponent extends React.Component<P> {
-  ref?: any;
+  ref?: HTMLDivElement;
 
   scrollIntoView = () => {
     const { error, autoScrollIntoView = true } = this.props;
-    if (error && autoScrollIntoView && this.ref && this.ref.scrollIntoView) {
+    if (error && autoScrollIntoView && this.ref) {
       scrollIntoViewIfNeeded(this.ref);
     }
   };
   componentDidMount() {
     this.scrollIntoView();
   }
-  componentDidUpdate() {
-    this.scrollIntoView();
+
+  componentDidUpdate(prevProps: P) {
+    if (!isEqual(this.props.error, prevProps.error)) {
+      this.scrollIntoView();
+    }
   }
   render() {
     const {
@@ -62,7 +66,7 @@ export default class ErrorComponent extends React.Component<P> {
       ...testSelectors
     } = this.props;
 
-    if ([null, undefined].includes(error)) {
+    if ([null, undefined].includes(error as any)) {
       return null;
     }
     const colorClass = color ? `text-${color}` : "text-danger";
@@ -97,16 +101,14 @@ export default class ErrorComponent extends React.Component<P> {
             }),
         }}
       >
-        {withIcon && (
-          <Icon size={1} className="as-start" path={mdiAlertOutline} />
-        )}
+        {withIcon && <Icon className="as-start f-0" path={mdiAlertOutline} />}
         <FlexCol
           className={
-            "gap-1 as-center-thisbreakslongerrors " +
+            "gap-p5 as-center-thisbreakslongerrors " +
             (noScroll ? "ws-break" : "o-auto")
           }
         >
-          {title && <div className="font-18 bold">{title}</div>}
+          {title && <div className="font-16 bold">{title}</div>}
           {(parsedError(error, findMsg) + "").slice(0, maxTextLength)}
         </FlexCol>
         {onClear && (
@@ -200,7 +202,8 @@ export const getErrorMessage = (e: any) => {
 /**
  * Return a more human readable error message if it's an object
  */
-export const parsedError = (val, findMsg?: boolean): string => {
+export const parsedError = (rawVal, findMsg?: boolean): string => {
+  const val = getSerialisableError(rawVal);
   let res = "";
 
   if (typeof val === "string") res = val;
@@ -211,10 +214,13 @@ export const parsedError = (val, findMsg?: boolean): string => {
       res = getErrorMessage(val);
     }
     if (!res)
-      res = Object.keys(val)
-        .map((k) => `${k}: ${JSON.stringify(val[k], null, 2)}`)
+      res = Object.entries(val)
+        .map(
+          ([k, v]) =>
+            `${k}: ${JSON.stringify(getSerialisableError(v), null, 2)}`,
+        )
         .join("\n");
-  } else if (val?.toString) res = val.toString();
+  } else if (val?.toString) res = (val as any).toString();
   else res = JSON.stringify(val);
 
   if (typeof res === "string" && res.length) {

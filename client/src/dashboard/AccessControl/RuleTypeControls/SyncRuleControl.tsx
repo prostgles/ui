@@ -1,18 +1,15 @@
 import React from "react";
-import ErrorComponent from "../../../components/ErrorComponent";
+import ErrorComponent from "@components/ErrorComponent";
 
-import type { SyncRule, TableRules } from "../../../../../common/publishUtils";
-import Select from "../../../components/Select/Select";
+import type { SyncRule, TableRules } from "@common/publishUtils";
+import { Select } from "@components/Select/Select";
 import type { ContextDataSchema } from "../OptionControllers/FilterControl";
 import type { TablePermissionControlsProps } from "../TableRules/TablePermissionControls";
 import { RuleToggle } from "./RuleToggle";
-import { InfoRow } from "../../../components/InfoRow";
+import { InfoRow } from "@components/InfoRow";
 // import { _PG_date, _PG_numbers, _PG_strings } from "prostgles-types";
 
-type P = Pick<
-  Required<TablePermissionControlsProps>,
-  "prgl" | "table" | "userTypes"
-> & {
+type P = Pick<Required<TablePermissionControlsProps>, "table" | "userTypes"> & {
   rule: TableRules["sync"];
   tableRules: TableRules;
   onChange: (rule: SyncRule | undefined) => void;
@@ -61,7 +58,7 @@ export const SyncRuleControl = ({
     : undefined;
 
   const cannotEnableError =
-    table.info.isView ? "Only tables can be synced"
+    table.isView ? "Only tables can be synced"
     : !tableRules.select ? "Cannot enable sync without select rule"
     : !(tableRules.update || tableRules.insert || tableRules.delete) ?
       "Cannot enable sync without at least one of the following rules: insert, update, delete"

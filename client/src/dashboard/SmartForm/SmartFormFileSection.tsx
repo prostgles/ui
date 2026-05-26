@@ -1,8 +1,8 @@
 import type { AnyObject, DBSchemaTable } from "prostgles-types";
 import { isEmpty } from "prostgles-types";
 import React, { useMemo } from "react";
-import type { Media } from "../../components/FileInput/FileInput";
-import { FileInput } from "../../components/FileInput/FileInput";
+import type { Media } from "@components/FileInput/FileInput";
+import { FileInput } from "@components/FileInput/FileInput";
 import type { SmartFormProps } from "./SmartForm";
 import type { NewRow, NewRowDataHandler } from "./SmartFormNewRowDataHandler";
 import type { SmartFormState } from "./useSmartForm";
@@ -30,8 +30,7 @@ export const SmartFormFileSection = ({
   row,
   newRowDataHandler,
 }: P) => {
-  const tableInfo = table.info;
-  const { isFileTable } = table.info;
+  const { isFileTable } = table;
   const tableName = table.name;
   const media: Media[] | undefined = useMemo(() => {
     if (!isFileTable) throw "Must be a file table";
@@ -64,9 +63,9 @@ export const SmartFormFileSection = ({
   return (
     <FileInput
       key={tableName}
-      className={"mt-p5 f-0 " + (tableInfo.isFileTable ? " min-w-300" : "")}
+      className={"mt-p5 f-0 " + (isFileTable ? " min-w-300" : "")}
       media={media}
-      minSize={isFileTable ? 470 : 450}
+      // minSize={isFileTable ? 470 : 450}
       maxFileCount={1}
       onAdd={([file]) => {
         // const currentRow = action.type === "update" ? action.currentRow : {};
@@ -89,7 +88,7 @@ export const SmartFormFileSection = ({
       }}
       onDelete={async (media) => {
         if ("id" in media && media.id) {
-          if (action.type === "update" && tableInfo.isFileTable) {
+          if (action.type === "update" && isFileTable) {
             // ????
             newRowDataHandler.setNewRow({
               [tableName]: { type: "nested-table", value: [] },
@@ -102,7 +101,7 @@ export const SmartFormFileSection = ({
                 { deleted: true },
                 onSuccess ? { returning: "*" } : {},
               );
-              onSuccess?.("update", res!);
+              onSuccess?.("update", res);
             }
           }
         } else {

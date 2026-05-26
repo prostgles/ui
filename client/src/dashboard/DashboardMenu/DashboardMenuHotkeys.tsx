@@ -1,20 +1,21 @@
 import React, { useEffect, useRef } from "react";
 import { getFileText } from "../W_SQL/W_SQLMenu";
 import type { DashboardMenuProps, DashboardMenuState } from "./DashboardMenu";
-import { getKeys } from "../../utils";
+import { getKeys } from "../../utils/utils";
 import { includes } from "../W_SQL/W_SQLBottomBar/W_SQLBottomBar";
+import { useAddViewToWorkspace } from "../Dashboard/useAddViewToWorkspace";
 
-type P = Pick<DashboardMenuProps, "loadTable"> & {
+type P = Pick<DashboardMenuProps, "workspace"> & {
   setShowSearchAll: React.Dispatch<
     React.SetStateAction<DashboardMenuState["showSearchAll"]>
   >;
 };
-export const DashboardMenuHotkeys = ({ loadTable, setShowSearchAll }: P) => {
+export const DashboardMenuHotkeys = ({ workspace, setShowSearchAll }: P) => {
   const inputRef = useRef<HTMLInputElement>(null);
-
+  const { addViewToWorkspace } = useAddViewToWorkspace();
   useEffect(() => {
-    const onKeyDown = (e) => {
-      const term = window.getSelection()?.toString()?.trim();
+    const onKeyDown = (e: KeyboardEvent) => {
+      const term = window.getSelection()?.toString().trim();
       const mode = getHotkey(e);
       if (mode && !includes(mode, ["rows", "open file", "commands"])) {
         e.preventDefault();
@@ -22,8 +23,8 @@ export const DashboardMenuHotkeys = ({ loadTable, setShowSearchAll }: P) => {
       }
     };
 
-    const onKeyUp = (e) => {
-      const term = window.getSelection()?.toString()?.trim();
+    const onKeyUp = (e: KeyboardEvent) => {
+      const term = window.getSelection()?.toString().trim();
       const mode = getHotkey(e);
       if (mode === "open file") {
         e.preventDefault();
@@ -52,7 +53,12 @@ export const DashboardMenuHotkeys = ({ loadTable, setShowSearchAll }: P) => {
     const file = e.target.files?.[0];
     if (file) {
       // if(file.name.toLowerCase().endsWith(".sql")){
-      loadTable({ sql: await getFileText(file), type: "sql", name: file.name });
+      void addViewToWorkspace({
+        workspace_id: workspace.id,
+        sql: await getFileText(file),
+        type: "sql",
+        name: file.name,
+      });
       /* CSV?? */
       // } else {
 

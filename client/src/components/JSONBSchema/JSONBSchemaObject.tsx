@@ -50,7 +50,8 @@ export const JSONBSchemaObject = ({
           variant="faded"
           onClick={() => {
             setShowOptional(true);
-            onChange({} as any);
+            //@ts-ignore
+            onChange({});
           }}
         />
       </div>
@@ -91,7 +92,7 @@ export const JSONBSchemaObject = ({
             <JSONBSchema
               key={propName}
               value={(value as any)?.[propName]}
-              schema={propSchema as any}
+              schema={propSchema}
               nestingPath={itemNestingPath}
               style={itemStyle?.style}
               className={itemStyle?.className}

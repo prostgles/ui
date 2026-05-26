@@ -5,7 +5,7 @@ import {
   type TypeAutoOpts,
 } from "../../dashboard/W_SQL/getDemoUtils";
 import { VIDEO_DEMO_DB_NAME } from "../../dashboard/W_SQL/TestSQL";
-import { tout } from "../../utils";
+import { tout } from "../../utils/utils";
 import { closeAllViews } from "./dashboardDemo";
 import {
   click,
@@ -14,6 +14,7 @@ import {
   openConnection,
   waitForElement,
 } from "../demoUtils";
+import { getCommandElemSelector } from "src/Testing";
 
 export { fixIndent };
 const sqlVideoDemo: DemoScript = async (args) => {
@@ -70,7 +71,7 @@ const sqlVideoDemo: DemoScript = async (args) => {
       `CREATE TABLE IF NOT EXISTS chats (id BIGSERIAL PRIMARY KEY);`,
       `CREATE TABLE IF NOT EXISTS chat_members (chat_id BIGINT NOT NULL REFERENCES chats, user_id UUID NOT NULL REFERENCES users, UNIQUE(chat_id, user_id));`,
       `CREATE TABLE IF NOT EXISTS contacts ( user_id UUID REFERENCES users, contact_user_id UUID REFERENCES users, added_on TIMESTAMP DEFAULT now(), PRIMARY KEY (user_id, contact_user_id));`,
-      `CREATE TABLE IF NOT EXISTS messages (id BIGSERIAL PRIMARY KEY, chat_id BIGINT REFERENCES chats, sender_id UUID REFERENCES users, message_text TEXT NOT NULL CHECK (length(trim(message_text)) > 0), timestamp TIMESTAMP DEFAULT now(), seen_at TIMESTAMP);`,
+      `CREATE TABLE IF NOT EXISTS messages (id BIGSERIAL PRIMARY KEY, chat_id BIGINT REFERENCES chats, sender_id UUID REFERENCES users ON DELETE CASCADE, message_text TEXT NOT NULL CHECK (length(trim(message_text)) > 0), timestamp TIMESTAMP DEFAULT now(), seen_at TIMESTAMP);`,
       `REVOKE ALL ON ALL TABLES IN SCHEMA public FROM vid_demo_user;`,
       `
     -- Alter Default Privileges for Future Tables
@@ -96,7 +97,7 @@ const sqlVideoDemo: DemoScript = async (args) => {
     script: string,
     logic: () => Promise<void>,
   ) => {
-    fromBeginning(false, `/* ${title} */\n${script}`);
+    await fromBeginning(false, `/* ${title} */\n${script}`);
     await tout(1e3);
     await logic();
     await tout(1e3);
@@ -165,8 +166,8 @@ const sqlVideoDemo: DemoScript = async (args) => {
       await moveCursor.lineEnd();
       await typeQuick(`, age(cr`, { waitBeforeAccept: 1500 });
       await moveCursor.down(1);
-      await moveCursor.lineEnd();
-      await newLine();
+      await moveCursor.lineEnd(500);
+      newLine();
       await typeQuick(`W`, { triggerMode: "firstChar", waitBeforeAccept: 500 });
       await typeQuick(` opt`);
       await typeAuto(` the`, { waitAccept: 1e3 });
@@ -439,9 +440,14 @@ const timeChartDemo: DemoScript = async ({
 
   /** Shows numeric col avg by default */
   shouldBeEqual(layer.innerText, "Avg(\nrval\n),\ndate");
+  await tout(100);
 
-  /** Cannot add the same layer */
-  shouldBeEqual(addTChartBtn.disabled, true);
+  for (const btn of document.querySelectorAll<HTMLButtonElement>(
+    getCommandElemSelector("AddChartMenu.Timechart"),
+  )) {
+    /** Cannot add the same layer */
+    shouldBeEqual(btn.disabled, true, "Cannot add the same layer");
+  }
 
   const setLayerFunc = async (func: "$avg" | "$countAll", layerNumber = 0) => {
     await click("TimeChartLayerOptions.aggFunc", "", {
@@ -526,8 +532,8 @@ const timeChartDemo: DemoScript = async ({
   await click("dashboard.window.closeChart");
 };
 
-export const shouldBeEqual = (a: any, b: any) => {
+export const shouldBeEqual = (a: any, b: any, message?: string) => {
   if (a !== b) {
-    throw new Error(`Expected ${a} to equal ${b}`);
+    throw new Error(`Expected ${a} to equal ${b}. ${message ?? ""}`);
   }
 };

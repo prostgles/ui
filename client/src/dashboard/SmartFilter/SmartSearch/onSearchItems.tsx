@@ -1,22 +1,21 @@
-import React from "react";
+import type { DetailedFilter } from "@common/filterUtils";
 import type {
+  OnPartialResult,
   SearchListItem,
   SearchListProps,
-} from "../../../components/SearchList/SearchList";
+} from "@components/SearchList/SearchList";
+import React from "react";
+import { SearchMatchRow } from "src/dashboard/SearchAll/SearchMatchRow";
+import { isDefined } from "../../../utils/utils";
 import type { SmartSearch } from "./SmartSearch";
 import { getSmartSearchRows } from "./getSmartSearchRows";
-import type {
-  SimpleFilter,
-  SmartGroupFilter,
-} from "../../../../../common/filterUtils";
-import { isDefined } from "../../../utils";
-import { SearchAll } from "../../SearchAll";
+import type { ColumnValue } from "src/dashboard/W_Table/ColumnMenu/ColumnStyleControls/ColumnStyleControls";
 
 export async function onSearchItems(
   this: SmartSearch,
   term: string,
   opts?: { matchCase?: boolean },
-  onPartialResult?,
+  onPartialResult?: OnPartialResult,
 ): Promise<Required<SearchListProps>["items"]> {
   if (typeof term !== "string") {
     return [];
@@ -65,7 +64,8 @@ export async function onSearchItems(
         if (!r.prgl_term_highlight) return undefined;
         const firstRowKey = Object.keys(r.prgl_term_highlight)[0]!;
         const colName = column === "*" ? firstRowKey : (column ?? firstRowKey);
-        let node, columnValue, columnTermValue;
+        let node: React.ReactNode = null;
+        let columnValue: ColumnValue, columnTermValue;
         if (colName) {
           /** If date then put the returned content as value */
           columnTermValue = r.prgl_term_highlight[colName].flat().join("");
@@ -85,7 +85,10 @@ export async function onSearchItems(
                   </div>
                 )}
               <div className="f-1 " style={{ marginTop: "4px" }}>
-                {SearchAll.renderRow(r.prgl_term_highlight[colName], i)}
+                <SearchMatchRow
+                  key={i}
+                  matchRow={r.prgl_term_highlight[colName]}
+                />
               </div>
             </div>
           );
@@ -100,13 +103,13 @@ export async function onSearchItems(
           title: stringColumnValue,
           data: columnValue,
           onPress: () => {
-            const newFilter: SimpleFilter = {
+            const newFilter: DetailedFilter = {
               fieldName: colName,
-              type: "$term_highlight",
-              // value: this.props.column? ( columnValue ?? term) : term,
-              value: columnTermValue ?? term, // term// columnValue ?? term
+              type: "$in",
+              value: [columnValue],
+              minimised: true,
             };
-            const result: SmartGroupFilter = [
+            const result: DetailedFilter[] = [
               ...(this.props.detailedFilter ?? []),
               newFilter,
             ];
@@ -125,9 +128,9 @@ export async function onSearchItems(
     return searchItems;
   };
   const hasChars = Boolean(term && /[a-z]/i.test(term));
+  let canceled = false as boolean;
   for (let i = 0; i < columns.length; i++) {
     const col = columns[i]!;
-    let canceled: boolean = false as boolean;
     if (canceled || (col.tsDataType === "number" && hasChars)) {
       /** 100% no result due to data type mismatch */
     } else {

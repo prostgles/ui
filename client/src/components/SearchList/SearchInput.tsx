@@ -5,12 +5,13 @@ import Btn from "../Btn";
 import { classOverride, FlexRow } from "../Flex";
 import { Input } from "../Input";
 import Loading from "../Loader/Loading";
+import { ClickCatchOverlayZIndex } from "@components/ClickCatchOverlay";
 
 export const SearchInputZIndex = 2;
 
 export type SearchInputProps = Pick<
   React.HTMLProps<HTMLInputElement>,
-  "type" | "title"
+  "type" | "title" | "autoFocus"
 > &
   TestSelectors & {
     placeholder?: string;
@@ -22,7 +23,7 @@ export type SearchInputProps = Pick<
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
     withShadow: boolean | undefined;
     isLoading?: boolean;
-    matchCase?: {
+    matchCaseState?: {
       value: boolean;
       onChange: (value: boolean) => void;
     };
@@ -40,7 +41,7 @@ export const SearchInput = (props: SearchInputProps) => {
     wrapperStyle,
     inputWrapperRef,
     inputRef,
-    matchCase,
+    matchCaseState,
     isLoading,
     withShadow,
     style,
@@ -60,11 +61,9 @@ export const SearchInput = (props: SearchInputProps) => {
       }
       style={{
         ...wrapperStyle,
-        ...(mode ?
-          { zIndex: mode["!listNode"] ? "unset" : SearchInputZIndex }
-        : {
-            margin: "8px",
-          }),
+        ...(mode && {
+          zIndex: mode["!listNode"] ? "unset" : SearchInputZIndex,
+        }),
       }}
       onClick={onClickWrapper}
     >
@@ -76,20 +75,25 @@ export const SearchInput = (props: SearchInputProps) => {
         type={type}
         ref={inputRef}
         style={{
+          minWidth: "5em",
           ...(mode?.["!noList"] && {
             borderBottomLeftRadius: 0,
             borderBottomRightRadius: 0,
-            zIndex: 3,
+            zIndex: ClickCatchOverlayZIndex + 1,
           }),
-          ...(matchCase && {
+          ...(matchCaseState && {
             borderTopRightRadius: 0,
             borderBottomRightRadius: 0,
           }),
-          ...style,
           ...(size !== "small" && {
-            padding: "8px 1em",
+            padding: "0.5em",
             paddingRight: 0,
           }),
+          ...(leftContent && {
+            paddingLeft: 0,
+          }),
+          margin: "2px",
+          ...style,
         }}
         autoComplete="off"
         title={"Search"}
@@ -101,28 +105,35 @@ export const SearchInput = (props: SearchInputProps) => {
           borderTopLeftRadius: 0,
           borderBottomLeftRadius: 0,
           overflow: "visible",
-          margin: "0px",
+          margin: "2px",
         }}
       >
         {isLoading && (
           <Loading
-            className="noselect mr-p5 bg-color-0"
+            className="noselect m-auto"
+            style={{
+              position: "absolute",
+              right: ".5em",
+              top: 0,
+              bottom: 0,
+            }}
             sizePx={24}
-            variant="cover"
           />
         )}
 
-        {matchCase && (
+        {matchCaseState && (
           <Btn
             data-command="SearchList.MatchCase"
             title={"Match case"}
             iconPath={mdiFormatLetterCase}
             style={{
-              margin: "1px",
+              visibility: isLoading ? "hidden" : "visible",
+              padding: "6px",
             }}
-            color={matchCase.value ? "action" : undefined}
+            size="small"
+            color={matchCaseState.value ? "action" : undefined}
             onClick={() => {
-              matchCase.onChange(!matchCase);
+              matchCaseState.onChange(!matchCaseState.value);
             }}
           />
         )}

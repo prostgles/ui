@@ -8,12 +8,20 @@ export const timechartUIDoc = {
   selector: `.SilverGridChild[data-view-type="timechart"]`,
   title: "Timechart view",
   description: "Displays a timechart based on the Table/SQL query results.",
-  docs: fixIndent(`
-    The timechart view allows you to visualize time-series data from your database.
-    It supports multiple layers, each with its own data source and style.
-    You can add filters to the timechart to narrow down the data displayed.
-    <img src="./screenshots/timechart.svg" alt="Timechart view screenshot" />
-  `),
+  docs: `
+    The timechart view allows you to visualize time-series data from your database. 
+
+
+    ## Features
+    
+    - **Multiple layer support**: Display multiple layers of time-series data on the same chart, each with its own data source and styling options.
+    - **Aggregation and grouping**: Configure aggregation functions and grouping options for each layer to analyze trends and patterns in your data effectively.
+    - **Interactive exploration**: Interact with the chart using zooming, panning, and tooltips to explore your data in detail.
+  
+    <img src="./screenshots/timechart.svgif.svg" alt="Timechart view screenshot" />
+    
+    ## Components
+    `,
   docOptions: "asSeparateFile",
   children: [
     getCommonViewHeaderUIDoc(

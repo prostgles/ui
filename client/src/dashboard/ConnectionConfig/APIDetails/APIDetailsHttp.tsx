@@ -1,24 +1,26 @@
+import { getConnectionApiPaths } from "@common/utils";
+import Btn from "@components/Btn";
+import { FlexCol } from "@components/Flex";
+import PopupMenu from "@components/PopupMenu";
+import { SwitchToggle } from "@components/SwitchToggle";
 import { mdiCodeBraces } from "@mdi/js";
 import React from "react";
-import Btn from "../../../components/Btn";
-import { FlexCol } from "../../../components/Flex";
-import PopupMenu from "../../../components/PopupMenu";
-import { SwitchToggle } from "../../../components/SwitchToggle";
-import CodeExample from "../../CodeExample";
-import type { APIDetailsProps } from "./APIDetails";
-import { getConnectionPaths } from "../../../../../common/utils";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import { t } from "../../../i18n/i18nUtils";
+import CodeExample from "../../CodeExample";
 import { download } from "../../W_SQL/W_SQL";
+import type { APIDetailsProps } from "./APIDetails";
+import { getApiEndpoint } from "./getApiEndpoint";
 
 export const APIDetailsHttp = ({
-  dbs,
   connection,
   token,
 }: APIDetailsProps & { token?: string }) => {
+  const { dbs } = usePrglCore();
   const { data: dbConfig } = dbs.database_configs.useSubscribeOne({
     $existsJoined: { connections: { id: connection.id } },
   });
-  const restPath = `${window.location.origin}${getConnectionPaths(connection).rest}`;
+  const restPath = `${getApiEndpoint(connection)}${getConnectionApiPaths(connection).rest}`;
   const restExample = getRestExample(restPath, token);
   return (
     <FlexCol>
@@ -30,7 +32,7 @@ export const APIDetailsHttp = ({
             variant="row"
             checked={!!dbConfig.rest_api_enabled}
             onChange={(rest_api_enabled) => {
-              dbs.database_configs.update(
+              void dbs.database_configs.update(
                 { id: dbConfig.id },
                 { rest_api_enabled },
               );
@@ -102,7 +104,7 @@ const headers = new Headers({
   'Authorization': \`Bearer ${!token ? "YOUR_TOKEN_IN_BASE64" : btoa(token)}\`, 
   'Accept': 'application/json',
   'Content-Type': 'application/json'
-})
+});
 const api = (route, ...params) => fetch(
   \`${path}/\${route.join("/")}\`, 
   { 
@@ -112,10 +114,10 @@ const api = (route, ...params) => fetch(
   })
   .then(res => res.json())
   .catch(res => res.text())
-  .catch(res => res.statusText) 
+  .catch(res => res.statusText);
   
 const schema = await api(["schema"]);
 console.log(schema);
-const data = await api(["db", schema.tableSchema[0]?.name ?? "someTable", "find"], {}, { select: "*", limit: 2 })
+const data = await api(["db", schema.tableSchema[0]?.name ?? "someTable", "find"], {}, { select: "*", limit: 2 });
 // const methodResult = await api(["methods", "someMethod"], {})
 `;

@@ -1,18 +1,28 @@
 process.on("unhandledRejection", (reason, p) => {
   console.trace("Unhandled Rejection at: Promise", p, "reason:", reason);
 });
+/** Prevent "node --watch" waiting for process graceful exit  */
+import inspector from "inspector";
+process.on("SIGTERM", () => {
+  inspector.close();
+  void tout(1000).then(() => {
+    process.exit(0);
+  });
+});
 
+import { sidKeyName } from "@common/authTypesAndConstants";
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
+import type { ProstglesState } from "@common/electronInitTypes";
+import { isObject, type DBSSchema } from "@common/publishUtils";
+import { API_ENDPOINTS, SPOOF_TEST_VALUE } from "@common/utils";
+import { tout } from "@src/utils/tout";
 import { spawn } from "child_process";
 import type { NextFunction, Request, Response } from "express";
 import path from "path";
-import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
+import type { DBOFullyTyped } from "prostgles-server";
 import type { VoidFunction } from "prostgles-server/dist/SchemaWatch/SchemaWatch";
 import { getKeys, omitKeys, type AnyObject } from "prostgles-types";
-import type { DBGeneratedSchema } from "../../common/DBGeneratedSchema";
-import type { ProstglesState } from "../../common/electronInitTypes";
-import { isObject, type DBSSchema } from "../../common/publishUtils";
-import { SPOOF_TEST_VALUE } from "../../common/utils";
-import { sidKeyName } from "./authConfig/sessionUtils";
+import { getAuthSetupData } from "./authConfig/subscribeToAuthSetupChanges";
 import { ConnectionManager } from "./ConnectionManager/ConnectionManager";
 import { actualRootDir, getElectronConfig } from "./electronConfig";
 import { initExpressAndIOServers } from "./init/initExpressAndIOServers";
@@ -26,12 +36,8 @@ import {
   startingProstglesResult,
   tryStartProstgles,
 } from "./init/tryStartProstgles";
-import { getAuthSetupData } from "./authConfig/subscribeToAuthSetupChanges";
 
 const { app, http, io } = initExpressAndIOServers();
-
-export const connMgr = new ConnectionManager(http, app);
-export const isDocker = Boolean(process.env.IS_DOCKER);
 
 const isTestingElectron = require.main?.filename.endsWith("testElectron.js");
 const electronConfig = getElectronConfig();
@@ -39,10 +45,11 @@ const PORT =
   electronConfig && !isTestingElectron ? 0 : (
     +(process.env.PROSTGLES_UI_PORT ?? 3004)
   );
+export const connectionManager = new ConnectionManager(http, app, io, PORT);
+
 const LOCALHOST = "127.0.0.1";
 const HOST =
   electronConfig ? LOCALHOST : process.env.PROSTGLES_UI_HOST || LOCALHOST;
-setDBSRoutesForElectron(app, io, PORT, HOST);
 
 /** Make client wait for everything to load before serving page */
 export const waitForInitialisation =
@@ -66,7 +73,7 @@ export const waitForInitialisation =
 /**
  * Serve prostglesInitState
  */
-app.get("/dbs", (req, res) => {
+app.get(API_ENDPOINTS.DBS, (req, res) => {
   const prostglesState = getProstglesState();
   const { initState } = prostglesState;
   const nonSerialiseableOrNotNeededKeys = getKeys({
@@ -109,11 +116,11 @@ app.get("/dbs", (req, res) => {
   }
   /** Alert admin if x-real-ip is spoofable */
   let xRealIpSpoofable = false;
-  const { globalSettings } = getAuthSetupData();
+  const { stateDatabaseConfig: database_config } = getAuthSetupData();
   if (
     req.headers["x-real-ip"] === SPOOF_TEST_VALUE &&
-    globalSettings?.login_rate_limit_enabled &&
-    globalSettings.login_rate_limit.groupBy === "x-real-ip"
+    database_config?.login_rate_limit_enabled &&
+    database_config.login_rate_limit.groupBy === "x-real-ip"
   ) {
     xRealIpSpoofable = true;
   }
@@ -133,7 +140,7 @@ const serveIndexIfNoCredentialsOrInitError = async (
     electronCredsProvided,
   } = getProstglesState();
   if (state !== "ok" || (isElectron && !electronCredsProvided)) {
-    if (req.method === "GET" && !req.path.startsWith("/dbs")) {
+    if (req.method === "GET" && !req.path.startsWith(API_ENDPOINTS.DBS)) {
       res.sendFile(path.resolve(actualRootDir + "/../client/build/index.html"));
       return;
     }
@@ -141,8 +148,7 @@ const serveIndexIfNoCredentialsOrInitError = async (
 
   next();
 };
-
-// eslint-disable-next-line @typescript-eslint/no-misused-promises
+console.error("THE READMEEEEEEEEEEEEEEEEEEEEE");
 app.use(serveIndexIfNoCredentialsOrInitError);
 
 /** Startup procedure
@@ -177,7 +183,7 @@ export function restartProc(cb?: VoidFunction) {
   console.warn("Restarting process");
   if (process.env.process_restarting) {
     delete process.env.process_restarting;
-    // Give old process one second to shut down before continuing ...
+    // Give old process  one second to shut down before continuing ...
     setTimeout(() => {
       cb?.();
       restartProc();
@@ -197,14 +203,6 @@ export function restartProc(cb?: VoidFunction) {
   }).unref();
 }
 
-export const tout = (timeout: number) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(true);
-    }, timeout);
-  });
-};
-
 export type BareConnectionDetails = Pick<
   Connections,
   | "type"
@@ -218,7 +216,7 @@ export type BareConnectionDetails = Pick<
   | "ssl_certificate"
 >;
 export type DBS = DBOFullyTyped<DBGeneratedSchema>;
-export type Users = Required<DBGeneratedSchema["users"]["columns"]>;
+export type Users = DBSSchema["users"];
 export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
 export type DatabaseConfigs = DBSSchema["database_configs"];
 
@@ -235,7 +233,10 @@ type OnServerReadyResult = {
 };
 
 export const startServer = async (
-  onReady?: (result: OnServerReadyResult) => void | Promise<void>,
+  onReady?: (
+    result: OnServerReadyResult,
+    startupResult: ProstglesInitStateWithDBS,
+  ) => void | Promise<void>,
 ) => {
   const actualPort = await new Promise<number>((resolve) => {
     const server = http.listen(PORT, HOST, () => {
@@ -254,11 +255,8 @@ export const startServer = async (
   });
 
   const startupResult = await waitForInitialisation();
-  if (startupResult.state === "error") {
-    console.error("Failed to start prostgles", startupResult);
-    throw new Error("Failed to start prostgles");
-  }
-  void onReady?.({ port: actualPort });
+  await onReady?.({ port: actualPort }, startupResult);
+  return { connMgr: connectionManager };
 };
 
 /**
@@ -266,7 +264,11 @@ export const startServer = async (
  * Otherwise it will be started from electron/main.ts
  */
 if (require.main === module) {
-  void startServer((result) => {
+  void startServer((result, dbStartupInfo) => {
+    if (dbStartupInfo.state === "error") {
+      console.error("Failed to start prostgles", dbStartupInfo);
+      process.exit(1);
+    }
     console.log("Server started", result);
   });
 }

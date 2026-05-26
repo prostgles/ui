@@ -1,14 +1,16 @@
 import { omitKeys, pickKeys, type ProstglesError } from "prostgles-types";
 import type { Connections, DBS, Users } from ".";
-import type { DBGeneratedSchema } from "../../common/DBGeneratedSchema";
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import { testDBConnection } from "./connectionUtils/testDBConnection";
 import { validateConnection } from "./connectionUtils/validateConnection";
-import { applySampleSchema } from "./publishMethods/applySampleSchema";
+import { applySampleSchema } from "./serverFunctions/applySampleSchema";
+import { CSP_DEFAULTS } from "./init/CSP_DEFAULTS";
 
 export const upsertConnection = async (
   con: DBGeneratedSchema["connections"]["columns"],
   user_id: Users["id"] | null,
   dbs: DBS,
+  allowedOrigins: string[],
   sampleSchemaName?: string,
 ) => {
   const c = validateConnection({
@@ -26,12 +28,16 @@ export const upsertConnection = async (
       }
       connection = await dbs.connections.update(
         { id: con.id },
-        omitKeys(c as any, ["id"]),
+        omitKeys(c, ["id"]),
         { returning: "*", multi: false },
       );
     } else {
       await dbs.database_configs.insert(
-        pickKeys({ ...c }, ["db_host", "db_name", "db_port"]),
+        {
+          ...pickKeys({ ...c }, ["db_host", "db_name", "db_port"]),
+          cors: { allowedOrigins },
+          csp: CSP_DEFAULTS,
+        },
         {
           removeDisallowedFields: true,
           onConflict: "DoNothing",

@@ -1,11 +1,4 @@
-import { getCssVariableValue } from "./onRenderTimechart";
-
-export const DEFAULT_SHADOW = {
-  color: getCssVariableValue("--shadow1"), //"rgba(73, 56, 56, 0.5)",
-  blur: 15,
-  offsetX: 3,
-  offsetY: 3,
-};
+import { DEFAULT_SHADOW } from "./constants";
 
 export function roundRect(
   ctx: CanvasRenderingContext2D,
@@ -42,36 +35,8 @@ export function roundRect(
 
   ctx.beginPath();
   ctx.roundRect(x, y, width, height, radius.tl);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-  // const initialLineWidth = ctx.lineWidth;
-  // const curvedLineWidth = ctx.lineWidth + 1;
-  // ctx.beginPath();
-  // ctx.moveTo(x + radius.tl, y);
-  // ctx.lineTo(x + width - radius.tr, y);
-  // ctx.lineWidth = curvedLineWidth;
-  // ctx.quadraticCurveTo(x + width, y, x + width, y + radius.tr);
-  // ctx.lineWidth = initialLineWidth;
-  // ctx.lineTo(x + width, y + height - radius.br);
-  // ctx.lineWidth = curvedLineWidth;
-  // ctx.quadraticCurveTo(
-  //   x + width,
-  //   y + height,
-  //   x + width - radius.br,
-  //   y + height,
-  // );
-  // ctx.lineWidth = initialLineWidth;
-  // ctx.lineTo(x + radius.bl, y + height);
-  // ctx.lineWidth = curvedLineWidth;
-  // ctx.quadraticCurveTo(x, y + height, x, y + height - radius.bl);
-  // ctx.lineWidth = initialLineWidth;
-  // ctx.lineTo(x, y + radius.tl);
-  // ctx.lineWidth = curvedLineWidth;
-  // ctx.quadraticCurveTo(x, y, x + radius.tl, y);
-  // ctx.lineWidth = initialLineWidth;
-  // ctx.closePath();
-
-  // Restore the context state
+  if (shadow.blur) {
+    ctx.fill();
+  }
   ctx.restore();
 }

@@ -1,12 +1,13 @@
-import { asName, omitKeys } from "prostgles-types";
+//@ts-nocheck
+import { throttle } from "@common/utils";
+import { asName } from "prostgles-types";
 import type { Readable } from "stream";
-import { throttle } from "../../../common/utils";
+import { getSSLEnvVars } from "../ConnectionManager/saveCertificates";
 import type BackupManager from "./BackupManager";
 import type { Backups } from "./BackupManager";
 import { envToStr } from "./pipeFromCommand";
 import { pipeToCommand } from "./pipeToCommand";
 import { addOptions, getBkp, getConnectionEnvVars, makeLogs } from "./utils";
-import { getSSLEnvVars } from "../ConnectionManager/saveCertificates";
 
 export async function pgRestore(
   this: BackupManager,
@@ -17,12 +18,18 @@ export async function pgRestore(
   const { bkpId, connId } = arg1;
   const { fileMgr, bkp } = await getBkp(this.dbs, bkpId);
   if (!bkp.id && !connId)
-    throw "Must provide a connection id if backup does not have a connection_id";
+    throw new Error(
+      "Must provide a connection id if backup does not have a connection_id",
+    );
   const connection_id = connId ?? bkp.connection_id!;
   const con = await this.dbs.connections.findOne({ id: connection_id });
-  if (!con) throw "Connection not found";
-  if (!o) throw "Restore options missing";
-
+  if (!con) throw new Error("Connection not found");
+  if (!o) throw new Error("Restore options missing");
+  const { is_state_db } = con;
+  if (is_state_db && !o.singleTransaction) {
+    console.warn("Single transaction enabled for state db restore.");
+    o.singleTransaction = true;
+  }
   const setError = async (err: any) => {
     const currBkp = await this.dbs.backups.findOne({ id: bkpId });
     if (currBkp) {
@@ -30,8 +37,9 @@ export async function pgRestore(
         { id: bkpId },
         {
           restore_status: {
-            ...omitKeys(currBkp.restore_status as any, ["ok"]),
-            err: (err ?? "").toString(),
+            state: "error",
+            timestamp: new Date().toISOString(),
+            message: String(err ?? ""),
           },
           last_updated: new Date(),
         },
@@ -42,7 +50,7 @@ export async function pgRestore(
     if (o.create)
       throw "Cannot use 'newDbName' together with 'create'. --create option will still restore into the database specified within the dump file";
     try {
-      await this.dbs.sql(`CREATE DATABASE ${asName(o.newDbName)}`);
+      await this.dbsSql(`CREATE DATABASE ${asName(o.newDbName)}`);
     } catch (err) {
       void setError(err);
     }
@@ -68,13 +76,11 @@ export async function pgRestore(
       o.command === "psql" || o.format === "p" ?
         {
           command: this.getCmd("psql"),
-          // opts: [getConnectionUri(con as any)] // NOT SAFE ps aux
           opts: [],
         }
       : {
           command: this.getCmd("pg_restore"),
           opts: addOptions(
-            // ["-d", getConnectionUri(con as any) NOT SAFE FROM ps aux],
             [],
             [
               [true, "--dbname=" + ConnectionEnvVars.PGDATABASE], // Prevent error: "d -f/--file must be specified"
@@ -85,6 +91,7 @@ export async function pgRestore(
               [!!o.format, ["--format", o.format]],
               [o.dataOnly, "--data-only"],
               [o.ifExists, "--if-exists"],
+              [o.singleTransaction, "--single-transaction"],
               [!!o.excludeSchema, ["--exclude-schema", o.excludeSchema!]],
               [Number.isInteger(o.numberOfJobs), "--jobs"],
               [true, "-v"],
@@ -105,34 +112,41 @@ export async function pgRestore(
           restoreCmd.command +
           " " +
           restoreCmd.opts.join(" "),
-        restore_status: { loading: { loaded: 0, total: 0 } },
+        restore_status: { state: "loading", loaded: 0, total: 0 },
         last_updated: new Date(),
       },
     );
 
     let chunkSum = 0;
+    const totalBytes = +(bkp.sizeInBytes ?? bkp.dbSizeInBytes);
     const throttledUpdate = throttle(async () => {
       if (!(await this.dbs.backups.findOne({ id: bkpId }))) {
-        bkpStream.emit("error", "Backup file not found");
+        if (!is_state_db) {
+          bkpStream.emit("error", "Backup file not found");
+        } else {
+          console.warn(`Backup with id ${bkpId} not found`);
+        }
       } else {
-        const finished = chunkSum >= +(bkp.sizeInBytes ?? bkp.dbSizeInBytes);
+        const finished = chunkSum >= totalBytes;
+        const nowISO = new Date().toISOString();
         void this.dbs.backups.update(
           { id: bkpId },
           {
             restore_status:
               finished ?
                 {
-                  ok: `${new Date()}`,
+                  state: "finished",
+                  timestamp: nowISO,
                 }
               : {
-                  loading: {
-                    loaded: chunkSum,
-                    total: +(bkp.sizeInBytes ?? bkp.dbSizeInBytes),
-                  },
+                  state: "loading",
+                  loaded: chunkSum,
+                  total: totalBytes,
                 },
-            ...(finished && !(bkp.status as any)?.ok ?
-              { status: { ok: `${new Date()}` } }
-            : {}),
+            /** How can a restore succeed on a non finished backup? */
+            // ...(finished && !(bkp.status as any)?.ok ?
+            //   { status: { state: "finished", timestamp: nowISO } }
+            // : {}),
           },
         );
 
@@ -140,14 +154,15 @@ export async function pgRestore(
           const dummyViewToReloadSchema =
             "prostgles_dummy_view_to_reload_schema";
           void this.connMgr
-            .getConnection(con.id)
+            .getConnectionStartedInstance(con.id)
             .prgl._db.any(
               `
             CREATE VIEW ${dummyViewToReloadSchema} AS SELECT 1;
           `,
             )
             .then(() => {
-              void this.connMgr.getConnection(con.id).prgl._db.any(`
+              void this.connMgr.getConnectionStartedInstance(con.id).prgl._db
+                .any(`
               DROP VIEW ${dummyViewToReloadSchema};
             `);
             });
@@ -157,7 +172,12 @@ export async function pgRestore(
 
     bkpStream.on("data", (chunk) => {
       chunkSum += chunk.length;
-      // console.log(chunk.toString(), { chunk })
+      if (is_state_db) {
+        console.log(
+          "Restoring state db: ",
+          (totalBytes / chunkSum).toFixed(2) + "%",
+        );
+      }
       throttledUpdate();
     });
 
@@ -169,14 +189,19 @@ export async function pgRestore(
       (err) => {
         if (err) {
           console.error("pipeToCommand ERR:", err);
-          bkpStream.destroy();
-          void setError(err);
+          if (!is_state_db) {
+            bkpStream.destroy();
+            void setError(err);
+          }
         } else {
           void this.dbs.backups.update(
             { id: bkpId },
             {
               restore_end: new Date(),
-              restore_status: { ok: `${new Date()}` },
+              restore_status: {
+                state: "finished",
+                timestamp: new Date().toISOString(),
+              },
               last_updated: new Date(),
             },
           );
@@ -186,7 +211,8 @@ export async function pgRestore(
         /** Full logs are always provided */
         if (!isStdErr) return;
         const currBkp = await this.dbs.backups.findOne({ id: bkpId });
-        if ((currBkp as any)?.restore_status.err) {
+        const { state } = currBkp?.restore_status ?? {};
+        if (state === "error" || state === "stopped-by-user") {
           proc.kill();
           return;
         }
@@ -197,7 +223,7 @@ export async function pgRestore(
           const restore_logs = makeLogs(
             _restore_logs,
             currBkp.restore_logs,
-            currBkp.restore_start as any,
+            currBkp.restore_start ?? undefined,
           );
           void this.dbs.backups.update(
             { id: bkpId },

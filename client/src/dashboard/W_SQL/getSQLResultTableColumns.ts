@@ -11,7 +11,8 @@ export const getSQLResultTableColumns = ({
   tables,
   onResize,
   maxCharsPerCell,
-}: Pick<W_SQLResultsProps, "cols" | "tables" | "onResize"> & {
+  rows = [],
+}: Pick<W_SQLResultsProps, "cols" | "tables" | "onResize" | "rows"> & {
   maxCharsPerCell: number | undefined;
 }) => {
   return cols.map((c, i) => {
@@ -25,14 +26,15 @@ export const getSQLResultTableColumns = ({
       headerClassname: isNumeric ? " jc-end  " : " ",
       className: isNumeric ? " ta-right " : " ",
       onRender: onRenderColumn({
-        c: { ...c, name: i.toString(), format: undefined },
+        column: { ...c, name: i.toString(), format: undefined },
+        getValues: () => rows.map((r) => r[i]),
         table: undefined,
         tables,
         barchartVals: undefined,
         maxCellChars: maxCharsPerCell || 1000,
         maximumFractionDigits: 12,
       }),
-      onResize: async (width) => {
+      onResize: (width) => {
         const newCols = cols.map((_c) => {
           if (_c.key === c.key) {
             _c.width = width;

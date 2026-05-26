@@ -1,8 +1,8 @@
 import type { HoverCoords } from "../Map/DeckGLMap";
 import type { LayerQuery, LayerSQL } from "./W_Map";
 import type W_Map from "./W_Map";
-import type { MapDataResult } from "./getMapData";
-import { getMapFilter, getSQLHoverRow } from "./getMapData";
+import type { MapDataResult } from "./fetchData/getMapData";
+import { getMapFilter, getSQLHoverRow } from "./fetchData/getMapData";
 import type { AnyObject } from "prostgles-types";
 import { isObject } from "prostgles-types";
 
@@ -19,7 +19,7 @@ export type HoveredObject = {
   };
 };
 
-export async function onMapHover(
+export function onMapHover(
   this: W_Map,
   hoverObj?: AnyObject & HoveredObject,
   hoverCoords?: HoverCoords,
@@ -36,7 +36,7 @@ export async function onMapHover(
     if (this.hovering.hoverObjStr === hoverObjStr) {
       return;
     } else {
-      clearTimeout(this.hovering.timeout!);
+      clearTimeout(this.hovering.timeout);
     }
   }
 
@@ -86,7 +86,7 @@ export async function onMapHover(
                 const filter = getMapFilter(
                   layer,
                   table.columns,
-                  hoverObj.properties as any,
+                  hoverObj.properties,
                   this.props.myLinks,
                 )?.filterValue;
                 // const filter = selectData.i.$jsonb_build_object? (i as AnyObject) : {
@@ -102,7 +102,8 @@ export async function onMapHover(
               }
             }
           } else if (i && typeof i === "string") {
-            hovData = (await getSQLHoverRow(layer as LayerSQL, prgl.db, i))?.d;
+            hovData = (await getSQLHoverRow(layer as LayerSQL, prgl.sql!, i))
+              ?.d;
           }
           this.hovering = undefined;
 

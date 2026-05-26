@@ -1,19 +1,24 @@
 import React from "react";
-import { getRandomColor, type LinkSyncItem } from "../Dashboard/dashboardUtils";
-import PopupMenu from "../../components/PopupMenu";
-import Btn from "../../components/Btn";
+import type { LinkSyncItem } from "../Dashboard/dashboardUtils";
+import PopupMenu from "@components/PopupMenu";
+import Btn from "@components/Btn";
 import { mdiMap } from "@mdi/js";
 import { OverpassQuery } from "../W_Map/OSM/OverpassQuery";
-import { isDefined } from "../../utils";
-import { FlexRow } from "../../components/Flex";
+import { isDefined } from "../../utils/utils";
+import { FlexRow } from "@components/Flex";
+import { getRandomColor } from "../Dashboard/PALETTE";
 
 type P = {
   link: LinkSyncItem;
+  dataSource: Extract<
+    Extract<LinkSyncItem["options"], { type: "map" }>["dataSource"],
+    { type: "osm" }
+  >;
 };
-export const OSMLayerOptions = ({ link }: P) => {
+export const OSMLayerOptions = ({ link, dataSource }: P) => {
   const opts = link.options;
   if (opts.type !== "map") return null;
-  const query = opts.osmLayerQuery;
+  const query = dataSource.osmLayerQuery;
   if (!isDefined(query)) return null;
   return (
     <PopupMenu
@@ -38,10 +43,13 @@ export const OSMLayerOptions = ({ link }: P) => {
           link.$update(
             {
               options: {
-                osmLayerQuery,
+                dataSource: {
+                  ...dataSource,
+                  osmLayerQuery,
+                },
                 mapColorMode: {
                   type: "fixed",
-                  colorArr: getRandomColor(1, "deck"),
+                  colorArr: getRandomColor(1),
                 },
               },
             },

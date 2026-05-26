@@ -19,7 +19,7 @@ export const testSqlCharts: DemoScript = async ({
     )
     SELECT * FROM tbl
   `);
-  fromBeginning(false, q1);
+  await fromBeginning(false, q1);
 
   await click("AddChartMenu.Timechart");
 
@@ -31,14 +31,16 @@ export const testSqlCharts: DemoScript = async ({
   shouldBeEqual("Avg(\nvalue\n),\ntstamp", l1.innerText);
 
   const timechartQueries = `${q1}\n\n\n${q0.replace("100 as value", "10 as value2")}`;
-  fromBeginning(false, timechartQueries);
+  await fromBeginning(false, timechartQueries);
 
   const addChart = async (chartType: "Timechart" | "Map") => {
-    moveCursor.pageDown();
-    moveCursor.lineEnd();
-    moveCursor.up(1);
-    moveCursor.down(2);
-    await click(`AddChartMenu.${chartType}`);
+    await moveCursor.pageDown();
+    await moveCursor.lineEnd();
+    await moveCursor.up(1);
+    await moveCursor.down(2);
+    await click(
+      chartType === "Map" ? "AddChartMenu.Map" : "AddChartMenu.Timechart",
+    );
     await tout(500);
   };
   await addChart("Timechart");
@@ -67,7 +69,7 @@ export const testSqlCharts: DemoScript = async ({
 
   /** Reopen chart by clicking add layer to chart button */
   const restoreCharts = async () => {
-    moveCursor.pageDown();
+    await moveCursor.pageDown();
     // moveCursor.up(1);
     await click("AddChartMenu.Timechart");
     await checkL2();
@@ -100,11 +102,11 @@ export const testSqlCharts: DemoScript = async ({
     SELECT geom
     FROM london_center
   `);
-  fromBeginning(false, qMap);
+  await fromBeginning(false, qMap);
   await addChart("Map");
   await waitForElement("MapExtentBehavior");
 
-  fromBeginning(false, qMap0);
+  await fromBeginning(false, qMap0);
   await addChart("Map");
   await waitForElement("MapExtentBehavior");
 

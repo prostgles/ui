@@ -1,15 +1,12 @@
+import { sliceText } from "@common/utils";
 import React from "react";
-import type { TableProps, TableState } from "./Table";
-import type {
-  ColumnSort,
-  ColumnSortSQL,
-} from "../../dashboard/W_Table/ColumnMenu/ColumnMenu";
-import { getDraggedTableColStyle } from "./TableHeader";
-import { classOverride } from "../Flex";
+import type { ColumnSortSQL } from "../../dashboard/W_Table/ColumnMenu/ColumnMenu";
 import Btn from "../Btn";
-import { sliceText } from "../../../../common/utils";
+import { classOverride } from "../Flex";
+import type { TableProps, TableState } from "./Table";
+import { getDraggedTableColStyle } from "./TableHeader";
 
-export type TableRowProps<Sort extends ColumnSort | ColumnSortSQL> = {
+export type TableRowProps<Sort extends ColumnSortSQL> = {
   row: any;
   iRow: number;
   rowIndexOffset: number;
@@ -28,7 +25,7 @@ export type TableRowProps<Sort extends ColumnSort | ColumnSortSQL> = {
   | "maxRowHeight"
   | "rowStyle"
 >;
-export const TableRow = <Sort extends ColumnSort | ColumnSortSQL>({
+export const TableRow = <Sort extends ColumnSortSQL>({
   row,
   iRow,
   rowClass,
@@ -146,7 +143,7 @@ const parseCell = <FT extends boolean = false>(
     txt = "";
   } else if (d && Array.isArray(d)) {
     txt = sliceText(
-      `[${d.map((c) => parseCell(c)).join(", \n")}]`,
+      `[${d.map((c) => parseCell(c, undefined, true)).join(", \n")}]`,
       maxCharsPerCell,
     );
   } else if (d && typeof d.toISOString === "function") {

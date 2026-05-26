@@ -1,63 +1,87 @@
+import Btn from "@components/Btn";
+import { FlexCol } from "@components/Flex";
+import PopupMenu from "@components/PopupMenu";
+import { Select } from "@components/Select/Select";
+import { SwitchToggle } from "@components/SwitchToggle";
 import { mdiChartTimelineVariant } from "@mdi/js";
-import React from "react";
-import Btn from "../../../components/Btn";
-import { FlexCol } from "../../../components/Flex";
-import PopupMenu from "../../../components/PopupMenu";
-import Select from "../../../components/Select/Select";
-import { SwitchToggle } from "../../../components/SwitchToggle";
-import type { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
+import { _PG_numbers, includes } from "prostgles-types";
+import React, { useMemo } from "react";
+import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 import {
   TIMECHART_STAT_TYPES,
   TimechartRenderStyles,
 } from "../../W_TimeChart/W_TimeChartMenu";
 import type { ColumnConfigWInfo } from "../W_Table";
-import { _PG_numbers } from "prostgles-types";
 
 export const SORTABLE_CHART_COLUMNS = ["date", "value"];
 
 export type ColTimeChart = Required<ColumnConfigWInfo>["nested"]["chart"];
 type P = {
   tableName: string | undefined;
-  tables: DBSchemaTablesWJoins;
-  chart: ColTimeChart | undefined;
-  onChange: (newCol: ColTimeChart | undefined) => void;
+  chart: ColTimeChart;
+  onChange: (newCol: ColTimeChart) => void;
 };
-export const NestedTimechartControls = ({
-  tableName,
-  chart,
-  tables,
-  onChange,
-}: P) => {
-  if (!tableName) return null;
+export const NestedTimechartControls = ({ tableName, chart, onChange }: P) => {
+  const { tables } = usePrgl();
 
-  const table = tables.find((t) => t.name === tableName);
-  if (!table) return null;
+  const timeChartOpts = useMemo(() => {
+    if (!tableName) return null;
 
-  const dateCols = table.columns.filter(
-    (c) => c.udt_name.startsWith("timestamp") || c.udt_name === "date",
-  );
-  const numericCols = table.columns.filter((c) =>
-    _PG_numbers.includes(c.udt_name as any),
-  );
-  const timeChartOpts =
-    !dateCols.length ? undefined : (
-      {
-        dateCols,
-        numericCols,
-      }
+    const table = tables.find((t) => t.name === tableName);
+    if (!table) return null;
+
+    const dateCols = table.columns.filter(
+      (c) => c.udt_name.startsWith("timestamp") || c.udt_name === "date",
     );
+    const numericCols = table.columns.filter((c) =>
+      includes(_PG_numbers, c.udt_name),
+    );
+    const timeChartOpts =
+      !dateCols.length ? undefined : (
+        {
+          dateCols,
+          numericCols,
+        }
+      );
+
+    if (!timeChartOpts) return null;
+    return timeChartOpts;
+  }, [tableName, tables]);
+
+  const toggleChart = (enabled: boolean) => {
+    if (!timeChartOpts)
+      throw new Error("No date columns available for time chart");
+    const dateCol = timeChartOpts.dateCols[0]!.name;
+    onChange(
+      !enabled ? undefined : (
+        {
+          type: "time",
+          dateCol,
+          renderStyle: "smooth-line",
+          yAxis: {
+            isCountAll: true,
+          },
+        }
+      ),
+    );
+  };
 
   if (!timeChartOpts) return null;
+  const { numericCols } = timeChartOpts;
 
   return (
     <>
-      <div className="py-p75">OR</div>
+      <div className="py-p5">OR</div>
       <PopupMenu
+        data-command="NestedTimechartControls"
         button={
           <Btn
             color={chart ? "action" : undefined}
             variant="faded"
             iconPath={mdiChartTimelineVariant}
+            onClick={() => {
+              toggleChart(true);
+            }}
           >
             Time chart {chart ? ": Enabled" : ""}
           </Btn>
@@ -65,26 +89,12 @@ export const NestedTimechartControls = ({
         clickCatchStyle={{ opacity: 0 }}
         contentClassName="p-p5"
         positioning="beneath-left"
-        render={(pClose) => (
+        render={() => (
           <FlexCol>
             <SwitchToggle
               label={"Enable"}
               checked={!!chart}
-              onChange={(checked) => {
-                const dateCol = timeChartOpts.dateCols[0]!.name;
-                onChange(
-                  !checked ? undefined : (
-                    {
-                      type: "time",
-                      dateCol,
-                      renderStyle: "smooth-line",
-                      yAxis: {
-                        isCountAll: true,
-                      },
-                    }
-                  ),
-                );
-              }}
+              onChange={toggleChart}
             />
             {chart && numericCols.length > 0 && (
               <>
