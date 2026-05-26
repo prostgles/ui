@@ -27,7 +27,7 @@ export const getOverviewSvgifSpecs = async () => {
       fileName: "overview",
       scenes: [
         ...sliceScenes("sql_editor", 5, 7),
-        ...sliceScenes("schema_diagram", 1, 2),
+        ...sliceScenes("schema_diagram", 2, 4),
         ...sliceScenes("ai_assistant_agentic_workflow_gov_api", 0, 2),
         ...sliceScenes("ai_assistant_agentic_workflow_gov_api", 5, 6),
         // ...sliceScenes("ai_assistant_agentic_workflow_gov_api", 9, 11),
