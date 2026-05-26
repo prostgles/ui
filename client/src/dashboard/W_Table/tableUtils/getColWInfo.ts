@@ -12,16 +12,18 @@ export const getColWInfo = (
     c.computedConfig && !c.computedConfig.isColumn;
 
   const columns: ColumnConfigWInfo[] = (cols ?? [])
-    .map((c) => ({
-      ...c,
-      info:
-        isAdditionalComputed(c) ? undefined : (
-          omitKeys(
-            tableColumns.find((_c) => _c.select && _c.name === c.name)!,
-            ["renderAs", "style"],
-          )
-        ),
-    }))
+    .map((c) => {
+      const colInfo = tableColumns.find(
+        (_c) => _c.select && _c.name === c.name,
+      );
+      return {
+        ...c,
+        info:
+          isAdditionalComputed(c) ? undefined
+          : colInfo ? omitKeys(colInfo, ["renderAs", "style"])
+          : undefined,
+      };
+    })
     .filter((c) => {
       /** Remove dropped columns */
       if (!c.computedConfig && !c.info && !c.nested) {
