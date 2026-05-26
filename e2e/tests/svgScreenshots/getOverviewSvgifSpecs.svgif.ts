@@ -34,7 +34,7 @@ export const getOverviewSvgifSpecs = async () => {
         // ...sliceScenes("ai_assistant_agentic_workflow_gov_api", 12),
         // ...sliceScenes("ai_assistant_agentic_workflow", 0, 1),
         // ...sliceScenes("ai_assistant_agentic_workflow", 12, 15),
-        ...sliceScenes("table_timechart", 9, 10),
+        ...sliceScenes("table_timechart", 8, 9),
       ],
     },
     /** Overview section */
