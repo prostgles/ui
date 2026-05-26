@@ -7,10 +7,10 @@
   "author": "Prostgles LTD <office@prostgles.com>",
   "projectUrl": "https://github.com/prostgles/ui",
   "keywords": [
+    "PostgreSQL",
     "postgres",
     "postgis",
     "sql",
-    "PostgreSQL",
     "electron",
     "react",
     "typescript",
