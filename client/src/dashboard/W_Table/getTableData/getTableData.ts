@@ -65,7 +65,7 @@ export async function getTableData(
       const strFilter = JSON.stringify(tableFilterHaving);
 
       const clearSub = () => {
-        return this.dataSub?.unsubscribe?.();
+        return this.dataSub?.unsubscribe();
       };
       const clearInterval = () => {
         if (this.autoRefresh) {
