@@ -1,0 +1,67 @@
+name: Publish Release
+on:
+  pull_request:
+    types: [closed]
+    branches: [main, master]
+permissions:
+  contents: write
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.head.ref }}
+  cancel-in-progress: false
+jobs:
+  publish_release:
+    if: >-
+      ${{
+        github.event.pull_request.merged == true &&
+        startsWith(github.event.pull_request.head.ref, 'release/v') &&
+        contains(github.event.pull_request.title, 'Docker image versions')
+      }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+
+      - name: Validate release is ready to publish
+        run: ./scripts/check_release_ready.sh publish
+
+      - name: Resolve release tag
+        id: release_tag
+        env:
+          RELEASE_BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: |
+          TAG="${RELEASE_BRANCH#release/}"
+          TAG="${TAG%-docker-images}"
+          PACKAGE_TAG="v$(./scripts/get_version.sh)"
+          if [ "${TAG}" != "${PACKAGE_TAG}" ]; then
+            echo "Release PR tag (${TAG}) does not match package version tag (${PACKAGE_TAG})"
+            exit 1
+          fi
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Promote Docker images to latest
+        env:
+          TAG: ${{ steps.release_tag.outputs.tag }}
+        run: |
+          docker buildx imagetools create -t "prostgles/ui:latest" "prostgles/ui:${TAG}"
+          docker buildx imagetools create -t "prostgles/ui-db:latest" "prostgles/ui-db:${TAG}"
+
+      - name: Publish draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          TAG: ${{ steps.release_tag.outputs.tag }}
+        run: |
+          RELEASE_ID="$(gh api "repos/${REPO}/releases/tags/${TAG}" --jq .id)"
+          gh api \
+            --method PATCH \
+            "repos/${REPO}/releases/${RELEASE_ID}" \
+            -F draft=false \
+            -F prerelease="${{ contains(github.event.pull_request.head.ref, '-rc') }}"

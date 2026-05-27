@@ -3,6 +3,9 @@ on:
   push:
     tags:
       - "v*"
+permissions:
+  contents: write
+  pull-requests: write
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -63,7 +66,6 @@ jobs:
         with:
           images: prostgles/${{ matrix.image_name }}
           tags: |
-            type=raw,value=latest
             type=raw,value=${{ github.ref_name }}
 
       - uses: docker/build-push-action@v6
@@ -153,7 +155,7 @@ jobs:
           files: |
             electron/dist/**/*.dmg
             electron/dist/**/*.checksums
-  publish_release:
+  create_release_version_bump_pr:
     needs:
       - prepare_release
       - build_docker_images
@@ -162,9 +164,22 @@ jobs:
       - build_macos
     runs-on: ubuntu-latest
     steps:
-      - name: Publish draft release
-        uses: eregon/publish-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/checkout@v4
+
+      - name: Update Docker image versions
+        run: ./scripts/update_docker_image_versions.sh "${{ github.ref_name }}"
+
+      - name: Create release version bump PR
+        uses: peter-evans/create-pull-request@v6
         with:
-          release_id: ${{ needs.prepare_release.outputs.release_id }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          base: ${{ github.event.repository.default_branch }}
+          branch: release/${{ github.ref_name }}-docker-images
+          delete-branch: true
+          commit-message: "chore: update Docker images for ${{ github.ref_name }}"
+          title: "Release ${{ github.ref_name }} Docker image versions"
+          body: |
+            Updates `docker-compose.yml` to use the Docker images built for `${{ github.ref_name }}`.
+
+            Before merging, check the draft release artifacts for `${{ github.ref_name }}`.
+            Merging this PR publishes the draft release.

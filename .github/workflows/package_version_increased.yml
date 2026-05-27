@@ -27,7 +27,18 @@ jobs:
       - name: Compare versions
         run: |
           current_version=$(cat current_version.txt)
-          pr_version=$(cat pr_version.txt) 
+          pr_version=$(cat pr_version.txt)
+
+          if [ "${{ github.event_name }}" = "pull_request" ] && [[ "${{ github.head_ref }}" == release/v*-docker-images ]]; then
+            if [ "$current_version" != "$pr_version" ]; then
+              echo "Release publish PR must not change package.json version: $current_version != $pr_version"
+              exit 1
+            fi
+
+            echo "Release publish PR version check passed: $current_version == $pr_version"
+            exit 0
+          fi
+
           if [ "$(printf '%s\n' "$current_version" "$pr_version" | sort -V | head -n1)" = "$pr_version" ]; then
             echo "Version in package.json is not greater than the version in the base branch: $current_version <= $pr_version"
             exit 1
@@ -36,7 +47,7 @@ jobs:
           fi
 
       - name: Ensure Changelog exists
-        if: success() # Ensure version comparison passed
+        if: ${{ success() && !(github.event_name == 'pull_request' && startsWith(github.head_ref, 'release/v') && endsWith(github.head_ref, '-docker-images')) }}
         run: |
           pr_version=$(cat pr_version.txt) 
           base_ref="${{ github.base_ref }}"

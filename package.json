@@ -21,6 +21,7 @@
     "dev:electron": "bash ./scripts/start-dev-electron.sh",
     "start": "bash ./scripts/start-prod.sh",
     "test": "bash ./scripts/test.sh",
+    "release": "bash ./scripts/release.sh",
     "demo:record": "bash ./scripts/demo/record-local.sh"
   },
   "devDependencies": {

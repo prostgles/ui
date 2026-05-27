@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-MODE="${1:-pre-tag}" # pre-tag | on-release
+MODE="${1:-pre-tag}" # pre-tag | on-release | publish
 VERSION="$(./scripts/get_version.sh)"
 TAG="v${VERSION}"
 RELEASE_FILE="./releases/${TAG}.md"
@@ -14,15 +14,13 @@ fail() {
 
 echo "Checking release readiness for ${TAG} (mode=${MODE})"
 
+case "${MODE}" in
+  pre-tag|on-release|publish) ;;
+  *) fail "Unknown release readiness mode: ${MODE}" ;;
+esac
+
 # 1) release notes
 [ -f "${RELEASE_FILE}" ] || fail "Missing release notes file: ${RELEASE_FILE}"
-
-# 2) docker image tags in compose
-grep -q "image: prostgles/ui:${TAG}" "${COMPOSE_FILE}" || \
-  fail "Missing prostgles/ui:${TAG} in ${COMPOSE_FILE}"
-
-grep -q "image: prostgles/ui-db:${TAG}" "${COMPOSE_FILE}" || \
-  fail "Missing prostgles/ui-db:${TAG} in ${COMPOSE_FILE}"
 
 if [ "${MODE}" = "pre-tag" ]; then
   # 3a) pre-tag guard: tag must not already exist
@@ -41,6 +39,15 @@ if [ "${MODE}" = "on-release" ]; then
   [ -n "${REF_TAG}" ] || fail "GITHUB_REF_NAME is not set"
   [ "${REF_TAG}" = "${TAG}" ] || \
     fail "Pushed tag (${REF_TAG}) does not match package version tag (${TAG})"
+fi
+
+if [ "${MODE}" = "publish" ]; then
+  # Release publication is gated by the merged PR that pins Docker images.
+  grep -q "image: prostgles/ui:${TAG}" "${COMPOSE_FILE}" || \
+    fail "Missing prostgles/ui:${TAG} in ${COMPOSE_FILE}"
+
+  grep -q "image: prostgles/ui-db:${TAG}" "${COMPOSE_FILE}" || \
+    fail "Missing prostgles/ui-db:${TAG} in ${COMPOSE_FILE}"
 fi
 
 echo "All release checks passed for ${TAG}"
