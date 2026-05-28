@@ -136,5 +136,74 @@ export const webMcpSchema = {
   },
 } as const;
 
+const internalNetworkSubnets = [
+  "127.0.0.1/32", // localhost IPv4
+  "::1/128", // localhost IPv6
+
+  // RFC1918 private ranges
+  "10.0.0.0/8",
+  "172.16.0.0/12",
+  "192.168.0.0/16",
+
+  // Carrier-grade NAT
+  "100.64.0.0/10",
+
+  // Link-local
+  "169.254.0.0/16",
+  "fe80::/10",
+
+  // Unique local IPv6
+  "fc00::/7",
+
+  // Multicast
+  "224.0.0.0/4",
+  "ff00::/8",
+
+  // Reserved / unspecified
+  "0.0.0.0/8",
+  "::/128",
+
+  // Benchmarking / documentation
+  "192.0.2.0/24",
+  "198.51.100.0/24",
+  "203.0.113.0/24",
+  "2001:db8::/32",
+];
+
+export const webMcpConfigSchema = {
+  access: {
+    renderWithComponent: "WebMcpConfig",
+    type: {
+      mode: {
+        enum: ["allow", "deny", "unrestricted"],
+        description:
+          "Access control mode. 'allow' means only URLs matching the patterns in 'hosts' are allowed. 'deny' means URLs matching the patterns are blocked. 'unrestricted' means no URL filtering or blockedSubnet check is applied.",
+      },
+      urlPatterns: {
+        type: "string[]",
+        description:
+          "Patterns can be simple substrings (e.g., 'example.com') or wildcard patterns (e.g., '*.example.com'). The 'mode' field determines whether these patterns define allowed URLs or blocked URLs.",
+      },
+      blockInternalSubnets: {
+        type: "boolean",
+        optional: true,
+        description:
+          "If true, the server will block requests to IP addresses in common internal subnets (e.g., localhost, private network ranges) in addition to any user-defined blocked subnets. Defaults to true.",
+      },
+      internalSubnets: {
+        optional: true,
+        type: "string[]",
+        description: "Optional list of IP subnets in CIDR notation",
+      },
+    },
+    defaultValue: {
+      mode: "deny",
+      urlPatterns: [],
+      blockInternalSubnets: true,
+      internalSubnets: internalNetworkSubnets,
+    },
+  },
+} as const;
+
 export const GOOGLE_FAVICON_ENDPOINT = "https://www.google.com/s2/favicons";
 export const GOOGLE_FAVICON_ENDPOINT_REDIRECT = "https://*.gstatic.com/";

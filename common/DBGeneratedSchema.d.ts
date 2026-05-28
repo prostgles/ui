@@ -584,8 +584,10 @@ export type DBGeneratedSchema = {
       args?: null | string[];
       command: "npx" | "npm" | "uvx" | "uv" | "docker" | "prostgles-local"
       config_schema?: null | Record<string, 
- |  {  type: "env";  renderWithComponent?: string;  title?: string;  optional?: boolean;  description?: string; }
- |  {  type: "arg" | "...args";  renderWithComponent?: string;  title?: string;  optional?: boolean;  description?: string;  index?: number; }>
+ |  {  type: "local";  renderWithComponent?: "FileTree" | "WebMcpConfig";  title?: string;  optional?: boolean;  description?: string;  defaultValue?: unknown;  schema: unknown; }
+ |  {  type: "env";  renderWithComponent?: "FileTree" | "WebMcpConfig";  title?: string;  optional?: boolean;  description?: string; }
+ |  {  type: "arg" | "...args";  renderWithComponent?: "FileTree" | "WebMcpConfig";  title?: string;  optional?: boolean;  description?: string;  index?: number; }>
+      config_schema_component?: null | string;
       created?: null | string;
       cwd?: null | string;
       enabled?: boolean;

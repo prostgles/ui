@@ -1,5 +1,4 @@
 import { getMCPToolNameParts } from "@common/mcpUtils";
-import type { DBSSchema } from "@common/publishUtils";
 import type { SvgIconName } from "@components/SearchList/SearchList";
 import { isDefined } from "prostgles-types";
 import { useCallback, useMemo } from "react";

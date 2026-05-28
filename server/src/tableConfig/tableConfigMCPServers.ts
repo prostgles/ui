@@ -44,21 +44,40 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
       command: {
         enum: ["npx", "npm", "uvx", "uv", "docker", "prostgles-local"],
       },
+      config_schema_component: `TEXT`,
       config_schema: {
         jsonbSchema: {
           record: {
             values: {
               oneOfType: [
                 {
+                  type: { enum: ["local"] },
+                  renderWithComponent: {
+                    enum: ["FileTree", "WebMcpConfig"],
+                    optional: true,
+                  },
+                  title: { type: "string", optional: true },
+                  optional: { type: "boolean", optional: true },
+                  description: { type: "string", optional: true },
+                  defaultValue: { type: "unknown", optional: true },
+                  schema: "unknown",
+                },
+                {
                   type: { enum: ["env"] },
-                  renderWithComponent: { type: "string", optional: true },
+                  renderWithComponent: {
+                    enum: ["FileTree", "WebMcpConfig"],
+                    optional: true,
+                  },
                   title: { type: "string", optional: true },
                   optional: { type: "boolean", optional: true },
                   description: { type: "string", optional: true },
                 },
                 {
                   type: { enum: ["arg", "...args"] },
-                  renderWithComponent: { type: "string", optional: true },
+                  renderWithComponent: {
+                    enum: ["FileTree", "WebMcpConfig"],
+                    optional: true,
+                  },
                   title: { type: "string", optional: true },
                   optional: { type: "boolean", optional: true },
                   description: { type: "string", optional: true },
@@ -251,11 +270,9 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
             );
             if (serversThatNeedConfigs.length) {
               throw new Error(
-                `MCP Servers ${serversThatNeedConfigs
-                  .map((s) => s.name)
-                  .join(
-                    ", ",
-                  )} require a server_config_id to be set for allowed tools. Please provide a valid server_config_id.`,
+                `MCP Servers ${JSON.stringify(
+                  serversThatNeedConfigs.map((s) => s.name).join(", "),
+                )} require a server_config_id to be set for allowed tools. Please provide a valid server_config_id.`,
               );
             }
             if (serverNames.length) {

@@ -1,5 +1,6 @@
 import { isDefined } from "@common/filterUtils";
 import type { DBSSchema } from "@common/publishUtils";
+import { getEntries } from "@common/utils";
 import { useCallback } from "react";
 import type { Prgl } from "../../../../App";
 import type { DBS } from "../../../../dashboard/Dashboard/DBS";
@@ -35,8 +36,22 @@ export const useMCPServerEnable = ({
   const chatId = chatContext?.chatId;
   const onToggle = useCallback(async () => {
     const newEnabled = !enabled;
+
+    const defaultEntries =
+      config_schema &&
+      getEntries(config_schema)
+        .map(([key, value]) =>
+          value.type !== "local" || value.defaultValue === undefined ?
+            undefined
+          : ([key, value.defaultValue] as const),
+        )
+        .filter(isDefined);
+
     const mustProvideConfig =
-      newEnabled && config_schema && !mcp_server_configs.length;
+      newEnabled &&
+      config_schema &&
+      lastConfigId === undefined &&
+      !defaultEntries?.length;
     if (mustProvideConfig) {
       return setServerToConfigure({
         existingConfig: undefined,
@@ -51,22 +66,36 @@ export const useMCPServerEnable = ({
           server_name: mcp_server.name,
         });
       }
+
+      const configToUse =
+        lastConfigId !== undefined ?
+          { id: lastConfigId }
+        : await dbs.mcp_server_configs.insert(
+            {
+              server_name: mcp_server.name,
+              config: Object.fromEntries(defaultEntries ?? []),
+            },
+            {
+              returning: { id: 1 },
+            },
+          );
+
       await dbs.mcp_servers.update(
         { name: mcp_server.name },
         { enabled: newEnabled },
       );
-      return { configId: lastConfigId };
+      return { configId: configToUse.id };
     }
   }, [
     enabled,
     config_schema,
-    mcp_server_configs.length,
+    lastConfigId,
     setServerToConfigure,
     mcp_server.name,
     chatId,
+    dbs.mcp_server_configs,
     dbs.mcp_servers,
     dbs.llm_chats_allowed_mcp_tools,
-    lastConfigId,
   ]);
 
   const onToggleTools = useCallback(

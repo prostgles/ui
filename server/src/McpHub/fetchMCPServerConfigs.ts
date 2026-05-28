@@ -101,7 +101,7 @@ const applyConfig = (
   let args = [...baseArgs];
   const env = { ...baseEnv };
   Object.entries({ ...config_schema }).forEach(([key, configItem]) => {
-    if (configItem.type === "env") {
+    if (configItem.type === "env" || configItem.type === "local") {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       env[key] = config[key];
     } else {

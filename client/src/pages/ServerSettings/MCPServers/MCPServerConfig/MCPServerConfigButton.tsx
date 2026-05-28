@@ -1,4 +1,4 @@
-import type { DBSSchema } from "@common/publishUtils";
+import { isObject, type DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
 import { FlexRow } from "@components/Flex";
 import { mdiCogOutline } from "@mdi/js";
@@ -7,6 +7,7 @@ import {
   useMCPServerConfig,
   type MCPServerConfigProps,
 } from "./MCPServerConfig";
+import { sliceText } from "@common/utils";
 
 export const MCPServerConfigButton = (
   props: Omit<MCPServerConfigProps, "onDone" | "variant"> & {
@@ -15,6 +16,7 @@ export const MCPServerConfigButton = (
 ) => {
   const { schema, existingConfig, serverName, chatId } = props;
   const { setServerToConfigure } = useMCPServerConfig();
+
   return (
     <Btn
       onClick={() => {
@@ -31,10 +33,8 @@ export const MCPServerConfigButton = (
     >
       {Object.entries(schema).map(([key, schema]) => {
         const value = existingConfig?.value[key];
-        const displayValue =
-          typeof value === "string" ? value
-          : Array.isArray(value) ? value.join(", \n")
-          : "";
+        const displayValue = getMcpConfigValueAsString(value);
+
         return (
           <FlexRow
             key={key}
@@ -47,4 +47,16 @@ export const MCPServerConfigButton = (
       })}
     </Btn>
   );
+};
+
+export const getMcpConfigValueAsString = (value: unknown): string => {
+  const displayValue =
+    typeof value === "string" ? value
+    : Array.isArray(value) ? sliceText(value.join(", \n"), 100)
+    : isObject(value) ?
+      Object.entries(value)
+        .map(([k, v]) => `${k}: ${getMcpConfigValueAsString(v)}`)
+        .join(", \n")
+    : JSON.stringify(value);
+  return displayValue;
 };

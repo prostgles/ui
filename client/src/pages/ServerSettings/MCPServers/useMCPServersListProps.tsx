@@ -16,9 +16,9 @@ export type MCPServerWithToolAndConfigs = DBSSchema["mcp_servers"] & {
 export const useMCPServersListProps = (
   chatId: number | undefined,
   dbs: DBS,
+  focusedServer?: string,
 ) => {
-  const [selectedTool, setSelectedTool] =
-    useState<DBSSchema["mcp_server_tools"]>();
+  const [focusedServerName, setFocusedServerName] = useState(focusedServer);
 
   const { llm_chats_allowed_mcp_tools } = useMCPChatAllowedTools(dbs, chatId);
   const chatContext = useMemo(() => {
@@ -32,12 +32,12 @@ export const useMCPServersListProps = (
   }, [chatId, llm_chats_allowed_mcp_tools]);
 
   const filter = useMemo(() => {
-    return (
-      selectedTool && {
-        name: selectedTool.server_name,
-      }
-    );
-  }, [selectedTool]);
+    return !focusedServerName ? undefined : (
+        {
+          name: focusedServerName,
+        }
+      );
+  }, [focusedServerName]);
 
   const fieldConfigs = useMemo(
     () =>
@@ -81,7 +81,6 @@ export const useMCPServersListProps = (
               <MCPServerTools
                 server={server}
                 tools={tools}
-                selectedToolName={selectedTool?.name}
                 chatContext={chatContext}
                 dbs={dbs}
               />
@@ -102,12 +101,12 @@ export const useMCPServersListProps = (
           hide: true,
         })),
       ] satisfies FieldConfig<MCPServerWithToolAndConfigs>[],
-    [chatContext, dbs, selectedTool?.name],
+    [chatContext, dbs],
   );
 
   return {
-    selectedTool,
-    setSelectedTool,
+    focusedServerName,
+    setFocusedServerName,
     filter,
     fieldConfigs,
     chatContext,

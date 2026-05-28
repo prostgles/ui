@@ -1,4 +1,3 @@
-import type { DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
 import { FlexRow } from "@components/Flex";
 import { Select } from "@components/Select/Select";
@@ -10,11 +9,11 @@ import { useMcpToolsSelectOptions } from "../MCPServerTools/useMcpToolsSelectOpt
 import { AddMCPServer } from "./AddMCPServer";
 
 export const MCPServersToolbar = ({
-  selectedTool,
-  setSelectedTool,
+  selectedServer,
+  setSelectedServer,
 }: MCPServersProps & {
-  selectedTool: undefined | DBSSchema["mcp_server_tools"];
-  setSelectedTool: (tool: undefined | DBSSchema["mcp_server_tools"]) => void;
+  selectedServer: undefined | string;
+  setSelectedServer: (tool: undefined | string) => void;
 }) => {
   const { dbs } = usePrglCore();
   const globalSettings = dbs.global_settings.useSubscribeOne();
@@ -52,23 +51,23 @@ export const MCPServersToolbar = ({
           emptyLabel={"Search tools"}
           data-command="MCPServersToolbar.searchTools"
           btnProps={{
-            iconPath: selectedTool ? mdiFilter : mdiMagnify,
-            color: selectedTool ? "action" : "default",
-            variant: selectedTool ? "filled" : "faded",
+            iconPath: selectedServer ? mdiFilter : mdiMagnify,
+            color: selectedServer ? "action" : "default",
+            variant: selectedServer ? "filled" : "faded",
             style: {
               flexShrink: 1,
             },
           }}
-          value={selectedTool?.id}
+          value={undefined}
           fullOptions={options}
           onChange={(id) => {
-            setSelectedTool(tools?.find((t) => t.id === id));
+            setSelectedServer(tools?.find((t) => t.id === id)?.server_name);
           }}
         />
       </FlexRow>
-      {selectedTool && (
+      {selectedServer && (
         <FlexRow className="jc-end">
-          <Btn color="action" onClick={() => setSelectedTool(undefined)}>
+          <Btn color="action" onClick={() => setSelectedServer(undefined)}>
             Clear filter
           </Btn>
         </FlexRow>

@@ -3,7 +3,6 @@ import { FlexCol } from "@components/Flex";
 import { InfoRow } from "@components/InfoRow";
 import { mdiCheck, mdiCheckAll } from "@mdi/js";
 import { usePromise } from "prostgles-client";
-import type { DBHandlerClient } from "prostgles-client";
 import React, { useState } from "react";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import { SmartCardList } from "../../../dashboard/SmartCardList/SmartCardList";
@@ -19,9 +18,10 @@ import {
 
 export type MCPServersProps = {
   chatId: number | undefined;
+  focusedServer?: string;
 };
 
-export const MCPServers = ({ chatId }: MCPServersProps) => {
+export const MCPServers = ({ chatId, focusedServer }: MCPServersProps) => {
   const { dbsMethods, dbs, dbsMethodSchema, dbsTables, dbsSql } = usePrglCore();
 
   const { getMcpHostInfo } = dbsMethods;
@@ -29,8 +29,13 @@ export const MCPServers = ({ chatId }: MCPServersProps) => {
   const globalSettings = dbs.global_settings.useSubscribeOne();
   const { mcp_servers_disabled } = globalSettings.data ?? {};
 
-  const { selectedTool, setSelectedTool, filter, fieldConfigs, chatContext } =
-    useMCPServersListProps(chatId, dbs);
+  const {
+    focusedServerName,
+    setFocusedServerName,
+    filter,
+    fieldConfigs,
+    chatContext,
+  } = useMCPServersListProps(chatId, dbs, focusedServer);
   const { llm_chats_allowed_mcp_tools } = chatContext || {};
   const someToolsAutoApproved = llm_chats_allowed_mcp_tools?.some(
     (t) => t.auto_approve,
@@ -49,8 +54,8 @@ export const MCPServers = ({ chatId }: MCPServersProps) => {
         <MCPServersHeader envInfo={envInfo} />
         <MCPServersToolbar
           chatId={chatId}
-          selectedTool={selectedTool}
-          setSelectedTool={setSelectedTool}
+          selectedServer={focusedServerName}
+          setSelectedServer={setFocusedServerName}
         />
         <FlexCol
           {...(mcp_servers_disabled && {
