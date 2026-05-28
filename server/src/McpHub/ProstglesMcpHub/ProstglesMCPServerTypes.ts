@@ -11,7 +11,6 @@ export type ProstglesMcpServerDefinition = {
   label: string;
   description: string;
   config_schema: LocalConfigSchema | undefined;
-  config_schema_component: string | undefined;
   tools: Record<
     string,
     {

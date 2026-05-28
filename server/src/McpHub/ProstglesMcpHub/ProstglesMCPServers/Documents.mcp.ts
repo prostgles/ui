@@ -18,7 +18,6 @@ const definition = {
   description: "Convert documents to text and extract information from them",
   tools,
   config_schema: undefined,
-  config_schema_component: undefined,
 } as const satisfies ProstglesMcpServerDefinition;
 
 const handler = {

@@ -7,6 +7,7 @@ import type {
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
 import { isDefined } from "prostgles-types";
 import type { DBS } from "..";
+import { fromEntries, getEntries } from "@common/utils";
 
 export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
   mcp_servers: {
@@ -44,7 +45,6 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
       command: {
         enum: ["npx", "npm", "uvx", "uv", "docker", "prostgles-local"],
       },
-      config_schema_component: `TEXT`,
       config_schema: {
         jsonbSchema: {
           record: {
@@ -244,7 +244,7 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
         {
           commands: { insert: 1, update: 1 },
           validate: async (args) => {
-            const { dbx: dbs, data } =
+            const { dbx, data, rows } =
               args as unknown as ValidateRowsArgsCommon<
                 DBSSchema["llm_chats_allowed_mcp_tools"],
                 DBS
@@ -261,22 +261,74 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
                   .filter(isDefined),
               ),
             );
-            const serversThatNeedConfigs = await dbs.mcp_servers.find(
+            const serversThatNeedConfigs = await dbx.mcp_servers.find(
               {
                 name: { $in: serversWithoutConfigId },
                 config_schema: { $ne: null },
               },
-              { select: { name: 1 } },
+              { select: { name: 1, config_schema: 1 } },
             );
-            if (serversThatNeedConfigs.length) {
+
+            const defaultServerConfigs = serversThatNeedConfigs.map(
+              (server) => {
+                const defaultConfigEntries = getEntries(server.config_schema!)
+                  .map(([key, value]) => {
+                    if (
+                      value.type === "local" &&
+                      value.defaultValue !== undefined
+                    ) {
+                      return [key, value.defaultValue] as const;
+                    }
+                  })
+                  .filter(isDefined);
+                return { server, defaultConfigEntries };
+              },
+            );
+
+            if (
+              defaultServerConfigs.length &&
+              defaultServerConfigs.every((c) => c.defaultConfigEntries.length)
+            ) {
+              for (const {
+                server,
+                defaultConfigEntries,
+              } of defaultServerConfigs) {
+                const config = await dbx.mcp_server_configs.insert(
+                  {
+                    server_name: server.name,
+                    config: fromEntries(defaultConfigEntries),
+                  },
+                  { returning: { id: 1 } },
+                );
+                await dbx.llm_chats_allowed_mcp_tools.update(
+                  {
+                    $or: rows
+                      .filter(
+                        (row) =>
+                          row.server_name === server.name &&
+                          row.server_config_id === null,
+                      )
+                      .map(({ server_name, tool_id, chat_id }) => ({
+                        server_name,
+                        tool_id,
+                        chat_id,
+                      })),
+                  },
+                  {
+                    server_config_id: config.id,
+                  },
+                );
+              }
+            } else if (serversThatNeedConfigs.length) {
               throw new Error(
                 `MCP Servers ${JSON.stringify(
                   serversThatNeedConfigs.map((s) => s.name).join(", "),
                 )} require a server_config_id to be set for allowed tools. Please provide a valid server_config_id.`,
               );
             }
+
             if (serverNames.length) {
-              await dbs.mcp_servers.update(
+              await dbx.mcp_servers.update(
                 {
                   name: { $in: serverNames },
                   enabled: false,

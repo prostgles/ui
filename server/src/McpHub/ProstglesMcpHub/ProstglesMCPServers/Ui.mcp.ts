@@ -29,7 +29,6 @@ const definition = {
   label: "Prostgles",
   description: "Tools to assist with Prostgles UI tasks",
   config_schema: undefined,
-  config_schema_component: undefined,
   tools,
 } as const satisfies ProstglesMcpServerDefinition;
 

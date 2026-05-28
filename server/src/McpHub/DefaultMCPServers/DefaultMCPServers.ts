@@ -93,37 +93,33 @@ export const getDefaultMCPServers = (): Record<
       ([
         serverName,
         {
-          definition: {
-            icon_path,
-            tools,
-            config_schema,
-            config_schema_component,
-          },
+          definition: { icon_path, tools, config_schema },
         },
       ]) => [
         serverName,
         {
           command: "prostgles-local",
-          config_schema_component,
-          config_schema: fromEntries(
-            getEntries((config_schema ?? {}) as LocalConfigSchema).map(
-              ([key, value]) => {
-                const typeObj =
-                  typeof value === "string" ? { type: value } : value;
-                return [
-                  key,
-                  {
-                    type: "local",
-                    renderWithComponent: (typeObj as any).renderWithComponent,
-                    optional: typeObj.optional,
-                    title: typeObj.title,
-                    schema: value,
-                    defaultValue: (typeObj as any).defaultValue,
-                  } as const,
-                ] as const;
-              },
+          config_schema:
+            config_schema &&
+            fromEntries(
+              getEntries(config_schema as LocalConfigSchema).map(
+                ([key, value]) => {
+                  const typeObj =
+                    typeof value === "string" ? { type: value } : value;
+                  return [
+                    key,
+                    {
+                      type: "local",
+                      renderWithComponent: (typeObj as any).renderWithComponent,
+                      optional: typeObj.optional,
+                      title: typeObj.title,
+                      schema: value,
+                      defaultValue: (typeObj as any).defaultValue,
+                    } as const,
+                  ] as const;
+                },
+              ),
             ),
-          ),
           icon_path,
           mcp_server_tools: getEntries(tools).map(
             ([

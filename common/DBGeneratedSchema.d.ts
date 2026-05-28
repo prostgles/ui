@@ -587,7 +587,6 @@ export type DBGeneratedSchema = {
  |  {  type: "local";  renderWithComponent?: "FileTree" | "WebMcpConfig";  title?: string;  optional?: boolean;  description?: string;  defaultValue?: unknown;  schema: unknown; }
  |  {  type: "env";  renderWithComponent?: "FileTree" | "WebMcpConfig";  title?: string;  optional?: boolean;  description?: string; }
  |  {  type: "arg" | "...args";  renderWithComponent?: "FileTree" | "WebMcpConfig";  title?: string;  optional?: boolean;  description?: string;  index?: number; }>
-      config_schema_component?: null | string;
       created?: null | string;
       cwd?: null | string;
       enabled?: boolean;

@@ -27,7 +27,6 @@ const definition = {
   description: "Tools to interact with your database",
   tools: PROSTGLES_MCP_SERVERS_AND_TOOLS[serverName],
   config_schema: undefined,
-  config_schema_component: undefined,
 } as const satisfies ProstglesMcpServerDefinition;
 
 const handler = {

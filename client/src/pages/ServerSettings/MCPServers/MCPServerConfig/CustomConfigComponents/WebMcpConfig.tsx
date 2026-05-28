@@ -34,7 +34,7 @@ export const WebMcpConfig = ({ value: rawValue, onChange }: P) => {
       internalSubnets,
       ...newData,
     };
-    onChange(JSON.stringify(updatedData));
+    onChange(updatedData);
   };
 
   return (
@@ -51,15 +51,19 @@ export const WebMcpConfig = ({ value: rawValue, onChange }: P) => {
       />
       {mode !== "unrestricted" && (
         <>
-          {Boolean(!urlPatterns.length) && (
-            <InfoRow color="info">
+          {urlPatterns.length ?
+            <div className="ta-start">URL patterns to {mode}:</div>
+          : <InfoRow color="info">
               {mode === "allow" ?
                 "No URL patterns means nothing is allowed"
-              : "No URL patterns means any URL is allowed, except for blocked subnets"
+              : "No URL patterns means any URL is allowed" +
+                (blockInternalSubnets && internalSubnets.length ?
+                  ", except for blocked subnets"
+                : "")
               }
             </InfoRow>
-          )}
-          <div className="ta-start">URL patterns to {mode}:</div>
+          }
+
           {urlPatterns.map((urlPattern, index) => {
             return (
               <FormField
@@ -119,35 +123,37 @@ export const WebMcpConfig = ({ value: rawValue, onChange }: P) => {
               });
             }}
           />
-          <CodeEditor
-            contentTop={
-              <div className="p-p5 bg-color-1">
-                Internal subnets (CIDR notation)
-              </div>
-            }
-            className="o-hidden"
-            language={{
-              lang: "json",
-              jsonSchemas: [
-                {
-                  id: "prgl.internalSubnets",
-                  schema: {
-                    type: "array",
-                    items: {
-                      type: "string",
+          {blockInternalSubnets && (
+            <CodeEditor
+              contentTop={
+                <div className="p-p5 bg-color-1 ta-start">
+                  Internal subnets (CIDR notation)
+                </div>
+              }
+              className="o-hidden"
+              language={{
+                lang: "json",
+                jsonSchemas: [
+                  {
+                    id: "prgl.internalSubnets",
+                    schema: {
+                      type: "array",
+                      items: {
+                        type: "string",
+                      },
                     },
                   },
-                },
-              ],
-            }}
-            value={JSON.stringify(internalSubnets, null, 2)}
-            onChange={(newBlockedSubnets) => {
-              onPartialUpdate({
-                blockInternalSubnets: true,
-                internalSubnets: JSON.parse(newBlockedSubnets) as string[],
-              });
-            }}
-          />
+                ],
+              }}
+              value={JSON.stringify(internalSubnets, null, 2)}
+              onChange={(newBlockedSubnets) => {
+                onPartialUpdate({
+                  blockInternalSubnets: true,
+                  internalSubnets: JSON.parse(newBlockedSubnets) as string[],
+                });
+              }}
+            />
+          )}
         </>
       )}
     </FlexCol>

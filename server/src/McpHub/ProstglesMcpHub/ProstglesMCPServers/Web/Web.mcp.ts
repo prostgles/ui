@@ -22,7 +22,6 @@ const definition = {
   label: "Web Search",
   description: "Search the web for information",
   config_schema: PROSTGLES_MCP_SERVER_CONFIGS["web"],
-  config_schema_component: `WEB_MCP_CONFIG`,
   tools,
 } as const satisfies ProstglesMcpServerDefinition;
 

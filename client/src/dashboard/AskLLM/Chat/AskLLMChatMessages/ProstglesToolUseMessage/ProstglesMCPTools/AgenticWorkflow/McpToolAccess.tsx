@@ -8,8 +8,9 @@ import { Icon } from "@components/Icon/Icon";
 import Loading from "@components/Loader/Loading";
 import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 import { SvgIcon } from "@components/SvgIcon";
-import { mdiTools } from "@mdi/js";
+import { mdiCogOutline, mdiTools } from "@mdi/js";
 import { MCPServerConfig } from "@pages/ServerSettings/MCPServers/MCPServerConfig/MCPServerConfig";
+import { getMcpConfigValueAsString } from "@pages/ServerSettings/MCPServers/MCPServerConfig/MCPServerConfigButton";
 import { useMcpServerIcons } from "@pages/ServerSettings/MCPServers/MCPServerTools/useMcpServerIcons";
 import React, { useState } from "react";
 import type { TestSelectors } from "src/Testing";
@@ -67,15 +68,14 @@ export const McpToolAccess = ({
             !config_schema || !configId ?
               undefined
             : allConfigData.find((c) => c.id === configId)?.config;
-          const configDataString = Object.values(configData ?? {})
-            .map((v) => (isObject(v) ? JSON.stringify(v) : String(v)))
-            .join(", ");
+          const configDataString =
+            configData ? getMcpConfigValueAsString(configData) : undefined;
           return (
             <FlexRowWrap
               key={mcpServerName}
               title={toolNames.join(", ")}
               style={{ display: "inline-flex" }}
-              className="gap-p25"
+              className="gap-p25 max-w-fit"
             >
               <FlexRow className="f-0 w-fit gap-p25">
                 {icon ?
@@ -83,12 +83,21 @@ export const McpToolAccess = ({
                 : <Icon path={mdiTools} sizeName="micro" className="text-1" />}
                 <strong>{mcpServerName}:</strong>
               </FlexRow>
+              <span style={{ fontWeight: "normal" }}>
+                {sliceText(toolNames.join(", "), 50)}
+              </span>
               {config_schema && (
                 <Btn
                   size="micro"
                   variant={"faded"}
                   data-command="McpToolAccess.configure"
                   color={configData ? "action" : "danger"}
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    maxWidth: "200px",
+                  }}
+                  iconPath={mdiCogOutline}
                   onClick={() =>
                     setEditServerConfig({
                       serverName: mcpServerName,
@@ -100,9 +109,6 @@ export const McpToolAccess = ({
                   {configDataString || "Configure"}
                 </Btn>
               )}
-              <span style={{ fontWeight: "normal" }}>
-                {sliceText(toolNames.join(", "), 50)}
-              </span>
             </FlexRowWrap>
           );
         })}

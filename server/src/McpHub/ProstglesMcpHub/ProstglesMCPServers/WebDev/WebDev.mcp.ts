@@ -23,7 +23,6 @@ const definition = {
   label: "Web Dev Environment",
   description: "React vite based web development environment.",
   config_schema: undefined,
-  config_schema_component: undefined,
   tools: toolsSchema,
 } as const satisfies ProstglesMcpServerDefinition;
 
