@@ -3,12 +3,42 @@ on:
   push:
     tags:
       - "v*"
+permissions:
+  contents: write
+  pull-requests: write
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+  prepare_release:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      release_id: ${{ steps.create_release.outputs.id }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: version
+        run: |
+          VERSION=$(./scripts/get_version.sh)
+          echo "version=v$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Validate release readiness
+        run: ./scripts/check_release_ready.sh on-release
+
+      - name: Create draft release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          body_path: ./releases/${{ github.ref_name }}.md
+          draft: true
+          prerelease: ${{ contains(github.ref_name, '-rc') }}
+
   build_docker_images:
     timeout-minutes: 20
+    needs: prepare_release
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false # Optional: Prevent other matrix jobs from being cancelled if one fails
@@ -20,79 +50,34 @@ jobs:
             dockerfile: DB.Dockerfile
           # Add more entries here if you have more images to build
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Extract version
-        id: extract_version
-        run: |
-          VERSION=$(./scripts/get_version.sh)
-          echo "version=v$VERSION" >> $GITHUB_OUTPUT
-          echo "Extracted version: v$VERSION"
-
-      - name: Ensure release file exists
-        run: |
-          pr_version=$(./scripts/get_version.sh) 
-          base_ref="${{ github.base_ref }}"
-          release_file_path="./releases/v${pr_version}.md"
-
-          echo "Checking for release file: ${release_file_path}"
-
-          if [ -f "$release_file_path" ]; then
-            echo "Release file found: ${release_file_path}"
-          else
-
-            echo "Release file not found for v${pr_version}"
-            echo "Ensure this file exists: ${release_file_path}"
-
-            exit 1
-          fi
-
-      - name: Ensure docker-compose.yml image tags are updated
-        run: |
-          pr_version=$(./scripts/get_version.sh) 
-          expected_tag="v${pr_version}"
-          docker_compose_file="./docker-compose.yml"
-
-          echo "Checking docker-compose.yml for correct image tags..."
-
-          if grep -q "image: prostgles/ui:${expected_tag}" "$docker_compose_file" && \
-             grep -q "image: prostgles/ui-db:${expected_tag}" "$docker_compose_file"; then
-            echo "docker-compose.yml uses the correct image tags: ${expected_tag}"
-          else
-            echo "docker-compose.yml does not use the correct image tags."
-            echo "Expected tags: prostgles/ui:${expected_tag} and prostgles/ui-db:${expected_tag}"
-            exit 1
-          fi
-
-      - name: Create Release with Notes
-        uses: softprops/action-gh-release@v2
-        with:
-          body_path: ./releases/${{ steps.extract_version.outputs.version }}.md
-          draft: false
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
+      - uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-qemu-action@v3
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@v3
 
-      - name: Build and push ui
-        uses: docker/build-push-action@v6
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: prostgles/${{ matrix.image_name }}
+          tags: |
+            type=raw,value=${{ github.ref_name }}
+
+      - uses: docker/build-push-action@v6
         with:
           context: .
           file: ${{ matrix.dockerfile }}
           platforms: linux/amd64
           push: true
-          tags: |
-            prostgles/${{ matrix.image_name }}:latest
-            prostgles/${{ matrix.image_name }}:${{ steps.extract_version.outputs.version }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          provenance: mode=max
+          sbom: true
 
   build_linux:
     timeout-minutes: 20
@@ -114,6 +99,7 @@ jobs:
       - name: Release Linux
         uses: softprops/action-gh-release@v2
         with:
+          draft: true
           files: |
             electron/dist/**/*.deb
             electron/dist/**/*.rpm
@@ -140,6 +126,7 @@ jobs:
       - name: Release Windows
         uses: softprops/action-gh-release@v2
         with:
+          draft: true
           files: |
             electron/dist/**/*.exe
             electron/dist/**/*.checksums
@@ -164,6 +151,35 @@ jobs:
       - name: Release MacOS
         uses: softprops/action-gh-release@v2
         with:
+          draft: true
           files: |
             electron/dist/**/*.dmg
             electron/dist/**/*.checksums
+  create_release_version_bump_pr:
+    needs:
+      - prepare_release
+      - build_docker_images
+      - build_linux
+      - build_windows
+      - build_macos
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update Docker image versions
+        run: ./scripts/update_docker_image_versions.sh "${{ github.ref_name }}"
+
+      - name: Create release version bump PR
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          base: ${{ github.event.repository.default_branch }}
+          branch: release/${{ github.ref_name }}-docker-images
+          delete-branch: true
+          commit-message: "chore: update Docker images for ${{ github.ref_name }}"
+          title: "Release ${{ github.ref_name }} Docker image versions"
+          body: |
+            Updates `docker-compose.yml` to use the Docker images built for `${{ github.ref_name }}`.
+
+            Before merging, check the draft release artifacts for `${{ github.ref_name }}`.
+            Merging this PR publishes the draft release.
