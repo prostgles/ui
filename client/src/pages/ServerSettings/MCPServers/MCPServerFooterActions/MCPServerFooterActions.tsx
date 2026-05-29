@@ -104,6 +104,7 @@ export const MCPServerFooterActions = ({
               existingConfig={{ id: config.id, value: config.config }}
               serverName={mcp_server.name}
               chatId={chatId}
+              defaultConfig={config.config}
             />
           );
         })}

@@ -50,6 +50,7 @@ export const useMCPServerEnable = ({
         existingConfig: undefined,
         serverName: mcp_server.name,
         chatId,
+        defaultConfig,
       });
     } else {
       /** This ensures we don't re-enable the server through the logic in AskLLMChatActionBarMCPToolsBtn */
