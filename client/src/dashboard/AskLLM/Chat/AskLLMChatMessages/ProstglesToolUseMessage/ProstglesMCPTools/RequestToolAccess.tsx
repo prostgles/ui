@@ -112,13 +112,13 @@ export const RequestToolAccess = ({
         }
         await dbs.llm_chats_allowed_mcp_tools.insertMany(
           accessInfo.validatedTools.map(
-            ({ id, server_name }) =>
+            ({ id, server_name, config_id }) =>
               ({
                 chat_id: chatId,
                 server_name,
                 tool_id: id,
                 auto_approve: state === "auto_approve",
-                server_config_id: configs[server_name]?.configId,
+                server_config_id: configs[server_name]?.configId ?? config_id,
               }) satisfies DBSSchemaForInsert["llm_chats_allowed_mcp_tools"],
           ),
           {
@@ -135,7 +135,7 @@ export const RequestToolAccess = ({
         );
       }
       await tout(500);
-      void onSendResult();
+      await onSendResult();
     },
     [
       chatId,

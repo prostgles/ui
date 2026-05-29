@@ -13,12 +13,11 @@ import { ChatActionBarBtnStyleProps } from "./AskLLMChatActionBar";
 export const AskLLMChatActionBarMCPToolsBtn = ({
   activeChat,
   loading,
-  onClick,
+  ...btnProps
 }: {
   loading: boolean;
   activeChat: DBSSchema["llm_chats"];
-  onClick: BtnProps["onClick"];
-}) => {
+} & Pick<BtnProps, "onClick" | "data-command">) => {
   const { dbs, dbsMethods } = usePrgl();
   const { data: allowedTools } = dbs.mcp_server_tools.useSubscribe(
     {
@@ -95,7 +94,7 @@ export const AskLLMChatActionBarMCPToolsBtn = ({
         loading={loading}
         disabledInfo={!dbsMethods.getMcpHostInfo ? "Must be admin" : undefined}
         children={allowedTools?.length || null}
-        onClick={onClick}
+        {...btnProps}
       />
       {!!mcpServersThatConfiguring?.length &&
         !serverToConfigure &&
@@ -159,6 +158,7 @@ export const AskLLMChatActionBarMCPToolsBtn = ({
           onDone={() => {
             setServerToConfigure(undefined);
           }}
+          defaultConfig={undefined}
           serverName={serverToConfigure.name}
         />
       )}

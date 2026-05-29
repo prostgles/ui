@@ -214,6 +214,7 @@ const handler = {
               validatedTools?.map((t) => ({
                 id: t.id,
                 server_name: t.server_name,
+                config_id: t.configId ?? null,
               })) ?? [],
           };
         },

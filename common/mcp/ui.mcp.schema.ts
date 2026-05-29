@@ -329,6 +329,7 @@ export const uiMcpSchema = {
           arrayOfType: {
             id: "number",
             server_name: "string",
+            config_id: { oneOf: ["number", { enum: [null] }] },
           },
         },
         status: { optional: true, enum: ["approved", "denied"] },

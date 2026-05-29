@@ -8,6 +8,7 @@ import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig"
 import { isDefined } from "prostgles-types";
 import type { DBS } from "..";
 import { fromEntries, getEntries } from "@common/utils";
+import { getDefaultMcpConfig } from "@common/mcp/web.mcp.schema";
 
 export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
   mcp_servers: {
@@ -269,37 +270,33 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
               { select: { name: 1, config_schema: 1 } },
             );
 
-            const defaultServerConfigs = serversThatNeedConfigs.map(
-              (server) => {
-                const defaultConfigEntries = getEntries(server.config_schema!)
-                  .map(([key, value]) => {
-                    if (
-                      value.type === "local" &&
-                      value.defaultValue !== undefined
-                    ) {
-                      return [key, value.defaultValue] as const;
-                    }
-                  })
-                  .filter(isDefined);
-                return { server, defaultConfigEntries };
-              },
-            );
+            const defaultServerConfigs = serversThatNeedConfigs
+              .map((server) => {
+                const defaultConfig = getDefaultMcpConfig(server.config_schema);
+                if (!defaultConfig) {
+                  return;
+                }
+                return {
+                  server,
+                  defaultConfig,
+                };
+              })
+              .filter(isDefined);
 
             if (
-              defaultServerConfigs.length &&
-              defaultServerConfigs.every((c) => c.defaultConfigEntries.length)
+              serversThatNeedConfigs.length &&
+              serversThatNeedConfigs.length === defaultServerConfigs.length
             ) {
-              for (const {
-                server,
-                defaultConfigEntries,
-              } of defaultServerConfigs) {
-                const config = await dbx.mcp_server_configs.insert(
-                  {
-                    server_name: server.name,
-                    config: fromEntries(defaultConfigEntries),
-                  },
-                  { returning: { id: 1 } },
-                );
+              for (const { server, defaultConfig } of defaultServerConfigs) {
+                const configData = {
+                  server_name: server.name,
+                  config: defaultConfig,
+                };
+                const config =
+                  (await dbx.mcp_server_configs.findOne(configData)) ||
+                  (await dbx.mcp_server_configs.insert(configData, {
+                    returning: { id: 1 },
+                  }));
                 await dbx.llm_chats_allowed_mcp_tools.update(
                   {
                     $or: rows

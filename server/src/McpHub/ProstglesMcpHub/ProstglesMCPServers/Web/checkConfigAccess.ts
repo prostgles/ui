@@ -179,11 +179,11 @@ export const checkConfigAccess = async (
     throw new Error(`Invalid URL: ${url}`);
   }
 
-  const { urlPatterns, blockInternalSubnets, internalSubnets } = config.access;
+  const { urls, blockInternalSubnets, internalSubnets } = config.access;
 
   const blockedSubnets = blockInternalSubnets ? internalSubnets : undefined;
 
-  const isMatch = urlPatterns.some((pattern) =>
+  const isMatch = urls.some((pattern) =>
     matchesPattern(url, requestUrl, pattern),
   );
 

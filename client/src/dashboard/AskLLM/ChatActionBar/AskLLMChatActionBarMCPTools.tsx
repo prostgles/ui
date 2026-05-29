@@ -41,9 +41,10 @@ export const AskLLMChatActionBarMCPTools = (
         onClick={() => {
           setShow(true);
         }}
+        data-command={show ? undefined : "LLMChatOptions.MCPTools"}
       />
 
-      {enabledServers.length && (
+      {Boolean(enabledServers.length) && (
         <ScrollFade className="oy-auto flex-row ">
           {enabledServers
             .filter((s) => {
@@ -66,6 +67,8 @@ export const AskLLMChatActionBarMCPTools = (
                   onClick={() => {
                     setShow(server.name);
                   }}
+                  data-key={server.name}
+                  data-command="LLMChatOptions.EnabledMcpServer"
                   iconNode={
                     <SvgIcon size={18} icon={getIcon(server.name) ?? "Cog"} />
                   }

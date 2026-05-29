@@ -19,7 +19,7 @@ const getErrorMessage = async (promise: Promise<void>) => {
 void test("checkConfigAccess allows matching URLs in allow mode", async () => {
   const config = makeConfig({
     mode: "allow",
-    urlPatterns: ["example.com"],
+    urls: ["example.com"],
     blockInternalSubnets: true,
     internalSubnets: [],
   });
@@ -36,7 +36,7 @@ void test("checkConfigAccess allows matching URLs in allow mode", async () => {
 void test("checkConfigAccess denies matching URLs in deny mode", async () => {
   const config = makeConfig({
     mode: "deny",
-    urlPatterns: ["localhost"],
+    urls: ["localhost"],
     blockInternalSubnets: true,
     internalSubnets: [],
   });
@@ -51,7 +51,7 @@ void test("checkConfigAccess denies matching URLs in deny mode", async () => {
 void test("checkConfigAccess blocks direct IPs in blocked subnets", async () => {
   const config = makeConfig({
     mode: "deny",
-    urlPatterns: [],
+    urls: [],
     blockInternalSubnets: true,
     internalSubnets: ["127.0.0.0/8", "::1/128"],
   });
@@ -72,7 +72,7 @@ void test("checkConfigAccess blocks direct IPs in blocked subnets", async () => 
 void test("checkConfigAccess supports IPv4-mapped IPv6 blocked subnets", async () => {
   const config = makeConfig({
     mode: "deny",
-    urlPatterns: [],
+    urls: [],
     blockInternalSubnets: true,
     internalSubnets: ["::ffff:127.0.0.0/120"],
   });
@@ -88,7 +88,7 @@ void test("checkConfigAccess supports IPv4-mapped IPv6 blocked subnets", async (
 void test("checkConfigAccess blocks hostnames that resolve into blocked subnets", async () => {
   const config = makeConfig({
     mode: "deny",
-    urlPatterns: [],
+    urls: [],
     blockInternalSubnets: true,
     internalSubnets: ["127.0.0.0/8", "::1/128"],
   });
@@ -103,7 +103,7 @@ void test("checkConfigAccess blocks hostnames that resolve into blocked subnets"
 void test("checkConfigAccess ignores blocked subnets in unrestricted mode", async () => {
   const config = makeConfig({
     mode: "unrestricted",
-    urlPatterns: [],
+    urls: [],
     blockInternalSubnets: true,
     internalSubnets: ["not-a-cidr"],
   });

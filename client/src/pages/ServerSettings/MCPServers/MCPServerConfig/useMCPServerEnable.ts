@@ -6,6 +6,7 @@ import type { Prgl } from "../../../../App";
 import type { DBS } from "../../../../dashboard/Dashboard/DBS";
 import type { MCPChatAllowedTools } from "../useMCPChatAllowedTools";
 import { useMCPServerConfig } from "./MCPServerConfig";
+import { getDefaultMcpConfig } from "@common/mcp/web.mcp.schema";
 
 export type MCPServerChatContext = {
   chatId: number;
@@ -30,28 +31,20 @@ export const useMCPServerEnable = ({
   const { setServerToConfigure } = useMCPServerConfig();
 
   const lastConfigId = mcp_server_configs.at(-1)?.id;
-  const toolsAllowedConfigId = chatContext?.llm_chats_allowed_mcp_tools
-    .map((t) => t.server_config_id || undefined)
-    .filter(isDefined)[0];
+  const allowedForChatConfigId = chatContext?.llm_chats_allowed_mcp_tools.find(
+    (t) => t.server_name === mcp_server.name,
+  )?.server_config_id;
   const chatId = chatContext?.chatId;
   const onToggle = useCallback(async () => {
     const newEnabled = !enabled;
 
-    const defaultEntries =
-      config_schema &&
-      getEntries(config_schema)
-        .map(([key, value]) =>
-          value.type !== "local" || value.defaultValue === undefined ?
-            undefined
-          : ([key, value.defaultValue] as const),
-        )
-        .filter(isDefined);
+    const defaultConfig = getDefaultMcpConfig(config_schema);
 
     const mustProvideConfig =
       newEnabled &&
       config_schema &&
       lastConfigId === undefined &&
-      !defaultEntries?.length;
+      !defaultConfig;
     if (mustProvideConfig) {
       return setServerToConfigure({
         existingConfig: undefined,
@@ -68,12 +61,12 @@ export const useMCPServerEnable = ({
       }
 
       const configToUse =
-        lastConfigId !== undefined ?
+        lastConfigId !== undefined || !defaultConfig ?
           { id: lastConfigId }
         : await dbs.mcp_server_configs.insert(
             {
               server_name: mcp_server.name,
-              config: Object.fromEntries(defaultEntries ?? []),
+              config: defaultConfig,
             },
             {
               returning: { id: 1 },
@@ -110,7 +103,7 @@ export const useMCPServerEnable = ({
           tool_id,
           chat_id: chatId,
           server_name: mcp_server.name,
-          server_config_id: toolsAllowedConfigId || lastConfigId,
+          server_config_id: allowedForChatConfigId || lastConfigId,
         }));
         await dbs.llm_chats_allowed_mcp_tools.insertMany(data);
       } else {
@@ -126,7 +119,7 @@ export const useMCPServerEnable = ({
       onToggle,
       dbs.llm_chats_allowed_mcp_tools,
       mcp_server.name,
-      toolsAllowedConfigId,
+      allowedForChatConfigId,
       lastConfigId,
     ],
   );

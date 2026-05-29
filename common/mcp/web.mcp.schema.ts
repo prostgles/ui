@@ -1,3 +1,6 @@
+import { isDefined } from "../filterUtils";
+import type { DBSSchema } from "../publishUtils";
+import { getEntries } from "../utils";
 import { documentsServiceInputSchemaMcpOptions } from "./documentsServiceInputSchema";
 export const webMcpSchema = {
   fetch: {
@@ -179,10 +182,10 @@ export const webMcpConfigSchema = {
         description:
           "Access control mode. 'allow' means only URLs matching the patterns in 'hosts' are allowed. 'deny' means URLs matching the patterns are blocked. 'unrestricted' means no URL filtering or blockedSubnet check is applied.",
       },
-      urlPatterns: {
+      urls: {
         type: "string[]",
         description:
-          "Patterns can be simple substrings (e.g., 'example.com') or wildcard patterns (e.g., '*.example.com'). The 'mode' field determines whether these patterns define allowed URLs or blocked URLs.",
+          "URL Patterns can be simple substrings (e.g., 'example.com') or wildcard patterns (e.g., '*.example.com'). The 'mode' field determines whether these patterns define allowed URLs or blocked URLs.",
       },
       blockInternalSubnets: {
         type: "boolean",
@@ -198,12 +201,31 @@ export const webMcpConfigSchema = {
     },
     defaultValue: {
       mode: "deny",
-      urlPatterns: [],
+      urls: [],
       blockInternalSubnets: true,
       internalSubnets: internalNetworkSubnets,
     },
   },
 } as const;
+
+export const getDefaultMcpConfig = (
+  config_schema: DBSSchema["mcp_servers"]["config_schema"],
+) => {
+  if (!config_schema) return;
+  const defaultConfigEntries = getEntries(config_schema)
+    .map(([key, schema]) => {
+      if (schema.type === "local" && schema.defaultValue !== undefined) {
+        return [key, schema.defaultValue] as const;
+      }
+    })
+    .filter(isDefined);
+
+  if (!defaultConfigEntries.length) {
+    return;
+  }
+  const defaultConfig = Object.fromEntries(defaultConfigEntries);
+  return defaultConfig;
+};
 
 export const GOOGLE_FAVICON_ENDPOINT = "https://www.google.com/s2/favicons";
 export const GOOGLE_FAVICON_ENDPOINT_REDIRECT = "https://*.gstatic.com/";

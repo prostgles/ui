@@ -1176,18 +1176,44 @@ test.describe("Main test", () => {
     await page.getByTestId("AskLLM").click();
     await newChat(page);
     await toggleMCPTools(page, ["fetch"]);
-    await sendAskLLMMessage(page, " mcp ");
-    await page
-      .getByTestId("AskLLMToolApprover.AllowOnce")
-      .click({ ...TWENTY_SECONDS_OR_MORE });
-    await page.waitForTimeout(1e3);
-    const mcpToolUse = await getAskLLMLastMessage(page);
-    await expect(mcpToolUse).toContainText(
-      "successfully fetched the login page",
-      {
+
+    const mcpFetchAndExpect = async (
+      expectedMsg: string,
+      msgType: "last-msg" | "last-tool-use",
+    ) => {
+      await sendAskLLMMessage(page, " mcp ");
+      await page
+        .getByTestId("AskLLMToolApprover.AllowOnce")
+        .click({ ...TWENTY_SECONDS_OR_MORE });
+      await page.waitForTimeout(1e3);
+      const mcpToolUse = await getAskLLMLastMessage(page);
+
+      const locatorToCheck =
+        msgType === "last-msg" ? mcpToolUse : (
+          page.getByTestId("AskLLM.popup").getByTestId("ToolUseMessage").last()
+        );
+      await expect(locatorToCheck).toContainText(expectedMsg, {
         ...TWENTY_SECONDS_OR_MORE,
-      },
+      });
+    };
+    await mcpFetchAndExpect(
+      "is blocked by MCP server configuration (127.0.0.1/32)",
+      "last-tool-use",
     );
+
+    /** Must allow internal subnets */
+    await page
+      .locator(
+        getCommandElemSelector("LLMChatOptions.EnabledMcpServer") +
+          getDataKey("web"),
+      )
+      .click();
+    await page.getByTestId("MCPServerConfigButton").click();
+    await page.getByLabel("Block internal subnets").click();
+    await page.getByTestId("MCPServerConfig.save").click();
+    await page.waitForTimeout(1e3);
+    await page.getByTestId("Popup.close").last().click();
+    await mcpFetchAndExpect("successfully fetched the login page", "last-msg");
 
     /** Ensure chat name updates based on first message */
     await expect(page.getByTestId("LLMChat.select")).toContainText("mcp");
@@ -1832,7 +1858,10 @@ test.describe("Main test", () => {
 
     await newChat(page);
     await sendAskLLMMessage(page, " agentic_workflow_filesystem ");
-    await page.getByTestId("McpToolAccess.configure").click(getTimeout(60e3));
+    await page
+      .locator(getDataKey("filesystem"))
+      .getByTestId("McpToolAccess.configure")
+      .click(getTimeout(60e3));
     await fileBrowserGoToPath(page.getByTestId("FileTree"), [
       "ui",
       "e2e",

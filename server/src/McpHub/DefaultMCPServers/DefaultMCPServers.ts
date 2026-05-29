@@ -59,7 +59,7 @@ export const getDefaultMCPServers = (): Record<
     args: ["-y", "@modelcontextprotocol/server-memory"],
   },
   playwright: {
-    icon_path: "Web",
+    icon_path: "GoogleChrome",
     command: "npx",
     args: ["@playwright/mcp@latest"],
     env: {

@@ -1,10 +1,10 @@
+import { isDefined } from "@common/filterUtils";
+import { getDefaultMcpConfig } from "@common/mcp/web.mcp.schema";
 import type { DBSSchemaForInsert } from "@common/publishUtils";
 import { join } from "path";
 import type { DBS } from "..";
 import { getMCPDirectory } from "./AnthropicMcpHub/installMCPServer";
 import { getDefaultMCPServers } from "./DefaultMCPServers/DefaultMCPServers";
-import { getEntries } from "@common/utils";
-import { isDefined } from "@common/filterUtils";
 
 export const insertMcpServerList = async (dbs: DBS) => {
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
@@ -28,19 +28,12 @@ export const insertMcpServerList = async (dbs: DBS) => {
     await Promise.all(
       defaultServers.map(async (s) => {
         if (!s.config_schema) return;
-        const defaultConfigEntries = getEntries(s.config_schema)
-          .map(([key, schema]) => {
-            if (schema.type === "local" && schema.defaultValue !== undefined) {
-              return [key, schema.defaultValue] as const;
-            }
-          })
-          .filter(isDefined);
 
+        const defaultConfig = getDefaultMcpConfig(s.config_schema);
         if (
-          defaultConfigEntries.length &&
+          defaultConfig &&
           !(await dbs.mcp_server_configs.findOne({ server_name: s.name }))
         ) {
-          const defaultConfig = Object.fromEntries(defaultConfigEntries);
           return {
             server_name: s.name,
             config: defaultConfig,

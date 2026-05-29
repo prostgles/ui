@@ -21,7 +21,7 @@ export const WebMcpConfig = ({ value: rawValue, onChange }: P) => {
 
   const {
     mode = "allow",
-    urlPatterns = [],
+    urls = [],
     blockInternalSubnets = true,
     internalSubnets = [],
   } = data ?? {};
@@ -29,7 +29,7 @@ export const WebMcpConfig = ({ value: rawValue, onChange }: P) => {
   const onPartialUpdate = (newData: Partial<typeof data>) => {
     const updatedData = {
       mode,
-      urlPatterns,
+      urls,
       blockInternalSubnets,
       internalSubnets,
       ...newData,
@@ -51,7 +51,7 @@ export const WebMcpConfig = ({ value: rawValue, onChange }: P) => {
       />
       {mode !== "unrestricted" && (
         <>
-          {urlPatterns.length ?
+          {urls.length ?
             <div className="ta-start">URL patterns to {mode}:</div>
           : <InfoRow color="info">
               {mode === "allow" ?
@@ -64,7 +64,7 @@ export const WebMcpConfig = ({ value: rawValue, onChange }: P) => {
             </InfoRow>
           }
 
-          {urlPatterns.map((urlPattern, index) => {
+          {urls.map((urlPattern, index) => {
             return (
               <FormField
                 key={index}
@@ -73,7 +73,7 @@ export const WebMcpConfig = ({ value: rawValue, onChange }: P) => {
                 value={urlPattern}
                 onChange={(newPattern) => {
                   onPartialUpdate({
-                    urlPatterns: urlPatterns
+                    urls: urls
                       .map((p, i) => {
                         return (
                           i === index ?
@@ -94,7 +94,7 @@ export const WebMcpConfig = ({ value: rawValue, onChange }: P) => {
                     }}
                     onClick={() => {
                       onPartialUpdate({
-                        urlPatterns: urlPatterns.filter((_, i) => i !== index),
+                        urls: urls.filter((_, i) => i !== index),
                       });
                     }}
                   />
@@ -105,7 +105,7 @@ export const WebMcpConfig = ({ value: rawValue, onChange }: P) => {
           <Btn
             onClick={() => {
               onPartialUpdate({
-                urlPatterns: [...urlPatterns, ""],
+                urls: [...urls, ""],
               });
             }}
             variant="filled"
@@ -116,6 +116,7 @@ export const WebMcpConfig = ({ value: rawValue, onChange }: P) => {
           </Btn>
           <SwitchToggle
             label="Block internal subnets"
+            variant="row"
             checked={blockInternalSubnets}
             onChange={(blockInternalSubnets) => {
               onPartialUpdate({

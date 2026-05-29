@@ -56,7 +56,7 @@ export const DatabaseAccessEditor = ({
       }
     >
       {(showSelect || contentRight) && (
-        <FlexRow>
+        <FlexRow className="ai-end">
           {showSelect && (
             <>
               <Select

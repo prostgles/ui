@@ -17,6 +17,7 @@ export type MCPServerConfigProps = {
   existingConfig:
     | { id: number; value: Record<string, string | string[]> }
     | undefined;
+  defaultConfig: undefined | Record<string, string | string[]>;
   chatId: number | undefined;
   onDone: (res: void | MCPServerEnabledConfig) => void;
 };
@@ -112,7 +113,7 @@ export const MCPServerConfig = (props: MCPServerConfigProps) => {
             <FlexCol>
               {existingConfigs.map((existingConfig) => {
                 const values = Object.values(existingConfig.config)
-                  .map(getMcpConfigValueAsString)
+                  .map((v) => getMcpConfigValueAsString(v, undefined))
                   .join(", ");
                 return (
                   <FlexRow key={existingConfig.id} className="gap-0">
