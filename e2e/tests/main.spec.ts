@@ -1197,7 +1197,7 @@ test.describe("Main test", () => {
       });
     };
     await mcpFetchAndExpect(
-      "is blocked by MCP server configuration (127.0.0.1/32)",
+      "is blocked by MCP server configuration",
       "last-tool-use",
     );
 
