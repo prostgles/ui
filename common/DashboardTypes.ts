@@ -208,7 +208,7 @@ type Filtering = {
   };
 };
 
-type TableColumn = {
+export type TableColumn = {
   /**
    * Column name as it appears in the database.
    * For nested columns this can be anything. Use the table name or a more descriptive name.

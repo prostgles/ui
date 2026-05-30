@@ -830,6 +830,367 @@ export const prostglesUIFoodDeliveryDashboardSample = {
         },
       ],
     },
+    {
+      icon: "StarOutline",
+      name: "Restaurant Performance",
+      layout: {
+        id: "customer-root",
+        size: 1,
+        type: "col",
+        items: [
+          {
+            id: "restaurants_main_table",
+            size: 1,
+            type: "item",
+            viewType: "table",
+            tableName: "restaurants",
+          },
+        ],
+      },
+      windows: [
+        {
+          id: "restaurants_main_table",
+          sort: [
+            {
+              asc: false,
+              key: "created_at",
+              nulls: "last",
+            },
+          ],
+          type: "table",
+          title: "Restaurants with useful bar/time chart columns",
+          columns: [
+            {
+              name: "id",
+              width: 80,
+            },
+            {
+              name: "name",
+              width: 180,
+            },
+            {
+              name: "type",
+              width: 120,
+            },
+            {
+              name: "website",
+              width: 180,
+              format: {
+                type: "URL",
+              },
+            },
+            {
+              name: "is_popular",
+              width: 90,
+              styling: {
+                type: "Icons",
+                valueToIconMap: {
+                  true: "Star",
+                  false: "StarOutline",
+                },
+              },
+            },
+            {
+              name: "created_at",
+              width: 120,
+              format: {
+                type: "Age",
+                params: {
+                  variant: "short",
+                },
+              },
+            },
+            {
+              name: "menu items",
+              width: 130,
+              nested: {
+                path: [
+                  {
+                    on: [
+                      {
+                        id: "restaurant_id",
+                      },
+                    ],
+                    table: "menu_items",
+                  },
+                ],
+                limit: 1,
+                columns: [
+                  {
+                    name: "count",
+                    width: 90,
+                    computedConfig: {
+                      aggregation: "countAll",
+                    },
+                  },
+                ],
+                joinType: "left",
+              },
+              styling: {
+                type: "Barchart",
+                barColor: "indigo",
+                textColor: "#555",
+              },
+            },
+            {
+              name: "avg menu price",
+              width: 140,
+              format: {
+                type: "Currency",
+                params: {
+                  mode: "Fixed",
+                  currencyCode: "USD",
+                  metricPrefix: false,
+                },
+              },
+              nested: {
+                path: [
+                  {
+                    on: [
+                      {
+                        id: "restaurant_id",
+                      },
+                    ],
+                    table: "menu_items",
+                  },
+                ],
+                limit: 1,
+                columns: [
+                  {
+                    name: "avg_price",
+                    width: 100,
+                    computedConfig: {
+                      column: "price",
+                      aggregation: "avg",
+                    },
+                  },
+                ],
+                joinType: "left",
+              },
+              styling: {
+                type: "Barchart",
+                barColor: "green",
+                textColor: "#555",
+              },
+            },
+            {
+              name: "order count",
+              width: 130,
+              nested: {
+                path: [
+                  {
+                    on: [
+                      {
+                        id: "restaurant_id",
+                      },
+                    ],
+                    table: "orders",
+                  },
+                ],
+                limit: 1,
+                columns: [
+                  {
+                    name: "count",
+                    width: 90,
+                    computedConfig: {
+                      aggregation: "countAll",
+                    },
+                  },
+                ],
+                joinType: "left",
+              },
+              styling: {
+                type: "Barchart",
+                barColor: "blue",
+                textColor: "#555",
+              },
+            },
+            {
+              name: "sales",
+              width: 140,
+              format: {
+                type: "Currency",
+                params: {
+                  mode: "Fixed",
+                  currencyCode: "USD",
+                  metricPrefix: true,
+                },
+              },
+              nested: {
+                path: [
+                  {
+                    on: [
+                      {
+                        id: "restaurant_id",
+                      },
+                    ],
+                    table: "orders",
+                  },
+                ],
+                limit: 1,
+                columns: [
+                  {
+                    name: "sum_total_price",
+                    width: 100,
+                    computedConfig: {
+                      column: "total_price",
+                      aggregation: "sum",
+                    },
+                  },
+                ],
+                joinType: "left",
+              },
+              styling: {
+                type: "Barchart",
+                barColor: "purple",
+                textColor: "#555",
+              },
+            },
+            {
+              name: "avg rating",
+              width: 130,
+              nested: {
+                path: [
+                  {
+                    on: [
+                      {
+                        id: "restaurant_id",
+                      },
+                    ],
+                    table: "ratings",
+                  },
+                ],
+                limit: 1,
+                columns: [
+                  {
+                    name: "avg_rating",
+                    width: 100,
+                    computedConfig: {
+                      column: "rating",
+                      aggregation: "avg",
+                    },
+                  },
+                ],
+                joinType: "left",
+              },
+              styling: {
+                type: "Scale",
+                barColor: "yellow",
+                textColor: "#333",
+              },
+            },
+            {
+              name: "ratings over time",
+              width: 220,
+              nested: {
+                path: [
+                  {
+                    on: [
+                      {
+                        id: "restaurant_id",
+                      },
+                    ],
+                    table: "ratings",
+                  },
+                ],
+                chart: {
+                  type: "time",
+                  yAxis: {
+                    colName: "rating",
+                    funcName: "$avg",
+                    isCountAll: false,
+                  },
+                  dateCol: "created_at",
+                },
+                joinType: "left",
+              },
+            },
+            {
+              name: "orders over time",
+              width: 220,
+              nested: {
+                path: [
+                  {
+                    on: [
+                      {
+                        id: "restaurant_id",
+                      },
+                    ],
+                    table: "orders",
+                  },
+                ],
+                chart: {
+                  type: "time",
+                  yAxis: {
+                    colName: "id",
+                    funcName: "$count",
+                    isCountAll: true,
+                  },
+                  dateCol: "created_at",
+                },
+                joinType: "left",
+              },
+            },
+            {
+              name: "sales over time",
+              width: 220,
+              nested: {
+                path: [
+                  {
+                    on: [
+                      {
+                        id: "restaurant_id",
+                      },
+                    ],
+                    table: "orders",
+                  },
+                ],
+                chart: {
+                  type: "time",
+                  yAxis: {
+                    colName: "total_price",
+                    funcName: "$sum",
+                    isCountAll: false,
+                  },
+                  dateCol: "created_at",
+                },
+                joinType: "left",
+              },
+            },
+            {
+              name: "hygiene score",
+              width: 130,
+              nested: {
+                path: [
+                  {
+                    on: [
+                      {
+                        id: "restaurant_id",
+                      },
+                    ],
+                    table: "restaurant_hygiene_ratings",
+                  },
+                ],
+                limit: 1,
+                columns: [
+                  {
+                    name: "scores_hygiene",
+                    width: 100,
+                  },
+                ],
+                joinType: "left",
+              },
+              styling: {
+                type: "Scale",
+                barColor: "red",
+                textColor: "#333",
+              },
+            },
+          ],
+          table_name: "restaurants",
+        },
+      ],
+    },
   ],
 };
 

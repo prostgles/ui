@@ -84,7 +84,7 @@ export const getTableSelect = async (
         const sortByKey =
           c.computedConfig ?
             c.name
-          : `${c.name}.${getSingleShownNestedColumn(c, tables)?.shownCol.name}`;
+          : `${c.name}.${getSingleShownNestedColumn(c, tables)!.shownCol.name}`;
         const minRow = await db[w.table_name]?.findOne?.(filter, {
           select,
           orderBy: [{ key: sortByKey, asc: true, nulls: "last" }],

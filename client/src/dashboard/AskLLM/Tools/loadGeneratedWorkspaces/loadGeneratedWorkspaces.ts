@@ -4,12 +4,11 @@ import {
   type DBSSchema,
   type DBSSchemaForInsert,
 } from "@common/publishUtils";
-import { isDefined, omitKeys, pickKeys } from "prostgles-types";
-import type { WindowData } from "src/dashboard/Dashboard/dashboardUtils";
+import { isDefined, omitKeys } from "prostgles-types";
 import type { Prgl } from "../../../../App";
-import { CHIP_COLOR_NAMES } from "../../../W_Table/ColumnMenu/ColumnDisplayFormat/ChipStylePalette";
 import { loadGeneratedBarchart } from "./loadGeneratedBarchart";
 import { loadGeneratedMap } from "./loadGeneratedMap";
+import { loadGeneratedTable } from "./loadGeneratedTable";
 import { loadGeneratedTimechart } from "./loadGeneratedTimechart";
 
 export const loadGeneratedWorkspaces = async (
@@ -28,97 +27,7 @@ export const loadGeneratedWorkspaces = async (
         const { window } = loadGeneratedTimechart(generatedWindow);
         return window;
       } else if (generatedWindow.type === "table") {
-        const table = tables.find((t) => t.name === generatedWindow.table_name);
-        const columns = generatedWindow.columns?.map((c) => {
-          const { computedConfig } = c;
-          const computedConfigColumn =
-            computedConfig && computedConfig.aggregation !== "countAll" ?
-              table?.columns.find((col) => col.name === computedConfig.column)
-            : undefined;
-          const colTypes = pickKeys(
-            computedConfigColumn ?? {
-              tsDataType: "string",
-              udt_name: "int8",
-            },
-            ["tsDataType", "udt_name"],
-          );
-          return {
-            ...c,
-            computedConfig: computedConfig && {
-              column: computedConfigColumn?.name,
-              ...colTypes,
-              funcDef: {
-                key: "$" + computedConfig.aggregation,
-                outType: colTypes,
-                name: computedConfig.aggregation,
-                label: computedConfig.aggregation.toUpperCase(),
-                isAggregate: true,
-                isAllowedForColumn: true,
-              },
-            },
-            show: true,
-            style:
-              c.styling?.type === "conditional" ?
-                {
-                  type: "Conditional",
-                  conditions: c.styling.conditions.map((cond) => {
-                    // "textColor": "#ffffff",
-                    // "textColorDarkMode": "#2386d5",
-                    // "chipColor": "#673AB7"
-                    const style =
-                      Object.entries(CHIP_COLOR_NAMES).find(
-                        ([k]) => k === cond.chipColor,
-                      )?.[1] ?? CHIP_COLOR_NAMES.blue!;
-                    return {
-                      condition: cond.value,
-                      operator: cond.operator,
-                      textColor: style.textColor,
-                      chipColor: style.color,
-                      textColorDarkMode: style.textColorDarkMode,
-                    };
-                  }),
-                }
-              : c.styling,
-          };
-        });
-        const {
-          sort,
-          filter,
-          filterOperand,
-          quickFilterGroups,
-          // cardLayout,
-          table_name,
-          title,
-        } = generatedWindow;
-        return {
-          type: "table",
-          title,
-          columns,
-          filter,
-          options: {
-            filterOperand,
-            quickFilterGroups,
-            // cardLayout,
-          } satisfies WindowData<"table">["options"],
-          sort: sort
-            ?.map((s) => {
-              const nestedCol = columns?.find(
-                (c) => c.name === s.key && c.nested,
-              );
-              if (nestedCol) {
-                return {
-                  ...s,
-                  key: `${s.key}.value`,
-                };
-              }
-              return s;
-            })
-            .filter(isDefined),
-          table_name,
-        } satisfies Omit<
-          DBSSchemaForInsert["windows"],
-          "last_updated" | "user_id"
-        >;
+        return loadGeneratedTable(generatedWindow, tables);
       }
       return omitKeys(
         {

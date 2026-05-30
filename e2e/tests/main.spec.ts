@@ -19,6 +19,7 @@ import { startMockSMTPServer } from "./mockSMTPServer";
 import { testAskLLMCode, setupAskLLMToolUse } from "./testAskLLM/testAskLLM";
 import { getCommandElemSelector, getDataKey, getDataLabel } from "./Testing";
 import {
+  addExistingDatabase,
   clickAndWait,
   clickInsertRow,
   closeWorkspaceWindows,
@@ -65,6 +66,7 @@ import {
   typeConfirmationCode,
   uploadFile,
 } from "./utils/utils";
+import { createConnection } from "net";
 
 const schemaGraphTestDbName = "financial.sql";
 const DB_NAMES = {
@@ -1042,6 +1044,11 @@ test.describe("Main test", () => {
       "btn-color-action",
     );
 
+    await addExistingDatabase(page, "food_delivery");
+    // await openConnection(page, "food_delivery");
+    await page.getByTestId("AskLLM").click();
+    await newChat(page);
+
     await setPromptByText(page, "dashboard");
 
     await sendAskLLMMessage(
@@ -1056,11 +1063,23 @@ test.describe("Main test", () => {
     await expect(workspaceBtn).toContainText("Customer Insights");
 
     await page.waitForTimeout(1e3);
-    await page.getByTestId("AskLLM").click();
 
+    await page.locator(getDataKey("Restaurant Performance")).click();
+    await page
+      .getByTestId("TableBody")
+      .locator(".ProgressBar")
+      .first() // Table cell barcharts
+      // .scrollIntoViewIfNeeded({ timeout: 60e3 });
+      .waitFor({ state: "visible", timeout: 60e3 });
+
+    await page.getByTestId("AskLLM").click();
     await page.getByTestId("AskLLMChat.UnloadSuggestedDashboards").click();
     await expect(workspaceBtn).not.toContainText("Customer Insights");
 
+    await page.waitForTimeout(2e3);
+
+    await goTo(page, "/connections");
+    await dropConnectionAndDatabase("food_delivery", page, false);
     await page.waitForTimeout(2e3);
   });
 
@@ -1384,6 +1403,7 @@ test.describe("Main test", () => {
 
     await openConnection(page, "cloud");
     await page.getByTestId("AskLLM").click();
+    await setPromptByText(page, "dashboard");
     /* MCP Docker sandbox */
     await newChat(page);
     /* Prompt persists from the prev chat */

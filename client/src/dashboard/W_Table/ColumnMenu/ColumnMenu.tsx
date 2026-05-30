@@ -201,7 +201,7 @@ export const ColumnMenu = (props: P) => {
 
   const isComputed = Boolean(
     column.computedConfig ||
-    column.nested?.columns.some((c) => c.computedConfig),
+      column.nested?.columns.some((c) => c.computedConfig),
   );
   const computedType =
     column.nested ? "nested" : (

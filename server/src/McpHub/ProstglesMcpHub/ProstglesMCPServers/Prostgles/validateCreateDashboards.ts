@@ -1,4 +1,4 @@
-import type { WorkspaceInsertModel } from "@common/DashboardTypes";
+import type { TableColumn, WorkspaceInsertModel } from "@common/DashboardTypes";
 import { fromEntries } from "@common/utils";
 import { statePrgl } from "@src/init/startProstgles";
 import type { DBHandlerServer } from "prostgles-server";
@@ -43,25 +43,51 @@ export const validateCreateDashboards = async (
               }
 
               const select: Record<string, any> = {};
-              columns.forEach(({ name, nested }) => {
+              const getSelectItem = ({
+                computedConfig,
+                nested,
+              }: Pick<TableColumn, "computedConfig" | "nested">): any => {
+                if (computedConfig) {
+                  return {
+                    ["$" + computedConfig.aggregation]:
+                      computedConfig.aggregation === "countAll" ?
+                        []
+                      : [computedConfig.column],
+                  };
+                }
+                if (nested) {
+                  const joinTypeKey =
+                    nested.joinType === "inner" ? "$innerJoin" : "$leftJoin";
+                  if ("columns" in nested) {
+                    const innerSelect = fromEntries(
+                      nested.columns.map((c) => [c.name, getSelectItem(c)]),
+                    );
+                    return {
+                      [joinTypeKey]: nested.path,
+                      select: innerSelect,
+                    };
+                  }
+                  return {
+                    [joinTypeKey]: nested.path,
+                    select: {
+                      [nested.chart.dateCol]: 1,
+                      ...(!nested.chart.yAxis.isCountAll && {
+                        [nested.chart.yAxis.colName]:
+                          nested.chart.yAxis.funcName,
+                      }),
+                    },
+                  };
+                }
+
+                return 1;
+              };
+
+              columns.forEach(({ name, nested, computedConfig }) => {
                 if (!name) {
                   return `Column name is required for table windows. Problem found in workspace ${workspace.name}, window ${window.id}`;
                 }
 
-                if (nested) {
-                  select[name] = {
-                    [nested.joinType === "inner" ? "$innerJoin" : "$leftJoin"]:
-                      nested.path,
-                    select: fromEntries(
-                      ("columns" in nested ?
-                        nested.columns.map((c) => c.name)
-                      : [nested.chart.dateCol]
-                      ).map((colName) => [colName, 1]),
-                    ),
-                  };
-                } else {
-                  select[name] = 1;
-                }
+                select[name] = getSelectItem({ computedConfig, nested });
               });
 
               const orderBy = sort
