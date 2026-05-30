@@ -4,10 +4,13 @@ import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
 import { type JSONB } from "prostgles-types";
 import type { McpTool } from "../AnthropicMcpHub/McpTypes";
 
+export type LocalConfigSchema = JSONB.ObjectType["type"];
+
 export type ProstglesMcpServerDefinition = {
   icon_path: string;
   label: string;
   description: string;
+  config_schema: LocalConfigSchema | undefined;
   tools: Record<
     string,
     {
@@ -23,6 +26,12 @@ export type ProstglesMcpServerDefinition = {
 export type JSONBTypeIfDefined<Schema extends JSONB.FieldType | undefined> =
   Schema extends JSONB.FieldType ? JSONB.GetType<Schema> : undefined;
 
+export type JSONBObjectTypeIfDefined<
+  Schema extends LocalConfigSchema | undefined,
+> =
+  Schema extends LocalConfigSchema ? JSONB.GetType<{ type: Schema }>
+  : undefined;
+
 type MaybePromise<T> = T | Promise<T>;
 
 export type McpCallContext = {
@@ -33,7 +42,10 @@ export type McpCallContext = {
   dbs: DBS;
   toolUseId: string | undefined;
   messageId: DBSSchema["llm_messages"]["id"];
-};
+} & Pick<
+  DBSSchema["llm_chats_allowed_mcp_tools"],
+  "tool_id" | "server_config_id"
+>;
 
 export type McpCallContextFetchTools = {
   mcpTools: {
@@ -69,7 +81,11 @@ export type ProstglesMcpServerHandlerInstance = {
   >;
   tools: Record<
     string,
-    (toolArguments: unknown, context: McpCallContext) => MaybePromise<unknown>
+    (
+      toolArguments: unknown,
+      context: McpCallContext,
+      config: unknown,
+    ) => MaybePromise<unknown>
   >;
 };
 
@@ -108,6 +124,7 @@ export type ProstglesMcpServerHandlerTyped<
           ServerDefinition["tools"][ToolName]["schema"]
         >,
         context: McpCallContext,
+        config: JSONBObjectTypeIfDefined<ServerDefinition["config_schema"]>,
       ) => MaybePromise<
         JSONBTypeIfDefined<ServerDefinition["tools"][ToolName]["outputSchema"]>
       >;

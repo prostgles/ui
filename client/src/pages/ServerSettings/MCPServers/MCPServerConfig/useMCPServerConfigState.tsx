@@ -6,8 +6,10 @@ import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 
 export const useMCPServerConfigState = (props: MCPServerConfigProps) => {
   const { dbs } = usePrglCore();
-  const { serverName, existingConfig, onDone, chatId } = props;
-  const [config, setConfig] = useState(existingConfig?.value ?? {});
+  const { serverName, existingConfig, onDone, chatId, defaultConfig } = props;
+  const [config, setConfig] = useState(
+    existingConfig?.value ?? defaultConfig ?? {},
+  );
   const canSave = useMemo(
     () => !isEqual(config, existingConfig?.value),
     [config, existingConfig?.value],

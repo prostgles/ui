@@ -28,6 +28,7 @@ const definition = {
   icon_path: "CubeOutline",
   label: "Prostgles",
   description: "Tools to assist with Prostgles UI tasks",
+  config_schema: undefined,
   tools,
 } as const satisfies ProstglesMcpServerDefinition;
 
@@ -213,6 +214,7 @@ const handler = {
               validatedTools?.map((t) => ({
                 id: t.id,
                 server_name: t.server_name,
+                config_id: t.configId ?? null,
               })) ?? [],
           };
         },

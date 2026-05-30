@@ -7,6 +7,8 @@ import type {
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
 import { isDefined } from "prostgles-types";
 import type { DBS } from "..";
+import { fromEntries, getEntries } from "@common/utils";
+import { getDefaultMcpConfig } from "@common/mcp/web.mcp.schema";
 
 export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
   mcp_servers: {
@@ -50,15 +52,33 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
             values: {
               oneOfType: [
                 {
+                  type: { enum: ["local"] },
+                  renderWithComponent: {
+                    enum: ["FileTree", "WebMcpConfig"],
+                    optional: true,
+                  },
+                  title: { type: "string", optional: true },
+                  optional: { type: "boolean", optional: true },
+                  description: { type: "string", optional: true },
+                  defaultValue: { type: "unknown", optional: true },
+                  schema: "unknown",
+                },
+                {
                   type: { enum: ["env"] },
-                  renderWithComponent: { type: "string", optional: true },
+                  renderWithComponent: {
+                    enum: ["FileTree", "WebMcpConfig"],
+                    optional: true,
+                  },
                   title: { type: "string", optional: true },
                   optional: { type: "boolean", optional: true },
                   description: { type: "string", optional: true },
                 },
                 {
                   type: { enum: ["arg", "...args"] },
-                  renderWithComponent: { type: "string", optional: true },
+                  renderWithComponent: {
+                    enum: ["FileTree", "WebMcpConfig"],
+                    optional: true,
+                  },
                   title: { type: "string", optional: true },
                   optional: { type: "boolean", optional: true },
                   description: { type: "string", optional: true },
@@ -225,7 +245,7 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
         {
           commands: { insert: 1, update: 1 },
           validate: async (args) => {
-            const { dbx: dbs, data } =
+            const { dbx, data, rows } =
               args as unknown as ValidateRowsArgsCommon<
                 DBSSchema["llm_chats_allowed_mcp_tools"],
                 DBS
@@ -242,24 +262,70 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
                   .filter(isDefined),
               ),
             );
-            const serversThatNeedConfigs = await dbs.mcp_servers.find(
+            const serversThatNeedConfigs = await dbx.mcp_servers.find(
               {
                 name: { $in: serversWithoutConfigId },
                 config_schema: { $ne: null },
               },
-              { select: { name: 1 } },
+              { select: { name: 1, config_schema: 1 } },
             );
-            if (serversThatNeedConfigs.length) {
+
+            const defaultServerConfigs = serversThatNeedConfigs
+              .map((server) => {
+                const defaultConfig = getDefaultMcpConfig(server.config_schema);
+                if (!defaultConfig) {
+                  return;
+                }
+                return {
+                  server,
+                  defaultConfig,
+                };
+              })
+              .filter(isDefined);
+
+            if (
+              serversThatNeedConfigs.length &&
+              serversThatNeedConfigs.length === defaultServerConfigs.length
+            ) {
+              for (const { server, defaultConfig } of defaultServerConfigs) {
+                const configData = {
+                  server_name: server.name,
+                  config: defaultConfig,
+                };
+                const config =
+                  (await dbx.mcp_server_configs.findOne(configData)) ||
+                  (await dbx.mcp_server_configs.insert(configData, {
+                    returning: { id: 1 },
+                  }));
+                await dbx.llm_chats_allowed_mcp_tools.update(
+                  {
+                    $or: rows
+                      .filter(
+                        (row) =>
+                          row.server_name === server.name &&
+                          row.server_config_id === null,
+                      )
+                      .map(({ server_name, tool_id, chat_id }) => ({
+                        server_name,
+                        tool_id,
+                        chat_id,
+                      })),
+                  },
+                  {
+                    server_config_id: config.id,
+                  },
+                );
+              }
+            } else if (serversThatNeedConfigs.length) {
               throw new Error(
-                `MCP Servers ${serversThatNeedConfigs
-                  .map((s) => s.name)
-                  .join(
-                    ", ",
-                  )} require a server_config_id to be set for allowed tools. Please provide a valid server_config_id.`,
+                `MCP Servers ${JSON.stringify(
+                  serversThatNeedConfigs.map((s) => s.name).join(", "),
+                )} require a server_config_id to be set for allowed tools. Please provide a valid server_config_id.`,
               );
             }
+
             if (serverNames.length) {
-              await dbs.mcp_servers.update(
+              await dbx.mcp_servers.update(
                 {
                   name: { $in: serverNames },
                   enabled: false,

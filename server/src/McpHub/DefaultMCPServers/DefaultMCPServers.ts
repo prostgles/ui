@@ -3,6 +3,7 @@ import { mcpGithub } from "./mcpGithub";
 import { ProstglesMCPServers } from "../ProstglesMcpHub/ProstglesMCPServers";
 import { fromEntries, getEntries } from "@common/utils";
 import { getSchemasAsJsonSchema } from "../reloadMcpServerTools";
+import type { LocalConfigSchema } from "../ProstglesMcpHub/ProstglesMCPServerTypes";
 
 export const getDefaultMCPServers = (): Record<
   (typeof DEFAULT_MCP_SERVER_NAMES)[number],
@@ -58,7 +59,7 @@ export const getDefaultMCPServers = (): Record<
     args: ["-y", "@modelcontextprotocol/server-memory"],
   },
   playwright: {
-    icon_path: "Web",
+    icon_path: "GoogleChrome",
     command: "npx",
     args: ["@playwright/mcp@latest"],
     env: {
@@ -92,13 +93,33 @@ export const getDefaultMCPServers = (): Record<
       ([
         serverName,
         {
-          definition: { icon_path, tools },
+          definition: { icon_path, tools, config_schema },
         },
       ]) => [
         serverName,
         {
           command: "prostgles-local",
-          config_schema: undefined,
+          config_schema:
+            config_schema &&
+            fromEntries(
+              getEntries(config_schema as LocalConfigSchema).map(
+                ([key, value]) => {
+                  const typeObj =
+                    typeof value === "string" ? { type: value } : value;
+                  return [
+                    key,
+                    {
+                      type: "local",
+                      renderWithComponent: (typeObj as any).renderWithComponent,
+                      optional: typeObj.optional,
+                      title: typeObj.title,
+                      schema: value,
+                      defaultValue: (typeObj as any).defaultValue,
+                    } as const,
+                  ] as const;
+                },
+              ),
+            ),
           icon_path,
           mcp_server_tools: getEntries(tools).map(
             ([

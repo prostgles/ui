@@ -105,6 +105,8 @@ export const callMCPServerTool = async ({
         dbs,
         toolUseId,
         messageId,
+        tool_id: toolsAllowed.tool_id,
+        server_config_id: toolsAllowed.server_config_id,
       });
     }
 

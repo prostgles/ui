@@ -26,6 +26,7 @@ const definition = {
   label: "Database",
   description: "Tools to interact with your database",
   tools: PROSTGLES_MCP_SERVERS_AND_TOOLS[serverName],
+  config_schema: undefined,
 } as const satisfies ProstglesMcpServerDefinition;
 
 const handler = {
@@ -232,11 +233,7 @@ const runSqlTool = async (
     chat: DBSSchema["llm_chats"];
   },
 ) => {
-  const {
-    sql,
-    query_timeout = 30,
-    query_params,
-  } = args;
+  const { sql, query_timeout = 30, query_params } = args;
   if (!sql) {
     throw new Error("SQL query is required");
   }

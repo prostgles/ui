@@ -16,7 +16,7 @@ export const getOverviewSvgifSpecs = async () => {
     const scenes = structuredClone(svgifSpecsObj[fileName].slice(start, end));
     if (scenes.length !== end - start) {
       throw new Error(
-        `Not enough scenes in ${fileName}: expected ${end - start}, got ${scenes.length}`,
+        `Not enough scenes in ${fileName} from index ${start}. Missing ${scenes.length - (end - start)}`,
       );
     }
 
@@ -34,7 +34,7 @@ export const getOverviewSvgifSpecs = async () => {
         // ...sliceScenes("ai_assistant_agentic_workflow_gov_api", 12),
         // ...sliceScenes("ai_assistant_agentic_workflow", 0, 1),
         // ...sliceScenes("ai_assistant_agentic_workflow", 12, 15),
-        ...sliceScenes("table_timechart", 9, 10),
+        ...sliceScenes("table_timechart", 8, 9),
       ],
     },
     /** Overview section */

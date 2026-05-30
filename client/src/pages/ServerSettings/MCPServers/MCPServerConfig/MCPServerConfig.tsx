@@ -7,6 +7,8 @@ import { mdiDeleteOutline } from "@mdi/js";
 import React, { useContext, useState } from "react";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import { useMCPServerConfigState } from "./useMCPServerConfigState";
+import { WebMcpConfig } from "./CustomConfigComponents/WebMcpConfig";
+import { getMcpConfigValueAsString } from "./MCPServerConfigButton";
 
 export type MCPServerEnabledConfig = { configId: number };
 
@@ -15,6 +17,7 @@ export type MCPServerConfigProps = {
   existingConfig:
     | { id: number; value: Record<string, string | string[]> }
     | undefined;
+  defaultConfig: undefined | Record<string, string | string[]>;
   chatId: number | undefined;
   onDone: (res: void | MCPServerEnabledConfig) => void;
 };
@@ -72,6 +75,22 @@ export const MCPServerConfig = (props: MCPServerConfigProps) => {
               />
             );
           }
+
+          if (schema.renderWithComponent === "WebMcpConfig") {
+            return (
+              <WebMcpConfig
+                key={key}
+                value={config[key]}
+                onChange={(newValue) => {
+                  setConfig({
+                    ...config,
+                    [key]: newValue as string,
+                  });
+                }}
+              />
+            );
+          }
+
           return (
             <FormField
               type="text"
@@ -89,23 +108,22 @@ export const MCPServerConfig = (props: MCPServerConfigProps) => {
           );
         })}
         {Boolean(existingConfigs.length) && (
-          <FlexCol className="p-1 pb-2 gap-p5 bt b-color ml-p5">
+          <FlexCol className="py-1 pb-2 gap-p5 bt b-color ">
             <div className="ta-start mb-1">Existing configurations:</div>
             <FlexCol>
               {existingConfigs.map((existingConfig) => {
-                const renderableTypes = ["string", "number", "boolean"];
                 const values = Object.values(existingConfig.config)
-                  .map((v) =>
-                    renderableTypes.includes(typeof v) ?
-                      String(v)
-                    : JSON.stringify(v),
-                  )
+                  .map((v) => getMcpConfigValueAsString(v, undefined))
                   .join(", ");
                 return (
                   <FlexRow key={existingConfig.id} className="gap-0">
                     <Btn
                       variant="faded"
                       size="small"
+                      style={{
+                        minWidth: 0,
+                        flex: 1,
+                      }}
                       onClick={() => {
                         setConfig(existingConfig.config);
                       }}

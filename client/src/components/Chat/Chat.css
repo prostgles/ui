@@ -40,14 +40,14 @@
   cursor: pointer;
 }
 
-.chat-container.chat-component .send-wrapper svg {
+/* .chat-container.chat-component .send-wrapper svg {
   width: 1.5rem;
   height: 1.5rem;
 }
 
 .chat-container.chat-component .send-wrapper svg path {
   fill: currentColor;
-}
+} */
 
 .chat-container.chat-component .message-list {
   /* line-height: 1.75rem; */

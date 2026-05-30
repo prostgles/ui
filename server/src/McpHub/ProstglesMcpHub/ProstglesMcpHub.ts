@@ -123,7 +123,7 @@ const init = async (dbs: DBS) => {
       );
     }
 
-    return { name, toolMethod, outputSchema };
+    return { name, toolMethod, outputSchema, serverDefinition };
   };
 
   const callTool = async (
@@ -133,12 +133,23 @@ const init = async (dbs: DBS) => {
     context: McpCallContext,
   ) => {
     const result = await tryCatchV2(async () => {
-      const { name, toolMethod, outputSchema } = validateToolInput(
-        serverName,
-        toolName,
-        args,
-      );
-      const toolCallResult = await toolMethod(args, context);
+      const { name, toolMethod, outputSchema, serverDefinition } =
+        validateToolInput(serverName, toolName, args);
+
+      const config =
+        !context.server_config_id ? undefined : (
+          await dbs.mcp_server_configs.findOne({
+            server_name: serverName,
+            id: context.server_config_id,
+          })
+        );
+
+      if (serverDefinition.definition.config_schema && !config) {
+        throw new Error(
+          `Mcp server ${serverName} requires a config to be used, but no valid config was found for this tool call (server_config_id: ${context.server_config_id}).`,
+        );
+      }
+      const toolCallResult = await toolMethod(args, context, config?.config);
       const outputValidation =
         //@ts-ignore
         outputSchema ?

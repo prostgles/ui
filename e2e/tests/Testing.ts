@@ -588,6 +588,7 @@ export const COMMANDS = {
   SilverGridChild: "",
   App: "",
   SwitchToggle: "",
+  "LLMChatOptions.EnabledMcpServer": "",
 } as const satisfies Record<
   string,
   | string

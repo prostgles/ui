@@ -1,4 +1,5 @@
-import { isObject, type DBSSchema } from "@common/publishUtils";
+import { getDefaultMcpConfig } from "@common/mcp/web.mcp.schema";
+import { type DBSSchema } from "@common/publishUtils";
 import { sliceText } from "@common/utils";
 import Btn from "@components/Btn";
 import ErrorComponent from "@components/ErrorComponent";
@@ -8,8 +9,9 @@ import { Icon } from "@components/Icon/Icon";
 import Loading from "@components/Loader/Loading";
 import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 import { SvgIcon } from "@components/SvgIcon";
-import { mdiTools } from "@mdi/js";
+import { mdiCogOutline, mdiTools } from "@mdi/js";
 import { MCPServerConfig } from "@pages/ServerSettings/MCPServers/MCPServerConfig/MCPServerConfig";
+import { getMcpConfigValueAsString } from "@pages/ServerSettings/MCPServers/MCPServerConfig/MCPServerConfigButton";
 import { useMcpServerIcons } from "@pages/ServerSettings/MCPServers/MCPServerTools/useMcpServerIcons";
 import React, { useState } from "react";
 import type { TestSelectors } from "src/Testing";
@@ -25,6 +27,7 @@ type P = {
   >["orchestratorMcpServerConfigs"];
   onConfigChange: undefined | ((serverName: string, configId: number) => void);
 } & TestSelectors;
+
 export const McpToolAccess = ({
   value,
   title,
@@ -40,11 +43,11 @@ export const McpToolAccess = ({
   }>();
   const { dbs } = usePrglCore();
   const {
-    data: allConfigData,
+    data: existingMcpServerConfigs,
     isLoading,
     error,
   } = dbs.mcp_server_configs.useSubscribe({}, {});
-  if (isLoading || !allConfigData) return <Loading />;
+  if (isLoading || !existingMcpServerConfigs) return <Loading />;
   return (
     <HeaderSection
       title={title}
@@ -64,18 +67,21 @@ export const McpToolAccess = ({
           const { config_schema } = server ?? {};
           const { configId } = configs?.[mcpServerName] ?? {};
           const configData =
-            !config_schema || !configId ?
-              undefined
-            : allConfigData.find((c) => c.id === configId)?.config;
-          const configDataString = Object.values(configData ?? {})
-            .map((v) => (isObject(v) ? JSON.stringify(v) : String(v)))
-            .join(", ");
+            !config_schema ? undefined
+            : configId === undefined ? getDefaultMcpConfig(config_schema)
+            : existingMcpServerConfigs.find((c) => c.id === configId)?.config;
+          const configDataString =
+            configData ?
+              getMcpConfigValueAsString(configData, config_schema)
+            : undefined;
+
           return (
             <FlexRowWrap
               key={mcpServerName}
+              data-key={mcpServerName}
               title={toolNames.join(", ")}
               style={{ display: "inline-flex" }}
-              className="gap-p25"
+              className="gap-p25 max-w-fit"
             >
               <FlexRow className="f-0 w-fit gap-p25">
                 {icon ?
@@ -83,12 +89,21 @@ export const McpToolAccess = ({
                 : <Icon path={mdiTools} sizeName="micro" className="text-1" />}
                 <strong>{mcpServerName}:</strong>
               </FlexRow>
+              <span style={{ fontWeight: "normal" }}>
+                {sliceText(toolNames.join(", "), 50)}
+              </span>
               {config_schema && (
                 <Btn
                   size="micro"
                   variant={"faded"}
                   data-command="McpToolAccess.configure"
                   color={configData ? "action" : "danger"}
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    maxWidth: "200px",
+                  }}
+                  iconPath={mdiCogOutline}
                   onClick={() =>
                     setEditServerConfig({
                       serverName: mcpServerName,
@@ -100,9 +115,6 @@ export const McpToolAccess = ({
                   {configDataString || "Configure"}
                 </Btn>
               )}
-              <span style={{ fontWeight: "normal" }}>
-                {sliceText(toolNames.join(", "), 50)}
-              </span>
             </FlexRowWrap>
           );
         })}
@@ -111,6 +123,7 @@ export const McpToolAccess = ({
         <MCPServerConfig
           serverName={editServerConfig.serverName}
           chatId={undefined}
+          defaultConfig={editServerConfig.configData}
           existingConfig={
             editServerConfig.configId && editServerConfig.configData ?
               {
