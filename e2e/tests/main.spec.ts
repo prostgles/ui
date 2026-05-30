@@ -1079,7 +1079,7 @@ test.describe("Main test", () => {
     await page.waitForTimeout(2e3);
 
     await goTo(page, "/connections");
-    await dropConnectionAndDatabase("food_delivery", page, false);
+    await dropConnectionAndDatabase("food_delivery", page, true);
     await page.waitForTimeout(2e3);
   });
 
