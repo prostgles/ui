@@ -1044,8 +1044,8 @@ test.describe("Main test", () => {
       "btn-color-action",
     );
 
-    await addExistingDatabase(page, "food_delivery");
-    // await openConnection(page, "food_delivery");
+    // await addExistingDatabase(page, "food_delivery");
+    await createDatabase("food_delivery", page, true);
     await page.getByTestId("AskLLM").click();
     await newChat(page);
 
