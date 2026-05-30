@@ -62,6 +62,7 @@ import { FunctionSelector } from "./FunctionSelector/FunctionSelector";
 import type { FuncDef } from "./FunctionSelector/functions";
 import type { NESTED_COLUMN_DISPLAY_MODES } from "./LinkedColumn/LinkedColumn";
 import { LinkedColumn } from "./LinkedColumn/LinkedColumn";
+import { getSingleShownNestedColumn } from "../tableUtils/StyledTableColumn";
 
 export type ColumnConfig = {
   idx?: number;
@@ -201,7 +202,7 @@ export const ColumnMenu = (props: P) => {
 
   const isComputed = Boolean(
     column.computedConfig ||
-      column.nested?.columns.some((c) => c.computedConfig),
+    column.nested?.columns.some((c) => c.computedConfig),
   );
   const computedType =
     column.nested ? "nested" : (
@@ -226,12 +227,14 @@ export const ColumnMenu = (props: P) => {
     },
     Style: {
       leftIconPath: mdiFormatColorFill,
-      hide:
-        !!column.nested &&
-        column.nested.columns.filter((c) => c.show).length !== 1,
+      // hide:,
       disabledText:
-        column.format?.type === "Media" ?
-          "Cannot style a media format column"
+        column.format?.type === "Media" ? "Cannot style a media format column"
+        : (
+          column.nested &&
+          (column.nested.chart || !getSingleShownNestedColumn(column, tables))
+        ) ?
+          "Only supported for nested columns with a single shown column"
         : undefined,
       style:
         column.style?.type && column.style.type !== "None" ?
