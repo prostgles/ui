@@ -5,15 +5,20 @@ import { chipColorsFadedBorder } from "../ColumnDisplayFormat/ChipStylePalette";
 import type { DBS } from "src/dashboard/Dashboard/DBS";
 import { getRandomElement } from "@common/utils";
 import type { ConditionalStyle } from "./ColumnStyleControls";
+import type { ColumnConfig } from "../ColumnMenu";
+import { getComputedColumnSelect } from "../../tableUtils/getTableSelect";
+import { getSingleShownNestedColumn } from "../../tableUtils/StyledTableColumn";
+import type { DBSchemaTableWJoins } from "src/dashboard/Dashboard/dashboardUtils";
 
 export type DefaultConditionalStyleArgs =
   | {
       type: "table";
       db: DBHandlerClient | DBS;
       tableName: string;
-      columnName: string;
+      column: ColumnConfig;
       filter?: AnyObject;
       theme: Theme;
+      tables: DBSchemaTableWJoins[];
     }
   | {
       type: "sql";
@@ -53,15 +58,32 @@ export const getValueColors = async (
 
 export const fetchColumnValues = async (args: DefaultConditionalStyleArgs) => {
   if (args.type === "table") {
-    const { columnName, db, tableName, filter = {} } = args;
+    const { column, db, tableName: tableNameRaw, filter = {}, tables } = args;
+    const tableName = column.nested?.path.at(-1)?.table ?? tableNameRaw;
+    const firstNestedColumn = getSingleShownNestedColumn(column, tables);
+    const select =
+      firstNestedColumn ?
+        {
+          [firstNestedColumn.shownCol.name]:
+            firstNestedColumn.shownCol.computedConfig ?
+              getComputedColumnSelect(firstNestedColumn.shownCol.computedConfig)
+            : 1,
+        }
+      : {
+          [column.name]:
+            column.computedConfig ?
+              getComputedColumnSelect(column.computedConfig)
+            : 1,
+        };
     const tableHandler = db[tableName] as TableHandlerClient | undefined;
     if (!tableHandler?.find) return undefined;
     const rows = await tableHandler.find(filter, {
-      select: { [columnName]: 1 },
+      //@ts-ignore
+      select,
       limit: DefaultConditionalStyleLimit,
       groupBy: true,
     });
-    const values = rows.map((v) => v[columnName]) as string[];
+    const values = rows.map((v) => Object.values(v)[0]) as string[];
     return values;
   }
   const { sql } = args;

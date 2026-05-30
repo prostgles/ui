@@ -226,7 +226,9 @@ export const ColumnMenu = (props: P) => {
     },
     Style: {
       leftIconPath: mdiFormatColorFill,
-      hide: !!column.nested,
+      hide:
+        !!column.nested &&
+        column.nested.columns.filter((c) => c.show).length !== 1,
       disabledText:
         column.format?.type === "Media" ?
           "Cannot style a media format column"

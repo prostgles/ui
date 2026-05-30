@@ -45,7 +45,7 @@ export const ColumnList = ({
   onClose,
 }: P) => {
   const prgl = usePrgl();
-  const { sql } = prgl;
+  const { sql, tables } = prgl;
   const tableColumns = table.columns;
   const columns: ColumnConfigWInfo[] = useMemo(
     () =>
@@ -104,6 +104,21 @@ export const ColumnList = ({
           const nestedColumnsToShow = nestedColumn?.columns.filter(
             (col) => col.show,
           );
+          const targetNestedColumn =
+            nestedColumnsToShow && nestedColumnsToShow.length === 1 ?
+              nestedColumnsToShow[0]
+            : undefined;
+          const targetTable =
+            targetNestedColumn && nestedColumn ?
+              tables.find((t) => t.name === nestedColumn.path.at(-1)?.table)
+            : undefined;
+          const targetColumnInfo =
+            !targetNestedColumn || !targetTable ?
+              undefined
+            : (targetNestedColumn.computedConfig ??
+              targetTable.columns.find(
+                (c) => c.name === targetNestedColumn.name,
+              ));
           return {
             ...getColumnListItem({ ...c.info, name: c.name }, c),
             ...(showToggle ? { checked: c.show } : {}),
@@ -139,7 +154,7 @@ export const ColumnList = ({
                       />
                     </PopupMenu>
                   )}
-                  {nestedColumn && nestedColumnsToShow?.length === 1 && (
+                  {nestedColumn && targetNestedColumn && (
                     <PopupMenu
                       positioning="center"
                       title={`Alter ${c.name}`}
@@ -160,7 +175,7 @@ export const ColumnList = ({
                         db={prgl.db}
                         tableName={nestedColumn.path.at(-1)!.table}
                         tables={prgl.tables}
-                        column={nestedColumnsToShow[0]!}
+                        column={targetNestedColumn}
                         onUpdate={({ style }) => {
                           const newCols = columns.map((col) => {
                             if (col.name === c.name && col.nested) {
@@ -169,7 +184,7 @@ export const ColumnList = ({
                                 nested: {
                                   ...col.nested,
                                   columns: nestedColumn.columns.map((nc) =>
-                                    nc.name === nestedColumnsToShow[0]!.name ?
+                                    nc.name === targetNestedColumn.name ?
                                       { ...nc, style }
                                     : nc,
                                   ),
@@ -180,16 +195,8 @@ export const ColumnList = ({
                           });
                           onChange(newCols);
                         }}
-                        tsDataType={
-                          c.info?.tsDataType ||
-                          c.computedConfig?.tsDataType ||
-                          "any"
-                        }
-                        udt_name={
-                          c.info?.udt_name ||
-                          c.computedConfig?.udt_name ||
-                          "text"
-                        }
+                        tsDataType={targetColumnInfo?.tsDataType || "any"}
+                        udt_name={targetColumnInfo?.udt_name || "text"}
                       />
                     </PopupMenu>
                   )}
