@@ -1168,13 +1168,13 @@ export const prostglesUIFoodDeliveryDashboardSample = {
                         id: "restaurant_id",
                       },
                     ],
-                    table: "restaurant_hygiene_ratings",
+                    table: "hygiene_ratings",
                   },
                 ],
                 limit: 1,
                 columns: [
                   {
-                    name: "scores_hygiene",
+                    name: "hygiene_score",
                     width: 100,
                   },
                 ],

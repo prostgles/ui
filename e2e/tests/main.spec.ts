@@ -1050,6 +1050,18 @@ test.describe("Main test", () => {
     await newChat(page);
 
     await setPromptByText(page, "dashboard");
+    await runDbSql(
+      page,
+      `
+      CREATE TABLE IF NOT EXISTS hygiene_ratings (
+        id SERIAL PRIMARY KEY,
+        restaurant_name TEXT,
+        hygiene_score INTEGER,
+        restaurant_id int4 NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
+        inspection_date DATE
+      );
+      `,
+    );
 
     await sendAskLLMMessage(
       page,
