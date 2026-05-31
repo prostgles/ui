@@ -17,6 +17,7 @@ import {
   type ProcessLog,
 } from "@src/McpHub/DockerSandbox/executeDockerCommand";
 import { getFreePort } from "@src/utils/isPortFree";
+import { resolveBinary } from "./resolveWindowsBinary";
 
 const STOPPED_REASON = "stopped";
 export async function startService(
@@ -43,7 +44,9 @@ export async function startService(
   const containerName = `prostgles-service-${imageName}`;
 
   const cleanup = () => {
-    spawn("docker", ["stop", "-t", "0", containerName], { stdio: "ignore" });
+    spawn(resolveBinary("docker"), ["stop", "-t", "0", containerName], {
+      stdio: "ignore",
+    });
   };
   process.once("exit", cleanup);
   process.once("SIGINT", cleanup);

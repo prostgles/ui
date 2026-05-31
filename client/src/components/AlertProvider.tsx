@@ -82,7 +82,13 @@ export const useOnErrorAlert = (immediateUnmount = false) => {
       await promiseFunc().catch((error: unknown) => {
         if (!getIsMounted() && immediateUnmount) return;
         alert.addAlert({
-          children: <ErrorComponent error={error} findMsg={true} />,
+          children: (
+            <ErrorComponent
+              renderAsMarkdown={true}
+              error={error}
+              findMsg={true}
+            />
+          ),
         });
         throw error;
       });

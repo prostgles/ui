@@ -2,6 +2,7 @@ import { spawn } from "node:child_process";
 import type { ServiceManager } from "./ServiceManager";
 import type { prostglesServices } from "./ServiceManagerTypes";
 import { getContainerName } from "./startService";
+import { resolveBinary } from "./resolveWindowsBinary";
 
 export function stopService(
   this: ServiceManager,
@@ -14,7 +15,9 @@ export function stopService(
     }
   } catch {}
   const containerName = getContainerName(serviceName);
-  spawn("docker", ["stop", "-t", "0", containerName], { stdio: "ignore" });
+  spawn(resolveBinary("docker"), ["stop", "-t", "0", containerName], {
+    stdio: "ignore",
+  });
   this.activeServices.delete(serviceName);
   this.onServiceLog(serviceName, []);
 }
