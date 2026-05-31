@@ -1,4 +1,4 @@
-import { resolveBinary } from "@src/ServiceManager/resolveWindowsBinary";
+import { resolveBinary } from "@src/ServiceManager/resolveBinary";
 import { spawn, type SpawnOptionsWithoutStdio } from "child_process";
 import { getSerialisableError } from "prostgles-types";
 

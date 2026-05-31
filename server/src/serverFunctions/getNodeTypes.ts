@@ -6,10 +6,11 @@ const toPosixPath = (p: string) => p.split(path.sep).join("/");
 export const getNodeTypes = () => {
   const pathToProject = path.resolve(__dirname, "../../../..");
   const files = extractInstalledPackageTypes(pathToProject);
-  return files.map((file) => ({
-    ...file,
-    filePath: toPosixPath(path.relative(pathToProject, file.filePath)),
-  }));
+  return files;
+  // .map((file) => ({
+  //   ...file,
+  //   filePath: toPosixPath(path.relative(pathToProject, file.filePath)),
+  // }));
 };
 
 type TypeFile = {
@@ -24,7 +25,7 @@ type TypeFile = {
  *
  * @param projectDir - Absolute path to your project root.
  */
-export function extractInstalledPackageTypes(projectDir: string): TypeFile[] {
+const extractInstalledPackageTypes = (projectDir: string): TypeFile[] => {
   // 1. Read the project's package.json.
   const projectPkgPath = path.join(projectDir, "package.json");
   if (!ts.sys.fileExists(projectPkgPath)) {
@@ -251,10 +252,10 @@ export function extractInstalledPackageTypes(projectDir: string): TypeFile[] {
 
   const result = Array.from(collected.values()).map((file) => ({
     ...file,
-    filePath: toPosixPath(path.relative(projectDir, file.filePath)),
+    filePath: "/" + toPosixPath(path.relative(projectDir, file.filePath)),
   }));
   return result;
-}
+};
 
 function shouldWrapFile(sourceFile: ts.SourceFile): boolean {
   // If the file is already an external module, it has top-level imports/exports.

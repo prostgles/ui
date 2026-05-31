@@ -17,7 +17,7 @@ import {
   type ProcessLog,
 } from "@src/McpHub/DockerSandbox/executeDockerCommand";
 import { getFreePort } from "@src/utils/isPortFree";
-import { resolveBinary } from "./resolveWindowsBinary";
+import { resolveBinary } from "./resolveBinary";
 
 const STOPPED_REASON = "stopped";
 export async function startService(

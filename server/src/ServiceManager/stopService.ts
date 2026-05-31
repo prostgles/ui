@@ -2,7 +2,7 @@ import { spawn } from "node:child_process";
 import type { ServiceManager } from "./ServiceManager";
 import type { prostglesServices } from "./ServiceManagerTypes";
 import { getContainerName } from "./startService";
-import { resolveBinary } from "./resolveWindowsBinary";
+import { resolveBinary } from "./resolveBinary";
 
 export function stopService(
   this: ServiceManager,
