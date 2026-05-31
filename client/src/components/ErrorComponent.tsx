@@ -1,14 +1,14 @@
+import { isObject } from "@common/publishUtils";
 import { mdiAlertOutline, mdiClose } from "@mdi/js";
+import { getSerialisableError, includes, isEqual } from "prostgles-types";
 import type { ReactNode } from "react";
 import React from "react";
-import { isObject } from "@common/publishUtils";
 import type { TestSelectors } from "../Testing";
 import { isEmpty, scrollIntoViewIfNeeded } from "../utils/utils";
 import Btn from "./Btn";
 import { classOverride, FlexCol, FlexRow } from "./Flex";
 import { Icon } from "./Icon/Icon";
-import { getSerialisableError, includes, isEqual } from "prostgles-types";
-import Markdown from "react-markdown";
+import { MarkdownWithPlugins } from "./MarkdownWithPlugins/MarkdownWithPlugins";
 
 type P = TestSelectors & {
   error: unknown;
@@ -114,7 +114,7 @@ export default class ErrorComponent extends React.Component<P> {
         >
           {title && <div className="font-16 bold">{title}</div>}
           {renderAsMarkdown ?
-            <Markdown>{errorStr}</Markdown>
+            <MarkdownWithPlugins content={errorStr} />
           : errorStr}
         </FlexCol>
         {onClear && (

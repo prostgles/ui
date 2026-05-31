@@ -7,10 +7,6 @@ export const getNodeTypes = () => {
   const pathToProject = path.resolve(__dirname, "../../../..");
   const files = extractInstalledPackageTypes(pathToProject);
   return files;
-  // .map((file) => ({
-  //   ...file,
-  //   filePath: toPosixPath(path.relative(pathToProject, file.filePath)),
-  // }));
 };
 
 type TypeFile = {
@@ -184,17 +180,6 @@ const extractInstalledPackageTypes = (projectDir: string): TypeFile[] => {
               resolved.resolvedModule.resolvedFileName,
             );
             if (modSource) {
-              // const modFileNameForImport =
-              //   !parentPkgName ? undefined : (
-              //     parentPkgName +
-              //     modSource.fileName
-              //       .split(
-              //         path.normalize(
-              //           `${projectDir}/node_modules/${parentPkgName}`,
-              //         ),
-              //       )[1]
-              //       ?.split(".d.ts")[0]
-              //   );
               const modFileNameForImport =
                 !parentPkgName ? undefined : (
                   (() => {
