@@ -477,6 +477,7 @@ test.describe("Main test", () => {
         await expect(
           page.getByTestId("Popup.content").getByTestId("SmartCardList"),
         ).toContainText("Description");
+        await page.getByTestId("Popup.close").click();
       }
       const tabItems = await page.getByTestId("MenuList").locator("li").all();
       for (const tabItem of tabItems) {
