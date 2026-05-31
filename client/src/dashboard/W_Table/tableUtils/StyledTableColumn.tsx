@@ -2,8 +2,9 @@ import { FlexRow, FlexRowWrap } from "@components/Flex";
 import { CellBarchart } from "@components/ProgressBar";
 import { SvgIcon } from "@components/SvgIcon";
 import type { OnColRenderRowInfo } from "@components/Table/Table";
-import { _PG_date, _PG_numbers, includes } from "prostgles-types";
+import { _PG_date, _PG_numbers, includes, isObject } from "prostgles-types";
 import React from "react";
+import type { DBSchemaTablesWJoins } from "src/dashboard/Dashboard/dashboardUtils";
 import { RenderValue } from "../../SmartForm/SmartFormField/RenderValue";
 import type { ColumnConfig } from "../ColumnMenu/ColumnMenu";
 import type {
@@ -13,18 +14,57 @@ import type {
 import { type MinMax } from "../W_Table";
 import { blend } from "../colorBlend";
 import type { ProstglesTableColumn } from "./getTableCols";
-import type { OnRenderColumnProps } from "./onRenderColumn";
 import { kFormatter } from "./kFormatter";
+import type { OnRenderColumnProps } from "./onRenderColumn";
 
 type P = Pick<OnColRenderRowInfo, "value" | "renderedVal"> &
-  Pick<OnRenderColumnProps, "maxCellChars" | "column" | "barchartVals">;
+  Pick<
+    OnRenderColumnProps,
+    "maxCellChars" | "column" | "barchartVals" | "tables"
+  >;
 
 export const StyledTableColumn = ({
   column: c,
-  value,
+  value: valueOrNestedValue,
   barchartVals,
-  renderedVal,
+  renderedVal: renderedValRaw,
+  tables,
 }: P) => {
+  const cellValue = (() => {
+    if (!c.nested) {
+      return {
+        type: "normal" as const,
+        value: valueOrNestedValue,
+        renderedVal: renderedValRaw,
+      };
+    }
+
+    const nestedSingleColumn = getSingleShownNestedColumn(c, tables);
+    if (!nestedSingleColumn) {
+      return;
+    }
+    const { colInfo: shownColumnInfo, shownCol, table } = nestedSingleColumn;
+    const firstRow =
+      Array.isArray(valueOrNestedValue) ? valueOrNestedValue[0] : undefined;
+    const value =
+      firstRow && isObject(firstRow) ? firstRow[shownCol.name] : null;
+    return {
+      type: "nested" as const,
+      value,
+      renderedVal: (
+        <RenderValue
+          column={shownColumnInfo}
+          value={value}
+          style={{ color: "inherit" }}
+        />
+      ),
+    };
+  })();
+
+  if (!cellValue) {
+    return renderedValRaw;
+  }
+  const { value, renderedVal } = cellValue;
   if (c.style?.type === "Icons") {
     const valueKey = String(value?.toString() ?? "");
     const iconName = valueKey && c.style.valueToIconMap[valueKey];
@@ -236,4 +276,23 @@ export const getCellStyle = (
 
 export const isNumber = (v: any): v is number => {
   return Number.isFinite(v);
+};
+
+export const getSingleShownNestedColumn = (
+  column: ColumnConfig,
+  tables: DBSchemaTablesWJoins,
+) => {
+  if (!column.nested) return;
+  const shownNestedCols = column.nested.columns.filter((nc) => nc.show);
+  if (shownNestedCols.length !== 1) return;
+  const shownCol = shownNestedCols[0]!;
+  const table = tables.find(
+    (t) => t.name === column.nested?.path.at(-1)?.table,
+  );
+  if (!table) return;
+  const colInfo =
+    shownCol.computedConfig ??
+    table.columns.find((col) => col.name === shownCol.name);
+  if (!colInfo) return;
+  return { colInfo, shownCol, table };
 };

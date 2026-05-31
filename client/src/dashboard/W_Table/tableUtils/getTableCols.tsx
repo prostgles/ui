@@ -21,7 +21,7 @@ import type { OnClickEditRow } from "./getEditColumn";
 import { getEditColumn } from "./getEditColumn";
 import { getFullColumnConfig } from "./getFullColumnConfig";
 import { onRenderColumn } from "./onRenderColumn";
-import { getCellStyle } from "./StyledTableColumn";
+import { getCellStyle, getSingleShownNestedColumn } from "./StyledTableColumn";
 import type { TableHandlerClient } from "prostgles-client";
 
 export type ProstglesTableColumn = ProstglesColumn & ColumnConfigWInfo;
@@ -198,7 +198,12 @@ export const getTableCols = ({
        */
       getCellStyle: (row) => {
         if (c.style?.type === "Scale" && barchartVals?.[c.name]) {
-          const style = getCellStyle(c, c, row[c.name], barchartVals[c.name]);
+          const singleNested = getSingleShownNestedColumn(c, tables);
+          const value =
+            singleNested ?
+              row[c.name]?.[0]?.[singleNested.shownCol.name]
+            : row[c.name];
+          const style = getCellStyle(c, c, value, barchartVals[c.name]);
           if (!style?.cellColor && !style?.textColor) {
             return {};
           }

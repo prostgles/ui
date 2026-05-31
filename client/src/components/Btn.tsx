@@ -568,7 +568,7 @@ class Button<HREF extends string | void = void> extends RTComp<
 }
 
 const Btn = <HREF extends string | void = void>(allProps: BtnProps<HREF>) => {
-  const { onClickPromise, ...props } = allProps;
+  const { onClickPromise, children, ...props } = allProps;
   const { onErrorAlert } = useOnErrorAlert();
 
   const propsWithOnAlert = useMemo(() => {
@@ -583,7 +583,16 @@ const Btn = <HREF extends string | void = void>(allProps: BtnProps<HREF>) => {
     };
   }, [onClickPromise, onErrorAlert, props]);
 
-  return <Button {...(propsWithOnAlert as BtnProps<string>)} />;
+  return (
+    <Button
+      {...(propsWithOnAlert as BtnProps<string>)}
+      children={
+        children && typeof children === "string" ?
+          <span className="text-ellipsis">{children}</span>
+        : children
+      }
+    />
+  );
 };
 
 export default Btn;

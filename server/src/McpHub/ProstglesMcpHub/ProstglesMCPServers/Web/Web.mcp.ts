@@ -1,4 +1,7 @@
-import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
+import {
+  PROSTGLES_MCP_SERVER_CONFIGS,
+  PROSTGLES_MCP_SERVERS_AND_TOOLS,
+} from "@common/prostglesMcp";
 import { fromEntries, getEntries } from "@common/utils";
 import { McpHub } from "@src/McpHub/AnthropicMcpHub/McpHub";
 import type { McpTool } from "@src/McpHub/AnthropicMcpHub/McpTypes";
@@ -8,8 +11,9 @@ import type {
   ProstglesMcpServerDefinition,
   ProstglesMcpServerHandler,
   ProstglesMcpServerHandlerTyped,
-} from "../ProstglesMCPServerTypes";
+} from "../../ProstglesMCPServerTypes";
 import { CONVERT_DOCUMENT_DEFAULT_OPTIONS } from "@src/ServiceManager/services/documents/documents.service";
+import { checkConfigAccess } from "./checkConfigAccess";
 
 const tools = PROSTGLES_MCP_SERVERS_AND_TOOLS["web"];
 
@@ -17,6 +21,7 @@ const definition = {
   icon_path: "Web",
   label: "Web Search",
   description: "Search the web for information",
+  config_schema: PROSTGLES_MCP_SERVER_CONFIGS["web"],
   tools,
 } as const satisfies ProstglesMcpServerDefinition;
 
@@ -29,16 +34,21 @@ const handler = {
         serviceManager.stopService("webSearchSearxng");
       },
       tools: {
-        fetch: async ({
-          url,
-          mode = "raw",
-          max_length = 5000,
-          start_index = 0,
-          headers,
-          timeout = 15000,
-        }) => {
+        fetch: async (
+          {
+            url,
+            mode = "raw",
+            max_length = 5000,
+            start_index = 0,
+            headers,
+            timeout = 15000,
+          },
+          _,
+          config,
+        ) => {
           let content = "";
 
+          await checkConfigAccess(url, config);
           if (mode === "raw") {
             const res = await fetch(url, {
               redirect: "follow",
@@ -101,7 +111,9 @@ const handler = {
 
           return result.results;
         },
-        get_snapshot: async (toolArguments) => {
+        get_snapshot: async (toolArguments, _, config) => {
+          await checkConfigAccess(toolArguments.url, config);
+
           const mcpHub = new McpHub();
           await mcpHub.setServerConnections({
             playwright: {
@@ -178,7 +190,9 @@ const handler = {
               .join("\n") || ""
           );
         },
-        get_document_text: async ({ url, ...otherOpts }) => {
+        get_document_text: async ({ url, ...otherOpts }, _, config) => {
+          await checkConfigAccess(url, config);
+
           const docsService =
             await serviceManager.getServiceWithRetries("documents");
           const result = await docsService.endpoints["/v1/convert/source"]({

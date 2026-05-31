@@ -61,6 +61,7 @@ export const WorkspaceMenu = (props: P) => {
         {renderedWorkspaces.map((wsp) => (
           <li
             key={wsp.id}
+            data-key={wsp.name}
             className={
               "workspace-list-item text-1 relative flex-row " +
               (workspace.id === wsp.id ? "active" : "")

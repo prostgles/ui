@@ -105,5 +105,6 @@
       "allowToChangeInstallationDirectory": true,
       "uninstallDisplayName": "${productName}"
     }
-  }
+  },
+  "version": "2.3.3"
 }

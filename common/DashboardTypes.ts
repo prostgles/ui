@@ -73,7 +73,7 @@ type LinkedDataChart = {
  */
 type LinkedDataTable = {
   limit: number;
-  columns: Omit<TableColumn, "nested">[];
+  columns: Omit<TableColumn, "nested" | "styling">[];
 };
 
 /**
@@ -208,12 +208,27 @@ type Filtering = {
   };
 };
 
-type TableColumn = {
+export type TableColumn = {
   /**
    * Column name as it appears in the database.
    * For nested columns this can be anything. Use the table name or a more descriptive name.
    */
   name: string;
+
+  /**
+   *
+   */
+  computedConfig?:
+    | {
+        /**
+         * Table column that this computed column is based on.
+         */
+        column: string;
+        aggregation: "sum" | "avg" | "min" | "max" | "count";
+      }
+    | {
+        aggregation: "countAll";
+      };
 
   /**
    * Show linked data from other tables that are linked to this column through foreign keys.
@@ -226,10 +241,6 @@ type TableColumn = {
    */
   width: number;
 
-  /**
-   * Render column value in a chip
-   * Cannot be used with nested
-   */
   styling?:
     | {
         type: "conditional";
@@ -257,6 +268,56 @@ type TableColumn = {
          * }
          */
         valueToIconMap: Record<string, string>;
+      }
+    | {
+        /**
+         * Column value will be rendered as a horizontal bar with length proportional to the value.
+         * Can be used together with nested LinkedData as long as it's LinkedDataTable with a single column, for example:
+         * {
+            "name": "orders",
+            "show": true,
+            "style": {
+              "type": "Barchart"
+              "barColor": "blue",
+              "textColor": "#646464",
+            },
+            "width": 150,
+            "nested": {
+              "columns": [
+                {
+                  "name": "COUNT ALL",
+                  "show": true,
+                  "computedConfig": {
+                    "aggregation": "countAll"
+                  }
+                }, 
+              ],
+              "path": [
+                {
+                  "on": [
+                    {
+                      "id": "restaurant_id"
+                    }
+                  ],
+                  "table": "orders"
+                }
+              ],
+              "joinType": "left"
+            }
+          }
+         */
+        type: "Barchart";
+        barColor?: string;
+        textColor?: string;
+      }
+    | {
+        /**
+         * Column value will be rendered with a background color based on the value. The color is determined by dividing the range between min and max into equal segments and assigning a color to each segment.
+         * Can be used together with nested LinkedData as long as it's LinkedDataTable with a single column.
+         */
+        type: "Scale";
+        barColor?: string;
+        textColor?: string;
       };
 
   /**
@@ -412,21 +473,24 @@ export type BarchartWindowInsertModel = (
   id: string;
   type: "barchart";
   title?: string;
-  xAxis: {
+  labelColumn: string;
+  numericAxis: {
     column: string;
     aggregation: "sum" | "avg" | "min" | "max" | "count" | "count(*)";
     /**
      * Join to linked table (table_name is root table).
-     * The xAxis.column must be from the end table while the filters are from the root table (table_name).
+     * The numericAxis.column must be from the end table while the filters are from the root table (table_name).
      */
     joinPath?: TableJoin[];
   };
-  yAxisColumn: string;
 };
 
 export type WindowInsertModel =
   | MapWindowInsertModel
   | SqlWindowInsertModel
+  /**
+   * Prefer to use the TableWindowInsertModel for barcharts as it can contain more contextual data.
+   */
   | TableWindowInsertModel
   | TimechartWindowInsertModel
   | BarchartWindowInsertModel;

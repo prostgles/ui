@@ -1,5 +1,5 @@
 import type { DBSSchema } from "@common/publishUtils";
-import Btn from "@components/Btn";
+import Btn, { type BtnProps } from "@components/Btn";
 import { FlexRow } from "@components/Flex";
 import Popup from "@components/Popup/Popup";
 import { ScrollFade } from "@components/ScrollFade/ScrollFade";
@@ -13,10 +13,11 @@ import { ChatActionBarBtnStyleProps } from "./AskLLMChatActionBar";
 export const AskLLMChatActionBarMCPToolsBtn = ({
   activeChat,
   loading,
+  ...btnProps
 }: {
   loading: boolean;
   activeChat: DBSSchema["llm_chats"];
-}) => {
+} & Pick<BtnProps, "onClick" | "data-command">) => {
   const { dbs, dbsMethods } = usePrgl();
   const { data: allowedTools } = dbs.mcp_server_tools.useSubscribe(
     {
@@ -93,6 +94,7 @@ export const AskLLMChatActionBarMCPToolsBtn = ({
         loading={loading}
         disabledInfo={!dbsMethods.getMcpHostInfo ? "Must be admin" : undefined}
         children={allowedTools?.length || null}
+        {...btnProps}
       />
       {!!mcpServersThatConfiguring?.length &&
         !serverToConfigure &&
@@ -156,6 +158,7 @@ export const AskLLMChatActionBarMCPToolsBtn = ({
           onDone={() => {
             setServerToConfigure(undefined);
           }}
+          defaultConfig={undefined}
           serverName={serverToConfigure.name}
         />
       )}

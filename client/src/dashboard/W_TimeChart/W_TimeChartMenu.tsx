@@ -218,6 +218,7 @@ export const TIMECHART_BIN_SIZES = [
 export type TimeChartBinSize = (typeof TIMECHART_BIN_SIZES)[number]["key"];
 export const TIMECHART_STAT_TYPES = [
   { label: "Count All", func: "$countAll" },
+  { label: "Count", func: "$count" },
   { label: "Min", func: "$min" },
   { label: "Max", func: "$max" },
   { label: "Sum", func: "$sum" },

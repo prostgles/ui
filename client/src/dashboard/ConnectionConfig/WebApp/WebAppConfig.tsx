@@ -1,17 +1,16 @@
 import { getConnectionPaths } from "@common/utils";
 import { WebAppFileBrowser } from "@components/CodeFileBrowser/WebAppFileBrowser";
+import { CompactTabs } from "@components/CompactTabs/CompactTabs";
 import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol } from "@components/Flex";
 import { IFrame } from "@components/IFrame/IFrame";
 import Loading from "@components/Loader/Loading";
-import Tabs from "@components/Tabs";
 import React from "react";
 import { useWebAppConfigActiveSection } from "./hooks/useWebAppConfigActiveSection";
 import { useWebAppConfigState } from "./hooks/useWebAppConfigState";
 import { WebAppConfigComponents } from "./WebAppConfigComponents";
 import { WebAppConfigFooterActions } from "./WebAppConfigFooterActions";
 import { WebAppConfigSetup } from "./WebAppConfigSetup";
-import { CompactTabs } from "@components/CompactTabs/CompactTabs";
 
 export const WebAppConfig = () => {
   const state = useWebAppConfigState();

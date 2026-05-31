@@ -630,6 +630,21 @@ export const openTable = async (
   await expect(table).toBeVisible();
   await page.waitForTimeout(1000);
 };
+
+export const addExistingDatabase = async (page: PageWIds, dbName: string) => {
+  await goTo(page, "localhost:3004/connections");
+  await page.getByTestId("ConnectionServer.add").click();
+  await page
+    .locator(`[data-label="Select a database from this server"]`)
+    .click();
+  await page.getByTestId("ConnectionServer.add.existingDatabase").click();
+  await page
+    .getByTestId("ConnectionServer.add.existingDatabase")
+    .locator(getDataKey(dbName))
+    .click();
+  await page.getByTestId("ConnectionServer.add.confirm").click();
+};
+
 export const MINUTE = 60e3;
 export const createDatabase = async (
   dbName: string,
@@ -685,13 +700,16 @@ export const createDatabase = async (
 export const dropConnectionAndDatabase = async (
   dbName: string,
   page: PageWIds,
+  andDatabase = true,
 ) => {
   await page.waitForTimeout(2000);
   const connectionSelector = `[data-key=${JSON.stringify(dbName)}]`;
   await page.locator(connectionSelector).getByTestId("Connection.edit").click();
 
   await page.getByTestId("Connection.edit.delete").click();
-  await page.getByTestId("Connection.edit.delete.dropDatabase").click();
+  if (andDatabase) {
+    await page.getByTestId("Connection.edit.delete.dropDatabase").click();
+  }
   await typeConfirmationCode(page);
   await page.getByTestId("Connection.edit.delete.confirm").click();
   await page.waitForTimeout(5000);

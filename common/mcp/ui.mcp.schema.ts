@@ -329,6 +329,7 @@ export const uiMcpSchema = {
           arrayOfType: {
             id: "number",
             server_name: "string",
+            config_id: { oneOf: ["number", { enum: [null] }] },
           },
         },
         status: { optional: true, enum: ["approved", "denied"] },
@@ -374,7 +375,7 @@ export const uiMcpSchema = {
     icon: "CubeOutline",
     mode: "auto-approved-user-actionable",
     description:
-      "Creates and runs an agentic workflow to iteratively complete the specified task using MCP tools and database access if needed.",
+      "Creates an agentic workflow which is executed manually by the user to iteratively complete the specified task using MCP tools and database access if needed. Runtime logs are only visible to the user. Definition validation is not a substitute for testing external runtime assumptions",
     schema: {
       type: {
         workflow_function_definition: {
@@ -418,31 +419,24 @@ export const uiMcpSchema = {
       ],
     },
   },
-  get_table_metadata: {
+  get_tables_metadata: {
     icon: "Table",
     mode: undefined,
-    description:
-      "Get metadata about a database table such as column names and types.",
+    description: "Get rendering metadata for database tables.",
     schema: {
       type: {
-        tableName: "string",
+        tableNames: "string[]",
       },
     },
     outputSchema: {
       type: "unknown",
     },
   },
-  set_table_metadata: {
+  set_tables_metadata: {
     icon: "Table",
     mode: undefined,
-    description:
-      "Set metadata about a database table such as column names and types.",
-    schema: {
-      type: {
-        tableName: "string",
-        metadata: tableOptionsJsonbSchema,
-      },
-    },
+    description: "Set rendering metadata for database tables",
+    schema: { type: { metadata: tableOptionsJsonbSchema } },
     outputSchema: {
       type: "unknown",
     },

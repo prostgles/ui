@@ -20,7 +20,6 @@ export const MCPServerTools = ({
   };
   tools: DBSSchema["mcp_server_tools"][];
   chatContext: MCPServerChatContext | undefined;
-  selectedToolName: string | undefined;
 } & Pick<Prgl, "dbs">) => {
   const { onToggleTools } = useMCPServerEnable({
     dbs,

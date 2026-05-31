@@ -451,6 +451,7 @@ export type DefineAgenticWorkflow = <
        * Defaults to 'none'.
        * 'bridge' provides access to the internet through NAT, which is more secure than 'host' but may not work for all use cases.
        * Do not use 'host' unless it is strictly necessary, as it can be a security risk.
+       * Prefer to use specific tools (web/playwright mcp) that provide the required functionality instead of granting full internet access when possible.
        */
       internetAccess?: "none" | "bridge" | "host";
     };

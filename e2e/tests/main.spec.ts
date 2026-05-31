@@ -19,6 +19,7 @@ import { startMockSMTPServer } from "./mockSMTPServer";
 import { testAskLLMCode, setupAskLLMToolUse } from "./testAskLLM/testAskLLM";
 import { getCommandElemSelector, getDataKey, getDataLabel } from "./Testing";
 import {
+  addExistingDatabase,
   clickAndWait,
   clickInsertRow,
   closeWorkspaceWindows,
@@ -65,6 +66,7 @@ import {
   typeConfirmationCode,
   uploadFile,
 } from "./utils/utils";
+import { createConnection } from "net";
 
 const schemaGraphTestDbName = "financial.sql";
 const DB_NAMES = {
@@ -1042,7 +1044,24 @@ test.describe("Main test", () => {
       "btn-color-action",
     );
 
+    // await addExistingDatabase(page, "food_delivery");
+    await createDatabase("food_delivery", page, true);
+    await page.getByTestId("AskLLM").click();
+    await newChat(page);
+
     await setPromptByText(page, "dashboard");
+    await runDbSql(
+      page,
+      `
+      CREATE TABLE IF NOT EXISTS hygiene_ratings (
+        id SERIAL PRIMARY KEY,
+        restaurant_name TEXT,
+        hygiene_score INTEGER,
+        restaurant_id int4 NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
+        inspection_date DATE
+      );
+      `,
+    );
 
     await sendAskLLMMessage(
       page,
@@ -1056,11 +1075,23 @@ test.describe("Main test", () => {
     await expect(workspaceBtn).toContainText("Customer Insights");
 
     await page.waitForTimeout(1e3);
-    await page.getByTestId("AskLLM").click();
 
+    await page.locator(getDataKey("Restaurant Performance")).click();
+    await page
+      .getByTestId("TableBody")
+      .locator(".ProgressBar")
+      .first() // Table cell barcharts
+      // .scrollIntoViewIfNeeded({ timeout: 60e3 });
+      .waitFor({ state: "visible", timeout: 60e3 });
+
+    await page.getByTestId("AskLLM").click();
     await page.getByTestId("AskLLMChat.UnloadSuggestedDashboards").click();
     await expect(workspaceBtn).not.toContainText("Customer Insights");
 
+    await page.waitForTimeout(2e3);
+
+    await goTo(page, "/connections");
+    await dropConnectionAndDatabase("food_delivery", page, true);
     await page.waitForTimeout(2e3);
   });
 
@@ -1176,18 +1207,44 @@ test.describe("Main test", () => {
     await page.getByTestId("AskLLM").click();
     await newChat(page);
     await toggleMCPTools(page, ["fetch"]);
-    await sendAskLLMMessage(page, " mcp ");
-    await page
-      .getByTestId("AskLLMToolApprover.AllowOnce")
-      .click({ ...TWENTY_SECONDS_OR_MORE });
-    await page.waitForTimeout(1e3);
-    const mcpToolUse = await getAskLLMLastMessage(page);
-    await expect(mcpToolUse).toContainText(
-      "successfully fetched the login page",
-      {
+
+    const mcpFetchAndExpect = async (
+      expectedMsg: string,
+      msgType: "last-msg" | "last-tool-use",
+    ) => {
+      await sendAskLLMMessage(page, " mcp ");
+      await page
+        .getByTestId("AskLLMToolApprover.AllowOnce")
+        .click({ ...TWENTY_SECONDS_OR_MORE });
+      await page.waitForTimeout(1e3);
+      const mcpToolUse = await getAskLLMLastMessage(page);
+
+      const locatorToCheck =
+        msgType === "last-msg" ? mcpToolUse : (
+          page.getByTestId("AskLLM.popup").getByTestId("ToolUseMessage").last()
+        );
+      await expect(locatorToCheck).toContainText(expectedMsg, {
         ...TWENTY_SECONDS_OR_MORE,
-      },
+      });
+    };
+    await mcpFetchAndExpect(
+      "is blocked by MCP server configuration",
+      "last-tool-use",
     );
+
+    /** Must allow internal subnets */
+    await page
+      .locator(
+        getCommandElemSelector("LLMChatOptions.EnabledMcpServer") +
+          getDataKey("web"),
+      )
+      .click();
+    await page.getByTestId("MCPServerConfigButton").click();
+    await page.getByLabel("Block internal subnets").click();
+    await page.getByTestId("MCPServerConfig.save").click();
+    await page.waitForTimeout(1e3);
+    await page.getByTestId("Popup.close").last().click();
+    await mcpFetchAndExpect("successfully fetched the login page", "last-msg");
 
     /** Ensure chat name updates based on first message */
     await expect(page.getByTestId("LLMChat.select")).toContainText("mcp");
@@ -1358,6 +1415,7 @@ test.describe("Main test", () => {
 
     await openConnection(page, "cloud");
     await page.getByTestId("AskLLM").click();
+    await setPromptByText(page, "dashboard");
     /* MCP Docker sandbox */
     await newChat(page);
     /* Prompt persists from the prev chat */
@@ -1832,7 +1890,10 @@ test.describe("Main test", () => {
 
     await newChat(page);
     await sendAskLLMMessage(page, " agentic_workflow_filesystem ");
-    await page.getByTestId("McpToolAccess.configure").click(getTimeout(60e3));
+    await page
+      .locator(getDataKey("filesystem"))
+      .getByTestId("McpToolAccess.configure")
+      .click(getTimeout(60e3));
     await fileBrowserGoToPath(page.getByTestId("FileTree"), [
       "ui",
       "e2e",

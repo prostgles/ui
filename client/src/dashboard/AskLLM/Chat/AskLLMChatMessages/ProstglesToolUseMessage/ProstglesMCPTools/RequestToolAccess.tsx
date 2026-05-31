@@ -1,10 +1,10 @@
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import type { DBSSchemaForInsert } from "@common/publishUtils";
 import ErrorComponent from "@components/ErrorComponent";
-import { FlexCol, FlexRow } from "@components/Flex";
+import { FlexCol } from "@components/Flex";
 import { FooterButtons } from "@components/Popup/FooterButtons";
 import { mdiCheck, mdiCheckAll } from "@mdi/js";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { DatabaseAccessEditor } from "src/dashboard/DatabaseAccessEditor/DatabaseAccessEditor";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import { tout } from "src/utils/utils";
@@ -112,13 +112,13 @@ export const RequestToolAccess = ({
         }
         await dbs.llm_chats_allowed_mcp_tools.insertMany(
           accessInfo.validatedTools.map(
-            ({ id, server_name }) =>
+            ({ id, server_name, config_id }) =>
               ({
                 chat_id: chatId,
                 server_name,
                 tool_id: id,
                 auto_approve: state === "auto_approve",
-                server_config_id: configs[server_name]?.configId,
+                server_config_id: configs[server_name]?.configId ?? config_id,
               }) satisfies DBSSchemaForInsert["llm_chats_allowed_mcp_tools"],
           ),
           {
@@ -135,7 +135,7 @@ export const RequestToolAccess = ({
         );
       }
       await tout(500);
-      void onSendResult();
+      await onSendResult();
     },
     [
       chatId,

@@ -2,7 +2,7 @@ import type { GeneratedFunctionSchema } from "@common/DBGeneratedSchema";
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import { connectionManager } from "@src/index";
 import { statePrgl } from "@src/init/startProstgles";
-import { isEmpty } from "prostgles-types";
+import { isEmpty, pickKeys } from "prostgles-types";
 import { getDockerMCPServerProxy } from "../../DockerSandbox/dockerMCPServerProxy/dockerMCPServerProxy";
 import type {
   ProstglesMcpServerDefinition,
@@ -21,6 +21,8 @@ import {
   getMCPFullToolName,
   getProstglesMCPFullToolName,
 } from "@common/mcpUtils";
+import type { WorkspaceInsertModel } from "@common/DashboardTypes";
+import { validateCreateDashboards } from "./Prostgles/validateCreateDashboards";
 
 const serverName = "prostgles-ui" as const;
 const tools = PROSTGLES_MCP_SERVERS_AND_TOOLS[serverName];
@@ -28,6 +30,7 @@ const definition = {
   icon_path: "CubeOutline",
   label: "Prostgles",
   description: "Tools to assist with Prostgles UI tasks",
+  config_schema: undefined,
   tools,
 } as const satisfies ProstglesMcpServerDefinition;
 
@@ -213,6 +216,7 @@ const handler = {
               validatedTools?.map((t) => ({
                 id: t.id,
                 server_name: t.server_name,
+                config_id: t.configId ?? null,
               })) ?? [],
           };
         },
@@ -234,8 +238,8 @@ const handler = {
             infoLevel,
           );
         },
-        create_dashboards: () => {
-          return "Done";
+        create_dashboards: async ({ prostglesWorkspaces }, ctx) => {
+          return validateCreateDashboards(prostglesWorkspaces, ctx);
         },
         compact_context: async (_args, { chat }) => {
           const messageCount = await dbs.llm_messages.count({
@@ -246,19 +250,16 @@ const handler = {
           }
           return "Done";
         },
-        get_table_metadata: async ({ tableName }, { connection_id }) => {
+        get_tables_metadata: async ({ tableNames }, { connection_id }) => {
           const con = await dbs.connections.findOne({
             id: connection_id,
           });
           if (!con) {
             throw new Error(`Connection with id ${connection_id} not found`);
           }
-          return con.table_options?.[tableName];
+          return pickKeys(con.table_options ?? {}, tableNames);
         },
-        set_table_metadata: async (
-          { tableName, metadata },
-          { connection_id },
-        ) => {
+        set_tables_metadata: async ({ metadata }, { connection_id }) => {
           const con = await dbs.connections.findOne({
             id: connection_id,
           });
@@ -269,11 +270,8 @@ const handler = {
             { id: connection_id },
             {
               table_options: {
-                $merge: [
-                  {
-                    [tableName]: metadata,
-                  },
-                ],
+                ...con.table_options,
+                ...(metadata as typeof con.table_options),
               },
             },
           );

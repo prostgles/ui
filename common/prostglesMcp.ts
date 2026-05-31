@@ -1,9 +1,9 @@
 import { dbMcpSchema } from "./mcp/db.mcp.schema";
-import type { DBSSchema } from "./publishUtils";
-import { uiMcpSchema } from "./mcp/ui.mcp.schema";
-import { webdevMcpSchema } from "./mcp/webdev.mcp.schema";
-import { webMcpSchema } from "./mcp/web.mcp.schema";
 import { documentsMcpSchema } from "./mcp/documents.mcp.schema";
+import { uiMcpSchema } from "./mcp/ui.mcp.schema";
+import { webMcpConfigSchema, webMcpSchema } from "./mcp/web.mcp.schema";
+import { webdevMcpSchema } from "./mcp/webdev.mcp.schema";
+import type { DBSSchema } from "./publishUtils";
 
 export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
   db: dbMcpSchema,
@@ -29,3 +29,7 @@ export const PROSTGLES_MCP_SERVERS_AND_TOOLS = {
       }
   >
 >;
+
+export const PROSTGLES_MCP_SERVER_CONFIGS = {
+  web: webMcpConfigSchema,
+} as const;

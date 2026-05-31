@@ -1,14 +1,13 @@
 import { getKeys, includes } from "prostgles-types";
+import { DbMcpServer } from "./ProstglesMCPServers/Db.mcp";
+import { DocumentsMCPServer } from "./ProstglesMCPServers/Documents.mcp";
 import { ProstglesUiMCPServer } from "./ProstglesMCPServers/Ui.mcp";
+import { WebMCPServer } from "./ProstglesMCPServers/Web/Web.mcp";
 import { WebDevMCPServer } from "./ProstglesMCPServers/WebDev/WebDev.mcp";
-import { WebMCPServer } from "./ProstglesMCPServers/Web.mcp";
 import type {
   ProstglesMcpServerDefinition,
   ProstglesMcpServerHandler,
 } from "./ProstglesMCPServerTypes";
-import { DbMcpServer } from "./ProstglesMCPServers/Db.mcp";
-import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
-import { DocumentsMCPServer } from "./ProstglesMCPServers/Documents.mcp";
 
 export const ProstglesMCPServers = {
   web: WebMCPServer,
@@ -28,17 +27,4 @@ export const getProstglesMCPServer = (serverName: string) => {
     return ProstglesMCPServers[serverName];
   }
   return undefined;
-};
-
-export const getProstglesMCPServerTool = (
-  serverName: string,
-  toolName: string,
-) => {
-  const server =
-    PROSTGLES_MCP_SERVERS_AND_TOOLS[
-      serverName as keyof typeof PROSTGLES_MCP_SERVERS_AND_TOOLS
-    ];
-  if (toolName in server) {
-    return server[toolName as keyof typeof server];
-  }
 };
