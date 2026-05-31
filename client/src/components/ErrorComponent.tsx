@@ -1,13 +1,14 @@
+import { isObject } from "@common/publishUtils";
 import { mdiAlertOutline, mdiClose } from "@mdi/js";
+import { getSerialisableError, includes, isEqual } from "prostgles-types";
 import type { ReactNode } from "react";
 import React from "react";
-import { isObject } from "@common/publishUtils";
 import type { TestSelectors } from "../Testing";
 import { isEmpty, scrollIntoViewIfNeeded } from "../utils/utils";
 import Btn from "./Btn";
 import { classOverride, FlexCol, FlexRow } from "./Flex";
 import { Icon } from "./Icon/Icon";
-import { getSerialisableError, isEqual } from "prostgles-types";
+import { MarkdownWithPlugins } from "./MarkdownWithPlugins/MarkdownWithPlugins";
 
 type P = TestSelectors & {
   error: unknown;
@@ -28,6 +29,7 @@ type P = TestSelectors & {
    * Default: true
    */
   autoScrollIntoView?: boolean;
+  renderAsMarkdown?: boolean;
 };
 export default class ErrorComponent extends React.Component<P> {
   ref?: HTMLDivElement;
@@ -63,13 +65,15 @@ export default class ErrorComponent extends React.Component<P> {
       color,
       onClear,
       children,
+      renderAsMarkdown,
       ...testSelectors
     } = this.props;
 
-    if ([null, undefined].includes(error as any)) {
+    if (includes([null, undefined], error)) {
       return null;
     }
     const colorClass = color ? `text-${color}` : "text-danger";
+    const errorStr = (parsedError(error, findMsg) + "").slice(0, maxTextLength);
     return (
       <FlexRow
         ref={(e) => {
@@ -84,7 +88,7 @@ export default class ErrorComponent extends React.Component<P> {
         style={{
           whiteSpace: "pre-line",
           textAlign: "left",
-          display: !error ? "none" : "flex",
+          display: !(error as unknown) ? "none" : "flex",
           maxWidth: "min(600px, 100vw)",
           ...(!className.includes("p-") && { padding: "0 4px" }),
           ...style,
@@ -109,7 +113,9 @@ export default class ErrorComponent extends React.Component<P> {
           }
         >
           {title && <div className="font-16 bold">{title}</div>}
-          {(parsedError(error, findMsg) + "").slice(0, maxTextLength)}
+          {renderAsMarkdown ?
+            <MarkdownWithPlugins content={errorStr} />
+          : errorStr}
         </FlexCol>
         {onClear && (
           <Btn

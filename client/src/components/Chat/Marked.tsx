@@ -1,12 +1,9 @@
 import { getProperty } from "@common/utils";
+import { MarkdownWithPlugins } from "@components/MarkdownWithPlugins/MarkdownWithPlugins";
 import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 import type { TableHandlerClient } from "prostgles-client";
 import type { AnyObject } from "prostgles-types";
 import React, { useCallback, useState } from "react";
-import Markdown from "react-markdown";
-import rehypeRaw from "rehype-raw";
-import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
-import remarkGfm from "remark-gfm";
 import { type Prgl } from "src/App";
 import { SmartForm } from "src/dashboard/SmartForm/SmartForm";
 import { classOverride, type DivProps } from "../Flex";
@@ -15,22 +12,6 @@ import {
   MonacoCodeInMarkdown,
   type MonacoCodeInMarkdownProps,
 } from "./MonacoCodeInMarkdown/MonacoCodeInMarkdown";
-
-const sanitizeSchema = {
-  ...defaultSchema,
-  attributes: {
-    ...defaultSchema.attributes,
-    /**
-     * Allow data- attributes for links so that we can have links that open smart form popups
-     */
-    a: [
-      ...(defaultSchema.attributes?.a ?? []),
-      "dataTableName",
-      "dataColumnName",
-      "dataColumnValue",
-    ],
-  },
-};
 
 export type MarkedProps = DivProps &
   Pick<
@@ -135,11 +116,8 @@ export const Marked = (props: MarkedProps) => {
           onClose={() => setShowTableRow(undefined)}
         />
       )}
-      <Markdown
-        remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeRaw, [rehypeSanitize, sanitizeSchema]]}
+      <MarkdownWithPlugins
         components={{
-          pre: React.Fragment,
           code: CodeComponent,
           a: ({ node, ...props }) => {
             const { href } = props;
@@ -205,9 +183,8 @@ export const Marked = (props: MarkedProps) => {
             );
           },
         }}
-      >
-        {content}
-      </Markdown>
+        content={content}
+      />
     </ScrollFade>
   );
 };
