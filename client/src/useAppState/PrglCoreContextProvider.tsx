@@ -1,6 +1,8 @@
 import type { ProstglesState } from "@common/electronInitTypes";
 import type { DBSSchema } from "@common/publishUtils";
+import { tableMightBeUndefinedDueToAccessControl } from "@common/utils";
 import { PrglContext } from "@pages/ProjectConnection/PrglContextProvider";
+import { usePromise } from "prostgles-client";
 import type { ServerFunctionHandler } from "prostgles-client/dist/prostgles";
 import React, { createContext, useContext, useMemo } from "react";
 import type { Prgl, PrglReadyState, Theme } from "src/App";
@@ -20,9 +22,13 @@ export const PrglCoreProvider = ({
 }) => {
   const { dbs, dbsTables, dbsSql, dbsMethods } = prglCore;
 
-  const { data: connection } = dbs.connections.useFindOne({
-    is_state_db: true,
-  });
+  const connection = usePromise(
+    async () =>
+      tableMightBeUndefinedDueToAccessControl(dbs.connections)?.findOne({
+        is_state_db: true,
+      }),
+    [dbs.connections],
+  );
   const prglFromCore = useMemo(
     () =>
       ({
