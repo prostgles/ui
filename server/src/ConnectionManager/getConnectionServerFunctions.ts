@@ -67,35 +67,39 @@ export const getConnectionServerFunctions = async ({
     })();
 
     connectionFunctions.forEach((m) => {
+      const isAllowedToRunFunction =
+        authContext?.type === "admin" ||
+        authContext?.allowedFunctions.has(m.id);
       const run =
-        authContext &&
-        (async (validatedArgs?: Record<string, unknown>) => {
-          const sourceCode = getCompiledTS(m.run);
+        !isAllowedToRunFunction || !authContext ?
+          undefined
+        : async (validatedArgs?: Record<string, unknown>) => {
+            const sourceCode = getCompiledTS(m.run);
 
-          try {
-            const forkedPrglProcRunner = await getConnectionFunctionRunner({
-              dbs,
-              connection,
-              connectionManager,
-              databaseConfig,
-              connectionInfo,
-            }).catch((err) => {
-              console.error(
-                "Error getting function runner for connection function",
-                err,
-              );
-              return Promise.reject("Error setting up function runner");
-            });
-            return forkedPrglProcRunner.run({
-              type: "run",
-              code: sourceCode,
-              validatedArgs,
-              user: authContext.user,
-            });
-          } catch (err: any) {
-            return Promise.reject(err);
-          }
-        });
+            try {
+              const forkedPrglProcRunner = await getConnectionFunctionRunner({
+                dbs,
+                connection,
+                connectionManager,
+                databaseConfig,
+                connectionInfo,
+              }).catch((err) => {
+                console.error(
+                  "Error getting function runner for connection function",
+                  err,
+                );
+                return Promise.reject("Error setting up function runner");
+              });
+              return forkedPrglProcRunner.run({
+                type: "run",
+                code: sourceCode,
+                validatedArgs,
+                user: authContext.user,
+              });
+            } catch (err: any) {
+              return Promise.reject(err);
+            }
+          };
 
       result[m.name] = {
         input:

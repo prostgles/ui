@@ -250,7 +250,10 @@ export const publish: Publish<
         },
     connections: {
       select: {
-        fields: isAdmin ? "*" : { id: 1, name: 1, created: 1, is_state_db: 1 },
+        fields:
+          isAdmin ? "*" : (
+            { id: 1, name: 1, created: 1, is_state_db: 1, table_options: 1 }
+          ),
         orderByFields: { db_conn: 1, created: 1 },
         forcedFilter:
           isAdmin ?
