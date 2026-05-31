@@ -4,7 +4,7 @@ import { createStore } from "src/hooks/createStore";
 import type { Prgl } from "../../App";
 import { LLMSetupProvider } from "src/dashboard/AskLLM/Setup/LLMSetupProvider";
 
-const PrglContext = createContext<Prgl | undefined>(undefined);
+export const PrglContext = createContext<Prgl | undefined>(undefined);
 
 export const PrglProvider = ({
   prgl,

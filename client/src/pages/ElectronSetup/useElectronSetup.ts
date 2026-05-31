@@ -23,15 +23,16 @@ export const getOS = () => {
 };
 
 export const useElectronSetup = ({ serverState }: ElectronSetup) => {
+  const [isQuickMode, setIsQuickMode] = useState(true);
   const [connection, setConnection] = useState<Connection>({
     ...DEFAULT_CONNECTION,
     ...DEFAULT_ELECTRON_CONNECTION,
+    ...(isQuickMode && { db_user: "postgres" }),
     name: "prostgles_desktop",
   });
   const [validationWarning, setValidationWarning] = useState<unknown>();
 
   const [loading, setLoading] = useState(false);
-  const [isQuickMode, setIsQuickMode] = useState(true);
 
   const updateConnection = async (connectionUpdates: Partial<Connection>) => {
     setLoading(false);

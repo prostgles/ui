@@ -469,9 +469,16 @@ test.describe("Main test", () => {
     const page = p as PageWIds;
     await login(page, USERS.test_user, "/login");
 
-    for (const pageWithTabs of ["/server-settings", "/account"]) {
+    for (const pageWithTabs of ["/server-settings", "/account"] as const) {
       await goTo(page, pageWithTabs);
 
+      if (pageWithTabs === "/account") {
+        await page.getByTestId("ViewMoreSmartCardList").first().click();
+        await expect(
+          page.getByTestId("Popup.content").getByTestId("SmartCardList"),
+        ).toContainText("Description");
+        await page.getByTestId("Popup.close").click();
+      }
       const tabItems = await page.getByTestId("MenuList").locator("li").all();
       for (const tabItem of tabItems) {
         const tabKey = await tabItem.getAttribute("data-key");

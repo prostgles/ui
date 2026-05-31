@@ -1,3 +1,4 @@
+import { resolveBinary } from "@src/ServiceManager/resolveBinary";
 import { spawn, type SpawnOptionsWithoutStdio } from "child_process";
 import { getSerialisableError } from "prostgles-types";
 
@@ -48,7 +49,7 @@ export const executeDockerCommand = async (
       });
       return;
     }
-    const child = spawn("docker", args, {
+    const child = spawn(resolveBinary("docker"), args, {
       ...options,
       stdio: ["pipe", "pipe", "pipe"],
     });

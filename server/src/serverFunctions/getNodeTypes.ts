@@ -1,13 +1,12 @@
 import ts from "typescript";
 import * as path from "path";
 
+const toPosixPath = (p: string) => p.split(path.sep).join("/");
+
 export const getNodeTypes = () => {
-  const pathToProject = path.resolve(__dirname + "/../../../..");
+  const pathToProject = path.resolve(__dirname, "../../../..");
   const files = extractInstalledPackageTypes(pathToProject);
-  return files.map((file) => ({
-    ...file,
-    filePath: file.filePath.split(pathToProject).at(-1)!,
-  }));
+  return files;
 };
 
 type TypeFile = {
@@ -22,7 +21,7 @@ type TypeFile = {
  *
  * @param projectDir - Absolute path to your project root.
  */
-export function extractInstalledPackageTypes(projectDir: string): TypeFile[] {
+const extractInstalledPackageTypes = (projectDir: string): TypeFile[] => {
   // 1. Read the project's package.json.
   const projectPkgPath = path.join(projectDir, "package.json");
   if (!ts.sys.fileExists(projectPkgPath)) {
@@ -112,11 +111,15 @@ export function extractInstalledPackageTypes(projectDir: string): TypeFile[] {
 
   // 5. Recursively collect declaration files from each root.
   const collected = new Map<string, TypeFile>();
-
+  const nodeModulesRoot = path.resolve(projectDir, "node_modules");
+  const isInsideNodeModules = (targetPath: string): boolean => {
+    const rel = path.relative(nodeModulesRoot, targetPath);
+    return !rel.startsWith("..") && !path.isAbsolute(rel);
+  };
   function addNearestPackageJson(fileName: string) {
     let dir = path.dirname(fileName);
 
-    while (dir.startsWith(path.join(projectDir, "node_modules"))) {
+    while (isInsideNodeModules(dir)) {
       const pkgJsonPath = path.join(dir, "package.json");
       if (ts.sys.fileExists(pkgJsonPath)) {
         if (!collected.has(pkgJsonPath)) {
@@ -179,14 +182,26 @@ export function extractInstalledPackageTypes(projectDir: string): TypeFile[] {
             if (modSource) {
               const modFileNameForImport =
                 !parentPkgName ? undefined : (
-                  parentPkgName +
-                  modSource.fileName
-                    .split(
-                      path.normalize(
-                        `${projectDir}/node_modules/${parentPkgName}`,
-                      ),
-                    )[1]
-                    ?.split(".d.ts")[0]
+                  (() => {
+                    const pkgRoot = path.resolve(
+                      projectDir,
+                      "node_modules",
+                      parentPkgName,
+                    );
+                    const relToPkg = path.relative(pkgRoot, modSource.fileName);
+
+                    if (
+                      relToPkg.startsWith("..") ||
+                      path.isAbsolute(relToPkg)
+                    ) {
+                      return undefined;
+                    }
+
+                    return `${parentPkgName}/${toPosixPath(relToPkg).replace(
+                      /\.d\.ts$/i,
+                      "",
+                    )}`;
+                  })()
                 );
               collectSourceFile(modSource, modFileNameForImport, parentPkgName);
             }
@@ -222,10 +237,10 @@ export function extractInstalledPackageTypes(projectDir: string): TypeFile[] {
 
   const result = Array.from(collected.values()).map((file) => ({
     ...file,
-    filePath: file.filePath.split(projectDir).at(-1)!,
+    filePath: "/" + toPosixPath(path.relative(projectDir, file.filePath)),
   }));
   return result;
-}
+};
 
 function shouldWrapFile(sourceFile: ts.SourceFile): boolean {
   // If the file is already an external module, it has top-level imports/exports.

@@ -189,7 +189,11 @@ export const App = () => {
   const isElectron = !!serverState.isElectron;
   return (
     <AppContextProvider appContextProps={appContextProps}>
-      <PrglCoreProvider prglCore={prglState}>
+      <PrglCoreProvider
+        prglCore={prglState}
+        theme={theme}
+        serverState={serverState}
+      >
         <ElectronSearchBar />
         <FlexCol
           key={prglState.dbsKey}
