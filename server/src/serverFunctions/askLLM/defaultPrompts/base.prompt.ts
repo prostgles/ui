@@ -19,4 +19,5 @@ export const basePrompt = [
   `Let TS infer obvious local variable types. Avoid i < arr.length - 1 patterns; split into parents + last where needed.`,
   `Prefer to use types instead of interfaces. Prefer for...of over index-based for loops. Only use indexed loops when the numeric index itself is required.`,
   `Write a couple of words each time you use tools to summarise your intent/actions. This will be shown to the user instead of all tool call details.`,
+  `IMPORTANT: do not call repeatedly the same tools with the same arguments multiple times UNLESS you are expecting a different result. Your reasoning should evolve after each tool call.`,
 ].join("\n");

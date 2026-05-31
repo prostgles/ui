@@ -11,7 +11,7 @@ import {
 import { RenderValue } from "../../../SmartForm/SmartFormField/RenderValue";
 import { getYLabelFunc } from "../../../W_TimeChart/fetchData/getTimeChartData";
 import { getColWInfo } from "../../tableUtils/getColWInfo";
-import { StyledTableColumn } from "../../tableUtils/StyledTableColumn";
+import type { MinMaxVals } from "../../W_Table";
 import type { ColumnConfig } from "../ColumnMenu";
 
 const NESTED_LIMIT = 10;
@@ -26,6 +26,7 @@ type P = {
   row: AnyObject;
   nestedTimeChartMeta: NestedTimeChartMeta | undefined;
   tables: DBSchemaTableWithRenderInfo[];
+  barchartVals: MinMaxVals | undefined;
 };
 export const NestedColumnRender = ({
   value,
@@ -33,6 +34,7 @@ export const NestedColumnRender = ({
   row,
   nestedTimeChartMeta,
   tables,
+  barchartVals,
 }: P): JSX.Element => {
   const table = tables.find((t) => t.name === c.nested?.path.at(-1)?.table);
   const isMedia = table?.isFileTable;
@@ -94,21 +96,7 @@ export const NestedColumnRender = ({
           getValues={() => valueList.map((v) => v?.[key])}
         />
       : JSON.stringify(value);
-    if (columnWInfo?.style && columnWInfo.style.type !== "None") {
-      return (
-        <StyledTableColumn
-          value={value}
-          column={{
-            ...columnWInfo,
-            ...columnWInfo.info!,
-            ...datType,
-          }}
-          renderedVal={renderedValue}
-          maxCellChars={undefined}
-          barchartVals={undefined}
-        />
-      );
-    }
+
     return renderedValue;
   };
   const valueList = value ?? [];

@@ -32,7 +32,7 @@ type P = DivProps &
   };
 export const ColorByLegend = ({ className, style, onChanged, ...props }: P) => {
   const { groupByColumn, layers } = props;
-  const { db, sql, theme } = usePrgl();
+  const { db, sql, theme, tables } = usePrgl();
   const {
     getColor,
     oldLayerWindow,
@@ -108,9 +108,10 @@ export const ColorByLegend = ({ className, style, onChanged, ...props }: P) => {
             type: "table",
             db,
             tableName: tableName!,
-            columnName: groupByColumn,
+            column: { name: groupByColumn },
             filter,
             theme,
+            tables,
           };
       return fetchArgs;
     }

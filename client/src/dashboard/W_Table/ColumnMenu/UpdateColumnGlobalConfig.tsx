@@ -17,6 +17,10 @@ export const UpdateColumnGlobalConfig = ({
     connectionId,
   } = usePrgl();
 
+  if (column.computedConfig || column.nested) {
+    return null;
+  }
+
   /** Persist column options on close */
   const updateGlobalConfig = useMemo(() => {
     if (!tableMightBeUndefinedDueToAccessControl(dbs.connections)?.update) {

@@ -126,7 +126,11 @@ export const RenderValue = ({
     return (
       <span
         title={value}
-        style={{ color: getColumnDataColor(c), ...numericStyle, ...style }}
+        style={{
+          color: getColumnDataColor(c),
+          ...numericStyle,
+          ...style,
+        }}
       >
         {getValue()}
       </span>

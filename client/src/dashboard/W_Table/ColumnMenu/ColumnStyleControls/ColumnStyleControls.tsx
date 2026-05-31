@@ -17,6 +17,7 @@ import { ConditionalCellStyleControls } from "../ColumnDisplayFormat/Conditional
 import type { ColumnConfig } from "../ColumnMenu";
 import { getValueColors } from "./getValueColors";
 import { UpdateColumnGlobalConfig } from "../UpdateColumnGlobalConfig";
+import { getSingleShownNestedColumn } from "../../tableUtils/StyledTableColumn";
 
 export type ColumnValue = string | number | Date | null | undefined | boolean;
 
@@ -74,8 +75,10 @@ export type StyleColumnProps = Pick<Prgl, "db" | "tables"> & {
 };
 
 export const ColumnStyleControls = (props: StyleColumnProps) => {
-  const { column, onUpdate, tsDataType, udt_name, tableName, db } = props;
+  const { column, onUpdate, tableName, db } = props;
 
+  const nestedColumn = getSingleShownNestedColumn(column, props.tables);
+  const { tsDataType, udt_name } = nestedColumn?.colInfo ?? props;
   const STYLE_MODES: Array<Required<ColumnConfig>["style"]["type"]> = [
     "None",
     "Fixed",
@@ -131,8 +134,9 @@ export const ColumnStyleControls = (props: StyleColumnProps) => {
                 type: "table",
                 db,
                 tableName,
-                columnName: column.name,
-                theme: theme,
+                column,
+                theme,
+                tables: props.tables,
               },
               setStyle,
             );

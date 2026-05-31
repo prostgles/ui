@@ -11,37 +11,38 @@ export const loadGeneratedBarchart = (
   generatedWindow: BarchartWindowInsertModel,
   tables: DBSchemaTableWJoins[],
 ): WindowInsertModel => {
-  const { xAxis, yAxisColumn, title } = generatedWindow;
+  const { labelColumn, numericAxis, title } = generatedWindow;
 
   const funcDef = aggFunctions.find(
     (f) =>
       f.key ===
-      (xAxis.aggregation === "count(*)" ?
+      (numericAxis.aggregation === "count(*)" ?
         "$countAll"
-      : "$" + xAxis.aggregation),
+      : "$" + numericAxis.aggregation),
   )!;
   const xColName =
-    xAxis.aggregation === "count(*)" ?
+    numericAxis.aggregation === "count(*)" ?
       "Count"
-    : `${funcDef.name}(${xAxis.column})`;
+    : `${funcDef.name}(${numericAxis.column})`;
   const table =
     "table_name" in generatedWindow ?
       tables.find((t) => t.name === generatedWindow.table_name)
     : undefined;
-  const { joinPath } = xAxis;
+  const { joinPath } = numericAxis;
   const xAxisTable =
     !joinPath ? table : tables.find((t) => t.name === joinPath.at(-1)?.table);
   const xAxisColumnInfo =
-    xAxis.aggregation === "count(*)" ?
+    numericAxis.aggregation === "count(*)" ?
       undefined
-    : xAxisTable?.columns.find((c) => c.name === xAxis.column);
+    : xAxisTable?.columns.find((c) => c.name === numericAxis.column);
 
   const xAxisColumn: NonNullable<WindowData["columns"]>[number] = {
     name: xColName,
     width: 250,
     show: true,
     computedConfig: {
-      column: xAxis.column === "count(*)" ? undefined : xAxis.column,
+      column:
+        numericAxis.column === "count(*)" ? undefined : numericAxis.column,
       ...(funcDef.outType === "sameAsInput" ?
         pickKeys(xAxisColumnInfo!, ["tsDataType", "udt_name"])
       : funcDef.outType),
@@ -50,22 +51,31 @@ export const loadGeneratedBarchart = (
         subLabel: "",
       },
     },
-    style: {
-      type: "Barchart",
-      barColor: "#0081A7",
-      textColor: "",
-    },
   };
 
   const columns: WindowData["columns"] = [
     {
-      name: yAxisColumn,
+      name: labelColumn,
       width: 150,
       show: true,
     },
-    joinPath ?
+    !joinPath ?
       {
+        ...xAxisColumn,
+        style: {
+          type: "Barchart",
+          barColor: "#0081A7",
+          textColor: "",
+        },
+      }
+    : {
         name: xColName,
+        show: true,
+        style: {
+          type: "Barchart",
+          barColor: "#0081A7",
+          textColor: "",
+        },
         nested: {
           path: joinPath,
           columns: [
@@ -76,8 +86,7 @@ export const loadGeneratedBarchart = (
             })),
           ],
         },
-      }
-    : xAxisColumn,
+      },
   ];
   if ("sql" in generatedWindow) {
     return {
@@ -91,7 +100,7 @@ export const loadGeneratedBarchart = (
   const { table_name, filter, filterOperand, quickFilterGroups } =
     generatedWindow;
   table?.columns.forEach((col) => {
-    if (col.name !== yAxisColumn) {
+    if (col.name !== labelColumn) {
       columns.push({
         name: col.name,
         show: false,
@@ -110,8 +119,8 @@ export const loadGeneratedBarchart = (
       hideEditRow: true,
       hideInsertButton: true,
     } satisfies WindowData<"table">["options"],
-    sort: [{ key: xColName, asc: false, nulls: "last" }] satisfies NonNullable<
-      WindowData["sort"]
-    >,
+    // sort: [{ key: xColName, asc: false, nulls: "last" }] satisfies NonNullable<
+    //   WindowData["sort"]
+    // >,
   } satisfies WindowInsertModel;
 };

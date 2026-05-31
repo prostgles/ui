@@ -39,7 +39,17 @@ export const onRenderColumn = (args: OnRenderColumnProps) => {
       ((table && match?.(table, column)) ?? type === column.format?.type),
   );
   const onRender: ProstglesTableColumn["onRender"] =
-    column.nested ?
+    column.style && column.style.type !== "None" ?
+      (rowInfo) => (
+        <StyledTableColumn
+          {...rowInfo}
+          tables={tables}
+          column={column}
+          maxCellChars={maxCellChars}
+          barchartVals={barchartVals}
+        />
+      )
+    : column.nested ?
       ({ value, row }) => {
         // const nestedTimeChartDates: number[] | undefined = c.nested?.chart && value && value.flatMap(nr => isObject(nr)? +new Date(nr.date) : -1)
         // const allDatesAreValid = nestedTimeChartDates && nestedTimeChartDates.every(d => Number.isFinite(d));
@@ -67,18 +77,10 @@ export const onRenderColumn = (args: OnRenderColumnProps) => {
             c={column}
             tables={tables}
             nestedTimeChartMeta={nestedTimeChartMeta}
+            barchartVals={barchartVals}
           />
         );
       }
-    : column.style && column.style.type !== "None" ?
-      (rowInfo) => (
-        <StyledTableColumn
-          {...rowInfo}
-          column={column}
-          maxCellChars={maxCellChars}
-          barchartVals={barchartVals}
-        />
-      )
     : formatRender ?
       ({ row }) => {
         let value = row[column.name];
