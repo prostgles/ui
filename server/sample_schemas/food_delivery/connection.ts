@@ -566,15 +566,18 @@ const table_options = {
           conditions: [
             {
               operator: "=",
-              chipColor: "#16a34a",
+              chipColor: "#01d4002e",
               condition: true,
-              textColor: "#ffffff",
+              textColor: "#00ad44",
+              color: "#01d4002e",
+              borderColor: "#01d4008a",
             },
             {
               operator: "=",
-              chipColor: "#9ca3af",
+              chipColor: "#b4b4b42e",
               condition: false,
-              textColor: "#ffffff",
+              textColor: "#4b4b4b",
+              color: "#b4b4b42e",
             },
           ],
         },
@@ -652,26 +655,6 @@ const table_options = {
           params: {
             variant: "short",
           },
-        },
-      },
-      is_popular: {
-        icon: "Star",
-        style: {
-          type: "Conditional",
-          conditions: [
-            {
-              operator: "=",
-              chipColor: "#16a34a",
-              condition: true,
-              textColor: "#ffffff",
-            },
-            {
-              operator: "=",
-              chipColor: "#9ca3af",
-              condition: false,
-              textColor: "#ffffff",
-            },
-          ],
         },
       },
     },

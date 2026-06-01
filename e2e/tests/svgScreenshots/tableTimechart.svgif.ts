@@ -152,6 +152,11 @@ const windowConfig = {
         limit: 20,
         columns: [
           {
+            style: {
+              barColor: "var(--active)",
+              textColor: "#646464",
+              type: "Barchart",
+            },
             computedConfig: {
               funcDef: {
                 key: "$countAll",

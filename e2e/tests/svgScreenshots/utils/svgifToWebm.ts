@@ -8,13 +8,15 @@ export const svgifToWebm = async ({
   outDir,
   width = 900,
   height = 900,
+  pixelRatio = 2,
 }: {
   svgifPath: string;
   outDir: string;
   width?: number;
   height?: number;
+  pixelRatio?: number;
 }) => {
-  const fps = 30;
+  const fps = 60;
   const durationMillis = parseFloat(
     fs
       .readFileSync(svgifPath, "utf-8")
@@ -44,7 +46,7 @@ export const svgifToWebm = async ({
 
   const context = await browser.newContext({
     viewport: { width, height },
-    deviceScaleFactor: 1,
+    deviceScaleFactor: pixelRatio,
   });
 
   const page = await context.newPage();
@@ -114,7 +116,8 @@ export const svgifToWebm = async ({
     await page.screenshot({
       path: file,
       type: "png",
-      scale: "css",
+      // scale: "css",
+      scale: "device",
       animations: "allow",
     });
 
@@ -147,7 +150,7 @@ export const svgifToWebm = async ({
         "-b:v",
         "0",
         "-crf",
-        "15",
+        "10", // "15",
         "-pix_fmt",
         "yuv444p",
         "-vsync",
