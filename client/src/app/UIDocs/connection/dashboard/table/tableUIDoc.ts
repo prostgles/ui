@@ -13,24 +13,21 @@ export const tableUIDoc = {
   title: "Table view",
   description: "Allows interacting with a table/view from the database.",
   docs: `
-    The table view allows you to explore, filter, and edit your Postgres data with ease.
-    Search, sort, join, aggregate, create computed columns, pull in linked data through automatic joins, and create charts, maps, and cross-filtered views in a couple of clicks.
-    With smart forms that include linked data and allow row editing, rich column controls, and deep schema-aware features, the table view turns your database into an interactive workspace for analysis, tooling, and rapid iteration.
-
+    Table view is the main row-level interface for a Postgres table or view. 
+    It supports filtering, sorting, editing, schema-aware row forms, linked data from foreign-key relationships, computed columns, realtime refresh, and related chart/map views.
     
     ## Features
 
-    - **Smart filtering and search**: Use the smart filter bar to quickly filter your data based on column types and values.
-    - **Multiple display modes**: View the same data as a table, JSON, or card layout with grouping (Kanban style) and ordering options.
-    - **Computed columns and functions**: Derive new values, aggregate data, and apply functions without changing the underlying table.
-    - **Linked data and joins**: Pull in fields from related tables, control join type, aggregate, and filter or sort nested data.
-    - **Rich column controls**: Sort, resize, reorder, hide, format, and style columns, including conditional formatting and inline timechart and bar-chart rendering.
-    - **Charts, maps, and cross-filtering**: Turn table data into timecharts and maps, or open linked views that stay cross-filtered with the current selection.
-    - **Live data refresh**: Use realtime subscriptions to both tables and views to keep table data current.
-    - **Smart forms**: Edit rows using smart forms that adapt to your schema and data types.
-    - **Conditional styling**: Style your columns based on value, including inline bar charts and timecharts.
-    - **Rich column styling and display formats**: Apply value-based colours and styles, while also rendering emails, phone numbers, URLs, QR codes, currency, HTML, and media or image URLs in more useful formats.
-    - **Postgres-aware management**: Access table info, columns, indexes, constraints, triggers, policies, and access rules from the table menu.
+    - **Filtering and search**: Smart filter controls use column metadata and current values to build table filters.
+    - **Sorting and layout**: Sort by one or more columns, resize/reorder/hide columns, and switch between table, JSON, card, and grouped card (Kanban style) layouts where available.
+    - **Linked data columns**: Add columns from foreign-key relationships. Linked rows can be shown as header/value rows, columns, or compact values; they can be filtered, sorted, limited, joined with left/inner joins, or aggregated with functions such as count, sum, avg, min, and max.
+    - **Aggregated linked data**: Use linked or computed values as sortable table columns, including inline bar-style cells and nested timechart-style summaries where supported by the selected data type.
+    - **Column rendering**: Configure display format/render-as behavior for values such as URLs, images/media, email, phone, currency, HTML, QR codes, and other supported formats.
+    - **Conditional styling**: Apply value-based cell styles, including text/background colors, icons, scales, and bar-style numeric cells.
+    - **Smart forms**: Open a row card to view/edit the row using schema-aware inputs and JSONB support. Related records section to navigate the full relational context without leaving the record
+    - **Live data refresh**: Tables and views (and related tables) use realtime subscriptions to show latest data.
+    - **Charts, maps, and cross-filtering**: Add timecharts, maps, and cross-filtered table views from the current table. Interactions in linked views preserve the source context through dashboard filters.
+    - **Postgres management**: Inspect table/view details and manage columns, indexes, constraints, triggers, policies, access rules, refresh settings, and the current query from the table menu.
 
     <img src="./screenshots/table.svgif.svg" alt="Table view screenshot" />
     

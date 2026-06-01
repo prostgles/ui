@@ -13,32 +13,16 @@ export const smartFormUIDoc: UIDocElement = {
     It provides a user-friendly interface for inserting and updating data with automatic validation,
     foreign key handling, and support for complex data types.
 
-    <img src="./screenshots/smart_form.svgif.svg" alt="SmartForm screenshot" />
-
     ## Features
-    - **Auto-generated fields** based on table schema
-    - **Data type validation** (text, numbers, dates, JSON, etc.)
-    - **Foreign key support** with searchable dropdowns
+    - **Auto-generated fields** based on table schema and configurable metadata
+    - **Foreign key support** with searchable dropdowns showing referenced data
+    - **Linked data management** - view, insert/update related records without leaving the form
     - **File upload** for media and document columns
-    - **Linked data management** - insert related records inline
     - **JSON/JSONB editor** with syntax highlighting
-    - **Geometry/Geography** support for spatial data
     - **Array types** with dynamic add/remove
     - **Default values** and constraints enforcement
-    - **Required field** indicators
-    - **Custom field rendering** based on column configuration
 
-    ## Field Types
-    - Text inputs (single/multi-line)
-    - Number inputs (integer, decimal)
-    - Date/Time/Timestamp pickers
-    - Boolean checkboxes
-    - Select dropdowns (enums, foreign keys)
-    - File upload fields
-    - JSON/JSONB editors
-    - Geometry/Geography mappers
-    - Array editors
- 
+    <img src="./screenshots/smart_form.svgif.svg" alt="SmartForm screenshot" />
   `,
   children: [
     {

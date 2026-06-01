@@ -64,7 +64,11 @@ export const tableOptionsJsonbSchema = {
       type: {
         icon: { type: "string", optional: true },
         label: { type: "string", optional: true },
-        rowIconColumn: { type: "string", optional: true },
+        rowIconColumn: {
+          type: "string",
+          description: `Column name that contains url to a local icon (in /icons folder) to be shown as an icon in each row. This is used in card and table views.`,
+          optional: true,
+        },
         columns: {
           optional: true,
           record: {

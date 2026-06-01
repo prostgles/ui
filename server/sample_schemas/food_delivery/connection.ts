@@ -46,7 +46,6 @@ const table_options = {
         icon: "CrosshairsGps",
       },
     },
-    rowIconColumn: "type",
   },
   orders: {
     card: {
@@ -286,7 +285,6 @@ const table_options = {
         },
       },
     },
-    rowIconColumn: "type",
   },
   addresses: {
     card: {
@@ -388,7 +386,6 @@ const table_options = {
         icon: "CrosshairsGps",
       },
     },
-    rowIconColumn: "type",
   },
   menu_items: {
     card: {

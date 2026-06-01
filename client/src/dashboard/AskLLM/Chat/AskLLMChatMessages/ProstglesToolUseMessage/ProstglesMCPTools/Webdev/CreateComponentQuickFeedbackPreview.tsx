@@ -4,7 +4,7 @@ import { CompactTabs } from "@components/CompactTabs/CompactTabs";
 import { FlexCol } from "@components/Flex";
 import { MonacoLogs } from "@components/MonacoLogs/MonacoLogs";
 import type { JSONB } from "prostgles-types";
-import React from "react";
+import React, { useMemo } from "react";
 import { useWebAppConfigState } from "src/dashboard/ConnectionConfig/WebApp/hooks/useWebAppConfigState";
 import type { ProstglesMCPToolsProps } from "../../ProstglesToolUseMessage";
 import { useTypedToolUseResultDataV2 } from "../common/useTypedToolUseResultData";
@@ -38,6 +38,19 @@ export const CreateComponentQuickFeedbackPreview = ({
 
   const logs = toolResultJson?.data?.log?.map(({ text }) => text).join("\n");
 
+  const files = useMemo(
+    () => ({
+      "Component.tsx": data.indexTsx,
+      ...(data.css ? { "Component.css": data.css } : {}),
+      ...(data.dependencies?.length ?
+        {
+          "dependencies.json": JSON.stringify(data.dependencies, null, 2),
+        }
+      : {}),
+    }),
+    [data.css, data.dependencies, data.indexTsx],
+  );
+
   if (!resultContent) {
     return <div className="skeleton w-fit">Validating component...</div>;
   }
@@ -52,19 +65,8 @@ export const CreateComponentQuickFeedbackPreview = ({
           content: (
             <FlexCol className="f-1">
               <CodeFileBrowser
-                files={{
-                  "Component.tsx": data.indexTsx,
-                  ...(data.css ? { "Component.css": data.css } : {}),
-                  ...(data.dependencies?.length ?
-                    {
-                      "dependencies.json": JSON.stringify(
-                        data.dependencies,
-                        null,
-                        2,
-                      ),
-                    }
-                  : {}),
-                }}
+                modelsGroupId={toolUseContent.id}
+                files={files}
                 onChange={() => {}}
               />
               {logs && <MonacoLogs maxHeight={0} logs={logs} />}
