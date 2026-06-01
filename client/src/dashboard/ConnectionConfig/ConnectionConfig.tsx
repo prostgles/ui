@@ -23,7 +23,7 @@ import { AuthProviderSetup } from "@pages/ServerSettings/AuthProvidersSetup/Auth
 import { SecuritySettings } from "@pages/ServerSettings/SecuritySettings";
 import React, { useMemo } from "react";
 import { t } from "../../i18n/i18nUtils";
-import NewConnection from "../../pages/NewConnection/NewConnnectionForm";
+import { NewConnection } from "../../pages/NewConnection/NewConnectionForm";
 import { usePrgl } from "../../pages/ProjectConnection/PrglContextProvider";
 import type { Connections } from "../../pages/ProjectConnection/ProjectConnection";
 import { TopControls } from "../../pages/TopControls";

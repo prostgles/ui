@@ -11,7 +11,7 @@ import { InfoRow } from "@components/InfoRow";
 import PopupMenu from "@components/PopupMenu";
 import { SwitchToggle } from "@components/SwitchToggle";
 import CodeExample from "../../dashboard/CodeExample";
-import type { Connection } from "./NewConnnectionForm";
+import type { Connection } from "./NewConnectionForm";
 import type { FullExtraProps } from "../ProjectConnection/ProjectConnection";
 import ErrorComponent from "@components/ErrorComponent";
 import { t } from "../../i18n/i18nUtils";
@@ -244,9 +244,7 @@ export const NewConnectionForm = ({
                       title={t.NewConnectionForm["Create database"]}
                     ></Btn>
                   }
-                  initialState={
-                    { query: "", action: "create" }
-                  }
+                  initialState={{ query: "", action: "create" }}
                   render={(pClose, { query, action }, setState) => {
                     if (action === "clone" && origCon?.db_name) {
                       getDBCloneQuery(origCon.db_name, c.db_name, sql!).then(

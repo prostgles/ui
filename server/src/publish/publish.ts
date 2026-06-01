@@ -5,22 +5,19 @@ import {
   getVerificationEmailFromTemplate,
   MOCK_SMTP_HOST,
 } from "@common/OAuthUtils";
+import type { DBSSchema } from "@common/publishUtils";
+import { isPortFree } from "@src/utils/isPortFree";
 import type { SessionUser } from "prostgles-server/dist/Auth/AuthTypes";
+import type { PublishFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
 import { verifySMTPConfig } from "prostgles-server/dist/Prostgles";
 import type { Publish } from "prostgles-server/dist/PublishParser/PublishParser";
-import type {
-  PublishedResult,
-  ValidateUpdateRow,
-} from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
+import type { ValidateUpdateRow } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
 import { getKeys, type FilterItem } from "prostgles-types";
 import { getPasswordHash } from "../authConfig/authUtils";
 import { getSMTPWithTLS } from "../authConfig/emailProvider/getEmailSenderWithMockTest";
 import { checkClientIP } from "../authConfig/sessionUtils";
 import { getACRules } from "../ConnectionManager/ConnectionManager";
 import { getPublishLLM } from "./getPublishLLM";
-import type { DBSSchema } from "@common/publishUtils";
-import { isPortFree } from "@src/utils/isPortFree";
-import type { PublishFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
 
 export const publish: Publish<
   DBGeneratedSchema,
@@ -246,7 +243,7 @@ export const publish: Publish<
           delete: "*",
         }
       : {
-          select: { fields: { id: 1 } },
+          select: { fields: { id: 1, table_schema_positions: 1 } },
         },
     connections: {
       select: {

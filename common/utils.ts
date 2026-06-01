@@ -518,6 +518,6 @@ export const getRandomElement = <Arr>(
  */
 export const tableMightBeUndefinedDueToAccessControl = <T>(
   tableHandler: T,
-): T | undefined => {
+): Partial<T> | undefined => {
   return tableHandler;
 };

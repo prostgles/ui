@@ -18,7 +18,6 @@ import {
   mdiDeleteOutline,
   mdiPlus,
 } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client";
 import React from "react";
 import { NavLink, useNavigate, useParams } from "react-router";
 import type { AppContextProps, Prgl } from "../../App";
@@ -29,7 +28,6 @@ import { JoinedRecords } from "../../dashboard/SmartForm/JoinedRecords/JoinedRec
 import { t } from "../../i18n/i18nUtils";
 import { get } from "../../utils/utils";
 import { getBrowserOS } from "../ElectronSetup/ElectronSetup";
-import type { FullExtraProps } from "../ProjectConnection/ProjectConnection";
 import { NewConnectionForm } from "./NewConnectionFormFields";
 
 export const getSqlErrorText = (e: any) => {
@@ -120,7 +118,10 @@ type NewConnectionState = {
   activeTabKey?: string;
 };
 
-class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
+class NewConnectionManager extends RTComp<
+  NewConnectionProps,
+  NewConnectionState
+> {
   state: NewConnectionState = {
     conNotFound: false,
     nameErr: "",
@@ -540,11 +541,11 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
   }
 }
 
-export default (props: NewConnectionProps) => {
+export const NewConnection = (props: NewConnectionProps) => {
   const params = useParams();
   const navigate = useNavigate();
   return (
-    <NewConnection
+    <NewConnectionManager
       {...props}
       connectionId={props.connectionId ?? params.id}
       onDeleted={() => {
