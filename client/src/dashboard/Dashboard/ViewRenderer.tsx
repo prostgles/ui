@@ -118,8 +118,8 @@ export class ViewRenderer extends RTComp<
     } = this.props;
     const { links, windows } = this.getOpenedLinksAndWindows();
     const { linkMenuWindow } = this.state;
-
     if (!workspace || !tables) return;
+    const { layout_mode } = workspace;
 
     const { onClickRow } = getViewRendererUtils.bind(this)({
       ...this.props,
@@ -431,7 +431,13 @@ export class ViewRenderer extends RTComp<
           _ref={(r) => {
             this.gridRef = r;
           }}
-          layoutMode={workspace.layout_mode === "fixed" ? "fixed" : "editable"}
+          layoutMode={
+            layout_mode === "fixed" ?
+              prgl.user?.type === "admin" ?
+                "semi-fixed"
+              : "fixed"
+            : "editable"
+          }
           defaultLayoutType={workspace.options.defaultLayoutType}
           className="min-h-0 relative"
           layout={workspace.layout}

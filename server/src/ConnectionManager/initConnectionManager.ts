@@ -21,7 +21,7 @@ export const CONNECTION_HOT_RELOAD_COLUMNS = [
   "db_host",
   "db_port",
   "db_schema_filter",
-  "db_watch_shema",
+  "db_watch_schema",
 ] as const;
 
 export async function initConnectionManager(

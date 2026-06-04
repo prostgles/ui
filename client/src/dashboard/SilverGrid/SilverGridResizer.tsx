@@ -11,7 +11,7 @@ type LayoutSize = Pick<LayoutItem, "id" | "size">;
 type SilverGridResizerProps = {
   type: "row" | "col";
   onChange: (prev: LayoutSize, next: LayoutSize) => void;
-  layoutMode: "fixed" | "editable";
+  layoutMode: "semi-fixed" | "fixed" | "editable";
 };
 
 export class SilverGridResizer extends RTComp<
@@ -28,7 +28,7 @@ export class SilverGridResizer extends RTComp<
   onDelta() {
     const { onChange, layoutMode } = this.props;
     const ref = this.ref as any;
-    if (this.cleanupListeners && layoutMode === "fixed") {
+    if (this.cleanupListeners && layoutMode !== "editable") {
       this.cleanupListeners();
     }
     if (!ref || ref?._hasListeners) return;
@@ -76,8 +76,8 @@ export class SilverGridResizer extends RTComp<
         } else {
           const pxPerFlex = (prevRect.height + nextRect.height) / totalFlex;
 
-          (prevFlex = (p.y - topOffset - rHh) / pxPerFlex),
-            (nextFlex = totalFlex - prevFlex);
+          ((prevFlex = (p.y - topOffset - rHh) / pxPerFlex),
+            (nextFlex = totalFlex - prevFlex));
         }
 
         prevS.style.flex = `${prevFlex}`;
@@ -93,7 +93,7 @@ export class SilverGridResizer extends RTComp<
 
   ref?: HTMLDivElement;
   render() {
-    const isFixed = this.props.layoutMode === "fixed";
+    const isFixed = this.props.layoutMode !== "editable";
     const size =
       isFixed ? "1em"
       : isTouchDevice() ? "20px"

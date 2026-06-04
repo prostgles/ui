@@ -177,8 +177,10 @@ test.describe("Create docs and screenshots", () => {
   });
 
   test("Record videos", async () => {
+    test.setTimeout(50 * MINUTE);
     const svgifsToRecord = [
-      "overview.svgif",
+      "overview_long.svgif",
+      "ai_assistant_agentic_workflow.svgif",
       // "sql_editor_overview.svgif",
       // "ai_assistant_overview.svgif",
       // "ai_assistant_agentic_workflow_gov_api.svgif",

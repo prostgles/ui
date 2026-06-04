@@ -47,10 +47,11 @@ export const getSVGifCursorAnimationHandler = ({
     sceneNodeAnimations: SceneNodeAnimation[];
     sceneId: string;
   }) => {
+    const { delay = 0, duration } = animation;
     if (animation.type === "moveCursor") {
       cursorMovements.push({
-        fromPerc: Number(getPercent(currentPrevDuration)),
-        toPerc: Number(getPercent(currentPrevDuration + animation.duration)),
+        fromPerc: Number(getPercent(currentPrevDuration + delay)),
+        toPerc: Number(getPercent(currentPrevDuration + duration + delay)),
         lingerPerc: undefined,
         target: animation.xy,
       });
@@ -66,7 +67,6 @@ export const getSVGifCursorAnimationHandler = ({
       type,
       lingerMs = 500,
       waitBeforeClick = 500,
-      duration,
       elementSelector,
       offset,
     } = animation;
@@ -90,8 +90,8 @@ export const getSVGifCursorAnimationHandler = ({
       parsedScenes[sceneIndex + 1]?.animations[0];
     const anotherClickFollowing = nextAnimation?.type === "click";
     cursorMovements.push({
-      fromPerc: getPercent(currentPrevDuration),
-      toPerc: getPercent(clickEndTime),
+      fromPerc: getPercent(currentPrevDuration + delay),
+      toPerc: getPercent(clickEndTime + delay),
       lingerPerc:
         !lingerMs || anotherClickFollowing ? undefined : (
           Number(

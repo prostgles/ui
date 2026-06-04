@@ -8,9 +8,6 @@ export const schemaDiagramSvgif: OnBeforeScreenshot = async (
   { openMenuIfClosed, openConnection },
   { addScene, addSceneAnimation },
 ) => {
-  // if (Math.PI) {
-  //   throw "FISDW";
-  // }
   await openConnection("food_delivery");
   await closeWorkspaceWindows(page);
   await openMenuIfClosed();
@@ -54,6 +51,7 @@ export const schemaDiagramSvgif: OnBeforeScreenshot = async (
           type: "moveCursor",
           xy: point,
           duration: 300,
+          delay: -100,
         },
         { type: "wait", duration: 1000 },
       ],
@@ -61,7 +59,9 @@ export const schemaDiagramSvgif: OnBeforeScreenshot = async (
   }
 
   await addScene({
-    animations: [{ type: "moveCursor", xy: [250, 460], duration: 200 }],
+    animations: [
+      { type: "moveCursor", xy: [250, 460], duration: 200, delay: -100 },
+    ],
   });
 
   await page.reload();

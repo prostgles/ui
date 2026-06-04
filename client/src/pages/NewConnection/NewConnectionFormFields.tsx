@@ -432,9 +432,9 @@ export const NewConnectionForm = ({
                     ],
                   }}
                   data-command="NewConnectionForm.watchSchema"
-                  checked={!!c.db_watch_shema}
-                  onChange={(db_watch_shema) => {
-                    updateConnection({ db_watch_shema });
+                  checked={!!c.db_watch_schema}
+                  onChange={(db_watch_schema) => {
+                    updateConnection({ db_watch_schema });
                   }}
                 />
                 {dbsMethods?.reloadSchema && (

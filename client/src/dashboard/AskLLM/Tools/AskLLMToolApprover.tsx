@@ -3,7 +3,7 @@ import React, { useMemo, useState } from "react";
 import { getMCPFullToolName } from "@common/mcpUtils";
 import type { DBSSchema } from "@common/publishUtils";
 import { Marked } from "@components/Chat/Marked";
-import { FlexCol, FlexRow } from "@components/Flex";
+import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
 import Popup from "@components/Popup/Popup";
 import { CodeEditorWithSaveButton } from "src/dashboard/CodeEditor/CodeEditorWithSaveButton";
 import type { LoadedSuggestions } from "src/dashboard/Dashboard/dashboardUtils";
@@ -11,7 +11,7 @@ import { isEmpty } from "../../../utils/utils";
 import { ProstglesMCPToolsWithUI } from "../Chat/AskLLMChatMessages/ProstglesToolUseMessage/ProstglesToolUseMessage";
 import type { useAskLLMToolApprove } from "./useAskLLMToolApprover";
 import { NavLink } from "react-router";
-import { getConnectionPaths } from "@common/utils";
+import { getConnectionPaths, getEntries } from "@common/utils";
 import { isDefined } from "@common/filterUtils";
 import type { BtnProps } from "@components/Btn";
 import ErrorComponent from "@components/ErrorComponent";
@@ -154,6 +154,7 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
           color: "danger",
           variant: "faded",
           "data-command": "AskLLMToolApprover.Deny",
+          className: "mr-auto",
           onClickPromise: async () => {
             await respond({
               id: requestItem.id,
@@ -164,7 +165,6 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
         },
         differentConnection || requestItem.source.type === "proxy" ?
           {
-            className: "ml-auto",
             label: "Show chat",
             color: "action",
             variant: "faded",
@@ -210,6 +210,28 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
           </FlexRow>
           {source.type === "proxy" && (
             <Chip color="blue">Requested from container</Chip>
+          )}
+          {annotations?.title ?? ""}
+          {annotations && !isEmpty(annotations) && (
+            <FlexRowWrap>
+              {getEntries(annotations)
+                .filter(([key]) => key !== "title")
+                .map(([key, yes]) => (
+                  <Chip
+                    color={
+                      key === "destructiveHint" && yes ? "red"
+                      : (
+                        (key === "openWorldHint" && yes) ||
+                        (key === "readOnlyHint" && !yes)
+                      ) ?
+                        "orange"
+                      : "blue"
+                    }
+                  >
+                    {key}
+                  </Chip>
+                ))}
+            </FlexRowWrap>
           )}
         </FlexRow>
         <Marked

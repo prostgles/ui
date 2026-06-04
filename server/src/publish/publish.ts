@@ -399,7 +399,9 @@ export const publish: Publish<
     login_attempts: {
       select: "*",
     },
-
+    logs: isAdmin && {
+      select: "*",
+    },
     global_settings: isAdmin && {
       select: "*",
       update: {

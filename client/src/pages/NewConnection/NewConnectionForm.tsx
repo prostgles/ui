@@ -79,7 +79,7 @@ export const DEFAULT_CONNECTION = {
   prgl_url: "",
   prgl_params: "",
   db_conn: "",
-  db_watch_shema: true,
+  db_watch_schema: true,
   db_connection_timeout: 10_000,
 } as const;
 

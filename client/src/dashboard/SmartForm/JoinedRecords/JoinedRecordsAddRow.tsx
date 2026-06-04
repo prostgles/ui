@@ -10,7 +10,10 @@ import type { JoinedRecordSection } from "./useJoinedRecordsSections";
 type P = Omit<JoinedRecordsProps, "newRowDataHandler"> & {
   newRowDataHandler: NewRowDataHandler;
   section: JoinedRecordSection;
-  btnProps?: Pick<BtnProps, "size" | "className">;
+  btnProps?: Pick<
+    BtnProps,
+    "size" | "className" | "variant" | "children" | "data-command"
+  >;
 };
 export const JoinedRecordsAddRow = (props: P) => {
   const {
@@ -167,8 +170,8 @@ export const JoinedRecordsAddRow = (props: P) => {
         />
       )}
       <Btn
-        {...props.btnProps}
         data-command="JoinedRecords.AddRow"
+        {...props.btnProps}
         data-key={section.tableName}
         color="action"
         iconPath={mdiPlus}

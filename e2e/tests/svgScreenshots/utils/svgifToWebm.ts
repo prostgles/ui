@@ -51,7 +51,7 @@ export const svgifToWebm = async ({
 
   const page = await context.newPage();
   const url =
-    /^https?:\/\//.test(svgifPath) ? svgifPath : (
+    svgifPath.startsWith("https://") ? svgifPath : (
       `file://${path.resolve(svgifPath)}`
     );
 
@@ -116,7 +116,6 @@ export const svgifToWebm = async ({
     await page.screenshot({
       path: file,
       type: "png",
-      // scale: "css",
       scale: "device",
       animations: "allow",
     });
@@ -129,38 +128,52 @@ export const svgifToWebm = async ({
   console.log("\nEncoding…");
   await browser.close();
 
-  const outputFileName = fileNameWithoutExt + ".webm";
+  const outputFileName = fileNameWithoutExt + ".mp4";
   try {
-    // execSync(
-    //   `ffmpeg -y -framerate ${fps} -i "${path.join(framesDir, "%06d.png")}" ` +
-    //     `-c:v libvpx-vp9 -b:v 0 -crf 15 -pix_fmt yuv444p -vsync cfr -r ${fps} ${outputFileName} `,
-    //   {
-    //     cwd: outDir,
-    //   },
-    // );
-    await runFfmpeg(
-      [
-        "-y",
-        "-framerate",
-        String(fps),
-        "-i",
-        path.join(framesDir, "%06d.png"),
-        "-c:v",
-        "libvpx-vp9",
-        "-b:v",
-        "0",
-        "-crf",
-        "10", // "15",
-        "-pix_fmt",
-        "yuv444p",
-        "-vsync",
-        "cfr",
-        "-r",
-        String(fps),
-        outputFileName,
-      ],
-      outDir,
-    );
+    const webArgs = [
+      "-y",
+      "-framerate",
+      String(fps),
+      "-i",
+      path.join(framesDir, "%06d.png"),
+      "-c:v",
+      "libvpx-vp9",
+      "-b:v",
+      "0",
+      "-crf",
+      "10",
+      "-pix_fmt",
+      "yuv444p",
+      "-vsync",
+      "cfr",
+      "-r",
+      String(fps),
+      outputFileName,
+    ];
+
+    const mp4Args = [
+      "-y",
+      "-framerate",
+      String(fps),
+      "-i",
+      path.join(framesDir, "%06d.png"),
+      "-c:v",
+      "libx264",
+      "-crf",
+      "18",
+      "-preset",
+      "medium",
+      "-pix_fmt",
+      "yuv420p",
+      "-movflags",
+      "+faststart",
+      "-vsync",
+      "cfr",
+      "-r",
+      String(fps),
+      outputFileName,
+    ];
+    await runFfmpeg(mp4Args, outDir);
   } finally {
     fs.rmSync(framesDir, { recursive: true, force: true });
   }

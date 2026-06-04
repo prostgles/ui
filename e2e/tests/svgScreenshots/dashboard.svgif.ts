@@ -3,6 +3,7 @@ import { goTo } from "utils/goTo";
 import {
   closeWorkspaceWindows,
   deleteAllWorkspaces,
+  runDbSql,
   runDbsSql,
 } from "utils/utils";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
@@ -15,9 +16,6 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
   { openConnection, openMenuIfClosed, toggleMenuPinned },
   { addScene, addSceneAnimation },
 ) => {
-  // if (Math.PI) {
-  //   throw "Done";
-  // }
   await goTo(page, "/connections");
 
   await openConnection("food_delivery");
@@ -52,6 +50,17 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
   await page.getByLabel("Default layout type").click();
   await page.locator(getDataKey("col")).click();
   await page.getByTestId("Popup.close").last().click();
+
+  await runDbSql(
+    page,
+    `
+      DELETE FROM restaurant_managers
+      WHERE restaurant_id IN (
+        SELECT id FROM restaurants r
+        WHERE r.name = 'Sun Cafe'
+      )
+      `,
+  );
 
   // await setOrAddWorkspace(page, "Default Grid Layout");
   await openMenuIfClosed(true);
@@ -108,6 +117,30 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
 
   await addSceneAnimation(
     getCommandElemSelector("JoinedRecords.SectionToggle") +
+      '[data-key="restaurant_managers"]',
+  );
+
+  await addSceneAnimation(
+    getCommandElemSelector("JoinedRecords.AddRowNoRecords"),
+  );
+
+  await addSceneAnimation(
+    getDataKey("manager_id") +
+      " " +
+      getCommandElemSelector("SmartFormFieldForeignKey"),
+  );
+
+  await addScene({
+    svgFileName: "fkey_email_search",
+    animations: [{ type: "wait", duration: 1500 }],
+  });
+
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(1500);
+  await page.keyboard.press("Escape");
+
+  await addSceneAnimation(
+    getCommandElemSelector("JoinedRecords.SectionToggle") +
       '[data-key="orders"]',
     // '[data-key="order_items"]',
   );
@@ -120,15 +153,6 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
     .scrollIntoViewIfNeeded();
   await addScene({ animations: [{ type: "wait", duration: 1500 }] });
 
-  // await addSceneAnimation({
-  //   selector: getCommandElemSelector("dashboard.window.viewEditRow"),
-  //   nth: 0,
-  // });
-  // await page.waitForTimeout(1500);
-  // await addSceneAnimation(
-  //   getCommandElemSelector("JoinedRecords.SectionToggle") +
-  //     getDataKey("order_items"),
-  // );
   await page.waitForTimeout(1500);
   await addSceneAnimation({
     selector: getCommandElemSelector("SmartCard.viewEditRow"),
