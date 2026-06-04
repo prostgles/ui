@@ -177,6 +177,9 @@ test.describe("Create docs and screenshots", () => {
   });
 
   test("Record videos", async () => {
+    if (IS_GITHUB_WORKER) {
+      return;
+    }
     test.setTimeout(50 * MINUTE);
     const svgifsToRecord = [
       "overview_long.svgif",
