@@ -75,7 +75,7 @@ export const tableConfigConnections: TableConfig<{ en: 1 }> = {
       prgl_url: { sqlDefinition: `TEXT` },
       prgl_params: { sqlDefinition: `JSONB` },
       type: {
-        enum: ["Standard", "Connection URI", "Prostgles"],
+        enum: ["Standard", "Connection URI"],
         nullable: false,
       },
       is_state_db: {
