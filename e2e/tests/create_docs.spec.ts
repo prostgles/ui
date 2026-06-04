@@ -183,7 +183,6 @@ test.describe("Create docs and screenshots", () => {
       "ai_assistant_agentic_workflow.svgif",
       // "sql_editor_overview.svgif",
       // "ai_assistant_overview.svgif",
-      // "ai_assistant_agentic_workflow_gov_api.svgif",
       // "table_timechart.svgif",
     ].map((name) => {
       const filePath = path.join(SVG_SCREENSHOT_DIR, `${name}.svg`);
