@@ -15,7 +15,7 @@ export const useDrawHiddenSvgForNativeTextSearch = (
   const drawShapesOnHiddenSvg = useCallback(() => {
     const drawnShapes = canvasRef.current?._drawn;
     if (!drawnShapes || !didSearch) return;
-    const { shapes, scale, translate } = drawnShapes;
+    const { shapes, scale3d, translate } = drawnShapes;
     const transformedG = document.createElementNS(SVG_NAMESPACE, "g");
     const { width, height } = canvasRef.current.getBoundingClientRect();
     const shapesWithText = shapes
@@ -41,7 +41,7 @@ export const useDrawHiddenSvgForNativeTextSearch = (
       {} as any,
       transformedG,
       {
-        scale,
+        scale3d,
         translate,
       },
       {
