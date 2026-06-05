@@ -159,6 +159,7 @@ export const useDrawSchemaShapes = (
         const _drawn = {
           shapes: drawnShapes as ShapeV2[],
           scale3d: [scale, scale, 1] as [number, number, number],
+          zoomScale: scale,
           translate: positionRef.current,
         };
         canvas._drawn = _drawn;
@@ -233,6 +234,7 @@ declare global {
     _drawn?: {
       shapes: ShapeV2[];
       scale3d: [number, number, number];
+      zoomScale: number;
       translate: { x: number; y: number };
     };
     _deckgl?: Deck<OrthographicView[] | MapView[]>;

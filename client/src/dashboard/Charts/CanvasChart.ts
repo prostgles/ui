@@ -676,6 +676,7 @@ export class CanvasChart {
           return s;
         }),
         scale3d: [1, 1, 1],
+        zoomScale: this.view.xScale,
         translate: {
           x: 0,
           y: 0,
