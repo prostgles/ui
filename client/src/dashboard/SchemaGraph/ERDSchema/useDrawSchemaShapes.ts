@@ -155,9 +155,10 @@ export const useDrawSchemaShapes = (
           scale: scaleRef.current,
           translate: positionRef.current,
         });
+        const scale = scaleRef.current;
         const _drawn = {
           shapes: drawnShapes as ShapeV2[],
-          scale: scaleRef.current,
+          scale3d: [scale, scale, 1] as [number, number, number],
           translate: positionRef.current,
         };
         canvas._drawn = _drawn;
@@ -231,7 +232,7 @@ declare global {
   interface HTMLCanvasElement {
     _drawn?: {
       shapes: ShapeV2[];
-      scale: number;
+      scale3d: [number, number, number];
       translate: { x: number; y: number };
     };
     _deckgl?: Deck<OrthographicView[] | MapView[]>;

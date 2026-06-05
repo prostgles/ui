@@ -1,0 +1,59 @@
+# Contributing
+
+Thanks for your interest in contributing to Prostgles UI.
+
+## Scope
+
+This repository contains:
+
+- Web client
+- Server
+- Electron desktop app
+- End-to-end tests
+- Shared TypeScript packages
+- Documentation
+
+Please keep changes scoped and focused. Separate refactors from feature work where possible.
+
+## Before You Start
+
+1. Open an issue describing the bug/feature, or confirm an existing issue.
+2. Wait for maintainer feedback for larger changes.
+3. Fork and create a feature branch from master
+
+## Local Setup
+
+1. Install dependencies:
+   - Node.js (LTS)
+   - Postgres
+   - Docker (recommended for local stack)
+2. Start development:
+   - npm run dev
+3. Run tests before opening a PR:
+   - npm test
+   - e2e tests if your change affects UI flows
+
+## Coding Standards
+
+- Follow existing linting and formatting rules.
+- Keep PRs small and reviewable.
+- Avoid unrelated formatting-only changes in feature PRs.
+- Update docs when behavior or setup changes.
+
+## Pull Request Checklist
+
+- [ ] Tests added/updated for behavior changes
+- [ ] Existing tests pass
+- [ ] Docs updated (README/docs/changelog) when needed
+- [ ] No sensitive data or credentials committed
+
+## PR Review Expectations
+
+- Maintainers may request changes before merge.
+- CI must pass.
+- Security-sensitive changes may require additional review time.
+
+## Reporting Security Issues
+
+Please do not open public issues for vulnerabilities.  
+Use the private security contact in the repository security policy.

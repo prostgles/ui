@@ -40,6 +40,19 @@ export const getOverviewSvgifSpecs = async () => {
   };
   const overviewSvgifSpecs = [
     {
+      fileName: "overview_readme",
+      usedExternally: true,
+      scenes: [
+        ...sliceScenes("schema_diagram", 1, 2),
+        ...sliceScenes("sql_editor", 5, 6),
+        ...sliceScenes("ai_assistant_agentic_workflow_gov_api", 1, 2),
+        ...sliceScenes("ai_assistant_agentic_workflow_gov_api", 5, 6),
+        ...sliceScenes("table_timechart", 8, 9),
+        ...sliceScenes("timechart", 6),
+        ...sliceScenes("map", 6),
+      ],
+    },
+    {
       fileName: "overview",
       scenes: [
         ...sliceScenes("sql_editor", 5, 7),

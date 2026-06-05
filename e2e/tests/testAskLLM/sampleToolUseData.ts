@@ -1251,78 +1251,16 @@ export const prostglesUICryptoDashboardSample = {
               },
               filter: [
                 {
-                  type: "$eq",
-                  value: "BTCUSDT",
+                  type: "$in",
+                  value: ["BTCUSDT", "ETHUSDT", "TAOUSDT"],
                   fieldName: "symbol",
                 },
               ],
-              dateColumn: "timestamp",
-              table_name: "futures",
-            },
-            {
-              type: "local-table",
-              title: "ETH",
-              yAxis: {
-                column: "price",
-                aggregation: "avg",
-              },
-              filter: [
-                {
-                  type: "$eq",
-                  value: "ETHUSDT",
-                  fieldName: "symbol",
-                },
-              ],
-              dateColumn: "timestamp",
-              table_name: "futures",
-            },
-            {
-              type: "local-table",
-              title: "BNB",
-              yAxis: {
-                column: "price",
-                aggregation: "avg",
-              },
-              filter: [
-                {
-                  type: "$eq",
-                  value: "BNBUSDT",
-                  fieldName: "symbol",
-                },
-              ],
-              dateColumn: "timestamp",
-              table_name: "futures",
-            },
-            {
-              type: "local-table",
-              title: "SOL",
-              yAxis: {
-                column: "price",
-                aggregation: "avg",
-              },
-              filter: [
-                {
-                  type: "$eq",
-                  value: "SOLUSDT",
-                  fieldName: "symbol",
-                },
-              ],
-              dateColumn: "timestamp",
-              table_name: "futures",
-            },
-            {
-              type: "local-table",
-              title: "XRP",
-              yAxis: {
-                column: "price",
-                aggregation: "avg",
-              },
-              filter: [
-                {
-                  type: "$eq",
-                  value: "XRPUSDT",
-                  fieldName: "symbol",
-                },
+              groupByColumn: "symbol",
+              groupByColumnColors: [
+                { color: "#FF6B2C", value: "TAOUSDT" },
+                { color: "#06B6D4", value: "ETHUSDT" },
+                { color: "#CB11F0", value: "BTCUSDT" },
               ],
               dateColumn: "timestamp",
               table_name: "futures",

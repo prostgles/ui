@@ -15,7 +15,7 @@ With the exception of information you voluntarily submit via the "Send feedback"
     <strong>Your local machine:</strong> 
     <ul>
       <li><strong>Electron/Desktop app:</strong> Stores files, backups and encrypted state database connection details in your user data directory (Windows: <code>%APPDATA%/prostgles-desktop</code>, macOS: <code>~/Library/Application Support/prostgles-desktop</code>, Linux: <code>~/.config/prostgles-desktop</code>).</li>
-      <li><strong>Source/Docker/Node.js app:</strong> Stores files, backups and state state database configuration in the directory where the software is run (current working directory) unless otherwise configured.</li>
+      <li><strong>Source/Docker/Node.js app:</strong> Stores files, backups and state database configuration in the directory where the software is run (current working directory) unless otherwise configured.</li>
     </ul>
   </li>
   <li>

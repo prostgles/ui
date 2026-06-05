@@ -102,7 +102,7 @@ export const elementToSVG = async (
 
   if (element instanceof HTMLCanvasElement) {
     if (element._drawn?.shapes.length) {
-      const { shapes, scale, translate } = element._drawn;
+      const { shapes, scale3d, translate } = element._drawn;
       const transformedG = document.createElementNS(SVG_NAMESPACE, "g");
       g.setAttribute("transform", `translate(${x}, ${y})`);
       g.appendChild(transformedG);
@@ -111,7 +111,7 @@ export const elementToSVG = async (
         context,
         transformedG,
         {
-          scale,
+          scale3d,
           translate,
         },
         {

@@ -612,16 +612,16 @@ export class CanvasChart {
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       } else if (s.type === "text") {
         const coords = getScreenCoords(s.coords);
-        const { textAlign = "start" } = s;
+        const { textAlign = "start", background } = s;
 
-        if (s.background) {
+        if (background) {
           const txtSize = this.measureText(s);
-          const txtPadding = s.background.padding || 6;
-          ctx.fillStyle = s.background.fillStyle ?? ctx.fillStyle;
-          if (s.background.strokeStyle) {
-            ctx.strokeStyle = s.background.strokeStyle;
+          const txtPadding = background.padding || 6;
+          ctx.fillStyle = background.fillStyle ?? ctx.fillStyle;
+          if (background.strokeStyle) {
+            ctx.strokeStyle = background.strokeStyle;
           }
-          ctx.lineWidth = s.background.lineWidth ?? ctx.lineWidth;
+          ctx.lineWidth = background.lineWidth ?? ctx.lineWidth;
           let x = coords[0] - txtSize.width / 2 - txtPadding;
           const y = coords[1] - txtSize.actualHeight / 1.4 - txtPadding;
 
@@ -633,8 +633,8 @@ export class CanvasChart {
 
           const w = txtSize.width + 2 * txtPadding;
           const h = txtSize.actualHeight + 2 * txtPadding;
-          roundRect(ctx, x, y, w, h, s.background.borderRadius || 0);
-          if (s.background.strokeStyle) {
+          roundRect(ctx, x, y, w, h, background.borderRadius || 0);
+          if (background.strokeStyle) {
             ctx.stroke();
           }
           ctx.fill();
@@ -643,7 +643,7 @@ export class CanvasChart {
         ctx.fillStyle = s.fillStyle;
         ctx.textAlign = textAlign;
         ctx.textBaseline = s.textBaseline ?? "middle";
-        ctx.font = s.font || ctx.font;
+        ctx.font = s.font || ""; // || ctx.font;
 
         const topOffsetToCenterItVertically = 2;
 
@@ -656,11 +656,30 @@ export class CanvasChart {
     });
 
     const { canvas } = this.opts ?? {};
+    const applyTransforms = ([x, y]: Point): Point => {
+      return [
+        x * this.view.xScale + this.view.xO,
+        y * this.view.yScale + this.view.yO,
+      ];
+    };
     if (canvas) {
       canvas._drawn = {
-        shapes,
-        scale: 1,
-        translate: { x: 0, y: 0 },
+        /** Apply scales and offset here */
+        shapes: shapes.map((s) => {
+          if (s.type === "text") {
+            s.coords = applyTransforms(s.coords);
+          } else if (s.type === "rectangle" || s.type === "circle") {
+            s.coords = applyTransforms(s.coords);
+          } else {
+            s.coords = s.coords.map(applyTransforms);
+          }
+          return s;
+        }),
+        scale3d: [1, 1, 1],
+        translate: {
+          x: 0,
+          y: 0,
+        },
       };
     }
   }
