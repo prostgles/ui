@@ -344,6 +344,7 @@ export const COMMANDS = {
   "W_Table.TableNotFound": "",
   JoinedRecords: "",
   "JoinedRecords.AddRow": "",
+  "JoinedRecords.AddRowNoRecords": "",
   "JoinedRecords.SectionToggle": "",
   "JoinedRecords.Section": "",
   "SmartCard.viewEditRow": "",
@@ -589,6 +590,7 @@ export const COMMANDS = {
   App: "",
   SwitchToggle: "",
   "LLMChatOptions.EnabledMcpServer": "",
+  SmartFormFieldForeignKey: "",
 } as const satisfies Record<
   string,
   | string
@@ -645,11 +647,13 @@ export declare namespace SVGif {
          * Time to stay on the final position after clicking
          */
         lingerMs?: number;
+        delay?: number;
       }
     | {
         type: "moveCursor";
         xy: [number, number];
         duration: number;
+        delay?: number;
       };
   export type Animation =
     | CursorAnimation

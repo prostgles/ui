@@ -68,7 +68,7 @@ export const aiAssistantAgenticWorkflowGovApiSvgif: OnBeforeScreenshot = async (
     getCommandElemSelector("TableAccessEditor.newTableDDL"),
   );
   await addScene({
-    animations: [{ type: "wait", duration: 1000 }],
+    animations: [{ type: "wait", duration: 1500 }],
   });
   await page.getByTestId("Popup.close").last().click();
   await addSceneAnimation(
@@ -77,7 +77,7 @@ export const aiAssistantAgenticWorkflowGovApiSvgif: OnBeforeScreenshot = async (
       getCommandElemSelector("selectRuleAdvanced"),
   );
   await addScene({
-    animations: [{ type: "wait", duration: 1000 }],
+    animations: [{ type: "wait", duration: 2000 }],
   });
   await page.getByTestId("Popup.close").last().click();
 
@@ -86,12 +86,9 @@ export const aiAssistantAgenticWorkflowGovApiSvgif: OnBeforeScreenshot = async (
   await page.mouse.wheel(0, -800); // scroll up
   await page.waitForTimeout(5e3);
   await page.mouse.wheel(0, -800); // scroll up
+
   await addScene({
     svgFileName: "hygiene_ratings_workflow_definition",
-    animations: [{ type: "wait", duration: 1500 }],
-  });
-  await addScene({
-    svgFileName: "hygiene_ratings_workflow_definition_new_table",
     animations: [{ type: "wait", duration: 1000 }],
   });
   await addSceneAnimation(getCommandElemSelector("AgenticWorkflow.start"));

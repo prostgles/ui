@@ -44,7 +44,7 @@ export const NewTableMenu = (
   const [show, setShow] = useState<(typeof items)[number]["key"]>();
   const { addViewToWorkspace } = useAddViewToWorkspace();
   const { addAlert } = useAlert();
-  if (!sql) return null;
+  // if (!sql) return null;
 
   return (
     <>
@@ -61,6 +61,9 @@ export const NewTableMenu = (
           size: "default",
           className: "",
           children: null,
+          style: {
+            visibility: !sql ? "hidden" : undefined,
+          },
         }}
         fullOptions={items}
         onChange={(o) => {

@@ -4,7 +4,7 @@ import { mdiRelationManyToMany } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import React, { useState } from "react";
 import type { Prgl } from "../../App";
-import type { Connection } from "../../pages/NewConnection/NewConnnectionForm";
+import type { Connection } from "../../pages/NewConnection/NewConnectionForm";
 import type { DBS } from "../Dashboard/DBS";
 import { ERDSchema } from "./ERDSchema/ERDSchema";
 import {

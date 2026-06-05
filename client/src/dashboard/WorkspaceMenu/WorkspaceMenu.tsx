@@ -24,7 +24,8 @@ export const WorkspaceMenu = (props: P) => {
     prgl: { dbs, user },
   } = props;
   const listRef = useRef<HTMLDivElement>(null);
-
+  const { layout_mode } = workspace;
+  const isFixedLayout = layout_mode === "fixed";
   const { setWorkspace } = useSetActiveWorkspace(workspace.id);
   const userId = user?.id;
   const { workspaces } = useWorkspaces(dbs, userId!, workspace.connection_id);
@@ -96,30 +97,28 @@ export const WorkspaceMenu = (props: P) => {
           </li>
         ))}
       </ul>
-
-      {user?.type === "admin" && !window.isLowWidthScreen && (
-        <Btn
-          iconPath={
-            workspace.layout_mode === "fixed" ?
-              mdiViewDashboardEdit
-            : mdiViewDashboard
-          }
-          title={"Toggle Layout Mode"}
-          data-command="WorkspaceMenu.toggleWorkspaceLayoutMode"
-          size="default"
-          onClick={() => {
-            workspace.$update({
-              layout_mode:
-                workspace.layout_mode === "fixed" ? "editable" : "fixed",
-            });
-          }}
-        />
-      )}
       <WorkspaceMenuDropDown
         {...props}
         setWorkspace={setWorkspace}
         workspaces={workspaces}
       />
+
+      {user?.type === "admin" && !window.isLowWidthScreen && (
+        <Btn
+          iconPath={isFixedLayout ? mdiViewDashboardEdit : mdiViewDashboard}
+          title={"Toggle Layout Mode"}
+          data-command="WorkspaceMenu.toggleWorkspaceLayoutMode"
+          size="small"
+          variant={isFixedLayout ? "filled" : undefined}
+          color={isFixedLayout ? "action" : undefined}
+          onClick={() => {
+            workspace.$update({
+              layout_mode: isFixedLayout ? "editable" : "fixed",
+            });
+          }}
+          children={isFixedLayout ? "Edit layout" : undefined}
+        />
+      )}
     </FlexRow>
   );
 };

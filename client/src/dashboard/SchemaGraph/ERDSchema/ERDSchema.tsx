@@ -9,7 +9,10 @@ import { useCanvasPanZoom } from "./useCanvasPanZoom";
 import { useDrawSchemaShapes } from "./useDrawSchemaShapes";
 import { useSetPanShapes } from "./usePanShapes";
 import { useSchemaShapes, type SchemaShape } from "./useSchemaShapes";
-import { getEntries } from "@common/utils";
+import {
+  getEntries,
+  tableMightBeUndefinedDueToAccessControl,
+} from "@common/utils";
 import Chip from "@components/Chip";
 
 export type ColumnDisplayMode = "none" | "all" | "references";
@@ -85,7 +88,9 @@ export const ERDSchema = ({
         {} as Record<string, { x: number; y: number }>,
       );
     if (!dbConfId || displayMode !== "all") return;
-    void dbs.database_configs.update(
+    void tableMightBeUndefinedDueToAccessControl(
+      dbs.database_configs,
+    )?.update?.(
       {
         id: dbConfId,
       },

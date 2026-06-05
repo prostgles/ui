@@ -48,7 +48,7 @@ export const RenderValue = ({
   showTitle = true,
   maxLength,
   style,
-  maximumFractionDigits = 3,
+  maximumFractionDigits,
   getValues,
 }: P): JSX.Element => {
   const nullRender = renderNull(value, style, showTitle);
@@ -91,7 +91,6 @@ export const RenderValue = ({
   }
 
   if (
-    // tsDataType === "number" &&
     udt_name &&
     includes(_PG_numbers, udt_name) &&
     value !== undefined &&
@@ -106,21 +105,40 @@ export const RenderValue = ({
       })
       .reduce((a, b) => Math.max(a, b), 0);
     const getValue = () => {
+      const num = Number(value);
+      if (!Number.isFinite(num)) return value;
       const isFloat =
         udt_name === "float4" ||
         udt_name === "float8" ||
         udt_name === "numeric";
-      if (!isFloat) return +value;
-      const actualDecimals = countDecimals(+value);
-      const maxDecimals =
-        +value < 1 && +value > -1 ? actualDecimals + 1 : maximumFractionDigits;
-      const slicedValue = getSliced(
-        (+value).toLocaleString(undefined, {
-          minimumFractionDigits:
-            maxDecimalsFromValues ?? Math.min(maxDecimals, actualDecimals),
+      if (!isFloat) {
+        return num.toLocaleString();
+      }
+
+      const actualDecimals = countDecimals(num);
+      const autoMax =
+        num > -1 && num < 1 ?
+          Math.min(actualDecimals + 1, 6)
+        : Math.min(actualDecimals, 2);
+
+      const maxFraction = Math.min(
+        6,
+        Math.max(0, maxDecimalsFromValues || autoMax),
+      );
+
+      if (maximumFractionDigits !== undefined) {
+        return num.toLocaleString(undefined, {
+          minimumFractionDigits: Math.min(maxFraction, maximumFractionDigits),
+          maximumFractionDigits: Math.min(maxFraction, maximumFractionDigits),
+        });
+      }
+
+      return getSliced(
+        num.toLocaleString(undefined, {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: maxFraction,
         }),
       );
-      return slicedValue;
     };
 
     return (

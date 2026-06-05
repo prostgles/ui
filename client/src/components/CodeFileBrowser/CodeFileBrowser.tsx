@@ -9,7 +9,12 @@ import { CodeEditorWithSaveButton } from "src/dashboard/CodeEditor/CodeEditorWit
 export const CodeFileBrowser = ({
   files,
   onChange,
+  modelsGroupId,
 }: {
+  /**
+   * Used as modelId prefix for Monaco editor to ensure it doesn't show stale content from other renders
+   */
+  modelsGroupId: string;
   files: Record<string, string>;
   onChange: (newFile: {
     fileName: string;
@@ -24,11 +29,11 @@ export const CodeFileBrowser = ({
       return {
         lang: "typescript",
         environment: "nodejs",
-        modelFileName: activeFilePath ?? "file.ts",
+        modelFileName: modelsGroupId + (activeFilePath ?? "file.ts"),
       } as const;
     }
     return FILE_EXTENSION_TO_ICON_INFO[extension]?.label ?? "plaintext";
-  }, [activeFilePath, extension]);
+  }, [activeFilePath, extension, modelsGroupId]);
   return (
     <FlexRow className="min-w-0 min-h-0 ai-start gap-0 w-full max-w-full f-1">
       <MenuList

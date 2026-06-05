@@ -504,7 +504,7 @@ export default class FormField<
       : type === "checkbox" ? <Checkbox {...inputProps} />
       : readOnly ?
         <div
-          className="pr-p5 py-p5 font-16 ta-left o-auto"
+          className="pr-p5 font-16 ta-left o-auto"
           style={{ fontWeight: 500, maxHeight: "30vh" }}
         >
           <RenderValue column={undefined} value={rawValue} />

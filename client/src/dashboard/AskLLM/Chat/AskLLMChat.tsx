@@ -120,7 +120,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
           isFullscreen ?
             {}
           : {
-              width: `min(100vw, ${CHAT_WIDTH}px)`,
+              width: `min(calc(100vw - 2px), ${CHAT_WIDTH}px)`,
               minWidth: "0",
               maxWidth: `${CHAT_WIDTH}px`,
             },

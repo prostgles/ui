@@ -1,19 +1,26 @@
 import type { TimechartWindowInsertModel } from "@common/DashboardTypes";
 import { getPaletteRGBColor } from "src/dashboard/W_Table/ColumnMenu/ColorPicker";
 import type { LinkOption, WindowInsertModel } from "./loadGeneratedWorkspaces";
+import type { WindowData } from "src/dashboard/Dashboard/dashboardUtils";
 
 export const loadGeneratedTimechart = (
   generatedWindow: TimechartWindowInsertModel,
 ): { window: WindowInsertModel; linkOptions: LinkOption[] } => {
-  const { title, layers } = generatedWindow;
+  const { title = null, layers, yScaleMode = "multiple" } = generatedWindow;
 
   const tableLayer = layers.find(
     (l): l is Exclude<typeof l, { sql: string }> => "table_name" in l,
   );
-  const window: WindowInsertModel = {
+  const window: Pick<
+    WindowData<"timechart">,
+    "type" | "title" | "table_name" | "options"
+  > = {
     type: "timechart",
     title,
     table_name: tableLayer?.table_name || "",
+    options: {
+      yScaleMode,
+    },
   };
 
   const linkOptions: LinkOption[] = layers.map((l, i) => {

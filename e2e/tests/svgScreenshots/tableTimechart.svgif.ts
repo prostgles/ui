@@ -66,7 +66,17 @@ export const tableTimechartSvgif: OnBeforeScreenshot = async (
   // await page.locator("input#nested-col-name").fill("All orders");
   // await page.waitForTimeout(1500);
   // await page.getByTestId("LinkedColumn.Add").click();
-  await page.getByTestId("WorkspaceMenu.toggleWorkspaceLayoutMode").click();
+  const toggleFixedLayout = async (on: boolean) => {
+    await page.reload();
+    const btn = await page.getByTestId(
+      "WorkspaceMenu.toggleWorkspaceLayoutMode",
+    );
+    const isOn = Boolean((await btn.textContent())?.includes("Edit layout"));
+    if (isOn !== on) {
+      await btn.click();
+    }
+  };
+  await toggleFixedLayout(true);
 
   await page.evaluate(() => {
     document.querySelector<HTMLDivElement>(".TopHeader")!.style.display =
@@ -78,6 +88,9 @@ export const tableTimechartSvgif: OnBeforeScreenshot = async (
     document.querySelector<HTMLDivElement>(
       ".silver-grid-component",
     )!.style.padding = "0";
+    document.querySelector<HTMLDivElement>(
+      `[data-command="WorkspaceMenu.toggleWorkspaceLayoutMode"]`,
+    )!.style.opacity = "0";
   });
 
   /** Show linked computed column */
@@ -111,8 +124,7 @@ export const tableTimechartSvgif: OnBeforeScreenshot = async (
   await page.waitForTimeout(1500);
 
   await addScene();
-  await page.reload();
-  await page.getByTestId("WorkspaceMenu.toggleWorkspaceLayoutMode").click();
+  await toggleFixedLayout(false);
 
   await page.waitForTimeout(2000);
 
@@ -122,14 +134,26 @@ export const tableTimechartSvgif: OnBeforeScreenshot = async (
   await page.getByTestId("DataLayerDataSourceInfo").click();
   await page.locator(getDataKey("addresses.geog")).click();
 
-  await page.getByTestId("WorkspaceMenu.toggleWorkspaceLayoutMode").click();
+  await toggleFixedLayout(true);
 
   await clickTableRow({ page, addScene, addSceneAnimation }, 2, undefined, 2);
   await page.waitForTimeout(2_000);
   await clickTableRow({ page, addScene, addSceneAnimation }, 3, undefined, 2);
-  // await addScene();
+  await addScene({
+    svgFileName: "linked_data_map",
+    animations: [{ type: "wait", duration: 2000 }],
+  });
+  await clickTableRow({ page, addScene, addSceneAnimation }, 3, undefined, 1);
 
-  await page.getByTestId("WorkspaceMenu.toggleWorkspaceLayoutMode").click();
+  await addSceneAnimation(
+    getCommandElemSelector("JoinedRecords.SectionToggle") +
+      getDataKey("orders"),
+  );
+  await addScene({
+    animations: [{ type: "wait", duration: 2000 }],
+  });
+
+  await toggleFixedLayout(false);
 };
 
 const windowConfig = {
@@ -152,6 +176,11 @@ const windowConfig = {
         limit: 20,
         columns: [
           {
+            style: {
+              barColor: "var(--active)",
+              textColor: "#646464",
+              type: "Barchart",
+            },
             computedConfig: {
               funcDef: {
                 key: "$countAll",

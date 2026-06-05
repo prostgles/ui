@@ -214,6 +214,7 @@ export const DockerContainer = ({
     >
       <FlexCol className=" ai-start gap-0 f-1">
         <CodeFileBrowser
+          modelsGroupId={toolUseId}
           files={data.files}
           onChange={({ fileName, content }) => {
             setEditedFiles((prev) => ({

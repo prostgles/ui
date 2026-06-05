@@ -144,14 +144,16 @@ export const SvgIconFromURL = ({
         ...(mode === "mask" ?
           {
             backgroundColor: "currentColor",
-            maskImage: `url(${JSON.stringify(url)})`,
+            maskImage: `url(${JSON.stringify(url)}), url(${JSON.stringify(FALLBACK_ICON_URL)})`,
             maskSize: "cover",
           }
         : {
-            backgroundImage: `url(${JSON.stringify(url)})`,
+            backgroundImage: `url(${JSON.stringify(url)}), url(${JSON.stringify(FALLBACK_ICON_URL)})`,
             backgroundSize: "cover",
           }),
       }}
     />
   );
 };
+
+const FALLBACK_ICON_URL = "/icons/Help.svg";

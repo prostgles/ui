@@ -33,12 +33,14 @@ export type SmartFormFieldForeignKeyProps = Pick<
     onChange: (newValue: ColumnData) => Promise<void> | void;
     readOnly: boolean;
     newRowDataHandler: NewRowDataHandler;
+    id: string;
   };
 
 export const SmartFormFieldForeignKey = (
   props: SmartFormFieldForeignKeyProps,
 ) => {
   const {
+    id,
     column,
     db,
     onChange,
@@ -52,7 +54,7 @@ export const SmartFormFieldForeignKey = (
   } = props;
 
   const [fullOptions, setFullOptions] = useState<FullOption[]>();
-  const getuseIsMounted = useIsMounted();
+  const getIsMounted = useIsMounted();
   const newValue = newRowDataHandler.getNewRow()[column.name];
 
   const isUpsertingFile = column.file && isObject(newValue);
@@ -83,10 +85,10 @@ export const SmartFormFieldForeignKey = (
         row: rowWithFKeyValsMemo,
         term,
       });
-      if (!getuseIsMounted()) return;
+      if (!getIsMounted()) return;
       setFullOptions(options);
     },
-    [column, db, table, tables, rowWithFKeyValsMemo, getuseIsMounted],
+    [column, db, table, tables, rowWithFKeyValsMemo, getIsMounted],
   );
 
   useEffect(() => {
@@ -220,12 +222,14 @@ export const SmartFormFieldForeignKey = (
     <Select
       className="SmartFormFieldForeignKey FormField_Select noselect formfield-bg-color"
       variant="div"
+      data-command="SmartFormFieldForeignKey"
       fullOptions={fullOptions ?? []}
       onSearch={onSearchOptions}
       onChange={(newVal) => onChange({ type: "column", value: newVal })}
       value={value}
       labelAsValue={true}
       btnProps={{
+        id,
         children: displayValue,
         style: {
           justifyContent: "space-between",

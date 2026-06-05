@@ -1,8 +1,11 @@
 import { fetchNamedSVG } from "@components/SvgIcon";
 import { usePromise } from "prostgles-client";
-import { isEmpty } from "prostgles-types";
+import { isDefined, isEmpty } from "prostgles-types";
 import { getCssVariableValue } from "../../Charts/TimeChart/getCssVariableValue";
-import { PG_OBJECT_QUERIES } from "../../SQLEditor/SQLCompletion/getPGObjects";
+import {
+  PG_OBJECT_QUERIES,
+  type PGConstraint,
+} from "../../SQLEditor/SQLCompletion/getPGObjects";
 import { COLOR_PALETTE } from "../../W_Table/ColumnMenu/ColorPicker";
 import type { ERDSchemaProps } from "./ERDSchema";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
@@ -28,44 +31,98 @@ export const useFetchSchemaForDiagram = (
 
   const schemaInfo = usePromise(async () => {
     if (!dbConf) return;
-    const constraints =
-      !sql ?
-        []
-      : ((await sql(
-          PG_OBJECT_QUERIES.constraints.sql,
-          {},
-          { returnType: "rows" },
-        )) as (typeof PG_OBJECT_QUERIES.constraints.type)[]);
     const tables = dbTables;
+    type FkeyConstraint = Pick<
+      PGConstraint,
+      | "table_oid"
+      | "ftable_oid"
+      | "conkey"
+      | "confkey"
+      | "on_delete_action"
+      | "on_update_action"
+    >;
+    const fkeys: FkeyConstraint[] =
+      /** TODO: add on_delete/update actions to TableSchema  */
+      !sql ?
+        (() => {
+          const constraintsFromTables: FkeyConstraint[] = [];
+          const constraintMap = new Set<string>();
+          const upsertConstraint = (constraint: FkeyConstraint) => {
+            const { table_oid, ftable_oid, conkey, confkey } = constraint;
+            const key = [
+              table_oid,
+              ftable_oid,
+              ...conkey!.sort(),
+              ...confkey!.sort(),
+            ].join("-");
+            if (constraintMap.has(key)) return;
+            constraintMap.add(key);
+            constraintsFromTables.push(constraint);
+          };
+
+          tables.forEach(({ oid, columns }) => {
+            columns.forEach((col) => {
+              const refs = col.references;
+              if (refs?.length) {
+                refs.forEach(({ ftable, fcols, cols }) => {
+                  const fTable = tables.find((t) => t.name === ftable);
+                  if (!fTable) {
+                    console.warn(
+                      `Referenced table ${ftable} not found for column ${col.name}`,
+                    );
+                    return;
+                  }
+                  upsertConstraint({
+                    table_oid: oid,
+                    ftable_oid: fTable.oid,
+                    conkey: columns
+                      .map((c) =>
+                        cols.includes(c.name) ? c.ordinal_position : undefined,
+                      )
+                      .filter(isDefined),
+                    confkey: fTable.columns
+                      .map((c) =>
+                        fcols.includes(c.name) ? c.ordinal_position : undefined,
+                      )
+                      .filter(isDefined),
+                    on_delete_action: "NO ACTION",
+                    on_update_action: "NO ACTION",
+                  });
+                });
+              }
+            });
+          });
+          return constraintsFromTables;
+        })()
+      : (
+          (await sql(
+            PG_OBJECT_QUERIES.constraints.sql,
+            {},
+            { returnType: "rows" },
+          )) as (typeof PG_OBJECT_QUERIES.constraints.type)[]
+        ).filter((c) => c.contype === "f");
     const defaultIconColor = getCssVariableValue("--text-2");
     const columnConstraintIcons = {
       pkey: await fetchSVGImage("Key", defaultIconColor),
       fkey: await fetchSVGImage("KeyLink", defaultIconColor),
-      unqiue: await fetchSVGImage("AlphaU", defaultIconColor),
+      unique: await fetchSVGImage("AlphaU", defaultIconColor),
       nullable: await fetchSVGImage("AlphaN", defaultIconColor),
     };
 
-    const fkeys = constraints.filter((c) => c.contype === "f");
-    const getRefs = (
-      tableName: string,
-      relType: "references" | "referencedBy",
-    ) => {
+    const getRefs = (oid: number, relType: "references" | "referencedBy") => {
       return fkeys
         .filter(
-          ({ table_name, ftable_name }) =>
-            (relType === "referencedBy" ? ftable_name : table_name) ===
-            tableName,
+          ({ table_oid, ftable_oid }) =>
+            (relType === "referencedBy" ? ftable_oid : table_oid) === oid,
         )
-        .map((c) =>
-          relType === "referencedBy" ? c.table_name : c.ftable_name!,
-        );
+        .map((c) => (relType === "referencedBy" ? c.table_oid : c.ftable_oid));
     };
 
     const allTableMostReferencedTop = tables
       .map((t) => ({
         ...t,
-        references: getRefs(t.name, "references"),
-        referencedBy: getRefs(t.name, "referencedBy"),
+        references: getRefs(t.oid, "references"),
+        referencedBy: getRefs(t.oid, "referencedBy"),
       }))
       .map((t, i, tablesWithRefs) => ({
         ...t,
@@ -74,7 +131,7 @@ export const useFetchSchemaForDiagram = (
           : t.referencedBy.length ? ("root" as const)
           : ("orphan" as const),
         nextReferencedBy: tablesWithRefs
-          .filter((lt) => t.referencedBy.includes(lt.name))
+          .filter((lt) => t.referencedBy.includes(lt.oid))
           .flatMap((lt) => lt.referencedBy),
       }))
       .sort((a, b) => {
@@ -132,12 +189,11 @@ export const useFetchSchemaForDiagram = (
           (a.nextReferencedBy.length + a.referencedBy.length);
         return mostReferenced;
       });
-    const getNextTables = (prevColTableName: string) => {
+    const getNextTables = (prevColTableOid: number) => {
       const result = topLinkedTables.slice(0, 0);
       const indexesToRemove: number[] = [];
       topLinkedTables.forEach((t, i) => {
-        if (!t.references.includes(prevColTableName)) return;
-        // if (result.length >= limit) return;
+        if (!t.references.includes(prevColTableOid)) return;
         result.push(t);
         indexesToRemove.push(i);
       });
@@ -150,7 +206,7 @@ export const useFetchSchemaForDiagram = (
     while (topLinkedTables.length) {
       const prevColTables = schemaColumns.at(-1);
       if (!prevColTables) break;
-      const nextTables = prevColTables.flatMap((t) => getNextTables(t.name));
+      const nextTables = prevColTables.flatMap((t) => getNextTables(t.oid));
       schemaColumns.push(nextTables);
     }
 
@@ -202,10 +258,10 @@ export const useFetchSchemaForDiagram = (
   return { schemaInfo, dbConfId: dbConf?.id, dbConf };
 };
 
-const fetchSVGImage = (iconName: string, currentcolor: string) => {
+const fetchSVGImage = (iconName: string, currentFillColor: string) => {
   return fetchNamedSVG(iconName).then((rawSvgString) => {
     if (!rawSvgString) return;
-    const svgString = rawSvgString.replaceAll("currentcolor", currentcolor);
+    const svgString = rawSvgString.replaceAll("currentcolor", currentFillColor);
     return new Promise<HTMLImageElement>((resolve) => {
       // Create a data URL
       const img = new Image();

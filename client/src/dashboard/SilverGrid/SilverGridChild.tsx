@@ -307,7 +307,7 @@ export class SilverGridChild extends RTComp<
     let content: any = children;
 
     const height =
-      layoutMode === "fixed" ? 50
+      layoutMode !== "editable" ? 50
       : window.isMobileDevice ? 32
       : 40;
     const isMinimized = !fullscreen && !minimize && minimized;
@@ -354,7 +354,7 @@ export class SilverGridChild extends RTComp<
 
     /** Is used to ensure that clicks on overflowing content are not disabled */
     const isMyContent = (target: any) => this.ref?.contains(target);
-    const isFixed = this.props.layoutMode === "fixed";
+    const isFixed = this.props.layoutMode !== "editable";
     return (
       <div
         ref={(r) => {
@@ -362,7 +362,7 @@ export class SilverGridChild extends RTComp<
         }}
         /**
          * Specifically added for timechart.
-         * It dissapears when it's a small view and is zoomed in and fullscreen is toggled
+         * It disappears when it's a small view and is zoomed in and fullscreen is toggled
          * */
         key={fullscreen + layout.id}
         className={`SilverGridChild silver-grid-box silver-grid-item bg-color-1 f-1 flex-col min-w-0 min-h-0 ${fullscreen ? " fullscreen " : " "} ${isFixed ? "rounded shadow" : ""}`}

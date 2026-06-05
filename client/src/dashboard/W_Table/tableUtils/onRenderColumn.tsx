@@ -51,24 +51,11 @@ export const onRenderColumn = (args: OnRenderColumnProps) => {
       )
     : column.nested ?
       ({ value, row }) => {
-        // const nestedTimeChartDates: number[] | undefined = c.nested?.chart && value && value.flatMap(nr => isObject(nr)? +new Date(nr.date) : -1)
-        // const allDatesAreValid = nestedTimeChartDates && nestedTimeChartDates.every(d => Number.isFinite(d));
-        // const nestedTimeChartMeta: NestedTimeChartMeta | undefined = !allDatesAreValid? undefined : {
-        //   fullExtent: [
-        //     new Date(Math.min(...nestedTimeChartDates)),
-        //     new Date(Math.max(...nestedTimeChartDates)),
-        //   ]
-        // };
         const chartLimits = barchartVals?.[column.name];
         const nestedTimeChartMeta: NestedTimeChartMeta | undefined =
-          chartLimits ?
-            {
-              fullExtent: [
-                new Date(chartLimits.min),
-                new Date(chartLimits.max),
-              ],
-            }
-          : undefined;
+          chartLimits && {
+            fullExtent: [new Date(chartLimits.min), new Date(chartLimits.max)],
+          };
 
         return (
           <NestedColumnRender
@@ -77,7 +64,7 @@ export const onRenderColumn = (args: OnRenderColumnProps) => {
             c={column}
             tables={tables}
             nestedTimeChartMeta={nestedTimeChartMeta}
-            barchartVals={barchartVals}
+            getValues={getValues}
           />
         );
       }

@@ -2,7 +2,7 @@ import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig"
 import { UNIQUE_DB_COLS } from "./tableConfigDatabaseConfig";
 import { tableOptionsJsonbSchema } from "@common/mcp/tableOptionsJsonbSchema";
 
-const UNIQUE_DB_FIELDLIST = UNIQUE_DB_COLS.join(", ");
+const UNIQUE_DB_FIELD_LIST = UNIQUE_DB_COLS.join(", ");
 
 export const DB_SSL_ENUM = [
   "disable",
@@ -60,7 +60,12 @@ export const tableConfigConnections: TableConfig<{ en: 1 }> = {
         },
       },
       db_conn: { sqlDefinition: `TEXT DEFAULT ''` },
-      db_watch_shema: { sqlDefinition: `BOOLEAN DEFAULT TRUE` },
+      db_watch_schema: {
+        sqlDefinition: `BOOLEAN DEFAULT TRUE`,
+        info: {
+          hint: `If true then changes to the database schema will be watched and updated in the dashboard`,
+        },
+      },
       disable_realtime: {
         sqlDefinition: `BOOLEAN DEFAULT FALSE`,
         info: {
@@ -70,7 +75,7 @@ export const tableConfigConnections: TableConfig<{ en: 1 }> = {
       prgl_url: { sqlDefinition: `TEXT` },
       prgl_params: { sqlDefinition: `JSONB` },
       type: {
-        enum: ["Standard", "Connection URI", "Prostgles"],
+        enum: ["Standard", "Connection URI"],
         nullable: false,
       },
       is_state_db: {
@@ -130,7 +135,7 @@ export const tableConfigConnections: TableConfig<{ en: 1 }> = {
             AND (type <> 'Standard' OR length(db_host) > 1) 
             AND (type <> 'Prostgles' OR length(prgl_url) > 0)
           )`,
-      database_config_fkey: `FOREIGN KEY (${UNIQUE_DB_FIELDLIST}) REFERENCES database_configs( ${UNIQUE_DB_FIELDLIST} )`,
+      database_config_fkey: `FOREIGN KEY (${UNIQUE_DB_FIELD_LIST}) REFERENCES database_configs( ${UNIQUE_DB_FIELD_LIST} )`,
     },
   },
 };

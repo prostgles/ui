@@ -61,7 +61,7 @@ export const Checkbox = (props: P) => {
           {}
         : {
             padding: "3px",
-            borderRadius: "3px",
+            borderRadius: "var(--rounded)",
           }
       }
       onKeyDown={(e) => {

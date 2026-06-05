@@ -118,12 +118,12 @@ const getRootFkeyTable = ({
     const bestTextCols = getBestTextColumns(
       table,
       prevPath.flatMap(({ on }) => on.map((o) => o[1])),
-    );
+    ).map((c) => c.name);
     return {
       column,
       table,
       prevPath,
-      bestTextCol: bestTextCols[0]?.name,
+      bestTextCol: bestTextCols[0],
     };
   }
   const fcolsInfo =
@@ -304,6 +304,14 @@ export const getBestTextColumns = (
   table: DBSchemaTableWJoins,
   excludeCols: string[],
 ) => {
+  if (table.card?.headerColumn) {
+    const column = table.columns.find(
+      (c) => c.name === table.card?.headerColumn,
+    );
+    if (column && isTextColumn(column) && !excludeCols.includes(column.name)) {
+      return [column];
+    }
+  }
   if (table.isFileTable) {
     return table.columns.filter((c) =>
       includes(["original_name"] satisfies (keyof FileTable)[], c.name),

@@ -11,7 +11,6 @@ import {
 import { RenderValue } from "../../../SmartForm/SmartFormField/RenderValue";
 import { getYLabelFunc } from "../../../W_TimeChart/fetchData/getTimeChartData";
 import { getColWInfo } from "../../tableUtils/getColWInfo";
-import type { MinMaxVals } from "../../W_Table";
 import type { ColumnConfig } from "../ColumnMenu";
 
 const NESTED_LIMIT = 10;
@@ -26,7 +25,7 @@ type P = {
   row: AnyObject;
   nestedTimeChartMeta: NestedTimeChartMeta | undefined;
   tables: DBSchemaTableWithRenderInfo[];
-  barchartVals: MinMaxVals | undefined;
+  getValues: () => any[];
 };
 export const NestedColumnRender = ({
   value,
@@ -34,7 +33,7 @@ export const NestedColumnRender = ({
   row,
   nestedTimeChartMeta,
   tables,
-  barchartVals,
+  getValues,
 }: P): JSX.Element => {
   const table = tables.find((t) => t.name === c.nested?.path.at(-1)?.table);
   const isMedia = table?.isFileTable;
@@ -88,12 +87,26 @@ export const NestedColumnRender = ({
   const render = ({ key, value }: { key: string; value: any }) => {
     const columnWInfo = nestedColumns.find((c) => c.name === key);
     const datType = columnWInfo?.info ?? columnWInfo?.computedConfig;
+    const columnName =
+      columnWInfo?.computedConfig ?
+        columnWInfo.computedConfig.column
+      : columnWInfo?.name;
+    const tableColumn =
+      columnName ?
+        table?.columns.find((col) => col.name === columnName)
+      : undefined;
     const renderedValue =
       columnWInfo ?
         <RenderValue
           column={datType}
           value={value}
-          getValues={() => valueList.map((v) => v?.[key])}
+          getValues={() => {
+            const values = getValues().map((row) => row[0]?.[key]);
+            return values;
+          }}
+          maximumFractionDigits={
+            tableColumn?.renderAs?.type === "Currency" ? 2 : undefined
+          }
         />
       : JSON.stringify(value);
 

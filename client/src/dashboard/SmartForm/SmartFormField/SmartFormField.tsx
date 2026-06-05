@@ -196,7 +196,7 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
 
   const ftableIcon =
     column.icon ?? foreignDataState?.insertAndSearchState?.ftableInfo?.icon;
-
+  const id = tableName + "-" + column.name;
   return (
     <>
       {sectionHeader && (
@@ -210,7 +210,7 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
         </h4>
       )}
       <FormField
-        id={tableName + "-" + column.name}
+        id={id}
         data-key={column.name}
         leftIcon={
           ftableIcon ?
@@ -261,6 +261,7 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
           : foreignDataState?.showSmartFormFieldForeignKey && (
               <SmartFormFieldForeignKey
                 {...foreignDataState}
+                id={id}
                 key={column.name}
                 column={column as SmartFormFieldForeignKeyProps["column"]}
                 db={db}

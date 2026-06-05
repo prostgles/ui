@@ -8,13 +8,15 @@ export const svgifToWebm = async ({
   outDir,
   width = 900,
   height = 900,
+  pixelRatio = 2,
 }: {
   svgifPath: string;
   outDir: string;
   width?: number;
   height?: number;
+  pixelRatio?: number;
 }) => {
-  const fps = 30;
+  const fps = 60;
   const durationMillis = parseFloat(
     fs
       .readFileSync(svgifPath, "utf-8")
@@ -44,12 +46,12 @@ export const svgifToWebm = async ({
 
   const context = await browser.newContext({
     viewport: { width, height },
-    deviceScaleFactor: 1,
+    deviceScaleFactor: pixelRatio,
   });
 
   const page = await context.newPage();
   const url =
-    /^https?:\/\//.test(svgifPath) ? svgifPath : (
+    svgifPath.startsWith("https://") ? svgifPath : (
       `file://${path.resolve(svgifPath)}`
     );
 
@@ -114,7 +116,7 @@ export const svgifToWebm = async ({
     await page.screenshot({
       path: file,
       type: "png",
-      scale: "css",
+      scale: "device",
       animations: "allow",
     });
 
@@ -126,38 +128,52 @@ export const svgifToWebm = async ({
   console.log("\nEncoding…");
   await browser.close();
 
-  const outputFileName = fileNameWithoutExt + ".webm";
+  const outputFileName = fileNameWithoutExt + ".mp4";
   try {
-    // execSync(
-    //   `ffmpeg -y -framerate ${fps} -i "${path.join(framesDir, "%06d.png")}" ` +
-    //     `-c:v libvpx-vp9 -b:v 0 -crf 15 -pix_fmt yuv444p -vsync cfr -r ${fps} ${outputFileName} `,
-    //   {
-    //     cwd: outDir,
-    //   },
-    // );
-    await runFfmpeg(
-      [
-        "-y",
-        "-framerate",
-        String(fps),
-        "-i",
-        path.join(framesDir, "%06d.png"),
-        "-c:v",
-        "libvpx-vp9",
-        "-b:v",
-        "0",
-        "-crf",
-        "15",
-        "-pix_fmt",
-        "yuv444p",
-        "-vsync",
-        "cfr",
-        "-r",
-        String(fps),
-        outputFileName,
-      ],
-      outDir,
-    );
+    const webArgs = [
+      "-y",
+      "-framerate",
+      String(fps),
+      "-i",
+      path.join(framesDir, "%06d.png"),
+      "-c:v",
+      "libvpx-vp9",
+      "-b:v",
+      "0",
+      "-crf",
+      "10",
+      "-pix_fmt",
+      "yuv444p",
+      "-vsync",
+      "cfr",
+      "-r",
+      String(fps),
+      outputFileName,
+    ];
+
+    const mp4Args = [
+      "-y",
+      "-framerate",
+      String(fps),
+      "-i",
+      path.join(framesDir, "%06d.png"),
+      "-c:v",
+      "libx264",
+      "-crf",
+      "18",
+      "-preset",
+      "medium",
+      "-pix_fmt",
+      "yuv420p",
+      "-movflags",
+      "+faststart",
+      "-vsync",
+      "cfr",
+      "-r",
+      String(fps),
+      outputFileName,
+    ];
+    await runFfmpeg(mp4Args, outDir);
   } finally {
     fs.rmSync(framesDir, { recursive: true, force: true });
   }

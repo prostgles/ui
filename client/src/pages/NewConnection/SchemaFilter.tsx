@@ -3,7 +3,7 @@ import { Select, type SelectProps } from "@components/Select/Select";
 import { usePromise, type SQLHandler } from "prostgles-client";
 import React, { useMemo } from "react";
 import { t } from "../../i18n/i18nUtils";
-import type { Connection } from "./NewConnnectionForm";
+import type { Connection } from "./NewConnectionForm";
 
 type P = Pick<Connection, "db_schema_filter"> & {
   sql: SQLHandler | undefined;
