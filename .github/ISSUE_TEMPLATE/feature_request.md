@@ -2,4 +2,4 @@
 
 ## Use Cases
 
-## Current work arounds to accomplish requested behavior
+## Current work around to accomplish requested behavior
