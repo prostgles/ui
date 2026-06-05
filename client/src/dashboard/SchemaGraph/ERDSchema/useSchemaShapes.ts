@@ -77,7 +77,7 @@ export const useSchemaShapes = (
           h: ICON_SIZE,
           image: table.iconImage,
         };
-        const headerfillStyle = getCssVariableValue("--text-0");
+        const headerFillColor = getCssVariableValue("--text-0");
         const header = getMeasuredChartedText({
           id: table.name + "-header",
           type: "text",
@@ -89,8 +89,8 @@ export const useSchemaShapes = (
           font: "bold 22px Courier",
           fillStyle:
             columnColorMode === "root" || columnColorMode === "schema" ?
-              (table.rootColor ?? headerfillStyle)
-            : headerfillStyle,
+              (table.rootColor ?? headerFillColor)
+            : headerFillColor,
         });
 
         const tableFkeys = fkeys.filter((fk) => fk.table_oid === table.oid);
@@ -135,7 +135,7 @@ export const useSchemaShapes = (
             font: "16px sans-serif",
           });
 
-          const { fkey, nullable, pkey, unqiue } =
+          const { fkey, nullable, pkey, unique } =
             schemaInfo.columnConstraintIcons;
           const colIconImage =
             c.is_pkey ? pkey
@@ -146,7 +146,7 @@ export const useSchemaShapes = (
                 (ug) => ug.length === 1 && ug.includes(c.name),
               )
             ) ?
-              unqiue
+              unique
             : undefined;
 
           const colIcon =

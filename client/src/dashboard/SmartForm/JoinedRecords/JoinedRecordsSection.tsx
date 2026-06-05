@@ -9,6 +9,7 @@ import { NewRowDataHandler } from "../SmartFormNewRowDataHandler";
 import type { JoinedRecordsProps } from "./JoinedRecords";
 import type { JoinedRecordSection } from "./useJoinedRecordsSections";
 import { useJoinedSectionFieldConfigs } from "./useJoinedSectionFieldConfigs";
+import { JoinedRecordsAddRow } from "./JoinedRecordsAddRow";
 
 export const JoinedRecordsSection = ({
   section,
@@ -94,6 +95,30 @@ const JoinedRecordsSectionCardList = (
 
   const { count } = s;
 
+  const noDataComponent = (
+    <InfoRow
+      className=" "
+      color="info"
+      variant="filled"
+      contentClassname="flex-row gap-1 ai-center"
+    >
+      <div>No records</div>
+      {newRowDataHandler && (
+        <JoinedRecordsAddRow
+          {...props}
+          btnProps={{
+            size: "small",
+            variant: "filled",
+            children: "Add",
+            "data-command": "JoinedRecords.AddRowNoRecords",
+          }}
+          section={s}
+          newRowDataHandler={newRowDataHandler}
+        />
+      )}
+    </InfoRow>
+  );
+
   const limit = 20;
   if (isInsert) {
     if (!descendantInsertTables.includes(s.tableName)) {
@@ -114,19 +139,15 @@ const JoinedRecordsSectionCardList = (
         onChange={(newData) => {
           newRowDataHandler?.setNestedTable(s.tableName, newData);
         }}
-        noDataComponent={
-          <InfoRow className=" " color="info" variant="filled">
-            No records
-          </InfoRow>
-        }
+        noDataComponent={noDataComponent}
         noDataComponentMode="hide-all"
       />
     );
   }
 
   return (
-    <div className="flex-col">
-      {count > 20 && <div>Showing top {limit} records</div>}
+    <div className="flex-col gap-p25">
+      {count > 20 && <div className="text-2">Showing top {limit} records</div>}
       <SmartCardList
         key={s.path.join(".")}
         db={db}
@@ -140,11 +161,7 @@ const JoinedRecordsSectionCardList = (
         realtime={true}
         excludeNulls={true}
         showTopBar={false}
-        noDataComponent={
-          <InfoRow className=" " color="info" variant="filled">
-            No records
-          </InfoRow>
-        }
+        noDataComponent={noDataComponent}
         noDataComponentMode="hide-all"
         fieldConfigs={fieldConfigs}
       />

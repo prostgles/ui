@@ -46,7 +46,6 @@ const table_options = {
         icon: "CrosshairsGps",
       },
     },
-    rowIconColumn: "type",
   },
   orders: {
     card: {
@@ -286,7 +285,6 @@ const table_options = {
         },
       },
     },
-    rowIconColumn: "type",
   },
   addresses: {
     card: {
@@ -388,7 +386,6 @@ const table_options = {
         icon: "CrosshairsGps",
       },
     },
-    rowIconColumn: "type",
   },
   menu_items: {
     card: {
@@ -569,15 +566,18 @@ const table_options = {
           conditions: [
             {
               operator: "=",
-              chipColor: "#16a34a",
+              chipColor: "#01d4002e",
               condition: true,
-              textColor: "#ffffff",
+              textColor: "#00ad44",
+              color: "#01d4002e",
+              borderColor: "#01d4008a",
             },
             {
               operator: "=",
-              chipColor: "#9ca3af",
+              chipColor: "#b4b4b42e",
               condition: false,
-              textColor: "#ffffff",
+              textColor: "#4b4b4b",
+              color: "#b4b4b42e",
             },
           ],
         },
@@ -655,26 +655,6 @@ const table_options = {
           params: {
             variant: "short",
           },
-        },
-      },
-      is_popular: {
-        icon: "Star",
-        style: {
-          type: "Conditional",
-          conditions: [
-            {
-              operator: "=",
-              chipColor: "#16a34a",
-              condition: true,
-              textColor: "#ffffff",
-            },
-            {
-              operator: "=",
-              chipColor: "#9ca3af",
-              condition: false,
-              textColor: "#ffffff",
-            },
-          ],
         },
       },
     },
@@ -915,7 +895,7 @@ const table_options = {
         icon: "Target",
         style: {
           type: "Scale",
-          maxColor: "#16a34a",
+          maxColor: "#3ee17a",
           minColor: "#fee2e2",
           textColor: "#111827",
         },
@@ -941,13 +921,13 @@ const table_options = {
               operator: "in",
               chipColor: "#16a34a",
               condition: ["5", "Pass", "Very Good"],
-              textColor: "#166534",
+              textColor: "#ffffff",
             },
             {
               operator: "in",
               chipColor: "#dc2626",
               condition: ["0", "1", "Major Improvement Necessary"],
-              textColor: "#7f1d1d",
+              textColor: "#ffffff",
             },
           ],
         },
@@ -982,7 +962,7 @@ const table_options = {
           type: "Scale",
           maxColor: "#166534",
           minColor: "#dcfce7",
-          textColor: "#111827",
+          textColor: "#ffffff",
         },
       },
       matched_address: {
@@ -1000,7 +980,7 @@ const table_options = {
           type: "Scale",
           maxColor: "#1d4ed8",
           minColor: "#dbeafe",
-          textColor: "#111827",
+          textColor: "#ffffff",
         },
       },
       local_authority_code: {
@@ -1015,7 +995,7 @@ const table_options = {
           type: "Scale",
           maxColor: "#d97706",
           minColor: "#fef3c7",
-          textColor: "#111827",
+          textColor: "#ffffff",
         },
       },
     },

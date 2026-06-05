@@ -9,7 +9,7 @@ export const createDashboardsPrompt = [
   `After you've asked all necessary follow-up questions, use the ${getProstglesMCPFullToolName("prostgles-ui", "create_dashboards")} tool to return the suggested dashboards.`,
   `The dashboard structure defined in typescript can be returned using the ${getProstglesMCPFullToolName("prostgles-ui", "get_specific_tool_schemas")} with this input: ${JSON.stringify({ mcpServerTools: { "prostgles-ui": { create_dashboards: 1 } } })}.`,
   `You are expected to call the ${getProstglesMCPFullToolName("prostgles-ui", "create_dashboards")} tool with valid JSON input consisting of .`,
-
+  `IMPORTANT: when choosing colors for the dashboard, make sure to choose colors have good contrast. Avoid using dark text colors on dark backgrounds and light text colors on light backgrounds. `,
   `Return a json of this format: { "prostglesWorkspaces": WorkspaceInsertModel[] }`,
   "Do not return more than 3 workspaces, each with no more than 5 views.",
 ].join("\n");

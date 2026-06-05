@@ -15,18 +15,19 @@ export const timechartSvgif: OnBeforeScreenshot = async (
   await deleteAllWorkspaces(page);
   await closeWorkspaceWindows(page);
   await openTable(page, "futures");
-  await addSceneAnimation(
-    getCommandElemSelector("dashboard.window.toggleFilterBar"),
-  );
-  await addSceneAnimation(getCommandElemSelector("SearchList.Input"), {
-    action: {
-      action: "type",
-      text: "btcu",
-    },
-  });
+  await page.getByTestId("dashboard.window.toggleFilterBar").click();
+  await page.getByTestId("SearchList.Input").fill("btcu");
+  // await addSceneAnimation(getCommandElemSelector("SearchList.Input"), {
+  //   action: {
+  //     action: "type",
+  //     text: "btcu",
+  //   },
+  // });
 
-  await addSceneAnimation(`[data-label="BTCUSDT"]`);
-  await addSceneAnimation(getCommandElemSelector("FilterWrapper_FieldName"));
+  // await addSceneAnimation(`[data-label="BTCUSDT"]`);
+  await page.locator(`[data-label="BTCUSDT"]`).click();
+  // await addSceneAnimation(getCommandElemSelector("FilterWrapper_FieldName"));
+  await page.getByTestId("FilterWrapper_FieldName").click();
 
   await addSceneAnimation(getDataKey("XRPUSDT"));
   await addSceneAnimation(getCommandElemSelector("FilterWrapper_Field"));

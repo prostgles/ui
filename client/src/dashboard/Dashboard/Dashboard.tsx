@@ -459,9 +459,6 @@ export class _Dashboard extends RTComp<
     this.isOk = true;
 
     const pinnedMenu = getIsPinnedMenu(workspace);
-    const isReadonlyWorkspace =
-      workspace.published && workspace.user_id !== prgl.user?.id;
-    const isFixed = isReadonlyWorkspace && workspace.layout_mode === "fixed";
     const dashboardMenu = (
       <DashboardMenu
         menuAnchorState={this.menuAnchorState}

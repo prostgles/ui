@@ -68,27 +68,30 @@ export const SilverGridChildHeader = (props: P) => {
   const lineHeight = window.isMobileDevice ? 16 : 24;
 
   const tabs = siblingTabs?.length ? siblingTabs : [props.layout];
-  const isFixed = layoutMode === "fixed";
+  const isFixedOrSemiFixed =
+    layoutMode === "fixed" || layoutMode === "semi-fixed" ?
+      layoutMode
+    : undefined;
   const hideButtons: typeof _hideButtons =
-    isFixed ?
+    isFixedOrSemiFixed ?
       {
         minimize: true,
         fullScreen: false,
-        close: true,
-        pan: true,
-        resize: true,
+        close: isFixedOrSemiFixed === "fixed",
+        pan: isFixedOrSemiFixed === "fixed",
+        resize: isFixedOrSemiFixed === "fixed",
       }
     : _hideButtons;
   const { state: theme } = useReactiveState(appTheme);
   const bgClass = theme === "dark" ? "bg-color-0" : "bg-color-3";
   const bgActiveClass = theme === "dark" ? "bg-color-2" : "bg-color-0";
-  const btnClass = `f-0 ${isFixed && !fullscreen ? "show-on-parent-hover" : ""}`;
+  const btnClass = `f-0 ${isFixedOrSemiFixed && !fullscreen ? "show-on-parent-hover" : ""}`;
 
   return (
     <div
       className="silver-grid-item-header flex-row  bg-color-0 bb b-color-0 pointer f-0 noselect relative ai-center shadow"
       style={
-        isFixed ?
+        isFixedOrSemiFixed ?
           {
             paddingRight: ".25em",
           }
@@ -132,7 +135,7 @@ export const SilverGridChildHeader = (props: P) => {
                   {...attrs}
                   children={title}
                 />
-                {isFixed ?
+                {isFixedOrSemiFixed ?
                   <div style={{ width: "1em" }} />
                 : <CloseButton {...props} tabId={tabId} />}
               </FlexRow>
@@ -164,7 +167,7 @@ export const SilverGridChildHeader = (props: P) => {
                 className={`${GridHeaderClassname} f-1 min-w-0 max-w-fit text-ellipsis noselect `}
                 {...attrs}
               />
-              {isFixed ?
+              {isFixedOrSemiFixed ?
                 <div style={{ width: "1em" }} />
               : <CloseButton {...props} tabId={tab.id} />}
             </FlexRow>

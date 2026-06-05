@@ -24,7 +24,7 @@ export const PrglCoreProvider = ({
 
   const connection = usePromise(
     async () =>
-      tableMightBeUndefinedDueToAccessControl(dbs.connections)?.findOne({
+      tableMightBeUndefinedDueToAccessControl(dbs.connections)?.findOne?.({
         is_state_db: true,
       }),
     [dbs.connections],

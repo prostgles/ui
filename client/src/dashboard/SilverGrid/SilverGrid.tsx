@@ -57,7 +57,7 @@ export type SilverGridProps = {
   children?: ReactSilverGridNode[];
   headerIcons?: ReactSilverGridNode[];
   _ref?: (ref: HTMLDivElement) => void;
-  layoutMode: "fixed" | "editable";
+  layoutMode: "semi-fixed" | "fixed" | "editable";
 
   /**
    * Something to draw on top
@@ -487,7 +487,7 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
           if (r) this.ref = r;
         }}
         className={classOverride(
-          `silver-grid-component relative  ${layoutMode === "fixed" ? "p-1 bg-color-3" : ""}`,
+          `silver-grid-component relative  ${layoutMode !== "editable" ? "p-1 bg-color-3" : ""}`,
           className,
         )}
         style={{

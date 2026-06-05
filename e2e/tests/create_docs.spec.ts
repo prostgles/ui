@@ -1,6 +1,18 @@
 import { test } from "@playwright/test";
 import * as fs from "fs";
 import * as path from "path";
+import { getOverviewSvgifSpecs } from "svgScreenshots/getOverviewSvgifSpecs.svgif";
+import {
+  DOCS_DIR,
+  SVG_SCREENSHOT_DIR,
+  SVGIF_SCENES_DIR,
+} from "svgScreenshots/utils/constants";
+import { saveSVGifs } from "svgScreenshots/utils/saveSVGifs";
+import { svgifToWebm } from "svgScreenshots/utils/svgifToWebm";
+import { svgScreenshotsCompleteReferenced } from "svgScreenshots/utils/svgScreenshotsCompleteReferenced";
+import { setupAskLLMToolUse } from "testAskLLM/testAskLLM";
+import { IS_GITHUB_WORKER, USERS } from "utils/constants";
+import { goTo } from "utils/goTo";
 import { saveSVGs } from "./svgScreenshots/utils/saveSVGs";
 import {
   login,
@@ -10,13 +22,6 @@ import {
   restoreFromBackup,
   runDbsSql,
 } from "./utils/utils";
-import { DOCS_DIR } from "svgScreenshots/utils/constants";
-import { svgScreenshotsCompleteReferenced } from "svgScreenshots/utils/svgScreenshotsCompleteReferenced";
-import { IS_GITHUB_WORKER, USERS } from "utils/constants";
-import { goTo } from "utils/goTo";
-import { getOverviewSvgifSpecs } from "svgScreenshots/getOverviewSvgifSpecs.svgif";
-import { saveSVGifs } from "svgScreenshots/utils/saveSVGifs";
-import { setupAskLLMToolUse } from "testAskLLM/testAskLLM";
 
 test.use({
   viewport: {
@@ -168,6 +173,34 @@ test.describe("Create docs and screenshots", () => {
         Object.values(svgifSpecsObj).flat(),
         svgFilesUsedExternally,
       );
+    }
+  });
+
+  test("Record videos", async () => {
+    if (IS_GITHUB_WORKER) {
+      return;
+    }
+    test.setTimeout(50 * MINUTE);
+    const svgifsToRecord = [
+      "overview_long.svgif",
+      "ai_assistant_agentic_workflow.svgif",
+      // "sql_editor_overview.svgif",
+      // "ai_assistant_overview.svgif",
+      // "table_timechart.svgif",
+    ].map((name) => {
+      const filePath = path.join(SVG_SCREENSHOT_DIR, `${name}.svg`);
+      if (!fs.existsSync(filePath)) {
+        throw new Error(`SVGif file not found: ${filePath}`);
+      }
+      return { fileName: name, filePath };
+    });
+
+    for (const { fileName, filePath } of svgifsToRecord) {
+      await svgifToWebm({
+        svgifPath: filePath,
+        outDir: path.join(SVG_SCREENSHOT_DIR, "videos"),
+      });
+      console.log(`Generated webm: ${fileName}.webm`);
     }
   });
 });

@@ -4,7 +4,7 @@ import "./App.css";
 import Loading from "./components/Loader/Loading";
 import { t } from "./i18n/i18nUtils";
 import { Connections } from "./pages/Connections/Connections";
-import NewConnnection from "./pages/NewConnection/NewConnnectionForm";
+import { NewConnection } from "./pages/NewConnection/NewConnectionForm";
 import { NotFound } from "./pages/NotFound";
 import { ProjectConnection } from "./pages/ProjectConnection/ProjectConnection";
 
@@ -267,7 +267,7 @@ export const App = () => {
               key="5"
               path={ROUTES.NEW_CONNECTION}
               element={
-                <NewConnnection
+                <NewConnection
                   connectionId={undefined}
                   db={undefined}
                   prglState={appContextProps}
@@ -280,7 +280,7 @@ export const App = () => {
               key="6"
               path={`${ROUTES.EDIT_CONNECTION}/:id`}
               element={
-                <NewConnnection
+                <NewConnection
                   connectionId={undefined}
                   db={undefined}
                   prglState={appContextProps}

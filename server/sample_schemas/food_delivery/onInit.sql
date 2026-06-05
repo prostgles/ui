@@ -817,7 +817,6 @@ CREATE TABLE users (
   id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   type TEXT NOT NULL REFERENCES user_types, 
   email VARCHAR(100) NOT NULL ,
-  password VARCHAR(100) NOT NULL,
   first_name VARCHAR(50) NOT NULL,
   last_name VARCHAR(50) NOT NULL,
   phone_number VARCHAR(20) NOT NULL,
@@ -1091,7 +1090,7 @@ ires AS (
   RETURNING *, id as restaurant_id
 ),
 new_users AS (
-  SELECT fk.*, 'pwd' as pwd, 'restaurant_manager' as type
+  SELECT fk.*, 'restaurant_manager' as type
   FROM (
     SELECT *, row_number() OVER() as rnum
     FROM ires
@@ -1100,8 +1099,8 @@ new_users AS (
     ON fk.rnum = r.rnum
 ),
 uins AS (
-  INSERT INTO users (email, password, first_name, last_name, phone_number, type, created_at)
-  SELECT email, pwd, first_name, last_name, phone_number, type,  now() - (random() * "interval"('1 year'))
+  INSERT INTO users (email,  first_name, last_name, phone_number, type, created_at)
+  SELECT email, first_name, last_name, phone_number, type,  now() - (random() * "interval"('1 year'))
   FROM new_users
   RETURNING *
 )
@@ -1175,7 +1174,7 @@ BEGIN
     RETURNING *
   ),
   new_users AS (
-    SELECT fk.*, 'pwd' as pwd, 'customer' as type, 
+    SELECT fk.*, 'customer' as type, 
       geog, id as address_id
     FROM (
       SELECT *, row_number() OVER() as rnum
@@ -1185,8 +1184,8 @@ BEGIN
       ON fk.rnum = u.rnum
   ),
   uins AS (
-    INSERT INTO users (email, password, first_name, last_name, phone_number, type, created_at)
-    SELECT email, pwd, first_name, last_name, phone_number, type,  now() - (random() * period)
+    INSERT INTO users (email, first_name, last_name, phone_number, type, created_at)
+    SELECT email, first_name, last_name, phone_number, type,  now() - (random() * period)
     FROM new_users
     RETURNING *
   ) 
@@ -1200,8 +1199,8 @@ BEGIN
   number_of_riders := GREATEST(CEIL(number_of_users / 5), 1);
 
   /* Create 20% riders */
-  INSERT INTO users (email, password, first_name, last_name, phone_number, type, created_at)
-  SELECT email, 'pwd', first_name, last_name, phone_number, 'rider', now() - (random() * period)
+  INSERT INTO users (email, first_name, last_name, phone_number, type, created_at)
+  SELECT email, first_name, last_name, phone_number, 'rider', now() - (random() * period)
   FROM setof_fake_contacts(number_of_riders)
   LIMIT number_of_riders;
 END $$;
@@ -1490,11 +1489,10 @@ BEGIN
 
       seed_email := 'seed_pop_' || r.id || '_' || floor(extract(epoch from clock_timestamp()))::text || '@local.test';
 
-      INSERT INTO users (type, email, password, first_name, last_name, phone_number, created_at)
+      INSERT INTO users (type, email, first_name, last_name, phone_number, created_at)
       VALUES (
         'customer',
-        seed_email,
-        'pwd',
+        seed_email, 
         'Seed',
         'Customer',
         '07000000000',

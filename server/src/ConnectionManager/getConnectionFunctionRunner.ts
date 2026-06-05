@@ -17,7 +17,7 @@ export const getConnectionFunctionRunner = async ({
   databaseConfig: DatabaseConfigs;
   connectionInfo: ConnectionDetails;
 }) => {
-  const watchSchema = connection.db_watch_shema ? "*" : undefined;
+  const watchSchema = connection.db_watch_schema ? "*" : undefined;
   if (
     !connectionManager.getActiveConnectionSilentFail(connection.id)
       ?.methodRunner

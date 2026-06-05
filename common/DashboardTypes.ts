@@ -461,7 +461,13 @@ export type TimechartWindowInsertModel = {
           column: string;
         };
   })[];
+  /**
+   * Whether to use a shared y-axis for all layers or a separate y-axis for each layer.
+   * defaults to "multiple" (separate y-axis for each layer)
+   */
+  yScaleMode?: "single" | "multiple";
 };
+
 export type BarchartWindowInsertModel = (
   | (Filtering & {
       table_name: string;

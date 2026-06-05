@@ -1,23 +1,20 @@
-import { mdiConnection, mdiDotsHorizontal, mdiPlus } from "@mdi/js";
-import { usePromise, type SQLHandler } from "prostgles-client";
-import React, { useEffect, useRef } from "react";
 import Btn from "@components/Btn";
 import ButtonGroup from "@components/ButtonGroup";
-import { ExpandSection } from "@components/ExpandSection";
-import { FlexRow } from "@components/Flex";
+import ErrorComponent from "@components/ErrorComponent";
 import FormField from "@components/FormField/FormField";
 import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
 import { InfoRow } from "@components/InfoRow";
 import PopupMenu from "@components/PopupMenu";
-import { SwitchToggle } from "@components/SwitchToggle";
-import CodeExample from "../../dashboard/CodeExample";
-import type { Connection } from "./NewConnnectionForm";
-import type { FullExtraProps } from "../ProjectConnection/ProjectConnection";
-import ErrorComponent from "@components/ErrorComponent";
-import { t } from "../../i18n/i18nUtils";
-import { getDBCloneQuery, SSL_MODES } from "./newConnectionUtils";
-import { SchemaFilter } from "./SchemaFilter";
+import { mdiConnection, mdiPlus } from "@mdi/js";
+import { usePromise, type SQLHandler } from "prostgles-client";
+import React, { useEffect, useRef } from "react";
 import type { Prgl } from "src/App";
+import CodeExample from "../../dashboard/CodeExample";
+import { t } from "../../i18n/i18nUtils";
+import type { FullExtraProps } from "../ProjectConnection/ProjectConnection";
+import type { Connection } from "./NewConnectionForm";
+import { NewConnectionFormOptions } from "./NewConnectionFormOptions";
+import { getDBCloneQuery } from "./newConnectionUtils";
 
 type DBProps = {
   origCon: Partial<Connection>;
@@ -58,11 +55,8 @@ export const NewConnectionForm = ({
   useEffect(() => {
     refStatus.current?.scrollIntoView();
   }, [test.status]);
-  const sslmode = "db_ssl" in c ? c.db_ssl || "disable" : "disabled";
 
-  const { dbsTables, dbProject, origCon, dbsMethods, sql } = dbProps ?? {};
-
-  const cTable = dbsTables?.find((t) => t.name === "connections");
+  const { dbProject, origCon, sql } = dbProps ?? {};
 
   const { type } = c;
 
@@ -140,29 +134,7 @@ export const NewConnectionForm = ({
         }}
       />
 
-      {type === "Prostgles" ?
-        <>
-          <FormField
-            label={t.NewConnectionForm["Socket URL"]}
-            type="url"
-            required={true}
-            value={c.prgl_url || ""}
-            onChange={(val: string) => {
-              updateConnection({ prgl_url: val });
-            }}
-          />
-          <FormField
-            label={t.NewConnectionForm["Socket params (JSON)"]}
-            type="text"
-            required={true}
-            value={c.prgl_params}
-            onChange={(val: string) => {
-              updateConnection({ prgl_params: val });
-            }}
-            hint={`{ "path": "/socket" } `}
-          />
-        </>
-      : type === "Connection URI" ?
+      {type === "Connection URI" ?
         <>
           <FormFieldDebounced
             label={t.NewConnectionForm["Connection URI"]}
@@ -244,9 +216,7 @@ export const NewConnectionForm = ({
                       title={t.NewConnectionForm["Create database"]}
                     ></Btn>
                   }
-                  initialState={
-                    { query: "", action: "create" }
-                  }
+                  initialState={{ query: "", action: "create" }}
                   render={(pClose, { query, action }, setState) => {
                     if (action === "clone" && origCon?.db_name) {
                       getDBCloneQuery(origCon.db_name, c.db_name, sql!).then(
@@ -310,204 +280,35 @@ export const NewConnectionForm = ({
 
       {warning && <ErrorComponent error={warning} style={{ minWidth: 0 }} />}
 
-      {type !== "Prostgles" && (
-        <>
-          <ExpandSection
-            label={t.NewConnectionForm["More options"]}
-            buttonProps={{
-              variant: undefined,
-              color: "action",
-              iconPath: mdiDotsHorizontal,
-              "data-command": "NewConnectionForm.MoreOptionsToggle",
-            }}
+      <NewConnectionFormOptions
+        c={c}
+        dbProps={dbProps}
+        updateConnection={updateConnection}
+        isForStateDB={isForStateDB}
+      />
+      <div className="flex-col my-1 gap-1">
+        {test.onTest && (
+          <Btn
+            variant="faded"
+            data-command="NewConnectionForm.testConnection"
+            color="default"
+            iconPath={mdiConnection}
+            onClickPromise={test.onTest}
           >
-            <SchemaFilter
-              db_schema_filter={c.db_schema_filter}
-              sql={sql}
-              onChange={(newDbSchemaFilter) => {
-                updateConnection({
-                  type: "Standard",
-                  db_schema_filter: newDbSchemaFilter,
-                });
-              }}
-              asSelect={undefined}
-            />
-            <FormField
-              id="timeout"
-              label={t.NewConnectionForm["Connection timeout (ms)"]}
-              data-command="NewConnectionForm.connectionTimeout"
-              optional={true}
-              value={c.db_connection_timeout}
-              onChange={(db_connection_timeout) => {
-                updateConnection({ db_connection_timeout, type: "Standard" });
-              }}
-            />
-            <FormField
-              id="ssl_mode"
-              label={t.NewConnectionForm["SSL Mode"]}
-              data-command="NewConnectionForm.sslMode"
-              fullOptions={SSL_MODES}
-              required={true}
-              value={c.db_ssl}
-              onChange={(db_ssl: (typeof SSL_MODES)[number]["key"]) => {
-                // if(c.type === "Connection URI"){
-                //   const con = await dbsMethods?.validateConnection?.({ ...c, db_ssl, type: "Standard" });
-                //   console.log(con);
-                // }
-                /** Switch to standard to ensure the db_conn is updated accordingly */
-                void updateConnection({ db_ssl, type: "Standard" });
-              }}
-            />
-            {[
-              "verify-ca",
-              "verify-full",
-              "require",
-              "prefer",
-              "allow",
-            ].includes(sslmode) && (
-              <>
-                <FormField
-                  id="ssl_cert"
-                  label={t.NewConnectionForm["CA Certificate"]}
-                  type="file"
-                  labelStyle={{ flex: "unset" }}
-                  onChange={async (files) => {
-                    const file = files[0];
-                    void updateConnection({
-                      ssl_certificate: (await file?.text()) ?? undefined,
-                    });
-                  }}
-                />
-                <FormField
-                  id="ssl_client_cert"
-                  label="Client Certificate"
-                  type="file"
-                  labelStyle={{ flex: "unset" }}
-                  onChange={async (files) => {
-                    const file = files[0];
-                    void updateConnection({
-                      ssl_client_certificate: (await file?.text()) ?? undefined,
-                    });
-                  }}
-                />
-                <FormField
-                  id="ssl_client_cert_key"
-                  label={t.NewConnectionForm["Client Key"]}
-                  type="file"
-                  labelStyle={{ flex: "unset" }}
-                  onChange={async (files) => {
-                    const file = files[0];
-                    void updateConnection({
-                      ssl_client_certificate_key:
-                        (await file?.text()) ?? undefined,
-                    });
-                  }}
-                />
-                <FormField
-                  id="ssl_rejectUnauthorized"
-                  label={t.NewConnectionForm["Reject unauthorized"]}
-                  type="checkbox"
-                  labelStyle={{ flex: "unset" }}
-                  nullable={true}
-                  value={c.ssl_reject_unauthorized}
-                  onChange={(ssl_reject_unauthorized) => {
-                    updateConnection({ ssl_reject_unauthorized });
-                  }}
-                  hint={
-                    cTable?.columns.find(
-                      (c) => c.name === "ssl_reject_unauthorized",
-                    )?.hint
-                  }
-                />
-              </>
-            )}
-          </ExpandSection>
-          {!isForStateDB && (
-            <>
-              <FlexRow className="mt-1">
-                <SwitchToggle
-                  id="swatch"
-                  label={{
-                    label: t.NewConnectionForm["Watch schema"],
-                    info: t.NewConnectionForm[
-                      "Will refresh the dashboard and API on schema change. Requires superuser for best experience"
-                    ],
-                  }}
-                  data-command="NewConnectionForm.watchSchema"
-                  checked={!!c.db_watch_shema}
-                  onChange={(db_watch_shema) => {
-                    updateConnection({ db_watch_shema });
-                  }}
-                />
-                {dbsMethods?.reloadSchema && (
-                  <Btn
-                    onClickPromise={() =>
-                      dbsMethods.reloadSchema!({ conId: c.id! })
-                    }
-                    color="action"
-                  >
-                    {t.NewConnectionForm["Reload schema"]}
-                  </Btn>
-                )}
-              </FlexRow>
-              <SwitchToggle
-                id="realtime"
-                label={{
-                  label: t.NewConnectionForm.Realtime,
-                  info: t.NewConnectionForm[
-                    "Needed to allow realtime data view. Requires superuser"
-                  ],
-                }}
-                data-command="NewConnectionForm.realtime"
-                checked={!c.disable_realtime}
-                onChange={(disable_realtime) => {
-                  updateConnection({ disable_realtime: !disable_realtime });
-                }}
-              />
-              {!c.disable_realtime && (
-                <InfoRow>
-                  {
-                    t.NewConnectionForm[
-                      "Realtime requires table triggers to be created as and when needed."
-                    ]
-                  }
-                  <br></br>
-                  {
-                    t.NewConnectionForm[
-                      'A "prostgles" schema with necessary metadata will also be created'
-                    ]
-                  }
-                </InfoRow>
-              )}
-            </>
-          )}
-          <div className="flex-col my-1 gap-1">
-            {test.onTest && (
-              <Btn
-                variant="faded"
-                data-command="NewConnectionForm.testConnection"
-                color="default"
-                iconPath={mdiConnection}
-                onClickPromise={test.onTest}
-              >
-                {t.NewConnectionForm["Test connection"]}
-              </Btn>
-            )}
+            {t.NewConnectionForm["Test connection"]}
+          </Btn>
+        )}
 
-            {!!test.status && (
-              <div
-                ref={refStatus}
-                style={{ padding: "1em", borderRadius: "8px" }}
-                className={
-                  "chip flex-col p-1 " + (test.statusOK ? "green" : "red")
-                }
-              >
-                <span className="ws-pre">{test.status}</span>
-              </div>
-            )}
+        {!!test.status && (
+          <div
+            ref={refStatus}
+            style={{ padding: "1em", borderRadius: "8px" }}
+            className={"chip flex-col p-1 " + (test.statusOK ? "green" : "red")}
+          >
+            <span className="ws-pre">{test.status}</span>
           </div>
-        </>
-      )}
+        )}
+      </div>
     </>
   );
 };

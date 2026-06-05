@@ -145,7 +145,7 @@ export const startConnection = async function (
           dbs,
           connectionInfo,
         });
-        const watchSchema = connection.db_watch_shema ? "*" : false;
+        const watchSchema = connection.db_watch_schema ? "*" : false;
         const tableConfigRunner = await this.setTableConfig(
           connection.id,
           databaseConfig,

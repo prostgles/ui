@@ -12,12 +12,28 @@ export const getOverviewSvgifSpecs = async () => {
     fileName: keyof typeof SVG_SCREENSHOT_DETAILS,
     start: number,
     end = svgifSpecsObj[fileName].length,
+    holdLastFrame = false,
   ) => {
     const scenes = structuredClone(svgifSpecsObj[fileName].slice(start, end));
     if (scenes.length !== end - start) {
       throw new Error(
         `Not enough scenes in ${fileName} from index ${start}. Missing ${scenes.length - (end - start)}`,
       );
+    }
+
+    if (holdLastFrame) {
+      return scenes.map((scene, index) => {
+        if (index === scenes.length - 1) {
+          return {
+            ...scene,
+            animations: [
+              ...scene.animations,
+              { type: "wait", duration: 1000 },
+            ] as typeof scene.animations,
+          };
+        }
+        return scene;
+      });
     }
 
     return scenes;
@@ -37,11 +53,26 @@ export const getOverviewSvgifSpecs = async () => {
         ...sliceScenes("table_timechart", 8, 9),
       ],
     },
+    {
+      fileName: "overview_long",
+      usedExternally: true,
+      scenes: [
+        ...sliceScenes("schema_diagram", 1, 3),
+        ...sliceScenes("ai_assistant_agentic_workflow_gov_api", 0, 2),
+        ...sliceScenes("ai_assistant_agentic_workflow_gov_api", 5),
+        // ...sliceScenes("ai_assistant_agentic_workflow_gov_api", 9, 11),
+        // ...sliceScenes("ai_assistant_agentic_workflow_gov_api", 12),
+        // ...sliceScenes("ai_assistant_agentic_workflow", 0, 1),
+        // ...sliceScenes("ai_assistant_agentic_workflow", 12, 15),
+        ...sliceScenes("table_timechart", 6),
+        ...sliceScenes("sql_editor", 5, 7),
+      ],
+    },
     /** Overview section */
     {
       fileName: "linked_data",
       usedExternally: true,
-      scenes: [...sliceScenes("table_timechart", 1)],
+      scenes: [...sliceScenes("dashboard", 0, 10, true)],
     },
     {
       fileName: "smart_form",
@@ -70,7 +101,7 @@ export const getOverviewSvgifSpecs = async () => {
     {
       fileName: "ai_assistant_access_request",
       usedExternally: true,
-      scenes: [...sliceScenes("ai_assistant", 6, 11)],
+      scenes: [...sliceScenes("ai_assistant", 6, 11, true)],
     },
 
     {
