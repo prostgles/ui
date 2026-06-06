@@ -111,7 +111,7 @@ export type LanguageConfig =
     }
   | {
       lang: "json";
-      jsonSchemas?: CodeEditorJsonSchema[];
+      jsonSchemas?: readonly CodeEditorJsonSchema[];
     };
 
 export type CodeEditorJsonSchema = { id: string; schema: any };

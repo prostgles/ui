@@ -17,6 +17,7 @@ import type { ColumnConfig } from "../ColumnMenu";
 import type { TableWindowInsertModel } from "@common/DashboardTypes";
 import { FlexRowWrap } from "@components/Flex";
 import type { columnDisplayFormatSchema } from "@common/columnDisplayFormat.schema";
+import { MarkdownWithPlugins } from "@components/MarkdownWithPlugins/MarkdownWithPlugins";
 
 // const CurrencySchema = {
 //   type: {
@@ -366,6 +367,13 @@ export const DISPLAY_FORMATS = [
         : <RenderValue column={c} value={v} maxLength={maxCellChars} />;
     },
   } satisfies FormattedColRender<Extract<ColumnFormat, { type: "QR Code" }>>,
+  {
+    type: "Markdown",
+    tsDataType: ["string"],
+    render: (v) => {
+      return <MarkdownWithPlugins content={v} />;
+    },
+  } satisfies FormattedColRender<Extract<ColumnFormat, { type: "Markdown" }>>,
   {
     type: "HTML",
     tsDataType: ["string"],

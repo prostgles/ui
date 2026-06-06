@@ -1,13 +1,11 @@
 import { getProperty } from "@common/utils";
 import { MarkdownWithPlugins } from "@components/MarkdownWithPlugins/MarkdownWithPlugins";
-import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 import type { TableHandlerClient } from "prostgles-client";
 import type { AnyObject } from "prostgles-types";
 import React, { useCallback, useState } from "react";
 import { type Prgl } from "src/App";
 import { SmartForm } from "src/dashboard/SmartForm/SmartForm";
-import { classOverride, type DivProps } from "../Flex";
-import "./Marked.css";
+import { type DivProps } from "../Flex";
 import {
   MonacoCodeInMarkdown,
   type MonacoCodeInMarkdownProps,
@@ -91,13 +89,7 @@ export const Marked = (props: MarkedProps) => {
   );
 
   return (
-    <ScrollFade
-      {...divProps}
-      className={classOverride(
-        "Marked flex-col o-auto min-w-0 max-w-full ta-start",
-        divProps.className,
-      )}
-    >
+    <>
       {showTableRow && prgl && (
         <SmartForm
           asPopup={true}
@@ -117,6 +109,7 @@ export const Marked = (props: MarkedProps) => {
         />
       )}
       <MarkdownWithPlugins
+        {...divProps}
         components={{
           code: CodeComponent,
           a: ({ node, ...props }) => {
@@ -185,7 +178,7 @@ export const Marked = (props: MarkedProps) => {
         }}
         content={content}
       />
-    </ScrollFade>
+    </>
   );
 };
 

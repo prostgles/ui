@@ -1,4 +1,8 @@
 import type { GeneratedFunctionSchema } from "@common/DBGeneratedSchema";
+import {
+  getMCPFullToolName,
+  getProstglesMCPFullToolName,
+} from "@common/mcpUtils";
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import { connectionManager } from "@src/index";
 import { statePrgl } from "@src/init/startProstgles";
@@ -17,11 +21,6 @@ import { getToolTypescriptSchemas } from "./Prostgles/agenticWorkflow/runtimeSet
 import { fetchTools } from "./Prostgles/fetchTools";
 import { runCodeInSandboxContainer } from "./Prostgles/runCodeInSandboxContainer";
 import { startAgent } from "./Prostgles/startAgent";
-import {
-  getMCPFullToolName,
-  getProstglesMCPFullToolName,
-} from "@common/mcpUtils";
-import type { WorkspaceInsertModel } from "@common/DashboardTypes";
 import { validateCreateDashboards } from "./Prostgles/validateCreateDashboards";
 
 const serverName = "prostgles-ui" as const;

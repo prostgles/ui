@@ -40,15 +40,17 @@ export const onRenderColumn = (args: OnRenderColumnProps) => {
   );
   const onRender: ProstglesTableColumn["onRender"] =
     column.style && column.style.type !== "None" ?
-      (rowInfo) => (
-        <StyledTableColumn
-          {...rowInfo}
-          tables={tables}
-          column={column}
-          maxCellChars={maxCellChars}
-          barchartVals={barchartVals}
-        />
-      )
+      (rowInfo) => {
+        return (
+          <StyledTableColumn
+            {...rowInfo}
+            tables={tables}
+            column={column}
+            maxCellChars={maxCellChars}
+            barchartVals={barchartVals}
+          />
+        );
+      }
     : column.nested ?
       ({ value, row }) => {
         const chartLimits = barchartVals?.[column.name];
@@ -70,7 +72,7 @@ export const onRenderColumn = (args: OnRenderColumnProps) => {
       }
     : formatRender ?
       ({ row }) => {
-        let value = row[column.name];
+        let value = row[column.name] as unknown;
 
         const connectionId = location.pathname
           .split("/")
@@ -88,14 +90,14 @@ export const onRenderColumn = (args: OnRenderColumnProps) => {
         );
       }
     : table?.isFileTable && column.name === "url" ?
-      ({ value, row }) => {
+      ({ value }) => {
         return <MediaViewer key={value} url={value} />;
       }
     : /** Not pretty enough */
     column.udt_name === "interval" ?
       ({ row }) =>
-        Object.keys(row[column.name] ?? {})
-          .map((k) => `${row[column.name][k]} ${k}`)
+        Object.entries(row[column.name] ?? {})
+          .map(([k, v]) => `${v} ${k}`)
           .join(", ")
     : /** c.tsDataType and c.udt_name SHOULD NOT BE MISSING AT THIS POINT! */
       ({ value }) => (

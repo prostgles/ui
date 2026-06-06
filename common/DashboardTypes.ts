@@ -367,6 +367,9 @@ export type TableColumn = {
         };
       }
     | {
+        type: "Markdown";
+      }
+    | {
         /** Text content as sanitised html */
         type: "HTML";
       }

@@ -1,6 +1,11 @@
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
 import { UNIQUE_DB_COLS } from "./tableConfigDatabaseConfig";
 import { tableOptionsJsonbSchema } from "@common/mcp/tableOptionsJsonbSchema";
+import type { DBSSchema } from "@common/publishUtils";
+import type { ValidateRowArgsCommon } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
+import type { DBS } from "..";
+import { getEntries } from "@common/utils";
+import { assertIconExists } from "@src/utils/assertIconExists";
 
 const UNIQUE_DB_FIELD_LIST = UNIQUE_DB_COLS.join(", ");
 
@@ -136,6 +141,42 @@ export const tableConfigConnections: TableConfig<{ en: 1 }> = {
             AND (type <> 'Prostgles' OR length(prgl_url) > 0)
           )`,
       database_config_fkey: `FOREIGN KEY (${UNIQUE_DB_FIELD_LIST}) REFERENCES database_configs( ${UNIQUE_DB_FIELD_LIST} )`,
+    },
+    hooks: {
+      afterEach: [
+        {
+          commands: { insert: 1, update: 1 },
+          changedFields: ["table_options"],
+          validate: async (args) => {
+            const { dbx, row } = args as unknown as ValidateRowArgsCommon<
+              DBSSchema["connections"],
+              DBS
+            >;
+            /** Ensure icons exist */
+            for (const [tableName, tableOption] of getEntries(
+              row.table_options ?? {},
+            )) {
+              if (tableOption?.icon) {
+                assertIconExists({
+                  errorContext: `Table "${tableName}" in connections config has an icon that does not exist`,
+                  iconName: tableOption.icon,
+                });
+              }
+              for (const [columnName, columnOption] of getEntries(
+                tableOption?.columns ?? {},
+              )) {
+                if (columnOption?.icon) {
+                  assertIconExists({
+                    errorContext: `Column "${columnName}" in table "${tableName}" in connections config has an icon that does not exist`,
+                    iconName: columnOption.icon,
+                  });
+                }
+              }
+            }
+            await Promise.resolve();
+          },
+        },
+      ],
     },
   },
 };

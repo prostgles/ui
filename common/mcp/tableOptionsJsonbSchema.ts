@@ -91,8 +91,48 @@ export const tableOptionsJsonbSchema = {
         card: {
           optional: true,
           type: {
-            headerColumn: { type: "string", optional: true },
+            avatarColumn: {
+              type: "string",
+              description:
+                "Column name that contains url to an image to be shown as an avatar in card view.",
+              optional: true,
+            },
+            headerColumn: {
+              optional: true,
+              type: "string",
+            },
+            subHeaderColumn: {
+              optional: true,
+              type: "string",
+            },
+            visibleColumns: {
+              optional: true,
+              arrayOf: {
+                oneOf: [
+                  "string",
+                  {
+                    type: {
+                      column: "string",
+                      hideLabel: { type: "boolean", optional: true },
+                      // heightPx: { type: "integer", optional: true },
+                      // gridColumn: { optional: true, type: "string" },
+                      // gridRow: { optional: true, type: "string" },
+                    },
+                  },
+                ],
+              },
+              description:
+                "Array of column names that should be visible in card view by default",
+            },
           },
+          // layout: {
+          //   optional: true,
+          //   type: {
+          //     type: { enum: ["CardLayout"] },
+          //     // Recursive type, so we need to use `any` here
+          //     children: "any",
+          //   },
+          // },
         },
       },
     },

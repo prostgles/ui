@@ -1,4 +1,3 @@
-/* eslint-disable security/detect-non-literal-fs-filename */
 import * as fs from "fs";
 import * as path from "path";
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
@@ -36,6 +35,14 @@ const electronConfig: {
 };
 
 export const actualRootDir = path.join(__dirname, "/../../..");
+
+export const DIRECTORIES = {
+  CLIENT_BUILD: path.resolve(actualRootDir + "/../client/build"),
+  CLIENT_STATIC: path.resolve(actualRootDir + "/../client/static"),
+  CLIENT_ICONS: path.resolve(actualRootDir + "/../client/static/icons"),
+  DOCS_SCREENSHOTS: path.resolve(actualRootDir + "/../docs/screenshots"),
+} as const;
+
 let rootDir = actualRootDir;
 /**
  * server root directory

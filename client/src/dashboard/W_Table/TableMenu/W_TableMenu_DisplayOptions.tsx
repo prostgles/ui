@@ -1,18 +1,21 @@
-import React from "react";
-import type { W_TableMenuProps } from "./W_TableMenu";
 import FormField from "@components/FormField/FormField";
-import { ColumnSelect } from "../ColumnMenu/ColumnSelect/ColumnSelect";
-import { Select } from "@components/Select/Select";
-import { includes } from "../../W_SQL/W_SQLBottomBar/W_SQLBottomBar";
 import { IconPalette } from "@components/IconPalette/IconPalette";
+import { Select } from "@components/Select/Select";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import React, { useMemo } from "react";
+import { CodeEditorWithSaveButton } from "src/dashboard/CodeEditor/CodeEditorWithSaveButton";
+import type { DBSchemaTableWJoins } from "src/dashboard/Dashboard/dashboardUtils";
+import { includes } from "../../W_SQL/W_SQLBottomBar/W_SQLBottomBar";
+import { ColumnSelect } from "../ColumnMenu/ColumnSelect/ColumnSelect";
+import type { W_TableMenuProps } from "./W_TableMenu";
+import { getJSONBSchemaAsJSONSchema } from "prostgles-types";
+import { a1 } from "react-router/dist/development/index-react-server-client-BS5F89FR";
+import { tableOptionsJsonbSchema } from "@common/mcp/tableOptionsJsonbSchema";
 
 type P = W_TableMenuProps;
 
-export const W_TableMenu_DisplayOptions = ({
-  w,
-  workspace,
-  prgl: { tables, connection, dbs },
-}: P) => {
+export const W_TableMenu_DisplayOptions = ({ w, workspace, prgl }: P) => {
+  const { tables, connection, dbs } = prgl;
   const tableName = w.table_name;
   if (!tableName) return null;
   const table = tables.find((t) => t.name === tableName);
@@ -58,7 +61,7 @@ export const W_TableMenu_DisplayOptions = ({
         }}
         iconName={connection.table_options?.[w.table_name]?.icon}
         onChange={(icon) => {
-          dbs.connections.update(
+          void dbs.connections.update(
             { id: connection.id },
             {
               table_options: {
@@ -263,6 +266,72 @@ export const W_TableMenu_DisplayOptions = ({
           )}
         </>
       )}
+
+      {table && <TableDisplayOptionsJSON table={table} />}
     </div>
+  );
+};
+
+const TableDisplayOptionsJSON = ({ table }: { table: DBSchemaTableWJoins }) => {
+  const { dbsTables, dbs, connection } = usePrgl();
+  const connectionTable = dbsTables.find((t) => t.name === "connections");
+
+  const languageOrError = useMemo(() => {
+    if (!connectionTable) {
+      return "Error: connections table not found";
+    }
+    const tableOptionsColumn = connectionTable.columns.find(
+      (c) => c.name === "table_options",
+    );
+    if (!tableOptionsColumn || !tableOptionsColumn.jsonbSchema) {
+      return "Error: table_options column not found";
+    }
+
+    const schema = getJSONBSchemaAsJSONSchema(
+      connectionTable.name,
+      tableOptionsColumn.name,
+      tableOptionsJsonbSchema.record.values,
+    );
+
+    console.log(schema);
+
+    return {
+      lang: "json",
+      jsonSchemas: [
+        {
+          id: "displayOptionsSchema",
+          schema,
+        },
+      ],
+    } as const;
+  }, [connectionTable]);
+
+  if (typeof languageOrError === "string") {
+    return <div className="p-p25">{languageOrError}</div>;
+  }
+  return (
+    <CodeEditorWithSaveButton
+      label="Display options JSON"
+      language={languageOrError}
+      value={JSON.stringify(
+        connection.table_options?.[table.name] ?? {},
+        null,
+        2,
+      )}
+      onSave={async (newValue) => {
+        await dbs.connections.update(
+          { id: connection.id },
+          {
+            table_options: {
+              $merge: [
+                {
+                  [table.name]: JSON.parse(newValue),
+                },
+              ],
+            },
+          },
+        );
+      }}
+    />
   );
 };

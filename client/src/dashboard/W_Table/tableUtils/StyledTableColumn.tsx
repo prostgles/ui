@@ -35,7 +35,13 @@ export const StyledTableColumn = ({
       return {
         type: "normal" as const,
         value: valueOrNestedValue,
-        renderedVal: renderedValRaw,
+        renderedVal: (
+          <RenderValue
+            column={c}
+            value={valueOrNestedValue}
+            style={{ color: "inherit" }}
+          />
+        ),
       };
     }
 
@@ -43,7 +49,7 @@ export const StyledTableColumn = ({
     if (!nestedSingleColumn) {
       return;
     }
-    const { colInfo: shownColumnInfo, shownCol, table } = nestedSingleColumn;
+    const { colInfo: shownColumnInfo, shownCol } = nestedSingleColumn;
     const firstRow =
       Array.isArray(valueOrNestedValue) ? valueOrNestedValue[0] : undefined;
     const value =
@@ -216,22 +222,41 @@ export const getCellStyle = (
         c.udt_name === "int2" ||
         c.udt_name === "float4" ||
         c.udt_name === "money";
-      const cval =
+      const conditionalValue =
         isNumeric ? +(condition as string) : (condition as ColumnValue);
       if (operator === "contains") {
-        return val && `${JSON.stringify(val)}`.includes(cval?.toString() + "");
+        return (
+          val &&
+          `${JSON.stringify(val)}`.includes(conditionalValue?.toString() + "")
+        );
       } else if (operator === "=") {
-        return val == cval;
+        return val == conditionalValue;
       } else if (operator === ">") {
-        return cval !== undefined && cval !== null && val > cval;
+        return (
+          conditionalValue !== undefined &&
+          conditionalValue !== null &&
+          val > conditionalValue
+        );
       } else if (operator === ">=") {
-        return cval !== undefined && cval !== null && val >= cval;
+        return (
+          conditionalValue !== undefined &&
+          conditionalValue !== null &&
+          val >= conditionalValue
+        );
       } else if (operator === "<=") {
-        return cval !== undefined && cval !== null && val <= cval;
+        return (
+          conditionalValue !== undefined &&
+          conditionalValue !== null &&
+          val <= conditionalValue
+        );
       } else if (operator === "<") {
-        return cval !== undefined && cval !== null && val < cval;
+        return (
+          conditionalValue !== undefined &&
+          conditionalValue !== null &&
+          val < conditionalValue
+        );
       } else if (operator === "!=") {
-        return val != cval;
+        return val != conditionalValue;
       } else if (operator === "in" || operator === "not in") {
         const is_in = includes(condition, val);
 

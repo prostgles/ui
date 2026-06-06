@@ -32,7 +32,7 @@ const CurrencySchema = {
           type: "string",
           title: "Currency Field",
           description:
-            "Column containint the currency code (EUR, GBP, USD, etc...)",
+            "Column containing the currency code (EUR, GBP, USD, etc...)",
         },
       },
     ],
@@ -77,7 +77,7 @@ const MediaSchema = {
           title: "MIME column",
           type: "string",
           description:
-            "Column that contains valid extesion values (img, mp4, mp3, ...)",
+            "Column that contains valid extension values (img, mp4, mp3, ...)",
         },
       },
       {
@@ -160,6 +160,13 @@ export const columnDisplayFormatSchema = {
             enum: ["short", "full"],
           },
         },
+      },
+    },
+    {
+      type: {
+        enum: ["Markdown"],
+        title: "Format",
+        description: "Display string as Markdown",
       },
     },
     {

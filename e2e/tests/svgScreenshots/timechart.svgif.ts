@@ -16,12 +16,14 @@ export const timechartSvgif: OnBeforeScreenshot = async (
 ) => {
   await openConnection("crypto");
 
-  const wspText = await page
-    .locator(
-      getCommandElemSelector("SilverGridChild") +
-        `[data-view-type="timechart"]`,
-    )
-    .textContent();
+  const wspLocator = await page.locator(
+    getCommandElemSelector("SilverGridChild") + `[data-view-type="timechart"]`,
+  );
+
+  const wspText =
+    (await wspLocator.count()) > 0 ?
+      await wspLocator.first().textContent()
+    : undefined;
   const alreadyShowing =
     wspText?.includes("Multi-Asset Price Comparison") ?? false;
   if (!alreadyShowing) {

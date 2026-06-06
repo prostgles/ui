@@ -1,14 +1,16 @@
 import { matchObj } from "@common/utils";
-import { FlexRowWrap } from "@components/Flex";
-import { _PG_date, type AnyObject } from "prostgles-types";
+import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
+import { _PG_date, isDefined, type AnyObject } from "prostgles-types";
 import React, { useMemo } from "react";
+import type { CardLayout } from "src/dashboard/Dashboard/cardLayout";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
 import { RenderValue } from "../../SmartForm/SmartFormField/RenderValue";
 import { getEditColumn } from "../tableUtils/getEditColumn";
 import type { CardViewProps, IndexedRow } from "./CardView";
-import { DragHeader, DragHeaderHeight } from "./DragHeader";
+import { DragHeader } from "./DragHeader";
 import type { CardViewState } from "./useCardViewState";
-import type { CardLayout } from "src/dashboard/Dashboard/cardLayout";
+import { RenderMedia } from "@components/MediaViewer/RenderMedia";
+import { MediaViewer } from "@components/MediaViewer/MediaViewer";
 
 export type CardViewRowProps = Pick<
   CardViewProps,
@@ -77,13 +79,14 @@ export const CardViewRow = ({
     const isActive =
       joinFilter || (activeRow && matchObj(activeRow.row_filter, row));
     return {
-      gap: padding,
+      gap: 0,
+      padding: 0,
       background: isDragTarget ? "var(--bg-li-selected)" : "var(--bg-color-0)",
-      padding,
-      /** Used to ensure top right edit button is visible */
-      paddingRight: "3em",
+      // padding,
+      // /** Used to ensure top right edit button is visible */
+      // paddingRight: "3em",
       /** Used to ensure cell header contextmenu is working */
-      paddingTop: `${DragHeaderHeight}px`,
+      // paddingTop: `${DragHeaderHeight}px`,
       ...(maxCardWidth !== "100%" ?
         {
           width: maxCardWidth,
@@ -117,13 +120,35 @@ export const CardViewRow = ({
           !(
             hideEmptyCardCells &&
             [null, undefined, ""].includes(`${row[c.name] ?? ""}`.trim())
-          ),
+          ) &&
+          table.card?.headerColumn !== c.name,
       ),
-    [cols, hideEmptyCardCells, row],
+    [cols, hideEmptyCardCells, row, table.card?.headerColumn],
   );
 
+  const { card } = table;
+  const headerColumn =
+    card?.headerColumn ?
+      table.columns.find((c) => c.name === card.headerColumn)
+    : undefined;
+
+  const subHeaderColumn =
+    card?.subHeaderColumn ?
+      table.columns.find((c) => c.name === card.subHeaderColumn)
+    : undefined;
+
+  const avatarColumn =
+    card?.avatarColumn ?
+      table.columns.find((c) => c.name === card.avatarColumn)
+    : undefined;
+
+  const avatarUrl =
+    avatarColumn && typeof row[avatarColumn.name] === "string" ?
+      (row[avatarColumn.name] as string)
+    : undefined;
+
   return (
-    <FlexRowWrap
+    <FlexCol
       data-command="CardView.row"
       key={indexedRow.index}
       data-row-index={indexedRow.index}
@@ -137,30 +162,83 @@ export const CardViewRow = ({
         onClickRow?.(row, e);
       }}
     >
-      {moveItemsProps && (
-        <DragHeader
-          {...moveItemsProps}
-          padding={padding}
-          tableHandler={tableHandler}
-          table={table}
-          allIndexedRows={allIndexedRows}
-          columns={columns}
-          onDataChanged={onDataChanged}
-          onEditClickRow={onEditClickRow}
-          indexedRow={indexedRow}
-          draggedRow={draggedRow}
-          setDraggedRow={setDraggedRow}
-        />
-      )}
-      {!w?.options.hideEditRow && (
-        <div
+      <FlexRow
+        className="CardHeader relative w-full ai-start"
+        style={{ gap: padding, paddingLeft: avatarUrl ? padding : undefined }}
+      >
+        {avatarUrl && (
+          <MediaViewer
+            style={{
+              flex: "none",
+              width: "3em",
+              height: "3em",
+              borderRadius: "50%",
+              overflow: "hidden",
+              alignSelf: "center",
+              border: "1px solid var(--b-color)",
+            }}
+            url={avatarUrl}
+            content_type="image"
+          />
+        )}
+        <FlexCol
+          className="w-full f-1 gap-p25"
           style={{
-            top: "2px",
-            right: "2px",
-            position: "absolute",
+            padding,
+            ...(avatarUrl ?
+              {
+                paddingLeft: 0,
+              }
+            : {}),
           }}
         >
-          {getEditColumn({
+          {headerColumn && (
+            <div
+              className="w-full f-1"
+              title={headerColumn.label || headerColumn.name}
+              style={{
+                fontWeight: "bold",
+                fontSize: "1.1em",
+              }}
+            >
+              <RenderValue
+                column={headerColumn}
+                value={row[headerColumn.name]}
+              />
+            </div>
+          )}
+          {subHeaderColumn && (
+            <div
+              className="w-full f-1 text-1"
+              title={subHeaderColumn.label || subHeaderColumn.name}
+              style={{
+                fontSize: "0.9em",
+              }}
+            >
+              <RenderValue
+                column={subHeaderColumn}
+                value={row[subHeaderColumn.name]}
+              />
+            </div>
+          )}
+        </FlexCol>
+        {moveItemsProps && (
+          <DragHeader
+            {...moveItemsProps}
+            padding={padding}
+            tableHandler={tableHandler}
+            table={table}
+            allIndexedRows={allIndexedRows}
+            columns={columns}
+            onDataChanged={onDataChanged}
+            onEditClickRow={onEditClickRow}
+            indexedRow={indexedRow}
+            draggedRow={draggedRow}
+            setDraggedRow={setDraggedRow}
+          />
+        )}
+        {!w?.options.hideEditRow &&
+          getEditColumn({
             table,
             columnConfig: w?.columns || undefined,
             tableHandler,
@@ -176,9 +254,8 @@ export const CardViewRow = ({
             nextRow: indexedRows[rowIndex + 1],
             rowIndex: rowIndex,
           })}
-        </div>
-      )}
-      <CardViewRowContent
+      </FlexRow>
+      <CardBody
         visibleCols={visibleCols}
         cardCellMinWidth={cardCellMinWidth}
         cardRows={cardRows}
@@ -188,12 +265,13 @@ export const CardViewRow = ({
         rowIndex={rowIndex}
         indexedRows={indexedRows}
         cardLayout={w?.options.cardLayout}
+        table={table}
       />
-    </FlexRowWrap>
+    </FlexCol>
   );
 };
 
-const CardViewRowContent = ({
+const CardBody = ({
   visibleCols,
   cardCellMinWidth,
   cardRows,
@@ -203,6 +281,7 @@ const CardViewRowContent = ({
   rowIndex,
   indexedRows,
   cardLayout,
+  table,
 }: Pick<
   Required<CardViewRowProps["cardOpts"]>,
   "cardCellMinWidth" | "cardRows"
@@ -215,56 +294,67 @@ const CardViewRowContent = ({
   rowIndex: number;
   indexedRows: IndexedRow[];
   cardLayout: CardLayout | undefined;
+  table: DBSchemaTableWJoins;
 }) => {
-  const columnNodeList = visibleCols.map((c, ci) => {
-    const value = row[c.name] as unknown;
-    return (
-      <div
-        key={ci}
-        title={c.udt_name}
-        className={"flex-col min-w-0 " + (cardRows > 1 ? " h-fit w-fit " : "")}
-        style={{ minWidth: cardCellMinWidth }}
-      >
-        {!hideCardFieldNames && (
-          <div
-            className=" text-2 pointer noselect"
-            onContextMenu={
-              c.onContextMenu &&
-              ((e) => c.onContextMenu?.(e, e.currentTarget, c, () => {}))
-            }
-          >
-            {c.name}
-          </div>
-        )}
+  const { visibleColumns = visibleCols.map((c) => c.name) } = table.card ?? {};
+  const columnNodeList = visibleColumns
+    .map((c) => {
+      const columnName = typeof c === "string" ? c : c.column;
+      return visibleCols.find((vc) => vc.name === columnName);
+    })
+    .filter(isDefined)
+    .map((c, ci) => {
+      const value = row[c.name] as unknown;
+      const renderedVal = <RenderValue column={c} value={value} />;
+      return (
         <div
-          className=" o-auto font-18"
-          title={
-            (
-              typeof value === "string" &&
-              (_PG_date.some((v) => v === c.udt_name) ||
-                c.tsDataType === "number")
-            ) ?
-              value
-            : ""
+          key={ci}
+          title={c.udt_name}
+          className={
+            "flex-col gap-p25 min-w-0 " + (cardRows > 1 ? " h-fit w-fit " : "")
           }
-          style={{
-            lineHeight: 1.33,
-            ...(c.getCellStyle?.(row, value, value) || {}),
-            maxHeight: `${maxCardRowHeight || 800}px`,
-          }}
+          style={{ minWidth: cardCellMinWidth }}
         >
-          {c.onRender?.({
-            row: row,
-            value,
-            renderedVal: value as React.ReactNode,
-            rowIndex: rowIndex,
-            nextRow: indexedRows[rowIndex + 1],
-            prevRow: indexedRows[rowIndex - 1],
-          }) ?? <RenderValue column={c} value={value} />}
+          {!hideCardFieldNames && (
+            <div
+              className=" text-2 pointer noselect"
+              onContextMenu={
+                c.onContextMenu &&
+                ((e) => c.onContextMenu?.(e, e.currentTarget, c, () => {}))
+              }
+            >
+              {c.label || c.name}
+            </div>
+          )}
+          <div
+            className=" o-auto "
+            title={
+              (
+                typeof value === "string" &&
+                (_PG_date.some((v) => v === c.udt_name) ||
+                  c.tsDataType === "number")
+              ) ?
+                value
+              : ""
+            }
+            style={{
+              lineHeight: 1.33,
+              ...(c.getCellStyle?.(row, value, value) || {}),
+              maxHeight: `${maxCardRowHeight || 800}px`,
+            }}
+          >
+            {c.onRender?.({
+              row: row,
+              value,
+              renderedVal,
+              rowIndex: rowIndex,
+              nextRow: indexedRows[rowIndex + 1],
+              prevRow: indexedRows[rowIndex - 1],
+            }) ?? renderedVal}
+          </div>
         </div>
-      </div>
-    );
-  });
+      );
+    });
 
   if (cardLayout) {
     const columnNodes: Record<string, React.ReactNode> = {};
@@ -280,7 +370,18 @@ const CardViewRowContent = ({
     );
   }
 
-  return <>{columnNodeList}</>;
+  return (
+    <FlexRowWrap
+      className={"CardBody jc-start ai-start f-0 min-w-0"}
+      style={{
+        gap: padding,
+        padding,
+        paddingTop: 0,
+      }}
+    >
+      {columnNodeList}
+    </FlexRowWrap>
+  );
 };
 
 const CardLayoutRenderer = ({
