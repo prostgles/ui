@@ -15,7 +15,7 @@ if [ -n "$(git status --porcelain)" ]; then
   exit 1
 fi
 
-git fetch origin "$branch" --tags
+git fetch origin "$branch" --no-tags
 
 if ! git diff --quiet "HEAD..origin/$branch"; then
   echo "ERROR: Local $branch is behind origin/$branch" >&2

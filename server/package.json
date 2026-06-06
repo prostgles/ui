@@ -1,6 +1,6 @@
 {
   "name": "prostgles-ui-server",
-  "description": "",
+  "description": "Prostgles UI Server",
   "main": "index.js",
   "scripts": {
     "build": "npm ci && cross-env NODE_ENV='production' NODE_OPTIONS='--max-old-space-size=2048' tsc && tsc-alias && npm prune --omit=dev",
@@ -10,7 +10,7 @@
     "dev": "npm ci && cross-env NODE_ENV='development' NODE_OPTIONS='--max-old-space-size=4048' concurrently --kill-others \"tsc -w\" \"tsc-alias -w\" \"node --watch --trace-warnings --inspect dist/server/src/index.js\"",
     "dev:electron": "npm ci && cross-env NODE_ENV='development' NODE_OPTIONS='--max-old-space-size=4048' concurrently --kill-others \"tsc -w\" \"tsc-alias -w\" \"node --watch --trace-warnings --inspect dist/server/src/testElectron.js\""
   },
-  "author": "",
+  "author": "Prostgles LTD <office@prostgles.com>",
   "license": "",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1047.0",

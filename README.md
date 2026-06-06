@@ -1,12 +1,22 @@
-# Prostgles UI
+<h1 align="center">
+  <div style="margin: auto; width: fit-content; display: flex; flex-direction: row; align-items: center; gap: 10px">
+    <a href="https://www.prostgles.com">
+        <img src="./electron/icon512.png" height="36" />
+        <br>
+    </a>
+    Prostgles UI
+  </div>
+</h1>
 
-SQL Editor and internal tool builder for Postgres
+<p align="center">
+  SQL Editor, data explorer and internal tool builder for Postgres
+</p>
 
-[Live demo](https://playground.prostgles.com/)
-
-### Screenshots
-
-[More](https://prostgles.com/)
+<p align="center">
+  <a href="http://www.prostgles.com"><b>Website</b></a> •
+  <a href="https://playground.prostgles.com/"><b>Live demo</b></a> •
+  <a href="https://prostgles.com/docs"><b>Documentation</b></a>
+</p>
 
 <p float="left">
   <img src="./docs/screenshots/overview.svgif.svg" width="100%" style="border: 1px solid #cecece"/>  
@@ -63,9 +73,9 @@ docker compose --profile=docker-mcp up --build
 
 ### Installation - Desktop version
 
-- To install the pre-built installation files follow [these instructions](<./docs/03_Installation_(Desktop_Version).md>)
+- To install the pre-built installation files [follow these instructions](<./docs/03_Installation_(Desktop_Version).md>)
 
-- To build the installation files yourself you can follow the [these instructions](./electron/README.md)
+- To build the installation files yourself you can [follow these instructions](./electron/README.md)
 
 ### Installation - use existing PostgreSQL instance
 

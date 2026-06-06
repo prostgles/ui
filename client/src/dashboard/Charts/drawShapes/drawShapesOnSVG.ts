@@ -17,7 +17,7 @@ export const drawShapesOnSVG = (
   opts:
     | undefined
     | {
-        scale?: number;
+        scale3d?: [number, number, number];
         translate?: { x: number; y: number };
         isChild?: boolean;
       },
@@ -33,8 +33,8 @@ export const drawShapesOnSVG = (
   if (opts?.translate) {
     transform += `translate(${opts.translate.x}, ${opts.translate.y})`;
   }
-  if (opts?.scale) {
-    transform += ` scale(${opts.scale})`;
+  if (opts?.scale3d) {
+    transform += ` scale(${opts.scale3d.slice(0, 2).join(",")})`;
   }
   g.setAttribute("transform", transform);
 
@@ -291,26 +291,34 @@ export const drawShapesOnSVG = (
       textElement.setAttribute("opacity", opacity.toString());
       textElement.textContent = s.text;
 
-      if (s.textBaseline) {
-        textElement.setAttribute("dominant-baseline", s.textBaseline);
-      }
+      const { textBaseline = "middle", textAlign = "left" } = s;
+      textElement.setAttribute("dominant-baseline", textBaseline);
 
       // Handle background if present
       if (s.background) {
         const txtSize = measureSvgText(s.text, s.font || "");
-        const txtPadding = 2; //s.background.padding || 0;
+        // const txtPadding = 2; //s.background.padding || 0;
+        const txtPaddingAndBorder = 3; //s.background.padding || 0;
 
-        let bgX = x - txtSize.width / 2 - txtPadding;
-        const bgY = y - txtSize.actualHeight;
+        let bgX = x - txtSize.width / 2 - txtPaddingAndBorder;
+        let bgY = y - txtSize.actualHeight - txtPaddingAndBorder;
 
-        if (["left", "start"].includes(s.textAlign || "")) {
-          bgX = x - txtPadding;
-        } else if (["right", "end"].includes(s.textAlign || "")) {
-          bgX = x - txtSize.width - txtPadding;
+        if (["left", "start"].includes(textAlign)) {
+          bgX = x - txtPaddingAndBorder;
+        } else if (["right", "end"].includes(textAlign)) {
+          bgX = x - txtSize.width - txtPaddingAndBorder;
         }
 
-        const bgWidth = txtSize.width + 2 * txtPadding;
-        const bgHeight = txtSize.actualHeight + 2 * txtPadding;
+        if (textBaseline === "middle") {
+          bgY =
+            y -
+            txtSize.actualHeight / 2 -
+            txtPaddingAndBorder -
+            1 /* Adjust for visual centering */;
+        }
+
+        const bgWidth = txtSize.width + 2 * txtPaddingAndBorder;
+        const bgHeight = txtSize.actualHeight + 2 * txtPaddingAndBorder;
         const radius = s.background.borderRadius || 0;
 
         // const rectBg = createSvgElement("path");

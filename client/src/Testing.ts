@@ -696,6 +696,7 @@ export declare namespace SVGif {
         duration: number;
         type: "custom";
         attributes: Record<"transform", [string, string]>;
+        fixedAttributeValues?: Record<string, string>;
       }
     | {
         type: "wait";

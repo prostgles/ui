@@ -394,7 +394,8 @@ test.describe("Main test", () => {
 
     const getDrawnInfo = async () => {
       const drawnInfo: {
-        scale: number;
+        scale3d: [number, number, number];
+        zoomScale: number;
         translate: { x: number; y: number };
         shapes: (
           | {
@@ -423,8 +424,8 @@ test.describe("Main test", () => {
     await page.waitForTimeout(1500);
 
     const zoomedInShapesInfo = await getDrawnInfo();
-    await expect(zoomedInShapesInfo.scale).toBeGreaterThan(
-      initialShapesInfo.scale,
+    await expect(zoomedInShapesInfo.zoomScale).toBeGreaterThan(
+      initialShapesInfo.zoomScale,
     );
 
     const accountsTablePos = [155, 88] as const;

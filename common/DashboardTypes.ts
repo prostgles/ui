@@ -453,7 +453,13 @@ export type TimechartWindowInsertModel = {
   layers: (LayerDataSource & {
     title?: string;
     dateColumn: string;
+    /**
+     * Prefer to use groupByColumn instead of multiple layers that are based on the same table and column config.
+     * Will group by the specified column and show a separate line for each group in the time chart.
+     * Used together with groupByColumnColors, the column values will be mapped to the specified colors in the chart legend and lines. If not specified, colors will be assigned automatically.
+     */
     groupByColumn?: string;
+    groupByColumnColors?: { value: unknown; color: string }[];
     yAxis:
       | "count(*)"
       | {

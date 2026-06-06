@@ -126,6 +126,30 @@ export const ColorByLegend = ({ className, style, onChanged, ...props }: P) => {
     theme,
     db,
     tableName,
+    tables,
+  ]);
+
+  /** Remove extra labels */
+  useEffectDeep(() => {
+    if (dataSource?.type !== "local-table" || !valueStyles?.length) {
+      return;
+    }
+    const extraLabels = valueStyles.filter(
+      (s) => !layerGroupByValues.some((v) => v === s.value),
+    );
+    if (extraLabels.length) {
+      updateGroupByColumnColors(
+        valueStyles.filter((s) =>
+          layerGroupByValues.some((v) => v === s.value),
+        ),
+      );
+    }
+  }, [
+    dataSource?.type,
+    groupByColumnColors,
+    layerGroupByValues,
+    updateGroupByColumnColors,
+    valueStyles,
   ]);
 
   const fetchAndSetMissingLabels = useDebouncedCallback(
@@ -139,15 +163,15 @@ export const ColorByLegend = ({ className, style, onChanged, ...props }: P) => {
           )
         )
           return;
-        const prevSyleIndexes = new Set<number>();
+        const prevStyleIndexes = new Set<number>();
         updateGroupByColumnColors(
           values.map((value) => {
             const nonPickedStyles =
-              prevSyleIndexes.size === chipColors.length ?
+              prevStyleIndexes.size === chipColors.length ?
                 chipColors
-              : chipColors.filter((_, i) => !prevSyleIndexes.has(i));
+              : chipColors.filter((_, i) => !prevStyleIndexes.has(i));
             const { elem: style, index } = getRandomElement(nonPickedStyles);
-            prevSyleIndexes.add(index);
+            prevStyleIndexes.add(index);
             return {
               color: style.color,
               value,

@@ -54,6 +54,7 @@ export const loadGeneratedTimechart = (
         columns,
         title: l.title,
         groupByColumn: l.groupByColumn,
+        groupByColumnColors: l.groupByColumnColors,
         dataSource: {
           type: "local-table",
           localTableName: table_name,
