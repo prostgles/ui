@@ -173,9 +173,9 @@ export const useDrawSchemaShapes = (
     [canvasRef, getShapes, columnColorMode, drawShapesOnHiddenSvg],
   );
 
-  const prevdbConf = useRef(dbConf);
+  const previousDatabaseConfig = useRef(dbConf);
   useEffect(() => {
-    if (dbConf && !prevdbConf.current) {
+    if (dbConf && !previousDatabaseConfig.current) {
       const { table_schema_transform } = dbConf;
       if (table_schema_transform) {
         positionRef.current = table_schema_transform.translate;
