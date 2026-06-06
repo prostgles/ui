@@ -9,6 +9,7 @@ export const aiAssistantAgenticWorkflowGovApiSvgif: OnBeforeScreenshot = async (
   { openConnection },
   { addScene, addSceneAnimation },
 ) => {
+  // if (Math.PI) throw "Done";
   await openConnection("food_delivery");
   await page.getByTestId("AskLLM").click();
   await page.waitForTimeout(1000);

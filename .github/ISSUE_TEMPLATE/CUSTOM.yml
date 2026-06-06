@@ -1,6 +1,6 @@
-name: Custom issue
+name: General issue
 description: File a feature request
-title: "[Title]"
+title: "[General]: "
 assignees:
   - prostgles
 body:

@@ -203,8 +203,6 @@ export const getSVGifAnimations = (
           // appendStyle(parsedAnimations.style);
         } else if (animation.type === "custom") {
           const parsedAnimations = getSVGifCustomAnimation(
-            { height, width },
-            { element, bbox },
             parsedScene,
             animation,
             {
@@ -226,17 +224,28 @@ export const getSVGifAnimations = (
     if (sceneNodeAnimations.length) {
       sceneNodeAnimationsStyle += "\n";
       let nodeAnimIndex = 0;
-      sceneNodeAnimations.forEach(({ sceneId, elemSelector, keyframes }) => {
-        nodeAnimIndex++;
-        const animationName = `node-${sceneId}-anim-${nodeAnimIndex}`;
-        sceneNodeAnimationsStyle += "\n";
-        sceneNodeAnimationsStyle += fixIndent(`
+      sceneNodeAnimations.forEach(
+        ({ sceneId, elemSelector, keyframes, fixedAttributeValues }) => {
+          nodeAnimIndex++;
+          const animationName = `node-${sceneId}-anim-${nodeAnimIndex}`;
+          const fixedAttrsStr =
+            fixedAttributeValues ?
+              Object.entries(fixedAttributeValues)
+                .map(([k, v]) => `${k}: ${v};`)
+                .join(" ")
+            : "";
+          sceneNodeAnimationsStyle += "\n";
+          if (fixedAttrsStr) {
+            sceneNodeAnimationsStyle += `#${sceneId} ${elemSelector} { ${fixedAttrsStr} }\n`;
+          }
+          sceneNodeAnimationsStyle += fixIndent(`
           @keyframes ${animationName} {
           ${keyframes.map((v) => `  ${v}`).join("\n")}
           }
           ${getAnimationProperty({ elemSelector: `#${sceneId} ${elemSelector}`, animName: animationName, totalDuration: totalSvgifDuration })}
         `);
-      });
+        },
+      );
 
       appendStyle(sceneNodeAnimationsStyle);
     }
@@ -287,6 +296,7 @@ export type SceneNodeAnimation = {
   sceneId: string;
   elemSelector: string;
   keyframes: string[];
+  fixedAttributeValues?: Record<string, string>;
 };
 
 const appendSvgToSvg = (

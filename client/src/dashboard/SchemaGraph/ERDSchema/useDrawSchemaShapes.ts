@@ -155,9 +155,11 @@ export const useDrawSchemaShapes = (
           scale: scaleRef.current,
           translate: positionRef.current,
         });
+        const scale = scaleRef.current;
         const _drawn = {
           shapes: drawnShapes as ShapeV2[],
-          scale: scaleRef.current,
+          scale3d: [scale, scale, 1] as [number, number, number],
+          zoomScale: scale,
           translate: positionRef.current,
         };
         canvas._drawn = _drawn;
@@ -171,9 +173,9 @@ export const useDrawSchemaShapes = (
     [canvasRef, getShapes, columnColorMode, drawShapesOnHiddenSvg],
   );
 
-  const prevdbConf = useRef(dbConf);
+  const previousDatabaseConfig = useRef(dbConf);
   useEffect(() => {
-    if (dbConf && !prevdbConf.current) {
+    if (dbConf && !previousDatabaseConfig.current) {
       const { table_schema_transform } = dbConf;
       if (table_schema_transform) {
         positionRef.current = table_schema_transform.translate;
@@ -231,7 +233,8 @@ declare global {
   interface HTMLCanvasElement {
     _drawn?: {
       shapes: ShapeV2[];
-      scale: number;
+      scale3d: [number, number, number];
+      zoomScale: number;
       translate: { x: number; y: number };
     };
     _deckgl?: Deck<OrthographicView[] | MapView[]>;

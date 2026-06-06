@@ -156,7 +156,7 @@ const InputChip = ({
           width: `${numberOfChars}ch`,
           minWidth: _PG_date.some((v) => v === elemUdtName) ? "250px" : "50px",
           maxWidth: "300px",
-
+          textOverflow: "ellipsis",
           minHeight: elemTsType === "boolean" ? "20px" : undefined,
         }}
         onChange={({ target: { value } }) => {

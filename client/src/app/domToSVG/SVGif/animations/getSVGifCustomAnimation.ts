@@ -2,11 +2,8 @@ import type { SVGif } from "src/Testing";
 import type { SceneNodeAnimation } from "../getSVGifAnimations";
 import { getSVGifKeyframes } from "../getSVGifKeyframes";
 import type { SVGifParsedScene } from "../getSVGifParsedScenes";
-import type { getSVGifTargetBBox } from "../getSVGifTargetBBox";
 
 export const getSVGifCustomAnimation = (
-  viewport: { width: number; height: number },
-  { element, bbox: rawBBox }: ReturnType<typeof getSVGifTargetBBox>,
   { svgDom, svgFileName }: SVGifParsedScene,
   animation: Extract<SVGif.Animation, { type: "custom" }>,
   {
@@ -21,7 +18,8 @@ export const getSVGifCustomAnimation = (
     fromTime: number;
   },
 ) => {
-  const { elementSelector, attributes, duration } = animation;
+  const { elementSelector, attributes, duration, fixedAttributeValues } =
+    animation;
 
   const sceneNodeAnimations: SceneNodeAnimation[] = [];
 
@@ -48,6 +46,7 @@ export const getSVGifCustomAnimation = (
           percentage: getPercent(fromTime + duration),
         },
       ),
+      fixedAttributeValues,
     });
   }
   return { sceneNodeAnimations };
