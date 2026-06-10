@@ -10,6 +10,7 @@ import {
   deletePreviousMessages,
   newChat,
   runDbsMethod,
+  runDbsSql,
   setPromptByText,
 } from "utils/utils";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
@@ -68,6 +69,11 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   // });
 
   await openConnection("crypto");
+  await runDbsSql(
+    page,
+    "DELETE FROM workspaces WHERE name = 'Multi-Asset Price Comparison';",
+  );
+  await page.reload();
   await page.getByTestId("AskLLM").click();
   await newChat(page);
   await setPromptByText(page, "dashboard");
@@ -96,7 +102,7 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
     undefined,
     undefined,
     undefined,
-    "request_tool_access",
+    "request_tool_access_message",
   );
   const loadToolsBtn = await page
     .getByTestId("RequestToolAccess.Approve")
@@ -104,7 +110,9 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
 
   await loadToolsBtn.waitFor({ state: "visible", timeout: 15000 });
 
-  await addSceneAnimation(getCommandElemSelector("RequestToolAccess.Approve"));
+  await addSceneAnimation(getCommandElemSelector("RequestToolAccess.Approve"), {
+    svgFileName: "request_tool_access",
+  });
 
   await page.getByText("Added tool access").waitFor({ state: "visible" });
   await page.waitForTimeout(1000);

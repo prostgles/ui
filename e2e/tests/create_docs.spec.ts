@@ -42,6 +42,20 @@ test.describe("Create docs and screenshots", () => {
     timeout: 28 * MINUTE,
   });
 
+  // /** Allows reading images from cross origin sources to transform to data url */
+  // test.beforeEach(async ({ page }) => {
+  //   await page.route("**/*", async (route) => {
+  //     const response = await route.fetch();
+  //     await route.fulfill({
+  //       response,
+  //       headers: {
+  //         ...response.headers(),
+  //         "access-control-allow-origin": "*",
+  //       },
+  //     });
+  //   });
+  // });
+
   test(`Restore databases`, async ({ page: p }) => {
     const page = p as PageWIds;
 

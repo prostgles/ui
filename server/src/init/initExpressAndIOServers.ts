@@ -12,6 +12,7 @@ import { Server } from "socket.io";
 import { actualRootDir, DIRECTORIES } from "../electronConfig";
 import { includes } from "prostgles-types";
 import { isTesting } from "./utils";
+import { addDevImageProxyRoute } from "./addDevImageProxyRoute";
 
 export const initExpressAndIOServers = () => {
   const app = express();
@@ -90,6 +91,8 @@ export const initExpressAndIOServers = () => {
   );
 
   app.use(cookieParser());
+
+  addDevImageProxyRoute(app);
 
   const io = new Server(http, {
     path: API_ENDPOINTS.WS_DBS,
