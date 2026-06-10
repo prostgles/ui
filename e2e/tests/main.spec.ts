@@ -3133,7 +3133,7 @@ test.describe("Main test", () => {
     await page.keyboard.press("Escape");
     await usersTable.getByTestId("dashboard.window.fullscreen").click();
     await page.waitForTimeout(3e3);
-    await expect(await page.getByText("first_name").first()).toBeVisible();
+    await expect(await page.getByText("First Name").first()).toBeVisible();
 
     /** Test groupBy */
     const swapFirstTwoRows = async () => {
