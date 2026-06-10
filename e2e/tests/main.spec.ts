@@ -3115,10 +3115,9 @@ test.describe("Main test", () => {
     await usersTable.getByTestId("dashboard.window.menu").click();
     await page.waitForTimeout(1e3);
     await page.getByText("Display options").click();
-    await page.getByTestId("table.options.displayMode").click();
     await page
-      .getByTestId("SearchList.List")
-      .locator(`[data-key="card"]`)
+      .getByTestId("table.options.displayMode")
+      .locator(getDataKey("card"))
       .click();
     await page.getByTestId("table.options.cardView.groupBy").click();
     await page

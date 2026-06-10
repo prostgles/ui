@@ -84,7 +84,6 @@ export const StyledTableColumn = ({
     const numMax = Number(barchartVals[c.name]?.max ?? 0);
     return (
       <CellBarchart
-        style={{ marginTop: "6px" }}
         min={numMin}
         max={numMax}
         barColor={c.style.barColor}

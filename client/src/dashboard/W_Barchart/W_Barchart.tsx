@@ -87,7 +87,6 @@ export const W_Barchart = ({
               udt_name: "int4",
               onRender: ({ value }) => (
                 <CellBarchart
-                  style={{ marginTop: "6px" }}
                   min={barChartData.min}
                   max={barChartData.max}
                   barColor={`rgb(${barChartData.colorArr.slice(0, 3).join(",")})`}

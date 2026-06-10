@@ -69,6 +69,7 @@ export const CardHeader = ({
         className="w-full f-1 gap-p25"
         style={{
           padding,
+          paddingBottom: ".5em",
           ...(avatarUrl ?
             {
               paddingLeft: 0,

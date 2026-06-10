@@ -74,6 +74,5 @@ export const useWorkspacesSync = (dbs: DBS, connection_id: string) => {
     { connection_id, deleted: false },
     { handlesOnData: true },
   );
-  console.log(unsortedWorkspaces);
   return unsortedWorkspaces;
 };

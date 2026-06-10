@@ -106,7 +106,9 @@ export const CardViewRow = (props: CardViewRowProps) => {
           table.card?.subHeaderColumn,
           table.card?.avatarColumn,
         ];
-        if (headerFields.includes(c.name)) return false;
+        if (headerFields.includes(c.name)) {
+          return false;
+        }
         return (
           !c.hidden &&
           !(
