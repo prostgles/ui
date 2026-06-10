@@ -1,7 +1,11 @@
 import {
   mdiChartBoxMultipleOutline,
+  mdiCodeJson,
+  mdiCogOutline,
   mdiMagnify,
   mdiSetLeftCenter,
+  mdiTableLarge,
+  mdiViewAgendaOutline,
 } from "@mdi/js";
 
 import Btn from "@components/Btn";
@@ -11,12 +15,16 @@ import type { WindowSyncItem } from "./Dashboard/dashboardUtils";
 
 import { isJoinedFilter } from "@common/filterUtils";
 import { classOverride, FlexRow } from "@components/Flex";
+import { Select } from "@components/Select/Select";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { t } from "../i18n/i18nUtils";
 import type { DBS } from "./Dashboard/DBS";
 import { getLinkColorV2 } from "./W_Map/fetchData/getMapLayerQueries";
 import type { ChartableSQL } from "./W_SQL/getChartableSQL";
 import { AddChartMenu } from "./W_Table/TableMenu/AddChartMenu";
-import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import { tableMightBeUndefinedDueToAccessControl } from "@common/utils";
+import PopupMenu from "@components/PopupMenu";
+import { TableDisplayOptionsJSON } from "./W_Table/TableMenu/TableDisplayOptionsJSON";
 
 export type ProstglesQuickMenuProps = Pick<
   CommonWindowProps,
@@ -81,14 +89,18 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
         style={{ maxWidth: "fit-content", margin: "2px 0", gap: "1px" }}
         ref={divRef}
       >
-        {Boolean((dbs.windows as any).insert) && addChartProps && !show && (
-          <AddChartMenu
-            {...addChartProps}
-            childWindows={childWindows}
-            myLinks={myLinks}
-            getLinksAndWindows={getLinksAndWindows}
-          />
-        )}
+        {Boolean(
+          tableMightBeUndefinedDueToAccessControl(dbs.windows)?.insert,
+        ) &&
+          addChartProps &&
+          !show && (
+            <AddChartMenu
+              {...addChartProps}
+              childWindows={childWindows}
+              myLinks={myLinks}
+              getLinksAndWindows={getLinksAndWindows}
+            />
+          )}
         {hasMinimisedCharts && (
           <Btn
             iconPath={mdiChartBoxMultipleOutline}
@@ -108,22 +120,62 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
           !window.isMobileDevice &&
           !!setLinkMenu &&
           w.type === "table" && (
-            <Btn
-              title={t.W_QuickMenu["Cross filter tables"]}
-              data-command="Window.W_QuickMenu.addCrossFilteredTable"
-              size="small"
-              variant="icon"
-              iconPath={mdiSetLeftCenter}
-              style={
-                firstLink && { color: getLinkColorV2(firstLink, 1).colorStr }
-              }
-              onClick={(e) => {
-                setLinkMenu({
-                  w,
-                  anchorEl: e.currentTarget,
-                });
-              }}
-            />
+            <>
+              <Btn
+                title={t.W_QuickMenu["Cross filter tables"]}
+                data-command="Window.W_QuickMenu.addCrossFilteredTable"
+                size="small"
+                variant="icon"
+                iconPath={mdiSetLeftCenter}
+                style={
+                  firstLink && { color: getLinkColorV2(firstLink, 1).colorStr }
+                }
+                onClick={(e) => {
+                  setLinkMenu({
+                    w,
+                    anchorEl: e.currentTarget,
+                  });
+                }}
+              />
+              <Select
+                title="View mode"
+                fullOptions={
+                  [
+                    {
+                      key: "table",
+                      iconPath: mdiTableLarge,
+                    },
+                    {
+                      key: "card",
+                      iconPath: mdiViewAgendaOutline,
+                      rightContent: (
+                        <PopupMenu button={<Btn iconPath={mdiCogOutline} />}>
+                          <TableDisplayOptionsJSON tableName={w.table_name} />
+                        </PopupMenu>
+                      ),
+                    },
+                    {
+                      key: "json",
+                      iconPath: mdiCodeJson,
+                    },
+                  ] as const
+                }
+                btnProps={{
+                  variant: "icon",
+                }}
+                showSelected="icon"
+                value={w.options.viewAs?.type ?? "table"}
+                onChange={(viewAsType) => {
+                  w.$update({
+                    options: {
+                      viewAs: {
+                        type: viewAsType,
+                      },
+                    },
+                  });
+                }}
+              />
+            </>
           )}
         {table && (!show || show.filter) && w.type === "table" && (
           <Btn

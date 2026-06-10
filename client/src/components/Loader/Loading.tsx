@@ -104,7 +104,20 @@ export default class Loading extends RTComp<P, S> {
               this.setState({ timeoutMessage: this.props.onTimeout.message });
             }
           } else {
-            pageReload("Loader refreshPageTimeout");
+            const reason = "Loader refreshPageTimeout";
+            const previousLoaderTimeout = window.localStorage.getItem(reason);
+            if (
+              previousLoaderTimeout &&
+              Date.now() - Number(previousLoaderTimeout) < 8_000
+            ) {
+              console.log(
+                "Not refreshing page because loader was shown recently",
+                message,
+              );
+              return;
+            }
+            window.localStorage.setItem(reason, Date.now().toString());
+            pageReload(reason);
           }
         }, onTimeout?.timeout ?? refreshPageTimeout!);
       }

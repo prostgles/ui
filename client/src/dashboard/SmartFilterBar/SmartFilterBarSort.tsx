@@ -8,6 +8,7 @@ import type {
 } from "../Dashboard/dashboardUtils";
 import type { ColumnSort } from "../W_Table/ColumnMenu/ColumnMenu";
 import type { SmartFilterBarProps } from "./SmartFilterBar";
+import { isDefined } from "@common/filterUtils";
 
 type P = SmartFilterBarProps & {
   table: DBSchemaTableWJoins;
@@ -30,7 +31,6 @@ export const SmartFilterBarSort = ({ table, ...props }: P) => {
       props.onSortChange(newSort);
     }
   };
-  const orderableFields = columns ?? table.columns.filter((c) => c.filter);
   let orderByKey: string | undefined;
   let orderAsc = true;
   if ("w" in props) {
@@ -54,10 +54,41 @@ export const SmartFilterBarSort = ({ table, ...props }: P) => {
         emptyLabel="Sort by..."
         asRow={true}
         value={orderByKey}
-        fullOptions={orderableFields.map((f) => ({
-          key: f.name,
-          label: "label" in f ? f.label || f.name : f.name,
-        }))}
+        fullOptions={
+          columns
+            ?.flatMap((c) => {
+              if (!c.show) return;
+              if (c.nested) {
+                if (c.nested.chart) {
+                  return ["date", "value"].map((k) => ({
+                    key: `${c.name}.${k}`,
+                    label: `${c.name} - ${k}`,
+                  }));
+                }
+                return c.nested.columns.map((nc) =>
+                  !nc.show ? undefined : (
+                    {
+                      key: `${c.name}.${nc.name}`,
+                      label: `${c.name} - ${nc.name}`,
+                    }
+                  ),
+                );
+              }
+              return {
+                key: c.name,
+                label: c.name,
+              };
+            })
+            .filter(isDefined) ??
+          table.columns
+            .filter((c) => c.filter)
+            .flatMap(({ name, label }) => {
+              return {
+                key: name,
+                label: label || name,
+              };
+            })
+        }
         onChange={(orderByKey) => {
           setSort(orderByKey, orderAsc);
         }}

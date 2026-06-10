@@ -114,7 +114,8 @@ export const tableOptionsJsonbSchema = {
                     type: {
                       column: "string",
                       hideLabel: { type: "boolean", optional: true },
-                      // heightPx: { type: "integer", optional: true },
+                      // maxHeightPx: { type: "integer", optional: true },
+                      // widthPerc: { type: "integer", optional: true },
                       // gridColumn: { optional: true, type: "string" },
                       // gridRow: { optional: true, type: "string" },
                     },

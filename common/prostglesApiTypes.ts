@@ -479,24 +479,23 @@ export type TableHandlerClientMethods<T extends AnyObject = AnyObject, S extends
      * - any changes to the row using the $update method will be reflected instantly
      *    to all sync subscribers that were initiated with the same syncOptions
      */
-    useSync?: <TD extends T>(basicFilter: EqualityFilter<TD>, syncOptions: SyncOptions, hookOptions?: HookOptions) => AsyncResult<SyncDataItem<Required<TD>>[] | undefined>;
-    sync?: Sync<T>;
-    syncOne?: SyncOne<T>;
+    useSync?: <TD extends T, Opts extends SyncOptions>(basicFilter: EqualityFilter<TD>, syncOptions: Opts, hookOptions?: HookOptions) => AsyncResult<SyncDataItem<Required<TD>, Opts>[] | undefined>;
+    sync?: <TD extends T, Opts extends SyncOptions>(basicFilter: EqualityFilter<TD>, options: Opts, onChange: OnChange<TD, Opts>, onError?: OnErrorHandler) => Promise<SyncHandler<TD>>;
+    syncOne?: <TD extends T, Opts extends SyncOneOptions>(basicFilter: EqualityFilter<TD>, options: Opts, onChange: OnChangeOne<TD, Opts>, onError?: OnErrorHandler) => Promise<SingleSyncHandles<TD, Opts["handlesOnData"]>>;
     /**
      * Retrieves the first row matching the filter and keeps it in sync
      * - use { handlesOnData: true } to get optimistic updates method: $update
      * - any changes to the row using the $update method will be reflected instantly
      *    to all sync subscribers that were initiated with the same syncOptions
      */
-    useSyncOne?: <TD extends T>(basicFilter: EqualityFilter<TD>, syncOptions: SyncOneOptions, hookOptions?: HookOptions) => AsyncResult<SyncDataItem<Required<TD>> | undefined>;
+    useSyncOne?: <TD extends T, Opts extends SyncOneOptions>(basicFilter: EqualityFilter<TD>, syncOptions: Opts, hookOptions?: HookOptions) => AsyncResult<SyncDataItem<Required<TD>, Opts> | undefined>;
     /**
      * Used internally to setup sync
      */
     _sync?: (filter: EqualityFilter<AnyObject> | undefined, selectParams: {
-        select: AnyObject | "*";
+        select: FieldFilter;
     }, triggers: ClientSyncHandles) => Promise<DbTableSync>;
     _syncInfo?: SyncTableInfo;
-    getSync?: AnyObject;
     /**
      * Retrieves a list of matching records from the view/table and subscribes to changes
      */
@@ -547,4 +546,5 @@ export type ClientOnReadyParams<DBSchema = void, FunctionHandler extends ClientF
     isReconnect: boolean;
     socket: Socket;
 };
+export
 `;

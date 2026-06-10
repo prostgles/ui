@@ -1,6 +1,6 @@
 {
   "name": "prostgles-desktop",
-  "homepage": "https://prostgles.com/desktop",
+  "homepage": "https://prostgles.com",
   "description": "Realtime Dashboard and SQL editor for PostgreSQL",
   "author": "Prostgles LTD  <office@prostgles.com>",
   "projectUrl": "https://github.com/prostgles/ui",

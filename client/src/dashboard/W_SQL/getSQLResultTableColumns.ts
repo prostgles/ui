@@ -5,6 +5,7 @@ import {
 } from "prostgles-types";
 import { onRenderColumn } from "../W_Table/tableUtils/onRenderColumn";
 import type { W_SQLResultsProps } from "./W_SQLResults";
+import type { Prgl } from "src/App";
 
 export const getSQLResultTableColumns = ({
   cols = [],
@@ -12,8 +13,9 @@ export const getSQLResultTableColumns = ({
   onResize,
   maxCharsPerCell,
   rows = [],
-}: Pick<W_SQLResultsProps, "cols" | "tables" | "onResize" | "rows"> & {
+}: Pick<W_SQLResultsProps, "cols" | "onResize" | "rows"> & {
   maxCharsPerCell: number | undefined;
+  tables: Prgl["tables"];
 }) => {
   return cols.map((c, i) => {
     const isNumeric = isNumericColumn(c);

@@ -24,8 +24,8 @@ type P = DashboardMenuProps & {
 } & Pick<DashboardMenuState, "queries">;
 
 export const DashboardMenuContent = (props: P) => {
-  const { tables, workspace, queries, onClose, onClickSearchAll } = props;
-  const { methods, theme, user, sql } = usePrgl();
+  const { workspace, queries, onClose, onClickSearchAll } = props;
+  const { tables, methods, theme, user, sql } = usePrgl();
   const { addViewToWorkspace } = useAddViewToWorkspace();
 
   const pinnedMenu = getIsPinnedMenu(workspace);
@@ -144,7 +144,7 @@ export const DashboardMenuContent = (props: P) => {
                 </span>
               ),
               onPress: () => {
-                t.$update?.({ closed: false, workspace_id: workspace.id });
+                t.$update({ closed: false, workspace_id: workspace.id });
                 onClose?.();
               },
             }))}

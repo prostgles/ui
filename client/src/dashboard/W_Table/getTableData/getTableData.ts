@@ -18,9 +18,8 @@ export async function getTableData(
   const delta = { ...dp, ...ds, ...dd };
   const { rows } = this.state;
   const {
-    prgl: { db },
+    prgl: { tables, db },
     joinFilter,
-    tables,
   } = this.props;
   const { w } = this.d;
   if (!w) return;

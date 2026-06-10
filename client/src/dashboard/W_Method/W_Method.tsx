@@ -9,10 +9,8 @@ import { W_MethodMenu } from "./W_MethodMenu";
 export type W_MethodProps = Omit<CommonWindowProps, "w"> & {
   w: WindowSyncItem<"method">;
 };
-export const W_Method = (allProps: W_MethodProps) => {
-  const { tables, ...props } = allProps;
-
-  const [w, setW] = useState(allProps.w);
+export const W_Method = (props: W_MethodProps) => {
+  const [w, setW] = useState(props.w);
 
   const getIsMounted = useIsMounted();
   useEffect(() => {
@@ -35,11 +33,11 @@ export const W_Method = (allProps: W_MethodProps) => {
       connection={props.prgl.connection}
       layoutMode={props.workspace.layout_mode ?? "editable"}
       getMenu={(w, closeMenu) => (
-        <W_MethodMenu {...allProps} w={w} closeMenu={closeMenu} />
+        <W_MethodMenu {...props} w={w} closeMenu={closeMenu} />
       )}
     >
       <W_MethodControls
-        {...allProps.prgl}
+        {...props.prgl}
         method_name={w.method_name}
         w={w}
         setState={setOpts}

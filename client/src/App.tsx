@@ -42,6 +42,7 @@ import { NonHTTPSWarning } from "./pages/NonHTTPSWarning";
 import { useAppTheme } from "./theme/useAppTheme";
 import { PrglCoreProvider } from "./useAppState/PrglCoreContextProvider";
 import { useAppState } from "./useAppState/useAppState";
+import type { DBSchemaTableWithRenderInfo } from "./dashboard/Dashboard/getTables";
 
 export type ClientUser = {
   sid: string;
@@ -85,7 +86,7 @@ export type PrglCore = {
   db: DBHandler;
   sql: SQLHandler | undefined;
   methods: ServerFunctionHandler;
-  tables: DBSchemaTableWJoins[];
+  tables: DBSchemaTableWithRenderInfo[];
 };
 export type PrglProject = PrglCore & {
   dbKey: string;

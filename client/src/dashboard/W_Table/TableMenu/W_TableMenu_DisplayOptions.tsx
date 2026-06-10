@@ -1,16 +1,12 @@
 import FormField from "@components/FormField/FormField";
 import { IconPalette } from "@components/IconPalette/IconPalette";
 import { Select } from "@components/Select/Select";
-import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import React, { useMemo } from "react";
-import { CodeEditorWithSaveButton } from "src/dashboard/CodeEditor/CodeEditorWithSaveButton";
-import type { DBSchemaTableWJoins } from "src/dashboard/Dashboard/dashboardUtils";
-import { includes } from "../../W_SQL/W_SQLBottomBar/W_SQLBottomBar";
+import React from "react";
+import { includes } from "prostgles-types";
 import { ColumnSelect } from "../ColumnMenu/ColumnSelect/ColumnSelect";
+import { TableDisplayOptionsJSON } from "./TableDisplayOptionsJSON";
 import type { W_TableMenuProps } from "./W_TableMenu";
-import { getJSONBSchemaAsJSONSchema } from "prostgles-types";
-import { a1 } from "react-router/dist/development/index-react-server-client-BS5F89FR";
-import { tableOptionsJsonbSchema } from "@common/mcp/tableOptionsJsonbSchema";
+import ButtonGroup from "@components/ButtonGroup";
 
 type P = W_TableMenuProps;
 
@@ -25,9 +21,13 @@ export const W_TableMenu_DisplayOptions = ({ w, workspace, prgl }: P) => {
 
   return (
     <div className="flex-col gap-1 ai-start mb-1 f-1 o-auto p-p25 ">
-      <FormField
+      <ButtonGroup
         className=" w-fit f-0"
-        label="Display mode"
+        label={{
+          label: "Display mode",
+          variant: "normal",
+          style: { marginBottom: "4px" },
+        }}
         data-command="table.options.displayMode"
         value={w.options.viewAs?.type ?? "table"}
         fullOptions={(["table", "card", "json"] as const).map((key) => ({
@@ -37,14 +37,7 @@ export const W_TableMenu_DisplayOptions = ({ w, workspace, prgl }: P) => {
           w.$update(
             {
               options: {
-                viewAs:
-                  viewAsType === "card" ?
-                    {
-                      type: "card",
-                      maxCardWidth: window.isLowWidthScreen ? "100%" : "700px",
-                      hideEmptyCardCells: true,
-                    }
-                  : { type: viewAsType },
+                viewAs: { type: viewAsType },
               },
             },
             { deepMerge: true },
@@ -136,7 +129,7 @@ export const W_TableMenu_DisplayOptions = ({ w, workspace, prgl }: P) => {
             label="Cards order by column"
             data-command="table.options.cardView.orderBy"
             columns={table.columns.map((c) =>
-              includes(c.udt_name, ["numeric", "float4", "float8"]) ? c : (
+              includes(["numeric", "float4", "float8"], c.udt_name) ? c : (
                 {
                   ...c,
                   disabledInfo:
@@ -259,7 +252,7 @@ export const W_TableMenu_DisplayOptions = ({ w, workspace, prgl }: P) => {
               className="w-fit f-0"
               value={w.options.maxRowHeight ?? 100}
               options={[25, 50, 100, 150, 200, 300, 400, 500, 600, 700, 800]}
-              onChange={(maxRowHeight) => {
+              onChange={(maxRowHeight: number) => {
                 w.$update({ options: { maxRowHeight } }, { deepMerge: true });
               }}
             />
@@ -267,71 +260,7 @@ export const W_TableMenu_DisplayOptions = ({ w, workspace, prgl }: P) => {
         </>
       )}
 
-      {table && <TableDisplayOptionsJSON table={table} />}
+      {table && <TableDisplayOptionsJSON tableName={table.name} />}
     </div>
-  );
-};
-
-const TableDisplayOptionsJSON = ({ table }: { table: DBSchemaTableWJoins }) => {
-  const { dbsTables, dbs, connection } = usePrgl();
-  const connectionTable = dbsTables.find((t) => t.name === "connections");
-
-  const languageOrError = useMemo(() => {
-    if (!connectionTable) {
-      return "Error: connections table not found";
-    }
-    const tableOptionsColumn = connectionTable.columns.find(
-      (c) => c.name === "table_options",
-    );
-    if (!tableOptionsColumn || !tableOptionsColumn.jsonbSchema) {
-      return "Error: table_options column not found";
-    }
-
-    const schema = getJSONBSchemaAsJSONSchema(
-      connectionTable.name,
-      tableOptionsColumn.name,
-      tableOptionsJsonbSchema.record.values,
-    );
-
-    console.log(schema);
-
-    return {
-      lang: "json",
-      jsonSchemas: [
-        {
-          id: "displayOptionsSchema",
-          schema,
-        },
-      ],
-    } as const;
-  }, [connectionTable]);
-
-  if (typeof languageOrError === "string") {
-    return <div className="p-p25">{languageOrError}</div>;
-  }
-  return (
-    <CodeEditorWithSaveButton
-      label="Display options JSON"
-      language={languageOrError}
-      value={JSON.stringify(
-        connection.table_options?.[table.name] ?? {},
-        null,
-        2,
-      )}
-      onSave={async (newValue) => {
-        await dbs.connections.update(
-          { id: connection.id },
-          {
-            table_options: {
-              $merge: [
-                {
-                  [table.name]: JSON.parse(newValue),
-                },
-              ],
-            },
-          },
-        );
-      }}
-    />
   );
 };

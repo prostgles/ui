@@ -32,7 +32,6 @@ import { ViewRendererWrapped } from "./ViewRenderer";
 import { cloneWorkspace } from "./cloneWorkspace";
 import type {
   ChartType,
-  DBSchemaTablesWJoins,
   LinkSyncItem,
   LoadedSuggestions,
   WindowData,
@@ -42,7 +41,6 @@ import type {
   WorkspaceSyncItem,
 } from "./dashboardUtils";
 import { TopHeaderClassName } from "./dashboardUtils";
-import { getTables, type DBSchemaTableWithRenderInfo } from "./getTables";
 
 const FORCED_REFRESH_PREFIX = "force-" as const;
 export const CENTERED_WIDTH_CSS_VAR = "--centered-width";
@@ -54,7 +52,7 @@ export type DashboardProps = {
   navigate: NavigateFunction;
 };
 export type DashboardState = {
-  tables?: DBSchemaTableWithRenderInfo[];
+  // tables?: DBSchemaTableWithRenderInfo[];
   loading: boolean;
   minimised: boolean;
   namePopupWindow?: { w: WindowSyncItem; node: HTMLButtonElement };
@@ -137,17 +135,14 @@ export class _Dashboard extends RTComp<
         onRenew: () => this.loadSchema(true),
       };
 
-      const { tables = [] } = getTables(
-        dbSchemaTables,
-        connection.table_options,
-        db,
-      );
+      // const { tables = [] } = getTables(
+      //   dbSchemaTables,
+      //   connection.table_options,
+      //   db,
+      // );
 
-      const ns: Pick<
-        DashboardState,
-        "tables" | "suggestions" | "loading" | "error"
-      > = {
-        tables,
+      const ns: Pick<DashboardState, "suggestions" | "loading" | "error"> = {
+        // tables,
         loading: false,
         error: undefined,
         suggestions: undefined,
@@ -215,7 +210,7 @@ export class _Dashboard extends RTComp<
           { orderBy: { last_used: -1 } },
         );
 
-        await cloneEditableWorkpsaces({ dbs, user_id });
+        await cloneEditableWorkspaces({ dbs, user_id });
 
         /** If this is an editable workspace then ensure we're working on a clone */
         if (
@@ -264,14 +259,16 @@ export class _Dashboard extends RTComp<
       let updatedLastUsed = false;
       const workspaceSync = await workspaces.syncOne(
         { id: wsp.id, deleted: false },
-        { handlesOnData: true },
+        { handlesOnData: true } as const,
         (workspace, delta) => {
-          if (!this.mounted) return;
+          if (!this.mounted) {
+            return;
+          }
           if (!updatedLastUsed) {
             updatedLastUsed = true;
-            workspace.$update?.({ last_used: new Date() as any });
+            void workspace.$update({ last_used: new Date().toISOString() });
           }
-          this.setData({ workspace }, { workspace: delta });
+          this.setData({ workspace }, { workspace: delta as typeof workspace });
         },
       );
 
@@ -279,19 +276,20 @@ export class _Dashboard extends RTComp<
         { workspace_id: wsp.id },
         { handlesOnData: true },
         (links, delta) => {
-          if (!this.mounted) return;
+          if (!this.mounted) {
+            return;
+          }
 
-          this.setData({ links: links as any }, { links: delta as any });
+          this.setData({ links }, { links: delta as any });
         },
       );
 
       const windowsSync = await dbs.windows.sync?.(
         { workspace_id: wsp.id },
-        { handlesOnData: true, select: "*", patchText: false },
-        (_wnds, deltas) => {
-          const wnds = _wnds as WindowSyncItem[];
+        { handlesOnData: true, select: "*" } as const,
+        (windowSyncItems, deltas) => {
           if (!this.mounted) return;
-
+          const wnds = windowSyncItems as WindowSyncItem[];
           const windows = wnds.sort(
             (a, b) => +a.last_updated - +b.last_updated,
           );
@@ -404,7 +402,7 @@ export class _Dashboard extends RTComp<
     const { localSettings, prgl } = this.props;
     const { connectionId, connection } = prgl;
     const {
-      tables,
+      // tables,
       loading,
       isReadonly,
       suggestions,
@@ -436,14 +434,11 @@ export class _Dashboard extends RTComp<
 
     const { windowsSync, workspace } = this.d;
 
-    if (!windowsSync || !workspace || !tables) {
+    if (!windowsSync || !workspace) {
       let loadingMessage = "";
       if (!windowsSync || !workspace) {
         loadingMessage = "Loading dashboard...";
-      } else if (!tables) {
-        loadingMessage = "Loading schema...";
       }
-
       return (
         <div className="absolute flex-row bg-color-0 " style={{ inset: 0 }}>
           <Loading
@@ -464,7 +459,6 @@ export class _Dashboard extends RTComp<
         menuAnchorState={this.menuAnchorState}
         prgl={prgl}
         suggestions={suggestions}
-        tables={tables}
         workspace={workspace}
       />
     );
@@ -555,7 +549,6 @@ export class _Dashboard extends RTComp<
                 workspace={workspace}
                 links={this.d.links}
                 windows={this.d.windows}
-                tables={tables}
                 onCloseUnsavedSQL={(q, e) => {
                   this.setState({
                     namePopupWindow: { w: q, node: e.currentTarget },
@@ -634,7 +627,6 @@ export type CommonWindowProps<T extends ChartType = ChartType> = Pick<
    */
   onForceUpdate: () => void;
   titleIcon?: React.ReactNode;
-  tables: Required<DashboardState>["tables"];
   isReadonly: boolean;
   suggestions: LoadedSuggestions | undefined;
   myLinks: LinkSyncItem[];
@@ -646,7 +638,7 @@ export const getIsPinnedMenu = (workspace: WorkspaceSyncItem) => {
   return workspace.options.pinnedMenu && !window.isLowWidthScreen;
 };
 
-const cloneEditableWorkpsaces = async ({
+const cloneEditableWorkspaces = async ({
   dbs,
   user_id,
 }: {

@@ -12,6 +12,38 @@ import type { ClientUser } from "../App";
 import { isPlaywrightTest } from "../i18n/i18nUtils";
 import { playwrightTestLogs } from "../utils/utils";
 
+const onDebugUseWspSync: UseProstglesClientProps["onDebug"] = (ev) => {
+  // if (
+  //   ev.type === "table" &&
+  //   ev.command === "getSync" &&
+  //   ev.tableName === "workspaces"
+  // ) {
+  //   console.warn(Date.now(), ev.type, ev.command, ev.data.filter);
+  // }
+  // if (ev.type === "sync" && ev.tableName === "workspaces") {
+  //   if (
+  //     ev.command !== "notifySubscribers" &&
+  //     ev.command !== "onPullRequest" &&
+  //     ev.command !== "create" &&
+  //     ev.command !== "onSyncRequest" &&
+  //     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  //     ev.command !== "onUpdates"
+  //   ) {
+  //     return;
+  //   }
+  //   if (!syncTableSet.has(ev.options)) {
+  //     syncTableSet.add(ev.options);
+  //   }
+  //   console.log(
+  //     Date.now(),
+  //     ev.command,
+  //     ev.options.filter,
+  //     ev.data,
+  //     ev.channelName,
+  //     // Array.from(syncTableSet.values()).map((t) => [t.filter, t.getItems()]),
+  //   );
+  // }
+};
 export const useDBSClient = (
   onDisconnect: (isDisconnected: boolean) => void,
   serverState: ProstglesState | undefined,
@@ -30,7 +62,7 @@ export const useDBSClient = (
       onDisconnect: () => {
         onDisconnect(true);
       },
-      onDebug: !isPlaywrightTest ? undefined : playwrightTestLogs,
+      onDebug: !isPlaywrightTest ? onDebugUseWspSync : playwrightTestLogs,
       onReconnect: () => {
         onDisconnect(false);
         if (window.location.pathname.startsWith(ROUTES.CONNECTIONS + "/")) {

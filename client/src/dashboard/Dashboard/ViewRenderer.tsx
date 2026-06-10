@@ -43,7 +43,7 @@ import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 
 export type ViewRendererProps = Pick<DashboardProps, "prgl"> &
   Pick<DashboardData, "workspace" | "links" | "windows"> &
-  Pick<DashboardState, "tables" | "suggestions" | "isReadonly"> & {
+  Pick<DashboardState, "suggestions" | "isReadonly"> & {
     onCloseUnsavedSQL: (
       q: WindowSyncItem<ChartType>,
       e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
@@ -109,7 +109,7 @@ export class ViewRenderer extends RTComp<
   render() {
     const {
       workspace,
-      tables,
+
       suggestions,
       isReadonly,
       searchParams,
@@ -118,7 +118,8 @@ export class ViewRenderer extends RTComp<
     } = this.props;
     const { links, windows } = this.getOpenedLinksAndWindows();
     const { linkMenuWindow } = this.state;
-    if (!workspace || !tables) return;
+    const { tables } = prgl;
+    if (!workspace) return;
     const { layout_mode } = workspace;
 
     const { onClickRow } = getViewRendererUtils.bind(this)({
@@ -201,7 +202,6 @@ export class ViewRenderer extends RTComp<
         workspace,
         childWindows,
         prgl: this.props.prgl,
-        tables,
         onClose,
         onForceUpdate,
         searchParams,

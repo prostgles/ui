@@ -95,7 +95,7 @@ export const W_MethodMenu = (
                 dbsMethods={props.prgl.dbsMethods}
                 method={{ ...(editedMethod ?? method) }}
                 dbsTables={props.prgl.dbsTables}
-                tables={props.tables}
+                tables={props.prgl.tables}
                 onChange={(v) => {
                   if (isEqual(v, method)) {
                     setEditedMethod(undefined);

@@ -40,7 +40,7 @@ import { getTableMeta, type W_TableInfo } from "./getTableMeta";
 
 export type W_TableMenuProps = Pick<
   W_TableProps,
-  "workspace" | "prgl" | "externalFilters" | "joinFilter" | "tables"
+  "workspace" | "prgl" | "externalFilters" | "joinFilter"
 > & {
   w: WindowSyncItem<"table">;
   cols: ColumnConfigWInfo[];
@@ -336,7 +336,7 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
               );
             } else if (l1Key === "Columns") {
               const columnsConfig = await getAndFixWColumnsConfig(
-                this.props.tables,
+                this.props.prgl.tables,
                 w,
               );
               this.setState({ columnsConfig });

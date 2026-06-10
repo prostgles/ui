@@ -1,9 +1,9 @@
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type { ProstglesInitState } from "@common/electronInitTypes";
+import type { ConnectionDetails } from "@src/connectionUtils/getConnectionDetails";
 import { getServerFunctions } from "@src/serverFunctions/getServerFunctions";
 import type { Express } from "express";
 import path, { join } from "path";
-import type pg from "pg-promise/typescript/pg-subset";
 import prostgles from "prostgles-server";
 import type { InitResult } from "prostgles-server/dist/initProstgles";
 import { getSerialisableError } from "prostgles-types";
@@ -20,7 +20,6 @@ import { tableConfig } from "../tableConfig/tableConfig";
 import { tableConfigMigrations } from "../tableConfig/tableConfigMigrations";
 import { prostglesOnReady } from "./prostglesOnReady";
 import { startDevHotReloadNotifier } from "./startDevHotReloadNotifier";
-import type { ConnectionDetails } from "@src/connectionUtils/getConnectionDetails";
 
 type StartArguments = {
   app: Express;

@@ -51,6 +51,7 @@ export const timechartSvgif: OnBeforeScreenshot = async (
     await page.mouse.move((chartBBox!.x + chartBBox!.width) / 2, 300);
     await page.waitForTimeout(100);
     await page.mouse.wheel(0, -200);
+    /** Hide tooltips */
     // await page.waitForTimeout(100);
     // await page.mouse.move(0, 300);
     await page.waitForTimeout(1000);

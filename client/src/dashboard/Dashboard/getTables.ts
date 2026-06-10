@@ -10,7 +10,6 @@ export const getTables = (
   db: Prgl["db"],
   capitaliseNames = false,
 ): { tables: DBSchemaTablesWJoins } => {
-  // : { tables: DBSchemaTablesWJoins }
   const tables = schemaTables.map((t) => {
     const { columns, label, ...tableOpts } =
       connectionTableOptions?.[t.name] ?? {};
@@ -23,7 +22,6 @@ export const getTables = (
       columns: t.columns
         .map(
           (c) =>
-            // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
             ({
               ...c,
               label: capitaliseNames ? convertSnakeToReadable(c.name) : c.name,
@@ -35,21 +33,6 @@ export const getTables = (
               renderAs?: any;
               style?: any;
             },
-          // as typeof c &
-          //   Partial<
-          //     Pick<
-          //       NonNullable<
-          //         NonNullable<
-          //           NonNullable<
-          //             NonNullable<
-          //               DBSSchema["connections"]["table_options"]
-          //             >[string]
-          //           >["columns"]
-          //         >[string]
-          //       >,
-          //       "icon" | "renderAs" | "style"
-          //     >
-          //   >,
         )
         .sort((a, b) => {
           return a.ordinal_position - b.ordinal_position;

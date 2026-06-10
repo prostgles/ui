@@ -33,7 +33,9 @@ type P = Pick<Prgl, "db" | "methods" | "tables"> & {
     argName: string;
     tableName: string;
   };
-  w: SyncDataItem<Required<WindowData<"method">>, true> | undefined;
+  w:
+    | SyncDataItem<Required<WindowData<"method">>, { handlesOnData: true }>
+    | undefined;
 };
 
 export const W_MethodControls = ({

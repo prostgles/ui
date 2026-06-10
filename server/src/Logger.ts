@@ -53,28 +53,29 @@ const logRecords: {
 const isPlaywright = process.env.PLAYWRIGHT_TEST === "true";
 
 export const addLog = (e: EventInfo, connection_id: string | null) => {
-  // if (
-  //   e.type === "syncOrSub" &&
-  //   e.command === "addTrigger" &&
-  //   (e.tableName === "connections" || e.tableName === "database_configs")
-  // ) {
-  //   // if (item?.columnInfo?.tracked_columns.port) {
-  //   //   console.error("Port", item);
+  // if (e.type === "sync" && e.tableName === "windows") {
+  //   console.log(
+  //     e.command,
+  //     e.tableName,
+  //     pickKeys(e as any, [
+  //       "state",
+  //       "source",
+  //       "condition",
+  //       "last_synced",
+  //       "is_syncing",
+  //       "lr",
+  //       "channelName",
+  //       "rows",
+  //     ]),
+  //   );
+  //   // if (
+  //   //   e.command === "syncData"
+  //   // ) {
+  //   //   if (!_alreadyStarted && (e as any).is_syncing) {
+  //   //     debugger;
+  //   //   }
+  //   //   _alreadyStarted = true;
   //   // }
-  //   // console.log(e.tableName, item);
-  // }
-  // if (e.type === "syncOrSub" && e.command === "refreshTriggers") {
-  //   const items = Array.from(
-  //     structuredClone(e).triggers?.get("connections")?.values() ?? [],
-  //   );
-  //   const item = items.find(
-  //     ({ hash }) => hash === "daaf113dfd1f8e2deaaa3eb5af1d0f80",
-  //   );
-  //   if (item && !item.columnInfo?.tracked_columns.port) {
-  //     // eslint-disable-next-line no-debugger
-  //     debugger;
-  //   }
-  //   console.log(item);
   // }
   if (isPlaywright) {
     console.log(

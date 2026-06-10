@@ -268,7 +268,7 @@ export default class W_Table extends RTComp<
     const delta = { ...dp, ...ds, ...dd };
 
     const { workspace } = this.props;
-    const { db } = this.props.prgl;
+    const { db, tables } = this.props.prgl;
     const { w } = this.d;
     const { table_name: tableName, table_oid } = w || {};
 
@@ -285,7 +285,7 @@ export default class W_Table extends RTComp<
 
     /* Table was renamed. Replace from oid or fail gracefully */
     if (tableName && table_oid && !tableHandler) {
-      const match = this.props.tables.find((ti) => ti.oid === table_oid);
+      const match = tables.find((ti) => ti.oid === table_oid);
       if (match) {
         await w.$update({ table_name: match.name });
         return;
@@ -312,7 +312,7 @@ export default class W_Table extends RTComp<
 
     const { dbKey } = this.props.prgl;
     if (this.currDbKey !== dbKey) {
-      void getAndFixWColumnsConfig(this.props.tables, w);
+      void getAndFixWColumnsConfig(tables, w);
       this.currDbKey = dbKey;
     }
 
@@ -388,7 +388,7 @@ export default class W_Table extends RTComp<
 
   getWCols = () => {
     const { w } = this.d;
-    const { tables } = this.props;
+    const { tables } = this.props.prgl;
     const { rows } = this.state;
     return !w ?
         []
@@ -433,7 +433,6 @@ export default class W_Table extends RTComp<
     return (
       <W_TableMenu
         prgl={prgl}
-        tables={this.props.tables}
         workspace={this.props.workspace}
         cols={cols}
         w={w}
@@ -509,9 +508,8 @@ export default class W_Table extends RTComp<
       prgl,
       childWindow,
       workspace,
-      tables,
     } = this.props;
-    const { db, dbs } = prgl;
+    const { db, dbs, tables } = prgl;
 
     const tableHandler = db[tableName] as TableHandlerClient | undefined;
     if (!w) {
@@ -608,7 +606,6 @@ export default class W_Table extends RTComp<
           >
             <ColumnMenu
               columnMenuState={this.columnMenuState}
-              tables={tables}
               suggestions={this.props.suggestions}
               w={w}
             />
@@ -662,9 +659,7 @@ export default class W_Table extends RTComp<
                   error={error}
                 />
               )}
-              {(
-                cardOpts // childWindow ? childWindow :
-              ) ?
+              {cardOpts ?
                 <CardView
                   key={`${cardOpts.cardGroupBy}-${cardOpts.cardOrderBy}-${this.state.dataAge}`}
                   cols={cols}

@@ -13,9 +13,9 @@
   "author": "Prostgles LTD <office@prostgles.com>",
   "license": "",
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1047.0",
-    "@aws-sdk/lib-storage": "^3.1047.0",
-    "@aws-sdk/s3-request-presigner": "^3.1047.0",
+    "@aws-sdk/client-s3": "^3.1064.0",
+    "@aws-sdk/lib-storage": "^3.1064.0",
+    "@aws-sdk/s3-request-presigner": "^3.1064.0",
     "@libpg-query/parser": "^17.6.10",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@types/cookie-parser": "^1.4.10",
@@ -32,19 +32,19 @@
     "otplib": "^12.0.1",
     "path-to-regexp": "^8.4.2",
     "pidusage": "^4.0.1",
-    "prostgles-server": "^4.2.534",
+    "prostgles-server": "^4.2.543",
     "qrcode": "^1.5.4",
     "simple-git": "^3.36.0",
-    "smtp-server": "^3.18.4",
+    "smtp-server": "^3.18.5",
     "socket.io": "^4.8.3",
     "tslib": "^2.8.1",
     "typescript": "^5.9.3",
-    "ws": "^8.20.1"
+    "ws": "^8.21.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
     "@types/express": "^5.0.6",
-    "@types/node": "^22.19.15",
+    "@types/node": "^22.19.20",
     "@types/smtp-server": "^3.5.13",
     "@types/ws": "^8.18.1",
     "concurrently": "^9.2.1",
@@ -52,6 +52,6 @@
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-security": "^3.0.1",
     "tsc-alias": "^1.8.17",
-    "typescript-eslint": "^8.59.3"
+    "typescript-eslint": "^8.61.0"
   }
 }

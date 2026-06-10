@@ -220,23 +220,29 @@ export type ChartOptions<CType extends ChartType = "table"> =
       notSEtYet: "a";
     };
 
-export const IsMap = (w?: any): w is SyncDataItem<WindowData<"map">> => {
+export const IsMap = (
+  w?: any,
+): w is SyncDataItem<WindowData<"map">, { handlesOnData: true }> => {
   return w?.type === "map";
 };
-export const IsTable = (w?: any): w is SyncDataItem<WindowData<"table">> => {
+export const IsTable = (
+  w?: any,
+): w is SyncDataItem<WindowData<"table">, { handlesOnData: true }> => {
   return w?.type === "table";
 };
 export const isMethod = (
-  w?: SyncDataItem<WindowData> | WindowData,
+  w?: SyncDataItem<WindowData, { handlesOnData: true }> | WindowData,
 ): w is WindowSyncItem<"method"> => {
   return w?.type === "method";
 };
-export const IsSQL = (w: any): w is SyncDataItem<WindowData<"sql">> => {
+export const IsSQL = (
+  w: any,
+): w is SyncDataItem<WindowData<"sql">, { handlesOnData: false }> => {
   return w.type === "sql";
 };
 export const IsTimeChart = (
   w?: any,
-): w is SyncDataItem<WindowData<"timechart">> => {
+): w is SyncDataItem<WindowData<"timechart">, { handlesOnData: false }> => {
   return w?.type === "timechart";
 };
 
@@ -293,19 +299,25 @@ export const windowIs = <T extends ChartType>(
 };
 
 type ChartsObj = {
-  [type in ChartType]: SyncDataItem<Required<WindowData<type>>, true>;
+  [type in ChartType]: SyncDataItem<
+    Required<WindowData<type>>,
+    { handlesOnData: true; select: "*" }
+  >;
 };
 type ChartsObjOfUnion<U extends ChartType> = { [K in U]: ChartsObj[K] }[U];
 
 export type WindowSyncItem<T extends ChartType = ChartType> =
   ChartsObjOfUnion<T>;
-export type LinkSyncItem = SyncDataItem<Link, true>;
+export type LinkSyncItem = SyncDataItem<Link, { handlesOnData: true }>;
 
 export type WorkspaceSchema = DBSSchema["workspaces"];
 
 export type Workspace = Required<WorkspaceSchema>;
 
-export type WorkspaceSyncItem = SyncDataItem<Workspace, true>;
+export type WorkspaceSyncItem = SyncDataItem<
+  Workspace,
+  { handlesOnData: true }
+>;
 
 export type UserData = Omit<DBSSchema["users"], "password">;
 

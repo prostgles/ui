@@ -124,7 +124,7 @@ export type ColumnConfig = {
   width?: number;
 };
 
-type P = Pick<CommonWindowProps, "suggestions" | "tables"> & {
+type P = Pick<CommonWindowProps, "suggestions"> & {
   w: WindowSyncItem<"table">;
   columnMenuState: W_Table["columnMenuState"];
 };
@@ -140,9 +140,8 @@ export type ColumnSort = Omit<ColumnSortSQL, "key"> & {
 };
 
 export const ColumnMenu = (props: P) => {
-  const { tables } = props;
   const prgl = usePrgl();
-  const { sql, db } = prgl;
+  const { sql, db, tables } = prgl;
   const [w, setW] = useState<WindowSyncItem<"table">>(props.w);
   const tableName = w.table_name;
   const [activeKey, setActiveKey] = useState<string | undefined>("Sort");
@@ -273,8 +272,8 @@ export const ColumnMenu = (props: P) => {
         <ColumnDisplayFormat
           db={db}
           column={column}
-          tables={props.tables}
-          table={props.tables.find((t) => t.name === tableName)!}
+          tables={tables}
+          table={tables.find((t) => t.name === tableName)!}
           onChange={(format) => {
             onUpdate({ format });
           }}
