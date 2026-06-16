@@ -13,7 +13,7 @@ import { demoRestaurantName } from "utils/constants";
 
 export const dashboardSvgif: OnBeforeScreenshot = async (
   page,
-  { openConnection, openMenuIfClosed, toggleMenuPinned },
+  { openConnection, openMenuIfClosed },
   { addScene, addSceneAnimation },
 ) => {
   await goTo(page, "/connections");
@@ -246,6 +246,7 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
       },
       { type: "wait", duration: 500 },
     ],
+    svgFileName: "move_table",
   });
   await page.mouse.move(x + 675, y + 25, {
     steps: 22,

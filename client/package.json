@@ -13,7 +13,7 @@
     "monaco-editor": "^0.53.0",
     "papaparse": "^5.5.3",
     "pgsql-ast-parser": "^12.0.2",
-    "prostgles-client": "^4.0.365",
+    "prostgles-client": "^4.0.368",
     "qrcode": "^1.5.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

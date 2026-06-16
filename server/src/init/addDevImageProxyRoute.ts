@@ -1,5 +1,4 @@
 import type e from "express";
-import { isIP } from "net";
 import { isDevelopment } from "./utils";
 
 export const addDevImageProxyRoute = (app: e.Express): void => {
@@ -24,11 +23,6 @@ export const addDevImageProxyRoute = (app: e.Express): void => {
 
     if (!["http:", "https:"].includes(target.protocol)) {
       res.status(400).send("Unsupported protocol");
-      return;
-    }
-
-    if (isBlockedProxyHost(target.hostname)) {
-      res.status(403).send("Blocked host");
       return;
     }
 
@@ -77,31 +71,4 @@ export const addDevImageProxyRoute = (app: e.Express): void => {
       clearTimeout(timeout);
     }
   });
-};
-
-const isBlockedProxyHost = (hostname: string): boolean => {
-  const h = hostname.toLowerCase();
-
-  if (h === "localhost" || h.endsWith(".localhost")) return true;
-
-  if (isIP(h) === 4) {
-    return (
-      h.startsWith("10.") ||
-      h.startsWith("127.") ||
-      h.startsWith("192.168.") ||
-      h.startsWith("169.254.") ||
-      /^172\.(1[6-9]|2\d|3[0-1])\./.test(h)
-    );
-  }
-
-  if (isIP(h) === 6) {
-    return (
-      h === "::1" ||
-      h.startsWith("fc") ||
-      h.startsWith("fd") ||
-      h.startsWith("fe80:")
-    );
-  }
-
-  return false;
 };

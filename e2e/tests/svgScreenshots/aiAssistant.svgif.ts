@@ -6,6 +6,7 @@ import { setupAskLLMToolUse } from "testAskLLM/testAskLLM";
 import {
   allowOnce,
   closeWorkspaceWindows,
+  deleteAllWorkspaces,
   deleteExistingLLMChat,
   deletePreviousMessages,
   newChat,
@@ -69,11 +70,7 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   // });
 
   await openConnection("crypto");
-  await runDbsSql(
-    page,
-    "DELETE FROM workspaces WHERE name = 'Multi-Asset Price Comparison';",
-  );
-  await page.reload();
+  await deleteAllWorkspaces(page);
   await page.getByTestId("AskLLM").click();
   await newChat(page);
   await setPromptByText(page, "dashboard");

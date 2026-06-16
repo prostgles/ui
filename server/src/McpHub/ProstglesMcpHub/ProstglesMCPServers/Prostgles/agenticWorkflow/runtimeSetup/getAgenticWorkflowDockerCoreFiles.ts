@@ -108,13 +108,13 @@ export const packageJsonTemplate = {
   dependencies: {
     typescript: "^5.9.3",
     tslib: "^2.8.1",
-    "prostgles-types": "^4.0.252",
+    "prostgles-types": "^4.0.263",
   },
   devDependencies: {
-    "@types/node": "^22.19.20",
+    "@types/node": "^22.19.21",
     eslint: "^9.39.4",
     "@eslint/js": "^9.39.1",
-    "typescript-eslint": "^8.61.0",
+    "typescript-eslint": "^8.61.1",
   },
 } as const;
 

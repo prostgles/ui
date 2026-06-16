@@ -47,6 +47,7 @@ export const tableTimechartSvgif: OnBeforeScreenshot = async (
   if (!res || !res[0]) {
     throw "Failed to set window config";
   }
+
   await page.reload();
   await page.waitForTimeout(2000);
 
@@ -157,11 +158,23 @@ export const tableTimechartSvgif: OnBeforeScreenshot = async (
 };
 
 const windowConfig = {
+  sort: [
+    {
+      key: [linkedSortCol, "COUNT ALL"].join("."),
+      asc: false,
+      nulls: "last",
+    },
+  ],
   columns: [
     {
       name: linkedSortCol,
       show: true,
       width: 140,
+      style: {
+        barColor: "var(--active)",
+        textColor: "#646464",
+        type: "Barchart",
+      },
       nested: {
         path: [
           {
@@ -176,11 +189,6 @@ const windowConfig = {
         limit: 20,
         columns: [
           {
-            style: {
-              barColor: "var(--active)",
-              textColor: "#646464",
-              type: "Barchart",
-            },
             computedConfig: {
               funcDef: {
                 key: "$countAll",
@@ -271,6 +279,89 @@ const windowConfig = {
       name: "Hygiene rating",
       show: true,
       width: 120,
+      style: {
+        type: "Conditional",
+        conditions: [
+          {
+            color: "#f6beff",
+            operator: "=",
+            chipColor: "#f6beff",
+            condition: "0 - urgent improvement necessary",
+            textColor: "#490063",
+            borderColor: "rgb(172 64 211)",
+            textColorDarkMode: "#c1ad10",
+          },
+          {
+            color: "#f6beff",
+            operator: "=",
+            chipColor: "#f6beff",
+            condition: "1 - major improvement necessary",
+            textColor: "#490063",
+            borderColor: "rgb(172 64 211)",
+            textColorDarkMode: "#c1ad10",
+          },
+          {
+            color: "#b4b4b42e",
+            operator: "=",
+            chipColor: "#b4b4b42e",
+            condition: "AwaitingInspection",
+            textColor: "#4b4b4b",
+            textColorDarkMode: "#2386d5",
+          },
+          {
+            color: "#c9e7ff7d",
+            operator: "=",
+            chipColor: "#c9e7ff7d",
+            condition: "4 - generally satisfactory",
+            textColor: "#0075d2",
+            borderColor: "rgb(120 189 243)",
+            textColorDarkMode: "#838181",
+          },
+          {
+            color: "#b4b4b42e",
+            operator: "=",
+            chipColor: "#b4b4b42e",
+            condition: "Exempt",
+            textColor: "#4b4b4b",
+            borderColor: "rgb(169 169 169)",
+            textColorDarkMode: "#838181",
+          },
+          {
+            color: "#d4b7002e",
+            operator: "=",
+            chipColor: "#d4b7002e",
+            condition: "3 - improvement necessary",
+            textColor: "#716400",
+            borderColor: "rgb(227 217 41)",
+            textColorDarkMode: "#a95cc5",
+          },
+          {
+            operator: "=",
+            chipColor: "#ffd0cd",
+            condition: "2 - some improvement necessary",
+            textColor: "#940000",
+            borderColor: "rgb(216 71 71)",
+          },
+          {
+            color: "#BEE8FF66",
+            operator: "=",
+            chipColor: "#BEE8FF66",
+            condition: "4 - good",
+            textColor: "#0B5FAE",
+            borderColor: "#4A9DE6CC",
+            textColorDarkMode: "#8EC8FF",
+          },
+          {
+            color: "#39C56B55",
+            operator: "=",
+            chipColor: "#39C56B55",
+            condition: "5 - very good",
+            textColor: "#0D6B2E",
+            borderColor: "#1F9A4CCC",
+            textColorDarkMode: "#7BE3A0",
+          },
+        ],
+      },
       nested: {
         path: [
           {
@@ -303,79 +394,6 @@ const windowConfig = {
           {
             name: "rating_value_desc",
             show: true,
-            style: {
-              type: "Conditional",
-              conditions: [
-                {
-                  color: "#f6beff",
-                  operator: "=",
-                  chipColor: "#f6beff",
-                  condition: "0 - urgent improvement necessary",
-                  textColor: "#490063",
-                  borderColor: "rgb(172 64 211)",
-                  textColorDarkMode: "#c1ad10",
-                },
-                {
-                  color: "#f6beff",
-                  operator: "=",
-                  chipColor: "#f6beff",
-                  condition: "1 - major improvement necessary",
-                  textColor: "#490063",
-                  borderColor: "rgb(172 64 211)",
-                  textColorDarkMode: "#c1ad10",
-                },
-                {
-                  color: "#b4b4b42e",
-                  operator: "=",
-                  chipColor: "#b4b4b42e",
-                  condition: "AwaitingInspection",
-                  textColor: "#4b4b4b",
-                  textColorDarkMode: "#2386d5",
-                },
-                {
-                  color: "#c9e7ff7d",
-                  operator: "=",
-                  chipColor: "#c9e7ff7d",
-                  condition: "4 - generally satisfactory",
-                  textColor: "#0075d2",
-                  borderColor: "rgb(120 189 243)",
-                  textColorDarkMode: "#838181",
-                },
-                {
-                  color: "#b4b4b42e",
-                  operator: "=",
-                  chipColor: "#b4b4b42e",
-                  condition: "Exempt",
-                  textColor: "#4b4b4b",
-                  borderColor: "rgb(169 169 169)",
-                  textColorDarkMode: "#838181",
-                },
-                {
-                  color: "#d4b7002e",
-                  operator: "=",
-                  chipColor: "#d4b7002e",
-                  condition: "3 - improvement necessary",
-                  textColor: "#716400",
-                  borderColor: "rgb(227 217 41)",
-                  textColorDarkMode: "#a95cc5",
-                },
-                {
-                  operator: "=",
-                  chipColor: "#ffd0cd",
-                  condition: "2 - some improvement necessary",
-                  textColor: "#940000",
-                  borderColor: "rgb(216 71 71)",
-                },
-                {
-                  color: "#01d4002e",
-                  operator: "=",
-                  chipColor: "#01d4002e",
-                  condition: "5 - very good",
-                  textColor: "#00ad44",
-                  borderColor: "#01d4008a",
-                },
-              ],
-            },
           },
           {
             name: "hygiene_score",
