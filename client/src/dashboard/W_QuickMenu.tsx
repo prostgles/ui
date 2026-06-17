@@ -9,12 +9,14 @@ import {
 } from "@mdi/js";
 
 import Btn from "@components/Btn";
-import React from "react";
+import React, { useState } from "react";
 import type { CommonWindowProps } from "./Dashboard/Dashboard";
 import type { WindowSyncItem } from "./Dashboard/dashboardUtils";
 
 import { isJoinedFilter } from "@common/filterUtils";
+import { tableMightBeUndefinedDueToAccessControl } from "@common/utils";
 import { classOverride, FlexRow } from "@components/Flex";
+import Popup from "@components/Popup/Popup";
 import { Select } from "@components/Select/Select";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { t } from "../i18n/i18nUtils";
@@ -22,8 +24,6 @@ import type { DBS } from "./Dashboard/DBS";
 import { getLinkColorV2 } from "./W_Map/fetchData/getMapLayerQueries";
 import type { ChartableSQL } from "./W_SQL/getChartableSQL";
 import { AddChartMenu } from "./W_Table/TableMenu/AddChartMenu";
-import { tableMightBeUndefinedDueToAccessControl } from "@common/utils";
-import PopupMenu from "@components/PopupMenu";
 import { TableDisplayOptionsJSON } from "./W_Table/TableMenu/TableDisplayOptionsJSON";
 
 export type ProstglesQuickMenuProps = Pick<
@@ -78,6 +78,7 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
     (w) => (w.type === "timechart" || w.type === "map") && w.minimised,
   );
   const hasMinimisedCharts = minimisedCharts.length > 0;
+  const [showCardViewOptions, setShowCardViewOptions] = useState<HTMLElement>();
 
   return (
     <>
@@ -111,7 +112,7 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
             size="small"
             onClick={() => {
               minimisedCharts.forEach((w) => {
-                w.$update({ minimised: false });
+                void w.$update({ minimised: false });
               });
             }}
           />
@@ -121,6 +122,16 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
           !!setLinkMenu &&
           w.type === "table" && (
             <>
+              {showCardViewOptions && (
+                <Popup
+                  onClose={() => setShowCardViewOptions(undefined)}
+                  title="Card view options"
+                  positioning="center"
+                  clickCatchStyle={{ opacity: 1 }}
+                >
+                  <TableDisplayOptionsJSON tableName={w.table_name} />
+                </Popup>
+              )}
               <Btn
                 title={t.W_QuickMenu["Cross filter tables"]}
                 data-command="Window.W_QuickMenu.addCrossFilteredTable"
@@ -149,9 +160,13 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
                       key: "card",
                       iconPath: mdiViewAgendaOutline,
                       rightContent: (
-                        <PopupMenu button={<Btn iconPath={mdiCogOutline} />}>
-                          <TableDisplayOptionsJSON tableName={w.table_name} />
-                        </PopupMenu>
+                        <Btn
+                          iconPath={mdiCogOutline}
+                          size="micro"
+                          onClick={(e) =>
+                            setShowCardViewOptions(e.currentTarget)
+                          }
+                        />
                       ),
                     },
                     {
@@ -166,7 +181,7 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
                 showSelected="icon"
                 value={w.options.viewAs?.type ?? "table"}
                 onChange={(viewAsType) => {
-                  w.$update({
+                  void w.$update({
                     options: {
                       viewAs: {
                         type: viewAsType,
@@ -200,7 +215,7 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
               : undefined
             }
             onClick={() => {
-              w.$update(
+              void w.$update(
                 { options: { showFilters: !w.options.showFilters } },
                 { deepMerge: true },
               );
