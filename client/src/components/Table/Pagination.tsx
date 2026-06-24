@@ -40,11 +40,13 @@ export const Pagination = (props: PaginationProps) => {
 
   // if (!maxPage) return null;
 
-  const noPrev = zeroBasedPage === 0 ? "Already at first page" : undefined;
-  const noNext = zeroBasedPage === maxPage ? "Already at last page" : undefined;
+  const noPrevMessage =
+    zeroBasedPage === 0 ? "Already at first page" : undefined;
+  const noNextMessage =
+    zeroBasedPage === maxPage ? "Already at last page" : undefined;
   const totalPages = maxPage + 1;
   const totalRowCount = +(totalRows ?? 0);
-  if (noPrev && noNext && totalRowCount < PAGE_SIZES[0]) {
+  if (noPrevMessage && noNextMessage && totalRowCount <= PAGE_SIZES[0]) {
     return null;
   }
   const pageCountInfoNode = (
@@ -65,7 +67,7 @@ export const Pagination = (props: PaginationProps) => {
       <Btn
         data-command="Pagination.firstPage"
         iconPath={mdiPageFirst}
-        disabledInfo={noPrev}
+        disabledInfo={noPrevMessage}
         size="default"
         onClick={() => {
           onPageChange(0);
@@ -74,7 +76,7 @@ export const Pagination = (props: PaginationProps) => {
       <Btn
         data-command="Pagination.prevPage"
         iconPath={mdiChevronLeft}
-        disabledInfo={noPrev}
+        disabledInfo={noPrevMessage}
         size="default"
         onClick={() => {
           onPageChange(Math.max(0, zeroBasedPage - 1));
@@ -102,7 +104,7 @@ export const Pagination = (props: PaginationProps) => {
       <Btn
         data-command="Pagination.nextPage"
         iconPath={mdiChevronRight}
-        disabledInfo={noNext}
+        disabledInfo={noNextMessage}
         size="default"
         onClick={() => {
           onPageChange(Math.min(maxPage, zeroBasedPage + 1));
@@ -111,7 +113,7 @@ export const Pagination = (props: PaginationProps) => {
       <Btn
         data-command="Pagination.lastPage"
         iconPath={mdiPageLast}
-        disabledInfo={noNext}
+        disabledInfo={noNextMessage}
         size="default"
         onClick={() => {
           onPageChange(maxPage);

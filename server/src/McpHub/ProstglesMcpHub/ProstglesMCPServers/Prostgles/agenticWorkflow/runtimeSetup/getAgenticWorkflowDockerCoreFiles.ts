@@ -111,10 +111,10 @@ export const packageJsonTemplate = {
     "prostgles-types": "^4.0.264",
   },
   devDependencies: {
-    "@types/node": "^22.19.21",
+    "@types/node": "^22.20.0",
     eslint: "^9.39.4",
     "@eslint/js": "^9.39.1",
-    "typescript-eslint": "^8.61.1",
+    "typescript-eslint": "^8.62.0",
   },
 } as const;
 

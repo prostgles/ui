@@ -1093,7 +1093,9 @@ test.describe("Main test", () => {
       .waitFor({ state: "visible", timeout: 60e3 });
 
     await page.getByTestId("AskLLM").click();
-    await page.getByTestId("AskLLMChat.UnloadSuggestedDashboards").click();
+    await page
+      .getByTestId("AskLLMChat.UnloadSuggestedDashboards")
+      .click(TWENTY_SECONDS_OR_MORE);
     await expect(workspaceBtn).not.toContainText("Customer Insights");
 
     await page.waitForTimeout(2e3);
