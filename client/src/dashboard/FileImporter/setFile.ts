@@ -120,20 +120,24 @@ async function parseJSONFile(file: File): Promise<{
     }
   }
 
-  const pg_types = ["text", "geometry", "jsonb", "numeric"] as const;
+  const pg_types = ["text", "geometry", "jsonb", "numeric", "_text"] as const;
 
   const actualBytesPerChar = txt.length / file.size;
   let rows: AnyObject[] = [];
   let srid;
   let _cols: Record<string, (typeof pg_types)[number]> = {};
   let maxCharsPerRow = 0;
-  const setCol = (row) => {
+  const setCol = (row: AnyObject | null) => {
     const getType = (v) =>
       typeof v === "number" ? "numeric"
+      : Array.isArray(v) ?
+        v.some((elem) => typeof elem === "object") ?
+          "jsonb"
+        : "_text"
       : isObject(v) ? "jsonb"
       : "text";
-    Object.keys(row).map((k) => {
-      const currentValueType = getType(row[k]);
+    Object.entries(row ?? {}).forEach(([k, v]) => {
+      const currentValueType = getType(v);
       const columnType = _cols[k];
       if (
         !columnType ||
@@ -219,7 +223,10 @@ async function parseJSONFile(file: File): Promise<{
     const colKeys = Object.keys(_cols);
     rows = data.map((row) => {
       colKeys.map((k) => {
-        row[k] = row[k] ?? null;
+        row[k] =
+          _cols[k] === "jsonb" && row[k] ?
+            JSON.stringify(row[k])
+          : (row[k] ?? null);
       });
 
       maxCharsPerRow = Math.max(maxCharsPerRow, JSON.stringify(row).length);

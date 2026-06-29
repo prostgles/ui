@@ -128,11 +128,9 @@ const useServicesFieldConfigs = ({
                     title={isRunning ? "Stop service" : "Start service"}
                     checked={isRunning}
                     onChange={async () =>
-                      await onErrorAlert(async () => {
-                        await toggleService({
-                          serviceName: name,
-                          enable: !isRunning,
-                        });
+                      await toggleService({
+                        serviceName: name,
+                        enable: !isRunning,
                       })
                     }
                   />
