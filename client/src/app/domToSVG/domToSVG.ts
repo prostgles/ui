@@ -94,8 +94,19 @@ export const domToSVG = async (node: HTMLElement) => {
 
 /** Replace multi space with single space to prevent ios bidi bug */
 const removeDoubleSpaceBidiBugForIOS = (svg: SVGElement) => {
-  svg.querySelectorAll("text").forEach((text) => {
-    text.textContent = text.textContent.replace(/\s+/g, " ");
+  // svg.querySelectorAll("text").forEach((text) => {
+  //   text.textContent = text.textContent.replace(/\s+/g, " ");
+  // });
+  svg.querySelectorAll("text, tspan").forEach((node) => {
+    const isTextWithChildren =
+      node instanceof SVGTextElement && node.children.length > 0;
+    if (isTextWithChildren) return;
+
+    const content = node.textContent;
+    if (!content) return;
+
+    // Collapse only repeated regular spaces (not all whitespace/newlines)
+    node.textContent = content.replace(/ {2,}/g, " ");
   });
 };
 

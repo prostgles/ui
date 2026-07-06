@@ -67,12 +67,12 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
 
   /** Search all */
   await addScene({
-    caption: "Search all tables (Ctrl+Shift+F)",
+    // caption: "Search all tables (Ctrl+Shift+F)",
     animations: [{ type: "wait", duration: 1000 }],
   });
+
   await page.keyboard.press("Control+Shift+KeyF");
   await page.waitForTimeout(1000);
-  // await addScene({ animations: [{ type: "wait", duration: 1000 }] });
   const searchAllInput = page.getByTestId("SearchAll");
   /** To prevent searching */
   await searchAllInput.evaluate(

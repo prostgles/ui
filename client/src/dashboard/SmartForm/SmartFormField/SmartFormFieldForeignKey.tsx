@@ -58,18 +58,21 @@ export const SmartFormFieldForeignKey = (
   const newValue = newRowDataHandler.getNewRow()[column.name];
 
   const isUpsertingFile = column.file && isObject(newValue);
+  const isNestedInsert = newValue?.type === "nested-column";
   const rowWithFKeyVals = useMemo(() => {
     if (!row) return;
     const fkeyColNames = column.references
       .map((ref) => ref.cols)
       .filter(isDefined)
       .flat()
-      .filter((c) => {
+      .filter((refColumn) => {
         /** Exclude file insert data */
-        return !isUpsertingFile || c !== column.name;
+        return (
+          (!isNestedInsert && !isUpsertingFile) || refColumn !== column.name
+        );
       });
     return pickKeys(row, fkeyColNames);
-  }, [row, column, isUpsertingFile]);
+  }, [row, column, isNestedInsert, isUpsertingFile]);
 
   const rowWithFKeyValsMemo = useMemoDeep(
     () => rowWithFKeyVals,
@@ -184,10 +187,12 @@ export const SmartFormFieldForeignKey = (
     const newDataText = sliceText(
       Object.entries(referencedInsertDataObj ?? {})
         .map(([k, v]) =>
-          isObject(v) ? `{ ${k} }`
+          v === undefined ? undefined
+          : isObject(v) ? `{ ${k} }`
           : Array.isArray(v) ? `[{ ${k} }]`
           : v?.toString(),
         )
+        .filter(isDefined)
         .join(", "),
       60,
     );
