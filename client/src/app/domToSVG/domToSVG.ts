@@ -100,7 +100,13 @@ const removeDoubleSpaceBidiBugForIOS = (svg: SVGElement) => {
   svg.querySelectorAll("text, tspan").forEach((node) => {
     const isTextWithChildren =
       node instanceof SVGTextElement && node.children.length > 0;
-    if (isTextWithChildren) return;
+    if (isTextWithChildren) {
+      return;
+    }
+
+    if (node.closest(`[data-command="MonacoEditor"]`)) {
+      return;
+    }
 
     const content = node.textContent;
     if (!content) return;

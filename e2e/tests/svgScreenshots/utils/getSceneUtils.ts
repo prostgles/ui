@@ -114,6 +114,7 @@ export const getSceneUtils = (
         {
           type: elementIsVisible ? "click" : "clickAppearOnHover",
           elementSelector: svgifSelector,
+          nth,
           duration:
             duration === "faster" ? 400
             : duration === "fast" ? 700

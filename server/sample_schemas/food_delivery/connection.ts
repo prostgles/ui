@@ -3,7 +3,7 @@ const table_options = {
     card: {
       headerColumn: "email",
     },
-    icon: "AccountMultiple",
+    icon: "Account",
     label: "Users",
     columns: {
       id: {

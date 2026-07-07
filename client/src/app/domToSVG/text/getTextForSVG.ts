@@ -90,11 +90,7 @@ export const getTextForSVG = (
       if (!childTextNode.textContent.trim()) {
         return;
       }
-      /** Replace multi space with single space to prevent ios bidi bug */
-      childTextNode.textContent = childTextNode.textContent.replace(
-        /\s+/g,
-        " ",
-      );
+
       const textContent = childTextNode.textContent;
 
       const range = document.createRange();

@@ -43,9 +43,6 @@ const requestToolAccessArgs = {
       },
     },
   },
-  mcpServerTools: {
-    web: { fetch: 1 },
-  },
 } satisfies RequestToolAccess;
 
 const taskToolUse: ToolUse = {

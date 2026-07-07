@@ -1,12 +1,9 @@
 import { test } from "@playwright/test";
 import * as fs from "fs";
 import * as path from "path";
+import { saveDocs } from "saveDocs";
 import { getOverviewSvgifSpecs } from "svgScreenshots/getOverviewSvgifSpecs.svgif";
-import {
-  DOCS_DIR,
-  SVG_SCREENSHOT_DIR,
-  SVGIF_SCENES_DIR,
-} from "svgScreenshots/utils/constants";
+import { DOCS_DIR, SVG_SCREENSHOT_DIR } from "svgScreenshots/utils/constants";
 import { saveSVGifs } from "svgScreenshots/utils/saveSVGifs";
 import { svgifToWebm } from "svgScreenshots/utils/svgifToWebm";
 import { svgScreenshotsCompleteReferenced } from "svgScreenshots/utils/svgScreenshotsCompleteReferenced";
@@ -85,38 +82,7 @@ test.describe("Create docs and screenshots", () => {
 
     await login(page, USERS.test_user, "/login");
 
-    if (!IS_GITHUB_WORKER) {
-      /** Delete existing markdown docs */
-      if (fs.existsSync(DOCS_DIR)) {
-        fs.rmSync(DOCS_DIR, { force: true, recursive: true });
-      }
-      fs.mkdirSync(DOCS_DIR, { recursive: true });
-    }
-
-    const files: { fileName: string; text: string }[] = await page.evaluate(
-      async () => {
-        //@ts-ignore
-        return window.documentation;
-      },
-    );
-    await page.waitForTimeout(100);
-    for (const file of files) {
-      const filePath = path.join(DOCS_DIR, file.fileName);
-
-      const preparedFileContent = getDocWithDarkModeImgTags(file.text);
-      if (IS_GITHUB_WORKER) {
-        const existingFile = fs.readFileSync(filePath, "utf-8");
-        if (existingFile !== preparedFileContent) {
-          console.error(existingFile, preparedFileContent);
-          throw new Error(
-            `File ${file.fileName} has changed. Please update the docs. Existing ${existingFile} Expected ${preparedFileContent}`,
-          );
-        }
-      } else {
-        fs.writeFileSync(filePath, preparedFileContent, "utf-8");
-      }
-      await page.waitForTimeout(100);
-    }
+    await saveDocs(page);
 
     /** Test all scripts from readme */
     const uiInstallationDocs = fs.readFileSync(
@@ -152,7 +118,7 @@ test.describe("Create docs and screenshots", () => {
     }
   });
 
-  test("Create screenshots", async ({ page: p, browser }) => {
+  test("Create screenshots", async ({ page: p }) => {
     const page = p as PageWIds;
 
     await login(page, USERS.test_user, "/login");
@@ -196,6 +162,7 @@ test.describe("Create docs and screenshots", () => {
     }
     test.setTimeout(50 * MINUTE);
     const svgifsToRecord = [
+      "governed_ai.svgif",
       "overview_long.svgif",
       "ai_assistant_agentic_workflow.svgif",
       // "sql_editor_overview.svgif",
@@ -218,21 +185,6 @@ test.describe("Create docs and screenshots", () => {
     }
   });
 });
-
-const getDocWithDarkModeImgTags = (fileContent: string) => {
-  const imgTags = fileContent.split("<img");
-  // Must replace all img tags with theme aware src
-  if (imgTags.length > 1) {
-    imgTags.slice(1).forEach((imgTag, index) => {
-      const tagText = "<img" + imgTag.split("/>")[0] + "/>";
-      fileContent = fileContent.replaceAll(
-        tagText,
-        tagText.replace("/>", `style="border: 1px solid; margin: 1em 0;" />`),
-      );
-    });
-  }
-  return fileContent;
-};
 
 const prepare = async (page: PageWIds) => {
   await setupAskLLMToolUse(page);

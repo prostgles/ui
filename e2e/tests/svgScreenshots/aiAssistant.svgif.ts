@@ -11,7 +11,6 @@ import {
   deletePreviousMessages,
   newChat,
   runDbsMethod,
-  runDbsSql,
   setPromptByText,
 } from "utils/utils";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";

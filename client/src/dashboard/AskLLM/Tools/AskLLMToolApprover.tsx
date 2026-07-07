@@ -218,6 +218,7 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
                 .filter(([key]) => key !== "title")
                 .map(([key, yes]) => (
                   <Chip
+                    key={key}
                     color={
                       key === "destructiveHint" && yes ? "red"
                       : (

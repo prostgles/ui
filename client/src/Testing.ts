@@ -635,6 +635,7 @@ export declare namespace SVGif {
   export type CursorAnimation =
     | {
         elementSelector: string;
+        nth?: number;
         offset?: { x: number; y: number };
         duration: number;
         type: "click" | "clickAppearOnHover";

@@ -255,7 +255,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
       : (title ?? (
           <span className="text-1 pxd-1 py-p5">
             {titlePrefix ?? tableName}
-            <span>{` (${filteredRows.toLocaleString()}/${totalRows.toLocaleString()})`}</span>
+            <span>{` (${(filteredRows == totalRows ? [filteredRows] : [filteredRows, totalRows]).map((v) => v.toLocaleString()).join("/")})`}</span>
           </span>
         ));
 
@@ -329,17 +329,19 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
           onRowClick={onClickRow}
           sort={sort}
           onSort={(sort) => {
-            this.getData(undefined, sort);
+            void this.getData(undefined, sort);
           }}
           onColumnReorder={(newCols) => {
-            const nIdxes = newCols
+            const nonComputedColumnNames = newCols
               .filter((c) => !(c.computed && c.key === "edit_row"))
               .map((c) => c.name);
             this.setState({
               columns: tableCols
                 .slice(0)
                 .sort(
-                  (a, b) => nIdxes.indexOf(a.name) - nIdxes.indexOf(b.name),
+                  (a, b) =>
+                    nonComputedColumnNames.indexOf(a.name) -
+                    nonComputedColumnNames.indexOf(b.name),
                 ),
             });
           }}
@@ -348,17 +350,19 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
             pageSize: 10,
             totalRows,
             onPageChange: (page) => {
-              this.getData(undefined, undefined, page);
+              void this.getData(undefined, undefined, page);
             },
             onPageSizeChange: (pageSize) => {
-              this.getData(undefined, undefined, undefined, pageSize);
+              void this.getData(undefined, undefined, undefined, pageSize);
             },
           }}
         />
       </FlexCol>
     );
 
-    if (!onClosePopup) return content;
+    if (!onClosePopup) {
+      return content;
+    }
 
     return (
       <Popup

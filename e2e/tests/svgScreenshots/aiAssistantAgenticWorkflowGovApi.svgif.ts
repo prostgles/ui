@@ -101,7 +101,7 @@ export const aiAssistantAgenticWorkflowGovApiSvgif: OnBeforeScreenshot = async (
   //   "faster",
   // );
   await addSceneAnimation({
-    nth: 0,
+    nth: -2,
     selector: getCommandElemSelector("AgenticWorkflowActivity.openTable"),
   });
   await addScene({
