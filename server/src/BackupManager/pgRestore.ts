@@ -217,6 +217,7 @@ export async function pgRestore(
           return;
         }
         if (!currBkp) {
+          console.error("Backup not found while restoring");
           bkpStream.emit("error", "Backup file not found");
           bkpStream.destroy();
         } else {

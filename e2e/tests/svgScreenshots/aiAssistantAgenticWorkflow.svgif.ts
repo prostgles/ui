@@ -132,6 +132,7 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
       nth: 0,
     },
     {
+      svgFileName: "receipts_workflow",
       duration: {
         waitBeforeClick: 200,
       },
@@ -142,6 +143,7 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
     type: "fadeIn",
     duration: 1_000,
   } as const;
+
   await addScene({
     animations: [
       {
@@ -234,12 +236,14 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
 
   await addSceneAnimation(getCommandElemSelector("UserInput.Done"), {
     duration: "fast",
+    svgFileName: "receipts_workflow_files_selected",
   });
 
   await addSceneAnimation(getDataKey("Definition"), {
     duration: {
       waitBeforeClick: 1500,
     },
+    svgFileName: "receipts_workflow_ts_definition",
   });
 
   await addSceneAnimation(getCommandElemSelector("AgenticWorkflow.start"), {
