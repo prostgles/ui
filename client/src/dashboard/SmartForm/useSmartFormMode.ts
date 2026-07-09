@@ -1,3 +1,4 @@
+import { getSmartGroupFilter, type DetailedFilter } from "@common/filterUtils";
 import {
   useAsyncEffectQueue,
   useEffectDeep,
@@ -5,11 +6,6 @@ import {
 } from "prostgles-client";
 import { type AnyObject } from "prostgles-types";
 import { useEffect, useMemo, useState } from "react";
-import {
-  getSmartGroupFilter,
-  type DetailedFilter,
-  type DetailedFilterBase,
-} from "@common/filterUtils";
 import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
 import type { SmartFormProps } from "./SmartForm";
 
@@ -79,7 +75,7 @@ export const useSmartFormMode = (
   }, [rowFilter, tableName]);
   const [clonedRow, setClonedRow] = useState<AnyObject>();
   const [currentRowInfo, setCurrentRowInfo] = useState<{
-    row: AnyObject;
+    row: AnyObject | undefined;
     tableName: string;
   }>();
 
@@ -158,7 +154,7 @@ export const useSmartFormMode = (
         rowFilter: activeRowFilter!,
         rowFilterObj: getSmartGroupFilter(activeRowFilter),
         select,
-        loading: !currentRow,
+        loading: !currentRowInfo,
         tableHandlerFindOne,
         tableHandlerSubscribeOne,
         tableHandlerDelete,
