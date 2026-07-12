@@ -36,7 +36,7 @@ test.describe("Create docs and screenshots", () => {
   test.describe.configure({
     retries: 0,
     mode: "serial",
-    timeout: 28 * MINUTE,
+    timeout: 35 * MINUTE,
   });
 
   // /** Allows reading images from cross origin sources to transform to data url */
@@ -162,6 +162,7 @@ test.describe("Create docs and screenshots", () => {
     }
     test.setTimeout(50 * MINUTE);
     const svgifsToRecord = [
+      "ai_assistant_agentic_workflow_gov_api.svgif",
       "governed_ai.svgif",
       "overview_long.svgif",
       "ai_assistant_agentic_workflow.svgif",

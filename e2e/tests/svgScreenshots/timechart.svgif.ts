@@ -33,7 +33,9 @@ export const timechartSvgif: OnBeforeScreenshot = async (
     await setPromptByText(page, "dashboard");
     await newChat(page);
     await sendAskLLMMessage(page, " funding ");
-    await page.getByTestId("AskLLMChat.LoadSuggestedDashboards").click();
+    await page
+      .getByTestId("AskLLMChat.LoadSuggestedDashboards")
+      .click({ timeout: 30_000 });
   }
   await page.waitForTimeout(2000);
   const shortWait = { animations: [{ type: "wait" as const, duration: 1500 }] };

@@ -441,6 +441,20 @@ export const uiMcpSchema = {
       type: "unknown",
     },
   },
+  find_icons: {
+    icon: "ImageSearch",
+    mode: undefined,
+    description:
+      "Search for icons by name. Returns a list of icon names that match the search query.",
+    schema: {
+      type: {
+        query: "string",
+      },
+    },
+    outputSchema: {
+      type: "string[]",
+    },
+  },
   create_dashboards: {
     icon: "ViewCarousel",
     mode: "auto-approved-user-actionable",

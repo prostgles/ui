@@ -22,6 +22,8 @@ import { fetchTools } from "./Prostgles/fetchTools";
 import { runCodeInSandboxContainer } from "./Prostgles/runCodeInSandboxContainer";
 import { startAgent } from "./Prostgles/startAgent";
 import { validateCreateDashboards } from "./Prostgles/validateCreateDashboards";
+import { glob } from "glob";
+import { DIRECTORIES } from "@src/electronConfig";
 
 const serverName = "prostgles-ui" as const;
 const tools = PROSTGLES_MCP_SERVERS_AND_TOOLS[serverName];
@@ -274,6 +276,23 @@ const handler = {
               },
             },
           );
+        },
+        find_icons: async ({ query }) => {
+          const results = await glob("**/*.svg", {
+            cwd: DIRECTORIES.CLIENT_ICONS,
+            nodir: true,
+            signal: AbortSignal.timeout(5_000),
+          });
+
+          return results
+            .map((filePath) => {
+              return filePath.slice(0, -4); // remove .svg extension
+            })
+            .filter((filePath) => {
+              return (
+                !query || filePath.toLowerCase().includes(query.toLowerCase())
+              );
+            });
         },
       },
       fetchTools,

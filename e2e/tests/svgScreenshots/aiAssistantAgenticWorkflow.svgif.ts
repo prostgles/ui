@@ -132,7 +132,6 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
       nth: 0,
     },
     {
-      svgFileName: "receipts_workflow",
       duration: {
         waitBeforeClick: 200,
       },
@@ -145,6 +144,7 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
   } as const;
 
   await addScene({
+    svgFileName: "receipts_workflow",
     animations: [
       {
         type: "growIn",

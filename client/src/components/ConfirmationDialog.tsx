@@ -26,11 +26,7 @@ export type ConfirmDialogProps = Pick<
   style?: React.CSSProperties;
 };
 
-type S = {};
-
 export default class ConfirmationDialog extends RTComp<ConfirmDialogProps, S> {
-  state: S = {};
-
   render() {
     const {
       onClose,
@@ -51,7 +47,7 @@ export default class ConfirmationDialog extends RTComp<ConfirmDialogProps, S> {
           {iconPath && <Icon path={iconPath} size={1} className="f-0 text-2" />}
           <div className="">{message}</div>
         </div>
-        <FlexRowWrap className="p-p5 f-0 bt b-color jc-end ">
+        <FlexRowWrap className="p-1 f-0 bt b-color jc-end ">
           <Btn
             className="mr-1"
             size="default"

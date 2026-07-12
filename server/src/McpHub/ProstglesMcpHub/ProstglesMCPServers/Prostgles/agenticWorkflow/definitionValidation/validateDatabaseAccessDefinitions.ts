@@ -3,6 +3,7 @@ import { runConnectionQuery } from "@src/serverFunctions/getServerFunctions";
 import type { ProxyCallDataDefinitions } from "../runtimeSdk/defineAgenticWorkflowHandlers.types";
 import { parseDDLStatements } from "./parseDDLStatements";
 import { quoteIdent } from "./quoteIdent";
+import { isObject } from "@common/publishUtils";
 
 export const validateDatabaseAccessDefinitions = async ({
   databaseAccessDefinitions,
@@ -28,6 +29,47 @@ export const validateDatabaseAccessDefinitions = async ({
   const result = await (async () => {
     if (databaseAccessDefinitions?.mode === "custom") {
       const { tablePermissions, ddlStatements } = databaseAccessDefinitions;
+
+      /**
+       * Although the permissions are handled through getClientDBHandlersForChat we want to
+       * give give better errors to the agent
+       */
+      for (const table of usedTables) {
+        if (!tablePermissions[table]) {
+          throw new Error(
+            `Table "${table}" is used in the workflow but not included in tablePermissions`,
+          );
+        }
+      }
+
+      /** Validate table permissions */
+      const activeDb = activeConnection.prgl.db;
+      for (const [tableName, permissions] of Object.entries(tablePermissions)) {
+        for (const permissionType of [
+          "select",
+          "insert",
+          "update",
+          "delete",
+        ] as const) {
+          const permission = permissions[permissionType];
+          if (isObject(permission) && tableName in activeDb) {
+            const fields =
+              "fields" in permission ? permission.fields : undefined;
+            const forcedFilter =
+              "forcedFilter" in permission ?
+                permission.forcedFilter
+              : undefined;
+            await activeDb[tableName]
+              ?.find?.(forcedFilter, { select: fields, limit: 0 })
+              .catch((err) => {
+                throw new Error(
+                  `Error validating ${permissionType} permissions for table "${tableName}"`,
+                  { cause: err },
+                );
+              });
+          }
+        }
+      }
 
       if (typeof ddlStatements === "string") {
         if (!ddlStatements.trim()) {
@@ -77,18 +119,6 @@ export const validateDatabaseAccessDefinitions = async ({
 
         return { ...futureSchema, parsedDdlStatements };
       }
-
-      /**
-       * Although the permissions are handled through getClientDBHandlersForChat we want to
-       * give give better errors to the agent
-       */
-      usedTables.forEach((table) => {
-        if (!tablePermissions[table]) {
-          throw new Error(
-            `Table "${table}" is used in the workflow but not included in tablePermissions`,
-          );
-        }
-      });
     }
     const { tablesOrViews, tsSchema } = activeConnection.prgl.getTSSchema();
     return { tablesOrViews, tsSchema, parsedDdlStatements: undefined };

@@ -1,3 +1,4 @@
+import { getProstglesMCPFullToolName } from "@common/mcpUtils";
 import { existsSync, readdirSync } from "fs";
 import { join } from "path";
 import { DIRECTORIES } from "../electronConfig";
@@ -18,6 +19,6 @@ export const assertIconExists = (arg: AssertIconExistsArgs): void => {
     .map((fileName) => fileName.slice(0, -4)); // remove .svg extension
 
   throw new Error(
-    `${errorContext}. Icon "${iconName}" does not exist. Random sample of valid icons: ${top10Icons.join(", ")}`,
+    `${errorContext}. Icon "${iconName}" does not exist. Use ${getProstglesMCPFullToolName("prostgles-ui", "find_icons")} mcp tool to search. The following are example valid icons (not a complete list): ${top10Icons.join(", ")}`,
   );
 };

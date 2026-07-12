@@ -38,9 +38,9 @@ export const validateCreateDashboards = async (
                 return `Table ${window.table_name} does not exist in the database or not allowed. Problem found in workspace ${workspace.name}, window ${window.id}`;
               }
 
-              if (!columns?.length) {
-                return `At least one column must be shown for table windows. Problem found in workspace ${workspace.name}, window ${window.id}`;
-              }
+              // if (!columns?.length) {
+              //   return `At least one column must be shown for table windows. Problem found in workspace ${workspace.name}, window ${window.id}`;
+              // }
 
               const select: Record<string, any> = {};
               const getSelectItem = ({
@@ -82,7 +82,7 @@ export const validateCreateDashboards = async (
                 return 1;
               };
 
-              columns.forEach(({ name, nested, computedConfig }) => {
+              columns?.forEach(({ name, nested, computedConfig }) => {
                 if (!name) {
                   return `Column name is required for table windows. Problem found in workspace ${workspace.name}, window ${window.id}`;
                 }
@@ -92,7 +92,7 @@ export const validateCreateDashboards = async (
 
               const orderBy = sort
                 ?.map((s) => {
-                  const nestedCol = columns.find(
+                  const nestedCol = columns?.find(
                     (c) => c.name === s.key && c.nested,
                   );
                   if (nestedCol) {

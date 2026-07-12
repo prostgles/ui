@@ -5,7 +5,7 @@ type LoadedComponent<N extends keyof DynamicComponentRegistry> = Awaited<
   ReturnType<DynamicComponentRegistry[N]>
 >["default"];
 
-export type DynamicComponentProps<N extends keyof DynamicComponentRegistry> = {
+type DynamicComponentProps<N extends keyof DynamicComponentRegistry> = {
   component: N;
   props: React.ComponentProps<LoadedComponent<N>>;
 };

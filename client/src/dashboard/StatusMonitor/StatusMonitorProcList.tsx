@@ -102,7 +102,6 @@ export const StatusMonitorProcList = (
     };
   }, [datidFilter, viewType]);
 
-  if (!datidFilter) return <Loading />;
   return (
     <SmartCardList
       sql={dbsSql}

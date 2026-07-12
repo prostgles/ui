@@ -54,7 +54,7 @@ export const CardBody = ({
         >
           {!hideCardFieldNames && (
             <div
-              className=" text-2 pointer noselect"
+              className=" text-2 noselect"
               onContextMenu={
                 c.onContextMenu &&
                 ((e) => c.onContextMenu?.(e, e.currentTarget, c, () => {}))
