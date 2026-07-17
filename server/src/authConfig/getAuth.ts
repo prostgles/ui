@@ -21,6 +21,7 @@ import {
   type SUser,
 } from "./sessionUtils";
 import { type AuthConfigForStateOrConnection } from "./subscribeToAuthSetupChanges";
+import { updateRemoteMcpAuthorizationCode } from "@src/McpHub/AnthropicMcpHub/McpOAuth/updateRemoteMcpAuthorizationCode";
 
 export type DBWithAuth = DBOFullyTyped<
   Pick<
@@ -89,7 +90,32 @@ export const getAuth = async (
         API_ENDPOINTS.WS_DB,
       ],
       onGetRequestOK: async (req, res, { getUser }) => {
-        if (req.path.startsWith(ROUTES.PLAYWRIGHT_REPORT)) {
+        if (req.path.startsWith(ROUTES.MCP_OAUTH_CALLBACK)) {
+          const userData = await getUser();
+          if (!userData.user) {
+            res.status(401).send("Unauthorized");
+            return;
+          } else if (userData.user.type !== "admin") {
+            res.status(403).send("Forbidden");
+            return;
+          }
+
+          const result = await updateRemoteMcpAuthorizationCode(dbs, req.query);
+          if (result.success === false) {
+            res.status(400).send(result.message);
+            return;
+          }
+          const { server_name, mcp_server_config_id } = result;
+
+          res.set("Content-Type", "text/html");
+          res.send(`<!DOCTYPE html>
+            <html>
+              <body>
+                <p id="status">Connected MCP server "${server_name}" (config ID: ${mcp_server_config_id}). Closing this window...</p>
+                <script src="/mcp-oauth-close.js"></script>
+              </body>
+            </html>`);
+        } else if (req.path.startsWith(ROUTES.PLAYWRIGHT_REPORT)) {
           const userData = await getUser();
           if (!userData.user) {
             res.status(401).send("Unauthorized");

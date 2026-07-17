@@ -62,7 +62,12 @@ export const tableOptionsJsonbSchema = {
     partial: true,
     values: {
       type: {
-        icon: { type: "string", optional: true },
+        icon: {
+          type: "string",
+          description:
+            "MDI Icon name. For example: 'AccessPointNetwork', 'Github'",
+          optional: true,
+        },
         label: { type: "string", optional: true },
         rowIconColumn: {
           type: "string",
@@ -90,6 +95,7 @@ export const tableOptionsJsonbSchema = {
         },
         card: {
           optional: true,
+          description: "Card view options",
           type: {
             avatarColumn: {
               type: "string",
@@ -100,13 +106,19 @@ export const tableOptionsJsonbSchema = {
             headerColumn: {
               optional: true,
               type: "string",
+              description:
+                "Column name that should be used as the header in card view.",
             },
             subHeaderColumn: {
               optional: true,
               type: "string",
+              description:
+                "Column name that should be used as the sub-header in card view.",
             },
             visibleColumns: {
               optional: true,
+              description:
+                "Array of column names that should be visible in card view by default",
               arrayOf: {
                 oneOf: [
                   "string",
@@ -122,8 +134,6 @@ export const tableOptionsJsonbSchema = {
                   },
                 ],
               },
-              description:
-                "Array of column names that should be visible in card view by default",
             },
           },
           // layout: {

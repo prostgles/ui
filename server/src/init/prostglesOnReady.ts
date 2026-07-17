@@ -1,26 +1,26 @@
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
+import { getRestApiConfig } from "@src/ConnectionManager/connectionManagerUtils";
 import { getProstglesMcpHub } from "@src/McpHub/ProstglesMcpHub/ProstglesMcpHub";
 import { getServiceManager } from "@src/ServiceManager/ServiceManager";
 import type { SUser } from "@src/authConfig/sessionUtils";
 import type { DBSConnectionInfo } from "@src/electronConfig";
+import { connectionManager, type DBS } from "@src/index";
 import type e from "express";
 import type { DB } from "prostgles-server/dist/Prostgles";
 import type { OnReadyCallback } from "prostgles-server/dist/initProstgles";
-import { connectionManager, type DBS } from "@src/index";
+import { type SQLHandler } from "prostgles-types";
 import BackupManager from "../BackupManager/BackupManager";
 import { setLoggerDBS } from "../Logger";
 import { setupMCPServerHub } from "../McpHub/AnthropicMcpHub/startMcpHub";
-import { initUsers } from "./initUsers";
 import { getAuth } from "../authConfig/getAuth";
 import {
   subscribeToAuthSetupChanges,
   type AuthSetupDataListener,
 } from "../authConfig/subscribeToAuthSetupChanges";
 import { setupLLM } from "../serverFunctions/askLLM/setupLLM";
+import { initUsers } from "./initUsers";
 import { insertStateDatabase } from "./insertStateDatabase";
 import { getProstglesState } from "./tryStartProstgles";
-import { getRestApiConfig } from "@src/ConnectionManager/connectionManagerUtils";
-import { getSerialisableError, type SQLHandler } from "prostgles-types";
 
 let authSetupDataListener: AuthSetupDataListener | undefined;
 

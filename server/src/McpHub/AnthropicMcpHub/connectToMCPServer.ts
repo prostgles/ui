@@ -1,31 +1,25 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import {
-  StdioClientTransport,
-  type StdioServerParameters,
-} from "@modelcontextprotocol/sdk/client/stdio.js";
-import { getSerialisableError } from "prostgles-types";
-import { z } from "zod";
+import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { tout } from "@src/utils/tout";
+import { getSerialisableError } from "prostgles-types";
 import type { McpConnection } from "./McpHub";
-import type { McpServerEvents } from "./McpTypes";
-
-const StdioConfigSchema = z.object({
-  command: z.string(),
-  args: z.array(z.string()).optional(),
-  env: z.record(z.string(), z.string()).optional(),
-  disabled: z.boolean().optional(),
-});
+import {
+  MCP_CLIENT_INFO,
+  type McpServerEvents,
+  type McpServerParameters,
+} from "./McpTypes";
+import { connectToRemoteMCPServer } from "./connectToRemoteMCPServer";
 
 export type MCPServerInitInfo = McpServerEvents & {
   name: string;
   server_name: string;
-  config: StdioServerParameters;
+  parameters: McpServerParameters;
 };
 
 export const connectToMCPServer = ({
   name,
   server_name,
-  config,
+  parameters,
   onLog,
   onTransportClose,
 }: MCPServerInitInfo): Promise<McpConnection> => {
@@ -33,36 +27,42 @@ export const connectToMCPServer = ({
   return new Promise(async (resolve, reject) => {
     let log = "";
     try {
-      const parsedConfig = StdioConfigSchema.safeParse(config);
-      if (!parsedConfig.success)
-        throw new Error(
-          parsedConfig.error.issues.map((e) => e.message).join("\n"),
-        );
       /** Clear previous logs and errors */
       await onLog("stderr", "", log);
       await onLog("error", "", log);
 
       // Each MCP server requires its own transport connection and has unique capabilities, configurations, and error handling.
       // Having separate clients also allows proper scoping of resources/tools and independent server management like reconnection.
-      const client = new Client(
-        {
-          name: "Prostgles",
-          version: "1.0.0",
-        },
-        {
-          capabilities: {},
-        },
-      );
+      const client = new Client(MCP_CLIENT_INFO, {
+        capabilities: {},
+      });
+
+      if (parameters.type === "remote") {
+        const connection = await connectToRemoteMCPServer({
+          name,
+          server_name,
+          client,
+          parameters,
+          onLog,
+          onTransportClose,
+          appendToLog: (chunk: string) => {
+            log += chunk;
+          },
+          getFullLog: () => log,
+        });
+        resolve(connection);
+        return;
+      }
 
       const transport = new StdioClientTransport({
-        command: config.command,
-        args: config.args,
+        command: parameters.command,
+        args: parameters.args,
         env: {
-          ...config.env,
+          ...parameters.env,
           ...(process.env.PATH ? { PATH: process.env.PATH } : {}),
           // ...(process.env.NODE_PATH ? { NODE_PATH: process.env.NODE_PATH } : {}),
         },
-        cwd: config.cwd,
+        cwd: parameters.cwd,
         stderr: "pipe", // necessary for stderr to be available
       });
       // transport.onmessage = (message) => {
@@ -84,9 +84,8 @@ export const connectToMCPServer = ({
         server_name,
         server: {
           name,
-          config,
+          config: parameters,
           status: "connecting",
-          disabled: parsedConfig.data.disabled,
         },
         client,
         transport,

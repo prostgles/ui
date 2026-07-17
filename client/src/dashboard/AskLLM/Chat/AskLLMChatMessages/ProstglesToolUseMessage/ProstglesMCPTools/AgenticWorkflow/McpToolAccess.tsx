@@ -39,7 +39,8 @@ export const McpToolAccess = ({
   const [editServerConfig, setEditServerConfig] = useState<{
     serverName: string;
     configId: number | undefined;
-    configData: Record<string, string> | undefined;
+    configData: DBSSchema["mcp_server_configs"]["config"] | undefined;
+    configOAuth: DBSSchema["mcp_server_configs"]["oauth"];
   }>();
   const { dbs } = usePrglCore();
   const {
@@ -70,6 +71,9 @@ export const McpToolAccess = ({
             !config_schema ? undefined
             : configId === undefined ? getDefaultMcpConfig(config_schema)
             : existingMcpServerConfigs.find((c) => c.id === configId)?.config;
+          const configOAuth =
+            existingMcpServerConfigs.find((c) => c.id === configId)?.oauth ??
+            null;
           const configDataString =
             configData ?
               getMcpConfigValueAsString(configData, config_schema)
@@ -109,6 +113,7 @@ export const McpToolAccess = ({
                       serverName: mcpServerName,
                       configId,
                       configData,
+                      configOAuth,
                     })
                   }
                 >
@@ -128,7 +133,8 @@ export const McpToolAccess = ({
             editServerConfig.configId && editServerConfig.configData ?
               {
                 id: editServerConfig.configId,
-                value: editServerConfig.configData,
+                config: editServerConfig.configData,
+                oauth: editServerConfig.configOAuth,
               }
             : undefined
           }

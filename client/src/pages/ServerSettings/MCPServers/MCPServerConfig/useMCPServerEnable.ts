@@ -1,12 +1,10 @@
-import { isDefined } from "@common/filterUtils";
+import { getDefaultMcpConfig } from "@common/mcp/web.mcp.schema";
 import type { DBSSchema } from "@common/publishUtils";
-import { getEntries } from "@common/utils";
 import { useCallback } from "react";
 import type { Prgl } from "../../../../App";
 import type { DBS } from "../../../../dashboard/Dashboard/DBS";
 import type { MCPChatAllowedTools } from "../useMCPChatAllowedTools";
-import { useMCPServerConfig } from "./MCPServerConfig";
-import { getDefaultMcpConfig } from "@common/mcp/web.mcp.schema";
+import { useMCPServerConfig } from "./MCPServerConfigProvider";
 
 export type MCPServerChatContext = {
   chatId: number;
@@ -27,7 +25,7 @@ export const useMCPServerEnable = ({
   };
   chatContext: undefined | MCPServerChatContext;
 } & Pick<Prgl, "dbs">) => {
-  const { enabled, config_schema, mcp_server_configs } = mcp_server;
+  const { enabled, config_schema, command, mcp_server_configs } = mcp_server;
   const { setServerToConfigure } = useMCPServerConfig();
 
   const lastConfigId = mcp_server_configs.at(-1)?.id;
@@ -42,7 +40,7 @@ export const useMCPServerEnable = ({
 
     const mustProvideConfig =
       newEnabled &&
-      config_schema &&
+      (config_schema || command === "streamable-http") &&
       lastConfigId === undefined &&
       !defaultConfig;
     if (mustProvideConfig) {

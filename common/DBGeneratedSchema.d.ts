@@ -526,10 +526,17 @@ export type DBGeneratedSchema = {
   };
   mcp_server_configs: {
     columns: {
-      config:  Record<string, any>
+      config: 
+       |  Record<string, unknown>
       created?: null | string;
       id?: number;
       last_updated?: null | string;
+      oauth?: 
+       | null
+       |  {  phase: "waiting-for-auth";  redirectUri: string;  scopes: string[];  authorizationUrl: string;  state: unknown; }
+       |  {  phase: "code-provided";  redirectUri: string;  scopes: string[];  pendingAuthorizationCode: string;  state?: unknown; }
+       |  {  phase: "connected";  redirectUri: string;  scopes: string[];  clientSecret?: string;  state?: unknown; }
+      oauth_request_id?: null | string;
       server_name: string;
     };
     referencedBy: {"llm_chats_allowed_mcp_tools":["server_config_id"],"mcp_server_tool_calls":["mcp_server_name","mcp_server_config_id"],"mcp_tool_approval_requests":["server_config_id"]};
@@ -582,7 +589,8 @@ export type DBGeneratedSchema = {
   mcp_servers: {
     columns: {
       args?: null | string[];
-      command: "npx" | "npm" | "uvx" | "uv" | "docker" | "prostgles-local"
+      capabilities?: null | {    experimental?: Record<string, any>;   logging?: Record<string, any>;   completions?: Record<string, any>;   prompts?: {  listChanged?: boolean; };   resources?: {  subscribe?: boolean;  listChanged?: boolean; };   tools?: {  listChanged?: boolean; };   tasks?: {  list?: Record<string, any>;  cancel?: Record<string, any>;  requests?: {  tools?: {  call?: Record<string, any>; }; }; };   extensions?: Record<string,  Record<string, any>>;  };
+      command: "npx" | "npm" | "uvx" | "uv" | "docker" | "prostgles-local" | "streamable-http"
       config_schema?: null | Record<string, 
  |  {  type: "local";  renderWithComponent?: "FileTree" | "WebMcpConfig";  title?: string;  optional?: boolean;  description?: string;  defaultValue?: unknown;  schema: unknown; }
  |  {  type: "env";  renderWithComponent?: "FileTree" | "WebMcpConfig";  title?: string;  optional?: boolean;  description?: string; }
@@ -595,12 +603,15 @@ export type DBGeneratedSchema = {
       icon_path?: null | string;
       info?: null | string;
       installed?: null | string;
+      last_enabled?: null | string;
       name: string;
+      server_version?: null | {    version: string;   name: string;   websiteUrl?: string;   description?: string;   icons?: (  {  src: string;  mimeType?: string;  sizes?: string[];  theme?: "light" | "dark"; } )[];   title?: string;  };
       source?: 
        | null
        |  {  type: "github";  name: string;  repoUrl: string;  installationCommands?: (  {  command: string;  args?: string[]; } )[]; }
        |  {  type: "code";  packageJson: string;  tsconfigJson: string;  files: Record<string, string>; }
       stderr?: null | string;
+      url?: null | string;
     };
     referencedBy: {"llm_chats_allowed_mcp_tools":["server_name"],"mcp_server_configs":["server_name"],"mcp_server_logs":["server_name"],"mcp_server_tool_calls":["mcp_server_name"],"mcp_server_tools":["server_name"]};
   };
@@ -868,8 +879,8 @@ export type GeneratedFunctionSchema = {
   "changePassword": (args: {    oldPassword: string;   newPassword: string;  }) => Promise<void>;
   "getLLMAllowedChatTools": (args: {    chatId: number;  }) => Promise<(undefined | Array<({ server_name: string; description: string; mode: (null | "auto-approved-user-actionable" | "user-provides-response" | "always-needs-approval") } & { tool_id: number; name: string; tool_name: string; input_schema: any; auto_approve: boolean })>)>;
   "createWebAppFromTemplate": (args: {    connectionId: string;   clean?: boolean;  }) => Promise<string>;
-  "buildWebApp": (args: {    connectionId: string;   clean?: boolean;  }) => Promise<(({ command: string; exitCode: number; timedOut: boolean; executionTime: number; log: Array<{ type: ("error" | "stdout" | "stderr"); text: string }> } & { state: ("close" | "error" | "timed-out" | "aborted") }) | ({ command: string; exitCode: number; timedOut: boolean; executionTime: number; log: Array<{ type: ("error" | "stdout" | "stderr"); text: string }> } & { state: "error"; error: (undefined | null | string | Array<any> | { [key: string]: any }) }))>;
-  "testWebApp": (args: {    connectionId: string;  }) => Promise<(({ command: string; exitCode: number; timedOut: boolean; executionTime: number; log: Array<{ type: ("error" | "stdout" | "stderr"); text: string }> } & { state: ("close" | "error" | "timed-out" | "aborted") }) | ({ command: string; exitCode: number; timedOut: boolean; executionTime: number; log: Array<{ type: ("error" | "stdout" | "stderr"); text: string }> } & { state: "error"; error: (undefined | null | string | Array<any> | { [key: string]: any }) }))>;
+  "buildWebApp": (args: {    connectionId: string;   clean?: boolean;  }) => Promise<(({ command: string; exitCode: number; timedOut: boolean; executionTime: number; log: Array<{ type: ("error" | "stderr" | "stdout"); text: string }> } & { state: ("close" | "error" | "timed-out" | "aborted") }) | ({ command: string; exitCode: number; timedOut: boolean; executionTime: number; log: Array<{ type: ("error" | "stderr" | "stdout"); text: string }> } & { state: "error"; error: (undefined | null | string | Array<any> | { [key: string]: any }) }))>;
+  "testWebApp": (args: {    connectionId: string;  }) => Promise<(({ command: string; exitCode: number; timedOut: boolean; executionTime: number; log: Array<{ type: ("error" | "stderr" | "stdout"); text: string }> } & { state: ("close" | "error" | "timed-out" | "aborted") }) | ({ command: string; exitCode: number; timedOut: boolean; executionTime: number; log: Array<{ type: ("error" | "stderr" | "stdout"); text: string }> } & { state: "error"; error: (undefined | null | string | Array<any> | { [key: string]: any }) }))>;
   "writeWebAppFiles": (args: {    connectionId: string;   bypassAllowList?: boolean;   files: Record<string, string>;  }) => Promise<boolean>;
   "getWebAppComponents": (args: {    connectionId: string;  }) => Promise<{ components: Array<{ filePath: string; name: string; propsTypeString: (undefined | string) }>; renderTree: Array<{ componentName: string; outputTree: Array<{ name: string; children: Array<any>; condition?: (undefined | string); outputTree?: (undefined | Array<any>) }> }> }>;
   "getWebAppFileList": (args: {    connectionId: string;  }) => Promise<Array<string>>;
@@ -915,13 +926,15 @@ export type GeneratedFunctionSchema = {
   "getNodeTypes": () => Promise<Array<{ content: string; filePath: string }>>;
   "installMCPServer": (args: {    name: string;  }) => Promise<void>;
   "getMCPServersStatus": (args: {    serverName: string;  }) => Promise<{ ok: boolean; message?: (undefined | string) }>;
+  "authenticateMcpServer": (args: {    serverName: string;   origin: string;   scopes: string[];  }) => Promise<{ authorizationUrl: string }>;
+  "getMcpOAuthMetadata": (args: {    serverName: string;  }) => Promise<{ metadata: { resource: string; authorization_servers: Array<string>; scopes_supported: Array<string> }; serverInfo: { issuer: string; authorization_endpoint: string; token_endpoint: string; response_types_supported: Array<string>; grant_types_supported: Array<string>; service_documentation?: (undefined | string); scopes_supported: Array<string> } }>;
   "reRunMCPServerTool": (args: {    chatId: number;   serverName: string;   toolName: string;   reRunToolUseId: string;   args?: Record<string, any>;  }) => Promise<({ content: Array<({ type: "text"; text: string; annotations?: (undefined | { audience?: (undefined | Array<("user" | "assistant")>); priority?: (undefined | number); lastModified?: (undefined | string) }); _meta?: (undefined | { [key: string]: unknown }) } | { type: "image"; data: string; mimeType: string; annotations?: (undefined | { audience?: (undefined | Array<("user" | "assistant")>); priority?: (undefined | number); lastModified?: (undefined | string) }); _meta?: (undefined | { [key: string]: unknown }) } | { type: "audio"; data: string; mimeType: string; annotations?: (undefined | { audience?: (undefined | Array<("user" | "assistant")>); priority?: (undefined | number); lastModified?: (undefined | string) }); _meta?: (undefined | { [key: string]: unknown }) } | { uri: string; name: string; type: "resource_link"; description?: (undefined | string); mimeType?: (undefined | string); size?: (undefined | number); annotations?: (undefined | { audience?: (undefined | Array<("user" | "assistant")>); priority?: (undefined | number); lastModified?: (undefined | string) }); _meta?: (undefined | { [key: string]: unknown }); icons?: (undefined | Array<{ src: string; mimeType?: (undefined | string); sizes?: (undefined | Array<string>); theme?: (undefined | "dark" | "light") }>); title?: (undefined | string) } | { type: "resource"; resource: ({ uri: string; text: string; mimeType?: (undefined | string); _meta?: (undefined | { [key: string]: unknown }) } | { uri: string; blob: string; mimeType?: (undefined | string); _meta?: (undefined | { [key: string]: unknown }) }); annotations?: (undefined | { audience?: (undefined | Array<("user" | "assistant")>); priority?: (undefined | number); lastModified?: (undefined | string) }); _meta?: (undefined | { [key: string]: unknown }) })>; isError?: (undefined | false | true) } & { structuredContent?: unknown })>;
   "reloadMcpServerTools": (args: {    serverName: string;  }) => Promise<number>;
   "getMcpHostInfo": () => Promise<{ os: string; npmVersion: string; uvxVersion: string }>;
   "getDocumentText": (args: {    files: ( { name: string; type: string; data: Blob; } )[];   options?: {  from_formats?: ("docx" | "pptx" | "html" | "image" | "pdf" | "asciidoc" | "md" | "csv" | "xlsx" | "xml_uspto" | "xml_jats" | "xml_xbrl" | "mets_gbs" | "json_docling" | "audio" | "vtt" | "latex")[];  to_formats?: ("md" | "json" | "yaml" | "html" | "html_split_page" | "text" | "doctags")[];  image_export_mode?: "placeholder" | "embedded" | "referenced";  page_range?: number[];  do_ocr?: boolean;  force_ocr?: boolean;  ocr_engine?: "auto" | "easyocr" | "ocrmac" | "rapidocr" | "tesserocr" | "tesseract";  ocr_lang?: string[];  document_timeout?: number;  pdf_backend?: "pypdfium2" | "docling_parse" | "dlparse_v1" | "dlparse_v2" | "dlparse_v4";  table_mode?: "fast" | "accurate";  do_table_structure?: boolean;  include_images?: boolean;  md_page_break_placeholder?: string;  images_scale?: number; };  }) => Promise<({ status: ("started" | "pending" | "success" | "failure" | "partial_success" | "skipped"); document: ({ filename: (null | string); md_content: (null | string); json_content: any; html_content: (null | string); text_content: (null | string); doctags_content: (null | string) } & {}); errors: Array<any> } & {})>;
   "transcribeAudio": (args: {    audio: { name: string; type: string; data: Blob; };  }) => Promise<(({ language: string; success: boolean; transcription: string; language_probability: number; segments: Array<({ text: string; end: number; start: number } & {})> } & {}) | ({ error: string } & {}))>;
   "getRunTypescriptInNodejsFiles": (args: {    entrypointTs: string;   packageDependencies: Record<string, string>;  }) => Promise<{ "index.ts": string; Dockerfile: string; "package.json": string; "eslint.config.mjs": string; "tsconfig.json": string }>;
-  "startAgenticWorkflow": (args: {    chatId: number;   workflowId: number;   userInputValue: Record<string, unknown>;   messageId: string;   executionMode: "series" | "parallel";   autoApproveAllTools: boolean;  }) => Promise<(({ name: string; state: ("error" | "finished" | "build-error" | "timed-out" | "aborted"); command: string; log: Array<({ type: ("error" | "stdout" | "stderr"); text: string } & {})>; exitCode: number; runDuration: number; buildDuration: number } & {}) | { state: "init-error"; message: string; error: (undefined | null | string | Array<any> | { [key: string]: any }) })>;
+  "startAgenticWorkflow": (args: {    chatId: number;   workflowId: number;   userInputValue: Record<string, unknown>;   messageId: string;   executionMode: "series" | "parallel";   autoApproveAllTools: boolean;  }) => Promise<(({ name: string; state: ("error" | "finished" | "build-error" | "timed-out" | "aborted"); command: string; log: Array<({ type: ("error" | "stderr" | "stdout"); text: string } & {})>; exitCode: number; runDuration: number; buildDuration: number } & {}) | { state: "init-error"; message: string; error: (undefined | null | string | Array<any> | { [key: string]: any }) })>;
   "stopAgenticWorkflow": (args: {    chatId: number;   messageId: string;  }) => Promise<{ success: boolean }>;
   "getAgenticWorkflowTypes": (args: {    connectionId: string;   workflowId?: number;  }) => Promise<{ files: { "defineAgenticWorkflow.ts": string; "defineAgenticWorkflowHandlers.ts": string }; astNodes: any; summary: string; instrumentedFile: string }>;
   "stopDockerContainer": (args: {    chatId: number;   toolUseId: string;  }) => Promise<{ success: boolean }>;

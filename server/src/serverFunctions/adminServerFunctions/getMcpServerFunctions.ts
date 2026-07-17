@@ -6,12 +6,14 @@ import {
   getMCPServersStatus,
   installMCPServer,
 } from "@src/McpHub/AnthropicMcpHub/installMCPServer";
+import { authenticateMcpServer } from "@src/McpHub/AnthropicMcpHub/McpOAuth/authenticateMcpServer";
 import { callMCPServerTool } from "@src/McpHub/callMCPServerTool";
 import { getRunTypescriptInNodejsFiles } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Ui.mcp";
 import { reloadMcpServerTools } from "@src/McpHub/reloadMcpServerTools";
+import { CONVERT_DOCUMENT_DEFAULT_OPTIONS } from "@src/ServiceManager/services/documents/documents.service";
 import type { getServerFunctionsContext } from "../getServerFunctionsContext";
 import { getDefineAdminFunction } from "./getDefineAdminFunction";
-import { CONVERT_DOCUMENT_DEFAULT_OPTIONS } from "@src/ServiceManager/services/documents/documents.service";
+import { getMcpOAuthMetadata } from "@src/McpHub/AnthropicMcpHub/McpOAuth/getMcpOAuthMetadata";
 export const getMcpServerFunctions = (
   context: Awaited<ReturnType<typeof getServerFunctionsContext>>,
 ) => {
@@ -27,6 +29,39 @@ export const getMcpServerFunctions = (
     getMCPServersStatus: defineAdminFunction({
       input: { serverName: "string" },
       run: ({ serverName }, { dbs }) => getMCPServersStatus(dbs, serverName),
+    }),
+
+    authenticateMcpServer: defineAdminFunction({
+      input: {
+        serverName: "string",
+        origin: "string",
+        scopes: "string[]",
+      },
+      run: async ({ serverName, origin, scopes }, { dbs }) => {
+        return authenticateMcpServer({ serverName, origin, scopes }, dbs);
+      },
+    }),
+    getMcpOAuthMetadata: defineAdminFunction({
+      input: {
+        serverName: "string",
+      },
+      run: async ({ serverName }, { dbs }) => {
+        const server = await dbs.mcp_servers.findOne({ name: serverName });
+        if (!server) {
+          throw new Error(`MCP server "${serverName}" not found`);
+        }
+        const { command, url } = server;
+        if (command !== "streamable-http") {
+          throw new Error(
+            `MCP server "${serverName}" has command "${command}", expected "streamable-http"`,
+          );
+        }
+        if (!url) {
+          throw new Error(`MCP server "${serverName}" has no URL`);
+        }
+
+        return getMcpOAuthMetadata(url);
+      },
     }),
     reRunMCPServerTool: defineAdminFunction({
       input: {
@@ -224,4 +259,21 @@ export const getMcpServerFunctions = (
       },
     }),
   };
+};
+
+const extractAuthorizationCode = (
+  callbackUrl: string | undefined,
+): string | undefined => {
+  if (!callbackUrl) return undefined;
+  try {
+    const parsed = new URL(callbackUrl);
+    return parsed.searchParams.get("code") ?? undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+const extractFirstUrl = (text: string): string | undefined => {
+  const match = text.match(/https?:\/\/[^\s"')]+/);
+  return match?.[0];
 };

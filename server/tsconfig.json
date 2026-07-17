@@ -5,6 +5,7 @@
 		"target": "ES2022",
 		"lib": [ "ES2017", "es2019", "ES2021.String", "ES2023" ],
 		"esModuleInterop" : true,
+		"resolveJsonModule": true,
 		"allowSyntheticDefaultImports": true,
 		"allowJs": true,
 		"module": "commonjs",

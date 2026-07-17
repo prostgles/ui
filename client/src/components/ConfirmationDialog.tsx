@@ -26,7 +26,7 @@ export type ConfirmDialogProps = Pick<
   style?: React.CSSProperties;
 };
 
-export default class ConfirmationDialog extends RTComp<ConfirmDialogProps, S> {
+export default class ConfirmationDialog extends RTComp<ConfirmDialogProps> {
   render() {
     const {
       onClose,

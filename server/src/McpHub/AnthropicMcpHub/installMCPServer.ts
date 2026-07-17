@@ -104,7 +104,7 @@ export const installMCPServer = async (dbs: DBS, name: string) => {
         ["install", "--include=dev"],
         { cwd: installationPath },
         (chunk) => {
-          void addLog(chunk);
+          void addLog(chunk.toString());
         },
       );
       if (npmI.err) {

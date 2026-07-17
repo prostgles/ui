@@ -342,15 +342,15 @@ export class ForkedPrglProcRunner {
   };
 }
 
-export function debounce<Params extends any[]>(
-  func: (...args: Params) => any,
+export function debounce<F extends (...args: any[]) => any>(
+  func: F,
   timeout: number,
-): (...args: Params) => void {
+): F {
   let timer: NodeJS.Timeout;
-  return (...args: Params) => {
+  return ((...args) => {
     clearTimeout(timer);
     timer = setTimeout(() => {
       func(...args);
     }, timeout);
-  };
+  }) as F;
 }

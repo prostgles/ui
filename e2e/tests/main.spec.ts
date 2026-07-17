@@ -2000,7 +2000,8 @@ test.describe("Main test", () => {
     await expect(
       page.getByTestId("AgenticWorkflow.validationErrorLogs"),
     ).toContainText(
-      `Validation error for databaseHandler usage: the following table names do not match any new tables or existing tables: ["invalid_table"]`,
+      // `Validation error for databaseHandler usage: the following table names do not match any new tables or existing tables: ["invalid_table"]`,
+      `Table "invalid_table" is used in the workflow but not included in tablePermissions`,
       getTimeout(30e3),
     );
 

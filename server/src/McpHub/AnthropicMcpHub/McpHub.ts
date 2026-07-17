@@ -29,27 +29,23 @@ export type McpConnection = {
 };
 
 export class McpHub {
-  connections: Record<string, McpConnection> = {};
+  connections = new Map<string, McpConnection>();
   isConnecting = false;
 
   constructor() {}
 
   getClient = (serverName: string): Client | undefined => {
-    return Object.values(this.connections).find(
+    return Array.from(this.connections.values()).find(
       (conn) => conn.server_name === serverName,
     )?.client;
   };
 
   getServers(): McpServer[] {
-    // Only return enabled servers
-    return Object.values(this.connections)
-      .filter((conn) => !conn.server.disabled)
-      .map((conn) => conn.server);
+    return Array.from(this.connections.values()).map((conn) => conn.server);
   }
 
   private async connectToServer(initInfo: MCPServerInitInfo): Promise<void> {
     const { name } = initInfo;
-    delete this.connections[name];
     const { data: connection, error } = await tryCatchV2(
       async () => await connectToMCPServer(initInfo),
     );
@@ -61,25 +57,25 @@ export class McpHub {
       connection.server.resourceTemplates = await fetchMCPResourceTemplatesList(
         connection.client,
       );
-      this.connections[name] = connection;
+      this.connections.set(name, connection);
     } else {
-      delete this.connections[name];
+      this.connections.delete(name);
       throw error;
     }
   }
 
   private async destroyConnection(name: string): Promise<void> {
-    const connection = this.connections[name];
+    const connection = this.connections.get(name);
     if (connection) {
-      delete this.connections[name];
+      this.connections.delete(name);
       await connection.destroy();
     }
   }
 
   async setServerConnections(serversConfig: ServersConfig): Promise<void> {
     this.isConnecting = true;
-    const currentNames = Object.keys(this.connections);
-    const newNames = new Set(Object.keys(serversConfig));
+    const currentNames = Array.from(this.connections.keys());
+    const newNames = new Set(Array.from(serversConfig.keys()));
 
     // Delete removed servers
     for (const name of currentNames) {
@@ -90,10 +86,12 @@ export class McpHub {
     }
 
     // Update or add servers
-    for (const [name, { onLog, ...config }] of Object.entries(serversConfig)) {
-      const currentConnection = this.connections[name];
+    for (const [name, parameters] of Array.from(serversConfig.entries())) {
+      const { onLog, ...otherParams } = parameters;
+      const currentConnection = this.connections.get(name);
       const isRunningDifferentConfig =
-        currentConnection && !isEqual(currentConnection.server.config, config);
+        currentConnection &&
+        !isEqual(currentConnection.server.config, otherParams);
       if (isRunningDifferentConfig) {
         await this.destroyConnection(name);
       }
@@ -103,13 +101,13 @@ export class McpHub {
           const eventOptions = {
             onLog,
             onTransportClose: () => {
-              delete this.connections[name];
+              this.connections.delete(name);
             },
           };
           await this.connectToServer({
             name,
-            config,
-            server_name: config.server_name,
+            parameters,
+            server_name: otherParams.server_name,
             ...eventOptions,
           });
         } catch (error) {
@@ -132,14 +130,11 @@ export class McpHub {
     serverName: string,
     uri: string,
   ): Promise<McpResourceResponse> {
-    const connection = this.connections[serverName];
+    const connection = this.connections.get(serverName);
     if (!connection) {
       throw new Error(
         `No connection found for MCP server: ${serverName}. Make sure it is enabled`,
       );
-    }
-    if (connection.server.disabled) {
-      throw new Error(`Server "${serverName}" is disabled`);
     }
     return await connection.client.request(
       {
@@ -157,16 +152,10 @@ export class McpHub {
     toolName: string,
     toolArguments?: Record<string, unknown>,
   ): Promise<McpToolCallResponse> {
-    const connection = this.connections[serverName];
+    const connection = this.connections.get(serverName);
     if (!connection) {
       throw new Error(
         `No connection found for MCP server: ${serverName}. Please make sure it is enabled`,
-      );
-    }
-
-    if (connection.server.disabled) {
-      throw new Error(
-        `MCP Server "${serverName}" is disabled and cannot be used`,
       );
     }
 
@@ -184,7 +173,7 @@ export class McpHub {
   }
 
   async destroy(): Promise<void> {
-    for (const connection of Object.values(this.connections)) {
+    for (const connection of this.connections.values()) {
       try {
         await this.destroyConnection(connection.server.name);
       } catch (error) {
@@ -194,7 +183,7 @@ export class McpHub {
         );
       }
     }
-    this.connections = {};
+    this.connections = new Map();
   }
 }
 

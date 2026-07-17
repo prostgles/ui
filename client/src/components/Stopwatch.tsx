@@ -43,6 +43,44 @@ export const Stopwatch = ({
   );
 };
 
+export const useCountdown = () => {
+  const [state, start] = useState<
+    { endTime: Date; onFinish: () => void } | undefined
+  >(undefined);
+
+  const [elapsed, setElapsed] = useState("");
+
+  useEffect(() => {
+    if (!state) {
+      return;
+    }
+
+    const onElapsedUpdate = () => {
+      setElapsed(
+        getDurationAsStr(state.endTime.getTime() - Date.now(), {
+          excludeMs: true,
+        }),
+      );
+    };
+    const interval = setInterval(() => {
+      if (Date.now() >= state.endTime.getTime()) {
+        state.onFinish();
+        clearInterval(interval);
+        start(undefined);
+        setElapsed("");
+      } else {
+        onElapsedUpdate();
+      }
+    }, 1_000);
+    return () => clearInterval(interval);
+  }, [state]);
+
+  return {
+    start,
+    elapsed: state?.endTime ? elapsed : "",
+  };
+};
+
 type DurationOpts = {
   excludeMs?: boolean;
   keepTop?: number;

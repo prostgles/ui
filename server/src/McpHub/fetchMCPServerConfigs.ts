@@ -1,15 +1,20 @@
-import { isDefined, pickKeys, type ValueOf } from "prostgles-types";
-import type { DBS } from "..";
 import type { DBSSchema } from "@common/publishUtils";
+import type { StdioServerParameters } from "@modelcontextprotocol/sdk/client/stdio";
+import { getProperty, isDefined, pickKeys } from "prostgles-types";
+import type { DBS } from "..";
 import type {
-  McpConfigWithEvents,
+  McpServerEvents,
+  McpServerParameters,
   ServersConfig,
+  StreamableHTTPOAuthState,
 } from "./AnthropicMcpHub/McpTypes";
+import { buildRemoteMcpServerParameters } from "./AnthropicMcpHub/McpOAuth/buildRemoteMcpServerParameters";
 
 export const fetchMCPServerConfigs = async (
   dbs: DBS,
   testConfig?: DBSSchema["mcp_server_configs"],
 ) => {
+  const serversConfig: ServersConfig = new Map();
   const mcpServers = await dbs.mcp_servers.find(
     testConfig ?
       { name: testConfig.server_name }
@@ -18,10 +23,9 @@ export const fetchMCPServerConfigs = async (
   );
   const globalSettings = await dbs.global_settings.findOne();
   if (globalSettings?.mcp_servers_disabled) {
-    return {};
+    return serversConfig;
   }
 
-  const serversConfig: ServersConfig = {};
   mcpServers.forEach((server) => {
     const baseEnv = {
       /** Needed for puppeteer/playwright */
@@ -33,7 +37,7 @@ export const fetchMCPServerConfigs = async (
       ...(server.env ?? {}),
     };
     const baseArgs = server.args ?? [];
-    const onLog: McpConfigWithEvents["onLog"] = (type, data, log) => {
+    const onLog: McpServerEvents["onLog"] = (type, data, log) => {
       void dbs.mcp_server_logs.upsert(
         { server_name: server.name },
         type === "stderr" ?
@@ -52,36 +56,70 @@ export const fetchMCPServerConfigs = async (
         [testConfig]
       : ((server.mcp_server_configs ??
           []) as DBSSchema["mcp_server_configs"][]);
-    if (config_schema && mcp_server_configs.length) {
+
+    if (mcp_server_configs.length) {
       mcp_server_configs.forEach((mcp_server_config) => {
-        const { args, env } = applyConfig(
+        const serverInstanceName = server.name + "_" + mcp_server_config.id;
+        const serverConfig = (() => {
+          if (server.command === "streamable-http") {
+            return buildRemoteMcpServerParameters({
+              dbs,
+              server,
+              mcp_server_config,
+              onLog,
+            });
+          }
+          if (!config_schema) {
+            throw new Error(
+              `MCP server "${server.name}" has no config_schema but has mcp_server_configs.`,
+            );
+          }
+          const { args, env } = applyConfig(
+            {
+              args: baseArgs,
+              env: baseEnv,
+            },
+            config_schema,
+            mcp_server_config,
+          );
+          return {
+            type: "stdio",
+            ...server,
+            server_name: server.name,
+            args,
+            env,
+            stderr: undefined,
+            cwd: server.cwd ?? undefined,
+            onLog,
+          } satisfies McpServerParameters;
+        })();
+        if (serverConfig) {
+          serversConfig.set(serverInstanceName, serverConfig);
+        }
+      });
+    } else {
+      if (server.command === "streamable-http") {
+        const message = `MCP server "${server.name}" has command "streamable-http" but no config_schema or mcp_server_configs.`;
+        void dbs.mcp_server_logs.upsert(
+          { server_name: server.name },
           {
-            args: baseArgs,
-            env: baseEnv,
+            install_error: message,
+            error: message,
+            log: message,
           },
-          config_schema,
-          mcp_server_config,
         );
-        serversConfig[server.name + "_" + mcp_server_config.id] = {
+      } else {
+        serversConfig.set(server.name, {
+          type: "stdio",
           ...server,
           server_name: server.name,
-          args,
-          env,
+          args: baseArgs,
+          env: baseEnv,
           stderr: undefined,
           cwd: server.cwd ?? undefined,
           onLog,
-        } satisfies ValueOf<ServersConfig>;
-      });
-    } else {
-      serversConfig[server.name] = {
-        ...server,
-        server_name: server.name,
-        args: baseArgs,
-        env: baseEnv,
-        stderr: undefined,
-        cwd: server.cwd ?? undefined,
-        onLog,
-      } satisfies ValueOf<ServersConfig>;
+        } satisfies McpServerParameters);
+      }
     }
   });
   return serversConfig;
@@ -91,7 +129,7 @@ const applyConfig = (
   {
     args: baseArgs,
     env: baseEnv,
-  }: Required<Pick<McpConfigWithEvents, "args" | "env">>,
+  }: Required<Pick<StdioServerParameters, "args" | "env">>,
   config_schema: NonNullable<DBSSchema["mcp_servers"]["config_schema"]>,
   {
     server_name,
@@ -101,9 +139,9 @@ const applyConfig = (
   let args = [...baseArgs];
   const env = { ...baseEnv };
   Object.entries({ ...config_schema }).forEach(([key, configItem]) => {
+    const value = getProperty(config, key);
     if (configItem.type === "env" || configItem.type === "local") {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      env[key] = config[key];
+      env[key] = value as string;
     } else {
       const dollarArgIndexes = args
         .map((a, i) => (a.startsWith("${") ? i : undefined))
@@ -115,15 +153,14 @@ const applyConfig = (
       }
       const argIndex = configItem.index ?? dollarArgIndexes[0];
       if (isFinite(argIndex) && argIndex > -1) {
-        if (configItem.type === "...args" && Array.isArray(config[key])) {
+        if (configItem.type === "...args" && Array.isArray(value)) {
           args = [
             ...args.slice(0, argIndex),
-            ...(config[key] as string[]),
+            ...(value as string[]),
             ...args.slice(argIndex + 1),
           ];
         } else {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          args[argIndex] = config[key];
+          args[argIndex] = value as string;
         }
       } else {
         console.error(

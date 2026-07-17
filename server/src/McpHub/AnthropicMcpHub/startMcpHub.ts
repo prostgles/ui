@@ -12,31 +12,28 @@ import type { DBSSchema } from "@common/publishUtils";
 const mcpHub = new McpHub();
 
 let mcpHubInitPromise: Promise<McpHub> | undefined;
-export const startMcpHub = async (
-  dbs: DBS,
-  restart = false,
-): Promise<McpHub> => {
-  if (mcpHubInitPromise) {
-    await mcpHubInitPromise;
-    if (!restart) {
+export const startMcpHub = (dbs: DBS, restart = false): Promise<McpHub> => {
+  const result = (async () => {
+    if (!restart && mcpHubInitPromise) {
       const res = await mcpHubInitPromise;
       return res;
-    } else {
-      mcpHubInitPromise = undefined;
     }
-  }
 
-  mcpHubInitPromise = (async () => {
-    if (restart) {
-      await mcpHub.destroy();
-    }
+    await mcpHubInitPromise?.catch((err) => {
+      console.error("Error starting MCP Hub", err);
+    });
+
+    await mcpHub.destroy().catch((err) => {
+      console.error("Error destroying MCP Hub", err);
+    });
+
     const serversConfig = await fetchMCPServerConfigs(dbs);
     const serverNames = Array.from(
-      new Set(Object.values(serversConfig).map((s) => s.server_name)),
+      new Set(Array.from(serversConfig.values()).map((s) => s.server_name)),
     );
     await mcpHub.setServerConnections(serversConfig);
     if (serverNames.length) {
-      const serverNamesWithConfig = Object.keys(serversConfig);
+      const serverNamesWithConfig = Array.from(serversConfig.keys());
       console.log(
         `McpHub started. Enabled servers (${serverNamesWithConfig.length}): ${serverNamesWithConfig.join()}`,
       );
@@ -44,7 +41,9 @@ export const startMcpHub = async (
     return mcpHub;
   })();
 
-  return mcpHubInitPromise;
+  mcpHubInitPromise = result;
+
+  return result;
 };
 
 const loadMissingTools = async (
@@ -99,7 +98,7 @@ export const setupMCPServerHub = async (dbs: DBS) => {
 
   mcpSubscriptions.servers = await dbs.mcp_servers.subscribe(
     { enabled: true },
-    { select: { "*": 1, mcp_server_configs: "*" } },
+    { select: { "*": 1, mcp_server_configs: "*" }, throttle: 500 },
     (servers) => {
       enabledMcpServers = servers;
       onCallback();

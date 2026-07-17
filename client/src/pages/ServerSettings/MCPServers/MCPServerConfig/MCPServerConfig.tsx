@@ -1,33 +1,51 @@
+import type { DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
 import { FileTree } from "@components/FileTree/FileTree";
 import { FlexCol, FlexRow } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
 import Popup from "@components/Popup/Popup";
 import { mdiDeleteOutline } from "@mdi/js";
-import React, { useContext, useState } from "react";
+import React from "react";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
-import { useMCPServerConfigState } from "./useMCPServerConfigState";
+import { McpServerOAuthConfig } from "./CustomConfigComponents/McpServerOAuthConfig";
 import { WebMcpConfig } from "./CustomConfigComponents/WebMcpConfig";
 import { getMcpConfigValueAsString } from "./MCPServerConfigButton";
+import { useMCPServerConfigState } from "./useMCPServerConfigState";
+import { isEqual } from "prostgles-types";
 
 export type MCPServerEnabledConfig = { configId: number };
 
 export type MCPServerConfigProps = {
   serverName: string;
   existingConfig:
-    | { id: number; value: Record<string, string | string[]> }
+    | Pick<DBSSchema["mcp_server_configs"], "id" | "config" | "oauth">
     | undefined;
-  defaultConfig: undefined | Record<string, string | string[]>;
+  defaultConfig: undefined | DBSSchema["mcp_server_configs"]["config"];
   chatId: number | undefined;
   onDone: (res: void | MCPServerEnabledConfig) => void;
 };
 
 export const MCPServerConfig = (props: MCPServerConfigProps) => {
-  const { serverName, existingConfig, onDone } = props;
-  const { upsertConfig, canSave, schema, setConfig, config, existingConfigs } =
-    useMCPServerConfigState(props);
+  const { serverName, existingConfig: initialExistingConfig, onDone } = props;
+  const {
+    upsertConfig,
+    canSave,
+    schema,
+    setConfig,
+    config,
+    existingConfigs,
+    server,
+  } = useMCPServerConfigState(props);
+  const existingConfig =
+    initialExistingConfig ??
+    existingConfigs.find((c) => isEqual(c.config, config));
   const { dbs } = usePrglCore();
-  if (!schema) return null;
+  const otherConfigs = existingConfigs.filter(
+    (c) => !existingConfig || c.id !== existingConfig.id,
+  );
+  if (!server) {
+    return null;
+  }
 
   return (
     <Popup
@@ -45,73 +63,97 @@ export const MCPServerConfig = (props: MCPServerConfigProps) => {
           label: "Cancel",
           onClick: () => onDone(),
         },
+        existingConfig && {
+          label: "Delete config",
+          className: "ml-auto",
+          variant: "faded",
+          color: "danger",
+          onClickPromise: async () => {
+            await dbs.mcp_server_configs.delete({
+              id: existingConfig.id,
+            });
+            onDone();
+          },
+        },
         {
           label: existingConfig ? "Update" : "Enable",
           "data-command": "MCPServerConfig.save",
-          disabledInfo: canSave ? undefined : "No changes",
+          disabledInfo:
+            !existingConfig && server.command === "streamable-http" ?
+              "Must complete OAuth flow"
+            : canSave ? undefined
+            : "No changes",
           variant: "filled",
           color: "action",
-          className: "ml-auto",
+          className: existingConfig ? undefined : "ml-auto",
           onClickPromise: upsertConfig,
         },
       ]}
     >
       <FlexCol className="min-h-0">
-        {Object.entries(schema).map(([key, schema]) => {
-          if (schema.renderWithComponent === "FileTree") {
-            const currentValue = config[key];
+        {server.command === "streamable-http" ?
+          <McpServerOAuthConfig
+            server={server}
+            existingConfig={existingConfig}
+            setConfig={setConfig}
+            onDone={onDone}
+          />
+        : Object.entries(schema ?? {}).map(([key, schema]) => {
+            if (schema.renderWithComponent === "FileTree") {
+              const currentValue = config[key];
+              return (
+                <FileTree
+                  key={key}
+                  mode="pick-multiple"
+                  type="all"
+                  value={currentValue as string[] | undefined}
+                  onChange={(newValue) => {
+                    setConfig({
+                      ...config,
+                      [key]: newValue,
+                    });
+                  }}
+                />
+              );
+            }
+
+            if (schema.renderWithComponent === "WebMcpConfig") {
+              return (
+                <WebMcpConfig
+                  key={key}
+                  value={config[key]}
+                  onChange={(newValue) => {
+                    setConfig({
+                      ...config,
+                      [key]: newValue as string,
+                    });
+                  }}
+                />
+              );
+            }
+
             return (
-              <FileTree
+              <FormField
+                type="text"
                 key={key}
-                mode="pick-multiple"
-                type="all"
-                value={currentValue as string[] | undefined}
-                onChange={(newValue) => {
+                label={schema.title ?? key}
+                hint={schema.description}
+                value={config[key] as string | undefined}
+                onChange={(v) =>
                   setConfig({
                     ...config,
-                    [key]: newValue,
-                  });
-                }}
+                    [key]: v,
+                  })
+                }
               />
             );
-          }
-
-          if (schema.renderWithComponent === "WebMcpConfig") {
-            return (
-              <WebMcpConfig
-                key={key}
-                value={config[key]}
-                onChange={(newValue) => {
-                  setConfig({
-                    ...config,
-                    [key]: newValue as string,
-                  });
-                }}
-              />
-            );
-          }
-
-          return (
-            <FormField
-              type="text"
-              key={key}
-              label={schema.title ?? key}
-              hint={schema.description}
-              value={config[key] as string | undefined}
-              onChange={(v) =>
-                setConfig({
-                  ...config,
-                  [key]: v,
-                })
-              }
-            />
-          );
-        })}
-        {Boolean(existingConfigs.length) && (
+          })
+        }
+        {Boolean(otherConfigs.length) && (
           <FlexCol className="py-1 pb-2 gap-p5 bt b-color ">
             <div className="ta-start mb-1">Existing configurations:</div>
             <FlexCol>
-              {existingConfigs.map((existingConfig) => {
+              {otherConfigs.map((existingConfig) => {
                 const values = Object.values(existingConfig.config)
                   .map((v) => getMcpConfigValueAsString(v, undefined))
                   .join(", ");
@@ -149,65 +191,4 @@ export const MCPServerConfig = (props: MCPServerConfigProps) => {
       </FlexCol>
     </Popup>
   );
-};
-
-export type MCPServerConfigContext = {
-  setServerToConfigure: (
-    p: Omit<MCPServerConfigProps, "onDone" | "dbs">,
-  ) => Promise<void | MCPServerEnabledConfig>;
-};
-
-export const MCPServerConfigContext = React.createContext<
-  MCPServerConfigContext | undefined
->(undefined);
-
-export const MCPServerConfigProvider = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => {
-  const [serverToConfigure, setServerToConfigure] =
-    useState<MCPServerConfigProps>();
-
-  const value = React.useMemo(() => {
-    return {
-      setServerToConfigure: async (
-        props: Omit<MCPServerConfigProps, "onDone">,
-      ) => {
-        return new Promise<MCPServerEnabledConfig | void>((resolve) => {
-          setServerToConfigure({
-            ...props,
-            onDone: (enabled) => {
-              resolve(enabled);
-            },
-          });
-        });
-      },
-    };
-  }, []);
-
-  return (
-    <MCPServerConfigContext.Provider value={value}>
-      {children}
-      {serverToConfigure && (
-        <MCPServerConfig
-          {...serverToConfigure}
-          onDone={(enabled) => {
-            serverToConfigure.onDone(enabled);
-            setServerToConfigure(undefined);
-          }}
-        />
-      )}
-    </MCPServerConfigContext.Provider>
-  );
-};
-
-export const useMCPServerConfig = () => {
-  const context = useContext(MCPServerConfigContext);
-  if (!context) {
-    throw new Error(
-      "useMCPServerConfig must be used within a MCPServerConfigProvider",
-    );
-  }
-  return context;
 };

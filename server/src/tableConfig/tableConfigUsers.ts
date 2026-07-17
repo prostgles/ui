@@ -3,6 +3,15 @@ import {
   OAuthProviderOptions,
   PASSWORDLESS_ADMIN_USERNAME,
 } from "@common/OAuthUtils";
+import type {
+  AfterEachTsTrigger,
+  BeforeEachTsTrigger,
+  ValidateRowArgsCommon,
+} from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
+import type { DBSSchema } from "@common/publishUtils";
+import type { DBS } from "..";
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
+import { getPasswordHash } from "@src/authConfig/authUtils";
 
 export const tableConfigUsers = {
   users: {
@@ -174,5 +183,45 @@ export const tableConfigUsers = {
         `,
       },
     },
+    hooks: {
+      beforeEach: [
+        {
+          commands: { insert: 1 },
+          changedFields: ["password"],
+          // eslint-disable-next-line @typescript-eslint/require-await
+          validate: async (args) => {
+            const { data } = args;
+
+            const magicLinkWithoutPassword =
+              data.registration?.type === "magic-link" && !data.password;
+            if (magicLinkWithoutPassword) return;
+
+            if (!data.passwordless_admin && "password" in data) {
+              if (!data.password) {
+                throw "Password cannot be empty";
+              }
+              const id = crypto.randomUUID();
+
+              const hashedPassword = getPasswordHash({ id }, data.password);
+              if (typeof hashedPassword !== "string") {
+                throw "Not ok";
+              }
+
+              return {
+                row: {
+                  id,
+                  ...data,
+                  password: hashedPassword,
+                  last_updated: Date.now().toString(),
+                },
+              };
+            }
+          },
+        } satisfies BeforeEachTsTrigger<
+          Partial<DBSSchema["users"]>,
+          DBS
+        > as any,
+      ],
+    },
   },
-} as const satisfies TableConfig<{ en: 1 }>;
+} as const satisfies TableConfig<{ en: 1 }, DBGeneratedSchema>;

@@ -1,4 +1,3 @@
-import { getPasswordHash } from "@src/authConfig/authUtils";
 import { checkClientIP } from "@src/authConfig/sessionUtils";
 import { getAuthSetupData } from "@src/authConfig/subscribeToAuthSetupChanges";
 import { getInstalledPsqlVersions } from "@src/BackupManager/getInstalledPrograms";
@@ -36,6 +35,7 @@ import { getBackupServerFunctions } from "./getBackupServerFunctions";
 import { getDefineAdminFunction } from "./getDefineAdminFunction";
 import { getMcpServerFunctions } from "./getMcpServerFunctions";
 import { getWebAppServerFunctions } from "./getWebAppServerFunctions";
+import { getPasswordHash } from "@src/authConfig/authUtils";
 export const getAdminServerFunctions = (
   context: Awaited<ReturnType<typeof getServerFunctionsContext>>,
 ) => {

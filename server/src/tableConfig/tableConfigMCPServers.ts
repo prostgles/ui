@@ -1,14 +1,14 @@
+import { getDefaultMcpConfig } from "@common/mcp/web.mcp.schema";
 import type { DBSSchema } from "@common/publishUtils";
 import { testMCPServerConfig } from "@src/McpHub/testMCPServerConfig";
 import type {
+  AfterAllTsTrigger,
   ValidateRowArgsCommon,
   ValidateRowsArgsCommon,
 } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
 import { isDefined } from "prostgles-types";
 import type { DBS } from "..";
-import { fromEntries, getEntries } from "@common/utils";
-import { getDefaultMcpConfig } from "@common/mcp/web.mcp.schema";
 
 export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
   mcp_servers: {
@@ -16,6 +16,85 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
       name: `TEXT PRIMARY KEY`,
       info: `TEXT`,
       icon_path: `TEXT`,
+      server_version: {
+        nullable: true,
+        jsonbSchemaType: {
+          version: "string",
+          name: "string",
+          websiteUrl: { type: "string", optional: true },
+          description: { type: "string", optional: true },
+          icons: {
+            optional: true,
+            arrayOfType: {
+              src: "string",
+              mimeType: { type: "string", optional: true },
+              sizes: { type: "string[]", optional: true },
+              theme: { enum: ["light", "dark"], optional: true },
+            },
+          },
+          title: { type: "string", optional: true },
+        },
+      },
+      capabilities: {
+        nullable: true,
+        jsonbSchemaType: {
+          experimental: {
+            optional: true,
+            record: { values: "any" },
+          },
+          logging: {
+            optional: true,
+            record: { values: "any" },
+          },
+          completions: {
+            optional: true,
+            record: { values: "any" },
+          },
+          prompts: {
+            optional: true,
+            type: {
+              listChanged: { type: "boolean", optional: true },
+            },
+          },
+          resources: {
+            optional: true,
+            type: {
+              subscribe: { type: "boolean", optional: true },
+              listChanged: { type: "boolean", optional: true },
+            },
+          },
+          tools: {
+            optional: true,
+            type: {
+              listChanged: { type: "boolean", optional: true },
+            },
+          },
+          tasks: {
+            optional: true,
+            type: {
+              list: { record: { values: "any" }, optional: true },
+              cancel: { record: { values: "any" }, optional: true },
+              requests: {
+                optional: true,
+                type: {
+                  tools: {
+                    optional: true,
+                    type: {
+                      call: { record: { values: "any" }, optional: true },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          extensions: {
+            optional: true,
+            record: {
+              values: { record: { values: "any" } },
+            },
+          },
+        },
+      },
       source: {
         nullable: true,
         jsonbSchema: {
@@ -44,8 +123,29 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
         },
       },
       command: {
-        enum: ["npx", "npm", "uvx", "uv", "docker", "prostgles-local"],
+        enum: [
+          "npx",
+          "npm",
+          "uvx",
+          "uv",
+          "docker",
+          "prostgles-local",
+          "streamable-http",
+        ],
       },
+      url: `TEXT`,
+      cwd: `TEXT`,
+      args: `TEXT[]`,
+      stderr: "TEXT",
+      env: {
+        nullable: true,
+        jsonbSchema: {
+          record: {
+            values: "string",
+          },
+        },
+      },
+      env_from_main_process: `TEXT[]`,
       config_schema: {
         jsonbSchema: {
           record: {
@@ -90,28 +190,70 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
         },
         nullable: true,
       },
-      cwd: `TEXT`,
-      args: `TEXT[]`,
-      stderr: "TEXT",
-      env: {
-        nullable: true,
-        jsonbSchema: {
-          record: {
-            values: "string",
-          },
-        },
-      },
-      env_from_main_process: `TEXT[]`,
       enabled: `BOOLEAN NOT NULL DEFAULT FALSE`,
       created: `TIMESTAMPTZ DEFAULT NOW()`,
+      last_enabled: `TIMESTAMPTZ`,
       installed: `TIMESTAMPTZ`,
+    },
+    hooks: {
+      afterEach: [
+        {
+          commands: { update: 1 },
+          validate: async (args) => {
+            const { dbx, row } = args as unknown as ValidateRowArgsCommon<
+              DBSSchema["mcp_servers"],
+              DBS
+            >;
+
+            if (args.command === "update" && args.data.enabled) {
+              await dbx.mcp_servers.update(
+                { name: row.name },
+                { last_enabled: new Date() },
+              );
+            }
+          },
+        },
+      ],
     },
   },
   mcp_server_configs: {
     columns: {
       id: `SERIAL PRIMARY KEY`,
       server_name: `TEXT NOT NULL REFERENCES mcp_servers(name) ON DELETE CASCADE`,
-      config: { jsonbSchema: { record: { values: "any" } } },
+      config: {
+        jsonbSchema: {
+          oneOf: [{ record: { values: "unknown" } }],
+        },
+      },
+      oauth_request_id: `TEXT UNIQUE`,
+      oauth: {
+        nullable: true,
+        jsonbSchema: {
+          oneOfType: [
+            {
+              phase: { enum: ["waiting-for-auth"] },
+              redirectUri: "string",
+              scopes: "string[]",
+              authorizationUrl: "string",
+              state: "unknown",
+            },
+            {
+              phase: { enum: ["code-provided"] },
+              redirectUri: "string",
+              scopes: "string[]",
+              pendingAuthorizationCode: "string",
+              state: { type: "unknown", optional: true },
+            },
+            {
+              phase: { enum: ["connected"] },
+              redirectUri: "string",
+              scopes: "string[]",
+              clientSecret: { type: "string", optional: true },
+              state: { type: "unknown", optional: true },
+            },
+          ],
+        },
+      },
       created: `TIMESTAMPTZ DEFAULT NOW()`,
       last_updated: `TIMESTAMPTZ DEFAULT NOW()`,
     },
@@ -134,9 +276,40 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
               DBSSchema["mcp_server_configs"],
               DBS
             >;
+            if (row.oauth) {
+              return;
+            }
             await testMCPServerConfig(dbx, row);
           },
         },
+      ],
+      afterAll: [
+        {
+          commands: { delete: 1 },
+          validate: async (args) => {
+            await args.dbx.mcp_servers.update(
+              {
+                $and: [
+                  {
+                    $or: [
+                      { command: "streamable-http" },
+                      { config_schema: { $ne: null } },
+                    ],
+                  },
+                  {
+                    $notExistsJoined: {
+                      mcp_server_configs: {},
+                    },
+                  },
+                ],
+              },
+              { enabled: false },
+            );
+          },
+        } satisfies AfterAllTsTrigger<
+          DBSSchema["mcp_server_configs"],
+          DBS
+        > as any,
       ],
     },
   },
@@ -245,11 +418,15 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
         {
           commands: { insert: 1, update: 1 },
           validate: async (args) => {
-            const { dbx, data, rows } =
-              args as unknown as ValidateRowsArgsCommon<
-                DBSSchema["llm_chats_allowed_mcp_tools"],
-                DBS
-              >;
+            const {
+              dbx,
+              data: _data,
+              rows,
+            } = args as unknown as ValidateRowsArgsCommon<
+              DBSSchema["llm_chats_allowed_mcp_tools"],
+              DBS
+            >;
+            const data = _data as typeof rows;
             const serverNames = Array.from(
               new Set(data.map((row) => row.server_name).filter(isDefined)),
             );

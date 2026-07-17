@@ -1,20 +1,19 @@
 import { isObject, type DBSSchema } from "@common/publishUtils";
+import { sliceText } from "@common/utils";
 import Btn from "@components/Btn";
 import { FlexRow } from "@components/Flex";
 import { mdiCogOutline } from "@mdi/js";
 import React from "react";
-import {
-  useMCPServerConfig,
-  type MCPServerConfigProps,
-} from "./MCPServerConfig";
-import { sliceText } from "@common/utils";
+import { type MCPServerConfigProps } from "./MCPServerConfig";
+import { useMCPServerConfig } from "./MCPServerConfigProvider";
 
 export const MCPServerConfigButton = (
-  props: Omit<MCPServerConfigProps, "onDone" | "variant"> & {
-    schema: NonNullable<DBSSchema["mcp_servers"]["config_schema"]>;
+  props: Omit<MCPServerConfigProps, "onDone" | "variant" | "serverName"> & {
+    schema: DBSSchema["mcp_servers"]["config_schema"];
+    server: DBSSchema["mcp_servers"];
   },
 ) => {
-  const { schema, existingConfig, serverName, chatId } = props;
+  const { schema, existingConfig, server, chatId } = props;
   const { setServerToConfigure } = useMCPServerConfig();
 
   return (
@@ -22,7 +21,7 @@ export const MCPServerConfigButton = (
       onClick={() => {
         void setServerToConfigure({
           existingConfig,
-          serverName,
+          serverName: server.name,
           chatId,
           defaultConfig: undefined,
         });
@@ -32,8 +31,17 @@ export const MCPServerConfigButton = (
       iconPath={mdiCogOutline}
       data-command="MCPServerConfigButton"
     >
-      {Object.entries(schema).map(([key, { title }]) => {
-        const value = existingConfig?.value[key];
+      {Object.entries(
+        schema ??
+          Object.keys(existingConfig?.config ?? {}).reduce(
+            (acc, key) => {
+              acc[key] = { type: "string" };
+              return acc;
+            },
+            {} as Record<string, { type: "string" }>,
+          ),
+      ).map(([key, { title }]) => {
+        const value = existingConfig?.config[key];
         const displayValue = getMcpConfigValueAsString(value, undefined);
 
         return (

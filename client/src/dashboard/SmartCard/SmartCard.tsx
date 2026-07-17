@@ -47,8 +47,11 @@ export type FieldConfigBase<T extends AnyObject | void = void> = {
   label?: string;
 };
 
-export type FieldConfigRender<T extends AnyObject = AnyObject> = (
-  value: any,
+export type FieldConfigRender<
+  T extends AnyObject = AnyObject,
+  K extends keyof T | string = string,
+> = (
+  value: K extends keyof T ? T[K] : any,
   row: T,
   data: {
     rows: T[];
@@ -56,20 +59,23 @@ export type FieldConfigRender<T extends AnyObject = AnyObject> = (
   },
 ) => React.ReactNode;
 
-export type ParsedFieldConfig<T extends AnyObject = AnyObject> =
-  FieldConfigBase<T> & {
-    select?: "*" | number | AnyObject | keyof T;
-    hideIf?: (value, row: T) => boolean;
-    render?: FieldConfigRender<T>;
-    /**
-     * Defaults to "value"
-     */
-    renderMode?: "valueNode" | "value" | "full";
-  };
+export type ParsedFieldConfig<
+  T extends AnyObject = AnyObject,
+  K extends keyof T | string = string,
+> = FieldConfigBase<T> & {
+  select?: "*" | number | AnyObject | keyof T;
+  hideIf?: (value: K extends keyof T ? T[K] : any, row: T) => boolean;
+  render?: FieldConfigRender<T, K>;
+  /**
+   * Defaults to "value"
+   */
+  renderMode?: "valueNode" | "value" | "full";
+};
 
-export type FieldConfig<T extends AnyObject = AnyObject> =
-  | string
-  | ParsedFieldConfig<T>;
+export type FieldConfig<
+  T extends AnyObject = AnyObject,
+  K extends keyof T | string = string,
+> = string | ParsedFieldConfig<T, K>;
 
 export type SmartCardCommonProps = {};
 

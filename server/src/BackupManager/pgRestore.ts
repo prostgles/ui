@@ -1,4 +1,3 @@
-//@ts-nocheck
 import { throttle } from "@common/utils";
 import { asName } from "prostgles-types";
 import type { Readable } from "stream";

@@ -81,33 +81,32 @@ export const MCPServerFooterActions = ({
             />
           </PopupMenu>
         )}
-      {config_schema &&
-        mcp_server_configs.map((config, index) => {
-          const isLast = index === mcp_server_configs.length - 1;
+      {mcp_server_configs.map((config, index) => {
+        const isLast = index === mcp_server_configs.length - 1;
 
-          /** Show active config for this chat. If not active tools then show last config */
-          if (
-            llm_chats_allowed_mcp_tools && llm_chats_allowed_mcp_tools.length ?
-              !llm_chats_allowed_mcp_tools.some(
-                (t) =>
-                  t.server_name === mcp_server.name &&
-                  t.server_config_id === config.id,
-              )
-            : !isLast
-          ) {
-            return null;
-          }
-          return (
-            <MCPServerConfigButton
-              key={config.id}
-              schema={config_schema}
-              existingConfig={{ id: config.id, value: config.config }}
-              serverName={mcp_server.name}
-              chatId={chatId}
-              defaultConfig={config.config}
-            />
-          );
-        })}
+        /** Show active config for this chat. If not active tools then show last config */
+        if (
+          llm_chats_allowed_mcp_tools && llm_chats_allowed_mcp_tools.length ?
+            !llm_chats_allowed_mcp_tools.some(
+              (t) =>
+                t.server_name === mcp_server.name &&
+                t.server_config_id === config.id,
+            )
+          : !isLast
+        ) {
+          return null;
+        }
+        return (
+          <MCPServerConfigButton
+            key={config.id}
+            schema={config_schema}
+            existingConfig={config}
+            server={mcp_server}
+            chatId={chatId}
+            defaultConfig={config.config}
+          />
+        );
+      })}
       {reloadMcpServerTools && (
         <Btn
           title={"Refresh tools"}
@@ -116,6 +115,7 @@ export const MCPServerFooterActions = ({
           disabledInfo={
             mcp_server.enabled ? undefined : "Must enable server first"
           }
+          onClickPromiseMode="noTickIcon"
           onClickPromise={async () => {
             const toolCount = await reloadMcpServerTools({
               serverName: mcp_server.name,

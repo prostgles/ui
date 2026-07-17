@@ -58,6 +58,7 @@ export const MCPServerHeaderCheckbox = ({
     toolsAllowed,
   ]);
 
+  const isRemoteServer = mcpServer.command === "streamable-http";
   return (
     <FlexRow className="bold mx-p25 w-full">
       <Btn
@@ -66,7 +67,13 @@ export const MCPServerHeaderCheckbox = ({
           padding: "0",
           marginRight: "1em",
         }}
-        iconNode={icon_path && <SvgIcon icon={icon_path} />}
+        iconNode={
+          <SvgIcon
+            icon={
+              icon_path || (isRemoteServer ? "ServerNetworkOutline" : "Toolbox")
+            }
+          />
+        }
         color={someToolsAllowed ? "action" : undefined}
         disabledInfo={
           mcpServerTools.length ? undefined : (

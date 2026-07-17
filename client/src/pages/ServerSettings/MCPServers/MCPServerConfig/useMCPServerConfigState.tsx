@@ -8,11 +8,11 @@ export const useMCPServerConfigState = (props: MCPServerConfigProps) => {
   const { dbs } = usePrglCore();
   const { serverName, existingConfig, onDone, chatId, defaultConfig } = props;
   const [config, setConfig] = useState(
-    existingConfig?.value ?? defaultConfig ?? {},
+    existingConfig?.config ?? defaultConfig ?? {},
   );
   const canSave = useMemo(
-    () => !isEqual(config, existingConfig?.value),
-    [config, existingConfig?.value],
+    () => !isEqual(config, existingConfig?.config),
+    [config, existingConfig?.config],
   );
 
   const serverInfo = dbs.mcp_servers.useSubscribeOne(
@@ -33,7 +33,9 @@ export const useMCPServerConfigState = (props: MCPServerConfigProps) => {
     () => existingConfigData.data ?? [],
     [existingConfigData.data],
   );
-  const schema = serverInfo.data?.config_schema;
+
+  const server = serverInfo.data;
+  const schema = server?.config_schema;
   const { onErrorAlert } = useOnErrorAlert();
 
   const upsertConfig = useCallback(async () => {
@@ -94,6 +96,7 @@ export const useMCPServerConfigState = (props: MCPServerConfigProps) => {
   return {
     upsertConfig,
     schema,
+    server,
     config,
     setConfig,
     canSave,

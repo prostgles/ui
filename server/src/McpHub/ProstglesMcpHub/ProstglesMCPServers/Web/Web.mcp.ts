@@ -4,7 +4,10 @@ import {
 } from "@common/prostglesMcp";
 import { fromEntries, getEntries } from "@common/utils";
 import { McpHub } from "@src/McpHub/AnthropicMcpHub/McpHub";
-import type { McpTool } from "@src/McpHub/AnthropicMcpHub/McpTypes";
+import type {
+  McpServerParameters,
+  McpTool,
+} from "@src/McpHub/AnthropicMcpHub/McpTypes";
 import { getServiceManager } from "@src/ServiceManager/ServiceManager";
 import { getJSONBSchemaAsJSONSchema } from "prostgles-types";
 import type {
@@ -55,8 +58,8 @@ const handler = {
               headers: {
                 "User-Agent": "Mozilla/5.0 ",
               },
-              signal: AbortSignal.timeout(timeout),
               ...headers,
+              signal: AbortSignal.timeout(timeout),
             });
 
             if (!res.ok) {
@@ -66,6 +69,7 @@ const handler = {
             }
 
             content = await res.text();
+            return content;
           } else {
             const docsService =
               await getServiceManager(dbs).getServiceWithRetries("documents");
@@ -115,19 +119,25 @@ const handler = {
           await checkConfigAccess(toolArguments.url, config);
 
           const mcpHub = new McpHub();
-          await mcpHub.setServerConnections({
-            playwright: {
-              command: "npx",
-              args: ["@playwright/mcp@latest", "--isolated"],
-              onLog: () => {},
-              env: {
-                /** Prevent snapshots being saved in .playwright */
-                PLAYWRIGHT_MCP_SAVE_SESSION: "false",
-                PLAYWRIGHT_MCP_SAVE_TRACE: "false",
-              },
-              server_name: "playwright",
-            },
-          });
+          await mcpHub.setServerConnections(
+            new Map([
+              [
+                "playwright",
+                {
+                  type: "stdio",
+                  command: "npx",
+                  args: ["@playwright/mcp@latest", "--isolated"],
+                  onLog: () => {},
+                  env: {
+                    /** Prevent snapshots being saved in .playwright */
+                    PLAYWRIGHT_MCP_SAVE_SESSION: "false",
+                    PLAYWRIGHT_MCP_SAVE_TRACE: "false",
+                  },
+                  server_name: "playwright",
+                } satisfies McpServerParameters,
+              ] as const,
+            ]),
+          );
           const navigationResult = await mcpHub.callTool(
             "playwright",
             "browser_navigate",

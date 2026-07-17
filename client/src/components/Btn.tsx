@@ -103,14 +103,14 @@ type BtnCustomProps = (
   );
 type KeysOfUnion<T> = T extends T ? keyof T : never;
 
-type OmmitedKeys =
+type ExcludedButtonProps =
   | KeysOfUnion<BtnCustomProps>
   | "children"
   | "ref"
   | "onClick"
   | "style"
   | "title";
-const CUSTOM_ATTRS: OmmitedKeys[] = [
+const CUSTOM_ATTRS: ExcludedButtonProps[] = [
   "iconPath",
   "children",
   "disabledInfo",
@@ -582,9 +582,14 @@ const Btn = <HREF extends string | void = void>(allProps: BtnProps<HREF>) => {
       },
     };
   }, [onClickPromise, onErrorAlert, props]);
+  const [key, setKey] = React.useState(0);
+  React.useEffect(() => {
+    setKey((k) => k + 1);
+  }, [onClickPromise]);
 
   return (
     <Button
+      key={key}
       {...(propsWithOnAlert as BtnProps<string>)}
       children={
         children && typeof children === "string" ?

@@ -1,6 +1,5 @@
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type { AllowedChatTool } from "@common/mcpUtils";
-import type { DBSSchema } from "@common/publishUtils";
 import { authenticator } from "@otplib/preset-default";
 import { getPasswordHash } from "@src/authConfig/authUtils";
 import { createSessionSecret, type SUser } from "@src/authConfig/sessionUtils";
@@ -225,12 +224,12 @@ export const getUserServerFunctions = async (
       input: { oldPassword: "string", newPassword: "string" },
       run: async ({ newPassword, oldPassword }, { dbs, user }) => {
         const hashedCurrentPassword = getPasswordHash(user, oldPassword);
-        if (user.password !== hashedCurrentPassword)
+        if (user.password !== hashedCurrentPassword) {
           throw "Old password is incorrect";
-        const hashedNewPassword = getPasswordHash(user, newPassword);
+        }
         await dbs.users.update(
           { id: user.id },
-          { password: hashedNewPassword },
+          { password: getPasswordHash(user, newPassword) },
         );
       },
     }),
