@@ -10,7 +10,15 @@ export const authenticateMcpServer = async (
     serverName,
     origin,
     scopes: scopesUnsorted,
-  }: { serverName: string; origin: string; scopes: string[] },
+    authMode,
+    clientMetadataUrl,
+  }: {
+    serverName: string;
+    origin: string;
+    scopes: string[];
+    authMode: "dcr" | "cimd";
+    clientMetadataUrl: string | undefined;
+  },
   dbs: DBS,
 ) => {
   const scopes = [...scopesUnsorted].sort();
@@ -53,6 +61,8 @@ export const authenticateMcpServer = async (
             oauth_request_id: request_id,
             config: {
               scopes,
+              authMode,
+              clientMetadataUrl,
             },
           },
           {
@@ -81,6 +91,7 @@ export const authenticateMcpServer = async (
         },
         OAuthConfig: {
           redirectUri,
+          clientMetadataUrl,
         },
       });
       const transport = new StreamableHTTPClientTransport(new URL(url), {

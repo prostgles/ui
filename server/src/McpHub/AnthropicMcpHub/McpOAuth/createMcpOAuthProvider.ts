@@ -23,6 +23,7 @@ export const createMcpOAuthProvider = ({
 
   const provider: OAuthClientProvider = {
     redirectUrl: OAuthConfig.redirectUri,
+    clientMetadataUrl: OAuthConfig.clientMetadataUrl,
     clientMetadata: {
       client_name: MCP_CLIENT_INFO.name,
       redirect_uris: [OAuthConfig.redirectUri],

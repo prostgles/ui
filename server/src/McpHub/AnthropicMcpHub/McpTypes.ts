@@ -44,7 +44,7 @@ const StreamableHTTPOAuthConfigSchema: z.ZodType<StreamableHTTPOAuthConfig> =
   z.object({
     enabled: z.boolean().optional(),
     redirectUri: z.string().url(),
-    clientId: z.string(),
+    clientId: z.string().optional(),
     clientSecret: z.string().optional(),
     scopes: z.array(z.string()).optional(),
     state: StreamableHTTPOAuthStateSchema.optional(),
@@ -143,7 +143,9 @@ export type RemoteMcpServerParameters = {
   OAuthConfig: Pick<
     StreamableHTTPOAuthConfig,
     "clientSecret" | "redirectUri" | "scopes"
-  >;
+  > & {
+    clientMetadataUrl: string | undefined;
+  };
   RemoteServerEvents?: {
     onConnected?: (
       info: Awaited<ReturnType<typeof fetchRemoteMcpServerInfo>>,

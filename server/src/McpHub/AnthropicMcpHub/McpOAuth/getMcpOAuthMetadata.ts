@@ -1,3 +1,7 @@
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import { MCP_CLIENT_INFO } from "../McpTypes";
+
 export const getMcpOAuthMetadata = async (remoteMcpUrl: string) => {
   const getOAuthMetadataUrl = (route: keyof OAuthRouteDataMap, url: string) => {
     const { origin, pathname } = new URL(url);
@@ -9,6 +13,8 @@ export const getMcpOAuthMetadata = async (remoteMcpUrl: string) => {
     resource: string;
     authorization_servers: string[];
     scopes_supported: string[];
+    bearer_methods_supported?: string[];
+    client_id_metadata_document_supported?: boolean;
   }>(getOAuthMetadataUrl("oauth-protected-resource", remoteMcpUrl));
 
   const [firstServerUrl] = metadata.authorization_servers;
@@ -22,6 +28,7 @@ export const getMcpOAuthMetadata = async (remoteMcpUrl: string) => {
   const serverInfo = await fetchJson<{
     issuer: string;
     authorization_endpoint: string;
+    registration_endpoint?: string;
     token_endpoint: string;
     response_types_supported: string[];
     grant_types_supported: string[];
@@ -34,7 +41,21 @@ export const getMcpOAuthMetadata = async (remoteMcpUrl: string) => {
     ).toString(),
   );
 
-  return { metadata, serverInfo };
+  const modes = {
+    no_auth: await canConnectWithoutAuthentication(remoteMcpUrl),
+    dcr: Boolean(serverInfo.registration_endpoint),
+    bearer_token: Boolean(metadata.bearer_methods_supported?.length),
+    cimd: Boolean(metadata.client_id_metadata_document_supported),
+  };
+
+  const defaultMode =
+    modes.no_auth ? "no_auth"
+    : modes.dcr ? "dcr"
+    : modes.bearer_token ? "bearer_token"
+    : modes.cimd ? "cimd"
+    : undefined;
+
+  return { modes, defaultMode, metadata, serverInfo };
 };
 
 const fetchJson = async <T>(url: string): Promise<T> => {
@@ -67,4 +88,21 @@ type OAuthRouteDataMap = {
     scopes_supported: string[];
     resource_name?: string;
   };
+};
+
+const canConnectWithoutAuthentication = async (
+  remoteMcpUrl: string,
+): Promise<boolean> => {
+  const client = new Client(MCP_CLIENT_INFO, { capabilities: {} });
+  const transport = new StreamableHTTPClientTransport(new URL(remoteMcpUrl));
+
+  try {
+    await client.connect(transport);
+    return true;
+  } catch {
+    return false;
+  } finally {
+    await transport.close().catch(() => {});
+    await client.close().catch(() => {});
+  }
 };

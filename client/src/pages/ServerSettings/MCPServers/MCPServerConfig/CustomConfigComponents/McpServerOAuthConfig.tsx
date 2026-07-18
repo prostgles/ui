@@ -15,6 +15,15 @@ type P = {
   setConfig: (newConfig: Record<string, string | string[]>) => void;
 } & Pick<MCPServerConfigProps, "onDone" | "existingConfig">;
 
+type AuthMode = "none" | "dcr" | "cimd" | "bearer";
+
+type RemoteMcpConfig = {
+  authMode?: AuthMode;
+  scopes?: string[];
+  bearerToken?: string;
+  clientMetadataUrl?: string;
+};
+
 const usedAuthUrl = new Set<string>();
 
 export const McpServerOAuthConfig = ({
@@ -25,13 +34,18 @@ export const McpServerOAuthConfig = ({
 }: P) => {
   const { dbsMethods, dbs } = usePrglCore();
   const oauth = existingConfig?.oauth;
-  const savedScopes = existingConfig?.config.scopes as string[] | undefined;
+  const savedConfig = (existingConfig?.config ?? {}) as RemoteMcpConfig;
+  const savedScopes = savedConfig.scopes;
   const [selectedScopes, setSelectedScopes] = useState(savedScopes ?? []);
   const [allScopes, setAllScopes] = useState<string[]>();
   const [error, setError] = useState<unknown>();
   const authorizationUrl =
     oauth?.phase === "waiting-for-auth" ? oauth.authorizationUrl : undefined;
-
+  const [capabilities, setCapabilities] = useState<{
+    modes: AuthMode[];
+    defaultMode: AuthMode;
+    scopes: string[];
+  }>();
   const countdown = useCountdown();
 
   useEffect(() => {
@@ -51,7 +65,7 @@ export const McpServerOAuthConfig = ({
     if (server.url) {
       dbsMethods
         .getMcpOAuthMetadata?.({ serverName: server.name })
-        .then(({ metadata: { scopes_supported } }) => {
+        .then(({ serverInfo, metadata: { scopes_supported } }) => {
           setAllScopes(scopes_supported);
         })
         .catch(setError);
@@ -82,6 +96,7 @@ export const McpServerOAuthConfig = ({
               origin: window.location.origin,
               serverName: server.name,
               scopes: selectedScopes,
+              authMode: "dcr",
             });
             setConfig({ scopes: selectedScopes });
           }}

@@ -36,9 +36,17 @@ export const getMcpServerFunctions = (
         serverName: "string",
         origin: "string",
         scopes: "string[]",
+        clientMetadataUrl: { type: "string", optional: true },
+        authMode: { enum: ["dcr", "cimd"] as const },
       },
-      run: async ({ serverName, origin, scopes }, { dbs }) => {
-        return authenticateMcpServer({ serverName, origin, scopes }, dbs);
+      run: async (
+        { serverName, origin, scopes, clientMetadataUrl, authMode },
+        { dbs },
+      ) => {
+        return authenticateMcpServer(
+          { serverName, origin, scopes, clientMetadataUrl, authMode },
+          dbs,
+        );
       },
     }),
     getMcpOAuthMetadata: defineAdminFunction({

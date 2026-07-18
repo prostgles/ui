@@ -82,6 +82,7 @@ export const buildRemoteMcpServerParameters = ({
       clientSecret:
         oauth.phase === "connected" ? oauth.clientSecret : undefined,
       scopes: oauth.scopes,
+      clientMetadataUrl: config.clientMetadataUrl as string | undefined,
     },
     OAuthState: {
       ...("state" in oauth ? (oauth.state as {}) : {}),
