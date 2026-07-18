@@ -1,7 +1,7 @@
 import { useOnErrorAlert } from "@components/AlertProvider";
 import { isEqual } from "prostgles-types";
 import { useCallback, useMemo, useState } from "react";
-import type { MCPServerConfigProps } from "./MCPServerConfig";
+import type { MCPServerConfigProps } from "./MCPServerConfigEditor";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 
 export const useMCPServerConfigState = (props: MCPServerConfigProps) => {
@@ -79,6 +79,7 @@ export const useMCPServerConfigState = (props: MCPServerConfigProps) => {
       }
       onDone({ configId });
     }).catch((e) => {
+      console.error("Error saving MCP server config:", e);
       onDone();
     });
   }, [

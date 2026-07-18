@@ -1,17 +1,13 @@
-import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import {
   OAuthProviderOptions,
   PASSWORDLESS_ADMIN_USERNAME,
 } from "@common/OAuthUtils";
-import type {
-  AfterEachTsTrigger,
-  BeforeEachTsTrigger,
-  ValidateRowArgsCommon,
-} from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
 import type { DBSSchema } from "@common/publishUtils";
-import type { DBS } from "..";
-import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import { getPasswordHash } from "@src/authConfig/authUtils";
+import type { BeforeEachTsTrigger } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
+import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
+import type { DBS } from "..";
 
 export const tableConfigUsers = {
   users: {
@@ -192,19 +188,23 @@ export const tableConfigUsers = {
           validate: async (args) => {
             const { data } = args;
 
-            const magicLinkWithoutPassword =
-              data.registration?.type === "magic-link" && !data.password;
-            if (magicLinkWithoutPassword) return;
+            const nonPasswordAccount =
+              data.passwordless_admin ||
+              data.registration?.type === "OAuth" ||
+              data.registration?.type === "magic-link" ||
+              data.type === "public";
 
-            if (!data.passwordless_admin && "password" in data) {
+            if (nonPasswordAccount && !data.password) return;
+
+            if ("password" in data) {
               if (!data.password) {
                 throw "Password cannot be empty";
               }
               const id = crypto.randomUUID();
 
               const hashedPassword = getPasswordHash({ id }, data.password);
-              if (typeof hashedPassword !== "string") {
-                throw "Not ok";
+              if (!hashedPassword) {
+                throw "Password hashing failed";
               }
 
               return {

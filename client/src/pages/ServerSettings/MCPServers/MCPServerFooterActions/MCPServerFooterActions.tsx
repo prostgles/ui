@@ -2,19 +2,18 @@ import type { DBSSchema } from "@common/publishUtils";
 import { useAlert } from "@components/AlertProvider";
 import Btn from "@components/Btn";
 import { FlexRow } from "@components/Flex";
-import PopupMenu from "@components/PopupMenu";
 import { SwitchToggle } from "@components/SwitchToggle";
 import { mdiReload } from "@mdi/js";
 import React from "react";
 import { pluralise } from "src/pages/Connections/Connection";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
-import { CodeEditor } from "../../../../dashboard/CodeEditor/CodeEditor";
 import { MCPServerConfigButton } from "../MCPServerConfig/MCPServerConfigButton";
 import {
   useMCPServerEnable,
   type MCPServerChatContext,
 } from "../MCPServerConfig/useMCPServerEnable";
 import type { MCPServerWithToolAndConfigs } from "../useMCPServersListProps";
+import { MCPServerLogs } from "./MCPServerLogs";
 import { MCPServersInstall } from "./MCPServersInstall";
 
 export type MCPServerFooterActionsProps = {
@@ -36,8 +35,6 @@ export const MCPServerFooterActions = ({
   const { dbs, dbsMethods } = usePrglCore();
   const { reloadMcpServerTools } = dbsMethods;
   const { mcp_server_configs, config_schema } = mcp_server;
-  const logItem: DBSSchema["mcp_server_logs"] | undefined =
-    mcp_server.mcp_server_logs[0];
 
   const { onToggle } = useMCPServerEnable({
     dbs,
@@ -46,67 +43,29 @@ export const MCPServerFooterActions = ({
   });
   const { addAlert } = useAlert();
   const { llm_chats_allowed_mcp_tools, chatId } = chatContext ?? {};
+
+  /** Show active config for this chat. If no active tools then show last config */
+  const activeConfig = mcp_server_configs.find((config) =>
+    llm_chats_allowed_mcp_tools?.some(
+      (t) =>
+        t.server_name === mcp_server.name && t.server_config_id === config.id,
+    ),
+  );
+  const configToShow = activeConfig ?? mcp_server_configs.at(-1);
   return (
     <FlexRow className="jc-end pl-p5">
       {mcp_server.source && <MCPServersInstall mcpServer={mcp_server} />}
-      {logItem &&
-        Boolean(
-          logItem.log || logItem.install_log || logItem.install_error,
-        ) && (
-          <PopupMenu
-            title={`MCP Server ${JSON.stringify(mcp_server.name)} stderr logs`}
-            positioning="center"
-            // className="mr-auto ml-p25"
-            data-command="MCPServerFooterActions.logs"
-            showFullscreenToggle={{}}
-            button={
-              <Btn
-                color={logItem.error ? "danger" : "default"}
-                // variant="faded"
-                size="small"
-              >
-                {logItem.error ? "Error" : "Logs"}
-              </Btn>
-            }
-            onClickClose={false}
-            clickCatchStyle={{ opacity: 1 }}
-          >
-            <CodeEditor
-              language={"bash"}
-              value={logItem.log}
-              style={{
-                minWidth: "min(900px, 100vw)",
-                minHeight: "min(900px, 100vh)",
-              }}
-            />
-          </PopupMenu>
-        )}
-      {mcp_server_configs.map((config, index) => {
-        const isLast = index === mcp_server_configs.length - 1;
-
-        /** Show active config for this chat. If not active tools then show last config */
-        if (
-          llm_chats_allowed_mcp_tools && llm_chats_allowed_mcp_tools.length ?
-            !llm_chats_allowed_mcp_tools.some(
-              (t) =>
-                t.server_name === mcp_server.name &&
-                t.server_config_id === config.id,
-            )
-          : !isLast
-        ) {
-          return null;
-        }
-        return (
-          <MCPServerConfigButton
-            key={config.id}
-            schema={config_schema}
-            existingConfig={config}
-            server={mcp_server}
-            chatId={chatId}
-            defaultConfig={config.config}
-          />
-        );
-      })}
+      <MCPServerLogs mcpServer={mcp_server} />
+      {configToShow && (
+        <MCPServerConfigButton
+          key={configToShow.id}
+          schema={config_schema}
+          existingConfig={configToShow}
+          server={mcp_server}
+          chatId={chatId}
+          defaultConfig={configToShow.config}
+        />
+      )}
       {reloadMcpServerTools && (
         <Btn
           title={"Refresh tools"}

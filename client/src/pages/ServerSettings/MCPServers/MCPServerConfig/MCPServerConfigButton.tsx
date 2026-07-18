@@ -4,7 +4,7 @@ import Btn from "@components/Btn";
 import { FlexRow } from "@components/Flex";
 import { mdiCogOutline } from "@mdi/js";
 import React from "react";
-import { type MCPServerConfigProps } from "./MCPServerConfig";
+import { type MCPServerConfigProps } from "./MCPServerConfigEditor";
 import { useMCPServerConfig } from "./MCPServerConfigProvider";
 
 export const MCPServerConfigButton = (

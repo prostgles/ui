@@ -3,12 +3,14 @@ import type { DBSSchema } from "@common/publishUtils";
 import { testMCPServerConfig } from "@src/McpHub/testMCPServerConfig";
 import type {
   AfterAllTsTrigger,
+  BeforeEachTsTrigger,
   ValidateRowArgsCommon,
   ValidateRowsArgsCommon,
 } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
 import { isDefined } from "prostgles-types";
 import type { DBS } from "..";
+import { tout } from "@src/utils/tout";
 
 export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
   mcp_servers: {
@@ -196,23 +198,24 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
       installed: `TIMESTAMPTZ`,
     },
     hooks: {
-      afterEach: [
+      beforeEach: [
         {
-          commands: { update: 1 },
-          validate: async (args) => {
-            const { dbx, row } = args as unknown as ValidateRowArgsCommon<
-              DBSSchema["mcp_servers"],
-              DBS
-            >;
-
-            if (args.command === "update" && args.data.enabled) {
-              await dbx.mcp_servers.update(
-                { name: row.name },
-                { last_enabled: new Date() },
-              );
+          commands: { insert: 1, update: 1 },
+          validate: async ({ command, data }) => {
+            if (
+              (command === "update" && data.enabled) ||
+              (command === "insert" && !data.last_enabled)
+            ) {
+              await tout(10);
+              return {
+                row: {
+                  ...data,
+                  last_enabled: new Date().toISOString(),
+                },
+              };
             }
           },
-        },
+        } satisfies BeforeEachTsTrigger<DBSSchema["mcp_servers"], DBS> as any,
       ],
     },
   },
@@ -418,14 +421,8 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
         {
           commands: { insert: 1, update: 1 },
           validate: async (args) => {
-            const {
-              dbx,
-              data: _data,
-              rows,
-            } = args as unknown as ValidateRowsArgsCommon<
-              DBSSchema["llm_chats_allowed_mcp_tools"],
-              DBS
-            >;
+            const { dbx, data: _data, rows } = args;
+
             const data = _data as typeof rows;
             const serverNames = Array.from(
               new Set(data.map((row) => row.server_name).filter(isDefined)),
@@ -474,19 +471,25 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
                   (await dbx.mcp_server_configs.insert(configData, {
                     returning: { id: 1 },
                   }));
+                const conditions = rows
+                  .filter(
+                    (row) =>
+                      row.server_name === server.name &&
+                      !Number.isFinite(row.server_config_id),
+                  )
+                  .map(({ server_name, tool_id, chat_id }) => ({
+                    server_name,
+                    tool_id,
+                    chat_id,
+                  }));
+                if (!conditions.length) {
+                  throw new Error(
+                    `No conditions found for server ${server.name} to update server_config_id`,
+                  );
+                }
                 await dbx.llm_chats_allowed_mcp_tools.update(
                   {
-                    $or: rows
-                      .filter(
-                        (row) =>
-                          row.server_name === server.name &&
-                          row.server_config_id === null,
-                      )
-                      .map(({ server_name, tool_id, chat_id }) => ({
-                        server_name,
-                        tool_id,
-                        chat_id,
-                      })),
+                    $or: conditions,
                   },
                   {
                     server_config_id: config.id,
@@ -513,7 +516,10 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
               );
             }
           },
-        },
+        } satisfies AfterAllTsTrigger<
+          DBSSchema["llm_chats_allowed_mcp_tools"],
+          DBS
+        > as any,
       ],
     },
   },

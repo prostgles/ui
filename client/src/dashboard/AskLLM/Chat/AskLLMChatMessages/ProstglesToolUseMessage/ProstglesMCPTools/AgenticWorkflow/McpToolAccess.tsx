@@ -10,7 +10,7 @@ import Loading from "@components/Loader/Loading";
 import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 import { SvgIcon } from "@components/SvgIcon";
 import { mdiCogOutline, mdiTools } from "@mdi/js";
-import { MCPServerConfig } from "@pages/ServerSettings/MCPServers/MCPServerConfig/MCPServerConfig";
+import { MCPServerConfigEditor } from "@pages/ServerSettings/MCPServers/MCPServerConfig/MCPServerConfigEditor";
 import { getMcpConfigValueAsString } from "@pages/ServerSettings/MCPServers/MCPServerConfig/MCPServerConfigButton";
 import { useMcpServerIcons } from "@pages/ServerSettings/MCPServers/MCPServerTools/useMcpServerIcons";
 import React, { useState } from "react";
@@ -125,7 +125,7 @@ export const McpToolAccess = ({
         })}
       </ScrollFade>
       {editServerConfig && (
-        <MCPServerConfig
+        <MCPServerConfigEditor
           serverName={editServerConfig.serverName}
           chatId={undefined}
           defaultConfig={editServerConfig.configData}

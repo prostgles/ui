@@ -7,7 +7,7 @@ import { Label } from "@components/Label";
 import { Select } from "@components/Select/Select";
 import React, { useEffect, useState } from "react";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
-import type { MCPServerConfigProps } from "../MCPServerConfig";
+import type { MCPServerConfigProps } from "../MCPServerConfigEditor";
 import { useCountdown } from "@components/Stopwatch";
 
 type P = {

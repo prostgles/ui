@@ -25,7 +25,7 @@ export type MCPServerConfigProps = {
   onDone: (res: void | MCPServerEnabledConfig) => void;
 };
 
-export const MCPServerConfig = (props: MCPServerConfigProps) => {
+export const MCPServerConfigEditor = (props: MCPServerConfigProps) => {
   const { serverName, existingConfig: initialExistingConfig, onDone } = props;
   const {
     upsertConfig,

@@ -81,6 +81,7 @@ export const useMCPServerEnable = ({
   }, [
     enabled,
     config_schema,
+    command,
     lastConfigId,
     setServerToConfigure,
     mcp_server.name,

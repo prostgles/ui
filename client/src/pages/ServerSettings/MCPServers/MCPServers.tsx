@@ -42,6 +42,11 @@ export const MCPServers = ({ chatId, focusedServer }: MCPServersProps) => {
   );
 
   const [loaded, setLoaded] = useState(false);
+
+  if (chatId && !chatContext) {
+    return null;
+  }
+
   return (
     <MCPServerConfigProvider>
       <FlexCol

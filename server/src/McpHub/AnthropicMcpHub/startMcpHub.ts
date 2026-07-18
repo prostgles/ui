@@ -98,7 +98,7 @@ export const setupMCPServerHub = async (dbs: DBS) => {
 
   mcpSubscriptions.servers = await dbs.mcp_servers.subscribe(
     { enabled: true },
-    { select: { "*": 1, mcp_server_configs: "*" }, throttle: 500 },
+    { select: { "*": 1, mcp_server_configs: "*" } },
     (servers) => {
       enabledMcpServers = servers;
       onCallback();

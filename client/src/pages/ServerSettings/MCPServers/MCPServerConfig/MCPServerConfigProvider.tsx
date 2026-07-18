@@ -1,9 +1,9 @@
 import React, { useContext, useState } from "react";
 import {
-  MCPServerConfig,
+  MCPServerConfigEditor,
   type MCPServerConfigProps,
   type MCPServerEnabledConfig,
-} from "./MCPServerConfig";
+} from "./MCPServerConfigEditor";
 
 type MCPServerConfigContext = {
   setServerToConfigure: (
@@ -44,7 +44,7 @@ export const MCPServerConfigProvider = ({
     <MCPServerConfigContext.Provider value={value}>
       {children}
       {serverToConfigure && (
-        <MCPServerConfig
+        <MCPServerConfigEditor
           {...serverToConfigure}
           onDone={(enabled) => {
             serverToConfigure.onDone(enabled);

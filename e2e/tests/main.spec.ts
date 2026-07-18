@@ -3409,6 +3409,7 @@ test.describe("Main test", () => {
 
     await page.getByLabel("ALLOWED_DIR").fill("/prostgles-mcp-test");
     await page.getByText("Enable", { exact: true }).click();
+    await page.waitForTimeout(1e3);
     await page.getByTestId("Popup.close").last().click();
     await page.getByTestId("Popup.close").last().click();
     await page.getByTestId("Alerts").click(TWENTY_SECONDS_OR_MORE);

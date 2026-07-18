@@ -95,46 +95,6 @@ export const publish: Publish<
     {},
   );
 
-  type User = DBGeneratedSchema["users"]["columns"];
-  // const getValidateAndHashUserPassword = (mustUpdate = false) => {
-  //   const validateFunc: ValidateUpdateRow<User, DBGeneratedSchema> = async ({
-  //     dbx,
-  //     filter,
-  //     update,
-  //   }) => {
-  //     if ("password" in update) {
-  //       const [user, ...otherUsers] = await dbx.users.find(filter);
-  //       if (!user || otherUsers.length) {
-  //         const issue =
-  //           !user ?
-  //             "No user found for the provided filter"
-  //           : "Multiple users found for the provided filter";
-
-  //         throw (
-  //           "Cannot update: update filter must match exactly one user. " + issue
-  //         );
-  //       }
-  //       if (!update.password) {
-  //         throw "Password cannot be empty";
-  //       }
-  //       const hashedPassword = getPasswordHash(user, update.password);
-  //       if (typeof hashedPassword !== "string") {
-  //         throw "Not ok";
-  //       }
-  //       if (mustUpdate) {
-  //         await dbx.users.update(filter, { password: hashedPassword });
-  //       }
-  //       return {
-  //         ...update,
-  //         password: hashedPassword,
-  //       };
-  //     }
-  //     update.last_updated ??= Date.now().toString();
-  //     return update;
-  //   };
-  //   return validateFunc;
-  // };
-
   const userTypeFilter = {
     access_control_user_types: { user_type: user.type },
   };
@@ -320,20 +280,11 @@ export const publish: Publish<
           select: { fields: { "2fa": 0, password: 0 } },
           insert: {
             fields: { created: 0, "2fa": 0, last_updated: 0 },
-            // postValidate: async ({ row, dbx, localParams }) => {
-            //   await getValidateAndHashUserPassword(true)({
-            //     localParams,
-            //     update: row,
-            //     dbx,
-            //     filter: { id: row.id },
-            //   });
-            // },
           },
           update: {
             fields: {
               options: 1,
             },
-            // validate: getValidateAndHashUserPassword(),
             dynamicFields: [
               {
                 /* For own user can only change these fields */
@@ -364,7 +315,6 @@ export const publish: Publish<
           update: {
             fields: { password: 1, options: 1 },
             forcedFilter: { id: user_id },
-            // validate: getValidateAndHashUserPassword(),
           },
         },
     sessions: {
