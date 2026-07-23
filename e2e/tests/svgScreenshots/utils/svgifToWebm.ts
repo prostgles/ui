@@ -104,7 +104,7 @@ export const svgifToWebm = async ({
     }, t);
 
   console.log(
-    `Capturing ${total} frames at ${fps}fps (duration: ${durationSeconds}s)…\nWill take around ${Math.round((total * 250) / 1000)} seconds.`,
+    `Capturing ${total} frames at ${fps}fps (duration: ${durationSeconds}s)…\nWill take around ${Math.round((total * 250) / 1000)} seconds.\n${new Date().toLocaleTimeString()}`,
   );
   for (let i = 0; i < total; i++) {
     const t = i * frameDuration;

@@ -9,6 +9,7 @@ import {
   type McpServerParameters,
 } from "./McpTypes";
 import { connectToRemoteMCPServer } from "./connectToRemoteMCPServer";
+import { createMcpServerHandlers } from "./createMcpServerHandlers";
 
 export type MCPServerInitInfo = McpServerEvents & {
   name: string;
@@ -89,6 +90,7 @@ export const connectToMCPServer = ({
         },
         client,
         transport,
+        handlers: createMcpServerHandlers(client),
         destroy: async () => {
           try {
             await transport.close();

@@ -111,7 +111,7 @@ export type SmartCardProps<T extends AnyObject = AnyObject> = Pick<
      * Changing how table columns are displayed
      * Displaying additional custom computed columns
      */
-    fieldConfigs?: FieldConfig<T>[] | string[];
+    fieldConfigs?: FieldConfig<T>[] | (keyof T)[];
 
     title?: (row: T) => React.ReactNode;
     footer?: (row: T) => React.ReactNode;
@@ -120,7 +120,7 @@ export type SmartCardProps<T extends AnyObject = AnyObject> = Pick<
     enableInsert?: boolean;
 
     /**
-     * If true then will not displaye fields with null values
+     * If true then will not displays fields with null values
      * */
     excludeNulls?: boolean;
 

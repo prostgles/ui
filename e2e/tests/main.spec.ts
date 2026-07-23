@@ -2,7 +2,7 @@ import { chromium, expect, test, type Locator } from "@playwright/test";
 import { authenticator } from "otplib";
 import { speechToTextTest } from "testAskLLM/speechToTextTest";
 
-import { spawn } from "child_process";
+import { exec, execSync, spawn } from "child_process";
 import { fileBrowserGoToPath } from "fileBrowserGoToPath";
 import { writeFileSync } from "fs";
 import { mkdir } from "fs/promises";
@@ -1285,7 +1285,7 @@ test.describe("Main test", () => {
       )
       .click();
     await expect(page.getByTestId("Chat.messageList")).toContainText(
-      `Fetches content from a URL`,
+      `Fetches from a URL`,
     );
 
     await page.waitForTimeout(1e3);
@@ -2014,6 +2014,190 @@ test.describe("Main test", () => {
       `"invalid_table" does not match any new or existing tables`,
       getTimeout(30e3),
     );
+
+    await page.waitForTimeout(1e3);
+    await newChat(page);
+    await sendAskLLMMessage(page, " agentic_workflow_agent_failure ");
+    await page.getByTestId("AgenticWorkflow.start").click(getTimeout(90e3));
+    await expect(page.getByTestId("Alert")).toContainText(
+      `Agentic workflow container stopped with status: error`,
+      getTimeout(30e3),
+    );
+    await page.getByText("OK", { exact: true }).click();
+    await expect(page.getByTestId("AgenticWorkflow")).toContainText(
+      `The agent failed to complete the task`,
+    );
+    await expect(page.getByTestId("AgenticWorkflow")).not.toContainText(
+      `"<!DOCTYPE html>"`,
+    );
+  });
+
+  test("Remote MCP server", async ({ page: p }) => {
+    const page = p as PageWIds;
+    const imageName = "mcp-keycloak";
+    const containerName = "mcp-keycloak-e2e";
+
+    execSync(
+      `docker build -t ${imageName} ./e2e/tests/testAskLLM/mockRemoteMcp`,
+      { cwd: process.cwd(), stdio: "inherit" },
+    );
+
+    const container = spawn(
+      "docker",
+      [
+        "run",
+        "--rm",
+        "--name",
+        containerName,
+        "-p",
+        "8080:8080",
+        "-p",
+        "3000:3000",
+        imageName,
+      ],
+      { cwd: process.cwd(), stdio: "inherit" },
+    );
+    try {
+      test.setTimeout(3 * 60_000);
+
+      await expect
+        .poll(
+          async () => {
+            try {
+              const ready = await Promise.all([
+                page.request.get(
+                  "http://localhost:3000/.well-known/oauth-protected-resource/mcp",
+                ),
+                page.request.get(
+                  "http://localhost:8080/.well-known/oauth-authorization-server/realms/mcp",
+                ),
+              ]);
+
+              return ready.every((response) => response.status() === 200);
+            } catch {
+              return false;
+            }
+          },
+          {
+            timeout: 2 * 60_000,
+            intervals: [500, 1_000, 2_000],
+          },
+        )
+        .toBe(true);
+      await loginWhenSignupIsEnabled(page);
+      await goTo(page, "/server-settings?section=mcpServers");
+
+      await page.getByTestId("AddMCPServer.Open").click();
+      await monacoType(
+        page,
+        ".SmartCodeEditor",
+        JSON.stringify(
+          {
+            mcpServers: {
+              mock: { url: "http://localhost:3000/mcp" },
+            },
+          },
+          null,
+          2,
+        ),
+        { deleteAllAndFill: true, pressAfterTyping: ["Backspace"] },
+      );
+
+      await page.getByTestId("AddMCPServer.Add").click();
+      await page.getByTestId("AddMCPServer.Add").waitFor({ state: "detached" });
+
+      const serverCard = page
+        .getByTestId("SmartCardList")
+        .locator(getDataKey("mock"));
+      await serverCard.getByTitle("Press to enable").click();
+
+      /** General info */
+      await expect(
+        page.getByTestId("McpServerOAuthConfigTopControls.ShowServerInfo"),
+      ).toHaveAttribute("title", "Show server info", { ignoreCase: false });
+      await page
+        .getByTestId("McpServerOAuthConfigTopControls.ShowServerInfo")
+        .click();
+      await expect(page.getByTestId("Popup.content").last()).toContainText(
+        "authorization_endpoint",
+      );
+      await page.getByTestId("Popup.close").last().click();
+
+      /** DCR */
+      await page
+        .getByTestId("McpServerOAuthConfigActions.LoginWithOAuth")
+        .click(TWENTY_SECONDS_OR_MORE);
+
+      /** Open auth page */
+      const [popup] = await Promise.all([
+        page.waitForEvent("popup"),
+        page
+          .getByTestId(
+            "McpServerOAuthConfigAuthorizeUrlBtn.OpenAuthorizationUrl",
+          )
+          .click(),
+      ]);
+      await popup.waitForLoadState("load");
+      await popup.locator("#username").fill("admin1");
+      await popup.locator("#password").fill("admin1");
+      await popup.locator("button[name=login]").click();
+      await popup.locator("button[name=accept]").click(TWENTY_SECONDS_OR_MORE);
+      await popup.close();
+
+      const saveConfigAndRefreshTools = async () => {
+        await expect(
+          page.getByTestId("McpServerOAuthConfigActions.connectionToggle"),
+        ).toHaveText("Connected", { ...TWENTY_SECONDS_OR_MORE });
+        await page.getByTestId("MCPServerConfig.save").click();
+        await page.waitForTimeout(1e3);
+        await page
+          .locator(
+            getDataKey("mock") +
+              " " +
+              getCommandElemSelector("MCPServerFooterActions.refreshTools"),
+          )
+          .click(TWENTY_SECONDS_OR_MORE);
+        await expect(page.getByTestId("Popup.content").last()).toContainText(
+          ` tool for "mock" server`,
+        );
+        await page.getByText("OK", { exact: true }).click();
+      };
+      await saveConfigAndRefreshTools();
+
+      await page
+        .locator(
+          getDataKey("mock") +
+            " " +
+            getCommandElemSelector("MCPServerConfigButton"),
+        )
+        .click();
+      await page.getByText("Delete config", { exact: true }).click();
+
+      await page.waitForTimeout(3e3);
+      await page
+        .locator(
+          getDataKey("mock") + " " + getCommandElemSelector("SwitchToggle"),
+        )
+        .click();
+
+      /** Bearer */
+      await page
+        .getByTestId("McpServerOAuthConfigTopControls.authMode")
+        .click();
+      await page
+        .getByTestId("McpServerOAuthConfigTopControls.authMode")
+        .locator(getDataKey("bearer"))
+        .click();
+      await page.getByLabel("Bearer token").fill("test-token");
+      await page
+        .getByTestId("McpServerOAuthConfigActions.LoginWithOAuth")
+        .click();
+      await expect;
+      await saveConfigAndRefreshTools();
+    } finally {
+      container.kill("SIGTERM");
+      execSync(`docker rm -f ${containerName}`, { stdio: "ignore" });
+    }
   });
 
   test("Disable signups", async ({ page: p }) => {

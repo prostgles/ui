@@ -38,5 +38,8 @@
     "/import\\s+.*?from\\s+['\"].*?['\"]/g",
     "/require\\(['\"].*?['\"]\\)/g"
   ],
-  "prettier.printWidth": 100
+  "prettier.printWidth": 100,
+  "cSpell.words": [
+    "cimd"
+  ]
 }

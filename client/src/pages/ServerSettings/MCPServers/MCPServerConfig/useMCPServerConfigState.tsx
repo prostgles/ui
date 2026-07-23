@@ -7,9 +7,7 @@ import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 export const useMCPServerConfigState = (props: MCPServerConfigProps) => {
   const { dbs } = usePrglCore();
   const { serverName, existingConfig, onDone, chatId, defaultConfig } = props;
-  const [config, setConfig] = useState(
-    existingConfig?.config ?? defaultConfig ?? {},
-  );
+  const [config, setConfig] = useState(existingConfig?.config ?? defaultConfig);
   const canSave = useMemo(
     () => !isEqual(config, existingConfig?.config),
     [config, existingConfig?.config],
@@ -44,6 +42,9 @@ export const useMCPServerConfigState = (props: MCPServerConfigProps) => {
         (ec) => ec.server_name === serverName && isEqual(ec.config, config),
       );
 
+      if (!config) {
+        throw new Error("No configuration data to save.");
+      }
       const upsertedConfig =
         matchingConfig ??
         (await dbs.mcp_server_configs.insert(

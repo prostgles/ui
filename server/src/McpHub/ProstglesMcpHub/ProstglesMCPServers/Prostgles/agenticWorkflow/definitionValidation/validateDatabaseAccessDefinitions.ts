@@ -1,7 +1,10 @@
 import { isObject } from "@common/publishUtils";
 import { connectionManager } from "@src/index";
 import { runConnectionQuery } from "@src/serverFunctions/getServerFunctions";
-import type { DetailedTableFilterGroup } from "../runtimeSdk/defineAgenticWorkflow";
+import type {
+  DatabaseAccessDefinition,
+  DetailedTableFilterGroup,
+} from "../runtimeSdk/defineAgenticWorkflow";
 import type { ProxyCallDataDefinitions } from "../runtimeSdk/defineAgenticWorkflowHandlers.types";
 import { parseDDLStatements } from "./parseDDLStatements";
 import { quoteIdent } from "./quoteIdent";
@@ -141,5 +144,51 @@ export const detailedFilterToSimpleFilter = (
     [logicalOperator]: filters.map((f) => ({
       [f.fieldName]: { [f.type ?? "$eq"]: f.value },
     })),
+  };
+};
+
+export const getProstglesDbDataPermissions = (
+  databaseAccessDefinitions: DatabaseAccessDefinition | undefined,
+) => {
+  if (databaseAccessDefinitions?.mode !== "custom") {
+    return databaseAccessDefinitions;
+  }
+
+  const tablePermissions = Object.fromEntries(
+    Object.entries(databaseAccessDefinitions.tablePermissions).map(
+      ([tableName, permissions]) => {
+        const convertPermission = <T>(permission: T): T => {
+          if (
+            !isObject(permission) ||
+            !("forcedFilter" in permission) ||
+            !permission.forcedFilter
+          ) {
+            return permission;
+          }
+
+          return {
+            ...permission,
+            forcedFilter: detailedFilterToSimpleFilter(
+              permission.forcedFilter as DetailedTableFilterGroup,
+            ),
+          };
+        };
+
+        return [
+          tableName,
+          {
+            ...permissions,
+            select: convertPermission(permissions.select),
+            update: convertPermission(permissions.update),
+            delete: convertPermission(permissions.delete),
+          },
+        ];
+      },
+    ),
+  );
+
+  return {
+    mode: "custom" as const,
+    tablePermissions,
   };
 };

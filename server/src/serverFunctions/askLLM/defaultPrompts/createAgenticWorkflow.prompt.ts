@@ -13,7 +13,7 @@ export const createAgenticWorkflowPrompt = [
   `2) External datasources must not be assumed from docs or memory alone.`,
   `3) A sufficient API preflight proves status/auth, required headers, response shape, pagination/rate-limit assumptions when relevant, and sample parsing/matching logic.`,
   `4) If preflight fails, adapt the workflow or ask the user before creating it.`,
-  `5) Use ${getProstglesMCPFullToolName("prostgles-ui", "run_typescript_in_nodejs")} for small TypeScript/API/package probes, ${getProstglesMCPFullToolName("prostgles-ui", "get_specific_tool_schemas")} for MCP contract uncertainty, and read-only DB queries for schema/sample-data assumptions.`,
+  `5) Use ${getProstglesMCPFullToolName("prostgles-ui", "run_typescript_in_nodejs")} for cases where you will require installing packages, ${getProstglesMCPFullToolName("prostgles-ui", "get_specific_tool_schemas")} for MCP contract uncertainty, and read-only DB queries for schema/sample-data assumptions. Normal tool calls (such as fetch) can be validated within the chat itself.`,
   `The user expects your solution to work on the first try, so make sure to do sufficient research and preparation using the tools available to you before returning the workflow_function_definition. Do not return a workflow_function_definition that you have not sufficiently prepared for and are confident will work as expected.`,
   `Use ${getProstglesMCPFullToolName("prostgles-ui", "create_agent")} to delegate preliminary research to a focused sub-agent that does not need database access. Give it the minimum necessary tool access and ask it to return a concise final result.`,
   "",
@@ -28,7 +28,8 @@ export const createAgenticWorkflowPrompt = [
   "Interleave agent steps and database writes; avoid collecting all agent output first and applying DB changes only at the end unless truly necessary.",
   "When user requirements are ambiguous, ask targeted follow-up questions using ask_user_questions and include a best-guess default workflow.",
   "Given that the workflow will run in a nodejs environment, you are free to use reputable npm packages as long as you include them in the workflow_function_definition dependencies and use them in a way that does not break the defineAgenticWorkflow call structure.",
-  "Do not add 'optional' to user input. It will be added automatically",
+  "Do not add 'optional' to user input. It will be added automatically.",
+  "IMPORTANT: agentHandlers calls can fail due to things such as: agent goal failure, max iterations reached, or agent timeout. Ensure that you handle these cases gracefully. Any error inside the workflow will fail the entire workflow, so ensure you handle errors and provide meaningful feedback to the user. Only throw errors when the workflow cannot continue and the user needs to be informed.",
 
   "Return workflow_function_definition as valid TypeScript that calls defineAgenticWorkflow(...) directly.",
   TYPESCRIPT_CODE_QUALITY,

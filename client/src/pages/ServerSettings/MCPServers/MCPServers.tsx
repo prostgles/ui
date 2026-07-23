@@ -129,7 +129,7 @@ export const MCPServers = ({ chatId, focusedServer }: MCPServersProps) => {
 
 const orderByEnabledAndName = [
   {
-    key: "last_enabled",
+    key: "created",
     asc: false,
   },
   {

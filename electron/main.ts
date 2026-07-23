@@ -39,6 +39,7 @@ type StartParams = {
   electronSid: string;
   openPath: (path: string, isFile?: boolean) => void;
   onReady: (port: number) => void;
+  focusWindow: () => void;
 };
 process.env.NODE_ENV = "production";
 const expressApp = require("../ui/server/dist/server/src/electronConfig") as {
@@ -96,6 +97,9 @@ function initApp() {
         onReady: (actualPort: number) => {
           console.log("Express server started on port " + actualPort);
           openProstglesApp(actualPort);
+        },
+        focusWindow: () => {
+          focusIfOpen();
         },
       })
       .catch((err: any) => {

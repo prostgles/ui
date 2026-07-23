@@ -6,7 +6,7 @@ import {
   type McpServerEvents,
   type RemoteMcpServerParameters,
 } from "./McpTypes";
-import { fetchRemoteMcpServerInfo } from "./fetchRemoteMcpServerInfo";
+import { createMcpServerHandlers } from "./createMcpServerHandlers";
 
 const chainMap = new Map<string, Promise<any>>();
 
@@ -32,10 +32,6 @@ export const connectToRemoteMCPServer = async ({
   });
 
   const inPromise = (async () => {
-    // if (!parameters.OAuthState?.pendingAuthorizationCode) {
-    //   return;
-    // }
-
     const authProvider = createMcpOAuthProvider(parameters);
 
     const requestInit = {
@@ -49,7 +45,7 @@ export const connectToRemoteMCPServer = async ({
     const transport = new StreamableHTTPClientTransport(
       new URL(parameters.url),
       {
-        requestInit,
+        requestInit: parameters.isInitializing ? undefined : requestInit,
         authProvider,
       },
     );
@@ -57,7 +53,26 @@ export const connectToRemoteMCPServer = async ({
     transport.onerror = (error) => {
       const errMsg = "Transport error: " + error.message;
       appendToLog(errMsg);
+      const isOAuthAuthorizationUrl = error.message.startsWith(
+        "OAuth authorization required. Open this URL",
+      );
+      const dcrNotSupported =
+        error.message ===
+        "Incompatible auth server: does not support dynamic client registration";
+
+      const isDisconnectedError =
+        error.message ===
+        "SSE stream disconnected: AbortError: This operation was aborted";
       void onLog("error", errMsg, getFullLog());
+
+      if (isOAuthAuthorizationUrl || isDisconnectedError) {
+        // do nothing
+      } else {
+        parameters.OAuthEvents?.onAuthError(
+          dcrNotSupported ? "dcr_not_supported" : "unknown",
+          error.message,
+        );
+      }
     };
     transport.onclose = () => {
       onTransportClose();
@@ -73,7 +88,7 @@ export const connectToRemoteMCPServer = async ({
         );
         return Promise.reject(error);
       });
-      await parameters.OAuthEvents.onPersistState({
+      await parameters.OAuthEvents?.onPersistState({
         ...(parameters.OAuthState ?? {}),
         pendingAuthorizationCode: undefined,
       });
@@ -86,10 +101,12 @@ export const connectToRemoteMCPServer = async ({
     });
 
     if (parameters.RemoteServerEvents?.onConnected) {
-      const remoteInfo = await fetchRemoteMcpServerInfo(client);
-      if (remoteInfo) {
-        await parameters.RemoteServerEvents.onConnected(remoteInfo);
-      }
+      const serverVersion = client.getServerVersion();
+      const capabilities = client.getServerCapabilities();
+      await parameters.RemoteServerEvents.onConnected({
+        capabilities,
+        serverVersion,
+      });
     }
 
     const connection: McpConnection = {
@@ -101,6 +118,7 @@ export const connectToRemoteMCPServer = async ({
       },
       client,
       transport,
+      handlers: createMcpServerHandlers(client),
       destroy: async () => {
         try {
           await transport.close().catch((err) => {

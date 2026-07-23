@@ -166,6 +166,9 @@ const renderObject = (
 ): string => {
   const entries = Object.entries(schema.properties ?? {});
   const required = new Set(schema.required ?? []);
+  const hasOptionalProperties = entries.some(
+    ([propName]) => !required.has(propName),
+  );
 
   const lines: string[] = [];
 
@@ -189,6 +192,10 @@ const renderObject = (
     let apType = "unknown";
     if (schema.additionalProperties !== true) {
       apType = renderSchema(schema.additionalProperties, level + 1, ctx);
+    }
+
+    if (hasOptionalProperties) {
+      apType = `${parenthesizeIfNeeded(apType)} | undefined`;
     }
 
     if (ctx.mode === "full") {

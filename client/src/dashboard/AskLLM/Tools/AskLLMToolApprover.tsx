@@ -16,6 +16,7 @@ import { isDefined } from "@common/filterUtils";
 import type { BtnProps } from "@components/Btn";
 import ErrorComponent from "@components/ErrorComponent";
 import Chip from "@components/Chip";
+import { mdiCheckCircleOutline, mdiCloseCircleOutline } from "@mdi/js";
 
 export type AskLLMToolsProps = {
   workspaceId: string | undefined;
@@ -211,30 +212,35 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
           {source.type === "proxy" && (
             <Chip color="blue">Requested from container</Chip>
           )}
-          {annotations?.title ?? ""}
-          {annotations && !isEmpty(annotations) && (
-            <FlexRowWrap>
-              {getEntries(annotations)
-                .filter(([key]) => key !== "title")
-                .map(([key, yes]) => (
-                  <Chip
-                    key={key}
-                    color={
-                      key === "destructiveHint" && yes ? "red"
-                      : (
-                        (key === "openWorldHint" && yes) ||
-                        (key === "readOnlyHint" && !yes)
-                      ) ?
-                        "orange"
-                      : "blue"
-                    }
-                  >
-                    {key}
-                  </Chip>
-                ))}
-            </FlexRowWrap>
-          )}
         </FlexRow>
+        {annotations?.title && (
+          <FlexRow title="Title">{annotations.title}</FlexRow>
+        )}
+        {annotations && !isEmpty(annotations) && (
+          <FlexRowWrap title="Annotations" className="gap-p5">
+            {getEntries(annotations)
+              .filter(([key]) => key !== "title")
+              .map(([key, yes]) => (
+                <Chip
+                  key={key}
+                  leftIcon={{
+                    path: yes ? mdiCheckCircleOutline : mdiCloseCircleOutline,
+                  }}
+                  color={
+                    key === "destructiveHint" && yes ? "red"
+                    : (
+                      (key === "openWorldHint" && yes) ||
+                      (key === "readOnlyHint" && !yes)
+                    ) ?
+                      "orange"
+                    : "blue"
+                  }
+                >
+                  {key}
+                </Chip>
+              ))}
+          </FlexRowWrap>
+        )}
         <Marked
           style={{ maxHeight: "200px" }}
           className="ta-start"

@@ -1,6 +1,8 @@
 import type { DBSSchema } from "@common/publishUtils";
+import { includes } from "prostgles-types";
 import { useMemo, useState } from "react";
 import { ProstglesMCPToolsWithUI } from "../ProstglesToolUseMessage/ProstglesToolUseMessage";
+import { AGENT_GOAL_TOOL_NAMES } from "@common/mcp/startAgenticWorkflowSchema";
 
 type P = {
   llmMessages: DBSSchema["llm_messages"][] | undefined;
@@ -31,18 +33,37 @@ export const useLLMChatMessageGrouper = (props: P) => {
       const nextNextMessage = llmMessages[index + 2];
       const allToolUsesAreCollapsible =
         hasToolUse &&
-        message.message.every(
-          (m) =>
-            m.type !== "tool_use" ||
-            /** TODO: allow collapsing if followed by tool retries */
-            ProstglesMCPToolsWithUI[m.name]?.displayMode !== "full" ||
-            (nextMessage?.message.some(
-              (nm) => nm.type === "tool_result" && nm.tool_use_id === m.id,
+        message.message.every((m) => {
+          if (m.type !== "tool_use") {
+            return true;
+          }
+
+          if (
+            includes(
+              [AGENT_GOAL_TOOL_NAMES.REACHED, AGENT_GOAL_TOOL_NAMES.FAILED],
+              m.name,
+            )
+          ) {
+            return false;
+          }
+
+          const isFailureFollowedByRetries =
+            /** allow collapsing if followed by tool retries */
+            nextMessage?.message.some(
+              (nm) =>
+                nm.type === "tool_result" &&
+                nm.tool_use_id === m.id &&
+                nm.is_error,
             ) &&
-              nextNextMessage?.message.some(
-                (nnm) => nnm.type === "tool_use" && nnm.name === m.name,
-              )),
-        );
+            nextNextMessage?.message.some(
+              (nnm) => nnm.type === "tool_use" && nnm.name === m.name,
+            );
+          if(isFailureFollowedByRetries){
+            return true;
+          }
+
+          return ProstglesMCPToolsWithUI[m.name]?.displayMode !== "full";
+        });
 
       /** Start or continue group */
       if (allToolUsesAreCollapsible) {

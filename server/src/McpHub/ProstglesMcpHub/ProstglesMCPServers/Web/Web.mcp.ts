@@ -41,10 +41,12 @@ const handler = {
           {
             url,
             mode = "raw",
-            max_length = 5000,
+            max_length = 5_000,
             start_index = 0,
             headers,
-            timeout = 15000,
+            method = "GET",
+            body,
+            timeout = 15_000,
           },
           _,
           config,
@@ -55,6 +57,8 @@ const handler = {
           if (mode === "raw") {
             const res = await fetch(url, {
               redirect: "follow",
+              method,
+              body,
               headers: {
                 "User-Agent": "Mozilla/5.0 ",
               },
@@ -69,6 +73,9 @@ const handler = {
             }
 
             content = await res.text();
+            if (content.startsWith("<!DOCTYPE html>")) {
+              return sliceFetchedContent(content, start_index, max_length);
+            }
             return content;
           } else {
             const docsService =
@@ -187,13 +194,12 @@ const handler = {
             "playwright",
             "browser_snapshot",
           );
+          await mcpHub.destroy().catch(() => {});
           if (snapshotResult.isError) {
-            await mcpHub.destroy();
             throw new Error(
               `Failed to get snapshot: ${JSON.stringify(snapshotResult.content)}`,
             );
           }
-          await mcpHub.destroy();
           return (
             snapshotResult.content
               .map((item) => (item.type === "text" ? item.text : ""))

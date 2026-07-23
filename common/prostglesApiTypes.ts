@@ -187,6 +187,7 @@ export type SelectParams<T extends AnyObject | void = void, S extends DBSchema |
      * Filter applied after any aggregations (group by)
      */
     having?: FullFilter<T, S>;
+    abortSignal?: AbortSignal;
 };
 type SubscribeActions = "insert" | "delete" | "update";
 export type SubscribeOptions = {
@@ -432,7 +433,7 @@ export type TableHandler<TD extends AnyObject = AnyObject, S extends DBSchema | 
      * Updates multiple records in the table in a batch operation.
      * - Each item in the \`data\` array contains a filter and the corresponding data to update.
      */
-    updateBatch<P extends UpdateParams<TD, S>>(data: [FullFilter<TD, S>, UpsertDataToPGCastLax<TD>][], params?: P): Promise<UpdateReturnType<P, TD, S> | void>;
+    updateBatch<P extends UpdateParams<TD, S>>(data: [FullFilter<TD, S>, UpsertDataToPGCastLax<TD>][], params?: P): Promise<null>;
     /**
      * Inserts a new record into the table.
      */
@@ -446,12 +447,12 @@ export type TableHandler<TD extends AnyObject = AnyObject, S extends DBSchema | 
      * - If a record matching the \`filter\` exists, it updates the record.
      * - If no matching record exists, it inserts a new record.
      */
-    upsert<P extends UpdateParams<TD, S>>(filter: FullFilter<TD, S>, newData: UpsertDataToPGCastLax<TD>, params?: P): Promise<UpdateReturnType<P, TD, S>>;
+    upsert<P extends UpdateParams<TD, S>>(filter: FullFilter<TD, S>, newData: UpsertDataToPGCastLax<TD>, params?: P): Promise<GetReturningReturnType<P, TD, S>>;
     /**
      * Deletes records from the table based on the specified filter criteria.
      * - If no filter is provided, all records may be deleted (use with caution).
      */
-    delete<P extends DeleteParams<TD, S>>(filter?: FullFilter<TD, S>, params?: P): Promise<UpdateReturnType<P, TD, S> | undefined>;
+    delete<P extends DeleteParams<TD, S>>(filter?: FullFilter<TD, S>, params?: P): Promise<GetReturningReturnType<P, TD, S>[]>;
 };
 export type AsyncResult<T> = {
     data?: undefined;

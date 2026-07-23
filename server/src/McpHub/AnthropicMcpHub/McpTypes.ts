@@ -8,9 +8,13 @@ import type {
   OAuthClientInformationMixed,
   OAuthTokens,
 } from "@modelcontextprotocol/sdk/shared/auth";
-import type { ListToolsResult } from "@modelcontextprotocol/sdk/types";
-import type { fetchRemoteMcpServerInfo } from "./fetchRemoteMcpServerInfo";
-
+import {
+  ServerCapabilitiesSchema,
+  type ImplementationSchema,
+  type ListPromptsResultSchema,
+  type ListToolsResult,
+} from "@modelcontextprotocol/sdk/types";
+import { getElectronConfig } from "@src/electronConfig";
 const StdioConfigSchema = z.object({
   transport: z.literal("stdio").optional(),
   command: z.string(),
@@ -94,6 +98,7 @@ export type McpServer = {
   tools?: McpTool[];
   resources?: McpResource[];
   resourceTemplates?: McpResourceTemplate[];
+  prompts?: Awaited<ReturnType<typeof ListPromptsResultSchema.parse>>;
 };
 
 export type McpTool = ListToolsResult["tools"][number];
@@ -133,23 +138,36 @@ export type McpServerEvents = {
 
 export type RemoteMcpServerParameters = {
   url: string;
-  headers?: Record<string, string>;
+  headers: Record<string, string> | undefined;
+  /**
+   * If true will remove requestInit to try DCR
+   */
+  isInitializing: boolean;
   requestInit?: RequestInit;
-  OAuthEvents: {
-    onPersistState: (state: StreamableHTTPOAuthState) => Promise<void>;
-    onAuthRedirect: (authorizationUrl: string) => Promise<void>;
-  };
+  OAuthEvents:
+    | undefined
+    | {
+        onPersistState: (state: StreamableHTTPOAuthState) => Promise<void>;
+        onAuthRedirect: (authorizationUrl: string) => Promise<void>;
+        onAuthError: (
+          errorType: "dcr_not_supported" | "unknown",
+          error: string,
+        ) => void;
+      };
   OAuthState: undefined | StreamableHTTPOAuthState;
-  OAuthConfig: Pick<
-    StreamableHTTPOAuthConfig,
-    "clientSecret" | "redirectUri" | "scopes"
-  > & {
-    clientMetadataUrl: string | undefined;
-  };
+  OAuthConfig:
+    | undefined
+    | (Pick<
+        StreamableHTTPOAuthConfig,
+        "clientSecret" | "redirectUri" | "scopes"
+      > & {
+        clientMetadataUrl: string | undefined;
+      });
   RemoteServerEvents?: {
-    onConnected?: (
-      info: Awaited<ReturnType<typeof fetchRemoteMcpServerInfo>>,
-    ) => Promise<void> | void;
+    onConnected?: (info: {
+      serverVersion?: z.infer<typeof ImplementationSchema>;
+      capabilities?: z.infer<typeof ServerCapabilitiesSchema>;
+    }) => Promise<void> | void;
   };
 };
 
@@ -165,6 +183,6 @@ export type McpServerParameters = McpServerParametersWithEvents & {
 export type ServersConfig = Map<string, McpServerParameters>;
 
 export const MCP_CLIENT_INFO = {
-  name: "Prostgles",
+  name: "Prostgles" + (getElectronConfig()?.isElectron ? " Desktop" : " UI"),
   version: "1.0.0",
 };

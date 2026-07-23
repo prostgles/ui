@@ -1,27 +1,29 @@
+import type { DBSSchema } from "@common/publishUtils";
 import { ROUTES } from "@common/utils";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import type { DBS } from "@src/index";
-import { MCP_CLIENT_INFO } from "../McpTypes";
-import { createMcpOAuthProvider } from "./createMcpOAuthProvider";
+
+export const enqueuedRequestIds = new Set<string>();
 
 export const authenticateMcpServer = async (
   {
     serverName,
     origin,
-    scopes: scopesUnsorted,
-    authMode,
-    clientMetadataUrl,
+    config,
   }: {
     serverName: string;
     origin: string;
-    scopes: string[];
-    authMode: "dcr" | "cimd";
-    clientMetadataUrl: string | undefined;
+    config: Extract<
+      DBSSchema["mcp_server_configs"]["config"],
+      { type: "OAuth" }
+    >;
   },
   dbs: DBS,
 ) => {
-  const scopes = [...scopesUnsorted].sort();
+  if (config.scopes.join() !== [...config.scopes].sort().join()) {
+    throw new Error(
+      `Scopes must be sorted in ascending order. Provided scopes: ${config.scopes.join()}`,
+    );
+  }
   const server = await dbs.mcp_servers.findOne({ name: serverName });
   if (!server) {
     throw new Error(`MCP server "${serverName}" not found`);
@@ -37,82 +39,47 @@ export const authenticateMcpServer = async (
   }
   const callbackUrl = new URL(ROUTES.MCP_OAUTH_CALLBACK, origin);
   const request_id = crypto.randomUUID();
-  callbackUrl.searchParams.set("scopes", JSON.stringify(scopes));
+  const FIVE_MINUTES_IN_MS = 5 * 60 * 1000;
+  enqueuedRequestIds.add(request_id);
+  setTimeout(() => {
+    enqueuedRequestIds.delete(request_id);
+  }, FIVE_MINUTES_IN_MS);
+  callbackUrl.searchParams.set("scopes", JSON.stringify(config.scopes));
   callbackUrl.searchParams.set("server_name", serverName);
-  return new Promise<{ authorizationUrl: string }>((resolve, reject) => {
-    try {
-      const redirectUri = callbackUrl.toString();
-      let currentAuthorizationUrl: string | undefined;
-      let currentAuthState: unknown;
-      const onSuccess = async (
-        authorizationUrl = currentAuthorizationUrl,
-        state = currentAuthState,
-      ) => {
-        currentAuthorizationUrl ??= authorizationUrl;
-        currentAuthState ??= state;
+  callbackUrl.searchParams.set("request_id", request_id);
+  const redirectUri = callbackUrl.toString();
 
-        if (!currentAuthorizationUrl || !currentAuthState) {
-          return;
-        }
-
-        await dbs.mcp_server_configs.upsert(
+  await dbs.mcp_server_configs.upsert(
+    {
+      server_name: serverName,
+      config,
+    },
+    {
+      oauth_request_id: request_id,
+      oauth:
+        config.auth.mode === "bearer" ?
           {
-            server_name: serverName,
-            oauth_request_id: request_id,
-            config: {
-              scopes,
-              authMode,
-              clientMetadataUrl,
-            },
-          },
-          {
-            oauth: {
-              phase: "waiting-for-auth",
-              redirectUri,
-              scopes,
-              authorizationUrl: currentAuthorizationUrl,
-              state: currentAuthState,
-            },
-          },
-        );
-        resolve({ authorizationUrl: currentAuthorizationUrl });
-      };
-      const authProvider = createMcpOAuthProvider({
-        OAuthState: undefined,
-        url,
-        OAuthEvents: {
-          onAuthRedirect: async (authorizationUrl) => {
-            await onSuccess(authorizationUrl);
-          },
-          onPersistState: async (state) => {
-            console.log("onPersistState called with state:", state);
-            await onSuccess(undefined, state);
-          },
-        },
-        OAuthConfig: {
-          redirectUri,
-          clientMetadataUrl,
-        },
-      });
-      const transport = new StreamableHTTPClientTransport(new URL(url), {
-        authProvider,
-      });
-      const client = new Client(MCP_CLIENT_INFO);
-
-      client
-        .connect(transport)
-        .then(() => {
-          console.log("Connected to MCP server:", serverName);
-        })
-        .catch((err) => {
-          if (currentAuthorizationUrl) {
-            return;
+            phase: "initializing_bearer_token",
+            redirectUri,
+            scopes: config.scopes,
+            bearerToken: config.auth.bearerToken,
           }
-          console.error("Error connecting to MCP server:", err);
-          reject(err);
-        });
-    } catch (error) {
-      reject(error);
-    }
-  });
+        : {
+            phase: "initializing_dcr",
+            redirectUri,
+            scopes: config.scopes,
+          },
+    },
+    {
+      returning: "*",
+    },
+  );
+  await dbs.mcp_servers.update(
+    {
+      name: serverName,
+    },
+    {
+      enabled: true,
+    },
+  );
 };

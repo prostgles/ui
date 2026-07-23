@@ -190,7 +190,7 @@ export const RenderValue = ({
 
   if (value && (c?.udt_name.startsWith("json") || isObject(value))) {
     const title = (() => {
-      if (isObject(value)) {
+      if (isObject(value) || Array.isArray(value)) {
         try {
           return JSON.stringify(value, null, 2);
         } catch {}

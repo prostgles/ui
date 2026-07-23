@@ -12,6 +12,7 @@ import type {
   GoogleGeminiChatCompletionResponse,
   OpenAIChatCompletionResponse,
 } from "./LLMResponseTypes";
+import { wrapCode } from "@common/llmUtils";
 
 export type LLMResponseParser<T = AnyObject> = (args: {
   provider: string;
@@ -143,7 +144,7 @@ export const parseLLMResponseObject: LLMResponseParser = ({
           c.error ?
             ({
               type: "text",
-              text: `🔴 Something went wrong! Error received from from LLM Provider: \n\`\`\`json\n${JSON.stringify(c.error, null, 2)}\n\`\`\``,
+              text: `🔴 Something went wrong! Error received from from LLM Provider: \n${wrapCode("json", JSON.stringify(c.error, null, 2))}`,
             } satisfies LLMMessageWithRole["content"][number])
           : undefined,
           ...toolCalls,

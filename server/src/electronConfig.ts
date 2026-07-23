@@ -28,10 +28,18 @@ const electronConfig: {
   isElectron: boolean;
   electronSid: string;
   safeStorage: SafeStorage | undefined;
+  focusWindow: () => void;
+  devCredentials: DBSConnectionInfo | undefined;
 } = {
   isElectron: false,
   electronSid: "",
   safeStorage: undefined,
+  devCredentials: undefined,
+  focusWindow: () => {
+    throw new Error(
+      "focusWindow function not set. This should only be called in electron context.",
+    );
+  },
 };
 
 export const actualRootDir = path.join(__dirname, "/../../..");
@@ -44,13 +52,15 @@ export const DIRECTORIES = {
 } as const;
 
 let rootDir = actualRootDir;
+
 /**
  * server root directory
  */
 export const getRootDir = () => rootDir;
 
 export const getElectronConfig = () => {
-  const { isElectron, safeStorage } = electronConfig;
+  const { isElectron, safeStorage, focusWindow, devCredentials } =
+    electronConfig;
   if (!isElectron) return undefined;
 
   if (
@@ -65,6 +75,9 @@ export const getElectronConfig = () => {
     `${getRootDir()}/.prostgles-desktop-config.json`,
   );
   const getCredentials = (): DBSConnectionInfo | undefined => {
+    if (devCredentials) {
+      return devCredentials;
+    }
     try {
       const file =
         !fs.existsSync(electronConfigPath) ?
@@ -87,6 +100,7 @@ export const getElectronConfig = () => {
     sidConfig: electronConfig,
     hasCredentials: () => !!getCredentials(),
     getCredentials,
+    focusWindow,
     setCredentials: (connection?: DBSConnectionInfo) => {
       if (!connection) {
         if (fs.existsSync(electronConfigPath)) {
@@ -114,6 +128,8 @@ export const start = async (params: {
   rootDir: string;
   onReady: (actualPort: number) => void;
   port?: number;
+  devCredentials?: DBSConnectionInfo;
+  focusWindow: () => void;
 }) => {
   const { electronSid, onReady } = params;
   if (!params.rootDir || typeof params.rootDir !== "string") {
@@ -130,6 +146,8 @@ export const start = async (params: {
   electronConfig.isElectron = true;
   electronConfig.electronSid = params.electronSid;
   electronConfig.safeStorage = params.safeStorage;
+  electronConfig.devCredentials = params.devCredentials;
+  electronConfig.focusWindow = params.focusWindow;
   const { startServer } = await import("./index");
   const startResult = await startServer(async ({ port: actualPort }) => {
     // const [token] = prostglesTokens;

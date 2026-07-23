@@ -10,6 +10,7 @@ import type { SmartFormState } from "../useSmartForm";
 import { SmartFormPrevNext } from "./SmartFormPrevNext";
 import { useSmartFormPrevNext } from "./useSmartFormPrevNext";
 import { useSmartFormSubTitle } from "./useSmartFormSubTitle";
+import { SMART_FORM_POPUP_MIN_WIDTH } from "../constants";
 
 type P = Pick<SmartFormProps, "onPrevOrNext" | "prevNext" | "asPopup"> & {
   rowFilterObj: AnyObject | undefined;
@@ -80,7 +81,9 @@ export const SmartFormPopupWrapper = ({
       clickCatchStyle={{ opacity: 0.2 }}
       showFullscreenToggle={{
         getStyle: (fullscreen) =>
-          fullscreen ? {} : { width: "min(600px, 100vw)" },
+          fullscreen ?
+            {}
+          : { width: `min(${SMART_FORM_POPUP_MIN_WIDTH}px, 100vw)` },
       }}
     >
       {children}

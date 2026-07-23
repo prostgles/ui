@@ -7,19 +7,18 @@ import {
   type RemoteMcpServerParameters,
   type StreamableHTTPOAuthState,
 } from "../McpTypes";
-import { debounce } from "@src/ConnectionManager/ForkedPrglProcRunner/ForkedPrglProcRunner";
 
 export const createMcpOAuthProvider = ({
   OAuthState,
   OAuthEvents,
   OAuthConfig,
-}: RemoteMcpServerParameters): OAuthClientProvider => {
+}: RemoteMcpServerParameters): undefined | OAuthClientProvider => {
   let state: StreamableHTTPOAuthState = { ...(OAuthState ?? {}) };
 
-  const persist = debounce(async () => {
+  if (!OAuthConfig || !OAuthEvents) return;
+  const persist = async () => {
     await OAuthEvents.onPersistState(state);
-    await console.log("Persisting OAuth state:", state);
-  }, 1000);
+  };
 
   const provider: OAuthClientProvider = {
     redirectUrl: OAuthConfig.redirectUri,

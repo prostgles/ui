@@ -6,7 +6,10 @@ export const getMcpOAuthMetadata = async (remoteMcpUrl: string) => {
   const getOAuthMetadataUrl = (route: keyof OAuthRouteDataMap, url: string) => {
     const { origin, pathname } = new URL(url);
 
-    return origin + ["/.well-known", route, pathname.slice(1)].join("/");
+    return (
+      origin +
+      ["/.well-known", route, pathname.slice(1)].filter(Boolean).join("/")
+    );
   };
 
   const metadata = await fetchJson<{
@@ -65,6 +68,7 @@ const fetchJson = async <T>(url: string): Promise<T> => {
       "Content-Type": "application/json",
       "User-Agent": "Prostgles-MCP-Client/1.0",
     },
+    signal: AbortSignal.timeout(5000),
   });
   if (!data.ok) {
     throw new Error(

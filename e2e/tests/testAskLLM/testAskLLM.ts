@@ -5,7 +5,11 @@ import { fromEntries } from "common/utils";
 import { join } from "path";
 import type { JSONB } from "prostgles-types";
 import { runDbsSql, type PageWIds } from "utils/utils";
-import { agenticWorkflowToolUses, research } from "./agenticWorkflowToolUses";
+import {
+  agentFailure,
+  agenticWorkflowToolUses,
+  research,
+} from "./agenticWorkflowToolUses";
 import { createComponentToolUse } from "./createComponentToolUse";
 import { sampleReceiptData } from "./createReceipts";
 import { getAskUserToolUse } from "./getAskUserToolUse";
@@ -405,6 +409,7 @@ const toolResponses: Record<string, ToolUse> = {
   component: createComponentToolUse,
   agentic_workflow: agenticWorkflowToolUses.input,
   agentic_workflow_noinput: agenticWorkflowToolUses.noinput,
+  agentic_workflow_agent_failure: agenticWorkflowToolUses.agentFailure,
   agentic_workflow_filesystem: agenticWorkflowToolUses.filesystem,
   agentic_workflow_clashing: agenticWorkflowToolUses.clashing,
   agentic_workflow_invalidTable: agenticWorkflowToolUses.invalidTable,
@@ -423,6 +428,20 @@ const toolResponses: Record<string, ToolUse> = {
               { url: "ref1", title: "" },
               { url: "ref2", title: "" },
             ],
+          }),
+        },
+      },
+    ],
+  },
+  [agentFailure]: {
+    tool: [
+      {
+        id: "agentic-workflow-tool-use",
+        type: "function",
+        function: {
+          name: "agent_goal_failed",
+          arguments: stringify({
+            data: "The agent failed to complete the task.",
           }),
         },
       },

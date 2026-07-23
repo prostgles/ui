@@ -5,13 +5,13 @@ import { FlexCol, FlexRow } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
 import Popup from "@components/Popup/Popup";
 import { mdiDeleteOutline } from "@mdi/js";
-import React from "react";
+import { isEqual } from "prostgles-types";
+import React, { useCallback } from "react";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import { McpServerOAuthConfig } from "./CustomConfigComponents/McpServerOAuthConfig";
 import { WebMcpConfig } from "./CustomConfigComponents/WebMcpConfig";
-import { getMcpConfigValueAsString } from "./MCPServerConfigButton";
+import { getMcpConfigAsStrings } from "./MCPServerConfigButton";
 import { useMCPServerConfigState } from "./useMCPServerConfigState";
-import { isEqual } from "prostgles-types";
 
 export type MCPServerEnabledConfig = { configId: number };
 
@@ -32,13 +32,23 @@ export const MCPServerConfigEditor = (props: MCPServerConfigProps) => {
     canSave,
     schema,
     setConfig,
-    config,
+    config: configValue,
     existingConfigs,
     server,
   } = useMCPServerConfigState(props);
+
+  const setLocalConfig = useCallback(
+    (newConfig: Record<string, unknown>) => {
+      setConfig({
+        type: "local",
+        value: newConfig,
+      });
+    },
+    [setConfig],
+  );
   const existingConfig =
     initialExistingConfig ??
-    existingConfigs.find((c) => isEqual(c.config, config));
+    existingConfigs.find((c) => isEqual(c.config, configValue));
   const { dbs } = usePrglCore();
   const otherConfigs = existingConfigs.filter(
     (c) => !existingConfig || c.id !== existingConfig.id,
@@ -99,6 +109,8 @@ export const MCPServerConfigEditor = (props: MCPServerConfigProps) => {
             onDone={onDone}
           />
         : Object.entries(schema ?? {}).map(([key, schema]) => {
+            const config =
+              configValue?.type === "local" ? configValue.value : {};
             if (schema.renderWithComponent === "FileTree") {
               const currentValue = config[key];
               return (
@@ -108,7 +120,7 @@ export const MCPServerConfigEditor = (props: MCPServerConfigProps) => {
                   type="all"
                   value={currentValue as string[] | undefined}
                   onChange={(newValue) => {
-                    setConfig({
+                    setLocalConfig({
                       ...config,
                       [key]: newValue,
                     });
@@ -123,9 +135,9 @@ export const MCPServerConfigEditor = (props: MCPServerConfigProps) => {
                   key={key}
                   value={config[key]}
                   onChange={(newValue) => {
-                    setConfig({
+                    setLocalConfig({
                       ...config,
-                      [key]: newValue as string,
+                      [key]: newValue,
                     });
                   }}
                 />
@@ -140,7 +152,7 @@ export const MCPServerConfigEditor = (props: MCPServerConfigProps) => {
                 hint={schema.description}
                 value={config[key] as string | undefined}
                 onChange={(v) =>
-                  setConfig({
+                  setLocalConfig({
                     ...config,
                     [key]: v,
                   })
@@ -151,14 +163,12 @@ export const MCPServerConfigEditor = (props: MCPServerConfigProps) => {
         }
         {Boolean(otherConfigs.length) && (
           <FlexCol className="py-1 pb-2 gap-p5 bt b-color ">
-            <div className="ta-start mb-1">Existing configurations:</div>
+            <div className="ta-start mb-1 bold">Existing configurations:</div>
             <FlexCol>
-              {otherConfigs.map((existingConfig) => {
-                const values = Object.values(existingConfig.config)
-                  .map((v) => getMcpConfigValueAsString(v, undefined))
-                  .join(", ");
+              {otherConfigs.map(({ id, config }) => {
+                const values = getMcpConfigAsStrings(config, schema ?? null);
                 return (
-                  <FlexRow key={existingConfig.id} className="gap-0">
+                  <FlexRow key={id} className="gap-0">
                     <Btn
                       variant="faded"
                       size="small"
@@ -167,10 +177,12 @@ export const MCPServerConfigEditor = (props: MCPServerConfigProps) => {
                         flex: 1,
                       }}
                       onClick={() => {
-                        setConfig(existingConfig.config);
+                        setConfig(config);
                       }}
                     >
-                      {values}
+                      {values
+                        .map(({ displayValue }) => displayValue)
+                        .join(", ")}
                     </Btn>
                     <Btn
                       size="small"
@@ -178,7 +190,7 @@ export const MCPServerConfigEditor = (props: MCPServerConfigProps) => {
                       title="Delete existing config (if not used in other chats)"
                       onClickPromise={async () => {
                         await dbs.mcp_server_configs.delete({
-                          id: existingConfig.id,
+                          id,
                         });
                       }}
                     />

@@ -102,7 +102,9 @@ export const AgenticWorkflowActivity = ({
             const failed =
               item.type === "agent_chat" ?
                 item.status?.state === "goal-failure" ||
-                item.status?.state === "goal-data-validation-failure"
+                item.status?.state === "goal-data-validation-failure" ||
+                (item.status?.state === "stopped" &&
+                  item.status.reason !== "manual")
               : item.error;
             const errorStyle =
               failed ? { color: "var(--text-danger)" } : undefined;

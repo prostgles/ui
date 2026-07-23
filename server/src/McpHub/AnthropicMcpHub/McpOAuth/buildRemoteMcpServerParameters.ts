@@ -1,9 +1,8 @@
 import type { DBSSchema } from "@common/publishUtils";
-import type {
-  McpServerParameters,
-  StreamableHTTPOAuthState,
-} from "../McpTypes";
 import type { DBS } from "@src/index";
+import type { McpServerParameters } from "../McpTypes";
+import { getRemoteMcpOauthConfigParameters } from "./getRemoteMcpOauthConfigParameters";
+import { saveServerInfo } from "./saveServerInfo";
 
 export const buildRemoteMcpServerParameters = ({
   dbs,
@@ -23,88 +22,62 @@ export const buildRemoteMcpServerParameters = ({
     );
   }
 
-  if (oauth.phase === "waiting-for-auth") {
+  if (config.type !== "OAuth") {
+    throw new Error(
+      `MCP server "${server.name}" has command "streamable-http" but mcp_server_configs has config type "${config.type}", expected "OAuth".`,
+    );
+  }
+
+  if (oauth.phase === "awaiting_authorization" || oauth.phase === "error") {
     // do not enable
     return;
   }
 
-  let currentAuthState: StreamableHTTPOAuthState | undefined;
-  let currentAuthorizationUrl: string | undefined;
-  const onPersist = async (
-    authorizationUrl = currentAuthorizationUrl,
-    state = currentAuthState,
-  ) => {
-    currentAuthorizationUrl ??= authorizationUrl;
-    currentAuthState = state;
+  const remoteMcpOauthConfig = getRemoteMcpOauthConfigParameters(
+    dbs,
+    mcp_server_config,
+    server,
+  );
 
-    await dbs.mcp_server_configs.upsert(
-      {
-        server_name: server.name,
-        config,
-      },
-      {
-        oauth:
-          currentAuthorizationUrl ?
-            {
-              phase: "waiting-for-auth",
-              redirectUri: oauth.redirectUri,
-              scopes: oauth.scopes,
-              authorizationUrl: currentAuthorizationUrl,
-              state: currentAuthState,
-            }
-          : {
-              phase: "connected",
-              redirectUri: oauth.redirectUri,
-              scopes: oauth.scopes,
-              state: currentAuthState,
-            },
-      },
-    );
+  const withBearerToken = (
+    existingHeaders: Record<string, string> | undefined | null,
+  ) => {
+    if (config.auth.mode !== "bearer") {
+      return existingHeaders ?? undefined;
+    }
+    return {
+      ...existingHeaders,
+      Authorization: `Bearer ${config.auth.bearerToken}`,
+    };
   };
 
   return {
     type: "remote",
+    isInitializing: oauth.phase === "initializing_dcr",
     server_name: server.name,
     url: server.url!, // TODO: change the parameters to typed jsonb,
-    OAuthEvents: {
-      onAuthRedirect: async (authorizationUrl) => {
-        console.log(
-          `MUST BE Redirecting to authorization URL for server "${server.name}": ${authorizationUrl}`,
-        );
-        await onPersist(authorizationUrl);
-      },
-      onPersistState: async (state) => {
-        await onPersist(undefined, state);
-      },
-    },
-    OAuthConfig: {
-      redirectUri: oauth.redirectUri,
-      clientSecret:
-        oauth.phase === "connected" ? oauth.clientSecret : undefined,
-      scopes: oauth.scopes,
-      clientMetadataUrl: config.clientMetadataUrl as string | undefined,
-    },
-    OAuthState: {
-      ...("state" in oauth ? (oauth.state as {}) : {}),
-      pendingAuthorizationCode:
-        oauth.phase === "code-provided" ?
-          oauth.pendingAuthorizationCode
-        : undefined,
-    },
+    ...remoteMcpOauthConfig,
+    headers: withBearerToken(server.headers),
     RemoteServerEvents: {
-      onConnected: async (info) => {
-        await console.error(info);
-        await dbs.mcp_servers.update(
-          {
-            name: server.name,
-          },
-          {
-            info:
-              info?.serverVersion?.description ?? info?.serverVersion?.title,
-            capabilities: info?.capabilities,
-            server_version: info?.serverVersion,
-          },
-        );
+      onConnected: async (args) => {
+        await saveServerInfo({ ...config, dbs, server }, args);
+        if (
+          config.auth.mode === "bearer" &&
+          oauth.phase === "initializing_bearer_token"
+        ) {
+          await dbs.mcp_server_configs.update(
+            {
+              server_name: server.name,
+              config,
+            },
+            {
+              oauth: {
+                phase: "connected_bearer",
+                bearerToken: config.auth.bearerToken,
+              },
+            },
+          );
+        }
       },
     },
     onLog,

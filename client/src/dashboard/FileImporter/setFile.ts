@@ -128,14 +128,17 @@ async function parseJSONFile(file: File): Promise<{
   let _cols: Record<string, (typeof pg_types)[number]> = {};
   let maxCharsPerRow = 0;
   const setCol = (row: AnyObject | null) => {
-    const getType = (v) =>
-      typeof v === "number" ? "numeric"
-      : Array.isArray(v) ?
-        v.some((elem) => typeof elem === "object") ?
-          "jsonb"
-        : "_text"
-      : isObject(v) ? "jsonb"
-      : "text";
+    const getType = (v) => {
+      return (
+        typeof v === "number" ? "numeric"
+        : Array.isArray(v) ?
+          v.some((elem) => typeof elem === "object") ?
+            "jsonb"
+          : "_text"
+        : isObject(v) ? "jsonb"
+        : "text"
+      );
+    };
     Object.entries(row ?? {}).forEach(([k, v]) => {
       const currentValueType = getType(v);
       const columnType = _cols[k];

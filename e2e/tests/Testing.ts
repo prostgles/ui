@@ -591,6 +591,11 @@ export const COMMANDS = {
   SwitchToggle: "",
   "LLMChatOptions.EnabledMcpServer": "",
   SmartFormFieldForeignKey: "",
+  "McpServerOAuthConfigTopControls.ShowServerInfo": "",
+  "McpServerOAuthConfigActions.LoginWithOAuth": "",
+  "McpServerOAuthConfigAuthorizeUrlBtn.OpenAuthorizationUrl": "",
+  "McpServerOAuthConfigTopControls.authMode": "",
+  "McpServerOAuthConfigTopControls.bearerToken": "",
 } as const satisfies Record<
   string,
   | string

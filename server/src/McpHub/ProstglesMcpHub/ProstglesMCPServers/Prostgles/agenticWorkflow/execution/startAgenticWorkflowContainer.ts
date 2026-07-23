@@ -115,7 +115,7 @@ export const startAgenticWorkflowContainer = async (
       })
       .catch((error) => {
         console.error("Error in handler:", error);
-        res.status(500).json(error);
+        res.status(500).json(getSerialisableError(error));
       });
   };
   const result = await runContainerWithProxyAccess(

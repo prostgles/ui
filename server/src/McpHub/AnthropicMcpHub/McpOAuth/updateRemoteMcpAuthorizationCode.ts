@@ -1,5 +1,6 @@
 import type { DBS } from "@src/index";
 import { getJSONBObjectSchemaValidationError } from "prostgles-types";
+import { enqueuedRequestIds } from "./authenticateMcpServer";
 
 export const updateRemoteMcpAuthorizationCode = async (
   dbs: DBS,
@@ -10,21 +11,34 @@ export const updateRemoteMcpAuthorizationCode = async (
       server_name: "string",
       scopes: "string",
       code: "string",
+      request_id: "string",
     },
     data,
+    "params for updateRemoteMcpAuthorizationCode",
+    undefined,
+    { allowExtraProperties: true },
   );
 
   if (validation.error !== undefined) {
     return { success: false, message: validation.error } as const;
   }
-  const { scopes: scopesStr, code, server_name } = validation.data;
+  const { scopes: scopesStr, code, server_name, request_id } = validation.data;
+
+  const matchingRequest = enqueuedRequestIds.has(request_id);
+  if (!matchingRequest) {
+    return {
+      success: false,
+      message: `No matching MCP Auth request found for request_id "${request_id}". This may indicate a replay attack or that the request has expired.`,
+    } as const;
+  }
 
   return await dbs
     .tx(async (t) => {
       const scopes = (JSON.parse(scopesStr) as string[]).sort();
       const existingConfig = await t.mcp_server_configs.findOne({
         server_name,
-        config: { scopes },
+        oauth_request_id: request_id,
+        config: { "@>": { scopes, auth: { mode: "dcr" } } },
       });
       if (!existingConfig) {
         throw new Error(
@@ -37,7 +51,7 @@ export const updateRemoteMcpAuthorizationCode = async (
           `MCP server config with scope "${scopesStr}" has no OAuth config.`,
         );
       }
-      if (oauth.phase !== "waiting-for-auth") {
+      if (oauth.phase !== "awaiting_authorization") {
         throw new Error(
           `MCP server config with scope "${scopesStr}" is not in the correct phase for updating the authorization code. Current phase: ${oauth.phase}`,
         );
@@ -46,14 +60,17 @@ export const updateRemoteMcpAuthorizationCode = async (
         { id: existingConfig.id },
         {
           oauth: {
-            phase: "code-provided",
+            phase: "exchanging_code",
             redirectUri: oauth.redirectUri,
-            state: oauth.state,
             scopes: oauth.scopes,
+            clientInformation: oauth.clientInformation,
+            discoveryState: oauth.discoveryState,
             pendingAuthorizationCode: code,
+            codeVerifier: oauth.codeVerifier,
           },
         },
       );
+      enqueuedRequestIds.delete(request_id);
       await t.mcp_servers.update(
         {
           name: existingConfig.server_name,
@@ -71,7 +88,6 @@ export const updateRemoteMcpAuthorizationCode = async (
         server_name,
         mcp_server_config_id,
         code,
-        // state,
       } as const;
     })
     .catch((err) => {

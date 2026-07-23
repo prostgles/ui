@@ -2,13 +2,12 @@ import type { DBSSchema } from "@common/publishUtils";
 import type { StdioServerParameters } from "@modelcontextprotocol/sdk/client/stdio";
 import { getProperty, isDefined, pickKeys } from "prostgles-types";
 import type { DBS } from "..";
+import { buildRemoteMcpServerParameters } from "./AnthropicMcpHub/McpOAuth/buildRemoteMcpServerParameters";
 import type {
   McpServerEvents,
   McpServerParameters,
   ServersConfig,
-  StreamableHTTPOAuthState,
 } from "./AnthropicMcpHub/McpTypes";
-import { buildRemoteMcpServerParameters } from "./AnthropicMcpHub/McpOAuth/buildRemoteMcpServerParameters";
 
 export const fetchMCPServerConfigs = async (
   dbs: DBS,
@@ -138,8 +137,13 @@ const applyConfig = (
 ) => {
   let args = [...baseArgs];
   const env = { ...baseEnv };
+  if (config.type !== "local") {
+    throw new Error(
+      `MCP server "${server_name}" has config type "${config.type}", expected "local"`,
+    );
+  }
   Object.entries({ ...config_schema }).forEach(([key, configItem]) => {
-    const value = getProperty(config, key);
+    const value = getProperty(config.value, key);
     if (configItem.type === "env" || configItem.type === "local") {
       env[key] = value as string;
     } else {

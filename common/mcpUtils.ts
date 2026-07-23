@@ -71,6 +71,5 @@ export const DEFAULT_MCP_SERVER_NAMES = [
   "web",
   "webdev",
   "slack",
-  "githubweb",
   "apify",
 ] as const;

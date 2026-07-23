@@ -224,7 +224,7 @@ export const useSmartFormActions = ({
                     returning: "*",
                   });
 
-                  if (!nr?.length) {
+                  if (!nr.length) {
                     throw "No rows were deleted. Access rules may not allow this update.";
                   }
                   onSuccess?.("delete");

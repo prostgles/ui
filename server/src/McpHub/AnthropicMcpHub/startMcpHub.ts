@@ -46,10 +46,17 @@ export const startMcpHub = (dbs: DBS, restart = false): Promise<McpHub> => {
   return result;
 };
 
+type EnabledMcpServer = Pick<DBSSchema["mcp_servers"], "name" | "enabled"> & {
+  mcp_server_configs: Pick<
+    DBSSchema["mcp_server_configs"],
+    "server_name" | "config"
+  >[];
+};
+
 const loadMissingTools = async (
   dbs: DBS,
   mcpHub: McpHub,
-  enabledMcpServers: DBSSchema["mcp_servers"][],
+  enabledMcpServers: EnabledMcpServer[],
 ) => {
   for (const { name: server_name } of enabledMcpServers) {
     const toolCount = await dbs.mcp_server_tools.count({
@@ -72,7 +79,7 @@ export const setupMCPServerHub = async (dbs: DBS) => {
     await sub?.unsubscribe();
   }
 
-  let enabledMcpServers: DBSSchema["mcp_servers"][] | undefined;
+  let enabledMcpServers: EnabledMcpServer[] | undefined;
   let globalSettings: DBSSchema["global_settings"] | undefined;
   const onCallback = () => {
     if (enabledMcpServers && globalSettings) {
@@ -98,7 +105,7 @@ export const setupMCPServerHub = async (dbs: DBS) => {
 
   mcpSubscriptions.servers = await dbs.mcp_servers.subscribe(
     { enabled: true },
-    { select: { "*": 1, mcp_server_configs: "*" } },
+    { select: { name: 1, enabled: 1, mcp_server_configs: "*" } },
     (servers) => {
       enabledMcpServers = servers;
       onCallback();

@@ -1,9 +1,15 @@
 import { join } from "node:path";
 import { start } from "./electronConfig";
+import { DBS_CONNECTION_INFO } from "./envVars";
 
 const safeStorage = {
-  encryptString: (v: any) => Buffer.from(v),
-  decryptString: (v: Buffer) => v.toString(),
+  encryptString: (v: any) => {
+    throw "Not allowed in test environment";
+    // return Buffer.from(v);
+  },
+  decryptString: (v: Buffer) => {
+    return v.toString();
+  },
   isEncryptionAvailable: () => true,
 };
 
@@ -16,8 +22,12 @@ void start({
   safeStorage,
   electronSid,
   rootDir: actualRootDir,
+  devCredentials: DBS_CONNECTION_INFO,
   port: 3004, // For testing convenience
   onReady: (actualPort) => {
     console.log(`http://localhost:${actualPort}?electronSid=${electronSid}`);
+  },
+  focusWindow: () => {
+    console.log("focusWindow called");
   },
 });

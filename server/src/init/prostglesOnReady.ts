@@ -112,21 +112,20 @@ export const prostglesOnReady = async (
 };
 
 type AsyncCleanup = () => Promise<{ cleanup: () => Promise<void> }>;
-const cleanups: ReturnType<AsyncCleanup>[] = [];
+const cleanups: Awaited<ReturnType<AsyncCleanup>>["cleanup"][] = [];
 let chain = Promise.resolve();
 const promiseCleanup = (func: AsyncCleanup) => {
   chain = chain.then(async () => {
-    /** Get new values first for better experience */
-    cleanups.push(func());
+    const { cleanup } = await func();
+    cleanups.push(cleanup);
 
     while (cleanups.length > 1) {
+      const previousCleanup = cleanups.shift()!;
+
       try {
-        const { cleanup } = await cleanups[0]!;
-        await cleanup();
+        await previousCleanup();
       } catch (e) {
         console.error("Error during prostgles onReady cleanup", e);
-      } finally {
-        void cleanups.shift();
       }
     }
   });

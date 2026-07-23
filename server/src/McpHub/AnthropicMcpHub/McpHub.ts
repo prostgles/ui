@@ -3,6 +3,7 @@ import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import {
   CallToolResultSchema,
+  ListPromptsResultSchema,
   ReadResourceResultSchema,
   type CallToolResult,
 } from "@modelcontextprotocol/sdk/types.js";
@@ -11,9 +12,7 @@ import {
   connectToMCPServer,
   type MCPServerInitInfo,
 } from "./connectToMCPServer";
-import { fetchMCPResourcesList } from "./fetchMCPResourcesList";
-import { fetchMCPResourceTemplatesList } from "./fetchMCPResourceTemplatesList";
-import { fetchMCPToolsList } from "./fetchMCPToolsList";
+import type { createMcpServerHandlers } from "./createMcpServerHandlers";
 import { McpResourceResponse, McpServer, ServersConfig } from "./McpTypes";
 
 export type McpConnection = {
@@ -24,6 +23,7 @@ export type McpConnection = {
   server_name: string;
   server: McpServer;
   client: Client;
+  handlers: ReturnType<typeof createMcpServerHandlers>;
   transport: StdioClientTransport | StreamableHTTPClientTransport;
   destroy: () => Promise<void>;
 };
@@ -39,6 +39,11 @@ export class McpHub {
       (conn) => conn.server_name === serverName,
     )?.client;
   };
+  getClientHandlers = (serverName: string) => {
+    return Array.from(this.connections.values()).find(
+      (conn) => conn.server_name === serverName,
+    )?.handlers;
+  };
 
   getServers(): McpServer[] {
     return Array.from(this.connections.values()).map((conn) => conn.server);
@@ -50,13 +55,14 @@ export class McpHub {
       async () => await connectToMCPServer(initInfo),
     );
     if (connection) {
-      connection.server.tools = await fetchMCPToolsList(connection.client);
-      connection.server.resources = await fetchMCPResourcesList(
-        connection.client,
-      );
-      connection.server.resourceTemplates = await fetchMCPResourceTemplatesList(
-        connection.client,
-      );
+      // connection.server.tools = await fetchMCPToolsList(connection.client);
+      // connection.server.resources = await fetchMCPResourcesList(
+      //   connection.client,
+      // );
+      // connection.server.resourceTemplates = await fetchMCPResourceTemplatesList(
+      //   connection.client,
+      // );
+      // connection.server.prompts = await fetchPrompts(connection.client);
       this.connections.set(name, connection);
     } else {
       this.connections.delete(name);
@@ -148,14 +154,14 @@ export class McpHub {
   }
 
   async callTool(
-    serverName: string,
+    serverInstanceName: string,
     toolName: string,
     toolArguments?: Record<string, unknown>,
   ): Promise<McpToolCallResponse> {
-    const connection = this.connections.get(serverName);
+    const connection = this.connections.get(serverInstanceName);
     if (!connection) {
       throw new Error(
-        `No connection found for MCP server: ${serverName}. Please make sure it is enabled`,
+        `No connection found for MCP server: ${serverInstanceName}. Please make sure it is enabled`,
       );
     }
 
@@ -170,6 +176,23 @@ export class McpHub {
       CallToolResultSchema,
     );
     return toolResult;
+  }
+
+  async getPrompts(serverInstanceName: string) {
+    const connection = this.connections.get(serverInstanceName);
+    if (!connection) {
+      throw new Error(
+        `No connection found for MCP server: ${serverInstanceName}. Please make sure it is enabled`,
+      );
+    }
+
+    const prompts = await connection.client.request(
+      {
+        method: "prompts/list",
+      },
+      ListPromptsResultSchema,
+    );
+    return prompts;
   }
 
   async destroy(): Promise<void> {

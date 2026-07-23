@@ -94,15 +94,15 @@ export const runApprovedTools = async ({
     });
   }
 
-  const agetGoalTool = toolUseRequestMessages.find((m) =>
+  const agentGoalTool = toolUseRequestMessages.find((m) =>
     [AGENT_GOAL_TOOL_NAMES.REACHED, AGENT_GOAL_TOOL_NAMES.FAILED].includes(
       m.name,
     ),
   );
-  if (agetGoalTool) {
+  if (agentGoalTool) {
     return runAgentGoalTool({
       chat,
-      agetGoalTool,
+      agentGoalTool,
       dbs,
       aborter,
       args,

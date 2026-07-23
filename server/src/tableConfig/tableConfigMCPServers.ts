@@ -3,14 +3,45 @@ import type { DBSSchema } from "@common/publishUtils";
 import { testMCPServerConfig } from "@src/McpHub/testMCPServerConfig";
 import type {
   AfterAllTsTrigger,
-  BeforeEachTsTrigger,
   ValidateRowArgsCommon,
-  ValidateRowsArgsCommon,
 } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
-import { isDefined } from "prostgles-types";
+import { isDefined, type JSONB } from "prostgles-types";
 import type { DBS } from "..";
-import { tout } from "@src/utils/tout";
+
+export const mcpServerConfigJsonbSchema = {
+  oneOfType: [
+    {
+      type: { enum: ["OAuth"] },
+      scopes: { type: "string[]" },
+      savePngIcon: "boolean",
+      auth: {
+        oneOfType: [
+          { mode: { enum: ["none", "dcr"] } },
+          {
+            mode: { enum: ["cimd"] },
+            clientMetadataUrl: { type: "string" },
+          },
+          {
+            mode: { enum: ["bearer"] },
+            bearerToken: { type: "string" },
+          },
+        ],
+      },
+    },
+    {
+      type: { enum: ["local"] },
+      value: { record: { values: "unknown" } },
+    },
+  ],
+} as const satisfies JSONB.JSONBSchema;
+
+const commonOAuthSchema = {
+  scopes: "string[]",
+  discoveryState: { record: { values: "unknown" } },
+  clientInformation: { record: { values: "unknown" } },
+  redirectUri: "string",
+} as const satisfies JSONB.ObjectType["type"];
 
 export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
   mcp_servers: {
@@ -18,6 +49,15 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
       name: `TEXT PRIMARY KEY`,
       info: `TEXT`,
       icon_path: `TEXT`,
+      icon_bytes: `BYTEA`,
+      headers: {
+        nullable: true,
+        jsonbSchema: {
+          record: {
+            values: "string",
+          },
+        },
+      },
       server_version: {
         nullable: true,
         jsonbSchemaType: {
@@ -194,65 +234,58 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
       },
       enabled: `BOOLEAN NOT NULL DEFAULT FALSE`,
       created: `TIMESTAMPTZ DEFAULT NOW()`,
-      last_enabled: `TIMESTAMPTZ`,
       installed: `TIMESTAMPTZ`,
-    },
-    hooks: {
-      beforeEach: [
-        {
-          commands: { insert: 1, update: 1 },
-          validate: async ({ command, data }) => {
-            if (
-              (command === "update" && data.enabled) ||
-              (command === "insert" && !data.last_enabled)
-            ) {
-              await tout(10);
-              return {
-                row: {
-                  ...data,
-                  last_enabled: new Date().toISOString(),
-                },
-              };
-            }
-          },
-        } satisfies BeforeEachTsTrigger<DBSSchema["mcp_servers"], DBS> as any,
-      ],
     },
   },
   mcp_server_configs: {
     columns: {
       id: `SERIAL PRIMARY KEY`,
       server_name: `TEXT NOT NULL REFERENCES mcp_servers(name) ON DELETE CASCADE`,
-      config: {
-        jsonbSchema: {
-          oneOf: [{ record: { values: "unknown" } }],
-        },
-      },
+      config: { jsonbSchema: mcpServerConfigJsonbSchema },
       oauth_request_id: `TEXT UNIQUE`,
       oauth: {
         nullable: true,
         jsonbSchema: {
           oneOfType: [
             {
-              phase: { enum: ["waiting-for-auth"] },
+              phase: { enum: ["initializing_dcr"] },
               redirectUri: "string",
               scopes: "string[]",
-              authorizationUrl: "string",
-              state: "unknown",
             },
             {
-              phase: { enum: ["code-provided"] },
+              phase: { enum: ["initializing_bearer_token"] },
+              redirectUri: "string",
+              bearerToken: "string",
+              scopes: "string[]",
+            },
+            {
+              phase: { enum: ["error"] },
+              error: "string",
+              errorType: { enum: ["dcr_not_supported", "unknown"] },
               redirectUri: "string",
               scopes: "string[]",
+            },
+            {
+              phase: { enum: ["awaiting_authorization"] },
+              ...commonOAuthSchema,
+              authorizationUrl: "string",
+              codeVerifier: "string",
+            },
+            {
+              phase: { enum: ["exchanging_code"] },
+              ...commonOAuthSchema,
+              codeVerifier: "string",
               pendingAuthorizationCode: "string",
-              state: { type: "unknown", optional: true },
             },
             {
               phase: { enum: ["connected"] },
-              redirectUri: "string",
-              scopes: "string[]",
+              ...commonOAuthSchema,
+              tokens: { record: { values: "unknown" } },
               clientSecret: { type: "string", optional: true },
-              state: { type: "unknown", optional: true },
+            },
+            {
+              phase: { enum: ["connected_bearer"] },
+              bearerToken: "string",
             },
           ],
         },
@@ -361,6 +394,17 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
           },
         },
         nullable: true,
+      },
+      icons: {
+        nullable: true,
+        jsonbSchema: {
+          arrayOfType: {
+            src: "string",
+            mimeType: { type: "string", optional: true },
+            sizes: { type: "string[]", optional: true },
+            theme: { enum: ["light", "dark"], optional: true },
+          },
+        },
       },
       mode: {
         info: { hint: "Used by prostgles mcp tools" },

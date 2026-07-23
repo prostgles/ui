@@ -4,7 +4,7 @@ import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol } from "@components/Flex";
 import { FooterButtons } from "@components/Popup/FooterButtons";
 import { mdiCheck, mdiCheckAll } from "@mdi/js";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { DatabaseAccessEditor } from "src/dashboard/DatabaseAccessEditor/DatabaseAccessEditor";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import { tout } from "src/utils/utils";
@@ -30,6 +30,7 @@ export const RequestToolAccess = ({
       >
     >
   >({});
+
   const input = useJSONBParsedData(
     toolUseContent.input,
     PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]["request_tool_access"][
@@ -43,24 +44,25 @@ export const RequestToolAccess = ({
     ],
   );
 
-  // const compactDatabaseAccess = input.data?.databaseAccess;
-  // const dbAccess = useMemo(
-  //   () =>
-  //     typeof compactDatabaseAccess === "string" ?
-  //       {
-  //         mode: compactDatabaseAccess,
-  //       }
-  //     : compactDatabaseAccess ?
-  //       ({
-  //         mode: "custom",
-  //         tablePermissions: compactDatabaseAccess,
-  //       } as const)
-  //     : undefined,
-  //   [compactDatabaseAccess],
-  // );
   const dbAccess = input.data?.databaseAccess;
 
   const toolResultData = result?.data;
+
+  /**
+   * For convenience, add latest configs to the configs state, so that if the user has already configured a server, it will be used automatically.
+   */
+  useEffect(() => {
+    if (!toolResultData) return;
+    setConfigs((prev) => {
+      const newConfigs = { ...prev };
+      for (const tool of toolResultData.validatedTools) {
+        if (tool.config_id && !newConfigs[tool.server_name]) {
+          newConfigs[tool.server_name] = { configId: tool.config_id };
+        }
+      }
+      return newConfigs;
+    });
+  }, [toolResultData]);
 
   const { sendToolUseResult } = useSendToolUseResult();
   const onAddTools = useCallback(
@@ -93,7 +95,7 @@ export const RequestToolAccess = ({
         const serverNames = new Set(
           accessInfo.validatedTools.map((t) => t.server_name),
         );
-        await dbs.mcp_servers.update(
+        const enabledServers = await dbs.mcp_servers.update(
           {
             name: {
               $in: accessInfo.validatedTools.map((t) => t.server_name),
@@ -101,6 +103,9 @@ export const RequestToolAccess = ({
           },
           {
             enabled: true,
+          },
+          {
+            returning: { name: 1, command: 1, config_schema: 1 },
           },
         );
 
@@ -111,16 +116,33 @@ export const RequestToolAccess = ({
           await dbsMethods.reloadMcpServerTools?.({ serverName });
         }
         await dbs.llm_chats_allowed_mcp_tools.insertMany(
-          accessInfo.validatedTools.map(
-            ({ id, server_name, config_id }) =>
-              ({
-                chat_id: chatId,
-                server_name,
-                tool_id: id,
-                auto_approve: state === "auto_approve",
-                server_config_id: configs[server_name]?.configId ?? config_id,
-              }) satisfies DBSSchemaForInsert["llm_chats_allowed_mcp_tools"],
-          ),
+          accessInfo.validatedTools.map(({ id, server_name, config_id }) => {
+            const server = enabledServers?.find((s) => s.name === server_name);
+            if (!server) {
+              throw new Error(
+                `Server ${server_name} not found in enabled servers: ${JSON.stringify(
+                  enabledServers,
+                )}`,
+              );
+            }
+            const server_config_id =
+              configs[server_name]?.configId ?? config_id;
+            if (
+              (server.config_schema || server.command === "streamable-http") &&
+              !server_config_id
+            ) {
+              throw new Error(
+                `Server ${server_name} requires a config, but no config was provided. Please provide a config for this server.`,
+              );
+            }
+            return {
+              chat_id: chatId,
+              server_name,
+              tool_id: id,
+              auto_approve: state === "auto_approve",
+              server_config_id: configs[server_name]?.configId ?? config_id,
+            } satisfies DBSSchemaForInsert["llm_chats_allowed_mcp_tools"];
+          }),
           {
             onConflict: "DoUpdate",
           },

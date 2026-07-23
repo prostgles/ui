@@ -14,6 +14,10 @@ import { CONVERT_DOCUMENT_DEFAULT_OPTIONS } from "@src/ServiceManager/services/d
 import type { getServerFunctionsContext } from "../getServerFunctionsContext";
 import { getDefineAdminFunction } from "./getDefineAdminFunction";
 import { getMcpOAuthMetadata } from "@src/McpHub/AnthropicMcpHub/McpOAuth/getMcpOAuthMetadata";
+import {
+  mcpServerConfigJsonbSchema,
+  tableConfigMCPServers,
+} from "@src/tableConfig/tableConfigMCPServers";
 export const getMcpServerFunctions = (
   context: Awaited<ReturnType<typeof getServerFunctionsContext>>,
 ) => {
@@ -35,18 +39,10 @@ export const getMcpServerFunctions = (
       input: {
         serverName: "string",
         origin: "string",
-        scopes: "string[]",
-        clientMetadataUrl: { type: "string", optional: true },
-        authMode: { enum: ["dcr", "cimd"] as const },
+        config: { type: mcpServerConfigJsonbSchema.oneOfType[0] },
       },
-      run: async (
-        { serverName, origin, scopes, clientMetadataUrl, authMode },
-        { dbs },
-      ) => {
-        return authenticateMcpServer(
-          { serverName, origin, scopes, clientMetadataUrl, authMode },
-          dbs,
-        );
+      run: async ({ serverName, origin, config }, { dbs }) => {
+        return authenticateMcpServer({ serverName, origin, config }, dbs);
       },
     }),
     getMcpOAuthMetadata: defineAdminFunction({

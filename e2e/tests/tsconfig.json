@@ -11,5 +11,6 @@
     "paths": {
       "common/*": ["../../common/*"]
     }
-  }
+  },
+  "exclude": ["./tests/mockRemoteMcp"]
 }

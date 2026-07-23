@@ -165,12 +165,34 @@ const handler = {
           { databaseAccess, mcpServerTools },
           { connection_id },
         ) => {
+          /**
+           * For convenience, add latest configs to the configs state, so that if the user has already configured a server, it will be used automatically.
+           */
+          const latestConfigs =
+            mcpServerTools &&
+            !isEmpty(mcpServerTools) &&
+            (await dbs.mcp_server_configs.find(
+              {
+                server_name: {
+                  $in: Object.keys(mcpServerTools),
+                },
+              },
+              { select: { server_name: 1, configId: { $max: ["id"] } } },
+            ));
+
           const validatedTools =
             mcpServerTools &&
             (await getValidatedMcpServerToolsAllowed(
               dbs,
               mcpServerTools,
-              undefined,
+              !latestConfigs ? undefined : (
+                Object.fromEntries(
+                  latestConfigs.map((c) => [
+                    c.server_name,
+                    { configId: Number(c.configId) },
+                  ]),
+                )
+              ),
             ));
           if (mcpServerTools && !validatedTools?.length) {
             throw new Error(

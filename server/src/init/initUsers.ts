@@ -43,6 +43,7 @@ export const getPasswordlessAdmin = async (
 export const initUsers = async (db: DBS, _db: DB) => {
   let username = PRGL_USERNAME,
     password = PRGL_PASSWORD;
+
   if (NoInitialAdminPasswordProvided) {
     username = PASSWORDLESS_ADMIN_USERNAME;
     password = EMPTY_PASSWORD;
@@ -93,7 +94,9 @@ export const initUsers = async (db: DBS, _db: DB) => {
   const electron = getElectronConfig();
   if (electron?.isElectron) {
     const user = await getPasswordlessAdmin(db);
-    if (!user) throw `Unexpected: Electron passwordless_admin misssing`;
+    if (!user) {
+      throw `Unexpected: Electron passwordless_admin misssing`;
+    }
     await db.sessions.delete({});
     await makeSession(
       user,

@@ -88,17 +88,21 @@ export const getAuth = async (
         "/favicon.ico",
         "/robots.txt",
         API_ENDPOINTS.WS_DB,
+        ROUTES.MCP_OAUTH_CALLBACK,
       ],
       onGetRequestOK: async (req, res, { getUser }) => {
         if (req.path.startsWith(ROUTES.MCP_OAUTH_CALLBACK)) {
-          const userData = await getUser();
-          if (!userData.user) {
-            res.status(401).send("Unauthorized");
-            return;
-          } else if (userData.user.type !== "admin") {
-            res.status(403).send("Forbidden");
-            return;
-          }
+          /** The confirmation can be initiated on a browser without a session */
+          // const userData = await getUser();
+          // const errorHint =
+          //   "Ensure you're logged in as an admin user in Prostgles and have the correct permissions to perform this action.";
+          // if (!userData.user) {
+          //   res.status(401).send("Unauthorized");
+          //   return;
+          // } else if (userData.user.type !== "admin") {
+          //   res.status(403).send("Forbidden");
+          //   return;
+          // }
 
           const result = await updateRemoteMcpAuthorizationCode(dbs, req.query);
           if (result.success === false) {

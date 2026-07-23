@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { classOverride } from "./Flex";
+import { useDebouncedCallback } from "src/hooks/useDebouncedCallback";
+import { useCallback } from "react";
 
 export const Stopwatch = ({
   startTime,
@@ -75,9 +77,14 @@ export const useCountdown = () => {
     return () => clearInterval(interval);
   }, [state]);
 
+  const stop = useCallback(() => {
+    start(undefined);
+    setElapsed("");
+  }, []);
   return {
     start,
     elapsed: state?.endTime ? elapsed : "",
+    stop,
   };
 };
 
