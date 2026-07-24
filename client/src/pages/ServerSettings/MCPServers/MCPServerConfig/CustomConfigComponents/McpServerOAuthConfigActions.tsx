@@ -114,7 +114,10 @@ export const McpServerOAuthConfigActions = ({
         <McpServerOAuthConfigAuthorizeUrlBtn
           authorizationUrl={authorizationUrl}
         />
-      : oauth?.phase === "exchanging_code" ?
+      : (
+        oauth?.phase === "exchanging_code" ||
+        oauth?.phase === "initializing_client"
+      ) ?
         <Btn loading={true} color="warn" variant="faded">
           Waiting for server to finish authentication
         </Btn>

@@ -2128,8 +2128,6 @@ test.describe("Main test", () => {
       await page
         .getByTestId("McpServerOAuthConfigActions.LoginWithOAuth")
         .click(TWENTY_SECONDS_OR_MORE);
-
-      /** Open auth page */
       const [popup] = await Promise.all([
         page.waitForEvent("popup"),
         page
@@ -2234,17 +2232,6 @@ test.describe("Main test", () => {
         .getByTestId("McpServerOAuthConfigActions.LoginWithOAuth")
         .click();
 
-      const [popup3] = await Promise.all([
-        page.waitForEvent("popup"),
-        page
-          .getByTestId(
-            "McpServerOAuthConfigAuthorizeUrlBtn.OpenAuthorizationUrl",
-          )
-          .click(),
-      ]);
-      await popup3.waitForLoadState("load");
-      await popup3.locator("button[name=accept]").click(TWENTY_SECONDS_OR_MORE);
-      await popup3.close();
       await saveConfigAndRefreshToolsAndDeleteConfig();
     } finally {
       container.kill("SIGTERM");
