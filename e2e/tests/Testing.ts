@@ -596,6 +596,7 @@ export const COMMANDS = {
   "McpServerOAuthConfigAuthorizeUrlBtn.OpenAuthorizationUrl": "",
   "McpServerOAuthConfigTopControls.authMode": "",
   "McpServerOAuthConfigTopControls.bearerToken": "",
+  "McpServerOAuthConfigActions.connectionToggle": "",
 } as const satisfies Record<
   string,
   | string

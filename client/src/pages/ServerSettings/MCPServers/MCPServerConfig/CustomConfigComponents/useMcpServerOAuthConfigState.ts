@@ -20,6 +20,22 @@ export const useMcpServerOAuthConfigState = ({
   const [clientMetadataUrl, setClientMetadataUrl] = useState(
     savedConfig?.auth.mode === "cimd" ? savedConfig.auth.clientMetadataUrl : "",
   );
+  const [clientId, setClientId] = useState(
+    (
+      savedConfig?.auth.mode === "client_credentials" ||
+        savedConfig?.auth.mode === "authorization_code"
+    ) ?
+      savedConfig.auth.clientId
+    : "",
+  );
+  const [clientSecret, setClientSecret] = useState(
+    (
+      savedConfig?.auth.mode === "client_credentials" ||
+        savedConfig?.auth.mode === "authorization_code"
+    ) ?
+      savedConfig.auth.clientSecret
+    : "",
+  );
   const authorizationUrl =
     oauth?.phase === "awaiting_authorization" ?
       oauth.authorizationUrl
@@ -49,6 +65,10 @@ export const useMcpServerOAuthConfigState = ({
     authMode,
     clientMetadataUrl,
     setClientMetadataUrl,
+    clientId,
+    setClientId,
+    clientSecret,
+    setClientSecret,
   };
 };
 
@@ -63,6 +83,18 @@ const MCP_OAUTH_MODES = [
     label: "DCR",
     subLabel:
       "Dynamic Client Registration - Automatically registers an OAuth client with the authorization server",
+  },
+  {
+    key: "authorization_code",
+    label: "Authorization Code",
+    subLabel:
+      "Uses the OAuth authorization code flow to obtain an access token for authentication",
+  },
+  {
+    key: "client_credentials",
+    label: "Client Credentials",
+    subLabel:
+      "Uses the OAuth client credentials flow to obtain an access token for authentication",
   },
   {
     key: "bearer",

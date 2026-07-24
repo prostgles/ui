@@ -51,6 +51,7 @@ export const MCPServers = ({ chatId, focusedServer }: MCPServersProps) => {
     <MCPServerConfigProvider>
       <FlexCol
         className="p-1 pt-0 min-w-0 f-1 max-w-800"
+        data-command="MCPServers"
         style={{
           opacity: loaded ? 1 : 0,
           transition: "opacity 0.2s ease-in-out",

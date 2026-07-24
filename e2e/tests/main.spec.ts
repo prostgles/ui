@@ -67,6 +67,7 @@ import {
   uploadFile,
 } from "./utils/utils";
 import { createConnection } from "net";
+import { ROOT_DIR } from "svgScreenshots/utils/constants";
 
 const schemaGraphTestDbName = "financial.sql";
 const DB_NAMES = {
@@ -2039,7 +2040,7 @@ test.describe("Main test", () => {
 
     execSync(
       `docker build -t ${imageName} ./e2e/tests/testAskLLM/mockRemoteMcp`,
-      { cwd: process.cwd(), stdio: "inherit" },
+      { cwd: ROOT_DIR, stdio: "inherit" },
     );
 
     const container = spawn(
@@ -2144,7 +2145,7 @@ test.describe("Main test", () => {
       await popup.locator("button[name=accept]").click(TWENTY_SECONDS_OR_MORE);
       await popup.close();
 
-      const saveConfigAndRefreshTools = async () => {
+      const saveConfigAndRefreshToolsAndDeleteConfig = async () => {
         await expect(
           page.getByTestId("McpServerOAuthConfigActions.connectionToggle"),
         ).toHaveText("Connected", { ...TWENTY_SECONDS_OR_MORE });
@@ -2161,39 +2162,90 @@ test.describe("Main test", () => {
           ` tool for "mock" server`,
         );
         await page.getByText("OK", { exact: true }).click();
+        await page
+          .locator(
+            getDataKey("mock") +
+              " " +
+              getCommandElemSelector("MCPServerConfigButton"),
+          )
+          .click();
+        await page.getByText("Delete config", { exact: true }).click();
       };
-      await saveConfigAndRefreshTools();
+      await saveConfigAndRefreshToolsAndDeleteConfig();
 
-      await page
-        .locator(
-          getDataKey("mock") +
-            " " +
-            getCommandElemSelector("MCPServerConfigButton"),
-        )
-        .click();
-      await page.getByText("Delete config", { exact: true }).click();
+      const enableServer = async () => {
+        await page.waitForTimeout(3e3);
+        await page
+          .locator(
+            getDataKey("mock") + " " + getCommandElemSelector("SwitchToggle"),
+          )
+          .click();
+      };
 
-      await page.waitForTimeout(3e3);
-      await page
-        .locator(
-          getDataKey("mock") + " " + getCommandElemSelector("SwitchToggle"),
-        )
-        .click();
+      const setAuthMode = async (
+        mode: "bearer" | "client_credentials" | "authorization_code",
+      ) => {
+        await page
+          .getByTestId("McpServerOAuthConfigTopControls.authMode")
+          .click();
+        await page
+          .getByTestId("McpServerOAuthConfigTopControls.authMode")
+          .locator(getDataKey(mode))
+          .click();
+      };
 
       /** Bearer */
-      await page
-        .getByTestId("McpServerOAuthConfigTopControls.authMode")
-        .click();
-      await page
-        .getByTestId("McpServerOAuthConfigTopControls.authMode")
-        .locator(getDataKey("bearer"))
-        .click();
+      await enableServer();
+      await setAuthMode("bearer");
       await page.getByLabel("Bearer token").fill("test-token");
       await page
         .getByTestId("McpServerOAuthConfigActions.LoginWithOAuth")
         .click();
-      await expect;
-      await saveConfigAndRefreshTools();
+      await saveConfigAndRefreshToolsAndDeleteConfig();
+
+      /** authorization_code */
+      await enableServer();
+      await setAuthMode("authorization_code");
+      await page.getByLabel("Client Id").fill("static-client");
+      await page.getByLabel("Client Secret").fill("static-secret");
+      await page
+        .getByTestId("McpServerOAuthConfigActions.LoginWithOAuth")
+        .click();
+
+      const [popup2] = await Promise.all([
+        page.waitForEvent("popup"),
+        page
+          .getByTestId(
+            "McpServerOAuthConfigAuthorizeUrlBtn.OpenAuthorizationUrl",
+          )
+          .click(),
+      ]);
+      await popup2.waitForLoadState("load");
+      await popup2.locator("button[name=accept]").click(TWENTY_SECONDS_OR_MORE);
+      await popup2.close();
+      await saveConfigAndRefreshToolsAndDeleteConfig();
+
+      /** client credentials */
+      await enableServer();
+      await setAuthMode("client_credentials");
+      await page.getByLabel("Client Id").fill("static-client");
+      await page.getByLabel("Client Secret").fill("static-secret");
+      await page
+        .getByTestId("McpServerOAuthConfigActions.LoginWithOAuth")
+        .click();
+
+      const [popup3] = await Promise.all([
+        page.waitForEvent("popup"),
+        page
+          .getByTestId(
+            "McpServerOAuthConfigAuthorizeUrlBtn.OpenAuthorizationUrl",
+          )
+          .click(),
+      ]);
+      await popup3.waitForLoadState("load");
+      await popup3.locator("button[name=accept]").click(TWENTY_SECONDS_OR_MORE);
+      await popup3.close();
+      await saveConfigAndRefreshToolsAndDeleteConfig();
     } finally {
       container.kill("SIGTERM");
       execSync(`docker rm -f ${containerName}`, { stdio: "ignore" });

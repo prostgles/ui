@@ -15,9 +15,19 @@ export const createMcpOAuthProvider = ({
 }: RemoteMcpServerParameters): undefined | OAuthClientProvider => {
   let state: StreamableHTTPOAuthState = { ...(OAuthState ?? {}) };
 
-  if (!OAuthConfig || !OAuthEvents) return;
+  if (!OAuthConfig || !OAuthEvents) {
+    return;
+  }
   const persist = async () => {
     await OAuthEvents.onPersistState(state);
+  };
+
+  const commonConfig = {
+    redirect_uris: [OAuthConfig.redirectUri],
+    grant_types: ["authorization_code", "refresh_token"],
+    response_types: ["code"],
+    token_endpoint_auth_method:
+      OAuthConfig.clientSecret ? "client_secret_post" : "none",
   };
 
   const provider: OAuthClientProvider = {
@@ -25,13 +35,18 @@ export const createMcpOAuthProvider = ({
     clientMetadataUrl: OAuthConfig.clientMetadataUrl,
     clientMetadata: {
       client_name: MCP_CLIENT_INFO.name,
-      redirect_uris: [OAuthConfig.redirectUri],
-      grant_types: ["authorization_code", "refresh_token"],
-      response_types: ["code"],
-      token_endpoint_auth_method:
-        OAuthConfig.clientSecret ? "client_secret_post" : "none",
+      ...commonConfig,
     },
     clientInformation() {
+      if (OAuthConfig.authMode === "client_credentials") {
+        return {
+          ...state.clientInformation,
+          ...commonConfig,
+          response_types: ["token"],
+          client_id: OAuthConfig.clientId!,
+          client_secret: OAuthConfig.clientSecret!,
+        };
+      }
       return state.clientInformation;
     },
     async saveClientInformation(clientInformation) {

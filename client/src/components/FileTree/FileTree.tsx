@@ -73,6 +73,7 @@ export const FileTree = (props: FileTreeProps) => {
         <div
           ref={scrollRef}
           role="tree"
+          style={{ maxHeight: "500px" }}
           className="fst-scroll f-1 oy-auto ox-hidden"
           aria-label="File system"
         >

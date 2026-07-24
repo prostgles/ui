@@ -23,6 +23,8 @@ export const McpServerOAuthConfigActions = ({
   bearerToken,
   authMode,
   clientMetadataUrl,
+  clientId,
+  clientSecret,
 }: P) => {
   const {
     dbsMethods: { authenticateMcpServer },
@@ -45,19 +47,31 @@ export const McpServerOAuthConfigActions = ({
               auth:
                 authMode === "bearer" ?
                   {
-                    mode: "bearer",
+                    mode: authMode,
                     bearerToken,
                   }
                 : authMode === "dcr" ?
                   {
-                    mode: "dcr",
+                    mode: authMode,
+                  }
+                : authMode === "authorization_code" ?
+                  {
+                    mode: authMode,
+                    clientId,
+                    clientSecret,
+                  }
+                : authMode === "client_credentials" ?
+                  {
+                    mode: authMode,
+                    clientId,
+                    clientSecret,
                   }
                 : authMode === "none" ?
                   {
-                    mode: "none",
+                    mode: authMode,
                   }
                 : {
-                    mode: "cimd",
+                    mode: authMode,
                     clientMetadataUrl,
                   },
             } as const satisfies DBSSchema["mcp_server_configs"]["config"];

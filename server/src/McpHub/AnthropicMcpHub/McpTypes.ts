@@ -82,6 +82,7 @@ export type StreamableHTTPOAuthState = z.infer<
 export type StreamableHTTPOAuthConfig = {
   enabled?: boolean;
   redirectUri: string;
+  clientId?: string;
   clientSecret?: string;
   scopes?: string[];
   state?: StreamableHTTPOAuthState;
@@ -159,8 +160,9 @@ export type RemoteMcpServerParameters = {
     | undefined
     | (Pick<
         StreamableHTTPOAuthConfig,
-        "clientSecret" | "redirectUri" | "scopes"
+        "clientId" | "clientSecret" | "redirectUri" | "scopes"
       > & {
+        authMode: "dcr" | "authorization_code" | "client_credentials" | "cimd";
         clientMetadataUrl: string | undefined;
       });
   RemoteServerEvents?: {

@@ -40,7 +40,17 @@ export const serverSettingsUIDoc = {
       selector: getDataKey("mcpServers"),
       description:
         "Manage MCP servers and tools that can then be used in the Ask AI chat",
-      children: [],
+      children: [
+        {
+          type: "section",
+          title: "MCP Servers",
+          description:
+            "Manage MCP servers and tools that can then be used in the Ask AI chat",
+          componentName: "MCPServers",
+          selectorCommand: "MCPServers",
+          children: [],
+        },
+      ],
     },
     {
       type: "tab",

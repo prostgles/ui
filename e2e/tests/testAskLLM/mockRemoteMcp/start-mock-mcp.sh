@@ -26,7 +26,7 @@ $KCADM config credentials --server http://localhost:8080 --realm master --user a
 $KCADM create realms -s realm=mcp -s enabled=true
 
 
-# --- NEW: Configure Trusted Hosts for Dynamic Client Registration ---
+# ---Configure Trusted Hosts for Dynamic Client Registration ---
 echo "Configuring Trusted Hosts for Client Registration..."
 
 # 1. Get the component ID for the Trusted Hosts policy
@@ -48,11 +48,32 @@ fi
 
 
 # Create a static client (Flow 3: Bearer Token)
-$KCADM create clients -r mcp \
-    -s clientId=static-client \
-    -s publicClient=false \
-    -s secret=static-secret \
-    -s directAccessGrantsEnabled=true
+# $KCADM create clients -r mcp \
+#     -s clientId=static-client \
+#     -s publicClient=false \
+#     -s secret=static-secret \
+#     -s directAccessGrantsEnabled=true
+
+
+# Static client (Client Credentials + Auth Code with pre-registered client)
+$KCADM create clients -r mcp -f - <<'EOF'
+{
+  "clientId": "static-client",
+  "enabled": true,
+  "publicClient": false,
+  "secret": "static-secret",
+  "standardFlowEnabled": true,
+  "serviceAccountsEnabled": true,
+  "directAccessGrantsEnabled": true,
+  "consentRequired": true,
+  "redirectUris": ["*"],
+  "webOrigins": ["*"],
+  "attributes": {
+    "pkce.code.challenge.method": "S256"
+  }
+}
+EOF
+
 
 echo "Realm and static client provisioned."
 

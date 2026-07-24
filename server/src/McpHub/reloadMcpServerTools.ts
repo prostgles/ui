@@ -31,39 +31,47 @@ export const updateMcpServerTools = async (
   dbs: DBS,
   serverName: string,
   mcpHub: McpHub,
+  ignoreIfNotConnected = false,
 ) => {
-  let tools: (McpTool & {
+  const tools: (McpTool & {
     mode: DBSSchema["mcp_server_tools"]["mode"];
-  })[] = [];
-  const prostglesMCP = getProstglesMCPServer(serverName);
-  if (prostglesMCP) {
-    tools = getEntries(
-      prostglesMCP.definition.tools as ProstglesMcpServerDefinition["tools"],
-    ).map(([name, { schema, description, mode = null, outputSchema }]) => {
-      return {
-        name,
-        description,
-        mode,
-        ...getSchemasAsJsonSchema({ schema, outputSchema }),
-      };
-    });
-  } else {
-    const handlers = mcpHub.getClientHandlers(serverName);
-    if (!handlers) {
-      throw new Error(
-        `No connection found for MCP server: ${serverName}. Make sure it is enabled`,
-      );
+  })[] = await (async () => {
+    const prostglesMCP = getProstglesMCPServer(serverName);
+    if (prostglesMCP) {
+      return getEntries(
+        prostglesMCP.definition.tools as ProstglesMcpServerDefinition["tools"],
+      ).map(([name, { schema, description, mode = null, outputSchema }]) => {
+        return {
+          name,
+          description,
+          mode,
+          ...getSchemasAsJsonSchema({ schema, outputSchema }),
+        };
+      });
+    } else {
+      const handlers = mcpHub.getClientHandlers(serverName);
+      if (!handlers) {
+        if (ignoreIfNotConnected) {
+          return [];
+        }
+        throw new Error(
+          `No connection found for MCP server: ${serverName}. Make sure it is enabled`,
+        );
+      }
+      // const resources = await handlers.fetchResourcesList();
+      // const resourceTemplates = await handlers.fetchResourceTemplatesList();
+      // const prompts = await handlers.fetchPrompts();
+      return (await handlers.fetchToolsList()).map((tool) => {
+        return {
+          ...tool,
+          mode: null,
+        };
+      });
     }
-    tools = (await handlers.fetchToolsList()).map((tool) => {
-      return {
-        ...tool,
-        mode: null,
-      };
-    });
-    const resources = await handlers.fetchResourcesList();
-    const resourceTemplates = await handlers.fetchResourceTemplatesList();
-    const prompts = await handlers.fetchPrompts();
-    console.log({ resources, resourceTemplates, prompts });
+  })();
+
+  if (!tools.length && ignoreIfNotConnected) {
+    return 0;
   }
 
   await dbs.tx(async (tx) => {

@@ -63,7 +63,7 @@ const loadMissingTools = async (
       server_name,
     });
     if (!toolCount) {
-      await updateMcpServerTools(dbs, server_name, mcpHub);
+      await updateMcpServerTools(dbs, server_name, mcpHub, true);
     }
   }
 };

@@ -34,11 +34,9 @@ export const updateRemoteMcpAuthorizationCode = async (
 
   return await dbs
     .tx(async (t) => {
-      const scopes = (JSON.parse(scopesStr) as string[]).sort();
       const existingConfig = await t.mcp_server_configs.findOne({
         server_name,
         oauth_request_id: request_id,
-        config: { "@>": { scopes, auth: { mode: "dcr" } } },
       });
       if (!existingConfig) {
         throw new Error(

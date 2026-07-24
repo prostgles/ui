@@ -55,6 +55,10 @@ const DYNAMIC_COMPONENT_REGISTRY = {
     import("src/dashboard/SchemaGraph/SchemaGraph").then((mod) => ({
       default: mod.SchemaGraph,
     })),
+  MCPServers: () =>
+    import("src/pages/ServerSettings/MCPServers/MCPServers").then((mod) => ({
+      default: mod.MCPServers,
+    })),
 } as const satisfies Record<
   string,
   () => Promise<{ default: React.ComponentType<any> }>

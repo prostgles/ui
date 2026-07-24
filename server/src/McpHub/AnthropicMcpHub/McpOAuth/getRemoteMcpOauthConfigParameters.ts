@@ -17,14 +17,26 @@ export const getRemoteMcpOauthConfigParameters = (
   "OAuthConfig" | "OAuthEvents" | "OAuthState"
 > => {
   if (
-    config.type !== "OAuth" ||
     !oauth ||
+    config.type !== "OAuth" ||
+    config.auth.mode === "bearer" ||
+    config.auth.mode === "none"
+  ) {
+    return {
+      OAuthConfig: undefined,
+      OAuthEvents: undefined,
+      OAuthState: undefined,
+    };
+  }
+
+  if (
     oauth.phase === "connected_bearer" ||
     oauth.phase === "error" ||
     oauth.phase === "initializing_bearer_token"
   ) {
     return {
       OAuthConfig: {
+        authMode: config.auth.mode,
         redirectUri: "",
         clientMetadataUrl: undefined,
         scopes: [],
@@ -93,6 +105,13 @@ export const getRemoteMcpOauthConfigParameters = (
     }
   };
 
+  const configClientInfo =
+    (
+      config.auth.mode === "authorization_code" ||
+      config.auth.mode === "client_credentials"
+    ) ?
+      config.auth
+    : undefined;
   return {
     OAuthEvents: {
       onAuthRedirect: async (authorizationUrl) => {
@@ -123,12 +142,16 @@ export const getRemoteMcpOauthConfigParameters = (
       },
     },
     OAuthConfig: {
+      authMode: config.auth.mode,
       redirectUri: oauth.redirectUri,
       scopes: oauth.scopes,
       clientMetadataUrl:
         config.auth.mode === "cimd" ? config.auth.clientMetadataUrl : undefined,
+      clientId: configClientInfo?.clientId,
       clientSecret:
-        oauth.phase === "connected" ? oauth.clientSecret : undefined,
+        oauth.phase === "connected" ?
+          oauth.clientSecret
+        : configClientInfo?.clientSecret,
     },
     OAuthState:
       oauth.phase === "initializing_dcr" ?

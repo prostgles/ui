@@ -8,7 +8,7 @@ import {
   type McpServerEvents,
   type McpServerParameters,
 } from "./McpTypes";
-import { connectToRemoteMCPServer } from "./connectToRemoteMCPServer";
+import { connectToRemoteMCPServer } from "./McpOAuth/connectToRemoteMCPServer";
 import { createMcpServerHandlers } from "./createMcpServerHandlers";
 
 export type MCPServerInitInfo = McpServerEvents & {

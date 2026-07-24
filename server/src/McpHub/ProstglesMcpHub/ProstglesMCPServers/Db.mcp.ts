@@ -259,9 +259,8 @@ const runSqlTool = async (
     query_timeout && Number.isInteger(query_timeout) ?
       [`SET LOCAL statement_timeout to '${query_timeout}s'`, sql].join(";\n")
     : sql;
-  const result = await db.any<Record<string, any>>(
-    queryWithTimeout,
-    query_params,
+  const result = await db.tx((t) =>
+    t.any<Record<string, any>>(queryWithTimeout, query_params),
   );
   return result;
 };

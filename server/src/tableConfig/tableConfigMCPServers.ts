@@ -26,6 +26,11 @@ export const mcpServerConfigJsonbSchema = {
             mode: { enum: ["bearer"] },
             bearerToken: { type: "string" },
           },
+          {
+            mode: { enum: ["client_credentials", "authorization_code"] },
+            clientId: { type: "string" },
+            clientSecret: { type: "string" },
+          },
         ],
       },
     },

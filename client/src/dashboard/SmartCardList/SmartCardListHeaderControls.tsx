@@ -38,8 +38,8 @@ export const SmartCardListHeaderControls = (
     return {
       tableName: tableControls.tableName,
       filter: { $and: tableControls.localFilter },
-      onChange: (newf) => {
-        const items = "$and" in newf ? newf.$and : newf.$or;
+      onChange: (newFilter) => {
+        const items = "$and" in newFilter ? newFilter.$and : newFilter.$or;
         tableControls.setLocalFilter(items);
       },
     } satisfies Pick<RenderFilterProps, "filter" | "onChange" | "tableName">;
@@ -55,19 +55,19 @@ export const SmartCardListHeaderControls = (
     return null;
   }
 
-  if (
-    !(
-      titleNode ||
-      (showTopBar &&
-        ((isObject(showTopBar) && showTopBar.leftContent) ||
-          tableControls?.willShowInsert ||
-          (showSearch && tableControls) ||
-          (tableControls?.setLocalOrderBy && showSort))) ||
-      filterProps
-    )
-  ) {
+  if (!(
+    titleNode ||
+    (showTopBar &&
+      ((isObject(showTopBar) && showTopBar.leftContent) ||
+        tableControls?.willShowInsert ||
+        (showSearch && tableControls) ||
+        (tableControls?.setLocalOrderBy && showSort))) ||
+    filterProps
+  )) {
     return null;
   }
+
+  const noItemsToShow = !props.itemsLength && !props.totalRows;
 
   return (
     <FlexCol className="SmartCardListControls gap-p5 aid-end py-p25">
@@ -91,7 +91,7 @@ export const SmartCardListHeaderControls = (
               tableName={tableControls.tableName}
             />
           )}
-          {showSearch && tableControls && (
+          {showSearch && tableControls && !noItemsToShow && (
             <SmartFilterBarSearch
               db={db}
               tableName={tableControls.tableName}

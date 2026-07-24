@@ -1,7 +1,8 @@
 import * as path from "path";
 import type { SVGif } from "Testing";
 
-export const DOCS_DIR = path.join(__dirname, "../../../../docs/");
+export const ROOT_DIR = path.join(__dirname, "../../../../");
+export const DOCS_DIR = path.join(ROOT_DIR, "docs/");
 if (!DOCS_DIR.endsWith("ui/docs/")) {
   throw new Error("DOCS_DIR is not set correctly: " + DOCS_DIR);
 }

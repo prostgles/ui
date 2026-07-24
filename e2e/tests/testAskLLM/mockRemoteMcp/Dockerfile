@@ -23,8 +23,8 @@ RUN npm init -y && \
   npm install express @modelcontextprotocol/sdk typescript tsx @types/express
 
 # Copy your server and execution script
-COPY server.ts start.sh ./
-RUN chmod +x start.sh
+COPY server.ts start-mock-mcp.sh ./
+RUN chmod +x start-mock-mcp.sh
 
 EXPOSE 8080 3000
-CMD ["./start.sh"]
+CMD ["./start-mock-mcp.sh"]

@@ -3,8 +3,9 @@ import React, { useMemo } from "react";
 import { Icon } from "./Icon/Icon";
 import "./List.css";
 import type { MenuListProps } from "./MenuList";
+import type { TestSelectors } from "src/Testing";
 
-export type MenuListitem = {
+export type MenuListitem = TestSelectors & {
   key?: string;
   label: React.ReactElement | string;
   contentRight?: React.ReactNode;
@@ -51,7 +52,7 @@ export const MenuListItem = ({
           borderBottomStyle: "solid",
           borderBottomWidth: activeKey ? "4px" : "1px",
           flex: 1,
-          color: "var(--text-0)",
+          color: "var(--text-1)",
           ...(isActive && {
             borderColor: "var(--active)",
             backgroundColor: "var(--bg-color-0)",
@@ -96,6 +97,7 @@ export const MenuListItem = ({
       role="option"
       tabIndex={canPress ? 0 : undefined}
       title={item.disabledText || item.title}
+      data-command={item["data-command"]}
       className={`flex-row  p-p5  bg-li ${!item.disabledText && item.onPress ? " pointer " : " "} ${isActive ? " selected " : ""}`}
       {...itemProps}
       aria-current={isActive ? "true" : undefined}

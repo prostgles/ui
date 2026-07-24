@@ -1,12 +1,12 @@
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { tout } from "@src/utils/tout";
-import type { McpConnection } from "./McpHub";
-import { createMcpOAuthProvider } from "./McpOAuth/createMcpOAuthProvider";
+import type { McpConnection } from "../McpHub";
+import { createMcpOAuthProvider } from "./createMcpOAuthProvider";
 import {
   type McpServerEvents,
   type RemoteMcpServerParameters,
-} from "./McpTypes";
-import { createMcpServerHandlers } from "./createMcpServerHandlers";
+} from "../McpTypes";
+import { createMcpServerHandlers } from "../createMcpServerHandlers";
 
 const chainMap = new Map<string, Promise<any>>();
 

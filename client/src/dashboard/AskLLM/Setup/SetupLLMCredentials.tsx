@@ -11,6 +11,7 @@ import { AddLLMPromptForm } from "./AddLLMPromptForm";
 import { LLMProviderSetup } from "./LLMProviderSetup";
 import { ProstglesSignup } from "./ProstglesSignup";
 import type { LLMSetupState } from "./LLMSetupProvider";
+import Tabs from "@components/Tabs";
 
 export type SetupLLMCredentialsProps = {
   setupState: Exclude<LLMSetupState, { state: "ready" }>;
@@ -36,37 +37,30 @@ export const SetupLLMCredentials = (props: SetupLLMCredentialsProps) => {
     : state === "cannotSetupOrNotAllowed" ?
       <div>Contact the admin to setup the AI assistant</div>
     : <FlexCol data-command="SetupLLMCredentials">
-        <FlexCol className="ai-center mb-2">
-          {!setupType && (
-            <div className={"font-18 bold my-2"}>
-              To to use the AI assistant you need to either:
-            </div>
-          )}
-          <FlexRowWrap>
-            <Btn
-              data-command="SetupLLMCredentials.free"
-              variant={setupType === "free" ? "filled" : "faded"}
-              color="action"
-              onClick={() => setSetupType("free")}
-              iconPath={mdiLogin}
-              // disabledInfo={isPlaywrightTest ? undefined : "Coming soon"}
-            >
-              Signup (free)
-            </Btn>
-            <strong>Or</strong>
-            <Btn
-              data-command="SetupLLMCredentials.api"
-              variant={setupType === "api" ? "filled" : "faded"}
-              color="action"
-              onClick={() => setSetupType("api")}
-              iconPath={mdiKey}
-            >
-              Provide API Keys
-            </Btn>
-          </FlexRowWrap>
+        <FlexCol className="ai-center  ">
+          <div className={"font-18   mb-1"}>
+            The AI assistant requires access to an LLM provider
+          </div>
+          <Tabs
+            activeKey={setupType}
+            onChange={setSetupType}
+            contentClass="pt-2"
+            items={{
+              free: {
+                label: "Signup (free)",
+                leftIconPath: mdiLogin,
+                "data-command": "SetupLLMCredentials.free",
+                content: <ProstglesSignup setupState={setupState} />,
+              },
+              api: {
+                label: "Add provider",
+                leftIconPath: mdiKey,
+                "data-command": "SetupLLMCredentials.api",
+                content: <LLMProviderSetup />,
+              },
+            }}
+          />
         </FlexCol>
-        {setupType === "free" && <ProstglesSignup setupState={setupState} />}
-        {setupType === "api" && <LLMProviderSetup />}
         {setupType && !prompts.length && (
           <FlexCol className="mt-2">
             <InfoRow color="info" variant="filled">

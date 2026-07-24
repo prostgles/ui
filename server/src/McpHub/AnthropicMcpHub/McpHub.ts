@@ -34,15 +34,13 @@ export class McpHub {
 
   constructor() {}
 
-  getClient = (serverName: string): Client | undefined => {
+  getServer = (serverName: string) => {
     return Array.from(this.connections.values()).find(
       (conn) => conn.server_name === serverName,
-    )?.client;
+    );
   };
   getClientHandlers = (serverName: string) => {
-    return Array.from(this.connections.values()).find(
-      (conn) => conn.server_name === serverName,
-    )?.handlers;
+    return this.getServer(serverName)?.handlers;
   };
 
   getServers(): McpServer[] {
