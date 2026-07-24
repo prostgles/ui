@@ -8,10 +8,8 @@ import FormField from "@components/FormField/FormField";
 import PopupMenu from "@components/PopupMenu";
 import { Select } from "@components/Select/Select";
 import { mdiInformationOutline } from "@mdi/js";
-import { usePromise } from "prostgles-client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { CodeEditor } from "src/dashboard/CodeEditor/CodeEditor";
-import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import type { McpServerOAuthConfigState } from "./useMcpServerOAuthConfigState";
 
 type P = {
@@ -30,23 +28,9 @@ export const McpServerOAuthConfigTopControls = ({
   setSelectedScopes,
   authModeFullOptions,
   setAuthMode,
+  authInfo,
+  authInfoError,
 }: P) => {
-  const {
-    dbsMethods: { getMcpOAuthMetadata },
-  } = usePrglCore();
-
-  const [error, setError] = useState<unknown>();
-
-  const authInfo = usePromise(async () => {
-    if (server.url) {
-      if (!getMcpOAuthMetadata) {
-        return "not-allowed";
-      }
-      return getMcpOAuthMetadata({ serverName: server.name }).catch(setError);
-    }
-    return "none";
-  }, [getMcpOAuthMetadata, server.name, server.url]);
-
   const dcrNotSupported =
     (isObject(authInfo) && authInfo.modes.dcr === false) ||
     (existingConfig?.oauth?.phase === "error" &&
@@ -85,7 +69,7 @@ export const McpServerOAuthConfigTopControls = ({
           authMode === "none" ? "No OAuth authentication required"
           : authMode === "bearer" ?
             "Scopes are not used with bearer token authentication"
-          : error !== undefined ?
+          : authInfoError !== undefined ?
             "Failed to fetch scopes"
           : undefined
         }
@@ -112,15 +96,15 @@ export const McpServerOAuthConfigTopControls = ({
         button={
           <Btn
             iconPath={mdiInformationOutline}
-            loading={!authInfo && !error}
+            loading={!authInfo && !authInfoError}
             data-command="McpServerOAuthConfigTopControls.ShowServerInfo"
             variant="faded"
-            color={error ? "danger" : undefined}
+            color={authInfoError ? "danger" : undefined}
             title={"Show server info"}
             disabledInfo={
-              error ?
+              authInfoError ?
                 "Failed to fetch server info: " +
-                JSON.stringify(getSerialisableError(error), null, 2)
+                JSON.stringify(getSerialisableError(authInfoError), null, 2)
               : undefined
             }
           />

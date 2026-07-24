@@ -1,4 +1,4 @@
-import type { DBSSchema } from "@common/publishUtils";
+import { isObject, type DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
 import ErrorComponent from "@components/ErrorComponent";
 import React from "react";
@@ -25,6 +25,7 @@ export const McpServerOAuthConfigActions = ({
   clientMetadataUrl,
   clientId,
   clientSecret,
+  authInfo,
 }: P) => {
   const {
     dbsMethods: { authenticateMcpServer },
@@ -65,6 +66,18 @@ export const McpServerOAuthConfigActions = ({
                     mode: authMode,
                     clientId,
                     clientSecret,
+                    tokenEndpoint: (() => {
+                      const tokenEndpoint =
+                        isObject(authInfo) ?
+                          authInfo.serverInfo.token_endpoint
+                        : undefined;
+                      if (!tokenEndpoint) {
+                        throw new Error(
+                          "Cannot determine token endpoint for client_credentials mode",
+                        );
+                      }
+                      return tokenEndpoint;
+                    })(),
                   }
                 : authMode === "none" ?
                   {

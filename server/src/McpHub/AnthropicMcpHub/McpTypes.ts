@@ -1,4 +1,3 @@
-import { z } from "zod";
 import type {
   OAuthClientProvider,
   OAuthDiscoveryState,
@@ -15,6 +14,7 @@ import {
   type ListToolsResult,
 } from "@modelcontextprotocol/sdk/types";
 import { getElectronConfig } from "@src/electronConfig";
+import { z } from "zod";
 const StdioConfigSchema = z.object({
   transport: z.literal("stdio").optional(),
   command: z.string(),
@@ -145,26 +145,17 @@ export type RemoteMcpServerParameters = {
    */
   isInitializing: boolean;
   requestInit?: RequestInit;
-  OAuthEvents:
+  OAuth:
     | undefined
     | {
-        onPersistState: (state: StreamableHTTPOAuthState) => Promise<void>;
-        onAuthRedirect: (authorizationUrl: string) => Promise<void>;
+        pendingAuthorizationCode: undefined | string;
+        onCodeUsed: () => Promise<void>;
+        authProvider: OAuthClientProvider;
         onAuthError: (
           errorType: "dcr_not_supported" | "unknown",
           error: string,
         ) => void;
       };
-  OAuthState: undefined | StreamableHTTPOAuthState;
-  OAuthConfig:
-    | undefined
-    | (Pick<
-        StreamableHTTPOAuthConfig,
-        "clientId" | "clientSecret" | "redirectUri" | "scopes"
-      > & {
-        authMode: "dcr" | "authorization_code" | "client_credentials" | "cimd";
-        clientMetadataUrl: string | undefined;
-      });
   RemoteServerEvents?: {
     onConnected?: (info: {
       serverVersion?: z.infer<typeof ImplementationSchema>;

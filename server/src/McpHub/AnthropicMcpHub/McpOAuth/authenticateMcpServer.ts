@@ -49,6 +49,7 @@ export const authenticateMcpServer = async (
   callbackUrl.searchParams.set("request_id", request_id);
   const redirectUri = callbackUrl.toString();
 
+  const auth = config.auth;
   await dbs.mcp_server_configs.upsert(
     {
       server_name: serverName,
@@ -57,12 +58,24 @@ export const authenticateMcpServer = async (
     {
       oauth_request_id: request_id,
       oauth:
-        config.auth.mode === "bearer" ?
+        auth.mode === "bearer" ?
           {
             phase: "initializing_bearer_token",
             redirectUri,
             scopes: config.scopes,
-            bearerToken: config.auth.bearerToken,
+            bearerToken: auth.bearerToken,
+          }
+        : auth.mode === "client_credentials" ?
+          {
+            phase: "initializing_client",
+            redirectUri,
+            scopes: config.scopes,
+            clientInformation: {
+              client_id: auth.clientId,
+              client_secret: auth.clientSecret,
+            },
+            discoveryState: {},
+            tokenEndpoint: auth.tokenEndpoint,
           }
         : {
             phase: "initializing_dcr",

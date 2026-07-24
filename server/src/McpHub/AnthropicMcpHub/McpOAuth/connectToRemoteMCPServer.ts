@@ -1,7 +1,6 @@
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { tout } from "@src/utils/tout";
 import type { McpConnection } from "../McpHub";
-import { createMcpOAuthProvider } from "./createMcpOAuthProvider";
 import {
   type McpServerEvents,
   type RemoteMcpServerParameters,
@@ -32,8 +31,6 @@ export const connectToRemoteMCPServer = async ({
   });
 
   const inPromise = (async () => {
-    const authProvider = createMcpOAuthProvider(parameters);
-
     const requestInit = {
       ...(parameters.requestInit ?? {}),
       headers: {
@@ -46,7 +43,7 @@ export const connectToRemoteMCPServer = async ({
       new URL(parameters.url),
       {
         requestInit: parameters.isInitializing ? undefined : requestInit,
-        authProvider,
+        authProvider: parameters.OAuth?.authProvider,
       },
     );
 
@@ -68,7 +65,7 @@ export const connectToRemoteMCPServer = async ({
       if (isOAuthAuthorizationUrl || isDisconnectedError) {
         // do nothing
       } else {
-        parameters.OAuthEvents?.onAuthError(
+        parameters.OAuth?.onAuthError(
           dcrNotSupported ? "dcr_not_supported" : "unknown",
           error.message,
         );
@@ -78,20 +75,16 @@ export const connectToRemoteMCPServer = async ({
       onTransportClose();
     };
 
-    const oauthCode = parameters.OAuthState?.pendingAuthorizationCode;
+    const oauthCode = parameters.OAuth?.pendingAuthorizationCode;
     if (oauthCode) {
       await transport.finishAuth(oauthCode).catch(async (error) => {
         console.error(
           "Failed to finish OAuth authentication for " + name,
           error,
-          parameters.OAuthState,
         );
         return Promise.reject(error);
       });
-      await parameters.OAuthEvents?.onPersistState({
-        ...(parameters.OAuthState ?? {}),
-        pendingAuthorizationCode: undefined,
-      });
+      await parameters.OAuth?.onCodeUsed();
     }
 
     await client.connect(transport).catch(async (error) => {

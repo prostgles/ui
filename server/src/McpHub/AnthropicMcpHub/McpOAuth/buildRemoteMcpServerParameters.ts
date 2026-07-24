@@ -1,7 +1,7 @@
 import type { DBSSchema } from "@common/publishUtils";
 import type { DBS } from "@src/index";
 import type { McpServerParameters } from "../McpTypes";
-import { getRemoteMcpOauthConfigParameters } from "./getRemoteMcpOauthConfigParameters";
+import { createMcpOAuthProvider } from "./createMcpOAuthProvider";
 import { saveServerInfo } from "./saveServerInfo";
 
 export const buildRemoteMcpServerParameters = ({
@@ -33,12 +33,6 @@ export const buildRemoteMcpServerParameters = ({
     return;
   }
 
-  const remoteMcpOauthConfig = getRemoteMcpOauthConfigParameters(
-    dbs,
-    mcp_server_config,
-    server,
-  );
-
   const withBearerToken = (
     existingHeaders: Record<string, string> | undefined | null,
   ) => {
@@ -56,7 +50,10 @@ export const buildRemoteMcpServerParameters = ({
     isInitializing: oauth.phase === "initializing_dcr",
     server_name: server.name,
     url: server.url!, // TODO: change the parameters to typed jsonb,
-    ...remoteMcpOauthConfig,
+    OAuth: createMcpOAuthProvider({
+      dbs,
+      serverConfig: mcp_server_config,
+    }),
     headers: withBearerToken(server.headers),
     RemoteServerEvents: {
       onConnected: async (args) => {

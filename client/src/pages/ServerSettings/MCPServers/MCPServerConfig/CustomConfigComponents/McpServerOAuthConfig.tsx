@@ -20,6 +20,7 @@ export const McpServerOAuthConfig = ({
 }: P) => {
   const state = useMcpServerOAuthConfigState({
     existingConfig,
+    server,
   });
 
   return (

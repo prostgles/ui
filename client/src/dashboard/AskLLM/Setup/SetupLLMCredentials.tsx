@@ -49,13 +49,13 @@ export const SetupLLMCredentials = (props: SetupLLMCredentialsProps) => {
               free: {
                 label: "Signup (free)",
                 leftIconPath: mdiLogin,
-                "data-command": "SetupLLMCredentials.free",
+                listProps: { "data-command": "SetupLLMCredentials.free" },
                 content: <ProstglesSignup setupState={setupState} />,
               },
               api: {
                 label: "Add provider",
                 leftIconPath: mdiKey,
-                "data-command": "SetupLLMCredentials.api",
+                listProps: { "data-command": "SetupLLMCredentials.api" },
                 content: <LLMProviderSetup />,
               },
             }}

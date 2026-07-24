@@ -1,5 +1,8 @@
 import { useState } from "react";
 import type { MCPServerConfigProps } from "../MCPServerConfigEditor";
+import { usePromise } from "prostgles-client";
+import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
+import type { DBSSchema } from "@common/publishUtils";
 
 export type McpServerOAuthConfigState = ReturnType<
   typeof useMcpServerOAuthConfigState
@@ -7,7 +10,13 @@ export type McpServerOAuthConfigState = ReturnType<
 
 export const useMcpServerOAuthConfigState = ({
   existingConfig,
-}: Pick<MCPServerConfigProps, "existingConfig">) => {
+  server,
+}: Pick<MCPServerConfigProps, "existingConfig"> & {
+  server: DBSSchema["mcp_servers"];
+}) => {
+  const {
+    dbsMethods: { getMcpOAuthMetadata },
+  } = usePrglCore();
   const [savePngIcon, setSavePngIcon] = useState(true);
   const oauth = existingConfig?.oauth;
   const savedConfig =
@@ -48,6 +57,17 @@ export const useMcpServerOAuthConfigState = ({
     : MCP_OAUTH_MODES;
   const [authMode, setAuthMode] = useState(savedConfig?.auth.mode ?? "dcr");
 
+  const [error, setError] = useState<unknown>();
+  const authInfo = usePromise(async () => {
+    if (server.url) {
+      if (!getMcpOAuthMetadata) {
+        return "not-allowed";
+      }
+      return getMcpOAuthMetadata({ serverName: server.name }).catch(setError);
+    }
+    return "none";
+  }, [getMcpOAuthMetadata, server.name, server.url]);
+
   return {
     savePngIcon,
     setSavePngIcon,
@@ -69,6 +89,8 @@ export const useMcpServerOAuthConfigState = ({
     setClientId,
     clientSecret,
     setClientSecret,
+    authInfo,
+    authInfoError: error,
   };
 };
 

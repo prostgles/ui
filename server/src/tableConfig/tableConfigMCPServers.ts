@@ -27,9 +27,15 @@ export const mcpServerConfigJsonbSchema = {
             bearerToken: { type: "string" },
           },
           {
-            mode: { enum: ["client_credentials", "authorization_code"] },
-            clientId: { type: "string" },
-            clientSecret: { type: "string" },
+            mode: { enum: ["authorization_code"] },
+            clientId: "string",
+            clientSecret: "string",
+          },
+          {
+            mode: { enum: ["client_credentials"] },
+            clientId: "string",
+            clientSecret: "string",
+            tokenEndpoint: "string",
           },
         ],
       },
@@ -256,6 +262,11 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
               phase: { enum: ["initializing_dcr"] },
               redirectUri: "string",
               scopes: "string[]",
+            },
+            {
+              phase: { enum: ["initializing_client"] },
+              tokenEndpoint: "string",
+              ...commonOAuthSchema,
             },
             {
               phase: { enum: ["initializing_bearer_token"] },
