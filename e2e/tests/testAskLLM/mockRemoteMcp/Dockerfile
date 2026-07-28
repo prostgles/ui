@@ -22,7 +22,6 @@ WORKDIR /app
 
 COPY package.json package-lock.json ./
 
-# Install TS and MCP SDK dependencies
 RUN npm ci
 
 # Copy your server and execution script
