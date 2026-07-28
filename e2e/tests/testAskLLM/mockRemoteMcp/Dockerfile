@@ -6,11 +6,9 @@ FROM ubuntu:24.04
 
 # Install Java 21, Node.js, npm, and netcat
 RUN apt-get update && \
-  apt-get install -y \
-  openjdk-21-jre-headless \
-  nodejs \
-  npm \
-  netcat-traditional && \
+  apt-get install -y curl ca-certificates openjdk-21-jre-headless netcat-traditional && \
+  curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
+  apt-get install -y nodejs && \
   rm -rf /var/lib/apt/lists/*
 
 # Copy Keycloak from the official image
