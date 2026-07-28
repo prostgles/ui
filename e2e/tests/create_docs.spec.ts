@@ -163,9 +163,9 @@ test.describe("Create docs and screenshots", () => {
     test.setTimeout(50 * MINUTE);
     const svgifsToRecord = [
       "ai_assistant_agentic_workflow_gov_api.svgif",
-      "governed_ai.svgif",
-      "overview_long.svgif",
       "ai_assistant_agentic_workflow.svgif",
+      // "governed_ai.svgif",
+      "overview_long.svgif",
       // "sql_editor_overview.svgif",
       // "ai_assistant_overview.svgif",
       // "table_timechart.svgif",

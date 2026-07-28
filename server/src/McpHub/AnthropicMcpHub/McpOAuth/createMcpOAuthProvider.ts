@@ -12,6 +12,9 @@ import {
   type StreamableHTTPOAuthState,
 } from "../McpTypes";
 
+export const OAUTH_AUTHORIZATION_URL_ERROR =
+  "OAuth authorization required. Open this URL: ";
+
 export const createMcpOAuthProvider = ({
   dbs,
   serverConfig,
@@ -137,7 +140,6 @@ export const createMcpOAuthProvider = ({
         return {
           ...state.clientInformation,
           ...commonConfig,
-          // response_types: ["token"],
           grant_types: ["client_credentials"],
           client_id: configClientInfo.clientId,
           client_secret: configClientInfo.clientSecret,
@@ -164,8 +166,7 @@ export const createMcpOAuthProvider = ({
     async redirectToAuthorization(authorizationUrl: URL) {
       await onPersist(authorizationUrl.toString());
       throw new Error(
-        "OAuth authorization required. Open this URL: " +
-          authorizationUrl.toString(),
+        OAUTH_AUTHORIZATION_URL_ERROR + authorizationUrl.toString(),
       );
     },
     async saveCodeVerifier(codeVerifier: string) {

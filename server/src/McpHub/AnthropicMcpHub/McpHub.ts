@@ -1,19 +1,14 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import {
-  CallToolResultSchema,
-  ListPromptsResultSchema,
-  ReadResourceResultSchema,
-  type CallToolResult,
-} from "@modelcontextprotocol/sdk/types.js";
-import { getSerialisableError, isEqual, tryCatchV2 } from "prostgles-types";
+import { type CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import { isEqual } from "prostgles-types";
 import {
   connectToMCPServer,
   type MCPServerInitInfo,
 } from "./connectToMCPServer";
 import type { createMcpServerHandlers } from "./createMcpServerHandlers";
-import { McpResourceResponse, McpServer, ServersConfig } from "./McpTypes";
+import { McpServer, ServersConfig } from "./McpTypes";
 
 export type McpConnection = {
   /**
@@ -32,8 +27,6 @@ export class McpHub {
   connections = new Map<string, McpConnection>();
   isConnecting = false;
 
-  constructor() {}
-
   getServer = (serverName: string) => {
     return Array.from(this.connections.values()).find(
       (conn) => conn.server_name === serverName,
@@ -47,25 +40,15 @@ export class McpHub {
     return Array.from(this.connections.values()).map((conn) => conn.server);
   }
 
-  private async connectToServer(initInfo: MCPServerInitInfo): Promise<void> {
+  private async connectToServer(initInfo: MCPServerInitInfo) {
     const { name } = initInfo;
-    const { data: connection, error } = await tryCatchV2(
-      async () => await connectToMCPServer(initInfo),
-    );
-    if (connection) {
-      // connection.server.tools = await fetchMCPToolsList(connection.client);
-      // connection.server.resources = await fetchMCPResourcesList(
-      //   connection.client,
-      // );
-      // connection.server.resourceTemplates = await fetchMCPResourceTemplatesList(
-      //   connection.client,
-      // );
-      // connection.server.prompts = await fetchPrompts(connection.client);
-      this.connections.set(name, connection);
+    const instance = await connectToMCPServer(initInfo);
+    if (instance.success) {
+      this.connections.set(name, instance.connection);
     } else {
       this.connections.delete(name);
-      throw error;
     }
+    return instance;
   }
 
   private async destroyConnection(name: string): Promise<void> {
@@ -101,54 +84,22 @@ export class McpHub {
       }
 
       if (!currentConnection || isRunningDifferentConfig) {
-        try {
-          const eventOptions = {
-            onLog,
-            onTransportClose: () => {
-              this.connections.delete(name);
-            },
-          };
-          await this.connectToServer({
-            name,
-            parameters,
-            server_name: otherParams.server_name,
-            ...eventOptions,
-          });
-        } catch (error) {
-          void onLog("error", JSON.stringify(getSerialisableError(error)), "");
-          if (isRunningDifferentConfig) {
-            console.error(
-              `Failed to connect to new MCP server ${name}:`,
-              error,
-            );
-          } else {
-            console.error(`Failed to reconnect MCP server ${name}:`, error);
-          }
+        const eventOptions = {
+          onLog,
+          onTransportClose: () => {},
+        };
+        const instance = await this.connectToServer({
+          name,
+          parameters,
+          server_name: otherParams.server_name,
+          ...eventOptions,
+        });
+        if (!instance.success) {
+          void onLog({ type: "error", data: instance.error }, instance.log);
         }
       }
     }
     this.isConnecting = false;
-  }
-
-  async readResource(
-    serverName: string,
-    uri: string,
-  ): Promise<McpResourceResponse> {
-    const connection = this.connections.get(serverName);
-    if (!connection) {
-      throw new Error(
-        `No connection found for MCP server: ${serverName}. Make sure it is enabled`,
-      );
-    }
-    return await connection.client.request(
-      {
-        method: "resources/read",
-        params: {
-          uri,
-        },
-      },
-      ReadResourceResultSchema,
-    );
   }
 
   async callTool(
@@ -163,37 +114,14 @@ export class McpHub {
       );
     }
 
-    const toolResult = await connection.client.request(
-      {
-        method: "tools/call",
-        params: {
-          name: toolName,
-          arguments: toolArguments,
-        },
-      },
-      CallToolResultSchema,
-    );
-    return toolResult;
-  }
-
-  async getPrompts(serverInstanceName: string) {
-    const connection = this.connections.get(serverInstanceName);
-    if (!connection) {
-      throw new Error(
-        `No connection found for MCP server: ${serverInstanceName}. Please make sure it is enabled`,
-      );
-    }
-
-    const prompts = await connection.client.request(
-      {
-        method: "prompts/list",
-      },
-      ListPromptsResultSchema,
-    );
-    return prompts;
+    return connection.handlers.callTool(toolName, toolArguments);
   }
 
   async destroy(): Promise<void> {
+    console.log(
+      "MCP Hub destroying all connections: ",
+      Array.from(this.connections.keys()),
+    );
     for (const connection of this.connections.values()) {
       try {
         await this.destroyConnection(connection.server.name);

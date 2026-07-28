@@ -18,6 +18,7 @@ import { RunTypescriptInNodejs } from "./ProstglesMCPTools/RunTypescriptInNodejs
 import { CreateComponentQuickFeedbackPreview } from "./ProstglesMCPTools/Webdev/CreateComponentQuickFeedbackPreview";
 import { Markdown } from "./ProstglesMCPTools/WebSearch/Markdown";
 import { WebSearch } from "./ProstglesMCPTools/WebSearch/WebSearch";
+import { CreateTables } from "./ProstglesMCPTools/CreateTables";
 
 export const ProstglesMCPToolsWithUI = {
   [getProstglesMCPFullToolName("prostgles-ui", "create_dashboards") as string]:
@@ -80,6 +81,10 @@ export const ProstglesMCPToolsWithUI = {
   },
   [getProstglesMCPFullToolName("documents", "get_document_text") as string]: {
     component: DoclingConvertedDocument,
+    displayMode: "inline",
+  },
+  [getProstglesMCPFullToolName("prostgles-ui", "create_tables") as string]: {
+    component: CreateTables,
     displayMode: "inline",
   },
   [getProstglesMCPFullToolName(

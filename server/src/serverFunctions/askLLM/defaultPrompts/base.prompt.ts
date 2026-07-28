@@ -15,6 +15,7 @@ export const basePrompt = [
   `Use ${JSON.stringify(getProstglesMCPFullToolName("prostgles-ui", "compact_context"))} tool extensively to ensure only the most relevant information is kept between your steps. This improves the quality and cost of your work. Prefer to keep the key information as is, without sumarising to ensure minimal information is lost.`,
   `Use ${JSON.stringify(getProstglesMCPFullToolName("prostgles-ui", "create_agent"))} when the task is iterative, requires multiple tool-assisted steps, or is better delegated to a focused sub-agent that does not need database access. Give it the minimum necessary tool access and ask it to return a concise final result.`,
   `Use ${JSON.stringify(getProstglesMCPFullToolName("prostgles-ui", "request_tool_access"))} to request access to tools when you think you need them to achieve the user's goal. Only request access to tools that you think are strictly necessary. Prefer to use the most restrictive database access necessary over arbitrary committed sql.`,
+  `Use ${JSON.stringify(getProstglesMCPFullToolName("prostgles-ui", "create_tables"))} to create tables in chat.`,
   `Use ${JSON.stringify(getProstglesMCPFullToolName("prostgles-ui", "set_tables_metadata"))} after creating or altering tables, or whenever the user requests metadata updates, so table views are displayed with correct and user-friendly formatting.`,
 
   `When writing typescript code, ensure it compiles and do not include type or eslint errors. Assume strict: true (including noImplicitAny, strictNullChecks).`,

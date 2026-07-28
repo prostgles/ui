@@ -130,8 +130,16 @@ export type McpResourceResponse = {
 
 export type McpServerEvents = {
   onLog: (
-    type: "stderr" | "error",
-    data: string,
+    item:
+      | { type: "stderr"; data: string }
+      | {
+          type: "error";
+          errorType?:
+            | "oauth-authorization-url"
+            | "oauth-dcr-not-supported"
+            | "disconnected";
+          data: unknown;
+        },
     fullLog: string,
   ) => void | Promise<void>;
   onTransportClose: () => void;

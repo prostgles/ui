@@ -1299,3 +1299,10 @@ export const allowOnce = async (page: PageWIds, doClick = true) => {
   doClick && (await allowOnceBtn.click());
   await page.waitForTimeout(2500);
 };
+
+// This function is used to scroll an element into view, playwright's version of this scrollIntoViewIfNeeded() results in flaky tests
+export async function scrollElementIntoView(locator: Locator): Promise<void> {
+  await locator.evaluate((element) => {
+    element.scrollIntoView({ block: "center" });
+  });
+}

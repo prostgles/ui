@@ -98,7 +98,7 @@ RUN npm run build
 CMD ["npm", "start", "--silent"]
 `;
 
-import { getProperty, type AnyObject } from "prostgles-types";
+import { getProperty } from "prostgles-types";
 
 type PackageJsonTemplate = Record<
   "dependencies" | "devDependencies",
@@ -135,7 +135,7 @@ export const packageJsonTemplate = fromServerPackageJson({
   dependencies: {
     typescript: "^5.9.3",
     tslib: "^2.8.1",
-    "prostgles-types": "^4.0.269",
+    "prostgles-types": "^4.0.271",
   },
   devDependencies: {
     "@types/node": "^22.20.0",

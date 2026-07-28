@@ -17,6 +17,7 @@ import type {
 } from "../../ProstglesMCPServerTypes";
 import { CONVERT_DOCUMENT_DEFAULT_OPTIONS } from "@src/ServiceManager/services/documents/documents.service";
 import { checkConfigAccess } from "./checkConfigAccess";
+import { getDocumentText } from "./getDocumentText";
 
 const tools = PROSTGLES_MCP_SERVERS_AND_TOOLS["web"];
 
@@ -178,10 +179,18 @@ const handler = {
             .split(`### Result`)[1]
             ?.split(`### Ran Playwright code`)[0];
 
-          // 3. Validate Content Type
-          // Allow text/html, reject application/pdf, image/*, etc.
+          // 3. Validate Content Type and try to get document text if not HTML
           if (!contentType?.includes("text/html")) {
             await mcpHub.destroy();
+            if (
+              contentType?.includes("application/pdf") ||
+              contentType?.includes("image/png") ||
+              contentType?.includes("image/jpeg") ||
+              contentType?.includes("image/gif") ||
+              contentType?.includes("image/webp")
+            ) {
+              return getDocumentText(serviceManager, toolArguments.url, {});
+            }
             throw new Error(
               [
                 `Unsupported content type detected: "${contentType}".`,
@@ -208,31 +217,7 @@ const handler = {
         },
         get_document_text: async ({ url, ...otherOpts }, _, config) => {
           await checkConfigAccess(url, config);
-
-          const docsService =
-            await serviceManager.getServiceWithRetries("documents");
-          const result = await docsService.endpoints["/v1/convert/source"]({
-            sources: [{ kind: "http", url }],
-            options: {
-              ...CONVERT_DOCUMENT_DEFAULT_OPTIONS,
-              ...otherOpts,
-            },
-          });
-          const {
-            text_content,
-            doctags_content,
-            html_content,
-            json_content,
-            md_content,
-          } = result.document;
-          return String(
-            text_content ||
-              md_content ||
-              html_content ||
-              doctags_content ||
-              JSON.stringify(json_content) ||
-              "",
-          );
+          return getDocumentText(serviceManager, url, otherOpts);
         },
       },
       fetchTools: () => {

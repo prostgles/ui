@@ -1,15 +1,20 @@
 import type { DBSSchema } from "@common/publishUtils";
 import type { StdioServerParameters } from "@modelcontextprotocol/sdk/client/stdio";
-import { getProperty, isDefined, pickKeys } from "prostgles-types";
+import {
+  getProperty,
+  getSerialisableError,
+  isDefined,
+  pickKeys,
+} from "prostgles-types";
 import type { DBS } from "..";
-import { buildRemoteMcpServerParameters } from "./AnthropicMcpHub/McpOAuth/buildRemoteMcpServerParameters";
+import { getRemoteMcpServerParameters } from "./AnthropicMcpHub/McpOAuth/getRemoteMcpServerParameters";
 import type {
   McpServerEvents,
   McpServerParameters,
   ServersConfig,
 } from "./AnthropicMcpHub/McpTypes";
 
-export const fetchMCPServerConfigs = async (
+export const getMcpServerParameters = async (
   dbs: DBS,
   testConfig?: DBSSchema["mcp_server_configs"],
 ) => {
@@ -36,17 +41,36 @@ export const fetchMCPServerConfigs = async (
       ...(server.env ?? {}),
     };
     const baseArgs = server.args ?? [];
-    const onLog: McpServerEvents["onLog"] = (type, data, log) => {
+    const onLog: McpServerEvents["onLog"] = (item, log) => {
       void dbs.mcp_server_logs.upsert(
         { server_name: server.name },
-        type === "stderr" ?
+        item.type === "stderr" ?
           {
             log,
           }
         : {
-            error: data,
+            error: JSON.stringify(getSerialisableError(item.data)),
           },
       );
+      if (item.type === "error") {
+        void dbs.mcp_servers.update(
+          {
+            name: server.name,
+          },
+          {
+            enabled: false,
+          },
+        );
+        void dbs.alerts.insert({
+          severity: "error",
+          title: server.name + " MCP server disabled due to error",
+          message: log,
+          ui_path: {
+            page: "/server-settings",
+            section: "mcpServers",
+          },
+        });
+      }
     };
 
     const { config_schema } = server;
@@ -61,7 +85,7 @@ export const fetchMCPServerConfigs = async (
         const serverInstanceName = server.name + "_" + mcp_server_config.id;
         const serverConfig = (() => {
           if (server.command === "streamable-http") {
-            return buildRemoteMcpServerParameters({
+            return getRemoteMcpServerParameters({
               dbs,
               server,
               mcp_server_config,

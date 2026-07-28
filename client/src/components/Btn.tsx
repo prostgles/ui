@@ -49,7 +49,7 @@ type BtnCustomProps = (
    * no-fade - will not fade out the button when disabled/loading
    */
   disabledVariant?: "no-fade";
-  loading?: boolean;
+  loading?: boolean | "allow-clicking";
   fadeIn?: boolean;
   _ref?: React.RefObject<HTMLButtonElement>;
 
@@ -292,7 +292,7 @@ class Button<HREF extends string | void = void> extends RTComp<
 
     if (clickMessage?.replace) return clickMessage.msg;
 
-    const isDisabled = disabledInfo || loading;
+    const isDisabled = disabledInfo || loading === true;
     let _className = "";
     const { size: sizeFromProps = "small" } = this.props;
     const size =

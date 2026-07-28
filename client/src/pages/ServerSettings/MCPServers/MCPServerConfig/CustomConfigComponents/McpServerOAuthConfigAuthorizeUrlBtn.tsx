@@ -1,6 +1,7 @@
 import Btn from "@components/Btn";
 import { useCountdown } from "@components/Stopwatch";
 import React, { useEffect } from "react";
+import { LABEL_PROPS } from "./McpServerOAuthConfigActions";
 
 type P = {
   authorizationUrl: string;
@@ -35,6 +36,7 @@ export const McpServerOAuthConfigAuthorizeUrlBtn = ({
 
   return (
     <Btn
+      label={LABEL_PROPS}
       href={authorizationUrl}
       target="_blank"
       rel="noopener noreferrer"

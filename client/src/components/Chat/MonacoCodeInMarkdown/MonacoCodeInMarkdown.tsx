@@ -123,7 +123,7 @@ export const MonacoCodeInMarkdown = (props: MonacoCodeInMarkdownProps) => {
   return (
     <FullscreenWrapper
       key={codeString}
-      className={classOverride("f-1 f-0 o-hidden", className)}
+      className={classOverride("f-1 o-hidden", className)}
       style={{
         minWidth: `calc(min(${SMART_FORM_POPUP_MIN_WIDTH}px, 100vw) - 4em)`,
         minHeight: minHeight + "px",

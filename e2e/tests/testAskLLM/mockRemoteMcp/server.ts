@@ -7,6 +7,8 @@ import { ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 const app = express();
 app.use(express.json());
 
+const PORT = 3000;
+
 const createMcpServer = () => {
   const mcpServer = new Server(
     { name: "mock-oauth-mcp", version: "1.0.0" },
@@ -25,6 +27,29 @@ const createMcpServer = () => {
 
   return mcpServer;
 };
+
+// TODO: CIMD
+// const ORIGIN = "http://localhost:" + PORT;
+// const cimdMetadata = {
+//   // In CIMD, the client_id IS the URL where this JSON lives
+//   client_id: ORIGIN + "/metadata.json",
+//   client_name: "CIMD Test Client",
+//   client_uri: ORIGIN,
+//   redirect_uris: [ORIGIN + "http://localhost:4000/callback"],
+// };
+
+// app.post("/set_redirect_uri_for_test", (req, res) => {
+//   const redirectUri = req.query.redirect_uri;
+//   if (typeof redirectUri !== "string") {
+//     return res.status(400).json({ error: "Missing redirect_uri query param" });
+//   }
+
+//   cimdMetadata.redirect_uris = [redirectUri];
+//   res.json({ success: true, redirect_uris: cimdMetadata.redirect_uris });
+// });
+
+// 1. Host the metadata (Keycloak will fetch this automatically)
+// app.get("/metadata.json", (req, res) => res.json(cimdMetadata));
 
 app.get("/.well-known/oauth-protected-resource/mcp", (_req, res) => {
   res.json({

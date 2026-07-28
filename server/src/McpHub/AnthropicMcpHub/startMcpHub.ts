@@ -1,6 +1,6 @@
 import type { DBS } from "@src/index";
 import { McpHub } from "./McpHub";
-import { fetchMCPServerConfigs } from "../fetchMCPServerConfigs";
+import { getMcpServerParameters } from "../getMcpServerParameters";
 import { updateMcpServerTools } from "../reloadMcpServerTools";
 import {
   getSerialisableError,
@@ -27,7 +27,7 @@ export const startMcpHub = (dbs: DBS, restart = false): Promise<McpHub> => {
       console.error("Error destroying MCP Hub", err);
     });
 
-    const serversConfig = await fetchMCPServerConfigs(dbs);
+    const serversConfig = await getMcpServerParameters(dbs);
     const serverNames = Array.from(
       new Set(Array.from(serversConfig.values()).map((s) => s.server_name)),
     );
@@ -87,18 +87,7 @@ export const setupMCPServerHub = async (dbs: DBS) => {
         if (!enabledMcpServers) {
           throw new Error("enabledMcpServers is undefined");
         }
-        await loadMissingTools(dbs, mcpHub, enabledMcpServers).catch((err) => {
-          void dbs.alerts.insert({
-            severity: "error",
-            title: "MCP Server Hub Tool Load Error",
-            message: JSON.stringify(getSerialisableError(err)),
-            ui_path: {
-              page: "/server-settings",
-              section: "mcpServers",
-            },
-          });
-          console.error("Error loading MCP server tools", err);
-        });
+        await loadMissingTools(dbs, mcpHub, enabledMcpServers);
       });
     }
   };

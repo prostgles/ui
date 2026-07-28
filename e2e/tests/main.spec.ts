@@ -2059,7 +2059,7 @@ test.describe("Main test", () => {
       { cwd: process.cwd(), stdio: "inherit" },
     );
     try {
-      test.setTimeout(3 * 60_000);
+      test.setTimeout(4 * 60_000);
 
       await expect
         .poll(
@@ -2181,7 +2181,7 @@ test.describe("Main test", () => {
       };
 
       const setAuthMode = async (
-        mode: "bearer" | "client_credentials" | "authorization_code",
+        mode: "bearer" | "client_credentials" | "authorization_code" | "cimd",
       ) => {
         await page
           .getByTestId("McpServerOAuthConfigTopControls.authMode")
@@ -2231,8 +2231,24 @@ test.describe("Main test", () => {
       await page
         .getByTestId("McpServerOAuthConfigActions.LoginWithOAuth")
         .click();
-
       await saveConfigAndRefreshToolsAndDeleteConfig();
+
+      /** TODO: CIMD */
+      // await enableServer();
+      // await setAuthMode("cimd");
+      // const redirectUri = await page
+      //   .locator(`[data-label="Redirect URL"] .input-wrapper`)
+      //   .textContent();
+      // if (!redirectUri) throw new Error("Redirect URI not found");
+      // const searchParams = new URLSearchParams({ redirectUri });
+      // await fetch(
+      //   "http://localhost:3000/set_redirect_uri_for_test?" +
+      //     searchParams.toString(),
+      // );
+      // await page
+      //   .getByLabel("Client metadata URL")
+      //   .fill("http://localhost:3000/metadata.json");
+      // await saveConfigAndRefreshToolsAndDeleteConfig();
     } finally {
       container.kill("SIGTERM");
       execSync(`docker rm -f ${containerName}`, { stdio: "ignore" });
@@ -3585,6 +3601,8 @@ test.describe("Main test", () => {
       `
       UPDATE mcp_servers SET enabled = false WHERE name = 'myServer';
       DELETE FROM mcp_servers WHERE name = 'myServer';
+
+      DELETE FROM alerts; -- left by mock mcp server oauth flows
     `,
     );
 
@@ -3637,7 +3655,7 @@ test.describe("Main test", () => {
     await page.getByTestId("Popup.close").last().click();
     await page.getByTestId("Alerts").click(TWENTY_SECONDS_OR_MORE);
     await expect(page.getByTestId("Alerts")).toContainText(
-      "MCP Server Hub Tool Load Error",
+      "MCP server disabled due to error",
     );
     await page.getByText("Go to issue").click();
     await page

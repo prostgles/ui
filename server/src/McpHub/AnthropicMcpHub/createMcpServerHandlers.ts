@@ -1,9 +1,11 @@
 import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import {
+  CallToolResultSchema,
   ListPromptsResultSchema,
   ListResourcesResultSchema,
   ListResourceTemplatesResultSchema,
   ListToolsResultSchema,
+  ReadResourceResultSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 
 export const createMcpServerHandlers = (client: Client) => {
@@ -57,7 +59,43 @@ export const createMcpServerHandlers = (client: Client) => {
     return response.resourceTemplates;
   };
 
+  const callTool = async (
+    toolName: string,
+    toolArguments:
+      | {
+          [x: string]: unknown;
+        }
+      | undefined,
+  ) => {
+    const toolResult = await client.request(
+      {
+        method: "tools/call",
+        params: {
+          name: toolName,
+          arguments: toolArguments,
+        },
+      },
+      CallToolResultSchema,
+    );
+    return toolResult;
+  };
+
+  const readResource = async (uri: string) => {
+    const resourceResult = await client.request(
+      {
+        method: "resources/read",
+        params: {
+          uri,
+        },
+      },
+      ReadResourceResultSchema,
+    );
+    return resourceResult;
+  };
+
   return {
+    callTool,
+    readResource,
     fetchPrompts: returnEmptyOnError(fetchPrompts),
     fetchToolsList: returnEmptyOnError(fetchToolsList),
     fetchResourcesList: returnEmptyOnError(fetchResourcesList),

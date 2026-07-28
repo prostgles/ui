@@ -123,10 +123,10 @@ const MCP_OAUTH_MODES = [
     label: "Bearer Token",
     subLabel: "Uses a pre-issued access token for authentication",
   },
-  {
-    key: "cimd",
-    label: "CIMD",
-    subLabel:
-      "Client ID Metadata Documents - Uses a public client identifier document for OAuth client discovery",
-  },
+  // {
+  //   key: "cimd",
+  //   label: "CIMD",
+  //   subLabel:
+  //     "Client ID Metadata Documents - Uses a public client identifier document for OAuth client discovery",
+  // },
 ] as const;

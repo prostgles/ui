@@ -73,7 +73,9 @@ export const useAskLLMToolApprove = () => {
       id: number;
       response: "approve" | "deny" | "auto-approve";
     }) => {
-      if (!approveToolUse) throw new Error("approveToolUse method not found");
+      if (!approveToolUse) {
+        throw new Error("approveToolUse method not found");
+      }
       await approveToolUse({
         id,
         response,
@@ -87,7 +89,7 @@ export const useAskLLMToolApprove = () => {
     return;
   }
   return {
-    requests: requests,
+    requests,
     respond,
     dbSchemaForPrompt,
     showRequestId,

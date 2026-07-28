@@ -58,9 +58,6 @@ export const updateMcpServerTools = async (
           `No connection found for MCP server: ${serverName}. Make sure it is enabled`,
         );
       }
-      // const resources = await handlers.fetchResourcesList();
-      // const resourceTemplates = await handlers.fetchResourceTemplatesList();
-      // const prompts = await handlers.fetchPrompts();
       return (await handlers.fetchToolsList()).map((tool) => {
         return {
           ...tool,

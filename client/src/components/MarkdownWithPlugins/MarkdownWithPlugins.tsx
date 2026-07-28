@@ -6,6 +6,7 @@ import rehypeRaw from "rehype-raw";
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
 import "./Marked.css";
+import { preserveDisallowedHtmlAsText } from "./preserveDisallowedHtmlAsText";
 
 const sanitizeSchema = {
   ...defaultSchema,
@@ -22,6 +23,8 @@ const sanitizeSchema = {
     ],
   },
 };
+
+const allowedTagNames = new Set<string>(sanitizeSchema.tagNames ?? []);
 
 export const MarkdownWithPlugins = ({
   content,
@@ -41,7 +44,11 @@ export const MarkdownWithPlugins = ({
     >
       <Markdown
         remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeRaw, [rehypeSanitize, sanitizeSchema]]}
+        rehypePlugins={[
+          rehypeRaw,
+          preserveDisallowedHtmlAsText(content, allowedTagNames),
+          [rehypeSanitize, sanitizeSchema],
+        ]}
         components={{
           pre: React.Fragment,
           a: ({ node, ...props }) => {

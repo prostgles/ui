@@ -1,6 +1,11 @@
 import { getCommandElemSelector, getDataKey } from "Testing";
 import { hygieneRatingsApiScenario } from "testAskLLM/scenarios/hygieneRatingsApi.scenario";
-import { allowOnce, newChat, setPromptByText } from "utils/utils";
+import {
+  allowOnce,
+  newChat,
+  scrollElementIntoView,
+  setPromptByText,
+} from "utils/utils";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
 import { typeSendAddScenes } from "./utils/typeSendAddScenes";
 
@@ -40,7 +45,7 @@ export const aiAssistantAgenticWorkflowGovApiSvgif: OnBeforeScreenshot = async (
   await page
     .getByTestId("AgenticWorkflow.start")
     .waitFor({ state: "visible", timeout: 35000 });
-  await page.getByTestId("AgenticWorkflow.start").scrollIntoViewIfNeeded();
+  await scrollElementIntoView(page.getByTestId("AgenticWorkflow.start"));
   await addScene({
     svgFileName: "hygiene_ratings_workflow",
     animations: [

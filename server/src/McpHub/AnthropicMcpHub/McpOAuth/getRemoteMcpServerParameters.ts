@@ -4,7 +4,7 @@ import type { McpServerParameters } from "../McpTypes";
 import { createMcpOAuthProvider } from "./createMcpOAuthProvider";
 import { saveServerInfo } from "./saveServerInfo";
 
-export const buildRemoteMcpServerParameters = ({
+export const getRemoteMcpServerParameters = ({
   dbs,
   server,
   mcp_server_config,

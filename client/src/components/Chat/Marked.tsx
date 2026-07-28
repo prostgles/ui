@@ -75,7 +75,6 @@ export const Marked = (props: MarkedProps) => {
 
       return (
         <MonacoCodeInMarkdown
-          className="my-1"
           key={codeString}
           codeHeader={codeHeader}
           language={getProperty(shortenedMap, language) ?? language}
@@ -115,15 +114,11 @@ export const Marked = (props: MarkedProps) => {
           a: ({ node, ...props }) => {
             const { href } = props;
             const tableNameRaw = props[JOINED_RECORD_PROP_NAMES.tableName] as
-              | string
-              | undefined;
+              string | undefined;
             const columnName = props[JOINED_RECORD_PROP_NAMES.columnName] as
-              | string
-              | undefined;
+              string | undefined;
             const columnValue = props[JOINED_RECORD_PROP_NAMES.columnValue] as
-              | string
-              | number
-              | undefined;
+              string | number | undefined;
             /** It messes it up frequently */
             const getTableHandler = (name: string, isEscaped = false) => {
               if (!prgl) return undefined;
@@ -135,8 +130,7 @@ export const Marked = (props: MarkedProps) => {
                 return undefined;
               }
               const tableHandler = prgl.db[tableName] as
-                | TableHandlerClient
-                | undefined;
+                TableHandlerClient | undefined;
               if (!tableHandler) return undefined;
               return { tableName, tableHandler };
             };

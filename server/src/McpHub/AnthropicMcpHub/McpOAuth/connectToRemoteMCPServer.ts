@@ -6,6 +6,8 @@ import {
   type RemoteMcpServerParameters,
 } from "../McpTypes";
 import { createMcpServerHandlers } from "../createMcpServerHandlers";
+import { fromEntries } from "@common/utils";
+import { OAUTH_AUTHORIZATION_URL_ERROR } from "./createMcpOAuthProvider";
 
 const chainMap = new Map<string, Promise<any>>();
 
@@ -47,11 +49,12 @@ export const connectToRemoteMCPServer = async ({
       },
     );
 
+    let destroyed = false;
     transport.onerror = (error) => {
       const errMsg = "Transport error: " + error.message;
       appendToLog(errMsg);
       const isOAuthAuthorizationUrl = error.message.startsWith(
-        "OAuth authorization required. Open this URL",
+        OAUTH_AUTHORIZATION_URL_ERROR,
       );
       const dcrNotSupported =
         error.message ===
@@ -60,8 +63,21 @@ export const connectToRemoteMCPServer = async ({
       const isDisconnectedError =
         error.message ===
         "SSE stream disconnected: AbortError: This operation was aborted";
-      void onLog("error", errMsg, getFullLog());
-
+      if (destroyed && isDisconnectedError) {
+        return;
+      }
+      void onLog(
+        {
+          type: "error",
+          errorType:
+            dcrNotSupported ? "oauth-dcr-not-supported"
+            : isOAuthAuthorizationUrl ? "oauth-authorization-url"
+            : isDisconnectedError ? "disconnected"
+            : undefined,
+          data: error,
+        },
+        getFullLog(),
+      );
       if (isOAuthAuthorizationUrl || isDisconnectedError) {
         // do nothing
       } else {
@@ -114,6 +130,7 @@ export const connectToRemoteMCPServer = async ({
       handlers: createMcpServerHandlers(client),
       destroy: async () => {
         try {
+          destroyed = true;
           await transport.close().catch((err) => {
             console.error(
               "Failed to close streamable transport for " + name,
@@ -148,7 +165,7 @@ const getHeadersFromRequestInit = (
     return Object.fromEntries(requestInit.headers.entries());
   }
   if (Array.isArray(requestInit.headers)) {
-    return Object.fromEntries(requestInit.headers);
+    return fromEntries(requestInit.headers as [string, string][]);
   }
   return Object.fromEntries(
     Object.entries(requestInit.headers).map(([key, value]) => [

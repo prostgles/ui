@@ -4,9 +4,9 @@ import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol } from "@components/Flex";
 import { FooterButtons } from "@components/Popup/FooterButtons";
 import { mdiCheck, mdiCheckAll } from "@mdi/js";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import React, { useCallback, useEffect, useState } from "react";
 import { DatabaseAccessEditor } from "src/dashboard/DatabaseAccessEditor/DatabaseAccessEditor";
-import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import { tout } from "src/utils/utils";
 import type { ProstglesMCPToolsProps } from "../ProstglesToolUseMessage";
 import { McpToolAccess } from "./AgenticWorkflow/McpToolAccess";
@@ -19,7 +19,7 @@ export const RequestToolAccess = ({
   resultContent,
   chatId,
 }: ProstglesMCPToolsProps) => {
-  const { dbs, dbsMethods } = usePrglCore();
+  const {  dbs, dbsMethods } = usePrgl();
   const [configs, setConfigs] = useState<
     Partial<
       Record<
@@ -149,6 +149,7 @@ export const RequestToolAccess = ({
         );
       }
       if (dbAccess) {
+         
         await dbs.llm_chats.update(
           { id: chatId },
           {

@@ -24,6 +24,7 @@ import { startAgent } from "./Prostgles/startAgent";
 import { validateCreateDashboards } from "./Prostgles/validateCreateDashboards";
 import { glob } from "glob";
 import { DIRECTORIES } from "@src/electronConfig";
+import { validateDatabaseAccessDefinitions } from "./Prostgles/agenticWorkflow/definitionValidation/validateDatabaseAccessDefinitions";
 
 const serverName = "prostgles-ui" as const;
 const tools = PROSTGLES_MCP_SERVERS_AND_TOOLS[serverName];
@@ -161,6 +162,28 @@ const handler = {
             } as const;
           }
         },
+        create_tables: async ({ ddlStatements }, { connection_id }) => {
+          await validateDatabaseAccessDefinitions({
+            connection_id,
+            usedTables: [],
+            databaseAccessDefinitions: {
+              mode: "custom",
+              ddlStatements,
+              tablePermissions: {},
+            },
+            allowEmptyTablePermissions: true,
+          });
+          const connPrgl =
+            connectionManager.getActiveConnectionSilentFail(connection_id);
+          if (!connPrgl) {
+            throw new Error(`Connection with id ${connection_id} not found`);
+          }
+          if (!ddlStatements) {
+            throw new Error(`ddlStatements is required for create_tables tool`);
+          }
+          await connPrgl.prgl.sql(ddlStatements);
+          return { data: [] };
+        },
         request_tool_access: async (
           { databaseAccess, mcpServerTools },
           { connection_id },
@@ -200,34 +223,15 @@ const handler = {
             );
           }
 
-          const tablePermissions =
-            databaseAccess?.mode === "custom" ?
-              databaseAccess.tablePermissions
-            : undefined;
+          const customAccess =
+            databaseAccess?.mode === "custom" ? databaseAccess : undefined;
 
-          if (tablePermissions) {
-            if (isEmpty(tablePermissions)) {
-              throw new Error(
-                `Custom database access must have at least one table permission defined`,
-              );
-            }
-            const connPrgl =
-              connectionManager.getActiveConnectionSilentFail(connection_id);
-            if (!connPrgl) {
-              throw new Error(`Connection with id ${connection_id} not found`);
-            }
-            Object.keys(tablePermissions).forEach((tableName) => {
-              const matchingTable = connPrgl.prgl.db[tableName];
-              if (!matchingTable || !matchingTable.find) {
-                const allTables = Object.keys(connPrgl.prgl.db)
-                  .filter((k) => connPrgl.prgl.db[k]?.find)
-                  .join(", ");
-                throw new Error(
-                  `Table ${tableName} not found in current schema. Available tables: ${allTables}`,
-                );
-              }
-            });
-          }
+          await validateDatabaseAccessDefinitions({
+            connection_id,
+            usedTables: [],
+            databaseAccessDefinitions: customAccess,
+            allowEmptyTablePermissions: true,
+          });
           if (!mcpServerTools && !databaseAccess) {
             throw new Error(
               `At least one of mcpServerTools or databaseAccess must be provided`,

@@ -45,15 +45,7 @@ if [ -n "$TRUSTED_HOSTS_ID" ]; then
   echo "Trusted Hosts policy updated."
 fi
 # --------------------------------------------------------------------
-
-
-# Create a static client (Flow 3: Bearer Token)
-# $KCADM create clients -r mcp \
-#     -s clientId=static-client \
-#     -s publicClient=false \
-#     -s secret=static-secret \
-#     -s directAccessGrantsEnabled=true
-
+ 
 
 # Static client (Client Credentials + Auth Code with pre-registered client)
 $KCADM create clients -r mcp -f - <<'EOF'

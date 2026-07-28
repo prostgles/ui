@@ -79,7 +79,7 @@ export const getColWidth = <
       });
 
       /**
-       * TODO: should just workout top widest columns andd split free space between them.
+       * TODO: should just workout top widest columns and split free space between them.
        *  If free space AND last column is lengthy then extend last column to fill it
        * */
       if (isLastColumn && !includes(_PG_numbers, c.udt_name)) {
