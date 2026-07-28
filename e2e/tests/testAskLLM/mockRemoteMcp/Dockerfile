@@ -4,9 +4,13 @@ FROM quay.io/keycloak/keycloak:26.7.0 AS keycloak-base
 # Stage 2: Ubuntu 24.04 (has Java 21 natively)
 FROM ubuntu:24.04
 
-# Install Java 21, Node.js, npm, and netcat
+# Install Java 21, Node.js 22, npm, and netcat
 RUN apt-get update && \
-  apt-get install -y curl ca-certificates openjdk-21-jre-headless netcat-traditional && \
+  apt-get install -y \
+  openjdk-21-jre-headless \
+  curl \
+  ca-certificates \
+  netcat-traditional && \
   curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
   apt-get install -y nodejs && \
   rm -rf /var/lib/apt/lists/*
@@ -16,9 +20,10 @@ COPY --from=keycloak-base /opt/keycloak /opt/keycloak
 
 WORKDIR /app
 
+COPY package.json package-lock.json ./
+
 # Install TS and MCP SDK dependencies
-RUN npm init -y && \
-  npm install express @modelcontextprotocol/sdk typescript tsx @types/express
+RUN npm ci
 
 # Copy your server and execution script
 COPY server.ts start-mock-mcp.sh ./
