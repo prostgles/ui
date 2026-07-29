@@ -43,11 +43,12 @@ export const parseTableConfig = async ({
   newTableConfig,
 }: ParseTableConfigArgs): Promise<{
   fileTable?: FileTableConfig;
+  tableConfig: TableConfig | undefined;
   tableConfigOk: boolean;
 }> => {
   const connectionId = con.id;
   let tableConfigOk = false;
-  let tableConfig:
+  let fileTableConfig:
     | (DatabaseConfigs["file_table_config"] &
         Pick<FileTableConfig, "referencedTables">)
     | null = null;
@@ -57,28 +58,29 @@ export const parseTableConfig = async ({
     );
     if (!database_config) {
       return {
+        tableConfig: undefined,
         fileTable: undefined,
         tableConfigOk: true,
       };
     }
-    tableConfig = database_config.file_table_config;
+    fileTableConfig = database_config.file_table_config;
   } else {
-    tableConfig = newTableConfig;
+    fileTableConfig = newTableConfig;
   }
   let cloudClient: CloudClient | undefined;
-  if (tableConfig && tableConfig.storageType.type !== "local") {
-    if (tableConfig.storageType.credential_id) {
-      const s3Creds = await dbs.credentials.findOne({
-        id: tableConfig.storageType.credential_id,
+  if (fileTableConfig && fileTableConfig.storageType.type !== "local") {
+    if (fileTableConfig.storageType.credential_id) {
+      const s3Credentials = await dbs.credentials.findOne({
+        id: fileTableConfig.storageType.credential_id,
       });
-      if (s3Creds) {
+      if (s3Credentials) {
         tableConfigOk = true;
         cloudClient = getCloudClient({
-          accessKeyId: s3Creds.key_id,
-          secretAccessKey: s3Creds.key_secret,
-          Bucket: s3Creds.bucket!,
-          region: s3Creds.region || "auto",
-          endpoint: s3Creds.endpoint_url,
+          accessKeyId: s3Credentials.key_id,
+          secretAccessKey: s3Credentials.key_secret,
+          Bucket: s3Credentials.bucket!,
+          region: s3Credentials.region || "auto",
+          endpoint: s3Credentials.endpoint_url,
         });
       }
     }
@@ -88,20 +90,20 @@ export const parseTableConfig = async ({
       );
     }
   } else if (
-    tableConfig?.storageType.type === "local" &&
-    tableConfig.fileTable
+    fileTableConfig?.storageType.type === "local" &&
+    fileTableConfig.fileTable
   ) {
     tableConfigOk = true;
   }
 
   const fileTable =
-    !tableConfig?.fileTable || !tableConfigOk ?
+    !fileTableConfig?.fileTable || !tableConfigOk ?
       undefined
     : ({
-        tableName: tableConfig.fileTable,
+        tableName: fileTableConfig.fileTable,
         expressApp: app,
         fileServePath: `${ROUTES.STORAGE}/${connectionId}`,
-        ...(tableConfig.storageType.type === "local" ?
+        ...(fileTableConfig.storageType.type === "local" ?
           {
             localConfig: {
               /* Use path.resolve when using a relative path. Otherwise will get 403 forbidden */
@@ -109,10 +111,26 @@ export const parseTableConfig = async ({
             },
           }
         : { cloudClient }),
-        referencedTables: tableConfig.referencedTables,
+        referencedTables: fileTableConfig.referencedTables,
       } satisfies FileTableConfig);
 
-  return { tableConfigOk, fileTable };
+  return {
+    tableConfigOk,
+    fileTable,
+    tableConfig:
+      fileTable && fileTableConfig?.citationsTable ?
+        {
+          [fileTableConfig.citationsTable]: {
+            columns: {
+              id: ``,
+              file_id: `UUID REFERENCES ${fileTableConfig.fileTable}(id) ON DELETE CASCADE`,
+              citation: `TEXT NOT NULL`,
+              position: `JSONB NOT NULL`,
+            },
+          },
+        }
+      : undefined,
+  };
 };
 
 export const getCompiledTS = (code: string) => {

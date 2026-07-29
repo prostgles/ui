@@ -121,7 +121,11 @@ export const SmartFormFieldForeignKey = (
       <div className="text-ellipsis max-w-fit" style={valueStyle}>
         <RenderValue
           value={value}
-          column={column}
+          column={
+            column.udt_name === "uuid" ?
+              { ...column, tsDataType: "string", udt_name: "text" }
+            : column
+          }
           showTitle={false}
           maxLength={30}
           getValues={undefined}

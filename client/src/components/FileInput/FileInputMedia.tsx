@@ -49,6 +49,7 @@ export const FileInputMedia = (props: {
       return (
         <Chip
           key={i}
+          className="FileInputMedia"
           value={file.isLocalFile ? file.name : url}
           leftIcon={{ path: mdiFileOutline }}
           onDelete={onDelete}

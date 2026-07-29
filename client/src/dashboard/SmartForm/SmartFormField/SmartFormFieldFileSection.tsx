@@ -25,13 +25,17 @@ export const SmartFormFieldFileSection = ({ db, table, media }: P) => {
     const { data } = media;
     const url = URL.createObjectURL(data);
     const content_type = data.type;
+
     return { url, content_type };
   }, [media, db, fileTableName]);
+
   if (!mediaFile) return null;
+
   const { url, content_type } = mediaFile;
+
   return (
     <MediaViewer
-      style={{ maxHeight: "250px" }}
+      style={{ maxHeight: "250px", flex: "none" }}
       key={url}
       url={url}
       content_type={content_type}

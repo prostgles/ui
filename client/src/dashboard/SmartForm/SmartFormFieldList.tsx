@@ -17,6 +17,7 @@ import { SmartFormFileSection } from "./SmartFormFileSection";
 import type { NewRow, NewRowDataHandler } from "./SmartFormNewRowDataHandler";
 import type { SmartFormState } from "./useSmartForm";
 import type { SmartFormModeState } from "./useSmartFormMode";
+import { MediaViewer } from "@components/MediaViewer/MediaViewer";
 
 type P = Pick<
   SmartFormProps,
@@ -96,7 +97,7 @@ export const SmartFormFieldList = (props: P) => {
           geoJsonLayersDataFilterSignature=""
         />
       )} */}
-      {table.isFileTable && table.fileTableName && (
+      {table.isFileTable && table.fileTableName && modeType === "insert" ?
         <SmartFormFileSection
           {...props}
           table={table}
@@ -105,7 +106,12 @@ export const SmartFormFieldList = (props: P) => {
           mode={mode}
           mediaTableName={table.fileTableName}
         />
-      )}
+      : row.url ?
+        <MediaViewer
+          url={row.url}
+          style={{ width: "100%", height: "auto", flex: "none" }}
+        />
+      : null}
       {displayedColumns.map((c, i) => {
         const rawValue = row[c.name];
         const newValue = newRowData?.[c.name];

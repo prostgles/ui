@@ -14,6 +14,7 @@ export const getTables = (
     const { columns, label, ...tableOpts } =
       connectionTableOptions?.[t.name] ?? {};
     const result = {
+      isCitationTable: false,
       ...tableOpts,
       ...t,
       label:

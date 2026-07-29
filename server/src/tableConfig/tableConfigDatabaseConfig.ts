@@ -33,7 +33,7 @@ export const FILE_TABLE_CONFIG_SCHEMA = {
       },
     ],
   },
-  referencedTables: { type: "any", optional: true },
+  referencedTables: { record: { values: "any" }, optional: true },
   delayedDelete: {
     optional: true,
     type: {
@@ -42,11 +42,12 @@ export const FILE_TABLE_CONFIG_SCHEMA = {
        */
       deleteAfterNDays: { type: "number" },
       /**
-       * How freuquently the files will be checked for deletion delay
+       * How frequently the files will be checked for deletion delay
        */
       checkIntervalHours: { type: "number", optional: true },
     },
   },
+  citationsTable: { type: "string", optional: true },
 } as const satisfies JSONB.ObjectType["type"];
 
 const SMTPConfig = {

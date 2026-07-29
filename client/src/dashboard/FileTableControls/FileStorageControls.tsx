@@ -2,7 +2,7 @@ import type { DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
 import Chip from "@components/Chip";
 import ErrorComponent from "@components/ErrorComponent";
-import { FlexRowWrap } from "@components/Flex";
+import { FlexCol, FlexRowWrap } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
 import { InfoRow } from "@components/InfoRow";
 import { Select } from "@components/Select/Select";
@@ -14,6 +14,8 @@ import React, { useEffect, useState } from "react";
 import type { FullExtraProps } from "../../pages/ProjectConnection/ProjectConnection";
 import { CloudStorageCredentialSelector } from "../BackupAndRestore/CloudStorageCredentialSelector";
 import { FileStorageDelete } from "./FileStorageDelete";
+import { bytesToSize } from "../BackupAndRestore/BackupsControls";
+import { Label } from "@components/Label";
 
 const STORAGE_TYPES = [
   {
@@ -38,32 +40,28 @@ export const FileStorageControls = (props: FileStorageControlsProps) => {
     canCreateTables,
     connection,
     dbTables,
-    dbs,
-    dbsTables,
     dbsMethods,
     dbProject,
     database_config,
   } = props;
   const [showDelete, setShowDelete] = useState(false);
+  const fileConfig = database_config.file_table_config;
 
   const fileSizes = usePromise(async () => {
-    const projectFolderSize =
-      database_config.file_table_config?.storageType.type === "local" ?
-        await dbsMethods.getFileFolderSizeInBytes?.({
-          conId: connection.id,
-        })
-      : 0;
-    const totalFileFolderSize =
-      database_config.file_table_config?.storageType.type === "local" ?
-        await dbsMethods.getFileFolderSizeInBytes?.({})
-      : 0;
-    return { projectFolderSize, totalFileFolderSize };
-  }, [database_config, connection, dbsMethods]);
+    if (fileConfig?.storageType.type !== "local") {
+      return;
+    }
+    const projectFolder = await dbsMethods.getFileFolderSizeInBytes?.({
+      conId: connection.id,
+    });
+    const rootFolder = await dbsMethods.getFileFolderSizeInBytes?.({});
+    return { projectFolder, rootFolder };
+  }, [fileConfig?.storageType.type, dbsMethods, connection.id]);
 
-  const { projectFolderSize = 0, totalFileFolderSize = 0 } = fileSizes ?? {};
-
-  const fileConfig = database_config.file_table_config;
   const [fileTable, setFileTable] = useState(fileConfig?.fileTable);
+  const [fileCitationsTable, setFileCitationsTable] = useState(
+    fileConfig?.citationsTable,
+  );
 
   useEffect(() => {
     setFileTable(fileConfig?.fileTable);
@@ -81,6 +79,11 @@ export const FileStorageControls = (props: FileStorageControlsProps) => {
       t.name === fileTable &&
       !t.columns.some((c) => c.name === "signed_url_expires"),
   );
+  const fileCitationsTableNameClash = dbTables.some(
+    (t) =>
+      t.name === fileCitationsTable &&
+      !t.columns.some((c) => c.name === "citation"),
+  );
 
   const canEnable =
     !fileConfig?.fileTable &&
@@ -92,11 +95,9 @@ export const FileStorageControls = (props: FileStorageControlsProps) => {
     canCreateTables ? undefined : (
       `Cannot use this feature: Your account needs CREATE TABLE privilege`
     );
-  const [enablingError, setEnablingError] = useState<unknown>();
-
   return (
     <>
-      {!!showDelete && (
+      {showDelete && (
         <FileStorageDelete
           {...pickKeys(props, ["connection", "dbsMethods", "database_config"])}
           db={dbProject}
@@ -111,7 +112,7 @@ export const FileStorageControls = (props: FileStorageControlsProps) => {
           store file urls and metadata
         </p>
         <p className="mt-3">Access to the files is controlled through: </p>
-        <ul className="no-ddecor">
+        <ul>
           <li className="py-p25">
             <strong>file table</strong> - users that are allowed to
             view/insert/delete the data within the file table can interact with
@@ -134,6 +135,7 @@ export const FileStorageControls = (props: FileStorageControlsProps) => {
             "Enable"
           : "Enabled"
         }
+        variant="col"
         checked={!!fileTable}
         className=""
         data-command="config.files.toggle"
@@ -141,24 +143,29 @@ export const FileStorageControls = (props: FileStorageControlsProps) => {
         onChange={(val) => {
           if (val) {
             setFileTable("files");
+            setFileCitationsTable("file_citations");
             setStorageType("local");
           } else {
             if (fileConfig?.fileTable) {
               setShowDelete(true);
             } else {
               setFileTable(undefined);
+              setFileCitationsTable(undefined);
               setStorageType(undefined);
             }
           }
         }}
       />
       <FlexRowWrap className=" gap-1p5 ">
-        {!!fileTable && (
+        {Boolean(fileTable) && (
           <>
             <FormField
               type="text"
               label={{
                 label: "File table name",
+                style: {
+                  marginBottom: "0",
+                },
                 info:
                   fileConfig?.fileTable ?
                     "Table that contains file metadata"
@@ -174,11 +181,25 @@ export const FileStorageControls = (props: FileStorageControlsProps) => {
                 : undefined
               }
             />
-          </>
-        )}
-
-        {!!fileTable && (
-          <>
+            <FormField
+              type="text"
+              label={{
+                label: "File citations table name",
+                style: {
+                  marginBottom: "0",
+                },
+                info: "Used for pdf/image file citations. Table created in the current database",
+              }}
+              readOnly={!!fileConfig?.fileTable}
+              title={fileConfig?.fileTable ? "Cannot be updated" : ""}
+              value={fileCitationsTable}
+              onChange={setFileCitationsTable}
+              error={
+                fileCitationsTableNameClash ?
+                  "There is a table with this name in the database. Choose another name"
+                : undefined
+              }
+            />
             {fileConfig?.fileTable ?
               <FormField
                 readOnly={true}
@@ -191,51 +212,44 @@ export const FileStorageControls = (props: FileStorageControlsProps) => {
                 className=""
                 value={storageType}
                 onChange={setStorageType}
+                btnProps={{ size: "default" }}
               />
             }
           </>
         )}
-
-        {storageType === "S3" ?
-          <div className="flex-row-wrap gap-2 h-fit">
-            <CloudStorageCredentialSelector
-              selectedId={credentialId}
-              pickFirst={true}
-              onChange={(val) => {
-                setStorageType("S3");
-                setCredentialId(val);
-              }}
-            />
-          </div>
-        : storageType === "local" ?
-          <>
-            {!!fileConfig?.fileTable && (
-              <>
-                <Chip
-                  variant="header"
-                  label="This file folder size"
-                  value={
-                    Math.round(
-                      Number(projectFolderSize || 0) / 1e6,
-                    ).toLocaleString() + " MB"
-                  }
-                />
-                <Chip
-                  variant="header"
-                  label="All file folders size"
-                  value={
-                    Math.round(
-                      Number(totalFileFolderSize || 0) / 1e6,
-                    ).toLocaleString() + " MB"
-                  }
-                />
-              </>
-            )}
-          </>
-        : null}
       </FlexRowWrap>
 
-      <ErrorComponent variant="outlined" findMsg={true} error={enablingError} />
+      {storageType === "S3" ?
+        <div className="flex-row-wrap gap-2 h-fit">
+          <CloudStorageCredentialSelector
+            selectedId={credentialId}
+            pickFirst={true}
+            onChange={(val) => {
+              setStorageType("S3");
+              setCredentialId(val);
+            }}
+          />
+        </div>
+      : storageType === "local" ?
+        <>
+          {Boolean(fileSizes) && (
+            <>
+              {fileSizes?.rootFolder && (
+                <LocalStorageInfo
+                  title="Root folder"
+                  {...fileSizes.rootFolder}
+                />
+              )}
+              {fileSizes?.projectFolder && (
+                <LocalStorageInfo
+                  title="Project folder"
+                  {...fileSizes.projectFolder}
+                />
+              )}
+            </>
+          )}
+        </>
+      : null}
 
       {canEnable && (
         <div className="flex-col gap-1 mt-2 ">
@@ -243,32 +257,29 @@ export const FileStorageControls = (props: FileStorageControlsProps) => {
             color="action"
             variant="filled"
             data-command="config.files.toggle.confirm"
+            size="default"
             iconPath={mdiContentSaveCogOutline}
-            onClickMessage={async (_, setMsg) => {
-              try {
-                setMsg({ loading: 1, duration: 10000 });
-                if (storageType === "S3" && !credentialId) {
-                  throw "storageType missing";
-                }
-                await dbsMethods.setFileStorage!({
-                  connId: connection.id,
-                  opts: {},
-                  tableConfig: {
-                    fileTable,
-                    storageType:
-                      storageType === "local" ?
-                        {
-                          type: storageType,
-                        }
-                      : {
-                          type: storageType,
-                          credential_id: credentialId!,
-                        },
-                  },
-                });
-              } catch (err) {
-                setEnablingError(err);
+            onClickPromise={async () => {
+              if (storageType === "S3" && !credentialId) {
+                throw "storageType missing";
               }
+              await dbsMethods.setFileStorage!({
+                connId: connection.id,
+                opts: {},
+                tableConfig: {
+                  fileTable,
+                  citationsTable: fileCitationsTable,
+                  storageType:
+                    storageType === "local" ?
+                      {
+                        type: storageType,
+                      }
+                    : {
+                        type: storageType,
+                        credential_id: credentialId!,
+                      },
+                },
+              });
             }}
           >
             Enable file storage
@@ -278,3 +289,19 @@ export const FileStorageControls = (props: FileStorageControlsProps) => {
     </>
   );
 };
+
+const LocalStorageInfo = ({
+  title,
+  storagePath,
+  size,
+}: {
+  title: string;
+  storagePath: string;
+  size: number;
+}) => (
+  <FlexCol className="gap-p25">
+    <Label variant="normal" label={title} />
+    <div className="bold">{bytesToSize(size)}</div>
+    <div>{storagePath}</div>
+  </FlexCol>
+);

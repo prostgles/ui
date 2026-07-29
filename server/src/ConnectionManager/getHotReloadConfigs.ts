@@ -19,6 +19,7 @@ export type HotReloadConfigOptions = Pick<
   | "schemaFilter"
   | "auth"
   | "io"
+  | "tableConfig"
   | "functions"
   | "tsGeneratedTypesDir"
 >;
@@ -54,7 +55,7 @@ export const getHotReloadConfigs = async ({
   const { app } = connectionServers;
 
   const restApi = getRestApiConfig(app, connection, databaseConfig);
-  const { fileTable } = await parseTableConfig({
+  const { fileTable, tableConfig } = await parseTableConfig({
     type: "saved",
     dbs,
     con: connection,
@@ -97,6 +98,7 @@ export const getHotReloadConfigs = async ({
       io: connectionServers.ioConnection,
       restApi,
       fileTable,
+      tableConfig,
       auth,
       schemaFilter: db_schema_filter ?? { public: 1 },
       tsGeneratedTypesDir,

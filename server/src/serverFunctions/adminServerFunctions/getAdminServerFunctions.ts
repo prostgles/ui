@@ -276,15 +276,16 @@ export const getAdminServerFunctions = (
           return stats.reduce((accumulator, size) => accumulator + size, 0);
         };
 
-        if (conId && typeof conId !== "string") {
-          throw "Invalid/Inexisting connection id provided";
-        }
-        const dir = connectionManager.getFileFolderPath(conId);
-        return dirSize(dir);
+        const storagePath = connectionManager.getFileFolderPath(conId);
+        const size = dirSize(storagePath);
+        return {
+          size,
+          storagePath,
+        };
       },
     }),
     testDBConnection: defineAdminFunction({
-      input: { connection: "any" },
+      input: { connection: { record: { values: "unknown" } } },
       run: async ({ connection }) => {
         return testDBConnection(connection);
       },

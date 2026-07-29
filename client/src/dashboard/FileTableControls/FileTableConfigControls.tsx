@@ -1,9 +1,8 @@
-import { useIsMounted, usePromise } from "prostgles-client";
-import type { SQLHandler } from "prostgles-types";
-import React, { useState } from "react";
 import type { DBSSchema } from "@common/publishUtils";
-import { type Prgl } from "../../App";
 import Loading from "@components/Loader/Loading";
+import type { SQLHandler } from "prostgles-types";
+import React from "react";
+import { type Prgl } from "../../App";
 import type { FileTableConfigReferences } from "./FileColumnConfigControls";
 import { FileStorageControls } from "./FileStorageControls";
 import { FileStorageReferencedTablesConfig } from "./FileStorageReferencedTablesConfig";
@@ -58,7 +57,6 @@ export const FileTableConfigControls = ({
         refsConfig={refsConfig}
         file_table_config={database_config.file_table_config}
         tables={tables}
-        db={db}
       />
     </div>
   );

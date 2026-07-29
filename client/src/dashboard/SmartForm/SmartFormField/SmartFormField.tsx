@@ -7,7 +7,11 @@ import { JSONBSchemaA } from "@components/JSONBSchema/JSONBSchema";
 import Loading from "@components/Loader/Loading";
 import { SvgIcon } from "@components/SvgIcon";
 import { mdiDotsHorizontal } from "@mdi/js";
-import { isObject, type AnyObject } from "prostgles-types";
+import {
+  isObject,
+  type AnyObject,
+  type PG_COLUMN_UDT_DATA_TYPE,
+} from "prostgles-types";
 import React, { useCallback, useState } from "react";
 import type {
   DBSchemaTableColumn,
@@ -105,7 +109,7 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
 
   const onChange = useCallback(
     (newColData: ColumnData) => {
-      newRowDataHandler.setColumnData(column.name, newColData);
+      return newRowDataHandler.setColumnData(column.name, newColData);
     },
     [newRowDataHandler, column.name],
   );
@@ -171,7 +175,7 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
   let parsedValue;
   try {
     parsedValue = parseValue(column, value);
-  } catch (e: any) {
+  } catch {
     parsedValue = value;
   }
   if (readOnly && column.udt_name === "interval" && isObject(value)) {
@@ -185,10 +189,12 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
 
   let arrayType: FormFieldProps<"text">["arrayType"];
   if (column.tsDataType.endsWith("[]") && !column.tsDataType.includes("any")) {
-    const elemTSType = tsDataTypeFromUdtName(column.element_udt_name as any);
+    const elemTSType = tsDataTypeFromUdtName(column.element_udt_name ?? "text");
     arrayType = {
       tsDataType: elemTSType,
-      udt_name: column.element_udt_name as any,
+      udt_name:
+        (column.element_udt_name as PG_COLUMN_UDT_DATA_TYPE | undefined) ??
+        "text",
     };
   }
 

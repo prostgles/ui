@@ -1,9 +1,11 @@
+import type { ContentTypes } from "@common/columnDisplayFormat.schema";
 import Btn from "@components/Btn";
+import { getFileIconInfo } from "@components/FileTree/FileIcon";
+import Popup from "@components/Popup/Popup";
 import { mdiFileDocumentOutline } from "@mdi/js";
 import React, { useState } from "react";
 import { FlexCol } from "../Flex";
-import Popup from "@components/Popup/Popup";
-import type { ContentTypes } from "@common/columnDisplayFormat.schema";
+import { PdfViewer } from "@components/PdfViewer/PdfViewer";
 
 export type ValidContentType = (typeof ContentTypes)[number];
 export type UrlInfo = {
@@ -21,6 +23,7 @@ export const RenderMedia = ({
   urlInfo,
   style,
   title,
+  variant,
 }: {
   title: string | undefined;
   contentOnly: boolean;
@@ -28,6 +31,7 @@ export const RenderMedia = ({
   isFocused: boolean;
   style: React.CSSProperties | undefined;
   setIsFocused: (isFocused: boolean) => void;
+  variant?: "thumbnail";
 }) => {
   const [expandedDocUrl, setExpandedDocUrl] = useState<string>();
   if (!urlInfo) return null;
@@ -85,11 +89,20 @@ export const RenderMedia = ({
     } else if (type === "audio") {
       mediaContent = <audio {...commonProps} controls src={url} />;
     } else if (!isFocused && url) {
+      const fileIconInfo = getFileIconInfo(url);
       mediaContent = (
         <FlexCol className="f-0 gap-p25">
           <Btn
             variant="faded"
-            iconPath={mdiFileDocumentOutline}
+            iconProps={
+              fileIconInfo?.color ?
+                {
+                  path: fileIconInfo.iconPath ?? mdiFileDocumentOutline,
+                  color: fileIconInfo.color,
+                }
+              : undefined
+            }
+            size={variant === "thumbnail" ? "large" : undefined}
             value={content_type ?? "Not found"}
             title={content_type ?? url}
             onClick={(e) => {
@@ -104,12 +117,17 @@ export const RenderMedia = ({
                 setIsFocused(true);
               }
             }}
-          >
-            {title ??
-              (urlInfo.content_type ? content_type : (
-                urlInfo.forDisplay.slice(0, 100)
-              ))}
-          </Btn>
+            children={
+              variant === "thumbnail" ? undefined : (
+                `${
+                  title ??
+                  (urlInfo.content_type ? content_type : (
+                    urlInfo.forDisplay.slice(0, 100)
+                  ))
+                }. Click to preview`
+              )
+            }
+          />
           {content_type &&
             renderableContentTypes.includes(content_type) &&
             expandedDocUrl === url && (
@@ -120,15 +138,28 @@ export const RenderMedia = ({
                   setExpandedDocUrl(undefined);
                 }}
               >
-                <iframe
-                  src={url}
-                  style={{
-                    minHeight: 0,
-                    flex: 1,
-                    width: "100%",
-                    border: "none",
-                  }}
-                ></iframe>
+                {content_type === "application/pdf" ?
+                  <PdfViewer
+                    url={url}
+                    highlights={[
+                      {
+                        page: 1,
+                        color: "red",
+                        id: "1",
+                        rects: [{ x: 0, y: 0, height: 200, width: 200 }],
+                      },
+                    ]}
+                  />
+                : <iframe
+                    src={url}
+                    style={{
+                      minHeight: 0,
+                      flex: 1,
+                      width: "100%",
+                      border: "none",
+                    }}
+                  ></iframe>
+                }
               </Popup>
             )}
         </FlexCol>

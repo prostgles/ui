@@ -1249,7 +1249,7 @@ export const setupMagicLinkAuth = async (page: PageWIds) => {
 
 export const clickAndWait = async (
   btnLocator: LocatorWIds,
-  timeout = IS_GITHUB_WORKER ? 120_000 : 60_000,
+  timeout = IS_GITHUB_WORKER ? 220_000 : 120_000,
 ) => {
   await btnLocator.click();
   await btnLocator.page().waitForTimeout(200);

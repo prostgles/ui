@@ -33,11 +33,20 @@ type P = {
    * If present then use this
    */
   content_type?: ValidContentType;
+
+  variant?: "thumbnail";
 };
 
 export const MediaViewer = (props: P) => {
-  const { onPrevOrNext, style, content_type, url, allowedHostnames, name } =
-    props;
+  const {
+    onPrevOrNext,
+    style,
+    content_type,
+    url,
+    allowedHostnames,
+    name,
+    variant,
+  } = props;
   const [isFocused, setIsFocused] = useState(false);
   const [urlInfo, setUrlInfo] = useState<UrlInfo | undefined>(
     content_type && url ?
@@ -124,6 +133,7 @@ export const MediaViewer = (props: P) => {
         style={style}
         urlInfo={urlInfo}
         contentOnly={false}
+        variant={variant}
       />
       {isFocused && (
         <Popup

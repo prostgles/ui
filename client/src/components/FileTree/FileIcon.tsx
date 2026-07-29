@@ -10,8 +10,8 @@ export const FileIcon = ({
   name: string;
   className?: string;
 }) => {
-  const extension = name.toLowerCase().split(".").at(-1) ?? "";
-  const { iconPath, color } = FILE_EXTENSION_TO_ICON_INFO[extension] ?? {};
+  const iconInfo = getFileIconInfo(name);
+  const { color, iconPath } = iconInfo ?? {};
   return (
     <Icon
       color={color}
@@ -20,4 +20,9 @@ export const FileIcon = ({
       className={className + " text-1"}
     />
   );
+};
+
+export const getFileIconInfo = (name: string) => {
+  const extension = name.toLowerCase().split(".").at(-1) ?? "";
+  return FILE_EXTENSION_TO_ICON_INFO[extension];
 };
