@@ -38,54 +38,52 @@ export const useDatabaseAccessEditorTables = ({
         .concat(
           newTables
             ?.filter((nt) => !tables.some((t) => t.name === nt.name))
-            .map(
-              (t) =>
-                ({
-                  oid: NEW_OBJECT_OID,
-                  isView: false,
-                  joins: [],
-                  joinsV2: [],
-                  publishInfo: {},
-                  label: t.name,
-                  name: t.name,
-                  qualifiedNameParts: {
-                    schema: t.schema ?? "",
-                    name: t.name,
-                  },
-                  ddlState: getTableSchemaDriftState(
-                    tables.find((et) => et.name === t.name),
-                    t,
-                    newTablesDdl,
-                  ),
-                  columns: t.columns.map(
-                    ({ name, dataType }) =>
-                      ({
-                        oid: NEW_OBJECT_OID,
-                        name,
-                        label: name,
-                        comment: "",
-                        icon: undefined,
-                        delete: true,
-                        ordinal_position: -1,
-                        is_nullable: true,
-                        is_updatable: true,
-                        is_generated: true,
-                        udt_name: "text",
-                        data_type: dataType,
-                        tsDataType: "string",
-                        element_type: undefined,
-                        element_udt_name: undefined,
-                        is_pkey: false,
-                        has_default: false,
-                        select: true,
-                        insert: true,
-                        update: true,
-                        orderBy: true,
-                        filter: true,
-                      }) as DBSchemaTableColumn,
-                  ),
-                }),
-            ) ?? [],
+            .map((t) => ({
+              isCitationTable: false,
+              oid: NEW_OBJECT_OID,
+              isView: false,
+              joins: [],
+              joinsV2: [],
+              publishInfo: {},
+              label: t.name,
+              name: t.name,
+              qualifiedNameParts: {
+                schema: t.schema ?? "",
+                name: t.name,
+              },
+              ddlState: getTableSchemaDriftState(
+                tables.find((et) => et.name === t.name),
+                t,
+                newTablesDdl,
+              ),
+              columns: t.columns.map(
+                ({ name, dataType }) =>
+                  ({
+                    oid: NEW_OBJECT_OID,
+                    name,
+                    label: name,
+                    comment: "",
+                    icon: undefined,
+                    delete: true,
+                    ordinal_position: -1,
+                    is_nullable: true,
+                    is_updatable: true,
+                    is_generated: true,
+                    udt_name: "text",
+                    data_type: dataType,
+                    tsDataType: "string",
+                    element_type: undefined,
+                    element_udt_name: undefined,
+                    is_pkey: false,
+                    has_default: false,
+                    select: true,
+                    insert: true,
+                    update: true,
+                    orderBy: true,
+                    filter: true,
+                  }) as DBSchemaTableColumn,
+              ),
+            })) ?? [],
         )
         .toSorted((a, b) => {
           const aRule = value.tablePermissions[a.name];

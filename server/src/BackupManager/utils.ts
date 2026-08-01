@@ -1,14 +1,15 @@
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import path from "path";
-import { FileManager } from "prostgles-server/dist/FileManager/FileManager";
 
+import type { DBSSchema } from "@common/publishUtils";
 import { getAge, ROUTES } from "@common/utils";
+import { getLocalStorageClient } from "prostgles-server";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
 import type { Connections, DBS } from "..";
 import { getCloudClient } from "../cloudClients/cloudClients";
 import { getConnectionDetails } from "../connectionUtils/getConnectionDetails";
 import { getRootDir } from "../electronConfig";
-import type { DBSSchema } from "@common/publishUtils";
+import type { StorageClient } from "prostgles-server/dist/StorageClient/StorageClientTypes";
 
 export const getConnectionUri = (c: Connections) =>
   c.db_conn ||
@@ -22,7 +23,7 @@ export async function getFileMgr(dbs: DBS, credId: number | null) {
     cred = await dbs.credentials.findOne({ id: credId });
     if (!cred) throw new Error("Could not find the credentials");
   }
-  const fileMgr = new FileManager(
+  const fileMgr: StorageClient =
     cred ?
       getCloudClient({
         accessKeyId: cred.key_id,
@@ -31,8 +32,8 @@ export async function getFileMgr(dbs: DBS, credId: number | null) {
         region: cred.region || "auto",
         endpoint: cred.endpoint_url,
       })
-    : { localFolderPath },
-  );
+    : getLocalStorageClient({ localFolderPath });
+
   return { fileMgr, cred };
 }
 

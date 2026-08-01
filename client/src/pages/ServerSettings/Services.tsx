@@ -225,7 +225,7 @@ const useServicesFieldConfigs = ({
         ),
       },
     ] satisfies FieldConfig<DBSSchema["services"]>[];
-  }, [dbs.services, onErrorAlert, showSpecificService, toggleService]);
+  }, [dbs.services, showSpecificService, toggleService]);
 
   return { servicesFieldConfigs };
 };

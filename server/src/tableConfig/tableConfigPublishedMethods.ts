@@ -1,4 +1,4 @@
-import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
+import type { TableConfig } from "prostgles-server";
 import { DATA_TYPES, type JSONB } from "prostgles-types";
 
 const primitiveJsonbType = {

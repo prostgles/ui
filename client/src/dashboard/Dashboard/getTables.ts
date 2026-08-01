@@ -21,20 +21,27 @@ export const getTables = (
         label ?? (capitaliseNames ? convertSnakeToReadable(t.name) : t.name),
       ...getJoinedTables(schemaTables, t.name, db),
       columns: t.columns
-        .map(
-          (c) =>
-            ({
-              ...c,
-              label: capitaliseNames ? convertSnakeToReadable(c.name) : c.name,
-              icon: columns?.[c.name]?.icon,
-              renderAs: columns?.[c.name]?.renderAs,
-              style: columns?.[c.name]?.style,
-            }) as typeof c & {
-              icon: string;
-              renderAs?: any;
-              style?: any;
-            },
-        )
+        .map((c) => {
+          const columnConfig = columns?.[c.name];
+          const isFileColumn = (t.isFileTable && c.name === "url") || c.file;
+          return {
+            ...c,
+            label: capitaliseNames ? convertSnakeToReadable(c.name) : c.name,
+            icon: columnConfig?.icon,
+            renderAs:
+              isFileColumn && !columnConfig ?
+                {
+                  type: "Media",
+                  params: { type: "From URL Extension" },
+                }
+              : columnConfig?.renderAs,
+            style: columnConfig?.style,
+          } as typeof c & {
+            icon: string;
+            renderAs?: any;
+            style?: any;
+          };
+        })
         .sort((a, b) => {
           return a.ordinal_position - b.ordinal_position;
         }),

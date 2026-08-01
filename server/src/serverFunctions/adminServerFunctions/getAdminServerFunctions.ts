@@ -20,7 +20,13 @@ import { globStream } from "glob";
 import * as os from "os";
 import path, { join } from "path";
 import { getIsSuperUser } from "prostgles-server/dist/Prostgles";
-import { getKeys, includes, isEmpty, type SQLHandler } from "prostgles-types";
+import {
+  getKeys,
+  includes,
+  isEmpty,
+  type AnyObject,
+  type SQLHandler,
+} from "prostgles-types";
 import { getSampleSchemas } from "../applySampleSchema";
 import { getTemplateUserConnection } from "../askLLM/prostglesLLMTools/getTemplateUserConnection";
 import { refreshModels } from "../askLLM/refreshModels";
@@ -304,13 +310,13 @@ export const getAdminServerFunctions = (
     }),
     createConnection: defineAdminFunction({
       input: {
-        connection: "any",
+        connection: { record: { values: "any" } },
         origin: "string",
         sampleSchemaName: { type: "string", optional: true },
       },
       run: async ({ connection, sampleSchemaName, origin }, { dbs, user }) => {
         const res = await upsertConnection(
-          connection,
+          connection as any,
           user.id,
           dbs,
           [origin],
@@ -330,9 +336,6 @@ export const getAdminServerFunctions = (
       input: { conId: "string" },
       run: async ({ conId }) => {
         const conn = connectionManager.getConnectionStartedInstance(conId);
-        if (conId && typeof conId !== "string") {
-          throw "Invalid/Inexisting connection id provided";
-        }
         await conn.prgl.restart();
       },
     }),

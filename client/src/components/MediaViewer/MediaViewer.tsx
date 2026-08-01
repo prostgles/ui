@@ -4,10 +4,10 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Icon } from "../Icon/Icon";
 import Popup from "../Popup/Popup";
 import {
-  RenderMedia,
+  MediaViewerContent,
   type UrlInfo,
   type ValidContentType,
-} from "./RenderMedia";
+} from "./MediaViewerContent";
 import { ContentTypes } from "@common/columnDisplayFormat.schema";
 
 type P = {
@@ -126,8 +126,9 @@ export const MediaViewer = (props: P) => {
     );
   return (
     <>
-      <RenderMedia
+      <MediaViewerContent
         title={name}
+        subTitle={undefined}
         isFocused={isFocused}
         setIsFocused={setIsFocused}
         style={style}
@@ -139,7 +140,7 @@ export const MediaViewer = (props: P) => {
         <Popup
           rootStyle={{ padding: 0, borderRadius: 0 }}
           clickCatchStyle={{ opacity: 0.2 }}
-          contentClassName="o-hidden"
+          contentClassName="o-hidden p-0"
           onClose={() => {
             setIsFocused(false);
           }}
@@ -174,8 +175,9 @@ export const MediaViewer = (props: P) => {
             }
           >
             {toggleClick && ToggleBtn(true, () => toggleClick(-1))}
-            <RenderMedia
+            <MediaViewerContent
               title={name}
+              subTitle={undefined}
               isFocused={isFocused}
               setIsFocused={setIsFocused}
               style={style}

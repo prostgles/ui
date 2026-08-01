@@ -1,4 +1,4 @@
-import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
+import type { TableConfig } from "prostgles-server";
 import { UNIQUE_DB_COLS } from "./tableConfigDatabaseConfig";
 import { tableOptionsJsonbSchema } from "@common/mcp/tableOptionsJsonbSchema";
 import type { DBSSchema } from "@common/publishUtils";

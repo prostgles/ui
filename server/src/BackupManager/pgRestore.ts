@@ -70,7 +70,7 @@ export async function pgRestore(
     const SSL_ENV_VARS = getSSLEnvVars(con);
     const ConnectionEnvVars = getConnectionEnvVars(con);
     const ENV_VARS = { ...SSL_ENV_VARS, ...ConnectionEnvVars };
-    const bkpStream = stream ?? (await fileMgr.getFileStream(bkp.id));
+    const bkpStream = stream ?? (await fileMgr.downloadAsStream(bkp.id));
     const restoreCmd =
       o.command === "psql" || o.format === "p" ?
         {

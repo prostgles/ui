@@ -5,7 +5,6 @@ import type { DBSchemaTable, ValidatedColumnInfo } from "prostgles-types";
 import type {
   MissingBinsOption,
   ShowBinLabelsMode,
-  StatType,
   TimeChartBinSize,
   TimechartRenderStyle,
   TooltipPosition,
@@ -26,13 +25,7 @@ import type {
 import type { CardLayout } from "./cardLayout";
 
 export type ChartType =
-  | "table"
-  | "map"
-  | "timechart"
-  | "barchart"
-  | "sql"
-  | "card"
-  | "method";
+  "table" | "map" | "timechart" | "barchart" | "sql" | "card" | "method";
 
 export type DBSSchemaForHandlers = {
   [K in keyof DBGeneratedSchema]: DBGeneratedSchema[K]["columns"];
@@ -122,7 +115,6 @@ export type ChartOptions<CType extends ChartType = "table"> =
       showLogs?: boolean;
     }
   : CType extends "card" ?
-
     {
       // sortableFields: string[];
       // filterFields: string[];
@@ -367,12 +359,20 @@ export type DBSchemaTableColumn = ValidatedColumnInfo & {
 type TableOptions = NonNullable<
   NonNullable<DBSSchema["connections"]["table_options"]>[string]
 >;
-export type DBSchemaTableWJoins = Omit<DBSchemaTable, "columns"> & {
-  label: string;
-  joins: Join[];
-  joinsV2: JoinV2[];
-  columns: DBSchemaTableColumn[];
-} & Omit<TableOptions, "label" | "columns">;
+export type DBSchemaTableWJoins = DBSchemaTable<
+  Omit<TableOptions, "label" | "columns"> & {
+    isCitationTable: boolean;
+    label: string;
+    joins: Join[];
+    joinsV2: JoinV2[];
+  },
+  {
+    icon: string | undefined;
+    renderAs?: any;
+    style?: any;
+    label: string;
+  }
+>;
 export type DBSchemaTablesWJoins = DBSchemaTableWJoins[];
 
 /**

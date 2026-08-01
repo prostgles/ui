@@ -1,4 +1,4 @@
-import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
+import type { TableConfig } from "prostgles-server";
 import type { JSONB } from "prostgles-types";
 import { DUMP_OPTIONS_SCHEMA } from "./tableConfigBackups";
 import { OAuthProviderOptions } from "@common/OAuthUtils";
@@ -48,6 +48,7 @@ export const FILE_TABLE_CONFIG_SCHEMA = {
     },
   },
   citationsTable: { type: "string", optional: true },
+  extractText: { type: "boolean", optional: true },
 } as const satisfies JSONB.ObjectType["type"];
 
 const SMTPConfig = {

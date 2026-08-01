@@ -3,7 +3,7 @@ import type { DB } from "prostgles-server/dist/Prostgles";
 import type { UpdateableOptions } from "prostgles-server/dist/initProstgles";
 import type { SUser } from "../authConfig/sessionUtils";
 import type { Connections, DBS, DatabaseConfigs } from "../index";
-import { getRestApiConfig, parseTableConfig } from "./connectionManagerUtils";
+import { getRestApiConfig } from "./connectionManagerUtils";
 import { getConnectionAuth } from "./getConnectionAuth";
 import { getConnectionSocketPath } from "./getConnectionSocketPath";
 import type { ConnectionManager } from "./ConnectionManager";
@@ -11,6 +11,7 @@ import { join } from "path";
 import { getConnectionServerFunctions } from "./getConnectionServerFunctions";
 import type { ConnectionDetails } from "@src/connectionUtils/getConnectionDetails";
 import type { CONNECTION_HOT_RELOAD_COLUMNS } from "./initConnectionManager";
+import { parseTableConfig } from "./parseTableConfig";
 
 export type HotReloadConfigOptions = Pick<
   UpdateableOptions<void, SUser>,

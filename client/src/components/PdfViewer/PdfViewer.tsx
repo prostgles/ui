@@ -1,23 +1,35 @@
+import * as pdfjsLib from "pdfjs-dist";
+import { EventBus, PDFPageView } from "pdfjs-dist/web/pdf_viewer.mjs";
 import React, {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
 } from "react";
-import * as pdfjsLib from "pdfjs-dist";
+import { createPortal } from "react-dom";
+
+import ErrorComponent from "@components/ErrorComponent";
+import { FlexCol } from "@components/Flex";
+import { PdfViewerHeaderControls } from "./PdfViewerHeaderControls";
 
 import "pdfjs-dist/web/pdf_viewer.css";
 import "./PdfViewer.css";
-import Btn from "@components/Btn";
-import { FlexCol } from "@components/Flex";
+import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.mjs",
   import.meta.url,
 ).toString();
 
-type HighlightRect = {
+const CSS_UNITS = 96 / 72;
+
+export type HighlightRect = {
+  /**
+   * Unscaled CSS page-space coordinates, relative to the page's top-left
+   * corner. These are deliberately not PDF-point coordinates.
+   */
   x: number;
   y: number;
   width: number;
@@ -27,14 +39,13 @@ type HighlightRect = {
 export type Highlight = {
   id: string;
   page: number;
-
-  /**
-   * Coordinates in unscaled page-space units, using a top-left origin.
-   */
   rects: HighlightRect[];
-
   color: string;
   tooltip?: string;
+};
+
+export type CreatedHighlight = Omit<Highlight, "id" | "color"> & {
+  text: string;
 };
 
 type PdfViewerProps = {
@@ -42,7 +53,12 @@ type PdfViewerProps = {
   scale?: number;
   highlights?: Highlight[];
   withCredentials?: boolean;
-  onPageChange?: (page: number) => void;
+
+  /**
+   * Called after a text selection is made within the currently rendered page.
+   * The parent owns persistence, IDs, citation metadata, and highlight color.
+   */
+  onCreateHighlight?: (highlight: CreatedHighlight) => void;
 };
 
 type ActiveTooltip = {
@@ -52,6 +68,12 @@ type ActiveTooltip = {
   top: number;
 };
 
+type RenderedPage = {
+  element: HTMLDivElement;
+  page: number;
+  viewport: pdfjsLib.PageViewport;
+};
+
 const getErrorMessage = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
 
@@ -59,43 +81,48 @@ const isRenderCancellation = (error: unknown) =>
   error instanceof Error &&
   ["RenderingCancelledException", "AbortException"].includes(error.name);
 
-export function PdfViewer({
+const isRectVisible = (rect: HighlightRect) =>
+  rect.width > 0 && rect.height > 0;
+
+export const PdfViewer = ({
   url,
   scale = 1.5,
   highlights = [],
   withCredentials = false,
-  onPageChange,
-}: PdfViewerProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const textLayerRef = useRef<HTMLDivElement>(null);
-
-  const canvasRenderTaskRef = useRef<pdfjsLib.RenderTask | null>(null);
-  const textLayerTaskRef = useRef<{ cancel: () => void } | null>(null);
+  onCreateHighlight,
+}: PdfViewerProps) => {
+  const pageHostRef = useRef<HTMLDivElement>(null);
+  const pageViewRef = useRef<PDFPageView | null>(null);
   const renderVersionRef = useRef(0);
+  const [eventBus] = useState(() => new EventBus());
 
   const [pdfDocument, setPdfDocument] =
     useState<pdfjsLib.PDFDocumentProxy | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [viewport, setViewport] = useState<pdfjsLib.PageViewport | null>(null);
+  const [renderedPage, setRenderedPage] = useState<RenderedPage | null>(null);
   const [isRendering, setIsRendering] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<unknown>();
   const [activeTooltip, setActiveTooltip] = useState<ActiveTooltip | null>(
     null,
   );
 
   const numPages = pdfDocument?.numPages ?? 0;
-
-  const pageHighlights = highlights.filter(
-    (highlight) => highlight.page === currentPage,
+  const pageHighlights = useMemo(
+    () => highlights.filter((highlight) => highlight.page === currentPage),
+    [currentPage, highlights],
   );
+  const activeRenderedPage =
+    renderedPage?.page === currentPage ? renderedPage : null;
+  const viewport = activeRenderedPage?.viewport ?? null;
+  const pageElement = activeRenderedPage?.element ?? null;
 
   useEffect(() => {
     let disposed = false;
 
     setPdfDocument(null);
-    setViewport(null);
+    setRenderedPage(null);
     setCurrentPage(1);
-    setError(null);
+    setError(undefined);
 
     const loadingTask = pdfjsLib.getDocument({
       url,
@@ -106,15 +133,14 @@ export function PdfViewer({
 
     void loadingTask.promise
       .then((document) => {
-        if (disposed) return;
-
-        setPdfDocument(document);
-        setCurrentPage(1);
+        if (!disposed) {
+          setPdfDocument(document);
+        }
       })
       .catch((loadError: unknown) => {
-        if (disposed) return;
-
-        setError(`Failed to load PDF: ${getErrorMessage(loadError)}`);
+        if (!disposed) {
+          setError(loadError);
+        }
       });
 
     return () => {
@@ -124,79 +150,56 @@ export function PdfViewer({
   }, [url, withCredentials]);
 
   useEffect(() => {
-    if (!pdfDocument || !canvasRef.current || !textLayerRef.current) {
+    if (!pdfDocument || !pageHostRef.current) {
       return;
     }
 
+    const host = pageHostRef.current;
     const renderVersion = ++renderVersionRef.current;
-    const canvas = canvasRef.current;
-    const textLayerContainer = textLayerRef.current;
-
-    canvasRenderTaskRef.current?.cancel();
-    textLayerTaskRef.current?.cancel();
+    let disposed = false;
+    let pageView: PDFPageView | null = null;
 
     setIsRendering(true);
-    setError(null);
+    setError(undefined);
     setActiveTooltip(null);
+    setRenderedPage(null);
+
+    host.replaceChildren();
 
     const renderPage = async () => {
       try {
-        const page = await pdfDocument.getPage(currentPage);
+        const pdfPage = await pdfDocument.getPage(currentPage);
 
-        if (renderVersion !== renderVersionRef.current) return;
-
-        const pageViewport = page.getViewport({ scale });
-        const context = canvas.getContext("2d");
-
-        if (!context) {
-          throw new Error("Could not create the canvas rendering context.");
-        }
-
-        setViewport(pageViewport);
-        textLayerContainer.style.setProperty(
-          "--total-scale-factor",
-          pageViewport.scale.toString(),
-        );
-        const outputScale = window.devicePixelRatio || 1;
-
-        canvas.width = Math.floor(pageViewport.width * outputScale);
-        canvas.height = Math.floor(pageViewport.height * outputScale);
-        canvas.style.width = `${pageViewport.width}px`;
-        canvas.style.height = `${pageViewport.height}px`;
-
-        textLayerContainer.replaceChildren();
-
-        const canvasRenderTask = page.render({
-          canvas,
-          canvasContext: context,
-          viewport: pageViewport,
-          transform:
-            outputScale === 1 ? undefined : (
-              [outputScale, 0, 0, outputScale, 0, 0]
-            ),
-        });
-
-        canvasRenderTaskRef.current = canvasRenderTask;
-
-        // Rendering can begin while PDF.js extracts the page text.
-        const textContent = await page.getTextContent();
-
-        if (renderVersion !== renderVersionRef.current) {
-          canvasRenderTask.cancel();
+        if (disposed || renderVersion !== renderVersionRef.current) {
           return;
         }
 
-        const textLayer = new pdfjsLib.TextLayer({
-          container: textLayerContainer,
-          textContentSource: textContent,
-          viewport: pageViewport,
+        const viewerScale = scale / CSS_UNITS;
+        const defaultViewport = pdfPage.getViewport({ scale, rotation: 0 });
+
+        pageView = new PDFPageView({
+          container: host,
+          id: currentPage,
+          scale: viewerScale,
+          defaultViewport,
+          eventBus,
+          textLayerMode: 1,
+          annotationMode: pdfjsLib.AnnotationMode.ENABLE,
         });
 
-        textLayerTaskRef.current = textLayer;
+        pageViewRef.current = pageView;
+        pageView.setPdfPage(pdfPage);
 
-        await Promise.all([canvasRenderTask.promise, textLayer.render()]);
+        setRenderedPage({
+          element: pageView.div,
+          page: currentPage,
+          viewport: pageView.viewport,
+        });
+
+        await pageView.draw();
       } catch (renderError: unknown) {
         if (
+          disposed ||
           renderVersion !== renderVersionRef.current ||
           isRenderCancellation(renderError)
         ) {
@@ -206,7 +209,7 @@ export function PdfViewer({
         console.error("Failed to render PDF page:", renderError);
         setError(`Failed to render page: ${getErrorMessage(renderError)}`);
       } finally {
-        if (renderVersion === renderVersionRef.current) {
+        if (!disposed && renderVersion === renderVersionRef.current) {
           setIsRendering(false);
         }
       }
@@ -215,53 +218,120 @@ export function PdfViewer({
     void renderPage();
 
     return () => {
+      disposed = true;
       renderVersionRef.current += 1;
-      canvasRenderTaskRef.current?.cancel();
-      textLayerTaskRef.current?.cancel();
 
-      canvasRenderTaskRef.current = null;
-      textLayerTaskRef.current = null;
+      pageView?.cancelRendering();
+      pageView?.reset();
+      pageView?.div.remove();
+
+      if (pageViewRef.current === pageView) {
+        pageViewRef.current = null;
+      }
     };
-  }, [pdfDocument, currentPage, scale]);
+  }, [currentPage, eventBus, pdfDocument, scale]);
 
-  const changePage = useCallback(
-    (requestedPage: number) => {
-      if (!numPages) return;
+  const clearSelection = useCallback(() => {
+    window.getSelection()?.removeAllRanges();
+  }, []);
 
-      const nextPage = Math.min(Math.max(requestedPage, 1), numPages);
+  const createHighlightFromSelection = useCallback(() => {
+    if (!onCreateHighlight || !pageElement || !viewport) {
+      return;
+    }
 
-      if (nextPage === currentPage) return;
+    const selection = window.getSelection();
 
-      setCurrentPage(nextPage);
-      onPageChange?.(nextPage);
-    },
-    [currentPage, numPages, onPageChange],
-  );
+    if (!selection || selection.isCollapsed || selection.rangeCount === 0) {
+      return;
+    }
 
-  const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (!viewport) return;
+    const range = selection.getRangeAt(0);
+    const selectedText = selection.toString().trim();
 
-    const bounds = event.currentTarget.getBoundingClientRect();
-    const pointerX = event.clientX - bounds.left;
-    const pointerY = event.clientY - bounds.top;
+    if (!selectedText) {
+      return;
+    }
 
-    for (const highlight of pageHighlights) {
-      if (!highlight.tooltip) continue;
+    const commonAncestor =
+      range.commonAncestorContainer.nodeType === Node.ELEMENT_NODE ?
+        (range.commonAncestorContainer as Element)
+      : range.commonAncestorContainer.parentElement;
 
-      for (let index = 0; index < highlight.rects.length; index += 1) {
-        const rect = highlight.rects[index]!;
-        const left = rect.x * scale;
-        const top = rect.y * scale;
-        const width = rect.width * scale;
-        const height = rect.height * scale;
+    if (!commonAncestor?.closest(".textLayer")) {
+      return;
+    }
 
-        const isInside =
-          pointerX >= left &&
-          pointerX <= left + width &&
-          pointerY >= top &&
-          pointerY <= top + height;
+    const pageBounds = pageElement.getBoundingClientRect();
+    const rects = Array.from(range.getClientRects())
+      .map((clientRect): HighlightRect => {
+        const left = clientRect.left - pageBounds.left;
+        const top = clientRect.top - pageBounds.top;
 
-        if (isInside) {
+        return {
+          x: left / viewport.scale,
+          y: top / viewport.scale,
+          width: clientRect.width / viewport.scale,
+          height: clientRect.height / viewport.scale,
+        };
+      })
+      .filter(isRectVisible);
+
+    if (rects.length === 0) {
+      return;
+    }
+
+    onCreateHighlight({
+      page: currentPage,
+      rects,
+      text: selectedText,
+    });
+
+    clearSelection();
+  }, [clearSelection, currentPage, onCreateHighlight, pageElement, viewport]);
+
+  const handlePointerUp = useCallback(() => {
+    queueMicrotask(createHighlightFromSelection);
+  }, [createHighlightFromSelection]);
+
+  const handlePointerMove = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      if (!viewport) {
+        return;
+      }
+
+      const selection = window.getSelection();
+
+      if (selection && !selection.isCollapsed) {
+        setActiveTooltip(null);
+        return;
+      }
+
+      const bounds = event.currentTarget.getBoundingClientRect();
+      const pointerX = event.clientX - bounds.left;
+      const pointerY = event.clientY - bounds.top;
+
+      for (const highlight of pageHighlights) {
+        if (!highlight.tooltip) {
+          continue;
+        }
+
+        for (const [index, rect] of highlight.rects.entries()) {
+          const left = rect.x * viewport.scale;
+          const top = rect.y * viewport.scale;
+          const width = rect.width * viewport.scale;
+          const height = rect.height * viewport.scale;
+
+          const containsPointer =
+            pointerX >= left &&
+            pointerX <= left + width &&
+            pointerY >= top &&
+            pointerY <= top + height;
+
+          if (!containsPointer) {
+            continue;
+          }
+
           const key = `${highlight.id}-${index}`;
 
           setActiveTooltip((previous) =>
@@ -278,102 +348,76 @@ export function PdfViewer({
           return;
         }
       }
-    }
 
-    setActiveTooltip(null);
-  };
+      setActiveTooltip(null);
+    },
+    [pageHighlights, viewport],
+  );
+
+  const highlightLayer =
+    pageElement && viewport ?
+      createPortal(
+        <div className="pdf-viewer__highlight-layer" aria-hidden="true">
+          {pageHighlights.flatMap((highlight) =>
+            highlight.rects.map((rect, index) => (
+              <div
+                key={`${highlight.id}-${index}`}
+                className="pdf-viewer__highlight"
+                style={{
+                  left: rect.x * viewport.scale,
+                  top: rect.y * viewport.scale,
+                  width: rect.width * viewport.scale,
+                  height: rect.height * viewport.scale,
+                  backgroundColor: highlight.color,
+                }}
+              />
+            )),
+          )}
+        </div>,
+        pageElement,
+      )
+    : null;
+
+  const tooltipLayer =
+    pageElement && activeTooltip ?
+      createPortal(
+        <div
+          className="pdf-viewer__tooltip"
+          role="tooltip"
+          style={{
+            left: activeTooltip.left,
+            top: activeTooltip.top,
+          }}
+        >
+          {activeTooltip.text}
+        </div>,
+        pageElement,
+      )
+    : null;
 
   return (
-    <FlexCol className="PdfViewer bg-color-3 ai-center">
-      <nav className="pdf-viewer__controls m-auto" aria-label="PDF navigation">
-        <Btn
-          disabledInfo={
-            currentPage <= 1 || isRendering ? "Is on first page" : undefined
-          }
-          variant="faded"
-          onClick={() => changePage(currentPage - 1)}
-        >
-          Previous
-        </Btn>
+    <FlexCol className="PdfViewer bg-color-3 ai-center min-h-0">
+      <PdfViewerHeaderControls
+        page={currentPage}
+        numPages={numPages}
+        isRendering={isRendering}
+        onPageChange={setCurrentPage}
+      />
 
-        <span aria-live="polite">
-          Page {currentPage} of {numPages || "—"}
-        </span>
+      <ErrorComponent error={error} />
 
-        <Btn
-          disabledInfo={
-            !numPages || currentPage >= numPages || isRendering ?
-              "Is on last page"
-            : undefined
-          }
-          variant="faded"
-          onClick={() => changePage(currentPage + 1)}
-        >
-          Next
-        </Btn>
-      </nav>
-
-      {error && (
-        <div className="pdf-viewer__error" role="alert">
-          {error}
-        </div>
-      )}
-
-      <div
-        className="pdf-viewer__page"
-        style={
-          viewport ?
-            {
-              width: viewport.width,
-              height: viewport.height,
-              // "--scale-factor": viewport.scale,
-            }
-          : undefined
-        }
-        onPointerMove={handlePointerMove}
-        onPointerLeave={() => setActiveTooltip(null)}
-      >
-        <canvas
-          ref={canvasRef}
-          className="pdf-viewer__canvas"
-          aria-hidden="true"
+      <ScrollFade className="o-auto w-full">
+        <div
+          ref={pageHostRef}
+          className="pdfViewer removePageBorders singlePageView pdf-viewer__page-host"
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerLeave={() => setActiveTooltip(null)}
         />
+      </ScrollFade>
 
-        <div className="pdf-viewer__highlight-layer" aria-hidden="true">
-          {viewport &&
-            pageHighlights.flatMap((highlight) =>
-              highlight.rects.map((rect, index) => (
-                <div
-                  key={`${highlight.id}-${index}`}
-                  className="pdf-viewer__highlight"
-                  style={{
-                    left: rect.x * scale,
-                    top: rect.y * scale,
-                    width: rect.width * scale,
-                    height: rect.height * scale,
-                    backgroundColor: highlight.color,
-                  }}
-                />
-              )),
-            )}
-        </div>
-
-        {/* PDF.js populates this with selectable, transparent text. */}
-        <div ref={textLayerRef} className="textLayer pdf-viewer__text-layer" />
-
-        {activeTooltip && (
-          <div
-            className="pdf-viewer__tooltip"
-            role="tooltip"
-            style={{
-              left: activeTooltip.left,
-              top: activeTooltip.top,
-            }}
-          >
-            {activeTooltip.text}
-          </div>
-        )}
-      </div>
+      {highlightLayer}
+      {tooltipLayer}
     </FlexCol>
   );
-}
+};

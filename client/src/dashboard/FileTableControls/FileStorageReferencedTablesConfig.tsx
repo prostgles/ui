@@ -6,7 +6,7 @@ import React from "react";
 import type { PrglCore } from "../../App";
 import { CreateFileColumn } from "./CreateFileColumn";
 import { FileColumnConfigControls } from "./FileColumnConfigControls";
-import type { useFileTableConfigControls } from "./useFileTableConfigControls";
+import type { useFileTableConfigControls } from "./hooks/useFileTableConfigControls";
 
 type FileStorageReferencedTablesConfigProps = Pick<PrglCore, "tables"> &
   Pick<

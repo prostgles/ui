@@ -6,7 +6,7 @@ import { type Prgl } from "../../App";
 import type { FileTableConfigReferences } from "./FileColumnConfigControls";
 import { FileStorageControls } from "./FileStorageControls";
 import { FileStorageReferencedTablesConfig } from "./FileStorageReferencedTablesConfig";
-import { useFileTableConfigControls } from "./useFileTableConfigControls";
+import { useFileTableConfigControls } from "./hooks/useFileTableConfigControls";
 
 type FileTableConfigControlsProps = {
   prgl: Prgl;
@@ -22,7 +22,7 @@ export type ConnectionTableConfig =
 export const FileTableConfigControls = ({
   prgl,
 }: FileTableConfigControlsProps) => {
-  const { tables, db, dbs, dbsTables, dbsMethods } = prgl;
+  const { tables, db, dbs, dbsMethods } = prgl;
   const {
     connection,
     database_config,
@@ -42,10 +42,8 @@ export const FileTableConfigControls = ({
         canCreateTables={canCreateTables}
         connection={connection}
         database_config={database_config}
-        dbTables={tables}
         dbsMethods={dbsMethods}
         dbs={dbs}
-        dbsTables={dbsTables}
         dbProject={db}
       />
 

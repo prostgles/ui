@@ -18,7 +18,6 @@ import type { DBSSchema } from "@common/publishUtils";
 import { fixIndent, ROUTES } from "@common/utils";
 import { AppContextProvider } from "@pages/AppContextProvider";
 import { prglStateStore } from "@pages/ProjectConnection/PrglContextProvider";
-// import { type DBHandlerClient } from "prostgles-client";
 import { ElectronSearchBar } from "@components/ElectronSearchBar";
 import type { AuthHandler } from "prostgles-client/dist/getAuthHandler";
 import type { ServerFunctionHandler } from "prostgles-client/dist/prostgles";

@@ -1,8 +1,8 @@
 import { useIsMounted, usePromise } from "prostgles-client";
-import type { Prgl } from "../../App";
-import { getCanCreateTables } from "./FileTableConfigControls";
+import type { Prgl } from "../../../App";
+import { getCanCreateTables } from "../FileTableConfigControls";
 import { useCallback, useState } from "react";
-import type { FileTableConfigReferences } from "./FileColumnConfigControls";
+import type { FileTableConfigReferences } from "../FileColumnConfigControls";
 
 export type UseFileTableConfigControlsArgs = Pick<
   Prgl,

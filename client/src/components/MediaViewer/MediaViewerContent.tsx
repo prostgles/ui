@@ -16,16 +16,18 @@ export type UrlInfo = {
   type?: ValidContentType;
 };
 
-export const RenderMedia = ({
+export const MediaViewerContent = ({
   contentOnly = false,
   isFocused,
   setIsFocused,
   urlInfo,
   style,
   title,
+  subTitle,
   variant,
 }: {
   title: string | undefined;
+  subTitle: string | undefined;
   contentOnly: boolean;
   urlInfo: UrlInfo | undefined;
   isFocused: boolean;
@@ -133,10 +135,12 @@ export const RenderMedia = ({
             expandedDocUrl === url && (
               <Popup
                 title={title ?? urlInfo.forDisplay}
+                subTitle={subTitle}
                 positioning="fullscreen"
                 onClose={() => {
                   setExpandedDocUrl(undefined);
                 }}
+                contentClassName="p-0"
               >
                 {content_type === "application/pdf" ?
                   <PdfViewer

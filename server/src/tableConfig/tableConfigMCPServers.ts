@@ -5,7 +5,7 @@ import type {
   AfterAllTsTrigger,
   ValidateRowArgsCommon,
 } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
-import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
+import type { TableConfig } from "prostgles-server";
 import { isDefined, type JSONB } from "prostgles-types";
 import type { DBS } from "..";
 

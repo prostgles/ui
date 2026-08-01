@@ -1,6 +1,7 @@
 import type { DBS } from "@src/index";
 import { getJSONBObjectSchemaValidationError } from "prostgles-types";
 import { enqueuedRequestIds } from "./authenticateMcpServer";
+import { tout } from "@src/utils/tout";
 
 export const updateRemoteMcpAuthorizationCode = async (
   dbs: DBS,
@@ -69,6 +70,7 @@ export const updateRemoteMcpAuthorizationCode = async (
         },
       );
       enqueuedRequestIds.delete(request_id);
+      await tout(1_000);
       await t.mcp_servers.update(
         {
           name: existingConfig.server_name,

@@ -40,6 +40,7 @@
   ],
   "prettier.printWidth": 100,
   "cSpell.words": [
-    "cimd"
+    "cimd",
+    "cmaps"
   ]
 }

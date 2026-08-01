@@ -1,21 +1,20 @@
 import type { DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
-import Chip from "@components/Chip";
-import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol, FlexRowWrap } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
 import { InfoRow } from "@components/InfoRow";
+import { Label } from "@components/Label";
 import { Select } from "@components/Select/Select";
 import { SwitchToggle } from "@components/SwitchToggle";
 import { mdiContentSaveCogOutline } from "@mdi/js";
 import { usePromise } from "prostgles-client";
 import { pickKeys } from "prostgles-types";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import type { FullExtraProps } from "../../pages/ProjectConnection/ProjectConnection";
+import { bytesToSize } from "../BackupAndRestore/BackupsControls";
 import { CloudStorageCredentialSelector } from "../BackupAndRestore/CloudStorageCredentialSelector";
 import { FileStorageDelete } from "./FileStorageDelete";
-import { bytesToSize } from "../BackupAndRestore/BackupsControls";
-import { Label } from "@components/Label";
+import { useSetFileStorage } from "./hooks/useSetFileStorage";
 
 const STORAGE_TYPES = [
   {
@@ -28,7 +27,7 @@ const STORAGE_TYPES = [
 
 export type FileStorageControlsProps = Pick<
   FullExtraProps,
-  "dbsMethods" | "dbTables" | "dbs" | "dbsTables" | "dbProject"
+  "dbsMethods" | "dbs" | "dbProject"
 > & {
   connection: DBSSchema["connections"];
   database_config: DBSSchema["database_configs"];
@@ -39,13 +38,15 @@ export const FileStorageControls = (props: FileStorageControlsProps) => {
   const {
     canCreateTables,
     connection,
-    dbTables,
     dbsMethods,
     dbProject,
     database_config,
   } = props;
-  const [showDelete, setShowDelete] = useState(false);
+  const { toggleService } = dbsMethods;
+
   const fileConfig = database_config.file_table_config;
+
+  const [showDelete, setShowDelete] = useState(false);
 
   const fileSizes = usePromise(async () => {
     if (fileConfig?.storageType.type !== "local") {
@@ -58,43 +59,28 @@ export const FileStorageControls = (props: FileStorageControlsProps) => {
     return { projectFolder, rootFolder };
   }, [fileConfig?.storageType.type, dbsMethods, connection.id]);
 
-  const [fileTable, setFileTable] = useState(fileConfig?.fileTable);
-  const [fileCitationsTable, setFileCitationsTable] = useState(
-    fileConfig?.citationsTable,
-  );
+  const {
+    setFileStorage,
+    error,
+    canEnable,
+    storageType,
+    setStorageType,
+    credentialId,
+    setCredentialId,
+    fileTable,
+    setFileTable,
+    fileCitationsTable,
+    setFileCitationsTable,
+    fileTableNameClash,
+    fileCitationsTableNameClash,
+    extractText,
+    setExtractText,
+  } = useSetFileStorage({
+    canCreateTables,
+    connectionId: connection.id,
+    fileConfig,
+  });
 
-  useEffect(() => {
-    setFileTable(fileConfig?.fileTable);
-  }, [fileConfig?.fileTable]);
-
-  const [storageType, setStorageType] = useState(fileConfig?.storageType.type);
-  const [credentialId, setCredentialId] = useState(
-    fileConfig?.storageType && "credential_id" in fileConfig.storageType ?
-      fileConfig.storageType.credential_id
-    : undefined,
-  );
-
-  const fileTableNameClash = dbTables.some(
-    (t) =>
-      t.name === fileTable &&
-      !t.columns.some((c) => c.name === "signed_url_expires"),
-  );
-  const fileCitationsTableNameClash = dbTables.some(
-    (t) =>
-      t.name === fileCitationsTable &&
-      !t.columns.some((c) => c.name === "citation"),
-  );
-
-  const canEnable =
-    !fileConfig?.fileTable &&
-    fileTable &&
-    storageType &&
-    (storageType === "local" || !!credentialId);
-
-  const error =
-    canCreateTables ? undefined : (
-      `Cannot use this feature: Your account needs CREATE TABLE privilege`
-    );
   return (
     <>
       {showDelete && (
@@ -140,8 +126,8 @@ export const FileStorageControls = (props: FileStorageControlsProps) => {
         className=""
         data-command="config.files.toggle"
         disabledInfo={error}
-        onChange={(val) => {
-          if (val) {
+        onChange={(enable) => {
+          if (enable) {
             setFileTable("files");
             setFileCitationsTable("file_citations");
             setStorageType("local");
@@ -151,7 +137,7 @@ export const FileStorageControls = (props: FileStorageControlsProps) => {
             } else {
               setFileTable(undefined);
               setFileCitationsTable(undefined);
-              setStorageType(undefined);
+              setStorageType("local");
             }
           }
         }}
@@ -200,6 +186,27 @@ export const FileStorageControls = (props: FileStorageControlsProps) => {
                 : undefined
               }
             />
+            <SwitchToggle
+              label={"Extract text from documents using Docling"}
+              variant="col"
+              checked={extractText}
+              disabledInfo={
+                toggleService ? undefined : "Not allowed to start/stop services"
+              }
+              onChange={async (val) => {
+                if (val) {
+                  await toggleService?.({
+                    enable: true,
+                    serviceName: "documents",
+                  });
+                }
+                if (fileConfig) {
+                  await setFileStorage({ extractText: val });
+                } else {
+                  setExtractText(val);
+                }
+              }}
+            />
             {fileConfig?.fileTable ?
               <FormField
                 readOnly={true}
@@ -230,8 +237,7 @@ export const FileStorageControls = (props: FileStorageControlsProps) => {
             }}
           />
         </div>
-      : storageType === "local" ?
-        <>
+      : <>
           {Boolean(fileSizes) && (
             <>
               {fileSizes?.rootFolder && (
@@ -249,7 +255,7 @@ export const FileStorageControls = (props: FileStorageControlsProps) => {
             </>
           )}
         </>
-      : null}
+      }
 
       {canEnable && (
         <div className="flex-col gap-1 mt-2 ">
@@ -260,26 +266,7 @@ export const FileStorageControls = (props: FileStorageControlsProps) => {
             size="default"
             iconPath={mdiContentSaveCogOutline}
             onClickPromise={async () => {
-              if (storageType === "S3" && !credentialId) {
-                throw "storageType missing";
-              }
-              await dbsMethods.setFileStorage!({
-                connId: connection.id,
-                opts: {},
-                tableConfig: {
-                  fileTable,
-                  citationsTable: fileCitationsTable,
-                  storageType:
-                    storageType === "local" ?
-                      {
-                        type: storageType,
-                      }
-                    : {
-                        type: storageType,
-                        credential_id: credentialId!,
-                      },
-                },
-              });
+              await setFileStorage();
             }}
           >
             Enable file storage

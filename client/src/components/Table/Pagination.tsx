@@ -18,6 +18,8 @@ export type PaginationProps = {
   onPageChange?: (newPage: number) => any;
   onPageSizeChange?: (newPageSize: number) => any;
   className?: string;
+  disabled?: boolean;
+  pageCountInfo?: React.ReactNode;
 };
 
 export const Pagination = (props: PaginationProps) => {
@@ -28,6 +30,8 @@ export const Pagination = (props: PaginationProps) => {
     pageSize = PAGE_SIZES[0],
     totalRows,
     className = "",
+    disabled = false,
+    pageCountInfo,
   } = props;
   const onPageChange = (newPage) => {
     if (zeroBasedPage !== newPage) onPC?.(newPage);
@@ -41,12 +45,21 @@ export const Pagination = (props: PaginationProps) => {
   // if (!maxPage) return null;
 
   const noPrevMessage =
-    zeroBasedPage === 0 ? "Already at first page" : undefined;
+    disabled ? "Pagination is unavailable"
+    : zeroBasedPage === 0 ? "Already at first page"
+    : undefined;
   const noNextMessage =
-    zeroBasedPage === maxPage ? "Already at last page" : undefined;
+    disabled ? "Pagination is unavailable"
+    : zeroBasedPage === maxPage ? "Already at last page"
+    : undefined;
   const totalPages = maxPage + 1;
   const totalRowCount = +(totalRows ?? 0);
-  if (noPrevMessage && noNextMessage && totalRowCount <= PAGE_SIZES[0]) {
+  if (
+    !disabled &&
+    noPrevMessage &&
+    noNextMessage &&
+    totalRowCount <= PAGE_SIZES[0]
+  ) {
     return null;
   }
   const pageCountInfoNode = (
@@ -54,8 +67,12 @@ export const Pagination = (props: PaginationProps) => {
       className="text-2 text-sm p-p5 noselect"
       data-command={"Pagination.pageCountInfo" satisfies Command}
     >
-      {totalPages.toLocaleString()} page{totalPages === 1 ? "" : "s"}{" "}
-      {` (${totalRowCount.toLocaleString()} rows)`}
+      {pageCountInfo ?? (
+        <>
+          {totalPages.toLocaleString()} page{totalPages === 1 ? "" : "s"}{" "}
+          {` (${totalRowCount.toLocaleString()} rows)`}
+        </>
+      )}
     </div>
   );
   const displayPage = zeroBasedPage + 1;
@@ -93,6 +110,7 @@ export const Pagination = (props: PaginationProps) => {
         value={displayPage}
         min={1}
         max={maxPage + 1}
+        disabled={disabled}
         onChange={(e) => {
           const p = +e.target.value - 1;
           if (p >= 0 && p <= maxPage) {
@@ -126,6 +144,7 @@ export const Pagination = (props: PaginationProps) => {
           value={pageSize}
           data-command="Pagination.pageSize"
           options={PAGE_SIZES.map((s) => `${s}`)}
+          disabledInfo={disabled ? "Pagination is unavailable" : undefined}
           onChange={(e) => {
             const newPageSize = +e;
             if (newPageSize === pageSize) return;

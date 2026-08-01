@@ -46,48 +46,52 @@ const MediaSchema = {
     description: "Display media (video/image/audio) from URL",
   },
   params: {
-    optional: true,
-    oneOfType: [
-      {
-        type: {
-          title: "Content type",
-          enum: ["Auto"],
-          description: "Auto detect from URL and headers (default)",
+    type: {
+      contentType: {
+        optional: true,
+        title: "Content type",
+        oneOfType: [
+          {
+            mode: {
+              enum: ["Auto"],
+              title: "Auto detect from URL and headers (default)",
+            },
+          },
+          {
+            mode: { enum: ["Fixed"], title: "Fixed" },
+            fixedContentType: {
+              type: "string",
+              title: "Fixed content type",
+              allowedValues: ContentTypes,
+            },
+          },
+          {
+            mode: { enum: ["From column"], title: "From column" },
+            contentTypeColumnName: {
+              title: "MIME column",
+              type: "string",
+              description:
+                "Column that contains valid extension values (img, mp4, mp3, ...)",
+            },
+          },
+          {
+            mode: {
+              enum: ["From URL Extension"],
+              title: "From URL Extension (e.g. .png, .mp4)",
+            },
+          },
+        ],
+      },
+      originalNameColumn: {
+        type: "Lookup",
+        lookup: {
+          type: "schema",
+          isArray: false,
+          object: "column",
+          filter: { table: "files", tsDataType: "string" },
         },
       },
-      {
-        type: {
-          title: "Content type",
-          enum: ["Fixed"],
-          description: "Fixed",
-        },
-        fixedContentType: {
-          type: "string",
-          title: "Fixed content type",
-          allowedValues: ContentTypes,
-        },
-      },
-      {
-        type: {
-          title: "Content type",
-          enum: ["From column"],
-          description: "From column",
-        },
-        contentTypeColumnName: {
-          title: "MIME column",
-          type: "string",
-          description:
-            "Column that contains valid extension values (img, mp4, mp3, ...)",
-        },
-      },
-      {
-        type: {
-          title: "Content type",
-          enum: ["From URL Extension"],
-          description: "From URL Extension (e.g. .png, .mp4)",
-        },
-      },
-    ],
+    },
   },
 } as const; // satisfies JSONB.JSONBSchema["type"];
 

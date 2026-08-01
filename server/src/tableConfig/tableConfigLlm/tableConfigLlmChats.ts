@@ -5,7 +5,7 @@ import type { DBSSchema } from "@common/publishUtils";
 import type { DBS } from "@src/index";
 import { proxyDbCommands } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/agenticWorkflow/runtimeSdk/tableHandlers";
 import type { ValidateRowArgsCommon } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
-import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
+import type { TableConfig } from "prostgles-server";
 import { getKeys, isDefined, type JSONB } from "prostgles-types";
 import { agentOutputSchemaType } from "../../../../common/mcp/startAgenticWorkflowSchema";
 import { tablePermissionsSchema } from "../tablePermissionsSchema";

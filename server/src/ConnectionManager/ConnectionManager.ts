@@ -24,17 +24,14 @@ import type { Connections, DBS, DatabaseConfigs } from "../index";
 import { connectionManager } from "../index";
 import { UNIQUE_DB_COLS } from "../tableConfig/tableConfigDatabaseConfig";
 import { ForkedPrglProcRunner } from "./ForkedPrglProcRunner/ForkedPrglProcRunner";
-import {
-  getCompiledTS,
-  getTableConfig,
-  parseTableConfig,
-} from "./connectionManagerUtils";
+import { getCompiledTS, getTableConfig } from "./connectionManagerUtils";
 import { getConnectionHttpServer } from "./getConnectionHttpServer";
 import {
   initConnectionManager,
   type CONNECTION_HOT_RELOAD_COLUMNS,
 } from "./initConnectionManager";
 import { startConnection } from "./startConnection";
+import { parseTableConfig } from "./parseTableConfig";
 export type Unpromise<T extends Promise<any>> =
   T extends Promise<infer U> ? U : never;
 

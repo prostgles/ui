@@ -1,13 +1,11 @@
 import {
   filterArr,
-  filterArrInverse,
   getLLMMessageText,
   isAssistantMessageRequestingToolUse,
   reachedMaximumNumberOfConsecutiveToolRequests,
 } from "@common/llmUtils";
 import type { DBSSchema } from "@common/publishUtils";
-import { sliceText } from "@common/utils";
-import { HOUR } from "prostgles-server/dist/FileManager/FileManager";
+import { HOUR, sliceText } from "@common/utils";
 import {
   getProperty,
   getSerialisableError,
@@ -20,15 +18,15 @@ import { checkLLMLimit } from "./checkLLMLimit";
 import { fetchLLMResponse, type LLMMessageWithRole } from "./fetchLLMResponse";
 import { getLLMToolsAllowedInThisChat } from "./getLLMToolsAllowedInThisChat";
 
+import { getMCPToolNameParts } from "@common/mcpUtils";
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
 import { checkMaxCostLimitForChat } from "./checkMaxCostLimitForChat";
 import { getFullPrompt } from "./getFullPrompt";
-import { getValidatedAskLLMChatOptions } from "./getValidatedAskLLMChatOptions";
-import { runApprovedTools } from "./runApprovedTools/runApprovedTools";
-import { handleToolUseResultConfirmation } from "./handleToolUseResultConfirmation";
 import { getPastMessages } from "./getPastMessages";
-import { getMCPToolNameParts } from "@common/mcpUtils";
+import { getValidatedAskLLMChatOptions } from "./getValidatedAskLLMChatOptions";
+import { handleToolUseResultConfirmation } from "./handleToolUseResultConfirmation";
+import { runApprovedTools } from "./runApprovedTools/runApprovedTools";
 
 export const getBestLLMChatModel = async (
   dbs: DBS,

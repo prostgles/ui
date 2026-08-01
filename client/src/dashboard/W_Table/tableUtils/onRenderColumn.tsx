@@ -1,5 +1,4 @@
 import { ROUTES } from "@common/utils";
-import { MediaViewer } from "@components/MediaViewer/MediaViewer";
 import type { DBSchemaTable, ValidatedColumnInfo } from "prostgles-types";
 import React from "react";
 import type { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
@@ -13,7 +12,7 @@ import type { ProstglesTableColumn } from "./getTableCols";
 
 export type RenderedColumn = ColumnConfigWInfo &
   Pick<ValidatedColumnInfo, "tsDataType" | "udt_name" | "name"> &
-  Pick<ProstglesTableColumn, "format">; // | "noSanitize" | "contentConfig" | "allowedHTMLTags">;
+  Pick<ProstglesTableColumn, "format">;
 export type OnRenderColumnProps = {
   column: RenderedColumn;
   getValues: () => any[];
@@ -78,7 +77,9 @@ export const onRenderColumn = (args: OnRenderColumnProps) => {
           .split("/")
           .find((p, i, arr) => arr[i - 1] === "connections");
         if (column.info?.file) {
-          if (!value && column.format?.type === "Media") return null;
+          if (!value && column.format?.type === "Media") {
+            return null;
+          }
           value = `${ROUTES.STORAGE}/${connectionId}/${row[column.name]}`;
         }
         return formatRender.render(
@@ -89,16 +90,6 @@ export const onRenderColumn = (args: OnRenderColumnProps) => {
           maxCellChars,
         );
       }
-    : table?.isFileTable && column.name === "url" ?
-      ({ value }) => {
-        return <MediaViewer key={value} url={value} />;
-      }
-    : /** Not pretty enough */
-    column.udt_name === "interval" ?
-      ({ row }) =>
-        Object.entries(row[column.name] ?? {})
-          .map(([k, v]) => `${v} ${k}`)
-          .join(", ")
     : /** c.tsDataType and c.udt_name SHOULD NOT BE MISSING AT THIS POINT! */
       ({ value }) => (
         <RenderValue

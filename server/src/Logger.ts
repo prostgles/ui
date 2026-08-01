@@ -1,5 +1,5 @@
 import type { EventInfo } from "prostgles-server/dist/Logging";
-import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
+import type { TableConfig } from "prostgles-server";
 import { pickKeys } from "prostgles-types";
 import { type DBS } from ".";
 import { getAuthSetupData } from "./authConfig/subscribeToAuthSetupChanges";

@@ -121,8 +121,8 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
     w: undefined,
   };
 
-  onUnmount = async () => {
-    if (this.wSub) await this.wSub.$unsync();
+  onUnmount = () => {
+    this.wSub?.$unsync();
   };
 
   getTableInfo() {
@@ -144,13 +144,13 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
   wSub?: ReturnType<Required<D>["w"]["$cloneSync"]>;
   autoRefresh: any;
   loading = false;
-  onDelta = async (dP, dS) => {
+  onDelta = (dP, dS) => {
     const w = this.d.w || this.props.w;
     const { table_name: tableName } = w;
 
     if (tableName && (w as any).$cloneSync && !this.loading) {
       this.loading = true;
-      this.wSub = await w.$cloneSync((w, delta) => {
+      this.wSub = w.$cloneSync((w, delta) => {
         this.setData({ w }, { w: delta });
       });
       this.getTableInfo();
@@ -323,7 +323,7 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
             if (!this.d.w) return;
 
             if (l1Key === "View as card") {
-              this.d.w.$update(
+              void this.d.w.$update(
                 {
                   options: {
                     viewAs: {

@@ -328,9 +328,13 @@ export const DISPLAY_FORMATS = [
           url={v}
           style={{ maxHeight: "100%" }}
           content_type={
-            params?.type === "Fixed" ? params.fixedContentType
-            : params?.type === "From column" && params.contentTypeColumnName ?
-              row[params.contentTypeColumnName]
+            params.contentType?.mode === "Fixed" ?
+              params.contentType.fixedContentType
+            : (
+              params.contentType?.mode === "From column" &&
+              params.contentType.contentTypeColumnName
+            ) ?
+              row[params.contentType.contentTypeColumnName]
             : undefined
           }
           // onPrevOrNext={!allowMediaSkip ? undefined : (increment) => {

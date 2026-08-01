@@ -4,7 +4,7 @@ import { PassThrough } from "stream";
 import { getInstalledPsqlVersions } from "./getInstalledPrograms";
 import { pgDump } from "./pgDump";
 import { pgRestore } from "./pgRestore";
-import { getBkp, getFileMgr } from "./utils";
+import { bytesToSize, getBkp, getFileMgr } from "./utils";
 
 export type Backups = Required<DBGeneratedSchema["backups"]>["columns"];
 type DumpOpts = Backups["options"];
@@ -19,13 +19,8 @@ import { ROUTES } from "@common/utils";
 import checkDiskSpace from "check-disk-space";
 import type { Request, Response } from "express";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
-import { bytesToSize } from "prostgles-server/dist/FileManager/FileManager";
 import type { DB } from "prostgles-server/dist/Prostgles";
-import type {
-  FilterItem,
-  SQLHandler,
-  SubscriptionHandler,
-} from "prostgles-types";
+import type { SQLHandler, SubscriptionHandler } from "prostgles-types";
 import type { SUser } from "../authConfig/sessionUtils";
 import type { ConnectionManager } from "../ConnectionManager/ConnectionManager";
 import { getRootDir } from "../electronConfig";
@@ -189,7 +184,7 @@ export default class BackupManager {
     const { fileMgr, bkp } = await getBkp(this.dbs, bkpId);
 
     try {
-      await fileMgr.deleteFile(bkp.id);
+      await fileMgr.delete(bkp.id);
     } catch (err) {
       if (!force) throw err;
     }
@@ -219,8 +214,10 @@ export default class BackupManager {
     }
     const { fileMgr } = await getFileMgr(this.dbs, backup.credential_id);
     if (backup.credential_id) {
+      if (fileMgr.type !== "cloud")
+        throw new Error("Expected cloud file manager");
       /* Allow access to file for a period equivalent to a download rate of 50KBps */
-      const presignedURL = await fileMgr.getFileCloudDownloadURL(
+      const presignedURL = await fileMgr.getSignedUrlForDownload(
         backup.id,
         1 * 60, // 1 minute
       );
