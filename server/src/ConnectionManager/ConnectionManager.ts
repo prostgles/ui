@@ -7,7 +7,6 @@ import type { HttpAppSecurityOptions } from "@src/createHttpAndIOServers/setHttp
 import type e from "express";
 import type { Express } from "express";
 import type { Server as httpServer } from "http";
-import path from "path";
 import type pg from "pg-promise/typescript/pg-subset";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
 import type { Filter } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
@@ -19,7 +18,7 @@ import { isDefined, pickKeys } from "prostgles-types";
 import type { DefaultEventsMap, Server } from "socket.io";
 import type { SUser } from "../authConfig/sessionUtils";
 import { getDbConnection } from "../connectionUtils/testDBConnection";
-import { getRootDir } from "../electronConfig";
+import { getDataPath } from "../electronConfig";
 import type { Connections, DBS, DatabaseConfigs } from "../index";
 import { connectionManager } from "../index";
 import { UNIQUE_DB_COLS } from "../tableConfig/tableConfigDatabaseConfig";
@@ -30,8 +29,8 @@ import {
   initConnectionManager,
   type CONNECTION_HOT_RELOAD_COLUMNS,
 } from "./initConnectionManager";
-import { startConnection } from "./startConnection";
 import { parseTableConfig } from "./parseTableConfig";
+import { startConnection } from "./startConnection";
 export type Unpromise<T extends Promise<any>> =
   T extends Promise<infer U> ? U : never;
 
@@ -471,12 +470,11 @@ export class ConnectionManager {
   // }
 
   getFileFolderPath(conId?: string) {
-    const rootPath = path.resolve(`${getRootDir()}${ROUTES.STORAGE}`);
-    if (!conId) return rootPath;
+    if (!conId) return getDataPath("STORAGE");
     const conn = this.connections?.find((c) => c.id === conId);
     if (!conn) throw "Connection not found";
     const conPath = UNIQUE_DB_COLS.map((f) => conn[f]).join("_");
-    return `${rootPath}/${conPath}`;
+    return getDataPath("STORAGE", conPath);
   }
 
   getConnectionDb(

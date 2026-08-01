@@ -61,57 +61,60 @@ export const SmartFormFileSection = ({
   if (!newRowDataHandler) return null;
 
   return (
-    <FileInput
-      key={tableName}
-      className={"mt-p5 f-0 " + (isFileTable ? " min-w-300" : "")}
-      media={media}
-      // minSize={isFileTable ? 470 : 450}
-      maxFileCount={1}
-      onAdd={([file]) => {
-        // const currentRow = action.type === "update" ? action.currentRow : {};
-        // const currMedia = [
-        //   ...(newRowData?.[mediaTableName]?.value || []),
-        //   ...(currentRow?.[mediaTableName] || []),
-        // ].filter(isDefined);
-        // newRowDataHandler.setColumnData(mediaTableName, {
-        //   type: "nested-table",
-        //   value: [...currMedia, ...files],
-        // });
-        newRowDataHandler.setNewRow(
-          !file ?
-            {}
-          : {
-              name: { type: "column", value: file.name },
-              data: { type: "column", value: file.data },
-            },
-        );
-      }}
-      onDelete={async (media) => {
-        if ("id" in media && media.id) {
-          if (action.type === "update" && isFileTable) {
-            // ????
-            newRowDataHandler.setNewRow({
-              [tableName]: { type: "nested-table", value: [] },
-            });
-          } else {
-            const mediaTableHandler = db[mediaTableName];
-            if (mediaTableHandler?.update) {
-              const res = await mediaTableHandler.update(
-                { id: media.id },
-                { deleted: true },
-                onSuccess ? { returning: "*" } : {},
-              );
-              onSuccess?.("update", res);
+    <>
+      <FileInput
+        key={tableName}
+        className={"mt-p5 f-0 " + (isFileTable ? " min-w-300" : "")}
+        media={media}
+        // minSize={isFileTable ? 470 : 450}
+        maxFileCount={1}
+        onAdd={([file]) => {
+          // const currentRow = action.type === "update" ? action.currentRow : {};
+          // const currMedia = [
+          //   ...(newRowData?.[mediaTableName]?.value || []),
+          //   ...(currentRow?.[mediaTableName] || []),
+          // ].filter(isDefined);
+          // newRowDataHandler.setColumnData(mediaTableName, {
+          //   type: "nested-table",
+          //   value: [...currMedia, ...files],
+          // });
+          newRowDataHandler.setNewRow(
+            !file ?
+              {}
+            : {
+                name: { type: "column", value: file.name },
+                data: { type: "column", value: file.data },
+              },
+          );
+        }}
+        onDelete={async (media) => {
+          if ("id" in media && media.id) {
+            if (action.type === "update" && isFileTable) {
+              // ????
+              newRowDataHandler.setNewRow({
+                [tableName]: { type: "nested-table", value: [] },
+              });
+            } else {
+              const mediaTableHandler = db[mediaTableName];
+              if (mediaTableHandler?.update) {
+                const res = await mediaTableHandler.update(
+                  { id: media.id },
+                  { deleted: true },
+                  onSuccess ? { returning: "*" } : {},
+                );
+                onSuccess?.("update", res);
+              }
             }
+          } else {
+            const currMedia: Media[] =
+              newRowData?.[mediaTableName]?.value || [];
+            newRowDataHandler.setColumnData(mediaTableName, {
+              type: "nested-table",
+              value: currMedia.filter((m) => m.name !== media.name),
+            });
           }
-        } else {
-          const currMedia: Media[] = newRowData?.[mediaTableName]?.value || [];
-          newRowDataHandler.setColumnData(mediaTableName, {
-            type: "nested-table",
-            value: currMedia.filter((m) => m.name !== media.name),
-          });
-        }
-      }}
-    />
+        }}
+      />
+    </>
   );
 };

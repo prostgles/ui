@@ -21,7 +21,6 @@ export const getSQLResultTableColumns = ({
     const isNumeric = isNumericColumn(c);
     return {
       ...c,
-      key: i,
       label: c.name,
       filter: false,
       /* Align numbers to right for an easier read */

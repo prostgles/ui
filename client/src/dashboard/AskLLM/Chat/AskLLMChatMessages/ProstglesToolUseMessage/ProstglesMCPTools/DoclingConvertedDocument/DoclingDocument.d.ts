@@ -6,7 +6,7 @@ type DoclingBBox = {
   coord_origin: "BOTTOMLEFT" | "TOPLEFT";
 };
 
-export type DoclintDocument = {
+export type DoclingDocument = {
   schema_name: "DoclingDocument";
   version: "1.9.0";
   name: "blob";
@@ -45,7 +45,13 @@ export type DoclintDocument = {
     children: [];
     content_layer: "body";
     meta: null;
-    label: "section_header";
+    label:
+      | "section_header"
+      | "list_item"
+      | "paragraph"
+      | "footnote"
+      | "caption"
+      | "table_cell";
     prov: [
       {
         page_no: number;
@@ -53,7 +59,15 @@ export type DoclintDocument = {
         charspan: [number, number];
       },
     ];
+    /**
+     * original text extracted from the source document,
+     * preserving its source form as closely as Docling retained it.
+     */
     orig: string;
+    /**
+     * Docling’s processed or normalized text, intended for structured export and downstream use.
+     * It may have cleanup or normalization applied, such as whitespace or character handling.
+     */
     text: string;
     formatting: null;
     hyperlink: null;
@@ -79,7 +93,7 @@ export type DoclintDocument = {
     captions: [];
     references: [];
     footnotes: [];
-    image: null;
+    image: null | DoclingImage;
     data: {
       table_cells: {
         bbox: DoclingBBox;
@@ -123,16 +137,18 @@ export type DoclintDocument = {
         width: 375.1199951171875;
         height: 450;
       };
-      image: {
-        mimetype: "image/png";
-        dpi: 144;
-        size: {
-          width: 750;
-          height: 900;
-        };
-        uri: string;
-      };
+      image: null | DoclingImage;
       page_no: 1;
     }
   >;
+};
+
+type DoclingImage = {
+  mimetype: "image/png";
+  dpi: 144;
+  size: {
+    width: 750;
+    height: 900;
+  };
+  uri: string;
 };

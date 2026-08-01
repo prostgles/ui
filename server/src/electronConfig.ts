@@ -1,6 +1,6 @@
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import * as fs from "fs";
 import * as path from "path";
-import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 
 export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
 export type DBSConnectionInfo = Pick<
@@ -57,6 +57,22 @@ let rootDir = actualRootDir;
  * server root directory
  */
 export const getRootDir = () => rootDir;
+
+const getDataDir = () =>
+  path.resolve(process.env.PROSTGLES_DATA_DIR || getRootDir());
+
+export const DATA_FOLDERS = {
+  BACKUPS: "prostgles_backups",
+  CERTIFICATES: "prostgles_certificates",
+  MCP: "prostgles_mcp",
+  STORAGE: "prostgles_storage",
+  CONFIGS: "prostgles_configs",
+} as const;
+
+export const getDataPath = (
+  folder?: keyof typeof DATA_FOLDERS,
+  ...paths: string[]
+) => path.join(getDataDir(), ...[...(folder ? [folder] : []), ...paths]);
 
 export const getElectronConfig = () => {
   const { isElectron, safeStorage, focusWindow, devCredentials } =

@@ -3,6 +3,7 @@ import type { DBSchemaTable } from "prostgles-types";
 import type { Prgl } from "src/App";
 import { getJoinedTables } from "../W_Table/tableUtils/tableUtils";
 import type { DBSchemaTablesWJoins } from "./dashboardUtils";
+import type { MarkdownStringTrustedOptions } from "monaco-editor";
 
 export const getTables = (
   schemaTables: DBSchemaTable[],
@@ -24,17 +25,29 @@ export const getTables = (
         .map((c) => {
           const columnConfig = columns?.[c.name];
           const isFileColumn = (t.isFileTable && c.name === "url") || c.file;
+          const isFileDoclingColumn =
+            t.isFileTable && c.name === "docling_metadata";
+          const isFileTextColumn = t.isFileTable && c.name === "text_content";
           return {
             ...c,
             label: capitaliseNames ? convertSnakeToReadable(c.name) : c.name,
             icon: columnConfig?.icon,
             renderAs:
-              isFileColumn && !columnConfig ?
+              columnConfig?.renderAs ??
+              (isFileColumn ?
                 {
                   type: "Media",
                   params: { type: "From URL Extension" },
                 }
-              : columnConfig?.renderAs,
+              : isFileDoclingColumn ?
+                {
+                  type: "DoclingDocument",
+                }
+              : isFileTextColumn ?
+                {
+                  type: "MarkdownPopup",
+                }
+              : undefined),
             style: columnConfig?.style,
           } as typeof c & {
             icon: string;

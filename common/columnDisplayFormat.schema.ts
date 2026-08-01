@@ -168,9 +168,16 @@ export const columnDisplayFormatSchema = {
     },
     {
       type: {
-        enum: ["Markdown"],
+        enum: ["Markdown", "MarkdownPopup"],
         title: "Format",
         description: "Display string as Markdown",
+      },
+    },
+    {
+      type: {
+        enum: ["DoclingDocument"],
+        title: "Format",
+        description: "Renders a Docling parsed document",
       },
     },
     {

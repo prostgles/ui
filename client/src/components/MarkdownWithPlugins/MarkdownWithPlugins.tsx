@@ -7,6 +7,9 @@ import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
 import "./Marked.css";
 import { preserveDisallowedHtmlAsText } from "./preserveDisallowedHtmlAsText";
+import Btn from "@components/Btn";
+import PopupMenu from "@components/PopupMenu";
+import { mdiEye } from "@mdi/js";
 
 const sanitizeSchema = {
   ...defaultSchema,
@@ -26,14 +29,16 @@ const sanitizeSchema = {
 
 const allowedTagNames = new Set<string>(sanitizeSchema.tagNames ?? []);
 
+type P = {
+  content: string;
+  components?: Components;
+} & DivProps;
+
 export const MarkdownWithPlugins = ({
   content,
   components,
   ...divProps
-}: {
-  content: string;
-  components?: Components;
-} & DivProps) => {
+}: P) => {
   return (
     <ScrollFade
       {...divProps}
@@ -67,5 +72,21 @@ export const MarkdownWithPlugins = ({
         {content}
       </Markdown>
     </ScrollFade>
+  );
+};
+
+export const MarkdownWithPluginsPopupBtn = (props: P) => {
+  return (
+    <PopupMenu
+      title="Parsed document"
+      positioning="fullscreen"
+      button={
+        <Btn iconPath={mdiEye} color="action" variant="faded">
+          Show parsed document
+        </Btn>
+      }
+    >
+      <MarkdownWithPlugins {...props} />
+    </PopupMenu>
   );
 };

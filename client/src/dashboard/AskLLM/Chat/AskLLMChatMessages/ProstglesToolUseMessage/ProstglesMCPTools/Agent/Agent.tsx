@@ -100,8 +100,6 @@ export const Agent = ({
 
   return (
     <FlexCol className="w-full" data-command="Agent">
-      <Label>{inputData.name}</Label>
-
       <AgentDefinition
         agentName={inputData.name}
         config={{ ...inputData, outputSchema: { result: { type: "string" } } }}

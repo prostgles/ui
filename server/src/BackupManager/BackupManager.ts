@@ -1,5 +1,4 @@
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
-import path from "path";
 import { PassThrough } from "stream";
 import { getInstalledPsqlVersions } from "./getInstalledPrograms";
 import { pgDump } from "./pgDump";
@@ -23,7 +22,7 @@ import type { DB } from "prostgles-server/dist/Prostgles";
 import type { SQLHandler, SubscriptionHandler } from "prostgles-types";
 import type { SUser } from "../authConfig/sessionUtils";
 import type { ConnectionManager } from "../ConnectionManager/ConnectionManager";
-import { getRootDir } from "../electronConfig";
+import { getDataPath } from "../electronConfig";
 import { checkAutomaticBackup } from "./checkAutomaticBackup";
 
 export const HOUR = 3600 * 1000;
@@ -100,10 +99,10 @@ export default class BackupManager {
 
   checkIfEnoughSpace = async (conId: string) => {
     const dbSizeInBytes = await this.getDBSizeInBytes(conId);
-    const diskSpace = await checkDiskSpace(getRootDir());
-    const minLimin = 100 * 1e6;
-    if (diskSpace.free < minLimin) {
-      const err = `There is not enough space on server for local backups:\nTotal: ${bytesToSize(diskSpace.size)} \nRemaning: ${bytesToSize(diskSpace.free)} \nRequired: ${bytesToSize(minLimin)}`;
+    const diskSpace = await checkDiskSpace(getDataPath());
+    const minimumLimit = 100 * 1e6; // 100 MB
+    if (diskSpace.free < minimumLimit) {
+      const err = `There is not enough space on server for local backups:\nTotal: ${bytesToSize(diskSpace.size)} \nRemaning: ${bytesToSize(diskSpace.free)} \nRequired: ${bytesToSize(minimumLimit)}`;
       return { ok: false, err, diskSpace, dbSizeInBytes };
     } else if (diskSpace.free - 1.1 * dbSizeInBytes < 0) {
       const err = `There is not enough space on server for local backups:\nTotal: ${bytesToSize(diskSpace.size)} \nRemaning: ${bytesToSize(diskSpace.free)} \nRequired: 1.1*DB size on disk (${bytesToSize(dbSizeInBytes)})`;
@@ -229,11 +228,7 @@ export default class BackupManager {
     } else {
       try {
         res.type(backup.content_type);
-        res.sendFile(
-          path.resolve(
-            path.join(getRootDir() + ROUTES.BACKUPS + "/" + backup.id),
-          ),
-        );
+        res.sendFile(getDataPath("BACKUPS", backup.id));
       } catch (err) {
         res.sendStatus(404);
       }

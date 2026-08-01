@@ -17,7 +17,11 @@ import type { ColumnConfig } from "../ColumnMenu";
 import type { TableWindowInsertModel } from "@common/DashboardTypes";
 import { FlexRowWrap } from "@components/Flex";
 import type { columnDisplayFormatSchema } from "@common/columnDisplayFormat.schema";
-import { MarkdownWithPlugins } from "@components/MarkdownWithPlugins/MarkdownWithPlugins";
+import {
+  MarkdownWithPlugins,
+  MarkdownWithPluginsPopupBtn,
+} from "@components/MarkdownWithPlugins/MarkdownWithPlugins";
+import { DoclingDocumentViewerPopupBtn } from "src/dashboard/AskLLM/Chat/AskLLMChatMessages/ProstglesToolUseMessage/ProstglesMCPTools/DoclingConvertedDocument/DoclingDocumentViewer";
 
 // const CurrencySchema = {
 //   type: {
@@ -377,7 +381,18 @@ export const DISPLAY_FORMATS = [
     render: (v) => {
       return <MarkdownWithPlugins content={v} />;
     },
-  } satisfies FormattedColRender<Extract<ColumnFormat, { type: "Markdown" }>>,
+  } satisfies FormattedColRender<
+    Extract<ColumnFormat, { type: "Markdown" | "MarkdownPopup" }>
+  >,
+  {
+    type: "MarkdownPopup",
+    tsDataType: ["string"],
+    render: (v) => {
+      return <MarkdownWithPluginsPopupBtn content={v} />;
+    },
+  } satisfies FormattedColRender<
+    Extract<ColumnFormat, { type: "Markdown" | "MarkdownPopup" }>
+  >,
   {
     type: "HTML",
     tsDataType: ["string"],
@@ -463,6 +478,24 @@ export const DISPLAY_FORMATS = [
       return v;
     },
   } satisfies FormattedColRender<Extract<ColumnFormat, { type: "Currency" }>>,
+  {
+    type: "DoclingDocument",
+    tsDataType: ["string"],
+    render: (rawValue, row) => {
+      if (!rawValue) {
+        return null;
+      }
+      return (
+        <DoclingDocumentViewerPopupBtn
+          document={rawValue}
+          markdownContent=""
+          data={undefined}
+        />
+      );
+    },
+  } satisfies FormattedColRender<
+    Extract<ColumnFormat, { type: "DoclingDocument" }>
+  >,
 ] as ColumnRenderer[];
 
 export function getFormatOptions(

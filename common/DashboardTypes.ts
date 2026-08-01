@@ -370,12 +370,22 @@ export type TableColumn = {
         type: "Markdown";
       }
     | {
+        /**
+         * Same as "Markdown" but will show a popup with the full content when clicked.
+         */
+        type: "MarkdownPopup";
+      }
+    | {
         /** Text content as sanitised html */
         type: "HTML";
       }
     | {
         /** Displays the media from URL. Accepted formats: image, audio or video. Media/Mime type will be used from headers */
         type: "Media";
+      }
+    | {
+        /** Used internally. Ignore */
+        type: "DoclingDocument";
       };
 };
 

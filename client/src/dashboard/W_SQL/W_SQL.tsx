@@ -552,6 +552,10 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
               }}
               onResize={(newCols) => {
                 this.setState({ cols: newCols });
+                w.$update(
+                  { options: { sqlResultCols: newCols } },
+                  { deepMerge: true },
+                );
               }}
               onSort={(sort) => {
                 void this.runSQL(sort);

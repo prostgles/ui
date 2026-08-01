@@ -9,7 +9,7 @@ import { Agent } from "./ProstglesMCPTools/Agent/Agent";
 import { AgentGoallToolCall } from "./ProstglesMCPTools/Agent/AgentGoallToolCall";
 import { AgenticWorkflowMessage } from "./ProstglesMCPTools/AgenticWorkflow/AgenticWorkflowMessage";
 import { AskUserQuestions } from "./ProstglesMCPTools/AskUserQuestions";
-import { DoclingConvertedDocument } from "./ProstglesMCPTools/DoclingConvertedDocument/DoclingConvertedDocument";
+import { DoclingToolUseView } from "./ProstglesMCPTools/DoclingConvertedDocument/DoclingToolUseView";
 import { ExecuteSQL } from "./ProstglesMCPTools/ExecuteSQL";
 import { LoadSuggestedDashboards } from "./ProstglesMCPTools/LoadSuggestedDashboards";
 import { RequestToolAccess } from "./ProstglesMCPTools/RequestToolAccess";
@@ -80,7 +80,7 @@ export const ProstglesMCPToolsWithUI = {
     displayMode: "inline",
   },
   [getProstglesMCPFullToolName("documents", "get_document_text") as string]: {
-    component: DoclingConvertedDocument,
+    component: DoclingToolUseView,
     displayMode: "inline",
   },
   [getProstglesMCPFullToolName("prostgles-ui", "create_tables") as string]: {

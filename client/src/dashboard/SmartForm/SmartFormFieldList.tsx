@@ -18,6 +18,10 @@ import type { NewRow, NewRowDataHandler } from "./SmartFormNewRowDataHandler";
 import type { SmartFormState } from "./useSmartForm";
 import type { SmartFormModeState } from "./useSmartFormMode";
 import { MediaViewer } from "@components/MediaViewer/MediaViewer";
+import {
+  DoclingDocumentViewer,
+  DoclingDocumentViewerPopupBtn,
+} from "../AskLLM/Chat/AskLLMChatMessages/ProstglesToolUseMessage/ProstglesMCPTools/DoclingConvertedDocument/DoclingDocumentViewer";
 
 type P = Pick<
   SmartFormProps,
@@ -112,6 +116,13 @@ export const SmartFormFieldList = (props: P) => {
           style={{ width: "100%", height: "auto", flex: "none" }}
         />
       : null}
+      {table.isFileTable && row.docling_metadata && (
+        <DoclingDocumentViewerPopupBtn
+          data={undefined}
+          document={row.docling_metadata}
+          markdownContent={row.text_content ?? ""}
+        />
+      )}
       {displayedColumns.map((c, i) => {
         const rawValue = row[c.name];
         const newValue = newRowData?.[c.name];

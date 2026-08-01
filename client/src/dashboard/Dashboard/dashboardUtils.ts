@@ -199,8 +199,11 @@ export type ChartOptions<CType extends ChartType = "table"> =
         "tsDataType" | "udt_name" | "name"
       > & {
         idx: number;
-        key: string;
-        // label: string;
+        /**
+         * Column index is used as key because column name can be duplicated in sql result
+         */
+        key: number;
+        label: string;
         subLabel: string;
         width?: number;
         sortable: boolean;

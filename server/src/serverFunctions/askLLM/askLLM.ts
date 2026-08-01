@@ -271,7 +271,7 @@ export const askLLM = async (args: AskLLMArgs) => {
         }
         const { serverName, toolName } = toolNameParts;
         /**
-         * Somet of prostgles-ui tools don't need LLM response after their result
+         * Some of prostgles-ui tools don't need LLM response after their result
          */
         if (
           serverName ===
@@ -368,6 +368,7 @@ export const askLLM = async (args: AskLLMArgs) => {
     );
     const gemini25BreakingChanges = llm_model.name.includes("gemini-2.5");
     const {
+      responseData,
       content: aiResponseMessageRaw,
       meta,
       cost,
@@ -498,6 +499,16 @@ export const askLLM = async (args: AskLLMArgs) => {
         aborter,
         clientReq,
         messageId: aiResponseMessagePlaceholder.id,
+      });
+    }
+
+    /** Empty message bug */
+    if (!aiResponseMessage.length) {
+      await dbs.alerts.insert({
+        severity: "warning",
+        message:
+          "LLM response was empty. This might be a temporary issue with the LLM provider. " +
+          JSON.stringify({ provider: llm_provider, responseData }),
       });
     }
   } catch (err) {
