@@ -70,9 +70,13 @@ export const DATA_FOLDERS = {
 } as const;
 
 export const getDataPath = (
-  folder?: keyof typeof DATA_FOLDERS,
+  folderLabel?: keyof typeof DATA_FOLDERS,
   ...paths: string[]
-) => path.join(getDataDir(), ...[...(folder ? [folder] : []), ...paths]);
+) =>
+  path.join(
+    getDataDir(),
+    ...[...(folderLabel ? [DATA_FOLDERS[folderLabel]] : []), ...paths],
+  );
 
 export const getElectronConfig = () => {
   const { isElectron, safeStorage, focusWindow, devCredentials } =
