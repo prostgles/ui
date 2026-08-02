@@ -114,7 +114,10 @@ export const NestedColumnRender = ({
   };
   const valueList = value ?? [];
   const [firstValue, ...otherValues] = valueList;
-  const isSingleValue = shownNestedColumns.length === 1;
+  const [firstShownNestedColumn, ...otherShownNestedColumns] =
+    shownNestedColumns;
+  const isSingleValue =
+    firstShownNestedColumn && !otherShownNestedColumns.length;
   if (isSingleValue && !isMedia && firstValue && !otherValues.length) {
     const [key, value] = Object.entries(firstValue)[0]!;
     return <>{render({ key, value })}</>;
@@ -128,6 +131,10 @@ export const NestedColumnRender = ({
           style={{ height: "100%" }}
           key={nestedObj.url}
           url={nestedObj.url}
+          context={{
+            table,
+            columnName: "url",
+          }}
         />
       );
     }

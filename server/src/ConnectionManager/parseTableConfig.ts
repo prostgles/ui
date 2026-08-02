@@ -16,6 +16,7 @@ import { getCloudClient } from "../cloudClients/cloudClients";
 import type { ConnectionManager } from "./ConnectionManager";
 import { getDatabaseConfigFilter } from "./connectionManagerUtils";
 import type { ConnectionHotReloadProperties } from "./getHotReloadConfigs";
+import { citationsTableColumns } from "@common/managedTableSchema";
 
 type ParseTableConfigArgs = {
   dbs: DBS;
@@ -219,11 +220,13 @@ export const parseTableConfig = async ({
             },
           },
           [fileTableConfig.citationsTable]: {
-            columns: {
-              id: ``,
-              file_id: `UUID REFERENCES ${fileTableConfig.fileTable}(id) ON DELETE CASCADE`,
-              citation: `TEXT NOT NULL`,
-              position: `JSONB NOT NULL`,
+            dropIfExists: true,
+            columns: citationsTableColumns,
+            constraints: {
+              references_file_table:
+                "FOREIGN KEY (file_id) REFERENCES " +
+                fileTableConfig.fileTable +
+                "(id) ON DELETE CASCADE",
             },
           },
         }

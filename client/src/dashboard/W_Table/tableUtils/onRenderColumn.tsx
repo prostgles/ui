@@ -9,6 +9,7 @@ import { DISPLAY_FORMATS } from "../ColumnMenu/ColumnDisplayFormat/columnFormatU
 import type { ColumnConfigWInfo, MinMaxVals } from "../W_Table";
 import { StyledTableColumn } from "./StyledTableColumn";
 import type { ProstglesTableColumn } from "./getTableCols";
+import type { DBSchemaTableWithOptions } from "src/dashboard/Dashboard/getTables";
 
 export type RenderedColumn = ColumnConfigWInfo &
   Pick<ValidatedColumnInfo, "tsDataType" | "udt_name" | "name"> &
@@ -85,7 +86,7 @@ export const onRenderColumn = (args: OnRenderColumnProps) => {
         return formatRender.render(
           value,
           row,
-          column,
+          { column, table: table as DBSchemaTableWithOptions },
           column.format!,
           maxCellChars,
         );

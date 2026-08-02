@@ -5,7 +5,8 @@ import Popup from "@components/Popup/Popup";
 import { mdiFileDocumentOutline } from "@mdi/js";
 import React, { useState } from "react";
 import { FlexCol } from "../Flex";
-import { PdfViewer } from "@components/PdfViewer/PdfViewer";
+import type { MediaViewerProps } from "./MediaViewer";
+import { PdfViewerWithFileTableContext } from "./PdfViewerWithFileTableContext";
 
 export type ValidContentType = (typeof ContentTypes)[number];
 export type UrlInfo = {
@@ -14,6 +15,17 @@ export type UrlInfo = {
   forDisplay: string;
   content_type?: string; // If undefined then show as URL
   type?: ValidContentType;
+};
+
+type P = Pick<MediaViewerProps, "context"> & {
+  title: string | undefined;
+  subTitle: string | undefined;
+  contentOnly: boolean;
+  urlInfo: UrlInfo | undefined;
+  isFocused: boolean;
+  style: React.CSSProperties | undefined;
+  setIsFocused: (isFocused: boolean) => void;
+  variant?: "thumbnail";
 };
 
 export const MediaViewerContent = ({
@@ -25,16 +37,8 @@ export const MediaViewerContent = ({
   title,
   subTitle,
   variant,
-}: {
-  title: string | undefined;
-  subTitle: string | undefined;
-  contentOnly: boolean;
-  urlInfo: UrlInfo | undefined;
-  isFocused: boolean;
-  style: React.CSSProperties | undefined;
-  setIsFocused: (isFocused: boolean) => void;
-  variant?: "thumbnail";
-}) => {
+  context,
+}: P) => {
   const [expandedDocUrl, setExpandedDocUrl] = useState<string>();
   if (!urlInfo) return null;
 
@@ -91,9 +95,10 @@ export const MediaViewerContent = ({
     } else if (type === "audio") {
       mediaContent = <audio {...commonProps} controls src={url} />;
     } else if (!isFocused && url) {
+      const isPdf = content_type === "application/pdf";
       const fileIconInfo = getFileIconInfo(url);
       mediaContent = (
-        <FlexCol className="f-0 gap-p25">
+        <FlexCol className="f-0 gap-p25 max-w-full">
           <Btn
             variant="faded"
             iconProps={
@@ -107,6 +112,7 @@ export const MediaViewerContent = ({
             size={variant === "thumbnail" ? "large" : undefined}
             value={content_type ?? "Not found"}
             title={content_type ?? url}
+            className="max-w-full"
             onClick={(e) => {
               e.stopPropagation();
               e.preventDefault();
@@ -120,14 +126,16 @@ export const MediaViewerContent = ({
               }
             }}
             children={
-              variant === "thumbnail" ? undefined : (
-                `${
+              variant === "thumbnail" ? undefined
+              : isPdf ?
+                "Click to preview"
+              : `${
                   title ??
                   (urlInfo.content_type ? content_type : (
                     urlInfo.forDisplay.slice(0, 100)
                   ))
                 }. Click to preview`
-              )
+
             }
           />
           {content_type &&
@@ -142,18 +150,8 @@ export const MediaViewerContent = ({
                 }}
                 contentClassName="p-0"
               >
-                {content_type === "application/pdf" ?
-                  <PdfViewer
-                    url={url}
-                    highlights={[
-                      {
-                        page: 1,
-                        color: "red",
-                        id: "1",
-                        rects: [{ x: 0, y: 0, height: 200, width: 200 }],
-                      },
-                    ]}
-                  />
+                {isPdf ?
+                  <PdfViewerWithFileTableContext url={url} context={context} />
                 : <iframe
                     src={url}
                     style={{

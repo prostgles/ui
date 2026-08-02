@@ -1,6 +1,7 @@
 import type { DBSSchema } from "@common/publishUtils";
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import type { DBSchemaTable, ValidatedColumnInfo } from "prostgles-types";
+import type { ColumnOptions, TableOptions } from "@common/managedTableSchema";
 
 import type {
   MissingBinsOption,
@@ -352,29 +353,13 @@ export type Join = {
 };
 export type JoinV2 = Omit<Join, "on"> & { on: [string, string][][] };
 
-export type DBSchemaTableColumn = ValidatedColumnInfo & {
-  icon: string | undefined;
-  renderAs?: any;
-  style?: any;
-  label: string;
-};
-
-type TableOptions = NonNullable<
-  NonNullable<DBSSchema["connections"]["table_options"]>[string]
->;
 export type DBSchemaTableWJoins = DBSchemaTable<
   Omit<TableOptions, "label" | "columns"> & {
-    isCitationTable: boolean;
     label: string;
     joins: Join[];
     joinsV2: JoinV2[];
   },
-  {
-    icon: string | undefined;
-    renderAs?: any;
-    style?: any;
-    label: string;
-  }
+  ColumnOptions
 >;
 export type DBSchemaTablesWJoins = DBSchemaTableWJoins[];
 

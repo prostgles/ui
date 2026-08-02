@@ -11,7 +11,7 @@ import { areEqual, quickClone } from "../../utils/utils";
 import type { AccessControlAction, EditedAccessRule } from "./AccessControl";
 import { ACCESS_CONTROL_SELECT } from "./AccessControl";
 import type { PermissionEditProps } from "./AccessControlRuleEditor";
-import type { WorspaceTableAndColumns } from "./PublishedWorkspaceSelector";
+import type { WorkspaceTableAndColumns } from "./PublishedWorkspaceSelector";
 import { getWorkspaceTables } from "./PublishedWorkspaceSelector";
 
 type P = Pick<PermissionEditProps, "action" | "prgl">;
@@ -74,7 +74,7 @@ export type ValidEditedAccessRuleState = (
   userTypes: UserType[];
   ruleWasEdited: boolean;
   ruleErrorMessage: string | undefined;
-  worspaceTableAndColumns: WorspaceTableAndColumns[] | undefined;
+  workspaceTableAndColumns: WorkspaceTableAndColumns[] | undefined;
 };
 
 export type EditedAccessRuleState =
@@ -190,7 +190,7 @@ export const useEditedAccessRule = ({
     ...ruleData,
     newRule: newRule as EditedAccessRule,
     userTypes,
-    worspaceTableAndColumns: wspTables?.worspaceTableAndColumns,
+    workspaceTableAndColumns: wspTables?.workspaceTableAndColumns,
     tableErrors,
     ruleErrorMessage: newRule && getRuleErrorMessage(newRule),
     ruleWasEdited,

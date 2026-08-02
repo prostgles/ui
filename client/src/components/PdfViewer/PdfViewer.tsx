@@ -37,7 +37,7 @@ export type HighlightRect = {
 };
 
 export type Highlight = {
-  id: string;
+  id: string | number;
   page: number;
   rects: HighlightRect[];
   color: string;
@@ -48,7 +48,7 @@ export type CreatedHighlight = Omit<Highlight, "id" | "color"> & {
   text: string;
 };
 
-type PdfViewerProps = {
+export type PdfViewerProps = {
   url: string;
   scale?: number;
   highlights?: Highlight[];
@@ -409,7 +409,7 @@ export const PdfViewer = ({
       <ScrollFade className="o-auto w-full">
         <div
           ref={pageHostRef}
-          className="pdfViewer removePageBorders singlePageView pdf-viewer__page-host"
+          className="pdfViewer removePageBorders singlePageView"
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerLeave={() => setActiveTooltip(null)}

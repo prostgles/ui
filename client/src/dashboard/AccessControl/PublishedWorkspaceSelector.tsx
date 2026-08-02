@@ -189,7 +189,7 @@ export const PublishedWorkspaceSelector = ({
   );
 };
 
-export type WorspaceTableAndColumns = {
+export type WorkspaceTableAndColumns = {
   tableName: string;
   columns: ValidatedColumnInfo[];
 };
@@ -204,7 +204,7 @@ export const getWorkspaceTables = async (
   }
   let missingWindowTables: WindowData<"table">[] = [];
   let dbPermissionsCorrected = { ...dbPermissions };
-  const worspaceTableAndColumns: WorspaceTableAndColumns[] = [];
+  const workspaceTableAndColumns: WorkspaceTableAndColumns[] = [];
   if (dbPermissions.type === "Custom") {
     const workspaceWindows = await dbs.windows.find({
       workspace_id: { $in: workspaceIds },
@@ -229,7 +229,7 @@ export const getWorkspaceTables = async (
         if (!table || !tableWindowColumns) {
           return undefined;
         }
-        worspaceTableAndColumns.push({
+        workspaceTableAndColumns.push({
           tableName: table.name,
           columns: tableWindowColumns,
         });
@@ -282,9 +282,9 @@ export const getWorkspaceTables = async (
       msg: `Must allow SELECT on all tables from the published workspaces. Missing tables: ${missingTableNames.join(", ")}`,
       missingTables: missingTableNames,
       dbPermissionsCorrected,
-      worspaceTableAndColumns,
+      workspaceTableAndColumns,
     };
   }
 
-  return { msg: undefined, missingTables: undefined, worspaceTableAndColumns };
+  return { msg: undefined, missingTables: undefined, workspaceTableAndColumns };
 };

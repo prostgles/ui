@@ -22,7 +22,9 @@ export const CONNECTION_HOT_RELOAD_COLUMNS = [
   "db_port",
   "db_schema_filter",
   "db_watch_schema",
-] as const;
+  "table_options",
+  "display_options",
+] as const satisfies readonly (keyof DBSSchema["connections"])[];
 
 export async function initConnectionManager(
   this: ConnectionManager,

@@ -1,3 +1,4 @@
+import type { ColumnOptions, TableOptions } from "@common/managedTableSchema";
 import type { DBSSchema } from "@common/publishUtils";
 
 export const dbsConnectionOptions = {
@@ -99,14 +100,10 @@ export const dbsConnectionOptions = {
       label: "MCP Servers",
     },
   } satisfies Partial<{
-    [tableKey in keyof DBSSchema]: {
-      icon: string;
-      rowIconColumn?: string;
-      label: string;
-      card?: {
-        headerColumn?: string;
-      };
-      columns?: Partial<Record<keyof DBSSchema[tableKey], { icon?: string }>>;
+    [tableKey in keyof DBSSchema]: Partial<TableOptions> & {
+      columns?: Partial<
+        Record<keyof DBSSchema[tableKey], Partial<ColumnOptions>>
+      >;
     };
   }>, //satisfies DBSSchema["connections"]["table_options"]
 };

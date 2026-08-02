@@ -7,7 +7,10 @@ import {
 } from "prostgles-client";
 import { useMemo } from "react";
 import type { AppContextProps, PrglProject } from "../../App";
-import { getTables } from "../../dashboard/Dashboard/getTables";
+import {
+  getTables,
+  type DBSchemaTableWithOptions,
+} from "../../dashboard/Dashboard/getTables";
 import { isPlaywrightTest } from "../../i18n/i18nUtils";
 
 type PrglProjectStateError = {
@@ -92,8 +95,7 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
       } as const;
     }
     const databaseId = conState.data.database_configs?.[0]?.id as
-      | number
-      | undefined;
+      number | undefined;
     if (!databaseId) {
       return {
         state: "error",
@@ -200,10 +202,8 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
     } = dbState.dbPrgl;
 
     const { tables: dbTables = [] } = getTables(
-      tableSchema ?? [],
-      con.table_options,
+      (tableSchema ?? []) as DBSchemaTableWithOptions[],
       db as DBHandlerClient,
-      con.display_options?.prettyTableAndColumnNames ?? true,
     );
 
     const { path } = dbState;

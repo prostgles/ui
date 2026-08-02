@@ -9,8 +9,9 @@ import {
   type ValidContentType,
 } from "./MediaViewerContent";
 import { ContentTypes } from "@common/columnDisplayFormat.schema";
+import type { DBSchemaTableWithOptions } from "src/dashboard/Dashboard/getTables";
 
-type P = {
+export type MediaViewerProps = {
   url: string;
 
   /**
@@ -35,9 +36,14 @@ type P = {
   content_type?: ValidContentType;
 
   variant?: "thumbnail";
+
+  context?: {
+    table: DBSchemaTableWithOptions;
+    columnName: string;
+  };
 };
 
-export const MediaViewer = (props: P) => {
+export const MediaViewer = (props: MediaViewerProps) => {
   const {
     onPrevOrNext,
     style,
@@ -46,6 +52,7 @@ export const MediaViewer = (props: P) => {
     allowedHostnames,
     name,
     variant,
+    context,
   } = props;
   const [isFocused, setIsFocused] = useState(false);
   const [urlInfo, setUrlInfo] = useState<UrlInfo | undefined>(
@@ -135,6 +142,7 @@ export const MediaViewer = (props: P) => {
         urlInfo={urlInfo}
         contentOnly={false}
         variant={variant}
+        context={context}
       />
       {isFocused && (
         <Popup
@@ -183,6 +191,7 @@ export const MediaViewer = (props: P) => {
               style={style}
               urlInfo={urlInfo}
               contentOnly={true}
+              context={context}
             />
             {toggleClick && ToggleBtn(false, () => toggleClick(1))}
           </div>

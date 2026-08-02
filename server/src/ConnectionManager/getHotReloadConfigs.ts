@@ -1,6 +1,6 @@
 import { getAuthSetupData } from "@src/authConfig/subscribeToAuthSetupChanges";
 import type { DB } from "prostgles-server/dist/Prostgles";
-import type { UpdateableOptions } from "prostgles-server/dist/initProstgles";
+import type { UpdatableOptions } from "prostgles-server/dist/initProstgles";
 import type { SUser } from "../authConfig/sessionUtils";
 import type { Connections, DBS, DatabaseConfigs } from "../index";
 import { getRestApiConfig } from "./connectionManagerUtils";
@@ -12,17 +12,22 @@ import { getConnectionServerFunctions } from "./getConnectionServerFunctions";
 import type { ConnectionDetails } from "@src/connectionUtils/getConnectionDetails";
 import type { CONNECTION_HOT_RELOAD_COLUMNS } from "./initConnectionManager";
 import { parseTableConfig } from "./parseTableConfig";
+import type { RequiredKeepUndefined } from "@common/utils";
+import { modifyClientSchema } from "./modifyClientSchema";
 
-export type HotReloadConfigOptions = Pick<
-  UpdateableOptions<void, SUser>,
-  | "fileTable"
-  | "restApi"
-  | "schemaFilter"
-  | "auth"
-  | "io"
-  | "tableConfig"
-  | "functions"
-  | "tsGeneratedTypesDir"
+export type HotReloadConfigOptions = RequiredKeepUndefined<
+  Pick<
+    UpdatableOptions<void, SUser>,
+    | "fileTable"
+    | "restApi"
+    | "schemaFilter"
+    | "auth"
+    | "io"
+    | "tableConfig"
+    | "functions"
+    | "tsGeneratedTypesDir"
+    | "modifyClientSchema"
+  >
 >;
 
 export type ConnectionHotReloadProperties = Pick<
@@ -104,6 +109,8 @@ export const getHotReloadConfigs = async ({
       schemaFilter: db_schema_filter ?? { public: 1 },
       tsGeneratedTypesDir,
       functions,
+      modifyClientSchema: (table, userData) =>
+        modifyClientSchema({ connection, databaseConfig, table, userData }),
     } satisfies HotReloadConfigOptions,
     connectionServers,
   };

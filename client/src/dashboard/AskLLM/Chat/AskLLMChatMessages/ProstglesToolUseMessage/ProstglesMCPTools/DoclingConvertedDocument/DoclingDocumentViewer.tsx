@@ -106,6 +106,7 @@ export const DoclingDocumentViewerPopupBtn = (props: P) => {
     <PopupMenu
       title="Parsed document"
       positioning="fullscreen"
+      onClickClose={false}
       button={
         <Btn iconPath={mdiEye} color="action" variant="faded">
           Show parsed document

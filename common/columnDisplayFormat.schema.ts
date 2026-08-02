@@ -82,14 +82,10 @@ const MediaSchema = {
           },
         ],
       },
-      originalNameColumn: {
-        type: "Lookup",
-        lookup: {
-          type: "schema",
-          isArray: false,
-          object: "column",
-          filter: { table: "files", tsDataType: "string" },
-        },
+      titleColumn: {
+        optional: true,
+        type: "string",
+        title: "Title column",
       },
     },
   },

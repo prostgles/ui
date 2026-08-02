@@ -30,7 +30,7 @@ export const publish: Publish<
 
   const { id: user_id } = user;
 
-  /** This will prevent admins from seing each others published workspaces?! */
+  /** This will prevent admins from seeing each others published workspaces?! */
   const accessRules = isAdmin ? undefined : await getACRules(db, user);
 
   const createEditDashboards =

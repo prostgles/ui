@@ -1,5 +1,6 @@
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import { getRestApiConfig } from "@src/ConnectionManager/connectionManagerUtils";
+import { modifyClientSchema } from "@src/ConnectionManager/modifyClientSchema";
 import { getProstglesMcpHub } from "@src/McpHub/ProstglesMcpHub/ProstglesMcpHub";
 import { getServiceManager } from "@src/ServiceManager/ServiceManager";
 import type { SUser } from "@src/authConfig/sessionUtils";
@@ -90,10 +91,20 @@ export const prostglesOnReady = async (
         app.set("trust proxy", authData.stateDatabaseConfig.trust_proxy);
         const authSetupData = { ...authData, type: "state" as const };
         const auth = await getAuth(app, db, _db, authSetupData);
+        /** TODO: this must be merged with getHotReloadConfigs AND ProstglesInitOptions should have a getHotReloadConfigs: ({ db, _db }) => HotReloadOpts */
         void update({
           auth,
-          /** TODO: this must be merged with getHotReloadConfigs */
           restApi,
+
+          modifyClientSchema:
+            connection &&
+            ((table, userData) =>
+              modifyClientSchema({
+                connection,
+                databaseConfig: stateDatabaseConfig,
+                table,
+                userData,
+              })),
         });
       },
       authSetupDataListener,
