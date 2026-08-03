@@ -17,10 +17,10 @@ export const modifyClientSchema = ({
   userData: AuthResultWithSID<SUser> | undefined;
 }): DBSchemaTable<Omit<TableOptions, "columns">, ColumnOptions> => {
   const { file_table_config } = databaseConfig;
-  const { fileTable, citationsTable } = file_table_config ?? {};
+  const { fileTable, annotationsTable } = file_table_config ?? {};
   const managedTableOptions =
     fileTable === table.name ? fileTableOptions
-    : fileTable && citationsTable === table.name ? citationsTableOptions
+    : fileTable && annotationsTable === table.name ? annotationsTableOptions
     : undefined;
   const tableOptions = {
     ...(connection.is_state_db ?
@@ -115,11 +115,11 @@ const fileTableOptions: TableOptions = {
   },
 };
 
-const citationsTableOptions: TableOptions = {
-  managedTableType: "file-citations",
+const annotationsTableOptions: TableOptions = {
+  managedTableType: "file-annotations",
   columns: {},
   card: undefined,
   icon: "Link",
-  label: "File Citations",
+  label: "File annotations",
   rowIconColumn: undefined,
 };

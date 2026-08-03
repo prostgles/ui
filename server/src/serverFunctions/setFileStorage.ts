@@ -72,19 +72,19 @@ export const setFileStorage = async (
         await fileTableHandler.delete({});
       }
       if (!opts?.keepFileTable) {
-        const { citationsTable } = existingFileTableConfig;
-        if (citationsTable) {
+        const { annotationsTable } = existingFileTableConfig;
+        if (annotationsTable) {
           await connectionManager
             .getActiveConnectionSilentFail(connId)
             ?.prgl.update({ tableConfig: undefined });
         }
         await t.any(
-          (existingFileTableConfig.citationsTable ?
-            "DROP TABLE ${citationsTable:name} CASCADE;"
+          (existingFileTableConfig.annotationsTable ?
+            "DROP TABLE ${annotationsTable:name} CASCADE;"
           : "") + "DROP TABLE ${fileTable:name} CASCADE",
           {
             fileTable,
-            citationsTable: existingFileTableConfig.citationsTable,
+            annotationsTable: existingFileTableConfig.annotationsTable,
           },
         );
       }

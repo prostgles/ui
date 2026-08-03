@@ -69,10 +69,10 @@ export const FileStorageControls = (props: FileStorageControlsProps) => {
     setCredentialId,
     fileTable,
     setFileTable,
-    fileCitationsTable,
-    setFileCitationsTable,
+    fileAnnotationsTable,
+    setFileAnnotationsTable,
     fileTableNameClash,
-    fileCitationsTableNameClash,
+    fileAnnotationsTableNameClash,
     extractText,
     setExtractText,
   } = useSetFileStorage({
@@ -129,14 +129,14 @@ export const FileStorageControls = (props: FileStorageControlsProps) => {
         onChange={(enable) => {
           if (enable) {
             setFileTable("files");
-            setFileCitationsTable("file_citations");
+            setFileAnnotationsTable("file_annotations");
             setStorageType("local");
           } else {
             if (fileConfig?.fileTable) {
               setShowDelete(true);
             } else {
               setFileTable(undefined);
-              setFileCitationsTable(undefined);
+              setFileAnnotationsTable(undefined);
               setStorageType("local");
             }
           }
@@ -170,18 +170,18 @@ export const FileStorageControls = (props: FileStorageControlsProps) => {
             <FormField
               type="text"
               label={{
-                label: "File citations table name",
+                label: "File annotations table name",
                 style: {
                   marginBottom: "0",
                 },
-                info: "Used for pdf/image file citations. Table created in the current database",
+                info: "Used for pdf/image file annotations. Table created in the current database",
               }}
               readOnly={!!fileConfig?.fileTable}
               title={fileConfig?.fileTable ? "Cannot be updated" : ""}
-              value={fileCitationsTable}
-              onChange={setFileCitationsTable}
+              value={fileAnnotationsTable}
+              onChange={setFileAnnotationsTable}
               error={
-                fileCitationsTableNameClash ?
+                fileAnnotationsTableNameClash ?
                   "There is a table with this name in the database. Choose another name"
                 : undefined
               }

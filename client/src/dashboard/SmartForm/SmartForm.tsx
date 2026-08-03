@@ -260,7 +260,9 @@ const SmartFormWithNoError = ({
       headerText={headerText}
       rowFilterObj={"rowFilterObj" in mode ? mode.rowFilterObj : undefined}
       showAsMarkdown={showAsMarkdown}
-      setShowAsMarkdown={setShowAsMarkdown}
+      setShowAsMarkdown={
+        state.modeType === "insert" ? undefined : setShowAsMarkdown
+      }
     >
       <div
         data-command={isLoading ? undefined : "SmartForm"}

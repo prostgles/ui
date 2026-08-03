@@ -47,7 +47,7 @@ export const FILE_TABLE_CONFIG_SCHEMA = {
       checkIntervalHours: { type: "number", optional: true },
     },
   },
-  citationsTable: { type: "string", optional: true },
+  annotationsTable: { type: "string", optional: true },
   extractText: { type: "boolean", optional: true },
 } as const satisfies JSONB.ObjectType["type"];
 

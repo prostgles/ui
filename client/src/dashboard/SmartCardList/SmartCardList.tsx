@@ -101,7 +101,7 @@ export type SmartCardListProps<T extends AnyObject = AnyObject> = Pick<
   orderBy?: ColumnSort | ColumnSort[];
   realtime?: boolean;
   throttle?: number;
-  orderByfields?: string[];
+  orderByFields?: string[];
   showEdit?: boolean;
   onSetData?: (items: AnyObject[]) => void;
 } & Pick<TestSelectors, "data-command">;

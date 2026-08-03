@@ -35,7 +35,7 @@ export const TimeChartLayerOptions = ({
   w: wMapOrTimechart,
   mode,
 }: TimeChartLayerOptionsProps) => {
-  const { db, sql, tables } = usePrgl();
+  const { sql, tables } = usePrgl();
   const linkOpts = link.options;
   const sqlDataSourceColumns = usePromise(async () => {
     if (
@@ -236,9 +236,9 @@ export const TimeChartLayerOptions = ({
                 size="small"
                 data-command="TimeChartLayerOptions.numericColumn"
                 fullOptions={numericCols.map((c) => ({
+                  ...c,
                   key: c.name,
                   subLabel: c.udt_name,
-                  ...c,
                 }))}
                 disabledInfo={
                   statType.funcName === "$countAll" ?

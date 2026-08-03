@@ -21,14 +21,14 @@ export const FileInputMedia = (props: {
     url: string;
     isLocalFile?: boolean;
   } =
-    "url" in f ?
-      { ...f, type: f.content_type }
-    : {
-        name: f.name,
+    "data" in f ?
+      {
+        name: f.original_name,
         type: f.data.type,
         url: URL.createObjectURL(f.data),
         isLocalFile: true,
-      };
+      }
+    : { ...f, type: f.content_type };
 
   const { type, url, name } = file;
   let mediaPreview: React.ReactNode = null;

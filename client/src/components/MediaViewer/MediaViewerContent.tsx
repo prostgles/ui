@@ -96,7 +96,7 @@ export const MediaViewerContent = ({
       mediaContent = <audio {...commonProps} controls src={url} />;
     } else if (!isFocused && url) {
       const isPdf = content_type === "application/pdf";
-      const fileIconInfo = getFileIconInfo(url);
+      const fileIconInfo = getFileIconInfo(url, content_type);
       mediaContent = (
         <FlexCol className="f-0 gap-p25 max-w-full">
           <Btn

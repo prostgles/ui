@@ -13,10 +13,7 @@ import {
   type PG_COLUMN_UDT_DATA_TYPE,
 } from "prostgles-types";
 import React, { useCallback, useState } from "react";
-import type {
-  DBSchemaTableColumn,
-  DBSchemaTableWJoins,
-} from "../../Dashboard/dashboardUtils";
+import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
 import { getPGIntervalAsText } from "../../W_SQL/customRenderers";
 import type { ColumnDisplayConfig, SmartFormProps } from "../SmartForm";
 import type {
@@ -42,15 +39,9 @@ import {
 } from "./fieldUtils";
 import { useSmartFormFieldAsJSON } from "./useSmartFormFieldAsJSON";
 import { useSmartFormFieldOnChange } from "./useSmartFormFieldOnChange";
+import type { LocalMedia } from "@components/FileInput/FileInput";
 
-type SmartFormFieldValue =
-  | string
-  | number
-  | {
-      data: File;
-      name: string;
-    }
-  | null;
+export type SmartFormFieldValue = string | number | LocalMedia | null;
 
 export type SmartFormFieldProps = Pick<
   SmartFormProps,
@@ -77,7 +68,8 @@ export type SmartFormFieldProps = Pick<
   newRowDataHandler: NewRowDataHandler;
   someColumnsHaveIcons: boolean;
 };
-export type SmartColumnInfo = DBSchemaTableColumn & ColumnDisplayConfig;
+export type SmartColumnInfo = DBSchemaTableWJoins["columns"][number] &
+  ColumnDisplayConfig;
 
 /**
  * Allows displaying and editing a single column from a SmartForm based on table schema and config

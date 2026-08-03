@@ -6,7 +6,7 @@ export type TableOptions = RequiredKeepUndefined<
     NonNullable<DBSSchema["connections"]["table_options"]>[string]
   > & {
     label: string;
-    managedTableType?: "files" | "file-citations";
+    managedTableType?: "files" | "file-annotations";
   }
 >;
 export type ColumnOptions = RequiredKeepUndefined<
@@ -19,7 +19,7 @@ export type ColumnOptions = RequiredKeepUndefined<
   >
 >;
 
-export const citationsTableColumns = {
+export const annotationsTableColumns = {
   id: `INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY`,
   file_id: `UUID NOT NULL`,
   name: `TEXT`,

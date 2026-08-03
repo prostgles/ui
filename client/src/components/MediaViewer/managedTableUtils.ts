@@ -1,4 +1,4 @@
-import type { citationsTableColumns } from "@common/managedTableSchema";
+import type { annotationsTableColumns } from "@common/managedTableSchema";
 import type { JSONB, TS_PG_Types } from "prostgles-types";
 
 type PgTypeToTsCategory<PgType extends string> = {
@@ -73,4 +73,24 @@ type TableConfigType<T extends Record<string, ColumnConfig>> = {
   : unknown;
 };
 
-export type CitationsTableRow = TableConfigType<typeof citationsTableColumns>;
+export type AnnotationsTableRow = TableConfigType<
+  typeof annotationsTableColumns
+>;
+
+export type FilesTableRow = {
+  data: ArrayBuffer | Uint8Array;
+  url?: string;
+  id?: string;
+  original_last_modified?: null | string;
+  original_name: string;
+  content_type: string;
+};
+
+export type DBManagedTableSchema = {
+  files: {
+    columns: FilesTableRow;
+  };
+  file_annotations: {
+    columns: AnnotationsTableRow;
+  };
+};

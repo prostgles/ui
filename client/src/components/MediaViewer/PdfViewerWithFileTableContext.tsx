@@ -7,7 +7,7 @@ import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import type { TableHandlerClient } from "prostgles-client";
 import React, { useMemo } from "react";
 import type { DBSchemaTableWJoins } from "src/dashboard/Dashboard/dashboardUtils";
-import type { CitationsTableRow } from "./managedTableUtils";
+import type { AnnotationsTableRow } from "./managedTableUtils";
 import type { MediaViewerProps } from "./MediaViewer";
 
 type P = Omit<PdfViewerProps, "highlights" | "onCreateHighlight"> & {
@@ -16,55 +16,57 @@ type P = Omit<PdfViewerProps, "highlights" | "onCreateHighlight"> & {
 
 export const PdfViewerWithFileTableContext = ({ context, ...pdfProps }: P) => {
   const { db, tables } = usePrgl();
-  const citationsContext = useMemo(() => {
+  const annotationsContext = useMemo(() => {
     if (!context) return;
     const fileTable = tables.find((t) => t.managedTableType === "files");
-    const citationsTable = tables.find(
-      (t) => t.managedTableType === "file-citations",
+    const annotationsTable = tables.find(
+      (t) => t.managedTableType === "file-annotations",
     );
     const fileTableHandler = fileTable && db[fileTable.name];
-    const citationsTableHandler = citationsTable && db[citationsTable.name];
+    const annotationsTableHandler =
+      annotationsTable && db[annotationsTable.name];
     if (
       !fileTable ||
-      !citationsTable ||
+      !annotationsTable ||
       !fileTableHandler?.find ||
-      !citationsTableHandler?.find
+      !annotationsTableHandler?.find
     ) {
       return;
     }
     return {
       fileTable,
-      citationsTable,
+      annotationsTable,
       fileTableHandler: fileTableHandler as TableHandlerClient,
-      citationsTableHandler: citationsTableHandler as TableHandlerClient,
+      annotationsTableHandler: annotationsTableHandler as TableHandlerClient,
     };
   }, [context, db, tables]);
 
-  if (citationsContext) {
-    return <PdfViewerWithCitations {...pdfProps} {...citationsContext} />;
+  if (annotationsContext) {
+    return <PdfViewerWithannotations {...pdfProps} {...annotationsContext} />;
   }
   return <PdfViewer {...pdfProps} />;
 };
 
-type CitationsContext = {
+type annotationsContext = {
   fileTable: DBSchemaTableWJoins;
-  citationsTable: DBSchemaTableWJoins;
+  annotationsTable: DBSchemaTableWJoins;
   fileTableHandler: TableHandlerClient;
-  citationsTableHandler: TableHandlerClient<CitationsTableRow>;
+  annotationsTableHandler: TableHandlerClient<AnnotationsTableRow>;
 };
 
-export const PdfViewerWithCitations = ({
+export const PdfViewerWithannotations = ({
   fileTable,
-  citationsTableHandler,
+  annotationsTableHandler,
   url,
   ...pdfProps
-}: Omit<P, "context"> & CitationsContext) => {
+}: Omit<P, "context"> & annotationsContext) => {
   const [newDataKey, setNewDataKey] = React.useState(0);
-  const { data: citations } = citationsTableHandler.useFind(
+  const fileId = url.split("/").pop()?.split(".")[0] || url;
+  const { data: annotations } = annotationsTableHandler.useSubscribe(
     {
       $existsJoined: {
         [fileTable.name]: {
-          url,
+          id: fileId,
         },
       },
     },
@@ -73,13 +75,12 @@ export const PdfViewerWithCitations = ({
   );
 
   const { onErrorAlert } = useOnErrorAlert();
-  const fileId = url.split("/").pop()?.split(".")[0] || url;
 
   return (
     <PdfViewer
       url={url}
       highlights={
-        citations?.map(({ id, text, page, rectangles }) => ({
+        annotations?.map(({ id, text, page, rectangles }) => ({
           id,
           page,
           color: "var(--b-warning)",
@@ -91,7 +92,7 @@ export const PdfViewerWithCitations = ({
         void onErrorAlert(async () => {
           if (!rects.length) return;
 
-          await citationsTableHandler.insert({
+          await annotationsTableHandler.insert({
             id: undefined as any,
             name: null,
             file_id: fileId,

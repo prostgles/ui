@@ -22,7 +22,7 @@ export const useSmartCardListState = (
     | "realtime"
     | "orderBy"
     | "showTopBar"
-    | "orderByfields"
+    | "orderByFields"
     | "tables"
     | "searchFilter"
   > & {
@@ -30,7 +30,7 @@ export const useSmartCardListState = (
   },
 ) => {
   const {
-    orderByfields,
+    orderByFields,
     tableName,
     db,
     sql,
@@ -91,7 +91,7 @@ export const useSmartCardListState = (
       table?.columns.some((c) => c.insert);
 
     const showSort = isObject(showTopBar) ? showTopBar.sort : showTopBar;
-    const willShowSort = showSort && orderByfields?.length !== 0;
+    const willShowSort = showSort && orderByFields?.length !== 0;
     return {
       type: "table",
       tableName,
@@ -121,7 +121,7 @@ export const useSmartCardListState = (
     localOrderBy,
     tables,
     showTopBar,
-    orderByfields?.length,
+    orderByFields?.length,
   ]);
 
   useEffect(() => {

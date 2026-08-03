@@ -1,4 +1,5 @@
 import type { DBSSchema } from "@common/publishUtils";
+import type { AnnotationsTableRow } from "@components/MediaViewer/managedTableUtils";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -16,8 +17,8 @@ export const useSetFileStorage = ({
   const { dbsMethods, tables } = usePrgl();
 
   const [fileTable, setFileTable] = useState(fileConfig?.fileTable);
-  const [fileCitationsTable, setFileCitationsTable] = useState(
-    fileConfig?.citationsTable,
+  const [fileAnnotationsTable, setFileAnnotationsTable] = useState(
+    fileConfig?.annotationsTable,
   );
   const [extractText, setExtractText] = useState(
     fileConfig?.extractText ?? true,
@@ -41,17 +42,17 @@ export const useSetFileStorage = ({
       t.name === fileTable &&
       !t.columns.some((c) => c.name === "signed_url_expires"),
   );
-  const fileCitationsTableNameClash = tables.some(
+  const fileAnnotationsTableNameClash = tables.some(
     (t) =>
-      t.name === fileCitationsTable &&
-      !t.columns.some((c) => c.name === "citation"),
+      t.name === fileAnnotationsTable &&
+      !t.columns.some((c) => (c.name as keyof AnnotationsTableRow) === "page"),
   );
 
   const canEnable =
     !fileConfig?.fileTable &&
     fileTable &&
     !fileTableNameClash &&
-    !fileCitationsTableNameClash &&
+    !fileAnnotationsTableNameClash &&
     (storageType === "local" || !!credentialId);
 
   const error =
@@ -63,7 +64,7 @@ export const useSetFileStorage = ({
     return {
       ...fileConfig,
       fileTable,
-      citationsTable: fileCitationsTable,
+      annotationsTable: fileAnnotationsTable,
       storageType:
         storageType === "local" ?
           {
@@ -78,7 +79,7 @@ export const useSetFileStorage = ({
   }, [
     credentialId,
     extractText,
-    fileCitationsTable,
+    fileAnnotationsTable,
     fileConfig,
     fileTable,
     storageType,
@@ -117,11 +118,11 @@ export const useSetFileStorage = ({
     setCredentialId,
     fileTable,
     setFileTable,
-    fileCitationsTable,
-    setFileCitationsTable,
+    fileAnnotationsTable,
+    setFileAnnotationsTable,
     extractText,
     setExtractText,
     fileTableNameClash,
-    fileCitationsTableNameClash,
+    fileAnnotationsTableNameClash,
   };
 };

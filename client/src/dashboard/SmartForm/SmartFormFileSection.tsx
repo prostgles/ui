@@ -1,14 +1,15 @@
-import type { AnyObject, DBSchemaTable } from "prostgles-types";
+import type { LocalMedia, Media } from "@components/FileInput/FileInput";
+import { FileInput } from "@components/FileInput/FileInput";
+import type { FilesTableRow } from "@components/MediaViewer/managedTableUtils";
+import type { DBSchemaTable } from "prostgles-types";
 import { isEmpty } from "prostgles-types";
 import React, { useMemo } from "react";
-import type { Media } from "@components/FileInput/FileInput";
-import { FileInput } from "@components/FileInput/FileInput";
 import type { SmartFormProps } from "./SmartForm";
 import type { NewRow, NewRowDataHandler } from "./SmartFormNewRowDataHandler";
 import type { SmartFormState } from "./useSmartForm";
 
 type P = {
-  row: AnyObject;
+  row: Media | Record<string, never> | undefined;
   mediaTableName: string;
   newRowDataHandler: NewRowDataHandler | undefined;
   table: DBSchemaTable;
@@ -33,29 +34,15 @@ export const SmartFormFileSection = ({
   const { isFileTable } = table;
   const tableName = table.name;
   const media: Media[] | undefined = useMemo(() => {
-    if (!isFileTable) throw "Must be a file table";
-    if (!isEmpty(row)) return [row as Media];
+    if (!isFileTable) {
+      throw "Must be a file table";
+    }
+    if (!isEmpty(row) && row?.original_name !== undefined) {
+      return [row as Media];
+    }
     if (defaultData && !isEmpty(defaultData)) return [defaultData as Media];
     return [];
-
-    // if (action.type === "insert") {
-    //   if (defaultData && isObject(defaultData) && !newRowData) {
-    //     return [defaultData as Media];
-    //   } else {
-    //     return row[mediaTableName] ?? [];
-    //   }
-    // } else {
-    //   return newRowData?.[tableName]?.value ?? [row as Media];
-    // }
-  }, [
-    row,
-    isFileTable,
-    defaultData,
-    // mediaTableName,
-    // action.type,
-    // newRowData,
-    // tableName,
-  ]);
+  }, [row, isFileTable, defaultData]);
 
   if ("loading" in action && action.loading) return null;
   if (!newRowDataHandler) return null;
@@ -69,23 +56,25 @@ export const SmartFormFileSection = ({
         // minSize={isFileTable ? 470 : 450}
         maxFileCount={1}
         onAdd={([file]) => {
-          // const currentRow = action.type === "update" ? action.currentRow : {};
-          // const currMedia = [
-          //   ...(newRowData?.[mediaTableName]?.value || []),
-          //   ...(currentRow?.[mediaTableName] || []),
-          // ].filter(isDefined);
-          // newRowDataHandler.setColumnData(mediaTableName, {
-          //   type: "nested-table",
-          //   value: [...currMedia, ...files],
-          // });
-          newRowDataHandler.setNewRow(
-            !file ?
-              {}
-            : {
-                name: { type: "column", value: file.name },
-                data: { type: "column", value: file.data },
+          const newFileRow =
+            file &&
+            ({
+              original_name: { type: "column", value: file.original_name },
+              original_last_modified: {
+                type: "column",
+                value: file.original_last_modified,
               },
-          );
+              data: { type: "column", value: file.data },
+            } satisfies NewRow);
+          newFileRow satisfies
+            | undefined
+            | {
+                [K in keyof Required<LocalMedia>]: {
+                  type: "column";
+                  value: LocalMedia[K];
+                };
+              };
+          newRowDataHandler.setNewRow(newFileRow ?? {});
         }}
         onDelete={async (media) => {
           if ("id" in media && media.id) {
@@ -106,11 +95,13 @@ export const SmartFormFileSection = ({
               }
             }
           } else {
-            const currMedia: Media[] =
-              newRowData?.[mediaTableName]?.value || [];
-            newRowDataHandler.setColumnData(mediaTableName, {
+            const currMedia = (newRowData?.[mediaTableName]?.value ||
+              []) as Media[];
+            await newRowDataHandler.setColumnData(mediaTableName, {
               type: "nested-table",
-              value: currMedia.filter((m) => m.name !== media.name),
+              value: currMedia.filter(
+                (m) => m.original_name !== media.original_name,
+              ),
             });
           }
         }}

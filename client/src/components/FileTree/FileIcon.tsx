@@ -22,7 +22,10 @@ export const FileIcon = ({
   );
 };
 
-export const getFileIconInfo = (name: string) => {
-  const extension = name.toLowerCase().split(".").at(-1) ?? "";
+export const getFileIconInfo = (name: string, contentType?: string) => {
+  const extension =
+    name.toLowerCase().split(".").slice(1).at(-1) ??
+    contentType?.split("/").slice(1).at(-1) ??
+    "";
   return FILE_EXTENSION_TO_ICON_INFO[extension];
 };

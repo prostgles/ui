@@ -16,7 +16,7 @@ import { getCloudClient } from "../cloudClients/cloudClients";
 import type { ConnectionManager } from "./ConnectionManager";
 import { getDatabaseConfigFilter } from "./connectionManagerUtils";
 import type { ConnectionHotReloadProperties } from "./getHotReloadConfigs";
-import { citationsTableColumns } from "@common/managedTableSchema";
+import { annotationsTableColumns } from "@common/managedTableSchema";
 
 type ParseTableConfigArgs = {
   dbs: DBS;
@@ -105,7 +105,7 @@ export const parseTableConfig = async ({
   return {
     fileTable,
     tableConfig:
-      fileTable && fileTableConfig?.citationsTable ?
+      fileTable && fileTableConfig?.annotationsTable ?
         {
           [fileTable.tableName]: {
             columns: {
@@ -124,14 +124,14 @@ export const parseTableConfig = async ({
                 {
                   commands: { insert: 1, update: 1 },
                   validate: async ({ data: fileRow, hookContext }) => {
-                    const { name, content_type } = fileRow;
+                    const { original_name, content_type } = fileRow;
                     const buffer = hookContext?.data as Buffer;
                     const isImageOrPdf =
                       content_type &&
                       ["image/", "application/pdf"].some((prefix) =>
                         content_type.startsWith(prefix),
                       );
-                    if (!isImageOrPdf || !name) {
+                    if (!isImageOrPdf || !original_name) {
                       return;
                     }
                     const db =
@@ -219,9 +219,9 @@ export const parseTableConfig = async ({
               ],
             },
           },
-          [fileTableConfig.citationsTable]: {
-            dropIfExists: true,
-            columns: citationsTableColumns,
+          [fileTableConfig.annotationsTable]: {
+            // dropIfExists: true,
+            columns: annotationsTableColumns,
             constraints: {
               references_file_table:
                 "FOREIGN KEY (file_id) REFERENCES " +
