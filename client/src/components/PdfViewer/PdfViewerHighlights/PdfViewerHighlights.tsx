@@ -1,13 +1,9 @@
 import Btn from "@components/Btn";
+import { mdiPlus } from "@mdi/js";
 import type * as pdfjsLib from "pdfjs-dist";
-import React, { useState } from "react";
+import React from "react";
 import { createPortal } from "react-dom";
-import "./PdfViewerHighlights.css";
-import { mdiChevronRight } from "@mdi/js";
-import Popup from "@components/Popup/Popup";
-import { RowCard } from "src/dashboard/W_Table/RowCard";
-import { SmartForm } from "src/dashboard/SmartForm/SmartForm";
-import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import type { PdfViewerProps } from "../PdfViewer";
 
 export type HighlightRect = {
   /**
@@ -25,10 +21,14 @@ export type Highlight = {
   page: number;
   rects: HighlightRect[];
   color: string;
+  leftHandle: React.ReactNode;
   tooltip?: string;
 };
 
-export type CreatedHighlight = Omit<Highlight, "id" | "color"> & {
+export type CreatedHighlight = Omit<
+  Highlight,
+  "id" | "color" | "leftHandle"
+> & {
   text: string;
 };
 
@@ -39,11 +39,16 @@ export type ActiveTooltip = {
   top: number;
 };
 
-export type PdfViewerHighlightsProps = {
+export type PdfViewerHighlightsProps = Pick<
+  PdfViewerProps,
+  "onCreateHighlight"
+> & {
   viewport: pdfjsLib.PageViewport | null;
   pageElement: HTMLDivElement;
   activeTooltip: ActiveTooltip | null;
   pageHighlights: Highlight[];
+  potentialHighlight: CreatedHighlight | null;
+  clearPotentialHighlight: () => void;
 };
 
 export const PdfViewerHighlights = ({
@@ -51,43 +56,13 @@ export const PdfViewerHighlights = ({
   viewport,
   activeTooltip,
   pageHighlights,
+  potentialHighlight,
+  onCreateHighlight,
+  clearPotentialHighlight,
 }: PdfViewerHighlightsProps) => {
-  const prgl = usePrgl();
-  const [expandedHighlight, setExpandedHighlight] = useState<
-    Highlight | undefined
-  >();
+  const potentialHighlightLastRect = potentialHighlight?.rects.at(-1);
   return (
     <>
-      {/* {viewport &&
-        createPortal(
-          <div className="pdf-viewer__highlight-layer" aria-hidden="true">
-            {pageHighlights.flatMap((highlight) =>
-              highlight.rects.map((rect, index) => (
-                <div
-                  key={`${highlight.id}-${index}`}
-                  className="pdf-viewer__highlight"
-                  style={{
-                    left: rect.x * viewport.scale,
-                    top: rect.y * viewport.scale,
-                    width: rect.width * viewport.scale,
-                    height: rect.height * viewport.scale,
-                    backgroundColor: highlight.color,
-                  }}
-                />
-              )),
-            )}
-          </div>,
-          pageElement,
-        )} */}
-      {expandedHighlight && (
-        <SmartForm
-          asPopup={true}
-          {...prgl}
-          tableName="file_annotations"
-          rowFilter={[{ fieldName: "id", value: expandedHighlight.id }]}
-          onClose={() => setExpandedHighlight(undefined)}
-        />
-      )}
       {viewport &&
         createPortal(
           <div className="pdf-viewer__highlight-layer">
@@ -95,18 +70,18 @@ export const PdfViewerHighlights = ({
               highlight.rects.map((rect, index) => (
                 <React.Fragment key={`${highlight.id}-${index}`}>
                   {index === 0 && (
-                    <Btn
-                      type="button"
-                      title="Show highlight details"
-                      iconPath={mdiChevronRight}
-                      className="pdf-viewer__highlight-expand"
-                      aria-label={`Show details for highlight ${highlight.id}`}
+                    <div
                       style={{
-                        left: 0, // rect.x * viewport.scale,
+                        position: "absolute",
+                        zIndex: 4,
+                        pointerEvents: "auto",
+                        // left: 10,
+                        right: 10,
                         top: (rect.y + rect.height / 2) * viewport.scale,
                       }}
-                      onClick={() => setExpandedHighlight(highlight)}
-                    />
+                    >
+                      {highlight.leftHandle}
+                    </div>
                   )}
 
                   <div
@@ -122,6 +97,33 @@ export const PdfViewerHighlights = ({
                 </React.Fragment>
               )),
             )}
+            {potentialHighlight &&
+              potentialHighlightLastRect &&
+              onCreateHighlight && (
+                <Btn
+                  title="Add annotation"
+                  color="action"
+                  variant="filled"
+                  iconPath={mdiPlus}
+                  onClick={() => {
+                    clearPotentialHighlight();
+                    onCreateHighlight(potentialHighlight);
+                  }}
+                  style={{
+                    position: "absolute",
+                    zIndex: 4,
+                    pointerEvents: "auto",
+                    padding: 0,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    right: 10,
+                    top:
+                      (potentialHighlightLastRect.y +
+                        potentialHighlightLastRect.height / 2) *
+                      viewport.scale,
+                  }}
+                />
+              )}
           </div>,
           pageElement,
         )}

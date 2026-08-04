@@ -29,9 +29,9 @@ export type RequestToolAccess = JSONB.GetType<
   (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["request_tool_access"]["schema"]
 >;
 
-export const clientNodeModulesDirectory = join(
+export const nodeModulesDirectory = join(
   __dirname,
-  "../../../client/node_modules",
+  "../../../electron/node_modules",
 );
 
 const requestToolAccessArgs = {
@@ -369,7 +369,7 @@ const toolResponses: Record<string, ToolUse> = {
         function: {
           name: "filesystem--directory_tree",
           arguments: stringify({
-            path: clientNodeModulesDirectory,
+            path: nodeModulesDirectory,
           }),
         },
       },
@@ -454,6 +454,37 @@ const toolResponses: Record<string, ToolUse> = {
   ask_tool_invalid: {
     content: " ",
     ...getAskUserToolUse(false),
+  },
+  create_agent: {
+    content: "I'll create a new agent using the create_agent tool.",
+    tool: [
+      {
+        id: "create-agent-tool-use",
+        type: "function",
+        function: {
+          name: getProstglesMCPFullToolName("prostgles-ui", "create_agent"),
+          arguments: stringify({
+            name: "Test Agent",
+            // tools: {}
+            prompt: "Provide useful research to the user.",
+            timeout: 120000,
+            maxTokens: 5000,
+            modelName: "anthropic/claude-4.6-sonnet",
+            maxCostUSD: 1,
+            temperature: 0.1,
+            maxIterations: 8,
+            // mcpServerConfigs: {
+            //   "brave-search": {
+            //     configId: 35,
+            //   },
+            // },
+            autoApproveAllTools: true,
+          }),
+        },
+      },
+    ],
+    result_content:
+      "Created a new agent named 'Test Agent' with the specified description and goals.",
   },
 };
 

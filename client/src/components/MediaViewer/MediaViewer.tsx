@@ -3,6 +3,7 @@ import { mdiChevronLeft } from "@mdi/js";
 import React, { useCallback, useEffect, useState } from "react";
 import { Icon } from "../Icon/Icon";
 import Popup from "../Popup/Popup";
+import type { AnyObject } from "prostgles-types";
 import {
   MediaViewerContent,
   type UrlInfo,
@@ -40,6 +41,7 @@ export type MediaViewerProps = {
   context?: {
     table: DBSchemaTableWithOptions;
     columnName: string;
+    row: AnyObject;
   };
 };
 
@@ -155,6 +157,7 @@ export const MediaViewer = (props: MediaViewerProps) => {
           positioning="fullscreen"
           autoFocusFirst={"content"}
           focusTrap={true}
+
           title={
             name ??
             (!urlInfo ? "" : (

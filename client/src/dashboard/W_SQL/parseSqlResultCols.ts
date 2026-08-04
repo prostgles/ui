@@ -44,7 +44,7 @@ export const parseSqlResultCols = function (
         this.ref?.getBoundingClientRect().width,
       );
   const cols = colsWithWidth;
-  w.$update(
+  void w.$update(
     { options: { sqlResultCols: cols, lastSQL: isSelect ? trimmedSql : "" } },
     { deepMerge: true },
   );
@@ -65,7 +65,7 @@ export const parseSqlResultCols = function (
           }
         });
 
-        l.$update({
+        void l.$update({
           options: {
             ...l.options,
             columns: newCols,

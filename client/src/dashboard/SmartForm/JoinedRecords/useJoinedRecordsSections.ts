@@ -3,7 +3,10 @@ import {
   isJoinedFilter,
   type DetailedFilter,
 } from "@common/filterUtils";
-import type { TableHandlerClient } from "prostgles-client/dist/prostgles";
+import {
+  useMemoDeep,
+  type TableHandlerClient,
+} from "prostgles-client/dist/prostgles";
 import { getSerialisableError, type AnyObject } from "prostgles-types";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { isDefined } from "../../../utils/utils";
@@ -63,7 +66,7 @@ export const useJoinedRecordsSections = (props: JoinedRecordsProps) => {
     [parentForm],
   );
 
-  const table = useMemo(() => tablesMap.get(tableName), [tablesMap, tableName]);
+  const table = tablesMap.get(tableName);
 
   const currentSections = useRef<JoinedRecordSection[]>([]);
   const isInsert = !rowFilter;
@@ -95,6 +98,12 @@ export const useJoinedRecordsSections = (props: JoinedRecordsProps) => {
     [newRowData],
   );
 
+  const nestedInsertDataTableRowCounts = useMemoDeep(() => {
+    return new Map(
+      Object.entries(nestedInsertData).map(([k, d]) => [k, d.length]),
+    );
+  }, [nestedInsertData]);
+
   const [sectionCounts, setSectionCounts] = useState<
     Map<
       string,
@@ -102,6 +111,7 @@ export const useJoinedRecordsSections = (props: JoinedRecordsProps) => {
       | { success: false; error: unknown }
     >
   >(new Map());
+
   const refreshSectionCount = useCallback(
     async ({
       tableHandler,
@@ -124,8 +134,9 @@ export const useJoinedRecordsSections = (props: JoinedRecordsProps) => {
       }
       const existingDataCount = isInsert ? 0 : parseInt(countStr);
       const count =
-        (isInsert ? nestedInsertData[tableName]?.length : existingDataCount) ??
-        0;
+        (isInsert ?
+          nestedInsertDataTableRowCounts.get(tableName)
+        : existingDataCount) ?? 0;
       setSectionCounts((prev) => {
         const newMap = new Map(prev);
         if (countError) {
@@ -136,8 +147,9 @@ export const useJoinedRecordsSections = (props: JoinedRecordsProps) => {
         return newMap;
       });
     },
-    [isInsert, nestedInsertData],
+    [isInsert, nestedInsertDataTableRowCounts],
   );
+
   const sectionsWithoutCounts = useMemo(() => {
     const allSections = diplayedTables.map((j) => {
       const canInsert = db[j.tableName]?.insert && j.hasFkeys;

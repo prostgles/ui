@@ -1,5 +1,5 @@
 import * as pdfjsLib from "pdfjs-dist";
-import React from "react";
+import React, { useState } from "react";
 
 import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol } from "@components/Flex";
@@ -12,8 +12,10 @@ import {
   PdfViewerHighlights,
   type CreatedHighlight,
   type Highlight,
-} from "./PdfViewerHighlights";
+} from "./PdfViewerHighlights/PdfViewerHighlights";
 import { usePdfViewer } from "./usePdfViewer";
+import type { DoclingDocument } from "src/dashboard/AskLLM/Chat/AskLLMChatMessages/ProstglesToolUseMessage/ProstglesMCPTools/DoclingConvertedDocument/DoclingDocument";
+import { PdfViewerDoclingTextOverlay } from "./PdfViewerDoclingTextOverlay";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.mjs",
@@ -25,12 +27,10 @@ export type PdfViewerProps = {
   scale?: number;
   highlights?: Highlight[];
   withCredentials?: boolean;
-
-  /**
-   * Called after a text selection is made within the currently rendered page.
-   * The parent owns persistence, IDs, citation metadata, and highlight color.
-   */
+  doclingDocument?: DoclingDocument;
   onCreateHighlight?: (highlight: CreatedHighlight) => void;
+  topLeftControls?: React.ReactNode;
+  defaultPage?: number;
 };
 
 export const PdfViewer = ({
@@ -39,6 +39,9 @@ export const PdfViewer = ({
   highlights = [],
   withCredentials = false,
   onCreateHighlight,
+  doclingDocument,
+  topLeftControls,
+  defaultPage,
 }: PdfViewerProps) => {
   const {
     isRendering,
@@ -54,13 +57,20 @@ export const PdfViewer = ({
     viewport,
     setActiveTooltip,
     pageHighlights,
+    pdfDocument,
+    potentialHighlight,
+    setPotentialHighlight,
   } = usePdfViewer({
+    defaultPage,
     url,
     scale,
     highlights,
     withCredentials,
     onCreateHighlight,
+    topLeftControls,
   });
+
+  const [showDoclingOverlay, setShowDoclingOverlay] = useState(false);
 
   return (
     <FlexCol className="PdfViewer bg-color-3 ai-center min-h-0">
@@ -69,6 +79,12 @@ export const PdfViewer = ({
         numPages={numPages}
         isRendering={isRendering}
         onPageChange={setCurrentPage}
+        pageElement={pageElement}
+        pdfDocument={pdfDocument}
+        showDoclingOverlay={showDoclingOverlay}
+        setShowDoclingOverlay={setShowDoclingOverlay}
+        doclingDocument={doclingDocument}
+        topLeftControls={topLeftControls}
       />
 
       <ErrorComponent error={error} />
@@ -83,12 +99,26 @@ export const PdfViewer = ({
         />
       </ScrollFade>
 
+      {pageElement && doclingDocument && showDoclingOverlay && (
+        <PdfViewerDoclingTextOverlay
+          currentPage={currentPage}
+          doclingDocument={doclingDocument}
+          pageElement={pageElement}
+          viewport={viewport}
+        />
+      )}
+
       {pageElement && (
         <PdfViewerHighlights
           activeTooltip={activeTooltip}
           pageHighlights={pageHighlights}
           pageElement={pageElement}
           viewport={viewport}
+          potentialHighlight={potentialHighlight}
+          onCreateHighlight={onCreateHighlight}
+          clearPotentialHighlight={() => {
+            setPotentialHighlight(null);
+          }}
         />
       )}
     </FlexCol>

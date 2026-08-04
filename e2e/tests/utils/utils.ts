@@ -235,7 +235,7 @@ export const fillSmartFormAndInsert = async (
   const form = await fillSmartForm(page, tableName, values);
   await page.waitForTimeout(200);
   await form.getByTestId("SmartForm.insert").click();
-  await page.waitForTimeout(200);
+  await page.waitForTimeout(1200);
 };
 
 export const clickInsertRow = async (

@@ -44,6 +44,7 @@ export const SmartFormFieldFileSection = ({
       style={{ maxHeight: "250px", flex: "none" }}
       key={url}
       url={url}
+      name="Click to preview"
       content_type={content_type}
     />
   );

@@ -1,13 +1,14 @@
 import type * as pdfjsLib from "pdfjs-dist";
 import {
   useCallback,
+  useEffect,
   useState,
   type PointerEvent as ReactPointerEvent,
 } from "react";
 
-import type { PdfViewerProps } from "./PdfViewer";
 import type {
   ActiveTooltip,
+  CreatedHighlight,
   Highlight,
   HighlightRect,
 } from "./PdfViewerHighlights";
@@ -16,27 +17,39 @@ const isRectVisible = (rect: HighlightRect) =>
   rect.width > 0 && rect.height > 0;
 
 export const usePdfViewerHighlights = ({
-  onCreateHighlight,
+  setPotentialHighlight,
   pageElement,
   viewport,
   currentPage,
   pageHighlights,
-}: Pick<PdfViewerProps, "onCreateHighlight"> & {
+}: {
   viewport: pdfjsLib.PageViewport | null;
   pageElement: HTMLDivElement | null;
   currentPage: number;
   pageHighlights: Highlight[];
+  setPotentialHighlight: (highlight: CreatedHighlight | null) => void;
 }) => {
   const [activeTooltip, setActiveTooltip] = useState<ActiveTooltip | null>(
     null,
   );
 
-  const clearSelection = useCallback(() => {
-    window.getSelection()?.removeAllRanges();
-  }, []);
+  useEffect(() => {
+    const handleSelectionChange = () => {
+      const selection = document.getSelection()?.toString() ?? "";
+      if (selection.trim() === "") {
+        setPotentialHighlight(null);
+      }
+    };
+
+    document.addEventListener("selectionchange", handleSelectionChange);
+
+    return () => {
+      document.removeEventListener("selectionchange", handleSelectionChange);
+    };
+  }, [setPotentialHighlight]);
 
   const createHighlightFromSelection = useCallback(() => {
-    if (!onCreateHighlight || !pageElement || !viewport) {
+    if (!pageElement || !viewport) {
       return;
     }
 
@@ -82,14 +95,12 @@ export const usePdfViewerHighlights = ({
       return;
     }
 
-    onCreateHighlight({
+    setPotentialHighlight({
       page: currentPage,
       rects,
       text: selectedText,
     });
-
-    clearSelection();
-  }, [clearSelection, currentPage, onCreateHighlight, pageElement, viewport]);
+  }, [currentPage, setPotentialHighlight, pageElement, viewport]);
 
   const handlePointerUp = useCallback(() => {
     queueMicrotask(createHighlightFromSelection);
@@ -164,16 +175,13 @@ export const usePdfViewerHighlights = ({
 };
 
 const getSelectedTextRects = (range: Range): DOMRect[] => {
-  const walker = document.createTreeWalker(
-    range.commonAncestorContainer,
-    NodeFilter.SHOW_TEXT,
-  );
+  const root = range.commonAncestorContainer;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   const rects: DOMRect[] = [];
 
-  let textNode: Text | null;
-  while ((textNode = walker.nextNode() as Text | null)) {
+  const addTextNodeRects = (textNode: Text) => {
     if (!range.intersectsNode(textNode)) {
-      continue;
+      return;
     }
 
     const textRange = document.createRange();
@@ -187,6 +195,17 @@ const getSelectedTextRects = (range: Range): DOMRect[] => {
     );
 
     rects.push(...textRange.getClientRects());
+  };
+
+  if (root instanceof Text) {
+    addTextNodeRects(root);
+  }
+
+  let node: Node | null;
+  while ((node = walker.nextNode())) {
+    if (node instanceof Text) {
+      addTextNodeRects(node);
+    }
   }
 
   return rects;

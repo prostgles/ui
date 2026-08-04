@@ -134,8 +134,8 @@ export type DoclingDocument = {
     string,
     {
       size: {
-        width: 375.1199951171875;
-        height: 450;
+        width: number;
+        height: number;
       };
       image: null | DoclingImage;
       page_no: 1;

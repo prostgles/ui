@@ -103,7 +103,7 @@ export const Pagination = (props: PaginationProps) => {
       <input
         data-command={"Pagination.page" satisfies Command}
         type="number"
-        className="h-fit min-w-0 p-p5"
+        className="h-fit min-w-0 p-p25"
         style={{
           width: `${(displayPage || 0).toString().length + 5}ch`,
         }}

@@ -1,13 +1,13 @@
 import type { ProstglesTableColumn } from "./getTableCols";
 import { _PG_numbers, includes } from "prostgles-types";
 
-const minColumnWidth = 100;
+const minColumnWidth = 60;
 const maxColumnWidth = 300;
 
 export const getColWidth = <
   T extends Pick<
     ProstglesTableColumn,
-    "tsDataType" | "udt_name" | "width" | "nested"
+    "tsDataType" | "udt_name" | "width" | "nested" | "name"
   >,
   K extends keyof T,
 >(
@@ -43,16 +43,17 @@ export const getColWidth = <
       geography: 160,
       geometry: 160,
       timestamp: 200,
-      bool: 100,
+      // bool: 100,
     };
     const tsWidths: Partial<Record<typeof c.tsDataType, number>> = {
-      number: 100,
+      // number: 100,
     };
 
     const fixedWidth = udtNameWidths[c.udt_name] ?? tsWidths[c.tsDataType];
     if (fixedWidth) {
       width = fixedWidth;
     } else {
+      let maxTextContentWidth = 0;
       data.map((r) => {
         const data = r[c[key]];
         const dataIsSingleNestedColumnSoMustExcludePropertyNames =
@@ -68,15 +69,27 @@ export const getColWidth = <
           (dataAsString.length -
             (dataIsSingleNestedColumnSoMustExcludePropertyNames ? 0 : 0)) *
           8;
-
-        const existingWidth =
-          Number.isFinite(c.width) ? c.width! : textContentWidth;
-        /** Must be within 100px and 300px */
-        width = Math.min(
-          Math.max(width, textContentWidth, minColumnWidth, existingWidth),
-          maxColumnWidth,
-        );
+        maxTextContentWidth = Math.max(maxTextContentWidth, textContentWidth);
       });
+      const iconSizeAsTextLength = 4;
+      const labelWidth = (String(c.name).length + iconSizeAsTextLength) * 8;
+      const existingWidth =
+        Number.isFinite(c.width) ? c.width! : maxTextContentWidth;
+      if (c.name === "file_annotation_id") {
+        // debugger;
+        console.log(c.name, { labelWidth, maxTextContentWidth, existingWidth });
+      }
+      /** Must be within 100px and 300px */
+      width = Math.min(
+        Math.max(
+          width,
+          maxTextContentWidth,
+          labelWidth,
+          minColumnWidth,
+          existingWidth,
+        ),
+        maxColumnWidth,
+      );
 
       /**
        * TODO: should just workout top widest columns and split free space between them.

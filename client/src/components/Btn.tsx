@@ -44,7 +44,7 @@ type BtnCustomProps = (
   /**
    * If provided then the button is disabled and will display a tooltip with this message
    */
-  disabledInfo?: string;
+  disabledInfo?: string | false;
   /**
    * no-fade - will not fade out the button when disabled/loading
    */

@@ -29,6 +29,7 @@ export const createAgenticWorkflowPrompt = [
   "When user requirements are ambiguous, ask targeted follow-up questions using ask_user_questions and include a best-guess default workflow.",
   "Given that the workflow will run in a nodejs environment, you are free to use reputable npm packages as long as you include them in the workflow_function_definition dependencies and use them in a way that does not break the defineAgenticWorkflow call structure.",
   "Do not add 'optional' to user input. It will be added automatically.",
+  "When using non optional user input that is a table lookup, ensure you the table exists and has values before running the workflow OR provide a default value.",
   "IMPORTANT: agentHandlers calls can fail due to things such as: agent goal failure, max iterations reached, or agent timeout. Ensure that you handle these cases gracefully. Any error inside the workflow will fail the entire workflow, so ensure you handle errors and provide meaningful feedback to the user. Only throw errors when the workflow cannot continue and the user needs to be informed.",
 
   "Return workflow_function_definition as valid TypeScript that calls defineAgenticWorkflow(...) directly.",
@@ -46,6 +47,7 @@ export const createAgenticWorkflowPrompt = [
     `Any change to the existing table schema must be done through the ${getProstglesMCPFullToolName("db", "execute_sql")} before confirming it with the user.`,
   `Inspect the existing table schemas and ensure the workflow function definition is compatible with them. If new tables are needed, confirm with the user first.`,
   "DO NOT USE filesystem mcp tools unless necessary. Prefer to use userInput of type folder/file which mounts the files to the container that can then be used with nodejs 'fs' module.",
+  "DO NOT specify the Agent tools in the Orchestrator tools UNLESS YOU ARE ALSO USING THE SAME TOOLS IN THE ORCHESTRATION LOGIC. ",
   "When interacting with the DB avoid using repeated insert() calls where insertMany(arr) is possible.",
   "Avoid gathering agent responses and then executing database operations at the end of the workflow unless absolutely necessary, as it can lead to a long feedback loop and more work if the workflow needs to be adjusted.",
 ].join("\n");

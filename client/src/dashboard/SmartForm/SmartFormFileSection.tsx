@@ -1,6 +1,5 @@
 import type { LocalMedia, Media } from "@components/FileInput/FileInput";
 import { FileInput } from "@components/FileInput/FileInput";
-import type { FilesTableRow } from "@components/MediaViewer/managedTableUtils";
 import type { DBSchemaTable } from "prostgles-types";
 import { isEmpty } from "prostgles-types";
 import React, { useMemo } from "react";

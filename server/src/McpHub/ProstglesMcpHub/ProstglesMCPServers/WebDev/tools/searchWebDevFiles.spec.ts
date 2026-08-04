@@ -18,7 +18,6 @@ void test("searchWebDevFiles: basic search", async () => {
   strict.equal(
     firstResult.filePath,
     "src/useAppState/PrglCoreContextProvider.tsx",
-    // "First result should be TestComponent.tsx",
   );
   strict.ok(
     firstResult.matchedContent.includes("const usePrglCore = () => {"),

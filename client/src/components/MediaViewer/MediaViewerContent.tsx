@@ -6,7 +6,7 @@ import { mdiFileDocumentOutline } from "@mdi/js";
 import React, { useState } from "react";
 import { FlexCol } from "../Flex";
 import type { MediaViewerProps } from "./MediaViewer";
-import { PdfViewerWithFileTableContext } from "./PdfViewerWithFileTableContext";
+import { PdfViewerWithFileTableContext } from "../PdfViewer/PdfViewerWithFileTableContext";
 
 export type ValidContentType = (typeof ContentTypes)[number];
 export type UrlInfo = {
@@ -126,16 +126,12 @@ export const MediaViewerContent = ({
               }
             }}
             children={
-              variant === "thumbnail" ? undefined
-              : isPdf ?
-                "Click to preview"
-              : `${
-                  title ??
-                  (urlInfo.content_type ? content_type : (
-                    urlInfo.forDisplay.slice(0, 100)
-                  ))
-                }. Click to preview`
-
+              variant === "thumbnail" ? undefined : (
+                title ||
+                (urlInfo.content_type ? content_type : (
+                  urlInfo.forDisplay.slice(0, 100)
+                ))
+              )
             }
           />
           {content_type &&

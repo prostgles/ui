@@ -49,6 +49,7 @@ export const getMcpServerParameters = async (
             log,
           }
         : {
+            log,
             error: JSON.stringify(getSerialisableError(item.data)),
           },
       );

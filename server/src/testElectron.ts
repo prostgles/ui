@@ -21,7 +21,7 @@ const electronSid =
 void start({
   safeStorage,
   electronSid,
-  rootDir: actualRootDir,
+  userDataDir: actualRootDir,
   devCredentials: DBS_CONNECTION_INFO,
   port: 3004, // For testing convenience
   onReady: (actualPort) => {

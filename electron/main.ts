@@ -35,11 +35,11 @@ type SafeStorageHandles = Pick<SafeStorage, "encryptString" | "decryptString">;
 
 type StartParams = {
   safeStorage: SafeStorageHandles;
-  rootDir: string;
   electronSid: string;
   openPath: (path: string, isFile?: boolean) => void;
   onReady: (port: number) => void;
   focusWindow: () => void;
+  userDataDir: string;
 };
 process.env.NODE_ENV = "production";
 const expressApp = require("../ui/server/dist/server/src/electronConfig") as {
@@ -84,7 +84,7 @@ function initApp() {
     const hooks = await expressApp
       .start({
         safeStorage,
-        rootDir: app.getPath("userData"),
+        userDataDir: app.getPath("userData"),
         electronSid,
         openPath: (path: string, isFile?: boolean) => {
           // Show the given file in a file manager. If possible, select the file.

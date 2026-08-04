@@ -2,7 +2,7 @@ import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import Btn from "@components/Btn";
 import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol } from "@components/Flex";
-import { Label } from "@components/Label";
+import { mdiChat } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import React, { useCallback, useState } from "react";
 import { AskLLMChat } from "src/dashboard/AskLLM/Chat/AskLLMChat";
@@ -10,16 +10,20 @@ import { useAskLLMSetupState } from "src/dashboard/AskLLM/Setup/LLMSetupProvider
 import type { ProstglesMCPToolsProps } from "../../ProstglesToolUseMessage";
 import { AgentDefinition } from "../AgenticWorkflow/AgentDefinition";
 import { useJSONBParsedData } from "../common/useJSONBParsedData";
-import { mdiChat } from "@mdi/js";
 
 export const Agent = ({
   toolUseContent,
   chatId,
   loadedSuggestions,
   workspaceId,
+  resultContent,
 }: Pick<
   ProstglesMCPToolsProps,
-  "chatId" | "toolUseContent" | "loadedSuggestions" | "workspaceId"
+  | "chatId"
+  | "toolUseContent"
+  | "loadedSuggestions"
+  | "workspaceId"
+  | "resultContent"
 >) => {
   const { dbs, dbsMethods } = usePrgl();
   const setupState = useAskLLMSetupState();
@@ -34,11 +38,6 @@ export const Agent = ({
   //     .outputSchema,
   //   true,
   // );
-  const { data: agentChat } = dbs.llm_chats.useSubscribeOne({
-    parent_chat_id: chatId,
-  });
-  const [showAgentChatId, setShowAgentChatId] = useState<number>();
-
   const { data: toolUseMessage } = dbs.llm_messages.useFindOne({
     message: {
       "@>": [
@@ -49,6 +48,19 @@ export const Agent = ({
       ],
     },
   });
+  const { data: agentChat } = dbs.llm_chats.useSubscribeOne(
+    {
+      parent_chat_id: chatId,
+      parent_chat_message_id: toolUseMessage?.id,
+    },
+    {},
+    {
+      deps: [toolUseMessage?.id, chatId],
+      skip: !toolUseMessage?.id || !chatId,
+    },
+  );
+  const [showAgentChatId, setShowAgentChatId] = useState<number>();
+
   const onUpdateInput = useCallback(
     async (updates: Record<string, unknown>) => {
       if (!toolUseMessage) {
@@ -112,8 +124,13 @@ export const Agent = ({
         <>
           <Btn
             variant="faded"
-            color="action"
             iconPath={mdiChat}
+            color={
+              resultContent?.is_error ? "danger"
+              : resultContent ?
+                "green"
+              : "action"
+            }
             onClick={() => {
               setShowAgentChatId(agentChat.id);
             }}

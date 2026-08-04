@@ -52,7 +52,9 @@ export const modifyClientSchema = ({
       return {
         ...c,
         icon: columnOptions.icon,
-        label: capitaliseNames ? convertSnakeToReadable(c.name) : c.name,
+        label:
+          c.label ||
+          (capitaliseNames ? convertSnakeToReadable(c.name) : c.label),
         renderAs:
           columnOptions.renderAs ??
           (c.file ?
@@ -118,7 +120,10 @@ const fileTableOptions: TableOptions = {
 const annotationsTableOptions: TableOptions = {
   managedTableType: "file-annotations",
   columns: {},
-  card: undefined,
+  card: {
+    headerColumn: "name",
+    subHeaderColumn: "text",
+  },
   icon: "Link",
   label: "File annotations",
   rowIconColumn: undefined,

@@ -1,5 +1,7 @@
-import { classOverride, FlexCol } from "@components/Flex";
+import { classOverride, FlexCol, FlexRow } from "@components/Flex";
 import { Label } from "@components/Label";
+import type { FilesTableRow } from "@components/MediaViewer/managedTableUtils";
+import { MediaViewer } from "@components/MediaViewer/MediaViewer";
 import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 import {
   getPossibleNestedInsert,
@@ -7,21 +9,18 @@ import {
   type AnyObject,
 } from "prostgles-types";
 import React, { useMemo } from "react";
+import { DoclingDocumentViewerPopupBtn } from "../AskLLM/Chat/AskLLMChatMessages/ProstglesToolUseMessage/ProstglesMCPTools/DoclingConvertedDocument/DoclingDocumentViewer";
 import type { DBSchemaTablesWJoins } from "../Dashboard/dashboardUtils";
 import type { SmartFormProps } from "./SmartForm";
 import {
   SmartFormField,
+  SmartFormFieldIcon,
   type SmartColumnInfo,
 } from "./SmartFormField/SmartFormField";
 import { SmartFormFileSection } from "./SmartFormFileSection";
 import type { NewRow, NewRowDataHandler } from "./SmartFormNewRowDataHandler";
 import type { SmartFormState } from "./useSmartForm";
 import type { SmartFormModeState } from "./useSmartFormMode";
-import { MediaViewer } from "@components/MediaViewer/MediaViewer";
-import {
-  DoclingDocumentViewer,
-  DoclingDocumentViewerPopupBtn,
-} from "../AskLLM/Chat/AskLLMChatMessages/ProstglesToolUseMessage/ProstglesMCPTools/DoclingConvertedDocument/DoclingDocumentViewer";
 
 type P = Pick<
   SmartFormProps,
@@ -106,21 +105,25 @@ export const SmartFormFieldList = (props: P) => {
           {...props}
           table={table}
           newRowDataHandler={newRowDataHandler}
-          row={row}
+          row={row as Required<FilesTableRow>}
           mode={mode}
           mediaTableName={table.fileTableName}
         />
       : row.url ?
         <MediaViewer
-          url={row.url}
-          style={{ width: "100%", height: "auto", flex: "none" }}
+          url={(row as Required<FilesTableRow>).url}
+          style={{
+            width: "100%",
+            height: "auto",
+            flex: "none",
+          }}
         />
       : null}
       {table.isFileTable && row.docling_metadata && (
         <DoclingDocumentViewerPopupBtn
           data={undefined}
-          document={row.docling_metadata}
-          markdownContent={row.text_content ?? ""}
+          document={(row as Required<FilesTableRow>).docling_metadata!}
+          markdownContent={(row as Required<FilesTableRow>).text_content ?? ""}
         />
       )}
       {displayedColumns.map((c, i) => {
@@ -137,7 +140,11 @@ export const SmartFormFieldList = (props: P) => {
             }),
           );
           return (
-            <FlexCol key={c.name} style={formFieldStyle} className="gap-p25">
+            <FlexCol
+              key={c.name}
+              style={formFieldStyle}
+              className="SmartFormField_CustomRender gap-p25"
+            >
               <Label variant="normal">{c.label}</Label>
               {columnNode}
             </FlexCol>

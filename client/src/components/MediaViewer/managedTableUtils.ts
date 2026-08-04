@@ -1,5 +1,6 @@
 import type { annotationsTableColumns } from "@common/managedTableSchema";
-import type { JSONB, TS_PG_Types } from "prostgles-types";
+import type { AnyObject, JSONB, TS_PG_Types } from "prostgles-types";
+import type { DoclingDocument } from "src/dashboard/AskLLM/Chat/AskLLMChatMessages/ProstglesToolUseMessage/ProstglesMCPTools/DoclingConvertedDocument/DoclingDocument";
 
 type PgTypeToTsCategory<PgType extends string> = {
   [TsType in keyof typeof TS_PG_Types]: PgType extends (
@@ -84,6 +85,8 @@ export type FilesTableRow = {
   original_last_modified?: null | string;
   original_name: string;
   content_type: string;
+  docling_metadata: null | DoclingDocument;
+  text_content: null | string;
 };
 
 export type DBManagedTableSchema = {

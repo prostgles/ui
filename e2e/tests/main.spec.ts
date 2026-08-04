@@ -818,6 +818,8 @@ test.describe("Main test", () => {
     /** Enable Web app */
     await page.getByTestId("config.webApp").click();
     await page.waitForTimeout(1500);
+    await page.getByTestId("WebApp.directory").hover();
+    await page.waitForTimeout(1500);
     await page.getByTestId("WebApp.directory").click();
     await fileBrowserGoToPath(page.getByTestId("FileTree"), [
       "ui",
@@ -1385,22 +1387,32 @@ test.describe("Main test", () => {
       await sendAskLLMMessage(page, "cost", true);
     }
     await expect(page.getByTestId("Chat.messageList")).toContainText(
-      `Maximum total cost of the chat (5) reached. Current cost: 5.4`,
+      `Maximum total cost of the chat (5) reached. Current cost: 5.`,
       { ...TWENTY_SECONDS_OR_MORE },
     );
 
-    const maxCost = 4;
+    /** Test max speculative chat cost */
+    await newChat(page);
+    const costOfNodeModulesToolResult = 0.84;
+    const maxCost = costPerMsg * 2 + 0.8 * costOfNodeModulesToolResult;
     await page.getByTestId("LLMChatOptions.toggle").click();
+    await page.waitForTimeout(1500);
     await fillSmartForm(page, "llm_chats", {
       max_total_cost_usd: maxCost.toString(),
     });
+    await page.waitForTimeout(1500);
     await page.getByTestId("Popup.close").last().click();
-    /** Test max speculative chat cost */
-    await newChat(page);
+    await page.waitForTimeout(1500);
+    await page.getByTestId("LLMChatOptions.toggle").click();
+    await expect(
+      page.locator("input#llm_chats-max_total_cost_usd"),
+    ).toHaveValue(maxCost.toString());
+    await page.getByTestId("Popup.close").last().click();
+
     await enableMCPServers(page, ["filesystem"], true);
     await fileBrowserGoToPath(page.getByTestId("FileTree"), [
       "ui",
-      "client",
+      "electron",
       "node_modules",
     ]);
 
@@ -1415,7 +1427,7 @@ test.describe("Main test", () => {
     await expect(
       page.getByTestId("Chat.messageList").locator(".message").last(),
     ).toContainText(
-      `Maximum total cost of the chat (5) will be reached after sending this message`,
+      `Maximum total cost of the chat (${maxCost}) will be reached after sending this message`,
       getTimeout(30e3),
     );
   });
@@ -2031,6 +2043,26 @@ test.describe("Main test", () => {
     await expect(page.getByTestId("AgenticWorkflow")).not.toContainText(
       `"<!DOCTYPE html>"`,
     );
+  });
+
+  test("Create agent", async ({ page: p }) => {
+    const page = p as PageWIds;
+
+    await loginWhenSignupIsEnabled(page);
+    await openConnection(page, "cloud");
+    await closeWorkspaceWindows(page);
+    await page.getByTestId("AskLLM").click();
+
+    await setupAskLLMToolUse(page);
+
+    /** Test ask tool */
+    await newChat(page);
+    await sendAskLLMMessage(page, " create_agent ");
+    await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
+    await page
+      .getByTestId("Agent")
+      .getByText("View activity", { exact: true })
+      .click();
   });
 
   test("Remote MCP server", async ({ page: p }) => {

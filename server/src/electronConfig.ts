@@ -30,11 +30,13 @@ const electronConfig: {
   safeStorage: SafeStorage | undefined;
   focusWindow: () => void;
   devCredentials: DBSConnectionInfo | undefined;
+  userDataDir: string;
 } = {
   isElectron: false,
   electronSid: "",
   safeStorage: undefined,
   devCredentials: undefined,
+  userDataDir: "",
   focusWindow: () => {
     throw new Error(
       "focusWindow function not set. This should only be called in electron context.",
@@ -57,9 +59,16 @@ let rootDir = actualRootDir;
  * server root directory
  */
 export const getRootDir = () => rootDir;
+let userDataDir: string | undefined;
 
-const getDataDir = () =>
-  path.resolve(process.env.PROSTGLES_DATA_DIR || getRootDir());
+const getDataDir = () => {
+  if (electronConfig.isElectron && rootDir !== userDataDir) {
+    throw new Error(
+      `Electron userDataDir (${electronConfig.userDataDir}) does not match rootDir (${rootDir}). This should never happen.`,
+    );
+  }
+  return path.resolve(process.env.PROSTGLES_DATA_DIR || getRootDir());
+};
 
 export const DATA_FOLDERS = {
   BACKUPS: "prostgles_backups",
@@ -145,17 +154,18 @@ export const getElectronConfig = () => {
 export const start = async (params: {
   safeStorage: SafeStorage;
   electronSid: string;
-  rootDir: string;
+  userDataDir: string;
   onReady: (actualPort: number) => void;
   port?: number;
   devCredentials?: DBSConnectionInfo;
   focusWindow: () => void;
 }) => {
   const { electronSid, onReady } = params;
-  if (!params.rootDir || typeof params.rootDir !== "string") {
+  if (!params.userDataDir || typeof params.userDataDir !== "string") {
     throw `Must provide a valid rootDir`;
   }
-  rootDir = params.rootDir;
+  rootDir = params.userDataDir;
+  userDataDir = params.userDataDir;
   if (
     !electronSid ||
     typeof electronSid !== "string" ||

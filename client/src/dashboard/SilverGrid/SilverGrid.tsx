@@ -386,7 +386,7 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
             hasSiblings={children.some(
               (c) => c.props["data-key"] != activeItemId,
             )}
-            layout={firstItem}
+            layout={activeItem}
             header={header}
             setTarget={this.setTarget}
             getRoot={this.getRoot}

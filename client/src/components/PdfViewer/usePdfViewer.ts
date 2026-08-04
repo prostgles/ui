@@ -5,7 +5,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import "pdfjs-dist/web/pdf_viewer.css";
 import type { PdfViewerProps } from "./PdfViewer";
 import "./PdfViewer.css";
-import { usePdfViewerHighlights } from "./usePdfViewerHighlights";
+import { usePdfViewerHighlights } from "./PdfViewerHighlights/usePdfViewerHighlights";
+import type { CreatedHighlight } from "./PdfViewerHighlights/PdfViewerHighlights";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.mjs",
@@ -32,8 +33,10 @@ export const usePdfViewer = ({
   scale = 1.5,
   highlights = [],
   withCredentials = false,
-  onCreateHighlight,
-}: PdfViewerProps) => {
+  defaultPage,
+}: PdfViewerProps & {
+  onPotentialHighlight?: (highlight: CreatedHighlight) => void;
+}) => {
   const pageHostRef = useRef<HTMLDivElement>(null);
   const pageViewRef = useRef<PDFPageView | null>(null);
   const renderVersionRef = useRef(0);
@@ -41,7 +44,12 @@ export const usePdfViewer = ({
 
   const [pdfDocument, setPdfDocument] =
     useState<pdfjsLib.PDFDocumentProxy | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(defaultPage ?? 1);
+  useEffect(() => {
+    if (defaultPage) {
+      setCurrentPage(defaultPage);
+    }
+  }, [defaultPage]);
   const [renderedPage, setRenderedPage] = useState<RenderedPage | null>(null);
   const [isRendering, setIsRendering] = useState(false);
   const [error, setError] = useState<unknown>();
@@ -56,6 +64,8 @@ export const usePdfViewer = ({
   const viewport = activeRenderedPage?.viewport ?? null;
   const pageElement = activeRenderedPage?.element ?? null;
 
+  const [potentialHighlight, setPotentialHighlight] =
+    useState<CreatedHighlight | null>(null);
   const {
     activeTooltip,
     handlePointerMove,
@@ -63,7 +73,7 @@ export const usePdfViewer = ({
     setActiveTooltip,
   } = usePdfViewerHighlights({
     pageHighlights,
-    onCreateHighlight,
+    setPotentialHighlight,
     pageElement,
     viewport,
     currentPage,
@@ -198,5 +208,8 @@ export const usePdfViewer = ({
     error,
     setActiveTooltip,
     pageHighlights,
+    pdfDocument,
+    potentialHighlight,
+    setPotentialHighlight,
   };
 };

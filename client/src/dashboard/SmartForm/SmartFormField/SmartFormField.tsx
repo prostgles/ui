@@ -40,6 +40,7 @@ import {
 import { useSmartFormFieldAsJSON } from "./useSmartFormFieldAsJSON";
 import { useSmartFormFieldOnChange } from "./useSmartFormFieldOnChange";
 import type { LocalMedia } from "@components/FileInput/FileInput";
+import { FlexRow } from "@components/Flex";
 
 export type SmartFormFieldValue = string | number | LocalMedia | null;
 
@@ -211,17 +212,10 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
         id={id}
         data-key={column.name}
         leftIcon={
-          ftableIcon ?
-            <SvgIcon className="f-0 text-1 mr-p5" icon={ftableIcon} />
-          : someColumnsHaveIcons && (
-              <div
-                className="mt-p25 mr-p5"
-                style={{
-                  width: "24px",
-                  height: "24px",
-                }}
-              />
-            )
+          <SmartFormFieldIcon
+            icon={ftableIcon}
+            someColumnsHaveIcons={someColumnsHaveIcons}
+          />
         }
         label={column.hideLabel ? "" : column.label}
         data-command="SmartFormField"
@@ -319,11 +313,37 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
         hint={hint}
         hideClearButton={hideNullBtn}
       />
-      {column.file ?
-        typeof value === "number" ?
-          <ErrorComponent error={"Unexpected number data type"} />
-        : <SmartFormFieldFileSection db={db} table={table} media={value} />
-      : null}
+      {!column.file ? null : (
+        <FlexRow className="SmartFormField_SmartFormFieldFileSection gap-0">
+          <SmartFormFieldIcon
+            icon={undefined}
+            someColumnsHaveIcons={someColumnsHaveIcons}
+          />
+          {typeof value === "number" ?
+            <ErrorComponent error={"Unexpected number data type"} />
+          : <SmartFormFieldFileSection db={db} table={table} media={value} />}
+        </FlexRow>
+      )}
     </>
   );
+};
+
+export const SmartFormFieldIcon = ({
+  icon,
+  someColumnsHaveIcons,
+}: {
+  icon: string | undefined;
+  someColumnsHaveIcons: boolean;
+}) => {
+  return icon ?
+      <SvgIcon className="f-0 text-1 mr-p5" icon={icon} />
+    : someColumnsHaveIcons && (
+        <div
+          className="mt-p25 mr-p5"
+          style={{
+            width: "24px",
+            height: "24px",
+          }}
+        />
+      );
 };

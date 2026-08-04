@@ -103,9 +103,11 @@ export const LLMGroupedToolCallsMessage = ({
         data-command="ToolUseMessage.toggleGroup"
         loading={someToolUseMessagesNeedResult ? "allow-clicking" : undefined}
       >
-        {icons.map((iconName) => {
-          return <LLMToolCallIcon key={iconName} iconName={iconName} />;
-        })}
+        {someToolUseMessagesNeedResult ? null : (
+          icons.map((iconName) => {
+            return <LLMToolCallIcon key={iconName} iconName={iconName} />;
+          })
+        )}
         {toolCallCount} tool calls
       </Btn>
       {textMessages.length > 1 && lastTextMessage && (
