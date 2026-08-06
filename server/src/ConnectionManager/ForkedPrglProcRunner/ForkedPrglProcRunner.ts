@@ -17,6 +17,7 @@ type PrglInitOptions = Omit<ProstglesInitOptions, "onReady">;
 type ForkedProcMessageStart = ForkedProcMessageCommon & {
   type: "start";
   prglInitOpts: PrglInitOptions;
+  schemaConfigPath?: string;
 };
 type ForkedProcRunArgs =
   | {
@@ -27,7 +28,8 @@ type ForkedProcRunArgs =
     }
   | {
       type: "onMount";
-      code: string;
+      code?: string;
+      schemaConfigPath?: string;
     };
 type ForkedProcMessageRun = ForkedProcMessageCommon & ForkedProcRunArgs;
 type ForkedProcMCPResult = ForkedProcMessageCommon & {
@@ -76,12 +78,14 @@ type Opts = {
     }
   | {
       type: "onMount";
-      on_mount_ts: string;
-      on_mount_ts_compiled: string;
+      onMountKey: string;
+      on_mount_ts_compiled?: string;
+      schemaConfigPath?: string;
     }
   | {
       type: "tableConfig";
-      table_config_ts: string;
+      tableConfigKey: string;
+      schemaConfigPath?: string;
     }
 );
 
@@ -148,6 +152,7 @@ export class ForkedPrglProcRunner {
           void this.run({
             type: "onMount",
             code: this.opts.on_mount_ts_compiled,
+            schemaConfigPath: this.opts.schemaConfigPath,
           });
         }
         this.isRestarting = false;
@@ -263,6 +268,7 @@ export class ForkedPrglProcRunner {
     prglInitOpts,
     pass_process_env_vars_to_server_side_functions,
     forkOpts,
+    ...opts
   }: Opts): Promise<ChildProcess> => {
     return new Promise((resolve, reject) => {
       const forkedPath = path.join(__dirname, "forkedProcess.js");
@@ -295,6 +301,8 @@ export class ForkedPrglProcRunner {
         id: "1",
         type: "start",
         prglInitOpts,
+        schemaConfigPath:
+          opts.type === "tableConfig" ? opts.schemaConfigPath : undefined,
       } satisfies ForkedProcMessageStart);
     });
   };

@@ -10,6 +10,7 @@ import type { ConnectionManager } from "./ConnectionManager";
 import type { ConnectionHotReloadProperties } from "./getHotReloadConfigs";
 import type e from "express";
 import { getValidConfigPath } from "./getValidConfigPath";
+import type { SchemaConfig } from "../schemaConfig";
 
 export const getDatabaseConfigFilter = (c: ConnectionHotReloadProperties) =>
   pickKeys(c, ["db_name", "db_host", "db_port"]);
@@ -64,6 +65,18 @@ type TableDbConfig = Pick<
   "table_config" | "table_config_ts" | "config_sync"
 >;
 type CompiledTableConfig = { tableConfig: TableConfig; dashboardConfig?: any };
+
+export const getSchemaConfig = (
+  dbConf: { config_sync?: { schemaPath?: string } | null },
+): SchemaConfig | undefined => {
+  const configPath = getValidConfigPath(dbConf);
+  if (!configPath) return undefined;
+
+  /** Reload the project's entry point whenever the user syncs it. */
+  delete require.cache[require.resolve(configPath)];
+  return require(configPath) as SchemaConfig;
+};
+
 const getCompiledTableConfig = ({
   table_config,
   table_config_ts,
@@ -79,10 +92,9 @@ const getCompiledTableConfig = ({
 };
 
 export const getTableConfig = (dbConf: TableDbConfig) => {
-  const schemaPath = getValidConfigPath(dbConf);
-  if (schemaPath) {
-    const tableConfig = require(schemaPath).tableConfig as TableConfig;
-    return tableConfig;
+  const schemaConfig = getSchemaConfig(dbConf);
+  if (schemaConfig) {
+    return schemaConfig.tableConfig;
   }
   return getCompiledTableConfig(dbConf)?.tableConfig;
 };

@@ -22,7 +22,12 @@ import type { Connections, DBS, DatabaseConfigs } from "../index";
 import { connectionManager } from "../index";
 import { UNIQUE_DB_COLS } from "../tableConfig/tableConfigDatabaseConfig";
 import { ForkedPrglProcRunner } from "./ForkedPrglProcRunner/ForkedPrglProcRunner";
-import { getCompiledTS, getTableConfig } from "./connectionManagerUtils";
+import {
+  getCompiledTS,
+  getSchemaConfig,
+  getTableConfig,
+} from "./connectionManagerUtils";
+import { getValidConfigPath } from "./getValidConfigPath";
 import { getConnectionHttpServer } from "./getConnectionHttpServer";
 import {
   initConnectionManager,
@@ -201,11 +206,14 @@ export class ConnectionManager {
     connectionInfo: pg.IConnectionParameters<pg.IClient>,
   ) => {
     if (!this.dbs) throw "Dbs not ready";
+    const schemaConfigPath = getValidConfigPath({ config_sync });
+    const tableConfigKey =
+      schemaConfigPath ? JSON.stringify(config_sync) : table_config_ts;
     const prglCon = this.getActiveConnectionSilentFail(conId);
     if (
       !disabled &&
       prglCon?.tableConfigRunner?.opts.type === "tableConfig" &&
-      prglCon.tableConfigRunner.opts.table_config_ts === table_config_ts
+      prglCon.tableConfigRunner.opts.tableConfigKey === tableConfigKey
     ) {
       return;
     }
@@ -218,24 +226,27 @@ export class ConnectionManager {
       { id: dbConfId },
       { table_config_logs: null },
     );
-    if (table_config_ts) {
+    if (tableConfigKey) {
       const tableConfig = getTableConfig({
         table_config_ts,
         table_config: null,
         config_sync,
       });
+      if (!tableConfig) return;
       const tableConfigRunner = await ForkedPrglProcRunner.create({
         dbs: this.dbs,
         type: "tableConfig",
         pass_process_env_vars_to_server_side_functions: false,
-        table_config_ts,
+        tableConfigKey,
+        schemaConfigPath,
         dbConfId: dbConfId,
         prglInitOpts: {
           dbConnection: {
             ...connectionInfo,
             application_name: "tableConfig",
           },
-          tableConfig,
+          /** The fork loads external configs itself so hook functions are retained. */
+          tableConfig: schemaConfigPath ? undefined : tableConfig,
         },
       });
       const prglCon = this.getActiveConnectionSilentFail(conId);
@@ -257,13 +268,17 @@ export class ConnectionManager {
       "id" | "on_mount_ts" | "on_mount_ts_disabled"
     >,
     connectionInfo: pg.IConnectionParameters<pg.IClient>,
+    config_sync?: DatabaseConfigs["config_sync"],
   ) => {
     if (!this.dbs) throw "Dbs not ready";
+    const schemaConfigPath = getValidConfigPath({ config_sync });
+    const onMountKey =
+      schemaConfigPath ? JSON.stringify(config_sync) : on_mount_ts;
     const prglCon = this.getActiveConnectionSilentFail(conId);
     if (
       !disabled &&
       prglCon?.onMountRunner?.opts.type === "onMount" &&
-      prglCon.onMountRunner.opts.on_mount_ts === on_mount_ts
+      prglCon.onMountRunner.opts.onMountKey === onMountKey
     ) {
       return;
     }
@@ -277,13 +292,16 @@ export class ConnectionManager {
       { id: databaseConfigId },
       { on_mount_logs: null },
     );
-    if (on_mount_ts) {
-      const compiledCode = getCompiledTS(on_mount_ts);
+    const onMount =
+      schemaConfigPath ? getSchemaConfig({ config_sync })?.onMount : undefined;
+    if (onMountKey && (schemaConfigPath ? onMount : on_mount_ts)) {
+      const compiledCode = on_mount_ts ? getCompiledTS(on_mount_ts) : undefined;
       const onMountRunner = await ForkedPrglProcRunner.create({
         dbs: this.dbs,
         type: "onMount",
-        on_mount_ts,
+        onMountKey,
         on_mount_ts_compiled: compiledCode,
+        schemaConfigPath,
         pass_process_env_vars_to_server_side_functions: false,
         dbConfId: databaseConfigId,
         prglInitOpts: {
@@ -297,6 +315,7 @@ export class ConnectionManager {
       void onMountRunner.run({
         type: "onMount",
         code: compiledCode,
+        schemaConfigPath,
       });
       const prglCon = this.getActiveConnectionSilentFail(conId);
       if (prglCon) {

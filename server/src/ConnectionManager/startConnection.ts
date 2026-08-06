@@ -171,6 +171,7 @@ export const startConnection = async function (
           databaseConfig.id,
           connection,
           connectionInfo,
+          databaseConfig.config_sync,
         ).catch((e) => {
           void dbs.alerts.insert({
             severity: "error",

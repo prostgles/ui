@@ -64,9 +64,13 @@ const initForkedProc = () => {
       if (msg.type === "start") {
         if (onReadyParamsProxy) throw "Already started";
 
+        const schemaConfig =
+          msg.schemaConfigPath ? require(msg.schemaConfigPath) : undefined;
+
         //@ts-ignore
         await prostgles({
           ...msg.prglInitOpts,
+          tableConfig: schemaConfig?.tableConfig ?? msg.prglInitOpts.tableConfig,
           watchSchema: "*",
           transactions: true,
           onReady: (params) => {
@@ -132,10 +136,13 @@ const initForkedProc = () => {
             });
             cb(undefined, methodResult);
           } else {
-            const { code } = msg;
-            const { onMount } = evalSource<{
-              onMount: (args: any) => Promise<unknown>;
-            }>(code);
+            const onMount =
+              msg.schemaConfigPath ?
+                require(msg.schemaConfigPath).onMount
+              : evalSource<{
+                  onMount: (args: any) => Promise<unknown>;
+                }>(msg.code!).onMount;
+            if (!onMount) throw new Error("Schema config must export onMount");
 
             const methodResult = await onMount(onReadyParamsProxy);
             cb(undefined, methodResult);

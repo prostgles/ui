@@ -27,13 +27,15 @@ export const ConnectionConfigSync = () => {
     unsavedPath && dbConf && unsavedPath !== config_sync?.schemaPath;
 
   const schemaPath = unsavedPath ?? config_sync?.schemaPath;
-  const title = "Schema Folder";
+  const title = "Schema Config Project";
   return (
     <FlexCol className="ConnectionConfigSync">
       <PopupMenu
         title={title}
         headerRightContent={
-          <InfoRow className="p-p25 mr-p5">Read-Only Access</InfoRow>
+          <InfoRow className="p-p25 mr-p5">
+            Read-only Node.js project
+          </InfoRow>
         }
         positioning="center"
         clickCatchStyle={{ opacity: 1 }}
@@ -64,7 +66,7 @@ export const ConnectionConfigSync = () => {
               },
             }}
           >
-            {schemaPath || "Select schema folder..."}
+            {schemaPath || "Select project folder..."}
           </Btn>
         }
         render={(pClose) => (

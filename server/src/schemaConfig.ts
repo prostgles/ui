@@ -8,9 +8,20 @@ export type ProstglesOnMount<T = void> = (args: {
 }) => void | Promise<void>;
 
 export type { TableConfig } from "prostgles-server";
+import type { TableConfig } from "prostgles-server";
 export type TableOptions = NonNullable<
   DBSSchema["connections"]["table_options"]
 >[string];
 export type TableDisplayConfig = Record<string, TableOptions>;
 export type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 export type { WorkspaceInsertModel } from "@common/DashboardTypes";
+
+/**
+ * Named exports accepted from the entry point of a schema-config project.
+ * The project is loaded by Node at runtime, so hooks may use its own dependencies.
+ */
+export type SchemaConfig = {
+  tableConfig?: TableConfig;
+  onMount?: ProstglesOnMount;
+  onInitSQL?: string;
+};

@@ -2,7 +2,11 @@ import { getPasswordHash } from "@src/authConfig/authUtils";
 import { checkClientIP } from "@src/authConfig/sessionUtils";
 import { getAuthSetupData } from "@src/authConfig/subscribeToAuthSetupChanges";
 import { getInstalledPsqlVersions } from "@src/BackupManager/getInstalledPrograms";
-import { getCompiledTS } from "@src/ConnectionManager/connectionManagerUtils";
+import {
+  getCompiledTS,
+  getSchemaConfig,
+} from "@src/ConnectionManager/connectionManagerUtils";
+import { getValidConfigPath } from "@src/ConnectionManager/getValidConfigPath";
 import { testDBConnection } from "@src/connectionUtils/testDBConnection";
 import { validateConnection } from "@src/connectionUtils/validateConnection";
 import { getElectronConfig } from "@src/electronConfig";
@@ -15,6 +19,7 @@ import { getServiceManager } from "@src/ServiceManager/ServiceManager";
 import { prostglesServices } from "@src/ServiceManager/ServiceManagerTypes";
 import { FILE_TABLE_CONFIG_SCHEMA } from "@src/tableConfig/tableConfigDatabaseConfig";
 import { upsertConnection } from "@src/upsertConnection";
+import { execSync } from "child_process";
 import { existsSync, readdirSync, statSync } from "fs";
 import { mkdir } from "fs/promises";
 import { globStream } from "glob";
@@ -22,11 +27,7 @@ import * as os from "os";
 import path, { join } from "path";
 import { getIsSuperUser } from "prostgles-server/dist/Prostgles";
 import { getKeys, includes, isEmpty, type SQLHandler } from "prostgles-types";
-import {
-  applySchemaDir,
-  getSampleSchema,
-  getSampleSchemas,
-} from "../applySampleSchema";
+import { getSampleSchemas } from "../applySampleSchema";
 import { getTemplateUserConnection } from "../askLLM/prostglesLLMTools/getTemplateUserConnection";
 import { refreshModels } from "../askLLM/refreshModels";
 import { deleteConnection } from "../deleteConnection";
@@ -333,13 +334,47 @@ export const getAdminServerFunctions = (
         schemaPath: "string",
       },
       run: async ({ connectionId, schemaPath }, { dbs }) => {
-        const schema = getSampleSchema(schemaPath);
-        if (schema.type !== "dir") {
-          throw "Sample schema is not a directory";
+        const config_sync = {
+          schemaPath: getValidConfigPath({ config_sync: { schemaPath } })!,
+          lastSynced: new Date().toISOString(),
+        };
+        execSync("tsc", { cwd: config_sync.schemaPath });
+        const schemaConfig = getSchemaConfig({ config_sync });
+        if (schemaConfig?.onInitSQL) {
+          await runConnectionQuery(
+            connectionId,
+            schemaConfig.onInitSQL,
+            undefined,
+            { dbs },
+          );
         }
-        await applySchemaDir(dbs, schema, connectionId, {
-          config_sync: { schemaPath, lastSynced: new Date().toISOString() },
-        });
+        const databaseConfig = await dbs.database_configs.update(
+          { $existsJoined: { connections: { id: connectionId } } },
+          { config_sync },
+          { returning: "*", multi: false },
+        );
+        if (!databaseConfig) throw "Database config not found";
+
+        const activeConnection =
+          connectionManager.getActiveConnectionSilentFail(connectionId);
+        if (activeConnection) {
+          await connectionManager.setTableConfig(
+            connectionId,
+            databaseConfig,
+            activeConnection.connectionInfo,
+          );
+          const connection = await dbs.connections.findOne({
+            id: connectionId,
+          });
+          if (connection) {
+            await connectionManager.setOnMount(
+              databaseConfig.id,
+              connection,
+              activeConnection.connectionInfo,
+              config_sync,
+            );
+          }
+        }
       },
     }),
     refreshModels: defineAdminFunction({
@@ -432,6 +467,7 @@ export const getAdminServerFunctions = (
           dbConf.id,
           newConn,
           activeConnection.connectionInfo,
+          dbConf.config_sync,
         );
       },
     }),
