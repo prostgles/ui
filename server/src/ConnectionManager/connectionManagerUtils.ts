@@ -9,6 +9,7 @@ import type { DatabaseConfigs } from "..";
 import type { ConnectionManager } from "./ConnectionManager";
 import type { ConnectionHotReloadProperties } from "./getHotReloadConfigs";
 import type e from "express";
+import { getValidConfigPath } from "./getValidConfigPath";
 
 export const getDatabaseConfigFilter = (c: ConnectionHotReloadProperties) =>
   pickKeys(c, ["db_name", "db_host", "db_port"]);
@@ -78,6 +79,11 @@ const getCompiledTableConfig = ({
 };
 
 export const getTableConfig = (dbConf: TableDbConfig) => {
+  const schemaPath = getValidConfigPath(dbConf);
+  if (schemaPath) {
+    const tableConfig = require(schemaPath).tableConfig as TableConfig;
+    return tableConfig;
+  }
   return getCompiledTableConfig(dbConf)?.tableConfig;
 };
 
