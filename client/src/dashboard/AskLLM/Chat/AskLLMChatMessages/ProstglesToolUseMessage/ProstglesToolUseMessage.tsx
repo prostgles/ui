@@ -6,7 +6,7 @@ import type {
   ToolUseMessage,
 } from "../ToolUseChatMessage/ToolUseChatMessage";
 import { Agent } from "./ProstglesMCPTools/Agent/Agent";
-import { AgentGoallToolCall } from "./ProstglesMCPTools/Agent/AgentGoallToolCall";
+import { AgentGoalToolCall } from "./ProstglesMCPTools/Agent/AgentGoalToolCall";
 import { AgenticWorkflowMessage } from "./ProstglesMCPTools/AgenticWorkflow/AgenticWorkflowMessage";
 import { AskUserQuestions } from "./ProstglesMCPTools/AskUserQuestions";
 import { DoclingToolUseView } from "./ProstglesMCPTools/DoclingConvertedDocument/DoclingToolUseView";
@@ -96,7 +96,7 @@ export const ProstglesMCPToolsWithUI = {
     showsError: true,
   },
   [AGENT_GOAL_TOOL_NAMES.REACHED]: {
-    component: AgentGoallToolCall,
+    component: AgentGoalToolCall,
     displayMode: "full",
   },
 } satisfies Record<

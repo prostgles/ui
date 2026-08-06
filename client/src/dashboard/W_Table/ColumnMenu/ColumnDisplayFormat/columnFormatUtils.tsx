@@ -158,6 +158,7 @@ export const DISPLAY_FORMATS = [
               {
                 table: ctx.table,
                 columnName: ctx.column.name,
+                row,
               }
             : undefined
           }

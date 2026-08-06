@@ -347,6 +347,7 @@ export const CONNECTION_CONFIG_SECTIONS = [
   "API",
   "webApp",
   "security",
+  "config",
 ] as const;
 
 export const SERVER_SETTINGS_SECTIONS = [

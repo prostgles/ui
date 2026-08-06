@@ -55,6 +55,7 @@ export const COMMANDS = {
   "config.files.toggle.confirm": "",
   "config.api": { desc: "", uiOnly: true },
   "config.methods": "",
+  "config.config": "",
   "config.webApp": "",
 
   "dashboard.window.rowInsert": "Open row insert panel",

@@ -1,9 +1,6 @@
 import { getMCPFullToolName } from "../mcpUtils";
 import { fixIndent } from "../utils";
-import {
-  databaseAccessSchema,
-  databaseAccessSchemaWithoutDDL,
-} from "./databaseAccessSchema";
+import { databaseAccessSchemaWithoutDDL } from "./databaseAccessSchema";
 import { runCodeInSandboxSchema } from "./runCodeInSandboxSchema";
 import {
   agentDefinitionsSchema,
@@ -14,6 +11,7 @@ import { tableOptionsJsonbSchema } from "./tableOptionsJsonbSchema";
 const { outputSchema, ...agentSchemaWithoutOutput } =
   agentDefinitionsSchema.record.values.type;
 
+export { agentSchemaWithoutOutput };
 const { files, userInput, userInputValue, ...runTsSchema } =
   runCodeInSandboxSchema.type;
 
@@ -373,6 +371,12 @@ export const uiMcpSchema = {
             "List of MCP server tools available to the agent. Example: { web: { fetch: 1 } }",
           optional: true,
           ...mcpServerToolsAllowed,
+        },
+        firstMessage: {
+          description:
+            "The first message to send to the agent. If not provided, the agent will start with an empty message.",
+          optional: true,
+          type: "string",
         },
       },
     },

@@ -741,6 +741,11 @@ export const selectAndUpsertFile = async (
   }
 };
 
+export const getTimeout = (base: number) => ({
+  timeout: base * (process.env.CI ? 3 : 1),
+});
+export const TWENTY_SECONDS_OR_MORE = getTimeout(20_000);
+
 export const fileName = "icon512.png";
 export const uploadFile = async (page: PageWIds) => {
   await clickInsertRow(page, "files");
@@ -748,6 +753,9 @@ export const uploadFile = async (page: PageWIds) => {
   await selectAndUpsertFile(page, (page) =>
     page.getByTestId("FileBtn").click(),
   );
+  await page
+    .getByTestId("Popup.content")
+    .waitFor({ state: "detached", ...TWENTY_SECONDS_OR_MORE });
 };
 
 export const isEmpty = (obj?: any) => {
@@ -1228,7 +1236,7 @@ export const setOrAddWorkspace = async (
 
 export const newChat = async (page: PageWIds) => {
   await page.getByTestId("AskLLMChat.NewChat").click();
-  await page.waitForTimeout(1e3);
+  await page.waitForTimeout(2e3);
 };
 
 let setupAuthCount = 0;

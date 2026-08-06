@@ -67,6 +67,7 @@ export const getHotReloadConfigs = async ({
     con: connection,
     conMgr: connectionManager,
     app,
+    databaseConfig,
   });
   const auth = await getConnectionAuth(app, dbs, _dbs, {
     type: "connection",

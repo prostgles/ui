@@ -28,6 +28,19 @@ export const getCompiledTS = (code: string) => {
 
   return sourceCode;
 };
+export const getEvaledExports = <T>(
+  code: string | undefined,
+): T | undefined => {
+  if (!code) return undefined;
+  /**
+   * This is needed to ensure all named exports are returned in eval
+   */
+  const ending = "\n\nexports;";
+  const sourceCode = getCompiledTS(code + ending);
+  // eslint-disable-next-line security/detect-eval-with-expression
+  const result = eval(sourceCode) as T;
+  return result;
+};
 
 export const getRestApiConfig = (
   expressApp: e.Express,
@@ -44,21 +57,11 @@ export const getRestApiConfig = (
 
   return res;
 };
-export const getEvaledExports = <T>(
-  code: string | undefined,
-): T | undefined => {
-  if (!code) return undefined;
-  /**
-   * This is needed to ensure all named exports are returned in eval
-   */
-  const ending = "\n\nexports;";
-  const sourceCode = getCompiledTS(code + ending);
-  // eslint-disable-next-line security/detect-eval-with-expression
-  const result = eval(sourceCode) as T;
-  return result;
-};
 
-type TableDbConfig = Pick<DatabaseConfigs, "table_config" | "table_config_ts">;
+type TableDbConfig = Pick<
+  DatabaseConfigs,
+  "table_config" | "table_config_ts" | "config_sync"
+>;
 type CompiledTableConfig = { tableConfig: TableConfig; dashboardConfig?: any };
 const getCompiledTableConfig = ({
   table_config,
@@ -68,8 +71,9 @@ const getCompiledTableConfig = ({
   if (!table_config_ts) return undefined;
 
   const res = getEvaledExports<CompiledTableConfig>(table_config_ts);
-  if (!res?.tableConfig)
+  if (!res?.tableConfig) {
     throw "A table_config_ts must export a const named 'tableConfig' ";
+  }
   return res;
 };
 

@@ -40,7 +40,6 @@ export const modifyClientSchema = ({
     card: tableOptions.card,
     icon: tableOptions.icon,
     label:
-      table.label ??
       tableOptions.label ??
       (capitaliseNames ? convertSnakeToReadable(table.name) : table.name),
     rowIconColumn: tableOptions.rowIconColumn,

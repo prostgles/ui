@@ -1,3 +1,4 @@
+import { getPasswordHash } from "@src/authConfig/authUtils";
 import { checkClientIP } from "@src/authConfig/sessionUtils";
 import { getAuthSetupData } from "@src/authConfig/subscribeToAuthSetupChanges";
 import { getInstalledPsqlVersions } from "@src/BackupManager/getInstalledPrograms";
@@ -20,14 +21,12 @@ import { globStream } from "glob";
 import * as os from "os";
 import path, { join } from "path";
 import { getIsSuperUser } from "prostgles-server/dist/Prostgles";
+import { getKeys, includes, isEmpty, type SQLHandler } from "prostgles-types";
 import {
-  getKeys,
-  includes,
-  isEmpty,
-  type AnyObject,
-  type SQLHandler,
-} from "prostgles-types";
-import { getSampleSchemas } from "../applySampleSchema";
+  applySchemaDir,
+  getSampleSchema,
+  getSampleSchemas,
+} from "../applySampleSchema";
 import { getTemplateUserConnection } from "../askLLM/prostglesLLMTools/getTemplateUserConnection";
 import { refreshModels } from "../askLLM/refreshModels";
 import { deleteConnection } from "../deleteConnection";
@@ -41,7 +40,6 @@ import { getBackupServerFunctions } from "./getBackupServerFunctions";
 import { getDefineAdminFunction } from "./getDefineAdminFunction";
 import { getMcpServerFunctions } from "./getMcpServerFunctions";
 import { getWebAppServerFunctions } from "./getWebAppServerFunctions";
-import { getPasswordHash } from "@src/authConfig/authUtils";
 export const getAdminServerFunctions = (
   context: Awaited<ReturnType<typeof getServerFunctionsContext>>,
 ) => {
@@ -327,6 +325,21 @@ export const getAdminServerFunctions = (
           el.setCredentials(res.connection);
         }
         return res;
+      },
+    }),
+    syncSchema: defineAdminFunction({
+      input: {
+        connectionId: "string",
+        schemaPath: "string",
+      },
+      run: async ({ connectionId, schemaPath }, { dbs }) => {
+        const schema = getSampleSchema(schemaPath);
+        if (schema.type !== "dir") {
+          throw "Sample schema is not a directory";
+        }
+        await applySchemaDir(dbs, schema, connectionId, {
+          config_sync: { schemaPath, lastSynced: new Date().toISOString() },
+        });
       },
     }),
     refreshModels: defineAdminFunction({

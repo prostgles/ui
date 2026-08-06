@@ -676,6 +676,14 @@ export const tableConfigDatabaseConfig: TableConfig<{ en: 1 }> = {
           hint: "If true then all environment variables will be passed to the server side function nodejs. Use at your own risk",
         },
       },
+
+      config_sync: {
+        nullable: true,
+        jsonbSchemaType: {
+          schemaPath: "string",
+          lastSynced: "Date",
+        },
+      },
     },
   },
   database_config_logs: {

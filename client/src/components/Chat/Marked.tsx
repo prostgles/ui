@@ -1,7 +1,7 @@
 import { getProperty } from "@common/utils";
 import { MarkdownWithPlugins } from "@components/MarkdownWithPlugins/MarkdownWithPlugins";
 import type { TableHandlerClient } from "prostgles-client";
-import type { AnyObject } from "prostgles-types";
+import { tryCatchV2, type AnyObject } from "prostgles-types";
 import React, { useCallback, useState } from "react";
 import { type Prgl } from "src/App";
 import { SmartForm } from "src/dashboard/SmartForm/SmartForm";
@@ -10,6 +10,9 @@ import {
   MonacoCodeInMarkdown,
   type MonacoCodeInMarkdownProps,
 } from "./MonacoCodeInMarkdown/MonacoCodeInMarkdown";
+import SmartTable from "src/dashboard/SmartTable";
+import { useOnErrorAlert } from "@components/AlertProvider";
+import type { DetailedFilter } from "@common/filterUtils";
 
 export type MarkedProps = DivProps &
   Pick<
@@ -36,6 +39,14 @@ export const Marked = (props: MarkedProps) => {
         tableName: string;
         columnName: string;
         columnValue: string | number;
+        tableHandler: Partial<TableHandlerClient<AnyObject, void>>;
+      }
+  >();
+  const [showTableRecords, setShowTableRecords] = useState<
+    | undefined
+    | {
+        tableName: string;
+        filter: AnyObject;
         tableHandler: Partial<TableHandlerClient<AnyObject, void>>;
       }
   >();
@@ -87,6 +98,8 @@ export const Marked = (props: MarkedProps) => {
     [codeHeader, sqlHandler, loadedSuggestions],
   );
 
+  const { onErrorAlert } = useOnErrorAlert();
+
   return (
     <>
       {showTableRow && prgl && (
@@ -107,6 +120,17 @@ export const Marked = (props: MarkedProps) => {
           onClose={() => setShowTableRow(undefined)}
         />
       )}
+      {showTableRecords && prgl && (
+        <SmartTable
+          onClosePopup={() => setShowTableRecords(undefined)}
+          db={prgl.db}
+          sql={prgl.sql}
+          methods={prgl.methods}
+          tables={prgl.tables}
+          tableName={showTableRecords.tableName}
+          filter={showTableRecords.filter as DetailedFilter[]}
+        />
+      )}
       <MarkdownWithPlugins
         {...divProps}
         components={{
@@ -115,10 +139,13 @@ export const Marked = (props: MarkedProps) => {
             const { href } = props;
             const tableNameRaw = props[JOINED_RECORD_PROP_NAMES.tableName] as
               string | undefined;
+            const filterRaw = props[JOINED_RECORDS_PROP_NAMES.filter] as
+              string | undefined;
             const columnName = props[JOINED_RECORD_PROP_NAMES.columnName] as
               string | undefined;
             const columnValue = props[JOINED_RECORD_PROP_NAMES.columnValue] as
               string | number | undefined;
+
             /** It messes it up frequently */
             const getTableHandler = (name: string, isEscaped = false) => {
               if (!prgl) return undefined;
@@ -134,14 +161,15 @@ export const Marked = (props: MarkedProps) => {
               if (!tableHandler) return undefined;
               return { tableName, tableHandler };
             };
+
             const dbTable =
               tableNameRaw ? getTableHandler(tableNameRaw) : undefined;
             if (
-              tableNameRaw &&
+              dbTable &&
               columnName &&
               columnValue &&
-              dbTable &&
-              href?.startsWith("#record")
+              href ===
+                ("#record" satisfies keyof typeof JOINED_RECORD_PROP_NAMES)
             ) {
               const { tableHandler, tableName } = dbTable;
               return (
@@ -155,6 +183,46 @@ export const Marked = (props: MarkedProps) => {
                       columnName,
                       columnValue,
                       tableHandler,
+                    });
+                  }}
+                />
+              );
+            }
+
+            if (
+              dbTable &&
+              filterRaw &&
+              href ===
+                ("#records" satisfies keyof typeof JOINED_RECORDS_PROP_NAMES)
+            ) {
+              const { tableHandler, tableName } = dbTable;
+              const filterValidation = tryCatchV2(() => ({
+                filter: JSON.parse(filterRaw),
+              }));
+
+              return (
+                <a
+                  {...props}
+                  className="link"
+                  style={
+                    filterValidation.error ? { color: "var(--danger)" } : {}
+                  }
+                  onClick={async (e) => {
+                    e.preventDefault();
+
+                    await onErrorAlert(async () => {
+                      if (!filterValidation.data) {
+                        throw new Error(`Invalid JSON filter`);
+                      }
+                      await tableHandler.find(filterValidation.data.filter, {
+                        limit: 0,
+                        select: [],
+                      });
+                      setShowTableRecords({
+                        tableName,
+                        tableHandler,
+                        filter: filterValidation.data.filter,
+                      });
                     });
                   }}
                 />
@@ -181,4 +249,10 @@ export const JOINED_RECORD_PROP_NAMES = {
   tableName: "data-table-name",
   columnName: "data-column-name",
   columnValue: "data-column-value",
+} as const;
+
+export const JOINED_RECORDS_PROP_NAMES = {
+  "#records": "href",
+  tableName: "data-table-name",
+  filter: "data-filter",
 } as const;

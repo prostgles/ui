@@ -466,6 +466,7 @@ const toolResponses: Record<string, ToolUse> = {
           arguments: stringify({
             name: "Test Agent",
             // tools: {}
+            firstMessage: " Do the research please",
             prompt: "Provide useful research to the user.",
             timeout: 120000,
             maxTokens: 5000,

@@ -134,6 +134,7 @@ export const NestedColumnRender = ({
           context={{
             table,
             columnName: "url",
+            row: nestedObj,
           }}
         />
       );

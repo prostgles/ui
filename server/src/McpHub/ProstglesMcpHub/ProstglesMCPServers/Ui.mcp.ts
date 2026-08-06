@@ -6,7 +6,7 @@ import {
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import { connectionManager } from "@src/index";
 import { statePrgl } from "@src/init/startProstgles";
-import { isEmpty, pickKeys } from "prostgles-types";
+import { isEmpty, pickKeys, getSerialisableError } from "prostgles-types";
 import { getDockerMCPServerProxy } from "../../DockerSandbox/dockerMCPServerProxy/dockerMCPServerProxy";
 import type {
   ProstglesMcpServerDefinition,
@@ -75,7 +75,14 @@ const handler = {
           return "" as any;
         },
         create_agent: async (
-          { name, autoApproveAllTools, tools, timeout, ...config },
+          {
+            name,
+            firstMessage,
+            autoApproveAllTools,
+            tools,
+            timeout,
+            ...config
+          },
           { clientReq, connection_id, toolUseId, user_id, chat, messageId },
         ) => {
           if (!statePrgl) {
@@ -107,7 +114,11 @@ const handler = {
           try {
             const toolsWithInfo =
               tools &&
-              (await getValidatedMcpServerToolsAllowed(dbs, tools, undefined));
+              (await getValidatedMcpServerToolsAllowed(
+                dbs,
+                tools,
+                configWithDefaults.mcpServerConfigs,
+              ));
 
             const createAgentFullToolName = getProstglesMCPFullToolName(
               "prostgles-ui",
@@ -125,7 +136,7 @@ const handler = {
             }
 
             const rawRes = await startAgent(
-              undefined,
+              firstMessage,
               {
                 name: `Agent for toolUseId ${toolUseId}`,
                 toolsWithInfo,
@@ -158,7 +169,7 @@ const handler = {
           } catch (error) {
             return {
               success: false,
-              error: error instanceof Error ? error.message : "Unknown error",
+              error: JSON.stringify(getSerialisableError(error)),
             } as const;
           }
         },

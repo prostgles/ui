@@ -89,7 +89,7 @@ export const MarkdownWithPluginsPopupBtn = (props: P) => {
           color="action"
           variant="faded"
         >
-          Show parsed document
+          Show text
         </Btn>
       }
     >

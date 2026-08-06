@@ -2,7 +2,7 @@ import { chromium, expect, test, type Locator } from "@playwright/test";
 import { authenticator } from "otplib";
 import { speechToTextTest } from "testAskLLM/speechToTextTest";
 
-import { exec, execSync, spawn } from "child_process";
+import { execSync, spawn } from "child_process";
 import { fileBrowserGoToPath } from "fileBrowserGoToPath";
 import { writeFileSync } from "fs";
 import { mkdir } from "fs/promises";
@@ -16,10 +16,9 @@ import {
 import { goTo } from "utils/goTo";
 import { isPortFree } from "utils/isPortFree";
 import { startMockSMTPServer } from "./mockSMTPServer";
-import { testAskLLMCode, setupAskLLMToolUse } from "./testAskLLM/testAskLLM";
+import { setupAskLLMToolUse, testAskLLMCode } from "./testAskLLM/testAskLLM";
 import { getCommandElemSelector, getDataKey, getDataLabel } from "./Testing";
 import {
-  addExistingDatabase,
   clickAndWait,
   clickInsertRow,
   closeWorkspaceWindows,
@@ -42,6 +41,7 @@ import {
   getSearchListItem,
   getSelector,
   getTableWindow,
+  getTimeout,
   insertRow,
   login,
   loginWhenSignupIsEnabled,
@@ -63,10 +63,11 @@ import {
   setupMagicLinkAuth,
   setWspColLayout,
   toggleMCPTools,
+  TWENTY_SECONDS_OR_MORE,
   typeConfirmationCode,
   uploadFile,
 } from "./utils/utils";
-import { createConnection } from "net";
+
 import { ROOT_DIR } from "svgScreenshots/utils/constants";
 
 const schemaGraphTestDbName = "financial.sql";
@@ -78,10 +79,6 @@ const DB_NAMES = {
 };
 const backupDir = resolve(__dirname, "../demo/backups");
 
-const getTimeout = (base: number) => ({
-  timeout: base * (process.env.CI ? 3 : 1),
-});
-const TWENTY_SECONDS_OR_MORE = getTimeout(20_000);
 const viewPortSize = { width: 1080, height: 1080 };
 test.use({
   /** Increase size to ensure agentic workflow fits all logs */
@@ -1028,7 +1025,7 @@ test.describe("Main test", () => {
     await setModelByText(page, "son");
 
     await expect(page.getByTestId("LLMChatOptions.MCPTools")).toContainText(
-      "9",
+      "10",
     );
     await sendAskLLMMessage(page, " task ");
 
@@ -1045,7 +1042,7 @@ test.describe("Main test", () => {
     );
 
     await expect(page.getByTestId("LLMChatOptions.MCPTools")).toContainText(
-      "11",
+      "12",
     );
 
     const dbToolsBtn = await page
@@ -2057,12 +2054,20 @@ test.describe("Main test", () => {
 
     /** Test ask tool */
     await newChat(page);
+
     await sendAskLLMMessage(page, " create_agent ");
-    await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
+    await page
+      .getByTestId("AskLLMToolApprover.AllowOnce")
+      .click(TWENTY_SECONDS_OR_MORE);
     await page
       .getByTestId("Agent")
       .getByText("View activity", { exact: true })
-      .click();
+      .click(TWENTY_SECONDS_OR_MORE);
+
+    await expect(page.getByTestId("Popup.content").last()).toContainText(
+      "Agent goal reached",
+      getTimeout(30e3),
+    );
   });
 
   test("Remote MCP server", async ({ page: p }) => {
@@ -2995,6 +3000,11 @@ test.describe("Main test", () => {
     await page.waitForTimeout(1000);
 
     await uploadFile(page);
+
+    /* Ensure that the file is uploaded and visible in the table */
+    await page
+      .getByText("Show parsed document", { exact: true })
+      .waitFor({ state: "visible", ...TWENTY_SECONDS_OR_MORE });
 
     await insertRow(page, "my_table", { content: USERS.default_user });
     await insertRow(page, "orders", { status: "incomplete" });

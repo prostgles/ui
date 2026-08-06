@@ -1,6 +1,5 @@
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type { DBSSchema } from "@common/publishUtils";
-import { ROUTES } from "@common/utils";
 import type { ConnectionDetails } from "@src/connectionUtils/getConnectionDetails";
 import type { createHttpServer } from "@src/createHttpAndIOServers/createHttpServer";
 import type { HttpAppSecurityOptions } from "@src/createHttpAndIOServers/setHttpAppSecurity";
@@ -194,9 +193,10 @@ export class ConnectionManager {
       id: dbConfId,
       table_config_ts,
       table_config_ts_disabled: disabled,
+      config_sync,
     }: Pick<
       DBSSchema["database_configs"],
-      "id" | "table_config_ts" | "table_config_ts_disabled"
+      "id" | "table_config_ts" | "table_config_ts_disabled" | "config_sync"
     >,
     connectionInfo: pg.IConnectionParameters<pg.IClient>,
   ) => {
@@ -222,6 +222,7 @@ export class ConnectionManager {
       const tableConfig = getTableConfig({
         table_config_ts,
         table_config: null,
+        config_sync,
       });
       const tableConfigRunner = await ForkedPrglProcRunner.create({
         dbs: this.dbs,
@@ -538,6 +539,7 @@ export class ConnectionManager {
       conMgr: this,
       newTableConfig,
       app: activeConnection.app,
+      databaseConfig: activeConnection.dbConf,
     });
     await prgl.update({ fileTable });
   };

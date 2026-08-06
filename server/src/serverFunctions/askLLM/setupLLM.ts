@@ -42,6 +42,7 @@ export const setupLLM = async (dbs: DBS) => {
               get_specific_tool_schemas: "auto-approve",
               get_tool_list: "auto-approve",
               compact_context: "auto-approve",
+              create_agent: 1,
             }),
             database_access: "execute_readonly_sql",
           },
@@ -59,6 +60,7 @@ export const setupLLM = async (dbs: DBS) => {
               get_specific_tool_schemas: "auto-approve",
               get_tool_list: "auto-approve",
               request_tool_access: 1,
+              create_agent: 1,
             }),
 
             database_access: "execute_readonly_sql",
@@ -80,6 +82,7 @@ export const setupLLM = async (dbs: DBS) => {
             max_tokens: 18_000,
             mcp_server_tools: allowProstglesUITools({
               create_agentic_workflow: 1,
+              create_agent: 1,
               ask_user_questions: 1,
               compact_context: "auto-approve",
               get_specific_tool_schemas: "auto-approve",

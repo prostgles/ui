@@ -33,13 +33,13 @@
 	},
 	"exclude": [
 		"dist",
-		"DBoGenerated.ts",
+		// "DBoGenerated.ts",
 		"*.conf",
 		"prostgles_mcp",
 		"src/ServiceManager/services/**/src",
 	],
 	"include": [
 		"src",
-		"**/*.spec.ts"
+		"**/*.spec.ts", "../common/DBGeneratedSchema.d.ts"
 , "../common/getJsonSchemaAsTs.ts", "../common/startAgenticWorkflowSchema.ts"	]
 }
