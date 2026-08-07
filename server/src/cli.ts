@@ -52,7 +52,7 @@ const createConfig = (targetPath: string) => {
     .basename(targetPath)
     .replace(/[^a-z0-9-]/gi, "-")
     .toLowerCase();
-  const configId = packageName || "my-ui";
+  const configId = packageName || "my-prostgles-config";
 
   writeFileSync(
     path.join(targetPath, "package.json"),
@@ -103,7 +103,7 @@ const createConfig = (targetPath: string) => {
   );
   writeFileSync(
     path.join(targetPath, "src", "index.ts"),
-    `import { defineConfig } from "prostgles-ui/schema-config";
+    `import { defineConfig } from "prostgles/schema-config";
 import type { DBGeneratedSchema } from "./DBGeneratedSchema";
 
 export default defineConfig<DBGeneratedSchema>()({

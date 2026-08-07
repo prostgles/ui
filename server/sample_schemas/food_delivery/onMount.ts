@@ -1,4 +1,4 @@
-import type { ProstglesOnMount } from "prostgles-ui-server/schema-config";
+import type { ProstglesOnMount } from "prostgles/schema-config";
 
 export const onMount: ProstglesOnMount = async ({ dbo: db, sql }) => {
   const roadTableHandler = db.routes;

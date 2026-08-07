@@ -1,8 +1,3 @@
-import type {
-  DBSSchema,
-  DBSSchemaForInsert,
-} from "prostgles-ui-server/schema-config";
-
 export const workspaceConfig = {
   workspaces: [
     {

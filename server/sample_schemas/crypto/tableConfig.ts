@@ -1,12 +1,4 @@
-export type TableConfig = Record<
-  string,
-  {
-    /**
-     * Column names and sql definitions
-     * */
-    columns: Record<string, string>;
-  }
->;
+import type { TableConfig } from "prostgles/schema-config";
 
 export const tableConfig: TableConfig = {
   market_caps_import: {

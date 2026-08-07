@@ -1,4 +1,4 @@
-import type { ProstglesOnMount } from "prostgles-ui-server/schema-config";
+import type { ProstglesOnMount } from "prostgles/schema-config";
 const SECOND = 1e3;
 import { WebSocket } from "ws";
 
@@ -42,9 +42,7 @@ export const onMount: ProstglesOnMount = async ({ dbo: db, sql }) => {
 
   let socket: WebSocket | undefined;
   if (realtimeFutures) {
-    socket = new WebSocket(
-      "wss://fstream.binance.com/ws/!markPrice@arr@1s",
-    );
+    socket = new WebSocket("wss://fstream.binance.com/ws/!markPrice@arr@1s");
     socket.onmessage = async (rawData) => {
       const dataItems = JSON.parse(rawData.data as string) as any[];
       const data = dataItems.map((data) => ({
