@@ -79,10 +79,6 @@
     ".": {
       "types": "./dist/server/src/schemaConfig.d.ts",
       "default": "./dist/server/src/index.js"
-    },
-    "./schema-config": {
-      "types": "./dist/server/src/schemaConfig.d.ts",
-      "default": "./dist/server/src/schemaConfig.js"
     }
   }
 }

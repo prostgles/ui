@@ -1,9 +1,18 @@
 #!/usr/bin/env node
 
 import { spawn, type ChildProcess } from "child_process";
-import { existsSync, mkdirSync, readdirSync, watch, writeFileSync } from "fs";
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  watch,
+  writeFileSync,
+} from "fs";
 import path from "path";
 import packageJson from "../package.json";
+import { parse } from "dotenv";
+import { fixIndent } from "@common/utils";
 
 const usage = `Usage:
   prostgles create <directory>
@@ -117,9 +126,27 @@ export default defineConfig<DBGeneratedSchema>()({
 });
 `,
   );
-  console.log(
-    `Created config project in ${targetPath}. Run npm install, then npm run dev.`,
+  writeFileSync(
+    path.join(targetPath, ".env.example"),
+    fixIndent(`
+      # Prostgles UI state database. This stores users, settings, and connections.
+      # POSTGRES_URL=postgres://user:password@localhost:5432/prostgles_state
+
+      # Database exposed by this config.
+      # PROSTGLES_DATABASE_URL=postgres://user:password@localhost:5432/application
+`),
   );
+
+  console.log(
+    `Created config project in ${targetPath}. Copy .env.example to .env, configure both databases, run npm install, then npm run dev.`,
+  );
+};
+
+const getConfigEnvironment = (configPath: string) => {
+  const environmentFile = path.join(configPath, ".env");
+  return existsSync(environmentFile) ?
+      parse(readFileSync(environmentFile))
+    : {};
 };
 
 const runServer = (configPath: string, mode: "development" | "production") =>
@@ -127,6 +154,7 @@ const runServer = (configPath: string, mode: "development" | "production") =>
     cwd: configPath,
     stdio: "inherit",
     env: {
+      ...getConfigEnvironment(configPath),
       ...process.env,
       NODE_ENV: mode,
       PROSTGLES_UI_CONFIG: configPath,
