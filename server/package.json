@@ -1,17 +1,38 @@
 {
-  "name": "prostgles-ui-server",
-  "description": "Prostgles UI Server",
-  "main": "index.js",
+  "name": "prostgles",
+  "version": "2.3.6",
+  "description": "Prostgles UI runtime and configurable PostgreSQL dashboard",
+  "main": "dist/server/src/index.js",
+  "bin": {
+    "prostgles": "dist/server/src/cli.js"
+  },
   "scripts": {
-    "build": "npm ci && cross-env NODE_ENV='production' NODE_OPTIONS='--max-old-space-size=2048' tsc && tsc-alias && npm prune --omit=dev",
+    "compile": "cross-env NODE_ENV='production' NODE_OPTIONS='--max-old-space-size=2048' tsc && tsc-alias",
+    "build": "npm ci && npm run compile && npm prune --omit=dev",
     "start": "npm run build && cross-env NODE_ENV='production' node dist/server/src/index.js",
     "test": "npm run build && node test-runner.mjs",
     "lint": "eslint . --ext .ts --quiet --fix",
     "dev": "npm ci && cross-env NODE_ENV='development' NODE_OPTIONS='--max-old-space-size=4048' concurrently --kill-others \"tsc -w\" \"tsc-alias -w\" \"node --watch --watch-path=dist --trace-warnings --inspect dist/server/src/index.js\"",
-    "dev:electron": "npm ci && cross-env NODE_ENV='development' NODE_OPTIONS='--max-old-space-size=4048' concurrently --kill-others \"tsc -w\" \"tsc-alias -w\" \"node --watch --watch-path=dist --trace-warnings --inspect dist/server/src/testElectron.js\""
+    "dev:electron": "npm ci && cross-env NODE_ENV='development' NODE_OPTIONS='--max-old-space-size=4048' concurrently --kill-others \"tsc -w\" \"tsc-alias -w\" \"node --watch --watch-path=dist --trace-warnings --inspect dist/server/src/testElectron.js\"",
+    "package:prepare": "npm --prefix ../client ci && npm --prefix ../client run build && npm ci && npm run compile && node ./scripts/preparePackage.mjs",
+    "prepack": "npm run package:prepare"
   },
   "author": "Prostgles LTD <office@prostgles.com>",
   "license": "",
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "client/build",
+    "client/static",
+    "src/init.sql",
+    "src/ServiceManager/services/**/src",
+    "sample_schemas"
+  ],
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1101.0",
     "@aws-sdk/lib-storage": "^3.1101.0",
@@ -55,6 +76,10 @@
     "typescript-eslint": "^8.65.0"
   },
   "exports": {
+    ".": {
+      "types": "./dist/server/src/schemaConfig.d.ts",
+      "default": "./dist/server/src/index.js"
+    },
     "./schema-config": {
       "types": "./dist/server/src/schemaConfig.d.ts",
       "default": "./dist/server/src/schemaConfig.js"

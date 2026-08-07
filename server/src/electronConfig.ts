@@ -46,10 +46,17 @@ const electronConfig: {
 
 export const actualRootDir = path.join(__dirname, "/../../..");
 
+const getClientDirectory = (directory: string) => {
+  const packagedDirectory = path.resolve(actualRootDir, "client", directory);
+  return fs.existsSync(packagedDirectory) ?
+    packagedDirectory
+  : path.resolve(actualRootDir, "..", "client", directory);
+};
+
 export const DIRECTORIES = {
-  CLIENT_BUILD: path.resolve(actualRootDir + "/../client/build"),
-  CLIENT_STATIC: path.resolve(actualRootDir + "/../client/static"),
-  CLIENT_ICONS: path.resolve(actualRootDir + "/../client/static/icons"),
+  CLIENT_BUILD: getClientDirectory("build"),
+  CLIENT_STATIC: getClientDirectory("static"),
+  CLIENT_ICONS: getClientDirectory("static/icons"),
   DOCS_SCREENSHOTS: path.resolve(actualRootDir + "/../docs/screenshots"),
 } as const;
 

@@ -7,7 +7,7 @@ import path from "path";
 import type { AuthConfig } from "prostgles-server/dist/Auth/AuthTypes";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
 import type { DB } from "prostgles-server/dist/Prostgles";
-import { actualRootDir } from "../electronConfig";
+import { DIRECTORIES } from "../electronConfig";
 import type { DBS } from "../index";
 import { getEmailAuthProvider } from "./emailProvider/getEmailAuthProvider";
 import { getLogin } from "./getLogin";
@@ -144,7 +144,7 @@ export const getAuth = async (
           req.next?.();
         } else {
           res.sendFile(
-            path.resolve(actualRootDir + "/../client/build/index.html"),
+            path.resolve(DIRECTORIES.CLIENT_BUILD, "index.html"),
           );
         }
       },

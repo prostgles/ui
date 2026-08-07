@@ -144,7 +144,11 @@ export const startConnection = async function (
           _dbs,
           dbs,
         });
-        const watchSchema = connection.db_watch_schema ? "*" : false;
+        const watchSchema = connection.db_watch_schema ? "*" : (
+          process.env.NODE_ENV !== "production" && databaseConfig.config_sync ?
+            "hotReloadMode"
+          : false
+        );
         const schemaConfig = getSchemaConfig(databaseConfig);
         const {
           connection: _connectionConfig,

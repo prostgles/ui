@@ -19,6 +19,7 @@ import {
   type AuthSetupDataListener,
 } from "../authConfig/subscribeToAuthSetupChanges";
 import { setupLLM } from "../serverFunctions/askLLM/setupLLM";
+import { applyStartupSchemaConfig } from "../ConnectionManager/applyStartupSchemaConfig";
 import { initUsers } from "./initUsers";
 import { insertStateDatabase } from "./insertStateDatabase";
 import { getProstglesState } from "./tryStartProstgles";
@@ -73,6 +74,7 @@ export const prostglesOnReady = async (
 
     await connectionManager.destroy();
     await connectionManager.init(db, _db);
+    await applyStartupSchemaConfig({ dbs: db, db: _db });
     getServiceManager(db);
 
     backupManager ??= await BackupManager.create(

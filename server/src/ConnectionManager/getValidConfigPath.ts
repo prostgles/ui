@@ -18,6 +18,9 @@ export const getValidConfigPath = (
 
   const configPath = path.resolve(schemaPath);
   const projectPath = path.resolve(process.cwd());
+  const isCliConfig =
+    process.env.PROSTGLES_UI_CONFIG &&
+    configPath === path.resolve(process.env.PROSTGLES_UI_CONFIG);
   const bundledSamplesPath = path.resolve(actualRootDir, "sample_schemas");
   const isBundledSample =
     configPath.startsWith(bundledSamplesPath + path.sep);
@@ -25,6 +28,7 @@ export const getValidConfigPath = (
   /** Do not allow schemaPath to be inside the current project */
   if (
     !allowCurrentProject &&
+    !isCliConfig &&
     !isBundledSample &&
     (configPath === projectPath || configPath.startsWith(projectPath + path.sep))
   ) {

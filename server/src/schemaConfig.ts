@@ -14,10 +14,7 @@ export type ProstglesOnMountCleanup = () => void | Promise<void>;
 
 export type ProstglesOnMount<T = void> = (
   args: OnReadyParams<T>,
-) =>
-  | void
-  | ProstglesOnMountCleanup
-  | Promise<void | ProstglesOnMountCleanup>;
+) => void | ProstglesOnMountCleanup | Promise<void | ProstglesOnMountCleanup>;
 
 export type TableOptions = NonNullable<
   DBSSchema["connections"]["table_options"]
@@ -28,7 +25,22 @@ export type TableDisplayConfig = Record<string, TableOptions>;
 export type SchemaConfigConnection = Partial<
   Pick<
     DBSSchema["connections"],
-    "db_schema_filter" | "display_options" | "table_options"
+    | "name"
+    | "type"
+    | "db_conn"
+    | "db_host"
+    | "db_name"
+    | "db_pass"
+    | "db_port"
+    | "db_ssl"
+    | "db_user"
+    | "ssl_certificate"
+    | "ssl_client_certificate"
+    | "ssl_client_certificate_key"
+    | "ssl_reject_unauthorized"
+    | "db_schema_filter"
+    | "display_options"
+    | "table_options"
   >
 >;
 
@@ -62,18 +74,21 @@ export type SchemaConfigProstglesOptions<
   | "watchSchemaType"
 >;
 
-/**
- * Named exports accepted from a schema-config project's package entry point.
- * Runtime values are loaded directly, so hooks and functions retain access to
- * the project's own dependencies.
- */
 export type SchemaConfig<
   S = void,
   SUser extends SessionUser = SessionUser,
 > = SchemaConfigProstglesOptions<S, SUser> & {
+  /** Stable deployment identifier. Required when starting through the CLI. */
+  id?: string;
   connection?: SchemaConfigConnection;
   databaseConfig?: SchemaConfigDatabase;
   onInitSQL?: string;
   onMount?: ProstglesOnMount<S>;
   workspaces?: WorkspaceInsertModel[];
 };
+
+/** Gives a config object contextual types while preserving its exact shape. */
+export const defineConfig =
+  <S = void, SUser extends SessionUser = SessionUser>() =>
+  <T extends SchemaConfig<S, SUser>>(config: T): T =>
+    config;

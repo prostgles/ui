@@ -24,7 +24,7 @@ import type { VoidFunction } from "prostgles-server/dist/SchemaWatch/SchemaWatch
 import { getKeys, omitKeys, type AnyObject } from "prostgles-types";
 import { getAuthSetupData } from "./authConfig/subscribeToAuthSetupChanges";
 import { ConnectionManager } from "./ConnectionManager/ConnectionManager";
-import { actualRootDir, getElectronConfig } from "./electronConfig";
+import { DIRECTORIES, getElectronConfig } from "./electronConfig";
 import { initExpressAndIOServers } from "./init/initExpressAndIOServers";
 import { setDBSRoutesForElectron } from "./init/setDBSRoutesForElectron";
 import type {
@@ -141,7 +141,7 @@ const serveIndexIfNoCredentialsOrInitError = async (
   } = getProstglesState();
   if (state !== "ok" || (isElectron && !electronCredsProvided)) {
     if (req.method === "GET" && !req.path.startsWith(API_ENDPOINTS.DBS)) {
-      res.sendFile(path.resolve(actualRootDir + "/../client/build/index.html"));
+      res.sendFile(path.resolve(DIRECTORIES.CLIENT_BUILD, "index.html"));
       return;
     }
   }

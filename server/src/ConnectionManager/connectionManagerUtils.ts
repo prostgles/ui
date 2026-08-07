@@ -93,7 +93,9 @@ export const getSchemaConfig = (
     }
   });
   const entryPoint = require.resolve(configPath);
-  const config = require(entryPoint) as SchemaConfig;
+  const exports = require(entryPoint) as SchemaConfig | { default?: SchemaConfig };
+  const config =
+    (exports as { default?: SchemaConfig }).default ?? (exports as SchemaConfig);
   schemaConfigCache.set(configPath, { lastSynced, config });
   return config;
 };

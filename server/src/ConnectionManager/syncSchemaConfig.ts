@@ -5,6 +5,32 @@ import { runConnectionQuery } from "../serverFunctions/getServerFunctions";
 import { getSchemaConfig } from "./connectionManagerUtils";
 import { getValidConfigPath } from "./getValidConfigPath";
 
+const buildSchemaConfig = (schemaPath: string) =>
+  new Promise<void>((resolve, reject) => {
+    let tscPath: string;
+    try {
+      tscPath = require.resolve("typescript/bin/tsc", {
+        paths: [schemaPath],
+      });
+    } catch {
+      reject(
+        new Error(
+          `TypeScript is not installed in config project ${schemaPath}. Run npm install in that project.`,
+        ),
+      );
+      return;
+    }
+    const child = spawn(process.execPath, [tscPath, "--project", schemaPath], {
+      cwd: schemaPath,
+      stdio: "inherit",
+    });
+    child.on("error", reject);
+    child.on("close", (code, signal) => {
+      if (code === 0) return resolve();
+      reject(new Error(`tsc exited code=${code} signal=${signal}`));
+    });
+  });
+
 /**
  * Build and attach a schema-config project. Only its location is persisted;
  * its runtime exports are loaded into the connection's primary Prostgles
@@ -29,18 +55,7 @@ export const syncSchemaConfig = async ({
     lastSynced: new Date().toISOString(),
   };
 
-  await new Promise<void>((resolve, reject) => {
-    const child = spawn("tsc", {
-      cwd: config_sync.schemaPath,
-      stdio: "inherit",
-    });
-
-    child.on("error", reject);
-    child.on("close", (code, signal) => {
-      if (code === 0) return resolve();
-      reject(new Error(`tsc exited code=${code} signal=${signal}`));
-    });
-  });
+  await buildSchemaConfig(config_sync.schemaPath);
   const schemaConfig = getSchemaConfig(
     { config_sync },
     { allowCurrentProject },

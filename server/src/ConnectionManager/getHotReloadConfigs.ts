@@ -14,6 +14,7 @@ import { parseTableConfig } from "./parseTableConfig";
 import type { RequiredKeepUndefined } from "@common/utils";
 import { modifyClientSchema } from "./modifyClientSchema";
 import { getSchemaConfig } from "./connectionManagerUtils";
+import { getValidConfigPath } from "./getValidConfigPath";
 import type { ServerFunctionDefinitions } from "prostgles-server";
 
 export type HotReloadConfigOptions = RequiredKeepUndefined<
@@ -64,6 +65,10 @@ export const getHotReloadConfigs = async ({
   _dbs: DB;
 }) => {
   const schemaConfig = getSchemaConfig(databaseConfig);
+  const schemaConfigPath =
+    process.env.NODE_ENV === "production" || !schemaConfig ?
+      undefined
+    : getValidConfigPath(databaseConfig);
   const configuredConnection = {
     ...connection,
     ...schemaConfig?.connection,
@@ -113,7 +118,9 @@ export const getHotReloadConfigs = async ({
   const { web_app_templated, web_app_directory, db_schema_filter } =
     configuredConnection;
   const tsGeneratedTypesDir =
-    web_app_templated && web_app_directory ?
+    schemaConfigPath ?
+      join(schemaConfigPath, "src")
+    : web_app_templated && web_app_directory ?
       join(web_app_directory, "client", "src", "api")
     : undefined;
 
