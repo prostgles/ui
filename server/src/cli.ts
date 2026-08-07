@@ -112,7 +112,7 @@ const createConfig = (targetPath: string) => {
   );
   writeFileSync(
     path.join(targetPath, "src", "index.ts"),
-    `import { defineConfig } from "prostgles/schema-config";
+    `import { defineConfig } from "prostgles";
 import type { DBGeneratedSchema } from "./DBGeneratedSchema";
 
 export default defineConfig<DBGeneratedSchema>()({
