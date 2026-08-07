@@ -7,3 +7,4 @@ prostgles_certificates
 **/.electron-auth.json
 .prostgles-desktop-config.json
 **/.prostgles-desktop-config.json
+sample_schemas/**/dist/

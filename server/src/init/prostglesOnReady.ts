@@ -98,11 +98,12 @@ export const prostglesOnReady = async (
 
           modifyClientSchema:
             connection &&
-            ((table, userData) =>
+            ((table, tableConfig, userData) =>
               modifyClientSchema({
                 connection,
                 databaseConfig: stateDatabaseConfig,
                 table,
+                tableConfig,
                 userData,
               })),
         });

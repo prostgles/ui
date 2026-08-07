@@ -1,7 +1,7 @@
 import type { ColumnOptions, TableOptions } from "@common/managedTableSchema";
 import type { SUser } from "@src/authConfig/sessionUtils";
-import type { AuthResultWithSID } from "prostgles-server";
-import type { DBSchemaTable } from "prostgles-types";
+import type { AuthResultWithSID, TableConfig } from "prostgles-server";
+import { isObject, type DBSchemaTable } from "prostgles-types";
 import type { DatabaseConfigs } from "..";
 import { dbsConnectionOptions } from "./dbsConnectionOptions";
 import type { ConnectionHotReloadProperties } from "./getHotReloadConfigs";
@@ -10,10 +10,12 @@ export const modifyClientSchema = ({
   connection,
   databaseConfig,
   table,
+  tableConfig,
 }: {
   connection: ConnectionHotReloadProperties;
   databaseConfig: Pick<DatabaseConfigs, "file_table_config">;
   table: DBSchemaTable;
+  tableConfig: TableConfig[string] | undefined;
   userData: AuthResultWithSID<SUser> | undefined;
 }): DBSchemaTable<Omit<TableOptions, "columns">, ColumnOptions> => {
   const { file_table_config } = databaseConfig;
@@ -34,6 +36,7 @@ export const modifyClientSchema = ({
 
   const capitaliseNames =
     connection.display_options?.prettyTableAndColumnNames ?? true;
+  const tableHasLabelFromConfig = Boolean(tableConfig?.info?.label);
   return {
     ...table,
     managedTableType: tableOptions.managedTableType,
@@ -41,19 +44,33 @@ export const modifyClientSchema = ({
     icon: tableOptions.icon,
     label:
       tableOptions.label ??
-      (capitaliseNames ? convertSnakeToReadable(table.name) : table.name),
+      (!tableHasLabelFromConfig && capitaliseNames ?
+        convertSnakeToReadable(table.name)
+      : table.label || table.name),
     rowIconColumn: tableOptions.rowIconColumn,
     columns: table.columns.map((c) => {
       const columnOptions = {
         ...managedTableOptions?.columns?.[c.name],
         ...tableOptions.columns?.[c.name],
       };
+      const columnConfig =
+        tableConfig &&
+        "columns" in tableConfig &&
+        tableConfig.columns?.[c.name];
+      const columnHasLabelFromConfig = Boolean(
+        isObject(columnConfig) && columnConfig.label,
+      );
       return {
         ...c,
         icon: columnOptions.icon,
+        /**
+         * TODO: move label and rendering logic to one place only.
+         * Table config might not be the best place for this
+         * */
         label:
-          c.label ||
-          (capitaliseNames ? convertSnakeToReadable(c.name) : c.label),
+          !columnHasLabelFromConfig && capitaliseNames ?
+            convertSnakeToReadable(c.name)
+          : c.label,
         renderAs:
           columnOptions.renderAs ??
           (c.file ?

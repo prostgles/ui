@@ -9,11 +9,12 @@ import { getConnectionSocketPath } from "./getConnectionSocketPath";
 import type { ConnectionManager } from "./ConnectionManager";
 import { join } from "path";
 import { getConnectionServerFunctions } from "./getConnectionServerFunctions";
-import type { ConnectionDetails } from "@src/connectionUtils/getConnectionDetails";
 import type { CONNECTION_HOT_RELOAD_COLUMNS } from "./initConnectionManager";
 import { parseTableConfig } from "./parseTableConfig";
 import type { RequiredKeepUndefined } from "@common/utils";
 import { modifyClientSchema } from "./modifyClientSchema";
+import { getSchemaConfig } from "./connectionManagerUtils";
+import type { ServerFunctionDefinitions } from "prostgles-server";
 
 export type HotReloadConfigOptions = RequiredKeepUndefined<
   Pick<
@@ -35,6 +36,18 @@ export type ConnectionHotReloadProperties = Pick<
   (typeof CONNECTION_HOT_RELOAD_COLUMNS)[number]
 >;
 
+const mergeFunctions = (
+  schemaFunctions: ServerFunctionDefinitions<void, SUser> | undefined,
+  connectionFunctions: ServerFunctionDefinitions<void, SUser>,
+): ServerFunctionDefinitions<void, SUser> => {
+  if (!schemaFunctions) return connectionFunctions;
+  return async (params) => ({
+    ...(await schemaFunctions(params)),
+    /** Connection-managed functions retain precedence on name collisions. */
+    ...(await connectionFunctions(params)),
+  });
+};
+
 export const getHotReloadConfigs = async ({
   dbs,
   _dbs,
@@ -42,7 +55,6 @@ export const getHotReloadConfigs = async ({
   databaseConfig,
   connectionManager,
   stateDatabaseConfig,
-  connectionInfo,
 }: {
   connectionManager: ConnectionManager;
   connection: ConnectionHotReloadProperties;
@@ -50,8 +62,16 @@ export const getHotReloadConfigs = async ({
   stateDatabaseConfig: DatabaseConfigs;
   dbs: DBS;
   _dbs: DB;
-  connectionInfo: ConnectionDetails;
 }) => {
+  const schemaConfig = getSchemaConfig(databaseConfig);
+  const configuredConnection = {
+    ...connection,
+    ...schemaConfig?.connection,
+  };
+  const configuredDatabaseConfig = {
+    ...databaseConfig,
+    ...schemaConfig?.databaseConfig,
+  };
   const { socketPath, socketUrl } = getConnectionSocketPath(connection);
   const connectionServers = connectionManager.getConnectionHttpServer({
     connection,
@@ -60,20 +80,24 @@ export const getHotReloadConfigs = async ({
   });
   const { app } = connectionServers;
 
-  const restApi = getRestApiConfig(app, connection, databaseConfig);
+  const restApi = getRestApiConfig(
+    app,
+    configuredConnection,
+    configuredDatabaseConfig,
+  );
   const { fileTable, tableConfig } = await parseTableConfig({
     type: "saved",
     dbs,
-    con: connection,
+    con: configuredConnection,
     conMgr: connectionManager,
     app,
-    databaseConfig,
+    databaseConfig: configuredDatabaseConfig,
   });
   const auth = await getConnectionAuth(app, dbs, _dbs, {
     type: "connection",
     stateDatabaseConfig,
-    connectionDatabaseConfig: databaseConfig,
-    connection,
+    connectionDatabaseConfig: configuredDatabaseConfig,
+    connection: configuredConnection,
     passwordlessAdmin: getAuthSetupData().passwordlessAdmin,
   });
   const activeConnection = connectionManager.getActiveConnectionSilentFail(
@@ -86,18 +110,18 @@ export const getHotReloadConfigs = async ({
     activeConnection.socketPath = socketPath;
     activeConnection.socketUrl = socketUrl;
   }
-  const { web_app_templated, web_app_directory, db_schema_filter } = connection;
+  const { web_app_templated, web_app_directory, db_schema_filter } =
+    configuredConnection;
   const tsGeneratedTypesDir =
     web_app_templated && web_app_directory ?
       join(web_app_directory, "client", "src", "api")
     : undefined;
 
-  const functions = await getConnectionServerFunctions({
+  const connectionFunctions = await getConnectionServerFunctions({
     databaseConfig,
     dbs,
     connection,
     connectionManager,
-    connectionInfo,
   });
 
   return {
@@ -107,11 +131,18 @@ export const getHotReloadConfigs = async ({
       fileTable,
       tableConfig,
       auth,
-      schemaFilter: db_schema_filter ?? { public: 1 },
+      schemaFilter: schemaConfig?.schemaFilter ??
+        db_schema_filter ?? { public: 1 },
       tsGeneratedTypesDir,
-      functions,
-      modifyClientSchema: (table, userData) =>
-        modifyClientSchema({ connection, databaseConfig, table, userData }),
+      functions: mergeFunctions(schemaConfig?.functions, connectionFunctions),
+      modifyClientSchema: (table, tableConfig, userData) =>
+        modifyClientSchema({
+          connection: configuredConnection,
+          databaseConfig: configuredDatabaseConfig,
+          table,
+          tableConfig,
+          userData,
+        }),
     } satisfies HotReloadConfigOptions,
     connectionServers,
   };

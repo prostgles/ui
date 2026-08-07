@@ -1,3 +1,5 @@
+import type { ProstglesOnMount } from "prostgles-ui-server/schema-config";
+
 export const onMount: ProstglesOnMount = async ({ sql }) => {
   const createData = async () => {
     await sql(

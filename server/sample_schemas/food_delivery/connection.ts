@@ -1000,7 +1000,7 @@ const table_options = {
       },
     },
   },
-} satisfies typeof import("../../../common/DBGeneratedSchema");
+};
 
 export default {
   table_options,

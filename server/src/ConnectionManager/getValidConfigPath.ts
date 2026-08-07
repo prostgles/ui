@@ -1,10 +1,12 @@
 import { existsSync, statSync } from "fs";
 import path from "path";
+import { actualRootDir } from "../electronConfig";
 
 export const getValidConfigPath = (
   dbConf: {
     config_sync?: { schemaPath?: string } | null;
   },
+  { allowCurrentProject = false }: { allowCurrentProject?: boolean } = {},
 ) => {
   if (!dbConf.config_sync) return;
   const { schemaPath } = dbConf.config_sync;
@@ -16,9 +18,16 @@ export const getValidConfigPath = (
 
   const configPath = path.resolve(schemaPath);
   const projectPath = path.resolve(process.cwd());
+  const bundledSamplesPath = path.resolve(actualRootDir, "sample_schemas");
+  const isBundledSample =
+    configPath.startsWith(bundledSamplesPath + path.sep);
 
   /** Do not allow schemaPath to be inside the current project */
-  if (configPath === projectPath || configPath.startsWith(projectPath + path.sep)) {
+  if (
+    !allowCurrentProject &&
+    !isBundledSample &&
+    (configPath === projectPath || configPath.startsWith(projectPath + path.sep))
+  ) {
     throw new Error(
       `config_sync.schemaPath is set to "${schemaPath}", which is inside the current project. Please set it to a path outside the project.`,
     );

@@ -2,11 +2,8 @@ import { getPasswordHash } from "@src/authConfig/authUtils";
 import { checkClientIP } from "@src/authConfig/sessionUtils";
 import { getAuthSetupData } from "@src/authConfig/subscribeToAuthSetupChanges";
 import { getInstalledPsqlVersions } from "@src/BackupManager/getInstalledPrograms";
-import {
-  getCompiledTS,
-  getSchemaConfig,
-} from "@src/ConnectionManager/connectionManagerUtils";
-import { getValidConfigPath } from "@src/ConnectionManager/getValidConfigPath";
+import { getCompiledTS } from "@src/ConnectionManager/connectionManagerUtils";
+import { syncSchemaConfig } from "@src/ConnectionManager/syncSchemaConfig";
 import { testDBConnection } from "@src/connectionUtils/testDBConnection";
 import { validateConnection } from "@src/connectionUtils/validateConnection";
 import { getElectronConfig } from "@src/electronConfig";
@@ -19,7 +16,6 @@ import { getServiceManager } from "@src/ServiceManager/ServiceManager";
 import { prostglesServices } from "@src/ServiceManager/ServiceManagerTypes";
 import { FILE_TABLE_CONFIG_SCHEMA } from "@src/tableConfig/tableConfigDatabaseConfig";
 import { upsertConnection } from "@src/upsertConnection";
-import { execSync } from "child_process";
 import { existsSync, readdirSync, statSync } from "fs";
 import { mkdir } from "fs/promises";
 import { globStream } from "glob";
@@ -333,49 +329,8 @@ export const getAdminServerFunctions = (
         connectionId: "string",
         schemaPath: "string",
       },
-      run: async ({ connectionId, schemaPath }, { dbs }) => {
-        const config_sync = {
-          schemaPath: getValidConfigPath({ config_sync: { schemaPath } })!,
-          lastSynced: new Date().toISOString(),
-        };
-        execSync("tsc", { cwd: config_sync.schemaPath });
-        const schemaConfig = getSchemaConfig({ config_sync });
-        if (schemaConfig?.onInitSQL) {
-          await runConnectionQuery(
-            connectionId,
-            schemaConfig.onInitSQL,
-            undefined,
-            { dbs },
-          );
-        }
-        const databaseConfig = await dbs.database_configs.update(
-          { $existsJoined: { connections: { id: connectionId } } },
-          { config_sync },
-          { returning: "*", multi: false },
-        );
-        if (!databaseConfig) throw "Database config not found";
-
-        const activeConnection =
-          connectionManager.getActiveConnectionSilentFail(connectionId);
-        if (activeConnection) {
-          await connectionManager.setTableConfig(
-            connectionId,
-            databaseConfig,
-            activeConnection.connectionInfo,
-          );
-          const connection = await dbs.connections.findOne({
-            id: connectionId,
-          });
-          if (connection) {
-            await connectionManager.setOnMount(
-              databaseConfig.id,
-              connection,
-              activeConnection.connectionInfo,
-              config_sync,
-            );
-          }
-        }
-      },
+      run: ({ connectionId, schemaPath }, { dbs }) =>
+        syncSchemaConfig({ dbs, connectionId, schemaPath }),
     }),
     refreshModels: defineAdminFunction({
       run: (_, { dbs }) => refreshModels(dbs),
@@ -498,24 +453,6 @@ export const getAdminServerFunctions = (
           newDbConf,
           activeConnection.connectionInfo,
         );
-      },
-    }),
-    getForkedProcStats: defineAdminFunction({
-      input: { connectionId: "string" },
-      run: async ({ connectionId }) => {
-        const prgl =
-          connectionManager.getConnectionStartedInstance(connectionId);
-        const res = {
-          server: {
-            // cpu: os.cpus(),
-            mem: os.totalmem(),
-            freemem: os.freemem(),
-          },
-          methodRunner: await prgl.methodRunner?.getProcStats(),
-          onMountRunner: await prgl.onMountRunner?.getProcStats(),
-          tableConfigRunner: await prgl.tableConfigRunner?.getProcStats(),
-        };
-        return res;
       },
     }),
     getNodeTypes: defineAdminFunction({

@@ -1,3 +1,5 @@
+import type { ProstglesOnMount } from "prostgles-ui-server/schema-config";
+
 export const onMount: ProstglesOnMount = async ({ dbo: db, sql }) => {
   if (!db.cities) {
     console.warn("Creating tables...");
@@ -128,8 +130,10 @@ export const onMount: ProstglesOnMount = async ({ dbo: db, sql }) => {
   };
 
   const DAY = 1000 * 3600 * 24;
-  setTimeout(addForecasts, DAY); // Run every day
+  const nextForecastTimeout = setTimeout(addForecasts, DAY); // Run every day
   await addForecasts();
+
+  return () => clearTimeout(nextForecastTimeout);
 };
 
 type ForecastDetails = {

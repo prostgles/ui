@@ -124,7 +124,6 @@ export async function initConnectionManager(
               stateDatabaseConfig,
               dbs,
               _dbs: db,
-              connectionInfo: prglCon.connectionInfo,
             });
             /** Can happen due to error in onMount */
             await prglCon.prgl.update(hotReloadConfig).catch((e) => {

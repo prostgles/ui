@@ -4,12 +4,11 @@ import {
   type ServerFunctionDefinition,
   type ServerFunctionDefinitions,
 } from "prostgles-server";
+import type { OnReadyParams } from "prostgles-server/dist/initProstgles";
 import type { DBS } from "..";
-import { getCompiledTS } from "./connectionManagerUtils";
+import { getEvaledExports } from "./connectionManagerUtils";
 import { getAccessRule } from "./startConnection";
 import type { ConnectionManager } from "./ConnectionManager";
-import type { ConnectionDetails } from "@src/connectionUtils/getConnectionDetails";
-import { getConnectionFunctionRunner } from "./getConnectionFunctionRunner";
 import type { ConnectionHotReloadProperties } from "./getHotReloadConfigs";
 
 type Args = {
@@ -17,7 +16,6 @@ type Args = {
   databaseConfig: DBSSchema["database_configs"];
   connection: ConnectionHotReloadProperties;
   connectionManager: ConnectionManager;
-  connectionInfo: ConnectionDetails;
 };
 
 export const getConnectionServerFunctions = async ({
@@ -25,7 +23,6 @@ export const getConnectionServerFunctions = async ({
   dbs,
   connection,
   connectionManager,
-  connectionInfo,
 }: Args) => {
   const connectionFunctions = await dbs.published_methods.find({
     connection_id: connection.id,
@@ -74,31 +71,26 @@ export const getConnectionServerFunctions = async ({
         !isAllowedToRunFunction || !authContext ?
           undefined
         : async (validatedArgs?: Record<string, unknown>) => {
-            const sourceCode = getCompiledTS(m.run);
+            const user = authContext.user;
+            const method = getEvaledExports<{
+              run?: (
+                args: Record<string, unknown> | undefined,
+                params: OnReadyParams<void> & { user: typeof user },
+              ) => Promise<unknown>;
+            }>(m.run)?.run;
+            if (!method) throw "Published method must export a run function";
 
-            try {
-              const forkedPrglProcRunner = await getConnectionFunctionRunner({
-                dbs,
-                connection,
-                connectionManager,
-                databaseConfig,
-                connectionInfo,
-              }).catch((err) => {
-                console.error(
-                  "Error getting function runner for connection function",
-                  err,
-                );
-                return Promise.reject("Error setting up function runner");
-              });
-              return forkedPrglProcRunner.run({
-                type: "run",
-                code: sourceCode,
-                validatedArgs,
-                user: authContext.user,
-              });
-            } catch (err: any) {
-              return Promise.reject(err);
-            }
+            const activeConnection = connectionManager.getActiveConnection(
+              connection.id,
+            );
+            return method(validatedArgs, {
+              dbo: activeConnection.prgl.db,
+              db: activeConnection.prgl._db,
+              sql: activeConnection.prgl.sql,
+              tables: activeConnection.prgl.getSchema(),
+              reason: { type: "prgl.restart" },
+              user,
+            });
           };
 
       result[m.name] = {

@@ -7,8 +7,8 @@
     "start": "npm run build && cross-env NODE_ENV='production' node dist/server/src/index.js",
     "test": "npm run build && node test-runner.mjs",
     "lint": "eslint . --ext .ts --quiet --fix",
-    "dev": "npm ci && cross-env NODE_ENV='development' NODE_OPTIONS='--max-old-space-size=4048' concurrently --kill-others \"tsc -w\" \"tsc-alias -w\" \"node --watch --trace-warnings --inspect dist/server/src/index.js\"",
-    "dev:electron": "npm ci && cross-env NODE_ENV='development' NODE_OPTIONS='--max-old-space-size=4048' concurrently --kill-others \"tsc -w\" \"tsc-alias -w\" \"node --watch --trace-warnings --inspect dist/server/src/testElectron.js\""
+    "dev": "npm ci && cross-env NODE_ENV='development' NODE_OPTIONS='--max-old-space-size=4048' concurrently --kill-others \"tsc -w\" \"tsc-alias -w\" \"node --watch --watch-path=dist --trace-warnings --inspect dist/server/src/index.js\"",
+    "dev:electron": "npm ci && cross-env NODE_ENV='development' NODE_OPTIONS='--max-old-space-size=4048' concurrently --kill-others \"tsc -w\" \"tsc-alias -w\" \"node --watch --watch-path=dist --trace-warnings --inspect dist/server/src/testElectron.js\""
   },
   "author": "Prostgles LTD <office@prostgles.com>",
   "license": "",
@@ -32,7 +32,7 @@
     "otplib": "^12.0.1",
     "path-to-regexp": "^8.4.2",
     "pidusage": "^4.0.1",
-    "prostgles-server": "^4.2.580",
+    "prostgles-server": "^4.2.581",
     "qrcode": "^1.5.4",
     "simple-git": "^3.36.0",
     "smtp-server": "^3.19.2",

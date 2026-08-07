@@ -1,3 +1,4 @@
+import type { ProstglesOnMount } from "prostgles-ui-server/schema-config";
 const SECOND = 1e3;
 import { WebSocket } from "ws";
 
@@ -28,7 +29,7 @@ export const onMount: ProstglesOnMount = async ({ dbo: db, sql }) => {
     await db.market_caps.updateBatch(batchUpdate);
     await db.market_caps.insertMany(marketCaps, { onConflict: "DoUpdate" });
   };
-  setInterval(getMarketCaps, 30 * SECOND);
+  const marketCapsInterval = setInterval(getMarketCaps, 30 * SECOND);
   getMarketCaps();
 
   await db.symbols.insertMany([...FUNDING_SYMBOLS.map((pair) => ({ pair }))], {
@@ -39,8 +40,9 @@ export const onMount: ProstglesOnMount = async ({ dbo: db, sql }) => {
     await loadHistoricalFundingRates(db);
   }
 
+  let socket: WebSocket | undefined;
   if (realtimeFutures) {
-    const socket = new WebSocket(
+    socket = new WebSocket(
       "wss://fstream.binance.com/ws/!markPrice@arr@1s",
     );
     socket.onmessage = async (rawData) => {
@@ -80,8 +82,9 @@ export const onMount: ProstglesOnMount = async ({ dbo: db, sql }) => {
     await db.markets.insertMany(markets);
   }
 
+  let gasPricesInterval: ReturnType<typeof setInterval> | undefined;
   if (loadGasPrices) {
-    setInterval(async () => {
+    gasPricesInterval = setInterval(async () => {
       const markets = await db.markets.find();
       markets.forEach(async (market) => {
         const { id, rpcNode } = market;
@@ -138,7 +141,7 @@ export const onMount: ProstglesOnMount = async ({ dbo: db, sql }) => {
     }, frequency);
   }
 
-  setInterval(
+  const maintenanceInterval = setInterval(
     async () => {
       if (!loadGasPrices && !realtimeFutures) return;
       if (loadGasPrices) {
@@ -173,6 +176,13 @@ export const onMount: ProstglesOnMount = async ({ dbo: db, sql }) => {
     },
     60 * 60 * SECOND,
   );
+
+  return () => {
+    clearInterval(marketCapsInterval);
+    if (gasPricesInterval) clearInterval(gasPricesInterval);
+    clearInterval(maintenanceInterval);
+    socket?.close();
+  };
 };
 const HISTORICAL_DATA_START = Date.now() - 7 * 24 * 60 * 60 * 1000; // 7 days ago
 const loadHistorcalFutures = async (db) => {

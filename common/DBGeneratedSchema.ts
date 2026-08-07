@@ -932,7 +932,6 @@ export type GeneratedFunctionSchema = {
   "killPID": (args: {    connId: string;   id_query_hash: string;   type?: "cancel" | "terminate";  }) => Promise<Array<any>>;
   "setOnMount": (args: {    connId: string;   changes: {  on_mount_ts?: string;  on_mount_ts_disabled?: boolean; };  }) => Promise<void>;
   "setTableConfig": (args: {    connId: string;   changes: {  table_config_ts?: string;  table_config_ts_disabled?: boolean; };  }) => Promise<void>;
-  "getForkedProcStats": (args: {    connectionId: string;  }) => Promise<{ server: { mem: number; freemem: number }; methodRunner: (undefined | { pid: number; cpu: number; mem: number; uptime: number }); onMountRunner: (undefined | { pid: number; cpu: number; mem: number; uptime: number }); tableConfigRunner: (undefined | { pid: number; cpu: number; mem: number; uptime: number }) }>;
   "getNodeTypes": () => Promise<Array<{ content: string; filePath: string }>>;
   "installMCPServer": (args: {    name: string;  }) => Promise<void>;
   "getMCPServersStatus": (args: {    serverName: string;  }) => Promise<{ ok: boolean; message?: (undefined | string) }>;

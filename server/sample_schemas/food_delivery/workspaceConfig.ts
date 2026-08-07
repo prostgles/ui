@@ -1,51 +1,9 @@
-// Using the below typescript definition return
-// a json workspace/dashboard config for a property management company ensuring all table and column names are snake case:
+import type {
+  DBSSchema,
+  DBSSchemaForInsert,
+} from "prostgles-ui-server/schema-config";
 
-type WorkspaceConfig = {
-  workspaces: {
-    name: string;
-    options?: any;
-    windows: (
-      | {
-          type: "sql";
-          name: string;
-          sql: string;
-        }
-      | {
-          type: "table";
-          table_name: string;
-          columns?: {
-            name: string;
-            show?: boolean;
-            width?: number;
-            nested?: any;
-            style?:
-              | {
-                  type: "Conditional";
-                  conditions: {
-                    color: string;
-                    operator: "=";
-                    chipColor: string;
-                    condition: string;
-                    textColor: string;
-                    borderColor: string;
-                  }[];
-                }
-              | {
-                  type: "Barchart";
-                  barColor: string;
-                  textColor: string;
-                };
-            format?: any;
-          }[];
-          options?: any;
-          sort?: { asc: boolean; key: string }[];
-        }
-    )[];
-  }[];
-};
-
-export const workspaceConfig: WorkspaceConfig = {
+export const workspaceConfig = {
   workspaces: [
     {
       name: "Main",

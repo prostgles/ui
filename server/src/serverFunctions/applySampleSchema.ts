@@ -11,7 +11,7 @@ import type { SampleSchema, SampleSchemaDir } from "@common/utils";
 import { getEvaledExports } from "../ConnectionManager/connectionManagerUtils";
 import { actualRootDir } from "../electronConfig";
 import { runConnectionQuery } from "./getServerFunctions";
-import type { DBSSchemaForInsert } from "@common/publishUtils";
+import { syncSchemaConfig } from "../ConnectionManager/syncSchemaConfig";
 
 export const applySampleSchema = async (
   dbs: DBS,
@@ -32,27 +32,16 @@ export const applySampleSchema = async (
 
 export const applySchemaDir = async (
   dbs: DBS,
-  schema: SampleSchemaDir,
+  schema: SampleSchemaDir & { name: string; path: string },
   connectionId: string,
-  databaseConfigOverride?: Partial<DBSSchemaForInsert["database_configs"]>,
 ) => {
-  const { tableConfigTs, onMountTs, onInitSQL, connection, databaseConfig } =
-    schema;
-  if (onInitSQL) {
-    await runConnectionQuery(connectionId, onInitSQL, undefined, { dbs });
-  }
-  await dbs.database_configs.update(
-    { $existsJoined: { connections: { id: connectionId } } },
-    {
-      table_config_ts: tableConfigTs,
-      ...databaseConfig,
-      ...databaseConfigOverride,
-    },
-  );
-  await dbs.connections.update(
-    { id: connectionId },
-    { on_mount_ts: onMountTs, ...connection },
-  );
+  await syncSchemaConfig({
+    dbs,
+    connectionId,
+    schemaPath: path.join(schema.path, schema.name),
+    /** Sample projects are intentionally bundled inside this repository. */
+    allowCurrentProject: true,
+  });
 };
 
 const getFileIfExists = (path: string) => {

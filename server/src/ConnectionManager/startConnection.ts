@@ -4,13 +4,10 @@ import { API_ENDPOINTS } from "@common/utils";
 import prostgles from "prostgles-server";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
 import type { PRGLIOSocket } from "prostgles-server/dist/DboBuilder/DboBuilder";
+import type { InitResult } from "prostgles-server/dist/initProstgles";
 import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
 import { getIsSuperUser, type DB } from "prostgles-server/dist/Prostgles";
-import {
-  getSerialisableError,
-  pickKeys,
-  type AnyObject,
-} from "prostgles-types";
+import { pickKeys, type AnyObject } from "prostgles-types";
 import { addLog } from "../Logger";
 import type { SUser } from "../authConfig/sessionUtils";
 import { testDBConnection } from "../connectionUtils/testDBConnection";
@@ -20,6 +17,8 @@ import { getConnectionOnReady } from "./connectionOnReady";
 import { getConnectionPublish } from "./getConnectionPublish";
 import { getConnectionSocketPath } from "./getConnectionSocketPath";
 import { getHotReloadConfigs } from "./getHotReloadConfigs";
+import { getOnMount, getSchemaConfig } from "./connectionManagerUtils";
+import type { ProstglesOnMountCleanup } from "../schemaConfig";
 
 export const startConnection = async function (
   this: ConnectionManager,
@@ -36,6 +35,7 @@ export const startConnection = async function (
     }
     if (restartIfExists) {
       if (existingConnection.state === "started") {
+        await this.cleanupOnMount(existingConnection);
         await existingConnection.prgl.destroy();
       }
       this.prglConnections.delete(connectionId);
@@ -143,62 +143,58 @@ export const startConnection = async function (
           stateDatabaseConfig,
           _dbs,
           dbs,
-          connectionInfo,
         });
         const watchSchema = connection.db_watch_schema ? "*" : false;
-        const tableConfigRunner = await this.setTableConfig(
-          connection.id,
-          databaseConfig,
-          connectionInfo,
-        ).catch((e) => {
-          void dbs.alerts.insert({
-            severity: "error",
-            message: "Table config was disabled due to error",
-            database_config_id: databaseConfig.id,
-            connection_id: connection.id,
-            ui_path: {
-              page: "/connection-config",
-              section: "table_config",
-            },
-            data: getSerialisableError(e),
-          });
-          void dbs.database_configs.update(
-            { id: databaseConfig.id },
-            { table_config_ts_disabled: true },
+        const schemaConfig = getSchemaConfig(databaseConfig);
+        const {
+          connection: _connectionConfig,
+          databaseConfig: _databaseConfig,
+          onInitSQL: _onInitSQL,
+          onMount: _onMount,
+          workspaces: _workspaces,
+          ...schemaProstglesOptions
+        } = schemaConfig ?? {};
+        const onMount =
+          connection.on_mount_ts_disabled ? undefined : (
+            getOnMount({
+              config_sync: databaseConfig.config_sync,
+              on_mount_ts: connection.on_mount_ts,
+            })
           );
-        });
-        const onMountRunner = await this.setOnMount(
-          databaseConfig.id,
-          connection,
-          connectionInfo,
-          databaseConfig.config_sync,
-        ).catch((e) => {
-          void dbs.alerts.insert({
-            severity: "error",
-            message:
-              "On mount was disabled due to error " +
-              `\n\n${JSON.stringify(getErrorAsObject(e))}`,
-            database_config_id: databaseConfig.id,
-            connection_id: connection.id,
-            ui_path: {
-              page: "/connection-config",
-              section: "methods",
-            },
-          });
-          void dbs.connections.update(
-            { id: connection.id },
-            { on_mount_ts_disabled: true },
-          );
-        });
 
         const { disable_realtime } = connection;
-        const prgl = await prostgles<void, SUser>({
+        let onMountCleanup: ProstglesOnMountCleanup | undefined;
+        // eslint-disable-next-line prefer-const
+        let prgl: InitResult<void, SUser>;
+        let connectionStarted = false;
+        const attachOnMountCleanup = () => {
+          if (!connectionStarted || !onMountCleanup) return;
+          const activeConnection = this.getActiveConnectionSilentFail(
+            connection.id,
+          );
+          if (activeConnection?.prgl === prgl) {
+            activeConnection.onMountCleanup = onMountCleanup;
+          } else {
+            void Promise.resolve(onMountCleanup()).catch((error: unknown) => {
+              console.error("Error cleaning up an unmounted onMount", error);
+            });
+          }
+        };
+        const setOnMountCleanup = (
+          cleanup: Awaited<ReturnType<NonNullable<typeof onMount>>>,
+        ) => {
+          if (typeof cleanup !== "function") return;
+          onMountCleanup = cleanup;
+          attachOnMountCleanup();
+        };
+        prgl = await prostgles<void, SUser>({
+          ...schemaProstglesOptions,
           dbConnection: connectionInfo,
           ...hotReloadConfig,
           watchSchema,
           disableRealtime: disable_realtime ?? undefined,
           transactions: true,
-          joins: "inferred",
+          joins: schemaProstglesOptions.joins ?? "inferred",
           publish: getConnectionPublish({
             dbs,
             dbConf: databaseConfig,
@@ -236,15 +232,32 @@ export const startConnection = async function (
           onLog: (e) => {
             addLog(e, connectionId);
           },
-          onReady: getConnectionOnReady({
-            connectionManager: this,
-            dbs,
-            connection: connection,
-            databaseConfig,
-            onSetupReady: () => {
-              setInitState({ onReadyCalled: true });
-            },
-          }),
+          onReady: (params, update) => {
+            if (onMount && params.reason.type === "init") {
+              void Promise.resolve(onMount(params))
+                .then(setOnMountCleanup)
+                .catch((e: unknown) => {
+                  void dbs.alerts.insert({
+                    severity: "error",
+                    message:
+                      "On mount failed: " +
+                      `\n\n${JSON.stringify(getErrorAsObject(e))}`,
+                    database_config_id: databaseConfig.id,
+                    connection_id: connection.id,
+                    ui_path: { page: "/connection-config", section: "methods" },
+                  });
+                });
+            }
+            return getConnectionOnReady({
+              connectionManager: this,
+              dbs,
+              connection,
+              databaseConfig,
+              onSetupReady: () => {
+                setInitState({ onReadyCalled: true });
+              },
+            })(params, update);
+          },
         });
         this.prglConnections.set(connection.id, {
           state: "started",
@@ -257,12 +270,13 @@ export const startConnection = async function (
           socketUrl,
           con: connection,
           isReady: false,
-          methodRunner: undefined, // Set up later on demand
-          onMountRunner: onMountRunner ?? undefined,
-          tableConfigRunner: tableConfigRunner ?? undefined,
+          onMountCleanup:
+            typeof onMountCleanup === "function" ? onMountCleanup : undefined,
           isSuperUser: await getIsSuperUser(prgl._db),
           lastRestart: Date.now(),
         });
+        connectionStarted = true;
+        attachOnMountCleanup();
         void this.setSyncUserSub();
         setInitState({ prglReady: true });
       } catch (e) {

@@ -9,8 +9,14 @@ import type { DatabaseConfigs } from "..";
 import type { ConnectionManager } from "./ConnectionManager";
 import type { ConnectionHotReloadProperties } from "./getHotReloadConfigs";
 import type e from "express";
+import path from "path";
 import { getValidConfigPath } from "./getValidConfigPath";
-import type { SchemaConfig } from "../schemaConfig";
+import type { ProstglesOnMount, SchemaConfig } from "../schemaConfig";
+
+const schemaConfigCache = new Map<
+  string,
+  { lastSynced: string | undefined; config: SchemaConfig }
+>();
 
 export const getDatabaseConfigFilter = (c: ConnectionHotReloadProperties) =>
   pickKeys(c, ["db_name", "db_host", "db_port"]);
@@ -67,14 +73,29 @@ type TableDbConfig = Pick<
 type CompiledTableConfig = { tableConfig: TableConfig; dashboardConfig?: any };
 
 export const getSchemaConfig = (
-  dbConf: { config_sync?: { schemaPath?: string } | null },
+  dbConf: {
+    config_sync?: { schemaPath?: string; lastSynced?: string } | null;
+  },
+  options?: { allowCurrentProject?: boolean },
 ): SchemaConfig | undefined => {
-  const configPath = getValidConfigPath(dbConf);
+  const configPath = getValidConfigPath(dbConf, options);
   if (!configPath) return undefined;
 
-  /** Reload the project's entry point whenever the user syncs it. */
-  delete require.cache[require.resolve(configPath)];
-  return require(configPath) as SchemaConfig;
+  const lastSynced = dbConf.config_sync?.lastSynced;
+  const cached = schemaConfigCache.get(configPath);
+  if (cached && cached.lastSynced === lastSynced) return cached.config;
+
+  /** Reload the project and its local dependencies whenever the user syncs it. */
+  const projectPrefix = configPath + path.sep;
+  Object.keys(require.cache).forEach((modulePath) => {
+    if (modulePath === configPath || modulePath.startsWith(projectPrefix)) {
+      delete require.cache[modulePath];
+    }
+  });
+  const entryPoint = require.resolve(configPath);
+  const config = require(entryPoint) as SchemaConfig;
+  schemaConfigCache.set(configPath, { lastSynced, config });
+  return config;
 };
 
 const getCompiledTableConfig = ({
@@ -97,6 +118,18 @@ export const getTableConfig = (dbConf: TableDbConfig) => {
     return schemaConfig.tableConfig;
   }
   return getCompiledTableConfig(dbConf)?.tableConfig;
+};
+
+export const getOnMount = (
+  dbConf: Pick<DatabaseConfigs, "config_sync"> & {
+    on_mount_ts?: string | null;
+  },
+): ProstglesOnMount | undefined => {
+  const schemaConfig = getSchemaConfig(dbConf);
+  if (schemaConfig) return schemaConfig.onMount;
+  return getEvaledExports<{ onMount?: ProstglesOnMount }>(
+    dbConf.on_mount_ts ?? undefined,
+  )?.onMount;
 };
 
 export type FileTableConfigReferences = Record<
