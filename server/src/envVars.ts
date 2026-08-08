@@ -4,9 +4,12 @@ import type { DBSConnectionInfo } from "./electronConfig";
 import { actualRootDir } from "./electronConfig";
 import { DB_SSL_ENUM } from "./tableConfig/tableConfigConnections";
 import { validateConnection } from "./connectionUtils/validateConnection";
-const envFileVars = dotenv.config({
-  path: path.resolve(actualRootDir + "/../.env"),
-});
+const envFileVars =
+  process.env.PROSTGLES_UI_CONFIG ?
+    undefined
+  : dotenv.config({
+      path: path.resolve(actualRootDir + "/../.env"),
+    });
 
 export const {
   PRGL_USERNAME = "",
@@ -21,7 +24,7 @@ export const {
   POSTGRES_SSL,
   PROSTGLES_STRICT_COOKIE,
 } = {
-  ...(envFileVars.parsed ?? {}),
+  ...(envFileVars?.parsed ?? {}),
   ...process.env,
 } as Record<string, string>;
 

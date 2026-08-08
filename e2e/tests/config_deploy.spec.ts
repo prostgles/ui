@@ -1,5 +1,7 @@
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import {
+  appendFileSync,
+  copyFileSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
@@ -13,10 +15,26 @@ import {
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { expect, test } from "@playwright/test";
+import { goTo } from "./utils/goTo";
+import {
+  createDatabase,
+  disablePwdlessAdminAndCreateUser,
+  dropConnectionAndDatabase,
+  login,
+  runDbsSql,
+  type PageWIds,
+} from "./utils/utils";
+import { USERS } from "utils/constants";
 
 const serverDirectory = resolve(__dirname, "../../server");
-const cliPath = join(serverDirectory, "dist/server/src/cli.js");
+const cliPath = join(serverDirectory, "dist/server/src/cli/cli.js");
 const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
+
+const getCliEnvironment = () => {
+  const environment = { ...process.env };
+  delete environment.PRGL_TEST;
+  return environment;
+};
 
 const run = (command: string, args: string[], cwd: string) => {
   const result = spawnSync(command, args, {
@@ -58,6 +76,31 @@ const getPackedPaths = (output: string) => {
     }
     return file.path;
   });
+};
+
+const captureProcessOutput = (process: ChildProcess) => {
+  let output = "";
+  const append = (chunk: Buffer | string) => {
+    output = (output + chunk.toString()).slice(-10_000);
+    console.log(chunk.toString());
+  };
+  process.stdout?.on("data", append);
+  process.stderr?.on("data", append);
+  return () => output;
+};
+
+const stopProcess = async (process: ChildProcess) => {
+  if (process.exitCode !== null) return;
+  const exited = new Promise<void>((resolve) => process.once("exit", resolve));
+  process.kill("SIGTERM");
+  await Promise.race([
+    exited,
+    new Promise((resolve) => setTimeout(resolve, 5_000)),
+  ]);
+  if (process.exitCode === null) {
+    process.kill("SIGKILL");
+    await exited;
+  }
 };
 
 test.describe("Published config CLI", () => {
@@ -115,9 +158,153 @@ test.describe("Published config CLI", () => {
         configDirectory,
       );
 
-      expect(existsSync(join(configDirectory, "build", "index.js"))).toBe(true);
+      expect(
+        existsSync(join(configDirectory, "build", "src", "index.js")),
+      ).toBe(true);
     } finally {
       rmSync(temporaryDirectory, { recursive: true, force: true });
+    }
+  });
+
+  test("starts a generated config and exposes its dummy schema in the UI", async ({
+    page,
+  }) => {
+    test.setTimeout(180_000);
+    expect(existsSync(cliPath)).toBe(true);
+
+    const port = 3005;
+    const applicationStateDatabaseName = "cli_e2e_state_db";
+    const applicationDatabaseName = `cli_e2e_config_db`;
+    const schemaName = `cli_e2e_${process.pid}`;
+    const tableName = "started_from_config";
+    const temporaryDirectory = mkdtempSync(
+      join(tmpdir(), "prostgles-config-ui-e2e-"),
+    );
+    const configDirectory = join(temporaryDirectory, "config");
+    let configProcess: ChildProcess | undefined;
+
+    try {
+      run(
+        process.execPath,
+        [cliPath, "create", configDirectory],
+        serverDirectory,
+      );
+
+      const nodeModules = join(configDirectory, "node_modules");
+      mkdirSync(nodeModules, { recursive: true });
+      symlinkSync(serverDirectory, join(nodeModules, "prostgles"), "dir");
+      symlinkSync(
+        join(serverDirectory, "node_modules", "typescript"),
+        join(nodeModules, "typescript"),
+        "dir",
+      );
+
+      writeFileSync(
+        join(configDirectory, ".env"),
+        `
+          # Prostgles UI cli state database 
+          POSTGRES_HOST=127.0.0.1
+          POSTGRES_DB=${applicationStateDatabaseName}
+          POSTGRES_PORT=5432
+          POSTGRES_USER=usr
+          POSTGRES_PASSWORD=psw 
+
+          # Prostgles UI config database
+          PROSTGLES_UI_PORT=${port}
+          PROSTGLES_DATABASE_NAME=${applicationDatabaseName}
+        `,
+        {
+          encoding: "utf-8",
+        },
+      );
+
+      writeFileSync(
+        join(configDirectory, "src", "index.ts"),
+        `import { defineConfig } from "prostgles";
+
+export default defineConfig()({
+  id: ${JSON.stringify(applicationDatabaseName)},
+  createDatabase: true,
+  connection: {
+    name: ${JSON.stringify(applicationDatabaseName)},
+    type: "Standard",
+    db_host: process.env.PROSTGLES_DATABASE_HOST ?? process.env.POSTGRES_HOST ?? "localhost",
+    db_port: Number(process.env.PROSTGLES_DATABASE_PORT ?? process.env.POSTGRES_PORT ?? 5432),
+    db_name: process.env.PROSTGLES_DATABASE_NAME,
+    db_user: process.env.PROSTGLES_DATABASE_USER ?? process.env.POSTGRES_USER,
+    db_pass: process.env.PROSTGLES_DATABASE_PASSWORD ?? process.env.POSTGRES_PASSWORD,
+  },
+  schemaFilter: { ${JSON.stringify(schemaName)}: 1 },
+  onInitSQL: ${JSON.stringify(`
+    CREATE SCHEMA IF NOT EXISTS "${schemaName}";
+    CREATE TABLE IF NOT EXISTS "${schemaName}"."${tableName}" (
+      id integer primary key,
+      name text not null
+    );
+    INSERT INTO "${schemaName}"."${tableName}" (id, name)
+    VALUES (1, 'started from config')
+    ON CONFLICT (id) DO NOTHING;
+  `)},
+});
+`,
+      );
+
+      await goTo(page);
+      await disablePwdlessAdminAndCreateUser(page);
+      await login(page);
+
+      await runDbsSql(page, `CREATE DATABASE \${dbName:name};`, {
+        dbName: applicationStateDatabaseName,
+      });
+
+      configProcess = spawn(
+        process.execPath,
+        [cliPath, "start", "--config", configDirectory],
+        { cwd: serverDirectory, env: getCliEnvironment(), stdio: "pipe" },
+      );
+      const getLogs = captureProcessOutput(configProcess);
+      // await waitForServer(`http://127.0.0.1:${port}`, configProcess);
+      /** Listen for readiness from stdout */
+      while (true) {
+        if (configProcess.exitCode !== null) {
+          throw new Error(
+            `Config server exited with code ${configProcess.exitCode}`,
+          );
+        }
+        const output = getLogs();
+        if (
+          output.includes("Prostgles UI accessible at") &&
+          output.includes("Server started {")
+        ) {
+          break;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1_000));
+      }
+
+      const newPage: PageWIds = await page.context().newPage();
+
+      const url = `http://localhost:${port}`;
+      await goTo(newPage, url);
+      await disablePwdlessAdminAndCreateUser(newPage);
+      await login(newPage, USERS.test_user, url);
+
+      const connection = newPage.locator(
+        `[data-key=${JSON.stringify(applicationDatabaseName)}]`,
+      );
+      await expect(connection).toBeVisible({ timeout: 20_000 });
+      await connection
+        .locator('[data-command="Connection.openConnection"]')
+        .click();
+      await expect(
+        newPage
+          .getByTestId("dashboard.menu.tablesSearchList")
+          .locator(
+            `[data-key=${JSON.stringify([schemaName, tableName].join("."))}]`,
+          ),
+      ).toBeVisible();
+    } finally {
+      rmSync(temporaryDirectory, { recursive: true, force: true });
+      if (configProcess) stopProcess(configProcess);
     }
   });
 

@@ -26,8 +26,9 @@ void test("searchWebDevFiles: basic search", async () => {
 });
 
 void test("searchWebDevFiles: file name query", async () => {
+  const contentQuery = "usePrgl";
   const { result } = await searchWebDevFiles({
-    contentQuery: "usePrgl",
+    contentQuery,
     fileNameQuery: "PrglCoreContextProvider",
     web_app_directory,
     folder: "client",

@@ -1,10 +1,39 @@
 import type { DBS } from "..";
 import { connectionManager } from "..";
+import { testDBConnection } from "../connectionUtils/testDBConnection";
+import { validateConnection } from "../connectionUtils/validateConnection";
 import type { ConnectionInsert } from "../connectionUtils/validateConnection";
+import type { SchemaConfigConnection } from "../schemaConfig";
 import { upsertConnection } from "../upsertConnection";
 import { getSchemaConfig } from "./getSchemaConfig";
 import { syncSchemaConfig } from "./syncSchemaConfig";
 import type { DB } from "prostgles-server/dist/Prostgles";
+
+const createDatabaseIfMissing = async (
+  configuredConnection: SchemaConfigConnection,
+) => {
+  const connection = validateConnection(configuredConnection);
+  await testDBConnection(
+    {
+      ...connection,
+      type: "Standard",
+      db_conn: undefined,
+      db_name: "postgres",
+    },
+    false,
+    async (client) => {
+      const database = await client.oneOrNone<{ datname: string }>(
+        "SELECT datname FROM pg_catalog.pg_database WHERE datname = $1",
+        [connection.db_name],
+      );
+      if (!database) {
+        await client.none(`CREATE DATABASE \${db_name:name}`, {
+          db_name: connection.db_name,
+        });
+      }
+    },
+  );
+};
 
 /** Apply the config selected by the CLI after the state database is ready. */
 export const applyStartupSchemaConfig = async ({
@@ -37,6 +66,9 @@ export const applyStartupSchemaConfig = async ({
     throw new Error(
       "The config must provide connection.type and connection.db_conn or connection.db_host.",
     );
+  }
+  if (schemaConfig.createDatabase) {
+    await createDatabaseIfMissing(configuredConnection);
   }
 
   const existingConnection = await dbs.connections.findOne({

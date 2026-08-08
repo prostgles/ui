@@ -120,13 +120,16 @@ const getConfigEnvironment = (configPath: string) => {
     : {};
 };
 
+const serverEntryPath = path.join(__dirname, "..", "index.js");
+const serverDirectory = path.resolve(path.dirname(serverEntryPath), "../../..");
+
 const runServer = (configPath: string, mode: "development" | "production") =>
-  spawn(process.execPath, [path.join(__dirname, "index.js")], {
-    cwd: configPath,
+  spawn(process.execPath, [serverEntryPath], {
+    cwd: serverDirectory,
     stdio: "inherit",
     env: {
-      ...getConfigEnvironment(configPath),
       ...process.env,
+      ...getConfigEnvironment(configPath),
       NODE_ENV: mode,
       PROSTGLES_UI_CONFIG: configPath,
     },

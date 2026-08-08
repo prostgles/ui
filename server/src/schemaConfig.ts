@@ -80,6 +80,8 @@ export type SchemaConfig<
 > = SchemaConfigProstglesOptions<S, SUser> & {
   /** Stable deployment identifier. Required when starting through the CLI. */
   id?: string;
+  /** Create the configured PostgreSQL database during CLI startup when absent. */
+  createDatabase?: boolean;
   connection?: SchemaConfigConnection;
   databaseConfig?: SchemaConfigDatabase;
   onInitSQL?: string;

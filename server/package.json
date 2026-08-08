@@ -2,7 +2,7 @@
   "name": "prostgles",
   "version": "2.3.6",
   "description": "Prostgles UI runtime and configurable PostgreSQL dashboard",
-  "main": "dist/server/src/index.js",
+  "main": "dist/server/src/schemaConfig.js",
   "bin": {
     "prostgles": "dist/server/src/cli/cli.js"
   },
@@ -78,7 +78,7 @@
   "exports": {
     ".": {
       "types": "./dist/server/src/schemaConfig.d.ts",
-      "default": "./dist/server/src/index.js"
+      "default": "./dist/server/src/schemaConfig.js"
     }
   }
 }

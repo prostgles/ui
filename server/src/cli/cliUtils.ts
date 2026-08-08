@@ -8,7 +8,7 @@ export const cliTemplateFiles = {
   package: {
     private: true,
     version: "0.0.0",
-    main: "build/index.js",
+    main: "build/src/index.js",
     scripts: {
       build: "tsc --project tsconfig.json",
       dev: "prostgles dev --config .",
@@ -31,7 +31,7 @@ export const cliTemplateFiles = {
       target: "ES2022",
       module: "Node16",
       moduleResolution: "Node16",
-      rootDir: "prostgles",
+      rootDir: ".",
       outDir: "build",
       esModuleInterop: true,
       skipLibCheck: true,

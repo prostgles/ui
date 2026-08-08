@@ -1,7 +1,6 @@
 import { readFile } from "fs/promises";
 import { glob } from "glob";
 import { dirname, join } from "path";
-import { isDefined } from "prostgles-types";
 
 export const searchWebDevFiles = async ({
   contentQuery,

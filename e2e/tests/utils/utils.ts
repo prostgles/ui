@@ -783,16 +783,17 @@ export const setWspColLayout = async (page: PageWIds) => {
   await page.getByTestId("Popup.close").click();
 };
 export const disablePwdlessAdminAndCreateUser = async (page: PageWIds) => {
-  await goTo(page);
   await page
     .getByRole("link", { name: "Users" })
     .waitFor({ state: "visible", timeout: 60e3 });
   await page.getByRole("link", { name: "Users" }).click();
   await expect(page as PG).toHaveURL(/.*users/);
-  await page.goto("localhost:3004/users", {
-    waitUntil: "networkidle",
-    timeout: 10e3,
-  });
+  // const currentUrl = page.url();
+  // await page.goto();
+  // await page.goto(`${currentUrl}users`, {
+  //   waitUntil: "networkidle",
+  //   timeout: 10e3,
+  // });
   await page.getByRole("button", { name: "Create admin user" }).click();
   await page.locator("#username").fill(USERS.test_user);
   await page.locator("#new-password").fill(USERS.test_user);
