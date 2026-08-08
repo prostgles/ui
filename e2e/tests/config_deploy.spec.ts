@@ -152,7 +152,7 @@ test.describe("Published config CLI", () => {
         ),
       );
 
-      expect(packedPaths).toContain("dist/server/src/cli.js");
+      expect(packedPaths).toContain("dist/server/src/cli/cli.js");
       expect(packedPaths).toContain("dist/server/src/schemaConfig.js");
       expect(packedPaths).toContain("dist/server/src/schemaConfig.d.ts");
 
