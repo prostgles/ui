@@ -24,18 +24,16 @@ export const ConnectionConfigSync = () => {
 
   const { config_sync } = dbConf || {};
   const mustSave =
-    unsavedPath && dbConf && unsavedPath !== config_sync?.schemaPath;
+    unsavedPath && dbConf && unsavedPath !== config_sync?.configPath;
 
-  const schemaPath = unsavedPath ?? config_sync?.schemaPath;
+  const configPath = unsavedPath ?? config_sync?.configPath;
   const title = "Schema Config Project";
   return (
     <FlexCol className="ConnectionConfigSync">
       <PopupMenu
         title={title}
         headerRightContent={
-          <InfoRow className="p-p25 mr-p5">
-            Read-only Node.js project
-          </InfoRow>
+          <InfoRow className="p-p25 mr-p5">Read-only Node.js project</InfoRow>
         }
         positioning="center"
         clickCatchStyle={{ opacity: 1 }}
@@ -66,7 +64,7 @@ export const ConnectionConfigSync = () => {
               },
             }}
           >
-            {schemaPath || "Select project folder..."}
+            {configPath || "Select project folder..."}
           </Btn>
         }
         render={(pClose) => (
@@ -74,7 +72,7 @@ export const ConnectionConfigSync = () => {
             mode="pick-one"
             type="directory"
             onChange={setUnsavedPath}
-            value={schemaPath}
+            value={configPath}
           />
         )}
       />
@@ -88,12 +86,12 @@ export const ConnectionConfigSync = () => {
         variant="filled"
         disabledInfo={
           !syncSchema ? "Not allowed to sync schema"
-          : !schemaPath ?
+          : !configPath ?
             "No schema path selected"
           : undefined
         }
         onClickPromise={async () => {
-          await syncSchema!({ connectionId, schemaPath: schemaPath! });
+          await syncSchema!({ connectionId, configPath: configPath! });
         }}
       >
         {mustSave ? "Save and sync" : "Sync now"}

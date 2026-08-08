@@ -57,33 +57,33 @@ export const getSampleSchemas = (): SampleSchema[] => {
     .filter((name) => !name.startsWith("_"));
   return files
     .map((name) => {
-      const schemaPath = `${sampleSchemasDir}/${name}`;
+      const configPath = `${sampleSchemasDir}/${name}`;
       return {
         path: sampleSchemasDir,
         name,
-        ...getSampleSchema(schemaPath),
+        ...getSampleSchema(configPath),
       };
     })
     .filter(isDefined);
 };
 
-export const getSampleSchema = (schemaPath: string) => {
-  if (fs.statSync(`${schemaPath}`).isDirectory()) {
+export const getSampleSchema = (configPath: string) => {
+  if (fs.statSync(`${configPath}`).isDirectory()) {
     return {
       // path: sampleSchemasDir,
       // name,
       type: "dir" as const,
-      tableConfigTs: getFileIfExists(`${schemaPath}/tableConfig.ts`) ?? "",
-      onMountTs: getFileIfExists(`${schemaPath}/onMount.ts`) ?? "",
-      onInitSQL: getFileIfExists(`${schemaPath}/onInit.sql`) ?? "",
+      tableConfigTs: getFileIfExists(`${configPath}/tableConfig.ts`) ?? "",
+      onMountTs: getFileIfExists(`${configPath}/onMount.ts`) ?? "",
+      onInitSQL: getFileIfExists(`${configPath}/onInit.sql`) ?? "",
       connection: getEvaledExports<{
         default: SampleSchemaDir["connection"];
-      }>(getFileIfExists(`${schemaPath}/connection.ts`))?.default,
+      }>(getFileIfExists(`${configPath}/connection.ts`))?.default,
       databaseConfig: getEvaledExports<{
         default: SampleSchemaDir["databaseConfig"];
-      }>(getFileIfExists(`${schemaPath}/databaseConfig.ts`) ?? "")?.default,
+      }>(getFileIfExists(`${configPath}/databaseConfig.ts`) ?? "")?.default,
       workspaceConfig: getEvaledExports<SampleSchemaDir>(
-        getFileIfExists(`${schemaPath}/workspaceConfig.ts`),
+        getFileIfExists(`${configPath}/workspaceConfig.ts`),
       )?.workspaceConfig,
     };
   }
@@ -91,6 +91,6 @@ export const getSampleSchema = (schemaPath: string) => {
     // name,
     // path: sampleSchemasDir,
     type: "sql" as const,
-    file: getFileIfExists(schemaPath) ?? "",
+    file: getFileIfExists(configPath) ?? "",
   };
 };

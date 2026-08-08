@@ -61,23 +61,23 @@ export const syncSchemaConfig = async ({
   }
 };
 
-const compileSchemaConfigProject = (schemaPath: string) =>
+const compileSchemaConfigProject = (configPath: string) =>
   new Promise<void>((resolve, reject) => {
     let tscPath: string;
     try {
       tscPath = require.resolve("typescript/bin/tsc", {
-        paths: [schemaPath],
+        paths: [configPath],
       });
     } catch {
       reject(
         new Error(
-          `TypeScript is not installed in config project ${schemaPath}. Run npm install in that project.`,
+          `TypeScript is not installed in config project ${configPath}. Run npm install in that project.`,
         ),
       );
       return;
     }
-    const child = spawn(process.execPath, [tscPath, "--project", schemaPath], {
-      cwd: schemaPath,
+    const child = spawn(process.execPath, [tscPath, "--project", configPath], {
+      cwd: configPath,
       stdio: "inherit",
     });
     child.on("error", reject);
