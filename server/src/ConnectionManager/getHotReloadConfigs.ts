@@ -16,6 +16,7 @@ import { modifyClientSchema } from "./modifyClientSchema";
 import type { ServerFunctionDefinitions } from "prostgles-server";
 import { getSchemaConfig } from "./getSchemaConfig";
 import { IS_PROD } from "@src/init/utils";
+import { generatedFolderName } from "@src/cli/cliUtils";
 
 export type HotReloadConfigOptions = RequiredKeepUndefined<
   Pick<
@@ -142,7 +143,7 @@ export const getHotReloadConfigs = async ({
         : web_app_templated && web_app_directory ?
           join(web_app_directory, "client", "src", "api")
         : db_watch_schema && config_sync?.type === "cli" ?
-          join(config_sync.configPath, "prostgles")
+          join(config_sync.configPath, generatedFolderName)
         : undefined,
       functions: mergeFunctions(schemaConfig?.functions, connectionFunctions),
       modifyClientSchema: (table, tableConfig, userData) =>

@@ -12,9 +12,13 @@ const schemaConfigCache = new Map<
 type ConfigSync = NonNullable<DatabaseConfigs["config_sync"]>;
 type LoadedSchemaConfig = { config: SchemaConfig; configPath: string };
 
-const getConfigPath = (config: NonNullable<ConfigSync>) => {
-  const { configPath: configPathRaw, type } = config;
-  const configPath = path.resolve(configPathRaw);
+const validateConfigPath = (config: NonNullable<ConfigSync>) => {
+  const { configPath, type } = config;
+  if (configPath !== path.resolve(configPath)) {
+    throw new Error(
+      `config_sync.configPath must be an absolute path. "${configPath}" is not absolute.`,
+    );
+  }
   const projectPath = path.resolve(process.cwd());
   const bundledSamplesPath = path.resolve(actualRootDir, "sample_schemas");
   const isBundledSample = configPath.startsWith(bundledSamplesPath + path.sep);
@@ -30,20 +34,19 @@ const getConfigPath = (config: NonNullable<ConfigSync>) => {
       configPath.startsWith(projectPath + path.sep))
   ) {
     throw new Error(
-      `config_sync.configPath is set to "${configPathRaw}", which is inside the current project. Please set it to a path outside the project.`,
+      `config_sync.configPath is set to "${configPath}", which is inside the current project. Please set it to a path outside the project.`,
     );
   }
   if (!existsSync(configPath) || !statSync(configPath).isDirectory()) {
     throw new Error(
-      `config_sync.configPath must be a Node.js project folder. "${configPathRaw}" is not a directory.`,
+      `config_sync.configPath must be a Node.js project folder. "${configPath}" is not a directory.`,
     );
   }
   if (!existsSync(path.join(configPath, "package.json"))) {
     throw new Error(
-      `config_sync.configPath must contain a package.json. "${configPathRaw}" is not a Node.js project.`,
+      `config_sync.configPath must contain a package.json. "${configPath}" is not a Node.js project.`,
     );
   }
-  return configPath;
 };
 type SchemaConfigResult<T extends ConfigSync | undefined | null> =
   T extends ConfigSync ? LoadedSchemaConfig : undefined;
@@ -51,9 +54,9 @@ export const getSchemaConfig = <T extends ConfigSync | undefined | null>(
   config_sync: T,
 ): SchemaConfigResult<T> => {
   if (!config_sync) return undefined as SchemaConfigResult<T>;
-  const configPath = getConfigPath(config_sync);
+  validateConfigPath(config_sync);
 
-  const lastSynced = config_sync.lastSynced;
+  const { configPath, lastSynced } = config_sync;
   const cached = schemaConfigCache.get(configPath);
   if (cached && cached.lastSynced === lastSynced) {
     return { config: cached.config, configPath } as SchemaConfigResult<T>;

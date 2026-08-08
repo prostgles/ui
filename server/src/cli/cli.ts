@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
+import { fixIndent } from "@common/utils";
 import { spawn, type ChildProcess } from "child_process";
+import { parse } from "dotenv";
 import {
   existsSync,
   mkdirSync,
@@ -10,9 +12,11 @@ import {
   writeFileSync,
 } from "fs";
 import path from "path";
-import packageJson from "../package.json";
-import { parse } from "dotenv";
-import { fixIndent } from "@common/utils";
+import {
+  cliTemplateFiles,
+  generatedFolderName,
+  srcFolderName,
+} from "./cliUtils";
 
 const usage = `Usage:
   prostgles create <directory>
@@ -56,7 +60,8 @@ const createConfig = (targetPath: string) => {
   if (existsSync(targetPath) && readdirSync(targetPath).length) {
     throw new Error(`${targetPath} already exists and is not empty`);
   }
-  mkdirSync(path.join(targetPath, "prostgles"), { recursive: true });
+  mkdirSync(path.join(targetPath, "src"), { recursive: true });
+  mkdirSync(path.join(targetPath, "generated"), { recursive: true });
   const packageName = path
     .basename(targetPath)
     .replace(/[^a-z0-9-]/gi, "-")
@@ -68,19 +73,7 @@ const createConfig = (targetPath: string) => {
     JSON.stringify(
       {
         name: configId,
-        private: true,
-        version: "0.0.0",
-        main: "build/index.js",
-        scripts: {
-          build: "tsc --project tsconfig.json",
-          dev: "prostgles dev --config .",
-          start: "prostgles start --config .",
-        },
-        dependencies: { prostgles: `^${packageJson.version}` },
-        devDependencies: {
-          "@types/node": "^22.20.1",
-          typescript: "^5.9.3",
-        },
+        ...cliTemplateFiles.package,
       },
       null,
       2,
@@ -88,53 +81,31 @@ const createConfig = (targetPath: string) => {
   );
   writeFileSync(
     path.join(targetPath, "tsconfig.json"),
-    JSON.stringify(
-      {
-        compilerOptions: {
-          target: "ES2022",
-          module: "Node16",
-          moduleResolution: "Node16",
-          rootDir: "prostgles",
-          outDir: "build",
-          esModuleInterop: true,
-          skipLibCheck: true,
-          strict: true,
-        },
-        include: ["prostgles"],
-      },
-      null,
-      2,
-    ) + "\n",
+    JSON.stringify(cliTemplateFiles.tsconfig, null, 2) + "\n",
   );
   writeFileSync(
-    path.join(targetPath, "prostgles", "DBGeneratedSchema.ts"),
-    "export type DBGeneratedSchema = Record<string, { columns: Record<string, unknown> }>\n",
+    path.join(targetPath, generatedFolderName, "DBGeneratedSchema.ts"),
+    cliTemplateFiles.DBGeneratedSchema,
   );
   writeFileSync(
-    path.join(targetPath, "prostgles", "index.ts"),
-    `import { defineConfig } from "prostgles";
-import type { DBGeneratedSchema } from "./DBGeneratedSchema";
+    path.join(targetPath, srcFolderName, "index.ts"),
+    fixIndent(`
+      import { defineConfig } from "prostgles";
+      import type { DBGeneratedSchema } from "../${generatedFolderName}/DBGeneratedSchema";
 
-export default defineConfig<DBGeneratedSchema>()({
-  id: ${JSON.stringify(configId)},
-  connection: {
-    name: ${JSON.stringify(configId)},
-    type: "Connection URI",
-    db_conn: process.env.PROSTGLES_DATABASE_URL,
-  },
-  tableConfig: {},
-});
-`,
+      export default defineConfig<DBGeneratedSchema>()({
+        id: ${JSON.stringify(configId)},
+        connection: {
+          name: ${JSON.stringify(configId)},
+          type: "Connection URI",
+          db_conn: process.env.PROSTGLES_DATABASE_URL,
+        },
+        tableConfig: {},
+      });`),
   );
   writeFileSync(
     path.join(targetPath, ".env.example"),
-    fixIndent(`
-      # Prostgles UI state database. This stores users, settings, and connections.
-      # POSTGRES_URL=postgres://user:password@localhost:5432/prostgles_state
-
-      # Database exposed by this config.
-      # PROSTGLES_DATABASE_URL=postgres://user:password@localhost:5432/application
-`),
+    cliTemplateFiles.envExample,
   );
 
   console.log(
