@@ -4,7 +4,7 @@
   "description": "Prostgles UI runtime and configurable PostgreSQL dashboard",
   "main": "dist/server/src/index.js",
   "bin": {
-    "prostgles": "dist/server/src/cli.js"
+    "prostgles": "dist/server/src/cli/cli.js"
   },
   "scripts": {
     "compile": "cross-env NODE_ENV='production' NODE_OPTIONS='--max-old-space-size=2048' tsc && tsc-alias",
