@@ -20,6 +20,7 @@ import { tableConfig } from "../tableConfig/tableConfig";
 import { tableConfigMigrations } from "../tableConfig/tableConfigMigrations";
 import { prostglesOnReady } from "./prostglesOnReady";
 import { startDevHotReloadNotifier } from "./startDevHotReloadNotifier";
+import { IS_PROD } from "./utils";
 
 type StartArguments = {
   app: Express;
@@ -87,7 +88,6 @@ export const startProstgles = async ({
         errorType: "connection",
       };
     }
-    const IS_PROD = process.env.NODE_ENV === "production";
 
     /** Prevent electron access denied error (cannot edit files in the install directory in electron) */
     const tsGeneratedTypesDir =

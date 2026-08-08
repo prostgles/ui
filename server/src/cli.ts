@@ -56,7 +56,7 @@ const createConfig = (targetPath: string) => {
   if (existsSync(targetPath) && readdirSync(targetPath).length) {
     throw new Error(`${targetPath} already exists and is not empty`);
   }
-  mkdirSync(path.join(targetPath, "src"), { recursive: true });
+  mkdirSync(path.join(targetPath, "prostgles"), { recursive: true });
   const packageName = path
     .basename(targetPath)
     .replace(/[^a-z0-9-]/gi, "-")
@@ -94,24 +94,24 @@ const createConfig = (targetPath: string) => {
           target: "ES2022",
           module: "Node16",
           moduleResolution: "Node16",
-          rootDir: "src",
+          rootDir: "prostgles",
           outDir: "build",
           esModuleInterop: true,
           skipLibCheck: true,
           strict: true,
         },
-        include: ["src"],
+        include: ["prostgles"],
       },
       null,
       2,
     ) + "\n",
   );
   writeFileSync(
-    path.join(targetPath, "src", "DBGeneratedSchema.ts"),
+    path.join(targetPath, "prostgles", "DBGeneratedSchema.ts"),
     "export type DBGeneratedSchema = Record<string, { columns: Record<string, unknown> }>\n",
   );
   writeFileSync(
-    path.join(targetPath, "src", "index.ts"),
+    path.join(targetPath, "prostgles", "index.ts"),
     `import { defineConfig } from "prostgles";
 import type { DBGeneratedSchema } from "./DBGeneratedSchema";
 
@@ -169,7 +169,7 @@ const watchConfig = (configPath: string, onChange: () => void) => {
       .filter((entry) => entry.isDirectory() && entry.name !== "node_modules")
       .forEach((entry) => visit(path.join(directory, entry.name)));
   };
-  visit(path.join(configPath, "src"));
+  visit(path.join(configPath, "prostgles"));
   return () => watchers.forEach((watcher) => watcher.close());
 };
 

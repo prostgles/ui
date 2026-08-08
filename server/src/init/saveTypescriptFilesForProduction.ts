@@ -2,6 +2,7 @@ import { getRootDir } from "@src/electronConfig";
 import { tout } from "@src/utils/tout";
 import { readFileSync, writeFileSync } from "fs";
 import { join } from "path";
+import { IS_PROD } from "./utils";
 
 export const dashboardTypesContent = readFileSync(
   join(__dirname, "..", "..", "..", "..", "..", "common", "DashboardTypes.ts"),
@@ -16,7 +17,7 @@ if (!dashboardTypesContent) {
  * save them as built js files.
  */
 export const saveTypescriptFilesForProduction = async () => {
-  if (process.env.NODE_ENV === "production") return; // Skip in production
+  if (IS_PROD) return; // Skip in production
   const commonDir = `${getRootDir()}/../common`;
 
   await tout(3000); // Wait for any potential file changes to settle

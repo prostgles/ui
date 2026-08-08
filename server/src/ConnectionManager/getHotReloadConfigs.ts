@@ -13,9 +13,9 @@ import type { CONNECTION_HOT_RELOAD_COLUMNS } from "./initConnectionManager";
 import { parseTableConfig } from "./parseTableConfig";
 import type { RequiredKeepUndefined } from "@common/utils";
 import { modifyClientSchema } from "./modifyClientSchema";
-import { getSchemaConfig } from "./connectionManagerUtils";
-import { getValidConfigPath } from "./getValidConfigPath";
 import type { ServerFunctionDefinitions } from "prostgles-server";
+import { getSchemaConfig } from "./getSchemaConfig";
+import { IS_PROD } from "@src/init/utils";
 
 export type HotReloadConfigOptions = RequiredKeepUndefined<
   Pick<
@@ -64,11 +64,8 @@ export const getHotReloadConfigs = async ({
   dbs: DBS;
   _dbs: DB;
 }) => {
-  const schemaConfig = getSchemaConfig(databaseConfig);
-  const schemaConfigPath =
-    process.env.NODE_ENV === "production" || !schemaConfig ?
-      undefined
-    : getValidConfigPath(databaseConfig);
+  const loadedSchemaConfig = getSchemaConfig(databaseConfig.config_sync);
+  const schemaConfig = loadedSchemaConfig?.config;
   const configuredConnection = {
     ...connection,
     ...schemaConfig?.connection,
@@ -115,14 +112,14 @@ export const getHotReloadConfigs = async ({
     activeConnection.socketPath = socketPath;
     activeConnection.socketUrl = socketUrl;
   }
-  const { web_app_templated, web_app_directory, db_schema_filter } =
-    configuredConnection;
-  const tsGeneratedTypesDir =
-    schemaConfigPath ?
-      join(schemaConfigPath, "src")
-    : web_app_templated && web_app_directory ?
-      join(web_app_directory, "client", "src", "api")
-    : undefined;
+
+  const { config_sync } = configuredDatabaseConfig;
+  const {
+    web_app_templated,
+    web_app_directory,
+    db_schema_filter,
+    db_watch_schema,
+  } = configuredConnection;
 
   const connectionFunctions = await getConnectionServerFunctions({
     databaseConfig,
@@ -140,7 +137,13 @@ export const getHotReloadConfigs = async ({
       auth,
       schemaFilter: schemaConfig?.schemaFilter ??
         db_schema_filter ?? { public: 1 },
-      tsGeneratedTypesDir,
+      tsGeneratedTypesDir:
+        IS_PROD ? undefined
+        : web_app_templated && web_app_directory ?
+          join(web_app_directory, "client", "src", "api")
+        : db_watch_schema && config_sync?.type === "cli" ?
+          join(config_sync.configPath, "prostgles")
+        : undefined,
       functions: mergeFunctions(schemaConfig?.functions, connectionFunctions),
       modifyClientSchema: (table, tableConfig, userData) =>
         modifyClientSchema({

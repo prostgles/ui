@@ -17,8 +17,10 @@ import { getConnectionOnReady } from "./connectionOnReady";
 import { getConnectionPublish } from "./getConnectionPublish";
 import { getConnectionSocketPath } from "./getConnectionSocketPath";
 import { getHotReloadConfigs } from "./getHotReloadConfigs";
-import { getOnMount, getSchemaConfig } from "./connectionManagerUtils";
+import { getOnMount } from "./connectionManagerUtils";
 import type { ProstglesOnMountCleanup } from "../schemaConfig";
+import { getSchemaConfig } from "./getSchemaConfig";
+import { IS_PROD } from "@src/init/utils";
 
 export const startConnection = async function (
   this: ConnectionManager,
@@ -144,12 +146,13 @@ export const startConnection = async function (
           _dbs,
           dbs,
         });
-        const watchSchema = connection.db_watch_schema ? "*" : (
-          process.env.NODE_ENV !== "production" && databaseConfig.config_sync ?
-            "hotReloadMode"
-          : false
-        );
-        const schemaConfig = getSchemaConfig(databaseConfig);
+        const watchSchema =
+          connection.db_watch_schema ? "*"
+          : !IS_PROD && databaseConfig.config_sync ? "hotReloadMode"
+          : false;
+        const schemaConfig = getSchemaConfig(
+          databaseConfig.config_sync,
+        )?.config;
         const {
           connection: _connectionConfig,
           databaseConfig: _databaseConfig,

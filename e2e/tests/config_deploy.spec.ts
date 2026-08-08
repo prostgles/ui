@@ -81,9 +81,11 @@ test.describe("Published config CLI", () => {
       expect(existsSync(join(configDirectory, "package.json"))).toBe(true);
       expect(existsSync(join(configDirectory, "tsconfig.json"))).toBe(true);
       expect(existsSync(join(configDirectory, ".env.example"))).toBe(true);
-      expect(existsSync(join(configDirectory, "src", "index.ts"))).toBe(true);
+      expect(existsSync(join(configDirectory, "prostgles", "index.ts"))).toBe(
+        true,
+      );
       expect(
-        existsSync(join(configDirectory, "src", "DBGeneratedSchema.ts")),
+        existsSync(join(configDirectory, "prostgles", "DBGeneratedSchema.ts")),
       ).toBe(true);
 
       expect(
@@ -93,7 +95,7 @@ test.describe("Published config CLI", () => {
         readFileSync(join(configDirectory, "package.json"), "utf8"),
       ).toContain(`"start": "prostgles start --config ."`);
       expect(
-        readFileSync(join(configDirectory, "src", "index.ts"), "utf8"),
+        readFileSync(join(configDirectory, "prostgles", "index.ts"), "utf8"),
       ).toContain(`import { defineConfig } from "prostgles";`);
 
       const nodeModules = join(configDirectory, "node_modules");

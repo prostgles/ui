@@ -1,8 +1,8 @@
 import type e from "express";
-import { isDevelopment } from "./utils";
+import { IS_DEV } from "./utils";
 
 export const addDevImageProxyRoute = (app: e.Express): void => {
-  if (!isDevelopment) {
+  if (!IS_DEV) {
     return;
   }
   app.get("/dev-proxy/image", async (req, res) => {

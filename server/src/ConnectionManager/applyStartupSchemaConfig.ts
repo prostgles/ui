@@ -2,8 +2,7 @@ import type { DBS } from "..";
 import { connectionManager } from "..";
 import type { ConnectionInsert } from "../connectionUtils/validateConnection";
 import { upsertConnection } from "../upsertConnection";
-import { getSchemaConfig } from "./connectionManagerUtils";
-import { getValidConfigPath } from "./getValidConfigPath";
+import { getSchemaConfig } from "./getSchemaConfig";
 import { syncSchemaConfig } from "./syncSchemaConfig";
 import type { DB } from "prostgles-server/dist/Prostgles";
 
@@ -15,14 +14,20 @@ export const applyStartupSchemaConfig = async ({
   dbs: DBS;
   db: DB;
 }) => {
-  const schemaPath = process.env.PROSTGLES_UI_CONFIG;
-  if (!schemaPath) return;
+  const configPath = process.env.PROSTGLES_UI_CONFIG;
+  if (!configPath) return;
 
-  const config_sync = { schemaPath };
-  const resolvedPath = getValidConfigPath({ config_sync })!;
-  const schemaConfig = getSchemaConfig({ config_sync });
-  if (!schemaConfig?.id) {
-    throw new Error("The config must export an `id` when started through the CLI.");
+  const config_sync = {
+    configPath,
+    type: "cli",
+    lastSynced: new Date().toISOString(),
+  } as const;
+  const loadedSchemaConfig = getSchemaConfig(config_sync);
+  const schemaConfig = loadedSchemaConfig.config;
+  if (!schemaConfig.id) {
+    throw new Error(
+      "The config must export an `id` when started through the CLI.",
+    );
   }
   const configuredConnection = schemaConfig.connection;
   if (
@@ -51,7 +56,8 @@ export const applyStartupSchemaConfig = async ({
   await syncSchemaConfig({
     dbs,
     connectionId: connection.id,
-    schemaPath: resolvedPath,
+    configPath: loadedSchemaConfig.configPath,
+    type: "cli",
   });
   await connectionManager.startConnection(connection.id, dbs, db);
 };

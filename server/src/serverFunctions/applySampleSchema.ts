@@ -38,9 +38,8 @@ export const applySchemaDir = async (
   await syncSchemaConfig({
     dbs,
     connectionId,
-    schemaPath: path.join(schema.path, schema.name),
-    /** Sample projects are intentionally bundled inside this repository. */
-    allowCurrentProject: true,
+    configPath: path.join(schema.path, schema.name),
+    type: "sample-schema",
   });
 };
 

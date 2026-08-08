@@ -680,7 +680,8 @@ export const tableConfigDatabaseConfig: TableConfig<{ en: 1 }> = {
       config_sync: {
         nullable: true,
         jsonbSchemaType: {
-          schemaPath: "string",
+          configPath: "string",
+          type: { enum: ["sample-schema", "cli"] },
           lastSynced: "Date",
         },
       },

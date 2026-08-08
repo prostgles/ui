@@ -8,6 +8,7 @@ import { createAgenticWorkflowPrompt } from "./defaultPrompts/createAgenticWorkf
 import { setupLLMProviders } from "./setupLLMProviders";
 import { createDashboardsPrompt } from "./defaultPrompts/createDashboards.prompt";
 import { basePrompt } from "./defaultPrompts/base.prompt";
+import { IS_PROD } from "@src/init/utils";
 
 type UiToolName =
   keyof (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"];
@@ -109,10 +110,7 @@ export const setupLLM = async (dbs: DBS) => {
       { onConflict: "DoUpdate", returning: { name: 1 } },
     );
 
-    if (
-      !getElectronConfig()?.isElectron &&
-      process.env.NODE_ENV !== "production"
-    ) {
+    if (!getElectronConfig()?.isElectron && !IS_PROD) {
       await dbs.llm_prompts.insert(
         {
           name: "Web app development",

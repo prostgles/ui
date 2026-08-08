@@ -327,10 +327,10 @@ export const getAdminServerFunctions = (
     syncSchema: defineAdminFunction({
       input: {
         connectionId: "string",
-        schemaPath: "string",
+        configPath: "string",
       },
-      run: ({ connectionId, schemaPath }, { dbs }) =>
-        syncSchemaConfig({ dbs, connectionId, schemaPath }),
+      run: ({ connectionId, configPath }, { dbs }) =>
+        syncSchemaConfig({ dbs, connectionId, configPath, type: "cli" }),
     }),
     refreshModels: defineAdminFunction({
       run: (_, { dbs }) => refreshModels(dbs),
