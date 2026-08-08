@@ -26,6 +26,13 @@ npm i
 npm run lint
 npm test
 
+# Test cli
+cd ../client 
+npm run build
+cd ../e2e
+npm i
+npm run test:cli
+sleep 3
 cd ..
 
 run_e2e_tests() {
@@ -52,5 +59,4 @@ run_e2e_tests() {
   teardown_test_server
 }
 
-run_e2e_tests test:cli
 run_e2e_tests test

@@ -1,12 +1,11 @@
+import { expect, test } from "@playwright/test";
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import {
-  appendFileSync,
-  copyFileSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
-  readFileSync,
   readdirSync,
+  readFileSync,
   rmdirSync,
   rmSync,
   symlinkSync,
@@ -14,17 +13,15 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { expect, test } from "@playwright/test";
+import { USERS } from "utils/constants";
 import { goTo } from "./utils/goTo";
+import * as pg from "pg";
+
 import {
-  createDatabase,
   disablePwdlessAdminAndCreateUser,
-  dropConnectionAndDatabase,
   login,
-  runDbsSql,
   type PageWIds,
 } from "./utils/utils";
-import { USERS } from "utils/constants";
 
 const serverDirectory = resolve(__dirname, "../../server");
 const cliPath = join(serverDirectory, "dist/server/src/cli/cli.js");
@@ -167,13 +164,34 @@ test.describe("Published config CLI", () => {
   });
 
   test("starts a generated config and exposes its dummy schema in the UI", async ({
-    page,
+    page: p,
   }) => {
+    const page: PageWIds = p as PageWIds;
     test.setTimeout(180_000);
     expect(existsSync(cliPath)).toBe(true);
 
     const port = 3005;
-    const applicationStateDatabaseName = "cli_e2e_state_db";
+    const applicationStateDatabaseName = "db";
+    const connection = new pg.Client({
+      host: "127.0.0.1",
+      port: 5432,
+      user: "usr",
+      password: "psw",
+      database: "postgres",
+    });
+    await connection.connect();
+    /** Re-create db database */
+    await connection.query(
+      `DROP DATABASE IF EXISTS ${applicationStateDatabaseName} WITH (FORCE);`,
+    );
+    await connection.query(
+      `CREATE DATABASE ${applicationStateDatabaseName} WITH OWNER usr;`,
+    );
+
+    connection.on("error", console.error);
+    connection.end();
+
+    // const applicationStateDatabaseName = "cli_e2e_state_db";
     const applicationDatabaseName = `cli_e2e_config_db`;
     const schemaName = `cli_e2e_${process.pid}`;
     const tableName = "started_from_config";
@@ -249,14 +267,6 @@ export default defineConfig()({
 `,
       );
 
-      await goTo(page);
-      await disablePwdlessAdminAndCreateUser(page);
-      await login(page);
-
-      await runDbsSql(page, `CREATE DATABASE \${dbName:name};`, {
-        dbName: applicationStateDatabaseName,
-      });
-
       configProcess = spawn(
         process.execPath,
         [cliPath, "start", "--config", configDirectory],
@@ -280,15 +290,14 @@ export default defineConfig()({
         }
         await new Promise((resolve) => setTimeout(resolve, 1_000));
       }
-
-      const newPage: PageWIds = await page.context().newPage();
+      await new Promise((resolve) => setTimeout(resolve, 3_000));
 
       const url = `http://localhost:${port}`;
-      await goTo(newPage, url);
-      await disablePwdlessAdminAndCreateUser(newPage);
-      await login(newPage, USERS.test_user, url);
+      await goTo(page, url);
+      await disablePwdlessAdminAndCreateUser(page);
+      await login(page, USERS.test_user, url);
 
-      const connection = newPage.locator(
+      const connection = page.locator(
         `[data-key=${JSON.stringify(applicationDatabaseName)}]`,
       );
       await expect(connection).toBeVisible({ timeout: 20_000 });
@@ -296,7 +305,7 @@ export default defineConfig()({
         .locator('[data-command="Connection.openConnection"]')
         .click();
       await expect(
-        newPage
+        page
           .getByTestId("dashboard.menu.tablesSearchList")
           .locator(
             `[data-key=${JSON.stringify([schemaName, tableName].join("."))}]`,
@@ -304,7 +313,9 @@ export default defineConfig()({
       ).toBeVisible();
     } finally {
       rmSync(temporaryDirectory, { recursive: true, force: true });
-      if (configProcess) stopProcess(configProcess);
+      if (configProcess) {
+        await stopProcess(configProcess);
+      }
     }
   });
 

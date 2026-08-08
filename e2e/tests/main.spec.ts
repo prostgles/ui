@@ -245,6 +245,7 @@ test.describe("Main test", () => {
 
     await page.waitForTimeout(500);
     if (!localNoAuthSetup) {
+      await goTo(page);
       await disablePwdlessAdminAndCreateUser(page);
     }
     await login(page);

@@ -166,6 +166,14 @@ const run = async (configPath: string, isDev: boolean) => {
   };
   start();
 
+  let closeWatchers = undefined as (() => void) | undefined;
+  const cleanup = () => {
+    closeWatchers?.();
+    void stop();
+  };
+  process.once("SIGINT", cleanup);
+  process.once("SIGTERM", cleanup);
+
   if (!isDev) return;
   let timer: NodeJS.Timeout | undefined;
   const rebuild = () => {
@@ -184,13 +192,8 @@ const run = async (configPath: string, isDev: boolean) => {
       })();
     }, 100);
   };
-  const closeWatchers = watchConfig(configPath, rebuild);
-  const cleanup = () => {
-    closeWatchers();
-    void stop();
-  };
-  process.once("SIGINT", cleanup);
-  process.once("SIGTERM", cleanup);
+
+  closeWatchers = watchConfig(configPath, rebuild);
 };
 
 const main = async () => {
