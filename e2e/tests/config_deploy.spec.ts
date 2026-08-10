@@ -251,6 +251,7 @@ export default defineConfig()({
     db_name: process.env.PROSTGLES_DATABASE_NAME,
     db_user: process.env.PROSTGLES_DATABASE_USER ?? process.env.POSTGRES_USER,
     db_pass: process.env.PROSTGLES_DATABASE_PASSWORD ?? process.env.POSTGRES_PASSWORD,
+    db_ssl: "disable",
   },
   schemaFilter: { ${JSON.stringify(schemaName)}: 1 },
   onInitSQL: ${JSON.stringify(`
