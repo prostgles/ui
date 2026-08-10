@@ -254,6 +254,7 @@ test.describe("Published config CLI", () => {
     const applicationDatabaseName = `cli_e2e_config_db`;
     const schemaName = `cli_e2e_${process.pid}`;
     const tableName = "started_from_config";
+    const deniedTableName = "not_published_from_config";
     const temporaryDirectory = mkdtempSync(
       join(tmpdir(), "prostgles-config-ui-e2e-"),
     );
@@ -295,6 +296,7 @@ test.describe("Published config CLI", () => {
         },
       );
       const configFunctionName = "getDeploymentStatus";
+      const deniedFunctionName = "getPrivateDeploymentStatus";
       const configFunctionResult = "config deployment function";
       writeFileSync(
         join(configDirectory, "src", "index.ts"),
@@ -314,9 +316,19 @@ export default defineConfig()({
     db_ssl: "disable",
   },
   schemaFilter: { ${JSON.stringify(schemaName)}: 1 },
-  functions: () => ({
+  publish: ({ user }) => user?.type === "admin" ? ({
+    ${JSON.stringify([schemaName, tableName].join("."))}: {
+      select: "*",
+    },
+  }) : null,
+  functions: (params) => ({
     ${JSON.stringify(configFunctionName)}: {
-      run: () => ${JSON.stringify(configFunctionResult)},
+      run: params?.user?.type === "admin"
+        ? () => ${JSON.stringify(configFunctionResult)}
+        : undefined,
+    },
+    ${JSON.stringify(deniedFunctionName)}: {
+      run: undefined,
     },
   }),
   onInitSQL: ${JSON.stringify(`
@@ -328,6 +340,10 @@ export default defineConfig()({
     INSERT INTO "${schemaName}"."${tableName}" (id, name)
     VALUES (1, 'started from config')
     ON CONFLICT (id) DO NOTHING;
+    CREATE TABLE IF NOT EXISTS "${schemaName}"."${deniedTableName}" (
+      id integer primary key,
+      name text not null
+    );
   `)},
 });
 `,
@@ -370,18 +386,37 @@ export default defineConfig()({
       await connection
         .locator('[data-command="Connection.openConnection"]')
         .click();
+      const tablesList = page.getByTestId(
+        "dashboard.menu.tablesSearchList",
+      );
+      const publishedTableName = [schemaName, tableName].join(".");
       await expect(
-        page
-          .getByTestId("dashboard.menu.tablesSearchList")
-          .locator(
-            `[data-key=${JSON.stringify([schemaName, tableName].join("."))}]`,
-          ),
+        tablesList.locator(
+          `[data-key=${JSON.stringify(publishedTableName)}]`,
+        ),
       ).toBeVisible();
+      await expect(
+        tablesList.locator(
+          `[data-key=${JSON.stringify([schemaName, deniedTableName].join("."))}]`,
+        ),
+      ).not.toBeAttached();
 
-      await page
-        .getByTestId("dashboard.menu.serverSideFunctionsList")
-        .locator(getDataKey(configFunctionName))
-        .click();
+      const publishedRows = await page.evaluate(
+        async (qualifiedTableName) =>
+          await (window as any).db[qualifiedTableName].find(),
+        publishedTableName,
+      );
+      expect(publishedRows).toEqual([
+        { id: 1, name: "started from config" },
+      ]);
+
+      const functionsList = page.getByTestId(
+        "dashboard.menu.serverSideFunctionsList",
+      );
+      await expect(
+        functionsList.locator(getDataKey(deniedFunctionName)),
+      ).not.toBeAttached();
+      await functionsList.locator(getDataKey(configFunctionName)).click();
 
       await page.getByText("Run", { exact: true }).click();
 

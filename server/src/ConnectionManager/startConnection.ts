@@ -199,11 +199,13 @@ export const startConnection = async function (
           disableRealtime: disable_realtime ?? undefined,
           transactions: true,
           joins: schemaProstglesOptions.joins ?? "inferred",
-          publish: getConnectionPublish({
-            dbs,
-            dbConf: databaseConfig,
-            connection: connection,
-          }),
+          publish:
+            schemaProstglesOptions.publish ??
+            getConnectionPublish({
+              dbs,
+              dbConf: databaseConfig,
+              connection: connection,
+            }),
           // DEBUG_MODE: true,
           onConnectionError: (error) => {
             const nonReconnectableErrorCodes = {

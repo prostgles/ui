@@ -57,8 +57,8 @@ export type SchemaConfigDatabase = Partial<
 
 /**
  * Startup options which a config project may provide to the primary Prostgles
- * instance. Transport, authentication, authorization, storage wiring, and
- * connection lifecycle remain owned by the host application.
+ * instance. Transport, authentication, storage wiring, and connection
+ * lifecycle remain owned by the host application.
  */
 export type SchemaConfigProstglesOptions<
   S = void,
@@ -67,6 +67,7 @@ export type SchemaConfigProstglesOptions<
   ProstglesInitOptions<S, SUser>,
   | "functions"
   | "joins"
+  | "publish"
   | "schemaFilter"
   | "tableConfig"
   | "tableConfigMigrations"
