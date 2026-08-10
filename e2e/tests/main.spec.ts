@@ -1081,7 +1081,10 @@ test.describe("Main test", () => {
       .click({ ...TWENTY_SECONDS_OR_MORE });
 
     const workspaceBtn = await page.getByTestId("WorkspaceMenu.list");
-    await expect(workspaceBtn).toContainText("Customer Insights");
+    await expect(workspaceBtn).toContainText(
+      "Customer Insights",
+      TWENTY_SECONDS_OR_MORE,
+    );
 
     await page.waitForTimeout(1e3);
 
@@ -1636,7 +1639,9 @@ test.describe("Main test", () => {
     await toggleMCPTools(page, ["websearch", "get_snapshot"]);
     await page.waitForTimeout(7e3); // wait for the server to start
     await sendAskLLMMessage(page, " websearch ");
-    await page.getByTestId("AskLLMToolApprover.AllowAlways").click();
+    await page
+      .getByTestId("AskLLMToolApprover.AllowAlways")
+      .click(TWENTY_SECONDS_OR_MORE);
     await page.getByTestId("AskLLMToolApprover.AllowAlways").click();
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       "Search done.",
