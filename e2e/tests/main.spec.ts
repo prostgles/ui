@@ -69,6 +69,7 @@ import {
 } from "./utils/utils";
 
 import { ROOT_DIR } from "svgScreenshots/utils/constants";
+import { MINUTE } from "common/utils";
 
 const schemaGraphTestDbName = "financial.sql";
 const DB_NAMES = {
@@ -2994,6 +2995,9 @@ test.describe("Main test", () => {
 
   test("Default user has correct permissions", async ({ page: p }) => {
     const page = p as PageWIds;
+
+    /** Increase test time due to doc processing */
+    test.setTimeout(7 * MINUTE);
 
     await page.request.post("/logout");
     await login(page, USERS.default_user);
