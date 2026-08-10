@@ -52,8 +52,7 @@ export const W_MethodControls = ({
   const [result, setResult] = useState<unknown>();
   const [showResults, setShowResults] = useState(true);
   const methodFromSchema = getProperty(methods, method_name) as
-    | ClientServerFunction
-    | undefined;
+    ClientServerFunction | undefined;
   const [error, setError] = useState<unknown>(
     !methodFromSchema ? `Method named "${method_name}" not found` : undefined,
   );
@@ -158,6 +157,7 @@ export const W_MethodControls = ({
 
   return (
     <FlexCol
+      data-command="W_MethodControls"
       className="W_MethodControls f-1  min-s-0 o-auto bg-color-2"
       style={{ gap: "2px" }}
     >

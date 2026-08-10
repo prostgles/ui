@@ -599,6 +599,7 @@ export const COMMANDS = {
   "McpServerOAuthConfigTopControls.bearerToken": "",
   "McpServerOAuthConfigActions.connectionToggle": "",
   MCPServers: "",
+  W_MethodControls: "",
 } as const satisfies Record<
   string,
   | string

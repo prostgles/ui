@@ -26,8 +26,8 @@ export const syncSchemaConfig = async ({
     lastSynced: new Date().toISOString(),
   };
 
-  const loadedSchemaConfig = getSchemaConfig(config_sync);
   await compileSchemaConfigProject(config_sync.configPath);
+  const loadedSchemaConfig = getSchemaConfig(config_sync);
   const { config: schemaConfig, configPath: resolvedConfigPath } =
     loadedSchemaConfig;
   if (schemaConfig.onInitSQL) {

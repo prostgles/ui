@@ -1,26 +1,25 @@
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type { DBSSchema } from "@common/publishUtils";
 import { API_ENDPOINTS } from "@common/utils";
+import { IS_PROD } from "@src/init/utils";
 import prostgles from "prostgles-server";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
 import type { PRGLIOSocket } from "prostgles-server/dist/DboBuilder/DboBuilder";
-import type { InitResult } from "prostgles-server/dist/initProstgles";
 import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
 import { getIsSuperUser, type DB } from "prostgles-server/dist/Prostgles";
+import type { InitResult } from "prostgles-server/dist/initProstgles";
 import { pickKeys, type AnyObject } from "prostgles-types";
 import { addLog } from "../Logger";
 import type { SUser } from "../authConfig/sessionUtils";
 import { testDBConnection } from "../connectionUtils/testDBConnection";
 import { log, restartProc } from "../index";
+import type { ProstglesOnMountCleanup } from "../schemaConfig";
 import type { ConnectionManager, User } from "./ConnectionManager";
+import { getOnMount } from "./connectionManagerUtils";
 import { getConnectionOnReady } from "./connectionOnReady";
 import { getConnectionPublish } from "./getConnectionPublish";
 import { getConnectionSocketPath } from "./getConnectionSocketPath";
 import { getHotReloadConfigs } from "./getHotReloadConfigs";
-import { getOnMount } from "./connectionManagerUtils";
-import type { ProstglesOnMountCleanup } from "../schemaConfig";
-import { getSchemaConfig } from "./getSchemaConfig";
-import { IS_PROD } from "@src/init/utils";
 
 export const startConnection = async function (
   this: ConnectionManager,
@@ -138,6 +137,7 @@ export const startConnection = async function (
         const {
           config: hotReloadConfig,
           connectionServers: { ioConnection, app },
+          schemaConfig,
         } = await getHotReloadConfigs({
           connectionManager: this,
           connection,
@@ -150,9 +150,6 @@ export const startConnection = async function (
           connection.db_watch_schema ? "*"
           : !IS_PROD && databaseConfig.config_sync ? "hotReloadMode"
           : false;
-        const schemaConfig = getSchemaConfig(
-          databaseConfig.config_sync,
-        )?.config;
         const {
           connection: _connectionConfig,
           databaseConfig: _databaseConfig,

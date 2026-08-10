@@ -156,5 +156,6 @@ export const getHotReloadConfigs = async ({
         }),
     } satisfies HotReloadConfigOptions,
     connectionServers,
+    schemaConfig,
   };
 };

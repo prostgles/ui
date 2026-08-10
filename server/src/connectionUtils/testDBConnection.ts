@@ -104,12 +104,17 @@ export const testDBConnection = (
               check,
             ).then((res) => ({ ...res, isSSLModeFallBack: true })),
           );
-        } else {
-          console.error(
-            `Error connecting to database ${JSON.stringify(con.db_host)}`,
-            err,
-          );
         }
+
+        console.error(
+          `Error connecting to database ${JSON.stringify(con.db_host)}`,
+          err,
+          errRes === NO_SSL_SUPPORT_ERROR ?
+            {
+              hint: `Try setting db_ssl to "disable".`,
+            }
+          : undefined,
+        );
         const localHosts = [
           "host.docker.internal",
           "localhost",

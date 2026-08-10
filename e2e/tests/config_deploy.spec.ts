@@ -22,6 +22,7 @@ import {
   login,
   type PageWIds,
 } from "./utils/utils";
+import { getDataKey } from "Testing";
 
 const serverDirectory = resolve(__dirname, "../../server");
 const cliPath = join(serverDirectory, "dist/server/src/cli/cli.js");
@@ -163,6 +164,64 @@ test.describe("Published config CLI", () => {
     }
   });
 
+  test("never includes runtime data in the npm package", () => {
+    const runtimeDirectories = [
+      "prostgles_media",
+      "prostgles_storage",
+      "prostgles_backups",
+      "prostgles_certificates",
+    ];
+
+    const sentinels = runtimeDirectories.map((directory) => {
+      const absoluteDirectory = join(serverDirectory, directory);
+      const existed = existsSync(absoluteDirectory);
+      mkdirSync(absoluteDirectory, { recursive: true });
+
+      const sentinel = join(
+        absoluteDirectory,
+        `e2e-npm-pack-sentinel-${process.pid}.txt`,
+      );
+      writeFileSync(sentinel, "must not be published\n");
+
+      return { absoluteDirectory, directory, existed, sentinel };
+    });
+
+    try {
+      const packedPaths = getPackedPaths(
+        run(
+          npmCommand,
+          ["pack", "--dry-run", "--json", "--ignore-scripts"],
+          serverDirectory,
+        ),
+      );
+
+      expect(packedPaths).toContain("dist/server/src/cli/cli.js");
+      expect(packedPaths).toContain("dist/server/src/schemaConfig.js");
+      expect(packedPaths).toContain("dist/server/src/schemaConfig.d.ts");
+
+      for (const { directory, sentinel } of sentinels) {
+        expect(packedPaths).not.toContain(
+          `${directory}/${sentinel.split("/").at(-1)}`,
+        );
+        expect(
+          packedPaths.some(
+            (packedPath) =>
+              packedPath === directory ||
+              packedPath.startsWith(`${directory}/`),
+          ),
+        ).toBe(false);
+      }
+    } finally {
+      for (const { absoluteDirectory, existed, sentinel } of sentinels) {
+        rmSync(sentinel, { force: true });
+
+        if (!existed && readdirSync(absoluteDirectory).length === 0) {
+          rmdirSync(absoluteDirectory);
+        }
+      }
+    }
+  });
+
   test("starts a generated config and exposes its dummy schema in the UI", async ({
     page: p,
   }) => {
@@ -235,7 +294,8 @@ test.describe("Published config CLI", () => {
           encoding: "utf-8",
         },
       );
-
+      const configFunctionName = "getDeploymentStatus";
+      const configFunctionResult = "config deployment function";
       writeFileSync(
         join(configDirectory, "src", "index.ts"),
         `import { defineConfig } from "prostgles";
@@ -254,6 +314,11 @@ export default defineConfig()({
     db_ssl: "disable",
   },
   schemaFilter: { ${JSON.stringify(schemaName)}: 1 },
+  functions: () => ({
+    ${JSON.stringify(configFunctionName)}: {
+      run: () => ${JSON.stringify(configFunctionResult)},
+    },
+  }),
   onInitSQL: ${JSON.stringify(`
     CREATE SCHEMA IF NOT EXISTS "${schemaName}";
     CREATE TABLE IF NOT EXISTS "${schemaName}"."${tableName}" (
@@ -312,68 +377,21 @@ export default defineConfig()({
             `[data-key=${JSON.stringify([schemaName, tableName].join("."))}]`,
           ),
       ).toBeVisible();
+
+      await page
+        .getByTestId("dashboard.menu.serverSideFunctionsList")
+        .locator(getDataKey(configFunctionName))
+        .click();
+
+      await page.getByText("Run", { exact: true }).click();
+
+      await expect(page.getByTestId("W_MethodControls")).toContainText(
+        configFunctionResult,
+      );
     } finally {
       rmSync(temporaryDirectory, { recursive: true, force: true });
       if (configProcess) {
         await stopProcess(configProcess);
-      }
-    }
-  });
-
-  test("never includes runtime data in the npm package", () => {
-    const runtimeDirectories = [
-      "prostgles_media",
-      "prostgles_storage",
-      "prostgles_backups",
-      "prostgles_certificates",
-    ];
-
-    const sentinels = runtimeDirectories.map((directory) => {
-      const absoluteDirectory = join(serverDirectory, directory);
-      const existed = existsSync(absoluteDirectory);
-      mkdirSync(absoluteDirectory, { recursive: true });
-
-      const sentinel = join(
-        absoluteDirectory,
-        `e2e-npm-pack-sentinel-${process.pid}.txt`,
-      );
-      writeFileSync(sentinel, "must not be published\n");
-
-      return { absoluteDirectory, directory, existed, sentinel };
-    });
-
-    try {
-      const packedPaths = getPackedPaths(
-        run(
-          npmCommand,
-          ["pack", "--dry-run", "--json", "--ignore-scripts"],
-          serverDirectory,
-        ),
-      );
-
-      expect(packedPaths).toContain("dist/server/src/cli/cli.js");
-      expect(packedPaths).toContain("dist/server/src/schemaConfig.js");
-      expect(packedPaths).toContain("dist/server/src/schemaConfig.d.ts");
-
-      for (const { directory, sentinel } of sentinels) {
-        expect(packedPaths).not.toContain(
-          `${directory}/${sentinel.split("/").at(-1)}`,
-        );
-        expect(
-          packedPaths.some(
-            (packedPath) =>
-              packedPath === directory ||
-              packedPath.startsWith(`${directory}/`),
-          ),
-        ).toBe(false);
-      }
-    } finally {
-      for (const { absoluteDirectory, existed, sentinel } of sentinels) {
-        rmSync(sentinel, { force: true });
-
-        if (!existed && readdirSync(absoluteDirectory).length === 0) {
-          rmdirSync(absoluteDirectory);
-        }
       }
     }
   });
