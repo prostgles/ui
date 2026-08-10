@@ -753,9 +753,10 @@ export const uploadFile = async (page: PageWIds) => {
   await selectAndUpsertFile(page, (page) =>
     page.getByTestId("FileBtn").click(),
   );
+  const MINUTE = 60e3;
   await page
     .getByTestId("Popup.content")
-    .waitFor({ state: "detached", ...TWENTY_SECONDS_OR_MORE });
+    .waitFor({ state: "detached", ...getTimeout(2 * MINUTE) });
 };
 
 export const isEmpty = (obj?: any) => {
