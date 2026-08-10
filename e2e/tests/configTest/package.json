@@ -1,0 +1,17 @@
+{
+  "name": "prostgles-config-e2e-test",
+  "private": true,
+  "version": "0.0.0",
+  "main": "build/index.js",
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "start": "prostgles start --config ."
+  },
+  "dependencies": {
+    "prostgles": "file:../../../server"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.1",
+    "typescript": "^5.9.3"
+  }
+}

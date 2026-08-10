@@ -8,7 +8,6 @@ import {
   readFileSync,
   rmdirSync,
   rmSync,
-  symlinkSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -23,13 +22,15 @@ import {
   type PageWIds,
 } from "./utils/utils";
 import { getDataKey } from "Testing";
+import { CONFIG_TEST } from "./configTest/constants";
 
 const serverDirectory = resolve(__dirname, "../../server");
 const cliPath = join(serverDirectory, "dist/server/src/cli/cli.js");
 const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
+const configTestDirectory = resolve(__dirname, "configTest");
 
-const getCliEnvironment = () => {
-  const environment = { ...process.env };
+const getCliEnvironment = (overrides: NodeJS.ProcessEnv = {}) => {
+  const environment = { ...process.env, ...overrides };
   delete environment.PRGL_TEST;
   return environment;
 };
@@ -137,19 +138,22 @@ test.describe("Published config CLI", () => {
         readFileSync(join(configDirectory, "src", "index.ts"), "utf8"),
       ).toContain(`import { defineConfig } from "prostgles";`);
 
-      const nodeModules = join(configDirectory, "node_modules");
-      mkdirSync(nodeModules, { recursive: true });
-      symlinkSync(serverDirectory, join(nodeModules, "prostgles"), "dir");
-      symlinkSync(
-        join(serverDirectory, "node_modules", "typescript"),
-        join(nodeModules, "typescript"),
-        "dir",
+      const packageJsonPath = join(configDirectory, "package.json");
+      const packageJson = JSON.parse(
+        readFileSync(packageJsonPath, "utf8"),
+      );
+      packageJson.dependencies.prostgles = `file:${serverDirectory}`;
+      writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
+      run(
+        npmCommand,
+        ["install", "--ignore-scripts", "--no-package-lock", "--install-links"],
+        configDirectory,
       );
 
       run(
         process.execPath,
         [
-          join(nodeModules, "typescript", "bin", "tsc"),
+          join(configDirectory, "node_modules", "typescript", "bin", "tsc"),
           "--project",
           configDirectory,
         ],
@@ -222,15 +226,24 @@ test.describe("Published config CLI", () => {
     }
   });
 
-  test("starts a generated config and exposes its dummy schema in the UI", async ({
+  test("starts the test config and applies its publish rules", async ({
     page: p,
   }) => {
     const page: PageWIds = p as PageWIds;
     test.setTimeout(180_000);
     expect(existsSync(cliPath)).toBe(true);
 
-    const port = 3005;
-    const applicationStateDatabaseName = "db";
+    const {
+      applicationDatabaseName,
+      applicationStateDatabaseName,
+      configFunctionName,
+      configFunctionResult,
+      deniedFunctionName,
+      deniedTableName,
+      port,
+      schemaName,
+      tableName,
+    } = CONFIG_TEST;
     const connection = new pg.Client({
       host: "127.0.0.1",
       port: 5432,
@@ -248,111 +261,32 @@ test.describe("Published config CLI", () => {
     );
 
     connection.on("error", console.error);
-    connection.end();
+    await connection.end();
 
-    // const applicationStateDatabaseName = "cli_e2e_state_db";
-    const applicationDatabaseName = `cli_e2e_config_db`;
-    const schemaName = `cli_e2e_${process.pid}`;
-    const tableName = "started_from_config";
-    const deniedTableName = "not_published_from_config";
-    const temporaryDirectory = mkdtempSync(
-      join(tmpdir(), "prostgles-config-ui-e2e-"),
-    );
-    const configDirectory = join(temporaryDirectory, "config");
     let configProcess: ChildProcess | undefined;
 
     try {
       run(
-        process.execPath,
-        [cliPath, "create", configDirectory],
-        serverDirectory,
+        npmCommand,
+        ["install", "--ignore-scripts", "--no-package-lock", "--install-links"],
+        configTestDirectory,
       );
-
-      const nodeModules = join(configDirectory, "node_modules");
-      mkdirSync(nodeModules, { recursive: true });
-      symlinkSync(serverDirectory, join(nodeModules, "prostgles"), "dir");
-      symlinkSync(
-        join(serverDirectory, "node_modules", "typescript"),
-        join(nodeModules, "typescript"),
-        "dir",
-      );
-
-      writeFileSync(
-        join(configDirectory, ".env"),
-        `
-          # Prostgles UI cli state database 
-          POSTGRES_HOST=127.0.0.1
-          POSTGRES_DB=${applicationStateDatabaseName}
-          POSTGRES_PORT=5432
-          POSTGRES_USER=usr
-          POSTGRES_PASSWORD=psw 
-
-          # Prostgles UI config database
-          PROSTGLES_UI_PORT=${port}
-          PROSTGLES_DATABASE_NAME=${applicationDatabaseName}
-        `,
-        {
-          encoding: "utf-8",
-        },
-      );
-      const configFunctionName = "getDeploymentStatus";
-      const deniedFunctionName = "getPrivateDeploymentStatus";
-      const configFunctionResult = "config deployment function";
-      writeFileSync(
-        join(configDirectory, "src", "index.ts"),
-        `import { defineConfig } from "prostgles";
-
-export default defineConfig()({
-  id: ${JSON.stringify(applicationDatabaseName)},
-  createDatabase: true,
-  connection: {
-    name: ${JSON.stringify(applicationDatabaseName)},
-    type: "Standard",
-    db_host: process.env.PROSTGLES_DATABASE_HOST ?? process.env.POSTGRES_HOST ?? "localhost",
-    db_port: Number(process.env.PROSTGLES_DATABASE_PORT ?? process.env.POSTGRES_PORT ?? 5432),
-    db_name: process.env.PROSTGLES_DATABASE_NAME,
-    db_user: process.env.PROSTGLES_DATABASE_USER ?? process.env.POSTGRES_USER,
-    db_pass: process.env.PROSTGLES_DATABASE_PASSWORD ?? process.env.POSTGRES_PASSWORD,
-    db_ssl: "disable",
-  },
-  schemaFilter: { ${JSON.stringify(schemaName)}: 1 },
-  publish: ({ user }) => user?.type === "admin" ? ({
-    ${JSON.stringify([schemaName, tableName].join("."))}: {
-      select: "*",
-    },
-  }) : null,
-  functions: (params) => ({
-    ${JSON.stringify(configFunctionName)}: {
-      run: params?.user?.type === "admin"
-        ? () => ${JSON.stringify(configFunctionResult)}
-        : undefined,
-    },
-    ${JSON.stringify(deniedFunctionName)}: {
-      run: undefined,
-    },
-  }),
-  onInitSQL: ${JSON.stringify(`
-    CREATE SCHEMA IF NOT EXISTS "${schemaName}";
-    CREATE TABLE IF NOT EXISTS "${schemaName}"."${tableName}" (
-      id integer primary key,
-      name text not null
-    );
-    INSERT INTO "${schemaName}"."${tableName}" (id, name)
-    VALUES (1, 'started from config')
-    ON CONFLICT (id) DO NOTHING;
-    CREATE TABLE IF NOT EXISTS "${schemaName}"."${deniedTableName}" (
-      id integer primary key,
-      name text not null
-    );
-  `)},
-});
-`,
-      );
-
       configProcess = spawn(
         process.execPath,
-        [cliPath, "start", "--config", configDirectory],
-        { cwd: serverDirectory, env: getCliEnvironment(), stdio: "pipe" },
+        [cliPath, "start", "--config", configTestDirectory],
+        {
+          cwd: serverDirectory,
+          env: getCliEnvironment({
+            POSTGRES_HOST: "127.0.0.1",
+            POSTGRES_DB: applicationStateDatabaseName,
+            POSTGRES_PORT: "5432",
+            POSTGRES_USER: "usr",
+            POSTGRES_PASSWORD: "psw",
+            PROSTGLES_UI_PORT: String(port),
+            PROSTGLES_DATABASE_NAME: applicationDatabaseName,
+          }),
+          stdio: "pipe",
+        },
       );
       const getLogs = captureProcessOutput(configProcess);
       // await waitForServer(`http://127.0.0.1:${port}`, configProcess);
@@ -424,7 +358,6 @@ export default defineConfig()({
         configFunctionResult,
       );
     } finally {
-      rmSync(temporaryDirectory, { recursive: true, force: true });
       if (configProcess) {
         await stopProcess(configProcess);
       }

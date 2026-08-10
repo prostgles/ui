@@ -49,11 +49,11 @@ export const ServerSideFunctions = () => {
         <h3>On mount</h3>
         <SwitchToggle
           label={"Enabled"}
-          disabledInfo={
-            !connection.on_mount_ts ?
-              "No on mount function. Provide a function or edit and save the example"
-            : undefined
-          }
+          // disabledInfo={
+          //   !connection.on_mount_ts ?
+          //     "No on mount function. Provide a function or edit and save the example"
+          //   : undefined
+          // }
           data-command="ServerSideFunctions.onMountEnabled"
           checked={!!connection.on_mount_ts && !connection.on_mount_ts_disabled}
           onChange={async (checked) => {
