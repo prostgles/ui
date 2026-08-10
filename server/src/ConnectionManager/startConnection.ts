@@ -237,7 +237,11 @@ export const startConnection = async function (
             addLog(e, connectionId);
           },
           onReady: (params, update) => {
-            if (onMount && params.reason.type === "init") {
+            if (
+              !connection.on_mount_ts_disabled &&
+              onMount &&
+              params.reason.type === "init"
+            ) {
               void Promise.resolve(onMount(params))
                 .then(setOnMountCleanup)
                 .catch((e: unknown) => {

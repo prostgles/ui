@@ -1410,6 +1410,10 @@ test.describe("Main test", () => {
     ).toHaveValue(maxCost.toString());
     await page.getByTestId("Popup.close").last().click();
 
+    /** Install electron to ensure node_modules exists */
+    await execSync("npm install", {
+      cwd: resolve(__dirname, "../../electron"),
+    });
     await enableMCPServers(page, ["filesystem"], true);
     await fileBrowserGoToPath(page.getByTestId("FileTree"), [
       "ui",

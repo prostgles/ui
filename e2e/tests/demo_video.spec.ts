@@ -69,10 +69,10 @@ test.describe("Demo video", () => {
     await openConnection(page, "crypto");
     await page.getByTestId("dashboard.goToConnConfig").click();
     await page.getByTestId("config.methods").click();
-    // await page.getByTestId("ServerSideFunctions.onMountEnabled").click();
-    // await expect(
-    //   page.getByTestId("ServerSideFunctions.onMountEnabled"),
-    // ).toHaveAttribute("aria-checked", "true");
+    await page.getByTestId("ServerSideFunctions.onMountEnabled").click();
+    await expect(
+      page.getByTestId("ServerSideFunctions.onMountEnabled"),
+    ).toHaveAttribute("aria-checked", "true");
 
     const getVideoDemoConnection = async () => {
       await goTo(page, "/connections");
