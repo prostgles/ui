@@ -119,9 +119,8 @@ export const startConnection = async function (
   const result = new Promise<{
     socketPath: string;
     socketUrl: string | undefined;
-  }>(
-    // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    async (resolve, reject) => {
+  }>((resolve, reject) => {
+    void (async () => {
       const initState = {
         prglReady: false,
         onReadyCalled: false,
@@ -299,8 +298,8 @@ export const startConnection = async function (
           con: connection,
         });
       }
-    },
-  );
+    })();
+  });
 
   this.prglConnections.set(connection.id, {
     state: "initializing",

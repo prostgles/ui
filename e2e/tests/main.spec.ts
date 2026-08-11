@@ -55,6 +55,7 @@ import {
   runDbSql,
   runDbsSql,
   runSql,
+  scrollElementIntoView,
   selectAndUpsertFile,
   sendAskLLMMessage,
   setModelByText,
@@ -1344,7 +1345,7 @@ test.describe("Main test", () => {
       .getByTestId("Chat.messageList")
       .getByText("browser_snapshot")
       .last();
-    await lastToolUseBtn.scrollIntoViewIfNeeded();
+    await scrollElementIntoView(lastToolUseBtn);
     await page.waitForTimeout(1e3);
     await lastToolUseBtn.click();
     await page.waitForTimeout(1e3);

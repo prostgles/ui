@@ -5,7 +5,7 @@ import type { ProstglesInitOptions } from "prostgles-server/dist/ProstglesTypes"
 import type { OnReadyParams } from "prostgles-server/dist/initProstgles";
 
 export type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
-export type { WorkspaceInsertModel } from "@common/DashboardTypes";
+export type * from "@common/DashboardTypes";
 export type { DBSSchema } from "@common/publishUtils";
 export type { DBSSchemaForInsert } from "@common/publishUtils";
 export type { TableConfig } from "prostgles-server";

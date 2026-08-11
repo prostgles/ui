@@ -1,4 +1,6 @@
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
+import type { LayoutConfig } from "@common/DashboardTypes";
+import { randomUUID } from "crypto";
 import type { DBS } from "../index";
 import { connectionManager } from "../index";
 
@@ -19,6 +21,66 @@ import {
 import { getAdminServerFunctions } from "./adminServerFunctions/getAdminServerFunctions";
 import { getServerFunctionsContext } from "./getServerFunctionsContext";
 import { getUserServerFunctions } from "./userServerFunctions/getUserServerFunctions";
+import { getSchemaConfig } from "../ConnectionManager/getSchemaConfig";
+
+const insertConfigWorkspaces = async (
+  connectionId: string,
+  getClientDBHandlers: NonNullable<
+    PublishParams<DBGeneratedSchema, SUser>
+  >["getClientDBHandlers"],
+) => {
+  const connection =
+    connectionManager.getActiveConnectionSilentFail(connectionId);
+  if (!connection) return;
+  const workspaces = getSchemaConfig(connection.dbConf.config_sync)?.config
+    .workspaces;
+  if (!workspaces?.length) return;
+
+  const { clientDb } = await getClientDBHandlers(undefined);
+
+  const existingWorkspaces = await clientDb.workspaces.find({
+    connection_id: connectionId,
+    name: { $in: workspaces.map(({ name }) => name) },
+  });
+  const existingNames = new Set(existingWorkspaces.map(({ name }) => name));
+  const lastUpdated = Date.now().toString();
+  const newWorkspaces = workspaces
+    .filter(({ name }) => !existingNames.has(name))
+    .map((workspace) => {
+      const windowIds = new Map(
+        workspace.windows.map(({ id }) => [id, randomUUID()]),
+      );
+      const layout = structuredClone(workspace.layout);
+      const replaceLayoutIds = (item: LayoutConfig) => {
+        const replacementId = windowIds.get(item.id);
+        if (replacementId) item.id = replacementId;
+        if ("items" in item) item.items.forEach(replaceLayoutIds);
+        if (item.type === "tab" && item.activeTabKey) {
+          item.activeTabKey =
+            windowIds.get(item.activeTabKey) ?? item.activeTabKey;
+        }
+      };
+      replaceLayoutIds(layout);
+
+      return {
+        ...workspace,
+        connection_id: connectionId,
+        last_updated: lastUpdated,
+        user_id: undefined as unknown as string,
+        layout,
+        windows: workspace.windows.map((window) => ({
+          ...window,
+          id: windowIds.get(window.id),
+          last_updated: lastUpdated,
+          user_id: undefined as unknown as string,
+        })),
+      };
+    });
+
+  if (newWorkspaces.length) {
+    await clientDb.workspaces.insertMany(newWorkspaces);
+  }
+};
 
 export const getServerFunctions = async (
   params: PublishParams<DBGeneratedSchema, SUser> | undefined,
@@ -35,7 +97,13 @@ export const getServerFunctions = async (
       input: { connectionId: "string" },
       run: async (
         { connectionId },
-        { user, dbo: dbs, db: _dbs, clientReq: { socket } },
+        {
+          user,
+          dbo: dbs,
+          db: _dbs,
+          clientReq: { socket },
+          getClientDBHandlers,
+        },
       ) => {
         try {
           const socketPathAndUrl = await connectionManager.startConnection(
@@ -44,6 +112,7 @@ export const getServerFunctions = async (
             _dbs,
             socket,
           );
+          await insertConfigWorkspaces(connectionId, getClientDBHandlers);
           return socketPathAndUrl;
         } catch (error) {
           console.error("Could not start connection " + connectionId, error);

@@ -243,6 +243,8 @@ test.describe("Published config CLI", () => {
       port,
       schemaName,
       tableName,
+      workspaceName,
+      workspaceWindowName,
     } = CONFIG_TEST;
     const connection = new pg.Client({
       host: "127.0.0.1",
@@ -343,6 +345,24 @@ test.describe("Published config CLI", () => {
       expect(publishedRows).toEqual([
         { id: 1, name: "started from config" },
       ]);
+
+      const configuredWorkspace = await page.evaluate(
+        async ({ connectionName, workspaceName }) => {
+          const dbs = (window as any).dbs;
+          const connection = await dbs.connections.findOne({
+            name: connectionName,
+          });
+          return await dbs.workspaces.findOne(
+            { connection_id: connection.id, name: workspaceName },
+            { select: { "*": 1, windows: "*" } },
+          );
+        },
+        { connectionName: applicationDatabaseName, workspaceName },
+      );
+      expect(configuredWorkspace).toMatchObject({
+        name: workspaceName,
+        windows: [{ name: workspaceWindowName, type: "sql" }],
+      });
 
       const functionsList = page.getByTestId(
         "dashboard.menu.serverSideFunctionsList",

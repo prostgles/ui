@@ -8,4 +8,6 @@ export const CONFIG_TEST = {
   port: 3005,
   schemaName: "cli_e2e_config",
   tableName: "started_from_config",
+  workspaceName: "Workspace from config",
+  workspaceWindowName: "Configured query",
 } as const;
