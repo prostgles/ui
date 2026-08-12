@@ -39,14 +39,6 @@ export const CodeEditorWithSaveButton = (props: P) => {
   const propsValueRef = useRef<string | null | undefined>(value);
   propsValueRef.current = value;
 
-  /**
-   * Hiding PublishedMethods until OnMountFunction is loaded
-   * is done to prevent flaky tests when creating function
-   */
-  const [libsLoaded, setLibsLoaded] = useState(false);
-  const onTsLoaded = useCallback(() => {
-    setLibsLoaded(true);
-  }, []);
   const [error, setError] = useState<unknown>();
   const [fullScreen, setFullScreen] = React.useState(false);
   useEffectDeep(() => {
@@ -164,7 +156,7 @@ export const CodeEditorWithSaveButton = (props: P) => {
           : {}
         }
       >
-        {(isSaving || !libsLoaded) && <Loading variant="cover" />}
+        {isSaving && <Loading variant="cover" />}
         <CodeEditor
           className={codeEditorClassName}
           {...codeEditorProps}
@@ -175,8 +167,6 @@ export const CodeEditorWithSaveButton = (props: P) => {
           }
           onChange={onChange}
           onSave={onClickSave}
-          style={libsLoaded ? {} : { visibility: "hidden" }}
-          onTSLibraryChange={onTsLoaded}
         />
         {footerNode}
       </FlexCol>
