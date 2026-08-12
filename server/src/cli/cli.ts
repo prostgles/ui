@@ -107,6 +107,7 @@ const createConfig = (targetPath: string) => {
     path.join(targetPath, ".env.example"),
     cliTemplateFiles.envExample,
   );
+  writeFileSync(path.join(targetPath, ".gitignore"), cliTemplateFiles.gitignore);
 
   console.log(
     `Created config project in ${targetPath}. Copy .env.example to .env, configure both databases, run npm install, then npm run dev.`,

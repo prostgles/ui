@@ -41,6 +41,11 @@ export const cliTemplateFiles = {
   },
   DBGeneratedSchema:
     "export type DBGeneratedSchema = Record<string, { columns: Record<string, unknown> }>\n",
+  gitignore: fixIndent(`
+      node_modules/
+      build/
+      .env
+      *.log`),
   envExample: fixIndent(`
       # Prostgles UI state database. This stores users, settings, and connections.
       # POSTGRES_URL=postgres://user:password@localhost:5432/prostgles_state

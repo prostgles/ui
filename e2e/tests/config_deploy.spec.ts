@@ -123,6 +123,7 @@ test.describe("Published config CLI", () => {
       expect(existsSync(join(configDirectory, "package.json"))).toBe(true);
       expect(existsSync(join(configDirectory, "tsconfig.json"))).toBe(true);
       expect(existsSync(join(configDirectory, ".env.example"))).toBe(true);
+      expect(existsSync(join(configDirectory, ".gitignore"))).toBe(true);
       expect(existsSync(join(configDirectory, "src", "index.ts"))).toBe(true);
       expect(
         existsSync(join(configDirectory, "generated", "DBGeneratedSchema.ts")),
@@ -137,6 +138,10 @@ test.describe("Published config CLI", () => {
       expect(
         readFileSync(join(configDirectory, "src", "index.ts"), "utf8"),
       ).toContain(`import { defineConfig } from "@prostgles/prostgles";`);
+      expect(readFileSync(join(configDirectory, ".gitignore"), "utf8"))
+        .toContain("node_modules/");
+      expect(readFileSync(join(configDirectory, ".gitignore"), "utf8"))
+        .toContain(".env");
 
       const packageJsonPath = join(configDirectory, "package.json");
       const packageJson = JSON.parse(
