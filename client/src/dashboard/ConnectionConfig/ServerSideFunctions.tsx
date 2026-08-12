@@ -17,7 +17,7 @@ export const ServerSideFunctions = () => {
     },
     { select: { config_sync: 1 } },
   );
-  if (!connection) return <Loading />;
+  if (!connection || !dbConfig) return <Loading />;
 
   return (
     <FlexCol className="w-full" style={{ gap: "2em" }}>
@@ -27,7 +27,7 @@ export const ServerSideFunctions = () => {
           label={"Enabled"}
           data-command="ServerSideFunctions.onMountEnabled"
           checked={
-            !!dbConfig?.config_sync?.toggleableProperties.onMount &&
+            !!dbConfig.config_sync?.toggleableProperties.onMount &&
             !connection.on_mount_ts_disabled
           }
           onChange={async (checked) => {
