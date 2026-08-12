@@ -4,6 +4,7 @@ import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { useLLMSchemaStr } from "../Chat/useLLMSchemaStr";
 import type { DBSSchema } from "@common/publishUtils";
 
+export type AskLLMToolApproveState = ReturnType<typeof useAskLLMToolApprove>;
 export const useAskLLMToolApprove = () => {
   const {
     dbs,

@@ -2,12 +2,8 @@ import { FlexCol, FlexRow } from "@components/Flex";
 import Loading from "@components/Loader/Loading";
 import { SwitchToggle } from "@components/SwitchToggle";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import React, { useCallback, useState } from "react";
-import { useCodeEditorTsTypes } from "../AccessControl/Methods/useCodeEditorTsTypes";
-import { CodeEditorWithSaveButton } from "../CodeEditor/CodeEditorWithSaveButton";
-import { ProcessLogs } from "../TableConfig/ProcessLogs";
+import React from "react";
 import { PublishedMethods } from "../W_Method/PublishedMethods";
-import { ProjectCodeEditor } from "@components/CodeFileBrowser/ProjectCodeEditor";
 
 export const ServerSideFunctions = () => {
   const { dbsMethods, dbs, connectionId, dbKey, tables, databaseId } =
@@ -21,25 +17,6 @@ export const ServerSideFunctions = () => {
     },
     { select: { config_sync: 1 } },
   );
-  const languageObj = useCodeEditorTsTypes({
-    connectionId,
-    dbsMethods,
-    dbKey,
-    tables,
-    dbs,
-    method: undefined,
-  });
-
-  /**
-   * Hiding PublishedMethods until OnMountFunction is loaded
-   * is done to prevent flaky tests when creating function
-   */
-  const [libsLoaded, setLibsLoaded] = useState(false);
-
-  const onLoaded = useCallback(() => {
-    setLibsLoaded(true);
-  }, []);
-  const { config_sync } = dbConfig ?? {};
   if (!connection) return <Loading />;
 
   return (
@@ -48,11 +25,6 @@ export const ServerSideFunctions = () => {
         <h3>On mount</h3>
         <SwitchToggle
           label={"Enabled"}
-          // disabledInfo={
-          //   !connection.on_mount_ts ?
-          //     "No on mount function. Provide a function or edit and save the example"
-          //   : undefined
-          // }
           data-command="ServerSideFunctions.onMountEnabled"
           checked={
             !!dbConfig?.config_sync?.toggleableProperties.onMount &&
@@ -68,21 +40,6 @@ export const ServerSideFunctions = () => {
           }}
         />
       </FlexRow>
-      {/* <FlexCol>
-        {languageObj && config_sync && (
-          <>
-            <CodeEditorWithSaveButton
-              key={dbKey}
-              label="Server-side function executed after the table is created and server started or schema changed"
-              language={languageObj}
-              // codePlaceholder={example}
-              value={connection.on_mount_ts}
-              onTSLibraryChange={onLoaded}
-            />
-            <ProcessLogs key={dbKey + "logs"} type="onMount" />
-          </>
-        )}
-      </FlexCol> */}
       <PublishedMethods editedRule={undefined} accessRuleId={undefined} />
     </FlexCol>
   );

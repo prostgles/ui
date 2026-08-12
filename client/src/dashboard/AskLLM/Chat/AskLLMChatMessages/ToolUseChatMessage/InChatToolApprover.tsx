@@ -19,11 +19,11 @@ export const InChatToolApprover = ({
     if (!requests) return;
     return requests.filter(
       (r) =>
-        r.chat_id === chatId &&
+        r.chat_id == chatId &&
         r.response === null &&
         (r.tool_use_id === toolUseId ||
           (r.source.type === "proxy" &&
-            r.source.parentToolUseMessageId === String(messageId))),
+            r.source.parentToolUseMessageId == String(messageId))),
     );
   }, [requests, chatId, toolUseId, messageId]);
 
