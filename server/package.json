@@ -30,6 +30,7 @@
     "client/build",
     "client/static",
     "src/init.sql",
+    "src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/agenticWorkflow/runtimeSdk",
     "src/ServiceManager/services/**/src",
     "sample_schemas"
   ],

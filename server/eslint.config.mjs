@@ -16,6 +16,7 @@ export default defineConfig(
       "**/*.d.ts",
       "tests",
       "docs",
+      "client",
       "*.mjs",
       "sample_schemas",
       "**/*.d.ts",

@@ -39,6 +39,7 @@ const run = (command: string, args: string[], cwd: string) => {
   const result = spawnSync(command, args, {
     cwd,
     encoding: "utf8",
+    maxBuffer: 100 * 1024 * 1024,
   });
 
   if (result.error) throw result.error;
@@ -88,30 +89,77 @@ const captureProcessOutput = (process: ChildProcess) => {
   return () => output;
 };
 
-const stopProcess = async (process: ChildProcess) => {
-  if (process.exitCode !== null) return;
-  const exited = new Promise<void>((resolve) => process.once("exit", resolve));
-  process.kill("SIGTERM");
+const stopProcess = async (child: ChildProcess) => {
+  if (child.exitCode !== null) return;
+  const exited = new Promise<void>((resolve) => child.once("exit", resolve));
+  if (process.platform === "win32" || !child.pid) {
+    child.kill("SIGTERM");
+  } else {
+    process.kill(-child.pid, "SIGTERM");
+  }
   await Promise.race([
     exited,
     new Promise((resolve) => setTimeout(resolve, 5_000)),
   ]);
-  if (process.exitCode === null) {
-    process.kill("SIGKILL");
+  if (child.exitCode === null) {
+    if (process.platform === "win32" || !child.pid) {
+      child.kill("SIGKILL");
+    } else {
+      process.kill(-child.pid, "SIGKILL");
+    }
     await exited;
+  }
+};
+
+const startConfigScript = async (
+  script: "dev" | "start",
+  cwd: string,
+  env: NodeJS.ProcessEnv,
+) => {
+  const child = spawn(npmCommand, ["run", script], {
+    cwd,
+    env,
+    stdio: "pipe",
+    detached: process.platform !== "win32",
+  });
+  const getLogs = captureProcessOutput(child);
+  while (true) {
+    if (child.exitCode !== null) {
+      throw new Error(
+        `npm run ${script} exited with code ${child.exitCode}\n${getLogs()}`,
+      );
+    }
+    const output = getLogs();
+    if (
+      output.includes("Prostgles UI accessible at") &&
+      output.includes("Server started {")
+    ) {
+      return child;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1_000));
   }
 };
 
 test.describe("Published config CLI", () => {
   test.setTimeout(30_000);
 
-  test("creates a config project that compiles against the public package API", () => {
+  test.beforeAll(() => {
+    run(
+      process.execPath,
+      [join(serverDirectory, "scripts", "preparePackage.mjs")],
+      serverDirectory,
+    );
+  });
+
+  test("creates a config project whose build and dev scripts run", async () => {
+    test.setTimeout(120_000);
     expect(existsSync(cliPath)).toBe(true);
 
     const temporaryDirectory = mkdtempSync(
       join(tmpdir(), "prostgles-config-e2e-"),
     );
     const configDirectory = join(temporaryDirectory, "config");
+    let configProcess: ChildProcess | undefined;
 
     try {
       run(
@@ -156,20 +204,27 @@ test.describe("Published config CLI", () => {
         configDirectory,
       );
 
-      run(
-        process.execPath,
-        [
-          join(configDirectory, "node_modules", "typescript", "bin", "tsc"),
-          "--project",
-          configDirectory,
-        ],
-        configDirectory,
-      );
+      run(npmCommand, ["run", "build"], configDirectory);
 
       expect(
         existsSync(join(configDirectory, "build", "src", "index.js")),
       ).toBe(true);
+
+      configProcess = await startConfigScript(
+        "dev",
+        configDirectory,
+        getCliEnvironment({
+          POSTGRES_HOST: "127.0.0.1",
+          POSTGRES_DB: "db",
+          POSTGRES_PORT: "5432",
+          POSTGRES_USER: "usr",
+          POSTGRES_PASSWORD: "psw",
+          PROSTGLES_DATABASE_URL: "postgres://usr:psw@127.0.0.1:5432/db",
+          PROSTGLES_UI_PORT: "3006",
+        }),
+      );
     } finally {
+      if (configProcess) await stopProcess(configProcess);
       rmSync(temporaryDirectory, { recursive: true, force: true });
     }
   });
@@ -232,7 +287,7 @@ test.describe("Published config CLI", () => {
     }
   });
 
-  test("starts the test config and applies its publish rules", async ({
+  test("runs the start script and applies its publish rules", async ({
     page: p,
   }) => {
     const page: PageWIds = p as PageWIds;
@@ -274,46 +329,34 @@ test.describe("Published config CLI", () => {
     let configProcess: ChildProcess | undefined;
 
     try {
+      rmSync(
+        join(
+          configTestDirectory,
+          "node_modules",
+          "@prostgles",
+          "prostgles",
+        ),
+        { recursive: true, force: true },
+      );
       run(
         npmCommand,
         ["install", "--ignore-scripts", "--no-package-lock", "--install-links"],
         configTestDirectory,
       );
-      configProcess = spawn(
-        process.execPath,
-        [cliPath, "start", "--config", configTestDirectory],
-        {
-          cwd: serverDirectory,
-          env: getCliEnvironment({
-            POSTGRES_HOST: "127.0.0.1",
-            POSTGRES_DB: applicationStateDatabaseName,
-            POSTGRES_PORT: "5432",
-            POSTGRES_USER: "usr",
-            POSTGRES_PASSWORD: "psw",
-            PROSTGLES_UI_PORT: String(port),
-            PROSTGLES_DATABASE_NAME: applicationDatabaseName,
-          }),
-          stdio: "pipe",
-        },
+      const configEnvironment = getCliEnvironment({
+        POSTGRES_HOST: "127.0.0.1",
+        POSTGRES_DB: applicationStateDatabaseName,
+        POSTGRES_PORT: "5432",
+        POSTGRES_USER: "usr",
+        POSTGRES_PASSWORD: "psw",
+        PROSTGLES_UI_PORT: String(port),
+        PROSTGLES_DATABASE_NAME: applicationDatabaseName,
+      });
+      configProcess = await startConfigScript(
+        "start",
+        configTestDirectory,
+        configEnvironment,
       );
-      const getLogs = captureProcessOutput(configProcess);
-      // await waitForServer(`http://127.0.0.1:${port}`, configProcess);
-      /** Listen for readiness from stdout */
-      while (true) {
-        if (configProcess.exitCode !== null) {
-          throw new Error(
-            `Config server exited with code ${configProcess.exitCode}`,
-          );
-        }
-        const output = getLogs();
-        if (
-          output.includes("Prostgles UI accessible at") &&
-          output.includes("Server started {")
-        ) {
-          break;
-        }
-        await new Promise((resolve) => setTimeout(resolve, 1_000));
-      }
       await new Promise((resolve) => setTimeout(resolve, 3_000));
 
       const url = `http://localhost:${port}`;

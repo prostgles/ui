@@ -3,6 +3,7 @@ import type { ProstglesInitState } from "@common/electronInitTypes";
 import type { ConnectionDetails } from "@src/connectionUtils/getConnectionDetails";
 import { getServerFunctions } from "@src/serverFunctions/getServerFunctions";
 import type { Express } from "express";
+import { existsSync } from "fs";
 import path, { join } from "path";
 import prostgles from "prostgles-server";
 import type { InitResult } from "prostgles-server/dist/initProstgles";
@@ -90,8 +91,13 @@ export const startProstgles = async ({
     }
 
     /** Prevent electron access denied error (cannot edit files in the install directory in electron) */
+    const tsGeneratedTypesFunctionsPath = join(
+      actualRootDir,
+      "/src/init/startProstgles.ts",
+    );
+    const isSourceCheckout = existsSync(tsGeneratedTypesFunctionsPath);
     const tsGeneratedTypesDir =
-      IS_PROD || getElectronConfig()?.isElectron ?
+      IS_PROD || getElectronConfig()?.isElectron || !isSourceCheckout ?
         undefined
       : path.join(actualRootDir + "/../common/");
     const watchSchema = !!tsGeneratedTypesDir;
@@ -107,9 +113,7 @@ export const startProstgles = async ({
           io,
           tsGeneratedTypesDir,
           tsGeneratedTypesFunctionsPath:
-            IS_PROD ? undefined : (
-              join(actualRootDir, "/src/init/startProstgles.ts")
-            ),
+            tsGeneratedTypesDir ? tsGeneratedTypesFunctionsPath : undefined,
           watchSchema,
           watchSchemaType: "DDL_trigger",
           transactions: true,

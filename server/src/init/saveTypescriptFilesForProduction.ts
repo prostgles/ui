@@ -1,11 +1,11 @@
 import { getRootDir } from "@src/electronConfig";
 import { tout } from "@src/utils/tout";
-import { readFileSync, writeFileSync } from "fs";
+import { existsSync, readFileSync, writeFileSync } from "fs";
 import { join } from "path";
 import { IS_PROD } from "./utils";
 
 export const dashboardTypesContent = readFileSync(
-  join(__dirname, "..", "..", "..", "..", "..", "common", "DashboardTypes.ts"),
+  join(__dirname, "..", "..", "..", "common", "DashboardTypes.d.ts"),
   "utf-8",
 );
 if (!dashboardTypesContent) {
@@ -19,6 +19,7 @@ if (!dashboardTypesContent) {
 export const saveTypescriptFilesForProduction = async () => {
   if (IS_PROD) return; // Skip in production
   const commonDir = `${getRootDir()}/../common`;
+  if (!existsSync(commonDir)) return; // Published package, not a source checkout
 
   await tout(3000); // Wait for any potential file changes to settle
 

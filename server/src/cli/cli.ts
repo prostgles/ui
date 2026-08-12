@@ -155,7 +155,7 @@ const run = async (configPath: string, isDev: boolean) => {
   const start = () => {
     server = runServer(configPath, isDev ? "development" : "production");
     server.once("exit", (code, signal) => {
-      if (!restarting && (code || signal)) process.exitCode = code || 1;
+      if (!restarting && (code || signal)) process.exit(code || 1);
     });
   };
   const stop = async () => {
