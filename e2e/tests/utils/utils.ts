@@ -1129,7 +1129,7 @@ export const setPromptByText = async (
 ) => {
   await page.getByTestId("LLMChatOptions.Prompt").click();
   await page.locator(".SmartCard").getByText(text).first().click();
-  await page.waitForTimeout(2e3); // wait for prompt tools to be set
+  await page.waitForTimeout(3e3); // wait for prompt tools to be set
   if (!closePopup) return;
   await page
     .getByTestId("LLMChatOptions.Prompt")

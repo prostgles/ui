@@ -1,7 +1,7 @@
 import type { DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
 import { FlexCol, FlexRow } from "@components/Flex";
-import React, { useMemo } from "react";
+import React from "react";
 import { useAskLLMSetupState } from "src/dashboard/AskLLM/Setup/LLMSetupProvider";
 
 export const InChatToolApprover = ({
@@ -15,17 +15,13 @@ export const InChatToolApprover = ({
 }) => {
   const { toolApprovalState } = useAskLLMSetupState();
   const { requests, setShowRequestId } = toolApprovalState ?? {};
-  const matchingRequests = useMemo(() => {
-    if (!requests) return;
-    return requests.filter(
-      (r) =>
-        r.chat_id == chatId &&
-        r.response === null &&
-        (r.tool_use_id === toolUseId ||
-          (r.source.type === "proxy" &&
-            r.source.parentToolUseMessageId == String(messageId))),
-    );
-  }, [requests, chatId, toolUseId, messageId]);
+  const matchingRequests = requests?.filter(
+    (r) =>
+      r.chat_id == chatId &&
+      (r.tool_use_id === toolUseId ||
+        (r.source.type === "proxy" &&
+          r.source.parentToolUseMessageId == String(messageId))),
+  );
 
   if (!setShowRequestId || !toolApprovalState || !matchingRequests?.length) {
     return null;

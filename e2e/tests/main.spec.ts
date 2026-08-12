@@ -1232,7 +1232,9 @@ test.describe("Main test", () => {
       await page
         .getByTestId("AskLLMToolApprover.AllowOnce")
         .click({ ...TWENTY_SECONDS_OR_MORE });
-      await page.waitForTimeout(1e3);
+      await expect(
+        page.getByRole("button", { name: "Approve Once" }),
+      ).toHaveCount(0, TWENTY_SECONDS_OR_MORE);
       const mcpToolUse = await getAskLLMLastMessage(page);
 
       const locatorToCheck =
