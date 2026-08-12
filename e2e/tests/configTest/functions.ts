@@ -1,4 +1,4 @@
-import type { SchemaConfig } from "prostgles";
+import type { SchemaConfig } from "@prostgles/prostgles";
 import { CONFIG_TEST } from "./constants";
 
 export const functions: NonNullable<SchemaConfig["functions"]> = (params) => ({

@@ -1,5 +1,5 @@
 {
-  "name": "prostgles",
+  "name": "@prostgles/prostgles",
   "version": "2.3.6",
   "description": "Prostgles UI runtime and configurable PostgreSQL dashboard",
   "main": "dist/server/src/schemaConfig.js",

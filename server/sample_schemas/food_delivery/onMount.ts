@@ -1,4 +1,4 @@
-import type { ProstglesOnMount } from "prostgles";
+import type { ProstglesOnMount } from "@prostgles/prostgles";
 
 export const onMount: ProstglesOnMount = async ({ dbo: db, sql }) => {
   const roadTableHandler = db.routes;

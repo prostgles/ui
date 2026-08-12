@@ -14,7 +14,7 @@ export const cliTemplateFiles = {
       dev: "prostgles dev --config .",
       start: "prostgles start --config .",
     },
-    dependencies: { prostgles: `^${packageJson.version}` },
+    dependencies: { "@prostgles/prostgles": `^${packageJson.version}` },
     devDependencies: {
       "@types/node": "^22.20.1",
       typescript: packageJson.dependencies["typescript"],

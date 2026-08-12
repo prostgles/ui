@@ -1,4 +1,4 @@
-import type { ProstglesOnMount } from "prostgles";
+import type { ProstglesOnMount } from "@prostgles/prostgles";
 
 export const onMount: ProstglesOnMount = async ({ sql }) => {
   const createData = async () => {

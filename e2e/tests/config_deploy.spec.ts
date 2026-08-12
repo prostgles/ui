@@ -136,13 +136,14 @@ test.describe("Published config CLI", () => {
       ).toContain(`"start": "prostgles start --config ."`);
       expect(
         readFileSync(join(configDirectory, "src", "index.ts"), "utf8"),
-      ).toContain(`import { defineConfig } from "prostgles";`);
+      ).toContain(`import { defineConfig } from "@prostgles/prostgles";`);
 
       const packageJsonPath = join(configDirectory, "package.json");
       const packageJson = JSON.parse(
         readFileSync(packageJsonPath, "utf8"),
       );
-      packageJson.dependencies.prostgles = `file:${serverDirectory}`;
+      packageJson.dependencies["@prostgles/prostgles"] =
+        `file:${serverDirectory}`;
       writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
       run(
         npmCommand,

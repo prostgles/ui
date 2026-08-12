@@ -1,4 +1,4 @@
-import type { TableConfig } from "prostgles";
+import type { TableConfig } from "@prostgles/prostgles";
 
 export const tableConfig: TableConfig = {
   market_caps_import: {

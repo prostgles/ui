@@ -90,7 +90,7 @@ const createConfig = (targetPath: string) => {
   writeFileSync(
     path.join(targetPath, srcFolderName, "index.ts"),
     fixIndent(`
-      import { defineConfig } from "prostgles";
+      import { defineConfig } from "@prostgles/prostgles";
       import type { DBGeneratedSchema } from "../${generatedFolderName}/DBGeneratedSchema";
 
       export default defineConfig<DBGeneratedSchema>()({
@@ -143,7 +143,7 @@ const watchConfig = (configPath: string, onChange: () => void) => {
       .filter((entry) => entry.isDirectory() && entry.name !== "node_modules")
       .forEach((entry) => visit(path.join(directory, entry.name)));
   };
-  visit(path.join(configPath, "prostgles"));
+  visit(path.join(configPath, srcFolderName));
   return () => watchers.forEach((watcher) => watcher.close());
 };
 
