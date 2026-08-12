@@ -13,3 +13,5 @@ prostgles_certificates/
 **/.prostgles-desktop-config.json
 
 sample_schemas/**/dist/
+
+client/
