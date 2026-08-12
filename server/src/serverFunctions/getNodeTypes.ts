@@ -3,9 +3,9 @@ import * as path from "path";
 
 const toPosixPath = (p: string) => p.split(path.sep).join("/");
 
-export const getNodeTypes = () => {
-  const pathToProject = path.resolve(__dirname, "../../../..");
-  const files = extractInstalledPackageTypes(pathToProject);
+const SERVER_DIR = path.resolve(__dirname, "../../../..");
+export const getNodeTypes = (projectPath = SERVER_DIR) => {
+  const files = extractInstalledPackageTypes(projectPath);
   return files;
 };
 
@@ -13,6 +13,24 @@ type TypeFile = {
   content: string;
   filePath: string;
   // virtualPath: string;
+};
+
+const getPackageTypesEntry = (pkg: {
+  types?: unknown;
+  typings?: unknown;
+  exports?: unknown;
+}): string | undefined => {
+  if (typeof pkg.types === "string") return pkg.types;
+  if (typeof pkg.typings === "string") return pkg.typings;
+
+  const rootExport =
+    typeof pkg.exports === "object" && pkg.exports !== null ?
+      (pkg.exports as Record<string, unknown>)["."]
+    : undefined;
+  if (typeof rootExport !== "object" || rootExport === null) return;
+
+  const exportedTypes = (rootExport as Record<string, unknown>).types;
+  return typeof exportedTypes === "string" ? exportedTypes : undefined;
 };
 
 /**
@@ -84,7 +102,7 @@ const extractInstalledPackageTypes = (projectDir: string): TypeFile[] => {
     } catch {
       continue;
     }
-    const typesField = depPkg.types || depPkg.typings;
+    const typesField = getPackageTypesEntry(depPkg);
     if (!typesField) continue;
     const typesFilePath = path.join(depDir, typesField);
     if (!ts.sys.fileExists(typesFilePath)) continue;
@@ -112,6 +130,14 @@ const extractInstalledPackageTypes = (projectDir: string): TypeFile[] => {
   // 5. Recursively collect declaration files from each root.
   const collected = new Map<string, TypeFile>();
   const nodeModulesRoot = path.resolve(projectDir, "node_modules");
+  const getNodeModulesRelativePath = (targetPath: string) => {
+    const normalizedPath = toPosixPath(path.resolve(targetPath));
+    const marker = "/node_modules/";
+    const markerIndex = normalizedPath.indexOf(marker);
+    return markerIndex === -1 ? undefined : (
+        normalizedPath.slice(markerIndex + 1)
+      );
+  };
   const isInsideNodeModules = (targetPath: string): boolean => {
     const rel = path.relative(nodeModulesRoot, targetPath);
     return !rel.startsWith("..") && !path.isAbsolute(rel);
@@ -119,7 +145,7 @@ const extractInstalledPackageTypes = (projectDir: string): TypeFile[] => {
   function addNearestPackageJson(fileName: string) {
     let dir = path.dirname(fileName);
 
-    while (isInsideNodeModules(dir)) {
+    while (isInsideNodeModules(dir) || getNodeModulesRelativePath(dir)) {
       const pkgJsonPath = path.join(dir, "package.json");
       if (ts.sys.fileExists(pkgJsonPath)) {
         if (!collected.has(pkgJsonPath)) {
@@ -237,7 +263,10 @@ const extractInstalledPackageTypes = (projectDir: string): TypeFile[] => {
 
   const result = Array.from(collected.values()).map((file) => ({
     ...file,
-    filePath: "/" + toPosixPath(path.relative(projectDir, file.filePath)),
+    filePath:
+      "/" +
+      (getNodeModulesRelativePath(file.filePath) ??
+        toPosixPath(path.relative(projectDir, file.filePath))),
   }));
   return result;
 };

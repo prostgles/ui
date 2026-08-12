@@ -7,12 +7,20 @@ import { useCodeEditorTsTypes } from "../AccessControl/Methods/useCodeEditorTsTy
 import { CodeEditorWithSaveButton } from "../CodeEditor/CodeEditorWithSaveButton";
 import { ProcessLogs } from "../TableConfig/ProcessLogs";
 import { PublishedMethods } from "../W_Method/PublishedMethods";
+import { ProjectCodeEditor } from "@components/CodeFileBrowser/ProjectCodeEditor";
 
 export const ServerSideFunctions = () => {
-  const { dbsMethods, dbs, connectionId, dbKey, tables } = usePrgl();
+  const { dbsMethods, dbs, connectionId, dbKey, tables, databaseId } =
+    usePrgl();
   const { data: connection } = dbs.connections.useSubscribeOne({
     id: connectionId,
   });
+  const { data: dbConfig } = dbs.database_configs.useFindOne(
+    {
+      id: databaseId,
+    },
+    { select: { config_sync: 1 } },
+  );
   const languageObj = useCodeEditorTsTypes({
     connectionId,
     dbsMethods,
@@ -21,17 +29,7 @@ export const ServerSideFunctions = () => {
     dbs,
     method: undefined,
   });
-  const { setOnMount } = dbsMethods;
 
-  const onSave = useCallback(
-    async (value: string) => {
-      await setOnMount?.({
-        connId: connectionId,
-        changes: { on_mount_ts: value },
-      });
-    },
-    [setOnMount, connectionId],
-  );
   /**
    * Hiding PublishedMethods until OnMountFunction is loaded
    * is done to prevent flaky tests when creating function
@@ -41,6 +39,7 @@ export const ServerSideFunctions = () => {
   const onLoaded = useCallback(() => {
     setLibsLoaded(true);
   }, []);
+  const { config_sync } = dbConfig ?? {};
   if (!connection) return <Loading />;
 
   return (
@@ -55,7 +54,10 @@ export const ServerSideFunctions = () => {
           //   : undefined
           // }
           data-command="ServerSideFunctions.onMountEnabled"
-          checked={!!connection.on_mount_ts && !connection.on_mount_ts_disabled}
+          checked={
+            !!dbConfig?.config_sync?.toggleableProperties.onMount &&
+            !connection.on_mount_ts_disabled
+          }
           onChange={async (checked) => {
             await dbsMethods.setOnMount?.({
               connId: connectionId,
@@ -66,42 +68,22 @@ export const ServerSideFunctions = () => {
           }}
         />
       </FlexRow>
-      <FlexCol>
-        {languageObj && (
+      {/* <FlexCol>
+        {languageObj && config_sync && (
           <>
             <CodeEditorWithSaveButton
               key={dbKey}
               label="Server-side function executed after the table is created and server started or schema changed"
               language={languageObj}
-              codePlaceholder={example}
+              // codePlaceholder={example}
               value={connection.on_mount_ts}
-              onSave={onSave}
               onTSLibraryChange={onLoaded}
             />
             <ProcessLogs key={dbKey + "logs"} type="onMount" />
           </>
         )}
-      </FlexCol>
-      {!libsLoaded ?
-        <Loading />
-      : <PublishedMethods editedRule={undefined} accessRuleId={undefined} />}
+      </FlexCol> */}
+      <PublishedMethods editedRule={undefined} accessRuleId={undefined} />
     </FlexCol>
   );
 };
-
-const example = `/* Example */
-import { WebSocket } from "ws";
-export const onMount: ProstglesOnMount = async ({ dbo, sql }) => {
-
-  await sql('CREATE TABLE IF NOT EXISTS symbols(pair text primary key);');
-  await sql('CREATE TABLE IF NOT EXISTS futures (price float, symbol text, "timestamp" timestamptz);');
-  const socket = new WebSocket("wss://fstream.binance.com/ws/!markPrice@arr@1s");
-  
-  socket.onmessage = async (rawData) => {
-    const dataItems = JSON.parse(rawData.data as string);
-    const data = dataItems.map(data => ({ symbol: data.s, price: data.p, timestamp: new Date(data.E) }))
-    await dbo.symbols.insert(data.map(({ symbol }) => ({ pair: symbol })), { onConflict: "DoNothing" });
-    await dbo.futures.insert(data);
-  }
-}
-`;

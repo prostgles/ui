@@ -1,4 +1,4 @@
-import type { ProstglesOnMount } from "prostgles/schema-config";
+import type { ProstglesOnMount } from "prostgles";
 
 export const onMount: ProstglesOnMount = async ({ dbo: db, sql }) => {
   if (!db.cities) {

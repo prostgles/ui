@@ -1,4 +1,4 @@
-import type { ProstglesOnMount } from "prostgles/schema-config";
+import type { ProstglesOnMount } from "prostgles";
 const SECOND = 1e3;
 import { WebSocket } from "ws";
 

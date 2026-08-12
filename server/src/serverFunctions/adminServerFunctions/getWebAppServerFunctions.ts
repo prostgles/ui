@@ -152,6 +152,26 @@ export const getWebAppServerFunctions = (
         return filePaths;
       },
     }),
+    readFile: defineAdminFunction({
+      input: {
+        filePath: "string",
+      },
+      run: async ({ filePath }) => {
+        const content = await readFile(filePath, "utf-8");
+        return content;
+      },
+    }),
+    saveFile: defineAdminFunction({
+      input: {
+        filePath: "string",
+        content: "string",
+      },
+      run: async ({ filePath, content }) => {
+        await mkdir(join(filePath, ".."), { recursive: true });
+        await writeFile(filePath, content, "utf-8");
+        return true;
+      },
+    }),
     getWebAppFile: defineAdminFunction({
       input: {
         connectionId: "string",

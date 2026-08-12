@@ -9,7 +9,10 @@ const schemaConfigCache = new Map<
   { lastSynced: string | undefined; config: SchemaConfig }
 >();
 
-type ConfigSync = NonNullable<DatabaseConfigs["config_sync"]>;
+type ConfigSync = Omit<
+  NonNullable<DatabaseConfigs["config_sync"]>,
+  "toggleableProperties"
+>;
 type LoadedSchemaConfig = { config: SchemaConfig; configPath: string };
 
 const validateConfigPath = (config: NonNullable<ConfigSync>) => {

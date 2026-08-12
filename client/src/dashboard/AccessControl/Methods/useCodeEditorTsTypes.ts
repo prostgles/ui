@@ -13,8 +13,6 @@ type Props = Pick<
   method: MethodDefinitionProps["method"] | undefined;
 };
 
-let nodeLibs: TSLibrary[] | undefined;
-
 export const useCodeEditorTsTypes = (
   props: Props,
 ): LanguageConfig | undefined => {
@@ -91,6 +89,7 @@ export const useCodeEditorTsTypes = (
   return {
     lang: "typescript",
     environment: "nodejs",
+    projectPath: undefined,
     ...tsLibrariesAndModelName,
   };
 };

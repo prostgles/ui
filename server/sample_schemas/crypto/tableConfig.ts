@@ -1,9 +1,9 @@
-import type { TableConfig } from "prostgles/schema-config";
+import type { TableConfig } from "prostgles";
 
 export const tableConfig: TableConfig = {
   market_caps_import: {
     columns: {
-      v: "JSONB",
+      v: "JSONB"
     },
   },
   market_caps: {

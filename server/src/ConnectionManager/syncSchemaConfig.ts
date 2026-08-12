@@ -1,8 +1,10 @@
 import { spawn } from "child_process";
-import type { DBS } from "..";
+import type { DatabaseConfigs, DBS } from "..";
 import { connectionManager } from "..";
 import { runConnectionQuery } from "../serverFunctions/getServerFunctions";
 import { getSchemaConfig } from "./getSchemaConfig";
+import { getEntries } from "@common/utils";
+import { includes } from "prostgles-types";
 
 /**
  * Build and attach a schema-config project. Only its location is persisted;
@@ -20,16 +22,24 @@ export const syncSchemaConfig = async ({
   configPath: string;
   type: "sample-schema" | "cli";
 }) => {
-  const config_sync = {
+  await compileSchemaConfigProject(configPath);
+  const config_sync: NonNullable<DatabaseConfigs["config_sync"]> = {
     type,
     configPath,
     lastSynced: new Date().toISOString(),
+    toggleableProperties: {},
   };
-
-  await compileSchemaConfigProject(config_sync.configPath);
   const loadedSchemaConfig = getSchemaConfig(config_sync);
   const { config: schemaConfig, configPath: resolvedConfigPath } =
     loadedSchemaConfig;
+  getEntries(schemaConfig).forEach(([key, value]) => {
+    if (
+      value !== undefined &&
+      includes(["tableConfig", "functions", "onMount"] as const, key)
+    ) {
+      config_sync.toggleableProperties[key] = 1;
+    }
+  });
   if (schemaConfig.onInitSQL) {
     await runConnectionQuery(connectionId, schemaConfig.onInitSQL, undefined, {
       dbs,

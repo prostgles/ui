@@ -7,7 +7,7 @@ import { useEffect } from "react";
 
 export type MonacoEditorImport = typeof import("monaco-editor");
 
-let cachedNodeLibs: TSLibrary[] | undefined;
+const cachedNodeLibs = new Map<string, TSLibrary[]>();
 
 let lastLoadedLibsEditor: editor.IStandaloneCodeEditor | undefined;
 
@@ -19,14 +19,21 @@ export const useSetMonacoTsLibraries = (
   onTSLibraryChange: CodeEditorProps["onTSLibraryChange"],
 ) => {
   const getIsMounted = useIsMounted();
-  const { dbsMethods } = usePrglCore();
+  const {
+    dbsMethods: { getNodeTypes },
+  } = usePrglCore();
   const isNodeEnv =
     languageObj?.lang === "typescript" && languageObj.environment === "nodejs";
   const nodeLibs = usePromise(async () => {
     if (!isNodeEnv) return;
+    const projectPath = languageObj.projectPath ?? "";
     const nodeTypes =
-      cachedNodeLibs ?? (await dbsMethods.getNodeTypes?.()) ?? [];
-    cachedNodeLibs = nodeTypes;
+      cachedNodeLibs.get(projectPath) ??
+      (await getNodeTypes?.({
+        projectPath: languageObj.projectPath,
+      })) ??
+      [];
+    cachedNodeLibs.set(projectPath, nodeTypes);
     const badPathRecord = nodeTypes.find(
       (t) => !t.filePath.startsWith("/node_modules/"),
     );
@@ -39,11 +46,11 @@ export const useSetMonacoTsLibraries = (
       content: t.content,
       filePath: `file://${t.filePath}`,
     }));
-  });
+  }, [languageObj, getNodeTypes, isNodeEnv]);
   useEffect(() => {
     if (!monaco) return;
     setTSoptions(monaco);
-  }, [monaco, dbsMethods]);
+  }, [monaco, getNodeTypes]);
 
   useEffectDeep(() => {
     if (!monaco || !editor || languageObj?.lang !== "typescript") return;

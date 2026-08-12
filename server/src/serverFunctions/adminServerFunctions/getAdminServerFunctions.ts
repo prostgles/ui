@@ -456,8 +456,11 @@ export const getAdminServerFunctions = (
       },
     }),
     getNodeTypes: defineAdminFunction({
-      run: () => {
-        const pkgDeps = getNodeTypes();
+      input: {
+        projectPath: { type: "string", optional: true },
+      },
+      run: ({ projectPath }) => {
+        const pkgDeps = getNodeTypes(projectPath);
         return pkgDeps;
       },
     }),

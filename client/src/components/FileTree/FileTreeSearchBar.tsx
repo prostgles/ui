@@ -26,7 +26,7 @@ export const FileTreeSearchBar = ({
   setSortBy,
 }: FileTreeState) => {
   return (
-    <FlexCol className="gap-p5">
+    <FlexCol className="gap-p5 pl-p5">
       <FileTreeCurrentDirectory
         path={rootPath ?? "/"}
         onChange={(newDir) => setRootPath(newDir)}

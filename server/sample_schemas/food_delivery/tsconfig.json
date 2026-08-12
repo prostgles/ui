@@ -4,7 +4,7 @@
     "module": "commonjs",
     "baseUrl": "../../..",
     "paths": {
-      "prostgles/schema-config": ["server/dist/server/src/schemaConfig.d.ts"]
+      "prostgles": ["server/dist/server/src/schemaConfig.d.ts"]
     },
     "outDir": "dist",
     "rootDir": ".",

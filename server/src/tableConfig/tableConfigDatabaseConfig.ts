@@ -682,6 +682,13 @@ export const tableConfigDatabaseConfig: TableConfig<{ en: 1 }> = {
         jsonbSchemaType: {
           configPath: "string",
           type: { enum: ["sample-schema", "cli"] },
+          toggleableProperties: {
+            record: {
+              partial: true,
+              keysEnum: ["tableConfig", "functions", "onMount"],
+              values: { enum: [1] },
+            },
+          },
           lastSynced: "Date",
         },
       },

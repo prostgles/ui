@@ -1,5 +1,5 @@
 import ErrorComponent from "@components/ErrorComponent";
-import { FlexCol, FlexRow } from "@components/Flex";
+import { classOverride, FlexCol, FlexRow } from "@components/Flex";
 import Loading from "@components/Loader/Loading";
 import React, { useRef } from "react";
 import { FileTreeNode } from "./FileTreeNode";
@@ -10,6 +10,7 @@ import Btn from "@components/Btn";
 
 export type FileTreeProps = {
   rootPath?: string | undefined;
+  className?: string;
   defaultPattern?: string;
 } & (
   | {
@@ -32,6 +33,7 @@ export type FileTreeProps = {
 );
 
 export const FileTree = (props: FileTreeProps) => {
+  const { className } = props;
   const scrollRef = useRef<HTMLDivElement>(null);
   const state = useFileTree(props);
   const {
@@ -60,7 +62,10 @@ export const FileTree = (props: FileTreeProps) => {
       `}</style>
 
       <FlexCol
-        className="bg-color-0 gap-p25 rounded font-16 o-hidden"
+        className={classOverride(
+          className,
+          "bg-color-0 gap-p25 rounded font-16 o-hidden",
+        )}
         data-command="FileTree"
         style={{
           height: "100%",
