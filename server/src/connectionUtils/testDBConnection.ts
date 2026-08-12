@@ -89,7 +89,7 @@ export const testDBConnection = (
       })
       .catch((err) => {
         const errRes = err instanceof Error ? err.message : JSON.stringify(err);
-        if (errRes === NO_SSL_SUPPORT_ERROR && _c.db_ssl === "prefer") {
+        if (errRes === NO_SSL_SUPPORT_ERROR && con.db_ssl === "prefer") {
           console.warn(
             `Falling back to sslmode=disable for host ${con.db_host} as sslmode=prefer is not supported by the server.`,
           );
