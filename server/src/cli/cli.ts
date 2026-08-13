@@ -107,7 +107,10 @@ const createConfig = (targetPath: string) => {
     path.join(targetPath, ".env.example"),
     cliTemplateFiles.envExample,
   );
-  writeFileSync(path.join(targetPath, ".gitignore"), cliTemplateFiles.gitignore);
+  writeFileSync(
+    path.join(targetPath, ".gitignore"),
+    cliTemplateFiles.gitignore,
+  );
 
   console.log(
     `Created config project in ${targetPath}. Copy .env.example to .env, configure both databases, run npm install, then npm run dev.`,
@@ -119,6 +122,32 @@ const getConfigEnvironment = (configPath: string) => {
   return existsSync(environmentFile) ?
       parse(readFileSync(environmentFile))
     : {};
+};
+
+const warnAboutMissingEnvironment = (configPath: string) => {
+  const environmentFile = path.join(configPath, ".env");
+  if (!existsSync(environmentFile)) {
+    console.warn(
+      `Warning: No .env file found at ${environmentFile}. Copy .env.example to .env and configure the database credentials.`,
+    );
+  }
+
+  const environment = { ...process.env, ...getConfigEnvironment(configPath) };
+  const hasValue = (value: string | undefined) => Boolean(value?.trim());
+  const hasStateDatabase =
+    hasValue(environment.POSTGRES_URL) ||
+    (hasValue(environment.POSTGRES_DB) && hasValue(environment.POSTGRES_USER));
+
+  if (!hasStateDatabase) {
+    throw new Error(
+      "Prostgles UI state database credentials are missing. Set POSTGRES_URL, or both POSTGRES_DB and POSTGRES_USER.",
+    );
+  }
+  if (!hasValue(environment.PROSTGLES_DATABASE_URL)) {
+    throw new Error(
+      "Configured database credentials are missing. Set PROSTGLES_DATABASE_URL.",
+    );
+  }
 };
 
 const serverEntryPath = path.join(__dirname, "..", "index.js");
@@ -149,6 +178,7 @@ const watchConfig = (configPath: string, onChange: () => void) => {
 };
 
 const run = async (configPath: string, isDev: boolean) => {
+  warnAboutMissingEnvironment(configPath);
   await compileConfig(configPath);
   let server: ChildProcess | undefined;
   let restarting = false;

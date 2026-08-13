@@ -5,7 +5,7 @@ import type { FilterItem } from "prostgles-types";
 import React from "react";
 
 type P = {
-  type: "tableConfig" | "onMount" | "methods";
+  type: "tableConfig" | "methods";
   noMaxHeight?: boolean;
 };
 export const ProcessLogs = (props: P) => {
@@ -20,20 +20,15 @@ export const ProcessLogs = (props: P) => {
       "database_configs.connections": { id: connectionId },
     },
   } as FilterItem);
-  const hasCode =
-    type === "tableConfig" ? !!dbConf?.table_config_ts
-    : type === "onMount" ? !!conn?.on_mount_ts
-    : true;
+  const hasCode = type === "tableConfig" ? !!dbConf?.table_config_ts : true;
   const isDisabled =
     conn?.is_state_db ||
-    (type === "tableConfig" ? dbConf?.table_config_ts_disabled
-    : type === "onMount" ? conn?.on_mount_ts_disabled
-    : false) ||
+    (type === "tableConfig" ? dbConf?.table_config_ts_disabled : false) ||
     !hasCode;
 
   const logs =
-    type === "tableConfig" ? dbConfLogs?.table_config_logs
-    : type === "onMount" ? dbConfLogs?.on_mount_logs
+    type === "tableConfig" ?
+      dbConfLogs?.table_config_logs
     : dbConfLogs?.on_run_logs;
 
   if (conn?.is_state_db) {
@@ -52,8 +47,7 @@ export const ProcessLogs = (props: P) => {
           <FlexRow className="px-p5">
             {isDisabled ?
               <div>Process not started.</div>
-            : <div>Runs on the primary connection server.</div>
-            }
+            : <div>Runs on the primary connection server.</div>}
           </FlexRow>
         }
         logs={logs ?? ""}
@@ -61,5 +55,3 @@ export const ProcessLogs = (props: P) => {
     </FlexCol>
   );
 };
-
-const options = { readOnly: true };
