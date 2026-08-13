@@ -87,6 +87,7 @@ const createConfig = (targetPath: string) => {
     path.join(targetPath, generatedFolderName, "DBGeneratedSchema.ts"),
     cliTemplateFiles.DBGeneratedSchema,
   );
+  writeFileSync(path.join(targetPath, "AGENTS.md"), cliTemplateFiles.agents);
   writeFileSync(
     path.join(targetPath, srcFolderName, "index.ts"),
     fixIndent(`

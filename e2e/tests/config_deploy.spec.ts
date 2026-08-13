@@ -170,6 +170,7 @@ test.describe("Published config CLI", () => {
 
       expect(existsSync(join(configDirectory, "package.json"))).toBe(true);
       expect(existsSync(join(configDirectory, "tsconfig.json"))).toBe(true);
+      expect(existsSync(join(configDirectory, "AGENTS.md"))).toBe(true);
       expect(existsSync(join(configDirectory, ".env.example"))).toBe(true);
       expect(existsSync(join(configDirectory, ".gitignore"))).toBe(true);
       expect(existsSync(join(configDirectory, "src", "index.ts"))).toBe(true);
@@ -190,6 +191,12 @@ test.describe("Published config CLI", () => {
         .toContain("node_modules/");
       expect(readFileSync(join(configDirectory, ".gitignore"), "utf8"))
         .toContain(".env");
+      expect(
+        readFileSync(join(configDirectory, "AGENTS.md"), "utf8"),
+      ).toContain("Define tables and columns in `tableConfig`");
+      expect(
+        readFileSync(join(configDirectory, "AGENTS.md"), "utf8"),
+      ).toContain("databaseConfig.file_table_config");
 
       const packageJsonPath = join(configDirectory, "package.json");
       const packageJson = JSON.parse(
@@ -351,6 +358,7 @@ test.describe("Published config CLI", () => {
         POSTGRES_PASSWORD: "psw",
         PROSTGLES_UI_PORT: String(port),
         PROSTGLES_DATABASE_NAME: applicationDatabaseName,
+        PROSTGLES_DATABASE_URL: `postgres://usr:psw@127.0.0.1:5432/${applicationDatabaseName}`,
       });
       configProcess = await startConfigScript(
         "start",
