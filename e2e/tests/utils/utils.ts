@@ -1132,9 +1132,13 @@ export const setPromptByText = async (
   closePopup = true,
 ) => {
   await page.getByTestId("LLMChatOptions.Prompt").click();
-  await clickAndWait(
-    page.locator(".SmartCard button", { hasText: text }).first(),
-  );
+  const promptBtn = page
+    .locator(".SmartCard button", { hasText: text })
+    .first();
+  if ((await promptBtn.getAttribute("data-color")) !== "action") {
+    await promptBtn.click();
+    await expect(promptBtn).toHaveAttribute("data-color", "action");
+  }
   await page.waitForTimeout(3e3); // wait for prompt tools to be set
   if (!closePopup) return;
   await page
