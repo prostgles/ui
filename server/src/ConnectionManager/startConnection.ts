@@ -15,7 +15,6 @@ import { testDBConnection } from "../connectionUtils/testDBConnection";
 import { log, restartProc } from "../index";
 import type { ProstglesOnMountCleanup } from "../schemaConfig";
 import type { ConnectionManager, User } from "./ConnectionManager";
-import { getOnMount } from "./connectionManagerUtils";
 import { getConnectionOnReady } from "./connectionOnReady";
 import { getConnectionPublish } from "./getConnectionPublish";
 import { getConnectionSocketPath } from "./getConnectionSocketPath";
@@ -157,13 +156,7 @@ export const startConnection = async function (
           workspaces: _workspaces,
           ...schemaProstglesOptions
         } = schemaConfig ?? {};
-        const onMount =
-          connection.on_mount_ts_disabled ? undefined : (
-            getOnMount({
-              config_sync: databaseConfig.config_sync,
-              on_mount_ts: connection.on_mount_ts,
-            })
-          );
+        const onMount = connection.on_mount_ts_disabled ? undefined : _onMount;
 
         const { disable_realtime } = connection;
         let onMountCleanup: ProstglesOnMountCleanup | undefined;

@@ -7,7 +7,6 @@ import type { FileColumnConfig, TableSchema } from "prostgles-types";
 import { pickKeys } from "prostgles-types";
 import ts, { ModuleKind, ModuleResolutionKind, ScriptTarget } from "typescript";
 import type { DatabaseConfigs } from "..";
-import type { ProstglesOnMount } from "../schemaConfig";
 import type { ConnectionManager } from "./ConnectionManager";
 import type { ConnectionHotReloadProperties } from "./getHotReloadConfigs";
 import { getSchemaConfig } from "./getSchemaConfig";
@@ -86,18 +85,6 @@ export const getTableConfig = (dbConf: TableDbConfig) => {
     return schemaConfig.tableConfig;
   }
   return getCompiledTableConfig(dbConf)?.tableConfig;
-};
-
-export const getOnMount = (
-  dbConf: Pick<DatabaseConfigs, "config_sync"> & {
-    on_mount_ts?: string | null;
-  },
-): ProstglesOnMount | undefined => {
-  const schemaConfig = getSchemaConfig(dbConf.config_sync)?.config;
-  if (schemaConfig) return schemaConfig.onMount;
-  return getEvaledExports<{ onMount?: ProstglesOnMount }>(
-    dbConf.on_mount_ts ?? undefined,
-  )?.onMount;
 };
 
 export type FileTableConfigReferences = Record<

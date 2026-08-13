@@ -87,12 +87,6 @@ export const tableConfigConnections: TableConfig<{ en: 1 }> = {
         sqlDefinition: `BOOLEAN`,
         info: { hint: `If true then this DB is used to run the dashboard` },
       },
-      on_mount_ts: {
-        sqlDefinition: "TEXT",
-        info: {
-          hint: `On mount typescript function. Must export const onMount`,
-        },
-      },
       on_mount_ts_disabled: {
         sqlDefinition: "BOOLEAN",
         info: { hint: `If true then On mount typescript will not be executed` },

@@ -20,10 +20,11 @@ import { getDbConnection } from "../connectionUtils/testDBConnection";
 import { getDataPath } from "../electronConfig";
 import type { Connections, DBS, DatabaseConfigs } from "../index";
 import { connectionManager } from "../index";
-import { UNIQUE_DB_COLS } from "../tableConfig/tableConfigDatabaseConfig";
-import { getOnMount, getTableConfig } from "./connectionManagerUtils";
 import type { ProstglesOnMountCleanup } from "../schemaConfig";
+import { UNIQUE_DB_COLS } from "../tableConfig/tableConfigDatabaseConfig";
+import { getTableConfig } from "./connectionManagerUtils";
 import { getConnectionHttpServer } from "./getConnectionHttpServer";
+import { getSchemaConfig } from "./getSchemaConfig";
 import {
   initConnectionManager,
   type CONNECTION_HOT_RELOAD_COLUMNS,
@@ -217,8 +218,9 @@ export class ConnectionManager {
     );
     if (!prglCon) return;
     const tableConfig =
-      disabled ? undefined
-      : getTableConfig({ table_config_ts, table_config: null, config_sync });
+      disabled ? undefined : (
+        getTableConfig({ table_config_ts, table_config: null, config_sync })
+      );
     await prglCon.prgl.update({ tableConfig });
   };
 
@@ -226,12 +228,8 @@ export class ConnectionManager {
     databaseConfigId: number,
     {
       id: conId,
-      on_mount_ts,
       on_mount_ts_disabled: disabled,
-    }: Pick<
-      DBSSchema["connections"],
-      "id" | "on_mount_ts" | "on_mount_ts_disabled"
-    >,
+    }: Pick<DBSSchema["connections"], "id" | "on_mount_ts_disabled">,
     _connectionInfo: pg.IConnectionParameters<pg.IClient>,
     config_sync?: DatabaseConfigs["config_sync"],
   ) => {
@@ -241,8 +239,13 @@ export class ConnectionManager {
       { id: databaseConfigId },
       { on_mount_logs: null },
     );
-    if (!prglCon || disabled) return;
-    const onMount = getOnMount({ config_sync: config_sync ?? null, on_mount_ts });
+    if (!prglCon) return;
+    if (disabled) {
+      await this.cleanupOnMount(prglCon);
+      return;
+    }
+
+    const onMount = getSchemaConfig(config_sync)?.config.onMount;
     if (!onMount) return;
     await this.cleanupOnMount(prglCon);
     const cleanup = await onMount({

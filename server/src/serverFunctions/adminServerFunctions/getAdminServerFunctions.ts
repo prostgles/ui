@@ -402,7 +402,6 @@ export const getAdminServerFunctions = (
         connId: "string",
         changes: {
           type: {
-            on_mount_ts: { type: "string", optional: true },
             on_mount_ts_disabled: { type: "boolean", optional: true },
           },
         },

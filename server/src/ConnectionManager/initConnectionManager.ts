@@ -53,7 +53,7 @@ export async function initConnectionManager(
         return;
       }
       const currentConnection = this.connections?.find(
-        (ccon) => ccon.id === updatedConnection.id,
+        ({ id }) => id === updatedConnection.id,
       );
       if (
         prglCon?.io &&

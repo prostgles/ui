@@ -16,15 +16,6 @@ export const timechartSvgif: OnBeforeScreenshot = async (
   { addScene, addSceneAnimation },
 ) => {
   await openConnection("crypto");
-
-  await runDbsSql(
-    page,
-    `
-      UPDATE connections
-      SET on_mount_ts_disabled = true
-      WHERE name IN ( 'crypto')
-    `,
-  );
   const wspLocator = await page.locator(
     getCommandElemSelector("SilverGridChild") + `[data-view-type="timechart"]`,
   );
