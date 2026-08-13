@@ -1,6 +1,10 @@
 import type { WorkspaceInsertModel } from "@common/DashboardTypes";
 import type { DBSSchema } from "@common/publishUtils";
-import type { SessionUser } from "prostgles-server";
+import { type SessionUser } from "prostgles-server";
+export {
+  defineServerFunction,
+  createServerFunctionWithContext,
+} from "prostgles-server";
 import type { ProstglesInitOptions } from "prostgles-server/dist/ProstglesTypes";
 import type { OnReadyParams } from "prostgles-server/dist/initProstgles";
 
