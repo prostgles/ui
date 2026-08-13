@@ -133,6 +133,7 @@ export const AskLLMChatActionBarPromptSelector = (
                           style={{
                             padding: 0,
                           }}
+                          data-key={name}
                           color={isActive ? "action" : "default"}
                           variant="text"
                           iconPath={isActive ? mdiCheck : mdiCircleOutline}
