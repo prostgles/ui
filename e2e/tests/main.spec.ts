@@ -1272,7 +1272,6 @@ test.describe("Main test", () => {
       .getByTestId("AskLLMToolApprover.AllowOnce")
       .waitFor({ state: "visible", ...TWENTY_SECONDS_OR_MORE });
     await page.getByTestId("Popup.close").last().click();
-    await page.waitForTimeout(1e3);
     await sendAskLLMMessage(page, " interrupt tool call ");
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       "Tool use requests were interrupted by the user",

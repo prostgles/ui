@@ -937,7 +937,11 @@ export const sendAskLLMMessage = async (
         onAfterSend: () => Promise<void>;
       } = false,
 ) => {
-  await page.getByTestId("AskLLM.popup").getByTestId("Chat.textarea").fill(msg);
+  const textArea = page
+    .getByTestId("AskLLM.popup")
+    .getByTestId("Chat.textarea");
+  await expect(textArea).toBeEnabled(TWENTY_SECONDS_OR_MORE);
+  await textArea.fill(msg);
   await page.keyboard.press("Enter");
   await page.waitForTimeout(500);
   if (waitForLoadingToStop) {
@@ -1128,7 +1132,7 @@ export const setPromptByText = async (
   closePopup = true,
 ) => {
   await page.getByTestId("LLMChatOptions.Prompt").click();
-  await page.locator(".SmartCard").getByText(text).first().click();
+  await clickAndWait(page.locator(".SmartCard").getByText(text).first());
   await page.waitForTimeout(3e3); // wait for prompt tools to be set
   if (!closePopup) return;
   await page
