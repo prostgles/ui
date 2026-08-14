@@ -27,6 +27,7 @@ export type HotReloadConfigOptions = RequiredKeepUndefined<
     | "auth"
     | "io"
     | "tableConfig"
+    | "tableHooks"
     | "functions"
     | "tsGeneratedTypesDir"
     | "modifyClientSchema"
@@ -88,7 +89,7 @@ export const getHotReloadConfigs = async ({
     configuredConnection,
     configuredDatabaseConfig,
   );
-  const { fileTable, tableConfig } = await parseTableConfig({
+  const { fileTable, tableConfig, tableHooks } = await parseTableConfig({
     type: "saved",
     dbs,
     con: configuredConnection,
@@ -135,6 +136,7 @@ export const getHotReloadConfigs = async ({
       restApi,
       fileTable,
       tableConfig,
+      tableHooks,
       auth,
       schemaFilter: schemaConfig?.schemaFilter ??
         db_schema_filter ?? { public: 1 },

@@ -149,6 +149,8 @@ export const startConnection = async function (
           : !IS_PROD && databaseConfig.config_sync ? "hotReloadMode"
           : false;
         const {
+          id: _id,
+          createDatabase: _createDatabase,
           connection: _connectionConfig,
           databaseConfig: _databaseConfig,
           onInitSQL: _onInitSQL,

@@ -22,7 +22,6 @@ import type { Connections, DBS, DatabaseConfigs } from "../index";
 import { connectionManager } from "../index";
 import type { ProstglesOnMountCleanup } from "../schemaConfig";
 import { UNIQUE_DB_COLS } from "../tableConfig/tableConfigDatabaseConfig";
-import { getTableConfig } from "./connectionManagerUtils";
 import { getConnectionHttpServer } from "./getConnectionHttpServer";
 import { getSchemaConfig } from "./getSchemaConfig";
 import {
@@ -201,12 +200,11 @@ export class ConnectionManager {
     conId: string,
     {
       id: dbConfId,
-      table_config_ts,
       table_config_ts_disabled: disabled,
       config_sync,
     }: Pick<
       DBSSchema["database_configs"],
-      "id" | "table_config_ts" | "table_config_ts_disabled" | "config_sync"
+      "id" | "table_config_ts_disabled" | "config_sync"
     >,
     _connectionInfo: pg.IConnectionParameters<pg.IClient>,
   ) => {
@@ -218,9 +216,7 @@ export class ConnectionManager {
     );
     if (!prglCon) return;
     const tableConfig =
-      disabled ? undefined : (
-        getTableConfig({ table_config_ts, table_config: null, config_sync })
-      );
+      disabled ? undefined : getSchemaConfig(config_sync)?.config.tableConfig;
     await prglCon.prgl.update({ tableConfig });
   };
 

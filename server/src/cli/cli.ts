@@ -12,6 +12,7 @@ import {
   writeFileSync,
 } from "fs";
 import path from "path";
+import { compileSchemaConfigProject } from "../ConnectionManager/compileSchemaConfigProject";
 import {
   cliTemplateFiles,
   generatedFolderName,
@@ -30,31 +31,6 @@ const getConfigPath = (args: string[]) => {
   if (!configPath) throw new Error("--config requires a directory");
   return path.resolve(configPath);
 };
-
-const getTscPath = (configPath: string) => {
-  try {
-    return require.resolve("typescript/bin/tsc", { paths: [configPath] });
-  } catch {
-    throw new Error(
-      `TypeScript is not installed in ${configPath}. Run npm install in the config project.`,
-    );
-  }
-};
-
-const compileConfig = (configPath: string) =>
-  new Promise<void>((resolve, reject) => {
-    const child = spawn(
-      process.execPath,
-      [getTscPath(configPath), "--project", configPath],
-      { cwd: configPath, stdio: "inherit" },
-    );
-    child.once("error", reject);
-    child.once("close", (code) => {
-      if (code === 0) resolve();
-      else
-        reject(new Error(`Config compilation failed with exit code ${code}`));
-    });
-  });
 
 const createConfig = (targetPath: string) => {
   if (existsSync(targetPath) && readdirSync(targetPath).length) {
@@ -125,7 +101,7 @@ const getConfigEnvironment = (configPath: string) => {
     : {};
 };
 
-const warnAboutMissingEnvironment = (configPath: string) => {
+const validateEnvironmentSetup = (configPath: string) => {
   const environmentFile = path.join(configPath, ".env");
   if (!existsSync(environmentFile)) {
     console.warn(
@@ -179,8 +155,9 @@ const watchConfig = (configPath: string, onChange: () => void) => {
 };
 
 const run = async (configPath: string, isDev: boolean) => {
-  warnAboutMissingEnvironment(configPath);
-  await compileConfig(configPath);
+  validateEnvironmentSetup(configPath);
+  mkdirSync(path.join(configPath, generatedFolderName), { recursive: true });
+  await compileSchemaConfigProject(configPath);
   let server: ChildProcess | undefined;
   let restarting = false;
   const start = () => {
@@ -213,7 +190,7 @@ const run = async (configPath: string, isDev: boolean) => {
     timer = setTimeout(() => {
       void (async () => {
         try {
-          await compileConfig(configPath);
+          await compileSchemaConfigProject(configPath);
           restarting = true;
           await stop();
           restarting = false;

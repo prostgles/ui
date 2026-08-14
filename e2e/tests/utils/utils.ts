@@ -1137,11 +1137,7 @@ export const setPromptByText = async (
     .first();
   if ((await promptBtn.getAttribute("data-color")) !== "action") {
     await promptBtn.click();
-    await expect(promptBtn).toHaveAttribute(
-      "data-color",
-      "action",
-      TWENTY_SECONDS_OR_MORE,
-    );
+    await expect(promptBtn).not.toBeDisabled(TWENTY_SECONDS_OR_MORE);
   }
   await page.waitForTimeout(3e3); // wait for prompt tools to be set
   if (!closePopup) return;

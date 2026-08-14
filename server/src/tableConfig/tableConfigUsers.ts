@@ -179,49 +179,5 @@ export const tableConfigUsers = {
         `,
       },
     },
-    hooks: {
-      beforeEach: [
-        {
-          commands: { insert: 1 },
-          changedFields: ["password"],
-          // eslint-disable-next-line @typescript-eslint/require-await
-          validate: async (args) => {
-            const { data } = args;
-
-            const nonPasswordAccount =
-              data.passwordless_admin ||
-              data.registration?.type === "OAuth" ||
-              data.registration?.type === "magic-link" ||
-              data.type === "public";
-
-            if (nonPasswordAccount && !data.password) return;
-
-            if ("password" in data) {
-              if (!data.password) {
-                throw "Password cannot be empty";
-              }
-              const id = crypto.randomUUID();
-
-              const hashedPassword = getPasswordHash({ id }, data.password);
-              if (!hashedPassword) {
-                throw "Password hashing failed";
-              }
-
-              return {
-                row: {
-                  id,
-                  ...data,
-                  password: hashedPassword,
-                  last_updated: Date.now().toString(),
-                },
-              };
-            }
-          },
-        } satisfies BeforeEachTsTrigger<
-          Partial<DBSSchema["users"]>,
-          DBS
-        > as any,
-      ],
-    },
   },
-} as const satisfies TableConfig<{ en: 1 }, DBGeneratedSchema>;
+} as const satisfies TableConfig<{ en: 1 }>;

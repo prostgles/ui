@@ -467,6 +467,8 @@ class Button<HREF extends string | void = void> extends RTComp<
             : () => alert(disabledInfo)
           : onClick,
         title: disabledInfo || title,
+        "aria-disabled": isDisabled ? true : undefined,
+        "aria-busy": loading ? true : undefined,
         style: {
           ...extraStyle,
           display: "flex",

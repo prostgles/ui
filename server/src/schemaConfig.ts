@@ -73,6 +73,7 @@ export type SchemaConfigProstglesOptions<
   | "joins"
   | "publish"
   | "schemaFilter"
+  | "tableHooks"
   | "tableConfig"
   | "tableConfigMigrations"
   // | "tsGeneratedTypesFunctionsPath"

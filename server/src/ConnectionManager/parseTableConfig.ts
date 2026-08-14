@@ -7,6 +7,7 @@ import type {
   DBHandlerServer,
   FileTableRow,
   TableConfig,
+  TableHooks,
 } from "prostgles-server";
 import { getLocalStorageClient } from "prostgles-server";
 import type { FileTableConfig } from "prostgles-server/dist/ProstglesTypes";
@@ -15,8 +16,8 @@ import type { StorageClient } from "prostgles-server/dist/StorageClient/StorageC
 import type { DatabaseConfigs, DBS } from "..";
 import { getCloudClient } from "../cloudClients/cloudClients";
 import type { ConnectionManager } from "./ConnectionManager";
-import { getTableConfig } from "./connectionManagerUtils";
 import type { ConnectionHotReloadProperties } from "./getHotReloadConfigs";
+import { getSchemaConfig } from "./getSchemaConfig";
 
 type ParseTableConfigArgs = {
   dbs: DBS;
@@ -46,6 +47,7 @@ export const parseTableConfig = async ({
 }: ParseTableConfigArgs): Promise<{
   fileTable?: FileTableConfig;
   tableConfig: TableConfig | undefined;
+  tableHooks: TableHooks | undefined;
 }> => {
   const connectionId = con.id;
   let fileTableConfig:
@@ -95,7 +97,110 @@ export const parseTableConfig = async ({
         referencedTables: fileTableConfig.referencedTables,
       } satisfies FileTableConfig);
 
-  const tableConfig = getTableConfig(databaseConfig);
+  const { tableHooks, tableConfig } =
+    getSchemaConfig(databaseConfig.config_sync)?.config ?? {};
+  const fileTableHooksMerged: TableHooks | undefined =
+    fileTable && fileTableConfig?.annotationsTable ?
+      {
+        [fileTable.tableName]: {
+          beforeEach: [
+            {
+              commands: { insert: 1, update: 1 },
+              validate: async ({ data: fileRow, hookContext }) => {
+                const { original_name, content_type } = fileRow;
+                const buffer = hookContext?.data as Buffer;
+                const isImageOrPdf =
+                  content_type &&
+                  ["image/", "application/pdf"].some((prefix) =>
+                    content_type.startsWith(prefix),
+                  );
+                if (!isImageOrPdf || !original_name) {
+                  return;
+                }
+                const db =
+                  conMgr.getActiveConnectionSilentFail(connectionId)?.prgl.db;
+
+                const documentService = await getServiceManager(dbs)
+                  .getServiceWithRetries("documents")
+                  .catch((err) => {
+                    console.error("Failed to get documents service", err);
+                    return null;
+                  });
+
+                if (!db || !documentService) {
+                  return {
+                    row: {
+                      ...fileRow,
+                      extraction_status:
+                        !db || !documentService ?
+                          {
+                            phase: "error",
+                            error:
+                              !db ?
+                                "Internal error: Database handler not found for extraction"
+                              : "Internal error: Documents service could not be initialized for extraction. Check service logs for details.",
+                          }
+                        : {
+                            phase: "pending",
+                          },
+                    },
+                  };
+                }
+                const blobWithType = new Blob([buffer], {
+                  type: content_type,
+                });
+                const doclingResult = await documentService.endpoints[
+                  "/v1/convert/file"
+                ]({
+                  files: [blobWithType],
+                  ...CONVERT_DOCUMENT_DEFAULT_OPTIONS,
+                  // image_export_mode: "embedded",
+                  image_export_mode: "placeholder",
+                  to_formats: ["json", "text"],
+                })
+                  .then((result) => ({ success: true, result }) as const)
+                  .catch(
+                    (error: unknown) => ({ success: false, error }) as const,
+                  );
+
+                return {
+                  row: {
+                    ...fileRow,
+                    extraction_status:
+                      doclingResult.success ?
+                        {
+                          phase: "success",
+                        }
+                      : {
+                          phase: "error",
+                          error:
+                            doclingResult.error ||
+                            "Unknown error during document extraction",
+                        },
+                    docling_metadata:
+                      doclingResult.success ?
+                        doclingResult.result.document.json_content
+                      : null,
+                    text_content:
+                      doclingResult.success ?
+                        doclingResult.result.document.text_content
+                        // doclingResult.result.document.md_content
+                      : null,
+                  },
+                };
+              },
+            } satisfies BeforeEachTsTrigger<
+              FileTableRow & {
+                text_content: string | null;
+                docling_metadata: any;
+                extraction_status: any;
+              },
+              DBHandlerServer
+            >,
+          ],
+        },
+      }
+    : undefined;
   const fileTableConfigMerged: TableConfig | undefined =
     fileTable && fileTableConfig?.annotationsTable ?
       {
@@ -110,103 +215,6 @@ export const parseTableConfig = async ({
                 error: { type: "unknown", optional: true },
               },
             },
-          },
-          hooks: {
-            beforeEach: [
-              {
-                commands: { insert: 1, update: 1 },
-                validate: async ({ data: fileRow, hookContext }) => {
-                  const { original_name, content_type } = fileRow;
-                  const buffer = hookContext?.data as Buffer;
-                  const isImageOrPdf =
-                    content_type &&
-                    ["image/", "application/pdf"].some((prefix) =>
-                      content_type.startsWith(prefix),
-                    );
-                  if (!isImageOrPdf || !original_name) {
-                    return;
-                  }
-                  const db =
-                    conMgr.getActiveConnectionSilentFail(connectionId)?.prgl.db;
-
-                  const documentService = await getServiceManager(dbs)
-                    .getServiceWithRetries("documents")
-                    .catch((err) => {
-                      console.error("Failed to get documents service", err);
-                      return null;
-                    });
-
-                  if (!db || !documentService) {
-                    return {
-                      row: {
-                        ...fileRow,
-                        extraction_status:
-                          !db || !documentService ?
-                            {
-                              phase: "error",
-                              error:
-                                !db ?
-                                  "Internal error: Database handler not found for extraction"
-                                : "Internal error: Documents service could not be initialized for extraction. Check service logs for details.",
-                            }
-                          : {
-                              phase: "pending",
-                            },
-                      },
-                    };
-                  }
-                  const blobWithType = new Blob([buffer], {
-                    type: content_type,
-                  });
-                  const doclingResult = await documentService.endpoints[
-                    "/v1/convert/file"
-                  ]({
-                    files: [blobWithType],
-                    ...CONVERT_DOCUMENT_DEFAULT_OPTIONS,
-                    // image_export_mode: "embedded",
-                    image_export_mode: "placeholder",
-                    to_formats: ["json", "text"],
-                  })
-                    .then((result) => ({ success: true, result }) as const)
-                    .catch(
-                      (error: unknown) => ({ success: false, error }) as const,
-                    );
-
-                  return {
-                    row: {
-                      ...fileRow,
-                      extraction_status:
-                        doclingResult.success ?
-                          {
-                            phase: "success",
-                          }
-                        : {
-                            phase: "error",
-                            error:
-                              doclingResult.error ||
-                              "Unknown error during document extraction",
-                          },
-                      docling_metadata:
-                        doclingResult.success ?
-                          doclingResult.result.document.json_content
-                        : null,
-                      text_content:
-                        doclingResult.success ?
-                          doclingResult.result.document.text_content
-                          // doclingResult.result.document.md_content
-                        : null,
-                    },
-                  };
-                },
-              } satisfies BeforeEachTsTrigger<
-                FileTableRow & {
-                  text_content: string | null;
-                  docling_metadata: any;
-                  extraction_status: any;
-                },
-                DBHandlerServer
-              >,
-            ],
           },
         },
         [fileTableConfig.annotationsTable]: {
@@ -226,6 +234,10 @@ export const parseTableConfig = async ({
     tableConfig: (fileTableConfigMerged || tableConfig) && {
       ...(fileTableConfigMerged || {}),
       ...tableConfig,
+    },
+    tableHooks: (fileTableHooksMerged || tableHooks) && {
+      ...(fileTableHooksMerged || {}),
+      ...tableHooks,
     },
   };
 };

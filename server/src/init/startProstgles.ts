@@ -18,6 +18,7 @@ import { actualRootDir, getElectronConfig } from "../electronConfig";
 import { DBS_CONNECTION_INFO } from "../envVars";
 import { publish } from "../publish/publish";
 import { tableConfig } from "../tableConfig/tableConfig";
+import { tableHooks } from "../tableHooks/tableHooks";
 import { tableConfigMigrations } from "../tableConfig/tableConfigMigrations";
 import { prostglesOnReady } from "./prostglesOnReady";
 import { startDevHotReloadNotifier } from "./startDevHotReloadNotifier";
@@ -190,6 +191,7 @@ export const startProstgles = async ({
             addLog(e, null);
           },
           tableConfig,
+          tableHooks,
           tableConfigMigrations,
           publishRawSQL: (params) => {
             const { user } = params;

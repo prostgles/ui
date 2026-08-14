@@ -79,14 +79,6 @@ const getCompiledTableConfig = ({
   return res;
 };
 
-export const getTableConfig = (dbConf: TableDbConfig) => {
-  const schemaConfig = getSchemaConfig(dbConf.config_sync)?.config;
-  if (schemaConfig) {
-    return schemaConfig.tableConfig;
-  }
-  return getCompiledTableConfig(dbConf)?.tableConfig;
-};
-
 export type FileTableConfigReferences = Record<
   string,
   { referenceColumns: Record<string, FileColumnConfig> }
