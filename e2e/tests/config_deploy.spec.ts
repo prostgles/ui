@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import {
   existsSync,

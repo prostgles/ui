@@ -1,6 +1,8 @@
 import type { EventInfo } from "prostgles-server/dist/Logging";
 import type { TableConfig } from "prostgles-server";
-import { pickKeys } from "prostgles-types";
+import { mkdir, writeFile } from "fs/promises";
+import { dirname } from "path";
+import { getSerialisableError, pickKeys } from "prostgles-types";
 import { type DBS } from ".";
 import { getAuthSetupData } from "./authConfig/subscribeToAuthSetupChanges";
 
@@ -50,7 +52,37 @@ const logRecords: {
   connection_id: string | null;
   created: Date;
 }[] = [];
-const isPlaywright = process.env.PLAYWRIGHT_TEST === "true";
+const testLogPath =
+  process.env.PRGL_TEST ? process.env.PRGL_TEST_LOG_PATH : undefined;
+const maxTestLogCharacters = 64_000;
+let testLogArtifact = "";
+let testLogWriteTimer: NodeJS.Timeout | undefined;
+let testLogWrite = Promise.resolve();
+
+const addTestLog = (e: EventInfo, connection_id: string | null) => {
+  if (!testLogPath) return;
+  const line = JSON.stringify({
+    ...e,
+    connection_id,
+    error: "error" in e && e.error ? getSerialisableError(e.error) : undefined,
+  });
+  testLogArtifact = (testLogArtifact + line + "\n").slice(
+    -maxTestLogCharacters,
+  );
+
+  if (testLogWriteTimer) return;
+  testLogWriteTimer = setTimeout(() => {
+    testLogWriteTimer = undefined;
+    testLogWrite = testLogWrite
+      .then(async () => {
+        await mkdir(dirname(testLogPath), { recursive: true });
+        await writeFile(testLogPath, testLogArtifact);
+      })
+      .catch((error: unknown) => {
+        console.error("Failed to write test log artifact", error);
+      });
+  }, 50);
+};
 
 export const addLog = (e: EventInfo, connection_id: string | null) => {
   // if (e.type === "sync" && e.tableName === "windows") {
@@ -77,17 +109,8 @@ export const addLog = (e: EventInfo, connection_id: string | null) => {
   //   //   _alreadyStarted = true;
   //   // }
   // }
-  if (isPlaywright) {
-    console.log(
-      //@ts-ignore
-      e.command,
-      //@ts-ignore
-      e.table_name || e.tableName,
-      //@ts-ignore
-      e.filter || e.data?.filter || e.condition,
-      //@ts-ignore
-      e.channel_name,
-    );
+  if (testLogPath) {
+    addTestLog(e, connection_id);
   }
   if (shouldExclude(e, connection_id === null)) return;
   logRecords.push({ e, connection_id, created: new Date() });

@@ -12,6 +12,7 @@ import {
   type DBSchemaTableWithOptions,
 } from "../../dashboard/Dashboard/getTables";
 import { isPlaywrightTest } from "../../i18n/i18nUtils";
+import { logClientEvents } from "./logClientEvents";
 
 type PrglProjectStateError = {
   error: any;
@@ -37,24 +38,6 @@ export type PrglProjectState =
 type P = {
   connId: string | undefined;
   prglState: AppContextProps;
-};
-
-const onDebug: UseProstglesClientProps["onDebug"] = (ev) => {
-  if (
-    ev.type === "schemaChanged" ||
-    ev.type === "onReady" ||
-    ev.type === "onReady.notMounted" ||
-    ev.type === "onReady.call"
-  ) {
-    console.log(
-      Date.now(),
-      "onDebug",
-      ev.type,
-      ev.type === "schemaChanged" ?
-        ev.data.tableSchema.map((s) => s.name)
-      : Object.keys(ev.data.db),
-    );
-  }
 };
 
 export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
@@ -136,7 +119,7 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
           reconnectionDelay: 1000,
           reconnection: true,
         },
-        onDebug: isPlaywrightTest ? onDebug : undefined,
+        onDebug: logClientEvents,
         skip: !pathInfo?.path,
       }) satisfies UseProstglesClientProps,
     [pathInfo?.path, pathInfo?.socketUrl],

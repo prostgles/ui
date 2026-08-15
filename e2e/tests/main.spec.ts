@@ -1,4 +1,4 @@
-import { chromium, expect, test, type Locator } from "@playwright/test";
+import { chromium, expect, test, type Locator } from "./fixtures";
 import { authenticator } from "otplib";
 import { speechToTextTest } from "testAskLLM/speechToTextTest";
 

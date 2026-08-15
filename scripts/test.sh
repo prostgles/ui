@@ -37,11 +37,15 @@ cd ..
 
 run_e2e_tests() {
   local test_script="$1"
+  local test_log_path="$PWD/e2e/.test-artifacts/latest-app-logs.log"
 
   echo ">>> Running e2e tests: $test_script"
 
   rm -f ./client/configs/last_compiled.txt
-  PRGL_TEST=true npm run dev &
+  export PRGL_TEST=true
+  export PRGL_TEST_LOG_PATH="$test_log_path"
+  rm -f "$test_log_path"
+  npm run dev &
   START_SCRIPT_PID=$!
 
   until [ -f ./client/configs/last_compiled.txt ]

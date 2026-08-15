@@ -94,27 +94,6 @@ export const askLLM = async (args: AskLLMArgs) => {
 
   let pastMessages = await getPastMessages(dbs, chatId);
 
-  /** It's crucial we reduce the posibility that a new user message fails to insert due to some non critical error */
-  const {
-    data: toolsWithInfo,
-    error,
-    hasError,
-  } = await tryCatchV2(
-    async () =>
-      await getLLMToolsAllowedInThisChat({
-        userType: user.type,
-        dbs,
-        chat,
-        clientReq,
-      }),
-  );
-  if (hasError) {
-    if (chat.agent_info) {
-      throw error;
-    }
-    console.error("LLM Tools fetch error:", error);
-  }
-
   const aborter = args.aborter ?? new AbortController();
   activeLLMFetchRequests.set(chat.id, aborter);
   const lastMessage = pastMessages.at(-1);
@@ -323,7 +302,27 @@ export const askLLM = async (args: AskLLMArgs) => {
       },
     );
   };
+  let toolsWithInfo:
+    | Awaited<ReturnType<typeof getLLMToolsAllowedInThisChat>>
+    | undefined;
   try {
+    const toolsResult = await tryCatchV2(
+      async () =>
+        await getLLMToolsAllowedInThisChat({
+          userType: user.type,
+          dbs,
+          chat,
+          clientReq,
+        }),
+    );
+    toolsWithInfo = toolsResult.data;
+    if (toolsResult.hasError) {
+      if (chat.agent_info) {
+        throw toolsResult.error;
+      }
+      console.error("LLM Tools fetch error:", toolsResult.error);
+    }
+
     const modelData = await dbs.llm_models.findOne(
       { id: chat.model },
       {

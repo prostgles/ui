@@ -1,4 +1,4 @@
-import { test } from "@playwright/test";
+import { test } from "./fixtures";
 import { PageWIds, login } from "./utils/utils";
 import { USERS } from "utils/constants";
 test.use({

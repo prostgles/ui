@@ -77,6 +77,7 @@ jobs:
           path: |
             e2e/electron-report/
             e2e/playwright-report/
+            e2e/.test-artifacts/
           retention-days: 10
           if-no-files-found: warn
   test_desktop_on_macos:
