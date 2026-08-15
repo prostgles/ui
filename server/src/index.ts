@@ -36,6 +36,7 @@ import {
   startingProstglesResult,
   tryStartProstgles,
 } from "./init/tryStartProstgles";
+import { RUNTIME_MODE } from "./runtimeMode";
 
 const { app, http, io } = initExpressAndIOServers();
 
@@ -262,7 +263,7 @@ export const startServer = async (
  * Start the server if not electron
  * Otherwise it will be started from electron/main.ts
  */
-if (require.main === module) {
+if (RUNTIME_MODE === "cli" || RUNTIME_MODE === "default") {
   void startServer((result, dbStartupInfo) => {
     if (dbStartupInfo.state === "error") {
       console.error("Failed to start prostgles", dbStartupInfo);

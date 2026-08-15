@@ -1,6 +1,7 @@
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import * as fs from "fs";
 import * as path from "path";
+import { RUNTIME_MODE } from "./runtimeMode";
 
 export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
 export type DBSConnectionInfo = Pick<
@@ -47,10 +48,15 @@ const electronConfig: {
 export const actualRootDir = path.join(__dirname, "/../../..");
 
 const getClientDirectory = (directory: string) => {
+  const workspaceDirectory = path.resolve(
+    actualRootDir,
+    "..",
+    "client",
+    directory,
+  );
   const packagedDirectory = path.resolve(actualRootDir, "client", directory);
-  return fs.existsSync(packagedDirectory) ?
-    packagedDirectory
-  : path.resolve(actualRootDir, "..", "client", directory);
+
+  return RUNTIME_MODE === "cli" ? packagedDirectory : workspaceDirectory;
 };
 
 export const DIRECTORIES = {
