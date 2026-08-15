@@ -203,9 +203,9 @@ export class _Dashboard extends RTComp<
           ...({} as Pick<WorkspaceSchema, "user_id" | "last_updated">),
         });
       }
-      let wsp: Workspace | undefined;
+      let currentWorkspace: Workspace | undefined;
       try {
-        wsp = await workspaces.findOne(
+        currentWorkspace = await workspaces.findOne(
           workspaceId ? { id: workspaceId, ...wspFilter } : wspFilter,
           { orderBy: { last_used: -1 } },
         );
@@ -214,27 +214,28 @@ export class _Dashboard extends RTComp<
 
         /** If this is an editable workspace then ensure we're working on a clone */
         if (
-          wsp?.published &&
-          wsp.user_id !== this.props.prgl.user?.id &&
-          wsp.layout_mode !== "fixed"
+          currentWorkspace?.published &&
+          currentWorkspace.user_id !== this.props.prgl.user?.id &&
+          currentWorkspace.layout_mode !== "fixed"
         ) {
           let myClonedWsp = await workspaces.findOne({
-            parent_workspace_id: wsp.id,
+            parent_workspace_id: currentWorkspace.id,
           });
           if (!myClonedWsp) {
-            myClonedWsp = (await cloneWorkspace(dbs, wsp.id, true)).clonedWsp;
+            myClonedWsp = (await cloneWorkspace(dbs, currentWorkspace.id, true))
+              .clonedWsp;
           }
-          if (wsp.id !== myClonedWsp.id) {
+          if (currentWorkspace.id !== myClonedWsp.id) {
             window.location.href = getWorkspacePath(myClonedWsp);
           }
-          wsp = myClonedWsp;
+          currentWorkspace = myClonedWsp;
         }
       } catch (e) {
         this.setState({ wspError: e });
         return;
       }
 
-      if (!wsp) {
+      if (!currentWorkspace) {
         this.setState({ wspError: true });
         return;
       }
@@ -242,7 +243,7 @@ export class _Dashboard extends RTComp<
       const validatedCols = await this.props.prgl.dbs.workspaces
         .getColumns("en", {
           rule: "update",
-          filter: { id: wsp.id },
+          filter: { id: currentWorkspace.id },
         })
         .catch((error) => {
           console.error(error);
@@ -258,7 +259,7 @@ export class _Dashboard extends RTComp<
 
       let updatedLastUsed = false;
       const workspaceSync = await workspaces.syncOne(
-        { id: wsp.id, deleted: false },
+        { id: currentWorkspace.id, deleted: false },
         { handlesOnData: true } as const,
         (workspace, delta) => {
           if (!this.mounted) {
@@ -273,7 +274,7 @@ export class _Dashboard extends RTComp<
       );
 
       const linksSync = await dbs.links.sync?.(
-        { workspace_id: wsp.id },
+        { workspace_id: currentWorkspace.id },
         { handlesOnData: true },
         (links, delta) => {
           if (!this.mounted) {
@@ -285,7 +286,7 @@ export class _Dashboard extends RTComp<
       );
 
       const windowsSync = await dbs.windows.sync?.(
-        { workspace_id: wsp.id },
+        { workspace_id: currentWorkspace.id },
         { handlesOnData: true, select: "*" } as const,
         (windowSyncItems, deltas) => {
           if (!this.mounted) return;
