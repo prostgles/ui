@@ -2,7 +2,7 @@ import type { EventInfo } from "prostgles-server/dist/Logging";
 import type { TableConfig } from "prostgles-server";
 import { mkdir, writeFile } from "fs/promises";
 import { dirname } from "path";
-import { getSerialisableError, pickKeys } from "prostgles-types";
+import { getSerialisableError, omitKeys, pickKeys } from "prostgles-types";
 import { type DBS } from ".";
 import { getAuthSetupData } from "./authConfig/subscribeToAuthSetupChanges";
 
@@ -59,13 +59,33 @@ let testLogArtifact = "";
 let testLogWriteTimer: NodeJS.Timeout | undefined;
 let testLogWrite = Promise.resolve();
 
+const serialiseTestLog = (e: EventInfo, connection_id: string | null) => {
+  try {
+    const loggedEvent =
+      e.type === "table" || e.type === "method" ?
+        omitKeys(e, ["localParams"])
+      : undefined;
+    if (!loggedEvent) return undefined;
+    return JSON.stringify({
+      created: new Date().toISOString(),
+      connection_id,
+      ...(getSerialisableError(e) as {}),
+      loggedEvent,
+    });
+  } catch (error) {
+    return JSON.stringify({
+      created: new Date().toISOString(),
+      connection_id,
+      type: e.type,
+      serialization_error: getSerialisableError(error),
+    });
+  }
+};
+
 const addTestLog = (e: EventInfo, connection_id: string | null) => {
   if (!testLogPath) return;
-  const line = JSON.stringify({
-    ...e,
-    connection_id,
-    error: "error" in e && e.error ? getSerialisableError(e.error) : undefined,
-  });
+  const line = serialiseTestLog(e, connection_id);
+  if (!line) return;
   testLogArtifact = (testLogArtifact + line + "\n").slice(
     -maxTestLogCharacters,
   );

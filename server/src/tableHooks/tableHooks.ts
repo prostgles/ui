@@ -5,6 +5,7 @@ import { connectionsTableHooks } from "./connections.tableHooks";
 import { llmChatsAllowedMcpToolsTableHooks } from "./llm_chats_allowed_mcp_tools.tableHooks";
 import { llmChatsTableHooks } from "./llm_chats.tableHook";
 import { mcpServerConfigsTableHooks } from "./mcp_server_configs.tableHooks";
+import { llmCredentialsTableHooks } from "./llm_credentials.tableHooks";
 
 export const tableHooks = {
   ...usersTableHooks,
@@ -12,4 +13,5 @@ export const tableHooks = {
   ...llmChatsAllowedMcpToolsTableHooks,
   ...llmChatsTableHooks,
   ...mcpServerConfigsTableHooks,
+  ...llmCredentialsTableHooks,
 } as const satisfies TableHooks<DBGeneratedSchema>;

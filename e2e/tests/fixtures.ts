@@ -17,23 +17,7 @@ test.afterEach(async ({ browser }, testInfo) => {
           const body = await page
             .evaluate((key) => {
               const logs = (window as unknown as Record<string, unknown>)[key];
-              const seen = new WeakSet<object>();
-              return JSON.stringify(logs, (_name, value: unknown) => {
-                if (typeof value === "function") return "[Function]";
-                if (value instanceof Map) return Object.fromEntries(value);
-                if (value instanceof Error) {
-                  return {
-                    name: value.name,
-                    message: value.message,
-                    stack: value.stack,
-                  };
-                }
-                if (typeof value === "object" && value !== null) {
-                  if (seen.has(value)) return "[Circular]";
-                  seen.add(value);
-                }
-                return value;
-              });
+              return JSON.stringify(logs);
             }, CLIENT_LOGS_KEY)
             .catch(() => undefined);
           return body ? { url: page.url(), logs: JSON.parse(body) } : undefined;

@@ -1,10 +1,7 @@
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type { DBSSchema } from "@common/publishUtils";
-import { refreshModels } from "@src/serverFunctions/askLLM/refreshModels";
 import type { Publish } from "prostgles-server/dist/PublishParser/PublishParser";
 import type { DBS } from "..";
-import { getBestLLMChatModel } from "../serverFunctions/askLLM/askLLM";
-import { fetchLLMResponse } from "../serverFunctions/askLLM/fetchLLMResponse";
 import { getPublishLlmChats } from "./getPublishLlmChats";
 
 export const getPublishLLM = (
@@ -37,11 +34,11 @@ export const getPublishLLM = (
       select: "*",
       insert: {
         fields: "*",
-        requiredNestedInserts: [
-          {
-            ftable: "llm_models",
-          },
-        ],
+        // requiredNestedInserts: [
+        //   {
+        //     ftable: "llm_models",
+        //   },
+        // ],
       },
       update: "*",
       delete: "*",
@@ -70,41 +67,6 @@ export const getPublishLLM = (
       insert: isAdmin && {
         fields: { name: 1, provider_id: 1, api_key: 1 },
         forcedData,
-        postValidate: async ({ row, dbx }) => {
-          const provider = await dbx.llm_providers.findOne({
-            id: row.provider_id,
-          });
-          if (!provider) throw "Provider not found";
-          const preferredModel = await getBestLLMChatModel(dbx, {
-            provider_id: row.provider_id,
-          });
-          await fetchLLMResponse({
-            llm_chat: {
-              extra_body: {},
-              extra_headers: {},
-              options: {},
-            },
-            llm_model: preferredModel,
-            llm_provider: provider,
-            llm_credential: row,
-            tools: [],
-            messages: [
-              {
-                role: "system",
-                content: [{ type: "text", text: "Be helpful" }],
-              },
-              {
-                role: "user",
-                content: [{ type: "text", text: "Hey" }],
-              },
-            ],
-            aborter: new AbortController(),
-          });
-
-          if (row.provider_id === "OpenRouter") {
-            void refreshModels(dbs);
-          }
-        },
       },
       update: isAdmin && {
         fields: { created: 0, provider_id: 0 },

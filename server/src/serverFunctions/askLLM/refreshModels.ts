@@ -221,3 +221,76 @@ type ModelInfo = {
   per_request_limits: string | null;
   supported_parameters: string[]; // Array of supported API parameters for this model
 };
+
+export const fetchLlmModels = async ({
+  api_key,
+  api_url,
+  provider,
+}: {
+  api_key: string;
+  api_url: string;
+  provider: string;
+}): Promise<DBSSchemaForInsert["llm_models"][]> => {
+  const modelsRequest = await tryCatchV2(async () => {
+    const headers = new Headers();
+    if (api_key) {
+      headers.set("Authorization", `Bearer ${api_key}`);
+    }
+    headers.set("Content-Type", "application/json");
+    const resp = await fetch(
+      api_url.replace("/v1/chat/completions", "/v1/models"),
+      { headers },
+    );
+
+    if (!resp.ok) {
+      const responseText = await resp
+        .text()
+        .catch(() => "Could not read response text");
+      throw new Error(`Failed to fetch models: ${responseText}`);
+    }
+
+    return resp.json();
+  });
+
+  if (modelsRequest.hasError) {
+    throw modelsRequest.error;
+  }
+
+  if (provider === "Hetzner") {
+    const requestData = modelsRequest.data as HetznerModelInfo;
+    return requestData.data.map((model) => ({
+      name: model.id,
+      provider_id: provider,
+      context_length: model.max_model_len,
+      mcp_tool_support: false,
+      pricing_info: {
+        input: 0,
+        output: 0,
+        cachedInput: 0,
+        cachedOutput: 0,
+      },
+    }));
+  }
+
+  if (!Array.isArray(modelsRequest.data)) {
+    throw new Error("Unexpected response format: expected an array of models");
+  }
+
+  return modelsRequest.data.map((model) => ({
+    ...model,
+    provider_id: provider,
+  })) as DBSSchemaForInsert["llm_models"][];
+};
+
+type HetznerModelInfo = {
+  object: "list";
+  data: {
+    created: number;
+    id: string;
+    max_model_len: number;
+    object: "model";
+    owned_by: "hetzner";
+    parent: null;
+    root: "/model";
+  }[];
+};
