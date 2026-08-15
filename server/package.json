@@ -54,7 +54,7 @@
     "otplib": "^12.0.1",
     "path-to-regexp": "^8.4.2",
     "pidusage": "^4.0.1",
-    "prostgles-server": "^4.2.586",
+    "prostgles-server": "^4.2.587",
     "qrcode": "^1.5.4",
     "simple-git": "^3.36.0",
     "smtp-server": "^3.19.2",
