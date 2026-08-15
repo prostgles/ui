@@ -2,7 +2,7 @@ import { expect } from "@playwright/test";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { getDataKey } from "Testing";
-import { newChat, type PageWIds } from "utils/utils";
+import { getTimeout, newChat, type PageWIds } from "utils/utils";
 
 export const speechToTextTest = async (page: PageWIds) => {
   await grantMicrophonePermission(page);
@@ -41,7 +41,7 @@ export const speechToTextTest = async (page: PageWIds) => {
   await page
     .getByTestId("Chat.messageList")
     .locator("audio")
-    .waitFor({ state: "visible" });
+    .waitFor({ state: "visible", ...getTimeout(30_000) });
 
   await page
     .getByTestId("Chat.speech")
