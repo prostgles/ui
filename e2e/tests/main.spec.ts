@@ -1082,7 +1082,7 @@ test.describe("Main test", () => {
       .getByTestId("AskLLMChat.LoadSuggestedDashboards")
       .click({ ...TWENTY_SECONDS_OR_MORE });
 
-    const workspaceBtn = await page.getByTestId("WorkspaceMenu.list");
+    const workspaceBtn = page.getByTestId("WorkspaceMenu.list");
     await expect(workspaceBtn).toContainText(
       "Customer Insights",
       TWENTY_SECONDS_OR_MORE,

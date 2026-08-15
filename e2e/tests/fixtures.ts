@@ -20,15 +20,16 @@ test.afterEach(async ({ browser }, testInfo) => {
               return JSON.stringify(logs);
             }, CLIENT_LOGS_KEY)
             .catch(() => undefined);
-          return body ? { url: page.url(), logs: JSON.parse(body) } : undefined;
+          return {
+            url: page.url(),
+            logs: body ? JSON.parse(body) : [{ note: "client logs missing" }],
+          };
         }),
     )
   ).filter((result) => result !== undefined);
 
-  if (clientLogs.length) {
-    await testInfo.attach("latest-client-logs", {
-      body: JSON.stringify(clientLogs, null, 2),
-      contentType: "application/json",
-    });
-  }
+  await testInfo.attach("latest-client-logs", {
+    body: JSON.stringify(clientLogs, null, 2),
+    contentType: "application/json",
+  });
 });
