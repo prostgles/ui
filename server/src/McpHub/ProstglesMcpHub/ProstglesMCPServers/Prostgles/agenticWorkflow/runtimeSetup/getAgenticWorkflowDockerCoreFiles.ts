@@ -135,7 +135,7 @@ export const packageJsonTemplate = fromServerPackageJson({
   dependencies: {
     typescript: "^5.9.3",
     tslib: "^2.8.1",
-    "prostgles-types": "^4.0.274",
+    "prostgles-types": "^4.0.275",
   },
   devDependencies: {
     "@types/node": "^22.20.0",

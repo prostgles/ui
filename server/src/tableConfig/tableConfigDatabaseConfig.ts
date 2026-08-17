@@ -131,7 +131,16 @@ const tableConfigSchema: JSONB.JSONBSchema = {
                           },
                           {
                             type: {
-                              enum: ["Lookup", "Lookup[]"],
+                              enum: [
+                                "RowLookup",
+                                "RowLookup[]",
+                                "ValueLookup",
+                                "ValueLookup[]",
+                                "TableLookup",
+                                "TableLookup[]",
+                                "ColumnLookup",
+                                "ColumnLookup[]",
+                              ],
                             },
                             optional: { type: "boolean", optional: true },
                             description: { type: "string", optional: true },

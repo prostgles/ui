@@ -23,6 +23,7 @@ import { connectionManager } from "../index";
 import type { ProstglesOnMountCleanup } from "../schemaConfig";
 import { UNIQUE_DB_COLS } from "../tableConfig/tableConfigDatabaseConfig";
 import { getConnectionHttpServer } from "./getConnectionHttpServer";
+import { getConnectionServerFunctions } from "./getConnectionServerFunctions";
 import { getSchemaConfig } from "./getSchemaConfig";
 import {
   initConnectionManager,
@@ -366,7 +367,13 @@ export class ConnectionManager {
         connIds.map(async (connection_id) => {
           const connectionInstance = this.prglConnections.get(connection_id);
           if (connectionInstance?.state !== "started") return;
-          return connectionInstance.prgl.restart();
+          const functions = await getConnectionServerFunctions({
+            databaseConfig: connectionInstance.dbConf,
+            dbs: this.dbs!,
+            connection: connectionInstance.con,
+            connectionManager: this,
+          });
+          return connectionInstance.prgl.update({ functions }, true);
         }),
       );
     };

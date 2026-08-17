@@ -22,7 +22,7 @@ type P = JSONBSchemaCommonProps & {
 export const JSONBSchemaPrimitiveMatch = (
   s: JSONB.JSONBSchema,
 ): s is JSONB.BasicType | JSONB.EnumType =>
-  !s.lookup &&
+  !(typeof s.type === "string" && s.type.includes("Lookup")) &&
   (!!s.enum?.length ||
     (!s.allowedValues?.length && typeof s.type === "string"));
 
@@ -192,6 +192,14 @@ const schemaTypeToColType: Record<
     udt_name: "bytea",
   },
   "Blob[]": {
+    tsDataType: "any",
+    udt_name: "bytea",
+  },
+  Uint8Array: {
+    tsDataType: "any",
+    udt_name: "bytea",
+  },
+  "Uint8Array[]": {
     tsDataType: "any",
     udt_name: "bytea",
   },

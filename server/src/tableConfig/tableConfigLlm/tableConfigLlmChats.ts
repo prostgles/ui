@@ -180,12 +180,7 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
               },
               tables: {
                 title: "Tables",
-                type: "Lookup[]",
-                lookup: {
-                  type: "schema",
-                  object: "table",
-                  isArray: true,
-                },
+                type: "TableLookup[]",
               },
             },
           ],

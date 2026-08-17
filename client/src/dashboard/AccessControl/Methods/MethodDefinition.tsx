@@ -133,15 +133,12 @@ export const MethodDefinition = (props: MethodDefinitionProps) => {
                       description:
                         "Table that will be displayed below controls and inputs",
                       optional: true,
-                      lookup: {
-                        type: "schema",
-                        object: "table",
-                      },
+                      type: "TableLookup",
                     } as const
                   }
                   value={method.outputTable}
                   onChange={(outputTable) => {
-                    onChange({ ...method, outputTable: outputTable ?? null });
+                    onChange({ ...method, outputTable: outputTable || null });
                   }}
                   db={db}
                   tables={tables}

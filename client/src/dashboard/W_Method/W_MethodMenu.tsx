@@ -57,8 +57,10 @@ export const W_MethodMenu = (
                   return {
                     key: a.name,
                     subLabel:
-                      a.type.startsWith("Lookup") ?
-                        `references ${(a as any).table}`
+                      a.type.includes("Lookup") &&
+                      "table" in a &&
+                      typeof a.table === "string" ?
+                        `references ${a.table}`
                       : a.type,
                     checked,
                     disabledInfo: !a.optional ? "Is required" : undefined,

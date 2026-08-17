@@ -40,7 +40,7 @@ export const saveServerInfo = async (
               `Expected icon to be less than 1MB but got ${contentLength} bytes`,
             );
           }
-          return res.arrayBuffer();
+          return res.arrayBuffer() as unknown as Uint8Array;
         })
         .catch((cause) =>
           Promise.reject(new Error("Failed to fetch icon", { cause })),

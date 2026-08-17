@@ -42,7 +42,7 @@ export const getConnectionServerFunctions = async ({
       },
     },
   );
-  const publishMethods: ServerFunctionDefinitions<void> = {};
+  const publishMethods: ServerFunctionDefinitions<void, SUser> = {};
 
   /** Combine all userFilter with admin into unique groups */
   connectionFunctions.forEach((m) => {

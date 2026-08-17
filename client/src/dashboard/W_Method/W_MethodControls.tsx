@@ -10,7 +10,7 @@ import { mdiChevronDown, mdiPlay } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import type { AnyObject, ClientServerFunction, JSONB } from "prostgles-types";
-import { getKeys, getProperty, isEmpty, omitKeys } from "prostgles-types";
+import { getProperty, isEmpty, omitKeys } from "prostgles-types";
 import React, { useState } from "react";
 import { type Prgl } from "../../App";
 import { MethodDefinition } from "../AccessControl/Methods/MethodDefinition";
@@ -77,19 +77,20 @@ export const W_MethodControls = ({
       ([argName, stringOrObj]) => {
         const arg =
           typeof stringOrObj === "string" ? { type: stringOrObj } : stringOrObj;
-        const ref = arg.lookup?.type === "data" ? arg.lookup : undefined;
+        const isRowLookup = arg.type === "RowLookup";
+        const isValueLookup = arg.type === "ValueLookup";
         const argFullDetails = methodFullDataArgs?.[argName];
         if (arg.optional) {
           optionalArgNames.push(argName);
         }
         if (fixedRowArgument?.argName === argName) {
           argDefaults[argName] =
-            ref?.isFullRow ? fixedRowArgument.row
-            : ref?.column ? fixedRowArgument.row[ref.column]
+            isRowLookup ? fixedRowArgument.row
+            : isValueLookup ? fixedRowArgument.row[arg.column]
             : undefined;
         } else if (
           argFullDetails?.defaultValue !== undefined &&
-          !ref?.isFullRow
+          !isRowLookup
         ) {
           argDefaults[argName] = argFullDetails.defaultValue;
         }
@@ -108,28 +109,9 @@ export const W_MethodControls = ({
   };
 
   const inputSchema = methodFromSchema?.input ?? {};
-  const mArgs = getKeys(inputSchema).reduce((a, k) => {
-    const v: keyof typeof inputSchema = k;
-    const rawArg = inputSchema[v];
-    const arg = typeof rawArg === "string" ? { type: rawArg } : rawArg;
-    return {
-      ...a,
-      [v]:
-        arg?.lookup?.type === "data-def" ?
-          {
-            ...arg,
-            lookup: {
-              ...arg.lookup,
-              type: "data",
-            },
-          }
-        : inputSchema[v],
-    };
-  }, {} as JSONB.FieldTypeObj);
-
   const argSchema: JSONB.JSONBSchema = {
     type: {
-      ...omitKeys(mArgs, hiddenArgs as (keyof typeof mArgs)[]),
+      ...omitKeys(inputSchema, hiddenArgs),
     },
     defaultValue: Object.entries(methodFromSchema?.input ?? {})
       .filter(

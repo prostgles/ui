@@ -347,7 +347,7 @@ export type InsertDataWithNested<TD extends AnyObject, S extends DBSchema | void
  * Methods for interacting with a table/view
  * - On client-side some methods are restricted (and undefined) based on publish rules on the server
  */
-export type TableHandler<TD extends AnyObject = AnyObject, S extends DBSchema | void = void, TName extends S extends DBSchema ? keyof S : never = never> = {
+export type TableHandler<TD extends AnyObject = AnyObject, S extends DBSchema | void = void, TName extends (S extends DBSchema ? keyof S : never) = never> = {
     /**
      * Retrieves the table/view info
      */
