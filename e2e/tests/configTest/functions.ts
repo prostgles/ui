@@ -1,14 +1,23 @@
-import type { SchemaConfig } from "@prostgles/prostgles";
+import { createFunctionGroupDefiner } from "@prostgles/prostgles";
 import { CONFIG_TEST } from "./constants";
 
-export const functions: NonNullable<SchemaConfig["functions"]> = (params) => ({
-  [CONFIG_TEST.configFunctionName]: {
-    run:
-      params?.user?.type === "admin" ?
-        () => CONFIG_TEST.configFunctionResult
-      : undefined,
-  },
-  [CONFIG_TEST.deniedFunctionName]: {
-    run: undefined,
-  },
-});
+const defineFunctionGroup = createFunctionGroupDefiner();
+
+export const functions = {
+  adminFuncs: defineFunctionGroup({
+    userFilter: { type: "admin" },
+    functions: {
+      [CONFIG_TEST.configFunctionName]: {
+        run: () => CONFIG_TEST.configFunctionResult,
+      },
+    },
+  }),
+  deniedFunction: defineFunctionGroup({
+    userFilter: { id: "invalidId" },
+    functions: {
+      [CONFIG_TEST.deniedFunctionName]: {
+        run: () => CONFIG_TEST.configFunctionResult,
+      },
+    },
+  }),
+};
