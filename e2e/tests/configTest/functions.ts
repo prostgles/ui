@@ -13,7 +13,7 @@ export const functions = {
     },
   }),
   deniedFunction: defineFunctionGroup({
-    userFilter: { id: "invalidId" },
+    userFilter: { type: "invalidId" },
     functions: {
       [CONFIG_TEST.deniedFunctionName]: {
         run: () => CONFIG_TEST.configFunctionResult,
