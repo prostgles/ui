@@ -20,7 +20,7 @@ export const mcpSandboxToolUse: ToolUse = {
               scripts: {
                 start: "node index.js",
               },
-              depenencies: {
+              dependencies: {
                 "node-fetch": "^3.3.0",
               },
             }),

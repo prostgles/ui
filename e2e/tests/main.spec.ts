@@ -1496,6 +1496,7 @@ test.describe("Main test", () => {
       await page
         .getByTestId("DockerSandboxCreateContainer.stop")
         .waitFor({ state: "detached", ...getTimeout(40e3) });
+      await page.waitForTimeout(3e3);
 
       for (const res of Array.isArray(result) ? result : [result]) {
         await expect(
