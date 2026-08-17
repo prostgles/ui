@@ -46,6 +46,13 @@ export const cliTemplateFiles = {
 
       Build the application around these core Prostgles features:
 
+      ## Config structure
+
+      - Import \`DBGeneratedSchema\` from \`generated/DBGeneratedSchema\`, create the typed config helper with \`const prostgles = defineConfig<DBGeneratedSchema>()\`, and default-export \`prostgles({ ... })\`. Keep the helper name \`prostgles\` so function return types can be discovered during schema generation.
+      - Run \`npm run dev\` after schema or function changes. It rebuilds the config and refreshes \`generated/DBGeneratedSchema.ts\`, including \`GeneratedFunctionSchema\` for clients.
+      - Configure database permissions with \`access_control\` using the same \`dbPermissions\` shape as Prostgles access-control rules. Do not add a raw \`publish\` callback.
+      - Keep database credentials and names out of this config. Set the state and target connection URLs in \`.env\`.
+
       ## Table configuration
 
       - Define tables and columns in \`tableConfig\`. Prostgles applies schema changes automatically. For changes that require existing data to be transformed, increment \`tableConfigMigrations.version\` and use \`onMigrate\`.
@@ -69,7 +76,10 @@ export const cliTemplateFiles = {
       ## Server-side functions
 
       - Put privileged operations, cross-table workflows, and server-only business logic in \`functions\`.
-      - Define and validate function inputs, include a clear description, authorize from the current user context, and expose \`run\` only to users allowed to call it.
+      - Organize \`functions\` into groups shaped as \`{ userFilter, functions }\`. The group filter controls which authenticated users receive those functions.
+      - Create a schema-aware group helper with \`createFunctionGroupDefiner<DBGeneratedSchema>()\`. For function maps kept in separate modules, use \`createFunctionsDefiner<DBGeneratedSchema>()\` so names, database context, inputs, and return types remain inferred across imports.
+      - Define individual functions with \`defineFunction({ input, description, run })\`. Inputs use Prostgles JSONB field definitions and are validated before \`run\` executes.
+      - Functions have restricted database access by default. Set \`unrestrictedDbAccess: true\` only when the function needs raw SQL, transactions, or client DB-handler generation.
       - Keep secrets on the server and use database transactions for multi-step writes.`),
   gitignore: fixIndent(`
       node_modules/
@@ -77,9 +87,9 @@ export const cliTemplateFiles = {
       .env
       *.log`),
   envExample: fixIndent(`
-      # Prostgles UI state database. This stores users, settings, and connections.
-      # POSTGRES_URL=postgres://user:password@localhost:5432/prostgles_state
+      # Prostgles UI state. Created automatically when missing.
+      PROSTGLES_STATE_DATABASE_URL=postgres://user:password@localhost:5432/prostgles_state_database
 
-      # Database exposed by this config.
-      # PROSTGLES_DATABASE_URL=postgres://user:password@localhost:5432/application`),
+      # Database exposed by this config. Must use the same server as the state database.
+      PROSTGLES_DATABASE_URL=postgres://user:password@localhost:5432/application`),
 } as const;

@@ -39,32 +39,20 @@ const workspaces: WorkspaceInsertModel[] = [
   },
 ];
 
-export default defineConfig()({
+const prostgles = defineConfig();
+
+export default prostgles({
   id: CONFIG_TEST.applicationDatabaseName,
-  createDatabase: true,
-  connection: {
-    name: CONFIG_TEST.applicationDatabaseName,
-    type: "Standard",
-    db_host:
-      process.env.PROSTGLES_DATABASE_HOST ??
-      process.env.POSTGRES_HOST ??
-      "localhost",
-    db_port: Number(
-      process.env.PROSTGLES_DATABASE_PORT ?? process.env.POSTGRES_PORT ?? 5432,
-    ),
-    db_name: process.env.PROSTGLES_DATABASE_NAME,
-    db_user: process.env.PROSTGLES_DATABASE_USER ?? process.env.POSTGRES_USER,
-    db_pass:
-      process.env.PROSTGLES_DATABASE_PASSWORD ?? process.env.POSTGRES_PASSWORD,
-    db_ssl: "disable",
-  },
   schemaFilter: { [CONFIG_TEST.schemaName]: 1 },
-  publish: ({ user }) =>
-    user?.type === "admin" ?
+  access_control: {
+    type: "Custom",
+    customTables: [
       {
-        [publishedTableName]: { select: "*" },
-      }
-    : null,
+        tableName: publishedTableName,
+        select: true,
+      },
+    ],
+  },
   functions,
   workspaces,
   onInitSQL: `

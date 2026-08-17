@@ -159,6 +159,7 @@ test.describe("Published config CLI", () => {
       join(tmpdir(), "prostgles-config-e2e-"),
     );
     const configDirectory = join(temporaryDirectory, "config");
+    const cliTestPort = 30_000 + (process.pid % 10_000);
     let configProcess: ChildProcess | undefined;
 
     try {
@@ -187,21 +188,78 @@ test.describe("Published config CLI", () => {
       expect(
         readFileSync(join(configDirectory, "src", "index.ts"), "utf8"),
       ).toContain(`import { defineConfig } from "@prostgles/prostgles";`);
-      expect(readFileSync(join(configDirectory, ".gitignore"), "utf8"))
-        .toContain("node_modules/");
-      expect(readFileSync(join(configDirectory, ".gitignore"), "utf8"))
-        .toContain(".env");
+      expect(
+        readFileSync(join(configDirectory, "src", "index.ts"), "utf8"),
+      ).not.toContain("db_conn");
+      expect(
+        readFileSync(join(configDirectory, "src", "index.ts"), "utf8"),
+      ).not.toContain("db_name");
+      const envExample = readFileSync(
+        join(configDirectory, ".env.example"),
+        "utf8",
+      );
+      expect(envExample).toContain("PROSTGLES_STATE_DATABASE_URL=");
+      expect(envExample).toContain("/prostgles_state_database");
+      expect(envExample).toContain("PROSTGLES_DATABASE_URL=");
+      expect(
+        readFileSync(join(configDirectory, ".gitignore"), "utf8"),
+      ).toContain("node_modules/");
+      expect(
+        readFileSync(join(configDirectory, ".gitignore"), "utf8"),
+      ).toContain(".env");
       expect(
         readFileSync(join(configDirectory, "AGENTS.md"), "utf8"),
       ).toContain("Define tables and columns in `tableConfig`");
       expect(
         readFileSync(join(configDirectory, "AGENTS.md"), "utf8"),
-      ).toContain("databaseConfig.file_table_config");
+      ).toContain("createFunctionGroupDefiner<DBGeneratedSchema>()");
+      expect(
+        readFileSync(join(configDirectory, "AGENTS.md"), "utf8"),
+      ).toContain("Do not add a raw `publish` callback");
+
+      writeFileSync(
+        join(configDirectory, "src", "functions.ts"),
+        `import { createFunctionsDefiner, defineFunction } from "@prostgles/prostgles";
+import type { DBGeneratedSchema } from "../generated/DBGeneratedSchema";
+
+const defineFunctions = createFunctionsDefiner<DBGeneratedSchema>();
+
+export const inferredFunctions = defineFunctions({
+  cliFunction: defineFunction({
+    input: { message: "string" },
+    run: ({ message }, { dbo }) => {
+      message satisfies string;
+      void dbo;
+      return { message, length: message.length };
+    },
+  }),
+});
+`,
+      );
+      writeFileSync(
+        join(configDirectory, "src", "index.ts"),
+        `import { createFunctionGroupDefiner, defineConfig } from "@prostgles/prostgles";
+import type { DBGeneratedSchema } from "../generated/DBGeneratedSchema";
+import { inferredFunctions } from "./functions";
+
+const defineFunctionGroup = createFunctionGroupDefiner<DBGeneratedSchema>();
+const prostgles = defineConfig<DBGeneratedSchema>();
+
+export default prostgles({
+  id: "typed-cli-test",
+  tableConfig: {},
+  functions: {
+    public: defineFunctionGroup({
+      userFilter: {},
+      functions: inferredFunctions,
+    }),
+  },
+});
+`,
+      );
 
       const packageJsonPath = join(configDirectory, "package.json");
-      const packageJson = JSON.parse(
-        readFileSync(packageJsonPath, "utf8"),
-      );
+      const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8"));
       packageJson.dependencies["@prostgles/prostgles"] =
         `file:${serverDirectory}`;
       writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
@@ -221,14 +279,22 @@ test.describe("Published config CLI", () => {
         "dev",
         configDirectory,
         getCliEnvironment({
-          POSTGRES_HOST: "127.0.0.1",
-          POSTGRES_DB: "db",
-          POSTGRES_PORT: "5432",
-          POSTGRES_USER: "usr",
-          POSTGRES_PASSWORD: "psw",
-          PROSTGLES_DATABASE_URL: "postgres://usr:psw@127.0.0.1:5432/db",
-          PROSTGLES_UI_PORT: "3006",
+          PROSTGLES_STATE_DATABASE_URL:
+            "postgres://usr:psw@127.0.0.1:5432/db",
+          PROSTGLES_DATABASE_URL:
+            "postgres://usr:psw@127.0.0.1:5432/cli_e2e_config_db",
+          PROSTGLES_UI_PORT: String(cliTestPort),
         }),
+      );
+
+      const generatedSchema = readFileSync(
+        join(configDirectory, "generated", "DBGeneratedSchema.ts"),
+        "utf8",
+      );
+      expect(generatedSchema).toContain(`"cliFunction": (args:`);
+      expect(generatedSchema).toContain("message: string;");
+      expect(generatedSchema).toContain(
+        "Promise<{ message: string; length: number }>;",
       );
     } finally {
       if (configProcess) await stopProcess(configProcess);
@@ -294,7 +360,7 @@ test.describe("Published config CLI", () => {
     }
   });
 
-  test("runs the start script and applies its publish rules", async ({
+  test("runs the start script and applies its access-control rules", async ({
     page: p,
   }) => {
     const page: PageWIds = p as PageWIds;
@@ -322,12 +388,12 @@ test.describe("Published config CLI", () => {
       database: "postgres",
     });
     await connection.connect();
-    /** Re-create db database */
+    /** The CLI must create both databases. */
     await connection.query(
       `DROP DATABASE IF EXISTS ${applicationStateDatabaseName} WITH (FORCE);`,
     );
     await connection.query(
-      `CREATE DATABASE ${applicationStateDatabaseName} WITH OWNER usr;`,
+      `DROP DATABASE IF EXISTS ${applicationDatabaseName} WITH (FORCE);`,
     );
 
     connection.on("error", console.error);
@@ -337,12 +403,7 @@ test.describe("Published config CLI", () => {
 
     try {
       rmSync(
-        join(
-          configTestDirectory,
-          "node_modules",
-          "@prostgles",
-          "prostgles",
-        ),
+        join(configTestDirectory, "node_modules", "@prostgles", "prostgles"),
         { recursive: true, force: true },
       );
       run(
@@ -351,13 +412,8 @@ test.describe("Published config CLI", () => {
         configTestDirectory,
       );
       const configEnvironment = getCliEnvironment({
-        POSTGRES_HOST: "127.0.0.1",
-        POSTGRES_DB: applicationStateDatabaseName,
-        POSTGRES_PORT: "5432",
-        POSTGRES_USER: "usr",
-        POSTGRES_PASSWORD: "psw",
+        PROSTGLES_STATE_DATABASE_URL: `postgres://usr:psw@127.0.0.1:5432/${applicationStateDatabaseName}`,
         PROSTGLES_UI_PORT: String(port),
-        PROSTGLES_DATABASE_NAME: applicationDatabaseName,
         PROSTGLES_DATABASE_URL: `postgres://usr:psw@127.0.0.1:5432/${applicationDatabaseName}`,
       });
       configProcess = await startConfigScript(
@@ -379,14 +435,10 @@ test.describe("Published config CLI", () => {
       await connection
         .locator('[data-command="Connection.openConnection"]')
         .click();
-      const tablesList = page.getByTestId(
-        "dashboard.menu.tablesSearchList",
-      );
+      const tablesList = page.getByTestId("dashboard.menu.tablesSearchList");
       const publishedTableName = [schemaName, tableName].join(".");
       await expect(
-        tablesList.locator(
-          `[data-key=${JSON.stringify(publishedTableName)}]`,
-        ),
+        tablesList.locator(`[data-key=${JSON.stringify(publishedTableName)}]`),
       ).toBeVisible();
       await expect(
         tablesList.locator(
@@ -399,9 +451,7 @@ test.describe("Published config CLI", () => {
           await (window as any).db[qualifiedTableName].find(),
         publishedTableName,
       );
-      expect(publishedRows).toEqual([
-        { id: 1, name: "started from config" },
-      ]);
+      expect(publishedRows).toEqual([{ id: 1, name: "started from config" }]);
 
       const configuredWorkspace = await page.evaluate(
         async ({ connectionName, workspaceName }) => {

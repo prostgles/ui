@@ -18,6 +18,7 @@ import {
   generatedFolderName,
   srcFolderName,
 } from "./cliUtils";
+import { ensureCliDatabases } from "./ensureCliDatabases";
 
 const usage = `Usage:
   prostgles create <directory>
@@ -70,13 +71,10 @@ const createConfig = (targetPath: string) => {
       import { defineConfig } from "@prostgles/prostgles";
       import type { DBGeneratedSchema } from "../${generatedFolderName}/DBGeneratedSchema";
 
-      export default defineConfig<DBGeneratedSchema>()({
+      const prostgles = defineConfig<DBGeneratedSchema>();
+
+      export default prostgles({
         id: ${JSON.stringify(configId)},
-        connection: {
-          name: ${JSON.stringify(configId)},
-          type: "Connection URI",
-          db_conn: process.env.PROSTGLES_DATABASE_URL,
-        },
         tableConfig: {},
       });`),
   );
@@ -90,7 +88,7 @@ const createConfig = (targetPath: string) => {
   );
 
   console.log(
-    `Created config project in ${targetPath}. Copy .env.example to .env, configure both databases, run npm install, then npm run dev.`,
+    `Created config project in ${targetPath}. Copy .env.example to .env, configure both database URLs, run npm install, then npm run dev.`,
   );
 };
 
@@ -105,19 +103,15 @@ const validateEnvironmentSetup = (configPath: string) => {
   const environmentFile = path.join(configPath, ".env");
   if (!existsSync(environmentFile)) {
     console.warn(
-      `Warning: No .env file found at ${environmentFile}. Copy .env.example to .env and configure the database credentials.`,
+      `Warning: No .env file found at ${environmentFile}. Copy .env.example to .env and configure both database URLs.`,
     );
   }
 
   const environment = { ...process.env, ...getConfigEnvironment(configPath) };
   const hasValue = (value: string | undefined) => Boolean(value?.trim());
-  const hasStateDatabase =
-    hasValue(environment.POSTGRES_URL) ||
-    (hasValue(environment.POSTGRES_DB) && hasValue(environment.POSTGRES_USER));
-
-  if (!hasStateDatabase) {
+  if (!hasValue(environment.PROSTGLES_STATE_DATABASE_URL)) {
     throw new Error(
-      "Prostgles UI state database credentials are missing. Set POSTGRES_URL, or both POSTGRES_DB and POSTGRES_USER.",
+      "Prostgles UI state database credentials are missing. Set PROSTGLES_STATE_DATABASE_URL.",
     );
   }
   if (!hasValue(environment.PROSTGLES_DATABASE_URL)) {
@@ -125,6 +119,10 @@ const validateEnvironmentSetup = (configPath: string) => {
       "Configured database credentials are missing. Set PROSTGLES_DATABASE_URL.",
     );
   }
+  return environment as NodeJS.ProcessEnv & {
+    PROSTGLES_STATE_DATABASE_URL: string;
+    PROSTGLES_DATABASE_URL: string;
+  };
 };
 
 const serverEntryPath = path.join(__dirname, "..", "cliServer.js");
@@ -155,9 +153,10 @@ const watchConfig = (configPath: string, onChange: () => void) => {
 };
 
 const run = async (configPath: string, isDev: boolean) => {
-  validateEnvironmentSetup(configPath);
+  const environment = validateEnvironmentSetup(configPath);
   mkdirSync(path.join(configPath, generatedFolderName), { recursive: true });
   await compileSchemaConfigProject(configPath);
+  await ensureCliDatabases(environment);
   let server: ChildProcess | undefined;
   let restarting = false;
   const start = () => {

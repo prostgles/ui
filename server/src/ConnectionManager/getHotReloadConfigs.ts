@@ -16,7 +16,7 @@ import { modifyClientSchema } from "./modifyClientSchema";
 import type { ServerFunctionDefinitions } from "prostgles-server";
 import { getSchemaConfig } from "./getSchemaConfig";
 import { IS_PROD } from "@src/init/utils";
-import { generatedFolderName } from "@src/cli/cliUtils";
+import { generatedFolderName, srcFolderName } from "@src/cli/cliUtils";
 
 export type HotReloadConfigOptions = RequiredKeepUndefined<
   Pick<
@@ -30,6 +30,7 @@ export type HotReloadConfigOptions = RequiredKeepUndefined<
     | "tableHooks"
     | "functions"
     | "tsGeneratedTypesDir"
+    | "tsGeneratedTypesFunctionsPath"
     | "modifyClientSchema"
   >
 >;
@@ -147,6 +148,10 @@ export const getHotReloadConfigs = async ({
           join(web_app_directory, "client", "src", "api")
         : db_watch_schema && config_sync?.type === "cli" ?
           join(config_sync.configPath, generatedFolderName)
+        : undefined,
+      tsGeneratedTypesFunctionsPath:
+        !IS_PROD && db_watch_schema && config_sync?.type === "cli" ?
+          join(config_sync.configPath, srcFolderName, "index.ts")
         : undefined,
       functions: mergeFunctions(schemaConfig?.functions, connectionFunctions),
       modifyClientSchema: (table, tableConfig, userData) =>

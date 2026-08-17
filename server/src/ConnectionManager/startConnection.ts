@@ -150,12 +150,13 @@ export const startConnection = async function (
           : false;
         const {
           id: _id,
-          createDatabase: _createDatabase,
           connection: _connectionConfig,
           databaseConfig: _databaseConfig,
           onInitSQL: _onInitSQL,
           onMount: _onMount,
           workspaces: _workspaces,
+          access_control: _accessControl,
+          publish: _publish,
           ...schemaProstglesOptions
         } = schemaConfig ?? {};
         const onMount = connection.on_mount_ts_disabled ? undefined : _onMount;
@@ -193,13 +194,12 @@ export const startConnection = async function (
           disableRealtime: disable_realtime ?? undefined,
           transactions: true,
           joins: schemaProstglesOptions.joins ?? "inferred",
-          publish:
-            schemaProstglesOptions.publish ??
-            getConnectionPublish({
-              dbs,
-              dbConf: databaseConfig,
-              connection: connection,
-            }),
+          publish: getConnectionPublish({
+            dbs,
+            dbConf: databaseConfig,
+            connection: connection,
+            accessControl: _accessControl,
+          }),
           // DEBUG_MODE: true,
           onConnectionError: (error) => {
             const nonReconnectableErrorCodes = {
@@ -212,19 +212,20 @@ export const startConnection = async function (
             }
           },
           publishRawSQL: async ({ user }) => {
-            if (user?.type === "admin") {
+            if (!_accessControl && user?.type === "admin") {
               return true;
             }
-            const ac = await getAccessRule(
-              dbs,
-              user,
-              databaseConfig.id,
-              connection.id,
-            );
-            if (
-              ac?.dbPermissions.type === "Run SQL" &&
-              ac.dbPermissions.allowSQL
-            ) {
+            const dbPermissions =
+              _accessControl ??
+              (
+                await getAccessRule(
+                  dbs,
+                  user,
+                  databaseConfig.id,
+                  connection.id,
+                )
+              )?.dbPermissions;
+            if (dbPermissions?.type === "Run SQL" && dbPermissions.allowSQL) {
               return true;
             }
             return false;

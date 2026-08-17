@@ -30,19 +30,6 @@ export type TableDisplayConfig = Record<string, TableOptions>;
 export type SchemaConfigConnection = Partial<
   Pick<
     DBSSchema["connections"],
-    | "name"
-    | "type"
-    | "db_conn"
-    | "db_host"
-    | "db_name"
-    | "db_pass"
-    | "db_port"
-    | "db_ssl"
-    | "db_user"
-    | "ssl_certificate"
-    | "ssl_client_certificate"
-    | "ssl_client_certificate_key"
-    | "ssl_reject_unauthorized"
     | "db_schema_filter"
     | "display_options"
     | "table_options"
@@ -60,6 +47,9 @@ export type SchemaConfigDatabase = Partial<
   >
 >;
 
+export type SchemaConfigAccessControl =
+  DBSSchema["access_control"]["dbPermissions"];
+
 /**
  * Startup options which a config project may provide to the primary Prostgles
  * instance. Transport, authentication, storage wiring, and connection
@@ -72,12 +62,10 @@ export type SchemaConfigProstglesOptions<
   ProstglesInitOptions<S, SUser>,
   | "functions"
   | "joins"
-  | "publish"
   | "schemaFilter"
   | "tableHooks"
   | "tableConfig"
   | "tableConfigMigrations"
-  // | "tsGeneratedTypesFunctionsPath"
   | "watchSchemaType"
 >;
 
@@ -87,10 +75,13 @@ export type SchemaConfig<
 > = SchemaConfigProstglesOptions<S, SUser> & {
   /** Stable deployment identifier. Required when starting through the CLI. */
   id?: string;
-  /** Create the configured PostgreSQL database during CLI startup when absent. */
-  createDatabase?: boolean;
+  /** Non-credential connection display options. Database URLs belong in .env. */
   connection?: SchemaConfigConnection;
   databaseConfig?: SchemaConfigDatabase;
+  /** Database permissions applied to authenticated users of this CLI config. */
+  access_control?: SchemaConfigAccessControl;
+  /** CLI configs use access_control instead of prostgles-server publish rules. */
+  publish?: never;
   onInitSQL?: string;
   onMount?: ProstglesOnMount<S>;
   workspaces?: WorkspaceInsertModel[];
