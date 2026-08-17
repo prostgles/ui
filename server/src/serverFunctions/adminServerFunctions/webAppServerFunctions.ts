@@ -28,6 +28,7 @@ const templateDir = join(
 
 export const webAppServerFunctions = defineFunctionGroupFunctions({
   createWebAppFromTemplate: defineFunction({
+    unrestrictedDbAccess: true,
     input: {
       connectionId: "string",
       clean: { type: "boolean", optional: true },
