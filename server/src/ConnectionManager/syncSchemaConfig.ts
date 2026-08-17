@@ -1,6 +1,6 @@
 import type { DatabaseConfigs, DBS } from "..";
 import { connectionManager } from "..";
-import { runConnectionQuery } from "../serverFunctions/getServerFunctions";
+import { runConnectionQuery } from "../serverFunctions/stateServerFunctions";
 import { compileSchemaConfigProject } from "./compileSchemaConfigProject";
 import { getSchemaConfig } from "./getSchemaConfig";
 import { getEntries } from "@common/utils";

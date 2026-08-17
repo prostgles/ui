@@ -8,7 +8,7 @@ import type {
   McpServerParameters,
   McpTool,
 } from "@src/McpHub/AnthropicMcpHub/McpTypes";
-import { getServiceManager } from "@src/ServiceManager/ServiceManager";
+import { getServiceManager } from "@src/init/prostglesOnReady";
 import { getJSONBSchemaAsJSONSchema } from "prostgles-types";
 import type {
   ProstglesMcpServerDefinition,
@@ -30,8 +30,8 @@ const definition = {
 } as const satisfies ProstglesMcpServerDefinition;
 
 const handler = {
-  start: (dbs) => {
-    const serviceManager = getServiceManager(dbs);
+  start: () => {
+    const serviceManager = getServiceManager();
 
     return {
       stop: () => {
@@ -80,7 +80,7 @@ const handler = {
             return content;
           } else {
             const docsService =
-              await getServiceManager(dbs).getServiceWithRetries("documents");
+              await getServiceManager().getServiceWithRetries("documents");
             const result = await docsService.endpoints["/v1/convert/source"]({
               sources: [{ kind: "http", url }],
               options: {

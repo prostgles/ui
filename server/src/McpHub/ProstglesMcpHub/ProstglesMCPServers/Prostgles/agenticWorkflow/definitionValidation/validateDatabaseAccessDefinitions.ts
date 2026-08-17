@@ -1,6 +1,6 @@
 import { isObject } from "@common/publishUtils";
 import { connectionManager } from "@src/index";
-import { runConnectionQuery } from "@src/serverFunctions/getServerFunctions";
+import { runConnectionQuery } from "@src/serverFunctions/stateServerFunctions";
 import type {
   DatabaseAccessDefinition,
   DetailedTableFilter,

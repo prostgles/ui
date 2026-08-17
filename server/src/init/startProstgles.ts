@@ -1,7 +1,7 @@
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type { ProstglesInitState } from "@common/electronInitTypes";
 import type { ConnectionDetails } from "@src/connectionUtils/getConnectionDetails";
-import { getServerFunctions } from "@src/serverFunctions/getServerFunctions";
+import { stateServerFunctions } from "@src/serverFunctions/stateServerFunctions";
 import type { Express } from "express";
 import { existsSync } from "fs";
 import path, { join } from "path";
@@ -197,7 +197,7 @@ export const startProstgles = async ({
             const { user } = params;
             return Boolean(user && user.type === "admin");
           },
-          functions: getServerFunctions,
+          functions: stateServerFunctions,
           publish,
           joins: "inferred",
           onReady: async (params, update) => {

@@ -1,6 +1,5 @@
 import { annotationsTableColumns } from "@common/managedTableSchema";
 import { ROUTES } from "@common/utils";
-import { getServiceManager } from "@src/ServiceManager/ServiceManager";
 import { CONVERT_DOCUMENT_DEFAULT_OPTIONS } from "@src/ServiceManager/services/documents/documents.service";
 import type e from "express";
 import type {
@@ -18,6 +17,7 @@ import { getCloudClient } from "../cloudClients/cloudClients";
 import type { ConnectionManager } from "./ConnectionManager";
 import type { ConnectionHotReloadProperties } from "./getHotReloadConfigs";
 import { getSchemaConfig } from "./getSchemaConfig";
+import { getServiceManager } from "@src/init/prostglesOnReady";
 
 type ParseTableConfigArgs = {
   dbs: DBS;
@@ -120,7 +120,7 @@ export const parseTableConfig = async ({
                 const db =
                   conMgr.getActiveConnectionSilentFail(connectionId)?.prgl.db;
 
-                const documentService = await getServiceManager(dbs)
+                const documentService = await getServiceManager()
                   .getServiceWithRetries("documents")
                   .catch((err) => {
                     console.error("Failed to get documents service", err);

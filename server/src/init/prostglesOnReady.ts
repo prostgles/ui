@@ -2,15 +2,15 @@ import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import { getRestApiConfig } from "@src/ConnectionManager/connectionManagerUtils";
 import { modifyClientSchema } from "@src/ConnectionManager/modifyClientSchema";
 import { getProstglesMcpHub } from "@src/McpHub/ProstglesMcpHub/ProstglesMcpHub";
-import { getServiceManager } from "@src/ServiceManager/ServiceManager";
+import { ServiceManager } from "@src/ServiceManager/ServiceManager";
 import type { SUser } from "@src/authConfig/sessionUtils";
 import type { DBSConnectionInfo } from "@src/electronConfig";
-import { connectionManager, type DBS } from "@src/index";
+import { connectionManager } from "@src/index";
 import type e from "express";
 import type { DB } from "prostgles-server/dist/Prostgles";
 import type { OnReadyCallback } from "prostgles-server/dist/initProstgles";
-import { type SQLHandler } from "prostgles-types";
 import BackupManager from "../BackupManager/BackupManager";
+import { applyStartupSchemaConfig } from "../ConnectionManager/applyStartupSchemaConfig";
 import { setLoggerDBS } from "../Logger";
 import { setupMCPServerHub } from "../McpHub/AnthropicMcpHub/startMcpHub";
 import { getAuth } from "../authConfig/getAuth";
@@ -19,7 +19,6 @@ import {
   type AuthSetupDataListener,
 } from "../authConfig/subscribeToAuthSetupChanges";
 import { setupLLM } from "../serverFunctions/askLLM/setupLLM";
-import { applyStartupSchemaConfig } from "../ConnectionManager/applyStartupSchemaConfig";
 import { initUsers } from "./initUsers";
 import { insertStateDatabase } from "./insertStateDatabase";
 import { getProstglesState } from "./tryStartProstgles";
@@ -27,22 +26,22 @@ import { getProstglesState } from "./tryStartProstgles";
 let authSetupDataListener: AuthSetupDataListener | undefined;
 
 let backupManager: BackupManager | undefined;
-export const initBackupManager = async (
-  db: DB,
-  dbs: DBS,
-  dbsSql: SQLHandler,
-) => {
-  backupManager ??= await BackupManager.create(
-    db,
-    dbs,
-    dbsSql,
-    connectionManager,
-  );
-
+export const getBackupManager = () => {
+  if (!backupManager) {
+    throw new Error("BackupManager not initialized yet");
+  }
   return backupManager;
 };
 
-export const getBackupManager = () => backupManager;
+let serviceManager: ServiceManager | undefined = undefined;
+export const getServiceManager = () => {
+  if (!serviceManager) {
+    throw new Error(
+      "ServiceManager not initialized yet. Call initServiceManager first.",
+    );
+  }
+  return serviceManager;
+};
 
 export const prostglesOnReady = async (
   params: Parameters<OnReadyCallback<DBGeneratedSchema, SUser>>[0],
@@ -75,7 +74,7 @@ export const prostglesOnReady = async (
     await connectionManager.destroy();
     await connectionManager.init(db, _db);
     await applyStartupSchemaConfig({ dbs: db, db: _db });
-    getServiceManager(db);
+    serviceManager ??= new ServiceManager(db);
 
     backupManager ??= await BackupManager.create(
       _db,

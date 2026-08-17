@@ -53,6 +53,7 @@ export const getAuth = async (
     sidKeyName,
     onUseOrSocketConnected: getOnUseOrSocketConnected(_dbs, authSetupData),
     getUser: getGetUser(dbs, authSetupData),
+    findUser: (userFilter) => dbs.users.findOne(userFilter),
     cacheSession: {
       getSession: async (sid, _) => {
         if (!sid) return undefined;
@@ -131,7 +132,7 @@ export const getAuth = async (
           req.next?.();
         } else if (req.path.startsWith(ROUTES.BACKUPS)) {
           const userData = await getUser();
-          await getBackupManager()!.onRequestBackupFile(
+          await getBackupManager().onRequestBackupFile(
             res,
             !userData.user ? undefined : userData,
             req,
@@ -143,9 +144,7 @@ export const getAuth = async (
         } else if (req.query.transport === "polling") {
           req.next?.();
         } else {
-          res.sendFile(
-            path.resolve(DIRECTORIES.CLIENT_BUILD, "index.html"),
-          );
+          res.sendFile(path.resolve(DIRECTORIES.CLIENT_BUILD, "index.html"));
         }
       },
       cookieOptions: { ...authCookieOpts, ...database_config.cookie_options },

@@ -1,7 +1,7 @@
-import type { UseProstglesClientProps } from "prostgles-client";
-import { isPlaywrightTest } from "src/i18n/i18nUtils";
 import { CLIENT_LOGS_KEY } from "@common/constants";
-import { getSerialisableError } from "prostgles-types";
+import type { UseProstglesClientProps } from "prostgles-client";
+import { safeStringify } from "prostgles-types";
+import { isPlaywrightTest } from "src/i18n/i18nUtils";
 
 /** Add logs to window */
 const BATCH_SIZE = 100;
@@ -13,6 +13,6 @@ export const logClientEvents: UseProstglesClientProps["onDebug"] = (ev) => {
   const logs = window[CLIENT_LOGS_KEY] ?? [];
   window[CLIENT_LOGS_KEY] = [
     ...logs.slice(-(BATCH_SIZE - 1)),
-    getSerialisableError(ev) as typeof ev,
+    JSON.parse(safeStringify(ev)) as typeof ev,
   ];
 };

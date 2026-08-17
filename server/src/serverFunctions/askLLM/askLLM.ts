@@ -5,7 +5,7 @@ import {
   reachedMaximumNumberOfConsecutiveToolRequests,
 } from "@common/llmUtils";
 import type { DBSSchema } from "@common/publishUtils";
-import { HOUR, sliceText } from "@common/utils";
+import { sliceText } from "@common/utils";
 import {
   getProperty,
   getSerialisableError,
@@ -14,7 +14,6 @@ import {
   tryCatchV2,
 } from "prostgles-types";
 import { type DBS } from "../..";
-import { checkLLMLimit } from "./checkLLMLimit";
 import { fetchLLMResponse, type LLMMessageWithRole } from "./fetchLLMResponse";
 import { getLLMToolsAllowedInThisChat } from "./getLLMToolsAllowedInThisChat";
 
@@ -23,6 +22,7 @@ import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
 import { checkMaxCostLimitForChat } from "./checkMaxCostLimitForChat";
 import { getFullPrompt } from "./getFullPrompt";
+import { getLlmLimitWasReached } from "./getLlmLimitWasReached";
 import { getPastMessages } from "./getPastMessages";
 import { getValidatedAskLLMChatOptions } from "./getValidatedAskLLMChatOptions";
 import { handleToolUseResultConfirmation } from "./handleToolUseResultConfirmation";
@@ -49,8 +49,6 @@ export type AskLLMArgs = {
   chatId: number;
   dbs: DBS;
   user: Pick<DBSSchema["users"], "id" | "type">;
-  allowedLLMCreds: DBSSchema["access_control_allowed_llm"][] | undefined;
-  accessRules: DBSSchema["access_control"][] | undefined;
   clientReq: AuthClientRequest;
   type:
     | "new-message"
@@ -77,8 +75,6 @@ export const stopAskLLM = (chatId: number) => {
 
 export const askLLM = async (args: AskLLMArgs) => {
   const {
-    accessRules,
-    allowedLLMCreds,
     chatId,
     connectionId,
     dbs,
@@ -203,38 +199,15 @@ export const askLLM = async (args: AskLLMArgs) => {
     );
   }
 
-  const allowedUsedCreds = allowedLLMCreds?.filter(
-    (c) =>
-      c.llm_credential_id === llm_credential.id &&
-      c.llm_prompt_id === llm_prompt_id,
-  );
-
-  // Check if usage limit reached
-  if (allowedUsedCreds) {
-    const limitReachedMessage = await checkLLMLimit(
-      dbs,
-      user,
-      allowedUsedCreds,
-      accessRules ?? [],
-    );
-    if (limitReachedMessage) {
-      await dbs.llm_chats.update(
-        { id: chatId },
-        {
-          disabled_message: limitReachedMessage,
-          disabled_until: new Date(Date.now() + 24 * HOUR),
-        },
-      );
-      return;
-    } else if (chat.disabled_message) {
-      await dbs.llm_chats.update(
-        { id: chatId },
-        {
-          disabled_message: null,
-          disabled_until: null,
-        },
-      );
-    }
+  const limitReached = await getLlmLimitWasReached({
+    dbs,
+    user,
+    llm_credential,
+    llm_prompt_id,
+    chat,
+  });
+  if (limitReached) {
+    return;
   }
 
   const hasMessagesThatNeedAIResponse =

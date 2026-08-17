@@ -40,15 +40,16 @@ export type ConnectionHotReloadProperties = Pick<
 >;
 
 const mergeFunctions = (
-  schemaFunctions: ServerFunctionDefinitions<void, SUser> | undefined,
-  connectionFunctions: ServerFunctionDefinitions<void, SUser>,
+  schemaFunctions: ServerFunctionDefinitions | undefined,
+  connectionFunctions: ServerFunctionDefinitions,
 ): ServerFunctionDefinitions<void, SUser> => {
-  if (!schemaFunctions) return connectionFunctions;
-  return async (params) => ({
-    ...(await schemaFunctions(params)),
+  if (!schemaFunctions)
+    return connectionFunctions as ServerFunctionDefinitions<void, SUser>;
+  return {
+    ...schemaFunctions,
     /** Connection-managed functions retain precedence on name collisions. */
-    ...(await connectionFunctions(params)),
-  });
+    ...connectionFunctions,
+  } as ServerFunctionDefinitions<void, SUser>;
 };
 
 export const getHotReloadConfigs = async ({

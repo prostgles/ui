@@ -154,9 +154,3 @@ export class ServiceManager {
     this.activeServices = new Map();
   };
 }
-
-let serviceManager: ServiceManager | undefined = undefined;
-export const getServiceManager = (dbs: DBS | undefined) => {
-  serviceManager ??= new ServiceManager(dbs);
-  return serviceManager;
-};

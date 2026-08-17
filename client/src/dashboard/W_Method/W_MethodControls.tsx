@@ -71,7 +71,7 @@ export const W_MethodControls = ({
   const [loading, setLoading] = useState(false);
 
   const argDefaults: Record<string, ColumnValue> = {};
-  const disabledArgsDefaults: string[] = [];
+  const optionalArgNames: string[] = [];
   if (methodFromSchema) {
     getEntries(methodFromSchema.input ?? {}).forEach(
       ([argName, stringOrObj]) => {
@@ -80,7 +80,7 @@ export const W_MethodControls = ({
         const ref = arg.lookup?.type === "data" ? arg.lookup : undefined;
         const argFullDetails = methodFullDataArgs?.[argName];
         if (arg.optional) {
-          disabledArgsDefaults.push(argName);
+          optionalArgNames.push(argName);
         }
         if (fixedRowArgument?.argName === argName) {
           argDefaults[argName] =
@@ -98,7 +98,9 @@ export const W_MethodControls = ({
   }
 
   const args = otherProps.state.args ?? argDefaults;
-  const disabledArgs = otherProps.state.disabledArgs ?? disabledArgsDefaults;
+  const disabledArgs =
+    otherProps.state.disabledArgs ??
+    optionalArgNames.filter((argName) => args[argName] === undefined);
   const hiddenArgs = otherProps.state.hiddenArgs ?? [];
   const setArgs = (newArgs) => {
     setError(undefined);
