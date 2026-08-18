@@ -1,10 +1,11 @@
 import type { documentsServiceInputSchema } from "@common/mcp/documentsServiceInputSchema";
 import type { ServiceManager } from "@src/ServiceManager/ServiceManager";
+import type { prostglesServices } from "@src/ServiceManager/ServiceManagerTypes";
 import { CONVERT_DOCUMENT_DEFAULT_OPTIONS } from "@src/ServiceManager/services/documents/documents.service";
 import type { JSONB } from "prostgles-types";
 
 export const getDocumentText = async (
-  serviceManager: ServiceManager,
+  serviceManager: ServiceManager<typeof prostglesServices>,
   url: string,
   otherOpts: Partial<JSONB.GetType<typeof documentsServiceInputSchema>>,
 ) => {
