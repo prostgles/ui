@@ -1,5 +1,6 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import { randomBytes, randomUUID } from "node:crypto";
+import { mkdir, open, readFile } from "node:fs/promises";
 import { createServer } from "node:net";
 import path from "node:path";
 import prostgles, {
@@ -29,10 +30,12 @@ export type TestDeploymentSeedContext = {
 export type CreateTestDeploymentOptions = {
   /** Root of the app created by `prostgles create`. */
   configPath: string;
-  /** Optional readable segment used in Docker and database names. */
-  databasePrefix?: string;
+  /** App ID used in Docker and database names. */
+  configId: string;
   /** PostgreSQL Docker image. Defaults to the PostGIS image used by Prostgles. */
   postgresImage?: string;
+  /** Output file for deployment stdout and stderr. */
+  logPath?: string;
   users?: TestDeploymentUser[];
   seed?: (context: TestDeploymentSeedContext) => void | Promise<void>;
   startupTimeoutMs?: number;
@@ -54,6 +57,8 @@ export type TestDeployment<
   endpoint: string;
   stateDatabaseName: string;
   projectDatabaseName: string;
+  /** File containing deployment stdout and stderr. */
+  logPath: string;
   connectStateAs: (
     userKey: string,
   ) => Promise<TestDeploymentClient<void, ClientFunctionHandler, UserLike>>;
@@ -101,27 +106,11 @@ const getDockerError = (args: string[], result: CommandResult) =>
     `docker ${args[0] ?? "command"} failed with exit code ${result.exitCode}: ${result.stderr.trim() || result.stdout.trim()}`,
   );
 
-const validatePrefix = (prefix: string) => {
-  if (!prefix) return;
-  if (prefix.length > 20) {
-    throw new Error(
-      "PROSTGLES_TEST_DATABASES_PREFIX must be at most 20 characters.",
-    );
-  }
-  const isValidCharacter = (character: string) => {
-    const lower = character.toLowerCase();
-    return (
-      (lower >= "a" && lower <= "z") ||
-      (character >= "0" && character <= "9") ||
-      character === "_"
-    );
-  };
-  if (![...prefix].every(isValidCharacter)) {
-    throw new Error(
-      "PROSTGLES_TEST_DATABASES_PREFIX may contain only letters, numbers, and underscores.",
-    );
-  }
-};
+const validatePrefix = (configId: string) =>
+  configId
+    .toLowerCase()
+    .replace(/[^a-z0-9_]/g, "_")
+    .slice(0, 20);
 
 const getDatabaseUrl = (
   port: number,
@@ -141,16 +130,14 @@ const delay = async (milliseconds: number) =>
   await new Promise((resolve) => setTimeout(resolve, milliseconds));
 
 const startDockerDatabases = async ({
-  databasePrefix,
+  configId,
   postgresImage,
   startupTimeoutMs,
 }: Pick<
   CreateTestDeploymentOptions,
-  "databasePrefix" | "postgresImage" | "startupTimeoutMs"
+  "configId" | "postgresImage" | "startupTimeoutMs"
 >) => {
-  const prefix =
-    databasePrefix ?? process.env.PROSTGLES_TEST_DATABASES_PREFIX ?? "";
-  validatePrefix(prefix);
+  const prefix = validatePrefix(configId);
   const runId = randomBytes(6).toString("hex");
   const baseName = `${TEST_DATABASE_NAMESPACE}${prefix ? `${prefix}_` : ""}${runId}`;
   const stateName = `${baseName}_state`;
@@ -186,10 +173,7 @@ const startDockerDatabases = async ({
   const dispose = async () => {
     const args = ["rm", "--force", containerName];
     const result = await runDocker(args);
-    if (
-      result.exitCode !== 0 &&
-      !result.stderr.includes("No such container")
-    ) {
+    if (result.exitCode !== 0 && !result.stderr.includes("No such container")) {
       throw getDockerError(args, result);
     }
   };
@@ -207,15 +191,12 @@ const startDockerDatabases = async ({
     const separatorIndex = portText.lastIndexOf(":");
     const port = Number(portText.slice(separatorIndex + 1));
     if (!Number.isInteger(port) || port <= 0) {
-      throw new Error(`Docker returned an invalid PostgreSQL port: ${portText}`);
+      throw new Error(
+        `Docker returned an invalid PostgreSQL port: ${portText}`,
+      );
     }
 
-    const maintenanceUrl = getDatabaseUrl(
-      port,
-      username,
-      password,
-      "postgres",
-    );
+    const maintenanceUrl = getDatabaseUrl(port, username, password, "postgres");
     const startedAt = Date.now();
     let lastConnectionError: unknown;
     let maintenance: Client | undefined;
@@ -298,18 +279,21 @@ const waitForReady = async ({
   child,
   endpoint,
   getLogs,
+  logPath,
   timeoutMs,
 }: {
   child: ChildProcess;
   endpoint: string;
-  getLogs: () => string;
+  getLogs: () => Promise<string>;
+  logPath: string;
   timeoutMs: number;
 }) => {
+  const getLogDetails = async () => `Log file: ${logPath}\n${await getLogs()}`;
   const startedAt = Date.now();
   while (Date.now() - startedAt < timeoutMs) {
     if (child.exitCode !== null) {
       throw new Error(
-        `Prostgles test deployment exited with code ${child.exitCode}.\n${getLogs()}`,
+        `Prostgles test deployment exited with code ${child.exitCode}.\n${await getLogDetails()}`,
       );
     }
     const state = (await fetch(`${endpoint}/dbs`)
@@ -320,20 +304,17 @@ const waitForReady = async ({
     if (state?.initState?.state === "ok") return;
     if (state?.initState?.state === "error") {
       throw new Error(
-        `Prostgles test deployment failed to start: ${JSON.stringify(state.initState.error)}\n${getLogs()}`,
+        `Prostgles test deployment failed to start: ${JSON.stringify(state.initState.error)}\n${await getLogDetails()}`,
       );
     }
     await delay(200);
   }
   throw new Error(
-    `Timed out waiting for Prostgles test deployment.\n${getLogs()}`,
+    `Timed out waiting for Prostgles test deployment.\n${await getLogDetails()}`,
   );
 };
 
-const seedUsers = async (
-  databaseUrl: string,
-  users: TestDeploymentUser[],
-) => {
+const seedUsers = async (databaseUrl: string, users: TestDeploymentUser[]) => {
   const client = new Client({ connectionString: databaseUrl });
   const tokens = new Map<string, string>();
   await client.connect();
@@ -375,7 +356,8 @@ export const createTestDeployment = async <
   User extends UserLike = UserLike,
 >({
   configPath,
-  databasePrefix,
+  configId,
+  logPath,
   postgresImage,
   seed,
   startupTimeoutMs = START_TIMEOUT_MS,
@@ -385,7 +367,7 @@ export const createTestDeployment = async <
 > => {
   const resolvedConfigPath = path.resolve(configPath);
   const databases = await startDockerDatabases({
-    databasePrefix,
+    configId,
     postgresImage,
     startupTimeoutMs,
   });
@@ -394,7 +376,23 @@ export const createTestDeployment = async <
     throw error;
   });
   const endpoint = `http://127.0.0.1:${port}`;
-  const cliPath = path.resolve(__dirname, "../cli/cli.js");
+  const cliPath = path.resolve(__dirname, "../cli.js");
+  const resolvedLogPath = path.resolve(
+    logPath ??
+      path.join(
+        resolvedConfigPath,
+        ".prostgles/test-logs",
+        `${Date.now()}-${randomBytes(4).toString("hex")}.log`,
+      ),
+  );
+  const logFile = await mkdir(path.dirname(resolvedLogPath), {
+    recursive: true,
+  })
+    .then(async () => await open(resolvedLogPath, "w"))
+    .catch(async (error: unknown) => {
+      await databases.dispose();
+      throw error;
+    });
   const environment: NodeJS.ProcessEnv = {
     ...process.env,
     NODE_ENV: "production",
@@ -415,15 +413,20 @@ export const createTestDeployment = async <
       cwd: resolvedConfigPath,
       detached: process.platform !== "win32",
       env: environment,
-      stdio: "pipe",
+      stdio: ["ignore", logFile.fd, logFile.fd],
     },
   );
-  let logs = "";
-  const appendLogs = (chunk: Buffer | string) => {
-    logs = (logs + chunk.toString()).slice(-20_000);
+  await logFile.close();
+  const getLogs = async () =>
+    (await readFile(resolvedLogPath, "utf8")).slice(-20_000);
+  const addLogPath = (error: unknown) => {
+    const details = `Log file: ${resolvedLogPath}`;
+    if (error instanceof Error && error.message.includes(details)) return error;
+    return new Error(
+      `${error instanceof Error ? error.message : "Test deployment failed."}\n${details}`,
+      { cause: error },
+    );
   };
-  child.stdout.on("data", appendLogs);
-  child.stderr.on("data", appendLogs);
   const clients = new Set<{ disconnect: () => void }>();
   let disposed = false;
 
@@ -432,10 +435,9 @@ export const createTestDeployment = async <
     disposed = true;
     for (const client of clients) client.disconnect();
     clients.clear();
-    const cleanupResults = await Promise.allSettled([
-      stopProcess(child),
-      databases.dispose(),
-    ]);
+    const processCleanup = await Promise.allSettled([stopProcess(child)]);
+    const databaseCleanup = await Promise.allSettled([databases.dispose()]);
+    const cleanupResults = [...processCleanup, ...databaseCleanup];
     const errors = cleanupResults
       .filter((result) => result.status === "rejected")
       .map((result) => result.reason as unknown);
@@ -446,7 +448,8 @@ export const createTestDeployment = async <
     await waitForReady({
       child,
       endpoint,
-      getLogs: () => logs,
+      getLogs,
+      logPath: resolvedLogPath,
       timeoutMs: startupTimeoutMs,
     });
     const tokens = await seedUsers(databases.state.url, users);
@@ -519,9 +522,10 @@ export const createTestDeployment = async <
         const startConnection = (
           stateClient.methods as
             | {
-                startConnection?: (args: { connectionId: string }) => Promise<
-                  | { socketPath: string; socketUrl?: string }
-                  | undefined
+                startConnection?: (args: {
+                  connectionId: string;
+                }) => Promise<
+                  { socketPath: string; socketUrl?: string } | undefined
                 >;
               }
             | undefined
@@ -555,6 +559,7 @@ export const createTestDeployment = async <
       connectStateAs,
       dispose,
       endpoint,
+      logPath: resolvedLogPath,
       projectDatabaseName: databases.project.name,
       stateDatabaseName: databases.state.name,
     };
@@ -563,10 +568,10 @@ export const createTestDeployment = async <
       await dispose();
     } catch (cleanupError) {
       throw new AggregateError(
-        [error, cleanupError],
-        "Test deployment failed and cleanup also failed.",
+        [addLogPath(error), cleanupError],
+        `Test deployment failed and cleanup also failed.\nLog file: ${resolvedLogPath}`,
       );
     }
-    throw error;
+    throw addLogPath(error);
   }
 };

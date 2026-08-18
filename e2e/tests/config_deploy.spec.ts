@@ -231,7 +231,6 @@ test.describe("Published config CLI", () => {
       expect(envExample).toContain("PROSTGLES_STATE_DATABASE_URL=");
       expect(envExample).toContain("/prostgles_state_database");
       expect(envExample).toContain("PROSTGLES_DATABASE_URL=");
-      expect(envExample).toContain("PROSTGLES_TEST_DATABASES_PREFIX=");
       expect(envExample).toContain("PROSTGLES_TEST_POSTGRES_IMAGE=");
       expect(envExample).not.toContain("PROSTGLES_TEST_DATABASE_URL=");
       const deploymentTest = readFileSync(
@@ -239,13 +238,18 @@ test.describe("Published config CLI", () => {
         "utf8",
       );
       expect(deploymentTest).toContain("createTestDeployment");
+      expect(deploymentTest).toContain('configId: "config"');
       expect(deploymentTest).toContain('connectProjectAs("admin")');
+      expect(deploymentTest).toContain('connectProjectAs("member")');
       expect(
         readFileSync(join(configDirectory, ".gitignore"), "utf8"),
       ).toContain("node_modules/");
       expect(
         readFileSync(join(configDirectory, ".gitignore"), "utf8"),
       ).toContain(".env");
+      expect(
+        readFileSync(join(configDirectory, ".gitignore"), "utf8"),
+      ).toContain(".prostgles/test-logs/");
       expect(
         readFileSync(join(configDirectory, "AGENTS.md"), "utf8"),
       ).toContain("Define tables and columns in `tableConfig`");
@@ -307,6 +311,28 @@ const prostgles = defineConfig<DBGeneratedSchema>();
 export default prostgles({
   id: "typed-cli-test",
   tableConfig: {},
+  workspaces: [{
+    name: "Configured workspace",
+    layout: {
+      id: "root",
+      type: "tab",
+      size: 1,
+      activeTabKey: "configured-query",
+      items: [{
+        id: "configured-query",
+        type: "item",
+        tableName: null,
+        viewType: "sql",
+        size: 1,
+      }],
+    },
+    windows: [{
+      id: "configured-query",
+      type: "sql",
+      name: "Configured query",
+      sql: "SELECT 1",
+    }],
+  }],
   functions: {
     public: defineFunctionGroup({
       userFilter: {},

@@ -84,6 +84,9 @@ export const getCliAgentsFile = () =>
 
     - Run \`npm test\` before committing. Tests use \`@prostgles/prostgles/testing\` to start the real app against fresh state and project databases without opening the UI.
     - Keep deployment tests in \`tests/\`. Each call to \`createTestDeployment\` starts a disposable PostgreSQL Docker container bound only to \`127.0.0.1\`, creates fresh state and project databases, and removes the container during cleanup.
+    - Deployment stdout and stderr remain available after cleanup in \`.prostgles/test-logs/\`. The exact file is returned as \`deployment.logPath\`.
+    - Test logs may be large. Inspect them with \`tail\` or search them with \`rg\`; do not read an entire log unless its size is known to be small.
+    - If the deployment fixture blocks a valid scenario, inspect \`deployment.logPath\` and report the issue against \`@prostgles/prostgles\`; do not weaken the app or its assertions to work around the fixture.
     - Add test users through the fixture's \`users\` option and connect with \`connectProjectAs(userKey)\`. Sessions are seeded directly, so deployment tests do not need to exercise the login UI.
     - Add deterministic database state with the fixture's \`seed\` callback. Never use development or production database URLs for test setup.
 

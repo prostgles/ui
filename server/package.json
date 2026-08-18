@@ -85,8 +85,8 @@
       "default": "./dist/server/src/schemaConfig.js"
     },
     "./testing": {
-      "types": "./dist/server/src/testing/index.d.ts",
-      "default": "./dist/server/src/testing/index.js"
+      "types": "./dist/server/src/cli/testing/index.d.ts",
+      "default": "./dist/server/src/cli/testing/index.js"
     }
   }
 }

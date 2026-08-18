@@ -90,7 +90,7 @@ const createConfig = (targetPath: string, skipInstall: boolean) => {
   writeFileSync(path.join(targetPath, "AGENTS.md"), cliTemplateFiles.agents);
   writeFileSync(
     path.join(targetPath, testsFolderName, "deployment.test.ts"),
-    cliTemplateFiles.deploymentTest,
+    cliTemplateFiles.deploymentTest({ configId }),
   );
   writeFileSync(
     path.join(targetPath, srcFolderName, "index.ts"),

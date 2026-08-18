@@ -27,13 +27,7 @@ export const stateServerFunctions = {
         unrestrictedDbAccess: true,
         run: async (
           { connectionId },
-          {
-            user,
-            dbo: dbs,
-            db: _dbs,
-            clientReq: { socket },
-            getClientDBHandlers,
-          },
+          { user, dbo: dbs, db: _dbs, clientReq: { socket } },
         ) => {
           try {
             const socketPathAndUrl = await connectionManager.startConnection(
@@ -42,7 +36,7 @@ export const stateServerFunctions = {
               _dbs,
               socket,
             );
-            await insertConfigWorkspaces(connectionId, getClientDBHandlers);
+            await insertConfigWorkspaces(connectionId, dbs, user.id);
             return socketPathAndUrl;
           } catch (error) {
             console.error("Could not start connection " + connectionId, error);

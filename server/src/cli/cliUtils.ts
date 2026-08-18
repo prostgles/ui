@@ -106,8 +106,7 @@ export const cliTemplateFiles = {
       lint: "eslint .",
       "lint:fix": "eslint . --fix",
       start: "prostgles start --config .",
-      test:
-        'npm run build && node --env-file-if-exists=.env --test "build/tests/**/*.test.js"',
+      test: 'npm run build && node --env-file-if-exists=.env --test "build/tests/**/*.test.js"',
     },
     dependencies: { "@prostgles/prostgles": `^${packageJson.version}` },
     devDependencies: {
@@ -146,7 +145,8 @@ export const cliTemplateFiles = {
   DBGeneratedSchema:
     "export type DBGeneratedSchema = Record<string, { columns: Record<string, unknown> }>\n",
   agents: getCliAgentsFile(),
-  deploymentTest: fixIndent(`
+  deploymentTest: ({ configId }: { configId: string }) =>
+    fixIndent(`
       import assert from "node:assert/strict";
       import { resolve } from "node:path";
       import test from "node:test";
@@ -156,7 +156,11 @@ export const cliTemplateFiles = {
       void test("starts the configured app with an isolated database", async (context) => {
         const deployment = await createTestDeployment<DBGeneratedSchema>({
           configPath: resolve(__dirname, "../.."),
-          users: [{ key: "admin", type: "admin" }],
+          configId: ${JSON.stringify(configId)},
+          users: [
+            { key: "admin", type: "admin" },
+            { key: "member", type: "default" },
+          ],
           // Add deterministic rows with:
           // seed: async ({ projectDatabase }) => {
           //   await projectDatabase.query("INSERT INTO ...");
@@ -169,12 +173,17 @@ export const cliTemplateFiles = {
         assert.equal(client.socket.connected, true);
         assert.equal(client.auth.user?.type, "admin");
         assert.ok(client.db);
+
+        const memberClient = await deployment.connectProjectAs("member");
+        assert.equal(memberClient.socket.connected, true);
+        assert.equal(memberClient.auth.user?.type, "default");
       });`),
   eslintConfig,
   gitignore: fixIndent(`
       node_modules/
       build/
       .env
+      .prostgles/test-logs/
       *.log`),
   envExample: ({ configId }: { configId: string }) =>
     fixIndent(`
@@ -189,9 +198,6 @@ export const cliTemplateFiles = {
       PROSTGLES_DATABASE_URL=postgres://user:password@localhost:5432/${configId}
 
       # npm test starts an ephemeral PostgreSQL Docker container bound to 127.0.0.1 only.
-      # This optional prefix makes its disposable database and container names recognizable.
-      PROSTGLES_TEST_DATABASES_PREFIX=${configId.replaceAll("-", "_")}
-
       # Override only when the app needs a different PostgreSQL/PostGIS version.
       # PROSTGLES_TEST_POSTGRES_IMAGE=postgis/postgis:17-3.4`),
 } as const;

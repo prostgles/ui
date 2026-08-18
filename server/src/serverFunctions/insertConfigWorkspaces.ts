@@ -1,21 +1,18 @@
 import type { LayoutConfig } from "@common/DashboardTypes";
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import { randomUUID } from "crypto";
-import { connectionManager } from "../index";
+import { connectionManager, type DBS } from "../index";
 
 export type Users = Required<DBGeneratedSchema["users"]["columns"]>;
 export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
 
-import { type PublishParams } from "prostgles-server";
-import { type SUser } from "../authConfig/sessionUtils";
 import { getSchemaConfig } from "../ConnectionManager/getSchemaConfig";
 
 /** TODO: this must reuse loadGeneratedWorkspaces function  */
 export const insertConfigWorkspaces = async (
   connectionId: string,
-  getClientDBHandlers: NonNullable<
-    PublishParams<DBGeneratedSchema, SUser>
-  >["getClientDBHandlers"],
+  dbs: DBS,
+  userId: string,
 ) => {
   const connection =
     connectionManager.getActiveConnectionSilentFail(connectionId);
@@ -24,10 +21,9 @@ export const insertConfigWorkspaces = async (
     .workspaces;
   if (!workspaces?.length) return;
 
-  const { clientDb } = await getClientDBHandlers(undefined);
-
-  const existingWorkspaces = await clientDb.workspaces.find({
+  const existingWorkspaces = await dbs.workspaces.find({
     connection_id: connectionId,
+    user_id: userId,
     name: { $in: workspaces.map(({ name }) => name) },
   });
   const existingNames = new Set(existingWorkspaces.map(({ name }) => name));
@@ -54,18 +50,18 @@ export const insertConfigWorkspaces = async (
         ...workspace,
         connection_id: connectionId,
         last_updated: lastUpdated,
-        user_id: undefined as unknown as string,
+        user_id: userId,
         layout,
         windows: workspace.windows.map((window) => ({
           ...window,
           id: windowIds.get(window.id),
           last_updated: lastUpdated,
-          user_id: undefined as unknown as string,
+          user_id: userId,
         })),
       };
     });
 
   if (newWorkspaces.length) {
-    await clientDb.workspaces.insertMany(newWorkspaces);
+    await dbs.workspaces.insertMany(newWorkspaces);
   }
 };
