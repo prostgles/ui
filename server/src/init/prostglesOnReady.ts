@@ -22,6 +22,8 @@ import { setupLLM } from "../serverFunctions/askLLM/setupLLM";
 import { initUsers } from "./initUsers";
 import { insertStateDatabase } from "./insertStateDatabase";
 import { getProstglesState } from "./tryStartProstgles";
+import { prostglesServices } from "@src/ServiceManager/ServiceManagerTypes";
+import { resolve } from "path";
 
 let authSetupDataListener: AuthSetupDataListener | undefined;
 
@@ -33,7 +35,8 @@ export const getBackupManager = () => {
   return backupManager;
 };
 
-let serviceManager: ServiceManager | undefined = undefined;
+let serviceManager: ServiceManager<typeof prostglesServices> | undefined =
+  undefined;
 export const getServiceManager = () => {
   if (!serviceManager) {
     throw new Error(
@@ -74,7 +77,11 @@ export const prostglesOnReady = async (
     await connectionManager.destroy();
     await connectionManager.init(db, _db);
     await applyStartupSchemaConfig({ dbs: db, db: _db });
-    serviceManager ??= new ServiceManager(db);
+    serviceManager ??= new ServiceManager({
+      dbs: db,
+      services: prostglesServices,
+      serviceRoot: resolve(__dirname, "../ServiceManager/services"),
+    });
 
     backupManager ??= await BackupManager.create(
       _db,

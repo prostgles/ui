@@ -11,6 +11,7 @@ export const srcSubfolderNames = [
   "tableConfigs",
   "tableOptions",
   "tableHooks",
+  "services",
 ] as const;
 
 const eslintConfig = fixIndent(`

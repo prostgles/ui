@@ -6,7 +6,9 @@ import { initialiseServices } from "./initialiseServices";
 import {
   prostglesServices,
   ServiceInstance,
+  type ProstglesService,
   type RunningServiceInstance,
+  type ServiceRegistry,
 } from "./ServiceManagerTypes";
 import { startService } from "./startService";
 import { stopService } from "./stopService";
@@ -14,10 +16,38 @@ import { isTesting } from "@src/init/utils";
 import { withRetries } from "./withRetries";
 import type { ExtractBy } from "@common/utils";
 
-export class ServiceManager {
+export type StringKeyof<T> = Extract<keyof T, string>;
+
+export type ServiceManagerOptions<Services extends ServiceRegistry> = {
+  services: Services;
+  serviceRoot: string;
+  dbs?: DBS;
+};
+
+export class ServiceManager<
+  Services extends ServiceRegistry = Record<string, ProstglesService>,
+> {
+  readonly services: Services;
+  readonly serviceRoot: string;
   dbs: DBS | undefined;
-  constructor(dbs: DBS | undefined) {
+
+  constructor({ services, serviceRoot, dbs }: ServiceManagerOptions<Services>) {
+    if (services !== (prostglesServices as unknown as Services)) {
+      const clashingServices = Object.keys(services).filter((serviceName) =>
+        Object.keys(prostglesServices).includes(serviceName),
+      );
+      if (clashingServices.length > 0) {
+        throw new Error(
+          `ServiceManager: Clashing service names detected: ${clashingServices.join(
+            ", ",
+          )}. Please rename your services to avoid conflicts with built-in services.`,
+        );
+      }
+    }
+    this.services = services;
+    this.serviceRoot = serviceRoot;
     this.dbs = dbs;
+
     if (dbs) {
       void initialiseServices(this, dbs).catch(console.error);
     }
@@ -25,7 +55,7 @@ export class ServiceManager {
 
   serviceLogUpdateQueue: Map<string, Promise<void>> = new Map();
   onServiceLog = (
-    serviceName: keyof typeof prostglesServices,
+    serviceName: StringKeyof<Services>,
     logItems: ProcessLog[],
   ) => {
     const prevQueue =
@@ -80,7 +110,7 @@ export class ServiceManager {
   enablingServices: Map<string, Promise<RunningServiceInstance>> = new Map();
 
   getActiveService<Status extends ServiceInstance["status"]>(
-    serviceName: keyof typeof prostglesServices,
+    serviceName: StringKeyof<Services>,
     expectedStatus: Status,
   ) {
     const activeInstance = this.activeServices.get(serviceName);
@@ -93,8 +123,8 @@ export class ServiceManager {
   }
 
   getService<
-    ServiceName extends keyof typeof prostglesServices,
-    ExistingServices extends typeof prostglesServices,
+    ServiceName extends StringKeyof<Services>,
+    ExistingServices extends Services,
   >(
     serviceName: ServiceName,
   ): ServiceInstance<ExistingServices[ServiceName]> | undefined {
@@ -105,8 +135,8 @@ export class ServiceManager {
   }
 
   async getServiceWithRetries<
-    ServiceName extends keyof typeof prostglesServices,
-    ExistingServices extends typeof prostglesServices,
+    ServiceName extends StringKeyof<Services>,
+    ExistingServices extends Services,
   >(
     serviceName: ServiceName,
     onLogs?: (logs: ProcessLog[]) => void,

@@ -1,6 +1,7 @@
 import { strict } from "assert";
 import { describe, test } from "node:test";
 import { ServiceManager } from "./ServiceManager";
+import { prostglesServices } from "./ServiceManagerTypes";
 
 export const IS_GITHUB_WORKER = process.env.CI === "true";
 
@@ -10,7 +11,10 @@ void describe("Service manager tests", async () => {
       return;
     }
     let logText = "";
-    const serviceManager = new ServiceManager(undefined);
+    const serviceManager = new ServiceManager({
+      services: prostglesServices,
+      serviceRoot: "./services",
+    });
     const res = await serviceManager.enableService("speechToText", (logs) => {
       const lastLog = logs.at(-1)?.text;
       console.warn(lastLog);

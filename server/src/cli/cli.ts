@@ -108,6 +108,52 @@ const createConfig = (targetPath: string, skipInstall: boolean) => {
         tableConfig: {},
       });`),
   );
+  mkdirSync(
+    path.join(targetPath, srcFolderName, "services", "myService", "src"),
+    {
+      recursive: true,
+    },
+  );
+  writeFileSync(
+    path.join(targetPath, srcFolderName, "services"),
+    fixIndent(`
+      import { ServiceManager, type ServiceRegistry } from "@prostgles/prostgles/services";
+      import path from "node:path";
+
+      const services = {
+        myService: {
+          buildContext: "myService",
+          icon: "Extension",
+          label: "My service",
+          description: "Example local Docker service.",
+          port: 8080,
+          healthCheck: { endpoint: "/health" },
+          endpoints: {},
+        },
+      } as const satisfies ServiceRegistry;
+
+      export const serviceManager = new ServiceManager({
+        services,
+        serviceRoot: process.cwd(),
+      ),
+      });`),
+  );
+  writeFileSync(
+    path.join(
+      targetPath,
+      srcFolderName,
+      "services",
+      "myService",
+      "src",
+      "Dockerfile",
+    ),
+    fixIndent(`
+     FROM python:3.13-alpine
+
+      EXPOSE 8080
+
+      CMD ["python", "-m", "http.server", "8080", "--bind", "0.0.0.0"]`),
+  );
   writeFileSync(
     path.join(targetPath, ".env.example"),
     cliTemplateFiles.envExample({ configId }),

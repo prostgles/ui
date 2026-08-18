@@ -1,28 +1,26 @@
-import { spawn } from "child_process";
-import { tout } from "@src/utils/tout";
-import type { ServiceManager } from "./ServiceManager";
-import {
-  prostglesServices,
-  type OnServiceLogs,
-  type ProstglesService,
-  type RunningServiceInstance,
-  type ServiceInstance,
-} from "./ServiceManagerTypes";
-import { camelCaseToSkewerCase } from "./buildService";
-import { getServiceEndpoints } from "./getServiceEndpoints";
-import { getSelectedConfigEnvs } from "./getSelectedConfigEnvs";
 import {
   executeDockerCommand,
   type ExecutionResult,
   type ProcessLog,
 } from "@src/McpHub/DockerSandbox/executeDockerCommand";
 import { getFreePort } from "@src/utils/isPortFree";
+import { tout } from "@src/utils/tout";
+import { spawn } from "child_process";
+import type { ServiceManager } from "./ServiceManager";
+import {
+  type OnServiceLogs,
+  type RunningServiceInstance,
+  type ServiceInstance,
+} from "./ServiceManagerTypes";
+import { camelCaseToSkewerCase } from "./buildService";
+import { getSelectedConfigEnvs } from "./getSelectedConfigEnvs";
+import { getServiceEndpoints } from "./getServiceEndpoints";
 import { resolveBinary } from "./resolveBinary";
 
 const STOPPED_REASON = "stopped";
 export async function startService(
   this: ServiceManager,
-  serviceName: keyof typeof prostglesServices,
+  serviceName: string,
   onLogs: OnServiceLogs,
 ): Promise<Extract<ServiceInstance, { status: "running" }>> {
   const onLogsCombined: OnServiceLogs = (logs) => {
@@ -32,7 +30,10 @@ export async function startService(
   console.log("starting Service " + serviceName);
   const { labelArgs } = this.getActiveService(serviceName, "building-done");
 
-  const serviceConfig: ProstglesService = prostglesServices[serviceName];
+  const serviceConfig = this.services[serviceName];
+  if (!serviceConfig) {
+    throw new Error(`Service ${serviceName} not found in service registry`);
+  }
   const abortController = new AbortController();
   let logs: ProcessLog[] = [];
   const getLogs = () => {
@@ -70,10 +71,7 @@ export async function startService(
     volumeArgs.push("-v", `${hostPath}:${containerPath}`);
   }
 
-  const { env, gpus = "none" } = await getSelectedConfigEnvs(
-    this.dbs,
-    serviceName,
-  );
+  const { env, gpus = "none" } = await getSelectedConfigEnvs(this, serviceName);
 
   const baseHost = `127.0.0.1:${hostPort}`;
 
@@ -189,8 +187,6 @@ export async function startService(
   return runningService;
 }
 
-export const getContainerName = (
-  serviceName: keyof typeof prostglesServices,
-) => {
+export const getContainerName = (serviceName: string) => {
   return `prostgles-service-${camelCaseToSkewerCase(serviceName)}`;
 };

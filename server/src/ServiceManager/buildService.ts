@@ -1,24 +1,20 @@
-import { join } from "path";
-import { getDockerBuildHash } from "./getDockerBuildHash";
-import type { ServiceManager } from "./ServiceManager";
-import {
-  OnServiceLogs,
-  prostglesServices,
-  ServiceInstance,
-} from "./ServiceManagerTypes";
-import { isEqual, pickKeys } from "prostgles-types";
+import { filterArr } from "@common/llmUtils";
 import { getEntries } from "@common/utils";
-import { dockerInspect } from "./dockerInspect";
-import { getSelectedConfigEnvs } from "./getSelectedConfigEnvs";
 import {
   executeDockerCommand,
   type ExecutionResult,
 } from "@src/McpHub/DockerSandbox/executeDockerCommand";
-import { filterArr } from "@common/llmUtils";
+import { join, resolve } from "path";
+import { isEqual, pickKeys } from "prostgles-types";
+import { dockerInspect } from "./dockerInspect";
+import { getDockerBuildHash } from "./getDockerBuildHash";
+import { getSelectedConfigEnvs } from "./getSelectedConfigEnvs";
+import type { ServiceManager } from "./ServiceManager";
+import { OnServiceLogs, ServiceInstance } from "./ServiceManagerTypes";
 
 export async function buildService(
   this: ServiceManager,
-  serviceName: keyof typeof prostglesServices,
+  serviceName: string,
   onLogs: OnServiceLogs,
 ): Promise<ExecutionResult["state"]> {
   const onLogsCombined: OnServiceLogs = (logs) => {
@@ -41,17 +37,19 @@ export async function buildService(
   const stop = () => {
     abortController.abort();
   };
-  const serviceCwd = join(
-    __dirname,
-    "../../../../",
-    "/src/ServiceManager/services",
-    serviceName,
-    "src",
+
+  const service = this.services[serviceName];
+  if (!service) {
+    throw new Error(`Service ${serviceName} not found in service registry`);
+  }
+  const serviceCwd = resolve(
+    this.serviceRoot,
+    service.buildContext ?? join(serviceName, "src"),
   );
 
   const imageName = camelCaseToSkewerCase(serviceName);
 
-  const { buildArgs } = await getSelectedConfigEnvs(this.dbs, serviceName);
+  const { buildArgs } = await getSelectedConfigEnvs(this, serviceName);
   /** Only rebuild if hash differs */
   const buildHash = await getDockerBuildHash(serviceCwd, buildArgs);
   const buildLabels = {

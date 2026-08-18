@@ -1,10 +1,9 @@
 import type { ProcessLog } from "@src/McpHub/DockerSandbox/executeDockerCommand";
-import type { prostglesServices } from "./ServiceManagerTypes";
 import type { ServiceManager } from "./ServiceManager";
 
 export async function enableService(
   this: ServiceManager,
-  serviceName: keyof typeof prostglesServices,
+  serviceName: string,
   onLogs: (logs: ProcessLog[]) => void,
 ) {
   await this.enablingServices.get(serviceName);
