@@ -140,8 +140,7 @@ export const getHotReloadConfigs = async ({
       tableConfig,
       tableHooks,
       auth,
-      schemaFilter: schemaConfig?.schemaFilter ??
-        db_schema_filter ?? { public: 1 },
+      schemaFilter: db_schema_filter ?? { public: 1 },
       tsGeneratedTypesDir:
         IS_PROD ? undefined
         : web_app_templated && web_app_directory ?

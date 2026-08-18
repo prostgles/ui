@@ -1,8 +1,7 @@
-import { getEntries } from "@common/utils";
 import { FlexCol, FlexRowWrap } from "@components/Flex";
 import { InfoRow } from "@components/InfoRow";
 import { SearchList } from "@components/SearchList/SearchList";
-import { mdiFunction, mdiScriptTextPlay } from "@mdi/js";
+import { mdiScriptTextPlay } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import React, { useRef } from "react";
 import { getIsPinnedMenu } from "../Dashboard/Dashboard";
@@ -16,6 +15,7 @@ import { DashboardMenuHeader } from "./DashboardMenuHeader";
 import { DashboardMenuResizer } from "./DashboardMenuResizer";
 import { NewTableMenu } from "./NewTableMenu";
 import { SavedAgenticWorkflowsAndContainers } from "./SavedAgenticWorkflowsAndContainers";
+import { ServerFunctionList } from "./ServerFunctionList";
 import { TableList } from "./TableList";
 
 type P = DashboardMenuProps & {
@@ -25,8 +25,7 @@ type P = DashboardMenuProps & {
 
 export const DashboardMenuContent = (props: P) => {
   const { workspace, queries, onClose, onClickSearchAll } = props;
-  const { tables, methods, theme, user, sql } = usePrgl();
-  const { addViewToWorkspace } = useAddViewToWorkspace();
+  const { tables, theme, user, sql } = usePrgl();
 
   const pinnedMenu = getIsPinnedMenu(workspace);
   const isPublishedReadonlyWorkspace =
@@ -38,13 +37,9 @@ export const DashboardMenuContent = (props: P) => {
       (window.innerWidth - centeredLayout.maxWidth) / 2 + "px"
     : "50vw";
 
-  const detailedMethods = getEntries(methods).map(([name, info]) => ({
-    ...info,
-    name: name as string,
-  }));
-
   const { setWorkspace } = useSetActiveWorkspace(workspace.id);
 
+  const { addViewToWorkspace } = useAddViewToWorkspace();
   const ref = useRef<HTMLDivElement>(null);
   const bgColorClass =
     theme === "light" || !pinnedMenu ? "bg-color-0" : "bg-color-1";
@@ -144,7 +139,7 @@ export const DashboardMenuContent = (props: P) => {
                 </span>
               ),
               onPress: () => {
-                t.$update({ closed: false, workspace_id: workspace.id });
+                void t.$update({ closed: false, workspace_id: workspace.id });
                 onClose?.();
               },
             }))}
@@ -157,32 +152,17 @@ export const DashboardMenuContent = (props: P) => {
         onClose={onClose}
       />
 
-      {detailedMethods.length > 0 && (
-        <SearchList
-          limit={100}
-          noSearchLimit={0}
-          data-command="dashboard.menu.serverSideFunctionsList"
-          className={"search-list-functions b-t f-1 min-h-0 max-h-fit "}
-          style={ensureFadeDoesNotShowForOneItem}
-          placeholder={"Search " + detailedMethods.length + " functions"}
-          items={detailedMethods.map((t) => ({
-            iconLeft: {
-              type: "Icon",
-              path: mdiFunction,
-            },
-            key: t.name,
-            label: t.name,
-            onPress: () => {
-              void addViewToWorkspace({
-                workspace_id: workspace.id,
-                type: "method",
-                method_name: t.name,
-              });
-              onClose?.();
-            },
-          }))}
-        />
-      )}
+      <ServerFunctionList
+        onPressFunction={(functionName) => {
+          void addViewToWorkspace({
+            workspace_id: workspace.id,
+            type: "method",
+            method_name: functionName,
+          });
+          onClose?.();
+        }}
+      />
+
       <SavedAgenticWorkflowsAndContainers />
       <FlexRowWrap className="f-0 mt-1 mx-p5 jc-between">
         {!tables.length && !sql && (

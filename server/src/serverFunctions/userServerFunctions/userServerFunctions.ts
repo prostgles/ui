@@ -1,7 +1,7 @@
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type { AllowedChatTool } from "@common/mcpUtils";
-import { authenticator } from "@otplib/preset-default";
-import { getPasswordHash } from "@src/authConfig/authUtils";
+import { generateSecret, generateURI } from "otplib";
+import { getPasswordHash, isTotpTokenValid } from "@src/authConfig/authUtils";
 import { createSessionSecret, type SUser } from "@src/authConfig/sessionUtils";
 import { getIPsFromClientInfo } from "@src/authConfig/startRateLimitedLoginAttempt";
 import { USER_MESSAGE_CONTENT_SCHEMA_OPTIONS } from "@src/tableConfig/tableConfigLlm/tableConfigLlm";
@@ -160,8 +160,12 @@ export const userServerFunctions = {
         run: async (_, { dbo: dbs, user }) => {
           const userName = user.username;
           const service = "Prostgles UI";
-          const secret = authenticator.generateSecret();
-          const otpauth = authenticator.keyuri(userName, service, secret);
+          const secret = generateSecret();
+          const otpauth = generateURI({
+            label: userName,
+            issuer: service,
+            secret,
+          });
 
           const recoveryCode = crypto.randomBytes(26).toString("hex");
           const hashedRecoveryCode = getPasswordHash(user, recoveryCode);
@@ -190,8 +194,7 @@ export const userServerFunctions = {
           const secret = latestUser?.["2fa"]?.secret;
           if (!secret) throw "Secret not found";
 
-          //totp.verify({ secret, token }) -> Does not work.
-          const isValid = authenticator.check(token, secret);
+          const isValid = await isTotpTokenValid(secret, token);
 
           if (!isValid) throw "Invalid code";
           await dbs.users.update(

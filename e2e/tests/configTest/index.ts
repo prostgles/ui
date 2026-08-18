@@ -43,7 +43,9 @@ const prostgles = defineConfig();
 
 export default prostgles({
   id: CONFIG_TEST.applicationDatabaseName,
-  schemaFilter: { [CONFIG_TEST.schemaName]: 1 },
+  connection: {
+    db_schema_filter: { [CONFIG_TEST.schemaName]: 1 },
+  },
   access_control: {
     type: "Custom",
     customTables: [

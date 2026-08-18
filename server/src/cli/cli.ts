@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { fixIndent } from "@common/utils";
-import { spawn, type ChildProcess } from "child_process";
+import { spawn, spawnSync, type ChildProcess } from "child_process";
 import { parse } from "dotenv";
 import {
   existsSync,
@@ -17,11 +17,13 @@ import {
   cliTemplateFiles,
   generatedFolderName,
   srcFolderName,
+  srcSubfolderNames,
+  testsFolderName,
 } from "./cliUtils";
 import { ensureCliDatabases } from "./ensureCliDatabases";
 
 const usage = `Usage:
-  prostgles create <directory>
+  prostgles create <directory> [--skip-install]
   prostgles dev [--config <directory>]
   prostgles start [--config <directory>]`;
 
@@ -33,17 +35,34 @@ const getConfigPath = (args: string[]) => {
   return path.resolve(configPath);
 };
 
-const createConfig = (targetPath: string) => {
+const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
+
+const installConfigDependencies = (targetPath: string) => {
+  const result = spawnSync(npmCommand, ["install"], {
+    cwd: targetPath,
+    stdio: "inherit",
+  });
+  if (result.error) throw result.error;
+  if (result.status !== 0) {
+    throw new Error(`npm install failed with status ${result.status ?? 1}`);
+  }
+};
+
+const createConfig = (targetPath: string, skipInstall: boolean) => {
   if (existsSync(targetPath) && readdirSync(targetPath).length) {
     throw new Error(`${targetPath} already exists and is not empty`);
   }
   mkdirSync(path.join(targetPath, "src"), { recursive: true });
   mkdirSync(path.join(targetPath, "generated"), { recursive: true });
+  mkdirSync(path.join(targetPath, testsFolderName), { recursive: true });
+  srcSubfolderNames.forEach((folderName) => {
+    mkdirSync(path.join(targetPath, srcFolderName, folderName));
+  });
   const packageName = path
     .basename(targetPath)
     .replace(/[^a-z0-9-]/gi, "-")
     .toLowerCase();
-  const configId = packageName || "my-prostgles-config";
+  const configId = packageName || "my-prostgles-app";
 
   writeFileSync(
     path.join(targetPath, "package.json"),
@@ -61,10 +80,18 @@ const createConfig = (targetPath: string) => {
     JSON.stringify(cliTemplateFiles.tsconfig, null, 2) + "\n",
   );
   writeFileSync(
+    path.join(targetPath, "eslint.config.mjs"),
+    cliTemplateFiles.eslintConfig,
+  );
+  writeFileSync(
     path.join(targetPath, generatedFolderName, "DBGeneratedSchema.ts"),
     cliTemplateFiles.DBGeneratedSchema,
   );
   writeFileSync(path.join(targetPath, "AGENTS.md"), cliTemplateFiles.agents);
+  writeFileSync(
+    path.join(targetPath, testsFolderName, "deployment.test.ts"),
+    cliTemplateFiles.deploymentTest,
+  );
   writeFileSync(
     path.join(targetPath, srcFolderName, "index.ts"),
     fixIndent(`
@@ -75,20 +102,31 @@ const createConfig = (targetPath: string) => {
 
       export default prostgles({
         id: ${JSON.stringify(configId)},
+        connection: {
+          table_options: {},
+        },
         tableConfig: {},
       });`),
   );
   writeFileSync(
     path.join(targetPath, ".env.example"),
-    cliTemplateFiles.envExample,
+    cliTemplateFiles.envExample({ configId }),
   );
   writeFileSync(
     path.join(targetPath, ".gitignore"),
     cliTemplateFiles.gitignore,
   );
 
+  if (skipInstall) {
+    console.log(
+      `Created config project in ${targetPath}. Run npm install, copy .env.example to .env, configure both database URLs, then run npm run dev.`,
+    );
+    return;
+  }
+
+  installConfigDependencies(targetPath);
   console.log(
-    `Created config project in ${targetPath}. Copy .env.example to .env, configure both database URLs, run npm install, then npm run dev.`,
+    `Created config project and installed dependencies in ${targetPath}. Copy .env.example to .env, configure both database URLs, then run npm run dev.`,
   );
 };
 
@@ -133,8 +171,8 @@ const runServer = (configPath: string, mode: "development" | "production") =>
     cwd: serverDirectory,
     stdio: "inherit",
     env: {
-      ...process.env,
       ...getConfigEnvironment(configPath),
+      ...process.env,
       NODE_ENV: mode,
       PROSTGLES_UI_CONFIG: configPath,
     },
@@ -209,7 +247,7 @@ const main = async () => {
   if (command === "create") {
     const target = args[0];
     if (!target || target.startsWith("-")) throw new Error(usage);
-    createConfig(path.resolve(target));
+    createConfig(path.resolve(target), args.includes("--skip-install"));
     return;
   }
   if (command === "dev" || command === "start") {

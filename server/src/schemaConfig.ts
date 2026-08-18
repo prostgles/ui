@@ -13,7 +13,7 @@ export type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 export type * from "@common/DashboardTypes";
 export type { DBSSchema } from "@common/publishUtils";
 export type { DBSSchemaForInsert } from "@common/publishUtils";
-export type { TableConfig } from "prostgles-server";
+export type { DBOFullyTyped, TableConfig, TableHooks } from "prostgles-server";
 
 export type ProstglesOnMountCleanup = () => void | Promise<void>;
 
@@ -30,9 +30,7 @@ export type TableDisplayConfig = Record<string, TableOptions>;
 export type SchemaConfigConnection = Partial<
   Pick<
     DBSSchema["connections"],
-    | "db_schema_filter"
-    | "display_options"
-    | "table_options"
+    "db_schema_filter" | "display_options" | "table_options"
   >
 >;
 
@@ -62,7 +60,6 @@ export type SchemaConfigProstglesOptions<
   ProstglesInitOptions<S, SUser>,
   | "functions"
   | "joins"
-  | "schemaFilter"
   | "tableHooks"
   | "tableConfig"
   | "tableConfigMigrations"

@@ -152,7 +152,7 @@ test.describe("Published config CLI", () => {
   });
 
   test("creates a config project whose build and dev scripts run", async () => {
-    test.setTimeout(120_000);
+    test.setTimeout(240_000);
     expect(existsSync(cliPath)).toBe(true);
 
     const temporaryDirectory = mkdtempSync(
@@ -165,19 +165,31 @@ test.describe("Published config CLI", () => {
     try {
       run(
         process.execPath,
-        [cliPath, "create", configDirectory],
+        [cliPath, "create", configDirectory, "--skip-install"],
         serverDirectory,
       );
 
       expect(existsSync(join(configDirectory, "package.json"))).toBe(true);
       expect(existsSync(join(configDirectory, "tsconfig.json"))).toBe(true);
+      expect(existsSync(join(configDirectory, "eslint.config.mjs"))).toBe(true);
       expect(existsSync(join(configDirectory, "AGENTS.md"))).toBe(true);
       expect(existsSync(join(configDirectory, ".env.example"))).toBe(true);
       expect(existsSync(join(configDirectory, ".gitignore"))).toBe(true);
       expect(existsSync(join(configDirectory, "src", "index.ts"))).toBe(true);
       expect(
+        existsSync(join(configDirectory, "tests", "deployment.test.ts")),
+      ).toBe(true);
+      expect(
         existsSync(join(configDirectory, "generated", "DBGeneratedSchema.ts")),
       ).toBe(true);
+      for (const folder of [
+        "functions",
+        "tableConfigs",
+        "tableOptions",
+        "tableHooks",
+      ]) {
+        expect(existsSync(join(configDirectory, "src", folder))).toBe(true);
+      }
 
       expect(
         readFileSync(join(configDirectory, "package.json"), "utf8"),
@@ -185,6 +197,15 @@ test.describe("Published config CLI", () => {
       expect(
         readFileSync(join(configDirectory, "package.json"), "utf8"),
       ).toContain(`"start": "prostgles start --config ."`);
+      expect(
+        readFileSync(join(configDirectory, "package.json"), "utf8"),
+      ).toContain(`"lint": "eslint ."`);
+      expect(
+        readFileSync(join(configDirectory, "package.json"), "utf8"),
+      ).toContain(`"test": "npm run build`);
+      expect(
+        readFileSync(join(configDirectory, "package.json"), "utf8"),
+      ).toContain(`build/tests/**/*.test.js`);
       expect(
         readFileSync(join(configDirectory, "src", "index.ts"), "utf8"),
       ).toContain(`import { defineConfig } from "@prostgles/prostgles";`);
@@ -194,13 +215,31 @@ test.describe("Published config CLI", () => {
       expect(
         readFileSync(join(configDirectory, "src", "index.ts"), "utf8"),
       ).not.toContain("db_name");
+      expect(
+        readFileSync(join(configDirectory, "src", "index.ts"), "utf8"),
+      ).toContain("table_options: {}");
       const envExample = readFileSync(
         join(configDirectory, ".env.example"),
         "utf8",
       );
+      expect(envExample).toContain("PRGL_USERNAME=admin");
+      const adminPassword = envExample
+        .split("\n")
+        .find((line) => line.startsWith("PRGL_PASSWORD="))
+        ?.slice("PRGL_PASSWORD=".length);
+      expect(adminPassword?.length).toBe(32);
       expect(envExample).toContain("PROSTGLES_STATE_DATABASE_URL=");
       expect(envExample).toContain("/prostgles_state_database");
       expect(envExample).toContain("PROSTGLES_DATABASE_URL=");
+      expect(envExample).toContain("PROSTGLES_TEST_DATABASES_PREFIX=");
+      expect(envExample).toContain("PROSTGLES_TEST_POSTGRES_IMAGE=");
+      expect(envExample).not.toContain("PROSTGLES_TEST_DATABASE_URL=");
+      const deploymentTest = readFileSync(
+        join(configDirectory, "tests", "deployment.test.ts"),
+        "utf8",
+      );
+      expect(deploymentTest).toContain("createTestDeployment");
+      expect(deploymentTest).toContain('connectProjectAs("admin")');
       expect(
         readFileSync(join(configDirectory, ".gitignore"), "utf8"),
       ).toContain("node_modules/");
@@ -215,12 +254,32 @@ test.describe("Published config CLI", () => {
       ).toContain("createFunctionGroupDefiner<DBGeneratedSchema>()");
       expect(
         readFileSync(join(configDirectory, "AGENTS.md"), "utf8"),
-      ).toContain("Do not add a raw `publish` callback");
+      ).toContain("`tableHooks` as a separate top-level config property");
+      expect(
+        readFileSync(join(configDirectory, "AGENTS.md"), "utf8"),
+      ).toContain("Populate `connection.table_options`");
+      expect(
+        readFileSync(join(configDirectory, "AGENTS.md"), "utf8"),
+      ).toContain("`deployProject.function.ts`");
+      expect(
+        readFileSync(join(configDirectory, "AGENTS.md"), "utf8"),
+      ).toContain(
+        "The Prostgles `dbo` object available in `onMount`, `tableHooks`, and server functions",
+      );
+      expect(
+        readFileSync(join(configDirectory, "AGENTS.md"), "utf8"),
+      ).toContain("`DBOFullyTyped<DBGeneratedSchema>`");
+      expect(
+        readFileSync(join(configDirectory, "AGENTS.md"), "utf8"),
+      ).toContain("Prefer subscriptions over polling the database");
+      expect(
+        readFileSync(join(configDirectory, "AGENTS.md"), "utf8"),
+      ).toContain("Run `npm test` before committing");
 
       writeFileSync(
-        join(configDirectory, "src", "functions.ts"),
+        join(configDirectory, "src", "functions", "cli.function.ts"),
         `import { createFunctionsDefiner, defineFunction } from "@prostgles/prostgles";
-import type { DBGeneratedSchema } from "../generated/DBGeneratedSchema";
+import type { DBGeneratedSchema } from "../../generated/DBGeneratedSchema";
 
 const defineFunctions = createFunctionsDefiner<DBGeneratedSchema>();
 
@@ -240,7 +299,7 @@ export const inferredFunctions = defineFunctions({
         join(configDirectory, "src", "index.ts"),
         `import { createFunctionGroupDefiner, defineConfig } from "@prostgles/prostgles";
 import type { DBGeneratedSchema } from "../generated/DBGeneratedSchema";
-import { inferredFunctions } from "./functions";
+import { inferredFunctions } from "./functions/cli.function";
 
 const defineFunctionGroup = createFunctionGroupDefiner<DBGeneratedSchema>();
 const prostgles = defineConfig<DBGeneratedSchema>();
@@ -269,7 +328,24 @@ export default prostgles({
         configDirectory,
       );
 
-      run(npmCommand, ["run", "build"], configDirectory);
+      const invalidHookPath = join(
+        configDirectory,
+        "src",
+        "tableHooks",
+        "users.ts",
+      );
+      writeFileSync(invalidHookPath, "export const usersTableHooks = {};\n");
+      const lintResult = spawnSync(npmCommand, ["run", "lint"], {
+        cwd: configDirectory,
+        encoding: "utf8",
+      });
+      expect(lintResult.status).not.toBe(0);
+      expect(`${lintResult.stdout}${lintResult.stderr}`).toContain(
+        "must end in '.tableHooks.ts'",
+      );
+      rmSync(invalidHookPath);
+
+      run(npmCommand, ["test"], configDirectory);
 
       expect(
         existsSync(join(configDirectory, "build", "src", "index.js")),
@@ -279,8 +355,7 @@ export default prostgles({
         "dev",
         configDirectory,
         getCliEnvironment({
-          PROSTGLES_STATE_DATABASE_URL:
-            "postgres://usr:psw@127.0.0.1:5432/db",
+          PROSTGLES_STATE_DATABASE_URL: "postgres://usr:psw@127.0.0.1:5432/db",
           PROSTGLES_DATABASE_URL:
             "postgres://usr:psw@127.0.0.1:5432/cli_e2e_config_db",
           PROSTGLES_UI_PORT: String(cliTestPort),

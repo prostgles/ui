@@ -1,8 +1,99 @@
 import { fixIndent } from "@common/utils";
+import { randomBytes } from "crypto";
 import packageJson from "../../package.json";
+import { getCliAgentsFile } from "./getCliAgentsFile";
 
 export const srcFolderName = "src";
 export const generatedFolderName = "generated";
+export const testsFolderName = "tests";
+export const srcSubfolderNames = [
+  "functions",
+  "tableConfigs",
+  "tableOptions",
+  "tableHooks",
+] as const;
+
+const eslintConfig = fixIndent(`
+  import eslint from "@eslint/js";
+  import pluginSecurity from "eslint-plugin-security";
+  import path from "node:path";
+  import tseslint from "typescript-eslint";
+  import { defineConfig } from "eslint/config";
+
+  const semanticFilenameRule = {
+    meta: {
+      type: "problem",
+      schema: [{ type: "string" }],
+      messages: {
+        invalidSuffix: "Files in this folder must end in '{{suffix}}'.",
+      },
+    },
+    create(context) {
+      const suffix = context.options[0];
+      return {
+        Program(node) {
+          if (!path.basename(context.filename).endsWith(suffix)) {
+            context.report({
+              node,
+              messageId: "invalidSuffix",
+              data: { suffix },
+            });
+          }
+        },
+      };
+    },
+  };
+
+  const semanticFileConfig = (folder, suffix) => ({
+    files: [\`src/\${folder}/**/*.ts\`],
+    rules: {
+      "prostgles-config/semantic-filename": ["error", suffix],
+    },
+  });
+
+  export default defineConfig(
+    {
+      ignores: ["build", "generated", "node_modules", "eslint.config.mjs"],
+    },
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    pluginSecurity.configs.recommended,
+    eslint.configs.recommended,
+    tseslint.configs.recommendedTypeChecked,
+    {
+      files: ["src/**/*.ts", "tests/**/*.ts"],
+      languageOptions: {
+        parserOptions: {
+          projectService: true,
+          tsconfigRootDir: import.meta.dirname,
+        },
+      },
+      plugins: {
+        "prostgles-config": {
+          rules: { "semantic-filename": semanticFilenameRule },
+        },
+      },
+      rules: {
+        "no-cond-assign": "error",
+        "no-unused-vars": "off",
+        "security/detect-object-injection": "off",
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/no-floating-promises": "error",
+        "@typescript-eslint/no-unnecessary-condition": "error",
+        "@typescript-eslint/no-unused-vars": [
+          "error",
+          {
+            argsIgnorePattern: "^_",
+            varsIgnorePattern: "^_",
+            caughtErrorsIgnorePattern: "^_",
+          },
+        ],
+      },
+    },
+    semanticFileConfig("functions", ".function.ts"),
+    semanticFileConfig("tableConfigs", ".tableConfig.ts"),
+    semanticFileConfig("tableOptions", ".tableOptions.ts"),
+    semanticFileConfig("tableHooks", ".tableHooks.ts"),
+  );`);
 
 export const cliTemplateFiles = {
   package: {
@@ -10,14 +101,23 @@ export const cliTemplateFiles = {
     version: "0.0.0",
     main: "build/src/index.js",
     scripts: {
-      build: "tsc --project tsconfig.json",
+      build: "npm run lint && tsc --project tsconfig.json",
       dev: "prostgles dev --config .",
+      lint: "eslint .",
+      "lint:fix": "eslint . --fix",
       start: "prostgles start --config .",
+      test:
+        'npm run build && node --env-file-if-exists=.env --test "build/tests/**/*.test.js"',
     },
     dependencies: { "@prostgles/prostgles": `^${packageJson.version}` },
     devDependencies: {
+      "@eslint/js": packageJson.devDependencies["@eslint/js"],
       "@types/node": "^22.20.1",
+      eslint: packageJson.devDependencies.eslint,
+      "eslint-plugin-security":
+        packageJson.devDependencies["eslint-plugin-security"],
       typescript: packageJson.dependencies["typescript"],
+      "typescript-eslint": packageJson.devDependencies["typescript-eslint"],
     },
     exports: {
       "./generated": {
@@ -34,62 +134,64 @@ export const cliTemplateFiles = {
       rootDir: ".",
       outDir: "build",
       esModuleInterop: true,
+      forceConsistentCasingInFileNames: true,
+      noImplicitAny: true,
+      noUncheckedIndexedAccess: true,
       skipLibCheck: true,
       strict: true,
+      strictFunctionTypes: true,
     },
-    include: [srcFolderName, generatedFolderName],
+    include: [srcFolderName, generatedFolderName, testsFolderName],
   },
   DBGeneratedSchema:
     "export type DBGeneratedSchema = Record<string, { columns: Record<string, unknown> }>\n",
-  agents: fixIndent(`
-      # Prostgles configuration
+  agents: getCliAgentsFile(),
+  deploymentTest: fixIndent(`
+      import assert from "node:assert/strict";
+      import { resolve } from "node:path";
+      import test from "node:test";
+      import { createTestDeployment } from "@prostgles/prostgles/testing";
+      import type { DBGeneratedSchema } from "../generated/DBGeneratedSchema";
 
-      Build the application around these core Prostgles features:
+      void test("starts the configured app with an isolated database", async (context) => {
+        const deployment = await createTestDeployment<DBGeneratedSchema>({
+          configPath: resolve(__dirname, "../.."),
+          users: [{ key: "admin", type: "admin" }],
+          // Add deterministic rows with:
+          // seed: async ({ projectDatabase }) => {
+          //   await projectDatabase.query("INSERT INTO ...");
+          // },
+        });
+        context.after(async () => await deployment.dispose());
 
-      ## Config structure
+        const client = await deployment.connectProjectAs("admin");
 
-      - Import \`DBGeneratedSchema\` from \`generated/DBGeneratedSchema\`, create the typed config helper with \`const prostgles = defineConfig<DBGeneratedSchema>()\`, and default-export \`prostgles({ ... })\`. Keep the helper name \`prostgles\` so function return types can be discovered during schema generation.
-      - Run \`npm run dev\` after schema or function changes. It rebuilds the config and refreshes \`generated/DBGeneratedSchema.ts\`, including \`GeneratedFunctionSchema\` for clients.
-      - Configure database permissions with \`access_control\` using the same \`dbPermissions\` shape as Prostgles access-control rules. Do not add a raw \`publish\` callback.
-      - Keep database credentials and names out of this config. Set the state and target connection URLs in \`.env\`.
-
-      ## Table configuration
-
-      - Define tables and columns in \`tableConfig\`. Prostgles applies schema changes automatically. For changes that require existing data to be transformed, increment \`tableConfigMigrations.version\` and use \`onMigrate\`.
-      - Use TypeScript table \`hooks\` such as \`beforeEach\`, \`afterEach\`, and \`afterAll\` for application behavior instead of PostgreSQL triggers.
-      - Give every JSONB column a \`jsonbSchema\` or \`jsonbSchemaType\` so its contents are validated and typed.
-      - Follow PostgreSQL schema best practices: use primary and foreign keys, appropriate nullability, unique constraints, and indexes. Model fixed sets of values as lookup tables with \`isLookupTable\` and references instead of \`CHECK (value IN (...))\` constraints.
-
-      ## Workspaces
-
-      - Define typed \`workspaces\` as useful default dashboards that bring related data together. Include tables and, where useful, aggregate SQL results, bar charts, time charts, maps, and summary statistics.
-      - Keep window IDs stable and ensure every layout item references the matching window ID.
-
-      ## File storage
-
-      - Enable managed file storage with \`databaseConfig.file_table_config\`. For local storage, use \`{ fileTable: "files", storageType: { type: "local" } }\`. Prostgles creates and manages the file table and serves its files.
-      - For S3 storage, use \`storageType: { type: "S3", credential_id }\`; configure the credential in Prostgles and never put access keys in this repository.
-      - Reference \`files.id\` from application tables with foreign keys rather than storing file URLs. Referencing tables must have a primary key. Use \`referencedTables\` when file type or size restrictions are required.
-      - Use \`delayedDelete\` when files should remain recoverable for a retention period. Enable \`extractText\` and provide an \`annotationsTable\` only when document extraction or annotations are needed.
-      - Local file data lives outside PostgreSQL. Use persistent storage and include it in deployment backups.
-
-      ## Server-side functions
-
-      - Put privileged operations, cross-table workflows, and server-only business logic in \`functions\`.
-      - Organize \`functions\` into groups shaped as \`{ userFilter, functions }\`. The group filter controls which authenticated users receive those functions.
-      - Create a schema-aware group helper with \`createFunctionGroupDefiner<DBGeneratedSchema>()\`. For function maps kept in separate modules, use \`createFunctionsDefiner<DBGeneratedSchema>()\` so names, database context, inputs, and return types remain inferred across imports.
-      - Define individual functions with \`defineFunction({ input, description, run })\`. Inputs use Prostgles JSONB field definitions and are validated before \`run\` executes.
-      - Functions have restricted database access by default. Set \`unrestrictedDbAccess: true\` only when the function needs raw SQL, transactions, or client DB-handler generation.
-      - Keep secrets on the server and use database transactions for multi-step writes.`),
+        assert.equal(client.socket.connected, true);
+        assert.equal(client.auth.user?.type, "admin");
+        assert.ok(client.db);
+      });`),
+  eslintConfig,
   gitignore: fixIndent(`
       node_modules/
       build/
       .env
       *.log`),
-  envExample: fixIndent(`
+  envExample: ({ configId }: { configId: string }) =>
+    fixIndent(`
+      # Fixed admin credentials for CLI development.
+      PRGL_USERNAME=admin
+      PRGL_PASSWORD=${randomBytes(24).toString("base64url")}
+
       # Prostgles UI state. Created automatically when missing.
       PROSTGLES_STATE_DATABASE_URL=postgres://user:password@localhost:5432/prostgles_state_database
 
       # Database exposed by this config. Must use the same server as the state database.
-      PROSTGLES_DATABASE_URL=postgres://user:password@localhost:5432/application`),
+      PROSTGLES_DATABASE_URL=postgres://user:password@localhost:5432/${configId}
+
+      # npm test starts an ephemeral PostgreSQL Docker container bound to 127.0.0.1 only.
+      # This optional prefix makes its disposable database and container names recognizable.
+      PROSTGLES_TEST_DATABASES_PREFIX=${configId.replaceAll("-", "_")}
+
+      # Override only when the app needs a different PostgreSQL/PostGIS version.
+      # PROSTGLES_TEST_POSTGRES_IMAGE=postgis/postgis:17-3.4`),
 } as const;

@@ -1,5 +1,5 @@
 import { chromium, expect, test, type Locator } from "./fixtures";
-import { authenticator } from "otplib";
+import { generate } from "otplib";
 import { speechToTextTest } from "testAskLLM/speechToTextTest";
 
 import { execSync, spawn } from "child_process";
@@ -2577,7 +2577,7 @@ test.describe("Main test", () => {
       .textContent();
     const createAndFillCode = async () => {
       await page.waitForTimeout(1200);
-      const code = authenticator.generate(Base64Secret ?? "");
+      const code = await generate({ secret: Base64Secret ?? "" });
       await page
         .getByTestId("Setup2FA.Enable.ConfirmCode")
         .locator("input")
@@ -2600,7 +2600,7 @@ test.describe("Main test", () => {
     /** Using token */
     await login(page);
     const fillTokenAndSignIn = async () => {
-      const newCode = authenticator.generate(Base64Secret ?? "");
+      const newCode = await generate({ secret: Base64Secret ?? "" });
       await page.locator("#totp_token").fill(newCode);
       await page.getByRole("button", { name: "Sign in", exact: true }).click();
     };
