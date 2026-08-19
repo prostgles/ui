@@ -134,7 +134,7 @@ const startConfigScript = async (
       output.includes("Prostgles UI accessible at") &&
       output.includes("Server started {")
     ) {
-      return child;
+      return { child, getLogs };
     }
     await new Promise((resolve) => setTimeout(resolve, 1_000));
   }
@@ -160,7 +160,9 @@ test.describe("Published config CLI", () => {
     );
     const configDirectory = join(temporaryDirectory, "config");
     const cliTestPort = 30_000 + (process.pid % 10_000);
-    let configProcess: ChildProcess | undefined;
+    let configProcess:
+      | Awaited<ReturnType<typeof startConfigScript>>
+      | undefined;
 
     try {
       run(
@@ -187,8 +189,11 @@ test.describe("Published config CLI", () => {
         "tableConfigs",
         "tableOptions",
         "tableHooks",
+        "services",
       ]) {
-        expect(existsSync(join(configDirectory, "src", folder))).toBe(true);
+        expect(existsSync(join(configDirectory, "src", folder)), folder).toBe(
+          true,
+        );
       }
 
       expect(
@@ -304,7 +309,7 @@ export const inferredFunctions = defineFunctions({
         `import { createFunctionGroupDefiner, defineConfig } from "@prostgles/prostgles";
 import type { DBGeneratedSchema } from "../generated/DBGeneratedSchema";
 import { inferredFunctions } from "./functions/cli.function";
-
+import { serviceManager } from "./serviceManager";
 const defineFunctionGroup = createFunctionGroupDefiner<DBGeneratedSchema>();
 const prostgles = defineConfig<DBGeneratedSchema>();
 
@@ -339,6 +344,11 @@ export default prostgles({
       functions: inferredFunctions,
     }),
   },
+  onMount: async () => {
+        
+    const service = await serviceManager.getServiceWithRetries("myService", console.log).catch(console.error);
+    await service?.endpoints["/hey"](undefined).then(res => console.log("response-is-" + res)).catch(console.error);
+  }
 });
 `,
       );
@@ -367,7 +377,7 @@ export default prostgles({
       });
       expect(lintResult.status).not.toBe(0);
       expect(`${lintResult.stdout}${lintResult.stderr}`).toContain(
-        "must end in '.tableHooks.ts'",
+        "must end in '.tableHook.ts'",
       );
       rmSync(invalidHookPath);
 
@@ -397,8 +407,12 @@ export default prostgles({
       expect(generatedSchema).toContain(
         "Promise<{ message: string; length: number }>;",
       );
+      await new Promise((resolve) => setTimeout(resolve, 10_000));
+      expect(configProcess.getLogs()).toContain(
+        "response-is-Hello from myService",
+      );
     } finally {
-      if (configProcess) await stopProcess(configProcess);
+      if (configProcess) await stopProcess(configProcess.child);
       rmSync(temporaryDirectory, { recursive: true, force: true });
     }
   });
@@ -500,7 +514,9 @@ export default prostgles({
     connection.on("error", console.error);
     await connection.end();
 
-    let configProcess: ChildProcess | undefined;
+    let configProcess:
+      | Awaited<ReturnType<typeof startConfigScript>>
+      | undefined;
 
     try {
       rmSync(
@@ -587,7 +603,7 @@ export default prostgles({
       );
     } finally {
       if (configProcess) {
-        await stopProcess(configProcess);
+        await stopProcess(configProcess.child);
       }
     }
   });

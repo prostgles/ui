@@ -1,25 +1,15 @@
 #!/usr/bin/env node
 
-import { fixIndent } from "@common/utils";
 import { spawn, spawnSync, type ChildProcess } from "child_process";
 import { parse } from "dotenv";
-import {
-  existsSync,
-  mkdirSync,
-  readdirSync,
-  readFileSync,
-  watch,
-  writeFileSync,
-} from "fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, watch } from "fs";
 import path from "path";
 import { compileSchemaConfigProject } from "../ConnectionManager/compileSchemaConfigProject";
 import {
-  cliTemplateFiles,
   generatedFolderName,
+  saveCliTemplateFiles,
   srcFolderName,
-  srcSubfolderNames,
-  testsFolderName,
-} from "./cliUtils";
+} from "./cliTemplateFiles";
 import { ensureCliDatabases } from "./ensureCliDatabases";
 
 const usage = `Usage:
@@ -52,116 +42,13 @@ const createConfig = (targetPath: string, skipInstall: boolean) => {
   if (existsSync(targetPath) && readdirSync(targetPath).length) {
     throw new Error(`${targetPath} already exists and is not empty`);
   }
-  mkdirSync(path.join(targetPath, "src"), { recursive: true });
-  mkdirSync(path.join(targetPath, "generated"), { recursive: true });
-  mkdirSync(path.join(targetPath, testsFolderName), { recursive: true });
-  srcSubfolderNames.forEach((folderName) => {
-    mkdirSync(path.join(targetPath, srcFolderName, folderName));
-  });
+
   const packageName = path
     .basename(targetPath)
     .replace(/[^a-z0-9-]/gi, "-")
     .toLowerCase();
   const configId = packageName || "my-prostgles-app";
-
-  writeFileSync(
-    path.join(targetPath, "package.json"),
-    JSON.stringify(
-      {
-        name: configId,
-        ...cliTemplateFiles.package,
-      },
-      null,
-      2,
-    ) + "\n",
-  );
-  writeFileSync(
-    path.join(targetPath, "tsconfig.json"),
-    JSON.stringify(cliTemplateFiles.tsconfig, null, 2) + "\n",
-  );
-  writeFileSync(
-    path.join(targetPath, "eslint.config.mjs"),
-    cliTemplateFiles.eslintConfig,
-  );
-  writeFileSync(
-    path.join(targetPath, generatedFolderName, "DBGeneratedSchema.ts"),
-    cliTemplateFiles.DBGeneratedSchema,
-  );
-  writeFileSync(path.join(targetPath, "AGENTS.md"), cliTemplateFiles.agents);
-  writeFileSync(
-    path.join(targetPath, testsFolderName, "deployment.test.ts"),
-    cliTemplateFiles.deploymentTest({ configId }),
-  );
-  writeFileSync(
-    path.join(targetPath, srcFolderName, "index.ts"),
-    fixIndent(`
-      import { defineConfig } from "@prostgles/prostgles";
-      import type { DBGeneratedSchema } from "../${generatedFolderName}/DBGeneratedSchema";
-
-      const prostgles = defineConfig<DBGeneratedSchema>();
-
-      export default prostgles({
-        id: ${JSON.stringify(configId)},
-        connection: {
-          table_options: {},
-        },
-        tableConfig: {},
-      });`),
-  );
-  mkdirSync(
-    path.join(targetPath, srcFolderName, "services", "myService", "src"),
-    {
-      recursive: true,
-    },
-  );
-  writeFileSync(
-    path.join(targetPath, srcFolderName, "services"),
-    fixIndent(`
-      import { ServiceManager, type ServiceRegistry } from "@prostgles/prostgles/services";
-      import path from "node:path";
-
-      const services = {
-        myService: {
-          buildContext: "myService",
-          icon: "Extension",
-          label: "My service",
-          description: "Example local Docker service.",
-          port: 8080,
-          healthCheck: { endpoint: "/health" },
-          endpoints: {},
-        },
-      } as const satisfies ServiceRegistry;
-
-      export const serviceManager = new ServiceManager({
-        services,
-        serviceRoot: process.cwd(),
-      ),
-      });`),
-  );
-  writeFileSync(
-    path.join(
-      targetPath,
-      srcFolderName,
-      "services",
-      "myService",
-      "src",
-      "Dockerfile",
-    ),
-    fixIndent(`
-     FROM python:3.13-alpine
-
-      EXPOSE 8080
-
-      CMD ["python", "-m", "http.server", "8080", "--bind", "0.0.0.0"]`),
-  );
-  writeFileSync(
-    path.join(targetPath, ".env.example"),
-    cliTemplateFiles.envExample({ configId }),
-  );
-  writeFileSync(
-    path.join(targetPath, ".gitignore"),
-    cliTemplateFiles.gitignore,
-  );
+  saveCliTemplateFiles({ configId, targetPath });
 
   if (skipInstall) {
     console.log(

@@ -16,7 +16,7 @@ import { modifyClientSchema } from "./modifyClientSchema";
 import type { ServerFunctionDefinitions } from "prostgles-server";
 import { getSchemaConfig } from "./getSchemaConfig";
 import { IS_PROD } from "@src/init/utils";
-import { generatedFolderName, srcFolderName } from "@src/cli/cliUtils";
+import { generatedFolderName, srcFolderName } from "@src/cli/cliTemplateFiles";
 
 export type HotReloadConfigOptions = RequiredKeepUndefined<
   Pick<

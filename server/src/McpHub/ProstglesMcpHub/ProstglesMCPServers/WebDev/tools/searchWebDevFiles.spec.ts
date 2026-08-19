@@ -15,6 +15,7 @@ void test("searchWebDevFiles: basic search", async () => {
 
   strict.ok(result.length > 0, "Should find at least one result");
   const firstResult = result[0]!;
+  console.log("First result:", firstResult);
   strict.equal(
     firstResult.filePath,
     "src/useAppState/PrglCoreContextProvider.tsx",

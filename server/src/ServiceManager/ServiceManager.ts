@@ -75,7 +75,7 @@ export class ServiceManager<
           .join("");
 
         if (!this.dbs) {
-          console.warn("No dbs available to log service logs", {
+          console.warn("No dbs provided. Will not store service logs", {
             serviceName,
             serviceStatus,
           });

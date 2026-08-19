@@ -80,7 +80,10 @@ export const prostglesOnReady = async (
     serviceManager ??= new ServiceManager({
       dbs: db,
       services: prostglesServices,
-      serviceRoot: resolve(__dirname, "../ServiceManager/services"),
+      serviceRoot: resolve(
+        __dirname,
+        "../../../../src/ServiceManager/services",
+      ),
     });
 
     backupManager ??= await BackupManager.create(

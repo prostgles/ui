@@ -13,7 +13,7 @@ void describe("Service manager tests", async () => {
     let logText = "";
     const serviceManager = new ServiceManager({
       services: prostglesServices,
-      serviceRoot: "./services",
+      serviceRoot: "src/ServiceManager/services",
     });
     const res = await serviceManager.enableService("speechToText", (logs) => {
       const lastLog = logs.at(-1)?.text;
