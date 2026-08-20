@@ -83,6 +83,7 @@ const getCliTemplateFiles = ({ configId }: { configId: string }) =>
       "index.ts": `
         import { defineConfig } from "@prostgles/prostgles";
         import type { DBGeneratedSchema } from "../${generatedFolderName}/DBGeneratedSchema";
+        import { serviceManagerConfig } from "./serviceManager";
 
         const prostgles = defineConfig<DBGeneratedSchema>();
 
@@ -91,6 +92,7 @@ const getCliTemplateFiles = ({ configId }: { configId: string }) =>
           connection: {
             table_options: {},
           },
+          services: serviceManagerConfig,
           tableConfig: {},
         });`,
       [servicesFolderName]: {
@@ -128,14 +130,22 @@ const getCliTemplateFiles = ({ configId }: { configId: string }) =>
         },
       },
       "serviceManager.ts": `
-        import { ServiceManager } from "@prostgles/prostgles/services";
+        import {
+          getServiceManager,
+          type ServiceManagerConfig,
+        } from "@prostgles/prostgles/services";
         import { myService } from "./services/myService/myService.service";
         import path from "node:path";
 
-        export const serviceManager = new ServiceManager({
-          services: { myService },
+        export const services = { myService };
+
+        export const serviceManagerConfig = {
+          services,
           serviceRoot: path.resolve(__dirname, "..", "..", "src", "services"),
-        });`,
+        } satisfies ServiceManagerConfig<typeof services>;
+
+        /** The host-owned instance used by Prostgles and the Services UI. */
+        export const serviceManager = getServiceManager<typeof services>();`,
     },
     [testsFolderName]: {
       "deployment.test.ts": `
@@ -344,6 +354,8 @@ const schemaConfigGuidance = {
     "Use `onInitSQL` only for SQL initialization that cannot be expressed by `tableConfig`.",
   onMount:
     "Use `onMount` for startup integration work and return cleanup logic when resources are opened.",
+  services:
+    "Register Docker-backed runtimes with `services` so Prostgles can expose and control them.",
   tableConfig:
     "Define tables and columns in `tableConfig`, including constraints and indexes.",
   tableConfigMigrations:
@@ -379,6 +391,13 @@ const getCliAgentsFile = () => `
   - ${schemaConfigGuidance.access_control} 
   - ${schemaConfigGuidance.watchSchemaType}
   - ${schemaConfigGuidance.onInitSQL} ${schemaConfigGuidance.onMount}
+
+  ## Services
+
+  - If a server function needs a non-Node.js runtime or system dependencies, implement that work as a service instead of running it directly in the function.
+  - Define services under \`src/services/<serviceName>/\`, with the typed \`*.service.ts\` definition beside a \`src/\` Docker build context. Declare a health check and typed endpoints for every operation the app calls.
+  - Register each service in \`src/serviceManager.ts\` and expose its config through the top-level \`services\` property. Service names must not collide with built-in Prostgles services or another app service.
+  - Import the exported \`serviceManager\` in server functions and use \`getServiceWithRetries(serviceName)\` before calling an endpoint. This is the host-owned instance shown in the Prostgles Services UI; do not construct another \`ServiceManager\`.
 
   ## Typed database object
 

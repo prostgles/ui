@@ -1,10 +1,6 @@
 import type { DBSSchemaForInsert } from "@common/publishUtils";
 
 import type { DBS } from "..";
-import {
-  prostglesServices,
-  type ProstglesService,
-} from "./ServiceManagerTypes";
 import type { ServiceManager } from "./ServiceManager";
 
 export const initialiseServices = async (
@@ -13,7 +9,7 @@ export const initialiseServices = async (
 ) => {
   await dbs.services
     .insertMany(
-      Object.entries(prostglesServices as Record<string, ProstglesService>).map(
+      Object.entries(serviceManager.services).map(
         ([name, service]) =>
           ({
             name,
@@ -33,13 +29,11 @@ export const initialiseServices = async (
       void dbs.services.find({ status: "running" }).then((services) => {
         const activeServiceNames: string[] = [];
         services.forEach((service) => {
+          if (!Object.hasOwn(serviceManager.services, service.name)) return;
           activeServiceNames.push(service.name);
           console.log("Re-enabling service on startup: ", service.name);
           serviceManager
-            .enableService(
-              service.name as keyof typeof prostglesServices,
-              () => {},
-            )
+            .enableService(service.name, () => {})
             .catch(console.error);
         });
         serviceManager.activeServices.forEach((_, serviceName) => {

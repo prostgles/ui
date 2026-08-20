@@ -18,40 +18,80 @@ import type { ExtractBy } from "@common/utils";
 
 export type StringKeyof<T> = Extract<keyof T, string>;
 
-export type ServiceManagerOptions<Services extends ServiceRegistry> = {
+export type ServiceManagerConfig<Services extends ServiceRegistry> = {
   services: Services;
   serviceRoot: string;
-  dbs?: DBS;
 };
 
 export class ServiceManager<
   Services extends ServiceRegistry = Record<string, ProstglesService>,
 > {
   readonly services: Services;
-  readonly serviceRoot: string;
+  private readonly serviceRoots = new Map<string, string>();
   dbs: DBS | undefined;
 
-  constructor({ services, serviceRoot, dbs }: ServiceManagerOptions<Services>) {
-    if (services !== (prostglesServices as unknown as Services)) {
-      const clashingServices = Object.keys(services).filter((serviceName) =>
-        Object.keys(prostglesServices).includes(serviceName),
-      );
-      if (clashingServices.length > 0) {
-        throw new Error(
-          `ServiceManager: Clashing service names detected: ${clashingServices.join(
-            ", ",
-          )}. Please rename your services to avoid conflicts with built-in services.`,
-        );
-      }
-    }
-    this.services = services;
-    this.serviceRoot = serviceRoot;
+  private constructor(
+    _config: ServiceManagerConfig<Services>,
+    dbs: DBS | undefined,
+  ) {
+    this.services = {} as Services;
     this.dbs = dbs;
+  }
 
-    if (dbs) {
-      void initialiseServices(this, dbs).catch(console.error);
+  static async create<Services extends ServiceRegistry>(
+    config: ServiceManagerConfig<Services>,
+    dbs: DBS | undefined,
+  ) {
+    const instance = new ServiceManager(config, dbs);
+    await instance.registerServices(config, true);
+    return instance;
+  }
+
+  private async registerServices(
+    { services, serviceRoot }: ServiceManagerConfig<ServiceRegistry>,
+    allowBuiltInServices = false,
+  ) {
+    const clashingServices = Object.keys(services).filter(
+      (serviceName) =>
+        Object.hasOwn(this.services, serviceName) ||
+        (!allowBuiltInServices &&
+          Object.hasOwn(prostglesServices, serviceName)),
+    );
+    if (clashingServices.length) {
+      throw new Error(
+        `ServiceManager: Clashing service names detected: ${clashingServices.join(
+          ", ",
+        )}. Please rename your services to avoid conflicts with registered or built-in services.`,
+      );
+    }
+
+    Object.assign(this.services, services);
+    Object.keys(services).forEach((serviceName) => {
+      this.serviceRoots.set(serviceName, serviceRoot);
+    });
+    if (this.dbs) {
+      await initialiseServices(this, this.dbs);
     }
   }
+
+  addServices = async <AdditionalServices extends ServiceRegistry>({
+    services,
+    serviceRoot,
+  }: ServiceManagerConfig<AdditionalServices>) => {
+    await this.registerServices({
+      services,
+      serviceRoot,
+    });
+    return this as unknown as ServiceManager<Services & AdditionalServices>;
+  };
+
+  getServiceRoot = (serviceName: string) => {
+    const serviceRoot = this.serviceRoots.get(serviceName);
+    if (serviceRoot === undefined) {
+      throw new Error(`Service ${serviceName} has no registered root`);
+    }
+    return serviceRoot;
+  };
 
   serviceLogUpdateQueue: Map<string, Promise<void>> = new Map();
   onServiceLog = (

@@ -16,7 +16,6 @@ import {
 import { statePrgl } from "@src/init/startProstgles";
 import { getStatus } from "@src/methods/getPidStats";
 import { killPID } from "@src/methods/statusMonitorUtils";
-import { prostglesServices } from "@src/ServiceManager/ServiceManagerTypes";
 import { FILE_TABLE_CONFIG_SCHEMA } from "@src/tableConfig/tableConfigDatabaseConfig";
 import { upsertConnection } from "@src/upsertConnection";
 import { existsSync, readdirSync, statSync } from "fs";
@@ -26,7 +25,7 @@ import * as os from "os";
 import path, { join } from "path";
 import { defineFunction } from "prostgles-server";
 import { getIsSuperUser } from "prostgles-server/dist/Prostgles";
-import { getKeys, includes, isEmpty, type SQLHandler } from "prostgles-types";
+import { isEmpty, type SQLHandler } from "prostgles-types";
 import { getSampleSchemas } from "../applySampleSchema";
 import { getTemplateUserConnection } from "../askLLM/prostglesLLMTools/getTemplateUserConnection";
 import { refreshModels } from "../askLLM/refreshModels";
@@ -232,7 +231,7 @@ export const stateServerAdminFunctions = {
         input: { serviceName: "string", enable: "boolean" },
         run: async ({ serviceName, enable }, { dbo: dbs }) => {
           const serviceManager = getServiceManager();
-          if (!includes(getKeys(prostglesServices), serviceName)) {
+          if (!Object.hasOwn(serviceManager.services, serviceName)) {
             throw "Service not found";
           }
           if (enable) {

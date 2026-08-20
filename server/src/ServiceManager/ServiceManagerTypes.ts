@@ -23,7 +23,7 @@ export type ProstglesService = {
   env?: Record<string, string>;
   /**
    * Directory containing the Docker build context.
-   * Relative paths resolve from ServiceManager.serviceRoot.
+   * Relative paths resolve from the root used to register this service.
    * Defaults to `<serviceName>/src`.
    */
   buildContext?: string;

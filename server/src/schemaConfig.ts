@@ -8,6 +8,8 @@ export {
 } from "prostgles-server";
 import type { ProstglesInitOptions } from "prostgles-server/dist/ProstglesTypes";
 import type { OnReadyParams } from "prostgles-server/dist/initProstgles";
+import type { ServiceManagerConfig } from "./ServiceManager/ServiceManager";
+import type { ServiceRegistry } from "./ServiceManager/ServiceManagerTypes";
 
 export type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 export type * from "@common/DashboardTypes";
@@ -81,6 +83,8 @@ export type SchemaConfig<
   publish?: never;
   onInitSQL?: string;
   onMount?: ProstglesOnMount<S>;
+  /** Docker-backed services managed by the host Prostgles instance. */
+  services?: ServiceManagerConfig<ServiceRegistry>;
   workspaces?: WorkspaceInsertModel[];
 };
 

@@ -43,7 +43,7 @@ export async function buildService(
     throw new Error(`Service ${serviceName} not found in service registry`);
   }
   const serviceCwd = resolve(
-    this.serviceRoot,
+    this.getServiceRoot(serviceName),
     service.buildContext ?? join(serviceName, "src"),
   );
 
