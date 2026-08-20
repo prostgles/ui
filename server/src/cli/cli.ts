@@ -97,11 +97,10 @@ const validateEnvironmentSetup = (configPath: string) => {
 };
 
 const serverEntryPath = path.join(__dirname, "..", "cliServer.js");
-const serverDirectory = path.resolve(path.dirname(serverEntryPath), "../../..");
 
 const runServer = (configPath: string, mode: "development" | "production") =>
   spawn(process.execPath, [serverEntryPath], {
-    cwd: serverDirectory,
+    cwd: configPath,
     stdio: "inherit",
     env: {
       ...getConfigEnvironment(configPath),

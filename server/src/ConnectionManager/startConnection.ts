@@ -13,6 +13,7 @@ import { addLog } from "../Logger";
 import type { SUser } from "../authConfig/sessionUtils";
 import { testDBConnection } from "../connectionUtils/testDBConnection";
 import { log, restartProc } from "../index";
+import { getServiceManager } from "../ServiceManager/getServiceManager";
 import type { ProstglesOnMountCleanup } from "../schemaConfig";
 import type { ConnectionManager, User } from "./ConnectionManager";
 import { getConnectionOnReady } from "./connectionOnReady";
@@ -154,6 +155,7 @@ export const startConnection = async function (
           databaseConfig: _databaseConfig,
           onInitSQL: _onInitSQL,
           onMount: _onMount,
+          services: _services,
           workspaces: _workspaces,
           access_control: _accessControl,
           publish: _publish,
@@ -239,7 +241,12 @@ export const startConnection = async function (
               onMount &&
               params.reason.type === "init"
             ) {
-              void Promise.resolve(onMount(params))
+              void Promise.resolve(
+                onMount({
+                  ...params,
+                  serviceManager: getServiceManager(),
+                }),
+              )
                 .then(setOnMountCleanup)
                 .catch((e: unknown) => {
                   void dbs.alerts.insert({

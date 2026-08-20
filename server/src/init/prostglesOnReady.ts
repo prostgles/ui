@@ -2,7 +2,7 @@ import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import { getRestApiConfig } from "@src/ConnectionManager/connectionManagerUtils";
 import { modifyClientSchema } from "@src/ConnectionManager/modifyClientSchema";
 import { getProstglesMcpHub } from "@src/McpHub/ProstglesMcpHub/ProstglesMcpHub";
-import { ServiceManager } from "@src/ServiceManager/ServiceManager";
+import { initializeServiceManager } from "@src/ServiceManager/getServiceManager";
 import type { SUser } from "@src/authConfig/sessionUtils";
 import type { DBSConnectionInfo } from "@src/electronConfig";
 import { connectionManager } from "@src/index";
@@ -25,11 +25,6 @@ import { setupLLM } from "../serverFunctions/askLLM/setupLLM";
 import { initUsers } from "./initUsers";
 import { insertStateDatabase } from "./insertStateDatabase";
 import { getProstglesState } from "./tryStartProstgles";
-import {
-  prostglesServices,
-  type ServiceRegistry,
-} from "@src/ServiceManager/ServiceManagerTypes";
-import { resolve } from "path";
 
 let authSetupDataListener: AuthSetupDataListener | undefined;
 
@@ -39,21 +34,6 @@ export const getBackupManager = () => {
     throw new Error("BackupManager not initialized yet");
   }
   return backupManager;
-};
-
-let serviceManager: ServiceManager<typeof prostglesServices> | undefined =
-  undefined;
-export const getServiceManager = <
-  AdditionalServices extends ServiceRegistry = Record<never, never>,
->() => {
-  if (!serviceManager) {
-    throw new Error(
-      "ServiceManager is not available before Prostgles startup.",
-    );
-  }
-  return serviceManager as ServiceManager<
-    typeof prostglesServices & AdditionalServices
-  >;
 };
 
 export const prostglesOnReady = async (
@@ -86,17 +66,8 @@ export const prostglesOnReady = async (
 
     await connectionManager.destroy();
     await connectionManager.init(db, _db);
-    const isNewServiceManager = !serviceManager;
-    serviceManager ??= await ServiceManager.create(
-      {
-        services: prostglesServices,
-        serviceRoot: resolve(
-          __dirname,
-          "../../../../src/ServiceManager/services",
-        ),
-      },
-      db,
-    );
+    const { serviceManager, isNew: isNewServiceManager } =
+      await initializeServiceManager(db);
     const startupSchemaConfig = getStartupSchemaConfig();
     if (
       isNewServiceManager &&

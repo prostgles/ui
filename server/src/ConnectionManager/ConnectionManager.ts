@@ -20,6 +20,7 @@ import { getDbConnection } from "../connectionUtils/testDBConnection";
 import { getDataPath } from "../electronConfig";
 import type { Connections, DBS, DatabaseConfigs } from "../index";
 import { connectionManager } from "../index";
+import { getServiceManager } from "../ServiceManager/getServiceManager";
 import type { ProstglesOnMountCleanup } from "../schemaConfig";
 import { UNIQUE_DB_COLS } from "../tableConfig/tableConfigDatabaseConfig";
 import { getConnectionHttpServer } from "./getConnectionHttpServer";
@@ -251,6 +252,7 @@ export class ConnectionManager {
       sql: prglCon.prgl.sql,
       tables: prglCon.prgl.getSchema(),
       reason: { type: "prgl.restart" },
+      serviceManager: getServiceManager(),
     });
     if (typeof cleanup === "function") {
       prglCon.onMountCleanup = cleanup;

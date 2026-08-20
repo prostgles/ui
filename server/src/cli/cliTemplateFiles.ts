@@ -130,10 +130,7 @@ const getCliTemplateFiles = ({ configId }: { configId: string }) =>
         },
       },
       "serviceManager.ts": `
-        import {
-          getServiceManager,
-          type ServiceManagerConfig,
-        } from "@prostgles/prostgles/services";
+        import type { ServiceManagerConfig } from "@prostgles/prostgles/services";
         import { myService } from "./services/myService/myService.service";
         import path from "node:path";
 
@@ -142,10 +139,7 @@ const getCliTemplateFiles = ({ configId }: { configId: string }) =>
         export const serviceManagerConfig = {
           services,
           serviceRoot: path.resolve(__dirname, "..", "..", "src", "services"),
-        } satisfies ServiceManagerConfig<typeof services>;
-
-        /** The host-owned instance used by Prostgles and the Services UI. */
-        export const serviceManager = getServiceManager<typeof services>();`,
+        } satisfies ServiceManagerConfig<typeof services>;`,
     },
     [testsFolderName]: {
       "deployment.test.ts": `
@@ -377,9 +371,13 @@ const connectionGuidance = {
 } satisfies ConnectionGuidance;
 
 const getCliAgentsFile = () => `
-  # Prostgles configuration
+  # Prostgles application
 
-  Build the application around the typed Prostgles schema config.
+  This repository is a Prostgles config project: a typed TypeScript definition of a PostgreSQL-backed application or internal tool. Prostgles is the framework, not the application itself. It makes internal tools easier to build by providing the web UI, authentication, realtime transport, database connections, and deployment lifecycle; the user decides what the application does and this repository defines it.
+
+  This project owns the application's database schema and behavior: permissions, display options, workspaces, server functions, hooks, migrations, and optional Docker services. There is normally no separate frontend or HTTP server to build; Prostgles derives the database UI and typed client API from this config.
+
+  Treat \`src/index.ts\` as the composition root. Keep feature definitions in focused modules under \`src/\`, then assemble them into the default-exported config. Treat \`generated/DBGeneratedSchema.ts\` as generated output: use its types, but do not hand-edit it. Keep credentials and database URLs in \`.env\`, never in the config.
 
   ## Config structure
 
@@ -397,12 +395,12 @@ const getCliAgentsFile = () => `
   - If a server function needs a non-Node.js runtime or system dependencies, implement that work as a service instead of running it directly in the function.
   - Define services under \`src/services/<serviceName>/\`, with the typed \`*.service.ts\` definition beside a \`src/\` Docker build context. Declare a health check and typed endpoints for every operation the app calls.
   - Register each service in \`src/serviceManager.ts\` and expose its config through the top-level \`services\` property. Service names must not collide with built-in Prostgles services or another app service.
-  - Import the exported \`serviceManager\` in server functions and use \`getServiceWithRetries(serviceName)\` before calling an endpoint. This is the host-owned instance shown in the Prostgles Services UI; do not construct another \`ServiceManager\`.
+  - Use the \`serviceManager\` provided to \`onMount\` and call \`getServiceWithRetries(serviceName)\` before using an endpoint. This is the host-owned instance shown in the Prostgles Services UI; do not construct another \`ServiceManager\`.
 
   ## Typed database object
 
   - The Prostgles \`dbo\` object available in \`onMount\`, \`tableHooks\`, and server functions is \`DBOFullyTyped<DBGeneratedSchema>\`. Table names, columns, filters, selects, inserts, updates, and results are fully typed.
-  - Keep the schema generic connected when moving code into separate modules. Use \`ProstglesOnMount<DBGeneratedSchema>\` for \`onMount\`, \`TableHooks<DBGeneratedSchema>\` for hooks, and the typed function definers for functions.
+  - Keep the schema generic connected when moving code into separate modules. Use \`ProstglesOnMount<DBGeneratedSchema, typeof services>\` for an \`onMount\` module that uses app services, \`TableHooks<DBGeneratedSchema>\` for hooks, and the typed function definers for functions.
   - Prefer typed \`dbo\` table handlers and let TypeScript infer values. Casts should be very rare; before adding one, check the table definition, JSONB schema, generated schema, and helper generic.
   - Every table and view handler supports realtime \`subscribe\` and \`subscribeOne\`, for example \`dbo.orders.subscribe(filter, params, onData)\`. Prefer subscriptions over polling the database. Keep the returned subscription handler and call \`unsubscribe()\` during cleanup; an \`onMount\` callback can return that cleanup function.
 

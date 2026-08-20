@@ -22,7 +22,7 @@ const validateConfigPath = (config: NonNullable<ConfigSync>) => {
       `config_sync.configPath must be an absolute path. "${configPath}" is not absolute.`,
     );
   }
-  const projectPath = path.resolve(process.cwd());
+  const projectPath = path.resolve(actualRootDir);
   const bundledSamplesPath = path.resolve(actualRootDir, "sample_schemas");
   const isBundledSample = configPath.startsWith(bundledSamplesPath + path.sep);
 

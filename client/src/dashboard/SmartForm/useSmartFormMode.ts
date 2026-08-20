@@ -4,7 +4,7 @@ import {
   useEffectDeep,
   type TableHandlerClient,
 } from "prostgles-client";
-import { type AnyObject } from "prostgles-types";
+import { type AnyObject, omitKeys } from "prostgles-types";
 import { useEffect, useMemo, useState } from "react";
 import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
 import type { SmartFormProps } from "./SmartForm";
@@ -148,7 +148,16 @@ export const useSmartFormMode = (
         type: tableHandlerUpdate ? "update" : "view",
         clone:
           tableHandlerInsert && currentRow ?
-            () => setClonedRow(currentRow)
+            () => {
+              const nonInsertableColumns = table.columns
+                .filter((c) => !c.insert)
+                .map((c) => c.name);
+              const currentRowClone =
+                nonInsertableColumns.length ?
+                  omitKeys({ ...currentRow }, nonInsertableColumns)
+                : { ...currentRow };
+              setClonedRow(currentRowClone);
+            }
           : undefined,
         currentRow,
         rowFilter: activeRowFilter!,

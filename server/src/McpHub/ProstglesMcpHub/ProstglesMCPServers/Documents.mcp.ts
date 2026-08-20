@@ -1,7 +1,7 @@
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import { fromEntries, getEntries } from "@common/utils";
 import type { McpTool } from "@src/McpHub/AnthropicMcpHub/McpTypes";
-import { getServiceManager } from "@src/init/prostglesOnReady";
+import { getServiceManager } from "@src/ServiceManager/getServiceManager";
 import { getJSONBSchemaAsJSONSchema } from "prostgles-types";
 import type {
   ProstglesMcpServerDefinition,

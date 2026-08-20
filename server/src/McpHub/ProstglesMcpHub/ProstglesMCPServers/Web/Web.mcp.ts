@@ -8,7 +8,7 @@ import type {
   McpServerParameters,
   McpTool,
 } from "@src/McpHub/AnthropicMcpHub/McpTypes";
-import { getServiceManager } from "@src/init/prostglesOnReady";
+import { getServiceManager } from "@src/ServiceManager/getServiceManager";
 import { getJSONBSchemaAsJSONSchema } from "prostgles-types";
 import type {
   ProstglesMcpServerDefinition,

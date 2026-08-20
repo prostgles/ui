@@ -162,27 +162,21 @@ export class ServiceManager<
     return activeInstance as Extract<ServiceInstance, { status: Status }>;
   }
 
-  getService<
-    ServiceName extends StringKeyof<Services>,
-    ExistingServices extends Services,
-  >(
+  getService<ServiceName extends StringKeyof<Services>>(
     serviceName: ServiceName,
-  ): ServiceInstance<ExistingServices[ServiceName]> | undefined {
+  ): ServiceInstance<Services[ServiceName]> | undefined {
     const activeInstance = this.activeServices.get(serviceName);
 
     //@ts-ignore
     return activeInstance;
   }
 
-  async getServiceWithRetries<
-    ServiceName extends StringKeyof<Services>,
-    ExistingServices extends Services,
-  >(
+  async getServiceWithRetries<ServiceName extends StringKeyof<Services>>(
     serviceName: ServiceName,
     onLogs?: (logs: ProcessLog[]) => void,
   ): Promise<
     ExtractBy<
-      ServiceInstance<ExistingServices[ServiceName]>,
+      ServiceInstance<Services[ServiceName]>,
       "status",
       "running"
     >

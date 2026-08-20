@@ -9,10 +9,8 @@ import { validateConnection } from "@src/connectionUtils/validateConnection";
 import { getElectronConfig } from "@src/electronConfig";
 import { connectionManager } from "@src/index";
 import { getPasswordlessAdmin } from "@src/init/initUsers";
-import {
-  getBackupManager,
-  getServiceManager,
-} from "@src/init/prostglesOnReady";
+import { getServiceManager } from "@src/ServiceManager/getServiceManager";
+import { getBackupManager } from "@src/init/prostglesOnReady";
 import { statePrgl } from "@src/init/startProstgles";
 import { getStatus } from "@src/methods/getPidStats";
 import { killPID } from "@src/methods/statusMonitorUtils";

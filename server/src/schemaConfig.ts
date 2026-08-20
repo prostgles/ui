@@ -8,8 +8,14 @@ export {
 } from "prostgles-server";
 import type { ProstglesInitOptions } from "prostgles-server/dist/ProstglesTypes";
 import type { OnReadyParams } from "prostgles-server/dist/initProstgles";
-import type { ServiceManagerConfig } from "./ServiceManager/ServiceManager";
-import type { ServiceRegistry } from "./ServiceManager/ServiceManagerTypes";
+import type {
+  ServiceManager,
+  ServiceManagerConfig,
+} from "./ServiceManager/ServiceManager";
+import {
+  prostglesServices,
+  type ServiceRegistry,
+} from "./ServiceManager/ServiceManagerTypes";
 
 export type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 export type * from "@common/DashboardTypes";
@@ -19,8 +25,13 @@ export type { DBOFullyTyped, TableConfig, TableHooks } from "prostgles-server";
 
 export type ProstglesOnMountCleanup = () => void | Promise<void>;
 
-export type ProstglesOnMount<T = void> = (
-  args: OnReadyParams<T>,
+export type ProstglesOnMount<
+  T = void,
+  Services extends ServiceRegistry = Record<never, never>,
+> = (
+  args: OnReadyParams<T> & {
+    serviceManager: ServiceManager<typeof prostglesServices & Services>;
+  },
 ) => void | ProstglesOnMountCleanup | Promise<void | ProstglesOnMountCleanup>;
 
 export type TableOptions = NonNullable<
@@ -71,6 +82,7 @@ export type SchemaConfigProstglesOptions<
 export type SchemaConfig<
   S = void,
   SUser extends SessionUser = SessionUser,
+  Services extends ServiceRegistry = Record<never, never>,
 > = SchemaConfigProstglesOptions<S, SUser> & {
   /** Stable deployment identifier. Required when starting through the CLI. */
   id?: string;
@@ -82,14 +94,34 @@ export type SchemaConfig<
   /** CLI configs use access_control instead of prostgles-server publish rules. */
   publish?: never;
   onInitSQL?: string;
-  onMount?: ProstglesOnMount<S>;
+  onMount?: ProstglesOnMount<S, Services>;
   /** Docker-backed services managed by the host Prostgles instance. */
-  services?: ServiceManagerConfig<ServiceRegistry>;
+  services?: ServiceManagerConfig<Services>;
   workspaces?: WorkspaceInsertModel[];
 };
 
 /** Gives a config object contextual types while preserving its exact shape. */
-export const defineConfig =
-  <S = void, SUser extends SessionUser = SessionUser>() =>
-  <T extends SchemaConfig<S, SUser>>(config: T): T =>
-    config;
+export const defineConfig = <
+  S = void,
+  SUser extends SessionUser = SessionUser,
+>() => {
+  function getConfig<
+    Services extends ServiceRegistry,
+    T extends SchemaConfig<S, SUser, Services>,
+  >(
+    config: T & {
+      services: ServiceManagerConfig<Services>;
+      onMount?: ProstglesOnMount<S, Services>;
+    },
+  ): T;
+  function getConfig<T extends SchemaConfig<S, SUser>>(
+    config: T & {
+      services?: undefined;
+      onMount?: ProstglesOnMount<S>;
+    },
+  ): T;
+  function getConfig(config: unknown) {
+    return config;
+  }
+  return getConfig;
+};

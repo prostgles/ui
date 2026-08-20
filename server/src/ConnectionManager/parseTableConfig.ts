@@ -17,7 +17,7 @@ import { getCloudClient } from "../cloudClients/cloudClients";
 import type { ConnectionManager } from "./ConnectionManager";
 import type { ConnectionHotReloadProperties } from "./getHotReloadConfigs";
 import { getSchemaConfig } from "./getSchemaConfig";
-import { getServiceManager } from "@src/init/prostglesOnReady";
+import { getServiceManager } from "@src/ServiceManager/getServiceManager";
 
 type ParseTableConfigArgs = {
   dbs: DBS;

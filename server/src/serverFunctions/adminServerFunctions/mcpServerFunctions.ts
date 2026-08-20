@@ -1,7 +1,7 @@
 import { documentsServiceInputSchema } from "@common/mcp/documentsServiceInputSchema";
 import { getMCPFullToolName } from "@common/mcpUtils";
 import type { DBSSchema } from "@common/publishUtils";
-import { getServiceManager } from "@src/init/prostglesOnReady";
+import { getServiceManager } from "@src/ServiceManager/getServiceManager";
 import {
   getMcpHostInfo,
   getMCPServersStatus,

@@ -257,33 +257,7 @@ test.describe("Published config CLI", () => {
       ).toContain(".prostgles/test-logs/");
       expect(
         readFileSync(join(configDirectory, "AGENTS.md"), "utf8"),
-      ).toContain("Define tables and columns in `tableConfig`");
-      expect(
-        readFileSync(join(configDirectory, "AGENTS.md"), "utf8"),
-      ).toContain("createFunctionGroupDefiner<DBGeneratedSchema>()");
-      expect(
-        readFileSync(join(configDirectory, "AGENTS.md"), "utf8"),
-      ).toContain("`tableHooks` as a separate top-level config property");
-      expect(
-        readFileSync(join(configDirectory, "AGENTS.md"), "utf8"),
-      ).toContain("Populate `connection.table_options`");
-      expect(
-        readFileSync(join(configDirectory, "AGENTS.md"), "utf8"),
-      ).toContain("`deployProject.function.ts`");
-      expect(
-        readFileSync(join(configDirectory, "AGENTS.md"), "utf8"),
-      ).toContain(
-        "The Prostgles `dbo` object available in `onMount`, `tableHooks`, and server functions",
-      );
-      expect(
-        readFileSync(join(configDirectory, "AGENTS.md"), "utf8"),
-      ).toContain("`DBOFullyTyped<DBGeneratedSchema>`");
-      expect(
-        readFileSync(join(configDirectory, "AGENTS.md"), "utf8"),
-      ).toContain("Prefer subscriptions over polling the database");
-      expect(
-        readFileSync(join(configDirectory, "AGENTS.md"), "utf8"),
-      ).toContain("Run `npm test` before committing");
+      ).toContain("This repository is a Prostgles config project");
 
       writeFileSync(
         join(configDirectory, "src", "functions", "cli.function.ts"),
@@ -309,12 +283,13 @@ export const inferredFunctions = defineFunctions({
         `import { createFunctionGroupDefiner, defineConfig } from "@prostgles/prostgles";
 import type { DBGeneratedSchema } from "../generated/DBGeneratedSchema";
 import { inferredFunctions } from "./functions/cli.function";
-import { serviceManager } from "./serviceManager";
+import { serviceManagerConfig } from "./serviceManager";
 const defineFunctionGroup = createFunctionGroupDefiner<DBGeneratedSchema>();
 const prostgles = defineConfig<DBGeneratedSchema>();
 
 export default prostgles({
   id: "typed-cli-test",
+  services: serviceManagerConfig,
   tableConfig: {},
   workspaces: [{
     name: "Configured workspace",
@@ -344,10 +319,13 @@ export default prostgles({
       functions: inferredFunctions,
     }),
   },
-  onMount: async () => {
+  onMount: async ({ serviceManager }) => {
         
     const service = await serviceManager.getServiceWithRetries("myService", console.log).catch(console.error);
-    await service?.endpoints["/hey"](undefined).then(res => console.log("response-is-" + res)).catch(console.error);
+    await service?.endpoints["/hey"](undefined).then(res => {
+      res satisfies string;
+      console.log("response-is-" + res);
+    }).catch(console.error);
   }
 });
 `,
