@@ -101,7 +101,7 @@ export const SmartFormFieldForeignKey = (
   const valueStyle = {
     fontSize: "16px",
     fontWeight: 500,
-    paddingLeft: "6px 0",
+    lineHeight: "1em",
   };
 
   const selectedOption = fullOptions?.find((o) => o.key === value);
