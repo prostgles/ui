@@ -18,6 +18,7 @@ import type { ConnectionManager } from "./ConnectionManager";
 import type { ConnectionHotReloadProperties } from "./getHotReloadConfigs";
 import { getSchemaConfig } from "./getSchemaConfig";
 import { getServiceManager } from "@src/ServiceManager/getServiceManager";
+import type { ProstglesContext } from "@src/schemaConfig";
 
 type ParseTableConfigArgs = {
   dbs: DBS;
@@ -47,7 +48,7 @@ export const parseTableConfig = async ({
 }: ParseTableConfigArgs): Promise<{
   fileTable?: FileTableConfig;
   tableConfig: TableConfig | undefined;
-  tableHooks: TableHooks | undefined;
+  tableHooks: TableHooks<void, ProstglesContext> | undefined;
 }> => {
   const connectionId = con.id;
   let fileTableConfig:
@@ -99,7 +100,7 @@ export const parseTableConfig = async ({
 
   const { tableHooks, tableConfig } =
     getSchemaConfig(databaseConfig.config_sync)?.config ?? {};
-  const fileTableHooksMerged: TableHooks | undefined =
+  const fileTableHooksMerged: TableHooks<void, ProstglesContext> | undefined =
     fileTable && fileTableConfig?.annotationsTable ?
       {
         [fileTable.tableName]: {
@@ -195,7 +196,8 @@ export const parseTableConfig = async ({
                 docling_metadata: any;
                 extraction_status: any;
               },
-              DBHandlerServer
+              DBHandlerServer,
+              ProstglesContext
             >,
           ],
         },

@@ -43,7 +43,10 @@ export const getCorsOptions = (
           }
         }
       }
-      if (allowedOrigins.includes(requestedOrigin)) {
+      if (
+        allowedOrigins.includes("*") ||
+        allowedOrigins.includes(requestedOrigin)
+      ) {
         return cb(null, true);
       }
       console.error(`CORS policy: Origin ${requestedOrigin} blocked`);

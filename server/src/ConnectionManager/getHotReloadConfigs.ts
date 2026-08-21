@@ -13,14 +13,15 @@ import type { CONNECTION_HOT_RELOAD_COLUMNS } from "./initConnectionManager";
 import { parseTableConfig } from "./parseTableConfig";
 import type { RequiredKeepUndefined } from "@common/utils";
 import { modifyClientSchema } from "./modifyClientSchema";
-import type { ServerFunctionDefinitions } from "prostgles-server";
+import type { ServerFunctionDefinitions, SessionUser } from "prostgles-server";
 import { getSchemaConfig } from "./getSchemaConfig";
 import { IS_PROD } from "@src/init/utils";
 import { generatedFolderName, srcFolderName } from "@src/cli/cliTemplateFiles";
+import type { ProstglesContext } from "@src/schemaConfig";
 
 export type HotReloadConfigOptions = RequiredKeepUndefined<
   Pick<
-    UpdatableOptions<void, SUser>,
+    UpdatableOptions<void, SUser, ProstglesContext>,
     | "fileTable"
     | "restApi"
     | "schemaFilter"
@@ -41,16 +42,17 @@ export type ConnectionHotReloadProperties = Pick<
 >;
 
 const mergeFunctions = (
-  schemaFunctions: ServerFunctionDefinitions | undefined,
-  connectionFunctions: ServerFunctionDefinitions,
-): ServerFunctionDefinitions<void, SUser> => {
-  if (!schemaFunctions)
-    return connectionFunctions as ServerFunctionDefinitions<void, SUser>;
+  schemaFunctions:
+    | ServerFunctionDefinitions<void, SessionUser, ProstglesContext>
+    | undefined,
+  connectionFunctions: ServerFunctionDefinitions<void, SUser, ProstglesContext>,
+): ServerFunctionDefinitions<void, SUser, ProstglesContext> => {
+  if (!schemaFunctions) return connectionFunctions;
   return {
     ...schemaFunctions,
     /** Connection-managed functions retain precedence on name collisions. */
     ...connectionFunctions,
-  } as ServerFunctionDefinitions<void, SUser>;
+  } as ServerFunctionDefinitions<void, SUser, ProstglesContext>;
 };
 
 export const getHotReloadConfigs = async ({
@@ -80,8 +82,8 @@ export const getHotReloadConfigs = async ({
   };
   const { socketPath, socketUrl } = getConnectionSocketPath(connection);
   const connectionServers = connectionManager.getConnectionHttpServer({
-    connection,
-    databaseConfig,
+    connection: configuredConnection,
+    databaseConfig: configuredDatabaseConfig,
     socketPath,
   });
   const { app } = connectionServers;

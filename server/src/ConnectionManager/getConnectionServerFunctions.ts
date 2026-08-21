@@ -1,5 +1,6 @@
 import type { DBSSchema } from "@common/publishUtils";
 import type { SUser } from "@src/authConfig/sessionUtils";
+import type { ProstglesContext } from "@src/schemaConfig";
 import {
   type ServerFunctionDefinition,
   type ServerFunctionDefinitions,
@@ -42,7 +43,11 @@ export const getConnectionServerFunctions = async ({
       },
     },
   );
-  const publishMethods: ServerFunctionDefinitions<void, SUser> = {};
+  const publishMethods: ServerFunctionDefinitions<
+    void,
+    SUser,
+    ProstglesContext
+  > = {};
 
   /** Combine all userFilter with admin into unique groups */
   connectionFunctions.forEach((m) => {

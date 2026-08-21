@@ -4,7 +4,9 @@ import { type SessionUser } from "prostgles-server";
 export {
   defineFunction,
   createFunctionGroupDefiner,
+  createFunctionGroupDefinerWithContext,
   createFunctionsDefiner,
+  createFunctionsDefinerWithContext,
 } from "prostgles-server";
 import type { ProstglesInitOptions } from "prostgles-server/dist/ProstglesTypes";
 import type { OnReadyParams } from "prostgles-server/dist/initProstgles";
@@ -25,13 +27,17 @@ export type { DBOFullyTyped, TableConfig, TableHooks } from "prostgles-server";
 
 export type ProstglesOnMountCleanup = () => void | Promise<void>;
 
+export type ProstglesContext<
+  Services extends ServiceRegistry = Record<never, never>,
+> = {
+  serviceManager: ServiceManager<typeof prostglesServices & Services>;
+};
+
 export type ProstglesOnMount<
   T = void,
   Services extends ServiceRegistry = Record<never, never>,
 > = (
-  args: OnReadyParams<T> & {
-    serviceManager: ServiceManager<typeof prostglesServices & Services>;
-  },
+  args: OnReadyParams<T, ProstglesContext<Services>>,
 ) => void | ProstglesOnMountCleanup | Promise<void | ProstglesOnMountCleanup>;
 
 export type TableOptions = NonNullable<
@@ -53,6 +59,12 @@ export type SchemaConfigDatabase = Partial<
     | "file_table_config"
     | "rest_api_enabled"
     | "sync_users"
+    | "cors"
+    | "csp"
+    | "trust_proxy"
+    | "login_rate_limit"
+    | "login_rate_limit_enabled"
+    | "auth_providers"
     | "table_schema_positions"
     | "table_schema_transform"
   >
@@ -69,8 +81,9 @@ export type SchemaConfigAccessControl =
 export type SchemaConfigProstglesOptions<
   S = void,
   SUser extends SessionUser = SessionUser,
+  Services extends ServiceRegistry = Record<never, never>,
 > = Pick<
-  ProstglesInitOptions<S, SUser>,
+  ProstglesInitOptions<S, SUser, ProstglesContext<Services>>,
   | "functions"
   | "joins"
   | "tableHooks"
@@ -83,7 +96,7 @@ export type SchemaConfig<
   S = void,
   SUser extends SessionUser = SessionUser,
   Services extends ServiceRegistry = Record<never, never>,
-> = SchemaConfigProstglesOptions<S, SUser> & {
+> = SchemaConfigProstglesOptions<S, SUser, Services> & {
   /** Stable deployment identifier. Required when starting through the CLI. */
   id?: string;
   /** Non-credential connection display options. Database URLs belong in .env. */

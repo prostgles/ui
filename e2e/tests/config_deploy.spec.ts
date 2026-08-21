@@ -258,19 +258,31 @@ test.describe("Published config CLI", () => {
       expect(
         readFileSync(join(configDirectory, "AGENTS.md"), "utf8"),
       ).toContain("This repository is a Prostgles config project");
+      expect(
+        readFileSync(join(configDirectory, "AGENTS.md"), "utf8"),
+      ).toContain("context.serviceManager");
+      expect(
+        readFileSync(join(configDirectory, "AGENTS.md"), "utf8"),
+      ).toContain("still-uncommitted mutation transaction");
 
       writeFileSync(
         join(configDirectory, "src", "functions", "cli.function.ts"),
-        `import { createFunctionsDefiner, defineFunction } from "@prostgles/prostgles";
+        `import { createFunctionsDefinerWithContext, defineFunction } from "@prostgles/prostgles";
+import type { ProstglesContext } from "@prostgles/prostgles";
 import type { DBGeneratedSchema } from "../../generated/DBGeneratedSchema";
+import { services } from "../serviceManager";
 
-const defineFunctions = createFunctionsDefiner<DBGeneratedSchema>();
+const defineFunctions = createFunctionsDefinerWithContext<
+  DBGeneratedSchema,
+  ProstglesContext<typeof services>
+>();
 
 export const inferredFunctions = defineFunctions({
   cliFunction: defineFunction({
     input: { message: "string" },
-    run: ({ message }, { dbo }) => {
+    run: ({ message }, { context, dbo }) => {
       message satisfies string;
+      void context.serviceManager.getServiceWithRetries("myService");
       void dbo;
       return { message, length: message.length };
     },
@@ -280,11 +292,15 @@ export const inferredFunctions = defineFunctions({
       );
       writeFileSync(
         join(configDirectory, "src", "index.ts"),
-        `import { createFunctionGroupDefiner, defineConfig } from "@prostgles/prostgles";
+        `import { createFunctionGroupDefinerWithContext, defineConfig } from "@prostgles/prostgles";
+import type { ProstglesContext } from "@prostgles/prostgles";
 import type { DBGeneratedSchema } from "../generated/DBGeneratedSchema";
 import { inferredFunctions } from "./functions/cli.function";
-import { serviceManagerConfig } from "./serviceManager";
-const defineFunctionGroup = createFunctionGroupDefiner<DBGeneratedSchema>();
+import { serviceManagerConfig, services } from "./serviceManager";
+const defineFunctionGroup = createFunctionGroupDefinerWithContext<
+  DBGeneratedSchema,
+  ProstglesContext<typeof services>
+>();
 const prostgles = defineConfig<DBGeneratedSchema>();
 
 export default prostgles({
@@ -319,9 +335,10 @@ export default prostgles({
       functions: inferredFunctions,
     }),
   },
-  onMount: async ({ serviceManager }) => {
-        
-    const service = await serviceManager.getServiceWithRetries("myService", console.log).catch(console.error);
+  onMount: async ({ context }) => {
+    const service = await context.serviceManager
+      .getServiceWithRetries("myService", console.log)
+      .catch(console.error);
     await service?.endpoints["/hey"](undefined).then(res => {
       res satisfies string;
       console.log("response-is-" + res);

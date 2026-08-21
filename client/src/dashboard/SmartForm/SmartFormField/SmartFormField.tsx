@@ -155,6 +155,9 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
       return (
         <Btn
           className="mt-1"
+          style={{
+            marginLeft: someColumnsHaveIcons ? "24px" : undefined,
+          }}
           title="Expand"
           iconPath={mdiDotsHorizontal}
           onClick={() => {

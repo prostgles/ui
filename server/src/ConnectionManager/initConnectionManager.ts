@@ -5,6 +5,7 @@ import { getSerialisableError, isDefined } from "prostgles-types";
 import { type DBS } from "../index";
 import { type ConnectionManager } from "./ConnectionManager";
 import { getHotReloadConfigs } from "./getHotReloadConfigs";
+import { getSchemaConfig } from "./getSchemaConfig";
 import { saveCertificates } from "./saveCertificates";
 import { startConnectionOnRequestHandler } from "./startConnectionOnRequestHandler";
 import type { DBSSchema } from "@common/publishUtils";
@@ -93,6 +94,17 @@ export async function initConnectionManager(
       );
       for (const databaseConfig of dbConfigs) {
         for (const connectionPartialItem of databaseConfig.connections) {
+          const schemaConfig = getSchemaConfig(
+            databaseConfig.config_sync,
+          )?.config;
+          const configuredDatabaseConfig = {
+            ...databaseConfig,
+            ...schemaConfig?.databaseConfig,
+          };
+          const configuredConnection = {
+            ...connectionPartialItem,
+            ...schemaConfig?.connection,
+          };
           const prglCon = this.getActiveConnectionSilentFail(
             connectionPartialItem.id,
           );
@@ -105,8 +117,8 @@ export async function initConnectionManager(
           if (app && stateDatabaseConfig && stateConnectionPort) {
             setHttpAppSecurity(
               app,
-              databaseConfig,
-              connectionPartialItem,
+              configuredDatabaseConfig,
+              configuredConnection,
               stateConnectionPort,
               this.connectionPorts,
             );

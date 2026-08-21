@@ -2,7 +2,7 @@ import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type { DBSSchema } from "@common/publishUtils";
 import { API_ENDPOINTS } from "@common/utils";
 import { IS_PROD } from "@src/init/utils";
-import prostgles from "prostgles-server";
+import { createProstgles } from "prostgles-server";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
 import type { PRGLIOSocket } from "prostgles-server/dist/DboBuilder/DboBuilder";
 import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
@@ -14,7 +14,10 @@ import type { SUser } from "../authConfig/sessionUtils";
 import { testDBConnection } from "../connectionUtils/testDBConnection";
 import { log, restartProc } from "../index";
 import { getServiceManager } from "../ServiceManager/getServiceManager";
-import type { ProstglesOnMountCleanup } from "../schemaConfig";
+import type {
+  ProstglesContext,
+  ProstglesOnMountCleanup,
+} from "../schemaConfig";
 import type { ConnectionManager, User } from "./ConnectionManager";
 import { getConnectionOnReady } from "./connectionOnReady";
 import { getConnectionPublish } from "./getConnectionPublish";
@@ -166,7 +169,7 @@ export const startConnection = async function (
         const { disable_realtime } = connection;
         let onMountCleanup: ProstglesOnMountCleanup | undefined;
         // eslint-disable-next-line prefer-const
-        let prgl: InitResult<void, SUser>;
+        let prgl: InitResult<void, SUser, ProstglesContext>;
         let connectionStarted = false;
         const attachOnMountCleanup = () => {
           if (!connectionStarted || !onMountCleanup) return;
@@ -188,7 +191,8 @@ export const startConnection = async function (
           onMountCleanup = cleanup;
           attachOnMountCleanup();
         };
-        prgl = await prostgles<void, SUser>({
+        const prostgles = createProstgles<void, SUser>();
+        prgl = await prostgles({
           ...schemaProstglesOptions,
           dbConnection: connectionInfo,
           ...hotReloadConfig,
@@ -196,6 +200,9 @@ export const startConnection = async function (
           disableRealtime: disable_realtime ?? undefined,
           transactions: true,
           joins: schemaProstglesOptions.joins ?? "inferred",
+          createContext: () => ({
+            serviceManager: getServiceManager(),
+          }),
           publish: getConnectionPublish({
             dbs,
             dbConf: databaseConfig,
@@ -241,12 +248,7 @@ export const startConnection = async function (
               onMount &&
               params.reason.type === "init"
             ) {
-              void Promise.resolve(
-                onMount({
-                  ...params,
-                  serviceManager: getServiceManager(),
-                }),
-              )
+              void Promise.resolve(onMount(params))
                 .then(setOnMountCleanup)
                 .catch((e: unknown) => {
                   void dbs.alerts.insert({

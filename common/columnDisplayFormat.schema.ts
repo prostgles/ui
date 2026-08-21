@@ -178,6 +178,13 @@ export const columnDisplayFormatSchema = {
     },
     {
       type: {
+        enum: ["Logs"],
+        title: "Format",
+        description: "Renders a log viewer for text data",
+      },
+    },
+    {
+      type: {
         enum: ["HTML"],
         title: "Format",
         description: "Display string as sanitised HTML",

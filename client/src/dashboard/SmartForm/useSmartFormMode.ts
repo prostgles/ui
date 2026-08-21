@@ -150,7 +150,7 @@ export const useSmartFormMode = (
           tableHandlerInsert && currentRow ?
             () => {
               const nonInsertableColumns = table.columns
-                .filter((c) => !c.insert)
+                .filter((c) => !c.insert || c.is_pkey)
                 .map((c) => c.name);
               const currentRowClone =
                 nonInsertableColumns.length ?

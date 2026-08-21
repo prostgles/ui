@@ -23,6 +23,7 @@ import {
 } from "@components/MarkdownWithPlugins/MarkdownWithPlugins";
 import { DoclingDocumentViewerPopupBtn } from "src/dashboard/AskLLM/Chat/AskLLMChatMessages/ProstglesToolUseMessage/ProstglesMCPTools/DoclingConvertedDocument/DoclingDocumentViewer";
 import type { DBSchemaTableWithOptions } from "src/dashboard/Dashboard/getTables";
+import { MonacoLogs } from "@components/MonacoLogs/MonacoLogs";
 
 const tryParseNumber = (v) => {
   if (typeof v === "string" && v.length && Number.isFinite(+v)) {
@@ -317,6 +318,20 @@ export const DISPLAY_FORMATS = [
   } satisfies FormattedColRender<
     Extract<ColumnFormat, { type: "DoclingDocument" }>
   >,
+  {
+    type: "Logs",
+    tsDataType: ["string", "string[]"],
+    render: (rawValue, row) => {
+      const strValue = Array.isArray(rawValue) ? rawValue.join("\n") : rawValue;
+      if (!strValue) {
+        return null;
+      }
+      if (typeof strValue !== "string") {
+        return <div>Invalid value log data type: {typeof strValue}</div>;
+      }
+      return <MonacoLogs logs={strValue} />;
+    },
+  } satisfies FormattedColRender<Extract<ColumnFormat, { type: "Logs" }>>,
 ] as ColumnRenderer[];
 
 export function getFormatOptions(

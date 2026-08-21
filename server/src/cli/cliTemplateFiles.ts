@@ -383,6 +383,7 @@ const getCliAgentsFile = () => `
 
   - Import \`DBGeneratedSchema\` from \`generated/DBGeneratedSchema\`, create the typed config helper with \`const prostgles = defineConfig<DBGeneratedSchema>()\`, and default-export \`prostgles({ ... })\`. Keep the helper name \`prostgles\` so function return types can be discovered during schema generation.
   - Run \`npm run dev\` after schema or function changes. It rebuilds the config and refreshes \`generated/DBGeneratedSchema.ts\`, including \`GeneratedFunctionSchema\` for clients.
+  - Read the resolved type declarations and JSDoc for config APIs such as \`tableConfig\`, \`tableHooks\`, and \`functions\`. Where you are not fully confident about behavior, inspect the **resolved package declaration/source** in the installed Prostgles packages instead of guessing.
   - ${schemaConfigGuidance.id}
   - ${schemaConfigGuidance.connection} ${connectionGuidance.db_schema_filter} ${connectionGuidance.display_options}
   - ${schemaConfigGuidance.databaseConfig}
@@ -395,12 +396,13 @@ const getCliAgentsFile = () => `
   - If a server function needs a non-Node.js runtime or system dependencies, implement that work as a service instead of running it directly in the function.
   - Define services under \`src/services/<serviceName>/\`, with the typed \`*.service.ts\` definition beside a \`src/\` Docker build context. Declare a health check and typed endpoints for every operation the app calls.
   - Register each service in \`src/serviceManager.ts\` and expose its config through the top-level \`services\` property. Service names must not collide with built-in Prostgles services or another app service.
-  - Use the \`serviceManager\` provided to \`onMount\` and call \`getServiceWithRetries(serviceName)\` before using an endpoint. This is the host-owned instance shown in the Prostgles Services UI; do not construct another \`ServiceManager\`.
+  - Prostgles injects the host-owned service manager as \`context.serviceManager\` in \`onMount\`, table hooks, and server functions. In a function's \`run\` callback, destructure it from the function context with \`run: async (input, { context }) => { ... }\`.
+  - Call \`context.serviceManager.getServiceWithRetries(serviceName)\` before using an endpoint. This is the instance shown in the Prostgles Services UI; do not construct another \`ServiceManager\`.
 
   ## Typed database object
 
   - The Prostgles \`dbo\` object available in \`onMount\`, \`tableHooks\`, and server functions is \`DBOFullyTyped<DBGeneratedSchema>\`. Table names, columns, filters, selects, inserts, updates, and results are fully typed.
-  - Keep the schema generic connected when moving code into separate modules. Use \`ProstglesOnMount<DBGeneratedSchema, typeof services>\` for an \`onMount\` module that uses app services, \`TableHooks<DBGeneratedSchema>\` for hooks, and the typed function definers for functions.
+  - Keep the schema and context generics connected when moving code into separate modules. Use \`ProstglesOnMount<DBGeneratedSchema, typeof services>\` for \`onMount\`, \`TableHooks<DBGeneratedSchema, ProstglesContext<typeof services>>\` for hooks, and \`createFunctionGroupDefinerWithContext<DBGeneratedSchema, ProstglesContext<typeof services>>()\` or \`createFunctionsDefinerWithContext<DBGeneratedSchema, ProstglesContext<typeof services>>()\` for functions that use app services.
   - Prefer typed \`dbo\` table handlers and let TypeScript infer values. Casts should be very rare; before adding one, check the table definition, JSONB schema, generated schema, and helper generic.
   - Every table and view handler supports realtime \`subscribe\` and \`subscribeOne\`, for example \`dbo.orders.subscribe(filter, params, onData)\`. Prefer subscriptions over polling the database. Keep the returned subscription handler and call \`unsubscribe()\` during cleanup; an \`onMount\` callback can return that cleanup function.
 
@@ -425,6 +427,8 @@ const getCliAgentsFile = () => `
 
   - ${schemaConfigGuidance.tableConfig} ${schemaConfigGuidance.tableConfigMigrations}
   - ${schemaConfigGuidance.tableHooks} Use hooks such as \`beforeEach\`, \`afterEach\`, and \`afterAll\` for application behavior instead of PostgreSQL triggers as this allows interaction with typescript and provides full type safety.
+  - \`afterEach\` and \`afterAll\` run inside the still-uncommitted mutation transaction. Use their \`row\` or \`rows\` values for the affected records and \`dbx\` for reads or writes that must share that transaction. A separate handler, including a \`dbo\` captured from \`onMount\`, cannot see newly inserted rows until commit.
+  - Do not start detached work from a hook that immediately re-queries a newly inserted row through another database connection. Await work whose failure should roll back the mutation; for post-commit background processing, write an outbox/queue record in the hook transaction and let a separate consumer process it after commit.
   - ${connectionGuidance.table_options} Keep each table's options in its matching \`*.tableOptions.ts\` module and merge them under \`connection.table_options\`.
   - Give every JSONB column a \`jsonbSchema\` or \`jsonbSchemaType\` so its contents are validated and typed.
   - Follow PostgreSQL schema best practices: use primary and foreign keys, appropriate nullability, unique constraints, and indexes. Model fixed sets of values as lookup tables with \`isLookupTable\` and references instead of \`CHECK (value IN (...))\` constraints.

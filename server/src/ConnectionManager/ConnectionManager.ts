@@ -20,8 +20,10 @@ import { getDbConnection } from "../connectionUtils/testDBConnection";
 import { getDataPath } from "../electronConfig";
 import type { Connections, DBS, DatabaseConfigs } from "../index";
 import { connectionManager } from "../index";
-import { getServiceManager } from "../ServiceManager/getServiceManager";
-import type { ProstglesOnMountCleanup } from "../schemaConfig";
+import type {
+  ProstglesContext,
+  ProstglesOnMountCleanup,
+} from "../schemaConfig";
 import { UNIQUE_DB_COLS } from "../tableConfig/tableConfigDatabaseConfig";
 import { getConnectionHttpServer } from "./getConnectionHttpServer";
 import { getConnectionServerFunctions } from "./getConnectionServerFunctions";
@@ -60,7 +62,7 @@ type PRGLInstanceStarted = {
   io: Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>;
   con: Connections;
   dbConf: DatabaseConfigs;
-  prgl: InitResult<void, SUser>;
+  prgl: InitResult<void, SUser, ProstglesContext>;
   connectionInfo: ConnectionDetails;
   onMountCleanup: ProstglesOnMountCleanup | undefined;
   lastRestart: number;
@@ -181,6 +183,7 @@ export class ConnectionManager {
     if (prglCon.state !== "started") throw "Connection not ready";
     return prglCon;
   };
+
   getActiveConnectionSilentFail = (connectionId: string) => {
     const prglCon = this.prglConnections.get(connectionId);
     if (prglCon?.state !== "started") return undefined;
@@ -252,7 +255,7 @@ export class ConnectionManager {
       sql: prglCon.prgl.sql,
       tables: prglCon.prgl.getSchema(),
       reason: { type: "prgl.restart" },
-      serviceManager: getServiceManager(),
+      context: prglCon.prgl.context,
     });
     if (typeof cleanup === "function") {
       prglCon.onMountCleanup = cleanup;
