@@ -384,6 +384,10 @@ export type TableColumn = {
         type: "Media";
       }
     | {
+        /** Display process logs */
+        type: "Logs";
+      }
+    | {
         /** Used internally. Ignore */
         type: "DoclingDocument";
       };
