@@ -9,6 +9,7 @@ export {
   createFunctionsDefinerWithContext,
 } from "prostgles-server";
 import type { ProstglesInitOptions } from "prostgles-server/dist/ProstglesTypes";
+export type { Join } from "prostgles-server/dist/ProstglesTypes";
 import type { OnReadyParams } from "prostgles-server/dist/initProstgles";
 import type {
   ServiceManager,
@@ -19,6 +20,7 @@ export type {
   TableHooksDefinition,
 } from "prostgles-server";
 import type { ServerFunctionDefinitions } from "prostgles-server";
+
 import {
   prostglesServices,
   type ServiceRegistry,
