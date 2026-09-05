@@ -4,7 +4,7 @@ import type { SchemaConfig, SchemaConfigConnection } from "../schemaConfig";
 import packageJson from "../../package.json";
 import { fromEntries, pickKeys } from "prostgles-types";
 import { dirname, join } from "path";
-import { mkdirSync, writeFileSync } from "fs";
+import { existsSync, mkdirSync, writeFileSync } from "fs";
 
 export const saveCliTemplateFiles = ({
   configId,
@@ -14,6 +14,25 @@ export const saveCliTemplateFiles = ({
   targetPath: string;
 }) => {
   saveFolderFiles(targetPath, getCliTemplateFiles({ configId }));
+};
+
+export const saveCliComposeFiles = ({
+  configId,
+  targetPath,
+}: {
+  configId: string;
+  targetPath: string;
+}) => {
+  const files = getCliComposeFiles({ configId });
+  const existingFiles = Object.keys(files).filter((fileName) =>
+    existsSync(join(targetPath, fileName)),
+  );
+  if (existingFiles.length) {
+    throw new Error(
+      `Refusing to overwrite existing deployment files: ${existingFiles.join(", ")}`,
+    );
+  }
+  saveFolderFiles(targetPath, files);
 };
 
 export const srcFolderName = "src";
@@ -49,6 +68,30 @@ const saveFolderFiles = (targetPath: string, folderFiles: FolderFiles) => {
 
 const getCliTemplateFiles = ({ configId }: { configId: string }) =>
   ({
+    ...getCliComposeFiles({ configId }),
+    "README.md": `
+      # ${configId}
+
+      ## Development
+
+      Copy \`.env.example\` to \`.env\`, configure both database URLs, then run:
+
+      \`\`\`sh
+      npm install
+      npm run dev
+      \`\`\`
+
+      ## Deployment
+
+      Set strong \`PRGL_PASSWORD\` and \`PROSTGLES_DOCKER_DB_PASSWORD\` values in \`.env\`, then use Docker Compose directly:
+
+      \`\`\`sh
+      docker compose up -d --build
+      docker compose logs -f app
+      docker compose down
+      \`\`\`
+
+      The database and Prostgles data directory use named volumes. Managed app services share the private runtime network and are not published on host ports.`,
     "package.json": JSON.stringify(getPackageJson(configId), null, 2) + "\n",
     "tsconfig.json":
       JSON.stringify(
@@ -193,9 +236,94 @@ const getCliTemplateFiles = ({ configId }: { configId: string }) =>
       # Database exposed by this config. Must use the same server as the state database.
       PROSTGLES_DATABASE_URL=postgres://user:password@localhost:5432/${configId}
 
+      # Used by compose.yaml for its private PostgreSQL instance.
+      PROSTGLES_DOCKER_DB_PASSWORD=${randomBytes(24).toString("base64url")}
+
       # npm test starts an ephemeral PostgreSQL Docker container bound to 127.0.0.1 only.
       # Override only when the app needs a different PostgreSQL/PostGIS version.
       # PROSTGLES_TEST_POSTGRES_IMAGE=postgis/postgis:17-3.4`,
+  }) as const;
+
+export const getCliComposeFiles = ({ configId }: { configId: string }) =>
+  ({
+    Dockerfile: `
+      FROM docker:29-cli AS docker-cli
+
+      FROM node:24-bookworm-slim
+
+      WORKDIR /app
+
+      COPY --from=docker-cli /usr/local/bin/docker /usr/local/bin/docker
+
+      COPY . .
+      RUN npm install
+      RUN npm run build
+
+      ENV NODE_ENV=production
+
+      CMD ["npm", "start"]`,
+    "compose.yaml": `
+      name: ${configId}
+
+      services:
+        app:
+          build: .
+          init: true
+          restart: unless-stopped
+          depends_on:
+            db:
+              condition: service_healthy
+          environment:
+            IS_DOCKER: "yes"
+            NODE_ENV: production
+            PRGL_USERNAME: \${PRGL_USERNAME:-admin}
+            PRGL_PASSWORD: \${PRGL_PASSWORD:?Set PRGL_PASSWORD in .env}
+            PROSTGLES_UI_HOST: "0.0.0.0"
+            PROSTGLES_DATA_DIR: /var/lib/prostgles
+            PROSTGLES_STATE_DATABASE_URL: postgres://postgres:\${PROSTGLES_DOCKER_DB_PASSWORD:?Set PROSTGLES_DOCKER_DB_PASSWORD in .env}@db:5432/prostgles_state
+            PROSTGLES_DATABASE_URL: postgres://postgres:\${PROSTGLES_DOCKER_DB_PASSWORD:?Set PROSTGLES_DOCKER_DB_PASSWORD in .env}@db:5432/${configId}
+            PROSTGLES_DOCKER_NETWORK: \${PROSTGLES_DOCKER_NETWORK:-${configId}-runtime}
+            PROSTGLES_INSTANCE_ID: \${PROSTGLES_INSTANCE_ID:-${configId}}
+          ports:
+            - "\${PROSTGLES_DOCKER_IP:-127.0.0.1}:\${PROSTGLES_DOCKER_PORT:-3004}:3004"
+          volumes:
+            - prostgles-data:/var/lib/prostgles
+            - /var/run/docker.sock:/var/run/docker.sock
+          networks:
+            - runtime
+
+        db:
+          image: postgis/postgis:17-3.4
+          restart: unless-stopped
+          environment:
+            POSTGRES_DB: postgres
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: \${PROSTGLES_DOCKER_DB_PASSWORD:?Set PROSTGLES_DOCKER_DB_PASSWORD in .env}
+          healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+            interval: 2s
+            timeout: 3s
+            retries: 30
+          volumes:
+            - database:/var/lib/postgresql/data
+          networks:
+            - runtime
+
+      volumes:
+        database:
+        prostgles-data:
+
+      networks:
+        runtime:
+          name: \${PROSTGLES_DOCKER_NETWORK:-${configId}-runtime}
+          driver: bridge`,
+    ".dockerignore": `
+      .env
+      .git
+      .prostgles
+      build
+      node_modules
+      *.log`,
   }) as const;
 
 const getPackageJson = (configId: string) => ({
@@ -422,6 +550,12 @@ const getCliAgentsFile = () => `
   - If the deployment fixture blocks a valid scenario, inspect \`deployment.logPath\` and report the issue against \`@prostgles/prostgles\`; do not weaken the app or its assertions to work around the fixture.
   - Add test users through the fixture's \`users\` option and connect with \`connectProjectAs(userKey)\`. Sessions are seeded directly, so deployment tests do not need to exercise the login UI.
   - Add deterministic database state with the fixture's \`seed\` callback. Never use development or production database URLs for test setup.
+
+  ## Deployment
+
+  - Use \`docker compose up -d --build\` for production deployment. Keep Compose as the operational interface for logs, restarts, upgrades, and shutdown.
+  - The generated stack persists PostgreSQL and \`/var/lib/prostgles\`. Back up both named volumes.
+  - Managed services use the configured private Docker runtime network. Do not publish their ports unless an external client explicitly requires access.
 
   ## Tables, display options, and hooks
 

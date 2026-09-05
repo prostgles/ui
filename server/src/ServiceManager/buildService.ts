@@ -11,6 +11,7 @@ import { getDockerBuildHash } from "./getDockerBuildHash";
 import { getSelectedConfigEnvs } from "./getSelectedConfigEnvs";
 import type { ServiceManager } from "./ServiceManager";
 import { OnServiceLogs, ServiceInstance } from "./ServiceManagerTypes";
+import { getServiceDockerResources } from "@src/dockerRuntime";
 
 export async function buildService(
   this: ServiceManager,
@@ -47,7 +48,7 @@ export async function buildService(
     service.buildContext ?? join(serviceName, "src"),
   );
 
-  const imageName = camelCaseToSkewerCase(serviceName);
+  const { imageName } = getServiceDockerResources(serviceName);
 
   const { buildArgs } = await getSelectedConfigEnvs(this, serviceName);
   /** Only rebuild if hash differs */
@@ -127,10 +128,3 @@ export async function buildService(
   onLogsCombined(log);
   return state;
 }
-
-export const camelCaseToSkewerCase = (str: string) => {
-  return str
-    .replace(/([a-z])([A-Z])/g, "$1-$2")
-    .replace(/[\s_]+/g, "-")
-    .toLowerCase();
-};

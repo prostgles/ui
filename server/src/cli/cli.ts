@@ -7,6 +7,7 @@ import path from "path";
 import { compileSchemaConfigProject } from "../ConnectionManager/compileSchemaConfigProject";
 import {
   generatedFolderName,
+  saveCliComposeFiles,
   saveCliTemplateFiles,
   srcFolderName,
 } from "./cliTemplateFiles";
@@ -14,6 +15,7 @@ import { ensureCliDatabases } from "./ensureCliDatabases";
 
 const usage = `Usage:
   prostgles create <directory> [--skip-install]
+  prostgles compose init [--config <directory>]
   prostgles dev [--config <directory>]
   prostgles start [--config <directory>]`;
 
@@ -26,6 +28,9 @@ const getConfigPath = (args: string[]) => {
 };
 
 const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
+
+const getConfigId = (value: string) =>
+  value.replace(/[^a-z0-9-]/gi, "-").toLowerCase() || "my-prostgles-app";
 
 const installConfigDependencies = (targetPath: string) => {
   const result = spawnSync(npmCommand, ["install"], {
@@ -43,23 +48,38 @@ const createConfig = (targetPath: string, skipInstall: boolean) => {
     throw new Error(`${targetPath} already exists and is not empty`);
   }
 
-  const packageName = path
-    .basename(targetPath)
-    .replace(/[^a-z0-9-]/gi, "-")
-    .toLowerCase();
-  const configId = packageName || "my-prostgles-app";
+  const configId = getConfigId(path.basename(targetPath));
   saveCliTemplateFiles({ configId, targetPath });
 
   if (skipInstall) {
     console.log(
-      `Created config project in ${targetPath}. Run npm install, copy .env.example to .env, configure both database URLs, then run npm run dev.`,
+      `Created config project in ${targetPath}. Run npm install, copy .env.example to .env, then see README.md for development and Docker deployment commands.`,
     );
     return;
   }
 
   installConfigDependencies(targetPath);
   console.log(
-    `Created config project and installed dependencies in ${targetPath}. Copy .env.example to .env, configure both database URLs, then run npm run dev.`,
+    `Created config project and installed dependencies in ${targetPath}. Copy .env.example to .env, then see README.md for development and Docker deployment commands.`,
+  );
+};
+
+const initialiseCompose = (configPath: string) => {
+  const packageFile = path.join(configPath, "package.json");
+  if (!existsSync(packageFile)) {
+    throw new Error(`No package.json found in config project ${configPath}`);
+  }
+  const packageConfig = JSON.parse(readFileSync(packageFile, "utf8")) as {
+    name?: unknown;
+  };
+  const configId = getConfigId(
+    typeof packageConfig.name === "string" ?
+      packageConfig.name
+    : path.basename(configPath),
+  );
+  saveCliComposeFiles({ configId, targetPath: configPath });
+  console.log(
+    `Added Dockerfile, compose.yaml and .dockerignore to ${configPath}. Set PROSTGLES_DOCKER_DB_PASSWORD in .env, then run docker compose up -d --build.`,
   );
 };
 
@@ -180,6 +200,10 @@ const main = async () => {
     const target = args[0];
     if (!target || target.startsWith("-")) throw new Error(usage);
     createConfig(path.resolve(target), args.includes("--skip-install"));
+    return;
+  }
+  if (command === "compose" && args[0] === "init") {
+    initialiseCompose(getConfigPath(args.slice(1)));
     return;
   }
   if (command === "dev" || command === "start") {

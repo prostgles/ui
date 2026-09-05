@@ -1,6 +1,5 @@
 name: prostgles
 
-# Define reusable blocks
 x-ui-environment: &ui-environment
   POSTGRES_HOST: db
   POSTGRES_DB: ${POSTGRES_DB}

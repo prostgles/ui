@@ -2,12 +2,17 @@ import pluginSecurity from "eslint-plugin-security";
 import eslint from "@eslint/js";
 import tseslint from "typescript-eslint";
 import { defineConfig } from "eslint/config";
+import globals from "globals";
 
 export default defineConfig(
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   pluginSecurity.configs.recommended,
   eslint.configs.recommended,
-  tseslint.configs.recommendedTypeChecked,
+  {
+    files: ["**/*.{js,mjs,cjs,ts,mts,cts}"],
+    languageOptions: {
+      globals: globals.node,
+    },
+  },
   {
     ignores: [
       "node_modules",
@@ -25,17 +30,14 @@ export default defineConfig(
     ],
   },
   {
+    files: ["**/*.{ts,tsx,mts,cts}"],
+    extends: [tseslint.configs.recommendedTypeChecked],
     languageOptions: {
       parserOptions: {
-        projectService: {
-          allowDefaultProject: ["*.js", "*.mjs", "scripts/*.mjs"],
-        },
+        projectService: true,
         tsconfigRootDir: import.meta.dirname,
       },
     },
-  },
-  {
-    files: ["**/*.js", "**/*.ts"],
     rules: {
       "no-cond-assign": "error",
       "@typescript-eslint/no-namespace": "off",
@@ -80,5 +82,9 @@ export default defineConfig(
         },
       ],
     },
+  },
+  {
+    files: ["**/*.{js,mjs,cjs}"],
+    extends: [tseslint.configs.disableTypeChecked],
   },
 );

@@ -43,7 +43,7 @@ export type ConnectionHotReloadProperties = Pick<
 
 const mergeFunctions = (
   schemaFunctions:
-    | ServerFunctionDefinitions<void, SessionUser, ProstglesContext>
+    | ServerFunctionDefinitions<void, SessionUser, ProstglesContext | undefined>
     | undefined,
   connectionFunctions: ServerFunctionDefinitions<void, SUser, ProstglesContext>,
 ): ServerFunctionDefinitions<void, SUser, ProstglesContext> => {

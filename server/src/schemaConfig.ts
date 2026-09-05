@@ -14,6 +14,7 @@ import type {
   ServiceManager,
   ServiceManagerConfig,
 } from "./ServiceManager/ServiceManager";
+import type { ServerFunctionDefinitions } from "prostgles-server";
 import {
   prostglesServices,
   type ServiceRegistry,
@@ -82,15 +83,24 @@ export type SchemaConfigProstglesOptions<
   S = void,
   SUser extends SessionUser = SessionUser,
   Services extends ServiceRegistry = Record<never, never>,
-> = Pick<
-  ProstglesInitOptions<S, SUser, ProstglesContext<Services>>,
-  | "functions"
-  | "joins"
-  | "tableHooks"
-  | "tableConfig"
-  | "tableConfigMigrations"
-  | "watchSchemaType"
->;
+> = Omit<
+  Pick<
+    ProstglesInitOptions<S, SUser, ProstglesContext<Services>>,
+    | "functions"
+    | "joins"
+    | "tableHooks"
+    | "tableConfig"
+    | "tableConfigMigrations"
+    | "watchSchemaType"
+  >,
+  "functions"
+> & {
+  functions?: ServerFunctionDefinitions<
+    S,
+    SUser,
+    ProstglesContext<Services> | undefined
+  >;
+};
 
 export type SchemaConfig<
   S = void,

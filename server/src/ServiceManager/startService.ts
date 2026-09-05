@@ -12,10 +12,13 @@ import {
   type RunningServiceInstance,
   type ServiceInstance,
 } from "./ServiceManagerTypes";
-import { camelCaseToSkewerCase } from "./buildService";
 import { getSelectedConfigEnvs } from "./getSelectedConfigEnvs";
 import { getServiceEndpoints } from "./getServiceEndpoints";
 import { resolveBinary } from "./resolveBinary";
+import {
+  getServiceDockerConnectivity,
+  getServiceDockerResources,
+} from "@src/dockerRuntime";
 
 const STOPPED_REASON = "stopped";
 export async function startService(
@@ -41,8 +44,8 @@ export async function startService(
   };
   const stop = () => abortController.abort(STOPPED_REASON);
   this.activeServices.set(serviceName, { getLogs, stop, status: "starting" });
-  const imageName = camelCaseToSkewerCase(serviceName);
-  const containerName = `prostgles-service-${imageName}`;
+  const { containerName, imageName, networkName, volumePrefix } =
+    getServiceDockerResources(serviceName);
 
   const cleanup = () => {
     spawn(resolveBinary("docker"), ["stop", "-t", "0", containerName], {
@@ -61,10 +64,11 @@ export async function startService(
     healthCheck,
     endpoints,
   } = serviceConfig;
-  const hostPort = await getFreePort(preferredHostPort);
+  const hostPort =
+    networkName ? undefined : await getFreePort(preferredHostPort);
   const volumeArgs: string[] = [];
   for (const [volumeName, containerPath] of Object.entries(volumes)) {
-    const hostPath = `prostgles-service-${imageName}-${volumeName}`;
+    const hostPath = `${volumePrefix}-${volumeName}`;
     await executeDockerCommand(["volume", "create", hostPath], {
       timeout: 10_000,
     });
@@ -73,7 +77,12 @@ export async function startService(
 
   const { env, gpus = "none" } = await getSelectedConfigEnvs(this, serviceName);
 
-  const baseHost = `127.0.0.1:${hostPort}`;
+  const { baseUrl, runArgs: connectivityArgs } = getServiceDockerConnectivity({
+    containerName,
+    containerPort: port,
+    hostPort: hostPort ?? preferredHostPort,
+    networkName,
+  });
 
   const onStopped = (
     res: ExecutionResult | { type: "error"; error: unknown },
@@ -109,8 +118,7 @@ export async function startService(
           Array.isArray(gpus) ? `"device=${gpus.join(",")}"` : gpus.toString(),
         ]
       : []),
-      "-p",
-      `${baseHost}:${port}`,
+      ...connectivityArgs,
       ...volumeArgs,
       ...Object.entries(env).flatMap(([key, value]) => [
         "-e",
@@ -133,7 +141,6 @@ export async function startService(
       onStopped({ type: "error", error });
     });
 
-  const baseUrl = `http://${baseHost}`;
   const startingServiceLabel = `Starting service ${JSON.stringify(serviceName)}. `;
   while (this.activeServices.get(serviceName)?.status === "starting") {
     await tout(1000);
@@ -188,5 +195,5 @@ export async function startService(
 }
 
 export const getContainerName = (serviceName: string) => {
-  return `prostgles-service-${camelCaseToSkewerCase(serviceName)}`;
+  return getServiceDockerResources(serviceName).containerName;
 };
