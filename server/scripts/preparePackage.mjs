@@ -1,5 +1,6 @@
 import { cpSync, existsSync, mkdirSync, rmSync } from "node:fs";
 import { resolve } from "node:path";
+import "./copyCliDockerfiles.mjs";
 
 const source = resolve(import.meta.dirname, "../../client");
 const destination = resolve(import.meta.dirname, "../client");

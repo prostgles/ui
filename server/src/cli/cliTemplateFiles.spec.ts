@@ -29,11 +29,15 @@ void test("new CLI apps include a native Compose deployment", (context) => {
     compose,
     /^ {4}name: \$\{PROSTGLES_DOCKER_NETWORK:-my-app-runtime\}$/m,
   );
-  assert.match(dockerfile, /FROM docker:29-cli AS docker-cli/);
-  assert.match(
-    dockerfile,
-    /COPY --from=docker-cli \/usr\/local\/bin\/docker \/usr\/local\/bin\/docker/,
+  assert.ok(dockerfile.includes("AS runtime"));
+  assert.ok(dockerfile.includes("FROM runtime AS app"));
+  assert.ok(!dockerfile.includes("prostgles/ui-runtime"));
+  assert.ok(compose.includes("dockerfile: DB.Dockerfile"));
+  assert.ok(
+    readFileSync(join(targetPath, "DB.Dockerfile"), "utf8").includes("procps"),
   );
+  assert.ok(compose.includes("shared_preload_libraries=pg_stat_statements"));
+  assert.ok(compose.includes("max_connections=200"));
 });
 
 void test("compose init does not overwrite deployment files", (context) => {

@@ -7,7 +7,7 @@
     "prostgles": "dist/server/src/cli/cli.js"
   },
   "scripts": {
-    "compile": "cross-env NODE_ENV='production' NODE_OPTIONS='--max-old-space-size=2048' tsc && tsc-alias",
+    "compile": "cross-env NODE_ENV='production' NODE_OPTIONS='--max-old-space-size=2048' tsc && tsc-alias && node ./scripts/copyCliDockerfiles.mjs",
     "build": "npm ci && npm run compile && npm prune --omit=dev",
     "start": "npm run build && cross-env NODE_ENV='production' node dist/server/src/index.js",
     "test": "npm run build && node test-runner.mjs",

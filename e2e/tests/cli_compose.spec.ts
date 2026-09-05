@@ -107,9 +107,23 @@ test("deploys a generated config project with Docker Compose", async () => {
     copyFileSync(join(testRoot, packedFileName), packageArchive);
 
     await run(
+      "npm",
+      [
+        "install",
+        "--ignore-scripts",
+        "--no-audit",
+        "--no-fund",
+        packageArchive,
+      ],
+      { cwd: testRoot, capture: true },
+    );
+    await run(
       process.execPath,
       [
-        join(serverRoot, "dist/server/src/cli/cli.js"),
+        join(
+          testRoot,
+          "node_modules/@prostgles/prostgles/dist/server/src/cli/cli.js",
+        ),
         "create",
         appRoot,
         "--skip-install",
@@ -125,8 +139,8 @@ test("deploys a generated config project with Docker Compose", async () => {
     packageConfig.dependencies["@prostgles/prostgles"] = "file:./prostgles.tgz";
     writeFileSync(packageFile, `${JSON.stringify(packageConfig, null, 2)}\n`);
 
-    await run("docker", ["compose", "up", "--detach", "--build"]);
     composeStarted = true;
+    await run("docker", ["compose", "up", "--detach", "--build"]);
     await waitFor(
       async () =>
         await fetch(`http://127.0.0.1:${freePort}/dbs`)
@@ -139,6 +153,53 @@ test("deploys a generated config project with Docker Compose", async () => {
           .catch(() => false),
       "the generated app",
     );
+
+    const backupRestore = await run(
+      "docker",
+      [
+        "compose",
+        "exec",
+        "--no-TTY",
+        "app",
+        "sh",
+        "-ec",
+        `
+        for program in psql pg_dump pg_restore pg_dumpall; do
+          which "$program"
+          "$program" --version
+        done
+        psql "$PROSTGLES_DATABASE_URL" -v ON_ERROR_STOP=1 -c "CREATE TABLE backup_restore_check (value text); INSERT INTO backup_restore_check VALUES ('backup-restored');"
+        pg_dump "$PROSTGLES_DATABASE_URL" --format=c --table=backup_restore_check --file=/tmp/backup-check.dump
+        psql "$PROSTGLES_DATABASE_URL" -v ON_ERROR_STOP=1 -c "DROP TABLE backup_restore_check;"
+        pg_restore --dbname="$PROSTGLES_DATABASE_URL" --exit-on-error /tmp/backup-check.dump
+        psql "$PROSTGLES_DATABASE_URL" -At -v ON_ERROR_STOP=1 -c "SELECT value FROM backup_restore_check;"
+        psql "$PROSTGLES_DATABASE_URL" -v ON_ERROR_STOP=1 -c "DROP TABLE backup_restore_check;"
+        rm /tmp/backup-check.dump
+      `,
+      ],
+      { capture: true },
+    );
+    expect(backupRestore.stdout).toContain("backup-restored");
+
+    const monitoring = await run(
+      "docker",
+      [
+        "compose",
+        "exec",
+        "--no-TTY",
+        "db",
+        "sh",
+        "-ec",
+        `
+        ps -eo pid,comm
+        top -b -n 1
+        psql -U postgres -d prostgles_state -At -v ON_ERROR_STOP=1 -c "SHOW shared_preload_libraries; SHOW max_connections; CREATE EXTENSION IF NOT EXISTS pg_stat_statements; SELECT count(*) FROM pg_stat_statements;"
+      `,
+      ],
+      { capture: true },
+    );
+    expect(monitoring.stdout).toContain("pg_stat_statements");
+    expect(monitoring.stdout.split("\n")).toContain("200");
 
     await run("docker", [
       "compose",

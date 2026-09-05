@@ -4,7 +4,7 @@ import type { SchemaConfig, SchemaConfigConnection } from "../schemaConfig";
 import packageJson from "../../package.json";
 import { fromEntries, pickKeys } from "prostgles-types";
 import { dirname, join } from "path";
-import { existsSync, mkdirSync, writeFileSync } from "fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 
 export const saveCliTemplateFiles = ({
   configId,
@@ -244,16 +244,21 @@ const getCliTemplateFiles = ({ configId }: { configId: string }) =>
       # PROSTGLES_TEST_POSTGRES_IMAGE=postgis/postgis:17-3.4`,
   }) as const;
 
+const readCliDockerfile = (filename: "Dockerfile" | "DB.Dockerfile") => {
+  const filePath = join(__dirname, filename);
+  if (!existsSync(filePath)) {
+    throw new Error(`Missing bundled ${filename}: ${filePath}`);
+  }
+  return readFileSync(filePath, "utf8");
+};
+
 export const getCliComposeFiles = ({ configId }: { configId: string }) =>
   ({
-    Dockerfile: `
-      FROM docker:29-cli AS docker-cli
-
-      FROM node:24-bookworm-slim
+    "DB.Dockerfile": readCliDockerfile("DB.Dockerfile"),
+    Dockerfile: `${readCliDockerfile("Dockerfile")}
+      FROM runtime AS app
 
       WORKDIR /app
-
-      COPY --from=docker-cli /usr/local/bin/docker /usr/local/bin/docker
 
       COPY . .
       RUN npm install
@@ -293,7 +298,10 @@ export const getCliComposeFiles = ({ configId }: { configId: string }) =>
             - runtime
 
         db:
-          image: postgis/postgis:17-3.4
+          build:
+            context: .
+            dockerfile: DB.Dockerfile
+          command: postgres -c shared_preload_libraries=pg_stat_statements -c max_connections=200
           restart: unless-stopped
           environment:
             POSTGRES_DB: postgres
