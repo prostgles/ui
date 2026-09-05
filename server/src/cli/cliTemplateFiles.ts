@@ -9,11 +9,19 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 export const saveCliTemplateFiles = ({
   configId,
   targetPath,
+  environmentDefaults,
 }: {
   configId: string;
   targetPath: string;
+  environmentDefaults?: {
+    PRGL_PASSWORD?: string;
+    PROSTGLES_DOCKER_DB_PASSWORD?: string;
+  };
 }) => {
-  saveFolderFiles(targetPath, getCliTemplateFiles({ configId }));
+  saveFolderFiles(
+    targetPath,
+    getCliTemplateFiles({ configId, environmentDefaults }),
+  );
 };
 
 export const saveCliComposeFiles = ({
@@ -66,7 +74,16 @@ const saveFolderFiles = (targetPath: string, folderFiles: FolderFiles) => {
   }
 };
 
-const getCliTemplateFiles = ({ configId }: { configId: string }) =>
+const getCliTemplateFiles = ({
+  configId,
+  environmentDefaults,
+}: {
+  configId: string;
+  environmentDefaults?: {
+    PRGL_PASSWORD?: string;
+    PROSTGLES_DOCKER_DB_PASSWORD?: string;
+  };
+}) =>
   ({
     ...getCliComposeFiles({ configId }),
     "README.md": `
@@ -80,6 +97,19 @@ const getCliTemplateFiles = ({ configId }: { configId: string }) =>
       npm install
       npm run dev
       \`\`\`
+
+      ## Upgrading
+
+      Run \`npm run upgrade\` to compare this app with the installed Prostgles version's scaffold.
+      Update the Prostgles dependency first when upgrading to a newer version.
+      Each new file prompts for skip/write (default: write). Each differing file prompts for
+      skip/merge/overwrite (default: merge). Identical files are left alone.
+      Enter the first letter of an action, or press Enter to use the default.
+      Merge opens each changed section with inline Accept Current/Incoming/Both actions in VS Code.
+      The \`git\` and \`code\` commands must be on PATH; no Git repository is required.
+      There is no historical template baseline, so merge is a manual comparison of both versions.
+      Save the result and close the file to continue to the next file.
+      Changes are applied as you go.
 
       ## Deployment
 
@@ -228,7 +258,7 @@ const getCliTemplateFiles = ({ configId }: { configId: string }) =>
     ".env.example": `
       # Fixed admin credentials for CLI development.
       PRGL_USERNAME=admin
-      PRGL_PASSWORD=${randomBytes(24).toString("base64url")}
+      PRGL_PASSWORD=${environmentDefaults?.PRGL_PASSWORD ?? randomBytes(24).toString("base64url")}
 
       # Prostgles UI state. Created automatically when missing.
       PROSTGLES_STATE_DATABASE_URL=postgres://user:password@localhost:5432/prostgles_state_database
@@ -237,7 +267,7 @@ const getCliTemplateFiles = ({ configId }: { configId: string }) =>
       PROSTGLES_DATABASE_URL=postgres://user:password@localhost:5432/${configId}
 
       # Used by compose.yaml for its private PostgreSQL instance.
-      PROSTGLES_DOCKER_DB_PASSWORD=${randomBytes(24).toString("base64url")}
+      PROSTGLES_DOCKER_DB_PASSWORD=${environmentDefaults?.PROSTGLES_DOCKER_DB_PASSWORD ?? randomBytes(24).toString("base64url")}
 
       # npm test starts an ephemeral PostgreSQL Docker container bound to 127.0.0.1 only.
       # Override only when the app needs a different PostgreSQL/PostGIS version.
@@ -345,6 +375,7 @@ const getPackageJson = (configId: string) => ({
     lint: "eslint .",
     "lint:fix": "eslint . --fix",
     start: "prostgles start --config .",
+    upgrade: "prostgles upgrade --config .",
     test: 'npm run build && node --env-file-if-exists=.env --test "build/tests/**/*.test.js"',
   },
   dependencies: { [packageJson.name]: `^${packageJson.version}` },

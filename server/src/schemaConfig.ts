@@ -14,6 +14,10 @@ import type {
   ServiceManager,
   ServiceManagerConfig,
 } from "./ServiceManager/ServiceManager";
+export type {
+  ServerFunctionDefinitions,
+  TableHooksDefinition,
+} from "prostgles-server";
 import type { ServerFunctionDefinitions } from "prostgles-server";
 import {
   prostglesServices,

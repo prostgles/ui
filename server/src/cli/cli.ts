@@ -12,9 +12,11 @@ import {
   srcFolderName,
 } from "./cliTemplateFiles";
 import { ensureCliDatabases } from "./ensureCliDatabases";
+import { upgradeCli } from "./upgradeCli";
 
 const usage = `Usage:
   prostgles create <directory> [--skip-install]
+  prostgles upgrade [--config <directory>]
   prostgles compose init [--config <directory>]
   prostgles dev [--config <directory>]
   prostgles start [--config <directory>]`;
@@ -64,7 +66,7 @@ const createConfig = (targetPath: string, skipInstall: boolean) => {
   );
 };
 
-const initialiseCompose = (configPath: string) => {
+const getExistingConfigId = (configPath: string) => {
   const packageFile = path.join(configPath, "package.json");
   if (!existsSync(packageFile)) {
     throw new Error(`No package.json found in config project ${configPath}`);
@@ -72,11 +74,15 @@ const initialiseCompose = (configPath: string) => {
   const packageConfig = JSON.parse(readFileSync(packageFile, "utf8")) as {
     name?: unknown;
   };
-  const configId = getConfigId(
+  return getConfigId(
     typeof packageConfig.name === "string" ?
       packageConfig.name
     : path.basename(configPath),
   );
+};
+
+const initialiseCompose = (configPath: string) => {
+  const configId = getExistingConfigId(configPath);
   saveCliComposeFiles({ configId, targetPath: configPath });
   console.log(
     `Added Dockerfile, compose.yaml and .dockerignore to ${configPath}. Set PROSTGLES_DOCKER_DB_PASSWORD in .env, then run docker compose up -d --build.`,
@@ -204,6 +210,12 @@ const main = async () => {
   }
   if (command === "compose" && args[0] === "init") {
     initialiseCompose(getConfigPath(args.slice(1)));
+    return;
+  }
+  if (command === "upgrade") {
+    const configPath = getConfigPath(args);
+    await upgradeCli(getExistingConfigId(configPath), configPath);
+    console.log("Upgrade file processing complete.");
     return;
   }
   if (command === "dev" || command === "start") {

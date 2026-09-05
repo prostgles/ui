@@ -13,6 +13,9 @@ void test("new CLI apps include a native Compose deployment", (context) => {
 
   const compose = readFileSync(join(targetPath, "compose.yaml"), "utf8");
   const dockerfile = readFileSync(join(targetPath, "Dockerfile"), "utf8");
+  const generatedPackage = JSON.parse(
+    readFileSync(join(targetPath, "package.json"), "utf8"),
+  ) as { scripts: Record<string, string> };
   assert.match(compose, /^name: my-app$/m);
   assert.match(compose, /^ {2}app:$/m);
   assert.match(compose, /^ {2}db:$/m);
@@ -38,6 +41,34 @@ void test("new CLI apps include a native Compose deployment", (context) => {
   );
   assert.ok(compose.includes("shared_preload_libraries=pg_stat_statements"));
   assert.ok(compose.includes("max_connections=200"));
+  assert.equal(
+    generatedPackage.scripts.upgrade,
+    "prostgles upgrade --config .",
+  );
+});
+
+void test("CLI templates can preserve environment example secrets", (context) => {
+  const targetPath = mkdtempSync(join(tmpdir(), "prostgles-cli-env-"));
+  context.after(() => rmSync(targetPath, { force: true, recursive: true }));
+
+  saveCliTemplateFiles({
+    configId: "my-app",
+    targetPath,
+    environmentDefaults: {
+      PRGL_PASSWORD: "existing-admin-password",
+      PROSTGLES_DOCKER_DB_PASSWORD: "existing-database-password",
+    },
+  });
+
+  const environmentExample = readFileSync(
+    join(targetPath, ".env.example"),
+    "utf8",
+  );
+  assert.match(environmentExample, /^PRGL_PASSWORD=existing-admin-password$/m);
+  assert.match(
+    environmentExample,
+    /^PROSTGLES_DOCKER_DB_PASSWORD=existing-database-password$/m,
+  );
 });
 
 void test("compose init does not overwrite deployment files", (context) => {
