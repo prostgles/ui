@@ -161,6 +161,7 @@ export const startConnection = async function (
           services: _services,
           workspaces: _workspaces,
           access_control: _accessControl,
+          audit: _audit,
           publish: _publish,
           ...schemaProstglesOptions
         } = schemaConfig ?? {};

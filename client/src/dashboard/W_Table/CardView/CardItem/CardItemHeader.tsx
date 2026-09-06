@@ -6,6 +6,7 @@ import { getEditColumn } from "../../tableUtils/getEditColumn";
 import { DragHeader } from "../DragHeader";
 import type { CardViewRowProps } from "./CardViewRow";
 import { CARD_ITEM_PADDING } from "../constants";
+import { AuditTrailButton } from "../../../AuditTrail/AuditTrailButton";
 
 export const CardHeader = ({
   w,
@@ -21,7 +22,8 @@ export const CardHeader = ({
   allIndexedRows,
   onDataChanged,
   setDraggedRow,
-}: Omit<CardViewRowProps, "cardOpts" | "props">) => {
+  props: cardViewProps,
+}: Omit<CardViewRowProps, "cardOpts">) => {
   const { card, columns } = table;
   const headerColumn =
     card?.headerColumn ?
@@ -128,6 +130,11 @@ export const CardHeader = ({
           setDraggedRow={setDraggedRow}
         />
       )}
+      <AuditTrailButton
+        table={table}
+        row={indexedRow.data}
+        {...cardViewProps.prgl}
+      />
       {!w?.options.hideEditRow &&
         getEditColumn({
           table,

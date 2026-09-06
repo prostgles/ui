@@ -259,6 +259,11 @@ const SmartFormWithNoError = ({
       displayedColumns={displayedColumns}
       headerText={headerText}
       rowFilterObj={"rowFilterObj" in mode ? mode.rowFilterObj : undefined}
+      row={
+        mode.type === "view" || mode.type === "update" ?
+          mode.currentRow
+        : undefined
+      }
       showAsMarkdown={showAsMarkdown}
       setShowAsMarkdown={
         state.modeType === "insert" ? undefined : setShowAsMarkdown

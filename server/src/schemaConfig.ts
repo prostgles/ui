@@ -80,6 +80,46 @@ export type SchemaConfigDatabase = Partial<
 export type SchemaConfigAccessControl =
   DBSSchema["access_control"]["dbPermissions"];
 
+type SchemaConfigTableName<S> =
+  [Extract<keyof S, string>] extends [never] ? string
+  : Extract<keyof S, string>;
+
+type SchemaConfigColumnName<S, T extends SchemaConfigTableName<S>> =
+  T extends keyof S ?
+    S[T] extends { columns: infer C } ?
+      Extract<keyof C, string>
+    : string
+  : string;
+
+type SchemaConfigAuditTableOptions<S, T extends SchemaConfigTableName<S>> = {
+  entityType?: string;
+  /** Defaults to every primary-key column. Required for tables without a primary key. */
+  idColumns?: readonly SchemaConfigColumnName<S, T>[];
+  excludeColumns?: readonly SchemaConfigColumnName<S, T>[];
+};
+
+type SchemaConfigAuditIncludedTables<S> = {
+  [T in SchemaConfigTableName<S>]?: 1 | SchemaConfigAuditTableOptions<S, T>;
+};
+
+type SchemaConfigAuditExcludedTables<S> = {
+  [T in SchemaConfigTableName<S>]?: 0;
+};
+
+export type SchemaConfigAudit<S = void> = {
+  /** Creates a managed append-only audit table. Publish it with select-only permissions. */
+  tableName: string;
+  /**
+   * Either an allowlist (`1` or options) or an exclusion list (`0`).
+   * Enabled and disabled entries cannot be mixed.
+   */
+  tables?:
+    | SchemaConfigAuditIncludedTables<S>
+    | SchemaConfigAuditExcludedTables<S>;
+  /** Columns omitted from every audit snapshot, such as secrets. */
+  excludeColumns?: readonly string[];
+};
+
 /**
  * Startup options which a config project may provide to the primary Prostgles
  * instance. Transport, authentication, storage wiring, and connection
@@ -118,6 +158,8 @@ export type SchemaConfig<
   /** Non-credential connection display options. Database URLs belong in .env. */
   connection?: SchemaConfigConnection;
   databaseConfig?: SchemaConfigDatabase;
+  /** Audits inserts, updates and deletes and shows the history in row cards. */
+  audit?: SchemaConfigAudit<S>;
   /** Database permissions applied to authenticated users of this CLI config. */
   access_control?: SchemaConfigAccessControl;
   /** CLI configs use access_control instead of prostgles-server publish rules. */

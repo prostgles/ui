@@ -162,6 +162,7 @@ export const getHotReloadConfigs = async ({
           table,
           tableConfig,
           userData,
+          audit: schemaConfig?.audit,
         }),
     } satisfies HotReloadConfigOptions,
     connectionServers,

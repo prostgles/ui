@@ -113,6 +113,7 @@ export const prostglesOnReady = async (
                 table,
                 tableConfig,
                 userData,
+                audit: undefined,
               })),
         });
       },

@@ -499,6 +499,8 @@ type ConnectionGuidance = {
 const schemaConfigGuidance = {
   access_control:
     "Configure database permissions with `access_control` using the Prostgles `dbPermissions` shape.",
+  audit:
+    "To enable auditing, configure `audit`. Auditing keeps track of data changes and makes them viewable from each row card. `tableName` names the table Prostgles creates; PostgreSQL triggers capture changes using `prostgles.user` for attribution, primary keys are detected by default, and the audit table is append-only.",
   connection:
     "Keep non-secret connection presentation settings in `connection`; database URLs belong in `.env`.",
   databaseConfig:
@@ -551,6 +553,7 @@ const getCliAgentsFile = () => `
   - ${schemaConfigGuidance.id}
   - ${schemaConfigGuidance.connection} ${connectionGuidance.db_schema_filter} ${connectionGuidance.display_options}
   - ${schemaConfigGuidance.databaseConfig}
+  - ${schemaConfigGuidance.audit}
   - ${schemaConfigGuidance.access_control} 
   - ${schemaConfigGuidance.watchSchemaType}
   - ${schemaConfigGuidance.onInitSQL} ${schemaConfigGuidance.onMount}

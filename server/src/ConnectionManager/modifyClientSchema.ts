@@ -5,17 +5,22 @@ import { isObject, type DBSchemaTable } from "prostgles-types";
 import type { DatabaseConfigs } from "..";
 import { dbsConnectionOptions } from "./dbsConnectionOptions";
 import type { ConnectionHotReloadProperties } from "./getHotReloadConfigs";
+import type { SchemaConfigAudit } from "../schemaConfig";
+import { getAuditTriggerName } from "./auditConfig";
+import { getTableAuditConfig } from "./getTableAuditConfig";
 
 export const modifyClientSchema = ({
   connection,
   databaseConfig,
   table,
   tableConfig,
+  audit,
 }: {
   connection: ConnectionHotReloadProperties;
   databaseConfig: Pick<DatabaseConfigs, "file_table_config">;
   table: DBSchemaTable;
   tableConfig: TableConfig[string] | undefined;
+  audit?: SchemaConfigAudit;
   userData: AuthResultWithSID<SUser> | undefined;
 }): DBSchemaTable<Omit<TableOptions, "columns">, ColumnOptions> => {
   const { file_table_config } = databaseConfig;
@@ -40,6 +45,10 @@ export const modifyClientSchema = ({
   return {
     ...table,
     managedTableType: tableOptions.managedTableType,
+    audit:
+      tableConfig?.triggers?.[getAuditTriggerName(table.name)] ?
+        getTableAuditConfig(table, audit)
+      : undefined,
     card: tableOptions.card,
     icon: tableOptions.icon,
     label:

@@ -45,6 +45,8 @@ type SmartTableProps = Pick<Prgl, "db" | "sql" | "tables" | "methods"> &
     onFilterChange?: (filter: DetailedFilter[]) => void;
     filterOperand?: "and" | "or";
     realtime?: { throttle?: number };
+    initialSort?: ColumnSort[];
+    hideFilters?: boolean;
   };
 
 type S = {
@@ -65,7 +67,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
     pageSize: 25,
     totalRows: 0,
     filteredRows: 0,
-    sort: [],
+    sort: this.props.initialSort ?? [],
     loadedData: false,
   };
 
@@ -237,6 +239,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
       title,
       clickCatchStyle,
       positioning = "right-panel",
+      hideFilters,
     } = this.props;
     const {
       filter,
@@ -300,28 +303,30 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
           />
         )}
 
-        <SmartFilterBar
-          className="p-1 bg-color-2 min-h-fit"
-          rowCount={totalRows}
-          db={db}
-          sql={sql}
-          methods={this.props.methods}
-          table_name={tableName}
-          tables={tables}
-          filter={filter}
-          onChange={(filter) => {
-            this.props.onFilterChange?.(filter);
-            void this.getData(filter);
-          }}
-          onHavingChange={() => {
-            console.warn("Having change not implemented");
-          }}
-          onSortChange={undefined}
-          hideSort={true}
-          showInsertUpdateDelete={{
-            onSuccess: () => this.getData(),
-          }}
-        />
+        {!hideFilters && (
+          <SmartFilterBar
+            className="p-1 bg-color-2 min-h-fit"
+            rowCount={totalRows}
+            db={db}
+            sql={sql}
+            methods={this.props.methods}
+            table_name={tableName}
+            tables={tables}
+            filter={filter}
+            onChange={(filter) => {
+              this.props.onFilterChange?.(filter);
+              void this.getData(filter);
+            }}
+            onHavingChange={() => {
+              console.warn("Having change not implemented");
+            }}
+            onSortChange={undefined}
+            hideSort={true}
+            showInsertUpdateDelete={{
+              onSuccess: () => this.getData(),
+            }}
+          />
+        )}
         <Table
           rows={rows}
           cols={tableCols}

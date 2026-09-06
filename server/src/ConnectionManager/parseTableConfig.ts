@@ -17,6 +17,7 @@ import { getCloudClient } from "../cloudClients/cloudClients";
 import type { ConnectionManager } from "./ConnectionManager";
 import type { ConnectionHotReloadProperties } from "./getHotReloadConfigs";
 import { getSchemaConfig } from "./getSchemaConfig";
+import { addAuditTableConfig } from "./auditConfig";
 import { getServiceManager } from "@src/ServiceManager/getServiceManager";
 import type { ProstglesContext } from "@src/schemaConfig";
 
@@ -98,7 +99,7 @@ export const parseTableConfig = async ({
         referencedTables: fileTableConfig.referencedTables,
       } satisfies FileTableConfig);
 
-  const { tableHooks, tableConfig } =
+  const { audit, tableHooks, tableConfig } =
     getSchemaConfig(databaseConfig.config_sync)?.config ?? {};
   const fileTableHooksMerged: TableHooks<void, ProstglesContext> | undefined =
     fileTable && fileTableConfig?.annotationsTable ?
@@ -231,15 +232,48 @@ export const parseTableConfig = async ({
         },
       }
     : undefined;
+  const sourceTableConfig = (fileTableConfigMerged || tableConfig) && {
+    ...(fileTableConfigMerged || {}),
+    ...tableConfig,
+  };
+  const mergedTableHooks = mergeTableHooks(fileTableHooksMerged, tableHooks);
+
   return {
     fileTable,
-    tableConfig: (fileTableConfigMerged || tableConfig) && {
-      ...(fileTableConfigMerged || {}),
-      ...tableConfig,
-    },
-    tableHooks: (fileTableHooksMerged || tableHooks) && {
-      ...(fileTableHooksMerged || {}),
-      ...tableHooks,
-    },
+    tableConfig: addAuditTableConfig(audit, sourceTableConfig, [
+      ...Object.keys(sourceTableConfig ?? {}),
+      ...Object.keys(mergedTableHooks ?? {}),
+      ...Object.keys(audit?.tables ?? {}),
+      ...(fileTable ? [fileTable.tableName] : []),
+    ]),
+    tableHooks: mergedTableHooks,
   };
+};
+
+const mergeTableHooks = (
+  ...hookSets: (TableHooks<void, ProstglesContext> | undefined)[]
+): TableHooks<void, ProstglesContext> | undefined => {
+  const result: TableHooks<void, ProstglesContext> = {};
+  for (const hooks of hookSets) {
+    for (const [tableName, tableHooks] of Object.entries(hooks ?? {})) {
+      const existing = result[tableName];
+      result[tableName] = {
+        ...existing,
+        ...tableHooks,
+        beforeEach:
+          existing?.beforeEach || tableHooks.beforeEach ?
+            [...(existing?.beforeEach ?? []), ...(tableHooks.beforeEach ?? [])]
+          : undefined,
+        afterEach:
+          existing?.afterEach || tableHooks.afterEach ?
+            [...(existing?.afterEach ?? []), ...(tableHooks.afterEach ?? [])]
+          : undefined,
+        afterAll:
+          existing?.afterAll || tableHooks.afterAll ?
+            [...(existing?.afterAll ?? []), ...(tableHooks.afterAll ?? [])]
+          : undefined,
+      };
+    }
+  }
+  return Object.keys(result).length ? result : undefined;
 };

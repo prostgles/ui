@@ -284,6 +284,7 @@ export const COMMANDS = {
   "table.options.cardView.groupBy": "",
   "table.options.cardView.orderBy": "",
   "CardView.row": "",
+  "AuditTrail.open": "Open the selected row's audit history",
   "CardView.group": "",
   "CardView.DragHeader": "",
 
