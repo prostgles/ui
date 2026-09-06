@@ -1,5 +1,6 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import { randomBytes, randomUUID } from "node:crypto";
+import { existsSync } from "node:fs";
 import { mkdir, open, readFile } from "node:fs/promises";
 import { createServer } from "node:net";
 import path from "node:path";
@@ -28,11 +29,11 @@ export type TestDeploymentSeedContext = {
 };
 
 export type CreateTestDeploymentOptions = {
-  /** Root of the app created by `prostgles create`. */
-  configPath: string;
+  /** Root of the app created by `prostgles create`. Defaults to the current working directory. */
+  configPath?: string;
   /** App ID used in Docker and database names. */
   configId: string;
-  /** PostgreSQL Docker image. Defaults to the PostGIS image used by Prostgles. */
+  /** Explicit PostgreSQL image override. By default DB.Dockerfile is built when present. */
   postgresImage?: string;
   /** Output file for deployment stdout and stderr. */
   logPath?: string;
@@ -130,13 +131,39 @@ const delay = async (milliseconds: number) =>
   await new Promise((resolve) => setTimeout(resolve, milliseconds));
 
 const startDockerDatabases = async ({
+  configPath,
   configId,
   postgresImage,
   startupTimeoutMs,
-}: Pick<
-  CreateTestDeploymentOptions,
-  "configId" | "postgresImage" | "startupTimeoutMs"
->) => {
+}: {
+  configPath: string;
+  configId: string;
+  postgresImage?: string;
+  startupTimeoutMs?: number;
+}) => {
+  const configuredImage =
+    postgresImage ?? process.env.PROSTGLES_TEST_POSTGRES_IMAGE;
+  const dbDockerfile = path.join(configPath, "DB.Dockerfile");
+  let image = configuredImage;
+  if (!image && existsSync(dbDockerfile)) {
+    const imageTag = `prostgles-test-${validatePrefix(configId).replaceAll("_", "-") || "app"}-db`;
+    const buildArgs = [
+      "build",
+      "--quiet",
+      "--file",
+      dbDockerfile,
+      "--tag",
+      imageTag,
+      configPath,
+    ];
+    const buildResult = await runDocker(buildArgs);
+    if (buildResult.exitCode !== 0) {
+      throw getDockerError(buildArgs, buildResult);
+    }
+    image = imageTag;
+  }
+  image ??= DEFAULT_POSTGRES_IMAGE;
+
   const prefix = validatePrefix(configId);
   const runId = randomBytes(6).toString("hex");
   const baseName = `${TEST_DATABASE_NAMESPACE}${prefix ? `${prefix}_` : ""}${runId}`;
@@ -145,10 +172,6 @@ const startDockerDatabases = async ({
   const username = "prostgles_test";
   const password = randomBytes(24).toString("base64url");
   const containerName = `prostgles-test-${prefix ? `${prefix.replaceAll("_", "-")}-` : ""}${runId}`;
-  const image =
-    postgresImage ??
-    process.env.PROSTGLES_TEST_POSTGRES_IMAGE ??
-    DEFAULT_POSTGRES_IMAGE;
   const runArgs = [
     "run",
     "--detach",
@@ -365,8 +388,9 @@ export const createTestDeployment = async <
 }: CreateTestDeploymentOptions): Promise<
   TestDeployment<Schema, Functions, User>
 > => {
-  const resolvedConfigPath = path.resolve(configPath);
+  const resolvedConfigPath = path.resolve(configPath ?? process.cwd());
   const databases = await startDockerDatabases({
+    configPath: resolvedConfigPath,
     configId,
     postgresImage,
     startupTimeoutMs,

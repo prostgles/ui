@@ -35,6 +35,12 @@ void test("new CLI apps include a native Compose deployment", (context) => {
   assert.ok(dockerfile.includes("AS runtime"));
   assert.ok(dockerfile.includes("FROM runtime AS app"));
   assert.ok(!dockerfile.includes("prostgles/ui-runtime"));
+  assert.ok(
+    !readFileSync(
+      join(targetPath, "tests/deployment.test.ts"),
+      "utf8",
+    ).includes("configPath"),
+  );
   assert.ok(compose.includes("dockerfile: DB.Dockerfile"));
   assert.ok(
     readFileSync(join(targetPath, "DB.Dockerfile"), "utf8").includes("procps"),
@@ -69,6 +75,7 @@ void test("CLI templates can preserve environment example secrets", (context) =>
     environmentExample,
     /^PROSTGLES_DOCKER_DB_PASSWORD=existing-database-password$/m,
   );
+  assert.ok(environmentExample.includes("PROSTGLES_TEST_POSTGRES_IMAGE"));
 });
 
 void test("compose init does not overwrite deployment files", (context) => {

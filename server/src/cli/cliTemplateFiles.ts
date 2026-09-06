@@ -217,14 +217,12 @@ const getCliTemplateFiles = ({
     [testsFolderName]: {
       "deployment.test.ts": `
         import assert from "node:assert/strict";
-        import { resolve } from "node:path";
         import test from "node:test";
         import { createTestDeployment } from "@prostgles/prostgles/testing";
         import type { DBGeneratedSchema } from "../generated/DBGeneratedSchema";
 
         void test("starts the configured app with an isolated database", async (context) => {
           const deployment = await createTestDeployment<DBGeneratedSchema>({
-            configPath: resolve(__dirname, "../.."),
             configId: ${JSON.stringify(configId)},
             users: [
               { key: "admin", type: "admin" },
@@ -269,8 +267,7 @@ const getCliTemplateFiles = ({
       # Used by compose.yaml for its private PostgreSQL instance.
       PROSTGLES_DOCKER_DB_PASSWORD=${environmentDefaults?.PROSTGLES_DOCKER_DB_PASSWORD ?? randomBytes(24).toString("base64url")}
 
-      # npm test starts an ephemeral PostgreSQL Docker container bound to 127.0.0.1 only.
-      # Override only when the app needs a different PostgreSQL/PostGIS version.
+      # Optional test-only override. By default npm test builds DB.Dockerfile.
       # PROSTGLES_TEST_POSTGRES_IMAGE=postgis/postgis:17-3.4`,
   }) as const;
 
@@ -583,7 +580,7 @@ const getCliAgentsFile = () => `
   ## Tests
 
   - Run \`npm test\` before committing. Tests use \`@prostgles/prostgles/testing\` to start the real app against fresh state and project databases without opening the UI.
-  - Keep deployment tests in \`tests/\`. Each call to \`createTestDeployment\` starts a disposable PostgreSQL Docker container bound only to \`127.0.0.1\`, creates fresh state and project databases, and removes the container during cleanup.
+  - Keep deployment tests in \`tests/\`. Each call to \`createTestDeployment\` uses the current app directory and its \`DB.Dockerfile\` when present, starts a disposable PostgreSQL Docker container bound only to \`127.0.0.1\`, creates fresh state and project databases, and removes the container during cleanup. Set \`PROSTGLES_TEST_POSTGRES_IMAGE\` only to override the Dockerfile.
   - Deployment stdout and stderr remain available after cleanup in \`.prostgles/test-logs/\`. The exact file is returned as \`deployment.logPath\`.
   - Test logs may be large. Inspect them with \`tail\` or search them with \`rg\`; do not read an entire log unless its size is known to be small.
   - If the deployment fixture blocks a valid scenario, inspect \`deployment.logPath\` and report the issue against \`@prostgles/prostgles\`; do not weaken the app or its assertions to work around the fixture.
