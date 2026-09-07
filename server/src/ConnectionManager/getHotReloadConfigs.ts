@@ -27,6 +27,7 @@ export type HotReloadConfigOptions = RequiredKeepUndefined<
     | "schemaFilter"
     | "auth"
     | "io"
+    | "audit"
     | "tableConfig"
     | "tableHooks"
     | "functions"
@@ -141,6 +142,7 @@ export const getHotReloadConfigs = async ({
       fileTable,
       tableConfig,
       tableHooks,
+      audit: schemaConfig?.audit,
       auth,
       schemaFilter: db_schema_filter ?? { public: 1 },
       tsGeneratedTypesDir:

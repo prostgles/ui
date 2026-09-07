@@ -26,6 +26,7 @@ import type { TableHandlerClient } from "prostgles-client";
 type SmartTableProps = Pick<Prgl, "db" | "sql" | "tables" | "methods"> &
   Pick<PopupProps, "clickCatchStyle" | "positioning"> & {
     filter?: DetailedFilter[];
+    fixedFilter?: AnyObject;
     tableName: string;
     tableCols?: ProstglesColumn[];
     selectedColumns?: string[];
@@ -150,7 +151,8 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
 
   loading = true;
   onDelta(deltaP: Partial<SmartTableProps> | undefined): void {
-    const { filter = {}, tableName, db, realtime } = this.props;
+    const { tableName, db, realtime } = this.props;
+    const filter = this.getQueryFilter();
 
     void (async () => {
       const tableHandler = db[tableName] as TableHandlerClient | undefined;
@@ -176,7 +178,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
           ),
           filter,
         };
-      } else if (deltaP?.filter) {
+      } else if (deltaP && ("filter" in deltaP || "fixedFilter" in deltaP)) {
         void this.getData();
       }
     })();
@@ -185,6 +187,17 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
   get filter() {
     return this.props.filter ?? this.state.filter ?? [];
   }
+
+  getQueryFilter = (filter = this.filter): AnyObject => {
+    const queryFilter = getSmartGroupFilter(
+      filter,
+      undefined,
+      this.props.filterOperand,
+    );
+    return this.props.fixedFilter ?
+        { $and: [this.props.fixedFilter, queryFilter] }
+      : queryFilter;
+  };
 
   getData = async (
     filter: DetailedFilter[] = this.filter,
@@ -197,12 +210,8 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
       const tableHandler = db[tableName] as TableHandlerClient | undefined;
       if (!tableHandler) return;
 
-      const _filter = getSmartGroupFilter(
-        filter,
-        undefined,
-        this.props.filterOperand,
-      );
-      const totalRows = await tableHandler.count();
+      const _filter = this.getQueryFilter(filter);
+      const totalRows = await tableHandler.count(this.props.fixedFilter);
       const filteredRows = await tableHandler.count(_filter);
       const rows = await tableHandler.find(_filter, {
         limit: pageSize,

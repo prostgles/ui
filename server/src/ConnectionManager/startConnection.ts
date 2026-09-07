@@ -135,6 +135,7 @@ export const startConnection = async function (
         }
       };
 
+      let prgl: InitResult<void, SUser, ProstglesContext> | undefined;
       try {
         const {
           config: hotReloadConfig,
@@ -169,15 +170,13 @@ export const startConnection = async function (
 
         const { disable_realtime } = connection;
         let onMountCleanup: ProstglesOnMountCleanup | undefined;
-        // eslint-disable-next-line prefer-const
-        let prgl: InitResult<void, SUser, ProstglesContext>;
         let connectionStarted = false;
         const attachOnMountCleanup = () => {
           if (!connectionStarted || !onMountCleanup) return;
           const activeConnection = this.getActiveConnectionSilentFail(
             connection.id,
           );
-          if (activeConnection?.prgl === prgl) {
+          if (activeConnection && activeConnection.prgl === prgl) {
             activeConnection.onMountCleanup = onMountCleanup;
           } else {
             void Promise.resolve(onMountCleanup()).catch((error: unknown) => {
@@ -227,14 +226,8 @@ export const startConnection = async function (
             }
             const dbPermissions =
               _accessControl ??
-              (
-                await getAccessRule(
-                  dbs,
-                  user,
-                  databaseConfig.id,
-                  connection.id,
-                )
-              )?.dbPermissions;
+              (await getAccessRule(dbs, user, databaseConfig.id, connection.id))
+                ?.dbPermissions;
             if (dbPermissions?.type === "Run SQL" && dbPermissions.allowSQL) {
               return true;
             }
@@ -295,6 +288,7 @@ export const startConnection = async function (
         void this.setSyncUserSub();
         setInitState({ prglReady: true });
       } catch (e) {
+        await prgl?.destroy();
         reject(e);
         this.prglConnections.set(connection.id, {
           state: "error",

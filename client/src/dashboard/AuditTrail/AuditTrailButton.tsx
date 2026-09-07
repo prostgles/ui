@@ -2,7 +2,6 @@ import Btn from "@components/Btn";
 import { mdiHistory } from "@mdi/js";
 import type { AnyObject } from "prostgles-types";
 import React, { useState } from "react";
-import { AUDIT_COLUMNS } from "@common/managedTableSchema";
 import type { Prgl } from "../../App";
 import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
 import SmartTable from "../SmartTable";
@@ -21,13 +20,12 @@ export const AuditTrailButton = ({
   methods,
 }: AuditTrailButtonProps) => {
   const [showHistory, setShowHistory] = useState(false);
-  const audit = table.audit;
+  if (!table.audit || !row) return null;
+  const audit = "error" in table.audit ? undefined : table.audit;
   const rowFilter =
-    !audit || !row ?
-      undefined
-    : Object.fromEntries(
-        audit.idColumns.map((column) => [column, row[column]]),
-      );
+    !audit ? undefined : (
+      Object.fromEntries(audit.idColumns.map((column) => [column, row[column]]))
+    );
   const auditTable = tables.find(
     (candidate) => candidate.name === audit?.tableName,
   );
@@ -37,29 +35,33 @@ export const AuditTrailButton = ({
       .filter((column) => column.select)
       .map((column) => column.name),
   );
-  const requiredColumns = audit && [
-    AUDIT_COLUMNS.entityType,
-    AUDIT_COLUMNS.rowFilter,
-  ];
-
-  if (
-    !audit ||
-    !rowFilter ||
-    Object.values(rowFilter).some(
-      (value) => value === undefined || value === null,
-    ) ||
-    !auditHandler?.find ||
-    !requiredColumns?.every((column) => auditColumnNames.has(column))
-  ) {
-    return null;
-  }
+  const requiredColumns = audit && ["entity_type", "old_id", "new_id"];
 
   const selectedColumns = [
-    AUDIT_COLUMNS.createdAt,
-    AUDIT_COLUMNS.actorId,
-    AUDIT_COLUMNS.action,
-    AUDIT_COLUMNS.details,
+    "created_at",
+    "actor",
+    "operation",
+    "old_row",
+    "new_row",
   ].filter((column) => auditColumnNames.has(column));
+
+  const error =
+    "error" in table.audit ? table.audit.error
+    : (
+      !rowFilter ||
+      !selectedColumns.length ||
+      Object.values(rowFilter).some(
+        (value) => value === undefined || value === null,
+      ) ||
+      !auditHandler?.find ||
+      !requiredColumns?.every((name) =>
+        auditTable?.columns.some(
+          (column) => column.name === name && column.select && column.filter,
+        ),
+      )
+    ) ?
+      "Insufficient privileges"
+    : undefined;
 
   return (
     <>
@@ -67,13 +69,14 @@ export const AuditTrailButton = ({
         data-command="AuditTrail.open"
         iconPath={mdiHistory}
         title="View audit history"
+        disabledInfo={error}
         onClick={(event) => {
           event.preventDefault();
           event.stopPropagation();
           setShowHistory(true);
         }}
       />
-      {showHistory && (
+      {showHistory && !error && audit && rowFilter && (
         <SmartTable
           db={db}
           sql={sql}
@@ -81,14 +84,20 @@ export const AuditTrailButton = ({
           methods={methods}
           tableName={audit.tableName}
           title={`History · ${table.label}`}
-          filter={[
-            { fieldName: AUDIT_COLUMNS.entityType, value: audit.entityType },
-            { fieldName: AUDIT_COLUMNS.rowFilter, value: rowFilter },
-          ]}
+          fixedFilter={{
+            $and: [
+              { entity_type: audit.entityType },
+              { $or: [{ old_id: rowFilter }, { new_id: rowFilter }] },
+            ],
+          }}
           selectedColumns={selectedColumns}
           initialSort={
-            auditColumnNames.has(AUDIT_COLUMNS.createdAt) ?
-              [{ key: AUDIT_COLUMNS.createdAt, asc: false, nulls: "last" }]
+            (
+              auditTable?.columns.some(
+                (column) => column.name === "created_at" && column.orderBy,
+              )
+            ) ?
+              [{ key: "created_at", asc: false, nulls: "last" }]
             : undefined
           }
           allowEdit={false}

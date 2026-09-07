@@ -1,20 +1,13 @@
 import type { DBSSchema } from "./publishUtils";
 import type { RequiredKeepUndefined } from "./utils";
 
-export const AUDIT_COLUMNS = {
-  entityType: "entity_type",
-  rowFilter: "row_filter",
-  action: "action",
-  actorId: "actor_id",
-  createdAt: "created_at",
-  details: "summary",
-} as const;
-
-export type ClientTableAuditConfig = {
-  tableName: string;
-  idColumns: string[];
-  entityType: string;
-};
+export type ClientTableAuditConfig =
+  | { error: string }
+  | {
+      tableName: string;
+      idColumns: string[];
+      entityType: string;
+    };
 
 export type TableOptions = RequiredKeepUndefined<
   NonNullable<

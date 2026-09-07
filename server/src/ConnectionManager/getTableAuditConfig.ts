@@ -1,36 +1,36 @@
 import type { ClientTableAuditConfig } from "@common/managedTableSchema";
+import type { SchemaConfigAudit, TableConfig } from "prostgles-server";
+import { getAuditWriterName } from "prostgles-server/dist/Audit/getAuditTableConfig";
 import type { DBSchemaTable } from "prostgles-types";
-import type { SchemaConfigAudit } from "../schemaConfig";
-import { getAuditTableOptions } from "./auditConfig";
 
+/** Publish UI metadata only for tables with a server-generated audit writer. */
 export const getTableAuditConfig = (
   table: DBSchemaTable,
+  tableConfig: TableConfig[string] | undefined,
   audit: SchemaConfigAudit | undefined,
 ): ClientTableAuditConfig | undefined => {
-  if (!audit) return;
-  const tableOptions = getAuditTableOptions(audit, table.name);
-  if (!tableOptions) return;
-
-  const primaryKeys = table.columns.filter((column) => column.is_pkey);
+  if (
+    !audit ||
+    !tableConfig?.triggers?.[getAuditWriterName(audit.tableName, table.name)]
+  )
+    return;
+  const rule = audit.tables?.[table.name];
+  const options = typeof rule === "object" ? rule : undefined;
   const idColumns = [
-    ...(tableOptions.idColumns ?? primaryKeys.map((column) => column.name)),
+    ...(options?.idColumns ??
+      table.columns.filter((c) => c.is_pkey).map((c) => c.name)),
   ];
   if (
     !idColumns.length ||
     idColumns.some(
-      (idColumn) => !table.columns.some((column) => column.name === idColumn),
+      (name) => !table.columns.some((c) => c.name === name && c.select),
     )
   ) {
-    throw new Error(
-      `Table ${table.name} is missing primary key columns for audit: ${idColumns.join(
-        ", ",
-      )}`,
-    );
+    return { error: "Insufficient privileges" };
   }
-
   return {
-    idColumns,
-    entityType: tableOptions.entityType,
     tableName: audit.tableName,
+    entityType: options?.entityType ?? table.name,
+    idColumns,
   };
 };

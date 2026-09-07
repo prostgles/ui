@@ -6,7 +6,7 @@
   "scripts": {
     "setup": "cp ../client/src/Testing.ts ./tests",
     "test": "npm run setup && playwright test main.spec.ts && playwright test demo_video_setup.spec.ts && playwright test demo_video.spec.ts && playwright test create_docs.spec.ts && playwright test command_palette.spec.ts",
-    "test:cli": "npm run setup && playwright test config_deploy.spec.ts cli_compose.spec.ts --workers=1",
+    "test:cli": "npm run setup && playwright test config_deploy.spec.ts cli_compose.spec.ts audit_trail.spec.ts audit_config.spec.ts --workers=1",
     "demo-video": "playwright test demo_video_setup.spec.ts && playwright test demo_video.spec.ts",
     "create-docs": "npm run setup && npx playwright test create_docs.spec.ts ",
     "command-palette": "npm run setup && npx playwright test command_palette.spec.ts ",

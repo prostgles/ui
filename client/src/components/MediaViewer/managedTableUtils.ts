@@ -1,5 +1,5 @@
 import type { annotationsTableColumns } from "@common/managedTableSchema";
-import type { AnyObject, JSONB, TS_PG_Types } from "prostgles-types";
+import type { JSONB, TS_PG_Types } from "prostgles-types";
 import type { DoclingDocument } from "src/dashboard/AskLLM/Chat/AskLLMChatMessages/ProstglesToolUseMessage/ProstglesMCPTools/DoclingConvertedDocument/DoclingDocument";
 
 type PgTypeToTsCategory<PgType extends string> = {

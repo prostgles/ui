@@ -1,3 +1,5 @@
+import type { SchemaConfigAudit } from "prostgles-server";
+import { getTableAuditConfig } from "./getTableAuditConfig";
 import type { ColumnOptions, TableOptions } from "@common/managedTableSchema";
 import type { SUser } from "@src/authConfig/sessionUtils";
 import type { AuthResultWithSID, TableConfig } from "prostgles-server";
@@ -5,9 +7,6 @@ import { isObject, type DBSchemaTable } from "prostgles-types";
 import type { DatabaseConfigs } from "..";
 import { dbsConnectionOptions } from "./dbsConnectionOptions";
 import type { ConnectionHotReloadProperties } from "./getHotReloadConfigs";
-import type { SchemaConfigAudit } from "../schemaConfig";
-import { getAuditTriggerName } from "./auditConfig";
-import { getTableAuditConfig } from "./getTableAuditConfig";
 
 export const modifyClientSchema = ({
   connection,
@@ -45,10 +44,7 @@ export const modifyClientSchema = ({
   return {
     ...table,
     managedTableType: tableOptions.managedTableType,
-    audit:
-      tableConfig?.triggers?.[getAuditTriggerName(table.name)] ?
-        getTableAuditConfig(table, audit)
-      : undefined,
+    audit: getTableAuditConfig(table, tableConfig, audit),
     card: tableOptions.card,
     icon: tableOptions.icon,
     label:

@@ -17,7 +17,6 @@ import { getCloudClient } from "../cloudClients/cloudClients";
 import type { ConnectionManager } from "./ConnectionManager";
 import type { ConnectionHotReloadProperties } from "./getHotReloadConfigs";
 import { getSchemaConfig } from "./getSchemaConfig";
-import { addAuditTableConfig } from "./auditConfig";
 import { getServiceManager } from "@src/ServiceManager/getServiceManager";
 import type { ProstglesContext } from "@src/schemaConfig";
 
@@ -62,30 +61,28 @@ export const parseTableConfig = async ({
     fileTableConfig = newTableConfig;
   }
   let storageClient: StorageClient | undefined;
-  if (fileTableConfig) {
-    if (fileTableConfig.storageType.type === "local") {
-      storageClient = getLocalStorageClient({
-        /* Use path.resolve when using a relative path. Otherwise will get 403 forbidden */
-        localFolderPath: conMgr.getFileFolderPath(connectionId),
+  if (fileTableConfig?.storageType.type === "local") {
+    storageClient = getLocalStorageClient({
+      /* Use path.resolve when using a relative path. Otherwise will get 403 forbidden */
+      localFolderPath: conMgr.getFileFolderPath(connectionId),
+    });
+  } else if (fileTableConfig?.storageType.credential_id) {
+    const s3Credentials = await dbs.credentials.findOne({
+      id: fileTableConfig.storageType.credential_id,
+    });
+    if (s3Credentials) {
+      storageClient = getCloudClient({
+        accessKeyId: s3Credentials.key_id,
+        secretAccessKey: s3Credentials.key_secret,
+        Bucket: s3Credentials.bucket!,
+        region: s3Credentials.region || "auto",
+        endpoint: s3Credentials.endpoint_url,
       });
-    } else if (fileTableConfig.storageType.credential_id) {
-      const s3Credentials = await dbs.credentials.findOne({
-        id: fileTableConfig.storageType.credential_id,
-      });
-      if (s3Credentials) {
-        storageClient = getCloudClient({
-          accessKeyId: s3Credentials.key_id,
-          secretAccessKey: s3Credentials.key_secret,
-          Bucket: s3Credentials.bucket!,
-          region: s3Credentials.region || "auto",
-          endpoint: s3Credentials.endpoint_url,
-        });
-      }
-    } else {
-      console.error(
-        "Could not find cloud credentials for fileTable config. File storage will not be set up ",
-      );
     }
+  } else if (fileTableConfig) {
+    console.error(
+      "Could not find cloud credentials for fileTable config. File storage will not be set up ",
+    );
   }
 
   const fileTable =
@@ -99,7 +96,7 @@ export const parseTableConfig = async ({
         referencedTables: fileTableConfig.referencedTables,
       } satisfies FileTableConfig);
 
-  const { audit, tableHooks, tableConfig } =
+  const { tableHooks, tableConfig } =
     getSchemaConfig(databaseConfig.config_sync)?.config ?? {};
   const fileTableHooksMerged: TableHooks<void, ProstglesContext> | undefined =
     fileTable && fileTableConfig?.annotationsTable ?
@@ -240,12 +237,7 @@ export const parseTableConfig = async ({
 
   return {
     fileTable,
-    tableConfig: addAuditTableConfig(audit, sourceTableConfig, [
-      ...Object.keys(sourceTableConfig ?? {}),
-      ...Object.keys(mergedTableHooks ?? {}),
-      ...Object.keys(audit?.tables ?? {}),
-      ...(fileTable ? [fileTable.tableName] : []),
-    ]),
+    tableConfig: sourceTableConfig,
     tableHooks: mergedTableHooks,
   };
 };
