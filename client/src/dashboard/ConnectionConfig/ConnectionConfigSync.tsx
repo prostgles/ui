@@ -7,6 +7,7 @@ import { InfoRow } from "@components/InfoRow";
 import PopupMenu from "@components/PopupMenu";
 import { mdiFolderOutline } from "@mdi/js";
 import { omitKeys } from "prostgles-types";
+import { usePromise } from "prostgles-client";
 import React, { useState } from "react";
 import { usePrgl } from "../../pages/ProjectConnection/PrglContextProvider";
 import { getIntervalAsText } from "../W_SQL/customRenderers";
@@ -15,7 +16,7 @@ export const ConnectionConfigSync = () => {
   const prgl = usePrgl();
   const {
     dbs,
-    dbsMethods: { syncSchema },
+    dbsMethods: { syncSchema, glob },
     connectionId,
   } = prgl;
 
@@ -31,6 +32,19 @@ export const ConnectionConfigSync = () => {
     unsavedPath && dbConf && unsavedPath !== config_sync?.configPath;
 
   const configPath = unsavedPath ?? config_sync?.configPath;
+  const [folderVersion, setFolderVersion] = useState(0);
+  const folder = usePromise(async () => {
+    if (!configPath || !glob) return;
+    try {
+      const { result } = await glob({ cwd: configPath, pattern: "{*,.*}" });
+      return { path: configPath, empty: result.length === 0 };
+    } catch {
+      return { path: configPath, empty: false };
+    }
+  }, [configPath, glob, folderVersion]);
+  const isEmptyFolder = folder?.path === configPath && folder?.empty;
+  const templateWarning =
+    "Setting up the template will install dependencies and sync its settings, overriding existing table display options and table configuration. It also adds an example service and restarts the connection.";
   const title = "Schema Config Project";
   const lastSyncedInterval =
     config_sync?.lastSynced ?
@@ -106,18 +120,46 @@ export const ConnectionConfigSync = () => {
             !syncSchema ? "Not allowed to sync schema"
             : !configPath ?
               "No schema path selected"
+            : glob && folder?.path !== configPath ?
+              "Checking project folder"
+            : undefined
+          }
+          clickConfirmation={
+            isEmptyFolder ?
+              {
+                message: templateWarning,
+                buttonText: "Set up template and sync",
+                color: "warn",
+              }
             : undefined
           }
           onClickPromise={
             syncSchema &&
             (async () => {
-              await syncSchema({ connectionId, configPath: configPath! });
+              try {
+                await syncSchema({
+                  connectionId,
+                  configPath: configPath!,
+                  setupTemplate: isEmptyFolder || undefined,
+                });
+              } finally {
+                setFolderVersion((value) => value + 1);
+              }
             })
           }
         >
-          {mustSave ? "Save and sync" : "Sync now"}
+          {isEmptyFolder ?
+            "Set up template and sync"
+          : mustSave ?
+            "Save and sync"
+          : "Sync now"}
         </Btn>
       </FlexRowWrap>
+      {isEmptyFolder && (
+        <InfoRow color="warning">
+          This folder is empty. {templateWarning}
+        </InfoRow>
+      )}
       {config_sync && (
         <ProjectCodeEditor title=" " projectPath={config_sync.configPath} />
       )}

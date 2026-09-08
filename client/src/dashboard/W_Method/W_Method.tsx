@@ -30,7 +30,7 @@ export const W_Method = (props: W_MethodProps) => {
     <Window
       w={w}
       childWindow={undefined}
-      connection={props.prgl.connection}
+      tables={props.prgl.tables}
       layoutMode={props.workspace.layout_mode ?? "editable"}
       getMenu={(w, closeMenu) => (
         <W_MethodMenu {...props} w={w} closeMenu={closeMenu} />

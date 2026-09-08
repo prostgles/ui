@@ -715,7 +715,7 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
       <Window
         w={w}
         childWindow={undefined}
-        connection={this.props.prgl.connection}
+        tables={this.props.prgl.tables}
         getMenu={this.getMenu}
         layoutMode={this.props.workspace.layout_mode ?? "editable"}
       >

@@ -260,7 +260,7 @@ export class W_TimeChart extends RTComp<W_TimeChartProps, W_TimeChartState, D> {
     const {
       onClickRow,
       workspace,
-      prgl: { connection },
+      prgl: { tables },
     } = this.props;
     const { w } = this.d;
     if (!w) return <Loading className="m-auto f-1" />;
@@ -297,7 +297,7 @@ export class W_TimeChart extends RTComp<W_TimeChartProps, W_TimeChartState, D> {
         childWindow={undefined}
         getMenu={this.getMenu}
         layoutMode={workspace.layout_mode ?? "editable"}
-        connection={connection}
+        tables={tables}
       >
         <div
           ref={(r) => {

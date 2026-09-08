@@ -91,7 +91,6 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
       connectionId: conState.data.id,
       connection: conState.data,
       is_state_db: conState.data.is_state_db,
-      table_options: conState.data.table_options,
       databaseId,
     } as const;
   }, [conState]);

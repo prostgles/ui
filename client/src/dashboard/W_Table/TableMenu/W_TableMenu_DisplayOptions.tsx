@@ -52,7 +52,7 @@ export const W_TableMenu_DisplayOptions = ({ w, workspace, prgl }: P) => {
             marginBottom: "4px",
           },
         }}
-        iconName={connection.table_options?.[w.table_name]?.icon}
+        iconName={table?.icon}
         onChange={(icon) => {
           void dbs.connections.update(
             { id: connection.id },

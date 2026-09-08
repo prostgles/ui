@@ -25,28 +25,20 @@ export const useSetMonacoTsLibraries = (
   const isNodeEnv =
     languageObj?.lang === "typescript" && languageObj.environment === "nodejs";
   const nodeLibs = usePromise(async () => {
-    if (!isNodeEnv) return;
+    if (!isNodeEnv || !monaco) return;
     const projectPath = languageObj.projectPath ?? "";
     const nodeTypes =
-      cachedNodeLibs.get(projectPath) ??
+      (!projectPath ? cachedNodeLibs.get(projectPath) : undefined) ??
       (await getNodeTypes?.({
         projectPath: languageObj.projectPath,
       })) ??
       [];
-    cachedNodeLibs.set(projectPath, nodeTypes);
-    const badPathRecord = nodeTypes.find(
-      (t) => !t.filePath.startsWith("/node_modules/"),
-    );
-    if (badPathRecord) {
-      console.warn(
-        `Warning: The filePath for ${badPathRecord.filePath} does not start with /node_modules/. This may cause issues with Monaco's module resolution. Please ensure that the server is returning correct file paths for node types.`,
-      );
-    }
+    if (!projectPath) cachedNodeLibs.set(projectPath, nodeTypes);
     return nodeTypes.map((t) => ({
       content: t.content,
-      filePath: `file://${t.filePath}`,
+      filePath: monaco.Uri.file(t.filePath).toString(true),
     }));
-  }, [languageObj, getNodeTypes, isNodeEnv]);
+  }, [languageObj, getNodeTypes, isNodeEnv, monaco]);
   useEffect(() => {
     if (!monaco) return;
     setTSoptions(monaco);

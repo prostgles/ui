@@ -585,7 +585,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
       <Window
         w={w}
         childWindow={childWindow}
-        connection={this.props.prgl.connection}
+        tables={this.props.prgl.tables}
         layoutMode={workspace.layout_mode ?? "editable"}
         quickMenuProps={{
           dbs,

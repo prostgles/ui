@@ -30,6 +30,7 @@ export const modifyClientSchema = ({
   const managedTableOptions =
     fileTable === table.name ? fileTableOptions
     : fileTable && annotationsTable === table.name ? annotationsTableOptions
+    : auditConfig?.tableName === table.name ? auditTableOptions
     : undefined;
   const tableOptions = {
     ...(connection.is_state_db ?
@@ -151,4 +152,43 @@ const annotationsTableOptions: TableOptions = {
   icon: "Link",
   label: "File annotations",
   rowIconColumn: undefined,
+};
+
+const auditTableOptions: TableOptions = {
+  managedTableType: undefined,
+  icon: "History",
+  label: "Audit trail",
+  rowIconColumn: undefined,
+  card: {
+    headerColumn: "operation",
+    subHeaderColumn: "entity_type",
+    visibleColumns: ["created_at", "actor", "old_row", "new_row"],
+  },
+  columns: {
+    operation: {
+      style: {
+        type: "Conditional",
+        conditions: [
+          {
+            operator: "=",
+            condition: "INSERT",
+            chipColor: "#dcfce7",
+            textColor: "#166534",
+          },
+          {
+            operator: "=",
+            condition: "UPDATE",
+            chipColor: "#dbeafe",
+            textColor: "#1e40af",
+          },
+          {
+            operator: "=",
+            condition: "DELETE",
+            chipColor: "#fee2e2",
+            textColor: "#991b1b",
+          },
+        ],
+      },
+    },
+  },
 };

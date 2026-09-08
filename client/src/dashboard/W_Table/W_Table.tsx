@@ -535,7 +535,7 @@ export default class W_Table extends RTComp<
         <Window
           w={w}
           childWindow={childWindow}
-          connection={prgl.connection}
+          tables={tables}
           layoutMode={workspace.layout_mode ?? "editable"}
           quickMenuProps={{
             chartableSQL: undefined,

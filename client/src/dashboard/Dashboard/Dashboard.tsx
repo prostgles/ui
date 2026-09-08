@@ -135,12 +135,6 @@ export class _Dashboard extends RTComp<
         onRenew: () => this.loadSchema(true),
       };
 
-      // const { tables = [] } = getTables(
-      //   dbSchemaTables,
-      //   connection.table_options,
-      //   db,
-      // );
-
       const ns: Pick<DashboardState, "suggestions" | "loading" | "error"> = {
         // tables,
         loading: false,

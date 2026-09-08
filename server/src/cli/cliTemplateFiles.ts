@@ -3,7 +3,7 @@ import { randomBytes } from "crypto";
 import type { SchemaConfig, SchemaConfigConnection } from "../schemaConfig";
 import packageJson from "../../package.json";
 import { fromEntries, pickKeys } from "prostgles-types";
-import { dirname, join } from "path";
+import { dirname, join, resolve } from "path";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 
 export const saveCliTemplateFiles = ({
@@ -375,7 +375,9 @@ const getPackageJson = (configId: string) => ({
     upgrade: "prostgles upgrade --config .",
     test: 'npm run build && node --env-file-if-exists=.env --test "build/tests/**/*.test.js"',
   },
-  dependencies: { [packageJson.name]: `^${packageJson.version}` },
+  dependencies: {
+    [packageJson.name]: getRuntimeDependency(),
+  },
   devDependencies: {
     ...pickKeys(packageJson.dependencies, ["typescript"]),
     ...pickKeys(packageJson.devDependencies, [
@@ -393,6 +395,14 @@ const getPackageJson = (configId: string) => ({
     },
   },
 });
+
+const getRuntimeDependency = () => {
+  const runtimePath = resolve(__dirname, "../../../..");
+  // Source checkouts can be ahead of the published npm version.
+  return existsSync(join(runtimePath, "src/cli/cli.ts")) ?
+      `file:${runtimePath}`
+    : `^${packageJson.version}`;
+};
 const eslintConfig = `
   import eslint from "@eslint/js";
   import pluginSecurity from "eslint-plugin-security";

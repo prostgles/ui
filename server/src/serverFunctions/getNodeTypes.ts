@@ -4,8 +4,21 @@ import * as path from "path";
 const toPosixPath = (p: string) => p.split(path.sep).join("/");
 
 const SERVER_DIR = path.resolve(__dirname, "../../../..");
-export const getNodeTypes = (projectPath = SERVER_DIR) => {
-  const files = extractInstalledPackageTypes(projectPath);
+export const getNodeTypes = (projectPath?: string) => {
+  const files = extractInstalledPackageTypes(projectPath ?? SERVER_DIR);
+  if (projectPath) {
+    const projectFiles = ts.sys.readDirectory(
+      path.resolve(projectPath),
+      [".ts", ".tsx", ".mts", ".cts"],
+      ["**/node_modules", "**/.git", "**/dist", "**/build"],
+    );
+    for (const filePath of projectFiles) {
+      const content = ts.sys.readFile(filePath);
+      if (content !== undefined) {
+        files.push({ filePath: toPosixPath(filePath), content });
+      }
+    }
+  }
   return files;
 };
 

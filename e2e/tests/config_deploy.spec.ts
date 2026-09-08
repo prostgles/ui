@@ -350,9 +350,9 @@ export default prostgles({
 
       const packageJsonPath = join(configDirectory, "package.json");
       const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8"));
-      packageJson.dependencies["@prostgles/prostgles"] =
-        `file:${serverDirectory}`;
-      writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
+      expect(packageJson.dependencies["@prostgles/prostgles"]).toBe(
+        `file:${serverDirectory}`,
+      );
       run(
         npmCommand,
         ["install", "--ignore-scripts", "--no-package-lock", "--install-links"],

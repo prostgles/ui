@@ -4,6 +4,7 @@ import { getAuthSetupData } from "@src/authConfig/subscribeToAuthSetupChanges";
 import { getInstalledPsqlVersions } from "@src/BackupManager/getInstalledPrograms";
 import { getCompiledTS } from "@src/ConnectionManager/connectionManagerUtils";
 import { syncSchemaConfig } from "@src/ConnectionManager/syncSchemaConfig";
+import { setupSchemaConfigTemplate } from "@src/ConnectionManager/setupSchemaConfigTemplate";
 import { testDBConnection } from "@src/connectionUtils/testDBConnection";
 import { validateConnection } from "@src/connectionUtils/validateConnection";
 import { getElectronConfig } from "@src/electronConfig";
@@ -342,9 +343,20 @@ export const stateServerAdminFunctions = {
         input: {
           connectionId: "string",
           configPath: "string",
+          setupTemplate: { type: "boolean", optional: true },
         },
-        run: ({ connectionId, configPath }, { dbo: dbs }) =>
-          syncSchemaConfig({ dbs, connectionId, configPath, type: "cli" }),
+        run: async (
+          { connectionId, configPath, setupTemplate },
+          { dbo: dbs },
+        ) => {
+          if (setupTemplate) await setupSchemaConfigTemplate(configPath);
+          await syncSchemaConfig({
+            dbs,
+            connectionId,
+            configPath,
+            type: "cli",
+          });
+        },
       }),
       refreshModels: defineFunction({
         unrestrictedDbAccess: true,
