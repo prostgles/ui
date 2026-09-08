@@ -390,6 +390,10 @@ export type TableColumn = {
     | {
         /** Used internally. Ignore */
         type: "DoclingDocument";
+      }
+    | {
+        type: "JSON Diff" | "Text Diff";
+        params: { oldColumn: string; newColumn: string };
       };
 };
 

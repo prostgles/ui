@@ -1,3 +1,4 @@
+import { auditOperationStyles } from "@common/auditOperationStyles";
 import type { ColumnOptions, TableOptions } from "@common/managedTableSchema";
 import type { SUser } from "@src/authConfig/sessionUtils";
 import type {
@@ -50,6 +51,9 @@ export const modifyClientSchema = ({
     managedTableType: tableOptions.managedTableType,
     audit: getTableAuditConfig(table, auditConfig),
     card: tableOptions.card,
+    sort: tableOptions.sort?.filter(({ key }) =>
+      table.columns.some((column) => column.name === key && column.orderBy),
+    ),
     icon: tableOptions.icon,
     label:
       tableOptions.label ??
@@ -112,6 +116,7 @@ const convertSnakeToReadable = (str: string) => {
 
 const fileTableOptions: TableOptions = {
   managedTableType: "files",
+  sort: undefined,
   card: {
     headerColumn: "original_name",
     subHeaderColumn: "url",
@@ -144,6 +149,7 @@ const fileTableOptions: TableOptions = {
 
 const annotationsTableOptions: TableOptions = {
   managedTableType: "file-annotations",
+  sort: undefined,
   columns: {},
   card: {
     headerColumn: "name",
@@ -154,10 +160,22 @@ const annotationsTableOptions: TableOptions = {
   rowIconColumn: undefined,
 };
 
+const auditOperationStyle = {
+  type: "Conditional",
+  conditions: Object.entries(auditOperationStyles).map(
+    ([condition, style]) => ({
+      operator: "=" as const,
+      condition,
+      ...style,
+    }),
+  ),
+} as const;
+
 const auditTableOptions: TableOptions = {
   managedTableType: undefined,
   icon: "History",
   label: "Audit trail",
+  sort: [{ key: "created_at", asc: false, nulls: "last" }],
   rowIconColumn: undefined,
   card: {
     headerColumn: "operation",
@@ -165,30 +183,16 @@ const auditTableOptions: TableOptions = {
     visibleColumns: ["created_at", "actor", "old_row", "new_row"],
   },
   columns: {
-    operation: {
-      style: {
-        type: "Conditional",
-        conditions: [
-          {
-            operator: "=",
-            condition: "INSERT",
-            chipColor: "#dcfce7",
-            textColor: "#166534",
-          },
-          {
-            operator: "=",
-            condition: "UPDATE",
-            chipColor: "#dbeafe",
-            textColor: "#1e40af",
-          },
-          {
-            operator: "=",
-            condition: "DELETE",
-            chipColor: "#fee2e2",
-            textColor: "#991b1b",
-          },
-        ],
+    created_at: { renderAs: { type: "Age" } },
+    new_row: {
+      style: { ...auditOperationStyle, column: "operation" },
+      renderAs: {
+        type: "JSON Diff",
+        params: { oldColumn: "old_row", newColumn: "new_row" },
       },
+    },
+    operation: {
+      style: auditOperationStyle,
     },
   },
 };

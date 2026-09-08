@@ -38,6 +38,7 @@ export const useDatabaseAccessEditorTables = ({
           (t) =>
             ({
               managedTableType: undefined,
+              sort: undefined,
               card: undefined,
               icon: undefined,
               rowIconColumn: undefined,

@@ -30,6 +30,7 @@ const ConditionFilter = {
 const ConditionalStyle = {
   type: {
     type: { enum: ["Conditional"] },
+    column: { type: "string", optional: true },
     conditions: {
       arrayOf: ConditionFilter,
     },
@@ -69,6 +70,15 @@ export const tableOptionsJsonbSchema = {
           optional: true,
         },
         label: { type: "string", optional: true },
+        sort: {
+          optional: true,
+          description: "Default sort order for new table views",
+          arrayOfType: {
+            key: "string",
+            asc: "boolean",
+            nulls: { enum: ["first", "last"], optional: true },
+          },
+        },
         rowIconColumn: {
           type: "string",
           description: `Column name that contains url to a local icon (in /icons folder) to be shown as an icon in each row. This is used in card and table views.`,

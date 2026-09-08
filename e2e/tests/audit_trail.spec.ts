@@ -7,7 +7,7 @@ import {
   createTestDeployment,
   type TestDeployment,
 } from "../../server/dist/server/src/cli/testing";
-import { openTable, type PageWIds } from "./utils/utils";
+import { openTable } from "./utils/utils";
 
 const sourceColumns = {
   tenant_id: "text NOT NULL",
@@ -22,7 +22,29 @@ const config = {
     tableName: "audit_events",
     tables: { records: { entityType: "record" }, other_records: 1 },
   },
+  connection: {
+    table_options: {
+      text_versions: {
+        sort: [{ key: "id", asc: false }],
+        columns: {
+          new_text: {
+            renderAs: {
+              type: "Text Diff",
+              params: { oldColumn: "old_text", newColumn: "new_text" },
+            },
+          },
+        },
+      },
+    },
+  },
   tableConfig: {
+    text_versions: {
+      columns: {
+        id: "integer PRIMARY KEY",
+        old_text: "text",
+        new_text: "text",
+      },
+    },
     records: {
       columns: sourceColumns,
       constraints: { records_pk: "PRIMARY KEY (tenant_id, id)" },
@@ -36,6 +58,7 @@ const config = {
 } satisfies SchemaConfig;
 
 let deployment: TestDeployment;
+let disposeDeployment: (() => Promise<void>) | undefined;
 let configPath: string;
 let sessionId: string;
 let restrictedSessionId: string;
@@ -80,6 +103,10 @@ test.beforeAll(async () => {
         [accessRuleId, config.id],
       );
 
+      await projectDatabase.query(
+        "INSERT INTO text_versions VALUES (1, $1, $2), (2, NULL, 'added text'), (3, 'removed text', NULL), (4, 'clear text', ''), (5, 'a🐈bKEEPx', 'a🐕bKEEPy'), (6, 'same text', 'same text')",
+        ['first line\n  old "value"\n', 'first line\n  new "value"\n'],
+      );
       await projectDatabase.query(`
         INSERT INTO records VALUES ('a', 1, 'original'), ('b', 1, 'other tenant'), ('a', 2, 'other row');
         INSERT INTO other_records VALUES ('a', 1, 'other entity');
@@ -88,10 +115,11 @@ test.beforeAll(async () => {
       `);
     },
   });
+  disposeDeployment = deployment.dispose;
 });
 
 test.afterAll(async () => {
-  await deployment?.dispose();
+  await disposeDeployment?.();
   if (configPath) rmSync(configPath, { recursive: true, force: true });
 });
 
@@ -111,7 +139,7 @@ test.beforeEach(async ({ page }) => {
 test("history is scoped to the row, newest first, live, and read-only", async ({
   page,
 }) => {
-  await openTable(page as PageWIds, "records", true);
+  await openTable(page, "records", true);
   const row = page
     .locator('[data-table-name="records"]')
     .getByRole("row")
@@ -126,6 +154,7 @@ test("history is scoped to the row, newest first, live, and read-only", async ({
   await expect(rows).toHaveCount(2);
   await expect(rows.nth(0)).toContainText("UPDATE");
   await expect(rows.nth(1)).toContainText("INSERT");
+  await expect(rows.first().locator('span[title*="seconds"]')).toHaveCount(1);
   await expect(history).not.toContainText("other tenant");
   await expect(history).not.toContainText("other row");
   await expect(history).not.toContainText("other entity");
@@ -135,6 +164,35 @@ test("history is scoped to the row, newest first, live, and read-only", async ({
   await expect(history.getByTestId("SmartForm.update")).toHaveCount(0);
   await expect(history.getByTestId("SmartForm.delete")).toHaveCount(0);
 
+  const summary = rows.first().getByTitle("View JSON diff");
+  await expect(summary.locator("strong")).toHaveText("name");
+  await expect(summary.locator("del")).toHaveText("original");
+  await expect(summary).toHaveCSS("font-weight", "400");
+  await expect(summary.locator("del")).toHaveCSS("font-weight", "400");
+  await expect(summary.locator("strong")).toHaveCSS("font-weight", "700");
+  await expect(summary.locator("del")).toHaveCSS(
+    "text-decoration-line",
+    "line-through",
+  );
+  await expect(summary.locator("del + span")).toHaveText("updated");
+  await expect(summary).toHaveCSS("color", "rgb(30, 64, 175)");
+  await summary.click();
+  const diff = page.getByRole("dialog").filter({ hasText: "JSON diff" });
+  await expect(diff.locator(".view-line").first()).toHaveCSS(
+    "text-align",
+    "left",
+  );
+  await diff.getByTitle("Side-by-side diff").click();
+  await expect(
+    diff.locator(".original .view-lines[role=presentation]"),
+  ).toContainText("original");
+  await expect(
+    diff.locator(".modified .view-lines[role=presentation]"),
+  ).toContainText("updated");
+  await diff.getByTitle("Inline diff").click();
+  await expect(diff.getByText("Before", { exact: true })).toHaveCount(0);
+  await diff.getByTestId("Popup.close").click();
+
   const client = await deployment.connectProjectAs("admin");
   try {
     await client.db.records!.update!(
@@ -142,7 +200,18 @@ test("history is scoped to the row, newest first, live, and read-only", async ({
       { name: "live change", id: 10 },
     );
     await expect(rows).toHaveCount(3);
-    await expect(rows.first()).toContainText("live change");
+    const updatedSummary = rows.first().getByTitle("View JSON diff");
+    await expect(updatedSummary.locator("strong")).toHaveText(["id", "name"]);
+    await expect(updatedSummary.locator("del")).toHaveText(["1", "updated"]);
+    await expect(updatedSummary.locator("del + span")).toHaveText([
+      "10",
+      "live change",
+    ]);
+    await rows.first().getByTitle("View JSON diff").click();
+    await expect(
+      diff.locator(".modified .view-lines[role=presentation]"),
+    ).toContainText("live change");
+    await diff.getByTestId("Popup.close").click();
   } finally {
     client.disconnect();
   }
@@ -154,7 +223,7 @@ test("history is scoped to the row, newest first, live, and read-only", async ({
 });
 
 test("rows without auditing have no history button", async ({ page }) => {
-  await openTable(page as PageWIds, "unaudited", true);
+  await openTable(page, "unaudited", true);
   await page.getByTestId("dashboard.window.viewEditRow").click();
   await expect(page.getByTestId("SmartForm")).toBeVisible();
   await expect(page.getByTestId("AuditTrail.open")).toHaveCount(0);
@@ -163,7 +232,7 @@ test("rows without auditing have no history button", async ({ page }) => {
 test("card view opens history without opening the row editor", async ({
   page,
 }) => {
-  await openTable(page as PageWIds, "records", true);
+  await openTable(page, "records", true);
   const table = page.locator('[data-table-name="records"]');
   await table.getByTestId("dashboard.window.menu").click();
   await page.getByText("Display options", { exact: true }).click();
@@ -180,8 +249,49 @@ test("card view opens history without opening the row editor", async ({
   await expect(history.getByTestId("TableBody").getByRole("row")).toHaveCount(
     1,
   );
-  await expect(history).toContainText("other tenant");
+  const summary = history.getByTitle("View JSON diff");
+  await expect(summary).toContainText("other tenant");
+  await expect(summary.locator("del")).toHaveCount(0);
+  await expect(summary).not.toContainText("—");
+  await expect(summary).toHaveCSS("color", "rgb(22, 101, 52)");
+  await summary.click();
+  const diff = page.getByRole("dialog").filter({ hasText: "JSON diff" });
+  await expect(
+    diff.locator(".modified .view-lines[role=presentation]"),
+  ).toContainText("other tenant");
+  await diff.getByTestId("Popup.close").click();
   await expect(page.getByTestId("SmartForm")).toHaveCount(0);
+
+  const client = await deployment.connectProjectAs("admin");
+  try {
+    await client.db.records!.delete!({ tenant_id: "b", id: 1 });
+    await openTable(page, "audit_events", true);
+    const auditRows = page
+      .locator('[data-table-name="audit_events"]')
+      .getByTestId("TableBody")
+      .getByRole("row");
+    await expect(auditRows.first()).toContainText("DELETE");
+    await expect(
+      auditRows.first().locator('span[title*="seconds"]'),
+    ).toHaveCount(1);
+    const deleted = page
+      .locator('[data-table-name="audit_events"]')
+      .getByRole("row")
+      .filter({ hasText: "DELETE" })
+      .getByTitle("View JSON diff");
+    await expect(deleted.locator("del")).toHaveCount(0);
+    await expect(deleted).toContainText("other tenant");
+    await expect(deleted).not.toContainText("→");
+    await expect(deleted).toHaveCSS("color", "rgb(153, 27, 27)");
+    await deleted.click();
+    await diff.getByTitle("Side-by-side diff").click();
+    await expect(
+      diff.locator(".original .view-lines[role=presentation]"),
+    ).toContainText("other tenant");
+    await diff.getByTestId("Popup.close").click();
+  } finally {
+    client.disconnect();
+  }
 });
 
 for (const restriction of [
@@ -245,7 +355,7 @@ for (const restriction of [
       .locator(`[data-key=${JSON.stringify(config.id)}]`)
       .getByTestId("Connection.openConnection")
       .click();
-    await openTable(page as PageWIds, "records", true);
+    await openTable(page, "records", true);
     const table = page.locator('[data-table-name="records"]');
     await table.getByTestId("dashboard.window.menu").click();
     await page.getByText("Display options", { exact: true }).click();
@@ -260,3 +370,36 @@ for (const restriction of [
     await expect(page.getByTestId("ProjectConnection.error")).toHaveCount(0);
   });
 }
+
+test("plain text diffs preserve lines and support both layouts", async ({
+  page,
+}) => {
+  await openTable(page, "text_versions", true);
+  const table = page.locator('[data-table-name="text_versions"]');
+  await expect(
+    table.getByTestId("TableBody").getByRole("row").first(),
+  ).toContainText("same text");
+  const summaries = table.getByTitle("View Text diff");
+  await expect(summaries).toHaveCount(6);
+  await expect(summaries).toHaveText(Array(6).fill("View diff"));
+  await table
+    .getByRole("row")
+    .filter({ hasText: 'old "value"' })
+    .getByTitle("View Text diff")
+    .click();
+  const diff = page.getByRole("dialog").filter({ hasText: "Text diff" });
+  await diff.getByTitle("Side-by-side diff").click();
+  const originalLines = diff.locator(
+    ".original .view-lines[role=presentation] .view-line",
+  );
+  const modifiedLines = diff.locator(
+    ".modified .view-lines[role=presentation] .view-line",
+  );
+  await expect(originalLines.first()).toHaveText("first line");
+  await expect(originalLines.nth(1)).toHaveText('old "value"');
+  await expect(modifiedLines.first()).toHaveText("first line");
+  await expect(modifiedLines.nth(1)).toHaveText('new "value"');
+  await diff.getByTitle("Inline diff").click();
+  await expect(diff.getByText("Before", { exact: true })).toHaveCount(0);
+  await diff.getByTestId("Popup.close").click();
+});

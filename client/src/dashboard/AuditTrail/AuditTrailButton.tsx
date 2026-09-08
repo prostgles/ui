@@ -91,15 +91,6 @@ export const AuditTrailButton = ({
             ],
           }}
           selectedColumns={selectedColumns}
-          initialSort={
-            (
-              auditTable?.columns.some(
-                (column) => column.name === "created_at" && column.orderBy,
-              )
-            ) ?
-              [{ key: "created_at", asc: false, nulls: "last" }]
-            : undefined
-          }
           allowEdit={false}
           hideFilters={true}
           realtime={{ throttle: 200 }}

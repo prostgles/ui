@@ -1,6 +1,6 @@
 {
   "name": "@prostgles/prostgles",
-  "version": "2.3.6",
+  "version": "2.3.6-dev.1788891542",
   "description": "Prostgles UI runtime and configurable PostgreSQL dashboard",
   "main": "dist/server/src/schemaConfig.js",
   "bin": {

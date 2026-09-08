@@ -238,8 +238,11 @@ export async function getTableData(
             ...r,
           }));
 
+          const tableLabel =
+            tables.find((table) => table.name === tableName)?.label ??
+            tableName;
           const nameTemplate =
-            w.title || `${w.table_name} ${showCounts ? "${rowCount}" : ""}`;
+            w.title || `${tableLabel}${showCounts ? " ${rowCount}" : ""}`;
           const newName = nameTemplate.replace(
             "${rowCount}",
             (showCounts ? (rowCount ?? "") : "").toLocaleString(),

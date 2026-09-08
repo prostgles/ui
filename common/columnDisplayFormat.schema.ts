@@ -171,6 +171,19 @@ export const columnDisplayFormatSchema = {
     },
     {
       type: {
+        enum: ["JSON Diff", "Text Diff"],
+        title: "Format",
+        description: "Compare JSON or plain text values from two columns",
+      },
+      params: {
+        type: {
+          oldColumn: "string",
+          newColumn: "string",
+        },
+      },
+    },
+    {
+      type: {
         enum: ["DoclingDocument"],
         title: "Format",
         description: "Renders a Docling parsed document",

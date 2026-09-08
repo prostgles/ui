@@ -25,6 +25,8 @@ import { DoclingDocumentViewerPopupBtn } from "src/dashboard/AskLLM/Chat/AskLLMC
 import type { DBSchemaTableWithOptions } from "src/dashboard/Dashboard/getTables";
 import { MonacoLogs } from "@components/MonacoLogs/MonacoLogs";
 
+import { JSONDiffPopup } from "./JSONDiffPopup";
+
 const tryParseNumber = (v) => {
   if (typeof v === "string" && v.length && Number.isFinite(+v)) {
     return +v;
@@ -103,7 +105,37 @@ const metricPrefixOptions = {
   compactDisplay: "short",
 } as const;
 
+const renderDiff: FormattedColRender<
+  Extract<ColumnFormat, { type: "JSON Diff" | "Text Diff" }>
+>["render"] = (value, row, { column }, { type, params }, maxCellChars) => {
+  if (
+    row[params.oldColumn] === undefined ||
+    row[params.newColumn] === undefined
+  ) {
+    return (
+      <RenderValue column={column} value={value} maxLength={maxCellChars} />
+    );
+  }
+  return (
+    <JSONDiffPopup
+      language={type === "Text Diff" ? "plaintext" : "json"}
+      oldValue={row[params.oldColumn]}
+      newValue={row[params.newColumn]}
+    />
+  );
+};
+
 export const DISPLAY_FORMATS = [
+  {
+    type: "JSON Diff",
+    tsDataType: ["any"],
+    render: renderDiff,
+  },
+  {
+    type: "Text Diff",
+    tsDataType: ["string"],
+    render: renderDiff,
+  },
   {
     type: "NONE",
     tsDataType: undefined,

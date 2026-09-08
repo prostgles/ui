@@ -17,25 +17,30 @@ import type { ProstglesTableColumn } from "./getTableCols";
 import { kFormatter } from "./kFormatter";
 import type { OnRenderColumnProps } from "./onRenderColumn";
 
-type P = Pick<OnColRenderRowInfo, "value" | "renderedVal"> &
+type P = Pick<OnColRenderRowInfo, "value" | "renderedVal" | "row"> &
   Pick<
     OnRenderColumnProps,
-    "maxCellChars" | "column" | "barchartVals" | "tables"
-  >;
+    "maxCellChars" | "column" | "barchartVals" | "tables" | "table"
+  > & {
+    formattedValue?: React.ReactNode;
+  };
 
 export const StyledTableColumn = ({
   column: c,
+  row,
+  formattedValue,
   value: valueOrNestedValue,
   barchartVals,
   renderedVal: renderedValRaw,
   tables,
+  table,
 }: P) => {
   const cellValue = (() => {
     if (!c.nested) {
       return {
         type: "normal" as const,
         value: valueOrNestedValue,
-        renderedVal: (
+        renderedVal: formattedValue ?? (
           <RenderValue
             column={c}
             value={valueOrNestedValue}
@@ -93,7 +98,14 @@ export const StyledTableColumn = ({
       />
     );
   } else if (c.style?.type !== "None") {
-    const style = getCellStyle(c, c, value, barchartVals?.[c.name]);
+    const conditionColumn =
+      c.style?.type === "Conditional" ? c.style.column : undefined;
+    const style = getCellStyle(
+      c,
+      table?.columns.find((col) => col.name === conditionColumn) ?? c,
+      conditionColumn ? row[conditionColumn] : value,
+      barchartVals?.[c.name],
+    );
 
     if (
       includes(["Fixed", "Conditional"], c.style?.type) &&

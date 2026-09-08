@@ -68,7 +68,11 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
     pageSize: 25,
     totalRows: 0,
     filteredRows: 0,
-    sort: this.props.initialSort ?? [],
+    sort:
+      this.props.initialSort ??
+      this.props.tables.find((table) => table.name === this.props.tableName)
+        ?.sort ??
+      [],
     loadedData: false,
   };
 
@@ -113,7 +117,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
             headerClassname: isNumeric ? " jc-end  " : " ",
             className: isNumeric ? " ta-right " : " ",
             onRender: onRenderColumn({
-              column: c,
+              column: { ...c, format: c.renderAs },
               table,
               tables,
               barchartVals: undefined,

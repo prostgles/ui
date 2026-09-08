@@ -78,6 +78,7 @@ export const getAndFixWColumnsConfig = async (
 ): Promise<ColumnConfig[]> => {
   const table = tables.find((t) => t.name === w.table_name);
   if (!table) return [];
+  const defaultSort = !w.columns && !w.sort?.length ? table.sort : undefined;
   const { columns: rootColumns, update: updateRoot } = getUpdatedColumnsConfig(
     table,
     w.columns,
@@ -109,8 +110,11 @@ export const getAndFixWColumnsConfig = async (
       return c;
     })
     .filter(isDefined);
-  if (update) {
-    await w.$update({ columns });
+  if (update || defaultSort?.length) {
+    await w.$update({
+      columns,
+      ...(defaultSort?.length ? { sort: defaultSort } : {}),
+    });
   }
   return columns;
 };

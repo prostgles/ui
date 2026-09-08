@@ -38,20 +38,27 @@ export const onRenderColumn = (args: OnRenderColumnProps) => {
       type !== "NONE" &&
       ((table && match?.(table, column)) ?? type === column.format?.type),
   );
+  if (column.style && column.style.type !== "None") {
+    const renderValue = onRenderColumn({
+      ...args,
+      column: { ...column, style: undefined },
+    });
+    return (rowInfo) => {
+      return (
+        <StyledTableColumn
+          {...rowInfo}
+          formattedValue={formatRender ? renderValue(rowInfo) : undefined}
+          table={table}
+          tables={tables}
+          column={column}
+          maxCellChars={maxCellChars}
+          barchartVals={barchartVals}
+        />
+      );
+    };
+  }
   const onRender: ProstglesTableColumn["onRender"] =
-    column.style && column.style.type !== "None" ?
-      (rowInfo) => {
-        return (
-          <StyledTableColumn
-            {...rowInfo}
-            tables={tables}
-            column={column}
-            maxCellChars={maxCellChars}
-            barchartVals={barchartVals}
-          />
-        );
-      }
-    : column.nested ?
+    column.nested ?
       ({ value, row }) => {
         const chartLimits = barchartVals?.[column.name];
         const nestedTimeChartMeta: NestedTimeChartMeta | undefined =
