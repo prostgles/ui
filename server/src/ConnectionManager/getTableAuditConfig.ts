@@ -1,25 +1,18 @@
 import type { ClientTableAuditConfig } from "@common/managedTableSchema";
-import type { SchemaConfigAudit, TableConfig } from "prostgles-server";
-import { getAuditWriterName } from "prostgles-server/dist/Audit/getAuditTableConfig";
+import type { ResolvedAuditConfig } from "prostgles-server";
 import type { DBSchemaTable } from "prostgles-types";
 
-/** Publish UI metadata only for tables with a server-generated audit writer. */
+/** Publish UI metadata for tables included by the server's audit rules. */
 export const getTableAuditConfig = (
   table: DBSchemaTable,
-  tableConfig: TableConfig[string] | undefined,
-  audit: SchemaConfigAudit | undefined,
+  auditConfig: ResolvedAuditConfig | undefined,
 ): ClientTableAuditConfig | undefined => {
-  if (
-    !audit ||
-    !tableConfig?.triggers?.[getAuditWriterName(audit.tableName, table.name)]
-  )
+  const config = auditConfig?.tables[table.name];
+  if (!config) {
     return;
-  const rule = audit.tables?.[table.name];
-  const options = typeof rule === "object" ? rule : undefined;
-  const idColumns = [
-    ...(options?.idColumns ??
-      table.columns.filter((c) => c.is_pkey).map((c) => c.name)),
-  ];
+  }
+
+  const { idColumns } = config;
   if (
     !idColumns.length ||
     idColumns.some(
@@ -29,8 +22,8 @@ export const getTableAuditConfig = (
     return { error: "Insufficient privileges" };
   }
   return {
-    tableName: audit.tableName,
-    entityType: options?.entityType ?? table.name,
+    tableName: auditConfig.tableName,
+    entityType: config.entityType,
     idColumns,
   };
 };

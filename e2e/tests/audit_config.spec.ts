@@ -1,7 +1,7 @@
-import assert from "node:assert/strict";
+import * as assert from "node:assert/strict";
 import { rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import pgPromise from "../../server/node_modules/pg-promise";
+import pgPromise = require("../../server/node_modules/pg-promise");
 import type { TableConfig } from "../../server/node_modules/prostgles-server";
 import type {
   SchemaConfig,
@@ -270,6 +270,8 @@ test("audits existing and configured tables without inferring names from audit r
     id: "audit-discovery-e2e",
     audit: { tableName: "audit_events" },
     onInitSQL: `
+      DROP TABLE IF EXISTS existing_records CASCADE;
+      DROP VIEW IF EXISTS existing_view CASCADE;
       CREATE TABLE IF NOT EXISTS existing_records (id integer PRIMARY KEY);
       CREATE VIEW existing_view AS SELECT * FROM existing_records;
     `,
@@ -304,6 +306,56 @@ test("audits existing and configured tables without inferring names from audit r
     expect(
       client.tableSchema?.find((table) => table.name === "existing_view"),
     ).not.toHaveProperty("audit.tableName");
+    expect(
+      client.tableSchema?.find((table) => table.name === "configured_records"),
+    ).toHaveProperty("audit.tableName", "audit_events");
+    expect(
+      client.tableSchema?.find((table) => table.name === "audit_events"),
+    ).not.toHaveProperty("audit.tableName");
+    client.disconnect();
+
+    const state = await deployment.connectStateAs("admin");
+    assert.ok(state.db.connections?.findOne);
+    const connection = await state.db.connections.findOne({ name: config.id });
+    assert.ok(connection);
+    for (const enabled of [false, true]) {
+      writeFileSync(
+        join(configPath, "index.js"),
+        `module.exports = ${JSON.stringify({
+          ...config,
+          audit: {
+            ...config.audit,
+            tables: enabled ? undefined : { configured_records: 0 },
+          },
+        })};`,
+      );
+      await state.methods!.syncSchema!({
+        connectionId: connection.id,
+        configPath,
+      });
+      expect(
+        await state.db.connections.findOne({ id: connection.id }),
+      ).toBeTruthy();
+      const excludedClient = await deployment.connectProjectAs("admin");
+      expect(
+        excludedClient.tableSchema?.find(
+          (table) => table.name === "existing_records",
+        ),
+      ).toHaveProperty("audit.tableName", "audit_events");
+      const configuredTable = excludedClient.tableSchema?.find(
+        (table) => table.name === "configured_records",
+      );
+      if (enabled) {
+        expect(configuredTable).toHaveProperty(
+          "audit.tableName",
+          "audit_events",
+        );
+      } else {
+        expect(configuredTable).not.toHaveProperty("audit.tableName");
+      }
+      excludedClient.disconnect();
+    }
+    state.disconnect();
   } finally {
     await deployment?.dispose();
     rmSync(configPath, { recursive: true, force: true });

@@ -108,9 +108,12 @@ export const ConnectionConfigSync = () => {
               "No schema path selected"
             : undefined
           }
-          onClickPromise={async () => {
-            await syncSchema!({ connectionId, configPath: configPath! });
-          }}
+          onClickPromise={
+            syncSchema &&
+            (async () => {
+              await syncSchema({ connectionId, configPath: configPath! });
+            })
+          }
         >
           {mustSave ? "Save and sync" : "Sync now"}
         </Btn>

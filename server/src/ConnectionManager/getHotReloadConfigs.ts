@@ -1,23 +1,23 @@
+import type { RequiredKeepUndefined } from "@common/utils";
 import { getAuthSetupData } from "@src/authConfig/subscribeToAuthSetupChanges";
+import { generatedFolderName, srcFolderName } from "@src/cli/cliTemplateFiles";
+import { IS_PROD } from "@src/init/utils";
+import type { ProstglesContext } from "@src/schemaConfig";
+import { join } from "path";
+import type { ServerFunctionDefinitions, SessionUser } from "prostgles-server";
 import type { DB } from "prostgles-server/dist/Prostgles";
 import type { UpdatableOptions } from "prostgles-server/dist/initProstgles";
 import type { SUser } from "../authConfig/sessionUtils";
 import type { Connections, DBS, DatabaseConfigs } from "../index";
+import type { ConnectionManager } from "./ConnectionManager";
 import { getRestApiConfig } from "./connectionManagerUtils";
 import { getConnectionAuth } from "./getConnectionAuth";
-import { getConnectionSocketPath } from "./getConnectionSocketPath";
-import type { ConnectionManager } from "./ConnectionManager";
-import { join } from "path";
 import { getConnectionServerFunctions } from "./getConnectionServerFunctions";
-import type { CONNECTION_HOT_RELOAD_COLUMNS } from "./initConnectionManager";
-import { parseTableConfig } from "./parseTableConfig";
-import type { RequiredKeepUndefined } from "@common/utils";
-import { modifyClientSchema } from "./modifyClientSchema";
-import type { ServerFunctionDefinitions, SessionUser } from "prostgles-server";
+import { getConnectionSocketPath } from "./getConnectionSocketPath";
 import { getSchemaConfig } from "./getSchemaConfig";
-import { IS_PROD } from "@src/init/utils";
-import { generatedFolderName, srcFolderName } from "@src/cli/cliTemplateFiles";
-import type { ProstglesContext } from "@src/schemaConfig";
+import type { CONNECTION_HOT_RELOAD_COLUMNS } from "./initConnectionManager";
+import { modifyClientSchema } from "./modifyClientSchema";
+import { parseTableConfig } from "./parseTableConfig";
 
 export type HotReloadConfigOptions = RequiredKeepUndefined<
   Pick<
@@ -157,14 +157,14 @@ export const getHotReloadConfigs = async ({
           join(config_sync.configPath, srcFolderName, "index.ts")
         : undefined,
       functions: mergeFunctions(schemaConfig?.functions, connectionFunctions),
-      modifyClientSchema: (table, tableConfig, userData) =>
+      modifyClientSchema: (table, tableConfig, userData, auditConfig) =>
         modifyClientSchema({
           connection: configuredConnection,
           databaseConfig: configuredDatabaseConfig,
           table,
           tableConfig,
           userData,
-          audit: schemaConfig?.audit,
+          auditConfig,
         }),
     } satisfies HotReloadConfigOptions,
     connectionServers,

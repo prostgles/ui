@@ -69,10 +69,7 @@ export const prostglesOnReady = async (
     const { serviceManager, isNew: isNewServiceManager } =
       await initializeServiceManager(db);
     const startupSchemaConfig = getStartupSchemaConfig();
-    if (
-      isNewServiceManager &&
-      startupSchemaConfig?.schemaConfig.services
-    ) {
+    if (isNewServiceManager && startupSchemaConfig?.schemaConfig.services) {
       await serviceManager.addServices(
         startupSchemaConfig.schemaConfig.services,
       );
@@ -106,14 +103,14 @@ export const prostglesOnReady = async (
 
           modifyClientSchema:
             connection &&
-            ((table, tableConfig, userData) =>
+            ((table, tableConfig, userData, auditConfig) =>
               modifyClientSchema({
                 connection,
                 databaseConfig: stateDatabaseConfig,
                 table,
                 tableConfig,
                 userData,
-                audit: undefined,
+                auditConfig,
               })),
         });
       },

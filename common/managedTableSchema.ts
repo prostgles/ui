@@ -5,7 +5,7 @@ export type ClientTableAuditConfig =
   | { error: string }
   | {
       tableName: string;
-      idColumns: string[];
+      idColumns: readonly string[];
       entityType: string;
     };
 

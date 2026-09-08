@@ -36,16 +36,10 @@ export const startConnection = async function (
   if (existingConnection) {
     if (existingConnection.state === "initializing") {
       existingConnection = await existingConnection.initPromise;
+      restartIfExists = false;
     }
-    if (restartIfExists) {
-      if (existingConnection.state === "started") {
-        await this.cleanupOnMount(existingConnection);
-        await existingConnection.prgl.destroy();
-      }
-      this.prglConnections.delete(connectionId);
-    } else if (existingConnection.state === "error") {
-      throw existingConnection.error;
-    } else {
+    if (!restartIfExists) {
+      if (existingConnection.state === "error") throw existingConnection.error;
       return pickKeys(existingConnection, ["socketPath", "socketUrl"]);
     }
   }
@@ -95,7 +89,10 @@ export const startConnection = async function (
     : existingInstance;
 
   const { socketPath, socketUrl } = getConnectionSocketPath(connection);
-  if (prglInstance) {
+  if (
+    prglInstance &&
+    (!restartIfExists || existingInstance?.state === "initializing")
+  ) {
     if (
       prglInstance.socketPath !== socketPath ||
       prglInstance.socketUrl !== socketUrl
@@ -123,7 +120,8 @@ export const startConnection = async function (
     socketPath: string;
     socketUrl: string | undefined;
   }>((resolve, reject) => {
-    void (async () => {
+    // Register initPromise below before running teardown or initialization.
+    void Promise.resolve().then(async () => {
       const initState = {
         prglReady: false,
         onReadyCalled: false,
@@ -137,6 +135,10 @@ export const startConnection = async function (
 
       let prgl: InitResult<void, SUser, ProstglesContext> | undefined;
       try {
+        if (restartIfExists && prglInstance?.state === "started") {
+          await this.cleanupOnMount(prglInstance);
+          await prglInstance.prgl.destroy();
+        }
         const {
           config: hotReloadConfig,
           connectionServers: { ioConnection, app },
@@ -298,7 +300,7 @@ export const startConnection = async function (
           con: connection,
         });
       }
-    })();
+    });
   });
 
   this.prglConnections.set(connection.id, {

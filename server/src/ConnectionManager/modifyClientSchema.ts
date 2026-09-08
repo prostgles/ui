@@ -1,25 +1,28 @@
-import type { SchemaConfigAudit } from "prostgles-server";
-import { getTableAuditConfig } from "./getTableAuditConfig";
 import type { ColumnOptions, TableOptions } from "@common/managedTableSchema";
 import type { SUser } from "@src/authConfig/sessionUtils";
-import type { AuthResultWithSID, TableConfig } from "prostgles-server";
+import type {
+  AuthResultWithSID,
+  ResolvedAuditConfig,
+  TableConfig,
+} from "prostgles-server";
 import { isObject, type DBSchemaTable } from "prostgles-types";
 import type { DatabaseConfigs } from "..";
 import { dbsConnectionOptions } from "./dbsConnectionOptions";
 import type { ConnectionHotReloadProperties } from "./getHotReloadConfigs";
+import { getTableAuditConfig } from "./getTableAuditConfig";
 
 export const modifyClientSchema = ({
   connection,
   databaseConfig,
   table,
   tableConfig,
-  audit,
+  auditConfig,
 }: {
   connection: ConnectionHotReloadProperties;
   databaseConfig: Pick<DatabaseConfigs, "file_table_config">;
   table: DBSchemaTable;
   tableConfig: TableConfig[string] | undefined;
-  audit?: SchemaConfigAudit;
+  auditConfig: ResolvedAuditConfig | undefined;
   userData: AuthResultWithSID<SUser> | undefined;
 }): DBSchemaTable<Omit<TableOptions, "columns">, ColumnOptions> => {
   const { file_table_config } = databaseConfig;
@@ -44,7 +47,7 @@ export const modifyClientSchema = ({
   return {
     ...table,
     managedTableType: tableOptions.managedTableType,
-    audit: getTableAuditConfig(table, tableConfig, audit),
+    audit: getTableAuditConfig(table, auditConfig),
     card: tableOptions.card,
     icon: tableOptions.icon,
     label:
