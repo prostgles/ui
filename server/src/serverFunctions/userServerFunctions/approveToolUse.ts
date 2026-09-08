@@ -1,10 +1,10 @@
+import { filterArr } from "@common/llmUtils";
 import type { DBSSchema } from "@common/publishUtils";
 import type { DBS } from "@src/index";
 import type { AuthClientRequest } from "prostgles-server";
-import { runApprovedTools } from "../askLLM/runApprovedTools/runApprovedTools";
+import { getChatAborter } from "../askLLM/askLLM";
 import { getLLMToolsAllowedInThisChat } from "../askLLM/getLLMToolsAllowedInThisChat";
-import { filterArr } from "@common/llmUtils";
-import { getChatAborter, type AskLLMArgs } from "../askLLM/askLLM";
+import { runApprovedTools } from "../askLLM/runApprovedTools/runApprovedTools";
 
 export const approveToolUse = async (
   {
@@ -20,14 +20,10 @@ export const approveToolUse = async (
     user,
     dbo: dbs,
     clientReq,
-    accessRules,
-    allowedLLMCreds,
   }: {
-    user: DBSSchema["users"];
+    user: Pick<DBSSchema["users"], "id" | "type">;
     dbo: DBS;
     clientReq: AuthClientRequest;
-    accessRules: AskLLMArgs["accessRules"];
-    allowedLLMCreds: AskLLMArgs["allowedLLMCreds"];
   },
 ) => {
   const toolUseRequest = await dbs.mcp_tool_approval_requests.findOne({
@@ -131,8 +127,6 @@ export const approveToolUse = async (
         clientReq,
         dbs,
         schema,
-        accessRules,
-        allowedLLMCreds,
         connectionId,
       },
       chat,

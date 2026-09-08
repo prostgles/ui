@@ -72,7 +72,7 @@ export default class Chip extends React.Component<ChipProps> {
           ...this.props.style,
         }}
         className={classOverride(
-          `chip-component flex-row ws-pre-wrap ai-center chip lg ${color} variant-${variant} ${variant === "default" ? "gap-p25" : ""} ${asHeader ? "text-ellipsis" : ""}`,
+          `chip-component flex-row ws-pre-wrap ai-center chip min-w-0 lg ${color} variant-${variant} ${variant === "default" ? "gap-p25" : ""} ${asHeader ? "text-ellipsis" : ""}`,
           className,
         )}
       >
@@ -81,7 +81,7 @@ export default class Chip extends React.Component<ChipProps> {
             <Btn
               iconPath={leftIcon.path}
               onClick={leftIcon.onClick}
-              className={classOverride("mr-p5 round", leftIcon.className)}
+              className={classOverride("round f-0", leftIcon.className)}
               size="default"
               style={{
                 padding: 0,
@@ -93,7 +93,7 @@ export default class Chip extends React.Component<ChipProps> {
             />
           : <Icon
               path={leftIcon.path}
-              className={classOverride("mr-p5 round", leftIcon.className)}
+              className={classOverride("round f-0", leftIcon.className)}
               size={leftIcon.size ?? 1}
               style={leftIcon.style}
             />
@@ -102,7 +102,7 @@ export default class Chip extends React.Component<ChipProps> {
 
         {!asHeader && labelNode}
 
-        <FlexCol className={`gap-p25 `}>
+        <FlexCol className={`gap-p25 min-w-0`}>
           {asHeader && labelNode}
           {"value" in this.props && this.props.value ?
             <span

@@ -1,6 +1,6 @@
-import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
-import { UNIQUE_DB_COLS } from "./tableConfigDatabaseConfig";
 import { tableOptionsJsonbSchema } from "@common/mcp/tableOptionsJsonbSchema";
+import type { TableConfig } from "prostgles-server";
+import { UNIQUE_DB_COLS } from "./tableConfigDatabaseConfig";
 
 const UNIQUE_DB_FIELD_LIST = UNIQUE_DB_COLS.join(", ");
 
@@ -81,12 +81,6 @@ export const tableConfigConnections: TableConfig<{ en: 1 }> = {
       is_state_db: {
         sqlDefinition: `BOOLEAN`,
         info: { hint: `If true then this DB is used to run the dashboard` },
-      },
-      on_mount_ts: {
-        sqlDefinition: "TEXT",
-        info: {
-          hint: `On mount typescript function. Must export const onMount`,
-        },
       },
       on_mount_ts_disabled: {
         sqlDefinition: "BOOLEAN",

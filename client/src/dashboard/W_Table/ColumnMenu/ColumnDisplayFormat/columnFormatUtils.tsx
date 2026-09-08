@@ -17,97 +17,15 @@ import type { ColumnConfig } from "../ColumnMenu";
 import type { TableWindowInsertModel } from "@common/DashboardTypes";
 import { FlexRowWrap } from "@components/Flex";
 import type { columnDisplayFormatSchema } from "@common/columnDisplayFormat.schema";
+import {
+  MarkdownWithPlugins,
+  MarkdownWithPluginsPopupBtn,
+} from "@components/MarkdownWithPlugins/MarkdownWithPlugins";
+import { DoclingDocumentViewerPopupBtn } from "src/dashboard/AskLLM/Chat/AskLLMChatMessages/ProstglesToolUseMessage/ProstglesMCPTools/DoclingConvertedDocument/DoclingDocumentViewer";
+import type { DBSchemaTableWithOptions } from "src/dashboard/Dashboard/getTables";
+import { MonacoLogs } from "@components/MonacoLogs/MonacoLogs";
 
-// const CurrencySchema = {
-//   type: {
-//     title: "Format",
-//     enum: ["Currency"],
-//     description: "With currency symbol",
-//   },
-//   params: {
-//     oneOfType: [
-//       {
-//         mode: { enum: ["Fixed"], title: "Type" },
-//         metricPrefix: {
-//           type: "boolean",
-//           title: "Use Metric Prefix",
-//           optional: true,
-//         },
-//         currencyCode: {
-//           type: "string",
-//           title: "Currency code",
-//           description: "EUR, GBP, USD, etc...",
-//         },
-//       },
-//       {
-//         mode: { enum: ["From column"], title: "Type" },
-//         metricPrefix: {
-//           type: "boolean",
-//           title: "Use Metric Prefix",
-//           optional: true,
-//         },
-//         currencyCodeField: {
-//           type: "string",
-//           title: "Currency Field",
-//           description:
-//             "Column containint the currency code (EUR, GBP, USD, etc...)",
-//         },
-//       },
-//     ],
-//   },
-// } as const satisfies JSONB.ObjectType["type"];
-
-// const MediaSchema = {
-//   type: {
-//     enum: ["Media"],
-//     title: "Format",
-//     description: "Display media (video/image/audio) from URL",
-//   },
-//   params: {
-//     optional: true,
-//     oneOfType: [
-//       {
-//         type: {
-//           title: "Content type",
-//           enum: ["Auto"],
-//           description: "Auto detect from URL and headers (default)",
-//         },
-//       },
-//       {
-//         type: {
-//           title: "Content type",
-//           enum: ["Fixed"],
-//           description: "Fixed",
-//         },
-//         fixedContentType: {
-//           type: "string",
-//           title: "Fixed content type",
-//           allowedValues: ContentTypes,
-//         },
-//       },
-//       {
-//         type: {
-//           title: "Content type",
-//           enum: ["From column"],
-//           description: "From column",
-//         },
-//         contentTypeColumnName: {
-//           title: "MIME column",
-//           type: "string",
-//           description:
-//             "Column that contains valid extesion values (img, mp4, mp3, ...)",
-//         },
-//       },
-//       {
-//         type: {
-//           title: "Content type",
-//           enum: ["From URL Extension"],
-//           description: "From URL Extension (e.g. .png, .mp4)",
-//         },
-//       },
-//     ],
-//   },
-// } as const satisfies JSONB.JSONBSchema["type"];
+import { JSONDiffPopup } from "./JSONDiffPopup";
 
 const tryParseNumber = (v) => {
   if (typeof v === "string" && v.length && Number.isFinite(+v)) {
@@ -115,111 +33,6 @@ const tryParseNumber = (v) => {
   }
   return v;
 };
-
-// export const columnDisplayFormatSchema = {
-//   title: "Display format",
-//   description: "Control how data is displayed",
-//   oneOfType: [
-//     {
-//       type: {
-//         enum: ["NONE"],
-//         title: "Format",
-//         description: "Display data as is. Default",
-//       },
-//     },
-//     {
-//       type: {
-//         enum: ["URL"],
-//         title: "Format",
-//         description: "Clickable URL",
-//       },
-//     },
-//     {
-//       type: {
-//         enum: ["Email"],
-//         title: "Format",
-//         description: "Email link",
-//       },
-//     },
-//     {
-//       type: {
-//         enum: ["Tel"],
-//         title: "Format",
-//         description: "Telephone number link",
-//       },
-//     },
-//     {
-//       type: {
-//         enum: ["QR Code"],
-//         title: "Format",
-//         description: "Display a URL as an image",
-//       },
-//     },
-//     CurrencySchema,
-//     {
-//       type: {
-//         enum: ["Metric Prefix"],
-//         title: "Format",
-//         description: "Display large numbers with metric prefixes (e.g. 1.2K)",
-//       },
-//     },
-//     {
-//       type: {
-//         enum: ["UNIX Timestamp"],
-//         title: "Format",
-//         description: "Display unix timestamp as datetime",
-//       },
-//     },
-//     {
-//       type: {
-//         enum: ["Age"],
-//         title: "Format",
-//         description: "Display time difference between now and the value",
-//       },
-//       params: {
-//         optional: true,
-//         type: {
-//           variant: {
-//             title: "Variant",
-//             description: "Short shows top two biggest units",
-//             enum: ["short", "full"],
-//           },
-//         },
-//       },
-//     },
-//     {
-//       type: {
-//         enum: ["HTML"],
-//         title: "Format",
-//         description: "Display string as sanitised HTML",
-//       },
-//       params: {
-//         type: {
-//           noSanitize: {
-//             type: "boolean",
-//             title: "Do not sanitize HTML",
-//             description: "Leave unchecked if you understand the risks",
-//             optional: true,
-//           },
-//           allowedHTMLTags: {
-//             title: "Allowed HTML Tags",
-//             type: "string[]",
-//             allowedValues: [
-//               { key: "img", label: "Image" },
-//               { key: "video", label: "Video" },
-//               { key: "audio", label: "Audio" },
-//               { key: "svg", label: "SVG" },
-//               { key: "path", label: "Path (SVG)" },
-//             ].map((v) => v.key),
-//             description: "List of allowed HTML tags. E.g.: div, p, html",
-//             optional: true,
-//           },
-//         },
-//       },
-//     },
-//     MediaSchema,
-//   ],
-// } as const satisfies JSONB.JSONBSchema;
 
 export type ColumnFormat = JSONB.GetSchemaType<
   typeof columnDisplayFormatSchema
@@ -231,6 +44,11 @@ const _ensureAITypesAreInSync = {} as Exclude<
 > satisfies NonNullable<TableWindowInsertModel["columns"]>[number]["format"];
 _ensureAITypesAreInSync;
 
+type RenderDataContext = {
+  column: RenderedColumn;
+  table: DBSchemaTableWithOptions | undefined;
+};
+
 type ColumnRenderer = {
   type: ColumnFormat["type"];
   tsDataType: ValidatedColumnInfo["tsDataType"][] | undefined;
@@ -238,7 +56,7 @@ type ColumnRenderer = {
   render: (
     value: any,
     row: AnyObject,
-    c: RenderedColumn,
+    ctx: RenderDataContext,
     format: ColumnFormat,
     maxCellChars: number,
   ) => React.ReactNode;
@@ -253,7 +71,7 @@ type FormattedColRender<F extends ColumnFormat> = Pick<
   render: (
     value: any,
     row: AnyObject,
-    c: RenderedColumn,
+    ctx: RenderDataContext,
     format: F,
     maxCellChars: number,
   ) => any;
@@ -268,11 +86,11 @@ const removeQuotes = (value: string | number | null) => {
     : v;
 };
 
-const HREFRender: FormattedColRender<any>["render"] = (v, r, c) => (
+const HREFRender: FormattedColRender<any>["render"] = (v, r, ctx) => (
   <a
     href={
-      (c.format?.type === "Email" ? "mailto:"
-      : c.format?.type === "Tel" ? "tel:"
+      (ctx.column.format?.type === "Email" ? "mailto:"
+      : ctx.column.format?.type === "Tel" ? "tel:"
       : "") + removeQuotes(v)
     }
     target="_blank"
@@ -287,7 +105,37 @@ const metricPrefixOptions = {
   compactDisplay: "short",
 } as const;
 
+const renderDiff: FormattedColRender<
+  Extract<ColumnFormat, { type: "JSON Diff" | "Text Diff" }>
+>["render"] = (value, row, { column }, { type, params }, maxCellChars) => {
+  if (
+    row[params.oldColumn] === undefined ||
+    row[params.newColumn] === undefined
+  ) {
+    return (
+      <RenderValue column={column} value={value} maxLength={maxCellChars} />
+    );
+  }
+  return (
+    <JSONDiffPopup
+      language={type === "Text Diff" ? "plaintext" : "json"}
+      oldValue={row[params.oldColumn]}
+      newValue={row[params.newColumn]}
+    />
+  );
+};
+
 export const DISPLAY_FORMATS = [
+  {
+    type: "JSON Diff",
+    tsDataType: ["any"],
+    render: renderDiff,
+  },
+  {
+    type: "Text Diff",
+    tsDataType: ["string"],
+    render: renderDiff,
+  },
   {
     type: "NONE",
     tsDataType: undefined,
@@ -318,18 +166,33 @@ export const DISPLAY_FORMATS = [
   {
     type: "Media",
     tsDataType: ["string", "string[]"],
-    render: (valueOrValues, row, c, f) => {
+    render: (valueOrValues, row, ctx, f) => {
       const mediaFormat = f;
-      const params = mediaFormat.params;
+      const { contentType, titleColumn } = mediaFormat.params;
+      const name = titleColumn ? row[titleColumn] : undefined;
+      const isTableColumn = !ctx.column.computedConfig && !ctx.column.nested;
       const onRender = (v: string) => (
         <MediaViewer
           key={v}
           url={v}
           style={{ maxHeight: "100%" }}
+          name={name}
           content_type={
-            params?.type === "Fixed" ? params.fixedContentType
-            : params?.type === "From column" && params.contentTypeColumnName ?
-              row[params.contentTypeColumnName]
+            contentType?.mode === "Fixed" ? contentType.fixedContentType
+            : (
+              contentType?.mode === "From column" &&
+              contentType.contentTypeColumnName
+            ) ?
+              row[contentType.contentTypeColumnName]
+            : undefined
+          }
+          context={
+            isTableColumn && ctx.table ?
+              {
+                table: ctx.table,
+                columnName: ctx.column.name,
+                row,
+              }
             : undefined
           }
           // onPrevOrNext={!allowMediaSkip ? undefined : (increment) => {
@@ -359,13 +222,31 @@ export const DISPLAY_FORMATS = [
   {
     type: "QR Code",
     tsDataType: ["string"],
-    render: (v, r, c, p, maxCellChars) => {
+    render: (v, r, { column }, p, maxCellChars) => {
       // Using "90px" because default max row height is 100px
       return v?.toString().trim().length ?
           <QRCodeImage url={v} size={90} variant="table-cell" />
-        : <RenderValue column={c} value={v} maxLength={maxCellChars} />;
+        : <RenderValue column={column} value={v} maxLength={maxCellChars} />;
     },
   } satisfies FormattedColRender<Extract<ColumnFormat, { type: "QR Code" }>>,
+  {
+    type: "Markdown",
+    tsDataType: ["string"],
+    render: (v) => {
+      return <MarkdownWithPlugins content={v} />;
+    },
+  } satisfies FormattedColRender<
+    Extract<ColumnFormat, { type: "Markdown" | "MarkdownPopup" }>
+  >,
+  {
+    type: "MarkdownPopup",
+    tsDataType: ["string"],
+    render: (v) => {
+      return <MarkdownWithPluginsPopupBtn content={v} />;
+    },
+  } satisfies FormattedColRender<
+    Extract<ColumnFormat, { type: "Markdown" | "MarkdownPopup" }>
+  >,
   {
     type: "HTML",
     tsDataType: ["string"],
@@ -451,6 +332,38 @@ export const DISPLAY_FORMATS = [
       return v;
     },
   } satisfies FormattedColRender<Extract<ColumnFormat, { type: "Currency" }>>,
+  {
+    type: "DoclingDocument",
+    tsDataType: ["string"],
+    render: (rawValue, row) => {
+      if (!rawValue) {
+        return null;
+      }
+      return (
+        <DoclingDocumentViewerPopupBtn
+          document={rawValue}
+          markdownContent=""
+          data={undefined}
+        />
+      );
+    },
+  } satisfies FormattedColRender<
+    Extract<ColumnFormat, { type: "DoclingDocument" }>
+  >,
+  {
+    type: "Logs",
+    tsDataType: ["string", "string[]"],
+    render: (rawValue, row) => {
+      const strValue = Array.isArray(rawValue) ? rawValue.join("\n") : rawValue;
+      if (!strValue) {
+        return null;
+      }
+      if (typeof strValue !== "string") {
+        return <div>Invalid value log data type: {typeof strValue}</div>;
+      }
+      return <MonacoLogs logs={strValue} />;
+    },
+  } satisfies FormattedColRender<Extract<ColumnFormat, { type: "Logs" }>>,
 ] as ColumnRenderer[];
 
 export function getFormatOptions(

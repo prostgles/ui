@@ -89,6 +89,13 @@ export const setupLLMProviders = async (dbs: DBS) => {
         llm_models: [],
       },
       {
+        id: "Hetzner",
+        api_url: "https://inference.hetzner.com/api/v1/chat/completions",
+        api_docs_url: "https://experiments.hetzner.com/docs/inference",
+        logo_url: "/logos/hetzner.svg",
+        llm_models: [],
+      },
+      {
         id: "Ollama",
         api_url: "http://localhost:11434/v1/chat/completions",
         api_docs_url: "https://github.com/ollama/ollama/blob/main/docs/api.md",

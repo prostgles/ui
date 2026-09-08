@@ -15,7 +15,7 @@ import { RenderValue } from "src/dashboard/SmartForm/SmartFormField/RenderValue"
 export type ColumnQuickStatsProps = {
   column: ValidatedColumnInfo;
   db: Prgl["db"];
-  w: SyncDataItem<Required<WindowData<"table">>, true>;
+  w: SyncDataItem<Required<WindowData<"table">>, { handlesOnData: true }>;
 };
 
 export const ColumnQuickStats = (props: ColumnQuickStatsProps) => {

@@ -3,14 +3,16 @@ import { mdiChevronLeft } from "@mdi/js";
 import React, { useCallback, useEffect, useState } from "react";
 import { Icon } from "../Icon/Icon";
 import Popup from "../Popup/Popup";
+import type { AnyObject } from "prostgles-types";
 import {
-  RenderMedia,
+  MediaViewerContent,
   type UrlInfo,
   type ValidContentType,
-} from "./RenderMedia";
+} from "./MediaViewerContent";
 import { ContentTypes } from "@common/columnDisplayFormat.schema";
+import type { DBSchemaTableWithOptions } from "src/dashboard/Dashboard/getTables";
 
-type P = {
+export type MediaViewerProps = {
   url: string;
 
   /**
@@ -33,11 +35,27 @@ type P = {
    * If present then use this
    */
   content_type?: ValidContentType;
+
+  variant?: "thumbnail";
+
+  context?: {
+    table: DBSchemaTableWithOptions;
+    columnName: string;
+    row: AnyObject;
+  };
 };
 
-export const MediaViewer = (props: P) => {
-  const { onPrevOrNext, style, content_type, url, allowedHostnames, name } =
-    props;
+export const MediaViewer = (props: MediaViewerProps) => {
+  const {
+    onPrevOrNext,
+    style,
+    content_type,
+    url,
+    allowedHostnames,
+    name,
+    variant,
+    context,
+  } = props;
   const [isFocused, setIsFocused] = useState(false);
   const [urlInfo, setUrlInfo] = useState<UrlInfo | undefined>(
     content_type && url ?
@@ -117,25 +135,29 @@ export const MediaViewer = (props: P) => {
     );
   return (
     <>
-      <RenderMedia
+      <MediaViewerContent
         title={name}
+        subTitle={undefined}
         isFocused={isFocused}
         setIsFocused={setIsFocused}
         style={style}
         urlInfo={urlInfo}
         contentOnly={false}
+        variant={variant}
+        context={context}
       />
       {isFocused && (
         <Popup
           rootStyle={{ padding: 0, borderRadius: 0 }}
           clickCatchStyle={{ opacity: 0.2 }}
-          contentClassName="o-hidden"
+          contentClassName="o-hidden p-0"
           onClose={() => {
             setIsFocused(false);
           }}
           positioning="fullscreen"
           autoFocusFirst={"content"}
           focusTrap={true}
+
           title={
             name ??
             (!urlInfo ? "" : (
@@ -164,13 +186,15 @@ export const MediaViewer = (props: P) => {
             }
           >
             {toggleClick && ToggleBtn(true, () => toggleClick(-1))}
-            <RenderMedia
+            <MediaViewerContent
               title={name}
+              subTitle={undefined}
               isFocused={isFocused}
               setIsFocused={setIsFocused}
               style={style}
               urlInfo={urlInfo}
               contentOnly={true}
+              context={context}
             />
             {toggleClick && ToggleBtn(false, () => toggleClick(1))}
           </div>

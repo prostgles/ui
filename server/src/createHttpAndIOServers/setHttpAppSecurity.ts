@@ -1,5 +1,4 @@
 import type { DBSSchema } from "@common/publishUtils";
-import { getElectronConfig } from "@src/electronConfig";
 import cors from "cors";
 import type e from "express";
 import helmet from "helmet";
@@ -8,8 +7,8 @@ import {
   upsertNamedExpressMiddleware,
 } from "prostgles-server";
 import type { ExpressApp } from "prostgles-server/dist/RestApi";
-import { getCorsOptions } from "./getCorsOptions";
 import { setNonceHandler, withNonce, withSelfAndExtra } from "../init/utils";
+import { getCorsOptions } from "./getCorsOptions";
 
 export type HttpAppSecurityOptions = Pick<
   DBSSchema["database_configs"],

@@ -18,9 +18,8 @@ export async function getTableData(
   const delta = { ...dp, ...ds, ...dd };
   const { rows } = this.state;
   const {
-    prgl: { db },
+    prgl: { tables, db },
     joinFilter,
-    tables,
   } = this.props;
   const { w } = this.d;
   if (!w) return;
@@ -239,8 +238,11 @@ export async function getTableData(
             ...r,
           }));
 
+          const tableLabel =
+            tables.find((table) => table.name === tableName)?.label ??
+            tableName;
           const nameTemplate =
-            w.title || `${w.table_name} ${showCounts ? "${rowCount}" : ""}`;
+            w.title || `${tableLabel}${showCounts ? " ${rowCount}" : ""}`;
           const newName = nameTemplate.replace(
             "${rowCount}",
             (showCounts ? (rowCount ?? "") : "").toLocaleString(),

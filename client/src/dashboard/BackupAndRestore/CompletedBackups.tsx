@@ -1,25 +1,28 @@
 import { ROUTES, sliceText } from "@common/utils";
 import Btn from "@components/Btn";
-import ButtonGroup from "@components/ButtonGroup";
-import { FlexCol } from "@components/Flex";
+import { FlexRow } from "@components/Flex";
 import { Icon } from "@components/Icon/Icon";
 import { InfoRow } from "@components/InfoRow";
+import { Select } from "@components/Select/Select";
 import {
   mdiBackupRestore,
   mdiDelete,
   mdiDownload,
+  mdiFilter,
   mdiGestureTapButton,
   mdiRefreshAuto,
 } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { type AnyObject } from "prostgles-types";
 import React from "react";
+import { t } from "src/i18n/i18nUtils";
 import type { Backups } from "../Dashboard/dashboardUtils";
 import type { FieldConfig } from "../SmartCard/SmartCard";
 import { SmartCardList } from "../SmartCardList/SmartCardList";
 import { StyledInterval } from "../W_SQL/customRenderers";
 import { bytesToSize } from "./BackupsControls";
 import { CodeConfirmation } from "./CodeConfirmation";
+import { DeleteAllBackups } from "./CompletedBackups/DeleteAllBackups";
 import { RenderBackupLogs } from "./RenderBackupLogs";
 import { RenderBackupStatus } from "./RenderBackupStatus";
 import { Restore } from "./Restore/Restore";
@@ -27,7 +30,6 @@ import {
   BACKUP_FILTER_OPTS,
   type BackupsControlsState,
 } from "./useBackupsControlsState";
-import { t } from "src/i18n/i18nUtils";
 
 const orderByCreated = {
   key: "created",
@@ -49,10 +51,6 @@ export const CompletedBackups = ({
     usePrgl();
   const { bkpDelete } = dbsMethods;
   const connection_id = connectionId;
-
-  // const [backupsFilterType, setBackupsFilterType] = useState<
-  //   (typeof BACKUP_FILTER_OPTS)[number]["key"]
-  // >(BACKUP_FILTER_OPTS[0].key);
 
   const restoreLogsFConf: FieldConfig<Backups> = {
     name: "restore_logs",
@@ -80,20 +78,26 @@ export const CompletedBackups = ({
       data-command="BackupsControls.Completed"
       btnColor="gray"
       showTopBar={false}
-      title={
-        <FlexCol className="mt-1 flex-col gap-p5">
-          <label className="font-16 bold">Completed backups</label>
-          <div className="flex-row ai-center gap-p5">
-            {/* <Btn iconPath={mdiFilter} variant="text" size="small" color="action" />  */}
-            <ButtonGroup
-              variant="select"
-              options={BACKUP_FILTER_OPTS.map((v) => v.key)}
-              value={backupsFilterType}
-              onChange={(v) => setBackupsFilterType(v)}
+      title={({ count }) => (
+        <FlexRow className="gap-p5 ai-end f-1">
+          <label className="font-16 bold mr-auto">
+            Completed backups ({count})
+          </label>
+          {Boolean(count) && (
+            <DeleteAllBackups
+              filter={completedBackupsFilter}
+              filterName={backupsFilterType}
+              data-command="BackupsControls.Completed.deleteAll"
             />
-          </div>
-        </FlexCol>
-      }
+          )}
+          <Select
+            btnProps={{ iconPath: mdiFilter }}
+            options={BACKUP_FILTER_OPTS.map((v) => v.key)}
+            value={backupsFilterType}
+            onChange={(v) => setBackupsFilterType(v)}
+          />
+        </FlexRow>
+      )}
       onSetData={(items) => setHasBackups(!!items.length)}
       db={dbs}
       methods={dbsMethodSchema}
@@ -101,7 +105,6 @@ export const CompletedBackups = ({
       tables={dbsTables}
       filter={completedBackupsFilter}
       realtime={true}
-      // className="mt-2"
       orderBy={orderByCreated}
       excludeNulls={true}
       fieldConfigs={[

@@ -10,8 +10,7 @@ import { RenderJson } from "./RenderValue/RenderJson";
 
 type P = {
   column:
-    | Pick<ValidatedColumnInfo, "udt_name" | "tsDataType" | "file">
-    | undefined;
+    Pick<ValidatedColumnInfo, "udt_name" | "tsDataType" | "file"> | undefined;
   value: any;
   /**
    * Defaults to true
@@ -63,7 +62,7 @@ export const RenderValue = ({
 
   if (c?.file && isObject(value)) {
     const media = value as LocalMedia;
-    return <div>{media.name}</div>;
+    return <div>{media.original_name}</div>;
   }
 
   if (c?.udt_name === "uuid" && value) {
@@ -190,7 +189,7 @@ export const RenderValue = ({
 
   if (value && (c?.udt_name.startsWith("json") || isObject(value))) {
     const title = (() => {
-      if (isObject(value)) {
+      if (isObject(value) || Array.isArray(value)) {
         try {
           return JSON.stringify(value, null, 2);
         } catch {}

@@ -15,9 +15,10 @@ void test("searchWebDevFiles: basic search", async () => {
 
   strict.ok(result.length > 0, "Should find at least one result");
   const firstResult = result[0]!;
-  strict.ok(
-    firstResult.filePath === "src/useAppState/PrglCoreContextProvider.tsx",
-    "First result should be TestComponent.tsx",
+  console.log("First result:", firstResult);
+  strict.equal(
+    firstResult.filePath,
+    "src/useAppState/PrglCoreContextProvider.tsx",
   );
   strict.ok(
     firstResult.matchedContent.includes("const usePrglCore = () => {"),
@@ -26,8 +27,9 @@ void test("searchWebDevFiles: basic search", async () => {
 });
 
 void test("searchWebDevFiles: file name query", async () => {
+  const contentQuery = "usePrgl";
   const { result } = await searchWebDevFiles({
-    contentQuery: "usePrgl",
+    contentQuery,
     fileNameQuery: "PrglCoreContextProvider",
     web_app_directory,
     folder: "client",

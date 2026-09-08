@@ -72,6 +72,7 @@ export const dbMcpSchema = {
     icon: "DatabaseEyeOutline",
     description: fixIndent(`
       Gets the schema of existing tables in the connected database.
+      It ignores the "prostgles" schema (used internally) by default.
       Optionally can provide a list of exact table names ("tableNames") or table name parts ("tableNameParts") to get the schema for specific tables. If not provided, the schema for all tables will be returned.
       `),
     schema: {

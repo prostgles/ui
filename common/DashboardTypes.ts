@@ -367,12 +367,33 @@ export type TableColumn = {
         };
       }
     | {
+        type: "Markdown";
+      }
+    | {
+        /**
+         * Same as "Markdown" but will show a popup with the full content when clicked.
+         */
+        type: "MarkdownPopup";
+      }
+    | {
         /** Text content as sanitised html */
         type: "HTML";
       }
     | {
         /** Displays the media from URL. Accepted formats: image, audio or video. Media/Mime type will be used from headers */
         type: "Media";
+      }
+    | {
+        /** Display process logs */
+        type: "Logs";
+      }
+    | {
+        /** Used internally. Ignore */
+        type: "DoclingDocument";
+      }
+    | {
+        type: "JSON Diff" | "Text Diff";
+        params: { oldColumn: string; newColumn: string };
       };
 };
 

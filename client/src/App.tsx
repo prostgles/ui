@@ -18,7 +18,6 @@ import type { DBSSchema } from "@common/publishUtils";
 import { fixIndent, ROUTES } from "@common/utils";
 import { AppContextProvider } from "@pages/AppContextProvider";
 import { prglStateStore } from "@pages/ProjectConnection/PrglContextProvider";
-// import { type DBHandlerClient } from "prostgles-client";
 import { ElectronSearchBar } from "@components/ElectronSearchBar";
 import type { AuthHandler } from "prostgles-client/dist/getAuthHandler";
 import type { ServerFunctionHandler } from "prostgles-client/dist/prostgles";
@@ -42,6 +41,7 @@ import { NonHTTPSWarning } from "./pages/NonHTTPSWarning";
 import { useAppTheme } from "./theme/useAppTheme";
 import { PrglCoreProvider } from "./useAppState/PrglCoreContextProvider";
 import { useAppState } from "./useAppState/useAppState";
+import type { DBSchemaTableWithRenderInfo } from "./dashboard/Dashboard/getTables";
 
 export type ClientUser = {
   sid: string;
@@ -85,7 +85,7 @@ export type PrglCore = {
   db: DBHandler;
   sql: SQLHandler | undefined;
   methods: ServerFunctionHandler;
-  tables: DBSchemaTableWJoins[];
+  tables: DBSchemaTableWithRenderInfo[];
 };
 export type PrglProject = PrglCore & {
   dbKey: string;

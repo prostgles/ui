@@ -1,11 +1,11 @@
 import type { DBSSchema } from "@common/publishUtils";
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import type { DBSchemaTable, ValidatedColumnInfo } from "prostgles-types";
+import type { ColumnOptions, TableOptions } from "@common/managedTableSchema";
 
 import type {
   MissingBinsOption,
   ShowBinLabelsMode,
-  StatType,
   TimeChartBinSize,
   TimechartRenderStyle,
   TooltipPosition,
@@ -26,13 +26,7 @@ import type {
 import type { CardLayout } from "./cardLayout";
 
 export type ChartType =
-  | "table"
-  | "map"
-  | "timechart"
-  | "barchart"
-  | "sql"
-  | "card"
-  | "method";
+  "table" | "map" | "timechart" | "barchart" | "sql" | "card" | "method";
 
 export type DBSSchemaForHandlers = {
   [K in keyof DBGeneratedSchema]: DBGeneratedSchema[K]["columns"];
@@ -122,7 +116,6 @@ export type ChartOptions<CType extends ChartType = "table"> =
       showLogs?: boolean;
     }
   : CType extends "card" ?
-
     {
       // sortableFields: string[];
       // filterFields: string[];
@@ -207,8 +200,11 @@ export type ChartOptions<CType extends ChartType = "table"> =
         "tsDataType" | "udt_name" | "name"
       > & {
         idx: number;
-        key: string;
-        // label: string;
+        /**
+         * Column index is used as key because column name can be duplicated in sql result
+         */
+        key: number;
+        label: string;
         subLabel: string;
         width?: number;
         sortable: boolean;
@@ -220,23 +216,29 @@ export type ChartOptions<CType extends ChartType = "table"> =
       notSEtYet: "a";
     };
 
-export const IsMap = (w?: any): w is SyncDataItem<WindowData<"map">> => {
+export const IsMap = (
+  w?: any,
+): w is SyncDataItem<WindowData<"map">, { handlesOnData: true }> => {
   return w?.type === "map";
 };
-export const IsTable = (w?: any): w is SyncDataItem<WindowData<"table">> => {
+export const IsTable = (
+  w?: any,
+): w is SyncDataItem<WindowData<"table">, { handlesOnData: true }> => {
   return w?.type === "table";
 };
 export const isMethod = (
-  w?: SyncDataItem<WindowData> | WindowData,
+  w?: SyncDataItem<WindowData, { handlesOnData: true }> | WindowData,
 ): w is WindowSyncItem<"method"> => {
   return w?.type === "method";
 };
-export const IsSQL = (w: any): w is SyncDataItem<WindowData<"sql">> => {
+export const IsSQL = (
+  w: any,
+): w is SyncDataItem<WindowData<"sql">, { handlesOnData: false }> => {
   return w.type === "sql";
 };
 export const IsTimeChart = (
   w?: any,
-): w is SyncDataItem<WindowData<"timechart">> => {
+): w is SyncDataItem<WindowData<"timechart">, { handlesOnData: false }> => {
   return w?.type === "timechart";
 };
 
@@ -293,19 +295,25 @@ export const windowIs = <T extends ChartType>(
 };
 
 type ChartsObj = {
-  [type in ChartType]: SyncDataItem<Required<WindowData<type>>, true>;
+  [type in ChartType]: SyncDataItem<
+    Required<WindowData<type>>,
+    { handlesOnData: true; select: "*" }
+  >;
 };
 type ChartsObjOfUnion<U extends ChartType> = { [K in U]: ChartsObj[K] }[U];
 
 export type WindowSyncItem<T extends ChartType = ChartType> =
   ChartsObjOfUnion<T>;
-export type LinkSyncItem = SyncDataItem<Link, true>;
+export type LinkSyncItem = SyncDataItem<Link, { handlesOnData: true }>;
 
 export type WorkspaceSchema = DBSSchema["workspaces"];
 
 export type Workspace = Required<WorkspaceSchema>;
 
-export type WorkspaceSyncItem = SyncDataItem<Workspace, true>;
+export type WorkspaceSyncItem = SyncDataItem<
+  Workspace,
+  { handlesOnData: true }
+>;
 
 export type UserData = Omit<DBSSchema["users"], "password">;
 
@@ -345,22 +353,14 @@ export type Join = {
 };
 export type JoinV2 = Omit<Join, "on"> & { on: [string, string][][] };
 
-export type DBSchemaTableColumn = ValidatedColumnInfo & {
-  icon: string | undefined;
-  renderAs?: any;
-  style?: any;
-  label: string;
-};
-
-type TableOptions = NonNullable<
-  NonNullable<DBSSchema["connections"]["table_options"]>[string]
+export type DBSchemaTableWJoins = DBSchemaTable<
+  Omit<TableOptions, "label" | "columns"> & {
+    label: string;
+    joins: Join[];
+    joinsV2: JoinV2[];
+  },
+  ColumnOptions
 >;
-export type DBSchemaTableWJoins = Omit<DBSchemaTable, "columns"> & {
-  label: string;
-  joins: Join[];
-  joinsV2: JoinV2[];
-  columns: DBSchemaTableColumn[];
-} & Omit<TableOptions, "label" | "columns">;
 export type DBSchemaTablesWJoins = DBSchemaTableWJoins[];
 
 /**

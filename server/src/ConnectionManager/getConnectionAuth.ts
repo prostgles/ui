@@ -30,6 +30,7 @@ export const getConnectionAuth = async (
     sidKeyName: auth.sidKeyName,
     getUser: (sid, __, _, cl, reqInfo) =>
       auth.getUser(sid, dbs, _dbs, cl, reqInfo),
+    findUser: auth.findUser,
     cacheSession: {
       getSession: (sid) => auth.cacheSession.getSession(sid, dbs),
     },

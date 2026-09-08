@@ -1,7 +1,7 @@
 import React from "react";
 
 export type DeepPartial<T> =
-  T extends any[] ? T
+  T extends readonly unknown[] ? T
   : T extends Record<string, any> ?
     {
       [P in keyof T]?: DeepPartial<T[P]>;

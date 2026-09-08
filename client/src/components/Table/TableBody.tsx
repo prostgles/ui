@@ -81,6 +81,10 @@ export const TableBody = <Sort extends ColumnSortSQL>(
     mode: enableExperimentalVirtualisation ? "auto" : "off",
   });
 
+  const columnLayoutKey = visibleCols
+    .map((col) => `${col.key}:${col.width ?? "flex"}`)
+    .join("|");
+
   return (
     <div
       data-command="TableBody"
@@ -101,7 +105,7 @@ export const TableBody = <Sort extends ColumnSortSQL>(
         )
       }
     >
-      <div ref={scrollBodyRef} className="relative f-0">
+      <div key={columnLayoutKey} ref={scrollBodyRef} className="relative f-0">
         {!_rows.length ?
           <div className="text-3 p-2 noselect">No data</div>
         : _rows.map((row, iRow) => {

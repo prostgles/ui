@@ -22,7 +22,10 @@ export const SearchListRowContent = ({ item }: { item: ParsedListItem }) => {
       {contentLeft || null}
       <div
         className="LABELWRAPPER flex-col ai-start f-1"
-        style={item.styles?.labelWrapper}
+        style={{
+          ...(contentLeft ? { marginTop: ".125em" } : {}),
+          ...item.styles?.labelWrapper,
+        }}
       >
         <label
           className={

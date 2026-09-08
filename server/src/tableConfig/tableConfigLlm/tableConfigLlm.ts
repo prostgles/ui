@@ -1,4 +1,4 @@
-import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
+import type { TableConfig } from "prostgles-server";
 import type { JSONB } from "prostgles-types";
 import { tableConfigAgenticWorkflow } from "../tableConfigAgenticWorkflow";
 import { tableConfigLlmChats } from "./tableConfigLlmChats";

@@ -21,6 +21,7 @@ export default defineConfig(
       "docs",
       "*.mjs",
       "sample_schemas",
+      "build",
       "**/*.d.ts",
       "**/*.js",
     ],

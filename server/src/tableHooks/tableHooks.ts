@@ -1,0 +1,17 @@
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
+import type { TableHooks } from "prostgles-server";
+import { usersTableHooks } from "./users.tableHooks";
+import { connectionsTableHooks } from "./connections.tableHooks";
+import { llmChatsAllowedMcpToolsTableHooks } from "./llm_chats_allowed_mcp_tools.tableHooks";
+import { llmChatsTableHooks } from "./llm_chats.tableHook";
+import { mcpServerConfigsTableHooks } from "./mcp_server_configs.tableHooks";
+import { llmCredentialsTableHooks } from "./llm_credentials.tableHooks";
+
+export const tableHooks = {
+  ...usersTableHooks,
+  ...connectionsTableHooks,
+  ...llmChatsAllowedMcpToolsTableHooks,
+  ...llmChatsTableHooks,
+  ...mcpServerConfigsTableHooks,
+  ...llmCredentialsTableHooks,
+} as const satisfies TableHooks<DBGeneratedSchema>;

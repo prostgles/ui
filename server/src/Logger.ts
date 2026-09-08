@@ -1,6 +1,8 @@
 import type { EventInfo } from "prostgles-server/dist/Logging";
-import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
-import { pickKeys } from "prostgles-types";
+import type { TableConfig } from "prostgles-server";
+import { mkdir, writeFile } from "fs/promises";
+import { dirname } from "path";
+import { getSerialisableError, omitKeys, pickKeys } from "prostgles-types";
 import { type DBS } from ".";
 import { getAuthSetupData } from "./authConfig/subscribeToAuthSetupChanges";
 
@@ -50,43 +52,85 @@ const logRecords: {
   connection_id: string | null;
   created: Date;
 }[] = [];
-const isPlaywright = process.env.PLAYWRIGHT_TEST === "true";
+const testLogPath =
+  process.env.PRGL_TEST ? process.env.PRGL_TEST_LOG_PATH : undefined;
+const maxTestLogCharacters = 64_000;
+let testLogArtifact = "";
+let testLogWriteTimer: NodeJS.Timeout | undefined;
+let testLogWrite = Promise.resolve();
+
+const serialiseTestLog = (e: EventInfo, connection_id: string | null) => {
+  try {
+    const loggedEvent =
+      e.type === "table" || e.type === "method" ?
+        omitKeys(e, ["localParams"])
+      : undefined;
+    if (!loggedEvent) return undefined;
+    return JSON.stringify({
+      created: new Date().toISOString(),
+      connection_id,
+      ...(getSerialisableError(e) as {}),
+      loggedEvent,
+    });
+  } catch (error) {
+    return JSON.stringify({
+      created: new Date().toISOString(),
+      connection_id,
+      type: e.type,
+      serialization_error: getSerialisableError(error),
+    });
+  }
+};
+
+const addTestLog = (e: EventInfo, connection_id: string | null) => {
+  if (!testLogPath) return;
+  const line = serialiseTestLog(e, connection_id);
+  if (!line) return;
+  testLogArtifact = (testLogArtifact + line + "\n").slice(
+    -maxTestLogCharacters,
+  );
+
+  if (testLogWriteTimer) return;
+  testLogWriteTimer = setTimeout(() => {
+    testLogWriteTimer = undefined;
+    testLogWrite = testLogWrite
+      .then(async () => {
+        await mkdir(dirname(testLogPath), { recursive: true });
+        await writeFile(testLogPath, testLogArtifact);
+      })
+      .catch((error: unknown) => {
+        console.error("Failed to write test log artifact", error);
+      });
+  }, 50);
+};
 
 export const addLog = (e: EventInfo, connection_id: string | null) => {
-  // if (
-  //   e.type === "syncOrSub" &&
-  //   e.command === "addTrigger" &&
-  //   (e.tableName === "connections" || e.tableName === "database_configs")
-  // ) {
-  //   // if (item?.columnInfo?.tracked_columns.port) {
-  //   //   console.error("Port", item);
+  // if (e.type === "sync" && e.tableName === "windows") {
+  //   console.log(
+  //     e.command,
+  //     e.tableName,
+  //     pickKeys(e as any, [
+  //       "state",
+  //       "source",
+  //       "condition",
+  //       "last_synced",
+  //       "is_syncing",
+  //       "lr",
+  //       "channelName",
+  //       "rows",
+  //     ]),
+  //   );
+  //   // if (
+  //   //   e.command === "syncData"
+  //   // ) {
+  //   //   if (!_alreadyStarted && (e as any).is_syncing) {
+  //   //     debugger;
+  //   //   }
+  //   //   _alreadyStarted = true;
   //   // }
-  //   // console.log(e.tableName, item);
   // }
-  // if (e.type === "syncOrSub" && e.command === "refreshTriggers") {
-  //   const items = Array.from(
-  //     structuredClone(e).triggers?.get("connections")?.values() ?? [],
-  //   );
-  //   const item = items.find(
-  //     ({ hash }) => hash === "daaf113dfd1f8e2deaaa3eb5af1d0f80",
-  //   );
-  //   if (item && !item.columnInfo?.tracked_columns.port) {
-  //     // eslint-disable-next-line no-debugger
-  //     debugger;
-  //   }
-  //   console.log(item);
-  // }
-  if (isPlaywright) {
-    console.log(
-      //@ts-ignore
-      e.command,
-      //@ts-ignore
-      e.table_name || e.tableName,
-      //@ts-ignore
-      e.filter || e.data?.filter || e.condition,
-      //@ts-ignore
-      e.channel_name,
-    );
+  if (testLogPath) {
+    addTestLog(e, connection_id);
   }
   if (shouldExclude(e, connection_id === null)) return;
   logRecords.push({ e, connection_id, created: new Date() });

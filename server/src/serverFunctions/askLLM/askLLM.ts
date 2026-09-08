@@ -1,13 +1,11 @@
 import {
   filterArr,
-  filterArrInverse,
   getLLMMessageText,
   isAssistantMessageRequestingToolUse,
   reachedMaximumNumberOfConsecutiveToolRequests,
 } from "@common/llmUtils";
 import type { DBSSchema } from "@common/publishUtils";
 import { sliceText } from "@common/utils";
-import { HOUR } from "prostgles-server/dist/FileManager/FileManager";
 import {
   getProperty,
   getSerialisableError,
@@ -16,19 +14,19 @@ import {
   tryCatchV2,
 } from "prostgles-types";
 import { type DBS } from "../..";
-import { checkLLMLimit } from "./checkLLMLimit";
 import { fetchLLMResponse, type LLMMessageWithRole } from "./fetchLLMResponse";
 import { getLLMToolsAllowedInThisChat } from "./getLLMToolsAllowedInThisChat";
 
+import { getMCPToolNameParts } from "@common/mcpUtils";
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
 import { checkMaxCostLimitForChat } from "./checkMaxCostLimitForChat";
 import { getFullPrompt } from "./getFullPrompt";
-import { getValidatedAskLLMChatOptions } from "./getValidatedAskLLMChatOptions";
-import { runApprovedTools } from "./runApprovedTools/runApprovedTools";
-import { handleToolUseResultConfirmation } from "./handleToolUseResultConfirmation";
+import { getLlmLimitWasReached } from "./getLlmLimitWasReached";
 import { getPastMessages } from "./getPastMessages";
-import { getMCPToolNameParts } from "@common/mcpUtils";
+import { getValidatedAskLLMChatOptions } from "./getValidatedAskLLMChatOptions";
+import { handleToolUseResultConfirmation } from "./handleToolUseResultConfirmation";
+import { runApprovedTools } from "./runApprovedTools/runApprovedTools";
 
 export const getBestLLMChatModel = async (
   dbs: DBS,
@@ -51,8 +49,6 @@ export type AskLLMArgs = {
   chatId: number;
   dbs: DBS;
   user: Pick<DBSSchema["users"], "id" | "type">;
-  allowedLLMCreds: DBSSchema["access_control_allowed_llm"][] | undefined;
-  accessRules: DBSSchema["access_control"][] | undefined;
   clientReq: AuthClientRequest;
   type:
     | "new-message"
@@ -79,8 +75,6 @@ export const stopAskLLM = (chatId: number) => {
 
 export const askLLM = async (args: AskLLMArgs) => {
   const {
-    accessRules,
-    allowedLLMCreds,
     chatId,
     connectionId,
     dbs,
@@ -95,27 +89,6 @@ export const askLLM = async (args: AskLLMArgs) => {
     await getValidatedAskLLMChatOptions(args);
 
   let pastMessages = await getPastMessages(dbs, chatId);
-
-  /** It's crucial we reduce the posibility that a new user message fails to insert due to some non critical error */
-  const {
-    data: toolsWithInfo,
-    error,
-    hasError,
-  } = await tryCatchV2(
-    async () =>
-      await getLLMToolsAllowedInThisChat({
-        userType: user.type,
-        dbs,
-        chat,
-        clientReq,
-      }),
-  );
-  if (hasError) {
-    if (chat.agent_info) {
-      throw error;
-    }
-    console.error("LLM Tools fetch error:", error);
-  }
 
   const aborter = args.aborter ?? new AbortController();
   activeLLMFetchRequests.set(chat.id, aborter);
@@ -226,38 +199,15 @@ export const askLLM = async (args: AskLLMArgs) => {
     );
   }
 
-  const allowedUsedCreds = allowedLLMCreds?.filter(
-    (c) =>
-      c.llm_credential_id === llm_credential.id &&
-      c.llm_prompt_id === llm_prompt_id,
-  );
-
-  // Check if usage limit reached
-  if (allowedUsedCreds) {
-    const limitReachedMessage = await checkLLMLimit(
-      dbs,
-      user,
-      allowedUsedCreds,
-      accessRules ?? [],
-    );
-    if (limitReachedMessage) {
-      await dbs.llm_chats.update(
-        { id: chatId },
-        {
-          disabled_message: limitReachedMessage,
-          disabled_until: new Date(Date.now() + 24 * HOUR),
-        },
-      );
-      return;
-    } else if (chat.disabled_message) {
-      await dbs.llm_chats.update(
-        { id: chatId },
-        {
-          disabled_message: null,
-          disabled_until: null,
-        },
-      );
-    }
+  const limitReached = await getLlmLimitWasReached({
+    dbs,
+    user,
+    llm_credential,
+    llm_prompt_id,
+    chat,
+  });
+  if (limitReached) {
+    return;
   }
 
   const hasMessagesThatNeedAIResponse =
@@ -273,7 +223,7 @@ export const askLLM = async (args: AskLLMArgs) => {
         }
         const { serverName, toolName } = toolNameParts;
         /**
-         * Somet of prostgles-ui tools don't need LLM response after their result
+         * Some of prostgles-ui tools don't need LLM response after their result
          */
         if (
           serverName ===
@@ -325,7 +275,27 @@ export const askLLM = async (args: AskLLMArgs) => {
       },
     );
   };
+  let toolsWithInfo:
+    | Awaited<ReturnType<typeof getLLMToolsAllowedInThisChat>>
+    | undefined;
   try {
+    const toolsResult = await tryCatchV2(
+      async () =>
+        await getLLMToolsAllowedInThisChat({
+          userType: user.type,
+          dbs,
+          chat,
+          clientReq,
+        }),
+    );
+    toolsWithInfo = toolsResult.data;
+    if (toolsResult.hasError) {
+      if (chat.agent_info) {
+        throw toolsResult.error;
+      }
+      console.error("LLM Tools fetch error:", toolsResult.error);
+    }
+
     const modelData = await dbs.llm_models.findOne(
       { id: chat.model },
       {
@@ -370,6 +340,7 @@ export const askLLM = async (args: AskLLMArgs) => {
     );
     const gemini25BreakingChanges = llm_model.name.includes("gemini-2.5");
     const {
+      responseData,
       content: aiResponseMessageRaw,
       meta,
       cost,
@@ -500,6 +471,16 @@ export const askLLM = async (args: AskLLMArgs) => {
         aborter,
         clientReq,
         messageId: aiResponseMessagePlaceholder.id,
+      });
+    }
+
+    /** Empty message bug */
+    if (!aiResponseMessage.length) {
+      await dbs.alerts.insert({
+        severity: "warning",
+        message:
+          "LLM response was empty. This might be a temporary issue with the LLM provider. " +
+          JSON.stringify({ provider: llm_provider, responseData }),
       });
     }
   } catch (err) {

@@ -1,6 +1,7 @@
 import type { DumpOpts, PGDumpParams } from "@common/utils";
 import type { ChildProcess } from "child_process";
-import { isDefined, omitKeys, pickKeys } from "prostgles-types";
+import { isDefined, omitKeys } from "prostgles-types";
+import Stream from "stream";
 import { getSSLEnvVars } from "../ConnectionManager/saveCertificates";
 import type BackupManager from "./BackupManager";
 import { envToStr, pipeFromCommand } from "./pipeFromCommand";
@@ -141,48 +142,50 @@ export async function pgDump(
 
     const getBkp = () => this.dbs.backups.findOne({ id: backup_id });
 
-    const destStream = fileMgr.uploadStream(
-      backup_id,
-      content_type,
-      (loadingRaw) => {
-        /** S3 is adding some extra fields while total is missing */
-        const loading = pickKeys(loadingRaw, ["total", "loaded"]);
-        void this.dbs.backups.update(
-          {
-            $and: [
-              { id: backup_id },
-              { status: { "@>": { state: "loading" } } },
-            ],
-          },
-          {
-            status: { state: "loading", ...loading },
-            last_updated: new Date(),
-          },
-        );
-      },
-      setError,
-      (item) => {
+    const destStream = new Stream.PassThrough();
+    void fileMgr
+      .upload({
+        file: destStream,
+        fileName: backup_id,
+        contentType: content_type,
+        onProgress: (loaded) => {
+          void this.dbs.backups.update(
+            {
+              $and: [
+                { id: backup_id },
+                { status: { "@>": { state: "loading" } } },
+              ],
+            },
+            {
+              status: { state: "loading", loaded, total: undefined },
+              last_updated: new Date(),
+            },
+          );
+        },
+      })
+      .then((item) => {
         void getBkp().then(async (bkp) => {
           if (bkp && "err" in bkp.status) {
             try {
-              await fileMgr.deleteFile(bkp.id);
+              await fileMgr.delete(bkp.id);
             } catch {}
           } else {
             const nowIso = new Date().toISOString();
             void this.dbs.backups.update(
               { id: backup_id },
               {
-                sizeInBytes: item.content_length,
+                sizeInBytes: item.contentLength,
                 uploaded: nowIso,
                 status: { state: "finished", timestamp: nowIso },
                 last_updated: nowIso,
-                local_filepath: item.filePath,
+                local_filepath:
+                  item.type === "local" ? item.filePath : undefined,
               },
             );
           }
         });
-      },
-    );
+      })
+      .catch(setError);
 
     // const res = child.spawnSync(dumpCommand.command, dumpCommand.opts.concat(["-f", "-l"]) as any, { env: ENV_VARS });
 

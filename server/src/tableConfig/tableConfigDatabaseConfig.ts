@@ -1,4 +1,4 @@
-import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
+import type { TableConfig } from "prostgles-server";
 import type { JSONB } from "prostgles-types";
 import { DUMP_OPTIONS_SCHEMA } from "./tableConfigBackups";
 import { OAuthProviderOptions } from "@common/OAuthUtils";
@@ -33,7 +33,7 @@ export const FILE_TABLE_CONFIG_SCHEMA = {
       },
     ],
   },
-  referencedTables: { type: "any", optional: true },
+  referencedTables: { record: { values: "any" }, optional: true },
   delayedDelete: {
     optional: true,
     type: {
@@ -42,11 +42,13 @@ export const FILE_TABLE_CONFIG_SCHEMA = {
        */
       deleteAfterNDays: { type: "number" },
       /**
-       * How freuquently the files will be checked for deletion delay
+       * How frequently the files will be checked for deletion delay
        */
       checkIntervalHours: { type: "number", optional: true },
     },
   },
+  annotationsTable: { type: "string", optional: true },
+  extractText: { type: "boolean", optional: true },
 } as const satisfies JSONB.ObjectType["type"];
 
 const SMTPConfig = {
@@ -129,7 +131,16 @@ const tableConfigSchema: JSONB.JSONBSchema = {
                           },
                           {
                             type: {
-                              enum: ["Lookup", "Lookup[]"],
+                              enum: [
+                                "RowLookup",
+                                "RowLookup[]",
+                                "ValueLookup",
+                                "ValueLookup[]",
+                                "TableLookup",
+                                "TableLookup[]",
+                                "ColumnLookup",
+                                "ColumnLookup[]",
+                              ],
                             },
                             optional: { type: "boolean", optional: true },
                             description: { type: "string", optional: true },
@@ -672,6 +683,22 @@ export const tableConfigDatabaseConfig: TableConfig<{ en: 1 }> = {
         sqlDefinition: `BOOLEAN NOT NULL DEFAULT FALSE`,
         info: {
           hint: "If true then all environment variables will be passed to the server side function nodejs. Use at your own risk",
+        },
+      },
+
+      config_sync: {
+        nullable: true,
+        jsonbSchemaType: {
+          configPath: "string",
+          type: { enum: ["sample-schema", "cli"] },
+          toggleableProperties: {
+            record: {
+              partial: true,
+              keysEnum: ["tableConfig", "functions", "onMount"],
+              values: { enum: [1] },
+            },
+          },
+          lastSynced: "Date",
         },
       },
     },

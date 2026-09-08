@@ -25,20 +25,22 @@ export const getTableFilter = (
   if (w.table_name) {
     const quickFilterGroups = w.options
       ?.quickFilterGroups as TableWindowInsertModel["quickFilterGroups"];
-    const quickFilters = Object.values(quickFilterGroups ?? {})
+    const quickFilter = Object.values(quickFilterGroups ?? {})
       .map(({ toggledFilterName, filters }) => {
         if (!toggledFilterName) return;
         const filter = filters[toggledFilterName];
         if (!filter) return;
         return getTableFilterFromDetailedGroupFilter(filter as DetailedFilter);
       })
-      .filter(isDefined);
+      .filter(isDefined)[0];
 
-    filter = getSmartGroupFilter(
-      rawFilter || [],
-      { filters: quickFilters },
-      w.options?.filterOperand === "OR" ? "or" : undefined,
-    );
+    filter =
+      quickFilter ??
+      getSmartGroupFilter(
+        rawFilter || [],
+        undefined,
+        w.options?.filterOperand === "OR" ? "or" : undefined,
+      );
 
     having = getSmartGroupFilter(
       rawHaving || [],

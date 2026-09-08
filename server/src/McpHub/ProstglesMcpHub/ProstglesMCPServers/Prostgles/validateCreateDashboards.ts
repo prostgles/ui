@@ -5,6 +5,8 @@ import type { DBHandlerServer } from "prostgles-server";
 import { getSerialisableError, isDefined } from "prostgles-types";
 import type { McpCallContext } from "../../ProstglesMCPServerTypes";
 import { getClientDBHandlersForChat } from "../getClientDBHandlersForChat";
+import { detailedFilterToSimpleFilter } from "./agenticWorkflow/definitionValidation/validateDatabaseAccessDefinitions";
+import type { DetailedTableFilterGroup } from "./agenticWorkflow/runtimeSdk/defineAgenticWorkflow";
 
 export const validateCreateDashboards = async (
   prostglesWorkspaces: any[],
@@ -29,24 +31,23 @@ export const validateCreateDashboards = async (
         return Promise.all(
           workspace.windows.map(async (window) => {
             if (window.type === "table") {
-              const { table_name, columns, sort } = window;
+              const { table_name, columns, sort, filter } = window;
               if (!table_name) {
                 return `table_name is required for table windows. Problem found in workspace ${workspace.name}, window ${window.id}`;
               }
 
-              if (!clientDb[table_name]?.find) {
+              const tableHandler = clientDb[table_name];
+              if (!tableHandler?.find) {
                 return `Table ${window.table_name} does not exist in the database or not allowed. Problem found in workspace ${workspace.name}, window ${window.id}`;
-              }
-
-              if (!columns?.length) {
-                return `At least one column must be shown for table windows. Problem found in workspace ${workspace.name}, window ${window.id}`;
               }
 
               const select: Record<string, any> = {};
               const getSelectItem = ({
                 computedConfig,
                 nested,
-              }: Pick<TableColumn, "computedConfig" | "nested">): any => {
+              }: Pick<TableColumn, "computedConfig" | "nested">):
+                | Record<string, unknown>
+                | 1 => {
                 if (computedConfig) {
                   return {
                     ["$" + computedConfig.aggregation]:
@@ -82,7 +83,7 @@ export const validateCreateDashboards = async (
                 return 1;
               };
 
-              columns.forEach(({ name, nested, computedConfig }) => {
+              columns?.forEach(({ name, nested, computedConfig }) => {
                 if (!name) {
                   return `Column name is required for table windows. Problem found in workspace ${workspace.name}, window ${window.id}`;
                 }
@@ -92,7 +93,7 @@ export const validateCreateDashboards = async (
 
               const orderBy = sort
                 ?.map((s) => {
-                  const nestedCol = columns.find(
+                  const nestedCol = columns?.find(
                     (c) => c.name === s.key && c.nested,
                   );
                   if (nestedCol) {
@@ -106,10 +107,17 @@ export const validateCreateDashboards = async (
                 .filter(isDefined);
 
               try {
-                await clientDb[table_name].find(
-                  {},
-                  { select, limit: 0, orderBy },
-                );
+                const tableFilter = detailedFilterToSimpleFilter({
+                  [window.filterOperand === "OR" ?
+                    ("$or" as const)
+                  : ("$and" as const)]: filter ?? [],
+                } as DetailedTableFilterGroup);
+
+                await tableHandler.find(tableFilter, {
+                  select,
+                  limit: 0,
+                  orderBy,
+                });
               } catch (e) {
                 return `Failed to query table ${window.table_name}. Problem found in workspace ${workspace.name}, window ${window.id}. Error: ${JSON.stringify(getSerialisableError(e))}`;
               }
@@ -137,7 +145,8 @@ export const validateCreateDashboards = async (
                       return `table_name is required for local-table layers. Problem found in workspace ${workspace.name}, window ${window.id}, layer index ${index}`;
                     }
 
-                    if (!clientDb[table_name]?.find) {
+                    const tableHandler = clientDb[table_name];
+                    if (!tableHandler?.find) {
                       return `Table ${table_name} does not exist in the database or not allowed. Problem found in workspace ${workspace.name}, window ${window.id}, layer index ${index}`;
                     }
 
@@ -148,7 +157,7 @@ export const validateCreateDashboards = async (
                     try {
                       const parseColumnFilter = (
                         f: NonNullable<typeof filter>[number],
-                      ): any => {
+                      ): Record<string, unknown> => {
                         return (
                           "$filter" in f ? f
                           : "fieldName" in f ?
@@ -168,7 +177,7 @@ export const validateCreateDashboards = async (
                       const columnSelect = fromEntries(
                         chartCols.map((col) => [col, 1] as const),
                       );
-                      await clientDb[table_name].find(
+                      await tableHandler.find(
                         {
                           $and: filter?.map(parseColumnFilter) ?? [],
                         },
@@ -196,12 +205,13 @@ export const validateCreateDashboards = async (
 
               if ("table_name" in window) {
                 const { table_name } = window;
-                if (!clientDb[table_name]?.find) {
+                const tableHandler = clientDb[table_name];
+                if (!tableHandler?.find) {
                   return `Table ${table_name} does not exist in the database or not allowed. Problem found in workspace ${workspace.name}, window ${window.id}`;
                 }
 
                 try {
-                  await clientDb[table_name].find(
+                  await tableHandler.find(
                     {},
                     {
                       select: {

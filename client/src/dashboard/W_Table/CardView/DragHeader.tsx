@@ -2,7 +2,7 @@ import { Pan } from "@components/Pan";
 import type { ValidatedColumnInfo } from "prostgles-types";
 import React from "react";
 import type { CardViewProps, IndexedRow } from "./CardView";
-import type { CardViewRowProps } from "./CardViewRow";
+import type { CardViewRowProps } from "./CardItem/CardViewRow";
 import { useDragHeader } from "./useDragHeader";
 
 export type DragHeaderProps = Pick<

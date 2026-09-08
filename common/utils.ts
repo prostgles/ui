@@ -347,6 +347,7 @@ export const CONNECTION_CONFIG_SECTIONS = [
   "API",
   "webApp",
   "security",
+  "config",
 ] as const;
 
 export const SERVER_SETTINGS_SECTIONS = [
@@ -431,6 +432,7 @@ export const ROUTES = {
   BACKUPS: "/prostgles_backups",
   STORAGE: "/prostgles_storage",
   PLAYWRIGHT_REPORT: "/playwright-report",
+  MCP_OAUTH_CALLBACK: "/mcp-oauth-callback",
 } as const;
 
 const testForDuplicateValues = <T extends AnyObject>(obj: T, name: string) => {

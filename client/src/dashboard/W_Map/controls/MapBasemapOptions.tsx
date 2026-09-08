@@ -17,7 +17,7 @@ import SmartTable from "../../SmartTable";
 import { MAP_PROJECTIONS } from "../W_MapMenu";
 
 type P = {
-  w: SyncDataItem<Required<WindowData<"map">>, true>;
+  w: SyncDataItem<Required<WindowData<"map">>, { handlesOnData: true }>;
   className?: string;
   asPopup?: boolean;
 };

@@ -1,7 +1,7 @@
 import type { DBSSchema } from "@common/publishUtils";
 import { createWorkflowExecutionHandlers } from "./proxyHandlers/createWorkflowExecutionHandlers";
 import type { DBS } from "@src/index";
-import { runConnectionQuery } from "@src/serverFunctions/getServerFunctions";
+import { runConnectionQuery } from "@src/serverFunctions/stateServerFunctions";
 import { getSerialisableError, omitKeys } from "prostgles-types";
 import { startAgenticWorkflowContainer } from "./execution/startAgenticWorkflowContainer";
 import type { AuthClientRequest } from "prostgles-server";
@@ -63,7 +63,7 @@ export const startAgenticWorkflow = async ({
   autoApproveAllTools,
 }: {
   workflow: DBSSchema["agentic_workflows"];
-  user: DBSSchema["users"];
+  user: Pick<DBSSchema["users"], "id">;
   dbs: DBS;
   chat: DBSSchema["llm_chats"];
   messageId: string;

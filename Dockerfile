@@ -1,25 +1,27 @@
-FROM node:24-slim AS base
+FROM docker:29-cli AS docker-cli
 
-WORKDIR /usr/src/app
+FROM node:24-bookworm-slim AS runtime
 
-COPY . .
+COPY --from=docker-cli /usr/local/bin/docker /usr/local/bin/docker
 
-# Install latest pg_dump (psql v17) to ensure backup/restore works
+# Backup/restore runs in the app container. Match DB.Dockerfile's PostgreSQL 17.
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends gnupg wget ca-certificates lsb-release && \ 
-    apt-get upgrade -y && \
-    sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'  && \
-    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - && \
+    apt-get install -y --no-install-recommends curl ca-certificates lsb-release && \
+    install -d /usr/share/postgresql-common/pgdg && \
+    curl --fail -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc && \
+    echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list && \
     apt-get update && \
     apt-get install -y --no-install-recommends postgresql-client-17 && \
-    pg_dump --version && \
-    psql --version && \
-    # Clean up
-    apt-get clean && \
-    apt-get purge -y --auto-remove gnupg wget lsb-release && \
+    psql --version && pg_dump --version && pg_restore --version && pg_dumpall --version && \
+    apt-get purge -y --auto-remove curl lsb-release && \
     rm -rf /var/lib/apt/lists/*
 
-FROM base AS deps 
+ENV IS_DOCKER=yes
+
+FROM runtime AS ui
+
+WORKDIR /usr/src/app
+COPY . .
 
 WORKDIR /usr/src/app/client
 

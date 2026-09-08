@@ -21,7 +21,12 @@ export const MCPServerHeaderCheckbox = ({
   chatContext: MCPServerChatContext | undefined;
   dbs: DBS;
 }) => {
-  const { mcp_server_tools: mcpServerTools, icon_path, enabled } = mcpServer;
+  const {
+    mcp_server_tools: mcpServerTools,
+    icon_path,
+    icon_bytes,
+    enabled,
+  } = mcpServer;
   const { llm_chats_allowed_mcp_tools, chatId } = chatContext ?? {};
   const toolsAllowed = llm_chats_allowed_mcp_tools?.filter((at) =>
     mcpServerTools.some((t) => t.id === at.tool_id),
@@ -58,6 +63,15 @@ export const MCPServerHeaderCheckbox = ({
     toolsAllowed,
   ]);
 
+  const isRemoteServer = mcpServer.command === "streamable-http";
+
+  const iconBytesAsDataUrl =
+    icon_bytes ?
+      `data:image/png;base64,${btoa(
+        String.fromCharCode(...new Uint8Array(icon_bytes as any)),
+      )}`
+    : undefined;
+
   return (
     <FlexRow className="bold mx-p25 w-full">
       <Btn
@@ -66,7 +80,19 @@ export const MCPServerHeaderCheckbox = ({
           padding: "0",
           marginRight: "1em",
         }}
-        iconNode={icon_path && <SvgIcon icon={icon_path} />}
+        iconNode={
+          iconBytesAsDataUrl ?
+            <img
+              style={{ width: "24px", height: "24px" }}
+              src={iconBytesAsDataUrl}
+            />
+          : <SvgIcon
+              icon={
+                icon_path ||
+                (isRemoteServer ? "ServerNetworkOutline" : "Toolbox")
+              }
+            />
+        }
         color={someToolsAllowed ? "action" : undefined}
         disabledInfo={
           mcpServerTools.length ? undefined : (

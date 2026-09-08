@@ -121,7 +121,7 @@ export type W_SQLState = {
   activeQuery: undefined | W_SQL_ActiveQuery;
   joins: string[];
   error?: unknown;
-  w?: SyncDataItem<WindowData>;
+  w?: SyncDataItem<WindowData, { handlesOnData: true }>;
   hideTable?: boolean;
   sql: string;
   sqlResult?: boolean;
@@ -328,9 +328,9 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
     const {
       onAddChart,
       suggestions,
-      tables,
+
       setLinkMenu,
-      prgl: { db, sql: sqlHandler, dbs, dbsTables, user },
+      prgl: { tables, db, sql: sqlHandler, dbs, dbsTables, user },
       myLinks,
       childWindow,
       workspace,
@@ -541,7 +541,6 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
               {...this.state}
               w={w}
               childWindow={childWindow}
-              tables={tables}
               onPageChange={(newPage) => {
                 this.setState({ page: newPage });
               }}
@@ -553,6 +552,10 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
               }}
               onResize={(newCols) => {
                 this.setState({ cols: newCols });
+                w.$update(
+                  { options: { sqlResultCols: newCols } },
+                  { deepMerge: true },
+                );
               }}
               onSort={(sort) => {
                 void this.runSQL(sort);
@@ -582,7 +585,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
       <Window
         w={w}
         childWindow={childWindow}
-        connection={this.props.prgl.connection}
+        tables={this.props.prgl.tables}
         layoutMode={workspace.layout_mode ?? "editable"}
         quickMenuProps={{
           dbs,

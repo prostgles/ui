@@ -36,9 +36,22 @@ const JOIN_TYPES = [
 ] as const;
 
 export const NESTED_COLUMN_DISPLAY_MODES = [
-  { key: "row", label: t.LinkedColumn["Row"] },
-  { key: "column", label: t.LinkedColumn["Column"] },
-  { key: "no-headers", label: t.LinkedColumn["No headers"] },
+  {
+    key: "row",
+    label: t.LinkedColumn["Row"],
+    subLabel: "Shows <header>:<value> pairs stacked in a single column",
+  },
+  {
+    key: "column",
+    label: t.LinkedColumn["Column"],
+    subLabel:
+      "(Default). Shows a wrappable row of values with headers as column labels",
+  },
+  {
+    key: "no-headers",
+    label: t.LinkedColumn["No headers"],
+    subLabel: "Shows a wrappable row of values without headers",
+  },
 ] as const;
 
 export const LinkedColumn = (props: LinkedColumnProps) => {

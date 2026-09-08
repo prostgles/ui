@@ -40,4 +40,5 @@ export const setNonceHandler = (app: e.Express, enable: boolean) => {
 };
 
 export const isTesting = !!process.env.PRGL_TEST;
-export const isDevelopment = process.env.NODE_ENV === "development";
+export const IS_DEV = process.env.NODE_ENV === "development";
+export const IS_PROD = process.env.NODE_ENV === "production";

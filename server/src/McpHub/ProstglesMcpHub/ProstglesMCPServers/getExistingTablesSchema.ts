@@ -124,7 +124,7 @@ export const getExistingTablesSchema = async (
         );
       });
   const { tableConstraints, viewDefinitions } = definitions;
-  const viewDefinitonsMap = new Map(
+  const viewDefinitionsMap = new Map(
     viewDefinitions.map((v) => [v.oid.toString(), v.view_definition]),
   );
   const res = allowedTables
@@ -140,7 +140,7 @@ export const getExistingTablesSchema = async (
       return true;
     })
     .map((t) => {
-      let viewDefinition = viewDefinitonsMap.get(t.oid.toString());
+      let viewDefinition = viewDefinitionsMap.get(t.oid.toString());
       if (viewDefinition) {
         /** Exclude postgis views */
         if (

@@ -1,0 +1,7 @@
+{
+  "private": true,
+  "main": "dist/index.js",
+  "dependencies": {
+    "@prostgles/prostgles": "file:../.."
+  }
+}

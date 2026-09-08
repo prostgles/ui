@@ -128,7 +128,7 @@ type ParseSchema<S extends Record<string, PropertyType>> = {
   [K in keyof S]: ParsePropertyType<S[K]>;
 };
 
-type DetailedTableFilter = {
+export type DetailedTableFilter = {
   fieldName: string;
   /**
    * Defaults to $eq
@@ -153,7 +153,7 @@ type DetailedTableFilter = {
     | "@@.websearch_to_tsquery";
   value: unknown;
 };
-type DetailedTableFilterGroup =
+export type DetailedTableFilterGroup =
   | { $and: DetailedTableFilter[] }
   | { $or: DetailedTableFilter[] };
 
@@ -313,12 +313,13 @@ type UserInputBase<T> = T & {
 
 /**
  * Prefer to use this over "custom" or "enum" to restrict the input and make it easier for the user to choose the correct value.
+ * If using folder/file type inputs then only use fs to read/write the files, do not use any other mcp tools for filesystem.
  */
 export type UserInputItem =
   | UserInputBase<{
       /**
        * A path to a file/folder from the local system that will be mounted to the container.
-       * The agent can read and write depending on the accessMode value.
+       * The agent can read and write (using fs) depending on the accessMode value.
        */
       type: "folder-path" | "file-path" | "file-or-folder-path";
       accessMode: "read" | "read-write";

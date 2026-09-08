@@ -1,8 +1,13 @@
-import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import {
   OAuthProviderOptions,
   PASSWORDLESS_ADMIN_USERNAME,
 } from "@common/OAuthUtils";
+import type { DBSSchema } from "@common/publishUtils";
+import { getPasswordHash } from "@src/authConfig/authUtils";
+import type { BeforeEachTsTrigger } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
+import type { TableConfig } from "prostgles-server";
+import type { DBS } from "..";
 
 export const tableConfigUsers = {
   users: {

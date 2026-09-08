@@ -1,18 +1,17 @@
+import { getIcon } from "@components/SvgIcon";
+import { scaleLinear } from "d3";
 import type { AnyObject, SelectParams } from "prostgles-types";
 import { pickKeys } from "prostgles-types";
-import { getIcon } from "@components/SvgIcon";
 import type {
   Extent,
   GeoJSONFeature,
   GeoJsonLayerProps,
 } from "../../Map/DeckGLMap";
+import { getMapFeatureStyle } from "../getMapFeatureStyle";
 import { getOSMData } from "../OSM/getOSMData";
 import type W_Map from "../W_Map";
 import type { W_MapState } from "../W_Map";
 import { MAP_SELECT_COLUMNS, getMapSelect, getSQLData } from "./getMapData";
-import { getMapFeatureStyle } from "../getMapFeatureStyle";
-import { scaleLinear } from "d3";
-import type { TableHandlerClient } from "prostgles-client";
 
 export const DEFAULT_GET_COLOR: Pick<
   GeoJsonLayerProps,
@@ -26,16 +25,13 @@ export const DEFAULT_GET_COLOR: Pick<
 
 export const fetchMapLayerData = async function (this: W_Map, dataAge: number) {
   const {
-    prgl: { db, sql: sqlHandler },
+    prgl: { tables, db, sql: sqlHandler },
     layerQueries = [],
-    tables,
   } = this.props;
   const { w } = this.d;
   if (!w) return;
 
-  const ext4326: Extent = (w.options.extent) || [
-    -180, -90, 180, 90,
-  ];
+  const ext4326: Extent = w.options.extent || [-180, -90, 180, 90];
 
   let result: Pick<W_MapState, "layers"> = {},
     error;

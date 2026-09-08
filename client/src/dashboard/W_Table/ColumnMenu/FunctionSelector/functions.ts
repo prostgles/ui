@@ -435,4 +435,4 @@ export const getColumnsAcceptedByFunction = (
   return undefined;
 };
 
-export const FUCTION_DEFINITIONS = [...getAggFuncs(), ...getFuncs()];
+export const FUNCTION_DEFINITIONS = [...getAggFuncs(), ...getFuncs()];

@@ -4,8 +4,11 @@ import {
 } from "@common/prostglesMcp";
 import { fromEntries, getEntries } from "@common/utils";
 import { McpHub } from "@src/McpHub/AnthropicMcpHub/McpHub";
-import type { McpTool } from "@src/McpHub/AnthropicMcpHub/McpTypes";
-import { getServiceManager } from "@src/ServiceManager/ServiceManager";
+import type {
+  McpServerParameters,
+  McpTool,
+} from "@src/McpHub/AnthropicMcpHub/McpTypes";
+import { getServiceManager } from "@src/ServiceManager/getServiceManager";
 import { getJSONBSchemaAsJSONSchema } from "prostgles-types";
 import type {
   ProstglesMcpServerDefinition,
@@ -14,6 +17,7 @@ import type {
 } from "../../ProstglesMCPServerTypes";
 import { CONVERT_DOCUMENT_DEFAULT_OPTIONS } from "@src/ServiceManager/services/documents/documents.service";
 import { checkConfigAccess } from "./checkConfigAccess";
+import { getDocumentText } from "./getDocumentText";
 
 const tools = PROSTGLES_MCP_SERVERS_AND_TOOLS["web"];
 
@@ -26,8 +30,8 @@ const definition = {
 } as const satisfies ProstglesMcpServerDefinition;
 
 const handler = {
-  start: (dbs) => {
-    const serviceManager = getServiceManager(dbs);
+  start: () => {
+    const serviceManager = getServiceManager();
 
     return {
       stop: () => {
@@ -38,10 +42,12 @@ const handler = {
           {
             url,
             mode = "raw",
-            max_length = 5000,
+            max_length = 5_000,
             start_index = 0,
             headers,
-            timeout = 15000,
+            method = "GET",
+            body,
+            timeout = 15_000,
           },
           _,
           config,
@@ -52,11 +58,13 @@ const handler = {
           if (mode === "raw") {
             const res = await fetch(url, {
               redirect: "follow",
+              method,
+              body,
               headers: {
                 "User-Agent": "Mozilla/5.0 ",
               },
-              signal: AbortSignal.timeout(timeout),
               ...headers,
+              signal: AbortSignal.timeout(timeout),
             });
 
             if (!res.ok) {
@@ -66,9 +74,13 @@ const handler = {
             }
 
             content = await res.text();
+            if (content.startsWith("<!DOCTYPE html>")) {
+              return sliceFetchedContent(content, start_index, max_length);
+            }
+            return content;
           } else {
             const docsService =
-              await getServiceManager(dbs).getServiceWithRetries("documents");
+              await getServiceManager().getServiceWithRetries("documents");
             const result = await docsService.endpoints["/v1/convert/source"]({
               sources: [{ kind: "http", url }],
               options: {
@@ -115,19 +127,25 @@ const handler = {
           await checkConfigAccess(toolArguments.url, config);
 
           const mcpHub = new McpHub();
-          await mcpHub.setServerConnections({
-            playwright: {
-              command: "npx",
-              args: ["@playwright/mcp@latest", "--isolated"],
-              onLog: () => {},
-              env: {
-                /** Prevent snapshots being saved in .playwright */
-                PLAYWRIGHT_MCP_SAVE_SESSION: "false",
-                PLAYWRIGHT_MCP_SAVE_TRACE: "false",
-              },
-              server_name: "playwright",
-            },
-          });
+          await mcpHub.setServerConnections(
+            new Map([
+              [
+                "playwright",
+                {
+                  type: "stdio",
+                  command: "npx",
+                  args: ["@playwright/mcp@latest", "--isolated"],
+                  onLog: () => {},
+                  env: {
+                    /** Prevent snapshots being saved in .playwright */
+                    PLAYWRIGHT_MCP_SAVE_SESSION: "false",
+                    PLAYWRIGHT_MCP_SAVE_TRACE: "false",
+                  },
+                  server_name: "playwright",
+                } satisfies McpServerParameters,
+              ] as const,
+            ]),
+          );
           const navigationResult = await mcpHub.callTool(
             "playwright",
             "browser_navigate",
@@ -161,10 +179,18 @@ const handler = {
             .split(`### Result`)[1]
             ?.split(`### Ran Playwright code`)[0];
 
-          // 3. Validate Content Type
-          // Allow text/html, reject application/pdf, image/*, etc.
+          // 3. Validate Content Type and try to get document text if not HTML
           if (!contentType?.includes("text/html")) {
             await mcpHub.destroy();
+            if (
+              contentType?.includes("application/pdf") ||
+              contentType?.includes("image/png") ||
+              contentType?.includes("image/jpeg") ||
+              contentType?.includes("image/gif") ||
+              contentType?.includes("image/webp")
+            ) {
+              return getDocumentText(serviceManager, toolArguments.url, {});
+            }
             throw new Error(
               [
                 `Unsupported content type detected: "${contentType}".`,
@@ -177,13 +203,12 @@ const handler = {
             "playwright",
             "browser_snapshot",
           );
+          await mcpHub.destroy().catch(() => {});
           if (snapshotResult.isError) {
-            await mcpHub.destroy();
             throw new Error(
               `Failed to get snapshot: ${JSON.stringify(snapshotResult.content)}`,
             );
           }
-          await mcpHub.destroy();
           return (
             snapshotResult.content
               .map((item) => (item.type === "text" ? item.text : ""))
@@ -192,31 +217,7 @@ const handler = {
         },
         get_document_text: async ({ url, ...otherOpts }, _, config) => {
           await checkConfigAccess(url, config);
-
-          const docsService =
-            await serviceManager.getServiceWithRetries("documents");
-          const result = await docsService.endpoints["/v1/convert/source"]({
-            sources: [{ kind: "http", url }],
-            options: {
-              ...CONVERT_DOCUMENT_DEFAULT_OPTIONS,
-              ...otherOpts,
-            },
-          });
-          const {
-            text_content,
-            doctags_content,
-            html_content,
-            json_content,
-            md_content,
-          } = result.document;
-          return String(
-            text_content ||
-              md_content ||
-              html_content ||
-              doctags_content ||
-              JSON.stringify(json_content) ||
-              "",
-          );
+          return getDocumentText(serviceManager, url, otherOpts);
         },
       },
       fetchTools: () => {

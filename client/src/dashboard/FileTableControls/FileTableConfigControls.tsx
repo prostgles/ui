@@ -1,13 +1,12 @@
-import { useIsMounted, usePromise } from "prostgles-client";
-import type { SQLHandler } from "prostgles-types";
-import React, { useState } from "react";
 import type { DBSSchema } from "@common/publishUtils";
-import { type Prgl } from "../../App";
 import Loading from "@components/Loader/Loading";
+import type { SQLHandler } from "prostgles-types";
+import React from "react";
+import { type Prgl } from "../../App";
 import type { FileTableConfigReferences } from "./FileColumnConfigControls";
 import { FileStorageControls } from "./FileStorageControls";
 import { FileStorageReferencedTablesConfig } from "./FileStorageReferencedTablesConfig";
-import { useFileTableConfigControls } from "./useFileTableConfigControls";
+import { useFileTableConfigControls } from "./hooks/useFileTableConfigControls";
 
 type FileTableConfigControlsProps = {
   prgl: Prgl;
@@ -23,7 +22,7 @@ export type ConnectionTableConfig =
 export const FileTableConfigControls = ({
   prgl,
 }: FileTableConfigControlsProps) => {
-  const { tables, db, dbs, dbsTables, dbsMethods } = prgl;
+  const { tables, db, dbs, dbsMethods } = prgl;
   const {
     connection,
     database_config,
@@ -43,10 +42,8 @@ export const FileTableConfigControls = ({
         canCreateTables={canCreateTables}
         connection={connection}
         database_config={database_config}
-        dbTables={tables}
         dbsMethods={dbsMethods}
         dbs={dbs}
-        dbsTables={dbsTables}
         dbProject={db}
       />
 
@@ -58,7 +55,6 @@ export const FileTableConfigControls = ({
         refsConfig={refsConfig}
         file_table_config={database_config.file_table_config}
         tables={tables}
-        db={db}
       />
     </div>
   );

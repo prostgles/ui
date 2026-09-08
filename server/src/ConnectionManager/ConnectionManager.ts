@@ -1,13 +1,11 @@
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type { DBSSchema } from "@common/publishUtils";
-import { ROUTES } from "@common/utils";
 import type { ConnectionDetails } from "@src/connectionUtils/getConnectionDetails";
 import type { createHttpServer } from "@src/createHttpAndIOServers/createHttpServer";
 import type { HttpAppSecurityOptions } from "@src/createHttpAndIOServers/setHttpAppSecurity";
 import type e from "express";
 import type { Express } from "express";
 import type { Server as httpServer } from "http";
-import path from "path";
 import type pg from "pg-promise/typescript/pg-subset";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
 import type { Filter } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
@@ -19,21 +17,22 @@ import { isDefined, pickKeys } from "prostgles-types";
 import type { DefaultEventsMap, Server } from "socket.io";
 import type { SUser } from "../authConfig/sessionUtils";
 import { getDbConnection } from "../connectionUtils/testDBConnection";
-import { getRootDir } from "../electronConfig";
+import { getDataPath } from "../electronConfig";
 import type { Connections, DBS, DatabaseConfigs } from "../index";
 import { connectionManager } from "../index";
+import type {
+  ProstglesContext,
+  ProstglesOnMountCleanup,
+} from "../schemaConfig";
 import { UNIQUE_DB_COLS } from "../tableConfig/tableConfigDatabaseConfig";
-import { ForkedPrglProcRunner } from "./ForkedPrglProcRunner/ForkedPrglProcRunner";
-import {
-  getCompiledTS,
-  getTableConfig,
-  parseTableConfig,
-} from "./connectionManagerUtils";
 import { getConnectionHttpServer } from "./getConnectionHttpServer";
+import { getConnectionServerFunctions } from "./getConnectionServerFunctions";
+import { getSchemaConfig } from "./getSchemaConfig";
 import {
   initConnectionManager,
   type CONNECTION_HOT_RELOAD_COLUMNS,
 } from "./initConnectionManager";
+import { parseTableConfig } from "./parseTableConfig";
 import { startConnection } from "./startConnection";
 export type Unpromise<T extends Promise<any>> =
   T extends Promise<infer U> ? U : never;
@@ -63,11 +62,9 @@ type PRGLInstanceStarted = {
   io: Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>;
   con: Connections;
   dbConf: DatabaseConfigs;
-  prgl: InitResult<void, SUser>;
+  prgl: InitResult<void, SUser, ProstglesContext>;
   connectionInfo: ConnectionDetails;
-  methodRunner: ForkedPrglProcRunner | undefined;
-  tableConfigRunner: ForkedPrglProcRunner | undefined;
-  onMountRunner: ForkedPrglProcRunner | undefined;
+  onMountCleanup: ProstglesOnMountCleanup | undefined;
   lastRestart: number;
   isSuperUser: boolean | undefined;
 };
@@ -186,129 +183,83 @@ export class ConnectionManager {
     if (prglCon.state !== "started") throw "Connection not ready";
     return prglCon;
   };
+
   getActiveConnectionSilentFail = (connectionId: string) => {
     const prglCon = this.prglConnections.get(connectionId);
     if (prglCon?.state !== "started") return undefined;
     return prglCon;
   };
 
+  cleanupOnMount = async (connection: PRGLInstanceStarted) => {
+    const cleanup = connection.onMountCleanup;
+    connection.onMountCleanup = undefined;
+    if (!cleanup) return;
+    try {
+      await cleanup();
+    } catch (error) {
+      console.error("Error cleaning up connection onMount", error);
+    }
+  };
+
   setTableConfig = async (
     conId: string,
     {
       id: dbConfId,
-      table_config_ts,
       table_config_ts_disabled: disabled,
+      config_sync,
     }: Pick<
       DBSSchema["database_configs"],
-      "id" | "table_config_ts" | "table_config_ts_disabled"
+      "id" | "table_config_ts_disabled" | "config_sync"
     >,
-    connectionInfo: pg.IConnectionParameters<pg.IClient>,
+    _connectionInfo: pg.IConnectionParameters<pg.IClient>,
   ) => {
     if (!this.dbs) throw "Dbs not ready";
     const prglCon = this.getActiveConnectionSilentFail(conId);
-    if (
-      !disabled &&
-      prglCon?.tableConfigRunner?.opts.type === "tableConfig" &&
-      prglCon.tableConfigRunner.opts.table_config_ts === table_config_ts
-    ) {
-      return;
-    }
-    if (prglCon) {
-      prglCon.tableConfigRunner?.destroy();
-      prglCon.tableConfigRunner = undefined;
-    }
-    if (disabled) return;
     await this.dbs.database_config_logs.update(
       { id: dbConfId },
       { table_config_logs: null },
     );
-    if (table_config_ts) {
-      const tableConfig = getTableConfig({
-        table_config_ts,
-        table_config: null,
-      });
-      const tableConfigRunner = await ForkedPrglProcRunner.create({
-        dbs: this.dbs,
-        type: "tableConfig",
-        pass_process_env_vars_to_server_side_functions: false,
-        table_config_ts,
-        dbConfId: dbConfId,
-        prglInitOpts: {
-          dbConnection: {
-            ...connectionInfo,
-            application_name: "tableConfig",
-          },
-          tableConfig,
-        },
-      });
-      const prglCon = this.getActiveConnectionSilentFail(conId);
-      if (prglCon) {
-        prglCon.tableConfigRunner = tableConfigRunner;
-      }
-      return tableConfigRunner;
-    }
+    if (!prglCon) return;
+    const tableConfig =
+      disabled ? undefined : getSchemaConfig(config_sync)?.config.tableConfig;
+    await prglCon.prgl.update({ tableConfig });
   };
 
   setOnMount = async (
     databaseConfigId: number,
     {
       id: conId,
-      on_mount_ts,
       on_mount_ts_disabled: disabled,
-    }: Pick<
-      DBSSchema["connections"],
-      "id" | "on_mount_ts" | "on_mount_ts_disabled"
-    >,
-    connectionInfo: pg.IConnectionParameters<pg.IClient>,
+    }: Pick<DBSSchema["connections"], "id" | "on_mount_ts_disabled">,
+    _connectionInfo: pg.IConnectionParameters<pg.IClient>,
+    config_sync?: DatabaseConfigs["config_sync"],
   ) => {
     if (!this.dbs) throw "Dbs not ready";
     const prglCon = this.getActiveConnectionSilentFail(conId);
-    if (
-      !disabled &&
-      prglCon?.onMountRunner?.opts.type === "onMount" &&
-      prglCon.onMountRunner.opts.on_mount_ts === on_mount_ts
-    ) {
-      return;
-    }
-    if (prglCon) {
-      prglCon.onMountRunner?.destroy();
-      prglCon.onMountRunner = undefined;
-    }
-
-    if (disabled) return;
     await this.dbs.database_config_logs.update(
       { id: databaseConfigId },
       { on_mount_logs: null },
     );
-    if (on_mount_ts) {
-      const compiledCode = getCompiledTS(on_mount_ts);
-      const onMountRunner = await ForkedPrglProcRunner.create({
-        dbs: this.dbs,
-        type: "onMount",
-        on_mount_ts,
-        on_mount_ts_compiled: compiledCode,
-        pass_process_env_vars_to_server_side_functions: false,
-        dbConfId: databaseConfigId,
-        prglInitOpts: {
-          dbConnection: {
-            ...connectionInfo,
-            application_name: "onMount",
-          },
-        },
-      });
-      /** Not awaited to not block opening the connection */
-      void onMountRunner.run({
-        type: "onMount",
-        code: compiledCode,
-      });
-      const prglCon = this.getActiveConnectionSilentFail(conId);
-      if (prglCon) {
-        prglCon.onMountRunner = onMountRunner;
-      }
-
-      return onMountRunner;
+    if (!prglCon) return;
+    if (disabled) {
+      await this.cleanupOnMount(prglCon);
+      return;
     }
-    return;
+
+    const onMount = getSchemaConfig(config_sync)?.config.onMount;
+    if (!onMount) return;
+    await this.cleanupOnMount(prglCon);
+    const cleanup = await onMount({
+      dbo: prglCon.prgl.db,
+      db: prglCon.prgl._db,
+      sql: prglCon.prgl.sql,
+      tables: prglCon.prgl.getSchema(),
+      reason: { type: "prgl.restart" },
+      context: prglCon.prgl.context,
+    });
+    if (typeof cleanup === "function") {
+      prglCon.onMountCleanup = cleanup;
+    }
   };
 
   syncUsers = async (
@@ -421,7 +372,13 @@ export class ConnectionManager {
         connIds.map(async (connection_id) => {
           const connectionInstance = this.prglConnections.get(connection_id);
           if (connectionInstance?.state !== "started") return;
-          return connectionInstance.prgl.restart();
+          const functions = await getConnectionServerFunctions({
+            databaseConfig: connectionInstance.dbConf,
+            dbs: this.dbs!,
+            connection: connectionInstance.con,
+            connectionManager: this,
+          });
+          return connectionInstance.prgl.update({ functions }, true);
         }),
       );
     };
@@ -474,12 +431,11 @@ export class ConnectionManager {
   // }
 
   getFileFolderPath(conId?: string) {
-    const rootPath = path.resolve(`${getRootDir()}${ROUTES.STORAGE}`);
-    if (!conId) return rootPath;
+    if (!conId) return getDataPath("STORAGE");
     const conn = this.connections?.find((c) => c.id === conId);
     if (!conn) throw "Connection not found";
     const conPath = UNIQUE_DB_COLS.map((f) => conn[f]).join("_");
-    return `${rootPath}/${conPath}`;
+    return getDataPath("STORAGE", conPath);
   }
 
   getConnectionDb(
@@ -510,9 +466,7 @@ export class ConnectionManager {
     const conn = this.prglConnections.get(conId);
     let destroyed = false;
     if (conn?.state === "started") {
-      conn.methodRunner?.destroy();
-      conn.tableConfigRunner?.destroy();
-      conn.onMountRunner?.destroy();
+      await this.cleanupOnMount(conn);
       //TODO: fix re-started connection not working. Might need to use ws instead of socket.io
       await conn.prgl.destroy();
       destroyed = true;
@@ -543,6 +497,7 @@ export class ConnectionManager {
       conMgr: this,
       newTableConfig,
       app: activeConnection.app,
+      databaseConfig: activeConnection.dbConf,
     });
     await prgl.update({ fileTable });
   };
@@ -553,13 +508,13 @@ export class ConnectionManager {
     await this.conSub?.unsubscribe();
     await this.dbConfSub?.unsubscribe();
     await this.userSub?.unsubscribe();
-    Array.from(this.prglConnections.values()).forEach((c) => {
-      if (c.state !== "started") return;
-      c.methodRunner?.destroy();
-      c.tableConfigRunner?.destroy();
-      c.onMountRunner?.destroy();
-      void c.prgl.destroy();
-    });
+    await Promise.all(
+      Array.from(this.prglConnections.values()).map(async (c) => {
+        if (c.state !== "started") return;
+        await this.cleanupOnMount(c);
+        await c.prgl.destroy();
+      }),
+    );
     await Promise.all(
       this.accessControlListeners?.map((l) => l.unsubscribe()) ?? [],
     );

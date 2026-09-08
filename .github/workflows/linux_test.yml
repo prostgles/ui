@@ -9,7 +9,7 @@ concurrency:
 jobs:
   test_linux:
     runs-on: ubuntu-latest
-    timeout-minutes: 65
+    timeout-minutes: 85
     services:
       postgres:
         image: postgis/postgis:15-3.3
@@ -77,6 +77,7 @@ jobs:
           path: |
             e2e/electron-report/
             e2e/playwright-report/
+            e2e/.test-artifacts/
           retention-days: 10
           if-no-files-found: warn
   test_desktop_on_macos:
@@ -88,7 +89,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: 20
+          node-version: 22
       - name: Install curl inside postgres container for video needed for demo
         run: |
           ls -la /Applications/

@@ -1,12 +1,12 @@
 name: prostgles
 
-# Define reusable blocks
 x-ui-environment: &ui-environment
   POSTGRES_HOST: db
   POSTGRES_DB: ${POSTGRES_DB}
   POSTGRES_USER: ${POSTGRES_USER}
   POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
   PROSTGLES_UI_HOST: "0.0.0.0"
+  PROSTGLES_DATA_DIR: /var/lib/prostgles
 
 x-ui-base: &ui-base
   image: prostgles/ui:v2.3.5
@@ -20,6 +20,8 @@ x-ui-base: &ui-base
     db:
       condition: service_healthy
   command: node /usr/src/app/server/dist/server/src/index.js
+  volumes:
+    - ui-data:/var/lib/prostgles
 
 services:
   db:
@@ -78,11 +80,12 @@ services:
       - "${PRGL_DOCKER_IP:-127.0.0.1}:${PRGL_DOCKER_PORT:-3004}:3004"
       - "${PRGL_DOCKER_IP:-127.0.0.1}:3089:3089"
     volumes:
+      - ui-data:/var/lib/prostgles
       - /var/run/docker.sock:/var/run/docker.sock
-      - /usr/bin/docker:/usr/bin/docker:ro
 
 volumes:
   db:
+  ui-data:
 # Used for docker mcp
 networks:
   default:

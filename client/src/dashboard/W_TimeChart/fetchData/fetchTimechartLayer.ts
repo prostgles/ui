@@ -1,10 +1,12 @@
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
-import type { DBHandlerClient, TableHandlerClient } from "prostgles-client";
 import {
   asName,
   type PG_COLUMN_UDT_DATA_TYPE,
   type SQLHandler,
 } from "prostgles-types";
+import type { Prgl } from "src/App";
+import { getMainTimeBinSizes } from "src/dashboard/Charts/TimeChart/getTimechartBinSize";
+import type { ColumnValue } from "src/dashboard/W_Table/ColumnMenu/ColumnStyleControls/ColumnStyleControls";
 import type {
   DataItem,
   TimeChartLayer,
@@ -24,22 +26,20 @@ import { type TimeChartLayerWithBinOrError } from "./getTimeChartLayersWithBins"
 import { getTimeChartSelectParams } from "./getTimeChartSelectParams";
 import { getTimeLayerDataSignature } from "./getTimeLayerDataSignature";
 import { getTimechartExtentFilter } from "./getTimechartExtentFilter";
-import { getMainTimeBinSizes } from "src/dashboard/Charts/TimeChart/getTimechartBinSize";
-import type { ColumnValue } from "src/dashboard/W_Table/ColumnMenu/ColumnStyleControls/ColumnStyleControls";
-import type { Prgl } from "src/App";
 
 type getTChartLayerArgs = Pick<
   W_TimeChartState,
   "viewPortExtent" | "visibleDataExtent"
 > &
-  Pick<W_TimeChartProps, "getLinksAndWindows" | "myLinks" | "tables"> & {
+  Pick<W_TimeChartProps, "getLinksAndWindows" | "myLinks"> & {
     layer: TimeChartLayerWithBinOrError;
     bin: FetchedLayerData["binSize"];
     binSize: FetchedLayerData["binSize"] | "auto";
     desiredBinCount: number;
     db: Prgl["db"];
+    tables: Prgl["tables"];
     sql: SQLHandler | undefined;
-    w: SyncDataItem<Required<WindowData<"timechart">>, true>;
+    w: SyncDataItem<Required<WindowData<"timechart">>, { handlesOnData: true }>;
   };
 export async function fetchTimechartLayer({
   bin,

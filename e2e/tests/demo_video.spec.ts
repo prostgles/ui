@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 import { type AnyObject } from "prostgles-types";
 import { USERS } from "utils/constants";
 import { goTo } from "utils/goTo";

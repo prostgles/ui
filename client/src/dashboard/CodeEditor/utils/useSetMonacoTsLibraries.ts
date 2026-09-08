@@ -7,7 +7,7 @@ import { useEffect } from "react";
 
 export type MonacoEditorImport = typeof import("monaco-editor");
 
-let cachedNodeLibs: TSLibrary[] | undefined;
+const cachedNodeLibs = new Map<string, TSLibrary[]>();
 
 let lastLoadedLibsEditor: editor.IStandaloneCodeEditor | undefined;
 
@@ -19,31 +19,30 @@ export const useSetMonacoTsLibraries = (
   onTSLibraryChange: CodeEditorProps["onTSLibraryChange"],
 ) => {
   const getIsMounted = useIsMounted();
-  const { dbsMethods } = usePrglCore();
+  const {
+    dbsMethods: { getNodeTypes },
+  } = usePrglCore();
   const isNodeEnv =
     languageObj?.lang === "typescript" && languageObj.environment === "nodejs";
   const nodeLibs = usePromise(async () => {
-    if (!isNodeEnv) return;
+    if (!isNodeEnv || !monaco) return;
+    const projectPath = languageObj.projectPath ?? "";
     const nodeTypes =
-      cachedNodeLibs ?? (await dbsMethods.getNodeTypes?.()) ?? [];
-    cachedNodeLibs = nodeTypes;
-    const badPathRecord = nodeTypes.find(
-      (t) => !t.filePath.startsWith("/node_modules/"),
-    );
-    if (badPathRecord) {
-      console.warn(
-        `Warning: The filePath for ${badPathRecord.filePath} does not start with /node_modules/. This may cause issues with Monaco's module resolution. Please ensure that the server is returning correct file paths for node types.`,
-      );
-    }
+      (!projectPath ? cachedNodeLibs.get(projectPath) : undefined) ??
+      (await getNodeTypes?.({
+        projectPath: languageObj.projectPath,
+      })) ??
+      [];
+    if (!projectPath) cachedNodeLibs.set(projectPath, nodeTypes);
     return nodeTypes.map((t) => ({
       content: t.content,
-      filePath: `file://${t.filePath}`,
+      filePath: monaco.Uri.file(t.filePath).toString(true),
     }));
-  });
+  }, [languageObj, getNodeTypes, isNodeEnv, monaco]);
   useEffect(() => {
     if (!monaco) return;
     setTSoptions(monaco);
-  }, [monaco, dbsMethods]);
+  }, [monaco, getNodeTypes]);
 
   useEffectDeep(() => {
     if (!monaco || !editor || languageObj?.lang !== "typescript") return;

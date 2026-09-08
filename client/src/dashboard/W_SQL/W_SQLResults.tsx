@@ -9,6 +9,7 @@ import { TooManyColumnsWarning } from "../W_Table/TooManyColumnsWarning";
 import { CSVRender } from "./CSVRender";
 import { getSQLResultTableColumns } from "./getSQLResultTableColumns";
 import type { W_SQLProps, W_SQLState } from "./W_SQL";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 
 export type W_SQLResultsProps = Pick<
   W_SQLState,
@@ -23,8 +24,8 @@ export type W_SQLResultsProps = Pick<
   | "pageSize"
   | "isSelect"
 > &
-  Pick<W_SQLProps, "childWindow" | "tables"> & {
-    w: SyncDataItem<Required<WindowData<"sql">>, true>;
+  Pick<W_SQLProps, "childWindow"> & {
+    w: SyncDataItem<Required<WindowData<"sql">>, { handlesOnData: true }>;
     onResize: (newCols: W_SQLState["cols"]) => void;
     onSort: (newSort: ColumnSortSQL[]) => void;
     onPageChange: (newPage: number) => void;
@@ -42,7 +43,6 @@ export const W_SQLResults = (props: W_SQLResultsProps) => {
     childWindow,
     sort,
     w,
-    tables,
     page,
     pageSize,
     onSort,
@@ -51,6 +51,7 @@ export const W_SQLResults = (props: W_SQLResultsProps) => {
     onPageChange,
     onPageSizeChange,
   } = props;
+  const { tables } = usePrgl();
   const o: WindowData<"sql">["options"] = w.options;
   const { renderMode = "table", maxCharsPerCell } = w.sql_options;
   const {

@@ -20,7 +20,7 @@ export const mcpSandboxToolUse: ToolUse = {
               scripts: {
                 start: "node index.js",
               },
-              depenencies: {
+              dependencies: {
                 "node-fetch": "^3.3.0",
               },
             }),
@@ -35,7 +35,7 @@ export const mcpSandboxToolUse: ToolUse = {
                 if(res.ok){
                   console.log("Table created successfully", json);
                 } else {
-                  console.error(json.message);
+                  console.error(json);
                 }
               })) 
               fetch(

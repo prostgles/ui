@@ -187,6 +187,7 @@ export type SelectParams<T extends AnyObject | void = void, S extends DBSchema |
      * Filter applied after any aggregations (group by)
      */
     having?: FullFilter<T, S>;
+    abortSignal?: AbortSignal;
 };
 type SubscribeActions = "insert" | "delete" | "update";
 export type SubscribeOptions = {
@@ -346,7 +347,7 @@ export type InsertDataWithNested<TD extends AnyObject, S extends DBSchema | void
  * Methods for interacting with a table/view
  * - On client-side some methods are restricted (and undefined) based on publish rules on the server
  */
-export type TableHandler<TD extends AnyObject = AnyObject, S extends DBSchema | void = void, TName extends S extends DBSchema ? keyof S : never = never> = {
+export type TableHandler<TD extends AnyObject = AnyObject, S extends DBSchema | void = void, TName extends (S extends DBSchema ? keyof S : never) = never> = {
     /**
      * Retrieves the table/view info
      */
@@ -432,7 +433,7 @@ export type TableHandler<TD extends AnyObject = AnyObject, S extends DBSchema | 
      * Updates multiple records in the table in a batch operation.
      * - Each item in the \`data\` array contains a filter and the corresponding data to update.
      */
-    updateBatch<P extends UpdateParams<TD, S>>(data: [FullFilter<TD, S>, UpsertDataToPGCastLax<TD>][], params?: P): Promise<UpdateReturnType<P, TD, S> | void>;
+    updateBatch<P extends UpdateParams<TD, S>>(data: [FullFilter<TD, S>, UpsertDataToPGCastLax<TD>][], params?: P): Promise<null>;
     /**
      * Inserts a new record into the table.
      */
@@ -446,12 +447,12 @@ export type TableHandler<TD extends AnyObject = AnyObject, S extends DBSchema | 
      * - If a record matching the \`filter\` exists, it updates the record.
      * - If no matching record exists, it inserts a new record.
      */
-    upsert<P extends UpdateParams<TD, S>>(filter: FullFilter<TD, S>, newData: UpsertDataToPGCastLax<TD>, params?: P): Promise<UpdateReturnType<P, TD, S>>;
+    upsert<P extends UpdateParams<TD, S>>(filter: FullFilter<TD, S>, newData: UpsertDataToPGCastLax<TD>, params?: P): Promise<GetReturningReturnType<P, TD, S>>;
     /**
      * Deletes records from the table based on the specified filter criteria.
      * - If no filter is provided, all records may be deleted (use with caution).
      */
-    delete<P extends DeleteParams<TD, S>>(filter?: FullFilter<TD, S>, params?: P): Promise<UpdateReturnType<P, TD, S> | undefined>;
+    delete<P extends DeleteParams<TD, S>>(filter?: FullFilter<TD, S>, params?: P): Promise<GetReturningReturnType<P, TD, S>[]>;
 };
 export type AsyncResult<T> = {
     data?: undefined;
@@ -479,24 +480,23 @@ export type TableHandlerClientMethods<T extends AnyObject = AnyObject, S extends
      * - any changes to the row using the $update method will be reflected instantly
      *    to all sync subscribers that were initiated with the same syncOptions
      */
-    useSync?: <TD extends T>(basicFilter: EqualityFilter<TD>, syncOptions: SyncOptions, hookOptions?: HookOptions) => AsyncResult<SyncDataItem<Required<TD>>[] | undefined>;
-    sync?: Sync<T>;
-    syncOne?: SyncOne<T>;
+    useSync?: <TD extends T, Opts extends SyncOptions>(basicFilter: EqualityFilter<TD>, syncOptions: Opts, hookOptions?: HookOptions) => AsyncResult<SyncDataItem<Required<TD>, Opts>[] | undefined>;
+    sync?: <TD extends T, Opts extends SyncOptions>(basicFilter: EqualityFilter<TD>, options: Opts, onChange: OnChange<TD, Opts>, onError?: OnErrorHandler) => Promise<SyncHandler<TD>>;
+    syncOne?: <TD extends T, Opts extends SyncOneOptions>(basicFilter: EqualityFilter<TD>, options: Opts, onChange: OnChangeOne<TD, Opts>, onError?: OnErrorHandler) => Promise<SingleSyncHandles<TD, Opts["handlesOnData"]>>;
     /**
      * Retrieves the first row matching the filter and keeps it in sync
      * - use { handlesOnData: true } to get optimistic updates method: $update
      * - any changes to the row using the $update method will be reflected instantly
      *    to all sync subscribers that were initiated with the same syncOptions
      */
-    useSyncOne?: <TD extends T>(basicFilter: EqualityFilter<TD>, syncOptions: SyncOneOptions, hookOptions?: HookOptions) => AsyncResult<SyncDataItem<Required<TD>> | undefined>;
+    useSyncOne?: <TD extends T, Opts extends SyncOneOptions>(basicFilter: EqualityFilter<TD>, syncOptions: Opts, hookOptions?: HookOptions) => AsyncResult<SyncDataItem<Required<TD>, Opts> | undefined>;
     /**
      * Used internally to setup sync
      */
     _sync?: (filter: EqualityFilter<AnyObject> | undefined, selectParams: {
-        select: AnyObject | "*";
+        select: FieldFilter;
     }, triggers: ClientSyncHandles) => Promise<DbTableSync>;
     _syncInfo?: SyncTableInfo;
-    getSync?: AnyObject;
     /**
      * Retrieves a list of matching records from the view/table and subscribes to changes
      */
@@ -547,4 +547,5 @@ export type ClientOnReadyParams<DBSchema = void, FunctionHandler extends ClientF
     isReconnect: boolean;
     socket: Socket;
 };
+export
 `;

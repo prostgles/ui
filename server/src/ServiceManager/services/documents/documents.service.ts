@@ -48,7 +48,7 @@ export const documentsService = {
         cpu: {
           env: {},
           buildArgs: {
-            BASE_IMAGE: "quay.io/docling-project/docling-serve:v1.17.0",
+            BASE_IMAGE: "quay.io/docling-project/docling-serve:v1.29.0",
           },
         },
         cuda: {
@@ -59,7 +59,7 @@ export const documentsService = {
             MKL_NUM_THREADS: "4",
           },
           buildArgs: {
-            BASE_IMAGE: "quay.io/docling-project/docling-serve-cu128:v1.17.0",
+            BASE_IMAGE: "quay.io/docling-project/docling-serve-cu128:v1.29.0",
           },
           gpus: "all",
         },

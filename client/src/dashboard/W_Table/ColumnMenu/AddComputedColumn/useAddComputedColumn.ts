@@ -2,7 +2,7 @@ import { isDefined, pickKeys } from "prostgles-types";
 import type { ValidatedColumnInfo } from "prostgles-types/lib";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  FUCTION_DEFINITIONS,
+  FUNCTION_DEFINITIONS,
   getColumnsAcceptedByFunction,
   type FuncDef,
 } from "../FunctionSelector/functions";
@@ -32,7 +32,7 @@ export const useAddComputedColumnState = ({
     return {
       args: config.args,
       funcDef:
-        FUCTION_DEFINITIONS.find((f) => f.key === config.funcDef.key) ||
+        FUNCTION_DEFINITIONS.find((f) => f.key === config.funcDef.key) ||
         undefined,
       column: table.columns.find((c) => c.name === config.column),
     };

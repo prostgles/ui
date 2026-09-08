@@ -44,12 +44,12 @@ type BtnCustomProps = (
   /**
    * If provided then the button is disabled and will display a tooltip with this message
    */
-  disabledInfo?: string;
+  disabledInfo?: string | false;
   /**
    * no-fade - will not fade out the button when disabled/loading
    */
   disabledVariant?: "no-fade";
-  loading?: boolean;
+  loading?: boolean | "allow-clicking";
   fadeIn?: boolean;
   _ref?: React.RefObject<HTMLButtonElement>;
 
@@ -103,14 +103,14 @@ type BtnCustomProps = (
   );
 type KeysOfUnion<T> = T extends T ? keyof T : never;
 
-type OmmitedKeys =
+type ExcludedButtonProps =
   | KeysOfUnion<BtnCustomProps>
   | "children"
   | "ref"
   | "onClick"
   | "style"
   | "title";
-const CUSTOM_ATTRS: OmmitedKeys[] = [
+const CUSTOM_ATTRS: ExcludedButtonProps[] = [
   "iconPath",
   "children",
   "disabledInfo",
@@ -292,7 +292,7 @@ class Button<HREF extends string | void = void> extends RTComp<
 
     if (clickMessage?.replace) return clickMessage.msg;
 
-    const isDisabled = disabledInfo || loading;
+    const isDisabled = disabledInfo || loading === true;
     let _className = "";
     const { size: sizeFromProps = "small" } = this.props;
     const size =
@@ -467,6 +467,8 @@ class Button<HREF extends string | void = void> extends RTComp<
             : () => alert(disabledInfo)
           : onClick,
         title: disabledInfo || title,
+        "aria-disabled": isDisabled ? true : undefined,
+        "aria-busy": loading ? true : undefined,
         style: {
           ...extraStyle,
           display: "flex",
@@ -582,9 +584,14 @@ const Btn = <HREF extends string | void = void>(allProps: BtnProps<HREF>) => {
       },
     };
   }, [onClickPromise, onErrorAlert, props]);
+  const [key, setKey] = React.useState(0);
+  React.useEffect(() => {
+    setKey((k) => k + 1);
+  }, [onClickPromise]);
 
   return (
     <Button
+      key={key}
       {...(propsWithOnAlert as BtnProps<string>)}
       children={
         children && typeof children === "string" ?

@@ -10,12 +10,13 @@ import { classOverride } from "./Flex";
 import { Icon } from "./Icon/Icon";
 import { MenuList } from "./MenuList";
 import type { MenuListitem } from "./MenuListItem";
+import type { TestSelectors } from "src/Testing";
 
 export type TabItem = Partial<
   Omit<MenuListitem, "contentRight" | "onPress">
 > & {
   content?: React.ReactNode;
-};
+} & TestSelectors;
 
 export type TabItems<K extends string = string> = {
   [P in K]: TabItem;

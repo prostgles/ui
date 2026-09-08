@@ -61,6 +61,24 @@ export const getTableSelect = async (
     }),
   );
 
+  const table = tables.find((t) => t.name === w.table_name);
+  fullColumns.forEach((c) => {
+    if (!c.show || c.computedConfig || c.nested) return;
+    const dependencies =
+      c.format?.type === "JSON Diff" || c.format?.type === "Text Diff" ?
+        [c.format.params.oldColumn, c.format.params.newColumn]
+      : [];
+    if (c.style?.type === "Conditional" && c.style.column)
+      dependencies.push(c.style.column);
+    dependencies.forEach((name) => {
+      if (
+        table?.columns.some((column) => column.name === name && column.select)
+      ) {
+        select[name] ??= 1;
+      }
+    });
+  });
+
   await Promise.all(
     fullColumns.map(async (c) => {
       if (

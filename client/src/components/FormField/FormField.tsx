@@ -670,6 +670,7 @@ export default class FormField<
             asJSON === "JSONBSchema") && {
             border: "unset",
             boxShadow: "unset",
+            borderRadius: "unset",
             /**
              * To ensure focus-border on select controls is visible
              */

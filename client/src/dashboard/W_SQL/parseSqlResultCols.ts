@@ -2,6 +2,7 @@ import type { SQLResult } from "prostgles-client/dist/prostgles";
 import { PALETTE } from "../Dashboard/PALETTE";
 import { getColWidth } from "../W_Table/tableUtils/getColWidth";
 import type { W_SQL } from "./W_SQL";
+import { findArr } from "@common/llmUtils";
 
 export const parseSqlResultCols = function (
   this: W_SQL,
@@ -25,17 +26,25 @@ export const parseSqlResultCols = function (
   const keyedRows = rows.map((r) =>
     r.reduce((a, v, i) => ({ ...a, [i]: v }), {}),
   );
+
+  const priorCols =
+    w.options.lastSQL === trimmedSql ? w.options.sqlResultCols : [];
+
   const colsWithWidth =
     !_cols.length ?
       []
     : getColWidth(
-        _cols,
+        _cols.map((c) => ({
+          ...c,
+          width: findArr(priorCols ?? [], { key: c.key, label: c.label })
+            ?.width,
+        })),
         keyedRows,
         "idx",
         this.ref?.getBoundingClientRect().width,
       );
   const cols = colsWithWidth;
-  w.$update(
+  void w.$update(
     { options: { sqlResultCols: cols, lastSQL: isSelect ? trimmedSql : "" } },
     { deepMerge: true },
   );
@@ -56,7 +65,7 @@ export const parseSqlResultCols = function (
           }
         });
 
-        l.$update({
+        void l.$update({
           options: {
             ...l.options,
             columns: newCols,
@@ -80,7 +89,7 @@ export const getFieldsWithActions = (
   fields.map((f, idx) => ({
     ...f,
     idx,
-    key: f.name,
+    key: idx,
     label: f.name,
     subLabel: f.dataType,
     sortable: isSelect && !["xml", "json"].includes(f.dataType),

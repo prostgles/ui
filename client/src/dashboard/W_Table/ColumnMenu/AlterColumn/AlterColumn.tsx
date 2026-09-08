@@ -2,7 +2,7 @@ import Btn from "@components/Btn";
 import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol, FlexRow } from "@components/Flex";
 import { IconPalette } from "@components/IconPalette/IconPalette";
-import type { DBSchemaTable } from "prostgles-types";
+import type { DBSchemaTableWJoins } from "../../../Dashboard/dashboardUtils";
 import { asName, getKeys } from "prostgles-types";
 import React from "react";
 import type { Prgl } from "../../../../App";
@@ -22,7 +22,7 @@ import { getAlterFkeyQuery } from "./ReferenceEditor";
 
 export type AlterColumnProps = Pick<CommonWindowProps, "suggestions"> & {
   prgl: Prgl;
-  table: DBSchemaTable;
+  table: DBSchemaTableWJoins;
   field: string;
   onClose: VoidFunction;
 };
@@ -342,10 +342,7 @@ export class AlterColumn extends RTComp<AlterColumnProps, S> {
           )}
           <IconPalette
             label={{ label: "Icon" }}
-            iconName={
-              prgl.connection.table_options?.[tableName]?.columns?.[col.name]
-                ?.icon
-            }
+            iconName={col.icon}
             onChange={async (iconName) => {
               await prgl.dbs.connections.update(
                 {

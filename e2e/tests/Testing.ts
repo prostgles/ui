@@ -55,6 +55,7 @@ export const COMMANDS = {
   "config.files.toggle.confirm": "",
   "config.api": { desc: "", uiOnly: true },
   "config.methods": "",
+  "config.config": "",
   "config.webApp": "",
 
   "dashboard.window.rowInsert": "Open row insert panel",
@@ -283,6 +284,7 @@ export const COMMANDS = {
   "table.options.cardView.groupBy": "",
   "table.options.cardView.orderBy": "",
   "CardView.row": "",
+  "AuditTrail.open": "Open the selected row's audit history",
   "CardView.group": "",
   "CardView.DragHeader": "",
 
@@ -591,6 +593,14 @@ export const COMMANDS = {
   SwitchToggle: "",
   "LLMChatOptions.EnabledMcpServer": "",
   SmartFormFieldForeignKey: "",
+  "McpServerOAuthConfigTopControls.ShowServerInfo": "",
+  "McpServerOAuthConfigActions.LoginWithOAuth": "",
+  "McpServerOAuthConfigAuthorizeUrlBtn.OpenAuthorizationUrl": "",
+  "McpServerOAuthConfigTopControls.authMode": "",
+  "McpServerOAuthConfigTopControls.bearerToken": "",
+  "McpServerOAuthConfigActions.connectionToggle": "",
+  MCPServers: "",
+  W_MethodControls: "",
 } as const satisfies Record<
   string,
   | string
@@ -635,6 +645,7 @@ export declare namespace SVGif {
   export type CursorAnimation =
     | {
         elementSelector: string;
+        nth?: number;
         offset?: { x: number; y: number };
         duration: number;
         type: "click" | "clickAppearOnHover";

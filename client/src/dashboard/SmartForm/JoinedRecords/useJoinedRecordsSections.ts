@@ -3,10 +3,12 @@ import {
   isJoinedFilter,
   type DetailedFilter,
 } from "@common/filterUtils";
-import type { TableHandlerClient } from "prostgles-client/dist/prostgles";
-import { usePromise } from "prostgles-client";
-import type { AnyObject } from "prostgles-types";
-import { useMemo, useRef, useState } from "react";
+import {
+  useMemoDeep,
+  type TableHandlerClient,
+} from "prostgles-client/dist/prostgles";
+import { getSerialisableError, type AnyObject } from "prostgles-types";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { isDefined } from "../../../utils/utils";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
 import { getJoinFilter } from "./getJoinFilter";
@@ -29,7 +31,7 @@ export type JoinedRecordSection = {
   expanded?: boolean;
   existingDataCount: number;
   canInsert?: boolean;
-  error?: string;
+  error?: unknown;
   joinFilter: AnyObject;
   detailedJoinFilter: DetailedFilter[];
   count: number;
@@ -64,7 +66,7 @@ export const useJoinedRecordsSections = (props: JoinedRecordsProps) => {
     [parentForm],
   );
 
-  const table = useMemo(() => tablesMap.get(tableName), [tablesMap, tableName]);
+  const table = tablesMap.get(tableName);
 
   const currentSections = useRef<JoinedRecordSection[]>([]);
   const isInsert = !rowFilter;
@@ -96,71 +98,99 @@ export const useJoinedRecordsSections = (props: JoinedRecordsProps) => {
     [newRowData],
   );
 
-  const sections = usePromise(async () => {
-    setIsLoadingSections(true);
-    const allSections = await Promise.all(
-      diplayedTables.map(async (j) => {
-        const canInsert = db[j.tableName]?.insert && j.hasFkeys;
-        if (action === "insert" && !canInsert) return;
-        const path = [j.tableName];
-        const detailedJoinFilter = getJoinFilter(
-          path,
-          tableName,
-          rowFilter?.filter((f) => !isJoinedFilter(f)),
-          {
-            minimised: true,
-          },
-        );
-        const joinFilter = getSmartGroupFilter(detailedJoinFilter);
-        let countStr = "0";
-        let countError: string | undefined;
-        const tableHandler = db[j.tableName];
-        try {
-          if (!isInsert) {
-            countStr =
-              (await tableHandler?.count?.(joinFilter))?.toString() ?? "0";
-          }
-        } catch (err) {
-          countError = `Failed to db.${j.tableName}.count(${JSON.stringify(joinFilter)})`;
-          console.error(countError);
-        }
-        const existingDataCount = isInsert ? 0 : parseInt(countStr);
-
-        const count =
-          (isInsert ?
-            nestedInsertData[j.tableName]?.length
-          : existingDataCount) ?? 0;
-
-        const table = tablesMap.get(j.tableName);
-        if (!table) return;
-
-        const res: JoinedRecordSection = {
-          label: table.label,
-          tableName: j.tableName,
-          existingDataCount,
-          canInsert,
-          path,
-          error: errors[j.tableName] || countError,
-          joinFilter,
-          detailedJoinFilter,
-          count,
-          expanded: currentSections.current.find(
-            (s) => s.tableName === j.tableName,
-          )?.expanded,
-          table,
-          tableHandler,
-        };
-
-        return res;
-      }),
+  const nestedInsertDataTableRowCounts = useMemoDeep(() => {
+    return new Map(
+      Object.entries(nestedInsertData).map(([k, d]) => [k, d.length]),
     );
+  }, [nestedInsertData]);
+
+  const [sectionCounts, setSectionCounts] = useState<
+    Map<
+      string,
+      | { success: true; count: number; existingDataCount: number }
+      | { success: false; error: unknown }
+    >
+  >(new Map());
+
+  const refreshSectionCount = useCallback(
+    async ({
+      tableHandler,
+      joinFilter,
+      tableName,
+    }: Pick<
+      JoinedRecordSection,
+      "tableHandler" | "joinFilter" | "tableName"
+    >) => {
+      let countStr = "0";
+      let countError: string | undefined;
+      try {
+        if (!isInsert) {
+          countStr =
+            (await tableHandler?.count?.(joinFilter))?.toString() ?? "0";
+        }
+      } catch (err) {
+        countError = `Failed to db.${tableName}.count(${JSON.stringify(joinFilter)}). Error: ${JSON.stringify(getSerialisableError(err))}`;
+        console.error(countError);
+      }
+      const existingDataCount = isInsert ? 0 : parseInt(countStr);
+      const count =
+        (isInsert ?
+          nestedInsertDataTableRowCounts.get(tableName)
+        : existingDataCount) ?? 0;
+      setSectionCounts((prev) => {
+        const newMap = new Map(prev);
+        if (countError) {
+          newMap.set(tableName, { success: false, error: countError });
+        } else {
+          newMap.set(tableName, { success: true, existingDataCount, count });
+        }
+        return newMap;
+      });
+    },
+    [isInsert, nestedInsertDataTableRowCounts],
+  );
+
+  const sectionsWithoutCounts = useMemo(() => {
+    const allSections = diplayedTables.map((j) => {
+      const canInsert = db[j.tableName]?.insert && j.hasFkeys;
+      if (action === "insert" && !canInsert) return;
+      const path = [j.tableName];
+      const detailedJoinFilter = getJoinFilter(
+        path,
+        tableName,
+        rowFilter?.filter((f) => !isJoinedFilter(f)),
+        {
+          minimised: true,
+        },
+      );
+      const joinFilter = getSmartGroupFilter(detailedJoinFilter);
+      const tableHandler = db[j.tableName];
+      const table = tablesMap.get(j.tableName);
+      if (!table) return;
+
+      const res: Omit<JoinedRecordSection, "count" | "existingDataCount"> = {
+        label: table.label,
+        tableName: j.tableName,
+        canInsert,
+        path,
+        error: errors[j.tableName],
+        joinFilter,
+        detailedJoinFilter,
+        expanded: currentSections.current.find(
+          (s) => s.tableName === j.tableName,
+        )?.expanded,
+        table,
+        tableHandler,
+      };
+
+      return res;
+    });
 
     const sections = allSections
       .filter(isDefined)
       .filter(
         (s) => !showRelated || descendants.some((t) => t.name === s.tableName),
       );
-    setIsLoadingSections(false);
     return sections;
   }, [
     diplayedTables,
@@ -168,19 +198,49 @@ export const useJoinedRecordsSections = (props: JoinedRecordsProps) => {
     db,
     rowFilter,
     tableName,
-    isInsert,
-    nestedInsertData,
     descendants,
     showRelated,
     errors,
     tablesMap,
   ]);
 
-  currentSections.current = sections ?? [];
+  useEffect(() => {
+    setIsLoadingSections(true);
+    void Promise.all(sectionsWithoutCounts.map(refreshSectionCount)).finally(
+      () => {
+        setIsLoadingSections(false);
+      },
+    );
+  }, [sectionsWithoutCounts, refreshSectionCount]);
+
+  const sections = useMemo(() => {
+    return sectionsWithoutCounts.map((s) => {
+      const countData = sectionCounts.get(s.tableName);
+      if (!countData) {
+        return { ...s, existingDataCount: 0, count: 0 };
+      }
+      if (!countData.success) {
+        return {
+          ...s,
+          existingDataCount: 0,
+          count: 0,
+          error: s.error ?? countData.error,
+        };
+      }
+      return {
+        ...s,
+        existingDataCount: countData.existingDataCount,
+        count: countData.count,
+      };
+    });
+  }, [sectionsWithoutCounts, sectionCounts]);
+
+  currentSections.current = sections;
   return {
     sections,
     isInsert,
     descendants,
     isLoadingSections,
+    refreshSectionCount,
   };
 };

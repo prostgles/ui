@@ -42,6 +42,7 @@ export type ChipStyle = {
 
 export type ConditionalStyle = {
   type: "Conditional";
+  column?: string;
   conditions: (ConditionFilter & ChipStyle)[];
   defaultStyle?: ChipStyle;
 };

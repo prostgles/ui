@@ -105,7 +105,7 @@ export const CellBarchart = ({
   return (
     <div
       {...divProps}
-      className={classOverride("ProgressBar flex-col gap-p25", className)}
+      className={classOverride("ProgressBar flex-col gap-p25  ", className)}
       style={style}
     >
       <div

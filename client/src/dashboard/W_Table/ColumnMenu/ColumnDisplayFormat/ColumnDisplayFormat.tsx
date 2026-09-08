@@ -1,20 +1,17 @@
-import { getConnectionPaths, ROUTES, type DeepWriteable } from "@common/utils";
+import { columnDisplayFormatSchema } from "@common/columnDisplayFormat.schema";
+import { getConnectionPaths, type DeepWriteable } from "@common/utils";
+import { FlexCol } from "@components/Flex";
 import { JSONBSchema } from "@components/JSONBSchema/JSONBSchema";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { includes, type DBSchemaTable } from "prostgles-types";
 import React, { useMemo } from "react";
+import { Link } from "react-router";
 import type { Prgl } from "src/App";
 import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
 import type { ColumnConfigWInfo } from "../../W_Table";
-import type { ColumnFormat } from "./columnFormatUtils";
-import {
-  // columnDisplayFormatSchema,
-  getFormatOptions,
-} from "./columnFormatUtils";
-import { FlexCol } from "@components/Flex";
-import { Link } from "react-router";
-import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import { columnDisplayFormatSchema } from "@common/columnDisplayFormat.schema";
 import { UpdateColumnGlobalConfig } from "../UpdateColumnGlobalConfig";
+import type { ColumnFormat } from "./columnFormatUtils";
+import { getFormatOptions } from "./columnFormatUtils";
 
 type P = {
   db: Prgl["db"];
@@ -56,8 +53,8 @@ export const ColumnDisplayFormat = ({
                 subLabel: c.country,
               }));
           } else if (t.type.enum[0] === "Media") {
-            //@ts-ignore
-            t.params.oneOfType[2]!.contentTypeColumnName.allowedValues =
+            // @ts-ignore
+            t.params.type.contentType.oneOfType[2]!.contentTypeColumnName.allowedValues =
               textCols;
           }
         }

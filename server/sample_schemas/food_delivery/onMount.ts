@@ -1,3 +1,5 @@
+import type { ProstglesOnMount } from "@prostgles/prostgles";
+
 export const onMount: ProstglesOnMount = async ({ dbo: db, sql }) => {
   const roadTableHandler = db.routes;
   if (!roadTableHandler) return;
@@ -63,10 +65,12 @@ export const onMount: ProstglesOnMount = async ({ dbo: db, sql }) => {
 
   await sql(`
       VACUUM;
-    `);
+  `);
 
   let shownProcInfo = false;
+  let stopped = false;
   const mockLocations = async () => {
+    if (stopped) return;
     try {
       if (!shownProcInfo) {
         shownProcInfo = true;
@@ -84,6 +88,7 @@ export const onMount: ProstglesOnMount = async ({ dbo: db, sql }) => {
       }
       await sql(`CALL mock_locations(); /* from fork */`);
     } catch (error) {
+      if (stopped) return;
       console.error("Error calling mock_locations", error);
       const funcs = await sql(
         `
@@ -97,11 +102,12 @@ export const onMount: ProstglesOnMount = async ({ dbo: db, sql }) => {
       console.error(funcs);
       throw error;
     }
-    mockLocations();
+    if (!stopped) void mockLocations();
   };
-  mockLocations();
+  void mockLocations();
 
-  setInterval(async () => {
+  const orderInterval = setInterval(async () => {
+    if (stopped) return;
     const hourOfDayAverageOrders = {
       0: 2,
       1: 1,
@@ -135,4 +141,9 @@ export const onMount: ProstglesOnMount = async ({ dbo: db, sql }) => {
       orderRatePerSecond,
     });
   }, 3e3);
+
+  return () => {
+    stopped = true;
+    clearInterval(orderInterval);
+  };
 };

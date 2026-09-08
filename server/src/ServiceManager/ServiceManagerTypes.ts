@@ -21,6 +21,12 @@ export type ProstglesService = {
    */
   hostPort?: number;
   env?: Record<string, string>;
+  /**
+   * Directory containing the Docker build context.
+   * Relative paths resolve from the root used to register this service.
+   * Defaults to `<serviceName>/src`.
+   */
+  buildContext?: string;
   configs?: Record<
     string,
     {
@@ -78,6 +84,7 @@ export type ProstglesService = {
     }
   >;
 };
+export type ServiceRegistry = Record<string, ProstglesService>;
 
 export const prostglesServices = {
   speechToText: speechToTextService,

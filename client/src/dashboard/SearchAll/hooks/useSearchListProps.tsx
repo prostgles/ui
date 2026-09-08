@@ -88,7 +88,7 @@ export const useSearchAllListProps = ({
 
               extra = { options: { ...q.options, cursorPosition } };
             }
-            q.$update?.({ closed: false, ...extra }, { deepMerge: true });
+            q.$update({ closed: false, ...extra }, { deepMerge: true });
           },
         })),
       )

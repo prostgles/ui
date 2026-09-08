@@ -76,7 +76,7 @@ export const startAgent = async (
           `\n`,
           `You must use the ${Object.values(AGENT_GOAL_TOOL_NAMES)} tools to return your final answer or bail out, and the output of that tool must match the expected output schema.`,
           "",
-          "Below is your prompt:",
+          "Below is your prompt:\n\n",
           prompt /* provided as first message */,
         ].join("\n"),
         outputSchema,
@@ -149,6 +149,12 @@ export const startAgent = async (
 
   if (chatStatus.state === "stopped") {
     throw new Error(`Agent ${name} failed with error: ${chatStatus.reason}`);
+  }
+
+  if (chatStatus.state === "goal-failure") {
+    throw new Error(
+      `Agent ${name} failed to achieve goal: ${chatStatus.error}. Data: ${JSON.stringify(chatStatus.data)}`,
+    );
   }
 
   if (chatStatus.state === "goal-data-validation-failure") {

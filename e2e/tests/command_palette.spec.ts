@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 import { COMMAND_SEARCH_ATTRIBUTE_NAME } from "./Testing";
 import { login, MINUTE, PageWIds } from "./utils/utils";
 import { goTo } from "utils/goTo";

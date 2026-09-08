@@ -94,15 +94,15 @@ export const runApprovedTools = async ({
     });
   }
 
-  const agetGoalTool = toolUseRequestMessages.find((m) =>
+  const agentGoalTool = toolUseRequestMessages.find((m) =>
     [AGENT_GOAL_TOOL_NAMES.REACHED, AGENT_GOAL_TOOL_NAMES.FAILED].includes(
       m.name,
     ),
   );
-  if (agetGoalTool) {
+  if (agentGoalTool) {
     return runAgentGoalTool({
       chat,
-      agetGoalTool,
+      agentGoalTool,
       dbs,
       aborter,
       args,
@@ -153,17 +153,24 @@ export const runApprovedTools = async ({
       } satisfies ToolUseMessageWithInfo;
     }
 
+    const approvalResponse =
+      (
+        userApprovalResponse?.response === "approve" ||
+        userApprovalResponse?.response === "auto-approve"
+      ) ?
+        "approved"
+      : userApprovalResponse?.response === "deny" ? "denied"
+      : "needs-approval";
     return {
       ...toolUse,
       userApprovalResponse,
       tool,
       state:
-        tool.mode === "always-needs-approval" ? "needs-approval"
+        tool.mode === "always-needs-approval" ? approvalResponse
         : (
           tool.auto_approve ||
           tool.mode === "auto-approved-user-actionable" ||
-          userApprovalResponse?.response === "approve" ||
-          userApprovalResponse?.response === "auto-approve"
+          approvalResponse === "approved"
         ) ?
           "approved"
         : tool.mode === "user-provides-response" ? "user-provides-response"
