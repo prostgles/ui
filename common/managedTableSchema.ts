@@ -6,7 +6,6 @@ export type ClientTableAuditConfig =
   | {
       tableName: string;
       idColumns: readonly string[];
-      entityType: string;
     };
 
 export type TableOptions = RequiredKeepUndefined<

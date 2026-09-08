@@ -510,16 +510,16 @@ const schemaConfigGuidance = {
   access_control:
     "Configure database permissions with `access_control` using the Prostgles `dbPermissions` shape.",
   audit:
-    "To enable auditing, configure `audit`. Auditing keeps track of data changes and makes them viewable from each row card. `tableName` names the table Prostgles creates; PostgreSQL triggers capture changes using `prostgles.user` for attribution, primary keys are detected by default, and the audit table is append-only.",
+    'Use built-in `audit` for row-change history, for example `audit: { tableName: "audit_log", tables: { projects: 1, conditions: 1 } }`. Prostgles-server creates an append-only audit table and PostgreSQL triggers; the UI exposes history from row cards. Do not recreate this with audit tables, hooks, or calls in every function. Omit `tables` to audit all eligible tables; use `excludeColumns` for sensitive fields and `idColumns` for tables without primary keys. Keep domain events such as approval reasons separate when row history alone is insufficient. Audit read permissions still need to respect application access boundaries. When replacing custom audit hooks, preserve existing history and workflow reasons; use a new managed audit table instead of reusing an incompatible application table.',
   connection:
     "Keep non-secret connection presentation settings in `connection`; database URLs belong in `.env`.",
   databaseConfig:
     "Use `databaseConfig` for host-managed database features such as file storage and REST access.",
   functions:
-    "Put privileged operations, cross-table workflows, and server-only business logic in top-level `functions`.",
+    "Use top-level `functions` for explicit workflow actions, privileged operations, and server-only business logic. Prefer built-in table insert/edit forms for ordinary CRUD instead of wrapping each insert or update in a function.",
   id: "Keep `id` stable because it identifies the deployed configuration.",
   joins:
-    "Use `joins` only for relationships that cannot be inferred from foreign keys.",
+    "Omit `joins` and use inferred foreign-key joins by default, including composite foreign keys and junction tables. The top-level `joins` option is experimental; do not enumerate existing FK relationships. An explicit path with \`on\` selects a known relationship; it does not define a new non-FK join. When a permission filter requires a non-FK relationship, declare only that relationship and verify the resolved server retains other inferred FK joins. Older servers suppress inferred joins involving either custom-join table; fix/upgrade the source package instead of enumerating the schema's joins.",
   onInitSQL:
     "Use `onInitSQL` only for SQL initialization that cannot be expressed by `tableConfig`.",
   onMount:
@@ -609,13 +609,19 @@ const getCliAgentsFile = () => `
   ## Tables, display options, and hooks
 
   - ${schemaConfigGuidance.tableConfig} ${schemaConfigGuidance.tableConfigMigrations}
-  - ${schemaConfigGuidance.tableHooks} Use hooks such as \`beforeEach\`, \`afterEach\`, and \`afterAll\` for application behavior instead of PostgreSQL triggers as this allows interaction with typescript and provides full type safety.
+  - ${schemaConfigGuidance.tableHooks} Use hooks such as \`beforeEach\`, \`afterEach\`, and \`afterAll\` for typed application validation and side effects of table-handler mutations. Use built-in \`audit\` for change tracking. Raw SQL does not run table-handler hooks; use database constraints for invariants that must hold for every write.
   - \`afterEach\` and \`afterAll\` run inside the still-uncommitted mutation transaction. Use their \`row\` or \`rows\` values for the affected records and \`dbx\` for reads or writes that must share that transaction. A separate handler, including a \`dbo\` captured from \`onMount\`, cannot see newly inserted rows until commit.
   - Do not start detached work from a hook that immediately re-queries a newly inserted row through another database connection. Await work whose failure should roll back the mutation; for post-commit background processing, write an outbox/queue record in the hook transaction and let a separate consumer process it after commit.
   - ${connectionGuidance.table_options} Keep each table's options in its matching \`*.tableOptions.ts\` module and merge them under \`connection.table_options\`.
   - Give every JSONB column a \`jsonbSchema\` or \`jsonbSchemaType\` so its contents are validated and typed.
   - Follow PostgreSQL schema best practices: use primary and foreign keys, appropriate nullability, unique constraints, and indexes. Model fixed sets of values as lookup tables with \`isLookupTable\` and references instead of \`CHECK (value IN (...))\` constraints.
   - ${schemaConfigGuidance.joins}
+
+  ## Table forms first
+
+  - Table insert/edit forms derive controls from column types, defaults, JSONB schemas, foreign keys, and permissions. They provide FK autocomplete, related-row search, nested inserts where permitted, and file uploads. Model relationships and configure useful referenced-table card labels instead of asking users to enter raw IDs or duplicate existing organisations by name.
+  - Grant the intended users the required insert/update fields and select access to referenced lookup rows through \`access_control\`. Use forced data for trusted values such as the current user. Verify the flow as a non-admin; a function's \`userFilter\` does not grant table-form permissions. Config-level custom permissions also apply to administrators. If a table mutation is restricted to administrators, enforce that in its hook as well as granting the necessary table fields.
+  - If creating a project also creates default memberships, put that setup in a transactional insert hook using \`dbx\`, so the table form retains autocomplete and all writes commit or roll back together. Keep a dedicated function when the operation is an explicit business workflow rather than an ordinary row mutation.
 
   ## Workspaces
 
@@ -627,7 +633,12 @@ const getCliAgentsFile = () => `
   - Enable managed file storage with \`databaseConfig.file_table_config\`. For local storage, use \`{ fileTable: "files", storageType: { type: "local" } }\`. Prostgles creates and manages the file table and serves its files.
   - For S3 storage, use \`storageType: { type: "S3", credential_id }\`; configure the credential in Prostgles and never put access keys in this repository.
   - Reference \`files.id\` from application tables with foreign keys rather than storing file URLs. Referencing tables must have a primary key. Use \`referencedTables\` when file type or size restrictions are required.
-  - Use \`delayedDelete\` when files should remain recoverable for a retention period. Enable \`extractText\` and provide an \`annotationsTable\` only when document extraction or annotations are needed.
+  - For PDF source references, configure \`annotationsTable: "file_annotations"\` alongside \`fileTable\` and \`storageType\`. Prostgles creates the annotation table and marks it as \`file-annotations\` in the client schema; do not create a replacement annotation table or set that marker manually.
+  - Reference an annotation from a domain row, for example \`conditions.columns.source_annotation_id: "integer REFERENCES file_annotations(id)"\`, or use a junction table for multiple excerpts. An annotation stores \`file_id\`, selected \`text\`, a one-based \`page\`, and \`rectangles\` for PDF highlights. Use the PDF viewer's text-selection annotation flow instead of inventing rectangle coordinates. A page number or copied quote alone does not preserve the highlighted source section.
+  - The PDF viewer displays saved highlights and an annotation selector. An FK opens the related annotation row; do not assume it automatically opens the PDF at that highlight. Include the source relation in the row card and verify the full navigation flow. Keep managed table definitions out of \`tableConfig\`, since a same-name definition replaces the managed definition.
+  - Configure annotation read/write permissions explicitly and restrict them to files the user may access. A foreign key does not grant permission. Ensure each condition's annotation belongs to its source file/version and project; test that users cannot link another project's excerpt. Once an excerpt is used as reviewed evidence, prevent edits or deletion that would change its text, file, page, or highlight coordinates; create a new annotation for corrections.
+  - Set \`extractText: false\` for manual PDF text annotations without server-side extraction, or \`extractText: true\` for extraction through the managed documents service (also supported without an annotation table). With annotations configured, omitting \`extractText\` preserves automatic extraction. Older runtimes ignore this flag; upgrade/fix the runtime instead of adding app-level extraction workarounds.
+  - File retention is not revision history. Managed file storage does not currently provide a logical document/revision model. When revisions are required, retain a distinct file per immutable revision and reference that revision from evidence, submissions, and annotations. Keep domain metadata and review/approval rules in the app. Propose reusable file versioning in \`prostgles-server\` before duplicating storage/version-management machinery in consuming apps; audit row history does not preserve overwritten file bytes.
   - Local file data lives outside PostgreSQL. Use persistent storage and include it in deployment backups.
 
   ## Server-side functions

@@ -330,8 +330,11 @@ const getValidatedFieldFilter = (
   expectAtLeastOne = true,
 ): FieldFilter => {
   if (value === "*") return value;
-  const values = Object.values(value);
-  const keys = Object.keys(value);
+  const fieldFilter = Array.isArray(value) ?
+    Object.fromEntries(value.map((column) => [column, 1]))
+  : value;
+  const values = Object.values(fieldFilter);
+  const keys = Object.keys(fieldFilter);
   if (!keys.length && expectAtLeastOne)
     throw new Error("Must select at least a field");
   if (values.some((v) => v) && values.some((v) => !v)) {

@@ -23,7 +23,6 @@ export const getTableAuditConfig = (
   }
   return {
     tableName: auditConfig.tableName,
-    entityType: config.entityType,
     idColumns,
   };
 };

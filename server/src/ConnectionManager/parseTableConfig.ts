@@ -98,8 +98,11 @@ export const parseTableConfig = async ({
 
   const { tableHooks, tableConfig } =
     getSchemaConfig(databaseConfig.config_sync)?.config ?? {};
+  // Preserve extraction for existing annotation configs unless explicitly disabled.
+  const extractText =
+    fileTableConfig?.extractText ?? !!fileTableConfig?.annotationsTable;
   const fileTableHooksMerged: TableHooks<void, ProstglesContext> | undefined =
-    fileTable && fileTableConfig?.annotationsTable ?
+    fileTable && extractText ?
       {
         [fileTable.tableName]: {
           beforeEach: [
@@ -107,13 +110,13 @@ export const parseTableConfig = async ({
               commands: { insert: 1, update: 1 },
               validate: async ({ data: fileRow, hookContext }) => {
                 const { original_name, content_type } = fileRow;
-                const buffer = hookContext?.data as Buffer;
+                const buffer = hookContext?.data as Buffer | undefined;
                 const isImageOrPdf =
                   content_type &&
                   ["image/", "application/pdf"].some((prefix) =>
                     content_type.startsWith(prefix),
                   );
-                if (!isImageOrPdf || !original_name) {
+                if (!isImageOrPdf || !original_name || !buffer) {
                   return;
                 }
                 const db =
@@ -202,7 +205,7 @@ export const parseTableConfig = async ({
       }
     : undefined;
   const fileTableConfigMerged: TableConfig | undefined =
-    fileTable && fileTableConfig?.annotationsTable ?
+    fileTable && (extractText || fileTableConfig?.annotationsTable) ?
       {
         [fileTable.tableName]: {
           columns: {
@@ -217,18 +220,19 @@ export const parseTableConfig = async ({
             },
           },
         },
-        [fileTableConfig.annotationsTable]: {
-          // dropIfExists: true,
-          columns: annotationsTableColumns,
-          constraints: {
-            references_file_table:
-              "FOREIGN KEY (file_id) REFERENCES " +
-              fileTableConfig.fileTable +
-              "(id) ON DELETE CASCADE",
-          },
-        },
       }
     : undefined;
+  if (fileTableConfigMerged && fileTableConfig?.annotationsTable) {
+    fileTableConfigMerged[fileTableConfig.annotationsTable] = {
+      columns: annotationsTableColumns,
+      constraints: {
+        references_file_table:
+          "FOREIGN KEY (file_id) REFERENCES " +
+          fileTableConfig.fileTable +
+          "(id) ON DELETE CASCADE",
+      },
+    };
+  }
   const sourceTableConfig = (fileTableConfigMerged || tableConfig) && {
     ...(fileTableConfigMerged || {}),
     ...tableConfig,

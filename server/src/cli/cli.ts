@@ -104,7 +104,7 @@ const validateEnvironmentSetup = (configPath: string) => {
     );
   }
 
-  const environment = { ...process.env, ...getConfigEnvironment(configPath) };
+  const environment = { ...getConfigEnvironment(configPath), ...process.env };
   const hasValue = (value: string | undefined) => Boolean(value?.trim());
   if (!hasValue(environment.PROSTGLES_STATE_DATABASE_URL)) {
     throw new Error(
