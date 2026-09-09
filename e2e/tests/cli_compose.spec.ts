@@ -122,7 +122,7 @@ test("deploys a generated config project with Docker Compose", async () => {
       [
         join(
           testRoot,
-          "node_modules/@prostgles/prostgles/dist/server/src/cli/cli.js",
+          "node_modules/@prostgles/app/dist/server/src/cli/cli.js",
         ),
         "create",
         appRoot,
@@ -136,7 +136,7 @@ test("deploys a generated config project with Docker Compose", async () => {
     const packageConfig = JSON.parse(readFileSync(packageFile, "utf8")) as {
       dependencies: Record<string, string>;
     };
-    packageConfig.dependencies["@prostgles/prostgles"] = "file:./prostgles.tgz";
+    packageConfig.dependencies["@prostgles/app"] = "file:./prostgles.tgz";
     writeFileSync(packageFile, `${JSON.stringify(packageConfig, null, 2)}\n`);
 
     composeStarted = true;

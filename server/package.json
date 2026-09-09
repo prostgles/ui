@@ -1,5 +1,5 @@
 {
-  "name": "@prostgles/prostgles",
+  "name": "@prostgles/app",
   "version": "2.3.6",
   "description": "Prostgles UI runtime and configurable PostgreSQL dashboard",
   "main": "dist/server/src/schemaConfig.js",
@@ -56,7 +56,7 @@
     "pg": "^8.23.0",
     "pidusage": "^4.0.1",
     "prostgles-client": "^4.0.386",
-    "prostgles-server": "^4.2.612",
+    "prostgles-server": "^4.2.615",
     "qrcode": "^1.5.4",
     "simple-git": "^3.36.0",
     "smtp-server": "^3.19.3",

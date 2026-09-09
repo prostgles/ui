@@ -100,14 +100,19 @@ export const SmartFormFieldList = (props: P) => {
           geoJsonLayersDataFilterSignature=""
         />
       )} */}
-      {table.isFileTable && table.fileTableName && modeType === "insert" ?
+      {(
+        table.isFileTable &&
+        table.fileTableName &&
+        (modeType === "insert" ||
+          (mode.type === "update" && mode.tableHandlerUpdate))
+      ) ?
         <SmartFormFileSection
           {...props}
+          key={row.id ?? tableName}
           table={table}
           newRowDataHandler={newRowDataHandler}
           row={row as Required<FilesTableRow>}
           mode={mode}
-          mediaTableName={table.fileTableName}
         />
       : row.url ?
         <MediaViewer

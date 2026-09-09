@@ -1,4 +1,4 @@
-import type { ProstglesOnMount } from "@prostgles/prostgles";
+import type { ProstglesOnMount } from "@prostgles/app";
 const SECOND = 1e3;
 import { WebSocket } from "ws";
 

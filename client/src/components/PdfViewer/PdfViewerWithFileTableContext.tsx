@@ -38,7 +38,7 @@ type AnnotationsContext = {
   >;
 };
 
-const PdfViewerWithannotations = ({
+const PdfViewerWithAnnotations = ({
   fileTable,
   fileTableHandler,
   annotationsTableHandler,
@@ -203,7 +203,7 @@ export const PdfViewerWithFileTableContext = ({ context, ...pdfProps }: P) => {
   }, [context, db, tables]);
 
   if (annotationsContext) {
-    return <PdfViewerWithannotations {...pdfProps} {...annotationsContext} />;
+    return <PdfViewerWithAnnotations {...pdfProps} {...annotationsContext} />;
   }
   return <PdfViewer {...pdfProps} />;
 };

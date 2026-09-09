@@ -2,7 +2,7 @@ import {
   defineConfig,
   type LayoutConfig,
   type WorkspaceInsertModel,
-} from "@prostgles/prostgles";
+} from "@prostgles/app";
 import { CONFIG_TEST } from "./constants";
 import { functions } from "./functions";
 

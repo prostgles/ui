@@ -2,7 +2,7 @@ import {
   createFunctionGroupDefiner,
   createFunctionsDefiner,
   defineFunction,
-} from "@prostgles/prostgles";
+} from "@prostgles/app";
 import { CONFIG_TEST } from "./constants";
 
 const defineFunctionGroup = createFunctionGroupDefiner();

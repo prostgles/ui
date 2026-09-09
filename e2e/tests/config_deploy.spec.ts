@@ -213,7 +213,7 @@ test.describe("Published config CLI", () => {
       ).toContain(`build/tests/**/*.test.js`);
       expect(
         readFileSync(join(configDirectory, "src", "index.ts"), "utf8"),
-      ).toContain(`import { defineConfig } from "@prostgles/prostgles";`);
+      ).toContain(`import { defineConfig } from "@prostgles/app";`);
       expect(
         readFileSync(join(configDirectory, "src", "index.ts"), "utf8"),
       ).not.toContain("db_conn");
@@ -267,8 +267,8 @@ test.describe("Published config CLI", () => {
 
       writeFileSync(
         join(configDirectory, "src", "functions", "cli.function.ts"),
-        `import { createFunctionsDefinerWithContext, defineFunction } from "@prostgles/prostgles";
-import type { ProstglesContext } from "@prostgles/prostgles";
+        `import { createFunctionsDefinerWithContext, defineFunction } from "@prostgles/app";
+import type { ProstglesContext } from "@prostgles/app";
 import type { DBGeneratedSchema } from "../../generated/DBGeneratedSchema";
 import { services } from "../serviceManager";
 
@@ -292,8 +292,8 @@ export const inferredFunctions = defineFunctions({
       );
       writeFileSync(
         join(configDirectory, "src", "index.ts"),
-        `import { createFunctionGroupDefinerWithContext, defineConfig } from "@prostgles/prostgles";
-import type { ProstglesContext } from "@prostgles/prostgles";
+        `import { createFunctionGroupDefinerWithContext, defineConfig } from "@prostgles/app";
+import type { ProstglesContext } from "@prostgles/app";
 import type { DBGeneratedSchema } from "../generated/DBGeneratedSchema";
 import { inferredFunctions } from "./functions/cli.function";
 import { serviceManagerConfig, services } from "./serviceManager";
@@ -350,7 +350,7 @@ export default prostgles({
 
       const packageJsonPath = join(configDirectory, "package.json");
       const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8"));
-      expect(packageJson.dependencies["@prostgles/prostgles"]).toBe(
+      expect(packageJson.dependencies["@prostgles/app"]).toBe(
         `file:${serverDirectory}`,
       );
       run(

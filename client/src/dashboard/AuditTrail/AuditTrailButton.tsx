@@ -26,39 +26,16 @@ export const AuditTrailButton = ({
     !audit ? undefined : (
       Object.fromEntries(audit.idColumns.map((column) => [column, row[column]]))
     );
-  const auditTable = tables.find(
-    (candidate) => candidate.name === audit?.tableName,
-  );
   const auditHandler = audit && db[audit.tableName];
-  const auditColumnNames = new Set(
-    auditTable?.columns
-      .filter((column) => column.select)
-      .map((column) => column.name),
-  );
-  const requiredColumns = audit && ["entity_type", "old_id", "new_id"];
-
-  const selectedColumns = [
-    "created_at",
-    "actor",
-    "operation",
-    "old_row",
-    "new_row",
-  ].filter((column) => auditColumnNames.has(column));
 
   const error =
     "error" in table.audit ? table.audit.error
     : (
       !rowFilter ||
-      !selectedColumns.length ||
       Object.values(rowFilter).some(
         (value) => value === undefined || value === null,
       ) ||
-      !auditHandler?.find ||
-      !requiredColumns?.every((name) =>
-        auditTable?.columns.some(
-          (column) => column.name === name && column.select && column.filter,
-        ),
-      )
+      !auditHandler?.find
     ) ?
       "Insufficient privileges"
     : undefined;
@@ -86,11 +63,13 @@ export const AuditTrailButton = ({
           title={`History · ${table.label}`}
           fixedFilter={{
             $and: [
-              { entity_type: audit.entityType },
+              {
+                table_name: table.qualifiedNameParts.name,
+                schema_name: table.qualifiedNameParts.schema,
+              },
               { $or: [{ old_id: rowFilter }, { new_id: rowFilter }] },
             ],
           }}
-          selectedColumns={selectedColumns}
           allowEdit={false}
           hideFilters={true}
           realtime={{ throttle: 200 }}

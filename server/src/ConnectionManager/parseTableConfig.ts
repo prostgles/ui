@@ -156,8 +156,7 @@ export const parseTableConfig = async ({
                 ]({
                   files: [blobWithType],
                   ...CONVERT_DOCUMENT_DEFAULT_OPTIONS,
-                  // image_export_mode: "embedded",
-                  image_export_mode: "placeholder",
+                  image_export_mode: "placeholder", // "embedded",
                   to_formats: ["json", "text"],
                 })
                   .then((result) => ({ success: true, result }) as const)

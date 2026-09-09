@@ -3075,6 +3075,23 @@ test.describe("Main test", () => {
     await expect(await page.getByText("secret").count()).toBe(1);
     await expect(await page.getByText(fileName).count()).toBe(2);
 
+    /** Replace an existing file through the row editor. */
+    await getTableWindow(page, "files")
+      .getByTestId("dashboard.window.viewEditRow")
+      .first()
+      .click();
+    await page.getByRole("button", { name: "Remove file", exact: true }).click();
+    await selectAndUpsertFile(
+      page,
+      (page) => page.getByTestId("FileBtn").click(),
+      async () => {
+        await expect(page.locator(".FileInputMedia img")).toBeVisible();
+      },
+      true,
+    );
+    await expect(page.getByTestId("SmartForm")).toHaveCount(0);
+    await expect(page.getByText(fileName)).toHaveCount(2);
+
     /** Disable files permissions to test direct insert */
     await page.getByTestId("dashboard.goToConnConfig").click();
     await page.getByTestId("config.ac").click();

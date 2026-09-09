@@ -154,7 +154,7 @@ const getCliTemplateFiles = ({
     [srcFolderName]: {
       ...fromEntries(srcSubfolderNames.map((folderName) => [folderName, {}])),
       "index.ts": `
-        import { defineConfig } from "@prostgles/prostgles";
+        import { defineConfig } from "@prostgles/app";
         import type { DBGeneratedSchema } from "../${generatedFolderName}/DBGeneratedSchema";
         import { serviceManagerConfig } from "./serviceManager";
 
@@ -171,7 +171,7 @@ const getCliTemplateFiles = ({
       [servicesFolderName]: {
         myService: {
           "myService.service.ts": ` 
-            import type { ProstglesService } from "@prostgles/prostgles/services";
+            import type { ProstglesService } from "@prostgles/app/services";
 
             export const myService = {
               icon: "Extension",
@@ -203,7 +203,7 @@ const getCliTemplateFiles = ({
         },
       },
       "serviceManager.ts": `
-        import type { ServiceManagerConfig } from "@prostgles/prostgles/services";
+        import type { ServiceManagerConfig } from "@prostgles/app/services";
         import { myService } from "./services/myService/myService.service";
         import path from "node:path";
 
@@ -218,7 +218,7 @@ const getCliTemplateFiles = ({
       "deployment.test.ts": `
         import assert from "node:assert/strict";
         import test from "node:test";
-        import { createTestDeployment } from "@prostgles/prostgles/testing";
+        import { createTestDeployment } from "@prostgles/app/testing";
         import type { DBGeneratedSchema } from "../generated/DBGeneratedSchema";
 
         void test("starts the configured app with an isolated database", async (context) => {
@@ -247,6 +247,13 @@ const getCliTemplateFiles = ({
         });`,
     },
     "eslint.config.mjs": eslintConfig,
+    ".prettierrc": readCliAsset(".prettierrc"),
+    ".prettierignore": `
+      node_modules/
+      build/
+      ${generatedFolderName}/
+      .prostgles/
+      src/${servicesFolderName}/*/src/`,
     ".gitignore": `
       node_modules/
       build/
@@ -271,7 +278,9 @@ const getCliTemplateFiles = ({
       # PROSTGLES_TEST_POSTGRES_IMAGE=postgis/postgis:17-3.4`,
   }) as const;
 
-const readCliDockerfile = (filename: "Dockerfile" | "DB.Dockerfile") => {
+const readCliAsset = (
+  filename: "Dockerfile" | "DB.Dockerfile" | ".prettierrc",
+) => {
   const filePath = join(__dirname, filename);
   if (!existsSync(filePath)) {
     throw new Error(`Missing bundled ${filename}: ${filePath}`);
@@ -281,8 +290,8 @@ const readCliDockerfile = (filename: "Dockerfile" | "DB.Dockerfile") => {
 
 export const getCliComposeFiles = ({ configId }: { configId: string }) =>
   ({
-    "DB.Dockerfile": readCliDockerfile("DB.Dockerfile"),
-    Dockerfile: `${readCliDockerfile("Dockerfile")}
+    "DB.Dockerfile": readCliAsset("DB.Dockerfile"),
+    Dockerfile: `${readCliAsset("Dockerfile")}
       FROM runtime AS app
 
       WORKDIR /app
@@ -371,6 +380,8 @@ const getPackageJson = (configId: string) => ({
     dev: "prostgles dev --config .",
     lint: "eslint .",
     "lint:fix": "eslint . --fix",
+    format: "prettier --write .",
+    "format:check": "prettier --check .",
     start: "prostgles start --config .",
     upgrade: "prostgles upgrade --config .",
     test: 'npm run build && node --env-file-if-exists=.env --test "build/tests/**/*.test.js"',
@@ -379,6 +390,7 @@ const getPackageJson = (configId: string) => ({
     [packageJson.name]: getRuntimeDependency(),
   },
   devDependencies: {
+    prettier: "^3.4.2",
     ...pickKeys(packageJson.dependencies, ["typescript"]),
     ...pickKeys(packageJson.devDependencies, [
       "@eslint/js",
@@ -581,6 +593,14 @@ const getCliAgentsFile = () => `
   - The Prostgles \`dbo\` object available in \`onMount\`, \`tableHooks\`, and server functions is \`DBOFullyTyped<DBGeneratedSchema>\`. Table names, columns, filters, selects, inserts, updates, and results are fully typed.
   - Keep the schema and context generics connected when moving code into separate modules. Use \`ProstglesOnMount<DBGeneratedSchema, typeof services>\` for \`onMount\`, \`TableHooks<DBGeneratedSchema, ProstglesContext<typeof services>>\` for hooks, and \`createFunctionGroupDefinerWithContext<DBGeneratedSchema, ProstglesContext<typeof services>>()\` or \`createFunctionsDefinerWithContext<DBGeneratedSchema, ProstglesContext<typeof services>>()\` for functions that use app services.
   - Prefer typed \`dbo\` table handlers and let TypeScript infer values. Casts should be very rare; before adding one, check the table definition, JSONB schema, generated schema, and helper generic.
+  - Use the same table-handler APIs on a hook's \`dbx\` to keep work in the mutation transaction. Before writing per-row loops, manual joins, or raw SQL, check the installed \`prostgles-types\` declarations (\`TableHandler\`, \`SelectParams\`, \`FullFilter\`, \`InsertParams\`, \`InsertDataWithNested\`) and \`prostgles-server\` implementation for built-in support. Client and restricted server-function handlers expose only the operations allowed by their permissions.
+  - Bulk inserts: use \`insertMany(rows, params?)\` for multiple rows, rather than calling \`insert\` in a loop or \`Promise.all\`. For example, \`if (disciplines.length) await dbx.project_members.insertMany(disciplines.map(discipline_id => ({ project_id: row.id, discipline_id })));\`. Include any other required columns from your schema. Use \`insert(row, params?)\` for one row and \`{ returning: ["id"] }\` when you need inserted IDs without re-querying.
+  - Bulk updates/deletes: use \`update(filter, data, params?)\` or \`delete(filter, params?)\` to affect all matching rows, including filters such as \`{ id: { $in: ids } }\`. Use \`updateBatch([[filter, data], ...], params?)\` when each update needs different data. \`upsert(filter, data, params?)\` inserts or updates a matching record; inserts also support \`onConflict\` options. Check their documented conflict semantics and the table's unique constraints before choosing one.
+  - Nested inserts: \`insert\` and \`insertMany\` can create related rows through foreign-key relationships in one transaction. For example, with \`project_members.project_id REFERENCES projects(id)\`, \`dbx.projects.insert({ name: "Example", project_members: [{ discipline_id }] }, { returning: "*" })\` creates the project and its member, propagating the parent key. Use actual related table names and required fields; do not manually insert a parent and loop over children when a nested insert fits.
+  - The runtime also supports inserting a referenced row through an FK column, for example \`tasks.insert({ title: "Example", project_id: { name: "New project" } })\`. This creates a new project, not a link to an existing one; pass an existing ID to link instead. Relationship ambiguity and nested-insert permissions still apply. The installed types may not fully express FK-column nested objects: inspect the resolved declarations and propose fixing \`prostgles-types\`/\`prostgles-server\` rather than adding broad casts or app-level workarounds.
+  - Reads: use \`find\`, \`findOne\`, and \`count\` with typed filters and \`select\`, \`orderBy\`, \`limit\`, and \`offset\` options. Filters support operators such as \`$in\`, \`$ilike\`, \`$and\`, and \`$or\`. Request only needed columns and use \`count\` rather than fetching rows to count them.
+  - Relational reads and aggregates: selects support nested related-table results, explicit \`$leftJoin\`/\`$innerJoin\` paths, and aggregate functions such as \`$count\` and \`$sum\` with \`groupBy\`. Prefer these to per-row lookups or client-side aggregation; inspect \`SelectParams\` and installed examples for the exact syntax and join path when multiple foreign keys exist.
+  - For multi-step server-side work outside a hook, use \`dbo.tx(async (dbx) => { ... })\` when available and use that callback's handlers throughout. Inside hooks, use the provided \`dbx\`. Raw SQL is available in unrestricted contexts but bypasses table-handler hooks; prefer handlers when they express the operation.
   - Every table and view handler supports realtime \`subscribe\` and \`subscribeOne\`, for example \`dbo.orders.subscribe(filter, params, onData)\`. Prefer subscriptions over polling the database. Keep the returned subscription handler and call \`unsubscribe()\` during cleanup; an \`onMount\` callback can return that cleanup function.
 
   ## Project structure
@@ -592,11 +612,12 @@ const getCliAgentsFile = () => `
 
   ## Tests
 
-  - Run \`npm test\` before committing. Tests use \`@prostgles/prostgles/testing\` to start the real app against fresh state and project databases without opening the UI.
+  - Run \`npm test\` before committing. Tests use \`@prostgles/app/testing\` to start the real app against fresh state and project databases without opening the UI.
   - Keep deployment tests in \`tests/\`. Each call to \`createTestDeployment\` uses the current app directory and its \`DB.Dockerfile\` when present, starts a disposable PostgreSQL Docker container bound only to \`127.0.0.1\`, creates fresh state and project databases, and removes the container during cleanup. Set \`PROSTGLES_TEST_POSTGRES_IMAGE\` only to override the Dockerfile.
-  - Deployment stdout and stderr remain available after cleanup in \`.prostgles/test-logs/\`. The exact file is returned as \`deployment.logPath\`.
-  - Test logs may be large. Inspect them with \`tail\` or search them with \`rg\`; do not read an entire log unless its size is known to be small.
-  - If the deployment fixture blocks a valid scenario, inspect \`deployment.logPath\` and report the issue against \`@prostgles/prostgles\`; do not weaken the app or its assertions to work around the fixture.
+  - \`npm test\` automatically saves each test deployment's stdout and stderr to \`.prostgles/test-logs/<timestamp>-<random>.log\` relative to the app root. Logs remain after cleanup; the exact file is returned as \`deployment.logPath\` and included in deployment startup errors. No custom logging command or output redirection is needed to capture deployment logs.
+  - After a test failure, inspect the existing logs before rerunning tests or requesting custom commands. Use \`ls -t .prostgles/test-logs/\` to find recent logs, then \`tail -n 200 .prostgles/test-logs/<filename>\` or \`rg -n -i 'error|failed' .prostgles/test-logs/<filename>\`. Logs may be large; do not read an entire log unless its size is known to be small.
+  - These files contain deployment output, not the npm/build/test-runner output. Check the test command's terminal output for lint, TypeScript, assertion, or Docker setup failures. Failures before the deployment starts may not create a log file.
+  - If the deployment fixture blocks a valid scenario, inspect \`deployment.logPath\` and report the issue against \`@prostgles/app\`; do not weaken the app or its assertions to work around the fixture.
   - Add test users through the fixture's \`users\` option and connect with \`connectProjectAs(userKey)\`. Sessions are seeded directly, so deployment tests do not need to exercise the login UI.
   - Add deterministic database state with the fixture's \`seed\` callback. Never use development or production database URLs for test setup.
 
