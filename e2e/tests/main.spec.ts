@@ -17,7 +17,11 @@ import { goTo } from "utils/goTo";
 import { isPortFree } from "utils/isPortFree";
 import { startMockSMTPServer } from "./mockSMTPServer";
 import { setupAskLLMToolUse, testAskLLMCode } from "./testAskLLM/testAskLLM";
-import { getCommandElemSelector, getDataKey, getDataLabel } from "./utils/Testing";
+import {
+  getCommandElemSelector,
+  getDataKey,
+  getDataLabel,
+} from "./utils/Testing";
 import {
   clickAndWait,
   clickInsertRow,
@@ -2509,6 +2513,7 @@ test.describe("Main test", () => {
       );
     `,
     );
+    await page.waitForTimeout(3e3);
     await page.getByTestId("dashboard.goToConnConfig").click();
     await page.getByTestId("NewConnectionForm.MoreOptionsToggle").click();
     await page.getByTestId("NewConnectionForm.schemaFilter").click();
@@ -3080,7 +3085,9 @@ test.describe("Main test", () => {
       .getByTestId("dashboard.window.viewEditRow")
       .first()
       .click();
-    await page.getByRole("button", { name: "Remove file", exact: true }).click();
+    await page
+      .getByRole("button", { name: "Remove file", exact: true })
+      .click();
     await selectAndUpsertFile(
       page,
       (page) => page.getByTestId("FileBtn").click(),

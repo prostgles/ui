@@ -18,7 +18,7 @@ export type LayoutItem = {
    *  'my_table'
    */
   tableName: string | null;
-  viewType: "table" | "map" | "timechart" | "sql" | "barchart";
+  viewType: "table" | "map" | "timechart" | "sql" | "barchart" | "method";
   /**
    * Flex size of the item
    */
@@ -518,7 +518,15 @@ export type BarchartWindowInsertModel = (
   };
 };
 
+export type MethodWindowInsertModel = {
+  id: string;
+  type: "method";
+  method_name: string;
+  name?: string;
+};
+
 export type WindowInsertModel =
+  | MethodWindowInsertModel
   | MapWindowInsertModel
   | SqlWindowInsertModel
   /**

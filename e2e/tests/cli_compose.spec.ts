@@ -31,6 +31,7 @@ test("runs a generated config project with temporary databases and Docker Compos
   const appRoot = join(testRoot, configId);
   const packageArchive = join(testRoot, "prostgles.tgz");
   const serviceContainer = `${configId}-service-my-service`;
+  const webSearchContainer = `${configId}-service-web-search-searxng`;
   const freePort = await new Promise<number>((resolvePromise, reject) => {
     const server = createServer();
     server.once("error", reject);
@@ -49,6 +50,7 @@ test("runs a generated config project with temporary databases and Docker Compos
   const environment = {
     ...process.env,
     PROSTGLES_DOCKER_PORT: String(freePort),
+    PROSTGLES_INSTANCE_ID: configId,
   };
   const run = (command: string, args: string[], options: RunOptions = {}) =>
     new Promise<{ stderr: string; stdout: string }>(
@@ -95,6 +97,7 @@ test("runs a generated config project with temporary databases and Docker Compos
 
   let composeStarted = false;
   try {
+    // Build and install the npm archive used by the generated app.
     await run(
       process.execPath,
       [join(serverRoot, "scripts", "preparePackage.mjs")],
@@ -122,6 +125,22 @@ test("runs a generated config project with temporary databases and Docker Compos
       ],
       { cwd: testRoot, capture: true },
     );
+    // Verify that every service includes its source assets in the package.
+    const servicesPath = "src/ServiceManager/services";
+    for (const service of readdirSync(join(serverRoot, servicesPath), {
+      withFileTypes: true,
+    }).filter((entry) => entry.isDirectory())) {
+      const srcPath = join(servicesPath, service.name, "src");
+      const asset = readdirSync(join(serverRoot, srcPath), {
+        withFileTypes: true,
+      }).find((entry) => entry.isFile());
+      expect(asset, `No files found in ${srcPath}`).toBeDefined();
+      const relativePath = join(srcPath, asset!.name);
+      expect(
+        readFileSync(join(testRoot, "node_modules/@prostgles/app", relativePath)),
+      ).toEqual(readFileSync(join(serverRoot, relativePath)));
+    }
+    // Scaffold a CLI app and configure functions backed by both service types.
     await run(
       process.execPath,
       [
@@ -146,6 +165,48 @@ test("runs a generated config project with temporary databases and Docker Compos
 
     await run("npm", ["install", "--no-audit", "--no-fund"], { capture: true });
     writeFileSync(
+      join(appRoot, "src/index.ts"),
+      `import { createFunctionGroupDefinerWithContext, defineConfig, defineFunction } from "@prostgles/app";
+       import type { ProstglesContext } from "@prostgles/app";
+       import { serviceManagerConfig, services } from "./serviceManager";
+
+       const defineFunctionGroup = createFunctionGroupDefinerWithContext<void, ProstglesContext<typeof services>>();
+
+       export default defineConfig()({
+         id: ${JSON.stringify(configId)},
+         services: serviceManagerConfig,
+         tableConfig: {},
+         functions: {
+           public: defineFunctionGroup({
+             userFilter: {},
+             functions: {
+               serviceGreeting: defineFunction({
+                 run: async (_, { context }) => {
+                   const service = await context.serviceManager.getServiceWithRetries("myService");
+                   return await service.endpoints["/hey"](undefined);
+                 },
+               }),
+               webSearch: defineFunction({
+                 run: async (_, { context }) => {
+                   const service = await context.serviceManager.getServiceWithRetries("webSearchSearxng");
+                   const result = await service.endpoints["/search"]({ q: "prostgles", engines: "bing", format: "json" });
+                   return "Web search returned " + result.results.length + " results";
+                 },
+               }),
+             },
+           }),
+         },
+         workspaces: [{
+           name: "Service workspace",
+           layout: {
+             id: "root", type: "tab", size: 1, activeTabKey: "web-search",
+             items: [{ id: "web-search", type: "item", tableName: null, viewType: "method", size: 1 }],
+           },
+           windows: [{ id: "web-search", type: "method", method_name: "webSearch", name: "Web search" }],
+         }],
+       });`,
+    );
+    writeFileSync(
       join(appRoot, "e2e/tests/admin/workspace.spec.ts"),
       `import { test, expect } from "../fixtures";
        import { setOrAddWorkspace } from "@prostgles/app/testing/ui";
@@ -155,6 +216,45 @@ test("runs a generated config project with temporary databases and Docker Compos
          await expect(app.page.getByTestId("WorkspaceMenu.list")).toContainText("Review queue");
        });`,
     );
+    writeFileSync(
+      join(appRoot, "e2e/tests/admin/service.spec.ts"),
+      `import { test, expect } from "../fixtures";
+       import { setOrAddWorkspace } from "@prostgles/app/testing/ui";
+       test("runs configured functions using built-in and app services", async ({ app, deployment }) => {
+         const state = await deployment.connectStateAs("admin");
+         try {
+           // Start the built-in web search service through the state API.
+           await state.methods!.toggleService!({ serviceName: "webSearchSearxng", enable: true });
+           await expect.poll(async () => await state.db.services!.findOne!({ name: "webSearchSearxng" }))
+             .toMatchObject({ status: "running", connection_id: null });
+           // Run the configured function view, then verify it survives a reload.
+           await app.open();
+           await setOrAddWorkspace(app.page, "Service workspace");
+           const controls = app.page.getByTestId("W_MethodControls");
+           await expect(controls).toBeVisible();
+           await controls.getByText("Run", { exact: true }).click();
+           await expect(controls).toContainText("Web search returned ");
+           await app.page.reload();
+           await expect(controls).toBeVisible();
+           await controls.getByText("Run", { exact: true }).click();
+           await expect(controls).toContainText("Web search returned ");
+           // Start the app's custom service and call it through a published function.
+           await state.methods!.toggleService!({ serviceName: "myService", enable: true });
+           await expect.poll(async () => await state.db.services!.findOne!({ name: "myService" }))
+             .toMatchObject({ status: "running" });
+           const project = await deployment.connectProjectAs("admin");
+           expect(await project.methods!.serviceGreeting!(undefined)).toBe("Hello from myService!");
+         } finally {
+           // Verify both services can be stopped through the state API.
+           for (const serviceName of ["webSearchSearxng", "myService"]) {
+             await state.methods!.toggleService!({ serviceName, enable: false });
+             await expect.poll(async () => await state.db.services!.findOne!({ name: serviceName }))
+               .toMatchObject({ status: "stopped" });
+           }
+         }
+       });`,
+    );
+    // Run the generated browser tests and verify their recorded artifacts.
     await run("npm", ["run", "test:e2e"], { capture: true });
     const artifacts = readdirSync(join(appRoot, "e2e/test-results"), {
       recursive: true,
@@ -164,8 +264,10 @@ test("runs a generated config project with temporary databases and Docker Compos
     expect(
       readFileSync(join(appRoot, "e2e/playwright-report/index.html"), "utf8"),
     ).toContain("Playwright");
+    // Check temporary database startup, dev reload, and shutdown cleanup.
     await checkTemporaryDatabases(appRoot, configId, freePort);
 
+    // Build and start the generated Docker Compose deployment.
     composeStarted = true;
     await run("docker", ["compose", "up", "--detach", "--build"]);
     await waitFor(
@@ -181,6 +283,7 @@ test("runs a generated config project with temporary databases and Docker Compos
       "the generated app",
     );
 
+    // Verify the app image includes working PostgreSQL backup/restore tools.
     const backupRestore = await run(
       "docker",
       [
@@ -208,6 +311,7 @@ test("runs a generated config project with temporary databases and Docker Compos
     );
     expect(backupRestore.stdout).toContain("backup-restored");
 
+    // Verify the database image supports process and SQL query monitoring.
     const monitoring = await run(
       "docker",
       [
@@ -227,53 +331,6 @@ test("runs a generated config project with temporary databases and Docker Compos
     );
     expect(monitoring.stdout).toContain("pg_stat_statements");
     expect(monitoring.stdout.split("\n")).toContain("200");
-
-    await run("docker", [
-      "compose",
-      "exec",
-      "--no-TTY",
-      "db",
-      "psql",
-      "-U",
-      "postgres",
-      "-d",
-      "prostgles_state",
-      "-c",
-      "UPDATE services SET status = 'running' WHERE name = 'myService'",
-    ]);
-    await run("docker", ["compose", "restart", "app"]);
-    await waitFor(
-      async () =>
-        await run("docker", ["inspect", serviceContainer], { capture: true })
-          .then(() => true)
-          .catch(() => false),
-      "the generated myService container",
-      180_000,
-    );
-
-    const callService = async () =>
-      await run(
-        "docker",
-        [
-          "compose",
-          "exec",
-          "--no-TTY",
-          "app",
-          "node",
-          "-e",
-          `fetch('http://${serviceContainer}:8080/hey').then(async response => { const text = await response.text(); if (text !== 'Hello from myService!') throw new Error(text); console.log(text); })`,
-        ],
-        { capture: true },
-      );
-    await waitFor(
-      async () =>
-        await callService()
-          .then(() => true)
-          .catch(() => false),
-      "the generated myService endpoint",
-    );
-    const response = await callService();
-    expect(response.stdout).toContain("Hello from myService!");
   } catch (error) {
     if (composeStarted) {
       await run("docker", ["compose", "logs", "--no-color"]).catch(
@@ -282,7 +339,7 @@ test("runs a generated config project with temporary databases and Docker Compos
     }
     throw error;
   } finally {
-    await run("docker", ["rm", "--force", serviceContainer], {
+    await run("docker", ["rm", "--force", serviceContainer, webSearchContainer], {
       capture: true,
     }).catch(() => undefined);
     if (composeStarted) {
@@ -295,7 +352,7 @@ test("runs a generated config project with temporary databases and Docker Compos
         "--remove-orphans",
       ]).catch(() => undefined);
     }
-    await run("docker", ["image", "rm", serviceContainer], {
+    await run("docker", ["image", "rm", serviceContainer, webSearchContainer], {
       capture: true,
     }).catch(() => undefined);
     rmSync(testRoot, { force: true, recursive: true });
