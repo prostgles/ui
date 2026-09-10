@@ -5,13 +5,13 @@ import type {
 import Btn, { type BtnProps } from "@components/Btn";
 import PopupMenu from "@components/PopupMenu";
 import { mdiFilter } from "@mdi/js";
-import React, { useMemo } from "react";
+import React from "react";
 import type {
   ContextDataSchema,
   ForcedFilterControlProps,
   SingleGroupFilter,
 } from "./AccessControl/OptionControllers/FilterControl";
-import { SmartFilter, type SmartFilterProps } from "./SmartFilter/SmartFilter";
+import { GroupedFilterControl } from "./SmartFilter/GroupedFilterControl";
 import type { ColumnConfig } from "./W_Table/ColumnMenu/ColumnMenu";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 
@@ -41,41 +41,7 @@ export const RenderFilter = (props: RenderFilterProps) => {
   const { db, tables } = usePrgl();
   const isAndOrFilter = "$and" in f || "$or" in f;
   const minimised = mode && mode === "minimised";
-  const { filters, ...filterProps } = useMemo(() => {
-    const isAnd = "$and" in f;
-    const filters = isAnd ? f.$and : f.$or;
-    const simpleFilters = filters.filter(isSimpleFilter);
-    const groupFilters = filters.filter(isNotSimpleFilter);
-    return {
-      filters,
-      filterClassName:
-        /** Where was this needed? Both cases look better with the classes applied */
-        // (minimised ?? filters.some((f) => f.minimised)) ?
-        //   " "
-        // :
-        " rounded  b b-action",
-      operand: isAnd ? "AND" : "OR",
-      detailedFilter: simpleFilters,
-      onOperandChange: (operand) => {
-        onChange(operand === "AND" ? { $and: filters } : { $or: filters });
-      },
-      onChange: (newF) => {
-        const newFilters = [...newF, ...groupFilters];
-        if (isAnd) f.$and = newFilters;
-        else f.$or = newFilters;
-        onChange(f);
-      },
-    } satisfies Pick<
-      SmartFilterProps,
-      | "filterClassName"
-      | "operand"
-      | "detailedFilter"
-      | "onOperandChange"
-      | "onChange"
-    > & {
-      filters: DetailedFilter[];
-    };
-  }, [f, onChange]);
+  const filters = "$and" in f ? f.$and : f.$or;
 
   if (!isAndOrFilter) {
     return <>Unexpected {itemName}. Expecting $and / $or</>;
@@ -83,7 +49,7 @@ export const RenderFilter = (props: RenderFilterProps) => {
 
   const content = (showAddFilter?: boolean) => (
     <>
-      <SmartFilter
+      <GroupedFilterControl
         type="where"
         itemName={itemName}
         contextData={contextData}
@@ -98,7 +64,8 @@ export const RenderFilter = (props: RenderFilterProps) => {
         tables={tables}
         selectedColumns={selectedColumns}
         hideOperand={hideOperand}
-        {...filterProps}
+        filter={f}
+        onChange={onChange}
         newFilterType={contextData ? "=" : undefined}
         hideToggle={true}
         minimised={minimised}
@@ -121,7 +88,7 @@ export const RenderFilter = (props: RenderFilterProps) => {
     return content(false);
   }
 
-  const filterIsNotEmpty = filters.some((f) => !f.disabled);
+  const filterIsNotEmpty = filters.length > 0;
 
   return (
     <PopupMenu
@@ -151,7 +118,7 @@ export const RenderFilter = (props: RenderFilterProps) => {
           label: "Done",
           "data-command": "RenderFilter.done",
           disabledInfo:
-            filters.some((f) => f.disabled) ?
+            hasDisabledFilter(f) ?
               `Some ${itemName}s are incomplete/disabled`
             : undefined,
         },
@@ -162,13 +129,12 @@ export const RenderFilter = (props: RenderFilterProps) => {
   );
 };
 
-const isSimpleFilter = (
-  f: DetailedFilter | GroupedDetailedFilter,
-): f is DetailedFilter => {
-  return !("$and" in f || "$or" in f);
-};
-const isNotSimpleFilter = (
-  f: DetailedFilter | GroupedDetailedFilter,
-): f is GroupedDetailedFilter => {
-  return !isSimpleFilter(f);
+const hasDisabledFilter = (
+  filter: DetailedFilter | GroupedDetailedFilter,
+): boolean => {
+  if ("$and" in filter) return filter.$and.some(hasDisabledFilter);
+  if ("$or" in filter) return filter.$or.some(hasDisabledFilter);
+  return (
+    !!filter.disabled || ("path" in filter && hasDisabledFilter(filter.filter))
+  );
 };

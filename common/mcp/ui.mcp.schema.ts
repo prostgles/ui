@@ -62,7 +62,7 @@ export const uiMcpSchema = {
         ${"```json"}
         {
           "files": {
-            "Dockerfile": "FROM node:18\nWORKDIR /app\nCOPY . .\nRUN npm install\nCMD [\"node\", \"index.js\"]",
+            "Dockerfile": "FROM node:24-trixie-slim\nWORKDIR /app\nCOPY . .\nRUN npm install\nCMD [\"node\", \"index.js\"]",
             "index.ts": "import type { JSONB } from \"prostgles-types\"; console.log('hello world');"
           }
         }

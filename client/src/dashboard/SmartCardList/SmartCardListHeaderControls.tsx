@@ -1,3 +1,4 @@
+import type { DetailedFilter } from "@common/filterUtils";
 import { FlexCol, FlexRowWrap } from "@components/Flex";
 import { isObject, type ValidatedColumnInfo } from "prostgles-types";
 import React, { useMemo } from "react";
@@ -39,8 +40,9 @@ export const SmartCardListHeaderControls = (
       tableName: tableControls.tableName,
       filter: { $and: tableControls.localFilter },
       onChange: (newFilter) => {
-        const items = "$and" in newFilter ? newFilter.$and : newFilter.$or;
-        tableControls.setLocalFilter(items);
+        tableControls.setLocalFilter(
+          "$and" in newFilter ? newFilter.$and : [newFilter],
+        );
       },
     } satisfies Pick<RenderFilterProps, "filter" | "onChange" | "tableName">;
   }, [tableControls]);
@@ -96,8 +98,17 @@ export const SmartCardListHeaderControls = (
               db={db}
               tableName={tableControls.tableName}
               tables={tables}
-              onFilterChange={tableControls.setLocalFilter}
-              filter={tableControls.localFilter ?? []}
+              onFilterChange={(filters) =>
+                tableControls.setLocalFilter([
+                  ...filters,
+                  ...(tableControls.localFilter ?? []).filter(
+                    (f) => "$and" in f || "$or" in f,
+                  ),
+                ])
+              }
+              filter={(tableControls.localFilter ?? []).filter(
+                (f): f is DetailedFilter => !("$and" in f || "$or" in f),
+              )}
               extraFilters={undefined}
               style={{
                 width: "unset",

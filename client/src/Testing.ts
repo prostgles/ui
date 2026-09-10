@@ -173,6 +173,8 @@ export const COMMANDS = {
   "RenderFilter.done": "",
 
   ForcedFilterControl: "",
+  JoinedFilterControl: "",
+  GroupedFilterControl: "",
   "ForcedFilterControl.type": "",
   "ForcedFilterControl.type.disabled": "",
   "ForcedFilterControl.type.enabled": "",

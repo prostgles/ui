@@ -12,6 +12,7 @@ import type { Prgl } from "../../App";
 import { FlexRow } from "@components/Flex";
 
 type ExistingAccessRulesProps = {
+  isCli: boolean;
   onSelect: (rule: AccessRule) => void;
   rules: AccessRule[];
   workspaces: Workspace[];
@@ -19,6 +20,7 @@ type ExistingAccessRulesProps = {
 };
 
 export const AccessControlRules = ({
+  isCli,
   rules,
   onSelect,
   workspaces,
@@ -36,10 +38,16 @@ export const AccessControlRules = ({
         style={{ alignItems: "center" }}
         iconPath=""
       >
-        <p>
-          {!userTypesWithAccess.length ? "Only users" : "Users"} of type{" "}
-          <strong>"admin"</strong> have full access to this database.
-        </p>
+        {isCli ?
+          <p>
+            CLI access rules apply to all authenticated users, including admins.
+            Update these rules in the app's source code.
+          </p>
+        : <p>
+            {!userTypesWithAccess.length ? "Only users" : "Users"} of type{" "}
+            <strong>"admin"</strong> have full access to this database.
+          </p>
+        }
 
         {!!userTypesWithAccess.length && (
           <p>
@@ -86,11 +94,13 @@ export const AccessControlRules = ({
                   <FlexRow>
                     <LabeledRow
                       icon={mdiAccount}
-                      title="User types"
+                      title={isCli ? "Applies to" : "User types"}
                       className="ExistingAccessRules_Item_Header ai-center f-1"
                     >
                       <span className="text-0 font-20 bold">
-                        {userTypes?.join(", ")}
+                        {isCli ?
+                          "All authenticated users"
+                        : userTypes?.join(", ")}
                       </span>
                     </LabeledRow>
                     <SwitchToggle

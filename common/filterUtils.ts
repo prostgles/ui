@@ -128,7 +128,7 @@ type JoinPath = {
 export type DetailedJoinedFilter = BaseFilter & {
   type: (typeof JOINED_FILTER_TYPES)[number];
   path: (string | JoinPath)[];
-  filter: DetailedFilterBase;
+  filter: DetailedFilterBase | GroupedDetailedFilter;
 };
 export type DetailedFilter = DetailedFilterBase | DetailedJoinedFilter;
 export type DetailedGroupFilter =
@@ -138,7 +138,7 @@ export type DetailedGroupFilter =
 export const isJoinedFilter = (f: DetailedFilter): f is DetailedJoinedFilter =>
   Boolean(f.type && JOINED_FILTER_TYPES.includes(f.type as any));
 export const isDetailedFilter = (f: DetailedFilter): f is DetailedFilterBase =>
-  !isJoinedFilter(f.type as any);
+  !isJoinedFilter(f);
 
 type InfoType = "pg";
 export const getFinalFilterInfo = (
@@ -164,7 +164,7 @@ export const getFinalFilterInfo = (
       const path = filter.path
         .map((p) => (typeof p === "string" ? p : p.table))
         .join(" -> ");
-      return `${filter.type === "$existsJoined" ? "Exists" : "Does not exist"} in ${path} where ${filterToString(filter.filter)}`;
+      return `${filter.type === "$existsJoined" ? "Exists" : "Does not exist"} in ${path} where ${getFinalFilterInfo(filter.filter, context, depth + 2, opts)}`;
     }
 
     const f = getFinalFilter(filter, context, {
@@ -253,11 +253,34 @@ type GetFinalFilterOpts = {
   columns?: string[];
 };
 export const getFinalFilter = (
-  detailedFilter: DetailedFilter,
+  detailedFilter: DetailedFilter | GroupedDetailedFilter,
   context?: ContextDataObject,
   opts?: GetFinalFilterOpts,
-) => {
+): AnyObject | undefined => {
   const { forInfoOnly = false } = opts ?? {};
+
+  if ("$and" in detailedFilter || "$or" in detailedFilter) {
+    const isAnd = "$and" in detailedFilter;
+    const filters = isAnd ? detailedFilter.$and : detailedFilter.$or;
+    return {
+      [isAnd ? "$and" : "$or"]: filters
+        .map((filter) => getFinalFilter(filter, context, opts))
+        .filter(isDefined),
+    };
+  }
+
+  if (detailedFilter.disabled) return undefined;
+
+  if ("path" in detailedFilter) {
+    const filter = getFinalFilter(detailedFilter.filter, context, {
+      ...opts,
+      columns: undefined,
+    });
+    if (!filter) return undefined;
+    return {
+      [detailedFilter.type]: { path: detailedFilter.path, filter },
+    };
+  }
 
   const checkFieldname = (f: string, columns?: string[]) => {
     if (columns?.length && !columns.includes(f)) {
@@ -268,12 +291,6 @@ export const getFinalFilter = (
 
     return f;
   };
-
-  if (
-    ("fieldName" in detailedFilter && detailedFilter.disabled) ||
-    (isJoinedFilter(detailedFilter) && detailedFilter.filter.disabled)
-  )
-    return undefined;
 
   const getFilter = (
     f: DetailedFilterBase,
@@ -370,15 +387,6 @@ export const getFinalFilter = (
     };
   };
 
-  if (isJoinedFilter(detailedFilter)) {
-    return {
-      [detailedFilter.type]: {
-        path: detailedFilter.path,
-        filter: getFilter(detailedFilter.filter),
-      },
-    };
-  }
-
   return getFilter(detailedFilter, opts?.columns);
 };
 
@@ -405,7 +413,7 @@ export const simplifyFilter = (f: AnyObject | undefined) => {
 };
 
 export const getSmartGroupFilter = (
-  detailedFilter: DetailedFilter[] = [],
+  detailedFilter: (DetailedFilter | GroupedDetailedFilter)[] = [],
   extraFilters?: { detailed?: DetailedFilter[]; filters?: AnyObject[] },
   operand?: "and" | "or",
 ): AnyObject => {
@@ -422,7 +430,7 @@ export const getSmartGroupFilter = (
 };
 
 export const getTableFilterFromDetailedGroupFilter = (
-  detailedGroupFilter: DetailedFilter | DetailedGroupFilter,
+  detailedGroupFilter: DetailedFilter | GroupedDetailedFilter,
 ): AnyObject => {
   const [operand, filterItems] =
     "$and" in detailedGroupFilter ? ["and" as const, detailedGroupFilter.$and]

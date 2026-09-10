@@ -275,7 +275,7 @@ const getCliTemplateFiles = ({
       PROSTGLES_DOCKER_DB_PASSWORD=${environmentDefaults?.PROSTGLES_DOCKER_DB_PASSWORD ?? randomBytes(24).toString("base64url")}
 
       # Optional test-only override. By default npm test builds DB.Dockerfile.
-      # PROSTGLES_TEST_POSTGRES_IMAGE=postgis/postgis:17-3.4`,
+      # PROSTGLES_TEST_POSTGRES_IMAGE=postgis/postgis:17-3.6-alpine`,
   }) as const;
 
 const readCliAsset = (
@@ -531,7 +531,7 @@ const schemaConfigGuidance = {
     "Use top-level `functions` for explicit workflow actions, privileged operations, and server-only business logic. Prefer built-in table insert/edit forms for ordinary CRUD instead of wrapping each insert or update in a function.",
   id: "Keep `id` stable because it identifies the deployed configuration.",
   joins:
-    "Omit `joins` and use inferred foreign-key joins by default, including composite foreign keys and junction tables. The top-level `joins` option is experimental; do not enumerate existing FK relationships. An explicit path with \`on\` selects a known relationship; it does not define a new non-FK join. When a permission filter requires a non-FK relationship, declare only that relationship and verify the resolved server retains other inferred FK joins. Older servers suppress inferred joins involving either custom-join table; fix/upgrade the source package instead of enumerating the schema's joins.",
+    "Omit `joins` and use inferred foreign-key joins by default, including composite foreign keys and junction tables. The top-level `joins` option is experimental; do not enumerate existing FK relationships. An explicit path with `on` selects a known relationship; it does not define a new non-FK join. When a permission filter requires a non-FK relationship, declare only that relationship and verify the resolved server retains other inferred FK joins. Older servers suppress inferred joins involving either custom-join table; fix/upgrade the source package instead of enumerating the schema's joins.",
   onInitSQL:
     "Use `onInitSQL` only for SQL initialization that cannot be expressed by `tableConfig`.",
   onMount:
@@ -542,7 +542,8 @@ const schemaConfigGuidance = {
     "Define tables and columns in `tableConfig`, including constraints and indexes.",
   tableConfigMigrations:
     "For schema changes that transform existing data, increment `tableConfigMigrations.version` and use `onMigrate`.",
-  tableHooks: "Define `tableHooks` as a separate top-level config property.",
+  tableHooks:
+    "Define `tableHooks` as a separate top-level config property. Do not implement authorization in table hooks; enforce user, role, ownership, and tenant access through `access_control`.",
   watchSchemaType:
     "Set `watchSchemaType` only when schema watching must differ from the default.",
   workspaces:
@@ -580,6 +581,17 @@ const getCliAgentsFile = () => `
   - ${schemaConfigGuidance.watchSchemaType}
   - ${schemaConfigGuidance.onInitSQL} ${schemaConfigGuidance.onMount}
 
+  ## Access control
+
+  - Define authorization in \`access_control\` using explicit per-table \`select\`, \`insert\`, \`update\`, and \`delete\` permissions. Use \`type: "Custom"\` with \`customTables\` for granular access. Do not put authorization checks in \`beforeEach\`, \`afterEach\`, or \`afterAll\` hooks, including admin-only mutation checks.
+  - Read the resolved \`SchemaConfigAccessControl\` and rule types before implementing permissions. CLI configs use the \`dbPermissions\` shape: \`forcedFilterDetailed\`, \`checkFilterDetailed\`, and \`forcedDataDetail\` map to the server's \`forcedFilter\`, \`checkFilter\`, and \`forcedData\`. Use the config property names and inspect their filter/context syntax rather than copying raw server publish rules.
+  - Forced filters restrict which existing rows a user can select, update, or delete. Apply ownership, tenant, and related-table membership restrictions to every relevant operation; select permissions alone do not protect writes.
+  - Check filters require inserted or updated rows to satisfy the permission condition or the write fails. Use them to prevent linking to an unauthorized parent or moving a row into another tenant/project. For updates, combine a forced filter on existing rows with a check filter on the resulting rows.
+  - Joined permission filters support nested \`$and\`/\`$or\` groups inside their \`filter\`. Put current-user and allowed-role conditions inside one \`$existsJoined\` so they must match the same membership row; separate existence checks can match different users. Ensure the join correlates every scope key, such as both project and discipline.
+  - Forced data supplies trusted insert/update values and overrides client input, such as the authenticated user's ID or a fixed status. Use server context for identity values; never trust a client-supplied owner or tenant ID. Configure insert and update rules as needed.
+  - Use \`fields\` to limit readable/writable columns, \`filterFields\` to limit query filter columns, \`orderByFields\` for selectable sort columns, and update \`dynamicFields\` when editable columns depend on the row. Grant only the operations and fields required by the workflow.
+  - Verify permissions through authenticated deployment tests: allowed and denied reads/writes, cross-tenant access, forged ownership values, and unauthorized foreign-key changes. Hooks are for application validation and transactional side effects; they are not the authorization boundary.
+
   ## Services
 
   - If a server function needs a non-Node.js runtime or system dependencies, implement that work as a service instead of running it directly in the function.
@@ -610,11 +622,19 @@ const getCliAgentsFile = () => `
   - Use semantic names ending in \`*.function.ts\`, \`*.tableConfig.ts\`, \`*.tableOptions.ts\`, and \`*.tableHooks.ts\`. Examples: \`deployProject.function.ts\`, \`orders.tableConfig.ts\`, \`customers.tableOptions.ts\`, and \`users.tableHooks.ts\`.
   - The generated ESLint config enforces these suffixes inside their corresponding folders. Run \`npm run lint\` before committing.
 
+  ## Local development
+
+  - For disposable development or UI checks, use \`npm run dev -- --temp-db\` or \`npm start -- --temp-db\`. The CLI manages PostgreSQL using the same helper as tests; no database URLs or manual Docker commands are needed. Docker must be available.
+  - Each command creates fresh state and project databases, overrides database URLs from the environment, and removes its container on exit. Dev reloads keep the databases until the command stops. Use normal dev/start with configured URLs only when persistent data is required.
+  - PostgreSQL logs are saved under \`.prostgles/test-logs/\`; the CLI prints the exact path. Logs remain after cleanup. Inspect these logs when database setup fails instead of starting another container.
+
   ## Tests
 
+  - Do not manually start PostgreSQL containers or supply database credentials for tests. Run the existing \`npm test\` workflow directly; it provisions and cleans up its own databases. Build and lint commands do not need a database.
   - Run \`npm test\` before committing. Tests use \`@prostgles/app/testing\` to start the real app against fresh state and project databases without opening the UI.
   - Keep deployment tests in \`tests/\`. Each call to \`createTestDeployment\` uses the current app directory and its \`DB.Dockerfile\` when present, starts a disposable PostgreSQL Docker container bound only to \`127.0.0.1\`, creates fresh state and project databases, and removes the container during cleanup. Set \`PROSTGLES_TEST_POSTGRES_IMAGE\` only to override the Dockerfile.
   - \`npm test\` automatically saves each test deployment's stdout and stderr to \`.prostgles/test-logs/<timestamp>-<random>.log\` relative to the app root. Logs remain after cleanup; the exact file is returned as \`deployment.logPath\` and included in deployment startup errors. No custom logging command or output redirection is needed to capture deployment logs.
+  - PostgreSQL stdout and stderr are also saved to \`deployment.databaseLogPath\` (the app log path plus \`.postgres.log\`), including database startup failures. These logs remain after cleanup.
   - After a test failure, inspect the existing logs before rerunning tests or requesting custom commands. Use \`ls -t .prostgles/test-logs/\` to find recent logs, then \`tail -n 200 .prostgles/test-logs/<filename>\` or \`rg -n -i 'error|failed' .prostgles/test-logs/<filename>\`. Logs may be large; do not read an entire log unless its size is known to be small.
   - These files contain deployment output, not the npm/build/test-runner output. Check the test command's terminal output for lint, TypeScript, assertion, or Docker setup failures. Failures before the deployment starts may not create a log file.
   - If the deployment fixture blocks a valid scenario, inspect \`deployment.logPath\` and report the issue against \`@prostgles/app\`; do not weaken the app or its assertions to work around the fixture.
@@ -641,7 +661,7 @@ const getCliAgentsFile = () => `
   ## Table forms first
 
   - Table insert/edit forms derive controls from column types, defaults, JSONB schemas, foreign keys, and permissions. They provide FK autocomplete, related-row search, nested inserts where permitted, and file uploads. Model relationships and configure useful referenced-table card labels instead of asking users to enter raw IDs or duplicate existing organisations by name.
-  - Grant the intended users the required insert/update fields and select access to referenced lookup rows through \`access_control\`. Use forced data for trusted values such as the current user. Verify the flow as a non-admin; a function's \`userFilter\` does not grant table-form permissions. Config-level custom permissions also apply to administrators. If a table mutation is restricted to administrators, enforce that in its hook as well as granting the necessary table fields.
+  - Grant the intended users the required insert/update fields and select access to referenced lookup rows through \`access_control\`. Use forced data for trusted values such as the current user. Verify the flow as a non-admin; a function's \`userFilter\` does not grant table-form permissions. Config-level custom permissions also apply to administrators. Enforce admin-only table mutations through \`access_control\`.
   - If creating a project also creates default memberships, put that setup in a transactional insert hook using \`dbx\`, so the table form retains autocomplete and all writes commit or roll back together. Keep a dedicated function when the operation is an explicit business workflow rather than an ordinary row mutation.
 
   ## Workspaces

@@ -175,19 +175,22 @@ export const AccessControlRuleEditor = ({
         </FlexRow>
 
         <div className="pl-2">
-          <UserTypeSelect
-            data-command={"config.ac.edit.user"}
-            connectionId={connection.id}
-            database_id={database_config.id}
-            userTypes={editedRule.userTypes}
-            fromEditedRule={editedRule.initialUserTypes}
-            dbs={dbs}
-            onChange={(newUserGroupNames) => {
-              editedRule.onChange({
-                access_control_user_types: [{ ids: newUserGroupNames }],
-              });
-            }}
-          />
+          {database_config.config_sync?.type === "cli" ?
+            "All authenticated users, including admins"
+          : <UserTypeSelect
+              data-command={"config.ac.edit.user"}
+              connectionId={connection.id}
+              database_id={database_config.id}
+              userTypes={editedRule.userTypes}
+              fromEditedRule={editedRule.initialUserTypes}
+              dbs={dbs}
+              onChange={(newUserGroupNames) => {
+                editedRule.onChange({
+                  access_control_user_types: [{ ids: newUserGroupNames }],
+                });
+              }}
+            />
+          }
         </div>
 
         <FlexCol
@@ -331,6 +334,7 @@ export const AccessControlRuleEditor = ({
       </ScrollFade>
       {dbPermissions && (
         <AccessRuleEditorFooter
+          isCli={database_config.config_sync?.type === "cli"}
           editedRule={editedRule}
           dbs={dbs}
           database_id={database_config.id}

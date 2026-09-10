@@ -1,4 +1,8 @@
-import { getSmartGroupFilter } from "@common/filterUtils";
+import {
+  getSmartGroupFilter,
+  type DetailedFilter,
+  type GroupedDetailedFilter,
+} from "@common/filterUtils";
 import { useAsyncEffectQueue } from "prostgles-client";
 import { isObject, type AnyObject } from "prostgles-types";
 import { useEffect, useMemo, useState } from "react";
@@ -51,7 +55,9 @@ export const useSmartCardListState = (
   const [localOrderBy, setLocalOrderBy] = useState(
     Array.isArray(orderBy) ? undefined : orderBy,
   );
-  const [localFilter, setLocalFilter] = useState(searchFilter);
+  const [localFilter, setLocalFilter] = useState<
+    (DetailedFilter | GroupedDetailedFilter)[] | undefined
+  >(searchFilter);
 
   const columns = useSmartCardColumns({
     tableName,

@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
 import { spawn, spawnSync, type ChildProcess } from "child_process";
+import { randomBytes } from "node:crypto";
+import { startTemporaryDatabases } from "./startTemporaryDatabases";
 import { parse } from "dotenv";
 import { existsSync, mkdirSync, readdirSync, readFileSync, watch } from "fs";
 import path from "path";
@@ -18,8 +20,8 @@ const usage = `Usage:
   prostgles create <directory> [--skip-install]
   prostgles upgrade [--config <directory>]
   prostgles compose init [--config <directory>]
-  prostgles dev [--config <directory>]
-  prostgles start [--config <directory>]`;
+  prostgles dev [--config <directory>] [--temp-db]
+  prostgles start [--config <directory>] [--temp-db]`;
 
 const getConfigPath = (args: string[]) => {
   const configIndex = args.indexOf("--config");
@@ -124,13 +126,16 @@ const validateEnvironmentSetup = (configPath: string) => {
 
 const serverEntryPath = path.join(__dirname, "..", "cliServer.js");
 
-const runServer = (configPath: string, mode: "development" | "production") =>
+const runServer = (
+  configPath: string,
+  mode: "development" | "production",
+  environment: NodeJS.ProcessEnv,
+) =>
   spawn(process.execPath, [serverEntryPath], {
     cwd: configPath,
     stdio: "inherit",
     env: {
-      ...getConfigEnvironment(configPath),
-      ...process.env,
+      ...environment,
       NODE_ENV: mode,
       PROSTGLES_UI_CONFIG: configPath,
     },
@@ -148,48 +153,119 @@ const watchConfig = (configPath: string, onChange: () => void) => {
   return () => watchers.forEach((watcher) => watcher.close());
 };
 
-const run = async (configPath: string, isDev: boolean) => {
-  const environment = validateEnvironmentSetup(configPath);
+const run = async (configPath: string, isDev: boolean, temporary: boolean) => {
+  const configuredEnvironment =
+    temporary ? undefined : validateEnvironmentSetup(configPath);
+  const environment = configuredEnvironment ?? {
+    ...getConfigEnvironment(configPath),
+    ...process.env,
+  };
   mkdirSync(path.join(configPath, generatedFolderName), { recursive: true });
   await compileSchemaConfigProject(configPath);
-  await ensureCliDatabases(environment);
+  const shutdown = new AbortController();
+  const onSignal = () => shutdown.abort();
+  process.once("SIGINT", onSignal);
+  process.once("SIGTERM", onSignal);
+  const databases =
+    temporary ?
+      await startTemporaryDatabases({
+        configPath,
+        configId: getExistingConfigId(configPath),
+        logPath: path.join(
+          configPath,
+          ".prostgles/test-logs",
+          `${Date.now()}-${randomBytes(4).toString("hex")}.postgres.log`,
+        ),
+      })
+    : undefined;
+  if (databases) {
+    environment.PROSTGLES_STATE_DATABASE_URL = databases.state.url;
+    environment.PROSTGLES_DATABASE_URL = databases.project.url;
+    environment.PROSTGLES_UI_HOST = "127.0.0.1";
+    environment.PRGL_USERNAME ||= "admin";
+    if (!environment.PRGL_PASSWORD) {
+      environment.PRGL_PASSWORD = randomBytes(24).toString("base64url");
+      console.log(
+        `Temporary admin login: ${environment.PRGL_USERNAME} / ${environment.PRGL_PASSWORD}`,
+      );
+    }
+    console.log(
+      "Using temporary databases. Data is deleted when this command stops.",
+    );
+  } else if (configuredEnvironment) {
+    await ensureCliDatabases(configuredEnvironment);
+  }
   let server: ChildProcess | undefined;
   let restarting = false;
+  let stopping = false;
+  const isStopping = () => stopping;
+  let timer: NodeJS.Timeout | undefined;
+  let closeWatchers: (() => void) | undefined;
   const start = () => {
-    server = runServer(configPath, isDev ? "development" : "production");
+    server = runServer(
+      configPath,
+      isDev ? "development" : "production",
+      environment,
+    );
+    server.once("error", (error) => {
+      console.error(error);
+      void cleanup(1);
+    });
     server.once("exit", (code, signal) => {
-      if (!restarting && (code || signal)) process.exit(code || 1);
+      if (!restarting && !stopping) void cleanup(code ?? (signal ? 1 : 0));
     });
   };
   const stop = async () => {
     const currentServer = server;
     server = undefined;
-    if (!currentServer || currentServer.killed) return;
+    if (
+      !currentServer ||
+      currentServer.exitCode !== null ||
+      currentServer.signalCode !== null ||
+      !currentServer.pid
+    )
+      return;
     currentServer.kill("SIGTERM");
     await new Promise<void>((resolve) => currentServer.once("exit", resolve));
   };
+  const cleanup = async (exitCode = 0) => {
+    if (isStopping()) return;
+    stopping = true;
+    if (timer) clearTimeout(timer);
+    closeWatchers?.();
+    try {
+      await stop();
+    } finally {
+      try {
+        await databases?.dispose();
+      } catch (error) {
+        console.error(error);
+        exitCode = 1;
+      }
+      process.exitCode = exitCode;
+    }
+  };
+  shutdown.signal.addEventListener("abort", () => void cleanup(), {
+    once: true,
+  });
+  if (shutdown.signal.aborted) {
+    await cleanup();
+    return;
+  }
   start();
 
-  let closeWatchers = undefined as (() => void) | undefined;
-  const cleanup = () => {
-    closeWatchers?.();
-    void stop();
-  };
-  process.once("SIGINT", cleanup);
-  process.once("SIGTERM", cleanup);
-
   if (!isDev) return;
-  let timer: NodeJS.Timeout | undefined;
   const rebuild = () => {
     if (timer) clearTimeout(timer);
     timer = setTimeout(() => {
       void (async () => {
         try {
           await compileSchemaConfigProject(configPath);
+          if (isStopping()) return;
           restarting = true;
           await stop();
           restarting = false;
-          start();
+          if (!isStopping()) start();
         } catch (error) {
           console.error(error);
         }
@@ -197,7 +273,12 @@ const run = async (configPath: string, isDev: boolean) => {
     }, 100);
   };
 
-  closeWatchers = watchConfig(configPath, rebuild);
+  try {
+    closeWatchers = watchConfig(configPath, rebuild);
+  } catch (error) {
+    await cleanup(1);
+    throw error;
+  }
 };
 
 const main = async () => {
@@ -219,7 +300,11 @@ const main = async () => {
     return;
   }
   if (command === "dev" || command === "start") {
-    await run(getConfigPath(args), command === "dev");
+    await run(
+      getConfigPath(args),
+      command === "dev",
+      args.includes("--temp-db"),
+    );
     return;
   }
   throw new Error(usage);

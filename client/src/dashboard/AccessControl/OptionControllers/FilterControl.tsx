@@ -1,4 +1,7 @@
-import { getSmartGroupFilter, type DetailedFilter } from "@common/filterUtils";
+import {
+  getFinalFilter,
+  type GroupedDetailedFilter,
+} from "@common/filterUtils";
 import Btn from "@components/Btn";
 import { FlexCol, FlexRowWrap } from "@components/Flex";
 import { Label } from "@components/Label";
@@ -19,9 +22,7 @@ export type ContextDataSchema = {
   columns: ValidatedColumnInfo[];
 }[];
 
-export type SingleGroupFilter =
-  | { $and: DetailedFilter[] }
-  | { $or: DetailedFilter[] };
+export type SingleGroupFilter = GroupedDetailedFilter;
 
 export type ForcedFilterControlProps = {
   detailedFilter: SingleGroupFilter | undefined;
@@ -100,11 +101,7 @@ export const FilterControl = (props: ForcedFilterControlProps) => {
 
   const tableHandler = db[tableName] as TableHandlerClient | undefined;
   const rowCount = usePromise(async () => {
-    const filter = getSmartGroupFilter(
-      filters,
-      undefined,
-      isAnd ? "and" : "or",
-    );
+    const filter = detailedFilter ? getFinalFilter(detailedFilter) : {};
     const rowCount = await tableHandler?.count(filter);
     return rowCount;
   }, [tableHandler, filters, isAnd]);
@@ -147,10 +144,9 @@ export const FilterControl = (props: ForcedFilterControlProps) => {
               tableName={props.tableName}
               tables={tables}
               filterOperand={isAnd ? "and" : "or"}
-              filter={filters}
-              onFilterChange={(newFilter) => {
-                props.onChange({ $and: newFilter });
-              }}
+              fixedFilter={
+                detailedFilter ? getFinalFilter(detailedFilter) : undefined
+              }
             />
           )}
         />

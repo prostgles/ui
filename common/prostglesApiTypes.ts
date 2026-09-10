@@ -340,14 +340,14 @@ export type DeleteParams<T extends AnyObject | void = void, S extends DBSchema |
 /**
  * TODO: pick only joined tables from schema AND exclude parent fkey columns from the nested data
  */
-export type InsertDataWithNested<TD extends AnyObject, S extends DBSchema | void> = UpsertDataToPGCast<TD> & (S extends DBSchema ? string extends keyof S ? {} : {
-    [TableName in keyof S]?: Partial<InsertDataWithNested<S[TableName]["columns"], S>>[];
+export type InsertDataWithNested<TD extends AnyObject, S extends DBSchema | void, TName extends PropertyKey = never> = InsertColumnsWithReferences<TD, S, TName> & (S extends DBSchema ? string extends keyof S ? {} : {
+    [TableName in keyof S]?: Partial<InsertDataWithNested<S[TableName]["columns"], S, TableName>>[];
 } : {});
 /**
  * Methods for interacting with a table/view
  * - On client-side some methods are restricted (and undefined) based on publish rules on the server
  */
-export type TableHandler<TD extends AnyObject = AnyObject, S extends DBSchema | void = void, TName extends (S extends DBSchema ? keyof S : never) = never> = {
+export type TableHandler<TD extends AnyObject = AnyObject, S extends DBSchema | void = void, TName extends PropertyKey = never> = {
     /**
      * Retrieves the table/view info
      */
@@ -437,11 +437,11 @@ export type TableHandler<TD extends AnyObject = AnyObject, S extends DBSchema | 
     /**
      * Inserts a new record into the table.
      */
-    insert<P extends InsertParams<TD, S>>(data: InsertDataWithNested<TD, S>, params?: P): Promise<GetReturningReturnType<P, TD, S>>;
+    insert<P extends InsertParams<TD, S>>(data: InsertDataWithNested<TD, S, TName>, params?: P): Promise<GetReturningReturnType<P, TD, S>>;
     /**
      * Inserts new records into the table.
      */
-    insertMany<P extends InsertParams<TD, S>>(data: InsertDataWithNested<TD, S>[], params?: P): Promise<GetReturningReturnType<P, TD, S>[]>;
+    insertMany<P extends InsertParams<TD, S>>(data: InsertDataWithNested<TD, S, TName>[], params?: P): Promise<GetReturningReturnType<P, TD, S>[]>;
     /**
      * Inserts or updates a record in the table.
      * - If a record matching the \`filter\` exists, it updates the record.

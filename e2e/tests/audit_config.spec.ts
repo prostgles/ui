@@ -56,7 +56,7 @@ test("PostgreSQL audit triggers capture transactional row changes", async () => 
         tables: {
           records: { excludeColumns: ["secret"] },
           children: 1,
-          custom_records: { idColumns: ["key"], entityType: "custom ' entity" },
+          custom_records: { idColumns: ["key"] },
         },
       },
       tableConfig: source,
@@ -154,13 +154,13 @@ test("PostgreSQL audit triggers capture transactional row changes", async () => 
       );
     });
 
-    await test.step("supports custom identifiers and quoted values", async () => {
+    await test.step("supports custom identifiers", async () => {
       await db.none(
         `INSERT INTO "custom_records" VALUES ('custom-key', 'value')`,
       );
       const event = await db.one(
-        "SELECT * FROM audit_events WHERE entity_type = $1",
-        ["custom ' entity"],
+        "SELECT * FROM audit_events WHERE table_name = $1",
+        ["custom_records"],
       );
       assert.deepEqual(event.new_id, { key: "custom-key" });
     });
@@ -169,10 +169,10 @@ test("PostgreSQL audit triggers capture transactional row changes", async () => 
       await db.none("INSERT INTO children VALUES (1, 'tenant-1', 11)");
       await db.none("DELETE FROM records WHERE id = 11");
       const events = await db.any(
-        "SELECT * FROM audit_events WHERE operation = 'DELETE' ORDER BY entity_type",
+        "SELECT * FROM audit_events WHERE operation = 'DELETE' ORDER BY table_name",
       );
       assert.equal(events.length, 2);
-      assert.equal(events[0].entity_type, "children");
+      assert.equal(events[0].table_name, "children");
       assert.deepEqual(events[1].old_row, {
         tenant_id: "tenant-1",
         id: 11,
@@ -244,7 +244,7 @@ test("PostgreSQL audit triggers capture transactional row changes", async () => 
       assert.equal(
         +(
           await db.one(
-            "SELECT count(*) FROM audit_events WHERE entity_type = 'ignored'",
+            "SELECT count(*) FROM audit_events WHERE table_name = 'ignored'",
           )
         ).count,
         0,
@@ -291,11 +291,19 @@ test("audits existing and configured tables without inferring names from audit r
           "INSERT INTO existing_records VALUES (1); INSERT INTO configured_records VALUES (2)",
         );
         const { rows } = await projectDatabase.query(
-          "SELECT entity_type, new_id FROM audit_events ORDER BY entity_type",
+          "SELECT schema_name, table_name, new_id FROM audit_events ORDER BY table_name",
         );
         expect(rows).toEqual([
-          { entity_type: "configured_records", new_id: { id: 2 } },
-          { entity_type: "existing_records", new_id: { id: 1 } },
+          {
+            schema_name: "public",
+            table_name: "configured_records",
+            new_id: { id: 2 },
+          },
+          {
+            schema_name: "public",
+            table_name: "existing_records",
+            new_id: { id: 1 },
+          },
         ]);
       },
     });

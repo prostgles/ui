@@ -26,7 +26,7 @@ export const buildWebApp = async (
 
   const result = await runDockerForWebApp({
     web_app_directory,
-    image: "node:24-slim",
+    image: "node:24-trixie-slim",
     shCommand: `cd client && npm i ${isTesting ? "" : "--silent"} && npm run build`,
     env: {
       HOME: "/tmp",

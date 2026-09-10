@@ -1,6 +1,13 @@
 import type { DBSSchema } from "./publishUtils";
 import type { RequiredKeepUndefined } from "./utils";
 
+export const auditTrailFilterColumns = [
+  "schema_name",
+  "table_name",
+  "old_id",
+  "new_id",
+] as const;
+
 export type ClientTableAuditConfig =
   | { error: string }
   | {

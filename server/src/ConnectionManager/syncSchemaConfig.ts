@@ -55,6 +55,18 @@ export const syncSchemaConfig = async ({
     throw "Database config not found";
   }
 
+  if (type === "cli") {
+    const filter = { database_id: databaseConfig.id, name: "CLI access rules" };
+    await dbs.access_control.delete(filter);
+    if (schemaConfig.access_control) {
+      await dbs.access_control.insert({
+        ...filter,
+        dbPermissions: schemaConfig.access_control,
+        access_control_connections: [{ connection_id: connectionId }],
+      });
+    }
+  }
+
   /**
    * Restart instead of updating a second Prostgles instance: config hooks,
    * migrations, functions, and table config now all share the live instance.

@@ -1,3 +1,4 @@
+import { auditTrailFilterColumns } from "@common/managedTableSchema";
 import Btn from "@components/Btn";
 import { mdiHistory } from "@mdi/js";
 import type { AnyObject } from "prostgles-types";
@@ -27,6 +28,7 @@ export const AuditTrailButton = ({
       Object.fromEntries(audit.idColumns.map((column) => [column, row[column]]))
     );
   const auditHandler = audit && db[audit.tableName];
+  const auditTable = audit && tables.find((t) => t.name === audit.tableName);
 
   const error =
     "error" in table.audit ? table.audit.error
@@ -35,7 +37,10 @@ export const AuditTrailButton = ({
       Object.values(rowFilter).some(
         (value) => value === undefined || value === null,
       ) ||
-      !auditHandler?.find
+      !auditHandler?.find ||
+      auditTrailFilterColumns.some(
+        (name) => !auditTable?.columns.some((c) => c.name === name && c.filter),
+      )
     ) ?
       "Insufficient privileges"
     : undefined;

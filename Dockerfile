@@ -1,6 +1,6 @@
 FROM docker:29-cli AS docker-cli
 
-FROM node:24-bookworm-slim AS runtime
+FROM node:24-trixie-slim AS runtime
 
 COPY --from=docker-cli /usr/local/bin/docker /usr/local/bin/docker
 

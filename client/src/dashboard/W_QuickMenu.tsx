@@ -207,7 +207,7 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
                     f.type === "not null" ||
                     f.type === "null" ||
                     (isJoinedFilter(f) ?
-                      f.filter.value !== undefined
+                      "fieldName" in f.filter && f.filter.value !== undefined
                     : f.value !== undefined),
                 )
               ) ?

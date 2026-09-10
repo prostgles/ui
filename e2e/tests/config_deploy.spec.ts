@@ -19,10 +19,340 @@ import * as pg from "pg";
 import {
   disablePwdlessAdminAndCreateUser,
   login,
+  openTable,
   type PageWIds,
 } from "./utils/utils";
 import { getDataKey } from "Testing";
+import { sidKeyName } from "../../common/authTypesAndConstants";
 import { CONFIG_TEST } from "./configTest/constants";
+import { createTestDeployment } from "../../server/dist/server/src/cli/testing";
+import type { GroupedDetailedFilter } from "../../common/filterUtils";
+import { createConfigTestProject } from "./utils/createConfigTestProject";
+
+test("checkFilterDetailed works with grouped existsJoined", async ({
+  page,
+}) => {
+  let sessionId = "";
+  let memberId = "";
+  const membershipFilter = {
+    $and: [
+      {
+        type: "$existsJoined",
+        path: [
+          {
+            table: "memberships",
+            on: [{ project_id: "project_id", discipline_id: "discipline_id" }],
+          },
+        ],
+        filter: {
+          $and: [
+            {
+              fieldName: "user_id",
+              type: "=",
+              contextValue: { objectName: "user", objectPropertyName: "id" },
+            },
+            {
+              $or: [
+                {
+                  fieldName: "role",
+                  type: "$in",
+                  value: ["contributor", "reviewer"],
+                },
+                { fieldName: "role", type: "=", value: "manager" },
+              ],
+            },
+          ],
+        },
+      },
+    ],
+  } satisfies GroupedDetailedFilter;
+  const configPath = createConfigTestProject({
+    id: "joined-permissions-e2e",
+    joins: [
+      {
+        tables: ["records", "memberships"],
+        on: [{ project_id: "project_id", discipline_id: "discipline_id" }],
+        type: "many-many",
+      },
+    ],
+    tableConfig: {
+      memberships: {
+        columns: {
+          id: "serial PRIMARY KEY",
+          project_id: "integer NOT NULL",
+          discipline_id: "integer NOT NULL",
+          user_id: "text NOT NULL",
+          role: "text NOT NULL",
+        },
+      },
+      records: {
+        columns: {
+          id: "serial PRIMARY KEY",
+          project_id: "integer NOT NULL",
+          discipline_id: "integer NOT NULL",
+          value: "text NOT NULL",
+        },
+      },
+    },
+    access_control: {
+      type: "Custom",
+      customTables: [
+        { tableName: "memberships", select: { fields: "*" } },
+        {
+          tableName: "records",
+          select: { fields: "*", forcedFilterDetailed: membershipFilter },
+          insert: { fields: "*", checkFilterDetailed: membershipFilter },
+          update: {
+            fields: "*",
+            forcedFilterDetailed: membershipFilter,
+            checkFilterDetailed: membershipFilter,
+          },
+          delete: { filterFields: "*", forcedFilterDetailed: membershipFilter },
+        },
+      ],
+    },
+  });
+  const deployment = await createTestDeployment({
+    configPath,
+    configId: "joined-permissions-e2e",
+    logPath: test.info().outputPath("joined-permissions-server.log"),
+    users: [
+      { key: "admin", type: "admin" },
+      { key: "member", username: "member@example.com", type: "default" },
+    ],
+    seed: async ({ projectDatabase, stateDatabase }) => {
+      const {
+        rows: [session],
+      } = await stateDatabase.query(
+        "SELECT id FROM sessions WHERE user_id = (SELECT id FROM users WHERE username = 'admin')",
+      );
+      sessionId = session.id;
+      const {
+        rows: [user],
+      } = await stateDatabase.query(
+        "SELECT id FROM users WHERE username = $1",
+        ["member@example.com"],
+      );
+      memberId = user.id;
+      await projectDatabase.query(
+        `INSERT INTO memberships (project_id, discipline_id, user_id, role) VALUES
+        (1, 1, $1, 'viewer'), (1, 1, 'another-user', 'manager'),
+        (1, 2, $1, 'contributor'), (2, 1, $1, 'reviewer'), (2, 2, $1, 'manager')`,
+        [user.id],
+      );
+      await projectDatabase.query(
+        "INSERT INTO records (project_id, discipline_id, value) VALUES (1, 1, 'protected'), (1, 2, 'editable')",
+      );
+    },
+  });
+  try {
+    await page
+      .context()
+      .addCookies([
+        { name: sidKeyName, value: sessionId, url: deployment.endpoint },
+      ]);
+    await page.goto(deployment.endpoint);
+    await page
+      .locator('[data-key="joined-permissions-e2e"]')
+      .getByTestId("Connection.openConnection")
+      .click();
+    await openTable(page, "records", true);
+    const state = await deployment.connectStateAs("admin");
+    const accessRules = await state.db.access_control!.find!({});
+    expect(accessRules).toHaveLength(1);
+    const accessRule = accessRules[0]!;
+    expect(accessRule.dbPermissions).toMatchObject({
+      type: "Custom",
+      customTables: [{ tableName: "memberships" }, { tableName: "records" }],
+    });
+    const cliError = {
+      message:
+        "This is a CLI app. Update access control rules in the source code.",
+    };
+    await expect(
+      state.db.access_control!.update!(
+        { id: accessRule.id },
+        { name: "edited" },
+      ),
+    ).rejects.toMatchObject(cliError);
+    await expect(
+      state.db.access_control!.delete!({ id: accessRule.id }),
+    ).rejects.toMatchObject(cliError);
+    await expect(
+      state.db.access_control_connections!.delete!({
+        access_control_id: accessRule.id,
+      }),
+    ).rejects.toMatchObject(cliError);
+    await expect(
+      state.db.access_control_user_types!.insert!({
+        access_control_id: accessRule.id,
+        user_type: "default",
+      }),
+    ).rejects.toMatchObject(cliError);
+    expect(await state.db.access_control!.find!({})).toEqual(accessRules);
+    const windowFilter = {
+      ...membershipFilter.$and[0]!,
+      filter: {
+        $and: [
+          { fieldName: "user_id", type: "=", value: memberId },
+          {
+            $or: [
+              { fieldName: "role", type: "=", value: "contributor" },
+              { fieldName: "role", type: "=", value: "reviewer" },
+            ],
+          },
+        ],
+      },
+    };
+    await state.db.windows!.update!(
+      { table_name: "records" },
+      { filter: [windowFilter], options: { showFilters: true } },
+    );
+    const joined = page.getByTestId("JoinedFilterControl");
+    await expect(joined).toBeVisible();
+    await expect(joined.getByTestId("FilterWrapper")).toHaveCount(3);
+    await expect(joined.locator(".SmartFilter")).toHaveCount(0);
+    const groups = joined.getByTestId("GroupedFilterControl");
+    await expect(groups).toHaveCount(2);
+    await expect(
+      groups.nth(1).getByRole("button", { name: "OR", exact: true }),
+    ).toHaveText("OR");
+    const collapseJoined = joined.getByTitle(
+      "Expand/collapse joined conditions",
+    );
+    await collapseJoined.click();
+    const summaries = joined.locator(".FilterWrapper_MinimisedRoot");
+    await expect(summaries).toHaveCount(3);
+    await expect(joined.getByTestId("FilterWrapper")).toHaveCount(0);
+    await expect(summaries.nth(1)).toContainText('"contributor"');
+    await expect(summaries.nth(1).locator(".FilterWrapper_Type")).toHaveText(
+      "=",
+    );
+    await summaries.nth(1).getByTitle("Click to expand/collapse").click();
+    await expect(joined.getByTestId("FilterWrapper")).toHaveCount(3);
+    await joined
+      .getByRole("button", { name: "Add group", exact: true })
+      .last()
+      .click();
+    await expect(groups).toHaveCount(3);
+    await joined
+      .getByRole("button", { name: "Delete group", exact: true })
+      .last()
+      .click();
+    await expect(groups).toHaveCount(2);
+    const roleFilter = joined
+      .getByTestId("FilterWrapper")
+      .filter({ has: page.locator('input[value="reviewer"]') });
+    await roleFilter.locator("input").fill("manager");
+    await page.getByRole("option", { name: "manager", exact: true }).click();
+    await expect
+      .poll(async () => {
+        const window = await state.db.windows!.findOne!({
+          table_name: "records",
+        });
+        return JSON.stringify(window?.filter);
+      })
+      .toContain('"manager"');
+    await page.reload();
+    await expect(joined).toBeVisible();
+    await expect(joined.locator('input[value="manager"]')).toBeVisible();
+    await expect(groups).toHaveCount(2);
+    const { db } = await deployment.connectProjectAs("member");
+    const records = db.records!;
+    expect(await records.find!({})).toMatchObject([{ value: "editable" }]);
+    await expect(
+      records.insert!({ project_id: 1, discipline_id: 1, value: "denied" }),
+    ).rejects.toBeDefined();
+    await expect(
+      records.insert!({
+        project_id: 3,
+        discipline_id: 2,
+        value: "wrong project",
+      }),
+    ).rejects.toBeDefined();
+    await expect(
+      records.insert!({
+        project_id: 2,
+        discipline_id: 3,
+        value: "wrong discipline",
+      }),
+    ).rejects.toBeDefined();
+    for (const [project_id, discipline_id] of [
+      [1, 2],
+      [2, 1],
+      [2, 2],
+    ]) {
+      await records.insert!({ project_id, discipline_id, value: "allowed" });
+    }
+    await records.update!({ value: "editable" }, { value: "updated" });
+    await expect(
+      records.update!({ value: "updated" }, { discipline_id: 1 }),
+    ).rejects.toBeDefined();
+    expect(await records.find!({ value: "updated" })).toHaveLength(1);
+    expect(
+      await records.update!(
+        { value: "protected" },
+        { value: "stolen" },
+        { returning: "*" },
+      ),
+    ).toEqual([]);
+    expect(
+      await records.delete!({ value: "protected" }, { returning: "*" }),
+    ).toEqual([]);
+    await page.getByTestId("dashboard.goToConnConfig").click();
+    await page.getByTestId("config.ac").click();
+    await expect(page.locator(".ExistingAccessRules_Item")).toHaveCount(1);
+    await expect(
+      page.locator(".ExistingAccessRules_Item_Header"),
+    ).toContainText("All authenticated users");
+    await page.locator(".ExistingAccessRules_Item_Header").click();
+    await page.getByTestId("config.ac.save").click();
+    await expect(page.locator(".AccessRuleEditorFooter")).toContainText(
+      cliError.message,
+    );
+    const connection = await state.db.connections!.findOne!({
+      name: "joined-permissions-e2e",
+    });
+    const config = JSON.parse(
+      readFileSync(join(configPath, "index.js"), "utf8")
+        .replace("module.exports = ", "")
+        .slice(0, -1),
+    );
+    for (const permissions of [
+      accessRule.dbPermissions,
+      { type: "Run SQL", allowSQL: true },
+      undefined,
+    ]) {
+      writeFileSync(
+        join(configPath, "index.js"),
+        `module.exports = ${JSON.stringify({ ...config, access_control: permissions })};`,
+      );
+      await state.methods!.syncSchema!({
+        connectionId: connection!.id,
+        configPath,
+      });
+      const syncedRules = await state.db.access_control!.find!({});
+      expect(syncedRules).toHaveLength(permissions ? 1 : 0);
+      if (permissions)
+        expect(syncedRules[0]).toMatchObject({
+          dbPermissions: permissions,
+        });
+      expect(await state.db.access_control_connections!.find!({})).toEqual(
+        permissions ?
+          [
+            {
+              access_control_id: syncedRules[0]!.id,
+              connection_id: connection!.id,
+            },
+          ]
+        : [],
+      );
+    }
+  } finally {
+    await deployment.dispose();
+    rmSync(configPath, { recursive: true, force: true });
+  }
+});
 
 const serverDirectory = resolve(__dirname, "../../server");
 const cliPath = join(serverDirectory, "dist/server/src/cli/cli.js");
@@ -161,8 +491,7 @@ test.describe("Published config CLI", () => {
     const configDirectory = join(temporaryDirectory, "config");
     const cliTestPort = 30_000 + (process.pid % 10_000);
     let configProcess:
-      | Awaited<ReturnType<typeof startConfigScript>>
-      | undefined;
+      Awaited<ReturnType<typeof startConfigScript>> | undefined;
 
     try {
       run(
@@ -510,8 +839,7 @@ export default prostgles({
     await connection.end();
 
     let configProcess:
-      | Awaited<ReturnType<typeof startConfigScript>>
-      | undefined;
+      Awaited<ReturnType<typeof startConfigScript>> | undefined;
 
     try {
       rmSync(

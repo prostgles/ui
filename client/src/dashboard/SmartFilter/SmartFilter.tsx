@@ -84,7 +84,9 @@ export const SmartFilter = (props: SmartFilterProps) => {
       {detailedFilter.map((filterItem, filterItemIndex) => {
         const filterFieldName =
           isJoinedFilter(filterItem) ?
-            filterItem.filter.fieldName
+            filterItem.path
+              .map((p) => (typeof p === "string" ? p : p.table))
+              .join(".")
           : filterItem.fieldName;
 
         const otherFilters = detailedFilter.filter(
@@ -129,7 +131,7 @@ export const SmartFilter = (props: SmartFilterProps) => {
           !hideOperand
         ) {
           return (
-            <React.Fragment key={"filter-item" + filterFieldName}>
+            <React.Fragment key={filterItemIndex + filterFieldName}>
               {filterNode}
               <Btn
                 className="OPERAND text-active hover"

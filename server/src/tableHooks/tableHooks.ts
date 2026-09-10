@@ -6,8 +6,10 @@ import { llmChatsAllowedMcpToolsTableHooks } from "./llm_chats_allowed_mcp_tools
 import { llmChatsTableHooks } from "./llm_chats.tableHook";
 import { mcpServerConfigsTableHooks } from "./mcp_server_configs.tableHooks";
 import { llmCredentialsTableHooks } from "./llm_credentials.tableHooks";
+import { accessControlTableHooks } from "./accessControl.tableHooks";
 
 export const tableHooks = {
+  ...accessControlTableHooks,
   ...usersTableHooks,
   ...connectionsTableHooks,
   ...llmChatsAllowedMcpToolsTableHooks,

@@ -279,7 +279,7 @@ export const parseFullFilter = (
 ): { $and: AnyObject[] } | { $or: AnyObject[] } | undefined => {
   const isAnd = "$and" in filter;
   const filters = isAnd ? filter.$and : filter.$or;
-  const finalFilters = (filters as DetailedFilter[])
+  const finalFilters = filters
     .map((f) => getFinalFilter(f, context, { columns }))
     .filter(isDefined);
   const f = isAnd ? { $and: finalFilters } : { $or: finalFilters };

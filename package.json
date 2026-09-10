@@ -25,7 +25,7 @@
     "demo:record": "bash ./scripts/demo/record-local.sh"
   },
   "devDependencies": {
-    "prettier": "^3.4.2",
-    "typescript": "^5.8.3"
+    "prettier": "^3.9.6",
+    "typescript": "^5.9.3"
   }
 }

@@ -12,7 +12,7 @@ jobs:
     timeout-minutes: 85
     services:
       postgres:
-        image: postgis/postgis:15-3.3
+        image: postgis/postgis:17-3.6-alpine
         env:
           POSTGRES_DB: db
           POSTGRES_PASSWORD: psw
@@ -42,7 +42,7 @@ jobs:
           pg_container_name=$(docker ps --format '{{.Names}}\t{{.Image}}' | grep 'postgis' | head -1 | awk '{print $1}') && \
           echo $pg_container_name && \
           docker ps -a && \
-          docker exec $pg_container_name /bin/sh -c "apt-get update && apt install curl -y"
+          docker exec "$pg_container_name" apk add --no-cache curl
 
       - name: Wait for PostgreSQL to be ready and create prostgles_desktop_db
         run: |
@@ -61,7 +61,7 @@ jobs:
           sudo apt-get -y install wget ca-certificates && \
           wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add - && \
           sudo apt-get update && \
-          sudo apt-get -y install postgresql-client-16
+          sudo apt-get -y install postgresql-client-17
           # Install uv tool for MCP tools
           curl -LsSf https://astral.sh/uv/install.sh | sh
           npm cache clean --force

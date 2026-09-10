@@ -179,7 +179,7 @@ const auditTableOptions: TableOptions = {
   rowIconColumn: undefined,
   card: {
     headerColumn: "operation",
-    subHeaderColumn: "entity_type",
+    subHeaderColumn: "table_name",
     visibleColumns: ["created_at", "actor", "old_row", "new_row"],
   },
   columns: {

@@ -23,7 +23,7 @@ export const testWebApp = async (
       /** To run tests against built version */
       URL: `http://localhost:${port}`,
     },
-    image: "mcr.microsoft.com/playwright:v1.58.0-noble",
+    image: "mcr.microsoft.com/playwright:v1.63.0-noble",
     shCommand: "cd e2e && npm install --silent && npm test",
   });
   return result;

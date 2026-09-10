@@ -1,5 +1,5 @@
-# Stage 1: Grab Keycloak 26.7.0
-FROM quay.io/keycloak/keycloak:26.7.0 AS keycloak-base
+# Stage 1: Grab Keycloak 26.7.3
+FROM quay.io/keycloak/keycloak:26.7.3 AS keycloak-base
 
 # Stage 2: Ubuntu 24.04 (has Java 21 natively)
 FROM ubuntu:24.04

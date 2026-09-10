@@ -112,6 +112,7 @@ export const AccessControl = (props: P) => {
             </FlexRow>
 
             <AccessControlRules
+              isCli={database_config.config_sync?.type === "cli"}
               workspaces={workspaces ?? []}
               rules={rules}
               prgl={prgl}

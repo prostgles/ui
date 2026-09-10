@@ -85,7 +85,7 @@ RUN npm install --silent
 `;
 
 export const DockerfileForAgenticWorkflow = `
-FROM node:24-slim
+FROM node:24-trixie-slim
 WORKDIR /app
 
 COPY package*.json ./
@@ -135,7 +135,7 @@ export const packageJsonTemplate = fromServerPackageJson({
   dependencies: {
     typescript: "^5.9.3",
     tslib: "^2.8.1",
-    "prostgles-types": "^4.0.280",
+    "prostgles-types": "^4.0.281",
   },
   devDependencies: {
     "@types/node": "^22.20.0",

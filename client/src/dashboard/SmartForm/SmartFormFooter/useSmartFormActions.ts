@@ -1,11 +1,10 @@
-import { useCallback, useMemo, useState } from "react";
 import { getSmartGroupFilter } from "@common/filterUtils";
 import type { ConfirmDialogProps } from "@components/ConfirmationDialog";
+import { useCallback, useMemo, useState } from "react";
+import { areEqual } from "../../../utils/utils";
 import type { SmartFormProps } from "../SmartForm";
 import type { SmartFormNewRowState } from "../useNewRowDataHandler";
 import type { SmartFormState } from "../useSmartForm";
-import { areEqual } from "../../../utils/utils";
-import { isEqual } from "prostgles-types";
 
 type ConfirmationPopup = Pick<
   ConfirmDialogProps,

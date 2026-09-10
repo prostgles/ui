@@ -1,28 +1,33 @@
 import { expect, test } from "@playwright/test";
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import {
   copyFileSync,
-  mkdtempSync,
+  mkdirSync,
   readdirSync,
   readFileSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
 import { createServer } from "node:net";
-import { tmpdir } from "node:os";
-import { basename, join, resolve } from "node:path";
+import { createRequire } from "node:module";
+import { join, resolve } from "node:path";
 
 type RunOptions = {
   capture?: boolean;
   cwd?: string;
 };
 
-test("deploys a generated config project with Docker Compose", async () => {
-  test.setTimeout(600_000);
+test("runs a generated config project with temporary databases and Docker Compose", async () => {
+  test.setTimeout(900_000);
 
   const serverRoot = resolve(__dirname, "../../server");
-  const testRoot = mkdtempSync(join(tmpdir(), "prostgles-compose-e2e-"));
-  const configId = basename(testRoot).toLowerCase();
+  const testRoot = test.info().outputPath("project");
+  mkdirSync(testRoot, { recursive: true });
+  writeFileSync(
+    join(testRoot, "package.json"),
+    JSON.stringify({ private: true }),
+  );
+  const configId = `compose-${Date.now()}`;
   const appRoot = join(testRoot, configId);
   const packageArchive = join(testRoot, "prostgles.tgz");
   const serviceContainer = `${configId}-service-my-service`;
@@ -138,6 +143,9 @@ test("deploys a generated config project with Docker Compose", async () => {
     };
     packageConfig.dependencies["@prostgles/app"] = "file:./prostgles.tgz";
     writeFileSync(packageFile, `${JSON.stringify(packageConfig, null, 2)}\n`);
+
+    await run("npm", ["install", "--no-audit", "--no-fund"], { capture: true });
+    await checkTemporaryDatabases(appRoot, configId, freePort);
 
     composeStarted = true;
     await run("docker", ["compose", "up", "--detach", "--build"]);
@@ -274,3 +282,109 @@ test("deploys a generated config project with Docker Compose", async () => {
     rmSync(testRoot, { force: true, recursive: true });
   }
 });
+
+const checkTemporaryDatabases = async (
+  appRoot: string,
+  configId: string,
+  port: number,
+) => {
+  const { createTestDeployment } = createRequire(join(appRoot, "package.json"))(
+    "@prostgles/app/testing",
+  ) as typeof import("../../server/dist/server/src/cli/testing");
+  const deployment = await createTestDeployment({
+    configId,
+    configPath: appRoot,
+    logPath: test.info().outputPath("deployment.log"),
+  });
+  await deployment.dispose();
+  expect(readFileSync(deployment.databaseLogPath, "utf8")).toContain(
+    "database system is shut down",
+  );
+
+  const sourcePath = join(appRoot, "src/index.ts");
+  const source = readFileSync(sourcePath, "utf8");
+  const envPath = join(appRoot, ".env");
+  const environment = readFileSync(envPath, "utf8");
+  writeFileSync(
+    envPath,
+    "PROSTGLES_DATABASE_URL=invalid\nPROSTGLES_STATE_DATABASE_URL=invalid\n",
+  );
+  try {
+    for (const mode of ["dev", "start"] as const) {
+      const child = spawn("npm", ["run", mode, "--", "--temp-db"], {
+        cwd: appRoot,
+        detached: true,
+        env: {
+          ...process.env,
+          PROSTGLES_UI_PORT: String(port),
+          PROSTGLES_DATABASE_URL: "invalid",
+          PROSTGLES_STATE_DATABASE_URL: "invalid",
+        },
+        stdio: ["ignore", "pipe", "pipe"],
+      });
+      let logs = "";
+      const isReady = () => {
+        if (child.exitCode !== null) throw new Error(logs.slice(-4000));
+        return logs.includes("Server started");
+      };
+      child.stdout.on("data", (chunk) => {
+        logs += chunk.toString();
+      });
+      child.stderr.on("data", (chunk) => {
+        logs += chunk.toString();
+      });
+      const exited = new Promise<void>((resolve) =>
+        child.once("exit", () => resolve()),
+      );
+      const containers = () => {
+        const result = spawnSync(
+          "docker",
+          [
+            "ps",
+            "-aq",
+            "--filter",
+            `name=prostgles-test-${configId.slice(0, 20)}`,
+          ],
+          { encoding: "utf8" },
+        );
+        expect(result.status).toBe(0);
+        return result.stdout.trim();
+      };
+      try {
+        await expect.poll(isReady, { timeout: 90_000 }).toBe(true);
+        const container = containers();
+        expect(container).not.toBe("");
+        if (mode === "dev") {
+          logs = "";
+          writeFileSync(
+            sourcePath,
+            `${source}\nconsole.log("TEMP_RELOADED");\n`,
+          );
+          await expect.poll(isReady, { timeout: 60_000 }).toBe(true);
+          expect(logs).toContain("TEMP_RELOADED");
+          expect(containers()).toBe(container);
+        }
+      } finally {
+        if (child.pid && child.exitCode === null)
+          process.kill(-child.pid, "SIGTERM");
+        await exited;
+        writeFileSync(test.info().outputPath(`${mode}.log`), logs);
+        writeFileSync(sourcePath, source);
+        await expect.poll(containers, { timeout: 30_000 }).toBe("");
+      }
+    }
+    const logDirectory = join(appRoot, ".prostgles/test-logs");
+    const databaseLogs = readdirSync(logDirectory).filter((name) =>
+      name.endsWith(".postgres.log"),
+    );
+    expect(databaseLogs).toHaveLength(2);
+    for (const name of databaseLogs) {
+      copyFileSync(join(logDirectory, name), test.info().outputPath(name));
+      expect(readFileSync(join(logDirectory, name), "utf8")).toContain(
+        "database system is shut down",
+      );
+    }
+  } finally {
+    writeFileSync(envPath, environment);
+  }
+};

@@ -15,6 +15,7 @@ import ErrorComponent from "@components/ErrorComponent";
 import type { ValidEditedAccessRuleState } from "./useEditedAccessRule";
 
 type P = {
+  isCli: boolean;
   onCancel: VoidFunction;
   action: AccessControlAction;
   dbs: DBS;
@@ -52,7 +53,8 @@ export const AccessRuleEditorFooter = (props: P) => {
   }
   const { newRule, onChange, ruleWasEdited, type, ruleErrorMessage } =
     editedRule ?? {};
-  const error = wspError || localError || ruleErrorMessage;
+  const error =
+    props.isCli ? localError : wspError || localError || ruleErrorMessage;
 
   return (
     <FlexCol className="AccessRuleEditorFooter">
@@ -104,14 +106,17 @@ export const AccessRuleEditorFooter = (props: P) => {
                 variant: "filled",
                 color: "action",
                 disabledInfo:
-                  wspError ? "Must fix errors" : (
-                    ruleErrorMessage ||
+                  props.isCli ? undefined
+                  : wspError ? "Must fix errors"
+                  : ruleErrorMessage ||
                     localError ||
-                    (ruleWasEdited ? undefined : "Nothing to update")
-                  ),
+                    (ruleWasEdited ? undefined : "Nothing to update"),
                 "data-command": "config.ac.save",
                 onClickPromise: async () => {
                   try {
+                    if (props.isCli) {
+                      throw "This is a CLI app. Update access control rules in the source code.";
+                    }
                     await upsertRule({
                       action,
                       newRule,

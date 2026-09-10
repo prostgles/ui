@@ -15,12 +15,12 @@ const sourceColumns = {
   name: "text NOT NULL",
 };
 
-// Composite IDs and a custom entity type exercise both history filters.
+// Composite IDs and separate tables exercise both history filters.
 const config = {
   id: "audit-e2e",
   audit: {
     tableName: "audit_events",
-    tables: { records: { entityType: "record" }, other_records: 1 },
+    tables: { records: 1, other_records: 1 },
   },
   connection: {
     table_options: {
