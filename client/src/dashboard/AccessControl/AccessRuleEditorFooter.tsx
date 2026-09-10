@@ -15,7 +15,6 @@ import ErrorComponent from "@components/ErrorComponent";
 import type { ValidEditedAccessRuleState } from "./useEditedAccessRule";
 
 type P = {
-  isCli: boolean;
   onCancel: VoidFunction;
   action: AccessControlAction;
   dbs: DBS;
@@ -53,8 +52,7 @@ export const AccessRuleEditorFooter = (props: P) => {
   }
   const { newRule, onChange, ruleWasEdited, type, ruleErrorMessage } =
     editedRule ?? {};
-  const error =
-    props.isCli ? localError : wspError || localError || ruleErrorMessage;
+  const error = wspError || localError || ruleErrorMessage;
 
   return (
     <FlexCol className="AccessRuleEditorFooter">
@@ -106,17 +104,14 @@ export const AccessRuleEditorFooter = (props: P) => {
                 variant: "filled",
                 color: "action",
                 disabledInfo:
-                  props.isCli ? undefined
-                  : wspError ? "Must fix errors"
-                  : ruleErrorMessage ||
+                  wspError ? "Must fix errors" : (
+                    ruleErrorMessage ||
                     localError ||
-                    (ruleWasEdited ? undefined : "Nothing to update"),
+                    (ruleWasEdited ? undefined : "Nothing to update")
+                  ),
                 "data-command": "config.ac.save",
                 onClickPromise: async () => {
                   try {
-                    if (props.isCli) {
-                      throw "This is a CLI app. Update access control rules in the source code.";
-                    }
                     await upsertRule({
                       action,
                       newRule,
@@ -163,10 +158,20 @@ const upsertRule = async (
     const userGroupNames = access_control_user_types.flatMap((ids) => ids.ids);
 
     const insertRelatedData = async (access_control_id: number) => {
-      await dbs.access_control_user_types.delete({ access_control_id });
-      if (userGroupNames.length) {
+      const existingUserTypes = await dbs.access_control_user_types.find({
+        access_control_id,
+      });
+      await dbs.access_control_user_types.delete({
+        access_control_id,
+        user_type: { $nin: userGroupNames },
+      });
+      const addedUserTypes = userGroupNames.filter(
+        (userType) =>
+          !existingUserTypes.some(({ user_type }) => user_type === userType),
+      );
+      if (addedUserTypes.length) {
         await dbs.access_control_user_types.insertMany(
-          userGroupNames.map((user_type) => ({ access_control_id, user_type })),
+          addedUserTypes.map((user_type) => ({ access_control_id, user_type })),
         );
       }
 

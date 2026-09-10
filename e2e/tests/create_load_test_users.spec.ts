@@ -1,4 +1,4 @@
-import { test } from "./fixtures";
+import { test } from "./utils/fixtures";
 import { PageWIds, login } from "./utils/utils";
 import { USERS } from "utils/constants";
 test.use({

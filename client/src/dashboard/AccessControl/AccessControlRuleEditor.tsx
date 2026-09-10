@@ -86,8 +86,7 @@ export const AccessControlRuleEditor = ({
   const currentSQLUser = usePromise(
     async () =>
       (await sql?.(`SELECT "current_user"()`, {}, { returnType: "value" })) as
-        | string
-        | undefined,
+        string | undefined,
     [sql],
   );
   const type = editedRule?.type;
@@ -145,7 +144,7 @@ export const AccessControlRuleEditor = ({
     connection,
     userTypes,
     onChange: (newDBPerm: AccessRule["dbPermissions"]) =>
-      onChange({ ...rule, dbPermissions: newDBPerm }),
+      onChange({ dbPermissions: newDBPerm }),
     rule,
     editedRule,
   };
@@ -175,22 +174,19 @@ export const AccessControlRuleEditor = ({
         </FlexRow>
 
         <div className="pl-2">
-          {database_config.config_sync?.type === "cli" ?
-            "All authenticated users, including admins"
-          : <UserTypeSelect
-              data-command={"config.ac.edit.user"}
-              connectionId={connection.id}
-              database_id={database_config.id}
-              userTypes={editedRule.userTypes}
-              fromEditedRule={editedRule.initialUserTypes}
-              dbs={dbs}
-              onChange={(newUserGroupNames) => {
-                editedRule.onChange({
-                  access_control_user_types: [{ ids: newUserGroupNames }],
-                });
-              }}
-            />
-          }
+          <UserTypeSelect
+            data-command={"config.ac.edit.user"}
+            connectionId={connection.id}
+            database_id={database_config.id}
+            userTypes={editedRule.userTypes}
+            fromEditedRule={editedRule.initialUserTypes}
+            dbs={dbs}
+            onChange={(newUserGroupNames) => {
+              editedRule.onChange({
+                access_control_user_types: [{ ids: newUserGroupNames }],
+              });
+            }}
+          />
         </div>
 
         <FlexCol
@@ -305,7 +301,7 @@ export const AccessControlRuleEditor = ({
                   {...permEditorProps}
                   dbPermissions={dbPermissions}
                   onChange={(newDBPerm) =>
-                    onChange({ ...rule, dbPermissions: newDBPerm })
+                    onChange({ dbPermissions: newDBPerm })
                   }
                 />
               }
@@ -334,7 +330,6 @@ export const AccessControlRuleEditor = ({
       </ScrollFade>
       {dbPermissions && (
         <AccessRuleEditorFooter
-          isCli={database_config.config_sync?.type === "cli"}
           editedRule={editedRule}
           dbs={dbs}
           database_id={database_config.id}

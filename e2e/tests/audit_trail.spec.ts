@@ -1,5 +1,5 @@
 import { sidKeyName } from "../../common/authTypesAndConstants";
-import { expect, test } from "./fixtures";
+import { expect, test } from "./utils/fixtures";
 import { rmSync } from "node:fs";
 import { createConfigTestProject } from "./utils/createConfigTestProject";
 import type { SchemaConfig } from "../../server/dist/server/src/schemaConfig";

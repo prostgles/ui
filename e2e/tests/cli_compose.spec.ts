@@ -145,6 +145,25 @@ test("runs a generated config project with temporary databases and Docker Compos
     writeFileSync(packageFile, `${JSON.stringify(packageConfig, null, 2)}\n`);
 
     await run("npm", ["install", "--no-audit", "--no-fund"], { capture: true });
+    writeFileSync(
+      join(appRoot, "e2e/tests/admin/workspace.spec.ts"),
+      `import { test, expect } from "../fixtures";
+       import { setOrAddWorkspace } from "@prostgles/app/testing/ui";
+       test("admin creates a business workspace", async ({ app }) => {
+         await app.open();
+         await setOrAddWorkspace(app.page, "Review queue");
+         await expect(app.page.getByTestId("WorkspaceMenu.list")).toContainText("Review queue");
+       });`,
+    );
+    await run("npm", ["run", "test:e2e"], { capture: true });
+    const artifacts = readdirSync(join(appRoot, "e2e/test-results"), {
+      recursive: true,
+    }).map(String);
+    expect(artifacts.some((file) => file.endsWith(".webm"))).toBe(true);
+    expect(artifacts.some((file) => file.endsWith("trace.zip"))).toBe(true);
+    expect(
+      readFileSync(join(appRoot, "e2e/playwright-report/index.html"), "utf8"),
+    ).toContain("Playwright");
     await checkTemporaryDatabases(appRoot, configId, freePort);
 
     composeStarted = true;

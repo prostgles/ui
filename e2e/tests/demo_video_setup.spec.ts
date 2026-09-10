@@ -1,4 +1,4 @@
-import { test } from "./fixtures";
+import { test } from "./utils/fixtures";
 import { PageWIds, createDatabase, login, runDbSql } from "./utils/utils";
 import { demoRestaurantName, USERS } from "utils/constants";
 import { goTo } from "utils/goTo";

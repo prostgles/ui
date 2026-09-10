@@ -1,3 +1,4 @@
+import { getE2ETemplate } from "../../../e2e/cli/template";
 import { fixIndent } from "@common/utils";
 import { randomBytes } from "crypto";
 import type { SchemaConfig, SchemaConfigConnection } from "../schemaConfig";
@@ -214,6 +215,7 @@ const getCliTemplateFiles = ({
           serviceRoot: path.resolve(__dirname, "..", "..", "src", "services"),
         } satisfies ServiceManagerConfig<typeof services>;`,
     },
+    e2e: getE2ETemplate(configId),
     [testsFolderName]: {
       "deployment.test.ts": `
         import assert from "node:assert/strict";
@@ -253,6 +255,8 @@ const getCliTemplateFiles = ({
       build/
       ${generatedFolderName}/
       .prostgles/
+      e2e/test-results/
+      e2e/playwright-report/
       src/${servicesFolderName}/*/src/`,
     ".gitignore": `
       node_modules/
@@ -384,12 +388,17 @@ const getPackageJson = (configId: string) => ({
     "format:check": "prettier --check .",
     start: "prostgles start --config .",
     upgrade: "prostgles upgrade --config .",
+    "test:e2e":
+      "npm run build && tsc -p e2e/tsconfig.json && playwright test --config e2e/playwright.config.ts",
+    "test:e2e:install": "playwright install chromium",
+    "test:e2e:report": "playwright show-report e2e/playwright-report",
     test: 'npm run build && node --env-file-if-exists=.env --test "build/tests/**/*.test.js"',
   },
   dependencies: {
     [packageJson.name]: getRuntimeDependency(),
   },
   devDependencies: {
+    "@playwright/test": packageJson.devDependencies["@playwright/test"],
     prettier: "^3.4.2",
     ...pickKeys(packageJson.dependencies, ["typescript"]),
     ...pickKeys(packageJson.devDependencies, [
@@ -459,6 +468,8 @@ const eslintConfig = `
         "build", 
         "${generatedFolderName}", 
         "node_modules", 
+        "e2e/test-results",
+        "e2e/playwright-report",
         "eslint.config.mjs",
         "src/${servicesFolderName}/*/src",  
       ],
@@ -468,7 +479,7 @@ const eslintConfig = `
     eslint.configs.recommended,
     tseslint.configs.recommendedTypeChecked,
     {
-      files: ["${srcFolderName}/**/*.ts", "${testsFolderName}/**/*.ts"],
+      files: ["${srcFolderName}/**/*.ts", "${testsFolderName}/**/*.ts", "e2e/**/*.ts"],
       languageOptions: {
         parserOptions: {
           projectService: true,
@@ -520,7 +531,7 @@ type ConnectionGuidance = {
  */
 const schemaConfigGuidance = {
   access_control:
-    "Configure database permissions with `access_control` using the Prostgles `dbPermissions` shape.",
+    "Configure `access_control` as an array of normal rules with explicit `userTypes`, `dbPermissions`, and optional `dbsPermissions`. Omit generated IDs; use `viewPublishedWorkspaces.workspaceNames` and `publishedMethods` to reference existing, uniquely named published resources on this connection.",
   audit:
     'Use built-in `audit` for row-change history, for example `audit: { tableName: "audit_log", tables: { projects: 1, conditions: 1 } }`. Prostgles-server creates an append-only audit table and PostgreSQL triggers; the UI exposes history from row cards. Do not recreate this with audit tables, hooks, or calls in every function. Omit `tables` to audit all eligible tables; use `excludeColumns` for sensitive fields and `idColumns` for tables without primary keys. Keep domain events such as approval reasons separate when row history alone is insufficient. Audit read permissions still need to respect application access boundaries. When replacing custom audit hooks, preserve existing history and workflow reasons; use a new managed audit table instead of reusing an incompatible application table.',
   connection:
@@ -584,7 +595,7 @@ const getCliAgentsFile = () => `
   ## Access control
 
   - Define authorization in \`access_control\` using explicit per-table \`select\`, \`insert\`, \`update\`, and \`delete\` permissions. Use \`type: "Custom"\` with \`customTables\` for granular access. Do not put authorization checks in \`beforeEach\`, \`afterEach\`, or \`afterAll\` hooks, including admin-only mutation checks.
-  - Read the resolved \`SchemaConfigAccessControl\` and rule types before implementing permissions. CLI configs use the \`dbPermissions\` shape: \`forcedFilterDetailed\`, \`checkFilterDetailed\`, and \`forcedDataDetail\` map to the server's \`forcedFilter\`, \`checkFilter\`, and \`forcedData\`. Use the config property names and inspect their filter/context syntax rather than copying raw server publish rules.
+  - Read the resolved \`SchemaConfigAccessControl\` and rule types before implementing permissions. Each CLI rule contains \`userTypes\` and \`dbPermissions\`: \`forcedFilterDetailed\`, \`checkFilterDetailed\`, and \`forcedDataDetail\` map to the server's \`forcedFilter\`, \`checkFilter\`, and \`forcedData\`. Use the config property names and inspect their filter/context syntax rather than copying raw server publish rules.
   - Forced filters restrict which existing rows a user can select, update, or delete. Apply ownership, tenant, and related-table membership restrictions to every relevant operation; select permissions alone do not protect writes.
   - Check filters require inserted or updated rows to satisfy the permission condition or the write fails. Use them to prevent linking to an unauthorized parent or moving a row into another tenant/project. For updates, combine a forced filter on existing rows with a check filter on the resulting rows.
   - Joined permission filters support nested \`$and\`/\`$or\` groups inside their \`filter\`. Put current-user and allowed-role conditions inside one \`$existsJoined\` so they must match the same membership row; separate existence checks can match different users. Ensure the join correlates every scope key, such as both project and discipline.
@@ -632,6 +643,7 @@ const getCliAgentsFile = () => `
 
   - Do not manually start PostgreSQL containers or supply database credentials for tests. Run the existing \`npm test\` workflow directly; it provisions and cleans up its own databases. Build and lint commands do not need a database.
   - Run \`npm test\` before committing. Tests use \`@prostgles/app/testing\` to start the real app against fresh state and project databases without opening the UI.
+  - For browser workflows, use \`e2e/AGENTS.md\`, \`npm run test:e2e\`, and the shared \`@prostgles/app/testing/ui\` helpers. Play passing and failing test videos with \`npm run test:e2e:report\`.
   - Keep deployment tests in \`tests/\`. Each call to \`createTestDeployment\` uses the current app directory and its \`DB.Dockerfile\` when present, starts a disposable PostgreSQL Docker container bound only to \`127.0.0.1\`, creates fresh state and project databases, and removes the container during cleanup. Set \`PROSTGLES_TEST_POSTGRES_IMAGE\` only to override the Dockerfile.
   - \`npm test\` automatically saves each test deployment's stdout and stderr to \`.prostgles/test-logs/<timestamp>-<random>.log\` relative to the app root. Logs remain after cleanup; the exact file is returned as \`deployment.logPath\` and included in deployment startup errors. No custom logging command or output redirection is needed to capture deployment logs.
   - PostgreSQL stdout and stderr are also saved to \`deployment.databaseLogPath\` (the app log path plus \`.postgres.log\`), including database startup failures. These logs remain after cleanup.
@@ -661,7 +673,7 @@ const getCliAgentsFile = () => `
   ## Table forms first
 
   - Table insert/edit forms derive controls from column types, defaults, JSONB schemas, foreign keys, and permissions. They provide FK autocomplete, related-row search, nested inserts where permitted, and file uploads. Model relationships and configure useful referenced-table card labels instead of asking users to enter raw IDs or duplicate existing organisations by name.
-  - Grant the intended users the required insert/update fields and select access to referenced lookup rows through \`access_control\`. Use forced data for trusted values such as the current user. Verify the flow as a non-admin; a function's \`userFilter\` does not grant table-form permissions. Config-level custom permissions also apply to administrators. Enforce admin-only table mutations through \`access_control\`.
+  - Grant the intended users the required insert/update fields and select access to referenced lookup rows through \`access_control\`. Use forced data for trusted values such as the current user. Verify the flow as a non-admin; a function's \`userFilter\` does not grant table-form permissions. Administrators retain full access, as in the access-control UI.
   - If creating a project also creates default memberships, put that setup in a transactional insert hook using \`dbx\`, so the table form retains autocomplete and all writes commit or roll back together. Keep a dedicated function when the operation is an explicit business workflow rather than an ordinary row mutation.
 
   ## Workspaces

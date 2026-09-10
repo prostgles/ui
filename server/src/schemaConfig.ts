@@ -1,3 +1,4 @@
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type { WorkspaceInsertModel } from "@common/DashboardTypes";
 import type { DBSSchema } from "@common/publishUtils";
 import type { SchemaConfigAudit, SessionUser } from "prostgles-server";
@@ -77,8 +78,22 @@ export type SchemaConfigDatabase = Partial<
   >
 >;
 
-export type SchemaConfigAccessControl =
-  DBSSchema["access_control"]["dbPermissions"];
+/** Normal access rules, with generated IDs omitted and resource references by name. */
+export type SchemaConfigAccessControl = Omit<
+  DBGeneratedSchema["access_control"]["columns"],
+  "id" | "database_id" | "created" | "dbsPermissions"
+> & {
+  userTypes: DBSSchema["user_types"]["id"][];
+  dbsPermissions?: Omit<
+    NonNullable<DBSSchema["access_control"]["dbsPermissions"]>,
+    "viewPublishedWorkspaces"
+  > & {
+    viewPublishedWorkspaces?: { workspaceNames: string[] };
+  };
+  /** Names of existing published functions on this connection. */
+  publishedMethods?: string[];
+  allowedLLM?: { credentialName: string; promptName: string }[];
+};
 
 export type { SchemaConfigAudit } from "prostgles-server";
 
@@ -122,8 +137,8 @@ export type SchemaConfig<
   databaseConfig?: SchemaConfigDatabase;
   /** Audits inserts, updates and deletes and shows the history in row cards. */
   audit?: SchemaConfigAudit<S>;
-  /** Database permissions applied to authenticated users of this CLI config. */
-  access_control?: SchemaConfigAccessControl;
+  /** Access rules matched by user type, just like rules configured through the UI. */
+  access_control?: SchemaConfigAccessControl[];
   /** CLI configs use access_control instead of prostgles-server publish rules. */
   publish?: never;
   onInitSQL?: string;

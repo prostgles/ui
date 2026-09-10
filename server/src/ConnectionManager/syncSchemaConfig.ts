@@ -5,6 +5,7 @@ import { compileSchemaConfigProject } from "./compileSchemaConfigProject";
 import { getSchemaConfig } from "./getSchemaConfig";
 import { getEntries } from "@common/utils";
 import { includes } from "prostgles-types";
+import { syncSchemaConfigAccessControl } from "./syncSchemaConfigAccessControl";
 
 /**
  * Build and attach a schema-config project. Only its location is persisted;
@@ -56,15 +57,13 @@ export const syncSchemaConfig = async ({
   }
 
   if (type === "cli") {
-    const filter = { database_id: databaseConfig.id, name: "CLI access rules" };
-    await dbs.access_control.delete(filter);
-    if (schemaConfig.access_control) {
-      await dbs.access_control.insert({
-        ...filter,
-        dbPermissions: schemaConfig.access_control,
-        access_control_connections: [{ connection_id: connectionId }],
-      });
-    }
+    await syncSchemaConfigAccessControl(
+      dbs,
+      databaseConfig.id,
+      connectionId,
+      schemaConfig.access_control,
+      schemaConfig.workspaces,
+    );
   }
 
   /**

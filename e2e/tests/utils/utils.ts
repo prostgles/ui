@@ -1,6 +1,6 @@
 import { Locator, Page as PG, expect } from "@playwright/test";
 import * as path from "path";
-import { Command, getCommandElemSelector, getDataKey } from "../Testing";
+import { Command, getCommandElemSelector, getDataKey } from "./Testing";
 import { goTo } from "./goTo";
 import { IS_GITHUB_WORKER, TEST_DB_NAME, USERS } from "./constants";
 

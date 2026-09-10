@@ -332,7 +332,7 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
   },
   access_control_allowed_llm: {
     columns: {
-      access_control_id: `INTEGER NOT NULL REFERENCES access_control(id)`,
+      access_control_id: `INTEGER NOT NULL REFERENCES access_control(id) ON DELETE CASCADE`,
       llm_credential_id: `INTEGER NOT NULL REFERENCES llm_credentials(id)`,
       llm_prompt_id: `INTEGER NOT NULL REFERENCES llm_prompts(id)`,
     },

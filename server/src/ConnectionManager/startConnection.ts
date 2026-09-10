@@ -209,7 +209,6 @@ export const startConnection = async function (
             dbs,
             dbConf: databaseConfig,
             connection: connection,
-            accessControl: _accessControl,
           }),
           // DEBUG_MODE: true,
           onConnectionError: (error) => {
@@ -223,13 +222,10 @@ export const startConnection = async function (
             }
           },
           publishRawSQL: async ({ user }) => {
-            if (!_accessControl && user?.type === "admin") {
-              return true;
-            }
-            const dbPermissions =
-              _accessControl ??
-              (await getAccessRule(dbs, user, databaseConfig.id, connection.id))
-                ?.dbPermissions;
+            if (user?.type === "admin") return true;
+            const dbPermissions = (
+              await getAccessRule(dbs, user, databaseConfig.id, connection.id)
+            )?.dbPermissions;
             if (dbPermissions?.type === "Run SQL" && dbPermissions.allowSQL) {
               return true;
             }

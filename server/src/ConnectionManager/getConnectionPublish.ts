@@ -15,14 +15,12 @@ type Args = {
   dbs: DBS;
   dbConf: DBSSchema["database_configs"];
   connection: DBSSchema["connections"];
-  accessControl?: DBSSchema["access_control"]["dbPermissions"];
 };
 
 export const getConnectionPublish = ({
   dbs,
   dbConf,
   connection,
-  accessControl,
 }: Args): Publish<void, SUser> | undefined => {
   if (connection.is_state_db) {
     return publish as Publish<void, SUser>;
@@ -37,13 +35,10 @@ export const getConnectionPublish = ({
       return null;
     }
 
-    if (!accessControl && user.type === "admin") {
-      return "*";
-    }
-
-    const dbPermissions =
-      accessControl ??
-      (await getAccessRule(dbs, user, dbConf.id, connectionId))?.dbPermissions;
+    if (user.type === "admin") return "*";
+    const dbPermissions = (
+      await getAccessRule(dbs, user, dbConf.id, connectionId)
+    )?.dbPermissions;
     if (!dbPermissions) return null;
 
     if (dbPermissions.type === "Run SQL" && dbPermissions.allowSQL) {

@@ -9,6 +9,7 @@
     "strict": true,
     "strictNullChecks": true,
     "paths": {
+      "Testing": ["./utils/Testing"],
       "common/*": ["../../common/*"]
     }
   },

@@ -1,4 +1,4 @@
-import { chromium, expect, test, type Locator } from "./fixtures";
+import { chromium, expect, test, type Locator } from "./utils/fixtures";
 import { generate } from "otplib";
 import { speechToTextTest } from "testAskLLM/speechToTextTest";
 
@@ -17,7 +17,7 @@ import { goTo } from "utils/goTo";
 import { isPortFree } from "utils/isPortFree";
 import { startMockSMTPServer } from "./mockSMTPServer";
 import { setupAskLLMToolUse, testAskLLMCode } from "./testAskLLM/testAskLLM";
-import { getCommandElemSelector, getDataKey, getDataLabel } from "./Testing";
+import { getCommandElemSelector, getDataKey, getDataLabel } from "./utils/Testing";
 import {
   clickAndWait,
   clickInsertRow,

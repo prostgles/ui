@@ -362,6 +362,7 @@ export class ConnectionManager {
   accessControlListeners?: SubscriptionHandler[];
   accessControlHotReload = async () => {
     if (!this.dbs || this.accessControlListeners?.length) return;
+    let previousDbIds: number[] = [];
     const onAccessChange = (connIds: string[]) => {
       if (!this.accessControlSkippedFirst) {
         this.accessControlSkippedFirst = true;
@@ -388,21 +389,29 @@ export class ConnectionManager {
         {
           select: {
             database_id: 1,
-            access_control_user_types: { access_control_id: 1 },
-            access_control_methods: { access_control_id: 1 },
+            dbPermissions: 1,
+            dbsPermissions: 1,
+            access_control_connections: { connection_id: 1 },
+            access_control_user_types: { user_type: 1 },
+            access_control_methods: { published_method_id: 1 },
           },
           throttle: 1000,
-          throttleOpts: {
-            skipFirst: true,
-          },
         },
         async (connections) => {
           const dbIds = Array.from(
             new Set(connections.map((c) => c.database_id)),
           );
+          const affectedDbIds = Array.from(
+            new Set([...previousDbIds, ...dbIds]),
+          );
+          previousDbIds = dbIds;
           const d: { connIds?: string[] } | undefined =
             await this.dbs?.connections.findOne(
-              { $existsJoined: { database_configs: { id: { $in: dbIds } } } },
+              {
+                $existsJoined: {
+                  database_configs: { id: { $in: affectedDbIds } },
+                },
+              },
               { select: { connIds: { $array_agg: ["id"] } } },
             );
           await onAccessChange(d?.connIds ?? []);

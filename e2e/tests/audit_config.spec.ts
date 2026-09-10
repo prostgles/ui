@@ -11,7 +11,7 @@ import {
   createTestDeployment,
   type TestDeployment,
 } from "../../server/dist/server/src/cli/testing";
-import { test, expect } from "./fixtures";
+import { test, expect } from "./utils/fixtures";
 import { createConfigTestProject } from "./utils/createConfigTestProject";
 
 test("PostgreSQL audit triggers capture transactional row changes", async () => {

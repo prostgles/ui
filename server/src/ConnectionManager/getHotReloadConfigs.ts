@@ -4,7 +4,6 @@ import { generatedFolderName, srcFolderName } from "@src/cli/cliTemplateFiles";
 import { IS_PROD } from "@src/init/utils";
 import type { ProstglesContext } from "@src/schemaConfig";
 import { join } from "path";
-import type { ServerFunctionDefinitions, SessionUser } from "prostgles-server";
 import type { DB } from "prostgles-server/dist/Prostgles";
 import type { UpdatableOptions } from "prostgles-server/dist/initProstgles";
 import type { SUser } from "../authConfig/sessionUtils";
@@ -41,20 +40,6 @@ export type ConnectionHotReloadProperties = Pick<
   Connections,
   (typeof CONNECTION_HOT_RELOAD_COLUMNS)[number]
 >;
-
-const mergeFunctions = (
-  schemaFunctions:
-    | ServerFunctionDefinitions<void, SessionUser, ProstglesContext | undefined>
-    | undefined,
-  connectionFunctions: ServerFunctionDefinitions<void, SUser, ProstglesContext>,
-): ServerFunctionDefinitions<void, SUser, ProstglesContext> => {
-  if (!schemaFunctions) return connectionFunctions;
-  return {
-    ...schemaFunctions,
-    /** Connection-managed functions retain precedence on name collisions. */
-    ...connectionFunctions,
-  } as ServerFunctionDefinitions<void, SUser, ProstglesContext>;
-};
 
 export const getHotReloadConfigs = async ({
   dbs,
@@ -156,7 +141,7 @@ export const getHotReloadConfigs = async ({
         !IS_PROD && db_watch_schema && config_sync?.type === "cli" ?
           join(config_sync.configPath, srcFolderName, "index.ts")
         : undefined,
-      functions: mergeFunctions(schemaConfig?.functions, connectionFunctions),
+      functions: connectionFunctions,
       modifyClientSchema: (table, tableConfig, userData, auditConfig) =>
         modifyClientSchema({
           connection: configuredConnection,

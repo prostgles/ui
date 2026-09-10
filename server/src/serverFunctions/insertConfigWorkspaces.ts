@@ -6,25 +6,34 @@ import { connectionManager, type DBS } from "../index";
 export type Users = Required<DBGeneratedSchema["users"]["columns"]>;
 export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
 
+import type { SchemaConfig } from "../schemaConfig";
 import { getSchemaConfig } from "../ConnectionManager/getSchemaConfig";
 
 /** TODO: this must reuse loadGeneratedWorkspaces function  */
 export const insertConfigWorkspaces = async (
   connectionId: string,
-  dbs: DBS,
+  dbs: Omit<DBS, "tx">,
   userId: string,
+  sharedWorkspaces?: SchemaConfig["workspaces"],
 ) => {
   const connection =
     connectionManager.getActiveConnectionSilentFail(connectionId);
-  if (!connection) return;
-  const workspaces = getSchemaConfig(connection.dbConf.config_sync)?.config
-    .workspaces;
+  const workspaces =
+    sharedWorkspaces ??
+    (connection &&
+      getSchemaConfig(connection.dbConf.config_sync)?.config.workspaces);
   if (!workspaces?.length) return;
 
   const existingWorkspaces = await dbs.workspaces.find({
-    connection_id: connectionId,
-    user_id: userId,
-    name: { $in: workspaces.map(({ name }) => name) },
+    $and: [
+      {
+        connection_id: connectionId,
+        name: { $in: workspaces.map(({ name }) => name) },
+      },
+      sharedWorkspaces ?
+        { published: true }
+      : { $or: [{ user_id: userId }, { published: true }] },
+    ],
   });
   const existingNames = new Set(existingWorkspaces.map(({ name }) => name));
   const lastUpdated = Date.now().toString();
@@ -48,6 +57,7 @@ export const insertConfigWorkspaces = async (
 
       return {
         ...workspace,
+        ...(sharedWorkspaces && { published: true }),
         connection_id: connectionId,
         last_updated: lastUpdated,
         user_id: userId,

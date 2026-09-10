@@ -46,15 +46,20 @@ export default prostgles({
   connection: {
     db_schema_filter: { [CONFIG_TEST.schemaName]: 1 },
   },
-  access_control: {
-    type: "Custom",
-    customTables: [
-      {
-        tableName: publishedTableName,
-        select: true,
+  access_control: [
+    {
+      userTypes: ["default"],
+      dbPermissions: {
+        type: "Custom",
+        customTables: [
+          {
+            tableName: publishedTableName,
+            select: true,
+          },
+        ],
       },
-    ],
-  },
+    },
+  ],
   functions,
   workspaces,
   onInitSQL: `

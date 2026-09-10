@@ -1,3 +1,4 @@
+import { getSchemaConfig } from "./getSchemaConfig";
 import type { DBSSchema } from "@common/publishUtils";
 import type { SUser } from "@src/authConfig/sessionUtils";
 import type { ProstglesContext } from "@src/schemaConfig";
@@ -148,5 +149,9 @@ export const getConnectionServerFunctions = async ({
   //   };
   // });
 
-  return publishMethods;
+  return {
+    ...getSchemaConfig(databaseConfig.config_sync)?.config.functions,
+    /** Connection-managed functions retain precedence on name collisions. */
+    ...publishMethods,
+  } as ServerFunctionDefinitions<void, SUser, ProstglesContext>;
 };

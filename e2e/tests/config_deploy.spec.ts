@@ -1,4 +1,4 @@
-import { expect, test } from "./fixtures";
+import { expect, test } from "./utils/fixtures";
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import {
   existsSync,
@@ -26,6 +26,7 @@ import { getDataKey } from "Testing";
 import { sidKeyName } from "../../common/authTypesAndConstants";
 import { CONFIG_TEST } from "./configTest/constants";
 import { createTestDeployment } from "../../server/dist/server/src/cli/testing";
+import { CHANNELS } from "prostgles-types";
 import type { GroupedDetailedFilter } from "../../common/filterUtils";
 import { createConfigTestProject } from "./utils/createConfigTestProject";
 
@@ -94,23 +95,31 @@ test("checkFilterDetailed works with grouped existsJoined", async ({
         },
       },
     },
-    access_control: {
-      type: "Custom",
-      customTables: [
-        { tableName: "memberships", select: { fields: "*" } },
-        {
-          tableName: "records",
-          select: { fields: "*", forcedFilterDetailed: membershipFilter },
-          insert: { fields: "*", checkFilterDetailed: membershipFilter },
-          update: {
-            fields: "*",
-            forcedFilterDetailed: membershipFilter,
-            checkFilterDetailed: membershipFilter,
-          },
-          delete: { filterFields: "*", forcedFilterDetailed: membershipFilter },
+    access_control: [
+      {
+        userTypes: ["default"],
+        dbPermissions: {
+          type: "Custom",
+          customTables: [
+            { tableName: "memberships", select: { fields: "*" } },
+            {
+              tableName: "records",
+              select: { fields: "*", forcedFilterDetailed: membershipFilter },
+              insert: { fields: "*", checkFilterDetailed: membershipFilter },
+              update: {
+                fields: "*",
+                forcedFilterDetailed: membershipFilter,
+                checkFilterDetailed: membershipFilter,
+              },
+              delete: {
+                filterFields: "*",
+                forcedFilterDetailed: membershipFilter,
+              },
+            },
+          ],
         },
-      ],
-    },
+      },
+    ],
   });
   const deployment = await createTestDeployment({
     configPath,
@@ -119,6 +128,7 @@ test("checkFilterDetailed works with grouped existsJoined", async ({
     users: [
       { key: "admin", type: "admin" },
       { key: "member", username: "member@example.com", type: "default" },
+      { key: "public", type: "public" },
     ],
     seed: async ({ projectDatabase, stateDatabase }) => {
       const {
@@ -165,31 +175,17 @@ test("checkFilterDetailed works with grouped existsJoined", async ({
       type: "Custom",
       customTables: [{ tableName: "memberships" }, { tableName: "records" }],
     });
-    const cliError = {
-      message:
-        "This is a CLI app. Update access control rules in the source code.",
-    };
-    await expect(
-      state.db.access_control!.update!(
-        { id: accessRule.id },
-        { name: "edited" },
-      ),
-    ).rejects.toMatchObject(cliError);
-    await expect(
-      state.db.access_control!.delete!({ id: accessRule.id }),
-    ).rejects.toMatchObject(cliError);
-    await expect(
-      state.db.access_control_connections!.delete!({
-        access_control_id: accessRule.id,
-      }),
-    ).rejects.toMatchObject(cliError);
-    await expect(
-      state.db.access_control_user_types!.insert!({
-        access_control_id: accessRule.id,
-        user_type: "default",
-      }),
-    ).rejects.toMatchObject(cliError);
-    expect(await state.db.access_control!.find!({})).toEqual(accessRules);
+    await state.db.access_control!.update!(
+      { id: accessRule.id },
+      { llm_daily_limit: 123 },
+    );
+    expect(
+      await state.db.access_control!.findOne!({ id: accessRule.id }),
+    ).toMatchObject({ llm_daily_limit: 123 });
+    await state.db.access_control!.update!(
+      { id: accessRule.id },
+      { llm_daily_limit: accessRule.llm_daily_limit },
+    );
     const windowFilter = {
       ...membershipFilter.$and[0]!,
       filter: {
@@ -257,6 +253,14 @@ test("checkFilterDetailed works with grouped existsJoined", async ({
     await expect(joined).toBeVisible();
     await expect(joined.locator('input[value="manager"]')).toBeVisible();
     await expect(groups).toHaveCount(2);
+    const admin = await deployment.connectProjectAs("admin");
+    expect(await admin.db.records!.find!({ value: "protected" })).toHaveLength(
+      1,
+    );
+    admin.disconnect();
+    const publicClient = await deployment.connectProjectAs("public");
+    expect(publicClient.db.records).toBeUndefined();
+    publicClient.disconnect();
     const { db } = await deployment.connectProjectAs("member");
     const records = db.records!;
     expect(await records.find!({})).toMatchObject([{ value: "editable" }]);
@@ -299,17 +303,48 @@ test("checkFilterDetailed works with grouped existsJoined", async ({
     expect(
       await records.delete!({ value: "protected" }, { returning: "*" }),
     ).toEqual([]);
+    let liveValues: unknown[] = [];
+    const subscription = await records.subscribe!(
+      {},
+      {},
+      (rows: { value: unknown }[]) => {
+        liveValues = rows.map((row) => row.value);
+      },
+    );
+    await expect.poll(() => liveValues).toContain("updated");
+    expect(liveValues).not.toContain("protected");
     await page.getByTestId("dashboard.goToConnConfig").click();
     await page.getByTestId("config.ac").click();
     await expect(page.locator(".ExistingAccessRules_Item")).toHaveCount(1);
     await expect(
       page.locator(".ExistingAccessRules_Item_Header"),
-    ).toContainText("All authenticated users");
+    ).toContainText("default");
+    await expect(
+      page.getByText("This is a CLI app.", { exact: false }),
+    ).toBeVisible();
     await page.locator(".ExistingAccessRules_Item_Header").click();
+    await page
+      .getByTestId("config.ac.edit.type")
+      .getByRole("button", { name: "Run SQL", exact: true })
+      .click();
+    await page.getByRole("checkbox", { name: "Run SQL", exact: true }).check();
     await page.getByTestId("config.ac.save").click();
-    await expect(page.locator(".AccessRuleEditorFooter")).toContainText(
-      cliError.message,
-    );
+    await expect(
+      page.getByText("Rule updated!", { exact: true }),
+    ).toBeVisible();
+    await expect
+      .poll(async () => await records.find!({ value: "protected" }))
+      .toHaveLength(1);
+    await expect.poll(() => liveValues).toContain("protected");
+    await subscription.unsubscribe();
+    const sqlClient = await deployment.connectProjectAs("member");
+    try {
+      expect(
+        await sqlClient.sql!("SELECT 42", {}, { returnType: "value" }),
+      ).toBe(42);
+    } finally {
+      sqlClient.disconnect();
+    }
     const connection = await state.db.connections!.findOne!({
       name: "joined-permissions-e2e",
     });
@@ -318,6 +353,23 @@ test("checkFilterDetailed works with grouped existsJoined", async ({
         .replace("module.exports = ", "")
         .slice(0, -1),
     );
+    const workspace = await state.db.workspaces!.insert!(
+      {
+        name: "Shared records",
+        connection_id: connection!.id,
+        user_id: (await state.db.users!.findOne!({ username: "admin" }))!.id,
+        published: true,
+      },
+      { returning: "*" },
+    );
+    const method = await state.db.published_methods!.insert!(
+      {
+        name: "sharedRecordCount",
+        connection_id: connection!.id,
+        run: "exports.run = async () => 42;",
+      },
+      { returning: "*" },
+    );
     for (const permissions of [
       accessRule.dbPermissions,
       { type: "Run SQL", allowSQL: true },
@@ -325,29 +377,300 @@ test("checkFilterDetailed works with grouped existsJoined", async ({
     ]) {
       writeFileSync(
         join(configPath, "index.js"),
-        `module.exports = ${JSON.stringify({ ...config, access_control: permissions })};`,
+        `module.exports = ${JSON.stringify({
+          ...config,
+          access_control: permissions && [
+            {
+              userTypes: ["default"],
+              dbPermissions: permissions,
+              dbsPermissions: {
+                viewPublishedWorkspaces: { workspaceNames: ["Shared records"] },
+              },
+              publishedMethods: ["sharedRecordCount"],
+            },
+            {
+              userTypes: ["public"],
+              dbPermissions: {
+                type: "Custom",
+                customTables: [{ tableName: "memberships", select: true }],
+              },
+            },
+          ],
+        })};`,
       );
       await state.methods!.syncSchema!({
         connectionId: connection!.id,
         configPath,
       });
+      if (permissions === accessRule.dbPermissions) {
+        const restoredClient = await deployment.connectProjectAs("member");
+        try {
+          expect(
+            await restoredClient.db.records!.find!({ value: "protected" }),
+          ).toEqual([]);
+        } finally {
+          restoredClient.disconnect();
+        }
+      }
       const syncedRules = await state.db.access_control!.find!({});
-      expect(syncedRules).toHaveLength(permissions ? 1 : 0);
+      expect(syncedRules).toHaveLength(permissions ? 2 : 0);
       if (permissions)
         expect(syncedRules[0]).toMatchObject({
           dbPermissions: permissions,
+          dbsPermissions: {
+            viewPublishedWorkspaces: { workspaceIds: [workspace.id] },
+          },
         });
+      if (permissions) {
+        expect(await state.db.access_control_methods!.find!({})).toEqual([
+          {
+            access_control_id: syncedRules[0]!.id,
+            published_method_id: method.id,
+          },
+        ]);
+        const publicClient = await deployment.connectProjectAs("public");
+        expect(publicClient.db.records).toBeUndefined();
+        expect(await publicClient.db.memberships!.find!({})).not.toHaveLength(
+          0,
+        );
+        publicClient.disconnect();
+        const member = await deployment.connectProjectAs("member");
+        expect(await member.methods!.sharedRecordCount!({})).toBe(42);
+        member.disconnect();
+      }
       expect(await state.db.access_control_connections!.find!({})).toEqual(
         permissions ?
-          [
-            {
-              access_control_id: syncedRules[0]!.id,
-              connection_id: connection!.id,
-            },
-          ]
+          syncedRules.map((rule) => ({
+            access_control_id: rule.id,
+            connection_id: connection!.id,
+          }))
         : [],
       );
+      if (permissions === accessRule.dbPermissions) {
+        expect(await state.db.access_control_user_types!.find!({})).toEqual([
+          { access_control_id: syncedRules[0]!.id, user_type: "default" },
+          { access_control_id: syncedRules[1]!.id, user_type: "public" },
+        ]);
+        const validSource = readFileSync(join(configPath, "index.js"), "utf8");
+        for (const invalidSource of [
+          validSource.replace("Shared records", "Missing workspace"),
+          validSource.replace("sharedRecordCount", "Missing function"),
+          validSource.replace('"userTypes":["default"]', '"userTypes":[]'),
+        ]) {
+          writeFileSync(join(configPath, "index.js"), invalidSource);
+          await expect(
+            state.methods!.syncSchema!({
+              connectionId: connection!.id,
+              configPath,
+            }),
+          ).rejects.toBeDefined();
+          expect(await state.db.access_control!.find!({})).toEqual(syncedRules);
+        }
+        writeFileSync(join(configPath, "index.js"), validSource);
+        await state.db.access_control_user_types!.delete!({
+          access_control_id: syncedRules[0]!.id,
+        });
+        await state.db.access_control_connections!.delete!({
+          access_control_id: syncedRules[0]!.id,
+        });
+        await state.db.access_control!.delete!({ id: syncedRules[0]!.id });
+        expect(await state.db.access_control!.find!({})).toEqual([
+          syncedRules[1],
+        ]);
+      }
     }
+  } finally {
+    await deployment.dispose();
+    rmSync(configPath, { recursive: true, force: true });
+  }
+});
+
+test("CLI permission sync preserves shared connections, workspaces and source functions", async () => {
+  const configPath = createConfigTestProject({
+    id: "permission-sync-e2e",
+    tableConfig: { records: { columns: { id: "serial PRIMARY KEY" } } },
+    workspaces: [
+      {
+        name: "Shared records",
+        layout: {
+          id: "root",
+          type: "tab",
+          size: 1,
+          items: [],
+          activeTabKey: undefined,
+        },
+        windows: [],
+      },
+    ],
+    access_control: [
+      {
+        userTypes: ["default"],
+        dbPermissions: {
+          type: "Custom",
+          customTables: [{ tableName: "records", select: true }],
+        },
+        dbsPermissions: {
+          viewPublishedWorkspaces: { workspaceNames: ["Shared records"] },
+        },
+      },
+    ],
+  });
+  const source =
+    readFileSync(join(configPath, "index.js"), "utf8") +
+    `
+module.exports.functions = {
+  members: { userFilter: { type: "default" }, functions: {
+    sourceFunction: { input: {}, run: () => 42 }
+  } }
+};`;
+  writeFileSync(join(configPath, "index.js"), source);
+  const deployment = await createTestDeployment({
+    configPath,
+    configId: "permission-sync-e2e",
+    logPath: test.info().outputPath("permission-sync-server.log"),
+    users: [
+      { key: "admin", type: "admin" },
+      { key: "member", type: "default" },
+    ],
+  });
+  try {
+    const state = await deployment.connectStateAs("admin");
+    const connection = (await state.db.connections!.findOne!({
+      name: "permission-sync-e2e",
+    }))!;
+    const connectionFilter = {
+      $existsJoined: {
+        access_control_connections: { connection_id: connection.id },
+      },
+    };
+    const rule = (await state.db.access_control!.findOne!(connectionFilter))!;
+    const memberState = await deployment.connectStateAs("member");
+    const workspace = (await memberState.db.workspaces!.findOne!({
+      connection_id: connection.id,
+      name: "Shared records",
+      published: true,
+    }))!;
+    expect(rule.dbsPermissions).toEqual({
+      viewPublishedWorkspaces: { workspaceIds: [workspace.id] },
+    });
+    expect(
+      await memberState.db.workspaces!.findOne!({ id: workspace.id }),
+    ).toBeTruthy();
+    await memberState.methods!.startConnection!({
+      connectionId: connection.id,
+    });
+    expect(
+      await state.sql!(
+        "SELECT count(*)::int FROM workspaces WHERE connection_id = $1 AND name = $2",
+        [connection.id, workspace.name],
+        { returnType: "value" },
+      ),
+    ).toBe(1);
+    const member = await deployment.connectProjectAs("member");
+    expect(await member.methods!.sourceFunction!({})).toBe(42);
+    let schemaUpdates = 0;
+    member.socket.on(CHANNELS.SCHEMA, () => {
+      schemaUpdates++;
+    });
+    await state.db.access_control!.update!(
+      { id: rule.id },
+      { dbPermissions: { type: "Run SQL", allowSQL: true } },
+    );
+    await expect.poll(() => schemaUpdates).toBeGreaterThan(0);
+    expect(await member.methods!.sourceFunction!({})).toBe(42);
+    await expect
+      .poll(async () => {
+        const refreshed = await deployment.connectProjectAs("member");
+        try {
+          if (!refreshed.sql) return undefined;
+          expect(await refreshed.methods!.sourceFunction!({})).toBe(42);
+          return await refreshed.sql("SELECT 42", {}, { returnType: "value" });
+        } finally {
+          refreshed.disconnect();
+        }
+      })
+      .toBe(42);
+    const { connection: sibling } = await state.methods!.createConnection!({
+      connection: {
+        ...connection,
+        id: undefined,
+        name: "permission-sync-sibling",
+      },
+      origin: deployment.endpoint,
+    });
+    await state.db.access_control_connections!.insert!({
+      access_control_id: rule.id,
+      connection_id: sibling.id,
+    });
+    const siblingRule = await state.db.access_control!.insert!(
+      {
+        database_id: rule.database_id,
+        dbPermissions: { type: "Custom", customTables: [] },
+        access_control_user_types: [{ user_type: "public" }],
+        access_control_connections: [{ connection_id: sibling.id }],
+      },
+      { returning: "*" },
+    );
+    await state.sql!(
+      `WITH provider AS (
+        INSERT INTO llm_providers (id, api_url) VALUES ('cascade-test', 'http://localhost') RETURNING id
+      ), credential AS (
+        INSERT INTO llm_credentials (user_id, provider_id, name)
+        SELECT $1, id, 'cascade-test' FROM provider RETURNING id
+      )
+      INSERT INTO access_control_allowed_llm (access_control_id, llm_credential_id, llm_prompt_id)
+      SELECT $2, credential.id, llm_prompts.id FROM credential CROSS JOIN llm_prompts LIMIT 1`,
+      [
+        (await state.db.users!.findOne!({ username: "admin" }))!.id,
+        siblingRule.id,
+      ],
+    );
+    const preservedRules = await state.db.access_control!.find!(
+      { id: { $in: [rule.id, siblingRule.id] } },
+      { orderBy: { id: 1 } },
+    );
+    for (const configuredSource of [
+      source,
+      source + "\nmodule.exports.access_control = []; ",
+    ]) {
+      writeFileSync(join(configPath, "index.js"), configuredSource);
+      await state.methods!.syncSchema!({
+        connectionId: connection.id,
+        configPath,
+      });
+      expect(
+        await state.db.access_control!.find!(
+          { id: { $in: [rule.id, siblingRule.id] } },
+          { orderBy: { id: 1 } },
+        ),
+      ).toEqual(preservedRules);
+      expect(
+        await state.db.access_control_connections!.find!({
+          access_control_id: rule.id,
+        }),
+      ).toEqual([{ access_control_id: rule.id, connection_id: sibling.id }]);
+      expect(
+        await state.sql!(
+          "SELECT count(*)::int FROM workspaces WHERE connection_id = $1 AND name = $2",
+          [connection.id, workspace.name],
+          { returnType: "value" },
+        ),
+      ).toBe(1);
+    }
+    expect(await state.db.access_control!.find!(connectionFilter)).toEqual([]);
+    const grantFilter = { access_control_id: siblingRule.id };
+    expect(await state.db.access_control_allowed_llm!.count!(grantFilter)).toBe(
+      1,
+    );
+    await state.db.access_control!.delete!({ id: siblingRule.id });
+    expect(await state.db.access_control_allowed_llm!.count!(grantFilter)).toBe(
+      0,
+    );
+    const revoked = await deployment.connectProjectAs("member");
+    expect(revoked.db.records).toBeUndefined();
+    expect(revoked.sql).toBeUndefined();
+    revoked.disconnect();
+    member.disconnect();
   } finally {
     await deployment.dispose();
     rmSync(configPath, { recursive: true, force: true });
@@ -843,7 +1166,7 @@ export default prostgles({
 
     try {
       rmSync(
-        join(configTestDirectory, "node_modules", "@prostgles", "prostgles"),
+        join(configTestDirectory, "node_modules", "@prostgles", "app"),
         { recursive: true, force: true },
       );
       run(
@@ -884,7 +1207,7 @@ export default prostgles({
         tablesList.locator(
           `[data-key=${JSON.stringify([schemaName, deniedTableName].join("."))}]`,
         ),
-      ).not.toBeAttached();
+      ).toBeVisible();
 
       const publishedRows = await page.evaluate(
         async (qualifiedTableName) =>

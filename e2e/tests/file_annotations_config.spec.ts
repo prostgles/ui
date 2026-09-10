@@ -5,7 +5,7 @@ import {
   createTestDeployment,
   type TestDeployment,
 } from "../../server/dist/server/src/cli/testing";
-import { expect, test } from "./fixtures";
+import { expect, test } from "./utils/fixtures";
 import { createConfigTestProject } from "./utils/createConfigTestProject";
 
 test("CLI annotations support PDF uploads without document extraction", async () => {

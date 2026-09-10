@@ -1,4 +1,4 @@
-import { test } from "./fixtures";
+import { test } from "./utils/fixtures";
 import * as fs from "fs";
 import * as path from "path";
 import { saveDocs } from "saveDocs";

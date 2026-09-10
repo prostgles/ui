@@ -10,6 +10,8 @@ import prostgles, {
 import type { UserLike } from "prostgles-types";
 import { Client } from "pg";
 import { startTemporaryDatabases } from "../startTemporaryDatabases";
+import { getConnectionPaths } from "@common/utils";
+import { sidKeyName } from "@common/authTypesAndConstants";
 
 const STATE_SOCKET_PATH = "/ws-api-dbs";
 const START_TIMEOUT_MS = 60_000;
@@ -60,6 +62,21 @@ export type TestDeployment<
   logPath: string;
   /** PostgreSQL output, retained after cleanup. */
   databaseLogPath: string;
+  /** Browser session for a seeded user, compatible with Playwright storageState. */
+  storageStateAs: (userKey: string) => {
+    cookies: {
+      name: string;
+      value: string;
+      domain: string;
+      path: string;
+      expires: number;
+      httpOnly: boolean;
+      secure: boolean;
+      sameSite: "Lax";
+    }[];
+    origins: [];
+  };
+  dashboardUrl: string;
   connectStateAs: (
     userKey: string,
   ) => Promise<TestDeploymentClient<void, ClientFunctionHandler, UserLike>>;
@@ -386,6 +403,22 @@ export const createTestDeployment = async <
     };
 
     return {
+      dashboardUrl: `${endpoint}${getConnectionPaths({ id: connectionId }).dashboard}`,
+      storageStateAs: (userKey) => ({
+        cookies: [
+          {
+            name: sidKeyName,
+            value: getToken(userKey),
+            domain: new URL(endpoint).hostname,
+            path: "/",
+            expires: -1,
+            httpOnly: true,
+            secure: false,
+            sameSite: "Lax",
+          },
+        ],
+        origins: [],
+      }),
       connectProjectAs,
       connectStateAs,
       dispose,

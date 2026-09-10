@@ -1,13 +1,13 @@
 {
   "name": "@prostgles/app",
-  "version": "2.3.6-dev.1789046358",
+  "version": "2.3.6",
   "description": "Prostgles UI runtime and configurable PostgreSQL dashboard",
   "main": "dist/server/src/schemaConfig.js",
   "bin": {
     "prostgles": "dist/server/src/cli/cli.js"
   },
   "scripts": {
-    "compile": "cross-env NODE_ENV='production' NODE_OPTIONS='--max-old-space-size=2048' tsc && tsc-alias && node ./scripts/copyCliDockerfiles.mjs",
+    "compile": "cross-env NODE_ENV='production' NODE_OPTIONS='--max-old-space-size=2048' tsc && tsc-alias && tsc -p ../e2e/cli/tsconfig.json && node ./scripts/copyCliDockerfiles.mjs",
     "build": "npm ci && npm run compile && npm prune --omit=dev",
     "start": "npm run build && cross-env NODE_ENV='production' node dist/server/src/index.js",
     "test": "npm run build && node test-runner.mjs",
@@ -77,7 +77,8 @@
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-security": "^3.0.1",
     "tsc-alias": "^1.9.2",
-    "typescript-eslint": "^8.67.0"
+    "typescript-eslint": "^8.67.0",
+    "@playwright/test": "1.59.1"
   },
   "exports": {
     ".": {
@@ -91,6 +92,18 @@
     "./services": {
       "types": "./dist/server/src/services.d.ts",
       "default": "./dist/server/src/services.js"
+    },
+    "./testing/ui": {
+      "types": "./dist/e2e/cli/index.d.ts",
+      "default": "./dist/e2e/cli/index.js"
+    }
+  },
+  "peerDependencies": {
+    "@playwright/test": "^1.59.1"
+  },
+  "peerDependenciesMeta": {
+    "@playwright/test": {
+      "optional": true
     }
   }
 }
