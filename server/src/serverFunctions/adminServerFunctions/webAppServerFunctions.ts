@@ -74,7 +74,7 @@ export const webAppServerFunctions = defineFunctionGroupFunctions({
         { id: connection.id },
         { web_app_templated: true },
       );
-      connectionManager
+      await connectionManager
         .getActiveConnectionSilentFail(connection.id)
         ?.prgl.reWriteDBSchema();
       return templateDir;

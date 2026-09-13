@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import type { TestDeployment } from "../../server/dist/server/src/cli/testing";
 import { spawn, spawnSync } from "node:child_process";
 import {
   copyFileSync,
@@ -11,11 +12,84 @@ import {
 import { createServer } from "node:net";
 import { createRequire } from "node:module";
 import { join, resolve } from "node:path";
+import { parse } from "../../server/node_modules/dotenv";
 
 type RunOptions = {
   capture?: boolean;
   cwd?: string;
 };
+
+test("formatted CLI apps have no spurious upgrade conflicts", async () => {
+  const serverRoot = resolve(__dirname, "../../server");
+  const cliRoot = join(serverRoot, "dist/server/src/cli");
+  const { saveCliTemplateFiles, generatedFolderName } =
+    await import("../../server/dist/server/src/cli/cliTemplateFiles");
+  const { applyCliUpgradeFiles } =
+    await import("../../server/dist/server/src/cli/upgradeCli");
+  const { cliFileNames } =
+    await import("../../server/dist/server/src/cli/cliFileNames");
+  const appRoot = test.info().outputPath("app");
+  const incomingPath = test.info().outputPath("incoming");
+  const created = spawnSync(
+    process.execPath,
+    [join(cliRoot, "cli.js"), "create", appRoot, "--skip-install"],
+    { encoding: "utf8" },
+  );
+  expect(created.stderr).toBe("");
+  expect(created.status).toBe(0);
+  const dockerfile = readFileSync(
+    join(appRoot, cliFileNames.dockerfile),
+    "utf8",
+  );
+  expect(dockerfile).toContain("\nFROM runtime AS app\n");
+  expect(dockerfile).toContain("\nWORKDIR /app\n");
+  const schemaPath = join(
+    appRoot,
+    generatedFolderName,
+    cliFileNames.dbGeneratedSchema,
+  );
+  const schema =
+    "export type DBGeneratedSchema = { existing_table: unknown };\n";
+  writeFileSync(schemaPath, schema);
+
+  const environmentDefaults = parse(
+    readFileSync(join(appRoot, cliFileNames.environmentExample)),
+  );
+  for (const customConfig of [false, true]) {
+    if (customConfig) {
+      writeFileSync(
+        join(appRoot, cliFileNames.prettierConfig),
+        JSON.stringify({ tabWidth: 4, singleQuote: true }),
+      );
+    }
+    const formatted = spawnSync(
+      process.execPath,
+      [
+        join(serverRoot, "node_modules/prettier/bin/prettier.cjs"),
+        "--write",
+        ".",
+      ],
+      { cwd: appRoot, encoding: "utf8" },
+    );
+    expect(formatted.stderr).toBe("");
+    expect(formatted.status).toBe(0);
+    await saveCliTemplateFiles({
+      configId: "app",
+      targetPath: incomingPath,
+      environmentDefaults,
+      formatConfigPath: appRoot,
+    });
+    const prompted: string[] = [];
+    await applyCliUpgradeFiles(incomingPath, appRoot, async (file) => {
+      prompted.push(file);
+      return "skip";
+    });
+    expect(prompted).toEqual(
+      customConfig ? [join(appRoot, cliFileNames.prettierConfig)] : [],
+    );
+    expect(readFileSync(schemaPath, "utf8")).toBe(schema);
+  }
+});
 
 test("runs a generated config project with temporary databases and Docker Compose", async () => {
   test.setTimeout(900_000);
@@ -175,11 +249,28 @@ test("runs a generated config project with temporary databases and Docker Compos
        export default defineConfig()({
          id: ${JSON.stringify(configId)},
          services: serviceManagerConfig,
+         llm_credentials: [],
          tableConfig: {},
          functions: {
            public: defineFunctionGroup({
              userFilter: {},
              functions: {
+               extract: defineFunction({
+                 input: { text: "string" },
+                 run: async ({ text }, ctx) => {
+                   const data = await ctx.context.startAgent({
+                     prompt: "Extract a summary",
+                     input: text,
+                     outputSchema: { summary: { type: "string" } },
+                     autoApproveAllTools: true,
+                   }, ctx);
+                   const summary: string = data.summary;
+                   // @ts-expect-error Result fields must retain their inferred type.
+                   const invalid: number = data.summary;
+                   void invalid;
+                   return summary;
+                 },
+               }),
                serviceGreeting: defineFunction({
                  run: async (_, { context }) => {
                    const service = await context.serviceManager.getServiceWithRetries("myService");
@@ -339,9 +430,13 @@ test("runs a generated config project with temporary databases and Docker Compos
     }
     throw error;
   } finally {
-    await run("docker", ["rm", "--force", serviceContainer, webSearchContainer], {
-      capture: true,
-    }).catch(() => undefined);
+    await run(
+      "docker",
+      ["rm", "--force", serviceContainer, webSearchContainer],
+      {
+        capture: true,
+      },
+    ).catch(() => undefined);
     if (composeStarted) {
       await run("docker", [
         "compose",
@@ -372,7 +467,11 @@ const checkTemporaryDatabases = async (
     configPath: appRoot,
     logPath: test.info().outputPath("deployment.log"),
   });
-  await deployment.dispose();
+  try {
+    await checkConfiguredLlmCredentials(appRoot, configId, deployment);
+  } finally {
+    await deployment.dispose();
+  }
   expect(readFileSync(deployment.databaseLogPath, "utf8")).toContain(
     "database system is shut down",
   );
@@ -462,5 +561,66 @@ const checkTemporaryDatabases = async (
     }
   } finally {
     writeFileSync(envPath, environment);
+  }
+};
+
+const checkConfiguredLlmCredentials = async (
+  appRoot: string,
+  configId: string,
+  deployment: TestDeployment,
+) => {
+  const state = await deployment.connectStateAs("admin");
+  const connection = await state.db.connections!.findOne!({
+    name: configId,
+  });
+  const sourcePath = join(appRoot, "src/index.ts");
+  const source = readFileSync(sourcePath, "utf8");
+  const credentialsLine =
+    'llm_credentials: [{ provider_id: "OpenAI", name: "cli-test", api_key: "cli-test-key" }],';
+  const getCredentials = () =>
+    state.sql!(
+      "SELECT provider_id, name, api_key FROM llm_credentials ORDER BY id",
+      {},
+      { returnType: "rows" },
+    );
+  const initial = [
+    { provider_id: "OpenAI", name: "cli-test", api_key: "cli-test-key" },
+  ];
+  const sync = async (replacement: string) => {
+    writeFileSync(
+      sourcePath,
+      source.replace("llm_credentials: [],", replacement),
+    );
+    await state.methods!.syncSchema!({
+      connectionId: connection!.id,
+      configPath: appRoot,
+    });
+  };
+  try {
+    expect(await getCredentials()).toEqual([]);
+    await state.sql!(
+      "UPDATE llm_providers SET api_url = 'http://localhost:3004/mocked-llm' WHERE id = 'OpenAI'",
+    );
+    await sync(credentialsLine);
+    expect(await getCredentials()).toEqual(initial);
+    await sync(credentialsLine.replace("cli-test-key", "replacement-key"));
+    expect(await getCredentials()).toEqual([
+      { ...initial[0], api_key: "replacement-key" },
+    ]);
+    await sync("");
+    expect(await getCredentials()).toEqual([
+      { ...initial[0], api_key: "replacement-key" },
+    ]);
+    await expect(
+      sync(credentialsLine.replace("OpenAI", "missing-provider")),
+    ).rejects.toBeDefined();
+    expect(await getCredentials()).toEqual([
+      { ...initial[0], api_key: "replacement-key" },
+    ]);
+    await sync("llm_credentials: [],");
+    expect(await getCredentials()).toEqual([]);
+  } finally {
+    writeFileSync(sourcePath, source);
+    state.disconnect();
   }
 };

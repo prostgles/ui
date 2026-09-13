@@ -14,6 +14,7 @@ import { createInterface } from "node:readline/promises";
 import { dirname, join } from "node:path";
 import { parse } from "dotenv";
 import { saveCliTemplateFiles } from "./cliTemplateFiles";
+import { cliFileNames } from "./cliFileNames";
 
 type FileAction = "skip" | "write" | "merge" | "overwrite";
 type ChooseFileAction = (
@@ -144,6 +145,8 @@ export const applyCliUpgradeFiles = async (
         copyFileSync(incoming, target);
         console.log(`Wrote ${target}`);
       }
+    } else if (entry.name === cliFileNames.dbGeneratedSchema) {
+      continue;
     } else if (!readFileSync(target).equals(readFileSync(incoming))) {
       const action = await chooseAction(
         target,
@@ -168,15 +171,19 @@ export const upgradeCli = async (configId: string, targetPath: string) => {
     output: process.stdout,
   });
   try {
-    const environmentExample = join(targetPath, ".env.example");
+    const environmentExample = join(
+      targetPath,
+      cliFileNames.environmentExample,
+    );
     const environmentDefaults =
       existsSync(environmentExample) ?
         parse(readFileSync(environmentExample))
       : undefined;
-    saveCliTemplateFiles({
+    await saveCliTemplateFiles({
       configId,
       targetPath: incomingPath,
       environmentDefaults,
+      formatConfigPath: targetPath,
     });
     await applyCliUpgradeFiles(
       incomingPath,

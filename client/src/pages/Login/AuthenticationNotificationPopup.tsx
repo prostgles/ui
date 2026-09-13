@@ -3,7 +3,7 @@ import Popup from "@components/Popup/Popup";
 import { SuccessMessage } from "@components/Animations";
 import { InfoRow } from "@components/InfoRow";
 
-export const AuthNotifPopup = ({
+export const AuthenticationNotificationPopup = ({
   success,
   message,
   onClose,

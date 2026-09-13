@@ -15,6 +15,7 @@ export const startAgent = async (
     configWithDefaults,
     autoApproveAllTools,
     requestTimestamp,
+    databaseAccess,
   }: {
     name: string;
     toolsWithInfo:
@@ -23,6 +24,7 @@ export const startAgent = async (
     configWithDefaults: Awaited<ReturnType<typeof getAgentConfigWithDefaults>>;
     autoApproveAllTools: boolean;
     requestTimestamp: Date;
+    databaseAccess?: DBSSchema["llm_chats"]["db_data_permissions"];
   },
   {
     dbs,
@@ -37,13 +39,13 @@ export const startAgent = async (
   }: {
     dbs: DBS;
     userId: string;
-    chatId: number;
+    chatId?: number;
     connectionId: string;
     askLLM: GeneratedFunctionSchema["askLLM"];
     signal: AbortSignal | undefined;
     timeout: number;
     started: number;
-    messageId: string | number;
+    messageId?: string | number;
   },
 ) => {
   const {
@@ -62,6 +64,7 @@ export const startAgent = async (
       parent_chat_id: chatId,
       parent_chat_message_id: messageId,
       connection_id: connectionId,
+      db_data_permissions: databaseAccess,
       agent_info: {
         type: "agent",
         name,

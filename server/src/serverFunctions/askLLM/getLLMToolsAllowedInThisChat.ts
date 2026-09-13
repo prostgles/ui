@@ -7,6 +7,7 @@ import {
 import type { DBS } from "../..";
 
 import { getJsonSchemaAsTs } from "@common/getJsonSchemaAsTs";
+import type { uiMcpSchema } from "@common/mcp/ui.mcp.schema";
 import {
   getMCPFullToolName,
   getMCPToolNameParts,
@@ -14,18 +15,13 @@ import {
   type AllowedChatTool,
 } from "@common/mcpUtils";
 import type { DBSSchema } from "@common/publishUtils";
-import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
 import { getAgentGoalTools } from "./agentConstants";
 import { getMCPServerTools } from "./prostglesLLMTools/getMCPServerTools";
 import { getMcpToolsWithDynamicDescription } from "./prostglesLLMTools/getMcpToolsWithDynamicDescription";
-import type { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
-import type { uiMcpSchema } from "@common/mcp/ui.mcp.schema";
 
 export type GetLLMToolsArgs = {
-  userType: string;
   chat: DBSSchema["llm_chats"];
   dbs: DBS;
-  clientReq: AuthClientRequest;
 };
 
 export type MCPToolSchema = {
@@ -35,10 +31,8 @@ export type MCPToolSchema = {
 };
 
 export const getLLMToolsAllowedInThisChat = async ({
-  userType,
   dbs,
   chat,
-  clientReq,
 }: GetLLMToolsArgs): Promise<undefined | AllowedChatTool[]> => {
   const { id: chatId } = chat;
 

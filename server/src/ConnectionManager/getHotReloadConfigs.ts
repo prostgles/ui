@@ -117,7 +117,6 @@ export const getHotReloadConfigs = async ({
     databaseConfig,
     dbs,
     connection,
-    connectionManager,
   });
 
   return {

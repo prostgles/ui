@@ -8,7 +8,7 @@ import type { PRGLIOSocket } from "prostgles-server/dist/DboBuilder/DboBuilder";
 import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
 import { getIsSuperUser, type DB } from "prostgles-server/dist/Prostgles";
 import type { InitResult } from "prostgles-server/dist/initProstgles";
-import { pickKeys, type AnyObject } from "prostgles-types";
+import { defineJoin, pickKeys, type AnyObject } from "prostgles-types";
 import { addLog } from "../Logger";
 import type { SUser } from "../authConfig/sessionUtils";
 import { testDBConnection } from "../connectionUtils/testDBConnection";
@@ -20,9 +20,10 @@ import type {
 } from "../schemaConfig";
 import type { ConnectionManager, User } from "./ConnectionManager";
 import { getConnectionOnReady } from "./connectionOnReady";
-import { getConnectionPublish } from "./getConnectionPublish";
+import { getConnectionPublish } from "../connectionPublish/getConnectionPublish";
 import { getConnectionSocketPath } from "./getConnectionSocketPath";
 import { getHotReloadConfigs } from "./getHotReloadConfigs";
+import { getStartAgent } from "../McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/getStartAgent";
 
 export const startConnection = async function (
   this: ConnectionManager,
@@ -204,8 +205,9 @@ export const startConnection = async function (
           joins: schemaProstglesOptions.joins ?? "inferred",
           createContext: () => ({
             serviceManager: getServiceManager(),
+            startAgent: getStartAgent(dbs, connectionId),
           }),
-          publish: getConnectionPublish({
+          publish: await getConnectionPublish({
             dbs,
             dbConf: databaseConfig,
             connection: connection,
@@ -322,22 +324,22 @@ export const startConnection = async function (
   return result;
 };
 
-export const getAccessRule = async (
-  dbs: DBOFullyTyped<DBGeneratedSchema>,
+const getAccessRuleFilter = (
   user: User | undefined,
   database_id: number,
   connection_id: string,
-): Promise<DBSSchema["access_control"] | undefined> => {
-  if (!user) return undefined;
-  return await dbs.access_control.findOne({
+) => {
+  return {
     $and: [
       {
         database_id,
-        $existsJoined: {
-          access_control_user_types: {
-            user_type: user.type,
+        ...(user && {
+          $existsJoined: {
+            access_control_user_types: {
+              user_type: user.type,
+            },
           },
-        },
+        }),
       },
       {
         $existsJoined: {
@@ -347,5 +349,35 @@ export const getAccessRule = async (
         },
       },
     ],
-  });
+  };
+};
+
+export const getAccessRule = async (
+  dbs: DBOFullyTyped<DBGeneratedSchema>,
+  user: User | undefined,
+  database_id: number,
+  connection_id: string,
+): Promise<DBSSchema["access_control"] | undefined> => {
+  if (!user) return undefined;
+  return await dbs.access_control.findOne(
+    getAccessRuleFilter(user, database_id, connection_id),
+  );
+};
+export const getAccessRules = async (
+  dbs: DBOFullyTyped<DBGeneratedSchema>,
+  database_id: number,
+  connection_id: string,
+) => {
+  return await dbs.access_control.find(
+    getAccessRuleFilter(undefined, database_id, connection_id),
+    {
+      select: {
+        "*": 1,
+        userTypes: defineJoin({
+          $leftJoin: "access_control_user_types",
+          select: "*",
+        }),
+      },
+    },
+  );
 };

@@ -7,7 +7,7 @@ set -e
 trap 'kill 0' EXIT
 
 # Install root dev extension tools
-npm i --no-audit
+npm ci --no-audit
 
 cd server 
 npm run build

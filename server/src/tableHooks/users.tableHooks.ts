@@ -11,18 +11,31 @@ export const usersTableHooks = {
         validate: (args) => {
           const { data } = args;
 
+          const registrationType =
+            (
+              data.registration &&
+              "type" in data.registration &&
+              typeof data.registration.type === "string"
+            ) ?
+              data.registration.type
+            : undefined;
+
           const nonPasswordAccount =
             data.passwordless_admin ||
-            data.registration?.type === "OAuth" ||
-            data.registration?.type === "magic-link" ||
+            registrationType === "OAuth" ||
+            registrationType === "magic-link" ||
             data.type === "public";
 
           if (nonPasswordAccount && !data.password) return;
 
           if ("password" in data) {
+            if (typeof data.password !== "string") {
+              throw "Password must be a string";
+            }
             if (!data.password) {
               throw "Password cannot be empty";
             }
+
             const id = crypto.randomUUID();
 
             const hashedPassword = getPasswordHash({ id }, data.password);
@@ -32,8 +45,8 @@ export const usersTableHooks = {
 
             return {
               row: {
-                id,
                 ...data,
+                id,
                 password: hashedPassword,
                 last_updated: Date.now().toString(),
               },

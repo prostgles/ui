@@ -132,8 +132,7 @@ export type DetailedJoinedFilter = BaseFilter & {
 };
 export type DetailedFilter = DetailedFilterBase | DetailedJoinedFilter;
 export type DetailedGroupFilter =
-  | { $and: DetailedFilter[] }
-  | { $or: DetailedFilter[] };
+  { $and: DetailedFilter[] } | { $or: DetailedFilter[] };
 
 export const isJoinedFilter = (f: DetailedFilter): f is DetailedJoinedFilter =>
   Boolean(f.type && JOINED_FILTER_TYPES.includes(f.type as any));
@@ -167,7 +166,7 @@ export const getFinalFilterInfo = (
       return `${filter.type === "$existsJoined" ? "Exists" : "Does not exist"} in ${path} where ${getFinalFilterInfo(filter.filter, context, depth + 2, opts)}`;
     }
 
-    const f = getFinalFilter(filter, context, {
+    const f = getFinalFilter(filter, {
       forInfoOnly: opts?.for ?? true,
     });
     if (!f) return undefined;
@@ -187,7 +186,10 @@ export const getFinalFilterInfo = (
       CORE_FILTER_TYPES.find(({ key }) => key === `$${operatorRaw}`)?.label ||
       operatorRaw;
     const value = f[fieldNameAndOperator];
-    if ("fieldName" in filter && filter.contextValue?.objectName === "user") {
+    if (
+      "fieldName" in filter &&
+      filter.contextValue?.$prostglesContext.objectName === "user"
+    ) {
       return `${fieldName}::TEXT ${operator} ${value}`;
     }
     const valueStr =
@@ -219,30 +221,24 @@ export const getFinalFilterInfo = (
   return result;
 };
 
-export const parseContextVal = (
+export const getContextualValue = (
   f: DetailedFilterBase,
-  context: ContextDataObject | undefined,
   { forInfoOnly }: GetFinalFilterOpts = {},
 ): any => {
   if (f.contextValue) {
     if (forInfoOnly) {
-      const objPath = `${f.contextValue.objectName}.${f.contextValue.objectPropertyName}`;
-      if (forInfoOnly === "pg") {
-        if (f.contextValue.objectName === "user") {
-          return `prostgles.user('${f.contextValue.objectPropertyName}')`;
-        }
-        return `current_setting('${objPath}')`;
-      }
+      const { objectName, objectPropertyName } =
+        f.contextValue.$prostglesContext;
+      const objPath = `${objectName}.${objectPropertyName}`;
+      // if (forInfoOnly === "pg") {
+      //   if (objectName === "user") {
+      //     return `prostgles.user('${objectPropertyName}')`;
+      //   }
+      //   return `current_setting('${objPath}')`;
+      // }
       return `{{${objPath}}}`;
     }
-    if (context) {
-      //@ts-ignore
-      return context[f.contextValue.objectName]?.[
-        f.contextValue.objectPropertyName
-      ];
-    }
-
-    return undefined;
+    return f.contextValue;
   }
 
   return { ...f }.value;
@@ -254,7 +250,6 @@ type GetFinalFilterOpts = {
 };
 export const getFinalFilter = (
   detailedFilter: DetailedFilter | GroupedDetailedFilter,
-  context?: ContextDataObject,
   opts?: GetFinalFilterOpts,
 ): AnyObject | undefined => {
   const { forInfoOnly = false } = opts ?? {};
@@ -264,7 +259,7 @@ export const getFinalFilter = (
     const filters = isAnd ? detailedFilter.$and : detailedFilter.$or;
     return {
       [isAnd ? "$and" : "$or"]: filters
-        .map((filter) => getFinalFilter(filter, context, opts))
+        .map((filter) => getFinalFilter(filter, opts))
         .filter(isDefined),
     };
   }
@@ -272,7 +267,7 @@ export const getFinalFilter = (
   if (detailedFilter.disabled) return undefined;
 
   if ("path" in detailedFilter) {
-    const filter = getFinalFilter(detailedFilter.filter, context, {
+    const filter = getFinalFilter(detailedFilter.filter, {
       ...opts,
       columns: undefined,
     });
@@ -296,11 +291,11 @@ export const getFinalFilter = (
     f: DetailedFilterBase,
     columns?: string[],
   ): Record<string, any> => {
-    const val = parseContextVal(f, context, opts);
+    const parsedContextValue = getContextualValue(f, opts);
     const fieldName = checkFieldname(f.fieldName, columns);
 
-    if (f.contextValue && !context && !forInfoOnly) {
-      return {};
+    if (f.contextValue && !forInfoOnly) {
+      return f.contextValue;
     }
 
     if (
@@ -312,7 +307,7 @@ export const getFinalFilter = (
       return {
         [`${fieldName}.${f.type}`]: [
           ...(ftsFilterOptions ? [ftsFilterOptions.lang] : []),
-          parseContextVal(f, context, opts),
+          getContextualValue(f, opts),
         ],
       };
     } else if (f.type === "$term_highlight") {
@@ -321,13 +316,13 @@ export const getFinalFilter = (
       return {
         $term_highlight: [
           [fieldName],
-          parseContextVal(f, context, opts),
+          getContextualValue(f, opts),
           { matchCase: false, edgeTruncate: 30, returnType: "boolean" },
         ],
       };
     } else if (f.type == "$ST_DWithin") {
       return {
-        $filter: [{ $ST_DWithin: [fieldName, { ...val }] }],
+        $filter: [{ $ST_DWithin: [fieldName, { ...parsedContextValue }] }],
       };
     } else if (
       f.complexFilter ||
@@ -358,7 +353,7 @@ export const getFinalFilter = (
           $filter: [
             { [f.type === "$ageNow" ? "$ageNow" : "$age"]: filterArgs },
             comparator,
-            val,
+            parsedContextValue,
           ],
         };
       } else if (f.complexFilter) {
@@ -367,7 +362,7 @@ export const getFinalFilter = (
         }
 
         return {
-          $filter: [f.complexFilter.leftExpression, f.type, val],
+          $filter: [f.complexFilter.leftExpression, f.type, parsedContextValue],
         };
       }
     }
@@ -383,7 +378,7 @@ export const getFinalFilter = (
     }
     return {
       [[fieldName, f.type === "=" ? null : f.type].filter((v) => v).join(".")]:
-        val,
+        parsedContextValue,
     };
   };
 

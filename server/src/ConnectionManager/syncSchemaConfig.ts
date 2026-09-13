@@ -5,7 +5,7 @@ import { compileSchemaConfigProject } from "./compileSchemaConfigProject";
 import { getSchemaConfig } from "./getSchemaConfig";
 import { getEntries } from "@common/utils";
 import { includes } from "prostgles-types";
-import { syncSchemaConfigAccessControl } from "./syncSchemaConfigAccessControl";
+import { syncSchemaConfigResources } from "./syncSchemaConfigResources";
 
 /**
  * Build and attach a schema-config project. Only its location is persisted;
@@ -57,13 +57,14 @@ export const syncSchemaConfig = async ({
   }
 
   if (type === "cli") {
-    await syncSchemaConfigAccessControl(
+    await syncSchemaConfigResources({
       dbs,
-      databaseConfig.id,
+      databaseId: databaseConfig.id,
       connectionId,
-      schemaConfig.access_control,
-      schemaConfig.workspaces,
-    );
+      rules: schemaConfig.access_control,
+      workspaces: schemaConfig.workspaces,
+      llmCredentials: schemaConfig.llm_credentials,
+    });
   }
 
   /**

@@ -143,7 +143,7 @@ export const publish: Publish<
       },
       update: "*",
     },
-    ...getPublishLLM(user_id, isAdmin, accessRules, db),
+    ...getPublishLLM(user_id, isAdmin, accessRules),
     credential_types: isAdmin && { select: "*" },
     access_control: isAdmin ? "*" : undefined,
     database_configs:
@@ -288,7 +288,7 @@ export const publish: Publish<
             dynamicFields: [
               {
                 /* For own user can only change these fields */
-                fields: { username: 1, password: 1, status: 1, options: 1 },
+                fields: { username: 1, status: 1, options: 1 },
                 filter: { id: user.id },
               },
             ],
@@ -313,7 +313,7 @@ export const publish: Publish<
             forcedFilter: { id: user_id },
           },
           update: {
-            fields: { password: 1, options: 1 },
+            fields: { options: 1 },
             forcedFilter: { id: user_id },
           },
         },

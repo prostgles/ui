@@ -113,10 +113,8 @@ export const approveToolUse = async (
       type: "tool_use",
     } as const);
     const toolsWithInfo = await getLLMToolsAllowedInThisChat({
-      userType: user.type,
       dbs,
       chat,
-      clientReq,
     });
     const aborter = getChatAborter(chat.id);
     return runApprovedTools({

@@ -159,14 +159,14 @@ export const stateServerAdminFunctions = {
       }),
       getConnectionDBTypes: defineFunction({
         input: { conId: { type: "string", optional: true } },
-        run: ({ conId }) => {
+        run: async ({ conId }) => {
           if (!statePrgl) throw "statePrgl missing";
           /** No connection id = state connection */
           if (!conId) {
-            return statePrgl.getTSSchema().tsSchema;
+            return (await statePrgl.getTSSchema()).tsSchema;
           }
           const c = connectionManager.getConnectionStartedInstance(conId);
-          return c.prgl.getTSSchema().tsSchema;
+          return (await c.prgl.getTSSchema()).tsSchema;
         },
       }),
       runSql: defineFunction({

@@ -1,6 +1,6 @@
 import {
   getFinalFilter,
-  parseContextVal,
+  getContextualValue,
   type DetailedFilter,
   type GroupedDetailedFilter,
 } from "@common/filterUtils";
@@ -35,12 +35,12 @@ export const getComparablePGPolicy = async ({
     if ("contextValue" in f) {
       const col = table.columns.find((c) => c.name === f.fieldName);
       if (!col) return "";
-      const contextVal: string = parseContextVal(f, undefined, {
+      const contextVal = getContextualValue(f, {
         forInfoOnly: "pg",
-      });
+      }) as string;
       return `${f.fieldName} ${f.type ?? "="} ${contextVal}::${col.udt_name}`;
     }
-    const parsedFilter = getFinalFilter(f, undefined, { columns });
+    const parsedFilter = getFinalFilter(f, { columns });
     try {
       const condition = (await db[table.name]?.find?.(parsedFilter, {
         returnType: "statement-where",
@@ -84,10 +84,10 @@ export const getComparablePGPolicy = async ({
         const col = table.columns.find((c) => c.name === d.fieldName);
         const value =
           d.type === "fixed" ?
-            ["number", "boolean"].includes(col?.tsDataType as any) ?
-              d.value
+            ["number", "boolean"].includes(col?.tsDataType as string) ?
+              (d.value as string)
             : `'${d.value}'`
-          : `prostgles.${d.objectName}('${d.objectPropertyName}')::${col?.udt_name}`;
+          : `prostgles.${d.$prostglesContext.objectName}('${d.$prostglesContext.objectPropertyName}')::${col?.udt_name}`;
         return `${i ? "" : "  "}${d.fieldName} = ${value}`;
       });
 

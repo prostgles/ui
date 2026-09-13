@@ -9,7 +9,6 @@ import type {
 import type { ProxyCallDataDefinitions } from "../runtimeSdk/defineAgenticWorkflowHandlers.types";
 import { parseDDLStatements } from "./parseDDLStatements";
 import { quoteIdent } from "./quoteIdent";
-import type { TableSchema } from "prostgles-server/dist/DboBuilder/DboBuilder";
 
 export const validateDatabaseAccessDefinitions = async ({
   databaseAccessDefinitions,
@@ -127,7 +126,8 @@ export const validateDatabaseAccessDefinitions = async ({
         return { ...futureSchema, parsedDdlStatements };
       }
     }
-    const { tablesOrViews, tsSchema } = activeConnection.prgl.getTSSchema();
+    const { tablesOrViews, tsSchema } =
+      await activeConnection.prgl.getTSSchema();
     return { tablesOrViews, tsSchema, parsedDdlStatements: undefined };
   })();
 

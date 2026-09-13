@@ -238,7 +238,7 @@ export const userServerFunctions = {
         input: { chatId: "integer" },
         run: async (
           { chatId },
-          { dbo: dbs, user, clientReq },
+          { dbo: dbs, user },
         ): Promise<AllowedChatTool[] | undefined> => {
           const chat = await dbs.llm_chats.findOne({
             id: chatId,
@@ -249,9 +249,7 @@ export const userServerFunctions = {
           if (!connectionId) throw "Chat connection_id not found";
           const allowedTools = await getLLMToolsAllowedInThisChat({
             chat,
-            userType: user.type,
             dbs,
-            clientReq,
           });
           return allowedTools;
         },

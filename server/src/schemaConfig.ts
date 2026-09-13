@@ -12,6 +12,7 @@ export {
 import type { ProstglesInitOptions } from "prostgles-server/dist/ProstglesTypes";
 export type { Join } from "prostgles-server/dist/ProstglesTypes";
 import type { OnReadyParams } from "prostgles-server/dist/initProstgles";
+import type { getStartAgent } from "./McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/getStartAgent";
 import type {
   ServiceManager,
   ServiceManagerConfig,
@@ -39,6 +40,8 @@ export type ProstglesContext<
   Services extends ServiceRegistry = Record<never, never>,
 > = {
   serviceManager: ServiceManager<typeof prostglesServices & Services>;
+  /** Run an agent as the caller using the existing Prostgles LLM configuration. */
+  startAgent: ReturnType<typeof getStartAgent>;
 };
 
 export type ProstglesOnMount<
@@ -135,6 +138,11 @@ export type SchemaConfig<
   /** Non-credential connection display options. Database URLs belong in .env. */
   connection?: SchemaConfigConnection;
   databaseConfig?: SchemaConfigDatabase;
+  /** Replaces instance-wide LLM credentials. Omit to preserve them; [] clears them. */
+  llm_credentials?: Omit<
+    DBGeneratedSchema["llm_credentials"]["columns"],
+    "id" | "created" | "user_id"
+  >[];
   /** Audits inserts, updates and deletes and shows the history in row cards. */
   audit?: SchemaConfigAudit<S>;
   /** Access rules matched by user type, just like rules configured through the UI. */

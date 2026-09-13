@@ -6,26 +6,35 @@ import packageJson from "../../package.json";
 import { fromEntries, pickKeys } from "prostgles-types";
 import { dirname, join, resolve } from "path";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
+import { format, getFileInfo, resolveConfig, type Options } from "prettier";
+import {
+  cliAssetFileNames,
+  cliFileNames,
+  type CliFileName,
+} from "./cliFileNames";
 
-export const saveCliTemplateFiles = ({
+export const saveCliTemplateFiles = async ({
   configId,
   targetPath,
   environmentDefaults,
+  formatConfigPath = targetPath,
 }: {
   configId: string;
   targetPath: string;
+  formatConfigPath?: string;
   environmentDefaults?: {
     PRGL_PASSWORD?: string;
     PROSTGLES_DOCKER_DB_PASSWORD?: string;
   };
 }) => {
-  saveFolderFiles(
+  await saveFolderFiles(
     targetPath,
     getCliTemplateFiles({ configId, environmentDefaults }),
+    await getFormatOptions(formatConfigPath),
   );
 };
 
-export const saveCliComposeFiles = ({
+export const saveCliComposeFiles = async ({
   configId,
   targetPath,
 }: {
@@ -41,7 +50,7 @@ export const saveCliComposeFiles = ({
       `Refusing to overwrite existing deployment files: ${existingFiles.join(", ")}`,
     );
   }
-  saveFolderFiles(targetPath, files);
+  await saveFolderFiles(targetPath, files, await getFormatOptions(targetPath));
 };
 
 export const srcFolderName = "src";
@@ -61,19 +70,41 @@ type FolderFiles = {
   [key: string]: string | FolderFiles;
 };
 
-const saveFolderFiles = (targetPath: string, folderFiles: FolderFiles) => {
+const saveFolderFiles = async (
+  targetPath: string,
+  folderFiles: FolderFiles,
+  formatOptions: Options,
+  ignorePath = join(targetPath, cliFileNames.prettierIgnore),
+) => {
+  const prettierIgnore = folderFiles[cliFileNames.prettierIgnore];
+  if (typeof prettierIgnore === "string") {
+    mkdirSync(targetPath, { recursive: true });
+    writeFileSync(ignorePath, fixIndent(prettierIgnore));
+  }
   for (const [relativePath, content] of Object.entries(folderFiles)) {
     const fullPath = join(targetPath, relativePath);
     const fullPathDirectory = dirname(fullPath);
     if (typeof content === "string") {
       mkdirSync(fullPathDirectory, { recursive: true });
-      writeFileSync(fullPath, fixIndent(content));
+      const text = fixIndent(content);
+      const { inferredParser } = await getFileInfo(fullPath, { ignorePath });
+      writeFileSync(
+        fullPath,
+        inferredParser ?
+          await format(text, { ...formatOptions, filepath: fullPath })
+        : text,
+      );
     } else {
       mkdirSync(fullPath, { recursive: true });
-      saveFolderFiles(fullPath, content);
+      await saveFolderFiles(fullPath, content, formatOptions, ignorePath);
     }
   }
 };
+
+const getFormatOptions = async (targetPath: string): Promise<Options> =>
+  (await resolveConfig(join(targetPath, cliFileNames.packageJson), {
+    useCache: false,
+  })) ?? (JSON.parse(readCliAsset(cliFileNames.prettierConfig)) as Options);
 
 const getCliTemplateFiles = ({
   configId,
@@ -87,7 +118,7 @@ const getCliTemplateFiles = ({
 }) =>
   ({
     ...getCliComposeFiles({ configId }),
-    "README.md": `
+    [cliFileNames.readme]: `
       # ${configId}
 
       ## Development
@@ -123,8 +154,9 @@ const getCliTemplateFiles = ({
       \`\`\`
 
       The database and Prostgles data directory use named volumes. Managed app services share the private runtime network and are not published on host ports.`,
-    "package.json": JSON.stringify(getPackageJson(configId), null, 2) + "\n",
-    "tsconfig.json":
+    [cliFileNames.packageJson]:
+      JSON.stringify(getPackageJson(configId), null, 2) + "\n",
+    [cliFileNames.tsconfig]:
       JSON.stringify(
         {
           compilerOptions: {
@@ -147,16 +179,16 @@ const getCliTemplateFiles = ({
         null,
         2,
       ) + "\n",
-    "AGENTS.md": getCliAgentsFile(),
+    [cliFileNames.agents]: getCliAgentsFile(),
     [generatedFolderName]: {
-      "DBGeneratedSchema.ts":
+      [cliFileNames.dbGeneratedSchema]:
         "export type DBGeneratedSchema = Record<string, { columns: Record<string, unknown> }>\n",
     },
     [srcFolderName]: {
       ...fromEntries(srcSubfolderNames.map((folderName) => [folderName, {}])),
       "index.ts": `
         import { defineConfig } from "@prostgles/app";
-        import type { DBGeneratedSchema } from "../${generatedFolderName}/DBGeneratedSchema";
+        import type { DBGeneratedSchema } from "../${generatedFolderName}/${cliFileNames.dbGeneratedSchema.slice(0, -3)}";
         import { serviceManagerConfig } from "./serviceManager";
 
         const prostgles = defineConfig<DBGeneratedSchema>();
@@ -190,7 +222,7 @@ const getCliTemplateFiles = ({
               }, 
             } as const satisfies ProstglesService;`,
           src: {
-            Dockerfile: `
+            [cliFileNames.dockerfile]: `
               FROM python:3.13-alpine
 
               WORKDIR /app
@@ -221,7 +253,7 @@ const getCliTemplateFiles = ({
         import assert from "node:assert/strict";
         import test from "node:test";
         import { createTestDeployment } from "@prostgles/app/testing";
-        import type { DBGeneratedSchema } from "../generated/DBGeneratedSchema";
+        import type { DBGeneratedSchema } from "../${generatedFolderName}/${cliFileNames.dbGeneratedSchema.slice(0, -3)}";
 
         void test("starts the configured app with an isolated database", async (context) => {
           const deployment = await createTestDeployment<DBGeneratedSchema>({
@@ -248,9 +280,9 @@ const getCliTemplateFiles = ({
           assert.equal(memberClient.auth.user?.type, "default");
         });`,
     },
-    "eslint.config.mjs": eslintConfig,
-    ".prettierrc": readCliAsset(".prettierrc"),
-    ".prettierignore": `
+    [cliFileNames.eslintConfig]: eslintConfig,
+    [cliFileNames.prettierConfig]: readCliAsset(cliFileNames.prettierConfig),
+    [cliFileNames.prettierIgnore]: `
       node_modules/
       build/
       ${generatedFolderName}/
@@ -258,13 +290,13 @@ const getCliTemplateFiles = ({
       e2e/test-results/
       e2e/playwright-report/
       src/${servicesFolderName}/*/src/`,
-    ".gitignore": `
+    [cliFileNames.gitIgnore]: `
       node_modules/
       build/
       .env
       .prostgles/test-logs/
       *.log`,
-    ".env.example": `
+    [cliFileNames.environmentExample]: `
       # Fixed admin credentials for CLI development.
       PRGL_USERNAME=admin
       PRGL_PASSWORD=${environmentDefaults?.PRGL_PASSWORD ?? randomBytes(24).toString("base64url")}
@@ -280,11 +312,18 @@ const getCliTemplateFiles = ({
 
       # Optional test-only override. By default npm test builds DB.Dockerfile.
       # PROSTGLES_TEST_POSTGRES_IMAGE=postgis/postgis:17-3.6-alpine`,
-  }) as const;
+  }) as const satisfies FolderFiles &
+    Record<
+      Exclude<CliFileName, typeof cliFileNames.dbGeneratedSchema>,
+      string
+    > & {
+      [generatedFolderName]: Record<
+        typeof cliFileNames.dbGeneratedSchema,
+        string
+      >;
+    };
 
-const readCliAsset = (
-  filename: "Dockerfile" | "DB.Dockerfile" | ".prettierrc",
-) => {
+const readCliAsset = (filename: (typeof cliAssetFileNames)[number]) => {
   const filePath = join(__dirname, filename);
   if (!existsSync(filePath)) {
     throw new Error(`Missing bundled ${filename}: ${filePath}`);
@@ -294,8 +333,8 @@ const readCliAsset = (
 
 export const getCliComposeFiles = ({ configId }: { configId: string }) =>
   ({
-    "DB.Dockerfile": readCliAsset("DB.Dockerfile"),
-    Dockerfile: `${readCliAsset("Dockerfile")}
+    [cliFileNames.dbDockerfile]: readCliAsset(cliFileNames.dbDockerfile),
+    [cliFileNames.dockerfile]: `${readCliAsset(cliFileNames.dockerfile).trimEnd()}\n\n${fixIndent(`
       FROM runtime AS app
 
       WORKDIR /app
@@ -306,8 +345,8 @@ export const getCliComposeFiles = ({ configId }: { configId: string }) =>
 
       ENV NODE_ENV=production
 
-      CMD ["npm", "start"]`,
-    "compose.yaml": `
+      CMD ["npm", "start"]`)}\n`,
+    [cliFileNames.compose]: `
       name: ${configId}
 
       services:
@@ -340,7 +379,7 @@ export const getCliComposeFiles = ({ configId }: { configId: string }) =>
         db:
           build:
             context: .
-            dockerfile: DB.Dockerfile
+            dockerfile: ${cliFileNames.dbDockerfile}
           command: postgres -c shared_preload_libraries=pg_stat_statements -c max_connections=200
           restart: unless-stopped
           environment:
@@ -365,7 +404,7 @@ export const getCliComposeFiles = ({ configId }: { configId: string }) =>
         runtime:
           name: \${PROSTGLES_DOCKER_NETWORK:-${configId}-runtime}
           driver: bridge`,
-    ".dockerignore": `
+    [cliFileNames.dockerIgnore]: `
       .env
       .git
       .prostgles
@@ -493,6 +532,7 @@ const eslintConfig = `
       },
       rules: {
         "no-cond-assign": "error",
+        "no-magic-numbers": "warn",
         "no-unused-vars": "off",
         "security/detect-object-injection": "off",
         "@typescript-eslint/no-explicit-any": "off",
@@ -541,6 +581,8 @@ const schemaConfigGuidance = {
   functions:
     "Use top-level `functions` for explicit workflow actions, privileged operations, and server-only business logic. Prefer built-in table insert/edit forms for ordinary CRUD instead of wrapping each insert or update in a function.",
   id: "Keep `id` stable because it identifies the deployed configuration.",
+  llm_credentials:
+    "Use `llm_credentials` only when this config should replace the instance-wide LLM credentials. Omit it to preserve existing credentials; an empty array clears them. Read secret values from environment variables and give credentials unique names for access-rule references.",
   joins:
     "Omit `joins` and use inferred foreign-key joins by default, including composite foreign keys and junction tables. The top-level `joins` option is experimental; do not enumerate existing FK relationships. An explicit path with `on` selects a known relationship; it does not define a new non-FK join. When a permission filter requires a non-FK relationship, declare only that relationship and verify the resolved server retains other inferred FK joins. Older servers suppress inferred joins involving either custom-join table; fix/upgrade the source package instead of enumerating the schema's joins.",
   onInitSQL:
@@ -594,6 +636,9 @@ const getCliAgentsFile = () => `
 
   ## Access control
 
+  - Each user type may appear in only one config rule. Keep \`public\` in its own rule; it cannot be combined with non-public user types. Table hooks validate this on access-rule user-type inserts and updates.
+  - CLI sync persists access rules in the same tables used by the UI editor. UI edits take effect, but the next sync replaces this connection's rules from config; omitted or empty \`access_control\` clears them. Rules still linked to other connections are preserved.
+  - Reference shared dashboards with \`dbsPermissions.viewPublishedWorkspaces.workspaceNames\`. Matching top-level \`workspaces\` are persisted under an admin owner before resolving permissions. Resource names must resolve uniquely; \`publishedMethods\` refers to existing published functions on this connection, separate from top-level \`functions\`.
   - Define authorization in \`access_control\` using explicit per-table \`select\`, \`insert\`, \`update\`, and \`delete\` permissions. Use \`type: "Custom"\` with \`customTables\` for granular access. Do not put authorization checks in \`beforeEach\`, \`afterEach\`, or \`afterAll\` hooks, including admin-only mutation checks.
   - Read the resolved \`SchemaConfigAccessControl\` and rule types before implementing permissions. Each CLI rule contains \`userTypes\` and \`dbPermissions\`: \`forcedFilterDetailed\`, \`checkFilterDetailed\`, and \`forcedDataDetail\` map to the server's \`forcedFilter\`, \`checkFilter\`, and \`forcedData\`. Use the config property names and inspect their filter/context syntax rather than copying raw server publish rules.
   - Forced filters restrict which existing rows a user can select, update, or delete. Apply ownership, tenant, and related-table membership restrictions to every relevant operation; select permissions alone do not protect writes.
@@ -602,6 +647,14 @@ const getCliAgentsFile = () => `
   - Forced data supplies trusted insert/update values and overrides client input, such as the authenticated user's ID or a fixed status. Use server context for identity values; never trust a client-supplied owner or tenant ID. Configure insert and update rules as needed.
   - Use \`fields\` to limit readable/writable columns, \`filterFields\` to limit query filter columns, \`orderByFields\` for selectable sort columns, and update \`dynamicFields\` when editable columns depend on the row. Grant only the operations and fields required by the workflow.
   - Verify permissions through authenticated deployment tests: allowed and denied reads/writes, cross-tenant access, forged ownership values, and unauthorized foreign-key changes. Hooks are for application validation and transactional side effects; they are not the authorization boundary.
+
+  ## LLM agents
+
+  - ${schemaConfigGuidance.llm_credentials}
+  - Use \`access_control[].allowedLLM\` entries shaped as \`{ credentialName, promptName }\` to reference existing, uniquely named LLM credentials and prompts. Set \`llm_daily_limit\` in the access rule when needed.
+  - In a server function, call \`ctx.context.startAgent({ prompt, input, outputSchema }, ctx)\`, where \`ctx\` is the function's second argument. This uses Prostgles' configured models and credentials and runs as the caller; pass the original context to retain their identity and request. The returned object is typed from \`outputSchema\`.
+  - \`startAgent\` currently requires \`clientReq\` alongside the validated \`user\`. Use \`ctx.clientReq\` from a server function's second argument, or \`localParams?.clientReq\` from a hook's arguments, and pass it with the validated user as \`{ user, clientReq }\`.
+  - Read the resolved \`ProstglesContext\` and agent option types before adding tools or database access. \`startAgent\` also accepts \`signal\` and \`timeout\` in milliseconds; tool auto-approval defaults to false.
 
   ## Services
 

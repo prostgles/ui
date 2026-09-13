@@ -16,9 +16,8 @@ export const useLocalTableRulesErrors = ({
 
     const columnNames = table.columns.map((c) => c.name);
     const tableRErrs = await getTableRulesErrors(
-      omitKeys(tableRules, ["tableName" as any]),
+      omitKeys(tableRules, ["tableName" as "select"]),
       columnNames,
-      contextData,
     );
     return tableRErrs;
   }, [tableRules, table, contextData]);

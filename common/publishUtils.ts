@@ -1,4 +1,4 @@
-import { DBGeneratedSchema } from "./DBGeneratedSchema";
+import { DBGeneratedSchema, type DBSchema } from "./DBGeneratedSchema";
 import {
   GroupedDetailedFilter,
   getFinalFilter,
@@ -89,8 +89,10 @@ export type MethodClientDef = {
 };
 
 export type ContextValue = {
-  objectName: string;
-  objectPropertyName: string;
+  $prostglesContext: {
+    objectName: string;
+    objectPropertyName: string;
+  };
 };
 
 export type ForcedData =
@@ -145,17 +147,7 @@ export type DeleteRule = {
   forcedFilterFrom?: "SelectRule" | "UpdateRule";
 };
 
-type CollapseNumberIfStringPresent<T> =
-  [Extract<T, string>] extends [never] ? T : Exclude<T, number>;
-
-export type RequiredCollapsed<T extends Record<string, unknown>> = Required<{
-  [K in keyof T]: CollapseNumberIfStringPresent<T[K]>;
-}>;
-export type DBSSchema = {
-  [K in keyof DBGeneratedSchema]: RequiredCollapsed<
-    DBGeneratedSchema[K]["columns"]
-  >;
-};
+export type DBSSchema = DBSchema;
 
 export type DBSSchemaForInsert = {
   [K in keyof DBGeneratedSchema]: DBGeneratedSchema[K]["columns"];
@@ -242,11 +234,7 @@ export function isObject<T extends Record<string, any>>(obj: any): obj is T {
 }
 
 export type FieldFilter =
-  | ""
-  | "*"
-  | string[]
-  | Record<string, 1 | true>
-  | Record<string, 0 | false>;
+  "" | "*" | string[] | Record<string, 1 | true> | Record<string, 0 | false>;
 
 export const parseFieldFilter = (args: {
   columns: string[];
@@ -274,13 +262,12 @@ export const parseFieldFilter = (args: {
 
 export const parseFullFilter = (
   filter: GroupedDetailedFilter,
-  context: ContextDataObject | undefined,
   columns: string[] | undefined,
 ): { $and: AnyObject[] } | { $or: AnyObject[] } | undefined => {
   const isAnd = "$and" in filter;
   const filters = isAnd ? filter.$and : filter.$or;
   const finalFilters = filters
-    .map((f) => getFinalFilter(f, context, { columns }))
+    .map((f) => getFinalFilter(f, { columns }))
     .filter(isDefined);
   const f = isAnd ? { $and: finalFilters } : { $or: finalFilters };
   return f;
@@ -293,28 +280,19 @@ type ParsedRuleFilters = {
 };
 export const parseCheckForcedFilters = (
   rule: TableRules[keyof TableRules],
-  context: ContextDataObject | undefined,
   columns: string[] | undefined,
 ): ParsedRuleFilters | undefined => {
   let parsedRuleFilters: ParsedRuleFilters | undefined;
   if (isObject(rule)) {
     if ("forcedFilterDetailed" in rule && rule.forcedFilterDetailed) {
-      const forcedFilter = parseFullFilter(
-        rule.forcedFilterDetailed,
-        context,
-        columns,
-      );
+      const forcedFilter = parseFullFilter(rule.forcedFilterDetailed, columns);
       if (forcedFilter) {
         parsedRuleFilters ??= {};
         parsedRuleFilters.forcedFilter = forcedFilter;
       }
     }
     if ("checkFilterDetailed" in rule && rule.checkFilterDetailed) {
-      const checkFilter = parseFullFilter(
-        rule.checkFilterDetailed,
-        context,
-        columns,
-      );
+      const checkFilter = parseFullFilter(rule.checkFilterDetailed, columns);
       if (checkFilter) {
         parsedRuleFilters ??= {};
         parsedRuleFilters.checkFilter = checkFilter;
@@ -326,13 +304,14 @@ export const parseCheckForcedFilters = (
 
 const getValidatedFieldFilter = (
   value: FieldFilter,
-  columns: string[],
+  columns: string[] | undefined,
   expectAtLeastOne = true,
 ): FieldFilter => {
   if (value === "*") return value;
-  const fieldFilter = Array.isArray(value) ?
-    Object.fromEntries(value.map((column) => [column, 1]))
-  : value;
+  const fieldFilter =
+    Array.isArray(value) ?
+      Object.fromEntries(value.map((column) => [column, 1]))
+    : value;
   const values = Object.values(fieldFilter);
   const keys = Object.keys(fieldFilter);
   if (!keys.length && expectAtLeastOne)
@@ -347,9 +326,12 @@ const getValidatedFieldFilter = (
       "Invalid field filter: field values can only be one of 0,1,true,false",
     );
   }
-  const badCols = keys.filter((c) => !columns.includes(c));
-  if (badCols.length) {
-    throw new Error(`Invalid columns provided: ${badCols}`);
+
+  if (columns) {
+    const badCols = keys.filter((c) => !columns.includes(c));
+    if (badCols.length) {
+      throw new Error(`Invalid columns provided: ${badCols}`);
+    }
   }
   return value;
 };
@@ -358,27 +340,24 @@ export type ContextDataObject = {
   user: DBSSchema["users"];
 };
 
-const parseForcedData = (
-  value: Pick<UpdateRule, "forcedDataDetail" | "checkFilterDetailed">,
-  context: ContextDataObject,
-  columns: string[],
-): { forcedData: AnyObject } | undefined => {
-  /** TODO: retire forced data completely */
-  if (!value?.forcedDataDetail?.length) {
-    if (value?.checkFilterDetailed) {
-      const checkFilter = value?.checkFilterDetailed;
+const parseForcedData = ({
+  forcedDataDetail,
+  checkFilterDetailed,
+}: Pick<UpdateRule, "forcedDataDetail" | "checkFilterDetailed">):
+  { forcedData: AnyObject } | undefined => {
+  /** TODO: retire forced data completely because checkFilter can cover the same use case by using '=' filters */
+  if (!forcedDataDetail?.length) {
+    if (checkFilterDetailed) {
+      const checkFilter = checkFilterDetailed;
       if ("$and" in checkFilter && checkFilter.$and.length) {
         const forcedContextData = (checkFilter.$and as DetailedFilter[])
           .map((f) => {
-            if (f.type !== "=") return undefined;
+            if (f.type !== "=") {
+              return undefined;
+            }
 
-            if (f.contextValue && f.contextValue?.objectName === "user") {
-              const userKey = f.contextValue.objectPropertyName;
-              if (!(userKey in context.user))
-                throw new Error(
-                  `Invalid objectPropertyName (${f.contextValue.objectPropertyName}) found in forcedData`,
-                );
-              return [f.fieldName, (context.user as any)[userKey]];
+            if (f.contextValue) {
+              return [f.fieldName, f.contextValue];
             } else if (f.value !== undefined) {
               return [f.fieldName, f.value];
             }
@@ -396,24 +375,17 @@ const parseForcedData = (
     return undefined;
   }
   let forcedData: AnyObject = {};
-  value?.forcedDataDetail.forEach((v) => {
-    if (!columns.includes(v.fieldName))
-      new Error(`Invalid fieldName in forced data ${v.fieldName}`);
-    if (v.fieldName in forcedData)
+  forcedDataDetail.forEach((item) => {
+    if (item.fieldName in forcedData) {
       throw new Error(
-        `Duplicate forced data (${v.fieldName}) found in ${JSON.stringify(value)}`,
+        `Duplicate forced data (${item.fieldName}) found in ${JSON.stringify(forcedDataDetail)}`,
       );
-    if (v.type === "fixed") {
-      forcedData[v.fieldName] = v.value;
+    }
+    if (item.type === "fixed") {
+      forcedData[item.fieldName] = item.value;
     } else {
-      const obj: AnyObject = context[v.objectName as keyof ContextDataObject];
-      if (!obj)
-        throw new Error(`Missing objectName (${v.objectName}) in forcedData`);
-      if (!(v.objectPropertyName in obj))
-        throw new Error(
-          `Invalid/missing objectPropertyName (${v.objectPropertyName}) found in forcedData`,
-        );
-      forcedData[v.fieldName] = obj[v.objectPropertyName];
+      const { $prostglesContext } = item;
+      forcedData[item.fieldName] = { $prostglesContext };
     }
   });
   return { forcedData };
@@ -421,14 +393,13 @@ const parseForcedData = (
 
 const parseSelect = (
   rule: undefined | boolean | SelectRule,
-  columns: string[],
-  context: ContextDataObject | undefined,
+  columns: string[] | undefined,
 ) => {
   if (!rule || rule === true) return rule;
 
   return {
     fields: getValidatedFieldFilter(rule.fields, columns),
-    ...parseCheckForcedFilters(rule, context, columns),
+    ...parseCheckForcedFilters(rule, columns),
     ...(rule.orderByFields && {
       orderByFields: getValidatedFieldFilter(
         rule.orderByFields,
@@ -443,75 +414,69 @@ const parseSelect = (
 };
 const parseUpdate = (
   rule: undefined | boolean | UpdateRule,
-  columns: string[],
-  context: ContextDataObject,
+  columns: string[] | undefined,
 ) => {
   if (!rule || rule === true) return rule;
 
   return {
     fields: getValidatedFieldFilter(rule.fields, columns),
-    ...parseCheckForcedFilters(rule, context, columns),
-    ...parseForcedData(rule, context, columns),
+    ...parseCheckForcedFilters(rule, columns),
+    ...parseForcedData(rule),
     ...(rule.filterFields && {
       filterFields: getValidatedFieldFilter(rule.filterFields, columns, false),
     }),
     ...(rule.dynamicFields?.length && {
       dynamicFields: rule.dynamicFields.map((v) => ({
         fields: getValidatedFieldFilter(v.fields, columns),
-        filter: parseFullFilter(v.filterDetailed, context, columns),
+        filter: parseFullFilter(v.filterDetailed, columns),
       })),
     }),
   } as PublishedResultUpdate;
 };
 const parseInsert = (
   rule: undefined | boolean | InsertRule,
-  columns: string[],
-  context: ContextDataObject,
+  columns: string[] | undefined,
 ) => {
   if (!rule || rule === true) return rule;
 
   return {
     fields: getValidatedFieldFilter(rule.fields, columns),
-    ...parseForcedData(rule, context, columns),
-    ...parseCheckForcedFilters(rule, context, columns),
+    ...parseForcedData(rule),
+    ...parseCheckForcedFilters(rule, columns),
   };
 };
 const parseDelete = (
   rule: undefined | boolean | DeleteRule,
-  columns: string[],
-  context: ContextDataObject,
+  columns: string[] | undefined,
 ) => {
   if (!rule || rule === true) return rule;
 
   return {
-    ...parseCheckForcedFilters(rule, context, columns),
+    ...parseCheckForcedFilters(rule, columns),
     filterFields: getValidatedFieldFilter(rule.filterFields, columns),
   };
 };
 
 export const parseTableRules = (
-  rules: TableRules,
-  isView = false,
-  columns: string[],
-  context: ContextDataObject,
+  tableRules: TableRules | true | "*",
+  columns: string[] | undefined,
 ): PublishedResult | undefined => {
-  if ([true, "*"].includes(rules as any)) {
+  if (tableRules === "*" || tableRules === true) {
     return true;
   }
 
-  if (isObject(rules)) {
+  if (isObject(tableRules)) {
     return {
-      select: parseSelect(rules.select, columns, context),
+      select: parseSelect(tableRules.select, columns),
       subscribe:
-        isObject(rules.select) ? rules.select.subscribe : rules.subscribe,
-      ...(!isView ?
-        {
-          insert: parseInsert(rules.insert, columns, context),
-          update: parseUpdate(rules.update, columns, context),
-          delete: parseDelete(rules.delete, columns, context),
-          sync: rules.sync,
-        }
-      : {}),
+        isObject(tableRules.select) ?
+          tableRules.select.subscribe
+        : tableRules.subscribe,
+      // ...(!isView ?
+      insert: parseInsert(tableRules.insert, columns),
+      update: parseUpdate(tableRules.update, columns),
+      delete: parseDelete(tableRules.delete, columns),
+      sync: tableRules.sync,
     };
   }
 
@@ -525,7 +490,6 @@ export type TableRulesErrors = Partial<Record<keyof TableRules, any>> & {
 export const getTableRulesErrors = async (
   rules: TableRules,
   tableColumns: string[],
-  contextData: ContextDataObject,
 ): Promise<TableRulesErrors> => {
   let result: TableRulesErrors = {};
 
@@ -535,7 +499,7 @@ export const getTableRulesErrors = async (
       const rule = rules[key];
 
       try {
-        parseTableRules({ [key]: rule }, false, tableColumns, contextData);
+        parseTableRules({ [key]: rule }, tableColumns);
       } catch (err) {
         result[key] = err;
       }
@@ -554,11 +518,7 @@ export const validateDynamicFields = async (
   if (!dynamicFields || !tableHandler) return {};
 
   for (const [dfIndex, dfRule] of dynamicFields.entries()) {
-    const filter = await parseFullFilter(
-      dfRule.filterDetailed,
-      context,
-      columns,
-    );
+    const filter = await parseFullFilter(dfRule.filterDetailed, columns);
     if (!filter)
       throw new Error(
         "dynamicFields.filter cannot be empty: " + JSON.stringify(dfRule),
@@ -568,11 +528,7 @@ export const validateDynamicFields = async (
     /** Ensure dynamicFields filters do not overlap */
     for (const [_dfIndex, _dfRule] of dynamicFields.entries()) {
       if (dfIndex !== _dfIndex) {
-        const _filter = await parseFullFilter(
-          _dfRule.filterDetailed,
-          context,
-          columns,
-        );
+        const _filter = await parseFullFilter(_dfRule.filterDetailed, columns);
         if (
           await tableHandler.findOne(
             { $and: [filter, _filter] },

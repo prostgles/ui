@@ -7,6 +7,7 @@ import {
 import type { DBSSchema } from "@common/publishUtils";
 import { sliceText } from "@common/utils";
 import {
+  defineJoin,
   getProperty,
   getSerialisableError,
   isObject,
@@ -276,16 +277,13 @@ export const askLLM = async (args: AskLLMArgs) => {
     );
   };
   let toolsWithInfo:
-    | Awaited<ReturnType<typeof getLLMToolsAllowedInThisChat>>
-    | undefined;
+    Awaited<ReturnType<typeof getLLMToolsAllowedInThisChat>> | undefined;
   try {
     const toolsResult = await tryCatchV2(
       async () =>
         await getLLMToolsAllowedInThisChat({
-          userType: user.type,
           dbs,
           chat,
-          clientReq,
         }),
     );
     toolsWithInfo = toolsResult.data;
@@ -301,7 +299,10 @@ export const askLLM = async (args: AskLLMArgs) => {
       {
         select: {
           "*": 1,
-          llm_providers: "*",
+          llm_providers: defineJoin({
+            select: "*",
+            $leftJoin: "llm_providers",
+          }),
         },
       },
     );

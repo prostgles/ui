@@ -348,7 +348,7 @@ export class ConnectionManager {
             ) {
               void this.syncUsers(
                 db,
-                userTypes as DBSSchema["users"]["type"][],
+                userTypes,
                 syncableColumns,
               );
             }
@@ -377,7 +377,6 @@ export class ConnectionManager {
             databaseConfig: connectionInstance.dbConf,
             dbs: this.dbs!,
             connection: connectionInstance.con,
-            connectionManager: this,
           });
           return connectionInstance.prgl.update({ functions }, true);
         }),

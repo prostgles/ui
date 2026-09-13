@@ -1,3 +1,4 @@
+import { cliFileNames } from "./cliFileNames";
 import assert from "node:assert/strict";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -5,16 +6,19 @@ import { join } from "node:path";
 import test from "node:test";
 import { saveCliComposeFiles, saveCliTemplateFiles } from "./cliTemplateFiles";
 
-void test("new CLI apps include a native Compose deployment", (context) => {
+void test("new CLI apps include a native Compose deployment", async (context) => {
   const targetPath = mkdtempSync(join(tmpdir(), "prostgles-cli-template-"));
   context.after(() => rmSync(targetPath, { force: true, recursive: true }));
 
-  saveCliTemplateFiles({ configId: "my-app", targetPath });
+  await saveCliTemplateFiles({ configId: "my-app", targetPath });
 
-  const compose = readFileSync(join(targetPath, "compose.yaml"), "utf8");
-  const dockerfile = readFileSync(join(targetPath, "Dockerfile"), "utf8");
+  const compose = readFileSync(join(targetPath, cliFileNames.compose), "utf8");
+  const dockerfile = readFileSync(
+    join(targetPath, cliFileNames.dockerfile),
+    "utf8",
+  );
   const generatedPackage = JSON.parse(
-    readFileSync(join(targetPath, "package.json"), "utf8"),
+    readFileSync(join(targetPath, cliFileNames.packageJson), "utf8"),
   ) as { scripts: Record<string, string> };
   assert.match(compose, /^name: my-app$/m);
   assert.match(compose, /^ {2}app:$/m);
@@ -43,7 +47,9 @@ void test("new CLI apps include a native Compose deployment", (context) => {
   );
   assert.ok(compose.includes("dockerfile: DB.Dockerfile"));
   assert.ok(
-    readFileSync(join(targetPath, "DB.Dockerfile"), "utf8").includes("procps"),
+    readFileSync(join(targetPath, cliFileNames.dbDockerfile), "utf8").includes(
+      "procps",
+    ),
   );
   assert.ok(compose.includes("shared_preload_libraries=pg_stat_statements"));
   assert.ok(compose.includes("max_connections=200"));
@@ -53,11 +59,11 @@ void test("new CLI apps include a native Compose deployment", (context) => {
   );
 });
 
-void test("CLI templates can preserve environment example secrets", (context) => {
+void test("CLI templates can preserve environment example secrets", async (context) => {
   const targetPath = mkdtempSync(join(tmpdir(), "prostgles-cli-env-"));
   context.after(() => rmSync(targetPath, { force: true, recursive: true }));
 
-  saveCliTemplateFiles({
+  await saveCliTemplateFiles({
     configId: "my-app",
     targetPath,
     environmentDefaults: {
@@ -67,7 +73,7 @@ void test("CLI templates can preserve environment example secrets", (context) =>
   });
 
   const environmentExample = readFileSync(
-    join(targetPath, ".env.example"),
+    join(targetPath, cliFileNames.environmentExample),
     "utf8",
   );
   assert.match(environmentExample, /^PRGL_PASSWORD=existing-admin-password$/m);
@@ -78,17 +84,17 @@ void test("CLI templates can preserve environment example secrets", (context) =>
   assert.ok(environmentExample.includes("PROSTGLES_TEST_POSTGRES_IMAGE"));
 });
 
-void test("compose init does not overwrite deployment files", (context) => {
+void test("compose init does not overwrite deployment files", async (context) => {
   const targetPath = mkdtempSync(join(tmpdir(), "prostgles-compose-init-"));
   context.after(() => rmSync(targetPath, { force: true, recursive: true }));
-  writeFileSync(join(targetPath, "Dockerfile"), "custom\n");
+  writeFileSync(join(targetPath, cliFileNames.dockerfile), "custom\n");
 
-  assert.throws(
+  await assert.rejects(
     () => saveCliComposeFiles({ configId: "my-app", targetPath }),
     /Refusing to overwrite existing deployment files: Dockerfile/,
   );
   assert.equal(
-    readFileSync(join(targetPath, "Dockerfile"), "utf8"),
+    readFileSync(join(targetPath, cliFileNames.dockerfile), "utf8"),
     "custom\n",
   );
 });

@@ -41,7 +41,7 @@ export type DBGeneratedSchema = {
   access_control_user_types: {
     columns: {
       access_control_id: number;
-      user_type: string;
+      user_type: "admin" | "public" | "default"
     };
     
   };
@@ -705,7 +705,7 @@ export type DBGeneratedSchema = {
       name?: null | string;
       project_id?: null | string;
       socket_id?: null | string;
-      type: string;
+      type: "web" | "api_token" | "mobile"
       user_agent?: null | string;
       user_id: string;
       user_type: string;
@@ -852,11 +852,23 @@ export type DBGeneratedSchema = {
   
 }
 
+type CollapseNumberIfStringPresent<T> =
+  [Extract<T, string>] extends [never] ? T : Exclude<T, number>;
+
+/**
+ * Numeric columns that serialize to strings keep the numeric type as well to allow:
+ * - inserting numeric values as either numbers or strings
+ * - reading numeric values as strings
+ */
+export type NormalizedRow<T extends Record<string, unknown>> = Required<{
+  [K in keyof T]: CollapseNumberIfStringPresent<T[K]>;
+}>;
+
 /**
  * Data types as expected when selecting from the database
  * */
 export type DBSchema = {
-  [K in keyof DBGeneratedSchema]: Required<DBGeneratedSchema[K]["columns"]>;
+  [K in keyof DBGeneratedSchema]: NormalizedRow<DBGeneratedSchema[K]["columns"]>;
 };
 
 /**

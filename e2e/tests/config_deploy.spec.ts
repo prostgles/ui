@@ -544,6 +544,33 @@ module.exports.functions = {
       },
     };
     const rule = (await state.db.access_control!.findOne!(connectionFilter))!;
+    const userTypes = state.db.access_control_user_types!;
+    const ruleFilter = { access_control_id: rule.id };
+    await userTypes.insert!({ ...ruleFilter, user_type: "admin" });
+    const mixedTypesError = {
+      message: "Cannot mix 'public' and non-public user types",
+    };
+    await expect(
+      userTypes.insert!({ ...ruleFilter, user_type: "public" }),
+    ).rejects.toMatchObject(mixedTypesError);
+    await expect(
+      userTypes.update!(
+        { ...ruleFilter, user_type: "admin" },
+        { user_type: "public" },
+      ),
+    ).rejects.toMatchObject(mixedTypesError);
+    expect(await userTypes.count!(ruleFilter)).toBe(2);
+    await userTypes.delete!({ ...ruleFilter, user_type: "admin" });
+    await expect(
+      state.db.access_control!.insert!({
+        database_id: rule.database_id,
+        dbPermissions: rule.dbPermissions,
+        access_control_user_types: [
+          { user_type: "public" },
+          { user_type: "default" },
+        ],
+      }),
+    ).rejects.toMatchObject(mixedTypesError);
     const memberState = await deployment.connectStateAs("member");
     const workspace = (await memberState.db.workspaces!.findOne!({
       connection_id: connection.id,

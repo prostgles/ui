@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { cliFileNames } from "./cliFileNames";
 import { spawn, spawnSync, type ChildProcess } from "child_process";
 import { randomBytes } from "node:crypto";
 import { startTemporaryDatabases } from "./startTemporaryDatabases";
@@ -47,13 +48,13 @@ const installConfigDependencies = (targetPath: string) => {
   }
 };
 
-const createConfig = (targetPath: string, skipInstall: boolean) => {
+const createConfig = async (targetPath: string, skipInstall: boolean) => {
   if (existsSync(targetPath) && readdirSync(targetPath).length) {
     throw new Error(`${targetPath} already exists and is not empty`);
   }
 
   const configId = getConfigId(path.basename(targetPath));
-  saveCliTemplateFiles({ configId, targetPath });
+  await saveCliTemplateFiles({ configId, targetPath });
 
   if (skipInstall) {
     console.log(
@@ -69,7 +70,7 @@ const createConfig = (targetPath: string, skipInstall: boolean) => {
 };
 
 const getExistingConfigId = (configPath: string) => {
-  const packageFile = path.join(configPath, "package.json");
+  const packageFile = path.join(configPath, cliFileNames.packageJson);
   if (!existsSync(packageFile)) {
     throw new Error(`No package.json found in config project ${configPath}`);
   }
@@ -83,9 +84,9 @@ const getExistingConfigId = (configPath: string) => {
   );
 };
 
-const initialiseCompose = (configPath: string) => {
+const initialiseCompose = async (configPath: string) => {
   const configId = getExistingConfigId(configPath);
-  saveCliComposeFiles({ configId, targetPath: configPath });
+  await saveCliComposeFiles({ configId, targetPath: configPath });
   console.log(
     `Added Dockerfile, compose.yaml and .dockerignore to ${configPath}. Set PROSTGLES_DOCKER_DB_PASSWORD in .env, then run docker compose up -d --build.`,
   );
@@ -286,11 +287,11 @@ const main = async () => {
   if (command === "create") {
     const target = args[0];
     if (!target || target.startsWith("-")) throw new Error(usage);
-    createConfig(path.resolve(target), args.includes("--skip-install"));
+    await createConfig(path.resolve(target), args.includes("--skip-install"));
     return;
   }
   if (command === "compose" && args[0] === "init") {
-    initialiseCompose(getConfigPath(args.slice(1)));
+    await initialiseCompose(getConfigPath(args.slice(1)));
     return;
   }
   if (command === "upgrade") {

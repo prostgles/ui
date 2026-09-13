@@ -1,13 +1,13 @@
-import type { DBS } from "@src/index";
-import { getTemplatedWebAppConnection } from "./getTemplatedWebAppConnection";
+import type { DBSClient } from "@src/index";
+import { isTesting } from "@src/init/utils";
 import { rmSync } from "fs";
 import { join } from "path";
+import { getTemplatedWebAppConnection } from "./getTemplatedWebAppConnection";
 import { runDockerForWebApp } from "./runDockerForWebApp";
-import { isTesting } from "@src/init/utils";
 
 export const buildWebApp = async (
   { connectionId, clean }: { connectionId: string; clean?: boolean },
-  { dbo }: { dbo: DBS },
+  { dbo }: { dbo: DBSClient },
 ) => {
   const { web_app_directory } = await getTemplatedWebAppConnection(
     dbo,

@@ -19,7 +19,7 @@ import { tout } from "@src/utils/tout";
 import { spawn } from "child_process";
 import type { NextFunction, Request, Response } from "express";
 import path from "path";
-import type { DBOFullyTyped } from "prostgles-server";
+import type { DBOFullyTyped, DBOFullyTypedClient } from "prostgles-server";
 import type { VoidFunction } from "prostgles-server/dist/SchemaWatch/SchemaWatch";
 import { getKeys, omitKeys, type AnyObject } from "prostgles-types";
 import { getAuthSetupData } from "./authConfig/subscribeToAuthSetupChanges";
@@ -216,6 +216,7 @@ export type BareConnectionDetails = Pick<
   | "ssl_certificate"
 >;
 export type DBS = DBOFullyTyped<DBGeneratedSchema>;
+export type DBSClient = DBOFullyTypedClient<DBGeneratedSchema>;
 export type Users = DBSSchema["users"];
 export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
 export type DatabaseConfigs = DBSSchema["database_configs"];

@@ -1,14 +1,12 @@
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type { DBSSchema } from "@common/publishUtils";
 import type { Publish } from "prostgles-server/dist/PublishParser/PublishParser";
-import type { DBS } from "..";
 import { getPublishLlmChats } from "./getPublishLlmChats";
 
 export const getPublishLLM = (
   user_id: string,
   isAdmin: boolean,
   accessRules: undefined | DBSSchema["access_control"][],
-  dbs: DBS,
 ) => {
   const forcedData = { user_id };
   const forcedFilter = { user_id };

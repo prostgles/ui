@@ -6,5 +6,4 @@ USER root
 # procps needed for stat monitoring
 RUN apk add --no-cache procps
 
-# Switch back to the default postgres user
-USER postgres
+# The entrypoint fixes volume ownership as root, then starts PostgreSQL as postgres.

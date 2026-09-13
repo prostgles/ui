@@ -2,26 +2,26 @@ import type { DBS } from "..";
 import { insertConfigWorkspaces } from "../serverFunctions/insertConfigWorkspaces";
 import type { SchemaConfig, SchemaConfigAccessControl } from "../schemaConfig";
 
-/** Store source rules in the same tables used by the access-control editor. */
-export const syncSchemaConfigAccessControl = async (
-  dbs: DBS,
-  databaseId: number,
-  connectionId: string,
-  rules: SchemaConfigAccessControl[] = [],
-  workspaces: SchemaConfig["workspaces"] = [],
-) => {
-  if (!Array.isArray(rules)) {
-    throw new Error(
-      "access_control must be an array of rules with userTypes and dbPermissions",
-    );
-  }
+/** Persist configured workspaces, LLM credentials, and access-control rules. */
+export const syncSchemaConfigResources = async ({
+  dbs,
+  databaseId,
+  connectionId,
+  rules = [],
+  workspaces = [],
+  llmCredentials,
+}: {
+  dbs: DBS;
+  databaseId: number;
+  connectionId: string;
+  rules?: SchemaConfigAccessControl[];
+  workspaces?: SchemaConfig["workspaces"];
+  llmCredentials?: SchemaConfig["llm_credentials"];
+}) => {
   const userTypes = new Set<string>();
   for (const rule of rules) {
     if (!Array.isArray(rule.userTypes) || !rule.userTypes.length) {
       throw new Error("Each access_control rule must specify userTypes");
-    }
-    if (rule.userTypes.includes("public") && rule.userTypes.length !== 1) {
-      throw new Error("Cannot mix 'public' and non-public user types");
     }
     for (const userType of rule.userTypes) {
       if (userTypes.has(userType)) {
@@ -70,6 +70,24 @@ export const syncSchemaConfigAccessControl = async (
       },
       $notExistsJoined: { access_control_connections: {} },
     });
+    if (llmCredentials) {
+      const admin = await tx.users.findOne(
+        { type: "admin" },
+        { orderBy: { created: 1 } },
+      );
+      if (!admin) {
+        throw new Error("An admin must own configured LLM credentials");
+      }
+      await tx.llm_credentials.delete({});
+      if (llmCredentials.length) {
+        await tx.llm_credentials.insertMany(
+          llmCredentials.map((credential) => ({
+            ...credential,
+            user_id: admin.id,
+          })),
+        );
+      }
+    }
     const allowedLLMReferences = rules.flatMap((rule) => rule.allowedLLM ?? []);
     const [sharedWorkspaces, publishedMethods, credentials, prompts] =
       await Promise.all([

@@ -1,30 +1,22 @@
-import { getSchemaConfig } from "./getSchemaConfig";
 import type { DBSSchema } from "@common/publishUtils";
 import type { SUser } from "@src/authConfig/sessionUtils";
 import type { ProstglesContext } from "@src/schemaConfig";
-import {
-  type ServerFunctionDefinition,
-  type ServerFunctionDefinitions,
-} from "prostgles-server";
-import type { OnReadyParams } from "prostgles-server/dist/initProstgles";
+import { defineJoin, type ServerFunctionDefinitions } from "prostgles-server";
 import type { DBS } from "..";
 import { getEvaledExports } from "./connectionManagerUtils";
-import { getAccessRule } from "./startConnection";
-import type { ConnectionManager } from "./ConnectionManager";
 import type { ConnectionHotReloadProperties } from "./getHotReloadConfigs";
+import { getSchemaConfig } from "./getSchemaConfig";
 
 type Args = {
   dbs: DBS;
   databaseConfig: DBSSchema["database_configs"];
   connection: ConnectionHotReloadProperties;
-  connectionManager: ConnectionManager;
 };
 
 export const getConnectionServerFunctions = async ({
   databaseConfig,
   dbs,
   connection,
-  connectionManager,
 }: Args) => {
   const connectionFunctions = await dbs.published_methods.find(
     {
@@ -33,14 +25,14 @@ export const getConnectionServerFunctions = async ({
     {
       select: {
         "*": 1,
-        user_types: {
+        user_types: defineJoin({
           $leftJoin: [
             "access_control_methods",
             "access_control",
             "access_control_user_types",
           ],
           select: { user_type: 1 },
-        },
+        }),
       },
     },
   );
@@ -53,12 +45,7 @@ export const getConnectionServerFunctions = async ({
   /** Combine all userFilter with admin into unique groups */
   connectionFunctions.forEach((m) => {
     const userTypesList = Array.from(
-      new Set<string>([
-        "admin",
-        ...((m.user_types as null | { user_type: string }[])?.map(
-          (r) => r.user_type,
-        ) ?? []),
-      ]),
+      new Set(["admin", ...m.user_types.map((r) => r.user_type)]),
     ).toSorted();
     const userFilter = {
       type: { $in: userTypesList },
