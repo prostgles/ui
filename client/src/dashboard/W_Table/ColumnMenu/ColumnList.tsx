@@ -220,7 +220,7 @@ export const ColumnList = ({
                     <SummariseColumn
                       column={c}
                       columns={columns}
-                      tableColumns={tableColumns}
+                      table={table}
                       onChange={onChange}
                     />
                   )}

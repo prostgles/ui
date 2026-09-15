@@ -1,5 +1,6 @@
 import type {
   DetailedFilter,
+  DetailedFilterBase,
   DetailedJoinedFilter,
   FilterType,
 } from "@common/filterUtils";
@@ -182,7 +183,7 @@ export const SmartAddFilter = (props: SmartAddFilterProps) => {
         : joinPath ? "not null"
         : isCategorical(c) ? "$in"
         : "$between";
-      const innerFilter: DetailedFilter =
+      const innerFilter: DetailedFilterBase =
         includes(_PG_date, c.udt_name) ?
           getDefaultAgeFilter(fieldName, "$ageNow")
         : {

@@ -87,7 +87,7 @@ export const getComparablePGPolicy = async ({
             ["number", "boolean"].includes(col?.tsDataType as string) ?
               (d.value as string)
             : `'${d.value}'`
-          : `prostgles.${d.$prostglesContext.objectName}('${d.$prostglesContext.objectPropertyName}')::${col?.udt_name}`;
+          : `prostgles.${d.objectName}('${d.objectPropertyName}')::${col?.udt_name}`;
         return `${i ? "" : "  "}${d.fieldName} = ${value}`;
       });
 

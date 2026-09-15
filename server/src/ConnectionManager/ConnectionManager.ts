@@ -17,6 +17,7 @@ import { isDefined, pickKeys } from "prostgles-types";
 import type { DefaultEventsMap, Server } from "socket.io";
 import type { SUser } from "../authConfig/sessionUtils";
 import { getDbConnection } from "../connectionUtils/testDBConnection";
+import { getConnectionPublish } from "../connectionPublish/getConnectionPublish";
 import { getDataPath } from "../electronConfig";
 import type { Connections, DBS, DatabaseConfigs } from "../index";
 import { connectionManager } from "../index";
@@ -346,11 +347,7 @@ export class ConnectionManager {
               userTypes &&
               requiredColumns.every((c) => syncableColumns.includes(c))
             ) {
-              void this.syncUsers(
-                db,
-                userTypes,
-                syncableColumns,
-              );
+              void this.syncUsers(db, userTypes, syncableColumns);
             }
           }
         }
@@ -373,12 +370,19 @@ export class ConnectionManager {
         connIds.map(async (connection_id) => {
           const connectionInstance = this.prglConnections.get(connection_id);
           if (connectionInstance?.state !== "started") return;
-          const functions = await getConnectionServerFunctions({
-            databaseConfig: connectionInstance.dbConf,
-            dbs: this.dbs!,
-            connection: connectionInstance.con,
-          });
-          return connectionInstance.prgl.update({ functions }, true);
+          const [functions, publish] = await Promise.all([
+            getConnectionServerFunctions({
+              databaseConfig: connectionInstance.dbConf,
+              dbs: this.dbs!,
+              connection: connectionInstance.con,
+            }),
+            getConnectionPublish({
+              dbConf: connectionInstance.dbConf,
+              dbs: this.dbs!,
+              connection: connectionInstance.con,
+            }),
+          ]);
+          return connectionInstance.prgl.update({ functions, publish }, true);
         }),
       );
     };

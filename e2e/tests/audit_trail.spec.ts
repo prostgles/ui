@@ -317,17 +317,14 @@ for (const restriction of [
                     { fields: { name: 1 } }
                   : true,
               },
-              ...(restriction === "audit table" ?
-                []
-              : [
-                  {
-                    tableName: "audit_events",
-                    select:
-                      restriction === "audit columns" ?
-                        { fields: { operation: 1, new_row: 1 } }
-                      : true,
-                  },
-                ]),
+              {
+                tableName: "audit_events",
+                select:
+                  restriction === "audit table" ? false
+                  : restriction === "audit columns" ?
+                    { fields: { operation: 1, new_row: 1 } }
+                  : true,
+              },
             ],
           },
         },
@@ -335,6 +332,16 @@ for (const restriction of [
     } finally {
       state.disconnect();
     }
+    await expect
+      .poll(async () => {
+        const client = await deployment.connectProjectAs("restricted");
+        try {
+          return client.tableSchema?.some((table) => table.name === "records");
+        } finally {
+          client.disconnect();
+        }
+      })
+      .toBe(true);
     const client = await deployment.connectProjectAs("restricted");
     if (restriction === "row identifiers") {
       expect(

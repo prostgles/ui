@@ -231,7 +231,7 @@ const upsertRule = async (
       if (overLappingUserGroups.length) {
         throw `Cannot have rules with overlapping user group names: ${overLappingUserGroups.flat().join(", ")}.\nRemove these group names from this rule or from the other rules`;
       } else {
-        const acontrol = await dbs.access_control.insert(
+        const accessControlEntry = await dbs.access_control.insert(
           {
             ...newRuleWithoutSomeExtraKeys,
             database_id,
@@ -244,7 +244,7 @@ const upsertRule = async (
           { returning: "*" },
         );
 
-        await insertRelatedData(acontrol.id);
+        await insertRelatedData(accessControlEntry.id);
       }
     }
   }

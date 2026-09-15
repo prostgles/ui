@@ -1,5 +1,8 @@
-import { getSmartGroupFilter } from "@common/filterUtils";
-import type { AnyObject } from "prostgles-types";
+import {
+  getSmartGroupFilter,
+  getTableFilterFromDetailedGroupFilter,
+} from "@common/filterUtils";
+import type { AnyObject, SelectFunction } from "prostgles-types";
 import { isDefined, reverseParsedPath } from "prostgles-types";
 import type { Prgl } from "src/App";
 import { isEmpty } from "../../../utils/utils";
@@ -154,7 +157,7 @@ export const getTableSelect = async (
 
 export const getComputedColumnSelect = (
   computedConfig: Required<ColumnConfig>["computedConfig"],
-) => {
+): SelectFunction => {
   let funcName = computedConfig.funcDef.key;
   let functionArgs: any[] = [computedConfig.column].filter(isDefined);
   if (computedConfig.column || computedConfig.args) {
@@ -171,7 +174,20 @@ export const getComputedColumnSelect = (
       functionArgs = [args.$template_string];
     }
   }
-  return { [funcName]: functionArgs };
+  const aggregateOptions =
+    computedConfig.funcDef.isAggregate ?
+      computedConfig.aggregateOptions
+    : undefined;
+  const aggregateFilter =
+    aggregateOptions?.filter &&
+    getTableFilterFromDetailedGroupFilter(aggregateOptions.filter);
+  return {
+    [funcName]: functionArgs,
+    ...(!isEmpty(aggregateFilter) && { $filter: aggregateFilter }),
+    ...(aggregateOptions?.orderBy && {
+      $orderBy: aggregateOptions.orderBy,
+    }),
+  } as SelectFunction;
 };
 
 export const getNestedColumnSelect = async (

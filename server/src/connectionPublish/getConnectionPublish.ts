@@ -1,11 +1,12 @@
-import type { DBSSchema } from "@common/publishUtils";
+import type { ContextValue, DBSSchema } from "@common/publishUtils";
 import { parseTableRules } from "@common/publishUtils";
 import type {
   Publish,
   PublishAllTables,
+  PublishContextValue,
   PublishObject,
 } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
-import { fromEntries } from "prostgles-types";
+import { fromEntries, isDefined } from "prostgles-types";
 import type { DBS } from "..";
 import type { SUser } from "../authConfig/sessionUtils";
 import {
@@ -17,7 +18,7 @@ import { publish } from "../publish/publish";
 type Args = {
   dbs: DBS;
   dbConf: DBSSchema["database_configs"];
-  connection: DBSSchema["connections"];
+  connection: Pick<DBSSchema["connections"], "id" | "is_state_db">;
 };
 
 export const getConnectionPublish = async ({
@@ -35,6 +36,7 @@ export const getConnectionPublish = async ({
     .map(({ dbPermissions, userTypes }) => {
       const publish = getPublishObjectFromDbPermissions(dbPermissions);
       const userTypesList = userTypes.map(({ user_type }) => user_type);
+      if (!userTypesList.length) return undefined;
       return {
         name:
           userTypesList
@@ -44,6 +46,7 @@ export const getConnectionPublish = async ({
         publish,
       };
     })
+    .filter(isDefined)
     .filter((r) => r.publish);
 
   const adminRule = {
@@ -87,7 +90,11 @@ const getPublishObjectFromDbPermissions = (
   if (dbPermissions.type === "Custom") {
     const publish = dbPermissions.customTables.reduce(
       (acc, { tableName, ...rule }) => {
-        const parsedRule = parseTableRules(rule, undefined);
+        const parsedRule = parseTableRules(
+          rule,
+          undefined,
+          toProstglesContextValue,
+        );
 
         if (!parsedRule) return acc;
 
@@ -107,3 +114,7 @@ const getPublishObjectFromDbPermissions = (
     "Unsupported access control rule: " + JSON.stringify(dbPermissions),
   );
 };
+
+const toProstglesContextValue = (
+  contextValue: ContextValue,
+): PublishContextValue => ({ $prostglesContext: contextValue });

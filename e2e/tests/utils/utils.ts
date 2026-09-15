@@ -5,28 +5,32 @@ import { goTo } from "./goTo";
 import { IS_GITHUB_WORKER, TEST_DB_NAME, USERS } from "./constants";
 
 type FuncNamesReturningLocatorObj = {
-  [prop in keyof PG as PG[prop] extends (...args: any) => any ?
-    prop extends "expect" ? never
-    : prop extends "getByTestId" ? never
-    : prop extends "evaluateHandle" ? never
-    : prop extends "waitForFunction" ? never
-    : ReturnType<PG[prop]> extends Promise<any> ? never
-    : ReturnType<PG[prop]> extends Locator ? prop
+  [
+    prop in keyof PG as PG[prop] extends (...args: any) => any ?
+      prop extends "expect" ? never
+      : prop extends "getByTestId" ? never
+      : prop extends "evaluateHandle" ? never
+      : prop extends "waitForFunction" ? never
+      : ReturnType<PG[prop]> extends Promise<any> ? never
+      : ReturnType<PG[prop]> extends Locator ? prop
+      : never
     : never
-  : never]: 1;
+  ]: 1;
 };
 type FuncNames = keyof FuncNamesReturningLocatorObj;
 type LocatorFuncNamesReturningLocatorObj = {
-  [prop in keyof Locator as Locator[prop] extends (...args: any) => any ?
-    prop extends "expect" ? never
-    : prop extends "getByTestId" ? never
-    : prop extends "evaluateHandle" ? never
-    : prop extends "waitForFunction" ? never
-    : ReturnType<Locator[prop]> extends Promise<any> ? never
-    : ReturnType<Locator[prop]> extends Locator ? prop
-    : // ReturnType<Locator[prop]> extends Promise<Locator>? prop :
-      never
-  : never]: 1;
+  [
+    prop in keyof Locator as Locator[prop] extends (...args: any) => any ?
+      prop extends "expect" ? never
+      : prop extends "getByTestId" ? never
+      : prop extends "evaluateHandle" ? never
+      : prop extends "waitForFunction" ? never
+      : ReturnType<Locator[prop]> extends Promise<any> ? never
+      : ReturnType<Locator[prop]> extends Locator ? prop
+      : // ReturnType<Locator[prop]> extends Promise<Locator>? prop :
+        never
+    : never
+  ]: 1;
 };
 type LocatorFuncNames = keyof LocatorFuncNamesReturningLocatorObj;
 export type PageWIds = Omit<PG, FuncNames | "getByTestId"> & {
@@ -83,13 +87,7 @@ export const getMonacoValue = async (
 
 type KeyPress = "Control" | "Shift";
 type InputKey =
-  | KeyPress
-  | "Enter"
-  | "Escape"
-  | "Tab"
-  | "Backspace"
-  | "Delete"
-  | "Space";
+  KeyPress | "Enter" | "Escape" | "Tab" | "Backspace" | "Delete" | "Space";
 type ArrowKey = "ArrowUp" | "ArrowDown" | "ArrowLeft" | "ArrowRight";
 type ArrowKeyCombinations = `${KeyPress}+${ArrowKey | InputKey}`;
 export type KeyPressOrCombination = InputKey | ArrowKeyCombinations | ArrowKey;
@@ -294,7 +292,7 @@ export const login = async (
 ) => {
   await goTo(page, url);
   await fillLoginFormAndSubmit(page, userNameAndPassword);
-  await page.locator("#username").waitFor({ state: "detached", timeout: 30e3 });
+  await page.locator("#username").waitFor({ state: "hidden", timeout: 30e3 });
 };
 
 export const typeConfirmationCode = async (page: PageWIds) => {

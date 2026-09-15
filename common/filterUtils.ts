@@ -1,4 +1,8 @@
-import { ContextDataObject, ContextValue, isObject } from "./publishUtils";
+import {
+  type ContextDataObject,
+  type ContextValue,
+  isObject,
+} from "./publishUtils";
 
 type AnyObject = Record<string, any>;
 
@@ -109,7 +113,7 @@ type ComplexFilterDetailed =
     }
   | {
       type: "$filter";
-      leftExpression: Record<string, any[]>;
+      leftExpression: Record<string, any>;
     };
 export type DetailedFilterBase = BaseFilter & {
   fieldName: string;
@@ -133,6 +137,11 @@ export type DetailedJoinedFilter = BaseFilter & {
 export type DetailedFilter = DetailedFilterBase | DetailedJoinedFilter;
 export type DetailedGroupFilter =
   { $and: DetailedFilter[] } | { $or: DetailedFilter[] };
+
+export type ContextValueMapper = (contextValue: ContextValue) => unknown;
+
+export const identityContextValue: ContextValueMapper = (contextValue) =>
+  contextValue;
 
 export const isJoinedFilter = (f: DetailedFilter): f is DetailedJoinedFilter =>
   Boolean(f.type && JOINED_FILTER_TYPES.includes(f.type as any));
@@ -186,10 +195,7 @@ export const getFinalFilterInfo = (
       CORE_FILTER_TYPES.find(({ key }) => key === `$${operatorRaw}`)?.label ||
       operatorRaw;
     const value = f[fieldNameAndOperator];
-    if (
-      "fieldName" in filter &&
-      filter.contextValue?.$prostglesContext.objectName === "user"
-    ) {
+    if ("fieldName" in filter && filter.contextValue?.objectName === "user") {
       return `${fieldName}::TEXT ${operator} ${value}`;
     }
     const valueStr =
@@ -223,12 +229,11 @@ export const getFinalFilterInfo = (
 
 export const getContextualValue = (
   f: DetailedFilterBase,
-  { forInfoOnly }: GetFinalFilterOpts = {},
+  { forInfoOnly, contextValueMapper }: GetFinalFilterOpts = {},
 ): any => {
   if (f.contextValue) {
     if (forInfoOnly) {
-      const { objectName, objectPropertyName } =
-        f.contextValue.$prostglesContext;
+      const { objectName, objectPropertyName } = f.contextValue;
       const objPath = `${objectName}.${objectPropertyName}`;
       // if (forInfoOnly === "pg") {
       //   if (objectName === "user") {
@@ -238,7 +243,7 @@ export const getContextualValue = (
       // }
       return `{{${objPath}}}`;
     }
-    return f.contextValue;
+    return (contextValueMapper ?? identityContextValue)(f.contextValue);
   }
 
   return { ...f }.value;
@@ -247,6 +252,7 @@ export const getContextualValue = (
 type GetFinalFilterOpts = {
   forInfoOnly?: boolean | InfoType;
   columns?: string[];
+  contextValueMapper?: ContextValueMapper;
 };
 export const getFinalFilter = (
   detailedFilter: DetailedFilter | GroupedDetailedFilter,
@@ -293,10 +299,6 @@ export const getFinalFilter = (
   ): Record<string, any> => {
     const parsedContextValue = getContextualValue(f, opts);
     const fieldName = checkFieldname(f.fieldName, columns);
-
-    if (f.contextValue && !forInfoOnly) {
-      return f.contextValue;
-    }
 
     if (
       FTS_FILTER_TYPES.some((fts) => fts.key === f.type) &&

@@ -179,10 +179,8 @@ export const TablePermissionControls = (
                         fieldName: userIdField.name,
                         type: "=",
                         contextValue: {
-                          $prostglesContext: {
-                            objectName: "user",
-                            objectPropertyName: "id",
-                          },
+                          objectName: "user",
+                          objectPropertyName: "id",
                         },
                       },
                     ],

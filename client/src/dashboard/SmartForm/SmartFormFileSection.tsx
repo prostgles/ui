@@ -33,9 +33,7 @@ export const SmartFormFileSection = ({
   const { isFileTable } = table;
   const tableName = table.name;
   const media: Media[] | undefined = useMemo(() => {
-    if (!isFileTable) {
-      throw "Must be a file table";
-    }
+   
     const data = newRowData?.data?.value;
     if (data instanceof File) {
       return [
@@ -52,10 +50,13 @@ export const SmartFormFileSection = ({
     }
     if (defaultData && !isEmpty(defaultData)) return [defaultData as Media];
     return [];
-  }, [row, isFileTable, defaultData, newRowData, removed]);
+  }, [row,  defaultData, newRowData, removed]);
 
   if ("loading" in action && action.loading) return null;
   if (!newRowDataHandler) return null;
+  if (!isFileTable) {
+    return "Unexpected: Must be a file table";
+  }
 
   const onRemove = () => {
     setRemoved(true);
@@ -84,7 +85,7 @@ export const SmartFormFileSection = ({
     <>
       <FileInput
         key={tableName}
-        className={"mt-p5 f-0 " + (isFileTable ? " min-w-300" : "")}
+        className={"mt-p5 f-0  min-w-300" }
         media={media}
         // minSize={isFileTable ? 470 : 450}
         maxFileCount={1}
@@ -103,10 +104,9 @@ export const SmartFormFileSection = ({
             },
             data: { type: "column", value: file.data },
           };
-          newRowDataHandler.setNewRow({
-            ...newRowDataHandler.getNewRow(),
-            ...newFileRow,
-          });
+ 
+          /** Prevent default column values for file tables */
+          newRowDataHandler.setNewRow(newFileRow);
         }}
         onDelete={onRemove}
       />

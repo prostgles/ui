@@ -38,7 +38,7 @@ export type SelectTyped<T extends AnyObject> = {
     [K in keyof Partial<T>]: 0 | false;
 } | (keyof T)[] | CommonSelect;
 export declare const JOIN_KEYS: readonly ["$innerJoin", "$leftJoin"];
-export declare const JOIN_PARAMS: readonly ["select", "filter", "$path", "$condition", "offset", "limit", "orderBy"];
+export declare const JOIN_PARAMS: ["select", "filter", "offset", "limit", "orderBy", "having"];
 export type JoinCondition = {
     column: string;
     rootColumn: string;
@@ -63,14 +63,7 @@ export type DetailedJoinSelect = Partial<Record<(typeof JOIN_KEYS)[number], RawJ
     offset?: number;
     limit?: number;
     orderBy?: OrderBy;
-} & ({
-    $condition?: undefined;
-} | {
-    /**
-     * If present then will overwrite $path and any inferred joins
-     */
-    $condition?: JoinCondition[];
-});
+};
 export type SimpleJoinSelect = "*"
 /** Aliased Shorthand join: table_name: { ...select } */
  | Record<string, 1 | "*" | true | FunctionSelect> | Record<string, 0 | false>;
@@ -80,28 +73,38 @@ export type JoinSelect = SimpleJoinSelect | DetailedJoinSelect;
  * Example: { field: { funcName: ["field"] } }
  * Can be written as { field: "funcName" } if the field is the same as the argument
  */
-type FunctionShorthand = string;
+type FunctionShorthand = FunctionName;
 /**
  * Common functions:
  *  - Aggregation functions: $count, $sum, $avg, $min, $max
  *  - String functions: $upper, $lower
  *  - Date functions: $age, $date_part
  *  - JSON functions: $merge
+ * Aggregate functions also accept $filter and $orderBy options.
  */
-type FunctionFull = Record<string, any[] | readonly any[] | FunctionShorthand>;
+type FunctionFull<T extends AnyObject = AnyObject> = {
+    [Name in FunctionName]: {
+        [K in Name]: any[] | readonly any[];
+    };
+}[FunctionName] & {
+    $filter?: FullFilter<void, void>;
+    $orderBy?: OrderBy<T>;
+};
 type FunctionSelect = FunctionShorthand | FunctionFull;
-/**
- * { computed_field: { funcName: [args] } }
- */
-type FunctionAliasedSelect = Record<string, FunctionFull>;
 type InclusiveSelect = true | 1 | FunctionSelect | JoinSelect;
-type SelectWithFunctions<T extends AnyObject = AnyObject, IsTyped = false> = ({
-    [K in keyof Partial<T>]: InclusiveSelect;
-} & Record<string, IsTyped extends true ? FunctionFull | DetailedJoinSelect : InclusiveSelect>) | FunctionAliasedSelect | {
-    [K in keyof Partial<T>]: true | 1 | string;
+type TypedShorthandJoinSelect<T extends AnyObject> = "*" | {
+    [K in keyof T]?: 0 | false | 1 | true | FunctionSelect;
+};
+type SchemaJoinSelect<T extends AnyObject, S extends DBSchema | void> = S extends DBSchema ? string extends keyof S ? {} : {
+    [K in keyof S]?: K extends keyof T ? InclusiveSelect : TypedShorthandJoinSelect<S[K]["columns"]> | FunctionFull | DetailedJoinSelect;
+} : {};
+type SelectWithFunctions<T extends AnyObject = AnyObject, IsTyped = false, S extends DBSchema | void = void> = (IsTyped extends true ? {
+    [K in keyof T]?: InclusiveSelect;
+} & SchemaJoinSelect<T, S> & Record<string, FunctionFull | JoinSelect> : Record<string, InclusiveSelect>) | {
+    [K in keyof T]?: true | 1 | FunctionShorthand;
 } | {
-    [K in keyof Partial<T>]: 0 | false;
-} | CommonSelect | (keyof Partial<T>)[];
+    [K in keyof T]?: 0 | false;
+} | CommonSelect | (keyof T)[];
 /** S param is needed to ensure the non typed select works fine */
 export type Select<T extends AnyObject | void = void, S extends DBSchema | void = void> = {
     t: T;
@@ -111,7 +114,7 @@ export type Select<T extends AnyObject | void = void, S extends DBSchema | void 
     s: DBSchema;
 } ? SelectWithFunctions<T & {
     $rowhash: string;
-}, true> : SelectWithFunctions<AnyObject & {
+}, true, S> : SelectWithFunctions<AnyObject & {
     $rowhash: string;
 }, false>;
 export type SelectBasic = {
@@ -262,8 +265,9 @@ type ExplicitJoinResult<J, S extends DBSchema | void, P> = [
 } ? SelectDataType<S, {
     select: Sel;
 }, S[T]["columns"]>[] : any[] : any[] : any[];
-type JoinedSelect = Record<string, Select>;
-export type SelectFunction = Record<string, any[]>;
+type ShorthandJoinResult<J, S extends DBSchema | void, TableName extends PropertyKey> = S extends DBSchema ? TableName extends keyof S ? J extends "*" ? NormalizedRow<S[TableName]["columns"]>[] : J extends Record<string, 0 | false> ? Omit<NormalizedRow<S[TableName]["columns"]>, keyof J>[] : J extends Record<string, any> ? ParseSelect<J, NormalizedRow<S[TableName]["columns"]>, S>[] : any[] : any[] : any[];
+/** ParseSelect must check joins first because FunctionFull structurally matches objects without \`$\` keys. */
+export type SelectFunction = FunctionFull;
 type ParseSelect<Select extends SelectParams<TD>["select"], TD extends AnyObject, S extends DBSchema | void> = (Select extends {
     "*": 1;
 } ? NormalizedRow<TD> : {}) & {
@@ -273,7 +277,7 @@ type ParseSelect<Select extends SelectParams<TD>["select"], TD extends AnyObject
     }) ? ExplicitJoinResult<Select[Key], S, P> : Select[Key] extends ({
         $innerJoin: infer P extends RawJoinPath;
         select: unknown;
-    }) ? ExplicitJoinResult<Select[Key], S, P> : Select[Key] extends SelectFunction ? any : Select[Key] extends JoinedSelect ? any[] : any;
+    }) ? ExplicitJoinResult<Select[Key], S, P> : Select[Key] extends JoinSelect ? ShorthandJoinResult<Select[Key], S, Key> : Select[Key] extends SelectFunction | FunctionShorthand ? GetFunctionReturnType<Select[Key], TD, Key> : any;
 };
 type SelectDataType<S extends DBSchema | void, O, TD extends AnyObject> = O extends {
     returnType: "value";
@@ -404,7 +408,7 @@ export type TableHandler<TD extends AnyObject = AnyObject, S extends DBSchema | 
     /**
      * Retrieves a list of matching records from the view/table
      */
-    find<P extends SelectParams<TD, S>>(
+    find<const P extends SelectParams<TD, S>>(
     /**
      * A filter for a table, defined as a MongoDB-like query object.
      * Supported operators:
@@ -444,15 +448,15 @@ export type TableHandler<TD extends AnyObject = AnyObject, S extends DBSchema | 
     /**
      * Retrieves a record from the view/table
      */
-    findOne<P extends SelectParams<TD, S>>(filter?: FullFilter<TD, S>, selectParams?: P): Promise<undefined | SelectReturnType<S, P, TD, false>>;
+    findOne<const P extends SelectParams<TD, S>>(filter?: FullFilter<TD, S>, selectParams?: P): Promise<undefined | SelectReturnType<S, P, TD, false>>;
     /**
      * Retrieves a list of matching records from the view/table and subscribes to changes
      */
-    subscribe<P extends SubscribeParams<TD, S>>(filter: FullFilter<TD, S>, params: P, onData: SubscribeCallback<SelectReturnType<S, P, TD, true>>): Promise<SubscriptionHandler>;
+    subscribe<const P extends SubscribeParams<TD, S>>(filter: FullFilter<TD, S>, params: P, onData: SubscribeCallback<SelectReturnType<S, P, TD, true>>): Promise<SubscriptionHandler>;
     /**
      * Retrieves first matching record from the view/table and subscribes to changes
      */
-    subscribeOne<P extends SubscribeParams<TD, S>>(filter: FullFilter<TD, S>, params: P, onData: SubscribeOneCallback<SelectReturnType<S, P, TD, false> | undefined>): Promise<SubscriptionHandler>;
+    subscribeOne<const P extends SubscribeParams<TD, S>>(filter: FullFilter<TD, S>, params: P, onData: SubscribeOneCallback<SelectReturnType<S, P, TD, false> | undefined>): Promise<SubscriptionHandler>;
     /**
      * Returns the number of rows that match the filter
      */

@@ -33,7 +33,7 @@ export const ContextDataSelector = ({
   );
   const valueId =
     value ?
-      `${value.$prostglesContext.objectName}.${value.$prostglesContext.objectPropertyName}`
+      `${value.objectName}.${value.objectPropertyName}`
     : undefined;
 
   return (
@@ -72,10 +72,8 @@ export const ContextDataSelector = ({
           if (!ctxCol) return;
 
           onChange({
-            $prostglesContext: {
-              objectName: ctxCol.tableName,
-              objectPropertyName: ctxCol.name,
-            },
+            objectName: "user",
+            objectPropertyName: ctxCol.name,
           });
         }}
       />

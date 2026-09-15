@@ -134,7 +134,7 @@ export async function pgDump(
 
     const bkpForId = await this.dbs.backups.findOne(
       { id: backup.id },
-      { select: { created: "$datetime_" } },
+      { select: { created: "$datetime_" as "$datetime" } },
     );
     if (!bkpForId) throw "Internal error";
     backup_id = `${(con.db_name || "").replace(/[\W]+/g, "_")}__${bkpForId.created}_pg_dump${dumpAll ? "all" : ""}_${backup.id}.${content_type === "text/sql" ? "sql" : "dump"}`;

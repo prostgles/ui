@@ -986,6 +986,14 @@ export default prostgles({
   id: "typed-cli-test",
   services: serviceManagerConfig,
   tableConfig: {},
+  onInitSQL: "CREATE TABLE IF NOT EXISTS client_schema_items (id SERIAL PRIMARY KEY, name TEXT NOT NULL)",
+  access_control: [{
+    userTypes: ["default"],
+    dbPermissions: {
+      type: "Custom",
+      customTables: [{ tableName: "client_schema_items", select: true }],
+    },
+  }],
   workspaces: [{
     name: "Configured workspace",
     layout: {
@@ -1080,6 +1088,12 @@ export default prostgles({
       expect(generatedSchema).toContain("message: string;");
       expect(generatedSchema).toContain(
         "Promise<{ message: string; length: number }>;",
+      );
+      const defaultSchema = generatedSchema
+        .split("export type DefaultSchema = {")[1]
+        ?.split("/** Permissive write inputs")[0];
+      expect(defaultSchema).toContain(
+        '"client_schema_items": DBGeneratedSchema["client_schema_items"]',
       );
       await new Promise((resolve) => setTimeout(resolve, 10_000));
       expect(configProcess.getLogs()).toContain(

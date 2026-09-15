@@ -1,9 +1,11 @@
 import { DBGeneratedSchema, type DBSchema } from "./DBGeneratedSchema";
 import {
+  type ContextValueMapper,
+  DetailedFilter,
   GroupedDetailedFilter,
   getFinalFilter,
+  identityContextValue,
   isDefined,
-  DetailedFilter,
 } from "./filterUtils";
 
 export type CustomTableRules = {
@@ -89,10 +91,8 @@ export type MethodClientDef = {
 };
 
 export type ContextValue = {
-  $prostglesContext: {
-    objectName: string;
-    objectPropertyName: string;
-  };
+  objectName: "user";
+  objectPropertyName: string;
 };
 
 export type ForcedData =
@@ -263,11 +263,17 @@ export const parseFieldFilter = (args: {
 export const parseFullFilter = (
   filter: GroupedDetailedFilter,
   columns: string[] | undefined,
+  mapContextValue: ContextValueMapper = identityContextValue,
 ): { $and: AnyObject[] } | { $or: AnyObject[] } | undefined => {
   const isAnd = "$and" in filter;
   const filters = isAnd ? filter.$and : filter.$or;
   const finalFilters = filters
-    .map((f) => getFinalFilter(f, { columns }))
+    .map((f) =>
+      getFinalFilter(f, {
+        columns,
+        contextValueMapper: mapContextValue,
+      }),
+    )
     .filter(isDefined);
   const f = isAnd ? { $and: finalFilters } : { $or: finalFilters };
   return f;
@@ -281,18 +287,27 @@ type ParsedRuleFilters = {
 export const parseCheckForcedFilters = (
   rule: TableRules[keyof TableRules],
   columns: string[] | undefined,
+  mapContextValue: ContextValueMapper = identityContextValue,
 ): ParsedRuleFilters | undefined => {
   let parsedRuleFilters: ParsedRuleFilters | undefined;
   if (isObject(rule)) {
     if ("forcedFilterDetailed" in rule && rule.forcedFilterDetailed) {
-      const forcedFilter = parseFullFilter(rule.forcedFilterDetailed, columns);
+      const forcedFilter = parseFullFilter(
+        rule.forcedFilterDetailed,
+        columns,
+        mapContextValue,
+      );
       if (forcedFilter) {
         parsedRuleFilters ??= {};
         parsedRuleFilters.forcedFilter = forcedFilter;
       }
     }
     if ("checkFilterDetailed" in rule && rule.checkFilterDetailed) {
-      const checkFilter = parseFullFilter(rule.checkFilterDetailed, columns);
+      const checkFilter = parseFullFilter(
+        rule.checkFilterDetailed,
+        columns,
+        mapContextValue,
+      );
       if (checkFilter) {
         parsedRuleFilters ??= {};
         parsedRuleFilters.checkFilter = checkFilter;
@@ -340,11 +355,13 @@ export type ContextDataObject = {
   user: DBSSchema["users"];
 };
 
-const parseForcedData = ({
-  forcedDataDetail,
-  checkFilterDetailed,
-}: Pick<UpdateRule, "forcedDataDetail" | "checkFilterDetailed">):
-  { forcedData: AnyObject } | undefined => {
+const parseForcedData = (
+  {
+    forcedDataDetail,
+    checkFilterDetailed,
+  }: Pick<UpdateRule, "forcedDataDetail" | "checkFilterDetailed">,
+  mapContextValue: ContextValueMapper,
+): { forcedData: AnyObject } | undefined => {
   /** TODO: retire forced data completely because checkFilter can cover the same use case by using '=' filters */
   if (!forcedDataDetail?.length) {
     if (checkFilterDetailed) {
@@ -357,7 +374,7 @@ const parseForcedData = ({
             }
 
             if (f.contextValue) {
-              return [f.fieldName, f.contextValue];
+              return [f.fieldName, mapContextValue(f.contextValue)];
             } else if (f.value !== undefined) {
               return [f.fieldName, f.value];
             }
@@ -384,8 +401,11 @@ const parseForcedData = ({
     if (item.type === "fixed") {
       forcedData[item.fieldName] = item.value;
     } else {
-      const { $prostglesContext } = item;
-      forcedData[item.fieldName] = { $prostglesContext };
+      const { objectName, objectPropertyName } = item;
+      forcedData[item.fieldName] = mapContextValue({
+        objectName,
+        objectPropertyName,
+      });
     }
   });
   return { forcedData };
@@ -394,12 +414,13 @@ const parseForcedData = ({
 const parseSelect = (
   rule: undefined | boolean | SelectRule,
   columns: string[] | undefined,
+  mapContextValue: ContextValueMapper,
 ) => {
   if (!rule || rule === true) return rule;
 
   return {
     fields: getValidatedFieldFilter(rule.fields, columns),
-    ...parseCheckForcedFilters(rule, columns),
+    ...parseCheckForcedFilters(rule, columns, mapContextValue),
     ...(rule.orderByFields && {
       orderByFields: getValidatedFieldFilter(
         rule.orderByFields,
@@ -415,20 +436,21 @@ const parseSelect = (
 const parseUpdate = (
   rule: undefined | boolean | UpdateRule,
   columns: string[] | undefined,
+  mapContextValue: ContextValueMapper,
 ) => {
   if (!rule || rule === true) return rule;
 
   return {
     fields: getValidatedFieldFilter(rule.fields, columns),
-    ...parseCheckForcedFilters(rule, columns),
-    ...parseForcedData(rule),
+    ...parseCheckForcedFilters(rule, columns, mapContextValue),
+    ...parseForcedData(rule, mapContextValue),
     ...(rule.filterFields && {
       filterFields: getValidatedFieldFilter(rule.filterFields, columns, false),
     }),
     ...(rule.dynamicFields?.length && {
       dynamicFields: rule.dynamicFields.map((v) => ({
         fields: getValidatedFieldFilter(v.fields, columns),
-        filter: parseFullFilter(v.filterDetailed, columns),
+        filter: parseFullFilter(v.filterDetailed, columns, mapContextValue),
       })),
     }),
   } as PublishedResultUpdate;
@@ -436,23 +458,25 @@ const parseUpdate = (
 const parseInsert = (
   rule: undefined | boolean | InsertRule,
   columns: string[] | undefined,
+  mapContextValue: ContextValueMapper,
 ) => {
   if (!rule || rule === true) return rule;
 
   return {
     fields: getValidatedFieldFilter(rule.fields, columns),
-    ...parseForcedData(rule),
-    ...parseCheckForcedFilters(rule, columns),
+    ...parseForcedData(rule, mapContextValue),
+    ...parseCheckForcedFilters(rule, columns, mapContextValue),
   };
 };
 const parseDelete = (
   rule: undefined | boolean | DeleteRule,
   columns: string[] | undefined,
+  mapContextValue: ContextValueMapper,
 ) => {
   if (!rule || rule === true) return rule;
 
   return {
-    ...parseCheckForcedFilters(rule, columns),
+    ...parseCheckForcedFilters(rule, columns, mapContextValue),
     filterFields: getValidatedFieldFilter(rule.filterFields, columns),
   };
 };
@@ -460,6 +484,7 @@ const parseDelete = (
 export const parseTableRules = (
   tableRules: TableRules | true | "*",
   columns: string[] | undefined,
+  mapContextValue: ContextValueMapper = identityContextValue,
 ): PublishedResult | undefined => {
   if (tableRules === "*" || tableRules === true) {
     return true;
@@ -467,15 +492,15 @@ export const parseTableRules = (
 
   if (isObject(tableRules)) {
     return {
-      select: parseSelect(tableRules.select, columns),
+      select: parseSelect(tableRules.select, columns, mapContextValue),
       subscribe:
         isObject(tableRules.select) ?
           tableRules.select.subscribe
         : tableRules.subscribe,
       // ...(!isView ?
-      insert: parseInsert(tableRules.insert, columns),
-      update: parseUpdate(tableRules.update, columns),
-      delete: parseDelete(tableRules.delete, columns),
+      insert: parseInsert(tableRules.insert, columns, mapContextValue),
+      update: parseUpdate(tableRules.update, columns, mapContextValue),
+      delete: parseDelete(tableRules.delete, columns, mapContextValue),
       sync: tableRules.sync,
     };
   }

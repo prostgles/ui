@@ -13,6 +13,7 @@ type SortByControlProps = Pick<
   columns: ValidatedColumnInfo[];
   value?: ColumnSort;
   fields?: string[];
+  label?: string;
 };
 export const SortByControl = ({
   onChange,
@@ -21,6 +22,7 @@ export const SortByControl = ({
   fields,
   style = {},
   className = "",
+  label,
 }: SortByControlProps) => {
   const setSort = (orderByKey: string | undefined, orderAsc = true) => {
     if (!orderByKey) {
@@ -40,7 +42,7 @@ export const SortByControl = ({
     }
   }
   const orderableFields = columns.filter(
-    (c) => c.filter && (!fields || fields.includes(c.name)),
+    (c) => c.orderBy && (!fields || fields.includes(c.name)),
   );
   const orderAsc = value?.asc ?? undefined;
   const orderByKey = value?.key;
@@ -54,6 +56,7 @@ export const SortByControl = ({
     >
       <Select
         id="orderbycomp"
+        label={label}
         // btnProps={{ className: "shadow bg-color-0" }}
         emptyLabel="Sort by..."
         asRow={true}

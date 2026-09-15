@@ -77,8 +77,7 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
         error: `Could not find connection with id: ${connId}`,
       } as const;
     }
-    const databaseId = conState.data.database_configs?.[0]?.id as
-      number | undefined;
+    const databaseId = conState.data.database_configs[0]?.id;
     if (!databaseId) {
       return {
         state: "error",

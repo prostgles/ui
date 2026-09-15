@@ -144,10 +144,8 @@ export const AddContextFilter = ({
                   type: value.type as FilterType,
                   fieldName: value.fieldName,
                   contextValue: {
-                    $prostglesContext: {
-                      objectName: "user",
-                      objectPropertyName: value.objectPropertyName,
-                    },
+                    objectName: "user",
+                    objectPropertyName: value.objectPropertyName,
                   },
                 });
                 pClose();

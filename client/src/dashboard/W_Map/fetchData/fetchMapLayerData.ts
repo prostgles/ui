@@ -174,7 +174,7 @@ export const fetchMapLayerData = async function (this: W_Map, dataAge: number) {
               );
               const seconds = (Date.now() - downloadStart) / 1000;
               bytesPerSec = (JSON.stringify(oneRow || {}).length * 4) / seconds;
-              opts = { select: select as any, limit: AGG_LIMIT };
+              opts = { select, limit: AGG_LIMIT };
 
               if (!oneRow || !this.ref) {
                 layers.push({
@@ -195,7 +195,7 @@ export const fetchMapLayerData = async function (this: W_Map, dataAge: number) {
               const minDelta = Math.min(xDelta, yDelta);
 
               /** Simplify Polygon and LineString shapes */
-              if (!oneRow.l?.type.endsWith("Point")) {
+              if (!(oneRow.l?.type as string | undefined)?.endsWith("Point")) {
                 // && (oneRow?.c?.coordinates || []).flat().flat().flat().length > 30){
                 const scale =
                   zoom > 7 ?
@@ -212,7 +212,7 @@ export const fetchMapLayerData = async function (this: W_Map, dataAge: number) {
                       [MAP_SELECT_COLUMNS.geoJson]: {
                         $ST_Simplify: [geomColumn, size],
                       },
-                    } as unknown as SelectParams["select"],
+                    },
                     limit: AGG_LIMIT,
                   };
                 }

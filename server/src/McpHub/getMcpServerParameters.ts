@@ -78,8 +78,7 @@ export const getMcpServerParameters = async (
     const mcp_server_configs =
       testConfig?.server_name === server.name ?
         [testConfig]
-      : ((server.mcp_server_configs ??
-          []) as DBSSchema["mcp_server_configs"][]);
+      : server.mcp_server_configs;
 
     if (mcp_server_configs.length) {
       mcp_server_configs.forEach((mcp_server_config) => {

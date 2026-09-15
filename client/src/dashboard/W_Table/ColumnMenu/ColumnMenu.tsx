@@ -31,7 +31,10 @@ import type {
 } from "./ColumnStyleControls/ColumnStyleControls";
 import { ColumnStyleControls } from "./ColumnStyleControls/ColumnStyleControls";
 
-import type { DetailedFilter } from "@common/filterUtils";
+import type {
+  DetailedFilter,
+  GroupedDetailedFilter,
+} from "@common/filterUtils";
 import Popup from "@components/Popup/Popup";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { useIsMounted } from "prostgles-client";
@@ -50,6 +53,7 @@ import type W_Table from "../W_Table";
 import type { ColumnConfigWInfo } from "../W_Table";
 import { getFullColumnConfig } from "../tableUtils/getFullColumnConfig";
 import { updateWCols } from "../tableUtils/tableUtils";
+import { AggregateFunctionOptions } from "./AddComputedColumn/AggregateFunctionOptions";
 import { AddComputedColMenu } from "./AddComputedColumn/AddComputedColMenu";
 import { QuickAddComputedColumn } from "./AddComputedColumn/QuickAddComputedColumn";
 import { ColumnDisplayFormat } from "./ColumnDisplayFormat/ColumnDisplayFormat";
@@ -120,6 +124,7 @@ export type ColumnConfig = {
       $string_agg?: { separator: string };
       $template_string?: string;
     };
+    aggregateOptions?: AggregateOptions;
   };
   width?: number;
 };
@@ -137,6 +142,11 @@ export type ColumnSortSQL = {
 };
 export type ColumnSort = Omit<ColumnSortSQL, "key"> & {
   key: string;
+};
+
+export type AggregateOptions = {
+  filter?: GroupedDetailedFilter;
+  orderBy?: ColumnSort;
 };
 
 export const ColumnMenu = (props: P) => {
@@ -379,22 +389,43 @@ export const ColumnMenu = (props: P) => {
         //   onChange={cols => updateWCols(w, cols)}
         //   tableColumns={table.columns}
         // />
-        <FunctionSelector
-          selectedFunction={column.computedConfig?.funcDef.key}
-          column={validatedColumn.name}
-          tableColumns={table.columns}
-          wColumns={w.columns}
-          onSelect={(funcDef) =>
-            onUpdate({
-              computedConfig: funcDef && {
-                ...pickKeys(validatedColumn, ["tsDataType", "udt_name"]),
-                funcDef,
-                isColumn: column.computedConfig?.isColumn ?? true,
-                column: validatedColumn.name,
-              },
-            })
-          }
-        />
+        <div className="flex-col gap-1">
+          <FunctionSelector
+            selectedFunction={column.computedConfig?.funcDef.key}
+            column={validatedColumn.name}
+            tableColumns={table.columns}
+            wColumns={w.columns}
+            onSelect={(funcDef) =>
+              onUpdate({
+                computedConfig: funcDef && {
+                  ...pickKeys(validatedColumn, ["tsDataType", "udt_name"]),
+                  funcDef,
+                  isColumn: column.computedConfig?.isColumn ?? true,
+                  column: validatedColumn.name,
+                  aggregateOptions:
+                    funcDef.isAggregate ?
+                      column.computedConfig?.aggregateOptions
+                    : undefined,
+                },
+              })
+            }
+          />
+          {column.computedConfig?.funcDef.isAggregate && (
+            <AggregateFunctionOptions
+              table={table}
+              value={column.computedConfig.aggregateOptions}
+              onChange={(aggregateOptions) => {
+                if (!column.computedConfig) return;
+                onUpdate({
+                  computedConfig: {
+                    ...column.computedConfig,
+                    aggregateOptions,
+                  },
+                });
+              }}
+            />
+          )}
+        </div>
       ),
     },
     "Add Linked Data": {

@@ -36,7 +36,7 @@ export const MinimisedFilter = ({
     asFullText: AsText,
   ): AsText extends true ? string : React.ReactNode => {
     if (filter.contextValue) {
-      return `{{${filter.contextValue.$prostglesContext.objectName}.${filter.contextValue.$prostglesContext.objectPropertyName}}}`;
+      return `{{${filter.contextValue.objectName}.${filter.contextValue.objectPropertyName}}}`;
     }
     if (Array.isArray(filterValue)) {
       if (filter.type === "$between") {

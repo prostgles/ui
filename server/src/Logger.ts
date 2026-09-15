@@ -2,7 +2,12 @@ import type { EventInfo } from "prostgles-server/dist/Logging";
 import type { TableConfig } from "prostgles-server";
 import { mkdir, writeFile } from "fs/promises";
 import { dirname } from "path";
-import { getSerialisableError, omitKeys, pickKeys } from "prostgles-types";
+import {
+  getSerialisableError,
+  omitKeys,
+  pickKeys,
+  safeStringify,
+} from "prostgles-types";
 import { type DBS } from ".";
 import { getAuthSetupData } from "./authConfig/subscribeToAuthSetupChanges";
 
@@ -66,14 +71,14 @@ const serialiseTestLog = (e: EventInfo, connection_id: string | null) => {
         omitKeys(e, ["localParams"])
       : undefined;
     if (!loggedEvent) return undefined;
-    return JSON.stringify({
+    return safeStringify({
       created: new Date().toISOString(),
       connection_id,
       ...(getSerialisableError(e) as {}),
       loggedEvent,
     });
   } catch (error) {
-    return JSON.stringify({
+    return safeStringify({
       created: new Date().toISOString(),
       connection_id,
       type: e.type,
