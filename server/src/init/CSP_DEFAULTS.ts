@@ -32,6 +32,7 @@ export const CSP_DEFAULTS = {
   connectSrc: [
     SELF,
     "data:" /** Used by deckgl icon render */,
+    "blob:" /** Used by PdfViewer when viewing attached files */,
     "ws:",
     "wss:",
     "https://vector.openstreetmap.org",

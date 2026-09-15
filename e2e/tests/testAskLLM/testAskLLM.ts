@@ -5,7 +5,11 @@ import { fromEntries } from "common/utils";
 import { join } from "path";
 import type { JSONB } from "prostgles-types";
 import { runDbsSql, type PageWIds } from "utils/utils";
-import { agenticWorkflowToolUses, research } from "./agenticWorkflowToolUses";
+import {
+  agentFailure,
+  agenticWorkflowToolUses,
+  research,
+} from "./agenticWorkflowToolUses";
 import { createComponentToolUse } from "./createComponentToolUse";
 import { sampleReceiptData } from "./createReceipts";
 import { getAskUserToolUse } from "./getAskUserToolUse";
@@ -25,9 +29,9 @@ export type RequestToolAccess = JSONB.GetType<
   (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["request_tool_access"]["schema"]
 >;
 
-export const clientNodeModulesDirectory = join(
+export const nodeModulesDirectory = join(
   __dirname,
-  "../../../client/node_modules",
+  "../../../electron/node_modules",
 );
 
 const requestToolAccessArgs = {
@@ -42,9 +46,6 @@ const requestToolAccessArgs = {
         update: true,
       },
     },
-  },
-  mcpServerTools: {
-    web: { fetch: 1 },
   },
 } satisfies RequestToolAccess;
 
@@ -368,7 +369,7 @@ const toolResponses: Record<string, ToolUse> = {
         function: {
           name: "filesystem--directory_tree",
           arguments: stringify({
-            path: clientNodeModulesDirectory,
+            path: nodeModulesDirectory,
           }),
         },
       },
@@ -408,6 +409,7 @@ const toolResponses: Record<string, ToolUse> = {
   component: createComponentToolUse,
   agentic_workflow: agenticWorkflowToolUses.input,
   agentic_workflow_noinput: agenticWorkflowToolUses.noinput,
+  agentic_workflow_agent_failure: agenticWorkflowToolUses.agentFailure,
   agentic_workflow_filesystem: agenticWorkflowToolUses.filesystem,
   agentic_workflow_clashing: agenticWorkflowToolUses.clashing,
   agentic_workflow_invalidTable: agenticWorkflowToolUses.invalidTable,
@@ -431,6 +433,20 @@ const toolResponses: Record<string, ToolUse> = {
       },
     ],
   },
+  [agentFailure]: {
+    tool: [
+      {
+        id: "agentic-workflow-tool-use",
+        type: "function",
+        function: {
+          name: "agent_goal_failed",
+          arguments: stringify({
+            data: "The agent failed to complete the task.",
+          }),
+        },
+      },
+    ],
+  },
   ask_tool: {
     content: "I'll ask you a question using the ask_user_questions tool.",
     ...getAskUserToolUse(true),
@@ -438,6 +454,38 @@ const toolResponses: Record<string, ToolUse> = {
   ask_tool_invalid: {
     content: " ",
     ...getAskUserToolUse(false),
+  },
+  create_agent: {
+    content: "I'll create a new agent using the create_agent tool.",
+    tool: [
+      {
+        id: "create-agent-tool-use",
+        type: "function",
+        function: {
+          name: getProstglesMCPFullToolName("prostgles-ui", "create_agent"),
+          arguments: stringify({
+            name: "Test Agent",
+            // tools: {}
+            firstMessage: " Do the research please",
+            prompt: "Provide useful research to the user.",
+            timeout: 120000,
+            maxTokens: 5000,
+            modelName: "anthropic/claude-4.6-sonnet",
+            maxCostUSD: 1,
+            temperature: 0.1,
+            maxIterations: 8,
+            // mcpServerConfigs: {
+            //   "brave-search": {
+            //     configId: 35,
+            //   },
+            // },
+            autoApproveAllTools: true,
+          }),
+        },
+      },
+    ],
+    result_content:
+      "Created a new agent named 'Test Agent' with the specified description and goals.",
   },
 };
 

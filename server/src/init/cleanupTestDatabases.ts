@@ -23,8 +23,12 @@ export const cleanupTestDatabases = async (con: DBSConnectionInfo) => {
       "drop database sample_database; ",
       "drop database sample_db; ",
       "drop database my_new_db; ",
+      "drop database food_delivery; ",
       "drop database db_with_owner;",
       "drop database financial;",
+      "drop database cli_e2e_db;",
+      "drop database cli_e2e_state_db;",
+      "drop database cli_e2e_config_db;",
       "drop user db_with_owner;",
       "create database db with owner usr;",
     ];

@@ -79,7 +79,7 @@ export const ConditionalCellStyleControls = ({
         >
           <FlexRowWrap className="gap-p5">
             <Btn color="action" variant="faded" className="max-w-full">
-              {column.name}
+              {style.column ?? column.name}
             </Btn>
             <Select
               className="ml-p25"
@@ -100,7 +100,7 @@ export const ConditionalCellStyleControls = ({
                 variant="search-no-shadow"
                 tables={tables}
                 defaultValue={(cs.condition ?? "").toString()}
-                column={column.name}
+                column={style.column ?? column.name}
                 onPressEnter={(term) => {
                   updateCondStyle({ condition: term }, condIdx);
                 }}

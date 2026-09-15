@@ -46,6 +46,7 @@ type GetMenuColumnArgs = {
   table: DBSchemaTableWJoins;
   columnConfig: { name: string }[] | undefined;
   addColumnProps?: AddColumnMenuProps;
+  style?: React.CSSProperties;
 };
 export const getEditColumn = ({
   tableHandler,
@@ -53,6 +54,7 @@ export const getEditColumn = ({
   addColumnProps,
   table,
   columnConfig,
+  style = { padding: "12px" },
 }: GetMenuColumnArgs): ProstglesColumn => {
   const viewOnly = !tableHandler.update;
   const title = viewOnly ? "View row" : "View/Edit row",
@@ -75,7 +77,7 @@ export const getEditColumn = ({
         title={title}
         data-command="dashboard.window.viewEditRow"
         iconPath={iconPath}
-        style={{ padding: "12px" }}
+        style={style}
         color="action"
         onClickMessage={async (e, setM) => {
           e.stopPropagation();

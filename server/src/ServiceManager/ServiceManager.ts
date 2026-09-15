@@ -6,7 +6,9 @@ import { initialiseServices } from "./initialiseServices";
 import {
   prostglesServices,
   ServiceInstance,
+  type ProstglesService,
   type RunningServiceInstance,
+  type ServiceRegistry,
 } from "./ServiceManagerTypes";
 import { startService } from "./startService";
 import { stopService } from "./stopService";
@@ -14,18 +16,86 @@ import { isTesting } from "@src/init/utils";
 import { withRetries } from "./withRetries";
 import type { ExtractBy } from "@common/utils";
 
-export class ServiceManager {
+export type StringKeyof<T> = Extract<keyof T, string>;
+
+export type ServiceManagerConfig<Services extends ServiceRegistry> = {
+  services: Services;
+  serviceRoot: string;
+};
+
+export class ServiceManager<
+  Services extends ServiceRegistry = Record<string, ProstglesService>,
+> {
+  readonly services: Services;
+  private readonly serviceRoots = new Map<string, string>();
   dbs: DBS | undefined;
-  constructor(dbs: DBS | undefined) {
+
+  private constructor(
+    _config: ServiceManagerConfig<Services>,
+    dbs: DBS | undefined,
+  ) {
+    this.services = {} as Services;
     this.dbs = dbs;
-    if (dbs) {
-      void initialiseServices(this, dbs).catch(console.error);
+  }
+
+  static async create<Services extends ServiceRegistry>(
+    config: ServiceManagerConfig<Services>,
+    dbs: DBS | undefined,
+  ) {
+    const instance = new ServiceManager(config, dbs);
+    await instance.registerServices(config, true);
+    return instance;
+  }
+
+  private async registerServices(
+    { services, serviceRoot }: ServiceManagerConfig<ServiceRegistry>,
+    allowBuiltInServices = false,
+  ) {
+    const clashingServices = Object.keys(services).filter(
+      (serviceName) =>
+        Object.hasOwn(this.services, serviceName) ||
+        (!allowBuiltInServices &&
+          Object.hasOwn(prostglesServices, serviceName)),
+    );
+    if (clashingServices.length) {
+      throw new Error(
+        `ServiceManager: Clashing service names detected: ${clashingServices.join(
+          ", ",
+        )}. Please rename your services to avoid conflicts with registered or built-in services.`,
+      );
+    }
+
+    Object.assign(this.services, services);
+    Object.keys(services).forEach((serviceName) => {
+      this.serviceRoots.set(serviceName, serviceRoot);
+    });
+    if (this.dbs) {
+      await initialiseServices(this, this.dbs);
     }
   }
 
+  addServices = async <AdditionalServices extends ServiceRegistry>({
+    services,
+    serviceRoot,
+  }: ServiceManagerConfig<AdditionalServices>) => {
+    await this.registerServices({
+      services,
+      serviceRoot,
+    });
+    return this as unknown as ServiceManager<Services & AdditionalServices>;
+  };
+
+  getServiceRoot = (serviceName: string) => {
+    const serviceRoot = this.serviceRoots.get(serviceName);
+    if (serviceRoot === undefined) {
+      throw new Error(`Service ${serviceName} has no registered root`);
+    }
+    return serviceRoot;
+  };
+
   serviceLogUpdateQueue: Map<string, Promise<void>> = new Map();
   onServiceLog = (
-    serviceName: keyof typeof prostglesServices,
+    serviceName: StringKeyof<Services>,
     logItems: ProcessLog[],
   ) => {
     const prevQueue =
@@ -45,7 +115,7 @@ export class ServiceManager {
           .join("");
 
         if (!this.dbs) {
-          console.warn("No dbs available to log service logs", {
+          console.warn("No dbs provided. Will not store service logs", {
             serviceName,
             serviceStatus,
           });
@@ -80,7 +150,7 @@ export class ServiceManager {
   enablingServices: Map<string, Promise<RunningServiceInstance>> = new Map();
 
   getActiveService<Status extends ServiceInstance["status"]>(
-    serviceName: keyof typeof prostglesServices,
+    serviceName: StringKeyof<Services>,
     expectedStatus: Status,
   ) {
     const activeInstance = this.activeServices.get(serviceName);
@@ -92,27 +162,21 @@ export class ServiceManager {
     return activeInstance as Extract<ServiceInstance, { status: Status }>;
   }
 
-  getService<
-    ServiceName extends keyof typeof prostglesServices,
-    ExistingServices extends typeof prostglesServices,
-  >(
+  getService<ServiceName extends StringKeyof<Services>>(
     serviceName: ServiceName,
-  ): ServiceInstance<ExistingServices[ServiceName]> | undefined {
+  ): ServiceInstance<Services[ServiceName]> | undefined {
     const activeInstance = this.activeServices.get(serviceName);
 
     //@ts-ignore
     return activeInstance;
   }
 
-  async getServiceWithRetries<
-    ServiceName extends keyof typeof prostglesServices,
-    ExistingServices extends typeof prostglesServices,
-  >(
+  async getServiceWithRetries<ServiceName extends StringKeyof<Services>>(
     serviceName: ServiceName,
     onLogs?: (logs: ProcessLog[]) => void,
   ): Promise<
     ExtractBy<
-      ServiceInstance<ExistingServices[ServiceName]>,
+      ServiceInstance<Services[ServiceName]>,
       "status",
       "running"
     >
@@ -154,9 +218,3 @@ export class ServiceManager {
     this.activeServices = new Map();
   };
 }
-
-let serviceManager: ServiceManager | undefined = undefined;
-export const getServiceManager = (dbs: DBS | undefined) => {
-  serviceManager ??= new ServiceManager(dbs);
-  return serviceManager;
-};

@@ -43,7 +43,9 @@ export const getTextForSVG = (
       } catch {}
     }
     const isPlaceholder = !element.value;
-    if (!textContent.trim()) return;
+    if (!textContent.trim()) {
+      return;
+    }
     const paddingLeft = parseFloat(style.paddingLeft) || 0;
     const paddingTop = parseFloat(style.paddingTop) || 0;
     const paddingBottom = parseFloat(style.paddingBottom) || 0;
@@ -82,9 +84,14 @@ export const getTextForSVG = (
 
   return Array.from(element.childNodes)
     .map((childTextNode) => {
-      if (!isTextNode(childTextNode)) return;
+      if (!isTextNode(childTextNode)) {
+        return;
+      }
+      if (!childTextNode.textContent.trim()) {
+        return;
+      }
+
       const textContent = childTextNode.textContent;
-      if (!textContent || !textContent.trim()) return;
 
       const range = document.createRange();
       range.selectNodeContents(childTextNode);

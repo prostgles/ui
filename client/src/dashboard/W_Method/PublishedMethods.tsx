@@ -7,7 +7,6 @@ import PopupMenu from "@components/PopupMenu";
 import { SwitchToggle } from "@components/SwitchToggle";
 import { mdiDelete, mdiLanguageTypescript, mdiPencil, mdiPlus } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import type { DBHandlerClient } from "prostgles-client";
 import { isDefined } from "prostgles-types";
 import React, { useMemo, useState } from "react";
 import { SectionHeader } from "../AccessControl/AccessControlRuleEditor";
@@ -32,8 +31,7 @@ export const PublishedMethods = ({
   accessRuleId,
   editedRule,
 }: P) => {
-  const { dbsMethods, dbsMethodSchema, dbsTables, dbs, connectionId, dbsSql } =
-    usePrgl();
+  const { dbsMethodSchema, dbsTables, dbs, connectionId, dbsSql } = usePrgl();
   const { listProps, action, setAction } = useSmartCardListProps({
     dbs,
     connectionId,

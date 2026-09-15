@@ -1,0 +1,21 @@
+.pdf-viewer-search {
+  min-width: 16rem;
+}
+
+.pdf-viewer-search__input {
+  min-width: 10rem;
+}
+
+.pdf-viewer-search__count {
+  min-width: 3.5rem;
+  text-align: center;
+}
+
+::highlight(pdf-viewer-search) {
+  color: inherit;
+  background-color: rgb(255 212 59 / 72%);
+}
+::highlight(pdf-viewer-search-active) {
+  color: #fff;
+  background-color: rgb(255 107 0 / 90%);
+}

@@ -7,7 +7,9 @@ export const getTimeChartSelectDate = ({
   dateColumn,
   bin,
 }: Pick<GetTimeChartSelectArgs, "bin" | "dateColumn">) => {
-  return { ["$date_trunc_" + bin]: [dateColumn, { timeZone: true }] };
+  return {
+    [("$date_trunc_" + bin) as "$date_trunc"]: [dateColumn, { timeZone: true }],
+  };
 };
 
 export type GetTimeChartSelectArgs = Pick<
@@ -25,7 +27,9 @@ export const getTimeChartSelectParams = ({
   const stat =
     statType && TIMECHART_STAT_TYPES.find((s) => s.func === statType.funcName);
   const valueSelect =
-    stat ? { [stat.func]: [statType.numericColumn] } : { $countAll: [] };
+    stat ?
+      { [stat.func as "$avg"]: [statType.numericColumn] }
+    : { $countAll: [] };
   const select = {
     [TIMECHART_FIELD_NAMES.value]: valueSelect,
     ...(groupByColumn && {

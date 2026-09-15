@@ -41,7 +41,7 @@ type S = {
   };
   addColMenu?: Element;
   addRefColMenu?: boolean;
-  w?: SyncDataItem<Required<WindowData<"table">>, true>;
+  w?: SyncDataItem<Required<WindowData<"table">>, { handlesOnData: true }>;
 };
 
 export class ColumnsMenu extends RTComp<P, S> {

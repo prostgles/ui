@@ -1,4 +1,3 @@
-import type { FileTable } from "@common/utils";
 import type { AnyObject } from "prostgles-types";
 import type { DBSchemaTableWithRenderInfo } from "src/dashboard/Dashboard/getTables";
 import type { WindowData } from "../../Dashboard/dashboardUtils";
@@ -19,19 +18,6 @@ export const getFullColumnConfig = (
     if (!table) return [];
     let colsWInfo = getColWInfo(table, w.columns);
 
-    /* Show file columns as Media format by default */
-    colsWInfo = colsWInfo.map((r) => {
-      const isFileColumn =
-        (table.isFileTable && r.name === "url") || r.info?.file;
-      return {
-        ...r,
-        format:
-          !r.format && isFileColumn ?
-            { type: "Media", params: { type: "From URL Extension" } }
-          : r.format,
-      };
-    });
-
     try {
       colsWInfo = getColWidth(
         colsWInfo.map((r) => ({
@@ -47,27 +33,6 @@ export const getFullColumnConfig = (
       }));
     } catch (e) {
       console.error(e);
-    }
-
-    /* If media table then set url column display format to Media  */
-    if (!w.columns?.length && table.isFileTable) {
-      colsWInfo = structuredClone(colsWInfo);
-      const urlColumnIndex = colsWInfo.findIndex((c) => c.name === "url");
-      const urlColumn = colsWInfo.splice(urlColumnIndex, 1)[0];
-      const origNameColIdx = colsWInfo.findIndex(
-        ({ name }) => name === ("original_name" satisfies keyof FileTable),
-      );
-      const origNameCol = colsWInfo.splice(origNameColIdx, 1)[0];
-      if (origNameCol) {
-        colsWInfo.unshift(origNameCol);
-      }
-      if (urlColumn) {
-        urlColumn.format = {
-          type: "Media",
-          params: { type: "From URL Extension" },
-        };
-        colsWInfo.unshift(urlColumn);
-      }
     }
 
     return colsWInfo.slice(0);

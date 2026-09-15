@@ -1,20 +1,20 @@
-import React, { useState } from "react";
+import type { ArgDef } from "@common/publishUtils";
 import Btn from "@components/Btn";
 import FormField from "@components/FormField/FormField";
 import Popup from "@components/Popup/Popup";
 import { Select } from "@components/Select/Select";
 import { SwitchToggle } from "@components/SwitchToggle";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { omitKeys } from "prostgles-types";
-import type { ArgDef } from "@common/publishUtils";
-import type { CommonWindowProps } from "src/dashboard/Dashboard/Dashboard";
+import React, { useState } from "react";
 
 type P = ArgDef & {
   onChange: (newArg: ArgDef | undefined) => void;
-} & Pick<CommonWindowProps, "tables">;
+};
 
-export const ReferencesDefinition = ({ onChange, tables, ...arg }: P) => {
+export const ReferencesDefinition = ({ onChange, ...arg }: P) => {
   const [showRef, setShowRef] = useState(false);
-
+  const { tables } = usePrgl();
   const refTable = tables.find((t) => t.name === arg.references?.table);
 
   const updateRef = (newRef: Partial<(typeof arg)["references"]>) => {

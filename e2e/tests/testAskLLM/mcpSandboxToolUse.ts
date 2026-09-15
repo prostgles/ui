@@ -13,14 +13,14 @@ export const mcpSandboxToolUse: ToolUse = {
         name: "prostgles-ui--run_code_in_sandbox",
         arguments: stringify({
           files: {
-            Dockerfile: `FROM node:24 \nWORKDIR /app \nCOPY . . \nRUN npm install \nCMD ["npm", "start"]`,
+            Dockerfile: `FROM node:24-trixie-slim \nWORKDIR /app \nCOPY . . \nRUN npm install \nCMD ["npm", "start"]`,
             "package.json": JSON.stringify({
               name: "test-app",
               version: "1.0.0",
               scripts: {
                 start: "node index.js",
               },
-              depenencies: {
+              dependencies: {
                 "node-fetch": "^3.3.0",
               },
             }),
@@ -35,7 +35,7 @@ export const mcpSandboxToolUse: ToolUse = {
                 if(res.ok){
                   console.log("Table created successfully", json);
                 } else {
-                  console.error(json.message);
+                  console.error(json);
                 }
               })) 
               fetch(

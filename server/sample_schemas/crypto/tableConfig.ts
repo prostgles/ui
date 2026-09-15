@@ -1,17 +1,9 @@
-export type TableConfig = Record<
-  string,
-  {
-    /**
-     * Column names and sql definitions
-     * */
-    columns: Record<string, string>;
-  }
->;
+import type { TableConfig } from "@prostgles/app";
 
 export const tableConfig: TableConfig = {
   market_caps_import: {
     columns: {
-      v: "JSONB",
+      v: "JSONB"
     },
   },
   market_caps: {

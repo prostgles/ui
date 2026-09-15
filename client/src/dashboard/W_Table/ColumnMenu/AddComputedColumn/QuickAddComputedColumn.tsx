@@ -7,6 +7,7 @@ import { t } from "src/i18n/i18nUtils";
 import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 import type { ColumnConfigWInfo } from "../../W_Table";
 import type { ColumnConfig } from "../ColumnMenu";
+import { AggregateFunctionOptions } from "./AggregateFunctionOptions";
 import { FunctionExtraArguments } from "../FunctionSelector/FunctionExtraArguments";
 import { FunctionSelector } from "../FunctionSelector/FunctionSelector";
 import { FunctionColumnList } from "./FunctionColumnList";
@@ -40,6 +41,8 @@ export const QuickAddComputedColumn = ({
     setName,
     args,
     setArgs,
+    aggregateOptions,
+    setAggregateOptions,
   } = state;
 
   if (!table) return <>Table not found {tableName}</>;
@@ -95,6 +98,14 @@ export const QuickAddComputedColumn = ({
           onChange={setColumn}
           setIncludeJoins={state.setIncludeJoins}
           includeJoins={state.includeJoins}
+        />
+      )}
+
+      {funcDef?.isAggregate && (!allowedColumns || column) && (
+        <AggregateFunctionOptions
+          table={column?.join?.table ?? table}
+          value={aggregateOptions}
+          onChange={setAggregateOptions}
         />
       )}
 

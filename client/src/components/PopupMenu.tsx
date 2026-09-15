@@ -70,6 +70,7 @@ export default function <S extends AnyObject>(
         }
         onClick={(e) => {
           if (refBtn?.contains(e.nativeEvent.target as HTMLElement)) {
+            e.stopPropagation();
             setRef(e.nativeEvent.target as HTMLElement);
           } else {
             setRef(null);

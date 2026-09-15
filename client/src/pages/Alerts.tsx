@@ -82,8 +82,9 @@ export const Alerts = () => {
             ui_path,
           } = row as DBSSchema["alerts"] & { age: any };
           return (
-            <FlexRow className="ai-start">
+            <FlexRow className="ai-start f-1">
               <InfoRow
+                iconPath=""
                 variant="naked"
                 color={
                   severity === "error" ? "danger"
@@ -109,6 +110,7 @@ export const Alerts = () => {
                 </FlexCol>
               </InfoRow>
               <Btn
+                className="ml-auto"
                 iconPath={mdiDelete}
                 onClickPromise={() =>
                   dbs.alert_viewed_by.insert({

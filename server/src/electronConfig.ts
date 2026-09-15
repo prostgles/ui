@@ -1,7 +1,7 @@
-/* eslint-disable security/detect-non-literal-fs-filename */
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import * as fs from "fs";
 import * as path from "path";
-import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
+import { RUNTIME_MODE } from "./runtimeMode";
 
 export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
 export type DBSConnectionInfo = Pick<
@@ -29,21 +29,80 @@ const electronConfig: {
   isElectron: boolean;
   electronSid: string;
   safeStorage: SafeStorage | undefined;
+  focusWindow: () => void;
+  devCredentials: DBSConnectionInfo | undefined;
+  userDataDir: string;
 } = {
   isElectron: false,
   electronSid: "",
   safeStorage: undefined,
+  devCredentials: undefined,
+  userDataDir: "",
+  focusWindow: () => {
+    throw new Error(
+      "focusWindow function not set. This should only be called in electron context.",
+    );
+  },
 };
 
 export const actualRootDir = path.join(__dirname, "/../../..");
+
+const getClientDirectory = (directory: string) => {
+  const workspaceDirectory = path.resolve(
+    actualRootDir,
+    "..",
+    "client",
+    directory,
+  );
+  const packagedDirectory = path.resolve(actualRootDir, "client", directory);
+
+  return RUNTIME_MODE === "cli" ? packagedDirectory : workspaceDirectory;
+};
+
+export const DIRECTORIES = {
+  CLIENT_BUILD: getClientDirectory("build"),
+  CLIENT_STATIC: getClientDirectory("static"),
+  CLIENT_ICONS: getClientDirectory("static/icons"),
+  DOCS_SCREENSHOTS: path.resolve(actualRootDir + "/../docs/screenshots"),
+} as const;
+
 let rootDir = actualRootDir;
+
 /**
  * server root directory
  */
 export const getRootDir = () => rootDir;
+let userDataDir: string | undefined;
+
+const getDataDir = () => {
+  if (electronConfig.isElectron && rootDir !== userDataDir) {
+    throw new Error(
+      `Electron userDataDir (${electronConfig.userDataDir}) does not match rootDir (${rootDir}). This should never happen.`,
+    );
+  }
+  return path.resolve(process.env.PROSTGLES_DATA_DIR || getRootDir());
+};
+
+export const DATA_FOLDERS = {
+  BACKUPS: "prostgles_backups",
+  CERTIFICATES: "prostgles_certificates",
+  MCP: "prostgles_mcp",
+  STORAGE: "prostgles_storage",
+  CONFIGS: "prostgles_configs",
+} as const;
+
+export const getDataPath = (
+  folderLabel?: keyof typeof DATA_FOLDERS,
+  ...paths: string[]
+) =>
+  path.join(
+    getDataDir(),
+    ...[...(folderLabel ? [DATA_FOLDERS[folderLabel]] : []), ...paths],
+  );
 
 export const getElectronConfig = () => {
-  const { isElectron, safeStorage } = electronConfig;
+  const { isElectron, safeStorage, focusWindow, devCredentials } =
+    electronConfig;
   if (!isElectron) return undefined;
 
   if (
@@ -58,6 +117,9 @@ export const getElectronConfig = () => {
     `${getRootDir()}/.prostgles-desktop-config.json`,
   );
   const getCredentials = (): DBSConnectionInfo | undefined => {
+    if (devCredentials) {
+      return devCredentials;
+    }
     try {
       const file =
         !fs.existsSync(electronConfigPath) ?
@@ -80,6 +142,7 @@ export const getElectronConfig = () => {
     sidConfig: electronConfig,
     hasCredentials: () => !!getCredentials(),
     getCredentials,
+    focusWindow,
     setCredentials: (connection?: DBSConnectionInfo) => {
       if (!connection) {
         if (fs.existsSync(electronConfigPath)) {
@@ -104,15 +167,18 @@ export const getElectronConfig = () => {
 export const start = async (params: {
   safeStorage: SafeStorage;
   electronSid: string;
-  rootDir: string;
+  userDataDir: string;
   onReady: (actualPort: number) => void;
   port?: number;
+  devCredentials?: DBSConnectionInfo;
+  focusWindow: () => void;
 }) => {
   const { electronSid, onReady } = params;
-  if (!params.rootDir || typeof params.rootDir !== "string") {
+  if (!params.userDataDir || typeof params.userDataDir !== "string") {
     throw `Must provide a valid rootDir`;
   }
-  rootDir = params.rootDir;
+  rootDir = params.userDataDir;
+  userDataDir = params.userDataDir;
   if (
     !electronSid ||
     typeof electronSid !== "string" ||
@@ -123,6 +189,8 @@ export const start = async (params: {
   electronConfig.isElectron = true;
   electronConfig.electronSid = params.electronSid;
   electronConfig.safeStorage = params.safeStorage;
+  electronConfig.devCredentials = params.devCredentials;
+  electronConfig.focusWindow = params.focusWindow;
   const { startServer } = await import("./index");
   const startResult = await startServer(async ({ port: actualPort }) => {
     // const [token] = prostglesTokens;

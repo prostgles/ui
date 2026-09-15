@@ -1,7 +1,7 @@
 import React from "react";
 import type { DBSchemaTableWJoins } from "src/dashboard/Dashboard/dashboardUtils";
 import type { CardViewProps, IndexedRow } from "./CardView";
-import { CardViewRow } from "./CardViewRow";
+import { CardViewRow } from "./CardItem/CardViewRow";
 import type { CardViewState } from "./useCardViewState";
 
 export type CardViewColumnProps = Pick<

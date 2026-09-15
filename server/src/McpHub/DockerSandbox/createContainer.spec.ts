@@ -175,7 +175,7 @@ console.log('Fetch app started. Will attempt to fetch from host:3004 every 30 se
 `;
 
 const Dockerfile = `
-FROM node:18-alpine
+FROM node:24-alpine
 
 WORKDIR /workspace
 

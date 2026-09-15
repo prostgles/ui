@@ -11,7 +11,6 @@ import {
   mdiOpenInNew,
 } from "@mdi/js";
 
-import type { DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
 import { ErrorTrap } from "@components/ErrorComponent";
 import { FlexCol, FlexRow } from "@components/Flex";
@@ -22,7 +21,11 @@ import type { ReactNode } from "react";
 import React from "react";
 import ReactDOM from "react-dom";
 import { t } from "../../i18n/i18nUtils";
-import type { WindowData, WindowSyncItem } from "../Dashboard/dashboardUtils";
+import type {
+  DBSchemaTableWJoins,
+  WindowData,
+  WindowSyncItem,
+} from "../Dashboard/dashboardUtils";
 import type { DeepPartial, DeltaOf } from "../RTComp";
 import RTComp from "../RTComp";
 import type { ReactSilverGridNode } from "../SilverGrid/SilverGrid";
@@ -38,7 +41,7 @@ import { Select } from "@components/Select/Select";
 type P<W extends WindowSyncItem> = {
   w: W;
   onWChange?: (w: W, delta: DeepPartial<W>) => any;
-  connection: DBSSchema["connections"];
+  tables: DBSchemaTableWJoins[];
   children?: ReactNode;
   getMenu?: (w: W, onClose: () => any) => ReactNode;
   layoutMode: "fixed" | "editable";
@@ -109,7 +112,7 @@ export default class Window<W extends WindowSyncItem> extends RTComp<
       children,
       getMenu,
       layoutMode = "editable",
-      connection,
+      tables,
       childWindow,
     } = this.props;
     const { showMenu } = this.state;
@@ -121,7 +124,8 @@ export default class Window<W extends WindowSyncItem> extends RTComp<
       const title = getWindowTitle(w);
       const tableName = w.table_name;
       const icon =
-        tableName ? (connection.table_options?.[tableName]?.icon ?? "Table")
+        tableName ?
+          (tables.find((table) => table.name === tableName)?.icon ?? "Table")
         : w.type === "sql" ? "ScriptOutline"
         : w.type === "method" ? "Function"
         : w.type === "map" ? "Map"

@@ -2,13 +2,14 @@ import { isDefined, pickKeys } from "prostgles-types";
 import type { ValidatedColumnInfo } from "prostgles-types/lib";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  FUCTION_DEFINITIONS,
+  FUNCTION_DEFINITIONS,
   getColumnsAcceptedByFunction,
   type FuncDef,
 } from "../FunctionSelector/functions";
 import { getAllJoins } from "../JoinPathSelectorV2";
 import type { QuickAddComputedColumnProps } from "./QuickAddComputedColumn";
 import type { ColumnConfig } from "../ColumnMenu";
+import type { AggregateOptions } from "../ColumnMenu";
 import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 
 export const useAddComputedColumnState = ({
@@ -32,9 +33,10 @@ export const useAddComputedColumnState = ({
     return {
       args: config.args,
       funcDef:
-        FUCTION_DEFINITIONS.find((f) => f.key === config.funcDef.key) ||
+        FUNCTION_DEFINITIONS.find((f) => f.key === config.funcDef.key) ||
         undefined,
       column: table.columns.find((c) => c.name === config.column),
+      aggregateOptions: config.aggregateOptions,
     };
   }, [existingColumn, table]);
 
@@ -44,6 +46,9 @@ export const useAddComputedColumnState = ({
   const [args, setArgs] = useState<
     Required<ColumnConfig>["computedConfig"]["args"]
   >(existingColumnInfo?.args);
+  const [aggregateOptions, setAggregateOptions] = useState<
+    AggregateOptions | undefined
+  >(existingColumnInfo?.aggregateOptions);
 
   const allowedColumns: undefined | ValidatedColumnInfoWithJoin[] =
     useMemo(() => {
@@ -114,6 +119,8 @@ export const useAddComputedColumnState = ({
                   ...pickKeys(outInfo, ["tsDataType", "udt_name"]),
                   funcDef,
                   column: column.name,
+                  aggregateOptions:
+                    funcDef.isAggregate ? aggregateOptions : undefined,
                 },
               },
               ...column.join.table.columns.map((c) => ({
@@ -134,11 +141,13 @@ export const useAddComputedColumnState = ({
             funcDef,
             args,
             column: column?.name,
+            aggregateOptions:
+              funcDef.isAggregate ? aggregateOptions : undefined,
           },
         });
       }
     },
-    [onAddColumn, name, args],
+    [aggregateOptions, args, name, onAddColumn],
   );
 
   const [onAddDisabledInfo, onAdd] =
@@ -163,6 +172,8 @@ export const useAddComputedColumnState = ({
     onAdd,
     args,
     setArgs,
+    aggregateOptions,
+    setAggregateOptions,
   };
 };
 

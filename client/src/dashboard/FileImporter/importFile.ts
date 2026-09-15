@@ -186,8 +186,8 @@ export const importFile = async (args: Args) => {
           batch = allRows.slice(currIdx, currIdx + stepSize);
 
           const rowsObj = Object.fromEntries(
-            batch.map((r, ri) => {
-              return [`r${ri}`, columns.map((c) => r[c])];
+            batch.map((row, ri) => {
+              return [`r${ri}`, columns.map((c) => row[c])];
             }),
           );
           await insertRowsObj(rowsObj);

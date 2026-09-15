@@ -12,7 +12,7 @@ export const sqlEditorUIDoc = {
   docs: `
     The SQL editor is a powerful tool for executing SQL queries against your PostgreSQL database. 
 
-    ### Features
+    ## Features
     
     - **Intelligent auto-completion** with context-aware suggestions based on your schema and data with JSONB property access support
     - **Rich suggestion details** with related objects, usage examples and documentation extracts, reducing the need to switch context

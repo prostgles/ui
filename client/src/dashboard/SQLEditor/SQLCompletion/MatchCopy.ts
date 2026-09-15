@@ -243,10 +243,10 @@ export const suggestDirsAndFiles = async (
   try {
     try {
       dirs = (await sql(
-        "set statement_timeout to 200; SELECT pg_ls_dir(${baseDir}) as path",
+        "set local statement_timeout to 200; SELECT pg_ls_dir(${baseDir}) as path",
         { baseDir },
         { returnType: "rows" },
-      )) as any;
+      )) as DirFilesResult[];
     } catch (err: any) {
       dirs = [
         {
@@ -279,7 +279,7 @@ export const suggestDirsAndFiles = async (
           try {
             const fileOrDirPath = `${baseDir}${d.path}`;
             const f = (await sql(
-              "set statement_timeout to 200; SELECT *, pg_size_pretty(size::bigint) as size_pretty from pg_stat_file(${baseDir})",
+              "set local statement_timeout to 200; SELECT *, pg_size_pretty(size::bigint) as size_pretty from pg_stat_file(${baseDir})",
               { baseDir: fileOrDirPath },
               { returnType: "row" },
             )) as DirOrFile;
@@ -325,9 +325,9 @@ export const suggestDirsAndFiles = async (
           return res;
         }),
     );
-    await sql("set statement_timeout to DEFAULT");
+    await sql("set local statement_timeout to DEFAULT");
   } catch (errRaw) {
-    await sql("set statement_timeout to DEFAULT");
+    await sql("set local statement_timeout to DEFAULT");
     error =
       errRaw instanceof Error ? errRaw.message
       : isObject(errRaw) ? errRaw.err_msg

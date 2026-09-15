@@ -18,7 +18,7 @@ export type LayoutItem = {
    *  'my_table'
    */
   tableName: string | null;
-  viewType: "table" | "map" | "timechart" | "sql" | "barchart";
+  viewType: "table" | "map" | "timechart" | "sql" | "barchart" | "method";
   /**
    * Flex size of the item
    */
@@ -367,12 +367,33 @@ export type TableColumn = {
         };
       }
     | {
+        type: "Markdown";
+      }
+    | {
+        /**
+         * Same as "Markdown" but will show a popup with the full content when clicked.
+         */
+        type: "MarkdownPopup";
+      }
+    | {
         /** Text content as sanitised html */
         type: "HTML";
       }
     | {
         /** Displays the media from URL. Accepted formats: image, audio or video. Media/Mime type will be used from headers */
         type: "Media";
+      }
+    | {
+        /** Display process logs */
+        type: "Logs";
+      }
+    | {
+        /** Used internally. Ignore */
+        type: "DoclingDocument";
+      }
+    | {
+        type: "JSON Diff" | "Text Diff";
+        params: { oldColumn: string; newColumn: string };
       };
 };
 
@@ -497,7 +518,15 @@ export type BarchartWindowInsertModel = (
   };
 };
 
+export type MethodWindowInsertModel = {
+  id: string;
+  type: "method";
+  method_name: string;
+  name?: string;
+};
+
 export type WindowInsertModel =
+  | MethodWindowInsertModel
   | MapWindowInsertModel
   | SqlWindowInsertModel
   /**

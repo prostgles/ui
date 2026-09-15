@@ -1,5 +1,6 @@
 import type { DBSSchema } from "@common/publishUtils";
 import type { SUser } from "@src/authConfig/sessionUtils";
+import type { ProstglesContext } from "@src/schemaConfig";
 import type { OnReadyCallback } from "prostgles-server/dist/initProstgles";
 import { pickKeys } from "prostgles-types";
 import type { DBS } from "..";
@@ -19,7 +20,7 @@ export const getConnectionOnReady = ({
   connection: DBSSchema["connections"];
   onSetupReady: () => void;
 }) => {
-  const onReady: OnReadyCallback<void, SUser> = (params) => {
+  const onReady: OnReadyCallback<void, SUser, ProstglesContext> = (params) => {
     const { dbo: db, db: _db, reason, tables } = params;
 
     let maybeActiveConnection = connectionManager.getActiveConnectionSilentFail(

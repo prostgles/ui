@@ -17,25 +17,36 @@ import type { ProstglesTableColumn } from "./getTableCols";
 import { kFormatter } from "./kFormatter";
 import type { OnRenderColumnProps } from "./onRenderColumn";
 
-type P = Pick<OnColRenderRowInfo, "value" | "renderedVal"> &
+type P = Pick<OnColRenderRowInfo, "value" | "renderedVal" | "row"> &
   Pick<
     OnRenderColumnProps,
-    "maxCellChars" | "column" | "barchartVals" | "tables"
-  >;
+    "maxCellChars" | "column" | "barchartVals" | "tables" | "table"
+  > & {
+    formattedValue?: React.ReactNode;
+  };
 
 export const StyledTableColumn = ({
   column: c,
+  row,
+  formattedValue,
   value: valueOrNestedValue,
   barchartVals,
   renderedVal: renderedValRaw,
   tables,
+  table,
 }: P) => {
   const cellValue = (() => {
     if (!c.nested) {
       return {
         type: "normal" as const,
         value: valueOrNestedValue,
-        renderedVal: renderedValRaw,
+        renderedVal: formattedValue ?? (
+          <RenderValue
+            column={c}
+            value={valueOrNestedValue}
+            style={{ color: "inherit" }}
+          />
+        ),
       };
     }
 
@@ -43,7 +54,7 @@ export const StyledTableColumn = ({
     if (!nestedSingleColumn) {
       return;
     }
-    const { colInfo: shownColumnInfo, shownCol, table } = nestedSingleColumn;
+    const { colInfo: shownColumnInfo, shownCol } = nestedSingleColumn;
     const firstRow =
       Array.isArray(valueOrNestedValue) ? valueOrNestedValue[0] : undefined;
     const value =
@@ -78,7 +89,6 @@ export const StyledTableColumn = ({
     const numMax = Number(barchartVals[c.name]?.max ?? 0);
     return (
       <CellBarchart
-        style={{ marginTop: "6px" }}
         min={numMin}
         max={numMax}
         barColor={c.style.barColor}
@@ -88,7 +98,14 @@ export const StyledTableColumn = ({
       />
     );
   } else if (c.style?.type !== "None") {
-    const style = getCellStyle(c, c, value, barchartVals?.[c.name]);
+    const conditionColumn =
+      c.style?.type === "Conditional" ? c.style.column : undefined;
+    const style = getCellStyle(
+      c,
+      table?.columns.find((col) => col.name === conditionColumn) ?? c,
+      conditionColumn ? row[conditionColumn] : value,
+      barchartVals?.[c.name],
+    );
 
     if (
       includes(["Fixed", "Conditional"], c.style?.type) &&
@@ -216,22 +233,41 @@ export const getCellStyle = (
         c.udt_name === "int2" ||
         c.udt_name === "float4" ||
         c.udt_name === "money";
-      const cval =
+      const conditionalValue =
         isNumeric ? +(condition as string) : (condition as ColumnValue);
       if (operator === "contains") {
-        return val && `${JSON.stringify(val)}`.includes(cval?.toString() + "");
+        return (
+          val &&
+          `${JSON.stringify(val)}`.includes(conditionalValue?.toString() + "")
+        );
       } else if (operator === "=") {
-        return val == cval;
+        return val == conditionalValue;
       } else if (operator === ">") {
-        return cval !== undefined && cval !== null && val > cval;
+        return (
+          conditionalValue !== undefined &&
+          conditionalValue !== null &&
+          val > conditionalValue
+        );
       } else if (operator === ">=") {
-        return cval !== undefined && cval !== null && val >= cval;
+        return (
+          conditionalValue !== undefined &&
+          conditionalValue !== null &&
+          val >= conditionalValue
+        );
       } else if (operator === "<=") {
-        return cval !== undefined && cval !== null && val <= cval;
+        return (
+          conditionalValue !== undefined &&
+          conditionalValue !== null &&
+          val <= conditionalValue
+        );
       } else if (operator === "<") {
-        return cval !== undefined && cval !== null && val < cval;
+        return (
+          conditionalValue !== undefined &&
+          conditionalValue !== null &&
+          val < conditionalValue
+        );
       } else if (operator === "!=") {
-        return val != cval;
+        return val != conditionalValue;
       } else if (operator === "in" || operator === "not in") {
         const is_in = includes(condition, val);
 

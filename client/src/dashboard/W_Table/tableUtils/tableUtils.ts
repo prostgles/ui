@@ -104,13 +104,14 @@ export const getSort = (
   tables: DBSchemaTableWJoins[],
   w: Pick<WindowSyncItem<"table">, "sort" | "columns" | "table_name">,
 ): ColumnSortSQL[] => {
-  const { sort } = w;
+  const table = tables.find((t) => t.name === w.table_name);
+  const sort = !w.columns && !w.sort?.length ? table?.sort : w.sort;
 
   if (!sort) return [];
 
   let _sort: ColumnSortSQL[] = sort.map((s) => ({ ...s }));
 
-  const cols = tables.find((t) => t.name === w.table_name)?.columns;
+  const cols = table?.columns;
   if (!cols) return [];
 
   const wcols = w.columns;

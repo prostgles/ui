@@ -1,8 +1,8 @@
 import { ROUTES } from "@common/utils";
-import type { DBS } from "../Dashboard/DBS";
-import { useNavigate, useSearchParams } from "react-router";
 import { useCallback, useMemo } from "react";
+import { useNavigate, useSearchParams } from "react-router";
 import type { Workspace } from "../Dashboard/dashboardUtils";
+import type { DBS } from "../Dashboard/DBS";
 
 export const useWorkspaces = (
   dbs: DBS,
@@ -72,7 +72,7 @@ export const useSetActiveWorkspace = (
 export const useWorkspacesSync = (dbs: DBS, connection_id: string) => {
   const { data: unsortedWorkspaces = [] } = dbs.workspaces.useSync!(
     { connection_id, deleted: false },
-    { handlesOnData: true, select: "*", patchText: false },
+    { handlesOnData: true },
   );
   return unsortedWorkspaces;
 };

@@ -1,46 +1,40 @@
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
+import { getRestApiConfig } from "@src/ConnectionManager/connectionManagerUtils";
+import { modifyClientSchema } from "@src/ConnectionManager/modifyClientSchema";
 import { getProstglesMcpHub } from "@src/McpHub/ProstglesMcpHub/ProstglesMcpHub";
-import { getServiceManager } from "@src/ServiceManager/ServiceManager";
+import { initializeServiceManager } from "@src/ServiceManager/getServiceManager";
 import type { SUser } from "@src/authConfig/sessionUtils";
 import type { DBSConnectionInfo } from "@src/electronConfig";
+import { connectionManager } from "@src/index";
 import type e from "express";
 import type { DB } from "prostgles-server/dist/Prostgles";
 import type { OnReadyCallback } from "prostgles-server/dist/initProstgles";
-import { connectionManager, type DBS } from "@src/index";
 import BackupManager from "../BackupManager/BackupManager";
+import {
+  applyStartupSchemaConfig,
+  getStartupSchemaConfig,
+} from "../ConnectionManager/applyStartupSchemaConfig";
 import { setLoggerDBS } from "../Logger";
 import { setupMCPServerHub } from "../McpHub/AnthropicMcpHub/startMcpHub";
-import { initUsers } from "./initUsers";
 import { getAuth } from "../authConfig/getAuth";
 import {
   subscribeToAuthSetupChanges,
   type AuthSetupDataListener,
 } from "../authConfig/subscribeToAuthSetupChanges";
 import { setupLLM } from "../serverFunctions/askLLM/setupLLM";
+import { initUsers } from "./initUsers";
 import { insertStateDatabase } from "./insertStateDatabase";
 import { getProstglesState } from "./tryStartProstgles";
-import { getRestApiConfig } from "@src/ConnectionManager/connectionManagerUtils";
-import { getSerialisableError, type SQLHandler } from "prostgles-types";
 
 let authSetupDataListener: AuthSetupDataListener | undefined;
 
 let backupManager: BackupManager | undefined;
-export const initBackupManager = async (
-  db: DB,
-  dbs: DBS,
-  dbsSql: SQLHandler,
-) => {
-  backupManager ??= await BackupManager.create(
-    db,
-    dbs,
-    dbsSql,
-    connectionManager,
-  );
-
+export const getBackupManager = () => {
+  if (!backupManager) {
+    throw new Error("BackupManager not initialized yet");
+  }
   return backupManager;
 };
-
-export const getBackupManager = () => backupManager;
 
 export const prostglesOnReady = async (
   params: Parameters<OnReadyCallback<DBGeneratedSchema, SUser>>[0],
@@ -72,7 +66,19 @@ export const prostglesOnReady = async (
 
     await connectionManager.destroy();
     await connectionManager.init(db, _db);
-    getServiceManager(db);
+    const { serviceManager, isNew: isNewServiceManager } =
+      await initializeServiceManager(db);
+    const startupSchemaConfig = getStartupSchemaConfig();
+    if (isNewServiceManager && startupSchemaConfig?.schemaConfig.services) {
+      await serviceManager.addServices(
+        startupSchemaConfig.schemaConfig.services,
+      );
+    }
+    await applyStartupSchemaConfig({
+      dbs: db,
+      db: _db,
+      startupSchemaConfig,
+    });
 
     backupManager ??= await BackupManager.create(
       _db,
@@ -90,10 +96,22 @@ export const prostglesOnReady = async (
         app.set("trust proxy", authData.stateDatabaseConfig.trust_proxy);
         const authSetupData = { ...authData, type: "state" as const };
         const auth = await getAuth(app, db, _db, authSetupData);
+        /** TODO: this must be merged with getHotReloadConfigs AND ProstglesInitOptions should have a getHotReloadConfigs: ({ db, _db }) => HotReloadOpts */
         void update({
           auth,
-          /** TODO: this must be merged with getHotReloadConfigs */
           restApi,
+
+          modifyClientSchema:
+            connection &&
+            ((table, tableConfig, userData, auditConfig) =>
+              modifyClientSchema({
+                connection,
+                databaseConfig: stateDatabaseConfig,
+                table,
+                tableConfig,
+                userData,
+                auditConfig,
+              })),
         });
       },
       authSetupDataListener,
@@ -112,21 +130,20 @@ export const prostglesOnReady = async (
 };
 
 type AsyncCleanup = () => Promise<{ cleanup: () => Promise<void> }>;
-const cleanups: ReturnType<AsyncCleanup>[] = [];
+const cleanups: Awaited<ReturnType<AsyncCleanup>>["cleanup"][] = [];
 let chain = Promise.resolve();
 const promiseCleanup = (func: AsyncCleanup) => {
   chain = chain.then(async () => {
-    /** Get new values first for better experience */
-    cleanups.push(func());
+    const { cleanup } = await func();
+    cleanups.push(cleanup);
 
     while (cleanups.length > 1) {
+      const previousCleanup = cleanups.shift()!;
+
       try {
-        const { cleanup } = await cleanups[0]!;
-        await cleanup();
+        await previousCleanup();
       } catch (e) {
         console.error("Error during prostgles onReady cleanup", e);
-      } finally {
-        void cleanups.shift();
       }
     }
   });

@@ -387,7 +387,7 @@ export const sqlDemo = async () => {
       ),
     ).find((n) => n.querySelector(".ProstglesSQL"));
   if (!getSqlWindow()) {
-    click("dashboard.menu.sqlEditor");
+    await click("dashboard.menu.sqlEditor");
     await tout(1500);
   }
   const sqlWindow = getSqlWindow();
@@ -434,9 +434,9 @@ const timeChartDemo: DemoScript = async ({
   await tout(1500);
   await clickWhenReady(addTChartBtn);
 
-  const layer = await waitForElement<HTMLButtonElement>(
-    "TimeChartLayerOptions.aggFunc",
-  );
+  const getLayer = () =>
+    waitForElement<HTMLButtonElement>("TimeChartLayerOptions.aggFunc");
+  let layer = await getLayer();
 
   /** Shows numeric col avg by default */
   shouldBeEqual(layer.innerText, "Avg(\nrval\n),\ndate");
@@ -465,6 +465,8 @@ const timeChartDemo: DemoScript = async ({
 
   /** Count all works */
   await setLayerFunc("$countAll");
+  await tout(1000);
+  layer = await getLayer();
   shouldBeEqual(layer.innerText, "count(*), date");
 
   /** Switch back */

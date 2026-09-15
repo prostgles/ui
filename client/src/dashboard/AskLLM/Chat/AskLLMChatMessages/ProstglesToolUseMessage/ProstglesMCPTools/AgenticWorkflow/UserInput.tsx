@@ -204,7 +204,9 @@ export const UserInput = ({
                         inputItem.dataType === "boolean" ? Boolean(newValueRaw)
                         : inputItem.dataType === "number" ? Number(newValueRaw)
                         : inputItem.dataType === "Date" ?
-                          new Date(String(newValueRaw)).toISOString()
+                          new Date(String(newValueRaw))
+                            .toISOString()
+                            .split("T")[0]
                         : String(newValueRaw);
                       setUserInputValue((prev) => ({
                         ...prev,

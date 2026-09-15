@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { classOverride } from "./Flex";
+import { useDebouncedCallback } from "src/hooks/useDebouncedCallback";
+import { useCallback } from "react";
 
 export const Stopwatch = ({
   startTime,
@@ -41,6 +43,49 @@ export const Stopwatch = ({
       {displayTime}
     </div>
   );
+};
+
+export const useCountdown = () => {
+  const [state, start] = useState<
+    { endTime: Date; onFinish: () => void } | undefined
+  >(undefined);
+
+  const [elapsed, setElapsed] = useState("");
+
+  useEffect(() => {
+    if (!state) {
+      return;
+    }
+
+    const onElapsedUpdate = () => {
+      setElapsed(
+        getDurationAsStr(state.endTime.getTime() - Date.now(), {
+          excludeMs: true,
+        }),
+      );
+    };
+    const interval = setInterval(() => {
+      if (Date.now() >= state.endTime.getTime()) {
+        state.onFinish();
+        clearInterval(interval);
+        start(undefined);
+        setElapsed("");
+      } else {
+        onElapsedUpdate();
+      }
+    }, 1_000);
+    return () => clearInterval(interval);
+  }, [state]);
+
+  const stop = useCallback(() => {
+    start(undefined);
+    setElapsed("");
+  }, []);
+  return {
+    start,
+    elapsed: state?.endTime ? elapsed : "",
+    stop,
+  };
 };
 
 type DurationOpts = {

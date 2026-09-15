@@ -494,7 +494,7 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
     const dataFilterSignature = JSON.stringify([layerQueries]);
     let form: React.ReactNode = null;
     if (w.options.showCardOnClick && clickedItem?.properties.i) {
-      const table = this.props.tables.find(
+      const table = this.props.prgl.tables.find(
         (t) => t.name === clickedItem.properties.tableName,
       );
       if (table) {
@@ -590,7 +590,7 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
                   if (isObject(filterOrHash)) {
                     rowFilter = filterOrHash;
                   } else {
-                    const table = this.props.tables.find(
+                    const table = this.props.prgl.tables.find(
                       (t) => t.name === object.properties.tableName,
                     );
                     if (table) {
@@ -686,7 +686,7 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
                     db: this.props.prgl.db,
                     sql: this.props.prgl.sql,
                     theme: this.props.prgl.theme,
-                    tables: this.props.tables,
+                    tables: this.props.prgl.tables,
                     methods: this.props.prgl.methods,
                     layerQueries,
                     onInsertOrUpdate: () => {
@@ -715,7 +715,7 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
       <Window
         w={w}
         childWindow={undefined}
-        connection={this.props.prgl.connection}
+        tables={this.props.prgl.tables}
         getMenu={this.getMenu}
         layoutMode={this.props.workspace.layout_mode ?? "editable"}
       >

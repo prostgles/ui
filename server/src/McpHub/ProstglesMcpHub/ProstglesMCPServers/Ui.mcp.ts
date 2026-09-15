@@ -1,8 +1,12 @@
 import type { GeneratedFunctionSchema } from "@common/DBGeneratedSchema";
+import {
+  getMCPFullToolName,
+  getProstglesMCPFullToolName,
+} from "@common/mcpUtils";
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import { connectionManager } from "@src/index";
 import { statePrgl } from "@src/init/startProstgles";
-import { isEmpty, pickKeys } from "prostgles-types";
+import { isEmpty, pickKeys, getSerialisableError } from "prostgles-types";
 import { getDockerMCPServerProxy } from "../../DockerSandbox/dockerMCPServerProxy/dockerMCPServerProxy";
 import type {
   ProstglesMcpServerDefinition,
@@ -17,12 +21,10 @@ import { getToolTypescriptSchemas } from "./Prostgles/agenticWorkflow/runtimeSet
 import { fetchTools } from "./Prostgles/fetchTools";
 import { runCodeInSandboxContainer } from "./Prostgles/runCodeInSandboxContainer";
 import { startAgent } from "./Prostgles/startAgent";
-import {
-  getMCPFullToolName,
-  getProstglesMCPFullToolName,
-} from "@common/mcpUtils";
-import type { WorkspaceInsertModel } from "@common/DashboardTypes";
 import { validateCreateDashboards } from "./Prostgles/validateCreateDashboards";
+import { glob } from "glob";
+import { DIRECTORIES } from "@src/electronConfig";
+import { validateDatabaseAccessDefinitions } from "./Prostgles/agenticWorkflow/definitionValidation/validateDatabaseAccessDefinitions";
 
 const serverName = "prostgles-ui" as const;
 const tools = PROSTGLES_MCP_SERVERS_AND_TOOLS[serverName];
@@ -73,7 +75,14 @@ const handler = {
           return "" as any;
         },
         create_agent: async (
-          { name, autoApproveAllTools, tools, timeout, ...config },
+          {
+            name,
+            firstMessage,
+            autoApproveAllTools,
+            tools,
+            timeout,
+            ...config
+          },
           { clientReq, connection_id, toolUseId, user_id, chat, messageId },
         ) => {
           if (!statePrgl) {
@@ -105,7 +114,11 @@ const handler = {
           try {
             const toolsWithInfo =
               tools &&
-              (await getValidatedMcpServerToolsAllowed(dbs, tools, undefined));
+              (await getValidatedMcpServerToolsAllowed(
+                dbs,
+                tools,
+                configWithDefaults.mcpServerConfigs,
+              ));
 
             const createAgentFullToolName = getProstglesMCPFullToolName(
               "prostgles-ui",
@@ -123,7 +136,7 @@ const handler = {
             }
 
             const rawRes = await startAgent(
-              undefined,
+              firstMessage,
               {
                 name: `Agent for toolUseId ${toolUseId}`,
                 toolsWithInfo,
@@ -156,20 +169,64 @@ const handler = {
           } catch (error) {
             return {
               success: false,
-              error: error instanceof Error ? error.message : "Unknown error",
+              error: JSON.stringify(getSerialisableError(error)),
             } as const;
           }
+        },
+        create_tables: async ({ ddlStatements }, { connection_id }) => {
+          await validateDatabaseAccessDefinitions({
+            connection_id,
+            usedTables: [],
+            databaseAccessDefinitions: {
+              mode: "custom",
+              ddlStatements,
+              tablePermissions: {},
+            },
+            allowEmptyTablePermissions: true,
+          });
+          const connPrgl =
+            connectionManager.getActiveConnectionSilentFail(connection_id);
+          if (!connPrgl) {
+            throw new Error(`Connection with id ${connection_id} not found`);
+          }
+          if (!ddlStatements) {
+            throw new Error(`ddlStatements is required for create_tables tool`);
+          }
+          await connPrgl.prgl.sql(ddlStatements);
+          return { data: [] };
         },
         request_tool_access: async (
           { databaseAccess, mcpServerTools },
           { connection_id },
         ) => {
+          /**
+           * For convenience, add latest configs to the configs state, so that if the user has already configured a server, it will be used automatically.
+           */
+          const latestConfigs =
+            mcpServerTools &&
+            !isEmpty(mcpServerTools) &&
+            (await dbs.mcp_server_configs.find(
+              {
+                server_name: {
+                  $in: Object.keys(mcpServerTools),
+                },
+              },
+              { select: { server_name: 1, configId: { $max: ["id"] } } },
+            ));
+
           const validatedTools =
             mcpServerTools &&
             (await getValidatedMcpServerToolsAllowed(
               dbs,
               mcpServerTools,
-              undefined,
+              !latestConfigs ? undefined : (
+                Object.fromEntries(
+                  latestConfigs.map((c) => [
+                    c.server_name,
+                    { configId: Number(c.configId) },
+                  ]),
+                )
+              ),
             ));
           if (mcpServerTools && !validatedTools?.length) {
             throw new Error(
@@ -177,34 +234,15 @@ const handler = {
             );
           }
 
-          const tablePermissions =
-            databaseAccess?.mode === "custom" ?
-              databaseAccess.tablePermissions
-            : undefined;
+          const customAccess =
+            databaseAccess?.mode === "custom" ? databaseAccess : undefined;
 
-          if (tablePermissions) {
-            if (isEmpty(tablePermissions)) {
-              throw new Error(
-                `Custom database access must have at least one table permission defined`,
-              );
-            }
-            const connPrgl =
-              connectionManager.getActiveConnectionSilentFail(connection_id);
-            if (!connPrgl) {
-              throw new Error(`Connection with id ${connection_id} not found`);
-            }
-            Object.keys(tablePermissions).forEach((tableName) => {
-              const matchingTable = connPrgl.prgl.db[tableName];
-              if (!matchingTable || !matchingTable.find) {
-                const allTables = Object.keys(connPrgl.prgl.db)
-                  .filter((k) => connPrgl.prgl.db[k]?.find)
-                  .join(", ");
-                throw new Error(
-                  `Table ${tableName} not found in current schema. Available tables: ${allTables}`,
-                );
-              }
-            });
-          }
+          await validateDatabaseAccessDefinitions({
+            connection_id,
+            usedTables: [],
+            databaseAccessDefinitions: customAccess,
+            allowEmptyTablePermissions: true,
+          });
           if (!mcpServerTools && !databaseAccess) {
             throw new Error(
               `At least one of mcpServerTools or databaseAccess must be provided`,
@@ -275,6 +313,23 @@ const handler = {
               },
             },
           );
+        },
+        find_icons: async ({ query }) => {
+          const results = await glob("**/*.svg", {
+            cwd: DIRECTORIES.CLIENT_ICONS,
+            nodir: true,
+            signal: AbortSignal.timeout(5_000),
+          });
+
+          return results
+            .map((filePath) => {
+              return filePath.slice(0, -4); // remove .svg extension
+            })
+            .filter((filePath) => {
+              return (
+                !query || filePath.toLowerCase().includes(query.toLowerCase())
+              );
+            });
         },
       },
       fetchTools,

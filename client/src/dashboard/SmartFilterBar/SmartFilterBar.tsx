@@ -167,7 +167,7 @@ const toggleAllFilters = (filters: DetailedFilter[], minimised?: boolean) => {
   const someFiltersExpanded = minimised ?? filters.some((f) => !f.minimised);
 
   return filters.map((f) => {
-    if (isJoinedFilter(f)) {
+    if (isJoinedFilter(f) && "fieldName" in f.filter) {
       f.filter.minimised = someFiltersExpanded;
     }
     return {

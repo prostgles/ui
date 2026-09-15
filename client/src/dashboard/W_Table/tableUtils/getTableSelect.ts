@@ -1,5 +1,8 @@
-import { getSmartGroupFilter } from "@common/filterUtils";
-import type { AnyObject } from "prostgles-types";
+import {
+  getSmartGroupFilter,
+  getTableFilterFromDetailedGroupFilter,
+} from "@common/filterUtils";
+import type { AnyObject, SelectFunction } from "prostgles-types";
 import { isDefined, reverseParsedPath } from "prostgles-types";
 import type { Prgl } from "src/App";
 import { isEmpty } from "../../../utils/utils";
@@ -60,6 +63,24 @@ export const getTableSelect = async (
       }
     }),
   );
+
+  const table = tables.find((t) => t.name === w.table_name);
+  fullColumns.forEach((c) => {
+    if (!c.show || c.computedConfig || c.nested) return;
+    const dependencies =
+      c.format?.type === "JSON Diff" || c.format?.type === "Text Diff" ?
+        [c.format.params.oldColumn, c.format.params.newColumn]
+      : [];
+    if (c.style?.type === "Conditional" && c.style.column)
+      dependencies.push(c.style.column);
+    dependencies.forEach((name) => {
+      if (
+        table?.columns.some((column) => column.name === name && column.select)
+      ) {
+        select[name] ??= 1;
+      }
+    });
+  });
 
   await Promise.all(
     fullColumns.map(async (c) => {
@@ -136,7 +157,7 @@ export const getTableSelect = async (
 
 export const getComputedColumnSelect = (
   computedConfig: Required<ColumnConfig>["computedConfig"],
-) => {
+): SelectFunction => {
   let funcName = computedConfig.funcDef.key;
   let functionArgs: any[] = [computedConfig.column].filter(isDefined);
   if (computedConfig.column || computedConfig.args) {
@@ -153,7 +174,20 @@ export const getComputedColumnSelect = (
       functionArgs = [args.$template_string];
     }
   }
-  return { [funcName]: functionArgs };
+  const aggregateOptions =
+    computedConfig.funcDef.isAggregate ?
+      computedConfig.aggregateOptions
+    : undefined;
+  const aggregateFilter =
+    aggregateOptions?.filter &&
+    getTableFilterFromDetailedGroupFilter(aggregateOptions.filter);
+  return {
+    [funcName]: functionArgs,
+    ...(!isEmpty(aggregateFilter) && { $filter: aggregateFilter }),
+    ...(aggregateOptions?.orderBy && {
+      $orderBy: aggregateOptions.orderBy,
+    }),
+  } as SelectFunction;
 };
 
 export const getNestedColumnSelect = async (

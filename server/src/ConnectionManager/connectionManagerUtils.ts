@@ -1,119 +1,18 @@
-import { getConnectionApiPaths, ROUTES } from "@common/utils";
+import { getConnectionApiPaths } from "@common/utils";
 import type e from "express";
-import type { CloudClient } from "prostgles-server/dist/FileManager/FileManager";
-import type {
-  FileTableConfig,
-  ProstglesInitOptions,
-} from "prostgles-server/dist/ProstglesTypes";
-import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
+import type { TableConfig } from "prostgles-server";
 import type { DB, OnInitReason } from "prostgles-server/dist/initProstgles";
+import type { ProstglesInitOptions } from "prostgles-server/dist/ProstglesTypes";
 import type { FileColumnConfig, TableSchema } from "prostgles-types";
 import { pickKeys } from "prostgles-types";
 import ts, { ModuleKind, ModuleResolutionKind, ScriptTarget } from "typescript";
-import type { DatabaseConfigs, DBS } from "..";
-import { getCloudClient } from "../cloudClients/cloudClients";
+import type { DatabaseConfigs } from "..";
 import type { ConnectionManager } from "./ConnectionManager";
 import type { ConnectionHotReloadProperties } from "./getHotReloadConfigs";
+import { getSchemaConfig } from "./getSchemaConfig";
 
 export const getDatabaseConfigFilter = (c: ConnectionHotReloadProperties) =>
   pickKeys(c, ["db_name", "db_host", "db_port"]);
-
-type ParseTableConfigArgs = {
-  dbs: DBS;
-  conMgr: ConnectionManager;
-  app: e.Express;
-  con: ConnectionHotReloadProperties;
-} & (
-  | {
-      type: "saved";
-      newTableConfig?: undefined;
-    }
-  | {
-      type: "new";
-      newTableConfig: DatabaseConfigs["file_table_config"];
-    }
-);
-
-export const parseTableConfig = async ({
-  con,
-  conMgr,
-  app,
-  dbs,
-  type,
-  newTableConfig,
-}: ParseTableConfigArgs): Promise<{
-  fileTable?: FileTableConfig;
-  tableConfigOk: boolean;
-}> => {
-  const connectionId = con.id;
-  let tableConfigOk = false;
-  let tableConfig:
-    | (DatabaseConfigs["file_table_config"] &
-        Pick<FileTableConfig, "referencedTables">)
-    | null = null;
-  if (type === "saved") {
-    const database_config = await dbs.database_configs.findOne(
-      getDatabaseConfigFilter(con),
-    );
-    if (!database_config) {
-      return {
-        fileTable: undefined,
-        tableConfigOk: true,
-      };
-    }
-    tableConfig = database_config.file_table_config;
-  } else {
-    tableConfig = newTableConfig;
-  }
-  let cloudClient: CloudClient | undefined;
-  if (tableConfig && tableConfig.storageType.type !== "local") {
-    if (tableConfig.storageType.credential_id) {
-      const s3Creds = await dbs.credentials.findOne({
-        id: tableConfig.storageType.credential_id,
-      });
-      if (s3Creds) {
-        tableConfigOk = true;
-        cloudClient = getCloudClient({
-          accessKeyId: s3Creds.key_id,
-          secretAccessKey: s3Creds.key_secret,
-          Bucket: s3Creds.bucket!,
-          region: s3Creds.region || "auto",
-          endpoint: s3Creds.endpoint_url,
-        });
-      }
-    }
-    if (!tableConfigOk) {
-      console.error(
-        "Could not find cloud credentials for fileTable config. File storage will not be set up ",
-      );
-    }
-  } else if (
-    tableConfig?.storageType.type === "local" &&
-    tableConfig.fileTable
-  ) {
-    tableConfigOk = true;
-  }
-
-  const fileTable =
-    !tableConfig?.fileTable || !tableConfigOk ?
-      undefined
-    : ({
-        tableName: tableConfig.fileTable,
-        expressApp: app,
-        fileServePath: `${ROUTES.STORAGE}/${connectionId}`,
-        ...(tableConfig.storageType.type === "local" ?
-          {
-            localConfig: {
-              /* Use path.resolve when using a relative path. Otherwise will get 403 forbidden */
-              localFolderPath: conMgr.getFileFolderPath(connectionId),
-            },
-          }
-        : { cloudClient }),
-        referencedTables: tableConfig.referencedTables,
-      } satisfies FileTableConfig);
-
-  return { tableConfigOk, fileTable };
-};
 
 export const getCompiledTS = (code: string) => {
   const sourceCode = ts.transpile(
@@ -130,22 +29,6 @@ export const getCompiledTS = (code: string) => {
 
   return sourceCode;
 };
-
-export const getRestApiConfig = (
-  app: e.Express,
-  con: ConnectionHotReloadProperties,
-  { rest_api_enabled }: Pick<DatabaseConfigs, "rest_api_enabled">,
-) => {
-  const res: ProstglesInitOptions["restApi"] =
-    rest_api_enabled ?
-      {
-        expressApp: app,
-        path: getConnectionApiPaths(con).rest,
-      }
-    : undefined;
-
-  return res;
-};
 export const getEvaledExports = <T>(
   code: string | undefined,
 ): T | undefined => {
@@ -160,8 +43,28 @@ export const getEvaledExports = <T>(
   return result;
 };
 
-type TableDbConfig = Pick<DatabaseConfigs, "table_config" | "table_config_ts">;
+export const getRestApiConfig = (
+  expressApp: e.Express,
+  con: ConnectionHotReloadProperties,
+  { rest_api_enabled }: Pick<DatabaseConfigs, "rest_api_enabled">,
+) => {
+  const res: ProstglesInitOptions["restApi"] =
+    rest_api_enabled ?
+      {
+        expressApp,
+        path: getConnectionApiPaths(con).rest,
+      }
+    : undefined;
+
+  return res;
+};
+
+type TableDbConfig = Pick<
+  DatabaseConfigs,
+  "table_config" | "table_config_ts" | "config_sync"
+>;
 type CompiledTableConfig = { tableConfig: TableConfig; dashboardConfig?: any };
+
 const getCompiledTableConfig = ({
   table_config,
   table_config_ts,
@@ -170,13 +73,10 @@ const getCompiledTableConfig = ({
   if (!table_config_ts) return undefined;
 
   const res = getEvaledExports<CompiledTableConfig>(table_config_ts);
-  if (!res?.tableConfig)
+  if (!res?.tableConfig) {
     throw "A table_config_ts must export a const named 'tableConfig' ";
+  }
   return res;
-};
-
-export const getTableConfig = (dbConf: TableDbConfig) => {
-  return getCompiledTableConfig(dbConf)?.tableConfig;
 };
 
 export type FileTableConfigReferences = Record<

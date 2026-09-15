@@ -5,22 +5,18 @@ import React, { useCallback, useMemo } from "react";
 import type { ReactiveState } from "../../appUtils";
 import { useReactiveState } from "../../appUtils";
 import type { DashboardProps, DashboardState } from "../Dashboard/Dashboard";
-import type {
-  DBSchemaTableWJoins,
-  WindowData,
-  Workspace,
-} from "../Dashboard/dashboardUtils";
+import type { WindowData, Workspace } from "../Dashboard/dashboardUtils";
 import { useAddViewToWorkspace } from "../Dashboard/useAddViewToWorkspace";
 import type { SEARCH_TYPES } from "../SearchAll/SearchAll";
 import { SearchAll } from "../SearchAll/SearchAll";
 import { DashboardMenuContent } from "./DashboardMenuContent";
 import { DashboardMenuHeader } from "./DashboardMenuHeader";
 import { DashboardMenuHotkeys } from "./DashboardMenuHotkeys";
+import { tableMightBeUndefinedDueToAccessControl } from "@common/utils";
 
 export type DashboardMenuProps = Pick<DashboardProps, "prgl"> & {
   suggestions: DashboardState["suggestions"];
-  tables: DBSchemaTableWJoins[];
-  workspace: SyncDataItem<Workspace, true>;
+  workspace: SyncDataItem<Workspace, { handlesOnData: true }>;
 };
 
 export type DashboardMenuState = {
@@ -28,7 +24,7 @@ export type DashboardMenuState = {
     mode: (typeof SEARCH_TYPES)[number]["key"];
     term?: string;
   };
-  queries: SyncDataItem<WindowData<"sql">>[];
+  queries: SyncDataItem<WindowData<"sql">, { handlesOnData: true }>[];
 };
 
 export const DashboardMenu = ({
@@ -41,19 +37,18 @@ export const DashboardMenu = ({
 
   const [showSearchAll, setShowSearchAll] =
     React.useState<DashboardMenuState["showSearchAll"]>();
-  const { suggestions, tables, workspace, prgl } = props;
-  const { db, dbs, sql, methods } = prgl;
+  const { suggestions, workspace, prgl } = props;
+  const { tables, db, dbs, sql, methods } = prgl;
 
   const filter =
     workspace.options.showAllMyQueries ? {} : { workspace_id: workspace.id };
   const { data: windows } = dbs.windows.useSync!(filter, {
     handlesOnData: true,
     select: "*",
-    patchText: false,
   });
   const queries = useMemo(() => {
     return (windows?.filter((w) => w.type === "sql" && !w.deleted) ??
-      []) as SyncDataItem<WindowData<"sql">>[];
+      []) as SyncDataItem<WindowData<"sql">, { handlesOnData: true }>[];
   }, [windows]);
   const anchor = { node: menuAnchor, onClose: () => setState(undefined) };
 
@@ -69,7 +64,9 @@ export const DashboardMenu = ({
     </>
   );
   const { addViewToWorkspace } = useAddViewToWorkspace();
-  if (!(dbs as any).workspaces.insert) return hotKeys;
+  if (!tableMightBeUndefinedDueToAccessControl(dbs.workspaces)?.insert) {
+    return hotKeys;
+  }
 
   const pinnedMenu = workspace.options.pinnedMenu && !window.isLowWidthScreen;
   if (!pinnedMenu && !anchor.node && !showSearchAll) return hotKeys;

@@ -1,4 +1,4 @@
-import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
+import type { TableConfig } from "prostgles-server";
 import { DATA_TYPES, type JSONB } from "prostgles-types";
 
 const primitiveJsonbType = {
@@ -61,18 +61,12 @@ export const tableConfigPublishedMethods: TableConfig<{ en: 1 }> = {
               },
               {
                 name: { title: "Argument name", type: "string" },
-                type: { title: "Data type", enum: ["Lookup", "Lookup[]"] },
+                type: {
+                  title: "Data type",
+                  enum: ["ColumnLookup", "ColumnLookup[]"],
+                },
                 defaultValue: { type: "any", optional: true },
                 optional: { optional: true, type: "boolean" },
-                lookup: {
-                  title: "Table column",
-                  lookup: {
-                    type: "schema",
-                    // column: "",
-                    // table: "",
-                    object: "column",
-                  },
-                },
               },
               {
                 name: { title: "Argument name", type: "string" },

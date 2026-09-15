@@ -1,16 +1,15 @@
-import { mdiFile, mdiTable, mdiTableEye } from "@mdi/js";
-import { getKeys } from "prostgles-types";
-import React, { useState } from "react";
 import type { TableRules } from "@common/publishUtils";
 import { FlexCol } from "@components/Flex";
-import { Icon } from "@components/Icon/Icon";
 import { SearchList } from "@components/SearchList/SearchList";
 import { SwitchToggle } from "@components/SwitchToggle";
+import { mdiFile, mdiTable, mdiTableEye } from "@mdi/js";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import { getKeys } from "prostgles-types";
+import React, { useState } from "react";
 import type { EditedAccessRule } from "../AccessControl";
 import type { PermissionEditProps } from "../AccessControlRuleEditor";
 import type { TableInfoWithRules } from "../TableRules/TablePermissionControls";
 import { TablePermissionControls } from "../TableRules/TablePermissionControls";
-import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 
 type DBPermissionCustomTables<
   T extends EditedAccessRule["dbPermissions"]["type"],
@@ -183,8 +182,8 @@ export const PCustomTables = ({
             const isNotFromWorkspaceTables =
               !t.isFileTable &&
               !editedRule?.newRule?.dbsPermissions?.createWorkspaces &&
-              editedRule?.worspaceTableAndColumns?.length &&
-              !editedRule.worspaceTableAndColumns.some(
+              editedRule?.workspaceTableAndColumns?.length &&
+              !editedRule.workspaceTableAndColumns.some(
                 (wt) => wt.tableName === t.name,
               );
             return {

@@ -1,28 +1,20 @@
-import type { DBSSchema } from "@common/publishUtils";
 import { DEFAULT_DUMP_OPTS, type PGDumpParams } from "@common/utils";
 import Btn from "@components/Btn";
 import FormField from "@components/FormField/FormField";
 import { InfoRow } from "@components/InfoRow";
 import PopupMenu from "@components/PopupMenu";
-import {
-  mdiDatabasePlusOutline,
-  mdiDelete,
-  mdiFileUploadOutline,
-  mdiStop,
-} from "@mdi/js";
+import { mdiDatabasePlusOutline, mdiFileUploadOutline, mdiStop } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { usePromise } from "prostgles-client";
-import { omitKeys, type AnyObject, type FilterItem } from "prostgles-types";
+import { omitKeys, type FilterItem } from "prostgles-types";
 import React, { useState } from "react";
 import { dataCommand } from "../../Testing";
-import type { DBS, DBSMethods } from "../Dashboard/DBS";
 import type { Backups } from "../Dashboard/dashboardUtils";
 import type { FieldConfig } from "../SmartCard/SmartCard";
 import { SmartCardList } from "../SmartCardList/SmartCardList";
 import { StyledInterval } from "../W_SQL/customRenderers";
 import { AutomaticBackups } from "./AutomaticBackups";
 import { BackupsInProgress } from "./BackupsInProgress";
-import { CodeConfirmation } from "./CodeConfirmation";
 import { CompletedBackups } from "./CompletedBackups";
 import { PGDumpOptions } from "./PGDumpOptions";
 import { RenderBackupLogs } from "./RenderBackupLogs";
@@ -283,70 +275,7 @@ export const BackupsControls = () => {
         completedBackupsFilter={completedBackupsFilter}
         setBackupsFilterType={setBackupsFilterType}
       />
-
-      {hasBackups && (
-        <DeleteAllBackups
-          dbs={dbs}
-          dbsMethods={dbsMethods}
-          filter={completedBackupsFilter}
-          filterName={backupsFilterType}
-          data-command="BackupsControls.Completed.deleteAll"
-        />
-      )}
     </div>
-  );
-};
-
-type DeleteAllBackupsProps = {
-  dbs: DBS;
-  dbsMethods: DBSMethods;
-  filter: AnyObject;
-  filterName: string;
-};
-
-const DeleteAllBackups = ({
-  dbs,
-  filter,
-  dbsMethods,
-  filterName,
-}: DeleteAllBackupsProps) => {
-  const onDeleteAll = async () => {
-    let bkp: DBSSchema["backups"] | undefined;
-    do {
-      bkp = await dbs.backups.findOne(filter);
-      if (bkp) {
-        await dbsMethods.bkpDelete!({ bkpId: bkp.id, force: true });
-      }
-    } while (bkp);
-  };
-
-  return (
-    <CodeConfirmation
-      className="ml-p25"
-      positioning="center"
-      data-command="BackupControls.DeleteAll"
-      button={
-        <Btn iconPath={mdiDelete} color="danger" title="Will need to confirm">
-          Delete all...
-        </Btn>
-      }
-      message={
-        <InfoRow style={{ alignItems: "center" }} color="danger">
-          Will delete ALL backup files from storage for{" "}
-          <strong>{filterName}</strong>. This action is not reversible!
-        </InfoRow>
-      }
-      confirmButtons={[
-        {
-          iconPath: mdiDelete,
-          variant: "outline",
-          color: "danger",
-          "data-command": "BackupControls.DeleteAll.Confirm",
-          onClickPromise: onDeleteAll,
-          children: "Force delete backups",
-        },
-      ]}
-    />
   );
 };
 

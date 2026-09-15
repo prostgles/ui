@@ -55,6 +55,13 @@ export const smartFormUIDoc: UIDocElement = {
             "Navigate to the next row in the dataset. Only shown for tables with primary key. Disabled when there is no next row available.",
         },
         {
+          selectorCommand: "AuditTrail.open",
+          type: "button",
+          title: "Audit history",
+          description:
+            "Shows the changes recorded for this row, newest first. Only shown when auditing is configured and permitted.",
+        },
+        {
           selectorCommand: "Popup.toggleFullscreen",
           type: "button",
           title: "Fullscreen toggle button",

@@ -144,7 +144,6 @@ export const getTableCols = ({
       c.nested ?
         `${c.name} (${c.nested.path.at(-1)?.table} data)`
       : [
-          //@ts-ignore
           c.name,
           c.udt_name,
           c.info?.comment || "",
@@ -167,7 +166,7 @@ export const getTableCols = ({
         : !!c.computedConfig ||
           (!!c.info?.orderBy &&
             c.info.udt_name !== "json" &&
-            (c.info as any)?.udt_name !== "point"),
+            c.info.udt_name !== "point"),
       computed: !!c.computedConfig,
       key: c.name,
       label:

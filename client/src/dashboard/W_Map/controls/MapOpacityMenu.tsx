@@ -5,7 +5,7 @@ import { Slider } from "@components/Slider";
 import type { WindowData } from "../../Dashboard/dashboardUtils";
 
 type P = {
-  w: SyncDataItem<Required<WindowData<"map">>, true>;
+  w: SyncDataItem<Required<WindowData<"map">>, { handlesOnData: true }>;
   className?: string;
 };
 

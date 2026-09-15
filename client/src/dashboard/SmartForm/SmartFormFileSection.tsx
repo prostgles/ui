@@ -1,117 +1,115 @@
-import type { AnyObject, DBSchemaTable } from "prostgles-types";
-import { isEmpty } from "prostgles-types";
-import React, { useMemo } from "react";
-import type { Media } from "@components/FileInput/FileInput";
+import Btn from "@components/Btn";
+import { MediaViewer } from "@components/MediaViewer/MediaViewer";
+import { mdiClose } from "@mdi/js";
+import type { LocalMedia, Media } from "@components/FileInput/FileInput";
 import { FileInput } from "@components/FileInput/FileInput";
+import type { DBSchemaTable } from "prostgles-types";
+import { isEmpty } from "prostgles-types";
+import React, { useMemo, useState } from "react";
 import type { SmartFormProps } from "./SmartForm";
 import type { NewRow, NewRowDataHandler } from "./SmartFormNewRowDataHandler";
 import type { SmartFormState } from "./useSmartForm";
 
 type P = {
-  row: AnyObject;
-  mediaTableName: string;
+  row: Media | Record<string, never> | undefined;
   newRowDataHandler: NewRowDataHandler | undefined;
   table: DBSchemaTable;
   newRowData: NewRow | undefined;
-} & Pick<SmartFormProps, "defaultData" | "onSuccess" | "db"> &
+} & Pick<SmartFormProps, "defaultData"> &
   Pick<SmartFormState, "mode">;
 
 /**
  * Appears at the bottom of the form when the table is a file table.
  */
 export const SmartFormFileSection = ({
-  db,
   table,
   newRowData,
   defaultData,
   mode: action,
-  onSuccess,
-  mediaTableName,
   row,
   newRowDataHandler,
 }: P) => {
+  const [removed, setRemoved] = useState(false);
   const { isFileTable } = table;
   const tableName = table.name;
   const media: Media[] | undefined = useMemo(() => {
-    if (!isFileTable) throw "Must be a file table";
-    if (!isEmpty(row)) return [row as Media];
+   
+    const data = newRowData?.data?.value;
+    if (data instanceof File) {
+      return [
+        {
+          data,
+          original_name: newRowData?.original_name?.value,
+          original_last_modified: newRowData?.original_last_modified?.value,
+        },
+      ];
+    }
+    if (removed) return [];
+    if (!isEmpty(row) && row?.original_name !== undefined) {
+      return [row as Media];
+    }
     if (defaultData && !isEmpty(defaultData)) return [defaultData as Media];
     return [];
-
-    // if (action.type === "insert") {
-    //   if (defaultData && isObject(defaultData) && !newRowData) {
-    //     return [defaultData as Media];
-    //   } else {
-    //     return row[mediaTableName] ?? [];
-    //   }
-    // } else {
-    //   return newRowData?.[tableName]?.value ?? [row as Media];
-    // }
-  }, [
-    row,
-    isFileTable,
-    defaultData,
-    // mediaTableName,
-    // action.type,
-    // newRowData,
-    // tableName,
-  ]);
+  }, [row,  defaultData, newRowData, removed]);
 
   if ("loading" in action && action.loading) return null;
   if (!newRowDataHandler) return null;
+  if (!isFileTable) {
+    return "Unexpected: Must be a file table";
+  }
+
+  const onRemove = () => {
+    setRemoved(true);
+    const pendingRow = newRowDataHandler.getNewRow();
+    delete pendingRow.data;
+    delete pendingRow.original_name;
+    delete pendingRow.original_last_modified;
+    newRowDataHandler.setNewRow(pendingRow);
+  };
+  const savedMedia = media[0];
+  if (savedMedia && "url" in savedMedia) {
+    return (
+      <>
+        <MediaViewer
+          url={savedMedia.url}
+          style={{ width: "100%", height: "auto", flex: "none" }}
+        />
+        <Btn iconPath={mdiClose} onClick={onRemove} variant="faded">
+          Remove file
+        </Btn>
+      </>
+    );
+  }
 
   return (
-    <FileInput
-      key={tableName}
-      className={"mt-p5 f-0 " + (isFileTable ? " min-w-300" : "")}
-      media={media}
-      // minSize={isFileTable ? 470 : 450}
-      maxFileCount={1}
-      onAdd={([file]) => {
-        // const currentRow = action.type === "update" ? action.currentRow : {};
-        // const currMedia = [
-        //   ...(newRowData?.[mediaTableName]?.value || []),
-        //   ...(currentRow?.[mediaTableName] || []),
-        // ].filter(isDefined);
-        // newRowDataHandler.setColumnData(mediaTableName, {
-        //   type: "nested-table",
-        //   value: [...currMedia, ...files],
-        // });
-        newRowDataHandler.setNewRow(
-          !file ?
-            {}
-          : {
-              name: { type: "column", value: file.name },
-              data: { type: "column", value: file.data },
+    <>
+      <FileInput
+        key={tableName}
+        className={"mt-p5 f-0  min-w-300" }
+        media={media}
+        // minSize={isFileTable ? 470 : 450}
+        maxFileCount={1}
+        onAdd={([file]) => {
+          if (!file) return;
+          const newFileRow: {
+            [K in keyof Required<LocalMedia>]: {
+              type: "column";
+              value: LocalMedia[K];
+            };
+          } = {
+            original_name: { type: "column", value: file.original_name },
+            original_last_modified: {
+              type: "column",
+              value: file.original_last_modified,
             },
-        );
-      }}
-      onDelete={async (media) => {
-        if ("id" in media && media.id) {
-          if (action.type === "update" && isFileTable) {
-            // ????
-            newRowDataHandler.setNewRow({
-              [tableName]: { type: "nested-table", value: [] },
-            });
-          } else {
-            const mediaTableHandler = db[mediaTableName];
-            if (mediaTableHandler?.update) {
-              const res = await mediaTableHandler.update(
-                { id: media.id },
-                { deleted: true },
-                onSuccess ? { returning: "*" } : {},
-              );
-              onSuccess?.("update", res);
-            }
-          }
-        } else {
-          const currMedia: Media[] = newRowData?.[mediaTableName]?.value || [];
-          newRowDataHandler.setColumnData(mediaTableName, {
-            type: "nested-table",
-            value: currMedia.filter((m) => m.name !== media.name),
-          });
-        }
-      }}
-    />
+            data: { type: "column", value: file.data },
+          };
+ 
+          /** Prevent default column values for file tables */
+          newRowDataHandler.setNewRow(newFileRow);
+        }}
+        onDelete={onRemove}
+      />
+    </>
   );
 };

@@ -1,57 +1,34 @@
 import type { ConnectionTableConfig } from "@src/ConnectionManager/ConnectionManager";
-import { assertJSONBObjectAgainstSchema, pickKeys } from "prostgles-types";
+import { pickKeys } from "prostgles-types";
 import { connectionManager, type DBS } from "..";
 import { getConnectionAndDatabaseConfig } from "./getConnectionAndDatabaseConfig";
 
 export const setFileStorage = async (
   dbs: DBS,
   connId: string,
-  tableConfig?: ConnectionTableConfig,
+  fileTableConfig?: ConnectionTableConfig,
   opts?: { keepS3Data?: boolean; keepFileTable?: boolean },
 ) => {
   const { db, dbConf } = await getConnectionAndDatabaseConfig(dbs, connId);
 
   let newTableConfig: ConnectionTableConfig | null =
-    tableConfig ?
+    fileTableConfig ?
       {
-        ...tableConfig,
+        ...fileTableConfig,
       }
     : null;
 
+  const existingFileTableConfig = dbConf.file_table_config;
   /** Enable file storage */
-  if (tableConfig) {
-    if (typeof tableConfig.referencedTables !== "undefined") {
-      assertJSONBObjectAgainstSchema(
-        { referencedTables: { record: { values: "any", partial: true } } },
-        tableConfig,
-        "referencedTables",
-        false,
-      );
-    }
-    if (tableConfig.referencedTables && Object.keys(tableConfig).length === 1) {
-      if (!dbConf.file_table_config) throw "Must enable file storage first";
-      newTableConfig = { ...dbConf.file_table_config, ...tableConfig };
+  if (fileTableConfig) {
+    if (
+      fileTableConfig.referencedTables &&
+      Object.keys(fileTableConfig).length === 1
+    ) {
+      if (!existingFileTableConfig) throw "Must enable file storage first";
+      newTableConfig = { ...existingFileTableConfig, ...fileTableConfig };
     } else {
-      assertJSONBObjectAgainstSchema(
-        {
-          fileTable: "string",
-          storageType: {
-            oneOfType: [
-              {
-                type: { enum: ["S3"] },
-                credential_id: "number",
-              },
-              {
-                type: { enum: ["local"] },
-              },
-            ],
-          },
-        },
-        tableConfig as any,
-        "tableConfig",
-        false,
-      );
-      const { storageType } = tableConfig;
+      const { storageType } = fileTableConfig;
 
       if (storageType.type === "S3") {
         if (
@@ -64,27 +41,28 @@ export const setFileStorage = async (
       }
       const KEYS = ["fileTable", "storageType"] as const;
       if (
-        dbConf.file_table_config &&
-        JSON.stringify(pickKeys(dbConf.file_table_config, KEYS.slice(0))) !==
-          JSON.stringify(pickKeys(tableConfig, KEYS.slice(0)))
+        existingFileTableConfig &&
+        JSON.stringify(pickKeys(existingFileTableConfig, KEYS.slice(0))) !==
+          JSON.stringify(pickKeys(fileTableConfig, KEYS.slice(0)))
       ) {
         throw "Cannot update " + KEYS.join("or");
       }
 
-      newTableConfig = tableConfig;
+      newTableConfig = fileTableConfig;
     }
 
     /** Disable current file storage */
   } else {
-    const fileTable = dbConf.file_table_config?.fileTable;
+    const fileTable = existingFileTableConfig?.fileTable;
     if (!fileTable) throw "Unexpected: fileTable already disabled";
     await db.tx(async (dbTX, t) => {
       const fileTableHandler = dbTX[fileTable];
-      if (!fileTableHandler)
+      if (!fileTableHandler) {
         throw "Unexpected: fileTable table handler missing";
+      }
       if (
-        dbConf.file_table_config?.fileTable &&
-        (dbConf.file_table_config.storageType.type === "local" ||
+        existingFileTableConfig.fileTable &&
+        (existingFileTableConfig.storageType.type === "local" ||
           !opts?.keepS3Data)
       ) {
         if (!fileTable || !fileTableHandler.delete) {
@@ -94,9 +72,21 @@ export const setFileStorage = async (
         await fileTableHandler.delete({});
       }
       if (!opts?.keepFileTable) {
-        await t.any("DROP TABLE ${fileTable:name} CASCADE", {
-          fileTable,
-        });
+        const { annotationsTable } = existingFileTableConfig;
+        if (annotationsTable) {
+          await connectionManager
+            .getActiveConnectionSilentFail(connId)
+            ?.prgl.update({ tableConfig: undefined });
+        }
+        await t.any(
+          (existingFileTableConfig.annotationsTable ?
+            "DROP TABLE ${annotationsTable:name} CASCADE;"
+          : "") + "DROP TABLE ${fileTable:name} CASCADE",
+          {
+            fileTable,
+            annotationsTable: existingFileTableConfig.annotationsTable,
+          },
+        );
       }
     });
     newTableConfig = null;
@@ -112,7 +102,6 @@ export const setFileStorage = async (
       );
     })
     .catch((err) => {
-      console.log({ err });
       return Promise.reject(err);
     });
 };

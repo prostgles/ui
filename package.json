@@ -1,7 +1,7 @@
 {
-  "name": "prostgles-ui",
+  "name": "prostgles",
   "private": true,
-  "version": "2.3.5",
+  "version": "2.3.6",
   "homepage": "https://prostgles.com/ui",
   "description": "Realtime Dashboard and SQL editor for PostgreSQL",
   "author": "Prostgles LTD <office@prostgles.com>",
@@ -25,7 +25,7 @@
     "demo:record": "bash ./scripts/demo/record-local.sh"
   },
   "devDependencies": {
-    "prettier": "^3.4.2",
-    "typescript": "^5.8.3"
+    "prettier": "^3.9.6",
+    "typescript": "^5.9.3"
   }
 }

@@ -21,7 +21,7 @@ import React from "react";
 import type { Prgl } from "src/App";
 import { CONTEXT_FILTER_OPERANDS } from "../AccessControl/ContextFilter";
 import RTComp from "../RTComp";
-import { JOIN_FILTER_TYPES } from "../SmartFilter/AddJoinFilter";
+import { JoinFilterTypeToggle } from "../SmartFilter/JoinFilterTypeToggle";
 import { MinimisedFilter } from "../SmartFilter/MinimisedFilter";
 import {
   DEFAULT_VALIDATED_COLUMN_INFO,
@@ -283,14 +283,11 @@ export class FilterWrapper extends RTComp<
             <FlexRow className="FilterWrapper__LabelContainer gap-0">
               {disabledToggle}
               {rootFilter && (
-                <Select
-                  fullOptions={JOIN_FILTER_TYPES}
+                <JoinFilterTypeToggle
                   value={rootFilter.value.type}
-                  btnProps={{
-                    color: btnColor,
-                    variant: "default",
-                  }}
-                  showSelected={"icon"}
+                  disabled={Boolean(
+                    filter?.disabled || rootFilter.value.disabled,
+                  )}
                   onChange={(type) => {
                     rootFilter.onChange({
                       ...rootFilter.value,

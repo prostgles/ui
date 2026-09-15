@@ -1,18 +1,17 @@
 import {
-  S3Client,
-  GetObjectCommand,
   DeleteObjectCommand,
+  GetObjectCommand,
+  S3Client,
 } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
-import { Readable } from "stream";
 import type {
-  CloudClient,
-  FileUploadArgs,
-  UploadedCloudFile,
-} from "prostgles-server/dist/FileManager/FileManager";
+  CloudStorageClient,
+  CloudUploadedFileDetails,
+} from "prostgles-server/dist/StorageClient/StorageClientTypes";
 import { pickKeys } from "prostgles-types";
+import { Readable } from "stream";
 
 type S3Config = {
   Bucket: string;
@@ -21,7 +20,7 @@ type S3Config = {
   accessKeyId: string;
   secretAccessKey: string;
 };
-const getS3CloudClient = (s3Config: S3Config): CloudClient => {
+const getS3CloudClient = (s3Config: S3Config): CloudStorageClient => {
   const bucket = pickKeys(s3Config, ["Bucket"]);
 
   // Initialize S3 client
@@ -37,9 +36,8 @@ const getS3CloudClient = (s3Config: S3Config): CloudClient => {
     objectKey: string,
     file: string | Buffer | Readable,
     contentType: string,
-    onFinish: FileUploadArgs["onFinish"],
     onProgress?: (bytesUploaded: number) => void,
-  ): Promise<void> => {
+  ) => {
     const stream = file instanceof Readable ? file : Readable.from(file);
 
     // Prepare the parameters for the PutObjectCommand
@@ -49,68 +47,47 @@ const getS3CloudClient = (s3Config: S3Config): CloudClient => {
       Body: stream,
       ContentType: contentType,
     };
-    try {
-      const parallelUploads3 = new Upload({
-        client: s3Client,
-        // tags: [...], // optional tags
-        // queueSize: 4, // optional concurrency configuration
-        leavePartsOnError: false, // optional manually handle dropped parts
-        params,
-      });
+    const parallelUploads3 = new Upload({
+      client: s3Client,
+      // tags: [...], // optional tags
+      // queueSize: 4, // optional concurrency configuration
+      leavePartsOnError: false, // optional manually handle dropped parts
+      params,
+    });
 
-      parallelUploads3.on("httpUploadProgress", (progres) => {
-        onProgress?.(progres.loaded ?? 0);
-      });
+    parallelUploads3.on("httpUploadProgress", (progres) => {
+      onProgress?.(progres.loaded ?? 0);
+    });
 
-      await parallelUploads3.done();
+    await parallelUploads3.done();
 
-      // Fetch the object metadata to get etag and content length
-      const headCommand = new GetObjectCommand({ ...bucket, Key: objectKey });
-      const headResponse = await s3Client.send(headCommand);
+    // Fetch the object metadata to get etag and content length
+    const headCommand = new GetObjectCommand({ ...bucket, Key: objectKey });
+    const headResponse = await s3Client.send(headCommand);
 
-      const endpoint =
-        s3Config.endpoint || `https://${bucketName}.s3.amazonaws.com/`;
+    const endpoint =
+      s3Config.endpoint || `https://${bucketName}.s3.amazonaws.com/`;
 
-      const uploadedFile: UploadedCloudFile = {
-        cloud_url: `${endpoint}${objectKey}`,
-        etag: headResponse.ETag || "",
-        content_length: headResponse.ContentLength || 0,
-      };
+    const uploadedFile: CloudUploadedFileDetails = {
+      type: "cloud",
+      url: `${endpoint}${objectKey}`,
+      contentHash: headResponse.ETag || "",
+      contentLength: headResponse.ContentLength || 0,
+    };
 
-      onFinish(undefined, uploadedFile);
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        onFinish(error, undefined);
-      } else {
-        console.error("Unknown error in uploadToS3 ", error);
-        onFinish(
-          new Error("Unknown error in uploadToS3. Check logs"),
-          undefined,
-        );
-      }
-    }
+    return uploadedFile;
   };
 
   return {
-    upload: (file: FileUploadArgs) =>
-      new Promise((resolve, reject) => {
-        void uploadToS3(
-          bucket.Bucket,
-          file.fileName,
-          file.file,
-          file.contentType,
-          (...args) => {
-            const [error, result] = args;
-            if (error) {
-              reject(error);
-            } else {
-              resolve();
-            }
-            file.onFinish(...args);
-          },
-          file.onProgress,
-        );
-      }),
+    type: "cloud",
+    upload: (file) =>
+      uploadToS3(
+        bucket.Bucket,
+        file.fileName,
+        file.file,
+        file.contentType,
+        file.onProgress,
+      ),
 
     downloadAsStream: async (name: string) => {
       const command = new GetObjectCommand({ ...bucket, Key: name });

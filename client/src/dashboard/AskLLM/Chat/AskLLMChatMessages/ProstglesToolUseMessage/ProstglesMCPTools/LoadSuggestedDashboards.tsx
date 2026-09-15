@@ -120,12 +120,16 @@ export const LoadSuggestedDashboards = ({
               "No workspaces found in the code block."
             : undefined
           }
-          onClick={() => {
-            loadGeneratedWorkspaces(prostglesWorkspaces, toolUseContent.id, {
-              dbs,
-              connectionId,
-              tables,
-            })
+          onClickPromise={async () => {
+            await loadGeneratedWorkspaces(
+              prostglesWorkspaces,
+              toolUseContent.id,
+              {
+                dbs,
+                connectionId,
+                tables,
+              },
+            )
               .then((insertedWorkspaces) => {
                 const [first] = insertedWorkspaces;
                 if (first) {
@@ -134,6 +138,7 @@ export const LoadSuggestedDashboards = ({
                 }
               })
               .catch((error) => {
+                console.error("Error loading workspaces", error);
                 if (isObject(error) && error.code === "23505") {
                   addAlert(
                     `Workspace with this name already exists. Must delete or rename the clashing workspaces: \n${prostglesWorkspaces.map((w) => w.name).join(", ")}`,

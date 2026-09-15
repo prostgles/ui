@@ -1,9 +1,10 @@
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type { ProstglesInitState } from "@common/electronInitTypes";
-import { getServerFunctions } from "@src/serverFunctions/getServerFunctions";
+import type { ConnectionDetails } from "@src/connectionUtils/getConnectionDetails";
+import { stateServerFunctions } from "@src/serverFunctions/stateServerFunctions";
 import type { Express } from "express";
+import { existsSync } from "fs";
 import path, { join } from "path";
-import type pg from "pg-promise/typescript/pg-subset";
 import prostgles from "prostgles-server";
 import type { InitResult } from "prostgles-server/dist/initProstgles";
 import { getSerialisableError } from "prostgles-types";
@@ -17,10 +18,11 @@ import { actualRootDir, getElectronConfig } from "../electronConfig";
 import { DBS_CONNECTION_INFO } from "../envVars";
 import { publish } from "../publish/publish";
 import { tableConfig } from "../tableConfig/tableConfig";
+import { tableHooks } from "../tableHooks/tableHooks";
 import { tableConfigMigrations } from "../tableConfig/tableConfigMigrations";
 import { prostglesOnReady } from "./prostglesOnReady";
 import { startDevHotReloadNotifier } from "./startDevHotReloadNotifier";
-import type { ConnectionDetails } from "@src/connectionUtils/getConnectionDetails";
+import { IS_PROD } from "./utils";
 
 type StartArguments = {
   app: Express;
@@ -36,15 +38,18 @@ export type InitExtra = {
 };
 export type ProstglesInitStateWithDBS = ProstglesInitState<InitExtra>;
 
+type StartProstglesReturn = Exclude<
+  ProstglesInitStateWithDBS,
+  { state: "loading" }
+>;
+
 export const startProstgles = async ({
   app,
   port,
   host,
   io,
   con = DBS_CONNECTION_INFO,
-}: StartArguments): Promise<
-  Exclude<ProstglesInitStateWithDBS, { state: "loading" }>
-> => {
+}: StartArguments): Promise<StartProstglesReturn> => {
   try {
     if (!con.db_conn && !con.db_user && !con.db_name) {
       const error = `
@@ -85,117 +90,136 @@ export const startProstgles = async ({
         errorType: "connection",
       };
     }
-    const IS_PROD = process.env.NODE_ENV === "production";
 
     /** Prevent electron access denied error (cannot edit files in the install directory in electron) */
+    const tsGeneratedTypesFunctionsPath = join(
+      actualRootDir,
+      "/src/init/startProstgles.ts",
+    );
+    const isSourceCheckout = existsSync(tsGeneratedTypesFunctionsPath);
     const tsGeneratedTypesDir =
-      IS_PROD || getElectronConfig()?.isElectron ?
+      IS_PROD || getElectronConfig()?.isElectron || !isSourceCheckout ?
         undefined
       : path.join(actualRootDir + "/../common/");
     const watchSchema = !!tsGeneratedTypesDir;
 
-    const prgl = await prostgles<DBGeneratedSchema, SUser>({
-      dbConnection: {
-        ...validatedDbConnection,
-        connectionTimeoutMillis: 10 * 1000,
-      },
-      sqlFilePath: path.join(actualRootDir + "/src/init.sql"),
-      io,
-      tsGeneratedTypesDir,
-      tsGeneratedTypesFunctionsPath:
-        IS_PROD ? undefined : (
-          join(actualRootDir, "/src/init/startProstgles.ts")
-        ),
-      watchSchema,
-      watchSchemaType: "DDL_trigger",
-      transactions: true,
-      onSocketConnect: async ({ socket, dbo, getUser }) => {
-        const user = await getUser();
-        const userId = user.user?.id;
-        const sid = user.sid;
-        // await securityManager.onSocketConnected({
-        //   sid,
-        // });
+    return new Promise<StartProstglesReturn>((resolve, reject) => {
+      (async () => {
+        const prgl = await prostgles<DBGeneratedSchema, SUser>({
+          dbConnection: {
+            ...validatedDbConnection,
+            connectionTimeoutMillis: 10 * 1000,
+          },
+          sqlFilePath: path.join(actualRootDir + "/src/init.sql"),
+          io,
+          tsGeneratedTypesDir,
+          tsGeneratedTypesFunctionsPath:
+            tsGeneratedTypesDir ? tsGeneratedTypesFunctionsPath : undefined,
+          watchSchema,
+          watchSchemaType: "DDL_trigger",
+          transactions: true,
+          onSocketConnect: async ({ socket, dbo, getUser }) => {
+            const user = await getUser();
+            const userId = user.user?.id;
+            const sid = user.sid;
+            // await securityManager.onSocketConnected({
+            //   sid,
+            // });
 
-        // if (sid) {
-        //   const s = await dbo.sessions.findOne({ id: sid });
-        //   if (!s) {
-        //     /** Can happen to deleted sessions */
-        //     // console.log("onSocketConnect session missing ?!");
-        //   } else if (Date.now() > +new Date(+s.expires)) {
-        //     console.log("onSocketConnect session expired ?!", s.id, Date.now());
-        //   } else {
-        //     await dbo.sessions.update(
-        //       { id: sid },
-        //       {
-        //         last_used: new Date(),
-        //         is_connected: true,
-        //         socket_id: socket.id,
-        //       },
-        //     );
-        //   }
-        // }
+            // if (sid) {
+            //   const s = await dbo.sessions.findOne({ id: sid });
+            //   if (!s) {
+            //     /** Can happen to deleted sessions */
+            //     // console.log("onSocketConnect session missing ?!");
+            //   } else if (Date.now() > +new Date(+s.expires)) {
+            //     console.log("onSocketConnect session expired ?!", s.id, Date.now());
+            //   } else {
+            //     await dbo.sessions.update(
+            //       { id: sid },
+            //       {
+            //         last_used: new Date(),
+            //         is_connected: true,
+            //         socket_id: socket.id,
+            //       },
+            //     );
+            //   }
+            // }
 
-        if (userId) {
-          /** Delete:
-           * - deleted workspaces
-           * - deleted/closed/detached (null wsp id)  non type=sql windows and links. Must keep detached SQL windows
-           */
-          const deletedWorkspaces = await dbo.workspaces.delete(
-            { deleted: true, user_id: userId },
-            { returning: { id: 1 }, returnType: "values" },
-          );
+            if (userId) {
+              /** Delete:
+               * - deleted workspaces
+               * - deleted/closed/detached (null wsp id)  non type=sql windows and links. Must keep detached SQL windows
+               */
+              const deletedWorkspaces = await dbo.workspaces.delete(
+                { deleted: true, user_id: userId },
+                { returning: { id: 1 }, returnType: "values" },
+              );
 
-          const deletedWindows = await dbo.windows.delete(
-            {
-              $or: [{ deleted: true }, { closed: true, type: { "<>": "sql" } }],
-            },
-            {
-              returning: { id: 1 },
-              returnType: "values",
-            },
-          );
-          deletedWorkspaces;
-          deletedWindows;
-        }
-      },
-      onSocketDisconnect: async (params) => {
-        const { dbo, getUser } = params;
+              const deletedWindows = await dbo.windows.delete(
+                {
+                  $or: [
+                    { deleted: true },
+                    { closed: true, type: { "<>": "sql" } },
+                  ],
+                },
+                {
+                  returning: { id: 1 },
+                  returnType: "values",
+                },
+              );
+              deletedWorkspaces;
+              deletedWindows;
+            }
+          },
+          onSocketDisconnect: async (params) => {
+            const { dbo, getUser } = params;
 
-        const user = await getUser();
-        const sid = user.sid;
-        if (sid) {
-          await dbo.sessions.update({ id: sid }, { is_connected: false });
-        }
-      },
-      /** Used for debugging */
-      // onQuery: (err, ctx) => {
-      //   if(err){
-      //     console.error(err, ctx?.client?.processID, ctx?.query);
-      //   }
-      // },
-      // DEBUG_MODE: true,
-      onLog: (e) => {
-        addLog(e, null);
-      },
-      tableConfig,
-      tableConfigMigrations,
-      publishRawSQL: (params) => {
-        const { user } = params;
-        return Boolean(user && user.type === "admin");
-      },
-      functions: getServerFunctions,
-      publish,
-      joins: "inferred",
-      onReady: async (params, update) => {
-        await prostglesOnReady(params, update, app, con, port);
-      },
+            const user = await getUser();
+            const sid = user.sid;
+            if (sid) {
+              await dbo.sessions.update({ id: sid }, { is_connected: false });
+            }
+          },
+          /** Used for debugging */
+          // onQuery: (err, ctx) => {
+          //   if(err){
+          //     console.error(err, ctx?.client?.processID, ctx?.query);
+          //   }
+          // },
+          // DEBUG_MODE: true,
+          onLog: (e) => {
+            addLog(e, null);
+          },
+          tableConfig,
+          tableHooks,
+          tableConfigMigrations,
+          publishRawSQL: (params) => {
+            const { user } = params;
+            return Boolean(user && user.type === "admin");
+          },
+          functions: stateServerFunctions,
+          publish,
+          joins: "inferred",
+          onReady: async (params, update) => {
+            await prostglesOnReady(params, update, app, con, port)
+              .then(() => {
+                resolve({ state: "ok", dbs: prgl.db });
+              })
+              .catch((err) => {
+                reject({
+                  state: "error",
+                  error: err as Error,
+                  errorType: "init",
+                });
+              });
+          },
+        });
+
+        statePrgl = prgl;
+
+        startDevHotReloadNotifier({ io, port, host });
+      })().catch(reject);
     });
-
-    statePrgl = prgl;
-
-    startDevHotReloadNotifier({ io, port, host });
-    return { state: "ok", dbs: prgl.db };
   } catch (err) {
     return { state: "error", error: err as Error, errorType: "init" };
   }

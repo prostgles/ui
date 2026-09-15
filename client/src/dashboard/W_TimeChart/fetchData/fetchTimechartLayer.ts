@@ -1,10 +1,12 @@
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
-import type { DBHandlerClient, TableHandlerClient } from "prostgles-client";
 import {
   asName,
   type PG_COLUMN_UDT_DATA_TYPE,
   type SQLHandler,
 } from "prostgles-types";
+import type { Prgl } from "src/App";
+import { getMainTimeBinSizes } from "src/dashboard/Charts/TimeChart/getTimechartBinSize";
+import type { ColumnValue } from "src/dashboard/W_Table/ColumnMenu/ColumnStyleControls/ColumnStyleControls";
 import type {
   DataItem,
   TimeChartLayer,
@@ -24,22 +26,20 @@ import { type TimeChartLayerWithBinOrError } from "./getTimeChartLayersWithBins"
 import { getTimeChartSelectParams } from "./getTimeChartSelectParams";
 import { getTimeLayerDataSignature } from "./getTimeLayerDataSignature";
 import { getTimechartExtentFilter } from "./getTimechartExtentFilter";
-import { getMainTimeBinSizes } from "src/dashboard/Charts/TimeChart/getTimechartBinSize";
-import type { ColumnValue } from "src/dashboard/W_Table/ColumnMenu/ColumnStyleControls/ColumnStyleControls";
-import type { Prgl } from "src/App";
 
 type getTChartLayerArgs = Pick<
   W_TimeChartState,
   "viewPortExtent" | "visibleDataExtent"
 > &
-  Pick<W_TimeChartProps, "getLinksAndWindows" | "myLinks" | "tables"> & {
+  Pick<W_TimeChartProps, "getLinksAndWindows" | "myLinks"> & {
     layer: TimeChartLayerWithBinOrError;
     bin: FetchedLayerData["binSize"];
     binSize: FetchedLayerData["binSize"] | "auto";
     desiredBinCount: number;
     db: Prgl["db"];
+    tables: Prgl["tables"];
     sql: SQLHandler | undefined;
-    w: SyncDataItem<Required<WindowData<"timechart">>, true>;
+    w: SyncDataItem<Required<WindowData<"timechart">>, { handlesOnData: true }>;
   };
 export async function fetchTimechartLayer({
   bin,
@@ -97,13 +97,13 @@ export async function fetchTimechartLayer({
         { [TIMECHART_FIELD_NAMES.date]: { "<>": null } },
       ].filter((f) => f),
     };
-    rows = await tableHandler.find(finalFilter, {
+    rows = (await tableHandler.find(finalFilter, {
       select,
       orderBy,
       limit:
         (binSize !== "auto" ? 1e3 : undefined) ??
         Math.max(desiredBinCount * 10, 1e4), // Returned row count can vary considerably from the desiredBinCount
-    });
+    })) as { date: string; value: number; group_by?: string }[];
 
     /** If too zoomed in and no data then add edges */
     const firstVal = rows[0];
@@ -116,7 +116,7 @@ export async function fetchTimechartLayer({
         (lastVal && +new Date(lastVal.date) < +viewPortExtent.maxDate))
     ) {
       const { minDate, maxDate } = viewPortExtent;
-      const leftValues = await tableHandler.find(
+      const leftValues = (await tableHandler.find(
         {
           $and: [
             tableFilters,
@@ -130,8 +130,8 @@ export async function fetchTimechartLayer({
           ],
           limit: 2,
         },
-      );
-      const rightValues = await tableHandler.find(
+      )) as { date: string; value: number; group_by?: string }[];
+      const rightValues = (await tableHandler.find(
         {
           $and: [
             tableFilters,
@@ -145,7 +145,7 @@ export async function fetchTimechartLayer({
           ],
           limit: 2,
         },
-      );
+      )) as { date: string; value: number; group_by?: string }[];
       rows = [...leftValues.reverse(), ...rows, ...rightValues];
     }
 

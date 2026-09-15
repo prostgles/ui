@@ -106,7 +106,7 @@ export const TableAccessEditor = ({
                   { returning: { ctid: 1 } },
                 );
                 throw new Error(
-                  `Deleted ${deletedRows?.length ?? 0} rows from ${table.name}`,
+                  `Deleted ${deletedRows.length} rows from ${table.name}`,
                 );
               },
             }

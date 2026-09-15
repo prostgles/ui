@@ -16,8 +16,8 @@ export const useNestedInsertDefaultData = ({
     const joinConfig = table?.joinsV2.find((j) => j.tableName === ftable);
     if (!joinConfig || !row) return;
     const data = {};
-    joinConfig.on.map((fkey) => {
-      fkey.map(([pcol, fcol]) => {
+    joinConfig.on.forEach((fkey) => {
+      fkey.forEach(([pcol, fcol]) => {
         data[fcol] = row[pcol];
       });
     });

@@ -65,7 +65,7 @@ export const PopupHeader = ({
         onClick={collapsible ? toggleContent : undefined}
       >
         <h4
-          className="m-0"
+          className="m-0 ta-center"
           style={{
             ...(collapsible ? { paddingLeft: 0 } : {}),
           }}

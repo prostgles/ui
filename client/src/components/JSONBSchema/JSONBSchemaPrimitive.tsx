@@ -22,7 +22,7 @@ type P = JSONBSchemaCommonProps & {
 export const JSONBSchemaPrimitiveMatch = (
   s: JSONB.JSONBSchema,
 ): s is JSONB.BasicType | JSONB.EnumType =>
-  !s.lookup &&
+  !(typeof s.type === "string" && s.type.includes("Lookup")) &&
   (!!s.enum?.length ||
     (!s.allowedValues?.length && typeof s.type === "string"));
 
@@ -71,7 +71,7 @@ export const JSONBSchemaPrimitive = ({
       name={schema.title}
       label={
         /**
-         * Hacky. TODO: find a better approach showing JSONB controls within a form with existing top label and bottom hint.
+         * Hacky. TODO: find a better approach for showing JSONB controls within a form with existing top label and bottom hint.
          * Should the main column label be removed?!
          */
         noLabels && schema.type !== "boolean" ?
@@ -88,6 +88,7 @@ export const JSONBSchemaPrimitive = ({
       arrayType={arrayType}
       inputProps={schema.type === "integer" ? { step: 1 } : undefined}
       fullOptions={fullOptions}
+      hintWrapperStyle={{ gap: 0 }}
       multiSelect={!!schema.allowedValues?.length && schema.type.endsWith("[]")}
       onChange={(newVal) => {
         if (schema.type === "number[]" || schema.type === "integer[]") {
@@ -191,6 +192,14 @@ const schemaTypeToColType: Record<
     udt_name: "bytea",
   },
   "Blob[]": {
+    tsDataType: "any",
+    udt_name: "bytea",
+  },
+  Uint8Array: {
+    tsDataType: "any",
+    udt_name: "bytea",
+  },
+  "Uint8Array[]": {
     tsDataType: "any",
     udt_name: "bytea",
   },

@@ -29,7 +29,7 @@ import { ColumnStyleControls } from "./ColumnStyleControls/ColumnStyleControls";
 type P = {
   columns: ColumnConfigWInfo[];
   onChange: (newCols: ColumnConfigWInfo[]) => void;
-  w: SyncDataItem<Required<WindowData<"table">>, true>;
+  w: SyncDataItem<Required<WindowData<"table">>, { handlesOnData: true }>;
   table: DBSchemaTablesWJoins[number];
   suggestions: LoadedSuggestions | undefined;
   onClose: VoidFunction;
@@ -220,7 +220,7 @@ export const ColumnList = ({
                     <SummariseColumn
                       column={c}
                       columns={columns}
-                      tableColumns={tableColumns}
+                      table={table}
                       onChange={onChange}
                     />
                   )}

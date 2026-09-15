@@ -139,10 +139,10 @@ export async function runSQL(this: W_SQL, sort: ColumnSortSQL[] = []) {
     }) => {
       this.streamData.set({ rows: [] });
       this.setState({
-        rows: undefined,
-        cols: undefined,
-        sqlResult: false,
-        page: 0,
+        // rows: undefined,
+        // cols: undefined,
+        // sqlResult: false,
+        // page: 0,
         ...extra,
         sort: sqlSorted !== trimmedSql ? sort : [],
         activeQuery: {

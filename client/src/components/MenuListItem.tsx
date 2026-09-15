@@ -51,7 +51,7 @@ export const MenuListItem = ({
           borderBottomStyle: "solid",
           borderBottomWidth: activeKey ? "4px" : "1px",
           flex: 1,
-          color: "var(--text-0)",
+          color: "var(--text-1)",
           ...(isActive && {
             borderColor: "var(--active)",
             backgroundColor: "var(--bg-color-0)",

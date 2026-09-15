@@ -1,32 +1,36 @@
 import { Locator, Page as PG, expect } from "@playwright/test";
 import * as path from "path";
-import { Command, getCommandElemSelector, getDataKey } from "../Testing";
+import { Command, getCommandElemSelector, getDataKey } from "./Testing";
 import { goTo } from "./goTo";
 import { IS_GITHUB_WORKER, TEST_DB_NAME, USERS } from "./constants";
 
 type FuncNamesReturningLocatorObj = {
-  [prop in keyof PG as PG[prop] extends (...args: any) => any ?
-    prop extends "expect" ? never
-    : prop extends "getByTestId" ? never
-    : prop extends "evaluateHandle" ? never
-    : prop extends "waitForFunction" ? never
-    : ReturnType<PG[prop]> extends Promise<any> ? never
-    : ReturnType<PG[prop]> extends Locator ? prop
+  [
+    prop in keyof PG as PG[prop] extends (...args: any) => any ?
+      prop extends "expect" ? never
+      : prop extends "getByTestId" ? never
+      : prop extends "evaluateHandle" ? never
+      : prop extends "waitForFunction" ? never
+      : ReturnType<PG[prop]> extends Promise<any> ? never
+      : ReturnType<PG[prop]> extends Locator ? prop
+      : never
     : never
-  : never]: 1;
+  ]: 1;
 };
 type FuncNames = keyof FuncNamesReturningLocatorObj;
 type LocatorFuncNamesReturningLocatorObj = {
-  [prop in keyof Locator as Locator[prop] extends (...args: any) => any ?
-    prop extends "expect" ? never
-    : prop extends "getByTestId" ? never
-    : prop extends "evaluateHandle" ? never
-    : prop extends "waitForFunction" ? never
-    : ReturnType<Locator[prop]> extends Promise<any> ? never
-    : ReturnType<Locator[prop]> extends Locator ? prop
-    : // ReturnType<Locator[prop]> extends Promise<Locator>? prop :
-      never
-  : never]: 1;
+  [
+    prop in keyof Locator as Locator[prop] extends (...args: any) => any ?
+      prop extends "expect" ? never
+      : prop extends "getByTestId" ? never
+      : prop extends "evaluateHandle" ? never
+      : prop extends "waitForFunction" ? never
+      : ReturnType<Locator[prop]> extends Promise<any> ? never
+      : ReturnType<Locator[prop]> extends Locator ? prop
+      : // ReturnType<Locator[prop]> extends Promise<Locator>? prop :
+        never
+    : never
+  ]: 1;
 };
 type LocatorFuncNames = keyof LocatorFuncNamesReturningLocatorObj;
 export type PageWIds = Omit<PG, FuncNames | "getByTestId"> & {
@@ -83,13 +87,7 @@ export const getMonacoValue = async (
 
 type KeyPress = "Control" | "Shift";
 type InputKey =
-  | KeyPress
-  | "Enter"
-  | "Escape"
-  | "Tab"
-  | "Backspace"
-  | "Delete"
-  | "Space";
+  KeyPress | "Enter" | "Escape" | "Tab" | "Backspace" | "Delete" | "Space";
 type ArrowKey = "ArrowUp" | "ArrowDown" | "ArrowLeft" | "ArrowRight";
 type ArrowKeyCombinations = `${KeyPress}+${ArrowKey | InputKey}`;
 export type KeyPressOrCombination = InputKey | ArrowKeyCombinations | ArrowKey;
@@ -235,7 +233,8 @@ export const fillSmartFormAndInsert = async (
   const form = await fillSmartForm(page, tableName, values);
   await page.waitForTimeout(200);
   await form.getByTestId("SmartForm.insert").click();
-  await page.waitForTimeout(200);
+  await page.waitForTimeout(1200);
+  await expect(form).not.toBeVisible(getTimeout(2 * MINUTE));
 };
 
 export const clickInsertRow = async (
@@ -293,7 +292,7 @@ export const login = async (
 ) => {
   await goTo(page, url);
   await fillLoginFormAndSubmit(page, userNameAndPassword);
-  await page.locator("#username").waitFor({ state: "detached", timeout: 30e3 });
+  await page.locator("#username").waitFor({ state: "hidden", timeout: 30e3 });
 };
 
 export const typeConfirmationCode = async (page: PageWIds) => {
@@ -741,6 +740,11 @@ export const selectAndUpsertFile = async (
   }
 };
 
+export const getTimeout = (base: number) => ({
+  timeout: base * (process.env.CI ? 3 : 1),
+});
+export const TWENTY_SECONDS_OR_MORE = getTimeout(20_000);
+
 export const fileName = "icon512.png";
 export const uploadFile = async (page: PageWIds) => {
   await clickInsertRow(page, "files");
@@ -748,6 +752,10 @@ export const uploadFile = async (page: PageWIds) => {
   await selectAndUpsertFile(page, (page) =>
     page.getByTestId("FileBtn").click(),
   );
+  const MINUTE = 60e3;
+  await page
+    .getByTestId("Popup.content")
+    .waitFor({ state: "detached", ...getTimeout(2 * MINUTE) });
 };
 
 export const isEmpty = (obj?: any) => {
@@ -775,16 +783,17 @@ export const setWspColLayout = async (page: PageWIds) => {
   await page.getByTestId("Popup.close").click();
 };
 export const disablePwdlessAdminAndCreateUser = async (page: PageWIds) => {
-  await goTo(page);
   await page
     .getByRole("link", { name: "Users" })
     .waitFor({ state: "visible", timeout: 60e3 });
   await page.getByRole("link", { name: "Users" }).click();
   await expect(page as PG).toHaveURL(/.*users/);
-  await page.goto("localhost:3004/users", {
-    waitUntil: "networkidle",
-    timeout: 10e3,
-  });
+  // const currentUrl = page.url();
+  // await page.goto();
+  // await page.goto(`${currentUrl}users`, {
+  //   waitUntil: "networkidle",
+  //   timeout: 10e3,
+  // });
   await page.getByRole("button", { name: "Create admin user" }).click();
   await page.locator("#username").fill(USERS.test_user);
   await page.locator("#new-password").fill(USERS.test_user);
@@ -926,7 +935,11 @@ export const sendAskLLMMessage = async (
         onAfterSend: () => Promise<void>;
       } = false,
 ) => {
-  await page.getByTestId("AskLLM.popup").getByTestId("Chat.textarea").fill(msg);
+  const textArea = page
+    .getByTestId("AskLLM.popup")
+    .getByTestId("Chat.textarea");
+  await expect(textArea).toBeEnabled(TWENTY_SECONDS_OR_MORE);
+  await textArea.fill(msg);
   await page.keyboard.press("Enter");
   await page.waitForTimeout(500);
   if (waitForLoadingToStop) {
@@ -1117,8 +1130,14 @@ export const setPromptByText = async (
   closePopup = true,
 ) => {
   await page.getByTestId("LLMChatOptions.Prompt").click();
-  await page.locator(".SmartCard").getByText(text).first().click();
-  await page.waitForTimeout(2e3); // wait for prompt tools to be set
+  const promptBtn = page
+    .locator(".SmartCard button", { hasText: text })
+    .first();
+  if ((await promptBtn.getAttribute("data-color")) !== "action") {
+    await promptBtn.click();
+    await expect(promptBtn).not.toBeDisabled(TWENTY_SECONDS_OR_MORE);
+  }
+  await page.waitForTimeout(3e3); // wait for prompt tools to be set
   if (!closePopup) return;
   await page
     .getByTestId("LLMChatOptions.Prompt")
@@ -1228,7 +1247,7 @@ export const setOrAddWorkspace = async (
 
 export const newChat = async (page: PageWIds) => {
   await page.getByTestId("AskLLMChat.NewChat").click();
-  await page.waitForTimeout(1e3);
+  await page.waitForTimeout(2e3);
 };
 
 let setupAuthCount = 0;
@@ -1249,7 +1268,7 @@ export const setupMagicLinkAuth = async (page: PageWIds) => {
 
 export const clickAndWait = async (
   btnLocator: LocatorWIds,
-  timeout = IS_GITHUB_WORKER ? 120_000 : 60_000,
+  timeout = IS_GITHUB_WORKER ? 220_000 : 120_000,
 ) => {
   await btnLocator.click();
   await btnLocator.page().waitForTimeout(200);
@@ -1299,3 +1318,10 @@ export const allowOnce = async (page: PageWIds, doClick = true) => {
   doClick && (await allowOnceBtn.click());
   await page.waitForTimeout(2500);
 };
+
+// This function is used to scroll an element into view, playwright's version of this scrollIntoViewIfNeeded() results in flaky tests
+export async function scrollElementIntoView(locator: Locator): Promise<void> {
+  await locator.evaluate((element) => {
+    element.scrollIntoView({ block: "center" });
+  });
+}

@@ -1,0 +1,58 @@
+.PdfViewer .pdfViewer,
+.PdfViewer .pdfViewer * {
+  box-sizing: content-box;
+}
+
+.PdfViewer .pdfViewer .page {
+  margin: 0;
+  border: 0;
+}
+
+.pdf-viewer__highlight-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+
+  /*
+   * Highlights must not capture pointer events, otherwise dragging over
+   * highlighted text will interrupt text selection.
+   */
+  pointer-events: none;
+}
+
+.pdf-viewer__highlight {
+  position: absolute;
+  opacity: 0.4;
+  mix-blend-mode: multiply;
+}
+
+.pdf-viewer__tooltip {
+  position: absolute;
+  z-index: 3;
+  max-width: 20rem;
+  padding: 0.375rem 0.5rem;
+  color: white;
+  font:
+    0.75rem/1.4 system-ui,
+    sans-serif;
+  white-space: normal;
+  pointer-events: none;
+  background: rgb(20 20 20 / 92%);
+  border-radius: 0.25rem;
+  box-shadow: 0 0.25rem 0.75rem rgb(0 0 0 / 25%);
+  transform: translate(-50%, calc(-100% - 0.375rem));
+}
+
+.pdf-viewer__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 3rem;
+  width: 100%;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-color-0);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 8%);
+  position: relative;
+  z-index: 2;
+}

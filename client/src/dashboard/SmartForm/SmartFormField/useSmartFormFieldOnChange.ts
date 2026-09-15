@@ -1,27 +1,25 @@
+import type { LocalMedia } from "@components/FileInput/FileInput";
+import type { AnyObject, MaybePromise } from "prostgles-types";
 import { useCallback, useState } from "react";
+import type { ColumnData } from "../SmartFormNewRowDataHandler";
 import { parseValue } from "./fieldUtils";
 import type { SmartFormFieldProps } from "./SmartFormField";
-import type { AnyObject } from "prostgles-types";
-import type { ColumnData } from "../SmartFormNewRowDataHandler";
 
 export const useSmartFormFieldOnChange = (
   props: Pick<SmartFormFieldProps, "column" | "table"> & {
-    onChange: (newColData: ColumnData) => void;
+    onChange: (newColData: ColumnData) => MaybePromise<void>;
   },
 ) => {
   const { onChange, column, table } = props;
-  const [error, setError] = useState<any>();
+  const [error, setError] = useState<unknown>();
 
   const onCheckAndChange = useCallback(
     async (_newValue: File[] | string | number | null | AnyObject) => {
-      let newValue: string | number | null | { data: File; name: string }[] =
-        _newValue as any;
+      let newValue = _newValue as string | number | null | LocalMedia[];
 
       if (
         _newValue === "" &&
-        ["Date", "number", "boolean", "Object"].includes(
-          column.tsDataType,
-        ) &&
+        ["Date", "number", "boolean", "Object"].includes(column.tsDataType) &&
         column.is_nullable
       ) {
         newValue = null;

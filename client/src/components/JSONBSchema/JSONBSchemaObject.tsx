@@ -91,7 +91,7 @@ export const JSONBSchemaObject = ({
           return (
             <JSONBSchema
               key={propName}
-              value={(value as any)?.[propName]}
+              value={value?.[propName]}
               schema={propSchema}
               nestingPath={itemNestingPath}
               style={itemStyle?.style}

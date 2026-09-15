@@ -7,9 +7,12 @@ import Popup from "@components/Popup/Popup";
 import { SwitchToggle } from "@components/SwitchToggle";
 import type { ColumnConfigWInfo } from "../W_Table";
 import { FunctionSelector } from "./FunctionSelector/FunctionSelector";
+import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
+import type { AggregateOptions } from "./ColumnMenu";
+import { AggregateFunctionOptions } from "./AddComputedColumn/AggregateFunctionOptions";
 
 type SummariseColumnProps = {
-  tableColumns: ValidatedColumnInfo[];
+  table: DBSchemaTableWJoins;
   column: ColumnConfigWInfo;
   onChange: (newCols: ColumnConfigWInfo[]) => void;
   columns: ColumnConfigWInfo[];
@@ -19,8 +22,9 @@ export const SummariseColumn = ({
   column,
   columns,
   onChange,
-  tableColumns,
+  table,
 }: SummariseColumnProps) => {
+  const tableColumns: ValidatedColumnInfo[] = table.columns;
   const topFuncs =
     (
       column.info?.udt_name.startsWith("timestamp") ||
@@ -34,6 +38,9 @@ export const SummariseColumn = ({
   const currFuncDef = column.computedConfig?.funcDef;
   const [funcDef, setFuncDef] = useState(currFuncDef);
   const [hideOthers, setHideOthers] = useState(false);
+  const [aggregateOptions, setAggregateOptions] = useState<
+    AggregateOptions | undefined
+  >();
 
   const [showPopup, setShowPopup] = useState<HTMLButtonElement>();
   return (
@@ -76,6 +83,8 @@ export const SummariseColumn = ({
                         column: column.name,
                         funcDef,
                         isColumn: true,
+                        aggregateOptions:
+                          funcDef.isAggregate ? aggregateOptions : undefined,
                       },
                     };
                     onChange(
@@ -107,6 +116,15 @@ export const SummariseColumn = ({
                 setHideOthers(!!funcDef?.isAggregate);
               }}
             />
+            {funcDef?.isAggregate && (
+              <div className="p-1">
+                <AggregateFunctionOptions
+                  table={table}
+                  value={aggregateOptions}
+                  onChange={setAggregateOptions}
+                />
+              </div>
+            )}
             {funcDef && (
               <SwitchToggle
                 className="m-1"

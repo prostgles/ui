@@ -1,18 +1,17 @@
+import { getIcon } from "@components/SvgIcon";
+import { scaleLinear } from "d3";
 import type { AnyObject, SelectParams } from "prostgles-types";
 import { pickKeys } from "prostgles-types";
-import { getIcon } from "@components/SvgIcon";
 import type {
   Extent,
   GeoJSONFeature,
   GeoJsonLayerProps,
 } from "../../Map/DeckGLMap";
+import { getMapFeatureStyle } from "../getMapFeatureStyle";
 import { getOSMData } from "../OSM/getOSMData";
 import type W_Map from "../W_Map";
 import type { W_MapState } from "../W_Map";
 import { MAP_SELECT_COLUMNS, getMapSelect, getSQLData } from "./getMapData";
-import { getMapFeatureStyle } from "../getMapFeatureStyle";
-import { scaleLinear } from "d3";
-import type { TableHandlerClient } from "prostgles-client";
 
 export const DEFAULT_GET_COLOR: Pick<
   GeoJsonLayerProps,
@@ -26,16 +25,13 @@ export const DEFAULT_GET_COLOR: Pick<
 
 export const fetchMapLayerData = async function (this: W_Map, dataAge: number) {
   const {
-    prgl: { db, sql: sqlHandler },
+    prgl: { tables, db, sql: sqlHandler },
     layerQueries = [],
-    tables,
   } = this.props;
   const { w } = this.d;
   if (!w) return;
 
-  const ext4326: Extent = (w.options.extent) || [
-    -180, -90, 180, 90,
-  ];
+  const ext4326: Extent = w.options.extent || [-180, -90, 180, 90];
 
   let result: Pick<W_MapState, "layers"> = {},
     error;
@@ -178,7 +174,7 @@ export const fetchMapLayerData = async function (this: W_Map, dataAge: number) {
               );
               const seconds = (Date.now() - downloadStart) / 1000;
               bytesPerSec = (JSON.stringify(oneRow || {}).length * 4) / seconds;
-              opts = { select: select as any, limit: AGG_LIMIT };
+              opts = { select, limit: AGG_LIMIT };
 
               if (!oneRow || !this.ref) {
                 layers.push({
@@ -199,7 +195,7 @@ export const fetchMapLayerData = async function (this: W_Map, dataAge: number) {
               const minDelta = Math.min(xDelta, yDelta);
 
               /** Simplify Polygon and LineString shapes */
-              if (!oneRow.l?.type.endsWith("Point")) {
+              if (!(oneRow.l?.type as string | undefined)?.endsWith("Point")) {
                 // && (oneRow?.c?.coordinates || []).flat().flat().flat().length > 30){
                 const scale =
                   zoom > 7 ?
@@ -216,7 +212,7 @@ export const fetchMapLayerData = async function (this: W_Map, dataAge: number) {
                       [MAP_SELECT_COLUMNS.geoJson]: {
                         $ST_Simplify: [geomColumn, size],
                       },
-                    } as unknown as SelectParams["select"],
+                    },
                     limit: AGG_LIMIT,
                   };
                 }

@@ -1,12 +1,11 @@
 import { spawn } from "node:child_process";
-import type { ServiceManager } from "./ServiceManager";
-import type { prostglesServices } from "./ServiceManagerTypes";
-import { getContainerName } from "./startService";
 import { resolveBinary } from "./resolveBinary";
+import type { ServiceManager } from "./ServiceManager";
+import { getContainerName } from "./startService";
 
 export function stopService(
-  this: ServiceManager,
-  serviceName: keyof typeof prostglesServices,
+  this: ServiceManager<Record<string, any>>,
+  serviceName: string,
 ) {
   try {
     const service = this.getService(serviceName);

@@ -49,7 +49,7 @@ export const ConnectionsOptions = ({
               if (checked) {
                 setShowStateConfirm(e.currentTarget);
               } else {
-                dbs.users.update(
+                void dbs.users.update(
                   { id: user.id },
                   { options: { $merge: [{ showStateDB: false }] } },
                 );

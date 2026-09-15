@@ -10,7 +10,7 @@ import { mdiChevronDown, mdiPlay } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import type { AnyObject, ClientServerFunction, JSONB } from "prostgles-types";
-import { getKeys, getProperty, isEmpty, omitKeys } from "prostgles-types";
+import { getProperty, isEmpty, omitKeys } from "prostgles-types";
 import React, { useState } from "react";
 import { type Prgl } from "../../App";
 import { MethodDefinition } from "../AccessControl/Methods/MethodDefinition";
@@ -33,7 +33,9 @@ type P = Pick<Prgl, "db" | "methods" | "tables"> & {
     argName: string;
     tableName: string;
   };
-  w: SyncDataItem<Required<WindowData<"method">>, true> | undefined;
+  w:
+    | SyncDataItem<Required<WindowData<"method">>, { handlesOnData: true }>
+    | undefined;
 };
 
 export const W_MethodControls = ({
@@ -50,8 +52,7 @@ export const W_MethodControls = ({
   const [result, setResult] = useState<unknown>();
   const [showResults, setShowResults] = useState(true);
   const methodFromSchema = getProperty(methods, method_name) as
-    | ClientServerFunction
-    | undefined;
+    ClientServerFunction | undefined;
   const [error, setError] = useState<unknown>(
     !methodFromSchema ? `Method named "${method_name}" not found` : undefined,
   );
@@ -70,25 +71,26 @@ export const W_MethodControls = ({
   const [loading, setLoading] = useState(false);
 
   const argDefaults: Record<string, ColumnValue> = {};
-  const disabledArgsDefaults: string[] = [];
+  const optionalArgNames: string[] = [];
   if (methodFromSchema) {
     getEntries(methodFromSchema.input ?? {}).forEach(
       ([argName, stringOrObj]) => {
         const arg =
           typeof stringOrObj === "string" ? { type: stringOrObj } : stringOrObj;
-        const ref = arg.lookup?.type === "data" ? arg.lookup : undefined;
+        const isRowLookup = arg.type === "RowLookup";
+        const isValueLookup = arg.type === "ValueLookup";
         const argFullDetails = methodFullDataArgs?.[argName];
         if (arg.optional) {
-          disabledArgsDefaults.push(argName);
+          optionalArgNames.push(argName);
         }
         if (fixedRowArgument?.argName === argName) {
           argDefaults[argName] =
-            ref?.isFullRow ? fixedRowArgument.row
-            : ref?.column ? fixedRowArgument.row[ref.column]
+            isRowLookup ? fixedRowArgument.row
+            : isValueLookup ? fixedRowArgument.row[arg.column]
             : undefined;
         } else if (
           argFullDetails?.defaultValue !== undefined &&
-          !ref?.isFullRow
+          !isRowLookup
         ) {
           argDefaults[argName] = argFullDetails.defaultValue;
         }
@@ -97,7 +99,9 @@ export const W_MethodControls = ({
   }
 
   const args = otherProps.state.args ?? argDefaults;
-  const disabledArgs = otherProps.state.disabledArgs ?? disabledArgsDefaults;
+  const disabledArgs =
+    otherProps.state.disabledArgs ??
+    optionalArgNames.filter((argName) => args[argName] === undefined);
   const hiddenArgs = otherProps.state.hiddenArgs ?? [];
   const setArgs = (newArgs) => {
     setError(undefined);
@@ -105,28 +109,9 @@ export const W_MethodControls = ({
   };
 
   const inputSchema = methodFromSchema?.input ?? {};
-  const mArgs = getKeys(inputSchema).reduce((a, k) => {
-    const v: keyof typeof inputSchema = k;
-    const rawArg = inputSchema[v];
-    const arg = typeof rawArg === "string" ? { type: rawArg } : rawArg;
-    return {
-      ...a,
-      [v]:
-        arg?.lookup?.type === "data-def" ?
-          {
-            ...arg,
-            lookup: {
-              ...arg.lookup,
-              type: "data",
-            },
-          }
-        : inputSchema[v],
-    };
-  }, {} as JSONB.FieldTypeObj);
-
   const argSchema: JSONB.JSONBSchema = {
     type: {
-      ...omitKeys(mArgs, hiddenArgs as (keyof typeof mArgs)[]),
+      ...omitKeys(inputSchema, hiddenArgs),
     },
     defaultValue: Object.entries(methodFromSchema?.input ?? {})
       .filter(
@@ -156,6 +141,7 @@ export const W_MethodControls = ({
 
   return (
     <FlexCol
+      data-command="W_MethodControls"
       className="W_MethodControls f-1  min-s-0 o-auto bg-color-2"
       style={{ gap: "2px" }}
     >
@@ -223,7 +209,7 @@ export const W_MethodControls = ({
                   setLoading(true);
                   setError(undefined);
                   const res = await methodFromSchema.run(
-                    !methodFullData?.arguments.length ? undefined : params,
+                    isEmpty(inputSchema) ? undefined : params,
                   );
                   if (outputTableInfo) {
                     w?.$update({

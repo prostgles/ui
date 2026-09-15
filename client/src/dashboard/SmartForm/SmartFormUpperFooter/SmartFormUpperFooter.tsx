@@ -37,9 +37,7 @@ export const SmartFormUpperFooter = (props: SmartFormUpperFooterProps) => {
       );
       const thisTableArgIdx = argEntries.findIndex(
         ([_, arg]) =>
-          arg.lookup?.type === "data" &&
-          arg.lookup.isFullRow &&
-          arg.lookup.table === tableName,
+          arg.type === "RowLookup" && arg.table === tableName,
       );
       if (thisTableArgIdx > -1) {
         return {
@@ -175,9 +173,8 @@ export const SmartFormUpperFooter = (props: SmartFormUpperFooterProps) => {
       {showMethods && (
         <div className="dbMethodActions flex-row-wrap gap-p5 p-1">
           {dbMethodActions.map(({ methodName, arg, argName }) => {
-            const { lookup } = arg;
             const showInRowCard =
-              lookup?.type !== "data" ? undefined : lookup.showInRowCard;
+              arg.type === "RowLookup" ? arg.showInRowCard : undefined;
             return (
               <Btn
                 key={methodName}

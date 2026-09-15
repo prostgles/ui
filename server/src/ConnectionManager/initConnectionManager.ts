@@ -5,6 +5,7 @@ import { getSerialisableError, isDefined } from "prostgles-types";
 import { type DBS } from "../index";
 import { type ConnectionManager } from "./ConnectionManager";
 import { getHotReloadConfigs } from "./getHotReloadConfigs";
+import { getSchemaConfig } from "./getSchemaConfig";
 import { saveCertificates } from "./saveCertificates";
 import { startConnectionOnRequestHandler } from "./startConnectionOnRequestHandler";
 import type { DBSSchema } from "@common/publishUtils";
@@ -22,7 +23,9 @@ export const CONNECTION_HOT_RELOAD_COLUMNS = [
   "db_port",
   "db_schema_filter",
   "db_watch_schema",
-] as const;
+  "table_options",
+  "display_options",
+] as const satisfies readonly (keyof DBSSchema["connections"])[];
 
 export async function initConnectionManager(
   this: ConnectionManager,
@@ -51,7 +54,7 @@ export async function initConnectionManager(
         return;
       }
       const currentConnection = this.connections?.find(
-        (ccon) => ccon.id === updatedConnection.id,
+        ({ id }) => id === updatedConnection.id,
       );
       if (
         prglCon?.io &&
@@ -91,6 +94,17 @@ export async function initConnectionManager(
       );
       for (const databaseConfig of dbConfigs) {
         for (const connectionPartialItem of databaseConfig.connections) {
+          const schemaConfig = getSchemaConfig(
+            databaseConfig.config_sync,
+          )?.config;
+          const configuredDatabaseConfig = {
+            ...databaseConfig,
+            ...schemaConfig?.databaseConfig,
+          };
+          const configuredConnection = {
+            ...connectionPartialItem,
+            ...schemaConfig?.connection,
+          };
           const prglCon = this.getActiveConnectionSilentFail(
             connectionPartialItem.id,
           );
@@ -103,8 +117,8 @@ export async function initConnectionManager(
           if (app && stateDatabaseConfig && stateConnectionPort) {
             setHttpAppSecurity(
               app,
-              databaseConfig,
-              connectionPartialItem,
+              configuredDatabaseConfig,
+              configuredConnection,
               stateConnectionPort,
               this.connectionPorts,
             );
@@ -122,7 +136,6 @@ export async function initConnectionManager(
               stateDatabaseConfig,
               dbs,
               _dbs: db,
-              connectionInfo: prglCon.connectionInfo,
             });
             /** Can happen due to error in onMount */
             await prglCon.prgl.update(hotReloadConfig).catch((e) => {

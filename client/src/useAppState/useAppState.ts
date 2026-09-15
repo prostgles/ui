@@ -3,8 +3,10 @@ import { useAsyncEffectQueue } from "prostgles-client";
 import { useMemo, useState } from "react";
 import type { PrglReadyState } from "../App";
 import type { DBS, DBSMethods } from "../dashboard/Dashboard/DBS";
-import { getTables } from "../dashboard/Dashboard/getTables";
-import { dbsConnectionOptions } from "./dbsConnectionOptions";
+import {
+  getTables,
+  type DBSchemaTableWithOptions,
+} from "../dashboard/Dashboard/getTables";
 import { useDBSClient } from "./useDBSClient";
 import { useServerState } from "./useServerState";
 
@@ -28,10 +30,8 @@ export const useAppState = (
     } = dbsClient;
 
     const { tables: dbsTables = [] } = getTables(
-      tableSchema ?? [],
-      dbsConnectionOptions.table_options,
+      (tableSchema ?? []) as DBSchemaTableWithOptions[],
       dbs,
-      true,
     );
     (window as any).dbs = dbs;
     (window as any).dbsSql = dbsSql;

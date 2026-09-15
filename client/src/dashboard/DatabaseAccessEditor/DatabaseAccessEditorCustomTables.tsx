@@ -57,7 +57,8 @@ export const DatabaseAccessEditorCustomTables = ({
         limit={200}
         listStyle={{
           display: "grid",
-          gridTemplateColumns: "max-content max-content 1fr",
+          // gridTemplateColumns: "max-content max-content 1fr",
+          gridTemplateColumns: "max-content minmax(0, 1fr) max-content",
           gap: "0.5em",
           alignItems: "center",
         }}
@@ -85,9 +86,13 @@ export const DatabaseAccessEditorCustomTables = ({
               ),
               styles: {
                 labelWrapper: {
+                  minWidth: 0,
                   ...(!onChange && { flex: "unset" }),
                 },
                 label: {
+                  minWidth: 0,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
                   fontSize: "16px",
                   userSelect: "text",
                 },

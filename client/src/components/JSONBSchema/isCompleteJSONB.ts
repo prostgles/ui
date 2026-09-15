@@ -30,8 +30,26 @@ export const isCompleteJSONB = (
   if (s.nullable && v === null) {
     return true;
   }
-  if ("lookup" in s && s.lookup) {
-    return v !== undefined;
+  if (typeof s.type === "string" && s.type.includes("Lookup")) {
+    const isArray = s.type.endsWith("[]");
+    const values = isArray && Array.isArray(v) ? v : [v];
+    if (isArray && !Array.isArray(v)) return false;
+
+    if (s.type.startsWith("TableLookup")) {
+      return values.every((value) => typeof value === "string");
+    }
+    if (s.type.startsWith("ColumnLookup")) {
+      return values.every(
+        (value) =>
+          isObject(value) &&
+          typeof value.table === "string" &&
+          typeof value.column === "string",
+      );
+    }
+    if (s.type.startsWith("RowLookup")) {
+      return values.every(isObject);
+    }
+    return values.every((value) => value !== undefined && value !== null);
   } else if (typeof s.type === "string" && v !== undefined) {
     return true;
   } else if (s.enum?.includes(v)) {

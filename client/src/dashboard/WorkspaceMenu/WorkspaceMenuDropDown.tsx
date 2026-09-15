@@ -15,6 +15,7 @@ import { WorkspaceAddBtn } from "./WorkspaceAddBtn";
 import { WorkspaceDeleteBtn } from "./WorkspaceDeleteBtn";
 import "./WorkspaceMenu.css";
 import { WorkspaceSettings } from "./WorkspaceSettings";
+import { getConnectionPaths } from "@common/utils";
 
 type P = {
   workspace: WorkspaceSyncItem;
@@ -71,101 +72,96 @@ export const WorkspaceMenuDropDown = ({
             }
           }}
         >
-          {!workspaces.length ?
-            <div className="text-2">No other workspaces</div>
-          : <SearchList
-              id="search-list-queries"
-              data-command="WorkspaceMenu.SearchList"
-              className={" b-t f-1 min-h-0 "}
-              style={{ minHeight: "120px", maxHeight: "30vh" }}
-              placeholder={"Workspaces"}
-              items={sortedWorkspaces.map((w) => ({
-                key: w.name,
-                label: w.name,
-                labelStyle: {},
-                rowStyle: {
-                  background:
-                    workspace.id === w.id ? "var(--bg-li-selected)" : undefined,
+          <SearchList
+            id="search-list-queries"
+            data-command="WorkspaceMenu.SearchList"
+            className={" b-t f-1 min-h-0 "}
+            style={{ minHeight: "120px", maxHeight: "30vh" }}
+            placeholder={"Workspaces"}
+            noResultsContent={<div className="text-2">No workspaces</div>}
+            items={sortedWorkspaces.map((w) => ({
+              key: w.name,
+              label: w.name,
+              labelStyle: {},
+              rowStyle: {
+                background:
+                  workspace.id === w.id ? "var(--bg-li-selected)" : undefined,
+              },
+              styles: {
+                rowInner: {
+                  alignItems: "center",
                 },
-                styles: {
-                  rowInner: {
-                    alignItems: "center",
-                  },
-                },
-                iconLeft: {
-                  type: "SvgIcon",
-                  pathName:
-                    (w.icon as SvgIconName | undefined) || "ViewCarousel",
-                  style:
-                    workspace.id === w.id ?
-                      { color: "var(--active)" }
-                    : undefined,
-                },
-                contentRight: (
-                  <div className="flex-row gap-p5 pl-1 show-on-parent-hover">
-                    {w.published && isAdmin && (
-                      <Btn
-                        title="Published"
-                        iconPath={mdiAccountMultiple}
-                        color="action"
-                        asNavLink={true}
-                        size="small"
-                        href={`/connection-config/${w.connection_id}?section=access_control`}
-                      />
-                    )}
-                    <WorkspaceDeleteBtn
-                      w={w}
-                      dbs={dbs}
-                      activeWorkspaceId={workspace.id}
-                      disabledInfo={
-                        isAdmin || w.isMine ?
-                          undefined
-                        : "You can not delete a published workspace"
-                      }
-                    />
+              },
+              iconLeft: {
+                type: "SvgIcon",
+                pathName: (w.icon as SvgIconName | undefined) || "ViewCarousel",
+                style:
+                  workspace.id === w.id ?
+                    { color: "var(--active)" }
+                  : undefined,
+              },
+              contentRight: (
+                <div className="flex-row gap-p5 pl-1 show-on-parent-hover">
+                  {w.published && isAdmin && (
                     <Btn
-                      iconPath={mdiContentCopy}
-                      title="Clone workspace"
-                      data-command="WorkspaceMenu.CloneWorkspace"
+                      title="Published"
+                      iconPath={mdiAccountMultiple}
+                      color="action"
+                      asNavLink={true}
                       size="small"
-                      onClickPromise={async () => {
-                        await cloneWorkspace(dbs, w.id).then((d) => {
-                          setWorkspace(d.clonedWsp);
-                        });
-                      }}
+                      href={`${getConnectionPaths({ id: w.connection_id }).config}?section=access_control`}
                     />
-                    {(isAdmin || w.isMine) && (
-                      <>
-                        <WorkspaceSettings
-                          w={w}
-                          dbs={prgl.dbs}
-                          dbsSql={prgl.dbsSql}
-                          dbsTables={dbsTables}
-                          dbsMethodSchema={dbsMethodSchema}
-                        />
-                      </>
-                    )}
-                  </div>
-                ),
-                onPress: (e) => {
-                  if (
-                    w.id === workspace.id ||
-                    (e.target as Element | null)?.closest(
-                      ".delete-workspace",
-                    ) ||
-                    (e.target as Element | null)?.closest(
-                      ".workspace-settings",
-                    ) ||
-                    (e.target as Element | null)?.closest(".clickcatchcomp")
-                  )
-                    return;
+                  )}
+                  <WorkspaceDeleteBtn
+                    workspace={w}
+                    dbs={dbs}
+                    activeWorkspaceId={workspace.id}
+                    disabledInfo={
+                      isAdmin || w.isMine ?
+                        undefined
+                      : "You can not delete a published workspace"
+                    }
+                  />
+                  <Btn
+                    iconPath={mdiContentCopy}
+                    title="Clone workspace"
+                    data-command="WorkspaceMenu.CloneWorkspace"
+                    size="small"
+                    onClickPromise={async () => {
+                      await cloneWorkspace(dbs, w.id).then((d) => {
+                        setWorkspace(d.clonedWsp);
+                      });
+                    }}
+                  />
+                  {(isAdmin || w.isMine) && (
+                    <>
+                      <WorkspaceSettings
+                        w={w}
+                        dbs={prgl.dbs}
+                        dbsSql={prgl.dbsSql}
+                        dbsTables={dbsTables}
+                        dbsMethodSchema={dbsMethodSchema}
+                      />
+                    </>
+                  )}
+                </div>
+              ),
+              onPress: (e) => {
+                if (
+                  w.id === workspace.id ||
+                  (e.target as Element | null)?.closest(".delete-workspace") ||
+                  (e.target as Element | null)?.closest(
+                    ".workspace-settings",
+                  ) ||
+                  (e.target as Element | null)?.closest(".clickcatchcomp")
+                )
+                  return;
 
-                  setWorkspace(w);
-                  closePopup();
-                },
-              }))}
-            />
-          }
+                setWorkspace(w);
+                closePopup();
+              },
+            }))}
+          />
         </FlexCol>
       )}
       footer={() => (

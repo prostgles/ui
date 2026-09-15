@@ -7,6 +7,7 @@ import type { LabelProps } from "./Label";
 import { Label } from "./Label";
 import Loading from "./Loader/Loading";
 import "./SwitchToggle.css";
+import { useOnErrorAlert } from "./AlertProvider";
 
 export type SwitchToggleProps = TestSelectors & {
   title?: string;
@@ -59,6 +60,7 @@ export const SwitchToggle: React.FC<SwitchToggleProps> = ({
         ...testSelectors,
       } as LabelProps)
     );
+  const { onErrorAlert } = useOnErrorAlert();
 
   return (
     <label
@@ -91,7 +93,9 @@ export const SwitchToggle: React.FC<SwitchToggleProps> = ({
             onChange={
               disabledInfo ? undefined : (
                 async (e) => {
-                  if (isLoading && disableOnChangeDuringLoading) return;
+                  if (isLoading && disableOnChangeDuringLoading) {
+                    return;
+                  }
                   const onChangeResult = onChange(e.target.checked, e);
                   const isPromise =
                     onChangeResult &&
@@ -101,7 +105,9 @@ export const SwitchToggle: React.FC<SwitchToggleProps> = ({
                     setIsLoading(true);
                   }
                   try {
-                    await onChangeResult;
+                    await onErrorAlert(async () => {
+                      await onChangeResult;
+                    });
                   } finally {
                     setIsLoading(false);
                   }

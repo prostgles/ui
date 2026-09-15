@@ -1197,7 +1197,7 @@ export const prostglesUIFoodDeliveryDashboardSample = {
 export const dockerWeatherToolUse = {
   files: {
     Dockerfile:
-      'FROM node:18-alpine\nWORKDIR /app\nCOPY package.json .\nRUN npm install\nCOPY . .\nCMD ["node", "fetch_weather.js"]',
+      'FROM node:24-alpine\nWORKDIR /app\nCOPY package.json .\nRUN npm install\nCOPY . .\nCMD ["node", "fetch_weather.js"]',
     "package.json":
       '{\n  "name": "weather-fetcher",\n  "version": "1.0.0",\n  "dependencies": {\n    "axios": "^1.6.0"\n  }\n}',
     "fetch_weather.js":

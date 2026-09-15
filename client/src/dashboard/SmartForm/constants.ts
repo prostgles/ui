@@ -1,0 +1,1 @@
+export const SMART_FORM_POPUP_MIN_WIDTH = 600;

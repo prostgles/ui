@@ -83,7 +83,7 @@ export const AskLLMChatActionBarPromptSelector = (
         showFullscreenToggle={{}}
         clickCatchStyle={{ opacity: 1 }}
         onClickClose={false}
-        contentClassName="p-2 flex-col gap-1 f-1"
+        contentClassName="p-2 flex-col gap-1 f-1 max-w-700"
         rootChildClassname="f-1"
         button={
           <Btn title="Prompt" {...ChatActionBarBtnStyleProps}>
@@ -133,6 +133,7 @@ export const AskLLMChatActionBarPromptSelector = (
                           style={{
                             padding: 0,
                           }}
+                          data-key={name}
                           color={isActive ? "action" : "default"}
                           variant="text"
                           iconPath={isActive ? mdiCheck : mdiCircleOutline}

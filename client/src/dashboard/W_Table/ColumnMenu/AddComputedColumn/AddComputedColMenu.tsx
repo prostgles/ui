@@ -21,7 +21,8 @@ import RTComp from "../../../RTComp";
 import type { ColumnConfigWInfo } from "../../W_Table";
 import { getTableSelect } from "../../tableUtils/getTableSelect";
 import { updateWCols } from "../../tableUtils/tableUtils";
-import type { ColumnConfig } from "../ColumnMenu";
+import type { AggregateOptions, ColumnConfig } from "../ColumnMenu";
+import { AggregateFunctionOptions } from "./AggregateFunctionOptions";
 import { FunctionSelector } from "../FunctionSelector/FunctionSelector";
 import {
   CountAllFunc,
@@ -57,6 +58,7 @@ type AddComputedColMenuS = {
   name?: string;
 
   args?: Required<ColumnConfig>["computedConfig"]["args"];
+  aggregateOptions?: AggregateOptions;
 
   template_string_hint?: string;
   template_string_error?: any;
@@ -130,6 +132,7 @@ export class AddComputedColMenu extends RTComp<
       template_string_hint,
       template_string_error,
       addTo,
+      aggregateOptions,
     } = this.state;
 
     const name =
@@ -347,6 +350,13 @@ export class AddComputedColMenu extends RTComp<
                   },
                 }))}
             />)}
+        {funcDef?.isAggregate && (
+          <AggregateFunctionOptions
+            table={table}
+            value={aggregateOptions}
+            onChange={(aggregateOptions) => this.setState({ aggregateOptions })}
+          />
+        )}
         {canAdd && (
           <>
             <FormField
@@ -408,6 +418,8 @@ export class AddComputedColMenu extends RTComp<
                 column,
                 ...pickKeys(outInfo, ["tsDataType", "udt_name"]),
                 args: isEmpty(args) ? undefined : args,
+                aggregateOptions:
+                  funcDef.isAggregate ? aggregateOptions : undefined,
               },
             };
             const { select } = await getTableSelect(

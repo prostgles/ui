@@ -75,8 +75,9 @@ export const parseExplainResult = ({
           (name, idx) =>
             ({
               idx,
-              key: name,
+              key: idx,
               name: name,
+              label: name,
               subLabel: "",
               sortable: false,
               udt_name: name.includes("Cost") ? "numeric" : "text",

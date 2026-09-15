@@ -143,6 +143,9 @@ export const JoinedRecords = (props: JoinedRecordsProps) => {
               section={section}
               descendants={descendants}
               isInsert={isInsert}
+              onSuccess={() => {
+                void sectionData.refreshSectionCount(section);
+              }}
             />
           </Section>
         );

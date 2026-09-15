@@ -59,7 +59,7 @@ export const getRows = async (args: Args, limit = 3, matchStart = false) => {
       { matchCase, edgeTruncate: 30, returnType: "object" },
     ],
   };
-  let select: { prgl_term_highlight: AnyObject } = { prgl_term_highlight };
+  let select = { prgl_term_highlight };
   if (column) {
     if (isObject(column)) {
       if (column.computedConfig) {
@@ -81,7 +81,7 @@ export const getRows = async (args: Args, limit = 3, matchStart = false) => {
         }
         select.prgl_term_highlight = getComputedColumnSelect(
           column.computedConfig,
-        );
+        ) as unknown as typeof select.prgl_term_highlight;
       } else {
         select[column.name] = 1;
       }

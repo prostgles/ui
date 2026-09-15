@@ -28,7 +28,7 @@ const NO_SSL_SUPPORT_ERROR = "The server does not support SSL connections";
  *  verify-full	only try an SSL connection, verify that the server certificate is issued by a trusted CA and that the server hostname matches that in the certificate.
  */
 export const testDBConnection = (
-  _c: ConnectionInfo,
+  connectionInfo: ConnectionInfo,
   expectSuperUser = false,
   check?: (c: pgPromise.IConnected<{}, pg.IClient>) => any,
 ): Promise<{
@@ -37,8 +37,11 @@ export const testDBConnection = (
   canCreateDb: boolean | undefined;
   isSSLModeFallBack?: boolean;
 }> => {
-  const con = validateConnection(_c);
-  if (typeof con !== "object" || (!("db_host" in con) && !("db_conn" in con))) {
+  const validatedConnection = validateConnection(connectionInfo);
+  if (
+    typeof validatedConnection !== "object" ||
+    (!("db_host" in validatedConnection) && !("db_conn" in validatedConnection))
+  ) {
     throw (
       "Incorrect database connection info provided. " +
       "\nExpecting: \
@@ -50,7 +53,7 @@ export const testDBConnection = (
 
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   return new Promise(async (resolve, reject) => {
-    const connOpts = getConnectionDetails(con as Connections);
+    const connOpts = getConnectionDetails(validatedConnection as Connections);
     const db = pgpNoWarnings({ ...connOpts });
     return db
       .connect()
@@ -89,14 +92,17 @@ export const testDBConnection = (
       })
       .catch((err) => {
         const errRes = err instanceof Error ? err.message : JSON.stringify(err);
-        if (errRes === NO_SSL_SUPPORT_ERROR && _c.db_ssl === "prefer") {
+        if (
+          errRes === NO_SSL_SUPPORT_ERROR &&
+          validatedConnection.db_ssl === "prefer"
+        ) {
           console.warn(
-            `Falling back to sslmode=disable for host ${con.db_host} as sslmode=prefer is not supported by the server.`,
+            `Falling back to sslmode=disable for host ${validatedConnection.db_host} as sslmode=prefer is not supported by the server.`,
           );
           return resolve(
             testDBConnection(
               {
-                ..._c,
+                ...validatedConnection,
                 db_ssl: "disable",
                 type: "Standard",
               },
@@ -104,12 +110,17 @@ export const testDBConnection = (
               check,
             ).then((res) => ({ ...res, isSSLModeFallBack: true })),
           );
-        } else {
-          console.error(
-            `Error connecting to database ${JSON.stringify(con.db_host)}`,
-            err,
-          );
         }
+
+        console.error(
+          `Error connecting to database ${JSON.stringify(validatedConnection.db_host)}`,
+          err,
+          errRes === NO_SSL_SUPPORT_ERROR ?
+            {
+              hint: `Try setting db_ssl to "disable".`,
+            }
+          : undefined,
+        );
         const localHosts = [
           "host.docker.internal",
           "localhost",
@@ -118,7 +129,10 @@ export const testDBConnection = (
         ];
 
         let prostgles_error_hint = "";
-        if (process.env.IS_DOCKER && localHosts.includes(con.db_host)) {
+        if (
+          process.env.IS_DOCKER &&
+          localHosts.includes(validatedConnection.db_host)
+        ) {
           prostgles_error_hint = [
             `\nTo connect to a localhost database from docker you need to either use "host" netoworking mode or:\n `,
             `1) If using docker-compose.yml, uncomment extra_hosts:  `,

@@ -14,31 +14,38 @@ import { loadGeneratedTimechart } from "./loadGeneratedTimechart";
 export const loadGeneratedWorkspaces = async (
   generatedWorkspaces: WorkspaceInsertModel[],
   tool_use_id: string,
-  { dbs, connectionId, tables }: Pick<Prgl, "dbs" | "connectionId" | "tables">,
+  {
+    // db,
+    dbs,
+    connectionId,
+    tables,
+  }: Pick<Prgl, "dbs" | "connectionId" | "tables">,
 ) => {
-  const workspaces = generatedWorkspaces.map((wsp) => {
-    const windows: WindowInsertModel[] = wsp.windows.map((generatedWindow) => {
-      if (generatedWindow.type === "barchart") {
-        return loadGeneratedBarchart(generatedWindow, tables);
-      } else if (generatedWindow.type === "map") {
-        const { window } = loadGeneratedMap(generatedWindow);
-        return window;
-      } else if (generatedWindow.type === "timechart") {
-        const { window } = loadGeneratedTimechart(generatedWindow);
-        return window;
-      } else if (generatedWindow.type === "table") {
-        return loadGeneratedTable(generatedWindow, tables);
-      }
-      return omitKeys(
-        {
-          ...generatedWindow,
-          name: generatedWindow.name || "Query",
-        },
-        ["id"],
-      );
-    });
+  const workspaces = generatedWorkspaces.map((workspace) => {
+    const windows: WindowInsertModel[] = workspace.windows.map(
+      (generatedWindow) => {
+        if (generatedWindow.type === "barchart") {
+          return loadGeneratedBarchart(generatedWindow, tables);
+        } else if (generatedWindow.type === "map") {
+          const { window } = loadGeneratedMap(generatedWindow);
+          return window;
+        } else if (generatedWindow.type === "timechart") {
+          const { window } = loadGeneratedTimechart(generatedWindow);
+          return window;
+        } else if (generatedWindow.type === "table") {
+          return loadGeneratedTable(generatedWindow, tables);
+        }
+        return omitKeys(
+          {
+            ...generatedWindow,
+            name: generatedWindow.name || "Query",
+          },
+          ["id"],
+        );
+      },
+    );
     return {
-      ...wsp,
+      ...workspace,
       options: {
         pinnedMenu: false,
       },
@@ -78,8 +85,7 @@ export const loadGeneratedWorkspaces = async (
               const insertedWorkspace =
                 insertedWorkspaces[generatedWorkspaceIndex];
               const insertedWindows = (insertedWorkspace as any).windows as
-                | DBSSchema["windows"][]
-                | DBSSchema["windows"];
+                DBSSchema["windows"][] | DBSSchema["windows"];
               // TODO fix bug where a single inserted window is not an array but an object
               const insertedWindow =
                 isObject(insertedWindows) && !generatedWindowIndex ?

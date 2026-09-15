@@ -23,13 +23,11 @@ export const JoinedRecordsSection = ({
 }) => {
   return (
     <FlexCol className=" px-1 pb-1 pt-p5 " data-command="JoinedRecords.Section">
-      {section.error && (
-        <ErrorComponent
-          error={section.error}
-          variant="outlined"
-          className=" f-1"
-        />
-      )}
+      <ErrorComponent
+        error={section.error}
+        variant="outlined"
+        className=" f-1"
+      />
       <JoinedRecordsSectionCardList
         {...props}
         section={section}

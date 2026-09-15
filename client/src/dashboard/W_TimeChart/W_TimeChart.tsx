@@ -23,6 +23,7 @@ import { getTimeChartSelectDate } from "./fetchData/getTimeChartSelectParams";
 import { W_TimeChartHeaderControls } from "./W_TimeChartHeaderControls";
 import type { TimeChartBinSize } from "./W_TimeChartMenu";
 import { ProstglesTimeChartMenu } from "./W_TimeChartMenu";
+import type { Prgl } from "src/App";
 
 export type TimeChartLinkOptions = Extract<
   DBSSchema["links"]["options"],
@@ -102,7 +103,7 @@ type D = {
   extent?: DateExtent;
   w?: WindowSyncItem<"timechart">;
   lCols: {
-    [key: string]: W_TimeChartProps["tables"][number]["columns"];
+    [key: string]: Prgl["tables"][number]["columns"];
   };
   dataAge: number;
 };
@@ -259,7 +260,7 @@ export class W_TimeChart extends RTComp<W_TimeChartProps, W_TimeChartState, D> {
     const {
       onClickRow,
       workspace,
-      prgl: { connection },
+      prgl: { tables },
     } = this.props;
     const { w } = this.d;
     if (!w) return <Loading className="m-auto f-1" />;
@@ -296,7 +297,7 @@ export class W_TimeChart extends RTComp<W_TimeChartProps, W_TimeChartState, D> {
         childWindow={undefined}
         getMenu={this.getMenu}
         layoutMode={workspace.layout_mode ?? "editable"}
-        connection={connection}
+        tables={tables}
       >
         <div
           ref={(r) => {

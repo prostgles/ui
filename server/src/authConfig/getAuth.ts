@@ -7,7 +7,7 @@ import path from "path";
 import type { AuthConfig } from "prostgles-server/dist/Auth/AuthTypes";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
 import type { DB } from "prostgles-server/dist/Prostgles";
-import { actualRootDir } from "../electronConfig";
+import { DIRECTORIES } from "../electronConfig";
 import type { DBS } from "../index";
 import { getEmailAuthProvider } from "./emailProvider/getEmailAuthProvider";
 import { getLogin } from "./getLogin";
@@ -21,6 +21,7 @@ import {
   type SUser,
 } from "./sessionUtils";
 import { type AuthConfigForStateOrConnection } from "./subscribeToAuthSetupChanges";
+import { updateRemoteMcpAuthorizationCode } from "@src/McpHub/AnthropicMcpHub/McpOAuth/updateRemoteMcpAuthorizationCode";
 
 export type DBWithAuth = DBOFullyTyped<
   Pick<
@@ -52,6 +53,7 @@ export const getAuth = async (
     sidKeyName,
     onUseOrSocketConnected: getOnUseOrSocketConnected(_dbs, authSetupData),
     getUser: getGetUser(dbs, authSetupData),
+    findUser: (userFilter) => dbs.users.findOne(userFilter),
     cacheSession: {
       getSession: async (sid, _) => {
         if (!sid) return undefined;
@@ -87,9 +89,38 @@ export const getAuth = async (
         "/favicon.ico",
         "/robots.txt",
         API_ENDPOINTS.WS_DB,
+        ROUTES.MCP_OAUTH_CALLBACK,
       ],
       onGetRequestOK: async (req, res, { getUser }) => {
-        if (req.path.startsWith(ROUTES.PLAYWRIGHT_REPORT)) {
+        if (req.path.startsWith(ROUTES.MCP_OAUTH_CALLBACK)) {
+          /** The confirmation can be initiated on a browser without a session */
+          // const userData = await getUser();
+          // const errorHint =
+          //   "Ensure you're logged in as an admin user in Prostgles and have the correct permissions to perform this action.";
+          // if (!userData.user) {
+          //   res.status(401).send("Unauthorized");
+          //   return;
+          // } else if (userData.user.type !== "admin") {
+          //   res.status(403).send("Forbidden");
+          //   return;
+          // }
+
+          const result = await updateRemoteMcpAuthorizationCode(dbs, req.query);
+          if (result.success === false) {
+            res.status(400).send(result.message);
+            return;
+          }
+          const { server_name, mcp_server_config_id } = result;
+
+          res.set("Content-Type", "text/html");
+          res.send(`<!DOCTYPE html>
+            <html>
+              <body>
+                <p id="status">Connected MCP server "${server_name}" (config ID: ${mcp_server_config_id}). Closing this window...</p>
+                <script src="/mcp-oauth-close.js"></script>
+              </body>
+            </html>`);
+        } else if (req.path.startsWith(ROUTES.PLAYWRIGHT_REPORT)) {
           const userData = await getUser();
           if (!userData.user) {
             res.status(401).send("Unauthorized");
@@ -101,7 +132,7 @@ export const getAuth = async (
           req.next?.();
         } else if (req.path.startsWith(ROUTES.BACKUPS)) {
           const userData = await getUser();
-          await getBackupManager()!.onRequestBackupFile(
+          await getBackupManager().onRequestBackupFile(
             res,
             !userData.user ? undefined : userData,
             req,
@@ -113,9 +144,7 @@ export const getAuth = async (
         } else if (req.query.transport === "polling") {
           req.next?.();
         } else {
-          res.sendFile(
-            path.resolve(actualRootDir + "/../client/build/index.html"),
-          );
+          res.sendFile(path.resolve(DIRECTORIES.CLIENT_BUILD, "index.html"));
         }
       },
       cookieOptions: { ...authCookieOpts, ...database_config.cookie_options },

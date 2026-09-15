@@ -1,14 +1,13 @@
+import type { DetailedFilterBase } from "@common/filterUtils";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import type { TableHandlerClient } from "prostgles-client";
 import type { AnyObject } from "prostgles-types";
 import React from "react";
-import type { DetailedFilterBase } from "@common/filterUtils";
-import type { CommonWindowProps } from "../Dashboard/Dashboard";
+import type { ReactiveState } from "../../appUtils";
+import { useReactiveState } from "../../appUtils";
 import { SmartForm } from "../SmartForm/SmartForm";
 import type { RowSiblingData } from "./tableUtils/getEditColumn";
 import { getRowSiblingData } from "./tableUtils/getEditColumn";
-import type { ReactiveState } from "../../appUtils";
-import { useReactiveState } from "../../appUtils";
-import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 
 export type RowPanelProps =
   | {

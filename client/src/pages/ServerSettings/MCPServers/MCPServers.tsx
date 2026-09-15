@@ -7,7 +7,7 @@ import React, { useState } from "react";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import { SmartCardList } from "../../../dashboard/SmartCardList/SmartCardList";
 import type { ColumnSort } from "../../../dashboard/W_Table/ColumnMenu/ColumnMenu";
-import { MCPServerConfigProvider } from "./MCPServerConfig/MCPServerConfig";
+import { MCPServerConfigProvider } from "./MCPServerConfig/MCPServerConfigProvider";
 import { MCPServerFooterActions } from "./MCPServerFooterActions/MCPServerFooterActions";
 import { MCPServersHeader } from "./MCPServersHeader";
 import { MCPServersToolbar } from "./MCPServersToolbar/MCPServersToolbar";
@@ -42,10 +42,16 @@ export const MCPServers = ({ chatId, focusedServer }: MCPServersProps) => {
   );
 
   const [loaded, setLoaded] = useState(false);
+
+  if (chatId && !chatContext) {
+    return null;
+  }
+
   return (
     <MCPServerConfigProvider>
       <FlexCol
         className="p-1 pt-0 min-w-0 f-1 max-w-800"
+        data-command="MCPServers"
         style={{
           opacity: loaded ? 1 : 0,
           transition: "opacity 0.2s ease-in-out",
@@ -124,7 +130,7 @@ export const MCPServers = ({ chatId, focusedServer }: MCPServersProps) => {
 
 const orderByEnabledAndName = [
   {
-    key: "enabled",
+    key: "created",
     asc: false,
   },
   {

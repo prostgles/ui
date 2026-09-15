@@ -4,12 +4,14 @@ import { MenuList } from "@components/MenuList";
 import { MONACO_READONLY_DEFAULT_OPTIONS } from "@components/MonacoEditor/MonacoEditor";
 import { mdiText } from "@mdi/js";
 import React, { useMemo, useState } from "react";
+import type { LanguageConfig } from "src/dashboard/CodeEditor/CodeEditor";
 import { CodeEditorWithSaveButton } from "src/dashboard/CodeEditor/CodeEditorWithSaveButton";
 
 export const CodeFileBrowser = ({
   files,
   onChange,
   modelsGroupId,
+  projectPath,
 }: {
   /**
    * Used as modelId prefix for Monaco editor to ensure it doesn't show stale content from other renders
@@ -20,6 +22,7 @@ export const CodeFileBrowser = ({
     fileName: string;
     content: string;
   }) => void | Promise<void>;
+  projectPath?: string;
 }) => {
   const [activeFilePath, setActiveFilePath] = useState(Object.keys(files)[0]);
   const activeContent = activeFilePath ? (files[activeFilePath] ?? "") : "";
@@ -30,10 +33,11 @@ export const CodeFileBrowser = ({
         lang: "typescript",
         environment: "nodejs",
         modelFileName: modelsGroupId + (activeFilePath ?? "file.ts"),
-      } as const;
+        projectPath,
+      } as const satisfies LanguageConfig;
     }
     return FILE_EXTENSION_TO_ICON_INFO[extension]?.label ?? "plaintext";
-  }, [activeFilePath, extension, modelsGroupId]);
+  }, [activeFilePath, extension, modelsGroupId, projectPath]);
   return (
     <FlexRow className="min-w-0 min-h-0 ai-start gap-0 w-full max-w-full f-1">
       <MenuList

@@ -3,7 +3,7 @@ import {
   ROUTES,
   SERVER_SETTINGS_SECTIONS,
 } from "@common/utils";
-import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
+import type { TableConfig } from "prostgles-server";
 import { loggerTableConfig } from "../Logger";
 import { tableConfigAccessControl } from "./tableConfigAccessControl";
 import { tableConfigBackups } from "./tableConfigBackups";

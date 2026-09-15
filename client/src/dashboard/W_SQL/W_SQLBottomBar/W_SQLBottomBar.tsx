@@ -152,12 +152,12 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
             label={t.W_SQLBottomBar["Execution mode"]}
             value={w.sql_options.executeOptions ?? "block"}
             options={["full", "block", "smallest-block"]}
-            onChange={(executeOptions) =>
+            onChange={(executeOptions) => {
               w.$update(
                 { sql_options: { executeOptions } },
                 { deepMerge: true },
-              )
-            }
+              );
+            }}
           />
           <SwitchToggle
             label={t.W_SQLBottomBar["Loop query execution"]}

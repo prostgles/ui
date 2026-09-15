@@ -1,4 +1,8 @@
-import type { PageWIds } from "utils/utils";
+import {
+  scrollElementIntoView,
+  TWENTY_SECONDS_OR_MORE,
+  type PageWIds,
+} from "utils/utils";
 import type { SVGifScene } from "./constants";
 import { saveSVGScreenshot } from "./saveSVGScreenshot";
 import type { Locator } from "@playwright/test";
@@ -84,7 +88,11 @@ export const getSceneUtils = (
       Number.isFinite(nth) ?
         page.locator(playwrightSelector).nth(nth!)
       : page.locator(playwrightSelector);
-    await playwrightLocator.scrollIntoViewIfNeeded({ timeout: 20_000 });
+    await playwrightLocator.waitFor({
+      state: "visible",
+      ...TWENTY_SECONDS_OR_MORE,
+    });
+    await scrollElementIntoView(playwrightLocator);
 
     const elementIsVisible = await playwrightLocator.evaluate((n) => {
       const hoverParent = n.closest(`[class*="hover"]`) as HTMLElement | null;
@@ -114,6 +122,7 @@ export const getSceneUtils = (
         {
           type: elementIsVisible ? "click" : "clickAppearOnHover",
           elementSelector: svgifSelector,
+          nth,
           duration:
             duration === "faster" ? 400
             : duration === "fast" ? 700

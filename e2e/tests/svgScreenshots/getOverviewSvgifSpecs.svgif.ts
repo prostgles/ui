@@ -67,6 +67,19 @@ export const getOverviewSvgifSpecs = async () => {
       ],
     },
     {
+      fileName: "governed_ai",
+      usedExternally: true,
+      scenes: [
+        ...sliceScenes("ai_assistant", 6, 13),
+        ...sliceScenes(
+          "ai_assistant_agentic_workflow_gov_api",
+          0,
+          undefined,
+          true,
+        ),
+      ],
+    },
+    {
       fileName: "overview_long",
       usedExternally: true,
       scenes: [

@@ -1,11 +1,8 @@
-import type {
-  DetailedJoinedFilter,
-  JOINED_FILTER_TYPES,
-} from "@common/filterUtils";
+import type { DetailedJoinedFilter } from "@common/filterUtils";
 import Btn from "@components/Btn";
 import { FlexCol, FlexRow } from "@components/Flex";
 import { Label } from "@components/Label";
-import { mdiSetCenter, mdiSetNone } from "@mdi/js";
+import { mdiSetCenter } from "@mdi/js";
 import React from "react";
 import type { DBSchemaTableWJoins, JoinV2 } from "../Dashboard/dashboardUtils";
 import {
@@ -23,25 +20,6 @@ type AddJoinFilterProps = {
   onChange: (joinOpts: undefined | JoinOpts) => void;
   disabledInfo?: string;
 };
-export const JOIN_FILTER_TYPES = [
-  {
-    key: "$existsJoined",
-    label: "Exists",
-    subLabel: "At least one matching record exists in the target table",
-    iconPath: mdiSetCenter,
-  },
-  {
-    key: "$notExistsJoined",
-    label: "Not Exists",
-    subLabel: "No matching records exists in the target table",
-    iconPath: mdiSetNone,
-  },
-] satisfies {
-  key: (typeof JOINED_FILTER_TYPES)[number];
-  label: string;
-  subLabel: string;
-  iconPath: string;
-}[];
 
 export const AddJoinFilter = ({
   tables,
