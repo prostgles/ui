@@ -72,7 +72,10 @@ export const useDragHeader = (props: DragHeaderProps) => {
   );
 
   const onPanStart = useCallback(
-    ({ node }, e) => {
+    (
+      { node }: { node: HTMLDivElement },
+      e: React.MouseEvent<HTMLDivElement>,
+    ) => {
       e.preventDefault();
       e.stopPropagation();
       const handlerNode = node.getBoundingClientRect();

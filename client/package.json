@@ -12,7 +12,7 @@
     "papaparse": "^5.7.0",
     "pdfjs-dist": "^6.3.289",
     "pgsql-ast-parser": "^12.0.2",
-    "prostgles-client": "^4.0.403",
+    "prostgles-client": "^4.0.405",
     "qrcode": "^1.5.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -30,10 +30,11 @@
   "scripts": {
     "prod": "NODE_ENV=production BABEL_ENV=production webpack",
     "start": "node scripts/start.js --no-cache",
-    "build-start": "rm -rf ./build && webpack --config=configs/prod.js && rm -rf ./node_modules",
+    "build-start": "rm -rf ./build && webpack --config=configs/prod.js && npm run test:bundle-size && rm -rf ./node_modules",
     "build": "bash ./build.sh",
     "dev": "npm ci --no-audit --quiet && webpack --watch --config=configs/dev.js",
     "lint": "eslint . --quiet --fix",
+    "test:bundle-size": "node --test bundleSize.test.mjs",
     "tsc": "tsc --noEmit"
   },
   "browserslist": {

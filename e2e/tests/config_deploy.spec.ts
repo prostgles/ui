@@ -127,7 +127,7 @@ test("checkFilterDetailed works with grouped existsJoined", async ({
     logPath: test.info().outputPath("joined-permissions-server.log"),
     users: [
       { key: "admin", type: "admin" },
-      { key: "member", username: "member@example.com", type: "default" },
+      { key: "default", username: "member@example.com", type: "default" },
       { key: "public", type: "public" },
     ],
     seed: async ({ projectDatabase, stateDatabase }) => {
@@ -261,7 +261,7 @@ test("checkFilterDetailed works with grouped existsJoined", async ({
     const publicClient = await deployment.connectProjectAs("public");
     expect(publicClient.db.records).toBeUndefined();
     publicClient.disconnect();
-    const { db } = await deployment.connectProjectAs("member");
+    const { db } = await deployment.connectProjectAs("default");
     const records = db.records!;
     expect(await records.find!({})).toMatchObject([{ value: "editable" }]);
     await expect(
@@ -337,7 +337,7 @@ test("checkFilterDetailed works with grouped existsJoined", async ({
       .toHaveLength(1);
     await expect.poll(() => liveValues).toContain("protected");
     await subscription.unsubscribe();
-    const sqlClient = await deployment.connectProjectAs("member");
+    const sqlClient = await deployment.connectProjectAs("default");
     try {
       expect(
         await sqlClient.sql!("SELECT 42", {}, { returnType: "value" }),
@@ -403,7 +403,7 @@ test("checkFilterDetailed works with grouped existsJoined", async ({
         configPath,
       });
       if (permissions === accessRule.dbPermissions) {
-        const restoredClient = await deployment.connectProjectAs("member");
+        const restoredClient = await deployment.connectProjectAs("default");
         try {
           expect(
             await restoredClient.db.records!.find!({ value: "protected" }),
@@ -434,7 +434,7 @@ test("checkFilterDetailed works with grouped existsJoined", async ({
           0,
         );
         publicClient.disconnect();
-        const member = await deployment.connectProjectAs("member");
+        const member = await deployment.connectProjectAs("default");
         expect(await member.methods!.sharedRecordCount!({})).toBe(42);
         member.disconnect();
       }
@@ -530,7 +530,7 @@ module.exports.functions = {
     logPath: test.info().outputPath("permission-sync-server.log"),
     users: [
       { key: "admin", type: "admin" },
-      { key: "member", type: "default" },
+      { key: "default", type: "default" },
     ],
   });
   try {
@@ -571,7 +571,7 @@ module.exports.functions = {
         ],
       }),
     ).rejects.toMatchObject(mixedTypesError);
-    const memberState = await deployment.connectStateAs("member");
+    const memberState = await deployment.connectStateAs("default");
     const workspace = (await memberState.db.workspaces!.findOne!({
       connection_id: connection.id,
       name: "Shared records",
@@ -593,7 +593,7 @@ module.exports.functions = {
         { returnType: "value" },
       ),
     ).toBe(1);
-    const member = await deployment.connectProjectAs("member");
+    const member = await deployment.connectProjectAs("default");
     expect(await member.methods!.sourceFunction!({})).toBe(42);
     let schemaUpdates = 0;
     member.socket.on(CHANNELS.SCHEMA, () => {
@@ -607,7 +607,7 @@ module.exports.functions = {
     expect(await member.methods!.sourceFunction!({})).toBe(42);
     await expect
       .poll(async () => {
-        const refreshed = await deployment.connectProjectAs("member");
+        const refreshed = await deployment.connectProjectAs("default");
         try {
           if (!refreshed.sql) return undefined;
           expect(await refreshed.methods!.sourceFunction!({})).toBe(42);
@@ -693,7 +693,7 @@ module.exports.functions = {
     expect(await state.db.access_control_allowed_llm!.count!(grantFilter)).toBe(
       0,
     );
-    const revoked = await deployment.connectProjectAs("member");
+    const revoked = await deployment.connectProjectAs("default");
     expect(revoked.db.records).toBeUndefined();
     expect(revoked.sql).toBeUndefined();
     revoked.disconnect();
@@ -863,6 +863,18 @@ test.describe("Published config CLI", () => {
       expect(
         existsSync(join(configDirectory, "generated", "DBGeneratedSchema.ts")),
       ).toBe(true);
+      expect(
+        readFileSync(
+          join(configDirectory, "generated", "DBGeneratedSchema.ts"),
+          "utf8",
+        ),
+      ).toContain("export type ClientDBSchema = DBGeneratedSchema;");
+      expect(
+        readFileSync(
+          join(configDirectory, "generated", "DBGeneratedSchema.ts"),
+          "utf8",
+        ),
+      ).toContain("export type ClientSchemas = [");
       for (const folder of [
         "functions",
         "tableConfigs",
@@ -924,7 +936,7 @@ test.describe("Published config CLI", () => {
       expect(deploymentTest).toContain("createTestDeployment");
       expect(deploymentTest).toContain('configId: "config"');
       expect(deploymentTest).toContain('connectProjectAs("admin")');
-      expect(deploymentTest).toContain('connectProjectAs("member")');
+      expect(deploymentTest).toContain('connectProjectAs("default")');
       expect(
         readFileSync(join(configDirectory, ".gitignore"), "utf8"),
       ).toContain("node_modules/");
@@ -1088,6 +1100,11 @@ export default prostgles({
       expect(generatedSchema).toContain("message: string;");
       expect(generatedSchema).toContain(
         "Promise<{ message: string; length: number }>;",
+      );
+      expect(generatedSchema).toContain("export type ClientDBSchema = {");
+      expect(generatedSchema).toContain("export type ClientSchemas = [");
+      expect(generatedSchema).toContain(
+        '{ userType: "default"; schema: DefaultSchema };',
       );
       const defaultSchema = generatedSchema
         .split("export type DefaultSchema = {")[1]

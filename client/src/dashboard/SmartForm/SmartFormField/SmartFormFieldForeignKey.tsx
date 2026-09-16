@@ -105,10 +105,11 @@ export const SmartFormFieldForeignKey = (
   };
 
   const selectedOption = fullOptions?.find((o) => o.key === value);
-
+  const { subLabel, leftContent } = selectedOption ?? {};
   const paddingValue = 0;
   const isNullOrEmpty = value === null || value === undefined;
 
+  const valueIsNotObject = !isObject(value);
   const displayValue = (
     <FlexRowWrap
       className={"gap-p5 min-w-0"}
@@ -117,12 +118,12 @@ export const SmartFormFieldForeignKey = (
         padding: isNullOrEmpty && !readOnly ? 0 : `${paddingValue} 0`,
       }}
     >
-      {column.file ? null : selectedOption?.leftContent}
+      {column.file ? null : leftContent}
       <div className="text-ellipsis max-w-fit" style={valueStyle}>
         <RenderValue
-          value={value}
+          value={subLabel ?? value}
           column={
-            column.udt_name === "uuid" ?
+            column.udt_name === "uuid" || isDefined(subLabel) ?
               { ...column, tsDataType: "string", udt_name: "text" }
             : column
           }
@@ -131,7 +132,7 @@ export const SmartFormFieldForeignKey = (
           getValues={undefined}
         />
       </div>
-      {isDefined(selectedOption?.subLabel) && (
+      {isDefined(subLabel) && (
         <div
           className="SmartFormFieldForeignKey.subLabel ta-left text-ellipsis"
           style={{
@@ -141,7 +142,7 @@ export const SmartFormFieldForeignKey = (
             maxWidth: "300px",
           }}
         >
-          {selectedOption.subLabel}
+          {valueIsNotObject ? value?.toString() : subLabel}
         </div>
       )}
     </FlexRowWrap>

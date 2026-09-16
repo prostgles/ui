@@ -17,6 +17,7 @@ test("CLI annotations support PDF uploads without document extraction", async ()
         storageType: { type: "local" },
         annotationsTable: "file_annotations",
         extractText: false,
+        versioning: { tableName: "file_versions", maxVersions: 2 },
       },
     },
     joins: [{
@@ -52,6 +53,9 @@ test("CLI annotations support PDF uploads without document extraction", async ()
     expect(
       tableSchema?.find((table) => table.name === "file_annotations"),
     ).toHaveProperty("managedTableType", "file-annotations");
+    expect(tableSchema?.some((table) => table.name === "file_versions")).toBe(
+      true,
+    );
     const file = await dbo.files!.insert!(
       {
         data: readFileSync(join(__dirname, "testAskLLM/sample.pdf")),
@@ -62,6 +66,8 @@ test("CLI annotations support PDF uploads without document extraction", async ()
     // Previously annotations invoked the documents service despite extractText: false.
     assert.equal(file.extraction_status, null);
     assert.equal(file.docling_metadata, null);
+    assert.equal(file.version, 1);
+    assert.equal(await dbo.file_versions!.count!({ file_id: file.id }), 1);
     const annotation = await dbo.file_annotations!.insert!(
       { file_id: file.id, text: "Source excerpt", page: 1, rectangles: [] },
       { returning: "*" },

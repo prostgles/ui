@@ -1,18 +1,19 @@
+import type { DetailedFilter } from "@common/filterUtils";
 import { getProperty } from "@common/utils";
+import { useOnErrorAlert } from "@components/AlertProvider";
 import { MarkdownWithPlugins } from "@components/MarkdownWithPlugins/MarkdownWithPlugins";
 import type { TableHandlerClient } from "prostgles-client";
+import type { TableHandlerClientForColumns } from "prostgles-client/dist/prostgles";
 import { tryCatchV2, type AnyObject } from "prostgles-types";
 import React, { useCallback, useState } from "react";
 import { type Prgl } from "src/App";
 import { SmartForm } from "src/dashboard/SmartForm/SmartForm";
+import SmartTable from "src/dashboard/SmartTable";
 import { type DivProps } from "../Flex";
 import {
   MonacoCodeInMarkdown,
   type MonacoCodeInMarkdownProps,
 } from "./MonacoCodeInMarkdown/MonacoCodeInMarkdown";
-import SmartTable from "src/dashboard/SmartTable";
-import { useOnErrorAlert } from "@components/AlertProvider";
-import type { DetailedFilter } from "@common/filterUtils";
 
 export type MarkedProps = DivProps &
   Pick<
@@ -39,7 +40,7 @@ export const Marked = (props: MarkedProps) => {
         tableName: string;
         columnName: string;
         columnValue: string | number;
-        tableHandler: Partial<TableHandlerClient<AnyObject, void>>;
+        tableHandler: Partial<TableHandlerClientForColumns<AnyObject>>;
       }
   >();
   const [showTableRecords, setShowTableRecords] = useState<
@@ -47,7 +48,7 @@ export const Marked = (props: MarkedProps) => {
     | {
         tableName: string;
         filter: AnyObject;
-        tableHandler: Partial<TableHandlerClient<AnyObject, void>>;
+        tableHandler: Partial<TableHandlerClientForColumns<AnyObject>>;
       }
   >();
 

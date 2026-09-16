@@ -181,8 +181,12 @@ const getCliTemplateFiles = ({
       ) + "\n",
     [cliFileNames.agents]: getCliAgentsFile(),
     [generatedFolderName]: {
-      [cliFileNames.dbGeneratedSchema]:
-        "export type DBGeneratedSchema = Record<string, { columns: Record<string, unknown> }>\n",
+      [cliFileNames.dbGeneratedSchema]: `export type DBGeneratedSchema = Record<string, { columns: Record<string, unknown> }>;
+         export type ClientDBSchema = DBGeneratedSchema;
+         export type ClientSchemas = [
+           { userType: "admin"; schema: ClientDBSchema },
+           { userType: "default"; schema: ClientDBSchema },
+         ];`,
     },
     [srcFolderName]: {
       ...fromEntries(srcSubfolderNames.map((folderName) => [folderName, {}])),
@@ -253,14 +257,14 @@ const getCliTemplateFiles = ({
         import assert from "node:assert/strict";
         import test from "node:test";
         import { createTestDeployment } from "@prostgles/app/testing";
-        import type { DBGeneratedSchema } from "../${generatedFolderName}/${cliFileNames.dbGeneratedSchema.slice(0, -3)}";
+        import type { ClientSchemas } from "../${generatedFolderName}/${cliFileNames.dbGeneratedSchema.slice(0, -3)}";
 
         void test("starts the configured app with an isolated database", async (context) => {
-          const deployment = await createTestDeployment<DBGeneratedSchema>({
+          const deployment = await createTestDeployment<ClientSchemas>({
             configId: ${JSON.stringify(configId)},
             users: [
               { key: "admin", type: "admin" },
-              { key: "member", type: "default" },
+              { key: "default", type: "default", username: "member" },
             ],
             // Add deterministic rows with:
             // seed: async ({ projectDatabase }) => {
@@ -275,7 +279,7 @@ const getCliTemplateFiles = ({
           assert.equal(client.auth.user?.type, "admin");
           assert.ok(client.db);
 
-          const memberClient = await deployment.connectProjectAs("member");
+          const memberClient = await deployment.connectProjectAs("default");
           assert.equal(memberClient.socket.connected, true);
           assert.equal(memberClient.auth.user?.type, "default");
         });`,
@@ -532,7 +536,18 @@ const eslintConfig = `
       },
       rules: {
         "no-cond-assign": "error",
-        "no-magic-numbers": "warn",
+        "no-magic-numbers": [
+          "warn",
+          {
+            ignore: [-1, 0, 1],
+            ignoreArrayIndexes: true,
+            ignoreDefaultValues: true,
+            ignoreEnums: true,
+            ignoreNumericLiteralTypes: true,
+            ignoreReadonlyClassProperties: true,
+            ignoreTypeIndexes: true,
+          },
+        ],
         "no-unused-vars": "off",
         "security/detect-object-injection": "off",
         "@typescript-eslint/no-explicit-any": "off",
@@ -703,7 +718,7 @@ const getCliAgentsFile = () => `
   - After a test failure, inspect the existing logs before rerunning tests or requesting custom commands. Use \`ls -t .prostgles/test-logs/\` to find recent logs, then \`tail -n 200 .prostgles/test-logs/<filename>\` or \`rg -n -i 'error|failed' .prostgles/test-logs/<filename>\`. Logs may be large; do not read an entire log unless its size is known to be small.
   - These files contain deployment output, not the npm/build/test-runner output. Check the test command's terminal output for lint, TypeScript, assertion, or Docker setup failures. Failures before the deployment starts may not create a log file.
   - If the deployment fixture blocks a valid scenario, inspect \`deployment.logPath\` and report the issue against \`@prostgles/app\`; do not weaken the app or its assertions to work around the fixture.
-  - Add test users through the fixture's \`users\` option and connect with \`connectProjectAs(userKey)\`. Sessions are seeded directly, so deployment tests do not need to exercise the login UI.
+  - Add test users through the fixture's \`users\` option and parameterize \`createTestDeployment<ClientSchemas>\`. A key matching a published user type uses its generated permission-aware schema. For multiple users of one type, use distinct keys and a matching test schema tuple. Sessions are seeded directly, so deployment tests do not need to exercise the login UI.
   - Add deterministic database state with the fixture's \`seed\` callback. Never use development or production database URLs for test setup.
 
   ## Deployment
@@ -736,7 +751,7 @@ const getCliAgentsFile = () => `
 
   ## File storage
 
-  - Enable managed file storage with \`databaseConfig.file_table_config\`. For local storage, use \`{ fileTable: "files", storageType: { type: "local" } }\`. Prostgles creates and manages the file table and serves its files.
+  - Enable managed file storage with \`databaseConfig.file_table_config\`. For local storage, use \`{ fileTable: "files", storageType: { type: "local" } }\`. Add \`versioning: {}\` to retain immutable file revisions. Prostgles manages \`files_versions\` by default (or \`versioning.tableName\`), mirrors custom columns added to \`tableConfig.files\`, and derives revision read access, fields, and row filters from the files table. Do not define the revisions table in \`tableConfig\` or grant it broader standalone access. Prostgles creates and manages the file table and serves its files.
   - For S3 storage, use \`storageType: { type: "S3", credential_id }\`; configure the credential in Prostgles and never put access keys in this repository.
   - Reference \`files.id\` from application tables with foreign keys rather than storing file URLs. Referencing tables must have a primary key. Use \`referencedTables\` when file type or size restrictions are required.
   - For PDF source references, configure \`annotationsTable: "file_annotations"\` alongside \`fileTable\` and \`storageType\`. Prostgles creates the annotation table and marks it as \`file-annotations\` in the client schema; do not create a replacement annotation table or set that marker manually.

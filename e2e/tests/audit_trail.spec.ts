@@ -72,7 +72,7 @@ test.beforeAll(async () => {
     configId: config.id,
     users: [
       { key: "admin", type: "admin" },
-      { key: "restricted", type: "default" },
+      { key: "default", username: "restricted", type: "default" },
     ],
     logPath: test.info().outputPath("audit-server.log"),
     seed: async ({ stateDatabase, projectDatabase }) => {
@@ -334,7 +334,7 @@ for (const restriction of [
     }
     await expect
       .poll(async () => {
-        const client = await deployment.connectProjectAs("restricted");
+        const client = await deployment.connectProjectAs("default");
         try {
           return client.tableSchema?.some((table) => table.name === "records");
         } finally {
@@ -342,7 +342,7 @@ for (const restriction of [
         }
       })
       .toBe(true);
-    const client = await deployment.connectProjectAs("restricted");
+    const client = await deployment.connectProjectAs("default");
     if (restriction === "row identifiers") {
       expect(
         client.tableSchema?.find((table) => table.name === "records"),

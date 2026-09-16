@@ -47,6 +47,7 @@ export const getCliUpgradeConflicts = (local: string, incoming: string) => {
       "--no-textconv",
       "--text",
       "--no-color",
+      "--ignore-space-at-eol",
       "--unified=0",
       "--inter-hunk-context=0",
       "--",
@@ -147,7 +148,7 @@ export const applyCliUpgradeFiles = async (
       }
     } else if (entry.name === cliFileNames.dbGeneratedSchema) {
       continue;
-    } else if (!readFileSync(target).equals(readFileSync(incoming))) {
+    } else if (fileContentsDiffer(target, incoming)) {
       const action = await chooseAction(
         target,
         ["skip", "merge", "overwrite"],
@@ -162,6 +163,18 @@ export const applyCliUpgradeFiles = async (
       }
     }
   }
+};
+
+const fileContentsDiffer = (currentPath: string, incomingPath: string) => {
+  const current = readFileSync(currentPath);
+  const incoming = readFileSync(incomingPath);
+  if (current.equals(incoming)) return false;
+  return !withoutFinalNewline(current).equals(withoutFinalNewline(incoming));
+};
+
+const withoutFinalNewline = (contents: Buffer) => {
+  if (contents.at(-1) !== 10) return contents;
+  return contents.subarray(0, contents.at(-2) === 13 ? -2 : -1);
 };
 
 export const upgradeCli = async (configId: string, targetPath: string) => {

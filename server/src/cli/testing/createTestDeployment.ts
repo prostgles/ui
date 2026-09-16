@@ -7,7 +7,12 @@ import prostgles, {
   type ClientFunctionHandler,
   type OnReadyParams,
 } from "prostgles-client";
-import type { UserLike } from "prostgles-types";
+import type {
+  ClientSchemaFor,
+  ClientUserType,
+  DefaultClientSchemas,
+  UserLike,
+} from "prostgles-types";
 import { Client } from "pg";
 import { startTemporaryDatabases } from "../startTemporaryDatabases";
 import { getConnectionPaths } from "@common/utils";
@@ -16,11 +21,18 @@ import { sidKeyName } from "@common/authTypesAndConstants";
 const STATE_SOCKET_PATH = "/ws-api-dbs";
 const START_TIMEOUT_MS = 60_000;
 
-export type TestDeploymentUser = {
+export type ClientSchemaDefinition = {
+  userType: string;
+  schema: unknown;
+};
+
+export type ClientSchemaDefinitions = readonly ClientSchemaDefinition[];
+
+export type TestDeploymentUser<UserKey extends string = string> = {
   /** Stable name used by connectStateAs/connectProjectAs. */
-  key: string;
+  key: UserKey;
   username?: string;
-  type?: "admin" | "default" | "public";
+  type?: string;
 };
 
 export type TestDeploymentSeedContext = {
@@ -28,7 +40,9 @@ export type TestDeploymentSeedContext = {
   projectDatabase: Client;
 };
 
-export type CreateTestDeploymentOptions = {
+export type CreateTestDeploymentOptions<
+  Schemas extends ClientSchemaDefinitions = DefaultClientSchemas,
+> = {
   /** Root of the app created by `prostgles create`. Defaults to the current working directory. */
   configPath?: string;
   /** App ID used in Docker and database names. */
@@ -37,7 +51,7 @@ export type CreateTestDeploymentOptions = {
   postgresImage?: string;
   /** Output file for deployment stdout and stderr. */
   logPath?: string;
-  users?: TestDeploymentUser[];
+  users?: TestDeploymentUser<ClientUserType<Schemas>>[];
   seed?: (context: TestDeploymentSeedContext) => void | Promise<void>;
   startupTimeoutMs?: number;
 };
@@ -51,7 +65,7 @@ export type TestDeploymentClient<
 };
 
 export type TestDeployment<
-  Schema = void,
+  Schemas extends ClientSchemaDefinitions = DefaultClientSchemas,
   Functions extends ClientFunctionHandler = ClientFunctionHandler,
   User extends UserLike = UserLike,
 > = {
@@ -63,7 +77,7 @@ export type TestDeployment<
   /** PostgreSQL output, retained after cleanup. */
   databaseLogPath: string;
   /** Browser session for a seeded user, compatible with Playwright storageState. */
-  storageStateAs: (userKey: string) => {
+  storageStateAs: (userKey: ClientUserType<Schemas>) => {
     cookies: {
       name: string;
       value: string;
@@ -78,11 +92,13 @@ export type TestDeployment<
   };
   dashboardUrl: string;
   connectStateAs: (
-    userKey: string,
+    userKey: ClientUserType<Schemas>,
   ) => Promise<TestDeploymentClient<void, ClientFunctionHandler, UserLike>>;
-  connectProjectAs: (
-    userKey: string,
-  ) => Promise<TestDeploymentClient<Schema, Functions, User>>;
+  connectProjectAs: <UserType extends ClientUserType<Schemas>>(
+    userKey: UserType,
+  ) => Promise<
+    TestDeploymentClient<ClientSchemaFor<Schemas, UserType>, Functions, User>
+  >;
   dispose: () => Promise<void>;
 };
 
@@ -197,7 +213,7 @@ const seedUsers = async (databaseUrl: string, users: TestDeploymentUser[]) => {
 };
 
 export const createTestDeployment = async <
-  Schema = void,
+  Schemas extends ClientSchemaDefinitions = DefaultClientSchemas,
   Functions extends ClientFunctionHandler = ClientFunctionHandler,
   User extends UserLike = UserLike,
 >({
@@ -207,9 +223,11 @@ export const createTestDeployment = async <
   postgresImage,
   seed,
   startupTimeoutMs = START_TIMEOUT_MS,
-  users = [{ key: "admin", type: "admin" }],
-}: CreateTestDeploymentOptions): Promise<
-  TestDeployment<Schema, Functions, User>
+  users = [{ key: "admin", type: "admin" }] as TestDeploymentUser<
+    ClientUserType<Schemas>
+  >[],
+}: CreateTestDeploymentOptions<Schemas>): Promise<
+  TestDeployment<Schemas, Functions, User>
 > => {
   const resolvedConfigPath = path.resolve(configPath ?? process.cwd());
   const resolvedLogPath = path.resolve(
@@ -351,7 +369,7 @@ export const createTestDeployment = async <
       clients.add(trackedClient);
       return trackedClient;
     };
-    const connectStateAs = async (userKey: string) =>
+    const connectStateAs = async (userKey: ClientUserType<Schemas>) =>
       trackClient(
         await prostgles({
           endpoint,
@@ -364,7 +382,9 @@ export const createTestDeployment = async <
           },
         }),
       );
-    const connectProjectAs = async (userKey: string) => {
+    const connectProjectAs = async <UserType extends ClientUserType<Schemas>>(
+      userKey: UserType,
+    ) => {
       const stateClient = await connectStateAs(userKey);
       try {
         const startConnection = (
@@ -386,7 +406,7 @@ export const createTestDeployment = async <
           throw new Error("The project socket path was not returned.");
         }
         return trackClient(
-          await prostgles<Schema, Functions, User>({
+          await prostgles<ClientSchemaFor<Schemas, UserType>, Functions, User>({
             endpoint: socketInfo.socketUrl ?? endpoint,
             token: getToken(userKey),
             socketOptions: {

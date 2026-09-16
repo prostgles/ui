@@ -12,11 +12,7 @@ import type { AnyObject } from "prostgles-types";
 import React, { useMemo, useState } from "react";
 import type { DBSchemaTableWJoins } from "src/dashboard/Dashboard/dashboardUtils";
 import { SmartForm } from "src/dashboard/SmartForm/SmartForm";
-import type {
-  AnnotationsTableRow,
-  DBManagedTableSchema,
-  FilesTableRow,
-} from "../MediaViewer/managedTableUtils";
+import type { DBManagedTableSchema } from "../MediaViewer/managedTableUtils";
 import type { MediaViewerProps } from "../MediaViewer/MediaViewer";
 import type { CreatedHighlight } from "./PdfViewerHighlights/PdfViewerHighlights";
 
@@ -31,10 +27,10 @@ type AnnotationsContext = {
   row: AnyObject;
   fileTable: DBSchemaTableWJoins;
   annotationsTable: DBSchemaTableWJoins;
-  fileTableHandler: TableHandlerClient<FilesTableRow, DBManagedTableSchema>;
+  fileTableHandler: TableHandlerClient<DBManagedTableSchema, "files">;
   annotationsTableHandler: TableHandlerClient<
-    AnnotationsTableRow,
-    DBManagedTableSchema
+    DBManagedTableSchema,
+    "file_annotations"
   >;
 };
 

@@ -18,7 +18,7 @@ import type { ConnectionManager } from "./ConnectionManager";
 import type { ConnectionHotReloadProperties } from "./getHotReloadConfigs";
 import { getSchemaConfig } from "./getSchemaConfig";
 import { getServiceManager } from "@src/ServiceManager/getServiceManager";
-import type { ProstglesContext } from "@src/schemaConfig";
+import type { ProstglesContext, SchemaConfigDatabase } from "@src/schemaConfig";
 
 type ParseTableConfigArgs = {
   dbs: DBS;
@@ -52,9 +52,10 @@ export const parseTableConfig = async ({
 }> => {
   const connectionId = con.id;
   let fileTableConfig:
-    | (DatabaseConfigs["file_table_config"] &
+    | (NonNullable<SchemaConfigDatabase["file_table_config"]> &
         Pick<FileTableConfig, "referencedTables">)
-    | null = null;
+    | null
+    | undefined = null;
   if (type === "saved") {
     fileTableConfig = databaseConfig.file_table_config;
   } else {
@@ -94,6 +95,7 @@ export const parseTableConfig = async ({
         fileServePath: `${ROUTES.STORAGE}/${connectionId}`,
         storageClient,
         referencedTables: fileTableConfig.referencedTables,
+        versioning: fileTableConfig.versioning,
       } satisfies FileTableConfig);
 
   const { tableHooks, tableConfig } =

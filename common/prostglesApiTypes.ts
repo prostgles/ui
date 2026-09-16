@@ -364,7 +364,9 @@ export type UpsertDataToPGCast<TD extends AnyObject> = {
 };
 type JSONMerge<T> = T extends Record<string, unknown> ? Record<"$merge", unknown[]> : never;
 export type PartialLax<T = AnyObject> = Partial<T>;
-type UpsertDataToPGCastLax<T extends AnyObject> = PartialLax<UpsertDataToPGCast<T>>;
+type UpsertDataToPGCastLax<T extends AnyObject> = {
+    [K in keyof T]?: CastFromTSToPG<T[K]> | JSONMerge<T[K]>;
+};
 export type DeleteParams<T extends AnyObject | void = void, S extends DBSchema | void = void> = {
     returning?: Select<T, S>;
 } & Pick<CommonSelectParams, "returnType">;
@@ -379,16 +381,18 @@ type GetInsertColumns<TD extends AnyObject, S, TName extends PropertyKey> = [
 ] extends [never] ? TD : S extends Record<TName, {
     insertColumns: infer Columns extends AnyObject;
 }> ? Columns : TD;
-type GetUpdateData<TD extends AnyObject, S, TName extends PropertyKey> = [
-    TName
-] extends [never] ? UpsertDataToPGCastLax<TD> : S extends Record<TName, {
+type GetUpdateData<TD extends AnyObject, S, TName extends PropertyKey> = S extends Record<TName, {
     updateColumns: infer Columns extends AnyObject;
-}> ? Columns : UpsertDataToPGCastLax<TD>;
+}> ? UpsertDataToPGCastLax<Columns> : UpsertDataToPGCastLax<TD>;
 /**
  * Methods for interacting with a table/view
  * - On client-side some methods are restricted (and undefined) based on publish rules on the server
  */
-export type TableHandler<TD extends AnyObject = AnyObject, S extends DBSchema | void = void, TName extends PropertyKey = never> = {
+type TableHandlerBase<
+/**
+ * TODO: check if: "deriving it directly throughout raised type instantiations from roughly 95.6k to 104k."
+ */
+TD extends AnyObject, S extends DBSchema | void, TName extends PropertyKey> = {
     /**
      * Retrieves the table/view info
      */
@@ -495,6 +499,14 @@ export type TableHandler<TD extends AnyObject = AnyObject, S extends DBSchema | 
      */
     delete<P extends DeleteParams<TD, S>>(filter?: FullFilter<TD, S>, params?: P): Promise<GetReturningReturnType<P, TD, S>[]>;
 };
+type TableHandlerData<S, TName> = S extends DBSchema ? TName extends keyof S ? S[TName]["columns"] : never : never;
+type TableHandlerSchema<S extends DBSchema> = DBSchema extends S ? void : S;
+export type TableHandler<S extends DBSchema = DBSchema, TName extends keyof S = keyof S> = TableHandlerBase<TableHandlerData<S, TName>, TableHandlerSchema<S>, TName>;
+export type TableHandlerForColumns<T extends AnyObject = AnyObject> = TableHandler<{
+    _: {
+        columns: T;
+    };
+}, "_">;
 export type AsyncResult<T> = {
     data?: undefined;
     isLoading: true;
@@ -563,9 +575,14 @@ export type TableHandlerClientMethods<T extends AnyObject = AnyObject, S extends
      */
     useSize: <P extends SelectParams<T, S>>(filter?: FullFilter<T, S>, selectParams?: P, hookOptions?: HookOptions) => AsyncResult<string | undefined>;
 };
-export type TableHandlerClient<T extends AnyObject = AnyObject, S extends DBSchema | void = void> = TableHandler<T, S> & TableHandlerClientMethods<T, S>;
+export type TableHandlerClient<S extends DBSchema = DBSchema, TName extends keyof S = keyof S> = TableHandler<S, TName> & TableHandlerClientMethods<S[TName]["columns"], DBSchema extends S ? void : S>;
+export type TableHandlerClientForColumns<T extends AnyObject = AnyObject> = TableHandlerClient<{
+    _: {
+        columns: T;
+    };
+}, "_">;
 export type DBHandlerClient<Schema = void> = Schema extends DBSchema ? {
-    [tov_name in keyof Schema]: (TableHandler<Schema[tov_name]["columns"], Schema, tov_name> & TableHandlerClientMethods<Schema[tov_name]["columns"], Schema>) | (Schema[tov_name] extends {
+    [tov_name in keyof Schema]: TableHandlerClient<Schema, tov_name> | (Schema[tov_name] extends {
         optional: true;
     } ? undefined : never);
 } : Record<string, Partial<TableHandler & TableHandlerClientMethods>>;

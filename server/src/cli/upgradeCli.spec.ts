@@ -55,6 +55,8 @@ void test("upgrade prompts per file with defaults and respects every action", as
   }
   for (const directory of [incoming, target])
     writeFileSync(join(directory, "identical"), "same");
+  writeFileSync(join(incoming, "final-newline-only"), "same\n");
+  writeFileSync(join(target, "final-newline-only"), "same");
   writeFileSync(join(target, "app-only"), "custom");
   mkdirSync(join(incoming, "nested"));
   writeFileSync(join(incoming, "nested", "new-write"), "incoming");
@@ -133,6 +135,8 @@ void test("inline conflicts handle additions, removals, empty files and line end
     ["", "added\n", conflict("", "added\n")],
     ["removed\n", "", conflict("removed\n", "")],
     ["old", "new", conflict("old\n", "new\n")],
+    ["same", "same\n", "same"],
+    ["old\nsame", "new\nsame\n", conflict("old\n", "new\n") + "same"],
     ["@@ old\n", "@@ new\n", conflict("@@ old\n", "@@ new\n")],
     [
       "same\r\nold\r\n",

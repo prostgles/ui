@@ -47,8 +47,7 @@ export type TimeChartLayerWithBin = ProstglesTimeChartLayer & {
 };
 
 export type TimeChartLayerWithBinOrError =
-  | TimeChartLayerWithBin
-  | TimeChartLayerWithBinError;
+  TimeChartLayerWithBin | TimeChartLayerWithBinError;
 
 async function getTimeChartLayerWithBin(
   this: W_TimeChart,
@@ -274,9 +273,7 @@ export const getDesiredTimeChartBinSize = ({
 };
 
 export const getTimeChartMinMax = async (
-  tableHandler:
-    | TableHandlerClient
-    | Partial<TableHandlerClient<AnyObject, void>>,
+  tableHandler: Partial<TableHandlerClient>,
   tableFilters: AnyObject,
   dateColumn: string,
 ) => {

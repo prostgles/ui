@@ -1,6 +1,6 @@
 import type { PaginationProps } from "@components/Table/Pagination";
 import { Pagination } from "@components/Table/Pagination";
-import type { TableHandlerClient } from "prostgles-client";
+import type { TableHandlerClientForColumns } from "prostgles-client/dist/prostgles";
 import type { AnyObject } from "prostgles-types";
 import React from "react";
 import type {
@@ -19,7 +19,7 @@ export type CardViewProps = {
   state: W_TableState;
   cardOpts: Extract<ChartOptions<"table">["viewAs"], { type: "card" }>;
   w?: WindowSyncItem<"table">;
-  tableHandler: Partial<TableHandlerClient<AnyObject, void>>;
+  tableHandler: Partial<TableHandlerClientForColumns<AnyObject>>;
   paginationProps: PaginationProps;
   style?: React.CSSProperties;
   className?: string;

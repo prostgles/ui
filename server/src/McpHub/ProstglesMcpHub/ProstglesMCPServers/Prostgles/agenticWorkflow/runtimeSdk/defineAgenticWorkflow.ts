@@ -154,8 +154,7 @@ export type DetailedTableFilter = {
   value: unknown;
 };
 export type DetailedTableFilterGroup =
-  | { $and: DetailedTableFilter[] }
-  | { $or: DetailedTableFilter[] };
+  { $and: DetailedTableFilter[] } | { $or: DetailedTableFilter[] };
 
 /**
  * Defines a list of columns with either 1 (include) or 0 (exclude).
@@ -236,8 +235,8 @@ export type DatabaseAccessDefinition =
 
 type DbTableHandler = {
   [TableName in keyof DBGeneratedSchema]: TableHandler<
-    DBGeneratedSchema[TableName]["columns"],
-    DBGeneratedSchema
+    DBGeneratedSchema,
+    TableName
   >;
 };
 

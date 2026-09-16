@@ -49,6 +49,13 @@ export const FILE_TABLE_CONFIG_SCHEMA = {
   },
   annotationsTable: { type: "string", optional: true },
   extractText: { type: "boolean", optional: true },
+  versioning: {
+    type: {
+      tableName: { type: "string", optional: true },
+      maxVersions: { type: "integer", optional: true },
+    },
+    optional: true,
+  },
 } as const satisfies JSONB.ObjectType["type"];
 
 const SMTPConfig = {
