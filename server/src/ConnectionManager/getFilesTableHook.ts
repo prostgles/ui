@@ -1,11 +1,15 @@
 import type { BeforeEachTsTrigger, DBHandlerServer } from "prostgles-server";
 import {
   extractFileText,
+  type FileTextExtractionOptions,
   type FileTableRowWithExtraction,
 } from "./extractFileText";
 import type { ProstglesContext } from "@src/schemaConfig";
 
-export const getFilesTableHook = (fileTableName: string) => ({
+export const getFilesTableHook = (
+  fileTableName: string,
+  extractTextOptions?: FileTextExtractionOptions,
+) => ({
   [fileTableName]: {
     beforeEach: [
       {
@@ -36,6 +40,7 @@ export const getFilesTableHook = (fileTableName: string) => ({
             fileId,
             fileTableName,
             start,
+            options: extractTextOptions,
           });
 
           return {

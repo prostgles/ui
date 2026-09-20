@@ -1,5 +1,6 @@
 import type { TableConfig } from "prostgles-server";
 import type { JSONB } from "prostgles-types";
+import { documentsServiceInputSchemaMcpOptions } from "@common/mcp/documentsServiceInputSchema";
 import { DUMP_OPTIONS_SCHEMA } from "./tableConfigBackups";
 import { OAuthProviderOptions } from "@common/OAuthUtils";
 
@@ -49,6 +50,10 @@ export const FILE_TABLE_CONFIG_SCHEMA = {
   },
   annotationsTable: { type: "string", optional: true },
   extractText: { type: "boolean", optional: true },
+  extractTextOptions: {
+    type: documentsServiceInputSchemaMcpOptions,
+    optional: true,
+  },
   versioning: {
     type: {
       tableName: { type: "string", optional: true },

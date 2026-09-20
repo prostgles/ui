@@ -1,6 +1,6 @@
 # Use the official docling-serve image (CPU version by default)
 # For GPU support, the service config will override with cu128 image 
-ARG BASE_IMAGE=quay.io/docling-project/docling-serve:v1.32.0
+ARG BASE_IMAGE=quay.io/docling-project/docling-serve:v1.34.0
 FROM ${BASE_IMAGE}
 
 EXPOSE 5001

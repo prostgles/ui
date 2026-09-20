@@ -101,7 +101,10 @@ export const parseTableConfig = async ({
     fileTableConfig?.extractText ?? !!fileTableConfig?.annotationsTable;
   const fileTableHooksMerged: TableHooks<void, ProstglesContext> | undefined =
     fileTable && extractText ?
-      getFilesTableHook(fileTable.tableName)
+      getFilesTableHook(
+        fileTable.tableName,
+        fileTableConfig?.extractTextOptions,
+      )
     : undefined;
   const fileTableConfigMerged: TableConfig | undefined =
     fileTable && (extractText || fileTableConfig?.annotationsTable) ?

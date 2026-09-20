@@ -151,6 +151,10 @@ test("CLI text extraction can be enabled without an annotations table", async ()
         fileTable: "files",
         storageType: { type: "local" },
         extractText: true,
+        extractTextOptions: {
+          do_ocr: false,
+          table_mode: "fast",
+        },
       },
     },
   });
