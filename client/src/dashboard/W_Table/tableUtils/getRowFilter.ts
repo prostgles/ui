@@ -12,7 +12,7 @@ export const getRowFilter = async (
   row: AnyObject,
   table: DBSchemaTableWJoins,
   columnConfig: { name: string }[] | undefined,
-  tableHandler: Partial<TableHandlerClient<AnyObject, void>>,
+  tableHandler: Partial<TableHandlerClient>,
 ): Promise<
   | { filter: DetailedFilterBase[]; error: undefined }
   | { filter: undefined; error: string }
@@ -61,7 +61,7 @@ export const getRowFilter = async (
     };
 
     rowFilter = filterCols.map((c) => {
-      const val = row[c.name];
+      const val = row[c.name] as unknown;
       return {
         fieldName: c.name,
         value:

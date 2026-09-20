@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import {
+  chmodSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
@@ -8,11 +9,12 @@ import {
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { delimiter, join } from "node:path";
 import test from "node:test";
 import {
   applyCliUpgradeFiles,
   getCliUpgradeConflicts,
+  mergeWithVSCode,
   parseFileAction,
 } from "./upgradeCli";
 
@@ -118,6 +120,41 @@ void test("inline conflicts separate changed sections and preserve shared lines"
     readFileSync(local, "utf8"),
     "header\nold\nshared\nold2\nfooter\n",
   );
+});
+
+void test("VS Code merge can be interrupted", async (context) => {
+  if (process.platform === "win32") {
+    context.skip("Test uses a Unix executable as the fake VS Code command");
+    return;
+  }
+  const debugPath = join(process.cwd(), "debug");
+  mkdirSync(debugPath, { recursive: true });
+  const root = mkdtempSync(join(debugPath, "prostgles-upgrade-test-"));
+  context.after(() => rmSync(root, { recursive: true, force: true }));
+  const local = join(root, "local");
+  const incoming = join(root, "incoming");
+  const editor = join(root, "code");
+  writeFileSync(local, "local\n");
+  writeFileSync(incoming, "incoming\n");
+  writeFileSync(
+    editor,
+    "#!/usr/bin/env node\nsetInterval(() => undefined, 1_000);\n",
+  );
+  chmodSync(editor, 0o755);
+
+  const originalPath = process.env.PATH;
+  process.env.PATH = `${root}${delimiter}${originalPath ?? ""}`;
+  const interrupt = setTimeout(() => process.emit("SIGINT"), 100);
+  try {
+    await assert.rejects(
+      mergeWithVSCode(local, incoming),
+      /VS Code exited with signal SIGINT/,
+    );
+    assert.equal(readFileSync(local, "utf8"), "local\n");
+  } finally {
+    clearTimeout(interrupt);
+    process.env.PATH = originalPath;
+  }
 });
 
 void test("inline conflicts handle additions, removals, empty files and line endings", (context) => {

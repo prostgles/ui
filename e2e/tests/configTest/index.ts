@@ -46,7 +46,7 @@ export default prostgles({
   connection: {
     db_schema_filter: { [CONFIG_TEST.schemaName]: 1 },
   },
-  access_control: [
+  accessControl: [
     {
       userTypes: ["default"],
       dbPermissions: {

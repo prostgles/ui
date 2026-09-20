@@ -1,5 +1,9 @@
 import { auditOperationStyles } from "@common/auditOperationStyles";
-import type { ColumnOptions, TableOptions } from "@common/managedTableSchema";
+import type {
+  ColumnOptions,
+  InternalColumnFormat,
+  TableOptions,
+} from "@common/managedTableSchema";
 import type { SUser } from "@src/authConfig/sessionUtils";
 import type {
   AuthResultWithSID,
@@ -46,6 +50,7 @@ export const modifyClientSchema = ({
   const capitaliseNames =
     connection.display_options?.prettyTableAndColumnNames ?? true;
   const tableHasLabelFromConfig = Boolean(tableConfig?.info?.label);
+  const reservedColumnNames = new Set(table.columns.map(({ name }) => name));
   return {
     ...table,
     managedTableType: tableOptions.managedTableType,
@@ -75,6 +80,13 @@ export const modifyClientSchema = ({
       );
       return {
         ...c,
+        defaultRenderAs: getDefaultRenderAs(
+          c,
+          table.name,
+          fileTable,
+          annotationsTable,
+          reservedColumnNames,
+        ),
         icon: columnOptions.icon,
         /**
          * TODO: move label and rendering logic to one place only.
@@ -84,18 +96,57 @@ export const modifyClientSchema = ({
           !columnHasLabelFromConfig && capitaliseNames ?
             convertSnakeToReadable(c.name)
           : c.label,
-        renderAs:
-          columnOptions.renderAs ??
-          (c.file ?
-            {
-              type: "Media",
-              params: { contentType: { mode: "From URL Extension" } },
-            }
-          : undefined),
+        renderAs: columnOptions.renderAs,
         style: columnOptions.style,
       };
     }),
   };
+};
+
+const getDefaultRenderAs = (
+  column: DBSchemaTable["columns"][number],
+  tableName: string,
+  fileTable: string | undefined,
+  annotationsTable: string | undefined,
+  reservedColumnNames: Set<string>,
+): InternalColumnFormat | undefined => {
+  if (fileTable === tableName && column.name === "extraction_status") {
+    return {
+      type: "Internal",
+      params: { component: "FileExtractionStatus" },
+    };
+  }
+
+  const referencedTables = column.references?.map(({ ftable }) => ftable);
+  if (annotationsTable && referencedTables?.includes(annotationsTable)) {
+    const dataKey = getAvailableDataKey(column.name, reservedColumnNames);
+    reservedColumnNames.add(dataKey);
+    return {
+      type: "Internal",
+      params: {
+        component: "FileAnnotation",
+        tableName: annotationsTable,
+        dataKey,
+      },
+    };
+  }
+  if (fileTable && referencedTables?.includes(fileTable)) {
+    return { type: "Internal", params: { component: "File" } };
+  }
+};
+
+const getAvailableDataKey = (
+  columnName: string,
+  reservedNames: ReadonlySet<string>,
+) => {
+  const baseName = `__managed_${columnName}`;
+  let dataKey = baseName;
+  let suffix = 1;
+  while (reservedNames.has(dataKey)) {
+    dataKey = `${baseName}_${suffix}`;
+    suffix += 1;
+  }
+  return dataKey;
 };
 
 const convertSnakeToReadable = (str: string) => {
@@ -137,11 +188,6 @@ const fileTableOptions: TableOptions = {
     docling_metadata: {
       renderAs: {
         type: "DoclingDocument",
-      },
-    },
-    text_content: {
-      renderAs: {
-        type: "MarkdownPopup",
       },
     },
   },

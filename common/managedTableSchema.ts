@@ -23,6 +23,19 @@ export type TableOptions = RequiredKeepUndefined<
     managedTableType?: "files" | "file-annotations";
   }
 > & { audit?: ClientTableAuditConfig };
+
+export type InternalColumnFormat = {
+  type: "Internal";
+  params:
+    | { component: "File" }
+    | {
+        component: "FileAnnotation";
+        tableName: string;
+        dataKey: string;
+      }
+    | { component: "FileExtractionStatus" };
+};
+
 export type ColumnOptions = RequiredKeepUndefined<
   NonNullable<
     NonNullable<
@@ -31,7 +44,9 @@ export type ColumnOptions = RequiredKeepUndefined<
       >["columns"]
     >[string]
   >
->;
+> & {
+  defaultRenderAs?: InternalColumnFormat;
+};
 
 export const annotationsTableColumns = {
   id: `INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY`,
@@ -46,6 +61,38 @@ export const annotationsTableColumns = {
         y: "number",
         width: "number",
         height: "number",
+      },
+    },
+  },
+} as const;
+
+export const fileTableExtractionColumns = {
+  columns: {
+    text_content: `TEXT[]`,
+    docling_metadata: `JSONB`,
+    extraction_status: {
+      nullable: true,
+      jsonbSchema: {
+        oneOfType: [
+          {
+            state: { enum: ["loading"] },
+            start: "Date",
+            options: { record: { values: "any" } },
+          },
+          {
+            state: { enum: ["finished"] },
+            start: "Date",
+            end: "Date",
+            options: { record: { values: "any" } },
+          },
+          {
+            state: { enum: ["error"] },
+            error: "unknown",
+            start: "Date",
+            end: "Date",
+            options: { record: { values: "any" } },
+          },
+        ],
       },
     },
   },

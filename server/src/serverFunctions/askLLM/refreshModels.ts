@@ -2,7 +2,9 @@ import { isDefined, tryCatchV2 } from "prostgles-types";
 import type { DBS } from "../..";
 import type { DBSSchemaForInsert } from "@common/publishUtils";
 
-export const refreshModels = async (dbs: DBS) => {
+export const refreshModels = async (
+  dbs: Pick<DBS, "llm_providers" | "llm_models">,
+) => {
   /**
    * https://openrouter.ai/docs/overview/models
    */
@@ -110,32 +112,24 @@ export const refreshModels = async (dbs: DBS) => {
     });
   });
 
-  await dbs.tx(async (dbTx) => {
-    // const existingModels = await dbTx.llm_models.find();
-    const nonOpenRouterModels = insertData
-      .filter((m) => m.provider_id !== "OpenRouter")
-      .map((m) => ({
-        ...m,
-        name: m.name.split("/")[1] || m.name,
-      }));
+  const nonOpenRouterModels = insertData
+    .filter((m) => m.provider_id !== "OpenRouter")
+    .map((m) => ({
+      ...m,
+      name: m.name.split("/")[1] || m.name,
+    }));
 
-    const newModels = [
-      ...nonOpenRouterModels,
-      ...insertData.map((d) => ({
-        ...d,
-        provider_id: "OpenRouter",
-      })),
-    ];
-    // .filter(
-    //   (m) =>
-    //     !existingModels.some(
-    //       (em) => em.name === m.name && em.provider_id === m.provider_id,
-    //     ),
-    // );
-    if (newModels.length) {
-      await dbTx.llm_models.insertMany(newModels, { onConflict: "DoUpdate" });
-    }
-  });
+  const newModels = [
+    ...nonOpenRouterModels,
+    ...insertData.map((d) => ({
+      ...d,
+      provider_id: "OpenRouter",
+    })),
+  ];
+
+  if (newModels.length) {
+    await dbs.llm_models.insertMany(newModels, { onConflict: "DoUpdate" });
+  }
 };
 
 export const CHEAPER_AGENTIC_MODEL_RANKING = [

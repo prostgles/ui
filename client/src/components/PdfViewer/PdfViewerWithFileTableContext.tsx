@@ -8,7 +8,6 @@ import { Select } from "@components/Select/Select";
 import { mdiComment, mdiSearchWeb } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import type { TableHandlerClient } from "prostgles-client";
-import type { AnyObject } from "prostgles-types";
 import React, { useMemo, useState } from "react";
 import type { DBSchemaTableWJoins } from "src/dashboard/Dashboard/dashboardUtils";
 import { SmartForm } from "src/dashboard/SmartForm/SmartForm";
@@ -24,7 +23,7 @@ type P = Omit<
 };
 
 type AnnotationsContext = {
-  row: AnyObject;
+  annotationPage: number | undefined;
   fileTable: DBSchemaTableWJoins;
   annotationsTable: DBSchemaTableWJoins;
   fileTableHandler: TableHandlerClient<DBManagedTableSchema, "files">;
@@ -40,6 +39,7 @@ const PdfViewerWithAnnotations = ({
   annotationsTableHandler,
   annotationsTable,
   url,
+  annotationPage,
   ...pdfProps
 }: Omit<P, "context" | "topLeftControls"> & AnnotationsContext) => {
   const prgl = usePrgl();
@@ -85,8 +85,11 @@ const PdfViewerWithAnnotations = ({
         />
       )}
       <PdfViewer
+        {...pdfProps}
         url={url}
-        defaultPage={activeAnnotation?.page}
+        defaultPage={
+          activeAnnotation?.page ?? annotationPage ?? pdfProps.defaultPage
+        }
         doclingDocument={fileRow?.docling_metadata ?? undefined}
         topLeftControls={
           <Select
@@ -133,7 +136,6 @@ const PdfViewerWithAnnotations = ({
           })) ?? []
         }
         onCreateHighlight={setNewAnnotation}
-        {...pdfProps}
       />
       {newAnnotation && (
         <Popup
@@ -190,7 +192,13 @@ export const PdfViewerWithFileTableContext = ({ context, ...pdfProps }: P) => {
       return;
     }
     return {
-      row: context.row,
+      annotationPage:
+        (
+          context.table.managedTableType === "file-annotations" &&
+          typeof context.row.page === "number"
+        ) ?
+          context.row.page
+        : undefined,
       fileTable,
       annotationsTable,
       fileTableHandler: fileTableHandler as TableHandlerClient,

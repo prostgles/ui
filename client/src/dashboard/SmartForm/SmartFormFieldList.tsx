@@ -1,4 +1,4 @@
-import { classOverride, FlexCol, FlexRow } from "@components/Flex";
+import { classOverride, FlexCol } from "@components/Flex";
 import { Label } from "@components/Label";
 import type { FilesTableRow } from "@components/MediaViewer/managedTableUtils";
 import { MediaViewer } from "@components/MediaViewer/MediaViewer";
@@ -14,7 +14,6 @@ import type { DBSchemaTablesWJoins } from "../Dashboard/dashboardUtils";
 import type { SmartFormProps } from "./SmartForm";
 import {
   SmartFormField,
-  SmartFormFieldIcon,
   type SmartColumnInfo,
 } from "./SmartFormField/SmartFormField";
 import { SmartFormFileSection } from "./SmartFormFileSection";
@@ -128,7 +127,9 @@ export const SmartFormFieldList = (props: P) => {
         <DoclingDocumentViewerPopupBtn
           data={undefined}
           document={(row as Required<FilesTableRow>).docling_metadata!}
-          markdownContent={(row as Required<FilesTableRow>).text_content ?? ""}
+          markdownContent={
+            (row as Required<FilesTableRow>).text_content?.join("\n\n") ?? ""
+          }
         />
       )}
       {displayedColumns.map((c, i) => {

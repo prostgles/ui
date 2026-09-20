@@ -45,7 +45,9 @@ export const usePdfViewer = ({
   const [pdfDocument, setPdfDocument] =
     useState<pdfjsLib.PDFDocumentProxy | null>(null);
   const [currentPage, setCurrentPage] = useState(defaultPage ?? 1);
+  const defaultPageRef = useRef(defaultPage);
   useEffect(() => {
+    defaultPageRef.current = defaultPage;
     if (defaultPage) {
       setCurrentPage(defaultPage);
     }
@@ -84,7 +86,7 @@ export const usePdfViewer = ({
 
     setPdfDocument(null);
     setRenderedPage(null);
-    setCurrentPage(1);
+    setCurrentPage(defaultPageRef.current ?? 1);
     setError(undefined);
 
     const loadingTask = pdfjsLib.getDocument({
@@ -121,6 +123,21 @@ export const usePdfViewer = ({
     const renderVersion = ++renderVersionRef.current;
     let disposed = false;
     let pageView: PDFPageView | null = null;
+    const handleTextLayerRendered = ({ source }: { source: PDFPageView }) => {
+      if (
+        source !== pageView ||
+        disposed ||
+        renderVersion !== renderVersionRef.current
+      ) {
+        return;
+      }
+
+      setRenderedPage({
+        element: pageView.div,
+        page: currentPage,
+        viewport: pageView.viewport,
+      });
+    };
 
     setIsRendering(true);
     setError(undefined);
@@ -128,6 +145,7 @@ export const usePdfViewer = ({
     setRenderedPage(null);
 
     host.replaceChildren();
+    eventBus.on("textlayerrendered", handleTextLayerRendered);
 
     const renderPage = async () => {
       try {
@@ -153,12 +171,6 @@ export const usePdfViewer = ({
         pageViewRef.current = pageView;
         pageView.setPdfPage(pdfPage);
 
-        setRenderedPage({
-          element: pageView.div,
-          page: currentPage,
-          viewport: pageView.viewport,
-        });
-
         await pageView.draw();
       } catch (renderError: unknown) {
         if (
@@ -183,6 +195,7 @@ export const usePdfViewer = ({
     return () => {
       disposed = true;
       renderVersionRef.current += 1;
+      eventBus.off("textlayerrendered", handleTextLayerRendered);
 
       pageView?.cancelRendering();
       pageView?.reset();

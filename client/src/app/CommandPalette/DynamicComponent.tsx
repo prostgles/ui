@@ -59,6 +59,10 @@ const DYNAMIC_COMPONENT_REGISTRY = {
     import("src/pages/ServerSettings/MCPServers/MCPServers").then((mod) => ({
       default: mod.MCPServers,
     })),
+  ConnectionConfigSync: () =>
+    import("src/dashboard/ConnectionConfig/ConnectionConfigSync").then(
+      (mod) => ({ default: mod.ConnectionConfigSync }),
+    ),
 } as const satisfies Record<
   string,
   () => Promise<{ default: React.ComponentType<any> }>

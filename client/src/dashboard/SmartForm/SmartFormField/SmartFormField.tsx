@@ -324,7 +324,14 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
           />
           {typeof value === "number" ?
             <ErrorComponent error={"Unexpected number data type"} />
-          : <SmartFormFieldFileSection db={db} table={table} media={value} />}
+          : <SmartFormFieldFileSection
+              db={db}
+              table={table}
+              columnName={column.name}
+              row={row}
+              media={value}
+            />
+          }
         </FlexRow>
       )}
     </>

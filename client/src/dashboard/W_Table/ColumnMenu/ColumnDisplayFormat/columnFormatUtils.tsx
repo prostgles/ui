@@ -7,16 +7,17 @@ import {
 } from "prostgles-types";
 import React from "react";
 import sanitizeHtml from "sanitize-html";
-import { getAge } from "@common/utils";
+import { getAge, getFileServePath } from "@common/utils";
+import type { FileTableRowExtraction } from "@components/MediaViewer/managedTableUtils";
 import { MediaViewer } from "@components/MediaViewer/MediaViewer";
 import { QRCodeImage } from "@components/QRCodeImage";
 import { RenderValue } from "../../../SmartForm/SmartFormField/RenderValue";
 import { StyledInterval } from "../../../W_SQL/customRenderers";
 import type { RenderedColumn } from "../../tableUtils/onRenderColumn";
-import type { ColumnConfig } from "../ColumnMenu";
 import type { TableWindowInsertModel } from "@common/DashboardTypes";
 import { FlexRowWrap } from "@components/Flex";
 import type { columnDisplayFormatSchema } from "@common/columnDisplayFormat.schema";
+import type { InternalColumnFormat } from "@common/managedTableSchema";
 import {
   MarkdownWithPlugins,
   MarkdownWithPluginsPopupBtn,
@@ -26,6 +27,8 @@ import type { DBSchemaTableWithOptions } from "src/dashboard/Dashboard/getTables
 import { MonacoLogs } from "@components/MonacoLogs/MonacoLogs";
 
 import { JSONDiffPopup } from "./JSONDiffPopup";
+import { FileAnnotationViewer } from "../../ManagedColumn/FileAnnotationViewer";
+import { FileExtractionStatus } from "../../ManagedColumn/FileExtractionStatus";
 
 const tryParseNumber = (v) => {
   if (typeof v === "string" && v.length && Number.isFinite(+v)) {
@@ -34,12 +37,14 @@ const tryParseNumber = (v) => {
   return v;
 };
 
-export type ColumnFormat = JSONB.GetSchemaType<
+export type UserColumnFormat = JSONB.GetSchemaType<
   typeof columnDisplayFormatSchema
 >;
 
+export type ColumnFormat = UserColumnFormat | InternalColumnFormat;
+
 const _ensureAITypesAreInSync = {} as Exclude<
-  ColumnFormat,
+  UserColumnFormat,
   { type: "NONE" | "UNIX Timestamp" }
 > satisfies NonNullable<TableWindowInsertModel["columns"]>[number]["format"];
 _ensureAITypesAreInSync;
@@ -52,7 +57,7 @@ type RenderDataContext = {
 type ColumnRenderer = {
   type: ColumnFormat["type"];
   tsDataType: ValidatedColumnInfo["tsDataType"][] | undefined;
-  match?: (table: DBSchemaTable, column: ColumnConfig) => boolean | undefined;
+  match?: (table: DBSchemaTable, column: RenderedColumn) => boolean | undefined;
   render: (
     value: any,
     row: AnyObject,
@@ -126,6 +131,45 @@ const renderDiff: FormattedColRender<
 };
 
 export const DISPLAY_FORMATS = [
+  {
+    type: "Internal",
+    tsDataType: undefined,
+    render: (value, row, { column, table }, { params }, maxCellChars) => {
+      if (params.component === "FileExtractionStatus") {
+        return (
+          <FileExtractionStatus
+            value={value as FileTableRowExtraction["extraction_status"]}
+          />
+        );
+      }
+
+      if (params.component === "FileAnnotation") {
+        return (
+          <FileAnnotationViewer
+            value={row[params.dataKey]}
+            fallbackValue={value}
+            tableName={params.tableName}
+            maxCellChars={maxCellChars}
+          />
+        );
+      }
+
+      if (!table || typeof value !== "string" || !value) return null;
+      const connectionId = location.pathname
+        .split("/")
+        .find((part, index, parts) => parts[index - 1] === "connections");
+      if (!connectionId) {
+        return null;
+      }
+      return (
+        <MediaViewer
+          url={getFileServePath({ connectionId, fileId: value })}
+          style={{ maxHeight: "100%" }}
+          context={{ table, columnName: column.name, row }}
+        />
+      );
+    },
+  } satisfies FormattedColRender<InternalColumnFormat>,
   {
     type: "JSON Diff",
     tsDataType: ["any"],
@@ -372,6 +416,9 @@ export function getFormatOptions(
   if (!colInfo) return [];
 
   return DISPLAY_FORMATS.filter(
-    (r) => !r.tsDataType || includes(r.tsDataType, colInfo.tsDataType),
+    (renderer) =>
+      renderer.type !== "Internal" &&
+      (!renderer.tsDataType ||
+        includes(renderer.tsDataType, colInfo.tsDataType)),
   );
 }

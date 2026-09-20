@@ -29,6 +29,7 @@ import type {
 import { ColumnMenu } from "./ColumnMenu/ColumnMenu";
 
 import type { DetailedFilterBase } from "@common/filterUtils";
+import type { InternalColumnFormat } from "@common/managedTableSchema";
 import { matchObj } from "@common/utils";
 import { ClickCatchOverlayZIndex } from "@components/ClickCatchOverlay";
 import { FlexCol, FlexRow } from "@components/Flex";
@@ -175,7 +176,11 @@ export type ProstglesTableD = {
   wSync?: SingleSyncHandles<Required<WindowData<"table">>, true>;
 };
 
-export type ColumnConfigWInfo = ColumnConfig & { info?: ValidatedColumnInfo };
+export type ColumnConfigWInfo = ColumnConfig & {
+  info?: ValidatedColumnInfo & {
+    defaultRenderAs?: InternalColumnFormat;
+  };
+};
 
 export default class W_Table extends RTComp<
   W_TableProps,

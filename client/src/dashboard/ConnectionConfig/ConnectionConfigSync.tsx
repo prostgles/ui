@@ -5,9 +5,10 @@ import { FileTree } from "@components/FileTree/FileTree";
 import { FlexCol, FlexRowWrap } from "@components/Flex";
 import { InfoRow } from "@components/InfoRow";
 import PopupMenu from "@components/PopupMenu";
+import { Select } from "@components/Select/Select";
 import { mdiFolderOutline } from "@mdi/js";
-import { omitKeys } from "prostgles-types";
 import { usePromise } from "prostgles-client";
+import { omitKeys } from "prostgles-types";
 import React, { useState } from "react";
 import { usePrgl } from "../../pages/ProjectConnection/PrglContextProvider";
 import { getIntervalAsText } from "../W_SQL/customRenderers";
@@ -16,11 +17,18 @@ export const ConnectionConfigSync = () => {
   const prgl = usePrgl();
   const {
     dbs,
-    dbsMethods: { syncSchema, glob },
+    dbsMethods: { findSchemaConfigSource, syncSchema, glob },
     connectionId,
+    methods,
+    tables,
   } = prgl;
 
   const [unsavedPath, setUnsavedPath] = useState<string | undefined>(undefined);
+  const [sourcePosition, setSourcePosition] = useState<{
+    fileName: string;
+    startLineNumber: number;
+    endLineNumber: number;
+  }>();
   const { data: dbConf } = dbs.database_configs.useSubscribeOne({
     $existsJoined: {
       connections: { id: connectionId },
@@ -35,6 +43,7 @@ export const ConnectionConfigSync = () => {
   const [folderVersion, setFolderVersion] = useState(0);
   const folder = usePromise(async () => {
     if (!configPath || !glob) return;
+    void folderVersion;
     try {
       const { result } = await glob({ cwd: configPath, pattern: "{*,.*}" });
       return { path: configPath, empty: result.length === 0 };
@@ -56,6 +65,35 @@ export const ConnectionConfigSync = () => {
         ", ",
       )
     : undefined;
+
+  const sourceResult = usePromise(async () => {
+    if (!findSchemaConfigSource || config_sync?.type !== "cli") {
+      return { items: [] };
+    }
+    try {
+      const sources = await findSchemaConfigSource({
+        connectionId,
+        tableNames: tables.map(({ name }) => name),
+        functionNames: Object.keys(methods),
+      });
+      const items = sources.map((source) => {
+        const label =
+          source.type === "function" ?
+            "Function"
+          : tableSourceLabels[source.type];
+        return {
+          ...source,
+          key: `${source.type}\0${source.name}`,
+          label: source.name,
+          subLabel: label,
+          parentLabels: [source.type === "function" ? "Functions" : label],
+        };
+      });
+      return { items };
+    } catch (error) {
+      return { items: [], error: String(error) };
+    }
+  }, [config_sync, connectionId, findSchemaConfigSource, methods, tables]);
   return (
     <FlexCol>
       <FlexRowWrap className="ConnectionConfigSync h-fit">
@@ -96,7 +134,7 @@ export const ConnectionConfigSync = () => {
               {configPath || "Select project folder..."}
             </Btn>
           }
-          render={(pClose) => (
+          render={() => (
             <FileTree
               mode="pick-one"
               type="directory"
@@ -161,8 +199,44 @@ export const ConnectionConfigSync = () => {
         </InfoRow>
       )}
       {config_sync && (
-        <ProjectCodeEditor title=" " projectPath={config_sync.configPath} />
+        <>
+          {sourceResult?.error && (
+            <InfoRow color="warning">{sourceResult.error}</InfoRow>
+          )}
+          <ProjectCodeEditor
+            title={
+              config_sync.type === "cli" ?
+                <Select
+                  optional
+                  value={undefined}
+                  fullOptions={sourceResult?.items ?? []}
+                  emptyLabel="Go to source..."
+                  disabledInfo={
+                    !findSchemaConfigSource ?
+                      "Source navigation is not available"
+                    : undefined
+                  }
+                  onChange={(key) => {
+                    const item = sourceResult?.items.find(
+                      (entry) => entry.key === key,
+                    );
+                    if (!item) return;
+                    setSourcePosition(item);
+                  }}
+                />
+              : " "
+            }
+            projectPath={config_sync.configPath}
+            sourcePosition={sourcePosition}
+          />
+        </>
       )}
     </FlexCol>
   );
 };
+
+const tableSourceLabels = {
+  tableConfig: "Table config",
+  tableHooks: "Table hooks",
+  tableOptions: "Table options",
+} as const;

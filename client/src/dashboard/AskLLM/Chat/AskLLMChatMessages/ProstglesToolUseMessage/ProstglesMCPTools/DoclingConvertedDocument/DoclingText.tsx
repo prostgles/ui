@@ -1,6 +1,8 @@
 import React from "react";
 import type { DoclingDocument } from "./DoclingDocument";
 
+export const DOCLING_TEXT_BG_CLASS = " bg-color-2 ";
+
 export const DoclingText = ({
   texts,
   page: { page_no, image, size },
@@ -62,7 +64,8 @@ export const DoclingText = ({
             title={textItem.orig}
             className={
               (image ? "show-on-hover " : "") +
-              " ta-start bg-warning text-ellipsis"
+              " ta-start text-ellipsis" +
+              DOCLING_TEXT_BG_CLASS
             }
             style={{
               whiteSpace: "pre-wrap",

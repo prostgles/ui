@@ -1,5 +1,6 @@
 import React from "react";
 import type { DoclingDocument } from "./DoclingDocument";
+import { DOCLING_TEXT_BG_CLASS } from "./DoclingText";
 
 type PageType = DoclingDocument["pages"][string];
 
@@ -44,7 +45,9 @@ export const DoclingTable = ({
                   key={table.self_ref + ":cell:" + cellIdx}
                   title={cell.text}
                   className={
-                    (image ? "show-on-hover " : "") + " ta-start bg-warning"
+                    (image ? "show-on-hover " : "") +
+                    " ta-start " +
+                    DOCLING_TEXT_BG_CLASS
                   }
                   style={{
                     position: "absolute",

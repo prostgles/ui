@@ -164,7 +164,8 @@ export const startConnection = async function (
           onMount: _onMount,
           services: _services,
           workspaces: _workspaces,
-          access_control: _accessControl,
+          accessControl: _accessControl,
+          llmCredential: _llmCredential,
           audit: _audit,
           publish: _publish,
           ...schemaProstglesOptions

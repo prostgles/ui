@@ -1,8 +1,8 @@
+import Btn from "@components/Btn";
 import { mdiOpenInNew, mdiPencilOutline } from "@mdi/js";
 import type { TableHandlerClient } from "prostgles-client";
 import type { AnyObject, ValidatedColumnInfo } from "prostgles-types";
 import React from "react";
-import Btn from "@components/Btn";
 
 import { type DetailedFilterBase } from "@common/filterUtils";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
@@ -120,7 +120,7 @@ export const getRowSiblingData = async (
   rowIndex: number,
   table: DBSchemaTableWJoins,
   columns: GetMenuColumnArgs["columnConfig"],
-  tableHandler: Partial<TableHandlerClient<AnyObject, void>>,
+  tableHandler: Partial<TableHandlerClient>,
 ) => {
   const prevRow = rows[rowIndex - 1];
   const nextRow = rows[rowIndex + 1];

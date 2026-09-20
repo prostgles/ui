@@ -1,4 +1,7 @@
-import type { annotationsTableColumns } from "@common/managedTableSchema";
+import type {
+  annotationsTableColumns,
+  fileTableExtractionColumns,
+} from "@common/managedTableSchema";
 import type { JSONB, TS_PG_Types } from "prostgles-types";
 import type { DoclingDocument } from "src/dashboard/AskLLM/Chat/AskLLMChatMessages/ProstglesToolUseMessage/ProstglesMCPTools/DoclingConvertedDocument/DoclingDocument";
 
@@ -66,13 +69,19 @@ type ColumnConfig =
 type TableConfigType<T extends Record<string, ColumnConfig>> = {
   [Col in keyof T]: T[Col] extends string ? PsqlTypeToTsType<T[Col]>
   : T[Col] extends { sqlDefinition: string } ?
-    PsqlTypeToTsType<T[Col]["sqlDefinition"]>
+    WithNullable<T[Col], PsqlTypeToTsType<T[Col]["sqlDefinition"]>>
   : T[Col] extends { jsonbSchema: JSONB.JSONBSchema } ?
-    JSONB.GetSchemaType<T[Col]["jsonbSchema"]>
+    WithNullable<T[Col], JSONB.GetSchemaType<T[Col]["jsonbSchema"]>>
   : T[Col] extends { jsonbSchemaType: JSONB.ObjectType["type"] } ?
-    JSONB.GetSchemaType<{ type: T[Col]["jsonbSchemaType"] }>
+    WithNullable<
+      T[Col],
+      JSONB.GetSchemaType<{ type: T[Col]["jsonbSchemaType"] }>
+    >
   : unknown;
 };
+
+type WithNullable<Config, Value> =
+  Config extends { nullable: true } ? Value | null : Value;
 
 export type AnnotationsTableRow = TableConfigType<
   typeof annotationsTableColumns
@@ -86,8 +95,12 @@ export type FilesTableRow = {
   original_name: string;
   content_type: string;
   docling_metadata: null | DoclingDocument;
-  text_content: null | string;
+  text_content: null | string[];
 };
+
+export type FileTableRowExtraction = TableConfigType<
+  (typeof fileTableExtractionColumns)["columns"]
+>;
 
 export type DBManagedTableSchema = {
   files: {

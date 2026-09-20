@@ -3,6 +3,10 @@ import { checkClientIP } from "@src/authConfig/sessionUtils";
 import { getAuthSetupData } from "@src/authConfig/subscribeToAuthSetupChanges";
 import { getInstalledPsqlVersions } from "@src/BackupManager/getInstalledPrograms";
 import { getCompiledTS } from "@src/ConnectionManager/connectionManagerUtils";
+import {
+  findSchemaConfigSource,
+  schemaConfigSourceTypes,
+} from "@src/ConnectionManager/findSchemaConfigSource";
 import { syncSchemaConfig } from "@src/ConnectionManager/syncSchemaConfig";
 import { setupSchemaConfigTemplate } from "@src/ConnectionManager/setupSchemaConfigTemplate";
 import { testDBConnection } from "@src/connectionUtils/testDBConnection";
@@ -355,6 +359,39 @@ export const stateServerAdminFunctions = {
             connectionId,
             configPath,
             type: "cli",
+          });
+        },
+      }),
+      findSchemaConfigSource: defineFunction({
+        unrestrictedDbAccess: true,
+        input: {
+          connectionId: "string",
+          tableNames: "string[]",
+          functionNames: "string[]",
+        },
+        run: async (
+          { connectionId, tableNames, functionNames },
+          { dbo: dbs },
+        ) => {
+          const { dbConf } = await getConnectionAndDatabaseConfig(
+            dbs,
+            connectionId,
+          );
+          const configSync = dbConf.config_sync;
+          if (configSync?.type !== "cli") {
+            throw new Error("Connection does not use a CLI config project");
+          }
+          return schemaConfigSourceTypes.flatMap((type) => {
+            const names = type === "function" ? functionNames : tableNames;
+            return names.flatMap((name) => {
+              const position = findSchemaConfigSource({
+                projectPath: configSync.configPath,
+                projectVersion: configSync.lastSynced,
+                type,
+                name,
+              });
+              return position ? [{ type, name, ...position }] : [];
+            });
           });
         },
       }),

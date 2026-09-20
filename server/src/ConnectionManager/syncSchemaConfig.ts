@@ -61,9 +61,9 @@ export const syncSchemaConfig = async ({
       dbs,
       databaseId: databaseConfig.id,
       connectionId,
-      rules: schemaConfig.access_control,
+      rules: schemaConfig.accessControl,
       workspaces: schemaConfig.workspaces,
-      llmCredentials: schemaConfig.llm_credentials,
+      llmCredential: schemaConfig.llmCredential,
     });
   }
 

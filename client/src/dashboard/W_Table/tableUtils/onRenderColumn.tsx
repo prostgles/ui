@@ -1,19 +1,22 @@
-import { ROUTES } from "@common/utils";
 import type { DBSchemaTable, ValidatedColumnInfo } from "prostgles-types";
 import React from "react";
+import type { DBSchemaTableWithOptions } from "src/dashboard/Dashboard/getTables";
 import type { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
 import { RenderValue } from "../../SmartForm/SmartFormField/RenderValue";
 import type { NestedTimeChartMeta } from "../ColumnMenu/ColumnDisplayFormat/NestedColumnRender";
 import { NestedColumnRender } from "../ColumnMenu/ColumnDisplayFormat/NestedColumnRender";
-import { DISPLAY_FORMATS } from "../ColumnMenu/ColumnDisplayFormat/columnFormatUtils";
+import {
+  DISPLAY_FORMATS,
+  type ColumnFormat,
+} from "../ColumnMenu/ColumnDisplayFormat/columnFormatUtils";
 import type { ColumnConfigWInfo, MinMaxVals } from "../W_Table";
 import { StyledTableColumn } from "./StyledTableColumn";
 import type { ProstglesTableColumn } from "./getTableCols";
-import type { DBSchemaTableWithOptions } from "src/dashboard/Dashboard/getTables";
 
-export type RenderedColumn = ColumnConfigWInfo &
-  Pick<ValidatedColumnInfo, "tsDataType" | "udt_name" | "name"> &
-  Pick<ProstglesTableColumn, "format">;
+export type RenderedColumn = Omit<ColumnConfigWInfo, "format"> &
+  Pick<ValidatedColumnInfo, "tsDataType" | "udt_name" | "name"> & {
+    format?: ColumnFormat;
+  };
 export type OnRenderColumnProps = {
   column: RenderedColumn;
   getValues: () => any[];
@@ -79,17 +82,8 @@ export const onRenderColumn = (args: OnRenderColumnProps) => {
       }
     : formatRender ?
       ({ row }) => {
-        let value = row[column.name] as unknown;
+        const value = row[column.name] as unknown;
 
-        const connectionId = location.pathname
-          .split("/")
-          .find((p, i, arr) => arr[i - 1] === "connections");
-        if (column.info?.file) {
-          if (!value && column.format?.type === "Media") {
-            return null;
-          }
-          value = `${ROUTES.STORAGE}/${connectionId}/${row[column.name]}`;
-        }
         return formatRender.render(
           value,
           row,

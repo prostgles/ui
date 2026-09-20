@@ -95,7 +95,7 @@ test("checkFilterDetailed works with grouped existsJoined", async ({
         },
       },
     },
-    access_control: [
+    accessControl: [
       {
         userTypes: ["default"],
         dbPermissions: {
@@ -379,7 +379,7 @@ test("checkFilterDetailed works with grouped existsJoined", async ({
         join(configPath, "index.js"),
         `module.exports = ${JSON.stringify({
           ...config,
-          access_control: permissions && [
+          accessControl: permissions && [
             {
               userTypes: ["default"],
               dbPermissions: permissions,
@@ -502,7 +502,7 @@ test("CLI permission sync preserves shared connections, workspaces and source fu
         windows: [],
       },
     ],
-    access_control: [
+    accessControl: [
       {
         userTypes: ["default"],
         dbPermissions: {
@@ -658,7 +658,7 @@ module.exports.functions = {
     );
     for (const configuredSource of [
       source,
-      source + "\nmodule.exports.access_control = []; ",
+      source + "\nmodule.exports.accessControl = []; ",
     ]) {
       writeFileSync(join(configPath, "index.js"), configuredSource);
       await state.methods!.syncSchema!({
@@ -863,19 +863,17 @@ test.describe("Published config CLI", () => {
       expect(
         existsSync(join(configDirectory, "generated", "DBGeneratedSchema.ts")),
       ).toBe(true);
-      expect(
-        readFileSync(
-          join(configDirectory, "generated", "DBGeneratedSchema.ts"),
-          "utf8",
-        ),
-      ).toContain("export type ClientDBSchema = DBGeneratedSchema;");
-      expect(
-        readFileSync(
-          join(configDirectory, "generated", "DBGeneratedSchema.ts"),
-          "utf8",
-        ),
-      ).toContain("export type ClientSchemas = [");
+      const initialGeneratedSchema = readFileSync(
+        join(configDirectory, "generated", "DBGeneratedSchema.ts"),
+        "utf8",
+      );
+      expect(initialGeneratedSchema).toContain(
+        "export type ClientDBSchema = DBGeneratedSchema;",
+      );
+      expect(initialGeneratedSchema).toContain("export type ClientSchemas = [");
+      expect(initialGeneratedSchema).not.toContain('userType: "default"');
       for (const folder of [
+        "accessControl",
         "functions",
         "tableConfigs",
         "tableOptions",
@@ -936,7 +934,7 @@ test.describe("Published config CLI", () => {
       expect(deploymentTest).toContain("createTestDeployment");
       expect(deploymentTest).toContain('configId: "config"');
       expect(deploymentTest).toContain('connectProjectAs("admin")');
-      expect(deploymentTest).toContain('connectProjectAs("default")');
+      expect(deploymentTest).not.toContain('connectProjectAs("default")');
       expect(
         readFileSync(join(configDirectory, ".gitignore"), "utf8"),
       ).toContain("node_modules/");
@@ -948,13 +946,7 @@ test.describe("Published config CLI", () => {
       ).toContain(".prostgles/test-logs/");
       expect(
         readFileSync(join(configDirectory, "AGENTS.md"), "utf8"),
-      ).toContain("This repository is a Prostgles config project");
-      expect(
-        readFileSync(join(configDirectory, "AGENTS.md"), "utf8"),
-      ).toContain("context.serviceManager");
-      expect(
-        readFileSync(join(configDirectory, "AGENTS.md"), "utf8"),
-      ).toContain("still-uncommitted mutation transaction");
+      ).toContain("not serialization between requests");
 
       writeFileSync(
         join(configDirectory, "src", "functions", "cli.function.ts"),
@@ -999,7 +991,7 @@ export default prostgles({
   services: serviceManagerConfig,
   tableConfig: {},
   onInitSQL: "CREATE TABLE IF NOT EXISTS client_schema_items (id SERIAL PRIMARY KEY, name TEXT NOT NULL)",
-  access_control: [{
+  accessControl: [{
     userTypes: ["default"],
     dbPermissions: {
       type: "Custom",
@@ -1104,7 +1096,7 @@ export default prostgles({
       expect(generatedSchema).toContain("export type ClientDBSchema = {");
       expect(generatedSchema).toContain("export type ClientSchemas = [");
       expect(generatedSchema).toContain(
-        '{ userType: "default"; schema: DefaultSchema };',
+        '{ userType: "default"; schema: DefaultSchema }',
       );
       const defaultSchema = generatedSchema
         .split("export type DefaultSchema = {")[1]
@@ -1223,10 +1215,10 @@ export default prostgles({
       Awaited<ReturnType<typeof startConfigScript>> | undefined;
 
     try {
-      rmSync(
-        join(configTestDirectory, "node_modules", "@prostgles", "app"),
-        { recursive: true, force: true },
-      );
+      rmSync(join(configTestDirectory, "node_modules", "@prostgles", "app"), {
+        recursive: true,
+        force: true,
+      });
       run(
         npmCommand,
         ["install", "--ignore-scripts", "--no-package-lock", "--install-links"],

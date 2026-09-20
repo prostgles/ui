@@ -1,13 +1,11 @@
 import Btn from "@components/Btn";
 import { FlexCol } from "@components/Flex";
 import { MarkdownWithPlugins } from "@components/MarkdownWithPlugins/MarkdownWithPlugins";
+import PopupMenu from "@components/PopupMenu";
 import { mdiEye } from "@mdi/js";
 import React, { useState } from "react";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import type { DoclingDocument } from "./DoclingDocument";
-import { DoclingTable } from "./DoclingTable";
-import { DoclingText } from "./DoclingText";
-import PopupMenu from "@components/PopupMenu";
 import { DoclingDocumentViewerPage } from "./DoclingDocumentViewerPage";
 
 type P = {

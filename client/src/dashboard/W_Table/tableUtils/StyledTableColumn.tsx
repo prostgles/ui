@@ -204,7 +204,7 @@ export const StyledCell = ({
 };
 
 export const getCellStyle = (
-  col: ColumnConfig,
+  col: Omit<ColumnConfig, "format">,
   c: Pick<ProstglesTableColumn, "tsDataType" | "udt_name">,
   val: any,
   dataRange: MinMax | undefined,
@@ -315,7 +315,7 @@ export const isNumber = (v: any): v is number => {
 };
 
 export const getSingleShownNestedColumn = (
-  column: ColumnConfig,
+  column: Omit<ColumnConfig, "format">,
   tables: DBSchemaTablesWJoins,
 ) => {
   if (!column.nested) return;

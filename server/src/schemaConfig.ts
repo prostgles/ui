@@ -4,15 +4,16 @@ import type { DBSSchema } from "@common/publishUtils";
 import type {
   OnReadyParams,
   SchemaConfigAudit,
-  ServerFunctionDefinitions,
   SessionUser,
 } from "prostgles-server";
 import type { ProstglesInitOptions } from "prostgles-server/dist/ProstglesTypes";
+import type { InsertDataWithNested } from "prostgles-types";
 import type { getStartAgent } from "./McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/getStartAgent";
 import type {
   ServiceManager,
   ServiceManagerConfig,
 } from "./ServiceManager/ServiceManager";
+import type { LLMProviderName } from "./serverFunctions/askLLM/setupLLMProviders";
 export {
   createFunctionGroupDefiner,
   createFunctionGroupDefinerWithContext,
@@ -33,8 +34,23 @@ import {
 
 export type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 export type * from "@common/DashboardTypes";
-export type { DBSSchema, DBSSchemaForInsert } from "@common/publishUtils";
+export type { DBSSchema } from "@common/publishUtils";
 export type { DBOFullyTyped, TableConfig, TableHooks } from "prostgles-server";
+
+type DBSSchemaForInsertWithNested = {
+  [K in keyof DBGeneratedSchema]: InsertDataWithNested<
+    DBGeneratedSchema[K]["columns"],
+    DBGeneratedSchema,
+    K
+  >;
+};
+
+export type SchemaConfigLlmCredential = Omit<
+  DBSSchemaForInsertWithNested["llm_credentials"],
+  "id" | "created" | "user_id" | "provider_id"
+> & {
+  provider_id: LLMProviderName;
+};
 
 export type ProstglesOnMountCleanup = () => void | Promise<void>;
 
@@ -111,25 +127,15 @@ export type SchemaConfigProstglesOptions<
   S = void,
   SUser extends SessionUser = SessionUser,
   Services extends ServiceRegistry = Record<never, never>,
-> = Omit<
-  Pick<
-    ProstglesInitOptions<S, SUser, ProstglesContext<Services>>,
-    | "functions"
-    | "joins"
-    | "tableHooks"
-    | "tableConfig"
-    | "tableConfigMigrations"
-    | "watchSchemaType"
-  >,
-  "functions"
-> & {
-  functions?: ServerFunctionDefinitions<
-    S,
-    SUser,
-    ProstglesContext<Services> | undefined
-  >;
-};
-
+> = Pick<
+  ProstglesInitOptions<S, SUser, ProstglesContext<Services>>,
+  | "functions"
+  | "joins"
+  | "tableHooks"
+  | "tableConfig"
+  | "tableConfigMigrations"
+  | "watchSchemaType"
+>;
 export type SchemaConfig<
   S = void,
   SUser extends SessionUser = SessionUser,
@@ -140,16 +146,13 @@ export type SchemaConfig<
   /** Non-credential connection display options. Database URLs belong in .env. */
   connection?: SchemaConfigConnection;
   databaseConfig?: SchemaConfigDatabase;
-  /** Replaces instance-wide LLM credentials. Omit to preserve them; [] clears them. */
-  llm_credentials?: Omit<
-    DBGeneratedSchema["llm_credentials"]["columns"],
-    "id" | "created" | "user_id"
-  >[];
+  /** Replaces the instance-wide LLM credential. Omit to preserve it. */
+  llmCredential?: SchemaConfigLlmCredential;
   /** Audits inserts, updates and deletes and shows the history in row cards. */
   audit?: SchemaConfigAudit<S>;
   /** Access rules matched by user type, just like rules configured through the UI. */
-  access_control?: SchemaConfigAccessControl[];
-  /** CLI configs use access_control instead of prostgles-server publish rules. */
+  accessControl?: SchemaConfigAccessControl[];
+  /** CLI configs use accessControl instead of prostgles-server publish rules. */
   publish?: never;
   onInitSQL?: string;
   onMount?: ProstglesOnMount<S, Services>;

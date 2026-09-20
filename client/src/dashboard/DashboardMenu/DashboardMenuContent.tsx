@@ -60,7 +60,7 @@ export const DashboardMenuContent = (props: P) => {
           width:
             workspace.options.pinnedMenuWidth ?
               `${workspace.options.pinnedMenuWidth}px`
-            : "fit-content",
+            : "400px",
           height: "100%",
         }),
       }}

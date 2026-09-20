@@ -18,10 +18,12 @@ export const saveCliTemplateFiles = async ({
   targetPath,
   environmentDefaults,
   formatConfigPath = targetPath,
+  runtimeDependency,
 }: {
   configId: string;
   targetPath: string;
   formatConfigPath?: string;
+  runtimeDependency?: string;
   environmentDefaults?: {
     PRGL_PASSWORD?: string;
     PROSTGLES_DOCKER_DB_PASSWORD?: string;
@@ -29,7 +31,7 @@ export const saveCliTemplateFiles = async ({
 }) => {
   await saveFolderFiles(
     targetPath,
-    getCliTemplateFiles({ configId, environmentDefaults }),
+    getCliTemplateFiles({ configId, environmentDefaults, runtimeDependency }),
     await getFormatOptions(formatConfigPath),
   );
 };
@@ -59,6 +61,7 @@ const testsFolderName = "tests";
 
 const servicesFolderName = "services";
 export const srcSubfolderNames = [
+  "accessControl",
   "functions",
   "tableConfigs",
   "tableOptions",
@@ -109,8 +112,10 @@ const getFormatOptions = async (targetPath: string): Promise<Options> =>
 const getCliTemplateFiles = ({
   configId,
   environmentDefaults,
+  runtimeDependency,
 }: {
   configId: string;
+  runtimeDependency?: string;
   environmentDefaults?: {
     PRGL_PASSWORD?: string;
     PROSTGLES_DOCKER_DB_PASSWORD?: string;
@@ -155,7 +160,8 @@ const getCliTemplateFiles = ({
 
       The database and Prostgles data directory use named volumes. Managed app services share the private runtime network and are not published on host ports.`,
     [cliFileNames.packageJson]:
-      JSON.stringify(getPackageJson(configId), null, 2) + "\n",
+      JSON.stringify(getPackageJson(configId, runtimeDependency), null, 2) +
+      "\n",
     [cliFileNames.tsconfig]:
       JSON.stringify(
         {
@@ -185,7 +191,6 @@ const getCliTemplateFiles = ({
          export type ClientDBSchema = DBGeneratedSchema;
          export type ClientSchemas = [
            { userType: "admin"; schema: ClientDBSchema },
-           { userType: "default"; schema: ClientDBSchema },
          ];`,
     },
     [srcFolderName]: {
@@ -262,10 +267,7 @@ const getCliTemplateFiles = ({
         void test("starts the configured app with an isolated database", async (context) => {
           const deployment = await createTestDeployment<ClientSchemas>({
             configId: ${JSON.stringify(configId)},
-            users: [
-              { key: "admin", type: "admin" },
-              { key: "default", type: "default", username: "member" },
-            ],
+            users: [{ key: "admin", type: "admin" }],
             // Add deterministic rows with:
             // seed: async ({ projectDatabase }) => {
             //   await projectDatabase.query("INSERT INTO ...");
@@ -278,10 +280,6 @@ const getCliTemplateFiles = ({
           assert.equal(client.socket.connected, true);
           assert.equal(client.auth.user?.type, "admin");
           assert.ok(client.db);
-
-          const memberClient = await deployment.connectProjectAs("default");
-          assert.equal(memberClient.socket.connected, true);
-          assert.equal(memberClient.auth.user?.type, "default");
         });`,
     },
     [cliFileNames.eslintConfig]: eslintConfig,
@@ -417,7 +415,7 @@ export const getCliComposeFiles = ({ configId }: { configId: string }) =>
       *.log`,
   }) as const;
 
-const getPackageJson = (configId: string) => ({
+const getPackageJson = (configId: string, runtimeDependency?: string) => ({
   name: configId,
   private: true,
   version: "0.0.0",
@@ -438,7 +436,7 @@ const getPackageJson = (configId: string) => ({
     test: 'npm run build && node --env-file-if-exists=.env --test "build/tests/**/*.test.js"',
   },
   dependencies: {
-    [packageJson.name]: getRuntimeDependency(),
+    [packageJson.name]: runtimeDependency ?? getRuntimeDependency(),
   },
   devDependencies: {
     "@playwright/test": packageJson.devDependencies["@playwright/test"],
@@ -565,10 +563,11 @@ const eslintConfig = `
     },
     ${srcSubfolderNames
       .filter((f) => f !== "services")
-      .map(
-        (folderName) =>
-          `semanticFileConfig("${folderName}", ".${folderName.slice(0, -1)}.ts")`,
-      )
+      .map((folderName) => {
+        const suffix =
+          folderName === "accessControl" ? folderName : folderName.slice(0, -1);
+        return `semanticFileConfig("${folderName}", ".${suffix}.ts")`;
+      })
       .join(",\n    ")}
   );`;
 
@@ -585,8 +584,8 @@ type ConnectionGuidance = {
  * Adding or removing a config property requires its guidance to be updated too.
  */
 const schemaConfigGuidance = {
-  access_control:
-    "Configure `access_control` as an array of normal rules with explicit `userTypes`, `dbPermissions`, and optional `dbsPermissions`. Omit generated IDs; use `viewPublishedWorkspaces.workspaceNames` and `publishedMethods` to reference existing, uniquely named published resources on this connection.",
+  accessControl:
+    "Configure `accessControl` as an array of normal rules with explicit `userTypes`, `dbPermissions`, and optional `dbsPermissions`. Omit generated IDs; use `viewPublishedWorkspaces.workspaceNames` and `publishedMethods` to reference existing, uniquely named published resources on this connection.",
   audit:
     'Use built-in `audit` for row-change history, for example `audit: { tableName: "audit_log", tables: { projects: 1, conditions: 1 } }`. Prostgles-server creates an append-only audit table and PostgreSQL triggers; the UI exposes history from row cards. Do not recreate this with audit tables, hooks, or calls in every function. Omit `tables` to audit all eligible tables; use `excludeColumns` for sensitive fields and `idColumns` for tables without primary keys. Keep domain events such as approval reasons separate when row history alone is insufficient. Audit read permissions still need to respect application access boundaries. When replacing custom audit hooks, preserve existing history and workflow reasons; use a new managed audit table instead of reusing an incompatible application table.',
   connection:
@@ -596,8 +595,8 @@ const schemaConfigGuidance = {
   functions:
     "Use top-level `functions` for explicit workflow actions, privileged operations, and server-only business logic. Prefer built-in table insert/edit forms for ordinary CRUD instead of wrapping each insert or update in a function.",
   id: "Keep `id` stable because it identifies the deployed configuration.",
-  llm_credentials:
-    "Use `llm_credentials` only when this config should replace the instance-wide LLM credentials. Omit it to preserve existing credentials; an empty array clears them. Read secret values from environment variables and give credentials unique names for access-rule references.",
+  llmCredential:
+    "Use `llmCredential` only when this config should replace the instance-wide LLM credential. Omit it to preserve the existing credential. Read the secret value from an environment variable and give the credential a unique name for access-rule references.",
   joins:
     "Omit `joins` and use inferred foreign-key joins by default, including composite foreign keys and junction tables. The top-level `joins` option is experimental; do not enumerate existing FK relationships. An explicit path with `on` selects a known relationship; it does not define a new non-FK join. When a permission filter requires a non-FK relationship, declare only that relationship and verify the resolved server retains other inferred FK joins. Older servers suppress inferred joins involving either custom-join table; fix/upgrade the source package instead of enumerating the schema's joins.",
   onInitSQL:
@@ -611,7 +610,7 @@ const schemaConfigGuidance = {
   tableConfigMigrations:
     "For schema changes that transform existing data, increment `tableConfigMigrations.version` and use `onMigrate`.",
   tableHooks:
-    "Define `tableHooks` as a separate top-level config property. Do not implement authorization in table hooks; enforce user, role, ownership, and tenant access through `access_control`.",
+    "Define `tableHooks` as a separate top-level config property. Do not implement authorization in table hooks; enforce user, role, ownership, and tenant access through `accessControl`.",
   watchSchemaType:
     "Set `watchSchemaType` only when schema watching must differ from the default.",
   workspaces:
@@ -636,6 +635,18 @@ const getCliAgentsFile = () => `
 
   Treat \`src/index.ts\` as the composition root. Keep feature definitions in focused modules under \`src/\`, then assemble them into the default-exported config. Treat \`generated/DBGeneratedSchema.ts\` as generated output: use its types, but do not hand-edit it. Keep credentials and database URLs in \`.env\`, never in the config.
 
+  ## Non-negotiable architecture
+
+  | Concern | Owner |
+  | --- | --- |
+  | User, role, ownership, and tenant authorization | \`accessControl\` |
+  | Universal data integrity | PostgreSQL constraints defined through \`tableConfig\` |
+  | Transactional application validation and mutation side effects | \`tableHooks\` |
+  | Explicit business workflows and privileged operations | \`functions\` |
+  | Row-change history | Built-in \`audit\` |
+
+  Keep these boundaries explicit. Do not introduce a reusable abstraction until at least two concrete, valid uses exist.
+
   ## Config structure
 
   - Import \`DBGeneratedSchema\` from \`generated/DBGeneratedSchema\`, create the typed config helper with \`const prostgles = defineConfig<DBGeneratedSchema>()\`, and default-export \`prostgles({ ... })\`. Keep the helper name \`prostgles\` so function return types can be discovered during schema generation.
@@ -645,16 +656,16 @@ const getCliAgentsFile = () => `
   - ${schemaConfigGuidance.connection} ${connectionGuidance.db_schema_filter} ${connectionGuidance.display_options}
   - ${schemaConfigGuidance.databaseConfig}
   - ${schemaConfigGuidance.audit}
-  - ${schemaConfigGuidance.access_control} 
+  - ${schemaConfigGuidance.accessControl}
   - ${schemaConfigGuidance.watchSchemaType}
   - ${schemaConfigGuidance.onInitSQL} ${schemaConfigGuidance.onMount}
 
   ## Access control
 
   - Each user type may appear in only one config rule. Keep \`public\` in its own rule; it cannot be combined with non-public user types. Table hooks validate this on access-rule user-type inserts and updates.
-  - CLI sync persists access rules in the same tables used by the UI editor. UI edits take effect, but the next sync replaces this connection's rules from config; omitted or empty \`access_control\` clears them. Rules still linked to other connections are preserved.
+  - CLI sync persists access rules in the same tables used by the UI editor. UI edits take effect, but the next sync replaces this connection's rules from config; omitted or empty \`accessControl\` clears them. Rules still linked to other connections are preserved.
   - Reference shared dashboards with \`dbsPermissions.viewPublishedWorkspaces.workspaceNames\`. Matching top-level \`workspaces\` are persisted under an admin owner before resolving permissions. Resource names must resolve uniquely; \`publishedMethods\` refers to existing published functions on this connection, separate from top-level \`functions\`.
-  - Define authorization in \`access_control\` using explicit per-table \`select\`, \`insert\`, \`update\`, and \`delete\` permissions. Use \`type: "Custom"\` with \`customTables\` for granular access. Do not put authorization checks in \`beforeEach\`, \`afterEach\`, or \`afterAll\` hooks, including admin-only mutation checks.
+  - Define authorization in \`accessControl\` using explicit per-table \`select\`, \`insert\`, \`update\`, and \`delete\` permissions. Use \`type: "Custom"\` with \`customTables\` for granular access. Do not put authorization checks in \`beforeEach\`, \`afterEach\`, or \`afterAll\` hooks, including admin-only mutation checks.
   - Read the resolved \`SchemaConfigAccessControl\` and rule types before implementing permissions. Each CLI rule contains \`userTypes\` and \`dbPermissions\`: \`forcedFilterDetailed\`, \`checkFilterDetailed\`, and \`forcedDataDetail\` map to the server's \`forcedFilter\`, \`checkFilter\`, and \`forcedData\`. Use the config property names and inspect their filter/context syntax rather than copying raw server publish rules.
   - Forced filters restrict which existing rows a user can select, update, or delete. Apply ownership, tenant, and related-table membership restrictions to every relevant operation; select permissions alone do not protect writes.
   - Check filters require inserted or updated rows to satisfy the permission condition or the write fails. Use them to prevent linking to an unauthorized parent or moving a row into another tenant/project. For updates, combine a forced filter on existing rows with a check filter on the resulting rows.
@@ -665,8 +676,8 @@ const getCliAgentsFile = () => `
 
   ## LLM agents
 
-  - ${schemaConfigGuidance.llm_credentials}
-  - Use \`access_control[].allowedLLM\` entries shaped as \`{ credentialName, promptName }\` to reference existing, uniquely named LLM credentials and prompts. Set \`llm_daily_limit\` in the access rule when needed.
+  - ${schemaConfigGuidance.llmCredential}
+  - Use \`accessControl[].allowedLLM\` entries shaped as \`{ credentialName, promptName }\` to reference existing, uniquely named LLM credentials and prompts. Set \`llm_daily_limit\` in the access rule when needed.
   - In a server function, call \`ctx.context.startAgent({ prompt, input, outputSchema }, ctx)\`, where \`ctx\` is the function's second argument. This uses Prostgles' configured models and credentials and runs as the caller; pass the original context to retain their identity and request. The returned object is typed from \`outputSchema\`.
   - \`startAgent\` currently requires \`clientReq\` alongside the validated \`user\`. Use \`ctx.clientReq\` from a server function's second argument, or \`localParams?.clientReq\` from a hook's arguments, and pass it with the validated user as \`{ user, clientReq }\`.
   - Read the resolved \`ProstglesContext\` and agent option types before adding tools or database access. \`startAgent\` also accepts \`signal\` and \`timeout\` in milliseconds; tool auto-approval defaults to false.
@@ -697,8 +708,8 @@ const getCliAgentsFile = () => `
   ## Project structure
 
   - Keep \`src/index.ts\` focused on composing and exporting the config.
-  - Put server functions in \`src/functions/\`, table definitions in \`src/tableConfigs/\`, display metadata in \`src/tableOptions/\`, and hooks in \`src/tableHooks/\`. Add domain subfolders when a folder becomes crowded.
-  - Use semantic names ending in \`*.function.ts\`, \`*.tableConfig.ts\`, \`*.tableOptions.ts\`, and \`*.tableHooks.ts\`. Examples: \`deployProject.function.ts\`, \`orders.tableConfig.ts\`, \`customers.tableOptions.ts\`, and \`users.tableHooks.ts\`.
+  - Put access rules in \`src/accessControl/\`, server functions in \`src/functions/\`, table definitions in \`src/tableConfigs/\`, display metadata in \`src/tableOptions/\`, and hooks in \`src/tableHooks/\`. Add domain subfolders when a folder becomes crowded.
+  - Use semantic names ending in \`*.accessControl.ts\`, \`*.function.ts\`, \`*.tableConfig.ts\`, \`*.tableOptions.ts\`, and \`*.tableHooks.ts\`. Examples: \`members.accessControl.ts\`, \`deployProject.function.ts\`, \`orders.tableConfig.ts\`, \`customers.tableOptions.ts\`, and \`users.tableHooks.ts\`.
   - The generated ESLint config enforces these suffixes inside their corresponding folders. Run \`npm run lint\` before committing.
 
   ## Local development
@@ -727,12 +738,22 @@ const getCliAgentsFile = () => `
   - The generated stack persists PostgreSQL and \`/var/lib/prostgles\`. Back up both named volumes.
   - Managed services use the configured private Docker runtime network. Do not publish their ports unless an external client explicitly requires access.
 
-  ## Tables, display options, and hooks
+  ## Table hooks
+
+  - ${schemaConfigGuidance.tableHooks} Hooks apply only to table-handler mutations; raw SQL bypasses them. Use \`beforeEach\` to validate or transform pending data, \`afterEach\` for each affected row, and \`afterAll\` once for all affected rows.
+  - The hook \`tx\` and \`dbx\` use the mutation's PostgreSQL transaction. This provides atomicity and read-your-writes, but not serialization between requests. Use the supplied \`dbx\` for transactional reads and writes; a separate handler, including a \`dbo\` captured from \`onMount\`, cannot see uncommitted rows.
+  - Prefer PostgreSQL constraints or atomic conditional writes for invariants under concurrency. Do not add \`FOR UPDATE\`, advisory locks, mutex helpers, or retry loops unless all of these are true:
+    1. The protected invariant and every competing operation are documented.
+    2. A deterministic concurrency test reproduces the failure. Sequential tests do not validate concurrency.
+    3. Constraints or atomic conditional writes cannot enforce the invariant.
+    4. The lock is acquired before reading the protected state.
+    5. The smallest relevant row is locked, and multiple locks use a consistent order.
+  - Locks acquired in \`afterEach\` or \`afterAll\` cannot protect checks performed earlier; do not use them for that purpose.
+  - Throwing from a hook rolls back the mutation. Use \`onCommit\` for external side effects that must run only after commit; use a transactionally written outbox/queue when delivery must be durable or retried. Do not start detached work from a hook or hold the transaction open across avoidable network calls.
+
+  ## Tables and display options
 
   - ${schemaConfigGuidance.tableConfig} ${schemaConfigGuidance.tableConfigMigrations}
-  - ${schemaConfigGuidance.tableHooks} Use hooks such as \`beforeEach\`, \`afterEach\`, and \`afterAll\` for typed application validation and side effects of table-handler mutations. Use built-in \`audit\` for change tracking. Raw SQL does not run table-handler hooks; use database constraints for invariants that must hold for every write.
-  - \`afterEach\` and \`afterAll\` run inside the still-uncommitted mutation transaction. Use their \`row\` or \`rows\` values for the affected records and \`dbx\` for reads or writes that must share that transaction. A separate handler, including a \`dbo\` captured from \`onMount\`, cannot see newly inserted rows until commit.
-  - Do not start detached work from a hook that immediately re-queries a newly inserted row through another database connection. Await work whose failure should roll back the mutation; for post-commit background processing, write an outbox/queue record in the hook transaction and let a separate consumer process it after commit.
   - ${connectionGuidance.table_options} Keep each table's options in its matching \`*.tableOptions.ts\` module and merge them under \`connection.table_options\`.
   - Give every JSONB column a \`jsonbSchema\` or \`jsonbSchemaType\` so its contents are validated and typed.
   - Follow PostgreSQL schema best practices: use primary and foreign keys, appropriate nullability, unique constraints, and indexes. Model fixed sets of values as lookup tables with \`isLookupTable\` and references instead of \`CHECK (value IN (...))\` constraints.
@@ -741,7 +762,7 @@ const getCliAgentsFile = () => `
   ## Table forms first
 
   - Table insert/edit forms derive controls from column types, defaults, JSONB schemas, foreign keys, and permissions. They provide FK autocomplete, related-row search, nested inserts where permitted, and file uploads. Model relationships and configure useful referenced-table card labels instead of asking users to enter raw IDs or duplicate existing organisations by name.
-  - Grant the intended users the required insert/update fields and select access to referenced lookup rows through \`access_control\`. Use forced data for trusted values such as the current user. Verify the flow as a non-admin; a function's \`userFilter\` does not grant table-form permissions. Administrators retain full access, as in the access-control UI.
+  - Grant the intended users the required insert/update fields and select access to referenced lookup rows through \`accessControl\`. Use forced data for trusted values such as the current user. Verify the flow as a non-admin; a function's \`userFilter\` does not grant table-form permissions. Administrators retain full access, as in the access-control UI.
   - If creating a project also creates default memberships, put that setup in a transactional insert hook using \`dbx\`, so the table form retains autocomplete and all writes commit or roll back together. Keep a dedicated function when the operation is an explicit business workflow rather than an ordinary row mutation.
 
   ## Workspaces

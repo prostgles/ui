@@ -1,4 +1,4 @@
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import {
   copyFileSync,
   existsSync,
@@ -22,6 +22,7 @@ type ChooseFileAction = (
   choices: readonly FileAction[],
   defaultAction: FileAction,
 ) => Promise<FileAction>;
+type MergeFiles = (local: string, incoming: string) => void | Promise<void>;
 
 export const parseFileAction = (
   answer: string,
@@ -107,21 +108,45 @@ export const getCliUpgradeConflicts = (local: string, incoming: string) => {
   return result + currentLines.slice(cursor).join("");
 };
 
-const mergeWithVSCode = (local: string, incoming: string) => {
+export const mergeWithVSCode = async (local: string, incoming: string) => {
   const original = readFileSync(local);
   const conflicts = getCliUpgradeConflicts(local, incoming);
   writeFileSync(local, conflicts);
-  const result = spawnSync("code", ["--wait", local], { stdio: "inherit" });
-  if (result.error) {
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const editor = spawn("code", ["--wait", local], { stdio: "inherit" });
+      const onInterrupt = () => editor.kill("SIGINT");
+      const cleanup = () => process.off("SIGINT", onInterrupt);
+      process.once("SIGINT", onInterrupt);
+      editor.once("error", (error) => {
+        cleanup();
+        reject(
+          new Error(
+            "Could not open VS Code. Ensure the code command is on PATH.",
+            {
+              cause: error,
+            },
+          ),
+        );
+      });
+      editor.once("exit", (status, signal) => {
+        cleanup();
+        if (status === 0) {
+          resolve();
+          return;
+        }
+        reject(
+          new Error(
+            signal ?
+              `VS Code exited with signal ${signal}`
+            : `VS Code exited with status ${status ?? 1}`,
+          ),
+        );
+      });
+    });
+  } catch (error) {
     writeFileSync(local, original);
-    throw new Error(
-      "Could not open VS Code. Ensure the code command is on PATH.",
-      { cause: result.error },
-    );
-  }
-  if (result.status !== 0) {
-    writeFileSync(local, original);
-    throw new Error(`VS Code exited with status ${result.status ?? 1}`);
+    throw error;
   }
 };
 
@@ -129,7 +154,7 @@ export const applyCliUpgradeFiles = async (
   incomingPath: string,
   targetPath: string,
   chooseAction: ChooseFileAction,
-  merge = mergeWithVSCode,
+  merge: MergeFiles = mergeWithVSCode,
 ) => {
   for (const entry of readdirSync(incomingPath, { withFileTypes: true })) {
     const incoming = join(incomingPath, entry.name);
@@ -159,7 +184,7 @@ export const applyCliUpgradeFiles = async (
         console.log(`Overwrote ${target}`);
       } else if (action === "merge") {
         console.log(`Merging ${target}`);
-        merge(target, incoming);
+        await merge(target, incoming);
       }
     }
   }
@@ -192,11 +217,17 @@ export const upgradeCli = async (configId: string, targetPath: string) => {
       existsSync(environmentExample) ?
         parse(readFileSync(environmentExample))
       : undefined;
+    const targetPackage = JSON.parse(
+      readFileSync(join(targetPath, cliFileNames.packageJson), "utf8"),
+    ) as { dependencies?: Record<string, unknown> };
+    const runtimeDependency = targetPackage.dependencies?.["@prostgles/app"];
     await saveCliTemplateFiles({
       configId,
       targetPath: incomingPath,
       environmentDefaults,
       formatConfigPath: targetPath,
+      runtimeDependency:
+        typeof runtimeDependency === "string" ? runtimeDependency : undefined,
     });
     await applyCliUpgradeFiles(
       incomingPath,

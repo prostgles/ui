@@ -241,8 +241,7 @@ export type SampleSchemaDir = {
   onMountTs: string;
   onInitSQL: string;
   workspaceConfig:
-    | { workspaces: DBSSchemaForInsert["workspaces"][] }
-    | undefined;
+    { workspaces: DBSSchemaForInsert["workspaces"][] } | undefined;
   connection:
     | Pick<
         DBSSchema["connections"],
@@ -445,6 +444,14 @@ const testForDuplicateValues = <T extends AnyObject>(obj: T, name: string) => {
 testForDuplicateValues(API_ENDPOINTS, "API_ENDPOINTS");
 testForDuplicateValues(ROUTES, "ROUTES");
 
+export const getFileServePath = ({
+  connectionId,
+  fileId,
+}: {
+  connectionId: string;
+  fileId: string | undefined;
+}) => [ROUTES.STORAGE, connectionId, fileId].filter(Boolean).join("/");
+
 export const PROSTGLES_CLOUD_URL = "https://cloud1.prostgles.com";
 
 export const FORKED_PROC_ENV_NAME = "IS_FORKED_PROC" as const;
@@ -516,7 +523,7 @@ export const getRandomElement = <Arr>(
 };
 
 /**
- * TODO: find a compile time solution
+ * TODO: migrate dbs access control to static rules to enable compile time checks
  */
 export const tableMightBeUndefinedDueToAccessControl = <T>(
   tableHandler: T,

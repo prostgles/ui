@@ -1,6 +1,16 @@
 import type { DBSSchemaForInsert } from "@common/publishUtils";
 import type { DBS } from "../..";
 
+export type LLMProviderName =
+  | "OpenAI"
+  | "Anthropic"
+  | "Google"
+  | "Hetzner"
+  | "Ollama"
+  | "OpenRouter"
+  | "Prostgles"
+  | "Custom";
+
 /**
  * https://www.anthropic.com/pricing#api
  * https://ai.google.dev/gemini-api/docs/pricing
@@ -187,6 +197,7 @@ export const setupLLMProviders = async (dbs: DBS) => {
         llm_models: [],
       },
     ] satisfies (DBSSchemaForInsert["llm_providers"] & {
+      id: LLMProviderName;
       llm_models: Omit<DBSSchemaForInsert["llm_models"], "provider_id">[];
     })[]);
   }

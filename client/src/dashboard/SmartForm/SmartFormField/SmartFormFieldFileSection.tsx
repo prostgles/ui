@@ -1,18 +1,25 @@
 import type { LocalMedia } from "@components/FileInput/FileInput";
-import { MediaViewer } from "@components/MediaViewer/MediaViewer";
+import {
+  MediaViewer,
+  type MediaViewerProps,
+} from "@components/MediaViewer/MediaViewer";
 import { usePromise } from "prostgles-client";
-import { type DBSchemaTable } from "prostgles-types";
+import { type AnyObject } from "prostgles-types";
 import React from "react";
 import type { SmartFormProps } from "../SmartForm";
 
 type P = {
-  table: DBSchemaTable;
+  table: NonNullable<MediaViewerProps["context"]>["table"];
+  columnName: string;
+  row: AnyObject | undefined;
   media: string | LocalMedia | undefined | null;
 } & Pick<SmartFormProps, "db">;
 
 export const SmartFormFieldFileSection = ({
   db,
   table,
+  columnName,
+  row,
   media: localMediaOrMediaId,
 }: P) => {
   const { fileTableName } = table;
@@ -46,6 +53,7 @@ export const SmartFormFieldFileSection = ({
       url={url}
       name="Click to preview"
       content_type={content_type}
+      context={row ? { table, columnName, row } : undefined}
     />
   );
 };

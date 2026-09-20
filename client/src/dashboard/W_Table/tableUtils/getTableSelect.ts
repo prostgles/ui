@@ -3,7 +3,7 @@ import {
   getTableFilterFromDetailedGroupFilter,
 } from "@common/filterUtils";
 import type { AnyObject, SelectFunction } from "prostgles-types";
-import { isDefined, reverseParsedPath } from "prostgles-types";
+import { isDefined } from "prostgles-types";
 import type { Prgl } from "src/App";
 import { isEmpty } from "../../../utils/utils";
 import type {
@@ -16,6 +16,7 @@ import {
 } from "../../W_TimeChart/fetchData/getTimeChartLayersWithBins";
 import { getTimeChartSelectParams } from "../../W_TimeChart/fetchData/getTimeChartSelectParams";
 import type { ColumnConfig } from "../ColumnMenu/ColumnMenu";
+import { getFormatColumnSelect } from "../ColumnMenu/ColumnDisplayFormat/getFormatColumnSelect";
 import type { MinMax, MinMaxVals } from "../W_Table";
 import { getFullColumnConfig } from "./getFullColumnConfig";
 import { getSingleShownNestedColumn } from "./StyledTableColumn";
@@ -30,12 +31,9 @@ export const getTableSelect = async (
   const select: AnyObject = {};
 
   let barchartVals: MinMaxVals | undefined;
-
-  if (!w.columns || !Array.isArray(w.columns)) {
-    return { barchartVals, select: { "*": 1 } };
-  }
-
   const fullColumns = getFullColumnConfig(tables, w);
+  const table = tables.find((t) => t.name === w.table_name);
+
   await Promise.all(
     fullColumns.map(async (c) => {
       if (!c.show) {
@@ -60,26 +58,25 @@ export const getTableSelect = async (
         }
       } else {
         select[c.name] = 1;
+        Object.assign(
+          select,
+          getFormatColumnSelect({ column: c, table, tables }),
+        );
       }
     }),
   );
 
-  const table = tables.find((t) => t.name === w.table_name);
   fullColumns.forEach((c) => {
     if (!c.show || c.computedConfig || c.nested) return;
-    const dependencies =
-      c.format?.type === "JSON Diff" || c.format?.type === "Text Diff" ?
-        [c.format.params.oldColumn, c.format.params.newColumn]
-      : [];
-    if (c.style?.type === "Conditional" && c.style.column)
-      dependencies.push(c.style.column);
-    dependencies.forEach((name) => {
-      if (
-        table?.columns.some((column) => column.name === name && column.select)
-      ) {
-        select[name] ??= 1;
-      }
-    });
+    const dependency = c.style?.type === "Conditional" && c.style.column;
+    if (
+      dependency &&
+      table?.columns.some(
+        (column) => column.name === dependency && column.select,
+      )
+    ) {
+      select[dependency] ??= 1;
+    }
   });
 
   await Promise.all(

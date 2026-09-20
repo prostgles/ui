@@ -2,31 +2,31 @@ import type { DBS } from "..";
 import { insertConfigWorkspaces } from "../serverFunctions/insertConfigWorkspaces";
 import type { SchemaConfig, SchemaConfigAccessControl } from "../schemaConfig";
 
-/** Persist configured workspaces, LLM credentials, and access-control rules. */
+/** Persist configured workspaces, the LLM credential, and access-control rules. */
 export const syncSchemaConfigResources = async ({
   dbs,
   databaseId,
   connectionId,
   rules = [],
   workspaces = [],
-  llmCredentials,
+  llmCredential,
 }: {
   dbs: DBS;
   databaseId: number;
   connectionId: string;
   rules?: SchemaConfigAccessControl[];
   workspaces?: SchemaConfig["workspaces"];
-  llmCredentials?: SchemaConfig["llm_credentials"];
+  llmCredential?: SchemaConfig["llmCredential"];
 }) => {
   const userTypes = new Set<string>();
   for (const rule of rules) {
     if (!Array.isArray(rule.userTypes) || !rule.userTypes.length) {
-      throw new Error("Each access_control rule must specify userTypes");
+      throw new Error("Each accessControl rule must specify userTypes");
     }
     for (const userType of rule.userTypes) {
       if (userTypes.has(userType)) {
         throw new Error(
-          `Multiple access_control rules for user type: ${userType}`,
+          `Multiple accessControl rules for user type: ${userType}`,
         );
       }
       userTypes.add(userType);
@@ -70,23 +70,19 @@ export const syncSchemaConfigResources = async ({
       },
       $notExistsJoined: { access_control_connections: {} },
     });
-    if (llmCredentials) {
+    if (llmCredential) {
       const admin = await tx.users.findOne(
         { type: "admin" },
         { orderBy: { created: 1 } },
       );
       if (!admin) {
-        throw new Error("An admin must own configured LLM credentials");
+        throw new Error("An admin must own the configured LLM credential");
       }
       await tx.llm_credentials.delete({});
-      if (llmCredentials.length) {
-        await tx.llm_credentials.insertMany(
-          llmCredentials.map((credential) => ({
-            ...credential,
-            user_id: admin.id,
-          })),
-        );
-      }
+      await tx.llm_credentials.insert({
+        ...llmCredential,
+        user_id: admin.id,
+      });
     }
     const allowedLLMReferences = rules.flatMap((rule) => rule.allowedLLM ?? []);
     const [sharedWorkspaces, publishedMethods, credentials, prompts] =

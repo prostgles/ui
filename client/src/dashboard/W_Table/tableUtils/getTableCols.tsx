@@ -23,6 +23,7 @@ import { getFullColumnConfig } from "./getFullColumnConfig";
 import { onRenderColumn } from "./onRenderColumn";
 import { getCellStyle, getSingleShownNestedColumn } from "./StyledTableColumn";
 import type { TableHandlerClient } from "prostgles-client";
+import { getColumnFormat } from "../ColumnMenu/ColumnDisplayFormat/getFormatColumnSelect";
 
 export type ProstglesTableColumn = ProstglesColumn & ColumnConfigWInfo;
 
@@ -80,6 +81,10 @@ export const getTableCols = ({
     });
 
   const tblCols: ProstglesTableColumn[] = fullConfigCols.map((c) => {
+    const renderColumn = {
+      ...c,
+      format: getColumnFormat(c),
+    };
     const nestedCols =
       !c.nested ? null
       : c.nested.chart ?
@@ -182,7 +187,7 @@ export const getTableCols = ({
       width: c.width ?? 100,
       noRightBorder: opts?.noRightBorder ?? false,
       onRender: onRenderColumn({
-        column: c,
+        column: renderColumn,
         table,
         tables,
         barchartVals,
@@ -214,7 +219,11 @@ export const getTableCols = ({
             ...(style.textColor && { color: `${style.textColor}` }),
           };
         }
-        return c.format?.type === "Media" ? { display: "flex" } : {};
+        const isMedia =
+          renderColumn.format?.type === "Media" ||
+          (renderColumn.format?.type === "Internal" &&
+            renderColumn.format.params.component === "File");
+        return isMedia ? { display: "flex" } : {};
       },
       onContextMenu: (e: React.MouseEvent, n: HTMLElement) => {
         e.preventDefault();

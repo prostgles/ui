@@ -1,7 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { classOverride } from "./Flex";
-import { useDebouncedCallback } from "src/hooks/useDebouncedCallback";
-import { useCallback } from "react";
 
 export const Stopwatch = ({
   startTime,
@@ -15,6 +13,25 @@ export const Stopwatch = ({
   title?: string;
   className?: string;
   style?: React.CSSProperties;
+}) => {
+  const { displayTime } = useStopwatch({ startTime, endTime });
+  return (
+    <div
+      title={title}
+      className={classOverride("Stopwatch ws-nowrap", className)}
+      style={style}
+    >
+      {displayTime}
+    </div>
+  );
+};
+
+export const useStopwatch = ({
+  startTime,
+  endTime,
+}: {
+  startTime: Date;
+  endTime: Date | undefined;
 }) => {
   const [elapsed, setElapsed] = useState(0);
 
@@ -34,15 +51,11 @@ export const Stopwatch = ({
   const displayTime = getDurationAsStr(elapsed, {
     excludeMs: endTime === undefined,
   });
-  return (
-    <div
-      title={title}
-      className={classOverride("Stopwatch ws-nowrap", className)}
-      style={style}
-    >
-      {displayTime}
-    </div>
-  );
+
+  return {
+    elapsed,
+    displayTime,
+  };
 };
 
 export const useCountdown = () => {

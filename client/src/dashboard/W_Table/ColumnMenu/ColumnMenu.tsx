@@ -57,7 +57,7 @@ import { AggregateFunctionOptions } from "./AddComputedColumn/AggregateFunctionO
 import { AddComputedColMenu } from "./AddComputedColumn/AddComputedColMenu";
 import { QuickAddComputedColumn } from "./AddComputedColumn/QuickAddComputedColumn";
 import { ColumnDisplayFormat } from "./ColumnDisplayFormat/ColumnDisplayFormat";
-import type { ColumnFormat } from "./ColumnDisplayFormat/columnFormatUtils";
+import type { UserColumnFormat } from "./ColumnDisplayFormat/columnFormatUtils";
 import { getFormatOptions } from "./ColumnDisplayFormat/columnFormatUtils";
 import { ColumnQuickStats } from "./ColumnQuickStats/ColumnQuickStats";
 import { ColumnSortMenu } from "./ColumnSortMenu";
@@ -103,7 +103,7 @@ export type ColumnConfig = {
     | FixedStyle
     | ScaleStyle
     | BarchartStyle;
-  format?: ColumnFormat;
+  format?: UserColumnFormat;
 
   /** If present then this is a computed column */
   computedConfig?: Pick<ValidatedColumnInfo, "tsDataType" | "udt_name"> & {

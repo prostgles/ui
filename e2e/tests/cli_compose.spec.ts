@@ -211,7 +211,9 @@ test("runs a generated config project with temporary databases and Docker Compos
       expect(asset, `No files found in ${srcPath}`).toBeDefined();
       const relativePath = join(srcPath, asset!.name);
       expect(
-        readFileSync(join(testRoot, "node_modules/@prostgles/app", relativePath)),
+        readFileSync(
+          join(testRoot, "node_modules/@prostgles/app", relativePath),
+        ),
       ).toEqual(readFileSync(join(serverRoot, relativePath)));
     }
     // Scaffold a CLI app and configure functions backed by both service types.
@@ -249,7 +251,7 @@ test("runs a generated config project with temporary databases and Docker Compos
        export default defineConfig()({
          id: ${JSON.stringify(configId)},
          services: serviceManagerConfig,
-         llm_credentials: [],
+         llmCredential: undefined,
          tableConfig: {},
          functions: {
            public: defineFunctionGroup({
@@ -468,7 +470,7 @@ const checkTemporaryDatabases = async (
     logPath: test.info().outputPath("deployment.log"),
   });
   try {
-    await checkConfiguredLlmCredentials(appRoot, configId, deployment);
+    await checkConfiguredLlmCredential(appRoot, configId, deployment);
   } finally {
     await deployment.dispose();
   }
@@ -564,7 +566,7 @@ const checkTemporaryDatabases = async (
   }
 };
 
-const checkConfiguredLlmCredentials = async (
+const checkConfiguredLlmCredential = async (
   appRoot: string,
   configId: string,
   deployment: TestDeployment,
@@ -576,7 +578,7 @@ const checkConfiguredLlmCredentials = async (
   const sourcePath = join(appRoot, "src/index.ts");
   const source = readFileSync(sourcePath, "utf8");
   const credentialsLine =
-    'llm_credentials: [{ provider_id: "OpenAI", name: "cli-test", api_key: "cli-test-key" }],';
+    'llmCredential: { provider_id: "OpenAI", name: "cli-test", api_key: "cli-test-key" },';
   const getCredentials = () =>
     state.sql!(
       "SELECT provider_id, name, api_key FROM llm_credentials ORDER BY id",
@@ -584,12 +586,16 @@ const checkConfiguredLlmCredentials = async (
       { returnType: "rows" },
     );
   const initial = [
-    { provider_id: "OpenAI", name: "cli-test", api_key: "cli-test-key" },
+    {
+      provider_id: "OpenAI",
+      name: "cli-test",
+      api_key: "cli-test-key",
+    },
   ];
   const sync = async (replacement: string) => {
     writeFileSync(
       sourcePath,
-      source.replace("llm_credentials: [],", replacement),
+      source.replace("llmCredential: undefined,", replacement),
     );
     await state.methods!.syncSchema!({
       connectionId: connection!.id,
@@ -617,8 +623,6 @@ const checkConfiguredLlmCredentials = async (
     expect(await getCredentials()).toEqual([
       { ...initial[0], api_key: "replacement-key" },
     ]);
-    await sync("llm_credentials: [],");
-    expect(await getCredentials()).toEqual([]);
   } finally {
     writeFileSync(sourcePath, source);
     state.disconnect();

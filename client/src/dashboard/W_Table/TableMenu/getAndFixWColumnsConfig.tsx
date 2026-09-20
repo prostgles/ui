@@ -21,11 +21,11 @@ const getUpdatedColumnsConfig = (
       const columnsHaveChanged =
         existingCols
           .map((c) => c.name)
-          .sort()
+          .toSorted()
           .join() !==
         tableColumnsConfig
           .map((c) => c.name)
-          .sort()
+          .toSorted()
           .join();
       if (columnsHaveChanged) {
         /* Remove missing columns */

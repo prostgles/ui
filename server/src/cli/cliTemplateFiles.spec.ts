@@ -59,13 +59,14 @@ void test("new CLI apps include a native Compose deployment", async (context) =>
   );
 });
 
-void test("CLI templates can preserve environment example secrets", async (context) => {
+void test("CLI templates can preserve upgrade inputs", async (context) => {
   const targetPath = mkdtempSync(join(tmpdir(), "prostgles-cli-env-"));
   context.after(() => rmSync(targetPath, { force: true, recursive: true }));
 
   await saveCliTemplateFiles({
     configId: "my-app",
     targetPath,
+    runtimeDependency: "file:../../ui/server",
     environmentDefaults: {
       PRGL_PASSWORD: "existing-admin-password",
       PROSTGLES_DOCKER_DB_PASSWORD: "existing-database-password",
@@ -82,6 +83,13 @@ void test("CLI templates can preserve environment example secrets", async (conte
     /^PROSTGLES_DOCKER_DB_PASSWORD=existing-database-password$/m,
   );
   assert.ok(environmentExample.includes("PROSTGLES_TEST_POSTGRES_IMAGE"));
+  const generatedPackage = JSON.parse(
+    readFileSync(join(targetPath, cliFileNames.packageJson), "utf8"),
+  ) as { dependencies: Record<string, string> };
+  assert.equal(
+    generatedPackage.dependencies["@prostgles/app"],
+    "file:../../ui/server",
+  );
 });
 
 void test("compose init does not overwrite deployment files", async (context) => {

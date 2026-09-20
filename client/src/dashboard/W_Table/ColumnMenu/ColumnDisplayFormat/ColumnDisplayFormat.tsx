@@ -10,7 +10,7 @@ import type { Prgl } from "src/App";
 import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
 import type { ColumnConfigWInfo } from "../../W_Table";
 import { UpdateColumnGlobalConfig } from "../UpdateColumnGlobalConfig";
-import type { ColumnFormat } from "./columnFormatUtils";
+import type { UserColumnFormat } from "./columnFormatUtils";
 import { getFormatOptions } from "./columnFormatUtils";
 
 type P = {
@@ -18,7 +18,7 @@ type P = {
   column: ColumnConfigWInfo;
   table: DBSchemaTable;
   tables: DBSchemaTablesWJoins;
-  onChange: (newFormat: ColumnFormat) => void;
+  onChange: (newFormat: UserColumnFormat) => void;
 };
 
 export const ColumnDisplayFormat = ({

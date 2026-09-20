@@ -2,13 +2,7 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 
 type JsonSchemaTypeName =
-  | "string"
-  | "number"
-  | "integer"
-  | "boolean"
-  | "null"
-  | "object"
-  | "array";
+  "string" | "number" | "integer" | "boolean" | "null" | "object" | "array";
 
 type JsonSchema = {
   $ref?: string;

@@ -36,7 +36,7 @@ export const getFullPrompt = async ({
             `- Files can be updated only through ${getProstglesMCPFullToolName("db", "update")} and only these properties can be updated: "data", "original_name", "original_last_modified", "content_type"`,
             `- Files can be deleted only through ${getProstglesMCPFullToolName("db", "delete")}`,
             `- Actual file data can be accessed by fetching the "url". The "data" column in the database is just a dummy placeholder.`,
-            `- The "text_content" and "docling_metadata" columns can be used for text searching. They are populated by the document (docling) service which extracts text data from applicable file types.`,
+            `- The "text_content" Markdown page array and "docling_metadata" column can be used for text searching. They are populated by the document (docling) service which extracts text data from applicable file types. $array_element function can be used to access individual elements of the array.`,
           ]),
         `\n`,
         `When you need to reference records from the database use an anchor to ensure the user can quickly preview them.`,

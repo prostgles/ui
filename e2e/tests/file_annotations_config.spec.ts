@@ -53,6 +53,30 @@ test("CLI annotations support PDF uploads without document extraction", async ()
     expect(
       tableSchema?.find((table) => table.name === "file_annotations"),
     ).toHaveProperty("managedTableType", "file-annotations");
+    expect(
+      tableSchema
+        ?.find((table) => table.name === "conditions")
+        ?.columns.find((column) => column.name === "source_annotation_id"),
+    ).toMatchObject({
+      defaultRenderAs: {
+        type: "Internal",
+        params: {
+          component: "FileAnnotation",
+          tableName: "file_annotations",
+          dataKey: "__managed_source_annotation_id",
+        },
+      },
+    });
+    expect(
+      tableSchema
+        ?.find((table) => table.name === "file_annotations")
+        ?.columns.find((column) => column.name === "file_id"),
+    ).toMatchObject({
+      defaultRenderAs: {
+        type: "Internal",
+        params: { component: "File" },
+      },
+    });
     expect(tableSchema?.some((table) => table.name === "file_versions")).toBe(
       true,
     );
@@ -87,9 +111,29 @@ test("CLI annotations support PDF uploads without document extraction", async ()
     // The custom membership join must preserve conditions -> file_annotations inference.
     const linked = await dbo.conditions!.findOne!(
       { id: condition.id },
-      { select: { file_annotations: "*" } },
+      {
+        select: {
+          file_annotations: "*",
+          source_annotation_id: 1,
+          __managed_source_annotation_id: {
+            $leftJoin: [
+              {
+                table: "file_annotations",
+                on: [{ source_annotation_id: "id" }],
+              },
+            ],
+            select: { id: 1, text: 1, page: 1 },
+          },
+        },
+      },
     );
     expect(linked).toHaveProperty("file_annotations.0.text", "Source excerpt");
+    expect(linked).toHaveProperty("source_annotation_id", annotation.id);
+    expect(linked).toHaveProperty(
+      "__managed_source_annotation_id.0.text",
+      "Source excerpt",
+    );
+    expect(linked).toHaveProperty("__managed_source_annotation_id.0.page", 1);
     const audit = await dbo.audit_log!.find!();
     assert.equal(audit.length, 1);
   } finally {
@@ -124,6 +168,20 @@ test("CLI text extraction can be enabled without an annotations table", async ()
     ]) {
       assert.ok(columns?.some((column) => column.name === name));
     }
+    expect(
+      columns?.find((column) => column.name === "extraction_status"),
+    ).toMatchObject({
+      udt_name: "jsonb",
+      defaultRenderAs: {
+        type: "Internal",
+        params: { component: "FileExtractionStatus" },
+      },
+    });
+    expect(
+      columns?.find((column) => column.name === "text_content"),
+    ).toMatchObject({
+      udt_name: "_text",
+    });
     // A non-document upload must not invoke the document conversion service.
     const file = await db.files!.insert!(
       { data: Buffer.from("hello"), original_name: "source.txt" },

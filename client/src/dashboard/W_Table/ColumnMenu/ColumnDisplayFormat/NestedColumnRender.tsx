@@ -20,7 +20,7 @@ export type NestedTimeChartMeta = {
   // binSize: number;
 };
 type P = {
-  c: ColumnConfig;
+  c: Omit<ColumnConfig, "format">;
   value: (AnyObject | undefined)[] | null;
   row: AnyObject;
   nestedTimeChartMeta: NestedTimeChartMeta | undefined;
@@ -125,15 +125,17 @@ export const NestedColumnRender = ({
   const content = valueList.slice(0, NESTED_LIMIT).map((nestedObj, idx) => {
     if (!nestedObj) return null;
 
-    if (isMedia) {
+    const { id, url } = nestedObj;
+    const urlOrId = url ?? id;
+    if (isMedia && urlOrId) {
       return (
         <MediaViewer
+          key={urlOrId + idx}
           style={{ height: "100%" }}
-          key={nestedObj.url}
-          url={nestedObj.url}
+          url={urlOrId}
           context={{
             table,
-            columnName: "url",
+            columnName: id ? "id" : "url",
             row: nestedObj,
           }}
         />
