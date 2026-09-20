@@ -1,3 +1,4 @@
+import { doclingTimingsSchema } from "./documentsServiceOutputSchema";
 import type { DBSSchema } from "./publishUtils";
 import type { RequiredKeepUndefined } from "./utils";
 
@@ -85,7 +86,7 @@ export const fileTableExtractionColumns = {
             end: "Date",
             options: { record: { values: "any" } },
             processing_time: "number",
-            timings: { record: { values: "number" } },
+            timings: doclingTimingsSchema,
           },
           {
             state: { enum: ["error"] },

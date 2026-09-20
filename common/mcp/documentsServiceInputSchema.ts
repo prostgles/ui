@@ -48,7 +48,7 @@ export const documentsServiceInputSchema = {
     },
 
     page_range: {
-      tuple: ["number", "number"],
+      tuple: ["integer", "integer"],
       optional: true,
       description:
         "Only convert a range of pages. The page number starts at 1. For example, [1, 3] will convert only the first and third pages of the document.",

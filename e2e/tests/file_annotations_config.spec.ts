@@ -5,6 +5,8 @@ import {
   createTestDeployment,
   type TestDeployment,
 } from "../../server/dist/server/src/cli/testing";
+import { documentsService } from "../../server/dist/server/src/ServiceManager/services/documents/documents.service";
+import { assertServiceOpenApi } from "./utils/assertServiceOpenApi";
 import { expect, test } from "./utils/fixtures";
 import { createConfigTestProject } from "./utils/createConfigTestProject";
 
@@ -20,14 +22,18 @@ test("CLI annotations support PDF uploads without document extraction", async ()
         versioning: { tableName: "file_versions", maxVersions: 2 },
       },
     },
-    joins: [{
-      tables: ["conditions", "members"],
-      on: [{ id: "condition_id" }],
-      type: "one-many",
-    }],
+    joins: [
+      {
+        tables: ["conditions", "members"],
+        on: [{ id: "condition_id" }],
+        type: "one-many",
+      },
+    ],
     audit: { tableName: "audit_log", tables: { conditions: 1 } },
     tableConfig: {
-      members: { columns: { id: "serial PRIMARY KEY", condition_id: "integer NOT NULL" } },
+      members: {
+        columns: { id: "serial PRIMARY KEY", condition_id: "integer NOT NULL" },
+      },
       conditions: {
         columns: {
           id: "serial PRIMARY KEY",
@@ -142,7 +148,7 @@ test("CLI annotations support PDF uploads without document extraction", async ()
   }
 });
 
-test("CLI text extraction can be enabled without an annotations table", async () => {
+test("CLI text extraction persists Docling profiling without annotations", async () => {
   const configId = "extraction-config-e2e";
   const configPath = createConfigTestProject({
     id: configId,
@@ -192,6 +198,42 @@ test("CLI text extraction can be enabled without an annotations table", async ()
       { returning: "*" },
     );
     assert.equal(file.extraction_status, null);
+
+    const pdf = await db.files!.insert!(
+      {
+        data: readFileSync(join(__dirname, "testAskLLM/sample.pdf")),
+        original_name: "sample.pdf",
+      },
+      { returning: "*" },
+    );
+    await expect
+      .poll(
+        async () =>
+          (await db.files!.findOne!({ id: pdf.id }))?.extraction_status?.state,
+        { timeout: 90_000 },
+      )
+      .toBe("finished");
+
+    const extractedPdf = await db.files!.findOne!({ id: pdf.id });
+    assert.equal(extractedPdf?.extraction_status?.state, "finished");
+    await assertServiceOpenApi("documents", documentsService);
+    const { timings } = extractedPdf.extraction_status;
+    expect(timings.pipeline_total).toBeDefined();
+    for (const profilingItem of Object.values(timings) as {
+      scope: string;
+      count: number;
+      times: number[];
+      start_timestamps: string[];
+    }[]) {
+      expect(["page", "document"]).toContain(profilingItem.scope);
+      expect(Number.isInteger(profilingItem.count)).toBe(true);
+      expect(profilingItem.times.every(Number.isFinite)).toBe(true);
+      expect(
+        profilingItem.start_timestamps.every(
+          (timestamp) => !Number.isNaN(Date.parse(timestamp)),
+        ),
+      ).toBe(true);
+    }
   } finally {
     await deployment?.dispose();
     rmSync(configPath, { recursive: true, force: true });
