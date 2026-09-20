@@ -25,6 +25,8 @@ const outputSchema = {
       ],
     },
     errors: "any[]",
+    processing_time: "number",
+    timings: { record: { values: "number" } },
   },
 } as const;
 
@@ -48,7 +50,7 @@ export const documentsService = {
         cpu: {
           env: {},
           buildArgs: {
-            BASE_IMAGE: "quay.io/docling-project/docling-serve:v1.32.0",
+            BASE_IMAGE: "quay.io/docling-project/docling-serve:v1.34.0",
           },
         },
         cuda: {
@@ -59,7 +61,7 @@ export const documentsService = {
             MKL_NUM_THREADS: "4",
           },
           buildArgs: {
-            BASE_IMAGE: "quay.io/docling-project/docling-serve-cu128:v1.32.0",
+            BASE_IMAGE: "quay.io/docling-project/docling-serve-cu128:v1.34.0",
           },
           gpus: "all",
         },
@@ -81,6 +83,7 @@ export const documentsService = {
     DOCLING_SERVE_ENABLE_UI: "1",
     DOCLING_SERVE_MAX_SYNC_WAIT: "600",
     DOCLING_SERVE_MAX_DOCUMENT_TIMEOUT: "600",
+    DOCLING_DEBUG_PROFILE_PIPELINE_TIMINGS: "true",
   },
   healthCheck: { endpoint: "/health" },
   endpoints: {

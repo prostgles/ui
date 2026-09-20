@@ -84,6 +84,8 @@ export const fileTableExtractionColumns = {
             start: "Date",
             end: "Date",
             options: { record: { values: "any" } },
+            processing_time: "number",
+            timings: { record: { values: "number" } },
           },
           {
             state: { enum: ["error"] },

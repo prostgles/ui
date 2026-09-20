@@ -76,6 +76,8 @@ export const extractFileText = ({
           start,
           options: extractionOptions,
           end: new Date().toISOString(),
+          processing_time: result.processing_time,
+          timings: result.timings,
         };
       } catch (error) {
         extraction_status = {

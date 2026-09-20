@@ -17,7 +17,7 @@ export const FileExtractionStatus = ({
     return <RenderValue column={undefined} value={value} />;
   }
   const end = value.state === "loading" ? undefined : value.end;
-  const title = JSON.stringify(value.options);
+  const title = JSON.stringify(value);
 
   const startTime = new Date(value.start);
   const endTime = end ? new Date(end) : undefined;
@@ -26,7 +26,7 @@ export const FileExtractionStatus = ({
   return (
     <div title={title}>
       <PopupMenu
-        title={"Extraction options"}
+        title={"Extraction details"}
         button={
           <Btn
             color={
@@ -54,7 +54,7 @@ export const FileExtractionStatus = ({
       >
         <MonacoEditor
           language="json"
-          value={JSON.stringify(value.options, null, 2)}
+          value={JSON.stringify(value, null, 2)}
           loadedSuggestions={undefined}
         />
         <ErrorComponent
