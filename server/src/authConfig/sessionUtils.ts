@@ -4,7 +4,7 @@ import * as crypto from "crypto";
 import type { Request } from "express";
 import { getClientRequestIPsInfo } from "prostgles-server/dist/Auth/AuthHandler";
 import type { BasicSession } from "prostgles-server/dist/Auth/AuthTypes";
-import type { PRGLIOSocket } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
+import type { ClientSocketWithCachedData } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
 import type { DB } from "prostgles-server/dist/initProstgles";
 import { PROSTGLES_STRICT_COOKIE } from "../envVars";
@@ -77,7 +77,7 @@ export const authCookieOpts =
  */
 export const checkClientIP = async (
   dbsOrTxSql: Pick<DB, "oneOrNone">,
-  args: { socket: PRGLIOSocket } | { httpReq: Request },
+  args: { socket: ClientSocketWithCachedData } | { httpReq: Request },
   {
     id,
     login_rate_limit,

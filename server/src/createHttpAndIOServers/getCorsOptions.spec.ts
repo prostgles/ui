@@ -8,10 +8,8 @@ void test("getCorsOptions allows any origin when configured with a wildcard", as
   const getCorsOptions = (() => {
     try {
       require.main.filename = require.resolve("../index");
-      return (
-        // eslint-disable-next-line security/detect-non-literal-require
-        require(getCorsOptionsPath) as typeof import("./getCorsOptions")
-      ).getCorsOptions;
+      return (require(getCorsOptionsPath) as typeof import("./getCorsOptions"))
+        .getCorsOptions;
     } finally {
       require.main.filename = testEntryPoint;
     }

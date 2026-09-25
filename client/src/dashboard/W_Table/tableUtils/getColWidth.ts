@@ -7,7 +7,7 @@ const maxColumnWidth = 300;
 export const getColWidth = <
   T extends Pick<
     ProstglesTableColumn,
-    "tsDataType" | "udt_name" | "width" | "nested" | "name"
+    "name" | "tsDataType" | "udt_name" | "width" | "nested"
   >,
   K extends keyof T,
 >(
@@ -58,7 +58,7 @@ export const getColWidth = <
         const data = r[c[key]];
         const dataIsSingleNestedColumnSoMustExcludePropertyNames =
           c.nested?.columns.filter((nc) => nc.show).length === 1 &&
-          !c.nested.chart &&
+          c.nested.display?.type !== "timechart" &&
           Array.isArray(data);
         const dataAsString = JSON.stringify(
           dataIsSingleNestedColumnSoMustExcludePropertyNames ?
@@ -111,50 +111,3 @@ export const getColWidth = <
     };
   });
 };
-
-// const getColumnWidths = <
-//   T extends Pick<ProstglesTableColumn, "tsDataType" | "udt_name" | "width">,
-//   K extends keyof T,
-// >(
-//   colPropertyForData: K,
-//   cols: T[],
-//   data: any[],
-// ): { col: T; width: number; widthSource: "fixed" | "fromData" }[] => {
-//   const fixedWidths = new Map<T, number>();
-//   const fromDataWidths = new Map<T, number>();
-//   cols.forEach((col) => {
-//     if (Number.isFinite(col.width)) {
-//       fixedWidths.set(col, col.width!);
-//     } else {
-//       fromDataWidths.set(col, -1);
-//     }
-//   });
-//   data.forEach((r) => {
-//     let width = 20;
-//     fromDataWidths.forEach((_, c) => {
-//       const textContentWidth =
-//         JSON.stringify(r[c[colPropertyForData]] || "").length * 8;
-//       const existingWidth =
-//         Number.isFinite(c.width) ? c.width! : textContentWidth;
-//       /** Must be within 100px and 300px */
-//       width = Math.min(
-//         Math.max(width, textContentWidth, minColumnWidth, existingWidth),
-//         maxColumnWidth,
-//       );
-//       fromDataWidths.set(c, Math.max(fromDataWidths.get(c) ?? 0, width));
-//     });
-//   });
-
-//   return cols.map((c) => {
-//     const fixedWidth = fixedWidths.get(c);
-//     if (fixedWidth !== undefined) {
-//       return { col: c, width: fixedWidth, widthSource: "fixed" };
-//     } else {
-//       return {
-//         col: c,
-//         width: fromDataWidths.get(c) ?? minColumnWidth,
-//         widthSource: "fromData",
-//       };
-//     }
-//   });
-// };

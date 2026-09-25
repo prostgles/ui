@@ -1,11 +1,9 @@
-import pluginSecurity from "eslint-plugin-security";
 import eslint from "@eslint/js";
 import tseslint from "typescript-eslint";
 import { defineConfig } from "eslint/config";
 import globals from "globals";
 
 export default defineConfig(
-  pluginSecurity.configs.recommended,
   eslint.configs.recommended,
   {
     files: ["**/*.{js,mjs,cjs,ts,mts,cts}"],
@@ -58,7 +56,7 @@ export default defineConfig(
       "security/detect-non-literal-fs-filename": "off",
       "@typescript-eslint/only-throw-error": "off",
       "@typescript-eslint/prefer-promise-reject-errors": "off",
-      "@typescript-eslint/restrict-template-expressions": "warn", 
+      "@typescript-eslint/restrict-template-expressions": "warn",
       "@typescript-eslint/no-unsafe-assignment": "warn",
       "@typescript-eslint/no-unsafe-argument": "warn",
       "@typescript-eslint/no-unsafe-return": "warn",

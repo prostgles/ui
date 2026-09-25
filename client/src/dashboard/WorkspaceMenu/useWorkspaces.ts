@@ -3,6 +3,7 @@ import { useCallback, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import type { Workspace } from "../Dashboard/dashboardUtils";
 import type { DBS } from "../Dashboard/DBS";
+import { getCanCreateWorkspaces } from "../Dashboard/cloneWorkspace";
 
 export const useWorkspaces = (
   dbs: DBS,
@@ -10,6 +11,7 @@ export const useWorkspaces = (
   connectionId: string,
 ) => {
   const unsortedWorkspaces = useWorkspacesSync(dbs, connectionId);
+  const canCreateWorkspaces = getCanCreateWorkspaces(dbs);
   const workspaces = useMemo(() => {
     return (
       unsortedWorkspaces
@@ -19,12 +21,16 @@ export const useWorkspaces = (
           ...wsp,
           isMine: wsp.user_id === userId,
         }))
-        /** Exclude editable original workspaces */
+        /** Hide editable originals after personal clones are created */
         .filter(
-          (wsp) => wsp.isMine || !wsp.published || wsp.layout_mode === "fixed",
+          (wsp) =>
+            !canCreateWorkspaces ||
+            wsp.isMine ||
+            !wsp.published ||
+            wsp.layout_mode === "fixed",
         )
     );
-  }, [unsortedWorkspaces, userId]);
+  }, [canCreateWorkspaces, unsortedWorkspaces, userId]);
 
   return { workspaces };
 };

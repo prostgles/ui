@@ -106,12 +106,9 @@ export const parseTableConfig = async ({
         fileTableConfig?.extractTextOptions,
       )
     : undefined;
-  const fileTableConfigMerged: TableConfig | undefined =
-    fileTable && (extractText || fileTableConfig?.annotationsTable) ?
-      {
-        [fileTable.tableName]: fileTableExtractionColumns,
-      }
-    : undefined;
+  const fileTableConfigMerged: TableConfig | undefined = fileTable && {
+    [fileTable.tableName]: fileTableExtractionColumns,
+  };
   if (fileTableConfigMerged && fileTableConfig?.annotationsTable) {
     fileTableConfigMerged[fileTableConfig.annotationsTable] = {
       columns: annotationsTableColumns,

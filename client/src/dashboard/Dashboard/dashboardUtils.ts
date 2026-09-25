@@ -1,6 +1,10 @@
 import type { DBSSchema } from "@common/publishUtils";
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
-import type { DBSchemaTable, ValidatedColumnInfo } from "prostgles-types";
+import type {
+  DBSchemaTable,
+  SQLResult,
+  ValidatedColumnInfo,
+} from "prostgles-types";
 import type { ColumnOptions, TableOptions } from "@common/managedTableSchema";
 
 import type {
@@ -208,7 +212,7 @@ export type ChartOptions<CType extends ChartType = "table"> =
         subLabel: string;
         width?: number;
         sortable: boolean;
-      })[];
+      } & SQLResult<"rows">["fields"][number])[];
 
       lastSQL?: string;
     }

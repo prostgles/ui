@@ -136,8 +136,12 @@ export const COMMANDS = {
   "W_TableMenu_TableInfo.drop": "",
 
   "W_TableMenu_ColumnList.alter": "",
+  "W_TableMenu_ColumnList.editComputedColumn": "",
+  "W_TableMenu_ColumnList.format": "",
   "W_TableMenu_ColumnList.linkedColumnOptions": "",
+  "W_TableMenu_ColumnList.options": "",
   "W_TableMenu_ColumnList.removeComputedColumn": "",
+  "W_TableMenu_ColumnList.style": "",
 
   TableHeader: "",
   "TableHeader.resizeHandle": "",
@@ -351,6 +355,9 @@ export const COMMANDS = {
   "JoinedRecords.AddRowNoRecords": "",
   "JoinedRecords.SectionToggle": "",
   "JoinedRecords.Section": "",
+  "LinkedColumn.OpenRecords": "",
+  "LinkedColumn.OpenRecord": "",
+  "LinkedColumn.ViewAll": "",
   "SmartCard.viewEditRow": "",
   "TimeChartLayerOptions.yAxis": "",
   "TimeChartLayerOptions.aggFunc": "",

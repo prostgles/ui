@@ -1,7 +1,7 @@
-import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
-import React, { useMemo, useState } from "react";
 import type { PaginationProps } from "@components/Table/Pagination";
 import { Table } from "@components/Table/Table";
+import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
+import React, { useMemo, useState } from "react";
 import { CodeEditor } from "../CodeEditor/CodeEditor";
 import type { WindowData } from "../Dashboard/dashboardUtils";
 import type { ColumnSortSQL } from "../W_Table/ColumnMenu/ColumnMenu";
@@ -9,7 +9,6 @@ import { TooManyColumnsWarning } from "../W_Table/TooManyColumnsWarning";
 import { CSVRender } from "./CSVRender";
 import { getSQLResultTableColumns } from "./getSQLResultTableColumns";
 import type { W_SQLProps, W_SQLState } from "./W_SQL";
-import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 
 export type W_SQLResultsProps = Pick<
   W_SQLState,
@@ -51,7 +50,6 @@ export const W_SQLResults = (props: W_SQLResultsProps) => {
     onPageChange,
     onPageSizeChange,
   } = props;
-  const { tables } = usePrgl();
   const o: WindowData<"sql">["options"] = w.options;
   const { renderMode = "table", maxCharsPerCell } = w.sql_options;
   const {
@@ -71,12 +69,11 @@ export const W_SQLResults = (props: W_SQLResultsProps) => {
   const tableColumns = useMemo(() => {
     return getSQLResultTableColumns({
       cols,
-      tables,
       maxCharsPerCell,
       onResize,
       rows,
     });
-  }, [cols, tables, maxCharsPerCell, onResize, rows]);
+  }, [cols, maxCharsPerCell, onResize, rows]);
 
   const pagination = useMemo(() => {
     if (!isSelect) return;

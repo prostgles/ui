@@ -1,4 +1,5 @@
 import serverPackageJson from "../../../../../../../package.json";
+import prostglesServerPackageJson from "prostgles-server/package.json";
 
 export const getAgenticWorkflowDockerCoreFiles = (
   package_dependencies: Record<string, string> | undefined,
@@ -135,7 +136,8 @@ export const packageJsonTemplate = fromServerPackageJson({
   dependencies: {
     typescript: "^5.9.3",
     tslib: "^2.8.1",
-    "prostgles-types": "^4.0.292",
+    "prostgles-types":
+      prostglesServerPackageJson.dependencies["prostgles-types"],
   },
   devDependencies: {
     "@types/node": "^22.20.0",
@@ -195,8 +197,6 @@ export default defineConfig(
       "@typescript-eslint/no-require-imports": "error",
       //"import/first": "error",            // enforce all imports at top-level
       "no-empty": "off",
-      "security/detect-object-injection": "off",
-      "security/detect-non-literal-fs-filename": "off",
       "@typescript-eslint/only-throw-error": "off",
       "@typescript-eslint/prefer-promise-reject-errors": "off",
       "@typescript-eslint/restrict-template-expressions": "warn",

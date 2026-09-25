@@ -2,7 +2,7 @@ import {
   getSmartGroupFilter,
   getTableFilterFromDetailedGroupFilter,
 } from "@common/filterUtils";
-import type { AnyObject, SelectFunction } from "prostgles-types";
+import type { AnyObject, Select, SelectFunction } from "prostgles-types";
 import { isDefined } from "prostgles-types";
 import type { Prgl } from "src/App";
 import { isEmpty } from "../../../utils/utils";
@@ -15,11 +15,16 @@ import {
   getTimeChartMinMax,
 } from "../../W_TimeChart/fetchData/getTimeChartLayersWithBins";
 import { getTimeChartSelectParams } from "../../W_TimeChart/fetchData/getTimeChartSelectParams";
-import type { ColumnConfig } from "../ColumnMenu/ColumnMenu";
 import { getFormatColumnSelect } from "../ColumnMenu/ColumnDisplayFormat/getFormatColumnSelect";
-import type { MinMax, MinMaxVals } from "../W_Table";
-import { getFullColumnConfig } from "./getFullColumnConfig";
-import { getSingleShownNestedColumn } from "./StyledTableColumn";
+import { getTableIdentityColumns } from "../ColumnMenu/ColumnDisplayFormat/getTableIdentityColumns";
+import { getParentTableJoinColumnNames } from "../ColumnMenu/ColumnDisplayFormat/getLinkedRecordsFilter";
+import type { ColumnConfig } from "../ColumnMenu/ColumnMenu";
+import type { ColumnConfigWithInfo, MinMax } from "../W_Table";
+import {
+  fetchChartRangeValues,
+  type ChartValues,
+} from "./fetchChartRangeValues";
+import { getColumnsWithInfoAndWidth } from "./getColumnsWithInfoAndWidth";
 
 export const getTableSelect = async (
   w: Pick<WindowData<"table">, "columns" | "table_name">,
@@ -27,12 +32,13 @@ export const getTableSelect = async (
   db: Prgl["db"],
   filter: AnyObject,
   withoutData = false,
-): Promise<{ barchartVals?: AnyObject; select: AnyObject }> => {
+): Promise<{ barchartVals?: ChartValues; select: AnyObject }> => {
   const select: AnyObject = {};
 
-  let barchartVals: MinMaxVals | undefined;
-  const fullColumns = getFullColumnConfig(tables, w);
+  const barchartVals: ChartValues = new Map();
+  const fullColumns = getColumnsWithInfoAndWidth(tables, w);
   const table = tables.find((t) => t.name === w.table_name);
+  if (!table) throw "Table not found";
 
   await Promise.all(
     fullColumns.map(async (c) => {
@@ -44,112 +50,94 @@ export const getTableSelect = async (
         select[c.name] = getComputedColumnSelect(c.computedConfig);
       } else if (c.nested) {
         const nestedSel = await getNestedColumnSelect(
-          c,
+          { ...c, nested: c.nested },
           db,
           tables,
           withoutData,
         );
         if (nestedSel) {
           if (nestedSel.dateExtent) {
-            barchartVals ??= {};
-            barchartVals[c.name] = nestedSel.dateExtent as any;
+            /**
+             * TODO: consolidate date/chart min max handling.
+             * ensure ALL nested ChartValues are fetched either in fetchChartRangeValues
+             * or in getNestedColumnSelect
+             */
+            barchartVals.set(c.name, {
+              type: "date",
+              range: {
+                min: +nestedSel.dateExtent.min,
+                max: +nestedSel.dateExtent.max,
+              },
+            });
           }
           select[c.name] = nestedSel.select;
         }
       } else {
         select[c.name] = 1;
-        Object.assign(
-          select,
-          getFormatColumnSelect({ column: c, table, tables }),
-        );
       }
     }),
   );
 
-  fullColumns.forEach((c) => {
-    if (!c.show || c.computedConfig || c.nested) return;
-    const dependency = c.style?.type === "Conditional" && c.style.column;
-    if (
-      dependency &&
-      table?.columns.some(
-        (column) => column.name === dependency && column.select,
-      )
-    ) {
-      select[dependency] ??= 1;
-    }
-  });
+  Object.assign(select, getRequiredTableSelect(fullColumns, table));
 
   await Promise.all(
     fullColumns.map(async (c) => {
-      if (
-        !c.show ||
-        !(c.style && ["Barchart", "Scale"].includes(c.style.type))
-      ) {
+      const { findOne } = db[w.table_name] ?? {};
+      if (!findOne) {
         return;
       }
-      barchartVals ??= {};
-      let minMax:
-        | {
-            min: any;
-            max: any;
-          }
-        | undefined;
-      let isDate = false;
-
-      if (withoutData) {
-        minMax = { min: -1, max: -1 };
-      } else if (c.computedConfig || c.nested) {
-        const sortByKey =
-          c.computedConfig ?
-            c.name
-          : `${c.name}.${getSingleShownNestedColumn(c, tables)!.shownCol.name}`;
-        const minRow = await db[w.table_name]?.findOne?.(filter, {
-          select,
-          orderBy: [{ key: sortByKey, asc: true, nulls: "last" }],
-        });
-        const maxRow = await db[w.table_name]?.findOne?.(filter, {
-          select,
-          orderBy: [{ key: sortByKey, asc: false, nulls: "last" }],
-        });
-
-        const min =
-          c.computedConfig ?
-            minRow?.[c.name]
-          : minRow?.[c.name]?.[0]?.[
-              getSingleShownNestedColumn(c, tables)?.shownCol.name ?? ""
-            ];
-        const max =
-          c.computedConfig ?
-            maxRow?.[c.name]
-          : maxRow?.[c.name]?.[0]?.[
-              getSingleShownNestedColumn(c, tables)?.shownCol.name ?? ""
-            ];
-        minMax = {
-          min,
-          max,
-        };
-      } else {
-        minMax = await db[w.table_name]?.findOne?.(filter, {
-          select: {
-            min: { $min: [c.name] },
-            max: { $max: [c.name] },
-          },
-        });
-
-        isDate =
-          c.info?.udt_name.startsWith("timestamp") ||
-          c.info?.udt_name === "date";
-      }
-      if (minMax) {
-        barchartVals[c.name] = {
-          min: isDate ? +new Date(minMax.min) : +minMax.min,
-          max: isDate ? +new Date(minMax.max) : +minMax.max,
-        };
-      }
+      const chartValues = await fetchChartRangeValues({
+        findOne,
+        column: c,
+        select,
+        filter,
+        withoutData,
+      });
+      if (chartValues) barchartVals.set(c.name, chartValues);
     }),
   );
 
   return { barchartVals, select };
+};
+
+export const getRequiredTableSelect = (
+  columns: ColumnConfigWithInfo[],
+  table: DBSchemaTableWJoins,
+): Select => {
+  const select: AnyObject = {};
+  const shownColumns = columns.filter((column) => column.show);
+  const selectableColumnNames = new Set(
+    table.columns
+      .filter((column) => column.select)
+      .map((column) => column.name),
+  );
+  const addColumn = (columnName: string | undefined) => {
+    if (columnName && selectableColumnNames.has(columnName)) {
+      select[columnName] ??= 1;
+    }
+  };
+
+  shownColumns.forEach((column) => {
+    if (!column.computedConfig && !column.nested) {
+      Object.assign(select, getFormatColumnSelect({ column, table }));
+      addColumn(
+        column.style?.type === "Conditional" ? column.style.column : undefined,
+      );
+    }
+    getParentTableJoinColumnNames(column).forEach(addColumn);
+  });
+
+  const hasAggregate = shownColumns.some(
+    (column) => column.computedConfig?.funcDef.isAggregate,
+  );
+  if (
+    !hasAggregate &&
+    shownColumns.some((column) => column.action?.type === "record")
+  ) {
+    getTableIdentityColumns(table).forEach(({ name }) => addColumn(name));
+  }
+
+  return select;
 };
 
 export const getComputedColumnSelect = (
@@ -187,27 +175,28 @@ export const getComputedColumnSelect = (
   } as SelectFunction;
 };
 
-export const getNestedColumnSelect = async (
-  c: ColumnConfig,
+const getNestedColumnSelect = async (
+  parentColumn: Pick<Required<ColumnConfig>, "nested"> &
+    Pick<ColumnConfig, "style" | "width">,
   db: Prgl["db"],
   tables: DBSchemaTableWJoins[],
   withoutData = false,
 ): Promise<{ select: AnyObject; dateExtent?: MinMax<Date> } | undefined> => {
-  if (!c.nested) throw "Impossible";
-
   let nestedSelect: AnyObject = {};
   let dateExtent: MinMax<Date> | undefined;
-  if (c.nested.chart) {
-    const targetTable = c.nested.path.at(-1)!.table;
-    const targetTableHandler = db[targetTable]!;
+  const display = parentColumn.nested.display;
+
+  const nestedTable = tables.find(
+    (table) => table.name === parentColumn.nested.path.at(-1)?.table,
+  );
+  if (!nestedTable) throw "Nested table not found";
+
+  if (display?.type === "timechart") {
+    const targetTableHandler = db[nestedTable.name]!;
     dateExtent =
       withoutData ?
         { min: new Date(), max: new Date() }
-      : await getTimeChartMinMax(
-          targetTableHandler,
-          {},
-          c.nested.chart.dateCol,
-        );
+      : await getTimeChartMinMax(targetTableHandler, {}, display.dateCol);
 
     const { bin } =
       withoutData ?
@@ -220,45 +209,73 @@ export const getNestedColumnSelect = async (
           manualBinSize: undefined,
           pxPerPoint: 5,
           viewPortExtent: undefined,
-          width: c.width ?? 100,
+          width: parentColumn.width ?? 100,
         });
     nestedSelect = getTimeChartSelectParams({
       bin,
-      dateColumn: c.nested.chart.dateCol,
+      dateColumn: display.dateCol,
       groupByColumn: undefined,
       statType:
-        !c.nested.chart.yAxis.isCountAll ?
+        !display.yAxis.isCountAll ?
           {
-            funcName: c.nested.chart.yAxis.funcName,
-            numericColumn: c.nested.chart.yAxis.colName,
+            funcName: display.yAxis.funcName,
+            numericColumn: display.yAxis.colName,
           }
         : undefined,
     }).select;
   } else {
     nestedSelect = (
       await getTableSelect(
-        { columns: c.nested.columns, table_name: c.nested.path.at(-1)!.table },
+        { columns: parentColumn.nested.columns, table_name: nestedTable.name },
         tables,
         db,
         {},
-        withoutData,
+        true, // Only build the select; ranges depend on the parent query.
       )
     ).select;
-    if (isEmpty(nestedSelect)) {
-      return undefined;
+    if (display?.type === "entities") {
+      getTableIdentityColumns(nestedTable).forEach((column) => {
+        nestedSelect[column.name] ??= 1;
+      });
     }
   }
 
-  const filter = getSmartGroupFilter(c.nested.detailedFilter, undefined, "and");
-  const having = getSmartGroupFilter(c.nested.detailedHaving, undefined, "and");
+  const conditionColumn =
+    parentColumn.style?.type === "Conditional" && parentColumn.style.column;
+  if (
+    display?.type === "entities" &&
+    conditionColumn &&
+    nestedTable.columns.some(
+      (column) => column.name === conditionColumn && column.select,
+    )
+  ) {
+    nestedSelect[conditionColumn] ??= 1;
+  }
+  if (isEmpty(nestedSelect)) return undefined;
+
+  const limit =
+    display?.type === "entities" && parentColumn.nested.limit !== undefined ?
+      parentColumn.nested.limit + 1
+    : parentColumn.nested.limit;
+
+  const filter = getSmartGroupFilter(
+    parentColumn.nested.detailedFilter,
+    undefined,
+    "and",
+  );
+  const having = getSmartGroupFilter(
+    parentColumn.nested.detailedHaving,
+    undefined,
+    "and",
+  );
   return {
     dateExtent,
     select: {
-      [c.nested.joinType === "inner" ? "$innerJoin" : "$leftJoin"]:
-        c.nested.path,
-      limit: c.nested.limit,
+      [parentColumn.nested.joinType === "inner" ? "$innerJoin" : "$leftJoin"]:
+        parentColumn.nested.path,
+      limit,
       select: nestedSelect,
-      orderBy: c.nested.sort && [c.nested.sort],
+      orderBy: parentColumn.nested.sort && [parentColumn.nested.sort],
       filter,
       having,
     },

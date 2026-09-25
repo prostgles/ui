@@ -11,11 +11,11 @@ import {
   TIMECHART_STAT_TYPES,
   TimechartRenderStyles,
 } from "../../W_TimeChart/W_TimeChartMenu";
-import type { ColumnConfigWInfo } from "../W_Table";
+import type { ColumnConfigChart } from "./ColumnMenu";
 
 export const SORTABLE_CHART_COLUMNS = ["date", "value"];
 
-export type ColTimeChart = Required<ColumnConfigWInfo>["nested"]["chart"];
+export type ColTimeChart = ColumnConfigChart | undefined;
 type P = {
   tableName: string | undefined;
   chart: ColTimeChart;
@@ -55,7 +55,7 @@ export const NestedTimechartControls = ({ tableName, chart, onChange }: P) => {
     onChange(
       !enabled ? undefined : (
         {
-          type: "time",
+          type: "timechart",
           dateCol,
           renderStyle: "smooth-line",
           yAxis: {

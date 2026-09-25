@@ -1,5 +1,6 @@
 import {
   includes,
+  isObject,
   type AnyObject,
   type DBSchemaTable,
   type JSONB,
@@ -8,12 +9,16 @@ import {
 import React from "react";
 import sanitizeHtml from "sanitize-html";
 import { getAge, getFileServePath } from "@common/utils";
-import type { FileTableRowExtraction } from "@components/MediaViewer/managedTableUtils";
+import type {
+  FILE_TABLE_SELECT,
+  FilesTableRow,
+  FileTableRowExtraction,
+} from "@components/MediaViewer/managedTableUtils";
 import { MediaViewer } from "@components/MediaViewer/MediaViewer";
 import { QRCodeImage } from "@components/QRCodeImage";
 import { RenderValue } from "../../../SmartForm/SmartFormField/RenderValue";
 import { StyledInterval } from "../../../W_SQL/customRenderers";
-import type { RenderedColumn } from "../../tableUtils/onRenderColumn";
+import type { RenderedColumn } from "../../RenderColumn/RenderColumn";
 import type { TableWindowInsertModel } from "@common/DashboardTypes";
 import { FlexRowWrap } from "@components/Flex";
 import type { columnDisplayFormatSchema } from "@common/columnDisplayFormat.schema";
@@ -57,7 +62,7 @@ type RenderDataContext = {
 type ColumnRenderer = {
   type: ColumnFormat["type"];
   tsDataType: ValidatedColumnInfo["tsDataType"][] | undefined;
-  match?: (table: DBSchemaTable, column: RenderedColumn) => boolean | undefined;
+  match?: (table: DBSchemaTable, columnName: string) => boolean | undefined;
   render: (
     value: any,
     row: AnyObject,
@@ -118,7 +123,11 @@ const renderDiff: FormattedColRender<
     row[params.newColumn] === undefined
   ) {
     return (
-      <RenderValue column={column} value={value} maxLength={maxCellChars} />
+      <RenderValue
+        column={column.computedConfig ?? column.info}
+        value={value}
+        maxLength={maxCellChars}
+      />
     );
   }
   return (
@@ -154,7 +163,16 @@ export const DISPLAY_FORMATS = [
         );
       }
 
-      if (!table || typeof value !== "string" || !value) return null;
+      const joinedValue = Array.isArray(value) ? value[0] : value;
+      const joinedFile =
+        isObject(joinedValue) ?
+          (joinedValue as Pick<
+            Partial<FilesTableRow>,
+            keyof typeof FILE_TABLE_SELECT
+          >)
+        : undefined;
+      const fileId = joinedFile?.id ?? value;
+      if (!table || typeof fileId !== "string" || !fileId) return null;
       const connectionId = location.pathname
         .split("/")
         .find((part, index, parts) => parts[index - 1] === "connections");
@@ -163,7 +181,10 @@ export const DISPLAY_FORMATS = [
       }
       return (
         <MediaViewer
-          url={getFileServePath({ connectionId, fileId: value })}
+          url={getFileServePath({ connectionId, fileId })}
+          name={joinedFile?.original_name}
+          content_type={joinedFile?.content_type}
+          isLoading={joinedFile?.extraction_status?.state === "loading"}
           style={{ maxHeight: "100%" }}
           context={{ table, columnName: column.name, row }}
         />
@@ -259,8 +280,8 @@ export const DISPLAY_FORMATS = [
   {
     type: "URL",
     tsDataType: ["string"],
-    match: (t, c) =>
-      t.isFileTable && ["cloud_url", "signed_url"].includes(c.name),
+    match: (t, columnName) =>
+      t.isFileTable && ["cloud_url", "signed_url"].includes(columnName),
     render: HREFRender,
   } satisfies FormattedColRender<Extract<ColumnFormat, { type: "URL" }>>,
   {
@@ -270,7 +291,11 @@ export const DISPLAY_FORMATS = [
       // Using "90px" because default max row height is 100px
       return v?.toString().trim().length ?
           <QRCodeImage url={v} size={90} variant="table-cell" />
-        : <RenderValue column={column} value={v} maxLength={maxCellChars} />;
+        : <RenderValue
+            column={column.computedConfig ?? column.info}
+            value={v}
+            maxLength={maxCellChars}
+          />;
     },
   } satisfies FormattedColRender<Extract<ColumnFormat, { type: "QR Code" }>>,
   {

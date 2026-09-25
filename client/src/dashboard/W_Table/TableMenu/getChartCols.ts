@@ -7,7 +7,7 @@ import type {
 } from "../../Dashboard/dashboardUtils";
 import type { ChartableSQL } from "../../W_SQL/getChartableSQL";
 import { getAllJoins } from "../ColumnMenu/JoinPathSelectorV2";
-import { getColWInfo } from "../tableUtils/getColWInfo";
+import { getColumnsWithInfo } from "../tableUtils/getColumnsWithInfo";
 
 export type ColInfo = Pick<
   ValidatedColumnInfo,
@@ -57,7 +57,6 @@ export const getChartCols = (
     return args.chartableSQL;
   }
   const { w, tables } = args;
-  const table = tables.find((t) => t.name === w.table_name);
 
   const getOtherCols = (cols: ValidatedColumnInfo[]): ColInfo[] =>
     cols.toSorted((b, a) => {
@@ -108,14 +107,10 @@ export const getChartCols = (
     )
     .filter(isDefined);
 
-  const cols =
-    !table ?
-      []
-    : getColWInfo(table, w.columns).map((c) => ({
-        ...c,
-        is_pkey: Boolean(c.info?.is_pkey),
-        udt_name: c.info?.udt_name || c.computedConfig?.udt_name || "text",
-      }));
+  const cols = getColumnsWithInfo(w.table_name, tables, w.columns).map((c) => ({
+    ...c,
+    is_pkey: Boolean(c.info?.is_pkey),
+  }));
 
   const windowDateCols: ChartColumn[] = cols.filter(isDateCol).map((c) => ({
     ...c,

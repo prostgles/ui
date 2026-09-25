@@ -8,14 +8,14 @@ import React, { useMemo } from "react";
 import { Link } from "react-router";
 import type { Prgl } from "src/App";
 import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
-import type { ColumnConfigWInfo } from "../../W_Table";
+import type { ColumnConfigWithInfo } from "../../W_Table";
 import { UpdateColumnGlobalConfig } from "../UpdateColumnGlobalConfig";
 import type { UserColumnFormat } from "./columnFormatUtils";
 import { getFormatOptions } from "./columnFormatUtils";
 
 type P = {
   db: Prgl["db"];
-  column: ColumnConfigWInfo;
+  column: ColumnConfigWithInfo;
   table: DBSchemaTable;
   tables: DBSchemaTablesWJoins;
   onChange: (newFormat: UserColumnFormat) => void;

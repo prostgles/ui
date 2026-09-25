@@ -23,8 +23,8 @@ export const getExistingTablesSchema = async (
     const schemas = Object.entries(
       connectionData.db_schema_filter || { public: 1 },
     )
-      .filter(([k, v]) => v)
-      .map(([k, v]) => k);
+      .filter(([_, v]) => v)
+      .map(([k]) => k);
     if (!schemas.includes("public")) {
       schemas.push("public");
     }
@@ -133,7 +133,6 @@ export const getExistingTablesSchema = async (
         return tableNames.includes(t.name);
       }
       if (tableNameRegex) {
-        // eslint-disable-next-line security/detect-non-literal-regexp
         const regex = new RegExp(tableNameRegex, "i");
         return regex.test(t.name);
       }

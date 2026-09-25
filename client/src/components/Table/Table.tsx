@@ -15,7 +15,7 @@ export type PageSize = (typeof PAGE_SIZES)[number];
 export const TableRootClassname = "table-component";
 export type OnColRenderRowInfo = {
   row: AnyObject;
-  value: any;
+  value: unknown;
   renderedVal: React.ReactNode;
   rowIndex: number;
   prevRow: AnyObject | undefined;

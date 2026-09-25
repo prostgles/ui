@@ -3,38 +3,46 @@ import {
   includes,
   type ValidatedColumnInfo,
 } from "prostgles-types";
-import { onRenderColumn } from "../W_Table/tableUtils/onRenderColumn";
+import React from "react";
+import { RenderValue } from "../SmartForm/SmartFormField/RenderValue";
+import type { ProstglesColumn } from "./W_SQL";
 import type { W_SQLResultsProps } from "./W_SQLResults";
-import type { Prgl } from "src/App";
 
 export const getSQLResultTableColumns = ({
   cols = [],
-  tables,
   onResize,
   maxCharsPerCell,
   rows = [],
 }: Pick<W_SQLResultsProps, "cols" | "onResize" | "rows"> & {
   maxCharsPerCell: number | undefined;
-  tables: Prgl["tables"];
 }) => {
-  return cols.map((c, i) => {
+  const tableColumns: ProstglesColumn[] = cols.map((c, i) => {
     const isNumeric = isNumericColumn(c);
+
     return {
       ...c,
       label: c.name,
       filter: false,
+      computed: false,
       /* Align numbers to right for an easier read */
       headerClassname: isNumeric ? " jc-end  " : " ",
       className: isNumeric ? " ta-right " : " ",
-      onRender: onRenderColumn({
-        column: { ...c, name: i.toString(), format: undefined },
-        getValues: () => rows.map((r) => r[i]),
-        table: undefined,
-        tables,
-        barchartVals: undefined,
-        maxCellChars: maxCharsPerCell || 1000,
-        maximumFractionDigits: 12,
-      }),
+      onRender: ({ value }) => {
+        // const table =
+        // c.tableID ? tables.find((t) => t.oid == c.tableID) : undefined;
+        /** TODO: if matches table and is only pkey (or we have all pkey columns) allow opening the row details
+         * Use href to link to the row details page as in AskLLM
+         */
+        return (
+          <RenderValue
+            column={c}
+            value={value}
+            getValues={() => rows.map((r) => r[i])}
+            maximumFractionDigits={12}
+            maxLength={maxCharsPerCell || 1000}
+          />
+        );
+      },
       onResize: (width) => {
         const newCols = cols.map((_c) => {
           if (_c.key === c.key) {
@@ -46,6 +54,7 @@ export const getSQLResultTableColumns = ({
       },
     };
   });
+  return tableColumns;
 };
 
 export const isNumericColumn = ({

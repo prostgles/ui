@@ -9,6 +9,7 @@ import Loading from "@components/Loader/Loading";
 import Popup, { type PopupProps } from "@components/Popup/Popup";
 import type { PaginationProps } from "@components/Table/Pagination";
 import { Table } from "@components/Table/Table";
+import type { TableHandlerClient } from "prostgles-client";
 import { type AnyObject, type SubscriptionHandler } from "prostgles-types";
 import React from "react";
 import type { Prgl } from "../App";
@@ -17,15 +18,14 @@ import RTComp from "./RTComp";
 import { SmartFilterBar } from "./SmartFilterBar/SmartFilterBar";
 import { SmartForm } from "./SmartForm/SmartForm";
 import { isNumericColumn } from "./W_SQL/getSQLResultTableColumns";
+import { getFormatColumnSelect } from "./W_Table/ColumnMenu/ColumnDisplayFormat/getFormatColumnSelect";
 import type { ColumnSort } from "./W_Table/ColumnMenu/ColumnMenu";
-import { getEditColumn } from "./W_Table/tableUtils/getEditColumn";
-import { onRenderColumn } from "./W_Table/tableUtils/onRenderColumn";
-import type { ProstglesColumn } from "./W_Table/W_Table";
-import type { TableHandlerClient } from "prostgles-client";
+import { onRenderColumn } from "./W_Table/RenderColumn/onRenderColumn";
 import {
-  getColumnFormat,
-  getFormatColumnSelect,
-} from "./W_Table/ColumnMenu/ColumnDisplayFormat/getFormatColumnSelect";
+  getEditColumn,
+  type OnClickEditRow,
+} from "./W_Table/tableUtils/getEditColumn";
+import type { ProstglesColumn } from "./W_Table/W_Table";
 
 type SmartTableProps = Pick<Prgl, "db" | "sql" | "tables" | "methods"> &
   Pick<PopupProps, "clickCatchStyle" | "positioning"> & {
@@ -103,11 +103,12 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
     const tableHandler = db[tableName] as TableHandlerClient | undefined;
     let _tableCols = tableCols ?? [];
     if (!tableCols) {
-      const onClickEditRow = (editRowFilter) => {
+      const onClickEditRow: OnClickEditRow = (editRowFilter) => {
         this.setState({ editRowFilter });
       };
       const table = tables.find((t) => t.name === tableName);
-      const cols = table?.columns ?? [];
+      if (!table) return [];
+      const cols = table.columns;
       const columnConfigs = cols
         .filter((c) => c.select)
         .map((c) => ({ ...c, format: c.renderAs, info: c }));
@@ -122,10 +123,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
           headerClassname: isNumeric ? " jc-end  " : " ",
           className: isNumeric ? " ta-right " : " ",
           onRender: onRenderColumn({
-            column: {
-              ...c,
-              format: getColumnFormat(c),
-            },
+            column: c,
             table,
             tables,
             barchartVals: undefined,
@@ -136,7 +134,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
         };
       });
 
-      if (allowEdit && tableHandler && table) {
+      if (allowEdit && tableHandler) {
         _tableCols.unshift(
           getEditColumn({
             table,
@@ -250,12 +248,17 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
   getDataSelect = () => {
     const { tableName, tables } = this.props;
     const table = tables.find(({ name }) => name === tableName);
-    if (!table) return "*" as const;
+    if (!table || !table.columns.length) return "*" as const;
 
-    const select: AnyObject = { "*": 1 };
+    const select: AnyObject = {};
     table.columns.forEach((info) => {
+      if (!info.select) {
+        return;
+      }
+      select[info.name] = 1;
       const column = { name: info.name, format: info.renderAs, info };
-      Object.assign(select, getFormatColumnSelect({ column, table, tables }));
+      const formatSelect = getFormatColumnSelect({ column, table });
+      Object.assign(select, formatSelect);
     });
     return select;
   };

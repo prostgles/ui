@@ -1325,3 +1325,10 @@ export async function scrollElementIntoView(locator: Locator): Promise<void> {
     element.scrollIntoView({ block: "center" });
   });
 }
+
+export const addFileToChat = async (page: PageWIds, filePath: string) => {
+  const fileChooserPromise = page.waitForEvent("filechooser");
+  await page.getByTestId("Chat.addFiles").click();
+  const fileChooser = await fileChooserPromise;
+  await fileChooser.setFiles(filePath);
+};

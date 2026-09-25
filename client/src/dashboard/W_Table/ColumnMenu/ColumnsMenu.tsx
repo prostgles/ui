@@ -15,7 +15,7 @@ import type {
 } from "../../Dashboard/dashboardUtils";
 import RTComp from "../../RTComp";
 import { SQLSmartEditor } from "../../SQLEditor/SQLSmartEditor";
-import { getFullColumnConfig } from "../tableUtils/getFullColumnConfig";
+import { getColumnsWithInfoAndWidth } from "../tableUtils/getColumnsWithInfoAndWidth";
 import { updateWCols } from "../tableUtils/tableUtils";
 import { AddColumnMenu } from "./AddColumnMenu";
 import { AddComputedColMenu } from "./AddComputedColumn/AddComputedColMenu";
@@ -80,7 +80,7 @@ export class ColumnsMenu extends RTComp<P, S> {
     if (!w) return null;
 
     let table = tables.find((t) => t.name === this.tableName);
-    let cols = getFullColumnConfig(tables, w);
+    let cols = getColumnsWithInfoAndWidth(tables, w);
     const nestedColumnName = nestedColumnOpts?.config.name;
     const onUpdateCols = (columns: ColumnConfig[]) => {
       if (nestedColumnOpts?.type === "new") {
@@ -99,7 +99,7 @@ export class ColumnsMenu extends RTComp<P, S> {
       }
       const nestedTableName = nestedColumn.nested.path.at(-1)!.table;
       table = tables.find((t) => t.name === nestedTableName);
-      cols = getFullColumnConfig(tables, {
+      cols = getColumnsWithInfoAndWidth(tables, {
         table_name: nestedTableName,
         columns: nestedColumn.nested.columns,
       });

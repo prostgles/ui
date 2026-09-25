@@ -73,7 +73,7 @@ type LinkedDataChart = {
  */
 type LinkedDataTable = {
   limit: number;
-  columns: Omit<TableColumn, "nested" | "styling">[];
+  columns: Omit<TableColumn, "nested">[];
 };
 
 /**

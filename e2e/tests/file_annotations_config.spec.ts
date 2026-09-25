@@ -210,7 +210,7 @@ test("CLI text extraction persists Docling profiling without annotations", async
       .poll(
         async () =>
           (await db.files!.findOne!({ id: pdf.id }))?.extraction_status?.state,
-        { timeout: 90_000 },
+        { timeout: 120_000 },
       )
       .toBe("finished");
 

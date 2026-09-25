@@ -29,7 +29,7 @@ import type {
   FixedStyle,
   ScaleStyle,
 } from "./ColumnStyleControls/ColumnStyleControls";
-import { ColumnStyleControls } from "./ColumnStyleControls/ColumnStyleControls";
+import { ColumnStyleMenu } from "./ColumnStyleControls/ColumnStyleMenu";
 
 import type {
   DetailedFilter,
@@ -50,8 +50,8 @@ import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";
 import { useEffectAsync } from "../../DashboardMenu/DashboardMenuSettings";
 import { getAndFixWColumnsConfig } from "../TableMenu/getAndFixWColumnsConfig";
 import type W_Table from "../W_Table";
-import type { ColumnConfigWInfo } from "../W_Table";
-import { getFullColumnConfig } from "../tableUtils/getFullColumnConfig";
+import type { ColumnConfigWithInfo } from "../W_Table";
+import { getColumnsWithInfoAndWidth } from "../tableUtils/getColumnsWithInfoAndWidth";
 import { updateWCols } from "../tableUtils/tableUtils";
 import { AggregateFunctionOptions } from "./AddComputedColumn/AggregateFunctionOptions";
 import { AddComputedColMenu } from "./AddComputedColumn/AddComputedColMenu";
@@ -64,69 +64,101 @@ import { ColumnSortMenu } from "./ColumnSortMenu";
 import { ColumnsMenu } from "./ColumnsMenu";
 import { FunctionSelector } from "./FunctionSelector/FunctionSelector";
 import type { FuncDef } from "./FunctionSelector/functions";
-import type { NESTED_COLUMN_DISPLAY_MODES } from "./LinkedColumn/LinkedColumn";
 import { LinkedColumn } from "./LinkedColumn/LinkedColumn";
-import { getSingleShownNestedColumn } from "../tableUtils/StyledTableColumn";
+import type { BtnProps } from "@components/Btn";
+
+export type ColumnConfigChart = {
+  type: "timechart";
+  dateCol: string;
+  renderStyle: TimechartRenderStyle | "smooth-line";
+  yAxis:
+    | {
+        isCountAll: false;
+        colName: string;
+        funcName: (typeof TIMECHART_STAT_TYPES)[number]["func"];
+      }
+    | {
+        isCountAll: true;
+      };
+};
+
+export type NestedColumn<C extends ColumnConfig | ColumnConfigWithInfo> = Omit<
+  C,
+  "nested"
+> & { nested?: never };
+
+export type ColumnAction =
+  | { type: "record" }
+  /** Uses the relationship, aggregate filter and clicked group. */
+  | { type: "relatedRecords" };
+
+export type ColumnStyle = (
+  | { type?: "None" }
+  | ConditionalStyle
+  | ConditionalStyleIcons
+  | FixedStyle
+  | ScaleStyle
+  | BarchartStyle
+) & {
+  /** Colours come from the same fixed/conditional style as plain values. */
+  buttonVariant?: Extract<
+    BtnProps["variant"],
+    "text" | "faded" | "filled" | "outline"
+  >;
+};
+
+export type NestedDisplay =
+  | { type: "values"; labels?: "auto" | "none" | "inline" | "above" }
+  | { type: "entities" }
+  | ColumnConfigChart;
+
+export type NestedColumnConfig = {
+  path: ParsedJoinPath[];
+  columns: NestedColumn<ColumnConfig>[];
+  joinType?: "inner" | "left";
+  limit?: number;
+  sort?: ColumnSort;
+  detailedFilter?: DetailedFilter[];
+  detailedHaving?: DetailedFilter[];
+  /** Defaults to values, with labels omitted for a single shown column. */
+  display?: NestedDisplay;
+};
 
 export type ColumnConfig = {
   idx?: number;
   name: string;
   show?: boolean;
-  nested?: {
-    path: ParsedJoinPath[];
-    columns: Omit<ColumnConfig, "nested">[];
-    joinType?: "inner" | "left";
-    displayMode?: (typeof NESTED_COLUMN_DISPLAY_MODES)[number]["key"];
-    limit?: number;
-    sort?: ColumnSort;
-    detailedFilter?: DetailedFilter[];
-    detailedHaving?: DetailedFilter[];
-    chart?: {
-      type: "time";
-      dateCol: string;
-      renderStyle: TimechartRenderStyle | "smooth-line";
-      yAxis:
-        | {
-            isCountAll: false;
-            colName: string;
-            funcName: (typeof TIMECHART_STAT_TYPES)[number]["func"];
-          }
-        | {
-            isCountAll: true;
-          };
-    };
-  };
-  style?:
-    | { type: "None" }
-    | ConditionalStyle
-    | ConditionalStyleIcons
-    | FixedStyle
-    | ScaleStyle
-    | BarchartStyle;
-  format?: UserColumnFormat;
-
-  /** If present then this is a computed column */
-  computedConfig?: Pick<ValidatedColumnInfo, "tsDataType" | "udt_name"> & {
-    /**
-     * If true then this (name === computedConfig.column) represents an actual column and should not be removed
-     */
-    isColumn?: boolean;
-
-    /** Out type removed to prevent confusion */
-    funcDef: Omit<FuncDef, "outType">;
-
-    /**
-     * In case of functions that don't need cols column will be undefined
-     */
-    column: string | undefined;
-    args?: {
-      $duration?: { otherColumn: string };
-      $string_agg?: { separator: string };
-      $template_string?: string;
-    };
-    aggregateOptions?: AggregateOptions;
-  };
   width?: number;
+  label?: string;
+  nested?: NestedColumnConfig;
+  style?: ColumnStyle;
+  format?: UserColumnFormat;
+  /** Omit to keep the format's own behaviour without added navigation. */
+  action?: ColumnAction;
+  computedConfig?: ComputedColumnConfig;
+};
+
+export type ComputedColumnConfig = Pick<
+  ValidatedColumnInfo,
+  "tsDataType" | "udt_name"
+> & {
+  /**
+   * If true then this (name === computedConfig.column) represents an actual column and should not be removed
+   */
+  isColumn?: boolean;
+
+  funcDef: Omit<FuncDef, "outType">;
+
+  /**
+   * Undefined for functions that don't need any columns
+   */
+  column: string | undefined;
+  args?: {
+    $duration?: { otherColumn: string };
+    $string_agg?: { separator: string };
+    $template_string?: string;
+  };
+  aggregateOptions?: AggregateOptions;
 };
 
 type P = Pick<CommonWindowProps, "suggestions"> & {
@@ -154,20 +186,22 @@ export const ColumnMenu = (props: P) => {
   const { sql, db, tables } = prgl;
   const [w, setW] = useState<WindowSyncItem<"table">>(props.w);
   const tableName = w.table_name;
-  const [activeKey, setActiveKey] = useState<string | undefined>("Sort");
+  const [activeKey, setActiveKey] = useState<keyof typeof items | undefined>(
+    "Sort",
+  );
   const { state, setState } = useReactiveState(props.columnMenuState);
   const colName = state?.column;
   const getIsMounted = useIsMounted();
 
   const column = useMemo(
-    () => getFullColumnConfig(tables, w).find((c) => c.name === colName),
+    () => getColumnsWithInfoAndWidth(tables, w).find((c) => c.name === colName),
     [colName, tables, w],
   );
 
   useEffect(() => {
-    const wSub = props.w.$cloneSync((wdata) => {
+    const wSub = props.w.$cloneSync((data) => {
       if (!getIsMounted()) return;
-      setW(wdata);
+      setW(data);
     });
     return wSub.$unsync;
   }, [setW, getIsMounted, props.w]);
@@ -175,9 +209,9 @@ export const ColumnMenu = (props: P) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffectAsync(async () => {
     if (!w.columns || !Array.isArray(w.columns)) {
-      updateWCols(w, await getAndFixWColumnsConfig(tables, w));
+      void updateWCols(w, await getAndFixWColumnsConfig(tables, w));
     } else if (colName) {
-      const column = getFullColumnConfig(tables, w).find(
+      const column = getColumnsWithInfoAndWidth(tables, w).find(
         (c) => c.name === colName,
       );
       if (!column) {
@@ -196,7 +230,7 @@ export const ColumnMenu = (props: P) => {
       }
       return c;
     });
-    updateWCols(w, newCols);
+    void updateWCols(w, newCols);
   };
 
   if (!column || !state) return null;
@@ -236,34 +270,26 @@ export const ColumnMenu = (props: P) => {
     },
     Style: {
       leftIconPath: mdiFormatColorFill,
-      // hide:,
       disabledText:
         column.format?.type === "Media" ? "Cannot style a media format column"
-        : (
-          column.nested &&
-          (column.nested.chart || !getSingleShownNestedColumn(column, tables))
-        ) ?
-          "Only supported for nested columns with a single shown column"
+        : column.nested?.display?.type === "timechart" ?
+          "Cannot style a time chart column"
         : undefined,
       style:
-        column.style?.type && column.style.type !== "None" ?
+        (
+          (column.nested?.columns ?? [column]).some(
+            (c) => c.show && c.style && c.style.type !== "None",
+          )
+        ) ?
           { color: "var(--active)" }
         : {},
       content: (
-        <ColumnStyleControls
+        <ColumnStyleMenu
           db={db}
           tableName={tableName}
           tables={tables}
           column={column}
           onUpdate={onUpdate}
-          tsDataType={
-            column.info?.tsDataType ||
-            column.computedConfig?.tsDataType ||
-            "any"
-          }
-          udt_name={
-            column.info?.udt_name || column.computedConfig?.udt_name || "text"
-          }
         />
       ),
     },
@@ -358,7 +384,7 @@ export const ColumnMenu = (props: P) => {
         <QuickAddComputedColumn
           existingColumn={column}
           onAddColumn={(newCol) => {
-            updateWCols(
+            void updateWCols(
               w,
               (w.columns ?? []).map((c) => {
                 if (c.name === column.name) {
@@ -485,45 +511,43 @@ export const ColumnMenu = (props: P) => {
           " min-w-300 flex-col ml-p25 o-auto " +
           (activeKey === "Alter" ? " o-auto " : " p-1 ")
         }
-        activeKey={activeKey as any}
+        activeKey={activeKey}
         items={items}
         menuStyle={{ borderRadius: 0 }}
-        onChange={async (v) => {
+        onChange={(v) => {
           if (v === "Add Computed Column") {
             // onClose();
           } else if (v === "Filter") {
-            const nf: DetailedFilter = await getDefaultFilter(column);
-            w.$update({ filter: [nf, ...w.filter] });
+            const nf: DetailedFilter = getDefaultFilter(column);
+            void w.$update({ filter: [nf, ...w.filter] });
             onClose();
           } else if (v === "Remove") {
-            const columns = (w.columns ?? []) //(await TableMenu.getWCols(db[tableName] as any, w, false))
-              .filter((cc) => column.name !== cc.name);
-            updateWCols(w, columns);
+            const columns = (w.columns ?? []).filter(
+              (cc) => column.name !== cc.name,
+            );
+            void updateWCols(w, columns);
             onClose();
           } else if (v === "Hide") {
-            const columns = (w.columns ?? []) //(await TableMenu.getWCols(db[tableName] as any, w, false))
-              .map((cc) => ({
-                ...cc,
-                show: column.name === cc.name ? false : cc.show,
-              }));
-            updateWCols(w, columns);
+            const columns = (w.columns ?? []).map((cc) => ({
+              ...cc,
+              show: column.name === cc.name ? false : cc.show,
+            }));
+            void updateWCols(w, columns);
             onClose();
           } else if (v === "Hide Others") {
-            const columns = (w.columns ?? []) //(await TableMenu.getWCols(db[tableName] as any, w, false))
-              .map((cc) => ({
-                ...cc,
-                show: column.name === cc.name,
-              }));
-            updateWCols(w, columns);
+            const columns = (w.columns ?? []).map((cc) => ({
+              ...cc,
+              show: column.name === cc.name,
+            }));
+            void updateWCols(w, columns);
             onClose();
           } else if (v === "Unhide all") {
-            const columns = (w.columns ?? []) //(await TableMenu.getWCols(db[tableName] as any, w, false))
-              .map((cc) => ({
-                ...cc,
-                show: true,
-              }));
+            const columns = (w.columns ?? []).map((cc) => ({
+              ...cc,
+              show: true,
+            }));
 
-            w.$update({ columns });
+            void w.$update({ columns });
             onClose();
           }
 
@@ -552,11 +576,9 @@ export const ColumnMenu = (props: P) => {
 };
 
 /** undefined value means filter is disabled (gray col name text) */
-const getDefaultFilter = (col: ColumnConfigWInfo): DetailedFilter => {
-  const isNumeric = ["number", "Date"].includes(
-    col.info?.tsDataType || (col.computedConfig?.funcDef.tsDataTypeCol as any),
-  );
-  const nf: DetailedFilter = {
+const getDefaultFilter = (col: ColumnConfigWithInfo): DetailedFilter => {
+  const isNumeric = includes(["number", "Date"], col.tsDataType);
+  const detailedFilter: DetailedFilter = {
     fieldName: col.name,
     type:
       col.info?.is_pkey || col.info?.references?.length ? "="
@@ -564,5 +586,5 @@ const getDefaultFilter = (col: ColumnConfigWInfo): DetailedFilter => {
       : "$in",
   };
 
-  return nf;
+  return detailedFilter;
 };

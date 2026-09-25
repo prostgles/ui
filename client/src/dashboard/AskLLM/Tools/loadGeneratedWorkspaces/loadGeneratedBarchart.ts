@@ -6,6 +6,10 @@ import type {
 } from "src/dashboard/Dashboard/dashboardUtils";
 import { aggFunctions } from "src/dashboard/W_Table/ColumnMenu/FunctionSelector/functions";
 import { pickKeys } from "prostgles-types";
+import type {
+  ColumnConfig,
+  NestedColumn,
+} from "src/dashboard/W_Table/ColumnMenu/ColumnMenu";
 
 export const loadGeneratedBarchart = (
   generatedWindow: BarchartWindowInsertModel,
@@ -36,7 +40,7 @@ export const loadGeneratedBarchart = (
       undefined
     : xAxisTable?.columns.find((c) => c.name === numericAxis.column);
 
-  const xAxisColumn: NonNullable<WindowData["columns"]>[number] = {
+  const xAxisColumn: NestedColumn<ColumnConfig> = {
     name: xColName,
     width: 250,
     show: true,
@@ -53,7 +57,7 @@ export const loadGeneratedBarchart = (
     },
   };
 
-  const columns: WindowData["columns"] = [
+  const columns: ColumnConfig[] = [
     {
       name: labelColumn,
       width: 150,

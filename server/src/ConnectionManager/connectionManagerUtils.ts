@@ -9,7 +9,6 @@ import ts, { ModuleKind, ModuleResolutionKind, ScriptTarget } from "typescript";
 import type { DatabaseConfigs } from "..";
 import type { ConnectionManager } from "./ConnectionManager";
 import type { ConnectionHotReloadProperties } from "./getHotReloadConfigs";
-import { getSchemaConfig } from "./getSchemaConfig";
 
 export const getDatabaseConfigFilter = (c: ConnectionHotReloadProperties) =>
   pickKeys(c, ["db_name", "db_host", "db_port"]);
@@ -29,6 +28,10 @@ export const getCompiledTS = (code: string) => {
 
   return sourceCode;
 };
+
+/**
+ * @deprecated Use getSchemaConfig instead
+ */
 export const getEvaledExports = <T>(
   code: string | undefined,
 ): T | undefined => {
@@ -38,7 +41,6 @@ export const getEvaledExports = <T>(
    */
   const ending = "\n\nexports;";
   const sourceCode = getCompiledTS(code + ending);
-  // eslint-disable-next-line security/detect-eval-with-expression
   const result = eval(sourceCode) as T;
   return result;
 };
@@ -98,8 +100,7 @@ export const alertIfReferencedFileColumnsRemoved = async function (
   const { dbConf, isSuperUser } =
     this.getActiveConnectionSilentFail(connId) ?? {};
   const referencedTables = dbConf?.file_table_config?.referencedTables as
-    | FileTableConfigReferences
-    | undefined;
+    FileTableConfigReferences | undefined;
   if (
     isSuperUser &&
     dbConf &&

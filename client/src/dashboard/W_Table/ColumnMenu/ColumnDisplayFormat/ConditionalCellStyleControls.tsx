@@ -6,7 +6,7 @@ import { mdiClose, mdiPlus } from "@mdi/js";
 import React from "react";
 import { isDefined } from "prostgles-types";
 import { SmartSearch } from "../../../SmartFilter/SmartSearch/SmartSearch";
-import { StyledCell } from "../../tableUtils/StyledTableColumn";
+import { StyledCell } from "../../RenderColumn/StyledTableColumn";
 import { ColorPicker } from "../ColorPicker";
 import type {
   ConditionalStyle,

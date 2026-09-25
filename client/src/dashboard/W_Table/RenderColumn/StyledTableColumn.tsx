@@ -2,7 +2,7 @@ import { FlexRow, FlexRowWrap } from "@components/Flex";
 import { CellBarchart } from "@components/ProgressBar";
 import { SvgIcon } from "@components/SvgIcon";
 import type { OnColRenderRowInfo } from "@components/Table/Table";
-import { _PG_date, _PG_numbers, includes, isObject } from "prostgles-types";
+import { _PG_date, _PG_numbers, includes } from "prostgles-types";
 import React from "react";
 import type { DBSchemaTablesWJoins } from "src/dashboard/Dashboard/dashboardUtils";
 import { RenderValue } from "../../SmartForm/SmartFormField/RenderValue";
@@ -13,104 +13,75 @@ import type {
 } from "../ColumnMenu/ColumnStyleControls/ColumnStyleControls";
 import { type MinMax } from "../W_Table";
 import { blend } from "../colorBlend";
-import type { ProstglesTableColumn } from "./getTableCols";
-import { kFormatter } from "./kFormatter";
-import type { OnRenderColumnProps } from "./onRenderColumn";
+import type { ProstglesTableColumn } from "../tableUtils/getTableCols";
+import { kFormatter } from "../tableUtils/kFormatter";
+import type { RenderColumnProps } from "./RenderColumn";
 
 type P = Pick<OnColRenderRowInfo, "value" | "renderedVal" | "row"> &
-  Pick<
-    OnRenderColumnProps,
-    "maxCellChars" | "column" | "barchartVals" | "tables" | "table"
-  > & {
+  Pick<RenderColumnProps, "barchartVals" | "tables" | "table" | "isNested"> & {
     formattedValue?: React.ReactNode;
+    column: Pick<ColumnConfig, "name" | "style" | "nested"> &
+      Pick<ProstglesTableColumn, "tsDataType" | "udt_name">;
   };
 
 export const StyledTableColumn = ({
-  column: c,
+  column,
   row,
   formattedValue,
   value: valueOrNestedValue,
   barchartVals,
+  isNested,
   renderedVal: renderedValRaw,
-  tables,
   table,
 }: P) => {
-  const cellValue = (() => {
-    if (!c.nested) {
-      return {
-        type: "normal" as const,
-        value: valueOrNestedValue,
-        renderedVal: formattedValue ?? (
-          <RenderValue
-            column={c}
-            value={valueOrNestedValue}
-            style={{ color: "inherit" }}
-          />
-        ),
-      };
-    }
-
-    const nestedSingleColumn = getSingleShownNestedColumn(c, tables);
-    if (!nestedSingleColumn) {
-      return;
-    }
-    const { colInfo: shownColumnInfo, shownCol } = nestedSingleColumn;
-    const firstRow =
-      Array.isArray(valueOrNestedValue) ? valueOrNestedValue[0] : undefined;
-    const value =
-      firstRow && isObject(firstRow) ? firstRow[shownCol.name] : null;
-    return {
-      type: "nested" as const,
-      value,
-      renderedVal: (
-        <RenderValue
-          column={shownColumnInfo}
-          value={value}
-          style={{ color: "inherit" }}
-        />
-      ),
-    };
-  })();
-
-  if (!cellValue) {
-    return renderedValRaw;
-  }
-  const { value, renderedVal } = cellValue;
-  if (c.style?.type === "Icons") {
+  if (column.nested) return renderedValRaw;
+  const value = valueOrNestedValue;
+  const renderedVal = formattedValue ?? renderedValRaw;
+  const chartValues = barchartVals?.get(column.name);
+  const range = chartValues?.type !== "nested" ? chartValues?.range : undefined;
+  if (column.style?.type === "Icons") {
     const valueKey = String(value?.toString() ?? "");
-    const iconName = valueKey && c.style.valueToIconMap[valueKey];
-    const sizeNum = c.style.size ?? 24;
+    const iconName = valueKey && column.style.valueToIconMap[valueKey];
+    const sizeNum = column.style.size ?? 24;
     const iconNode = iconName && <SvgIcon icon={iconName} size={sizeNum} />;
-    return <FlexRow>{iconNode ?? value}</FlexRow>;
+    return <FlexRow>{iconNode || renderedVal}</FlexRow>;
   }
-  if (c.style?.type === "Barchart" && barchartVals?.[c.name]) {
-    const numVal = Number(value);
-    const numMin = Number(barchartVals[c.name]?.min ?? 0);
-    const numMax = Number(barchartVals[c.name]?.max ?? 0);
+  if (
+    column.style?.type === "Barchart" &&
+    range &&
+    value != null &&
+    Number.isFinite(range.min) &&
+    Number.isFinite(range.max)
+  ) {
+    const numVal =
+      (
+        chartValues?.type === "date" &&
+        (typeof value === "string" || value instanceof Date)
+      ) ?
+        +new Date(value)
+      : Number(value);
+    const numMin = range.min;
+    const numMax = range.max;
     return (
       <CellBarchart
         min={numMin}
         max={numMax}
-        barColor={c.style.barColor}
-        textColor={c.style.textColor}
+        barColor={column.style.barColor}
+        textColor={column.style.textColor}
         value={numVal}
-        message={kFormatter(numVal)}
+        message={
+          formattedValue ??
+          (chartValues?.type === "date" ? renderedVal : kFormatter(numVal))
+        }
       />
     );
-  } else if (c.style?.type !== "None") {
-    const conditionColumn =
-      c.style?.type === "Conditional" ? c.style.column : undefined;
-    const style = getCellStyle(
-      c,
-      table?.columns.find((col) => col.name === conditionColumn) ?? c,
-      conditionColumn ? row[conditionColumn] : value,
-      barchartVals?.[c.name],
-    );
+  } else if (column.style?.type !== "None") {
+    const style = getColumnValueStyle({ column, table, row, barchartVals });
 
     if (
-      includes(["Fixed", "Conditional"], c.style?.type) &&
+      includes(["Fixed", "Conditional"], column.style?.type) &&
       Array.isArray(value) &&
-      c.udt_name.startsWith("_")
+      column.udt_name.startsWith("_")
     ) {
       return (
         <FlexRowWrap className="gap-p25">
@@ -118,7 +89,7 @@ export const StyledTableColumn = ({
             <StyledCell
               key={i}
               style={
-                c.style?.type === "Scale" ?
+                column.style?.type === "Scale" && !isNested ?
                   { textColor: style?.textColor }
                 : style
               }
@@ -126,8 +97,13 @@ export const StyledTableColumn = ({
                 <RenderValue
                   value={v}
                   column={{
-                    udt_name: c.udt_name.slice(1) as any,
-                    tsDataType: c.tsDataType.slice(0, -2) as any,
+                    udt_name: column.udt_name.slice(
+                      1,
+                    ) as typeof column.udt_name,
+                    tsDataType: column.tsDataType.slice(
+                      0,
+                      -2,
+                    ) as typeof column.tsDataType,
                   }}
                   style={
                     style?.textColor ? { color: style.textColor } : undefined
@@ -135,7 +111,7 @@ export const StyledTableColumn = ({
                   maxLength={55}
                 />
               }
-              className={c.tsDataType === "number" ? "as-end" : ""}
+              className={column.tsDataType === "number" ? "as-end" : ""}
             />
           ))}
         </FlexRowWrap>
@@ -144,10 +120,12 @@ export const StyledTableColumn = ({
     return (
       <StyledCell
         style={
-          c.style?.type === "Scale" ? { textColor: style?.textColor } : style
+          column.style?.type === "Scale" && !isNested ?
+            { textColor: style?.textColor }
+          : style
         }
         renderedVal={renderedVal}
-        className={includes(_PG_numbers, c.udt_name) ? "as-end" : ""}
+        className={includes(_PG_numbers, column.udt_name) ? "as-end" : ""}
       />
     );
   }
@@ -204,18 +182,10 @@ export const StyledCell = ({
 };
 
 export const getCellStyle = (
-  col: Omit<ColumnConfig, "format">,
-  c: Pick<ProstglesTableColumn, "tsDataType" | "udt_name">,
+  { style, udt_name }: Pick<ProstglesTableColumn, "udt_name" | "style">,
   val: any,
   dataRange: MinMax | undefined,
-):
-  | {
-      textColor?: string;
-      chipColor?: string;
-      cellColor?: string;
-    }
-  | undefined => {
-  const { style } = col;
+): ChipStyle | undefined => {
   let res: ChipStyle = {};
   if (!style || style.type === "None") {
     res = {};
@@ -226,13 +196,13 @@ export const getCellStyle = (
 
     const match = style.conditions.find(({ operator, condition }) => {
       const isNumeric =
-        c.udt_name === "int4" ||
-        c.udt_name === "float8" ||
-        c.udt_name === "numeric" ||
-        c.udt_name === "int8" ||
-        c.udt_name === "int2" ||
-        c.udt_name === "float4" ||
-        c.udt_name === "money";
+        udt_name === "int4" ||
+        udt_name === "float8" ||
+        udt_name === "numeric" ||
+        udt_name === "int8" ||
+        udt_name === "int2" ||
+        udt_name === "float4" ||
+        udt_name === "money";
       const conditionalValue =
         isNumeric ? +(condition as string) : (condition as ColumnValue);
       if (operator === "contains") {
@@ -294,11 +264,16 @@ export const getCellStyle = (
       minColor = "#63f717",
       maxColor = "#46b5d5",
     } = style;
-    const dateOrNumber = includes(_PG_date, c.udt_name) ? +new Date(val) : +val;
+    const dateOrNumber = includes(_PG_date, udt_name) ? +new Date(val) : +val;
     const { max, min } = dataRange ?? {};
 
-    if (isNumber(dateOrNumber) && isNumber(min) && isNumber(max)) {
-      const perc = (dateOrNumber - min) / (max - min);
+    if (
+      val != null &&
+      isNumber(dateOrNumber) &&
+      isNumber(min) &&
+      isNumber(max)
+    ) {
+      const perc = max === min ? 0 : (dateOrNumber - min) / (max - min);
 
       res = {
         textColor,
@@ -315,20 +290,41 @@ export const isNumber = (v: any): v is number => {
 };
 
 export const getSingleShownNestedColumn = (
-  column: Omit<ColumnConfig, "format">,
+  column: Pick<ColumnConfig, "nested">,
   tables: DBSchemaTablesWJoins,
 ) => {
   if (!column.nested) return;
-  const shownNestedCols = column.nested.columns.filter((nc) => nc.show);
-  if (shownNestedCols.length !== 1) return;
-  const shownCol = shownNestedCols[0]!;
   const table = tables.find(
     (t) => t.name === column.nested?.path.at(-1)?.table,
   );
   if (!table) return;
+  const shownNestedCols = column.nested.columns.filter((nc) => nc.show);
+  if (shownNestedCols.length !== 1) return;
+  const shownCol = shownNestedCols[0]!;
   const colInfo =
     shownCol.computedConfig ??
     table.columns.find((col) => col.name === shownCol.name);
   if (!colInfo) return;
   return { colInfo, shownCol, table };
+};
+
+export const getColumnValueStyle = ({
+  column,
+  table,
+  row,
+  barchartVals,
+}: Pick<P, "column" | "table" | "row" | "barchartVals">) => {
+  const conditionColumn =
+    column.style?.type === "Conditional" ? column.style.column : undefined;
+  const valueColumn =
+    conditionColumn && table.columns.find((c) => c.name === conditionColumn);
+  const chartValues = barchartVals?.get(column.name);
+  return getCellStyle(
+    {
+      ...column,
+      udt_name: valueColumn ? valueColumn.udt_name : column.udt_name,
+    },
+    row[conditionColumn || column.name],
+    chartValues?.type !== "nested" ? chartValues?.range : undefined,
+  );
 };

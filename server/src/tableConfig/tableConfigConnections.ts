@@ -131,5 +131,12 @@ export const tableConfigConnections: TableConfig<{ en: 1 }> = {
           )`,
       database_config_fkey: `FOREIGN KEY (${UNIQUE_DB_FIELD_LIST}) REFERENCES database_configs( ${UNIQUE_DB_FIELD_LIST} )`,
     },
+    indexes: {
+      "Only one state connection allowed": {
+        unique: true,
+        columns: "is_state_db",
+        where: "is_state_db = true",
+      },
+    },
   },
 };

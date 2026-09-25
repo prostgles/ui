@@ -59,7 +59,7 @@ export const SmartFilterBarSort = ({ table, ...props }: P) => {
             ?.flatMap((c) => {
               if (!c.show) return;
               if (c.nested) {
-                if (c.nested.chart) {
+                if (c.nested.display?.type === "timechart") {
                   return ["date", "value"].map((k) => ({
                     key: `${c.name}.${k}`,
                     label: `${c.name} - ${k}`,

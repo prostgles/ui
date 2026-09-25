@@ -26,6 +26,7 @@ type P = Pick<MediaViewerProps, "context"> & {
   style: React.CSSProperties | undefined;
   setIsFocused: (isFocused: boolean) => void;
   variant?: "thumbnail";
+  isLoading?: boolean;
 };
 
 export const MediaViewerContent = ({
@@ -38,6 +39,7 @@ export const MediaViewerContent = ({
   subTitle,
   variant,
   context,
+  isLoading,
 }: P) => {
   const [expandedDocUrl, setExpandedDocUrl] = useState<string>();
   if (!urlInfo) return null;
@@ -110,6 +112,7 @@ export const MediaViewerContent = ({
               : undefined
             }
             size={variant === "thumbnail" ? "large" : undefined}
+            loading={isLoading && "allow-clicking"}
             value={content_type ?? "Not found"}
             title={content_type ?? url}
             className="max-w-full"

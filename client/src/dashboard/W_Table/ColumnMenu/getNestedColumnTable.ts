@@ -2,7 +2,6 @@ import type {
   DBSchemaTablesWJoins,
   WindowSyncItem,
 } from "../../Dashboard/dashboardUtils";
-import type { ColumnConfigWInfo } from "../W_Table";
 import { getMinimalColumnInfo } from "../tableUtils/tableUtils";
 import type { ColumnConfig } from "./ColumnMenu";
 
@@ -14,21 +13,20 @@ type Result = {
 type ErrorResult = Partial<Record<keyof Result, undefined>>;
 
 type MaybeResult =
-  | ({ error: string } & ErrorResult)
-  | ({ error?: undefined } & Result);
+  ({ error: string } & ErrorResult) | ({ error?: undefined } & Result);
 
 export type NestedColumnOpts =
   | {
       type: "new";
-      config: ColumnConfigWInfo;
+      config: ColumnConfig;
       /**
        * A new nested column will be kept locally until the user decides to save it
        */
-      onChange: (config: ColumnConfigWInfo) => void;
+      onChange: (config: ColumnConfig) => void;
     }
   | {
       type: "existing";
-      config: ColumnConfigWInfo;
+      config: ColumnConfig;
     };
 export const getNestedColumnTable = (
   nestedColumnOpts: NestedColumnOpts | undefined,

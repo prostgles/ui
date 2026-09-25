@@ -29,7 +29,7 @@ import { CloseSaveSQLPopup } from "./CloseSaveSQLPopup";
 import { DashboardCenteredLayoutResizer } from "./DashboardCenteredLayoutResizer";
 import type { ViewRendererProps } from "./ViewRenderer";
 import { ViewRendererWrapped } from "./ViewRenderer";
-import { cloneWorkspace } from "./cloneWorkspace";
+import { cloneWorkspace, getCanCreateWorkspaces } from "./cloneWorkspace";
 import type {
   ChartType,
   LinkSyncItem,
@@ -112,13 +112,7 @@ export class _Dashboard extends RTComp<
 
   loadingSchema: DashboardState["suggestions"];
   loadSchema = async (force = false): Promise<void> => {
-    const {
-      db,
-      connectionId,
-      tables: dbSchemaTables,
-      connection,
-      sql,
-    } = this.props.prgl;
+    const { connectionId, sql } = this.props.prgl;
     const workspace = this.d.workspace;
     const dbKey =
       force ? `${FORCED_REFRESH_PREFIX}${Date.now()}` : this.props.prgl.dbKey;
@@ -204,25 +198,14 @@ export class _Dashboard extends RTComp<
           { orderBy: { last_used: -1 } },
         );
 
-        await cloneEditableWorkspaces({ dbs, user_id });
-
-        /** If this is an editable workspace then ensure we're working on a clone */
-        if (
-          currentWorkspace?.published &&
-          currentWorkspace.user_id !== this.props.prgl.user?.id &&
-          currentWorkspace.layout_mode !== "fixed"
-        ) {
-          let myClonedWsp = await workspaces.findOne({
-            parent_workspace_id: currentWorkspace.id,
-          });
-          if (!myClonedWsp) {
-            myClonedWsp = (await cloneWorkspace(dbs, currentWorkspace.id, true))
-              .clonedWsp;
-          }
-          if (currentWorkspace.id !== myClonedWsp.id) {
-            window.location.href = getWorkspacePath(myClonedWsp);
-          }
-          currentWorkspace = myClonedWsp;
+        const requestedWorkspaceId = currentWorkspace?.id;
+        currentWorkspace = await cloneEditableWorkspaces({
+          dbs,
+          user_id,
+          currentWorkspace,
+        });
+        if (currentWorkspace && requestedWorkspaceId !== currentWorkspace.id) {
+          window.location.href = getWorkspacePath(currentWorkspace);
         }
       } catch (e) {
         this.setState({ wspError: e });
@@ -595,13 +578,7 @@ export type CommonWindowProps<T extends ChartType = ChartType> = Pick<
   "data-key": string;
   "data-table-name": string | null;
   "data-view-type":
-    | "table"
-    | "map"
-    | "timechart"
-    | "sql"
-    | "card"
-    | "method"
-    | "barchart";
+    "table" | "map" | "timechart" | "sql" | "card" | "method" | "barchart";
   "data-title": string;
   "data-links-to": string;
   w: WindowSyncItem<T>;
@@ -636,27 +613,42 @@ export const getIsPinnedMenu = (workspace: WorkspaceSyncItem) => {
 const cloneEditableWorkspaces = async ({
   dbs,
   user_id,
+  currentWorkspace,
 }: {
   dbs: Prgl["dbs"];
   user_id: string | undefined;
-}) => {
+  currentWorkspace: Workspace | undefined;
+}): Promise<Workspace | undefined> => {
+  if (!user_id || !getCanCreateWorkspaces(dbs)) {
+    return currentWorkspace;
+  }
+
   /** Clone published editable workspaces */
-  const editablePublished =
-    !user_id ?
-      []
-    : await dbs.workspaces.find({
-        published: true,
-        user_id: { $ne: user_id },
-        layout_mode: { $isDistinctFrom: "fixed" },
-        $notExistsJoined: {
-          workspaces: {
-            user_id,
-          },
-        },
-      });
+  const editablePublished = await dbs.workspaces.find({
+    published: true,
+    user_id: { $ne: user_id },
+    layout_mode: { $isDistinctFrom: "fixed" },
+    $notExistsJoined: {
+      workspaces: {
+        user_id,
+      },
+    },
+  });
   await Promise.all(
     editablePublished.map(async (wsp) => {
       return cloneWorkspace(dbs, wsp.id, true);
     }),
   );
+
+  if (
+    currentWorkspace?.published &&
+    currentWorkspace.user_id !== user_id &&
+    currentWorkspace.layout_mode !== "fixed"
+  ) {
+    return await dbs.workspaces.findOne({
+      parent_workspace_id: currentWorkspace.id,
+    });
+  }
+
+  return currentWorkspace;
 };

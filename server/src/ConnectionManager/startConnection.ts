@@ -4,7 +4,7 @@ import { API_ENDPOINTS } from "@common/utils";
 import { IS_PROD } from "@src/init/utils";
 import { createProstgles } from "prostgles-server";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
-import type { PRGLIOSocket } from "prostgles-server/dist/DboBuilder/DboBuilder";
+import type { ClientSocketWithCachedData } from "prostgles-server/dist/DboBuilder/DboBuilder";
 import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
 import { getIsSuperUser, type DB } from "prostgles-server/dist/Prostgles";
 import type { InitResult } from "prostgles-server/dist/initProstgles";
@@ -30,7 +30,7 @@ export const startConnection = async function (
   connectionId: string,
   dbs: DBOFullyTyped<DBGeneratedSchema>,
   _dbs: DB,
-  socket?: PRGLIOSocket,
+  socket?: ClientSocketWithCachedData,
   restartIfExists = false,
 ): Promise<{ socketPath: string; socketUrl: string | undefined } | undefined> {
   let existingConnection = this.prglConnections.get(connectionId);

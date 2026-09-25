@@ -90,7 +90,6 @@ export const saveTsAsStringValue = ({
   let currentContent = "";
   const commonBuiltDir = join(__dirname, "../../../common");
   try {
-    // eslint-disable-next-line security/detect-non-literal-require
     currentContent = require(join(commonBuiltDir, variableName))[
       variableName
     ] as string;

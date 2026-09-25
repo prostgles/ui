@@ -1,31 +1,24 @@
-import { mdiDatabaseRefreshOutline, mdiDelete, mdiPlus } from "@mdi/js";
-import { asName } from "prostgles-types";
-import React, { useMemo } from "react";
 import Btn from "@components/Btn";
 import { FlexCol, FlexRow } from "@components/Flex";
 import { InfoRow } from "@components/InfoRow";
 import { Select } from "@components/Select/Select";
+import { mdiDatabaseRefreshOutline, mdiDelete, mdiPlus } from "@mdi/js";
+import { asName } from "prostgles-types";
+import React, { useMemo } from "react";
 import {
   SmartCardList,
   type SmartCardListProps,
 } from "../../SmartCardList/SmartCardList";
 import type { W_TableMenuProps, W_TableMenuState } from "./W_TableMenu";
 import type { W_TableInfo } from "./getTableMeta";
-import type { DBSSchema } from "@common/publishUtils";
 
 type P = W_TableMenuProps & {
   tableMeta: W_TableInfo | undefined;
   onSetQuery: (newQuery: W_TableMenuState["query"]) => void;
 };
-export const W_TableMenu_Indexes = ({
-  tableMeta,
-  onSetQuery,
-  w,
-  cols,
-  prgl,
-}: P) => {
+export const W_TableMenu_Indexes = ({ tableMeta, onSetQuery, w, prgl }: P) => {
   const tableName = w.table_name;
-
+  const table = prgl.tables.find((t) => t.name === tableName);
   const listProps = useMemo(() => {
     return {
       tableName: {
@@ -156,7 +149,7 @@ export const W_TableMenu_Indexes = ({
           onChange={(val) => {
             onSetQuery({
               title: "Create index",
-              sql: `CREATE INDEX ON public.${tableName} \nUSING ${val.toLowerCase().replaceAll("-", "")} (${cols.map((c) => JSON.stringify(c.name)).join(", ")}) `,
+              sql: `CREATE INDEX ON public.${tableName} \nUSING ${val.toLowerCase().replaceAll("-", "")} (${(table?.columns ?? []).map((c) => JSON.stringify(c.name)).join(", ")}) `,
             });
           }}
         />

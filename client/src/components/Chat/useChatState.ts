@@ -17,8 +17,14 @@ export const useChatState = (
     textAreaRef: React.RefObject<HTMLTextAreaElement>;
   },
 ) => {
-  const { messages, onSend, isLoading, textAreaRef, currentlyTypedMessage } =
-    props;
+  const {
+    messages,
+    onSend,
+    isLoading,
+    textAreaRef,
+    currentlyTypedMessage,
+    onCurrentlyTypedMessageChange,
+  } = props;
 
   const [scrollRef, setScrollRef] = useState<HTMLDivElement | null>(null);
 
@@ -33,7 +39,7 @@ export const useChatState = (
   }, [lastMessageId, scrollRef]);
 
   const getCurrentMessage = useCallback(
-    () => textAreaRef.current?.value || currentlyTypedMessage || "",
+    () => textAreaRef.current?.value ?? currentlyTypedMessage ?? "",
     [currentlyTypedMessage, textAreaRef],
   );
   const setCurrentMessage = useCallback(
@@ -72,7 +78,9 @@ export const useChatState = (
         [{ type: "text", text: msg }, ...docFilesMessages],
         otherFiles.map((f) => f.file),
       );
+      if (!textAreaRef.current) return;
       setCurrentMessage("");
+      onCurrentlyTypedMessageChange("");
       setFiles([]);
     } catch (e) {
       console.error(e);
@@ -83,8 +91,10 @@ export const useChatState = (
     filesWithInfo?.length,
     getConvertedDocs,
     onSend,
+    onCurrentlyTypedMessageChange,
     setCurrentMessage,
     setFiles,
+    textAreaRef,
   ]);
   const chatIsLoading = isLoading || sendingMsg;
 

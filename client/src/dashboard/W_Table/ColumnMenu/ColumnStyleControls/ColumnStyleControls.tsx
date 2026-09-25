@@ -14,10 +14,9 @@ import {
 import { ConditionalCellIconStyleControls } from "../ColumnDisplayFormat/ConditionalCellIconStyleControls";
 import type { CONDITION_OPERATORS } from "../ColumnDisplayFormat/ConditionalCellStyleControls";
 import { ConditionalCellStyleControls } from "../ColumnDisplayFormat/ConditionalCellStyleControls";
-import type { ColumnConfig } from "../ColumnMenu";
-import { getValueColors } from "./getValueColors";
+import type { ColumnConfig, ColumnStyle } from "../ColumnMenu";
 import { UpdateColumnGlobalConfig } from "../UpdateColumnGlobalConfig";
-import { getSingleShownNestedColumn } from "../../tableUtils/StyledTableColumn";
+import { getValueColors } from "./getValueColors";
 
 export type ColumnValue = string | number | Date | null | undefined | boolean;
 
@@ -76,11 +75,8 @@ export type StyleColumnProps = Pick<Prgl, "db" | "tables"> & {
 };
 
 export const ColumnStyleControls = (props: StyleColumnProps) => {
-  const { column, onUpdate, tableName, db } = props;
-
-  const nestedColumn = getSingleShownNestedColumn(column, props.tables);
-  const { tsDataType, udt_name } = nestedColumn?.colInfo ?? props;
-  const STYLE_MODES: Array<Required<ColumnConfig>["style"]["type"]> = [
+  const { column, onUpdate, tableName, db, tsDataType, udt_name } = props;
+  const STYLE_MODES: Array<NonNullable<ColumnStyle["type"]>> = [
     "None",
     "Fixed",
     "Conditional",
@@ -96,11 +92,14 @@ export const ColumnStyleControls = (props: StyleColumnProps) => {
     STYLE_MODES.push("Barchart");
   }
 
-  const style_type = style.type;
+  const style_type = style.type ?? "None";
   const setStyle = (newStyle: ColumnConfig["style"]) => {
     /* If different style type then full overwrite. Otherwise update */
     if (newStyle?.type && newStyle.type !== style.type) {
-      let _newStyle = { ...newStyle };
+      let _newStyle: ColumnStyle = {
+        buttonVariant: style.buttonVariant,
+        ...newStyle,
+      };
       if (newStyle.type === "Barchart") {
         _newStyle = {
           barColor: "rgba(0,246,96,1)",
@@ -123,6 +122,17 @@ export const ColumnStyleControls = (props: StyleColumnProps) => {
 
   return (
     <FlexCol className="ColumnStyleControls flex-col gap-1">
+      {column.action && (
+        <Select
+          label="Button style"
+          options={["text", "faded", "filled", "outline"]}
+          value={
+            style.buttonVariant ??
+            (column.nested?.display?.type === "entities" ? "faded" : "text")
+          }
+          onChange={(buttonVariant) => updateStylePart({ buttonVariant })}
+        />
+      )}
       <Select
         label="Style mode"
         value={style_type}

@@ -172,10 +172,7 @@ export async function getTableData(
         );
         if (barchartVals) {
           ns = ns || ({} as any);
-          ns!.barchartVals = {
-            ...this.state.barchartVals,
-            ...barchartVals,
-          };
+          ns!.barchartVals = barchartVals;
         }
 
         if (Object.keys(select).length) {

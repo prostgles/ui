@@ -1,15 +1,15 @@
-import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import type { ColumnConfigWInfo } from "../W_Table";
-import React, { useMemo } from "react";
 import { tableMightBeUndefinedDueToAccessControl } from "@common/utils";
 import Btn from "@components/Btn";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import React, { useMemo } from "react";
+import type { ColumnConfig } from "./ColumnMenu";
 
 export const UpdateColumnGlobalConfig = ({
   column,
   tableName,
 }: {
   tableName: string;
-  column: ColumnConfigWInfo;
+  column: ColumnConfig;
 }) => {
   const {
     dbs,

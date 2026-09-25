@@ -5,7 +5,7 @@ import Btn from "@components/Btn";
 import { FlexCol } from "@components/Flex";
 import Popup from "@components/Popup/Popup";
 import { SwitchToggle } from "@components/SwitchToggle";
-import type { ColumnConfigWInfo } from "../W_Table";
+import type { ColumnConfigWithInfo } from "../W_Table";
 import { FunctionSelector } from "./FunctionSelector/FunctionSelector";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
 import type { AggregateOptions } from "./ColumnMenu";
@@ -13,9 +13,9 @@ import { AggregateFunctionOptions } from "./AddComputedColumn/AggregateFunctionO
 
 type SummariseColumnProps = {
   table: DBSchemaTableWJoins;
-  column: ColumnConfigWInfo;
-  onChange: (newCols: ColumnConfigWInfo[]) => void;
-  columns: ColumnConfigWInfo[];
+  column: ColumnConfigWithInfo;
+  onChange: (newCols: ColumnConfigWithInfo[]) => void;
+  columns: ColumnConfigWithInfo[];
 };
 
 export const SummariseColumn = ({
@@ -74,7 +74,7 @@ export const SummariseColumn = ({
                   color: "action",
                   "data-command": "SummariseColumn.apply",
                   onClick: () => {
-                    const newCol: ColumnConfigWInfo = {
+                    const newCol: ColumnConfigWithInfo = {
                       ...column,
                       // name: funcDef? `${funcDef.label}(${column.name})` : column.name,
                       show: true,

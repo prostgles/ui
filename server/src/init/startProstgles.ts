@@ -19,7 +19,7 @@ import { DBS_CONNECTION_INFO } from "../envVars";
 import { publish } from "../publish/publish";
 import { tableConfig } from "../tableConfig/tableConfig";
 import { tableHooks } from "../tableHooks/tableHooks";
-import { tableConfigMigrations } from "../tableConfig/tableConfigMigrations";
+import { getTableConfigMigrations } from "../tableConfig/tableConfigMigrations";
 import { prostglesOnReady } from "./prostglesOnReady";
 import { startDevHotReloadNotifier } from "./startDevHotReloadNotifier";
 import { IS_PROD } from "./utils";
@@ -192,7 +192,7 @@ export const startProstgles = async ({
           },
           tableConfig,
           tableHooks,
-          tableConfigMigrations,
+          tableConfigMigrations: getTableConfigMigrations(con),
           publishRawSQL: (params) => {
             const { user } = params;
             return Boolean(user && user.type === "admin");

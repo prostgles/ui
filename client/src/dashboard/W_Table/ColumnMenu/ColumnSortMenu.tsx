@@ -1,8 +1,8 @@
 import React from "react";
 import { FlexCol } from "@components/Flex";
 import { Select } from "@components/Select/Select";
-import type { ColumnSort } from "./ColumnMenu";
-import type { ColumnConfigWInfo } from "../W_Table";
+import type { ColumnConfig, ColumnSort, NestedColumn } from "./ColumnMenu";
+import type { ColumnConfigWithInfo } from "../W_Table";
 import type {
   DBSchemaTablesWJoins,
   WindowSyncItem,
@@ -22,7 +22,7 @@ const SORT_OPTIONS = [
 ] as const;
 
 export type ColumnSortMenuProps = {
-  column: ColumnConfigWInfo;
+  column: ColumnConfigWithInfo;
   w: WindowSyncItem<"table">;
   tables: DBSchemaTablesWJoins;
 };
@@ -65,15 +65,15 @@ export const ColumnSortMenu = ({ column, w }: ColumnSortMenuProps) => {
     } else if (!matched as any) {
       newSort.push(newColSort);
     }
-    w.$update({ sort: newSort });
+    void w.$update({ sort: newSort });
   };
 
   const nested = column.nested && {
     ...column.nested,
     table: column.nested.path.at(-1)!.table,
   };
-  const nestedCols =
-    nested?.chart ?
+  const nestedCols: NestedColumn<ColumnConfig>[] | undefined =
+    nested?.display?.type === "timechart" ?
       [
         { name: "date", show: true },
         { name: "value", show: true },
@@ -90,14 +90,14 @@ export const ColumnSortMenu = ({ column, w }: ColumnSortMenuProps) => {
               nc.show ? undefined : "Must unhide column before sorting",
           }))}
           value={existingSort?.key}
-          onChange={(key, e) => {
+          onChange={(key) => {
             const newSort =
               existingSort ?
                 w.sort!.map((s) =>
                   s.key === existingSort.key ? { ...existingSort, key } : s,
                 )
               : [{ key, asc: true }];
-            w.$update({ sort: newSort });
+            void w.$update({ sort: newSort });
           }}
         />
       )}

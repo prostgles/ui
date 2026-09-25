@@ -4,11 +4,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Icon } from "../Icon/Icon";
 import Popup from "../Popup/Popup";
 import type { AnyObject } from "prostgles-types";
-import {
-  MediaViewerContent,
-  type UrlInfo,
-  type ValidContentType,
-} from "./MediaViewerContent";
+import { MediaViewerContent, type UrlInfo } from "./MediaViewerContent";
 import { ContentTypes } from "@common/columnDisplayFormat.schema";
 import type { DBSchemaTableWithOptions } from "src/dashboard/Dashboard/getTables";
 
@@ -34,7 +30,9 @@ export type MediaViewerProps = {
   /**
    * If present then use this
    */
-  content_type?: ValidContentType;
+  content_type?: string;
+
+  isLoading?: boolean;
 
   variant?: "thumbnail";
 
@@ -55,6 +53,7 @@ export const MediaViewer = (props: MediaViewerProps) => {
     name,
     variant,
     context,
+    isLoading,
   } = props;
   const [isFocused, setIsFocused] = useState(false);
   const [urlInfo, setUrlInfo] = useState<UrlInfo | undefined>(
@@ -63,7 +62,7 @@ export const MediaViewer = (props: MediaViewerProps) => {
         raw: url,
         validated: url,
         forDisplay: sliceText(url, 100),
-        type: content_type,
+        type: ContentTypes.find((type) => content_type.startsWith(type)),
         content_type,
       }
     : undefined,
@@ -145,6 +144,7 @@ export const MediaViewer = (props: MediaViewerProps) => {
         contentOnly={false}
         variant={variant}
         context={context}
+        isLoading={isLoading}
       />
       {isFocused && (
         <Popup

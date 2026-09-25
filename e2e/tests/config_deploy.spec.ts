@@ -485,7 +485,9 @@ test("checkFilterDetailed works with grouped existsJoined", async ({
   }
 });
 
-test("CLI permission sync preserves shared connections, workspaces and source functions", async () => {
+test("CLI permission sync preserves shared connections, workspaces and source functions", async ({
+  page,
+}) => {
   const configPath = createConfigTestProject({
     id: "permission-sync-e2e",
     tableConfig: { records: { columns: { id: "serial PRIMARY KEY" } } },
@@ -590,6 +592,30 @@ module.exports.functions = {
       await state.sql!(
         "SELECT count(*)::int FROM workspaces WHERE connection_id = $1 AND name = $2",
         [connection.id, workspace.name],
+        { returnType: "value" },
+      ),
+    ).toBe(1);
+    await page
+      .context()
+      .addCookies(deployment.storageStateAs("default").cookies);
+    await page.goto(deployment.dashboardUrl);
+    await expect(page.getByTestId("WorkspaceMenu.list")).toContainText(
+      workspace.name,
+    );
+    await expect(
+      page.getByText("Workspace not found", { exact: true }),
+    ).toHaveCount(0);
+    await page.getByTestId("WorkspaceMenuDropDown").click();
+    await expect(
+      page.getByTestId("WorkspaceMenuDropDown.WorkspaceAddBtn"),
+    ).toHaveCount(0);
+    await expect(page.getByTestId("WorkspaceMenu.CloneWorkspace")).toHaveCount(
+      0,
+    );
+    expect(
+      await state.sql!(
+        "SELECT count(*)::int FROM workspaces WHERE connection_id = $1",
+        [connection.id],
         { returnType: "value" },
       ),
     ).toBe(1);
@@ -1077,7 +1103,7 @@ export default prostgles({
         "dev",
         configDirectory,
         getCliEnvironment({
-          PROSTGLES_STATE_DATABASE_URL: "postgres://usr:psw@127.0.0.1:5432/db",
+          PROSTGLES_STATE_DATABASE_URL: `postgres://usr:psw@127.0.0.1:5432/${CONFIG_TEST.applicationStateDatabaseName}`,
           PROSTGLES_DATABASE_URL:
             "postgres://usr:psw@127.0.0.1:5432/cli_e2e_config_db",
           PROSTGLES_UI_PORT: String(cliTestPort),

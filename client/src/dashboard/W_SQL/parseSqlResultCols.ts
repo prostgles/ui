@@ -3,6 +3,7 @@ import { PALETTE } from "../Dashboard/PALETTE";
 import { getColWidth } from "../W_Table/tableUtils/getColWidth";
 import type { W_SQL } from "./W_SQL";
 import { findArr } from "@common/llmUtils";
+import { pickKeys } from "prostgles-types";
 
 export const parseSqlResultCols = function (
   this: W_SQL,
@@ -22,7 +23,7 @@ export const parseSqlResultCols = function (
 ) {
   const w = this.d.w;
   if (!w) return;
-  const _cols = getFieldsWithActions(fields, isSelect);
+  const resultColumns = getFieldsWithActions(fields, isSelect);
   const keyedRows = rows.map((r) =>
     r.reduce((a, v, i) => ({ ...a, [i]: v }), {}),
   );
@@ -31,13 +32,16 @@ export const parseSqlResultCols = function (
     w.options.lastSQL === trimmedSql ? w.options.sqlResultCols : [];
 
   const colsWithWidth =
-    !_cols.length ?
+    !resultColumns.length ?
       []
     : getColWidth(
-        _cols.map((c) => ({
+        resultColumns.map((c) => ({
           ...c,
-          width: findArr(priorCols ?? [], { key: c.key, label: c.label })
-            ?.width,
+          /** Persist column width from priorCols if available */
+          width: findArr(
+            priorCols ?? [],
+            pickKeys(c, ["key", "label", "udt_name"]),
+          )?.width,
         })),
         keyedRows,
         "idx",

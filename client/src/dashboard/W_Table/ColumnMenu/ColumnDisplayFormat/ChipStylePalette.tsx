@@ -1,6 +1,6 @@
 import React from "react";
 import { FlexRowWrap } from "@components/Flex";
-import { StyledCell } from "../../tableUtils/StyledTableColumn";
+import { StyledCell } from "../../RenderColumn/StyledTableColumn";
 
 type ChipStylePaletteProps = {
   onChange: (chipStyle: {

@@ -1,10 +1,10 @@
+import { FILE_TABLE_SELECT } from "@components/MediaViewer/managedTableUtils";
 import type { AnyObject, DBSchemaTable, ParsedJoinPath } from "prostgles-types";
-import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
-import type { ColumnConfigWInfo } from "../../W_Table";
 import { FILE_ANNOTATION_SELECT } from "../../ManagedColumn/fileAnnotation";
+import type { ColumnConfigWithInfo } from "../../W_Table";
 import type { ColumnFormat } from "./columnFormatUtils";
 
-type FormatColumn = Pick<ColumnConfigWInfo, "format" | "info" | "name">;
+type FormatColumn = Pick<ColumnConfigWithInfo, "format" | "info" | "name">;
 
 export const getColumnFormat = (
   column: FormatColumn,
@@ -13,20 +13,32 @@ export const getColumnFormat = (
 export const getFormatColumnSelect = ({
   column,
   table,
-  tables,
 }: {
   column: FormatColumn;
-  table: DBSchemaTable | undefined;
-  tables: DBSchemaTablesWJoins;
+  table: DBSchemaTable;
 }): AnyObject => {
   const format = getColumnFormat(column);
+  const selectableColumns = table.columns
+    .filter((c) => c.select)
+    .map((c) => c.name);
   if (format?.type === "JSON Diff" || format?.type === "Text Diff") {
     return Object.fromEntries(
       [format.params.oldColumn, format.params.newColumn]
-        .filter((name) =>
-          table?.columns.some(
-            (tableColumn) => tableColumn.name === name && tableColumn.select,
-          ),
+        .filter((name) => selectableColumns.includes(name))
+        .map((name) => [name, 1]),
+    );
+  }
+
+  if (format?.type === "Media") {
+    const { contentType, titleColumn } = format.params;
+    const contentTypeColumn =
+      contentType?.mode === "From column" ?
+        contentType.contentTypeColumnName
+      : undefined;
+    return Object.fromEntries(
+      [titleColumn, contentTypeColumn]
+        .filter(
+          (name): name is string => !!name && selectableColumns.includes(name),
         )
         .map((name) => [name, 1]),
     );
@@ -34,35 +46,48 @@ export const getFormatColumnSelect = ({
 
   if (
     format?.type !== "Internal" ||
-    format.params.component !== "FileAnnotation"
+    format.params.component === "FileExtractionStatus"
   ) {
     return {};
   }
 
-  const { dataKey, tableName } = format.params;
-  const query = getFileAnnotationSelect(column, tableName, tables);
-  return query ? { [dataKey]: query } : {};
+  const { params } = format;
+
+  if (params.component === "File") {
+    const { fileTableName } = table;
+    const query = getNestedJoinSelect(
+      column,
+      fileTableName!,
+      FILE_TABLE_SELECT,
+    );
+    return { [column.name]: query };
+  }
+
+  const { dataKey, tableName } = params;
+  const query = getNestedJoinSelect(column, tableName, FILE_ANNOTATION_SELECT);
+  return { [dataKey]: query };
 };
 
-const getFileAnnotationSelect = (
+const getNestedJoinSelect = (
   column: FormatColumn,
-  referencedTable: string,
-  tables: DBSchemaTablesWJoins,
-): AnyObject | undefined => {
-  if (!tables.some(({ name }) => name === referencedTable)) return;
+  nestedTable: string,
+  select: AnyObject,
+) => {
   const reference = column.info?.references?.find(
-    ({ ftable }) => ftable === referencedTable,
+    ({ ftable }) => ftable === nestedTable,
   );
-  if (!reference) return;
+  if (!reference) {
+    throw new Error(`No reference found for nested table: ${nestedTable}`);
+  }
 
   const joinPath = {
-    table: referencedTable,
+    table: nestedTable,
     on: reference.cols.map((columnName, index) => ({
       [columnName]: reference.fcols[index]!,
     })),
   } satisfies ParsedJoinPath;
   return {
     $leftJoin: [joinPath],
-    select: FILE_ANNOTATION_SELECT,
+    select,
   };
 };

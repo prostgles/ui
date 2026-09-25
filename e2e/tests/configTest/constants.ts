@@ -1,6 +1,6 @@
 export const CONFIG_TEST = {
   applicationDatabaseName: "cli_e2e_config_db",
-  applicationStateDatabaseName: "db",
+  applicationStateDatabaseName: "cli_e2e_config_state_db",
   configFunctionName: "getDeploymentStatus",
   configFunctionResult: "config deployment function",
   deniedFunctionName: "getPrivateDeploymentStatus",

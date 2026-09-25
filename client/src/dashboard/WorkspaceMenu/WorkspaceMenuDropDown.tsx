@@ -8,7 +8,10 @@ import {
 import { mdiAccountMultiple, mdiChevronDown, mdiContentCopy } from "@mdi/js";
 import React, { useMemo } from "react";
 import type { Prgl } from "src/App";
-import { cloneWorkspace } from "../Dashboard/cloneWorkspace";
+import {
+  cloneWorkspace,
+  getCanCreateWorkspaces,
+} from "../Dashboard/cloneWorkspace";
 import type { WorkspaceSyncItem } from "../Dashboard/dashboardUtils";
 import type { useSetActiveWorkspace, useWorkspaces } from "./useWorkspaces";
 import { WorkspaceAddBtn } from "./WorkspaceAddBtn";
@@ -31,6 +34,7 @@ export const WorkspaceMenuDropDown = ({
 }: P) => {
   const { dbs, dbsTables, dbsMethodSchema, user } = prgl;
   const isAdmin = user?.type === "admin";
+  const canCreateWorkspaces = getCanCreateWorkspaces(dbs);
   const sortedWorkspaces = useMemo(
     () =>
       workspaces.sort(
@@ -122,17 +126,19 @@ export const WorkspaceMenuDropDown = ({
                       : "You can not delete a published workspace"
                     }
                   />
-                  <Btn
-                    iconPath={mdiContentCopy}
-                    title="Clone workspace"
-                    data-command="WorkspaceMenu.CloneWorkspace"
-                    size="small"
-                    onClickPromise={async () => {
-                      await cloneWorkspace(dbs, w.id).then((d) => {
-                        setWorkspace(d.clonedWsp);
-                      });
-                    }}
-                  />
+                  {canCreateWorkspaces && (
+                    <Btn
+                      iconPath={mdiContentCopy}
+                      title="Clone workspace"
+                      data-command="WorkspaceMenu.CloneWorkspace"
+                      size="small"
+                      onClickPromise={async () => {
+                        await cloneWorkspace(dbs, w.id).then((d) => {
+                          setWorkspace(d.clonedWsp);
+                        });
+                      }}
+                    />
+                  )}
                   {(isAdmin || w.isMine) && (
                     <>
                       <WorkspaceSettings
@@ -164,15 +170,19 @@ export const WorkspaceMenuDropDown = ({
           />
         </FlexCol>
       )}
-      footer={() => (
-        <WorkspaceAddBtn
-          setWorkspace={setWorkspace}
-          btnProps={{
-            children: "New workspace",
-            "data-command": "WorkspaceMenuDropDown.WorkspaceAddBtn",
-          }}
-        />
-      )}
+      footer={
+        canCreateWorkspaces ?
+          () => (
+            <WorkspaceAddBtn
+              setWorkspace={setWorkspace}
+              btnProps={{
+                children: "New workspace",
+                "data-command": "WorkspaceMenuDropDown.WorkspaceAddBtn",
+              }}
+            />
+          )
+        : undefined
+      }
     />
   );
 };

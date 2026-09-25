@@ -12,7 +12,7 @@
     "papaparse": "^5.7.0",
     "pdfjs-dist": "^6.3.289",
     "pgsql-ast-parser": "^12.0.2",
-    "prostgles-client": "^4.0.406",
+    "prostgles-client": "^4.0.407",
     "qrcode": "^1.5.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -34,6 +34,7 @@
     "build": "bash ./build.sh",
     "dev": "npm ci --no-audit --quiet && webpack --watch --config=configs/dev.js",
     "lint": "eslint . --quiet --fix",
+    "test": "node --experimental-strip-types --test tests/clientLogBuffer.test.mjs",
     "test:bundle-size": "node --test bundleSize.test.mjs",
     "tsc": "tsc --noEmit"
   },

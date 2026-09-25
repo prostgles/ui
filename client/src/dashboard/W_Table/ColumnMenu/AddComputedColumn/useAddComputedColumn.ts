@@ -87,7 +87,7 @@ export const useAddComputedColumnState = ({
   const [name, setName] = useState(existingColumn?.name || "");
 
   useEffect(() => {
-    if (!funcDef) {
+    if (!funcDef || existingColumn) {
       return;
     }
     const name =
@@ -95,7 +95,7 @@ export const useAddComputedColumnState = ({
         `${funcDef.label}( ${[column.join?.table.label, column.name].filter(isDefined).join(".")} )`
       : funcDef.label;
     setName(name);
-  }, [funcDef, column]);
+  }, [funcDef, column, existingColumn]);
 
   const addColumn = useCallback(
     (column: ValidatedColumnInfoWithJoin | undefined, funcDef: FuncDef) => {
@@ -130,15 +130,16 @@ export const useAddComputedColumnState = ({
             ],
             path: column.join.path,
           },
-          show: true,
+          show: existingColumn?.show ?? true,
         });
       } else {
         onAddColumn({
           name,
-          show: true,
+          show: existingColumn?.show ?? true,
           computedConfig: {
             ...pickKeys(outInfo, ["tsDataType", "udt_name"]),
             funcDef,
+            isColumn: existingColumn?.computedConfig?.isColumn,
             args,
             column: column?.name,
             aggregateOptions:
@@ -147,7 +148,7 @@ export const useAddComputedColumnState = ({
         });
       }
     },
-    [aggregateOptions, args, name, onAddColumn],
+    [aggregateOptions, args, name, onAddColumn, existingColumn],
   );
 
   const [onAddDisabledInfo, onAdd] =

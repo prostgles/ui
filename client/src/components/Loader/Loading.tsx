@@ -1,4 +1,5 @@
 import React from "react";
+import { persistClientLogs } from "../../pages/ProjectConnection/logClientEvents";
 import RTComp from "../../dashboard/RTComp";
 import { tout } from "../../utils/utils";
 import { classOverride, FlexRow } from "../Flex";
@@ -6,6 +7,7 @@ import "./Loading.css";
 import { SpinnerV4 } from "./SpinnerV4";
 export const pageReload = async (reason: string) => {
   console.log("pageReload due to: ", reason);
+  persistClientLogs(reason);
   await tout(200);
   window.location.reload();
 };

@@ -9,16 +9,21 @@ import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 import { t } from "../../../../i18n/i18nUtils";
 import type { WindowSyncItem } from "../../../Dashboard/dashboardUtils";
 import { SmartFilterBar } from "../../../SmartFilterBar/SmartFilterBar";
-import type { ColumnConfigWInfo } from "../../W_Table";
-import { getColWInfo } from "../../tableUtils/getColWInfo";
+import type { ColumnConfigWithInfo } from "../../W_Table";
+import { getColumnsWithInfo } from "../../tableUtils/getColumnsWithInfo";
+import { getRequiredTableSelect } from "../../tableUtils/getTableSelect";
 import type { ColumnConfig } from "../ColumnMenu";
-import { JoinPathSelectorV2, getAllJoins } from "../JoinPathSelectorV2";
+import {
+  getAllJoins,
+  JoinPathSelectorV2,
+  type JoinPathSelectorV2Props,
+} from "../JoinPathSelectorV2";
 import { LinkedColumnFooter } from "./LinkedColumnFooter";
 import { LinkedColumnSelect } from "./LinkedColumnSelect";
 
 export type LinkedColumnProps = {
   w: WindowSyncItem<"table">;
-  column: ColumnConfigWInfo | undefined;
+  column: ColumnConfigWithInfo | undefined;
   onClose: VoidFunction | undefined;
 };
 
@@ -35,31 +40,15 @@ const JOIN_TYPES = [
   },
 ] as const;
 
-export const NESTED_COLUMN_DISPLAY_MODES = [
-  {
-    key: "row",
-    label: t.LinkedColumn["Row"],
-    subLabel: "Shows <header>:<value> pairs stacked in a single column",
-  },
-  {
-    key: "column",
-    label: t.LinkedColumn["Column"],
-    subLabel:
-      "(Default). Shows a wrappable row of values with headers as column labels",
-  },
-  {
-    key: "no-headers",
-    label: t.LinkedColumn["No headers"],
-    subLabel: "Shows a wrappable row of values without headers",
-  },
-] as const;
-
 export const LinkedColumn = (props: LinkedColumnProps) => {
   const { w } = props;
   const { tables, db, sql } = usePrgl();
-  const getCol = (name: string) => w.columns?.find((c) => c.name === name);
+  const getCol = useCallback(
+    (name: string) => w.columns?.find((c) => c.name === name),
+    [w.columns],
+  );
 
-  const [localColumn, setLocalColumn] = useState<ColumnConfigWInfo>();
+  const [localColumn, setLocalColumn] = useState<ColumnConfig>();
   const currentColumn = localColumn ?? props.column;
   const table = useMemo(() => {
     const currentTargetPath =
@@ -107,6 +96,68 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
     }
   }, [localColumn, table]);
 
+  const onJoinPathChange: JoinPathSelectorV2Props["onChange"] = useCallback(
+    (targetPath, multiJoin) => {
+      let colName = targetPath.table.name;
+      if (multiJoin) {
+        const distinctLeftCols = Array.from(
+          new Set(multiJoin.value.flatMap((d) => d.map((_d) => _d[0]))),
+        );
+        const distinctRightCols = Array.from(
+          new Set(multiJoin.value.flatMap((d) => d.map((_d) => _d[1]))),
+        );
+        /** If one of the groups has two distinct cols */
+        if (distinctLeftCols.length * distinctRightCols.length === 2) {
+          const chosenDifferentColname =
+            distinctLeftCols.length > 1 ?
+              multiJoin.chosen[0]![0]
+            : multiJoin.chosen[0]![1];
+          colName = `${chosenDifferentColname}_${targetPath.table.name}`;
+        }
+      }
+      const newColName = getCol(colName) ? `${colName} (1)` : colName;
+
+      const { table } = targetPath;
+      /**
+       * Show the first 5 cols and configured card fields
+       */
+      const initialNestedColumns = table.columns.map(
+        (c, i) =>
+          ({
+            name: c.name,
+            show:
+              i < 5 ||
+              [
+                table.card?.avatarColumn,
+                table.card?.headerColumn,
+                table.card?.subHeaderColumn,
+              ].includes(c.name),
+          }) satisfies ColumnConfig,
+      );
+      const requiredSelect = getRequiredTableSelect(
+        getColumnsWithInfo(table.name, tables, initialNestedColumns),
+        table,
+      );
+      const nestedColumns = initialNestedColumns.map((column) => ({
+        ...column,
+        show: column.show || requiredSelect[column.name] !== undefined,
+      }));
+      const newCol: ColumnConfig = {
+        name: newColName,
+        show: true,
+        width: 250,
+        nested: {
+          columns: nestedColumns,
+          path: targetPath.path,
+          joinType: "left",
+          limit: 20,
+        },
+      };
+      setLocalColumn(newCol);
+    },
+    [getCol, tables],
+  );
+
   return (
     <FlexCol
       data-command="LinkedColumn"
@@ -131,11 +182,14 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
       {currentColumn && (
         <FormFieldDebounced
           id="nested-col-name"
+          type="text"
           label={t.LinkedColumn["Column label"]}
-          value={currentColumn.name}
+          value={currentColumn.label ?? currentColumn.name}
           error={newColumnNameError}
           onChange={(newColName) => {
-            updateColumn({ name: newColName });
+            updateColumn(
+              props.column ? { label: newColName } : { name: newColName },
+            );
           }}
         />
       )}
@@ -144,48 +198,7 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
           tableName={w.table_name}
           tables={tables}
           value={currentColumn?.nested?.path}
-          onChange={(targetPath, multiJoin) => {
-            let colName = targetPath.table.name;
-            if (multiJoin) {
-              const distinctLeftCols = Array.from(
-                new Set(multiJoin.value.flatMap((d) => d.map((_d) => _d[0]))),
-              );
-              const distinctRightCols = Array.from(
-                new Set(multiJoin.value.flatMap((d) => d.map((_d) => _d[1]))),
-              );
-              /** If one of the groups has two distinct cols */
-              if (distinctLeftCols.length * distinctRightCols.length === 2) {
-                const chosenDifferentColname =
-                  distinctLeftCols.length > 1 ?
-                    multiJoin.chosen[0]![0]
-                  : multiJoin.chosen[0]![1];
-                colName = `${chosenDifferentColname}_${targetPath.table.name}`;
-              }
-            }
-            const newColName = getCol(colName) ? `${colName} (1)` : colName;
-
-            const { table } = targetPath;
-            /**
-             * Show first 5 cols to improve performance
-             * If fileTable show all columns to ensure the images/media preview works
-             */
-            const nestedColumns = getColWInfo(table, null).map((c, i) => ({
-              ...c,
-              show: !!table.isFileTable || i < 5,
-            }));
-            const newCol: ColumnConfig = {
-              name: newColName,
-              show: true,
-              width: 250,
-              nested: {
-                columns: nestedColumns,
-                path: targetPath.path,
-                joinType: "left",
-                limit: 20,
-              },
-            };
-            setLocalColumn(newCol);
-          }}
+          onChange={onJoinPathChange}
         />
       </FlexRowWrap>
       <LinkedColumnSelect
@@ -206,17 +219,36 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
                 <Select
                   label={t.LinkedColumn["Layout"]}
                   data-command="LinkedColumn.layoutType"
-                  fullOptions={NESTED_COLUMN_DISPLAY_MODES}
+                  options={["values", "entities"]}
                   disabledInfo={
-                    currentColumn.nested.chart ?
-                      t.LinkedColumn["Must disable chart first"]
+                    currentColumn.nested.display?.type === "timechart" ?
+                      "Must disable chart first"
                     : undefined
                   }
-                  value={currentColumn.nested.displayMode}
-                  onChange={(displayMode) => {
-                    updateNested({ displayMode });
-                  }}
+                  value={
+                    currentColumn.nested.display?.type === "entities" ?
+                      "entities"
+                    : "values"
+                  }
+                  onChange={(type) =>
+                    updateColumn({
+                      action:
+                        type === "entities" ? { type: "record" } : undefined,
+                      nested: { ...currentColumn.nested!, display: { type } },
+                    })
+                  }
                 />
+                {(!currentColumn.nested.display ||
+                  currentColumn.nested.display.type === "values") && (
+                  <Select
+                    label="Labels"
+                    options={["auto", "none", "inline", "above"]}
+                    value={currentColumn.nested.display?.labels ?? "auto"}
+                    onChange={(labels) =>
+                      updateNested({ display: { type: "values", labels } })
+                    }
+                  />
+                )}
               </FlexRowWrap>
             )}
             <FlexRowWrap>

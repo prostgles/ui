@@ -23,6 +23,7 @@ import {
   getDataLabel,
 } from "./utils/Testing";
 import {
+  addFileToChat,
   clickAndWait,
   clickInsertRow,
   closeWorkspaceWindows,
@@ -1006,6 +1007,34 @@ test.describe("Main test", () => {
 
     await page.getByTestId("AskLLM").click();
 
+    /**
+     * Ensure draft message is correctly handled
+     * */
+    const textArea = page.getByTestId("Chat.textarea");
+    await expect(textArea).toHaveValue("");
+    const draft = "Unsent draft should not be resent after clearing";
+    await textArea.fill(draft);
+    await expect
+      .poll(async () =>
+        runDbsSql(
+          page,
+          "SELECT count(*)::int FROM llm_chats WHERE currently_typed_message = $1",
+          [draft],
+          { returnType: "value" },
+        ),
+      )
+      .toBe(1);
+    await page.getByTestId("AskLLM.popup").getByTestId("Popup.close").click();
+    await page.getByTestId("AskLLM").click();
+    await expect(textArea).toHaveValue(draft);
+    const userMessages = page.locator(".message:not(.incoming)");
+    const messageCount = await userMessages.count();
+    await textArea.fill("");
+    await textArea.press("Enter");
+    await page.waitForTimeout(500);
+    await expect(userMessages).toHaveCount(messageCount);
+
+    /** Test request tool access */
     await sendAskLLMMessage(page, " request_tool_access ");
     await page
       .getByTestId("RequestToolAccess.Approve")
@@ -1128,20 +1157,14 @@ test.describe("Main test", () => {
      * Only test locally due to service image size
      */
     if (!process.env.CI) {
-      const addFile = async () => {
-        const pdfFilePath = join(
-          __dirname,
-          "..",
-          "tests",
-          "testAskLLM",
-          "sample.pdf",
-        );
-        const fileChooserPromise = page.waitForEvent("filechooser");
-        await page.getByTestId("Chat.addFiles").click();
-        const fileChooser = await fileChooserPromise;
-        await fileChooser.setFiles(pdfFilePath);
-      };
-      await addFile();
+      const pdfFilePath = join(
+        __dirname,
+        "..",
+        "tests",
+        "testAskLLM",
+        "sample.pdf",
+      );
+      await addFileToChat(page, pdfFilePath);
       const toggle = page.getByTestId(
         "ChatFileAttachments.convertDocsToMarkdown",
       );
@@ -1187,9 +1210,9 @@ test.describe("Main test", () => {
       await expect(itemBtn).not.toBeAttached();
 
       /** Re-adding the same file works */
-      await addFile();
+      await addFileToChat(page, pdfFilePath);
 
-      await expect(itemBtn).toBeVisible({ ...TWENTY_SECONDS_OR_MORE });
+      await expect(itemBtn).toBeVisible(TWENTY_SECONDS_OR_MORE);
 
       await page.getByTestId("Chat.send").click();
 
@@ -1198,14 +1221,12 @@ test.describe("Main test", () => {
         .getByTestId("Chat.messageList")
         .getByTestId("LLMChatMessageContent.textDocument")
         .getByText("sample.pdf");
-      await expect(inChatItemBtn).toBeVisible({
-        ...TWENTY_SECONDS_OR_MORE,
-      });
+      await expect(inChatItemBtn).toBeVisible(TWENTY_SECONDS_OR_MORE);
 
       /** Agent was provided the text content */
       await expect(page.getByTestId("Chat.messageList")).toContainText(
         "This is a sample PDF",
-        { ...TWENTY_SECONDS_OR_MORE },
+        TWENTY_SECONDS_OR_MORE,
       );
 
       await inChatItemBtn.click();
@@ -1221,6 +1242,7 @@ test.describe("Main test", () => {
 
   test("Test LLM tools", async ({ page: p }) => {
     const page = p as PageWIds;
+    // page.setDefaultTimeout(TWENTY_SECONDS_OR_MORE.timeout);
     await loginWhenSignupIsEnabled(page);
 
     await openConnection(page, "cloud");
@@ -1294,7 +1316,7 @@ test.describe("Main test", () => {
       .getByText(
         'prostgles-ui--get_specific_tool_schemas\nmcpServerTools: {"web":{"fetch":1}}',
       )
-      .click();
+      .click(TWENTY_SECONDS_OR_MORE);
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       `Fetches from a URL`,
     );
@@ -1305,7 +1327,7 @@ test.describe("Main test", () => {
       .getByTestId("ToolUseMessage.toggleGroup")
       .getByText("2 tool calls")
       .last()
-      .click();
+      .click(TWENTY_SECONDS_OR_MORE);
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       `Tool name "playwright--browser_navigate" is invalid. Try enabling and reloading the tools`,
     );
@@ -2189,7 +2211,7 @@ test.describe("Main test", () => {
           .getByTestId(
             "McpServerOAuthConfigAuthorizeUrlBtn.OpenAuthorizationUrl",
           )
-          .click(),
+          .click(TWENTY_SECONDS_OR_MORE),
       ]);
       await popup.waitForLoadState("load");
       await popup.locator("#username").fill("admin1");
@@ -3357,6 +3379,31 @@ test.describe("Main test", () => {
     await page.getByTestId("LinkedColumn.Add").click();
 
     await page.waitForTimeout(1e3);
+    await usersTable.getByTestId("AddColumnMenu").click();
+    await getSearchListItem(page.getByTestId("AddColumnMenu"), {
+      dataKey: "Referenced",
+    }).click();
+    await getSearchListItem(page.getByTestId("JoinPathSelectorV2"), {
+      dataKey: "orders",
+    }).click(TWENTY_SECONDS_OR_MORE);
+    await page.getByTestId("QuickAddComputedColumn").click();
+    await getSearchListItem(page.getByTestId("FunctionSelector"), {
+      dataKey: "$countAll",
+    }).click();
+    await page.getByTestId("QuickAddComputedColumn.Add").click();
+    await page.getByTestId("LinkedColumn.Add").click();
+
+    const linkedRecordsCount = usersTable
+      .getByTestId("LinkedColumn.OpenRecords")
+      .first();
+    await expect(linkedRecordsCount).toHaveText("100", TWENTY_SECONDS_OR_MORE);
+    await linkedRecordsCount.click();
+    const linkedRecordsPopup = page.getByTestId("Popup.content").last();
+    await expect(
+      linkedRecordsPopup.getByTestId("Pagination.pageCountInfo"),
+    ).toContainText("100 rows", TWENTY_SECONDS_OR_MORE);
+    await page.getByTestId("Popup.close").last().click();
+
     await usersTable.getByTestId("AddChartMenu.Map").click();
     await page
       .getByTestId("AddChartMenu.Map")

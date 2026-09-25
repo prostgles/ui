@@ -445,7 +445,6 @@ const getPackageJson = (configId: string, runtimeDependency?: string) => ({
     ...pickKeys(packageJson.devDependencies, [
       "@eslint/js",
       "eslint",
-      "eslint-plugin-security",
       "typescript-eslint",
       "@types/node",
     ]),
@@ -467,7 +466,6 @@ const getRuntimeDependency = () => {
 };
 const eslintConfig = `
   import eslint from "@eslint/js";
-  import pluginSecurity from "eslint-plugin-security";
   import path from "node:path";
   import tseslint from "typescript-eslint";
   import { defineConfig } from "eslint/config";
@@ -516,7 +514,6 @@ const eslintConfig = `
       ],
     },
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    pluginSecurity.configs.recommended,
     eslint.configs.recommended,
     tseslint.configs.recommendedTypeChecked,
     {

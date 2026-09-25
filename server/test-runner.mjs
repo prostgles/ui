@@ -5,7 +5,12 @@ import { basename } from "path";
 /**
  * This approach is used instead of command line node --test because it doesn't find all the spec files
  * */
-const files = await glob("dist/server/**/*.spec.js");
+const patterns = process.argv.slice(2);
+const files = (await glob("dist/server/**/*.spec.js")).filter(
+  (file) =>
+    !patterns.length || patterns.some((pattern) => file.includes(pattern)),
+);
+if (!files.length) throw new Error("No test files matched");
 /** Hacky approach for dev to push _ files first */
 const hasUnderlineFile = files.find((f) => f.includes("/_"));
 const sortedFiles =
@@ -20,6 +25,9 @@ const sortedFiles =
 // Bail on first failure
 const ac = new AbortController();
 const runner = run({ files: sortedFiles, signal: ac.signal });
+
+runner.on("test:stdout", ({ message }) => process.stdout.write(message));
+runner.on("test:stderr", ({ message }) => process.stderr.write(message));
 
 runner.on("test:fail", () => {
   process.exitCode = 1;

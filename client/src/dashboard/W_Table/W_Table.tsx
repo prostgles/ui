@@ -1,4 +1,5 @@
 import { mdiAlertOutline, mdiPlus } from "@mdi/js";
+import type { ChartValues } from "./tableUtils/fetchChartRangeValues";
 import type { AnyObject, SubscriptionHandler } from "prostgles-types";
 import { getKeys } from "prostgles-types";
 
@@ -25,6 +26,7 @@ import type {
   ColumnConfig,
   ColumnSort,
   ColumnSortSQL,
+  NestedColumn,
 } from "./ColumnMenu/ColumnMenu";
 import { ColumnMenu } from "./ColumnMenu/ColumnMenu";
 
@@ -59,7 +61,7 @@ import type {
   OnClickEditRow,
   RowSiblingData,
 } from "./tableUtils/getEditColumn";
-import { getFullColumnConfig } from "./tableUtils/getFullColumnConfig";
+import { getColumnsWithInfoAndWidth } from "./tableUtils/getColumnsWithInfoAndWidth";
 import { getTableCols } from "./tableUtils/getTableCols";
 import { getTableSelect } from "./tableUtils/getTableSelect";
 import { prepareColsForRender } from "./tableUtils/prepareColsForRender";
@@ -98,7 +100,7 @@ export type MinMax<T = number> = {
 /**
  * Used for cell timechart and barchart
  */
-export type MinMaxVals = Record<string, MinMax>;
+export type MinMaxVals = ChartValues;
 
 export function getFilter(filter: any = {}, activeRow?: ActiveRow): any {
   return {
@@ -135,7 +137,7 @@ export type W_TableState = {
   size?: { w: number; h: number };
   joins: string[];
   runningQuerySince: number | undefined;
-  error?: string;
+  error?: unknown;
   duration: number;
   hideTable?: boolean;
   sql: string;
@@ -164,7 +166,7 @@ export type W_TableState = {
    * Used in setting activeRow styles to all rows adequately
    */
   joinFilterStr?: string;
-  localCols?: ColumnConfigWInfo[];
+  localCols?: ColumnConfigWithInfo[];
   tooManyColumnsWarningWasShown?: boolean;
 };
 
@@ -176,11 +178,15 @@ export type ProstglesTableD = {
   wSync?: SingleSyncHandles<Required<WindowData<"table">>, true>;
 };
 
-export type ColumnConfigWInfo = ColumnConfig & {
+export type ColumnConfigWithInfo = Omit<ColumnConfig, "nested"> & {
+  /** Defined for plain columns and for computed columns that target a specific table column */
   info?: ValidatedColumnInfo & {
     defaultRenderAs?: InternalColumnFormat;
   };
-};
+  nested?: Omit<NonNullable<ColumnConfig["nested"]>, "columns"> & {
+    columns: NestedColumn<ColumnConfigWithInfo>[];
+  };
+} & Pick<ValidatedColumnInfo, "udt_name" | "tsDataType">;
 
 export default class W_Table extends RTComp<
   W_TableProps,
@@ -193,7 +199,7 @@ export default class W_Table extends RTComp<
   refRowCount?: HTMLElement;
 
   state: W_TableState = {
-    barchartVals: {},
+    barchartVals: new Map(),
     rowsLoaded: 0,
     runningQuerySince: undefined,
     sql: "",
@@ -226,7 +232,7 @@ export default class W_Table extends RTComp<
     const { w } = this.props;
 
     if (!Array.isArray(w.filter)) {
-      w.$update({ filter: [] });
+      void w.$update({ filter: [] });
     }
 
     this.d.wSync = w.$cloneSync((w, delta) => {
@@ -335,7 +341,7 @@ export default class W_Table extends RTComp<
       delta.w?.columns?.length &&
       w.sort?.some((sort) => !getSortColumn(sort, delta.w?.columns ?? []))
     ) {
-      w.$update({ sort: [] });
+      void w.$update({ sort: [] });
     }
 
     /** This is done to prevent errors due to renamed/altered columns */
@@ -344,7 +350,7 @@ export default class W_Table extends RTComp<
       !delta.w.id &&
       !w.options.showFilters
     ) {
-      w.$update({ options: { showFilters: true } }, { deepMerge: true });
+      void w.$update({ options: { showFilters: true } }, { deepMerge: true });
     }
 
     /** This is done to prevent empty result due to page offset */
@@ -397,7 +403,7 @@ export default class W_Table extends RTComp<
     const { rows } = this.state;
     return !w ?
         []
-      : getFullColumnConfig(tables, w, rows, this.ref?.offsetWidth);
+      : getColumnsWithInfoAndWidth(tables, w, rows, this.ref?.offsetWidth);
   };
 
   getPaginationProps = (): PaginationProps => {
@@ -427,10 +433,14 @@ export default class W_Table extends RTComp<
   }
 
   getMenu = (w: WindowSyncItem<"table">, onClose: VoidFunction) => {
-    const { prgl } = this.props;
+    const { prgl, workspace, externalFilters, joinFilter, suggestions } =
+      this.props;
 
     const cols = w.columns;
-
+    const table = this.props.prgl.tables.find((t) => t.name === w.table_name);
+    if (!table) {
+      return <ErrorComponent error="Table not found" />;
+    }
     if (!cols) {
       return <ErrorComponent error="Columns not defined" />;
     }
@@ -438,13 +448,12 @@ export default class W_Table extends RTComp<
     return (
       <W_TableMenu
         prgl={prgl}
-        workspace={this.props.workspace}
-        cols={cols}
+        workspace={workspace}
         w={w}
-        suggestions={this.props.suggestions}
+        suggestions={suggestions}
         onClose={onClose}
-        externalFilters={this.props.externalFilters}
-        joinFilter={this.props.joinFilter}
+        externalFilters={externalFilters}
+        joinFilter={joinFilter}
       />
     );
   };
@@ -461,8 +470,8 @@ export default class W_Table extends RTComp<
       /** Ensure the sort is valid */
       const { select } = await getTableSelect(w, tables, db, {}, true);
       await tableHandler?.find!({}, { select, limit: 0, orderBy });
-      w.$update({ sort });
-    } catch (error: any) {
+      void w.$update({ sort });
+    } catch (error) {
       this.setState({ error });
     }
   };
@@ -472,13 +481,16 @@ export default class W_Table extends RTComp<
   onColumnReorder = (newCols: ProstglesColumn[]) => {
     const { w } = this.d;
     if (!w) return null;
-    const nIdxes = newCols
+    const nonEditRowColumns = newCols
       .filter((c) => !(c.computed && c.key === "edit_row"))
       .map((c) => c.name);
     const columns = this.d.w?.columns
       ?.slice(0)
-      .toSorted((a, b) => nIdxes.indexOf(a.name) - nIdxes.indexOf(b.name));
-    updateWCols(w, columns);
+      .toSorted(
+        (a, b) =>
+          nonEditRowColumns.indexOf(a.name) - nonEditRowColumns.indexOf(b.name),
+      );
+    void updateWCols(w, columns);
   };
 
   columnMenuState = createReactiveState<
@@ -657,13 +669,12 @@ export default class W_Table extends RTComp<
               key={"W_Table_Content"}
               runningQuerySince={runningQuerySince}
             >
-              {error && (
-                <ErrorComponent
-                  withIcon={true}
-                  style={{ flex: "unset", padding: "2em" }}
-                  error={error}
-                />
-              )}
+              <ErrorComponent
+                withIcon={true}
+                style={{ flex: "unset", padding: "2em" }}
+                error={error}
+              />
+
               {cardOpts ?
                 <CardView
                   key={`${cardOpts.cardGroupBy}-${cardOpts.cardOrderBy}-${this.state.dataAge}`}

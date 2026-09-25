@@ -81,9 +81,12 @@ export const TableBody = <Sort extends ColumnSortSQL>(
     mode: enableExperimentalVirtualisation ? "auto" : "off",
   });
 
-  const columnLayoutKey = visibleCols
-    .map((col) => `${col.key}:${col.width ?? "flex"}`)
-    .join("|");
+  // Only virtualised rows need their cached layout reset on resize.
+  // Remounting ordinary cells would discard their open popups.
+  const columnLayoutKey =
+    enableExperimentalVirtualisation ?
+      visibleCols.map((col) => `${col.key}:${col.width ?? "flex"}`).join("|")
+    : undefined;
 
   return (
     <div

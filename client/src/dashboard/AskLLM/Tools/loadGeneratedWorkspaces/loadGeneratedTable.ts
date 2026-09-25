@@ -3,10 +3,14 @@ import type {
   TableWindowInsertModel,
 } from "@common/DashboardTypes";
 import { type DBSSchemaForInsert } from "@common/publishUtils";
+import { MINI_BARCHART_COLOR } from "@components/ProgressBar";
 import { isDefined, pickKeys } from "prostgles-types";
 import type { Prgl } from "src/App";
 import type { WindowData } from "src/dashboard/Dashboard/dashboardUtils";
-import type { ColumnConfig } from "src/dashboard/W_Table/ColumnMenu/ColumnMenu";
+import type {
+  ColumnConfig,
+  NestedColumn,
+} from "src/dashboard/W_Table/ColumnMenu/ColumnMenu";
 import { CHIP_COLOR_NAMES } from "../../../W_Table/ColumnMenu/ColumnDisplayFormat/ChipStylePalette";
 
 export const loadGeneratedTable = (
@@ -22,13 +26,15 @@ export const loadGeneratedTable = (
       nested:
         nested &&
         ({
-          ...nested,
+          path: nested.path,
+          joinType: nested.joinType,
+          ...("limit" in nested && { limit: nested.limit }),
 
-          chart:
+          display:
             "chart" in nested ?
               {
                 dateCol: nested.chart.dateCol,
-                type: nested.chart.type,
+                type: "timechart",
                 yAxis: nested.chart.yAxis,
                 renderStyle: "smooth-line",
               }
@@ -40,6 +46,11 @@ export const loadGeneratedTable = (
                   return {
                     ...nc,
                     show: true,
+                    style: parseColumnStyle(nc.styling),
+                    action:
+                      nc.computedConfig ?
+                        { type: "relatedRecords" }
+                      : undefined,
                     computedConfig:
                       nc.computedConfig &&
                       parseComputedConfig(
@@ -47,7 +58,7 @@ export const loadGeneratedTable = (
                         tables,
                         nested.path.at(-1)!.table,
                       ),
-                  } as ColumnConfig;
+                  } as NestedColumn<ColumnConfig>;
                 }),
                 ...nestedTable!.columns
                   .filter((c) => {
@@ -66,28 +77,7 @@ export const loadGeneratedTable = (
         computedConfig &&
         parseComputedConfig(computedConfig, tables, generatedWindow.table_name),
       show: true,
-      style:
-        c.styling?.type === "conditional" ?
-          {
-            type: "Conditional",
-            conditions: c.styling.conditions.map((cond) => {
-              // "textColor": "#ffffff",
-              // "textColorDarkMode": "#2386d5",
-              // "chipColor": "#673AB7"
-              const style =
-                Object.entries(CHIP_COLOR_NAMES).find(
-                  ([k]) => k === cond.chipColor,
-                )?.[1] ?? CHIP_COLOR_NAMES.blue!;
-              return {
-                condition: cond.value,
-                operator: cond.operator,
-                textColor: style.textColor,
-                chipColor: style.color,
-                textColorDarkMode: style.textColorDarkMode,
-              };
-            }),
-          }
-        : c.styling,
+      style: parseColumnStyle(c.styling),
     };
   });
   const {
@@ -155,5 +145,40 @@ const parseComputedConfig = (
       isAggregate: true,
       isAllowedForColumn: true,
     },
+  };
+};
+
+const parseColumnStyle = (
+  styling: TableColumn["styling"],
+): ColumnConfig["style"] => {
+  if (styling?.type === "Barchart") {
+    return {
+      ...styling,
+      barColor: styling.barColor ?? MINI_BARCHART_COLOR,
+      textColor: styling.textColor ?? "var(--text-1)",
+    };
+  }
+  if (styling?.type === "Scale") {
+    return {
+      type: "Scale",
+      minColor: "#63f717",
+      maxColor: "#46b5d5",
+      textColor: styling.textColor ?? "black",
+    };
+  }
+  if (styling?.type !== "conditional") return styling;
+  return {
+    type: "Conditional",
+    conditions: styling.conditions.map((condition) => {
+      const style =
+        CHIP_COLOR_NAMES[condition.chipColor] ?? CHIP_COLOR_NAMES.blue!;
+      return {
+        condition: condition.value,
+        operator: condition.operator,
+        textColor: style.textColor,
+        chipColor: style.color,
+        textColorDarkMode: style.textColorDarkMode,
+      };
+    }),
   };
 };

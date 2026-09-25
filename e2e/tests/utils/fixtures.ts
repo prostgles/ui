@@ -1,4 +1,7 @@
-import { CLIENT_LOGS_KEY } from "../../../common/constants";
+import {
+  CLIENT_LOGS_KEY,
+  PERSISTED_CLIENT_LOGS_KEY,
+} from "../../../common/constants";
 import { test as base } from "@playwright/test";
 
 export { chromium, expect, type Locator } from "@playwright/test";
@@ -18,12 +21,15 @@ export const test = base.extend<{ clientLogs: void }>({
             .flatMap((context) => context.pages())
             .map(async (page) => {
               const body = await page
-                .evaluate((key) => {
+                .evaluate(([key, persistedKey]) => {
                   const logs = (window as unknown as Record<string, unknown>)[
                     key
                   ];
-                  return JSON.stringify(logs);
-                }, CLIENT_LOGS_KEY)
+                  const persistedLogs = sessionStorage.getItem(persistedKey);
+                  return JSON.stringify(
+                    logs ?? (persistedLogs ? JSON.parse(persistedLogs) : logs),
+                  );
+                }, [CLIENT_LOGS_KEY, PERSISTED_CLIENT_LOGS_KEY] as const)
                 .catch(() => undefined);
               return {
                 url: page.url(),

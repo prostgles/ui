@@ -100,7 +100,8 @@ export const CellBarchart = ({
   const delta = +max - +min;
   const clampedValue = Math.min(Math.max(+value, +min), +max);
   const valDelta = +clampedValue - +min;
-  const perc = Math.round((100 * valDelta) / delta);
+  const perc = delta === 0 ? 0 : Math.round((100 * valDelta) / delta);
+
   const height = 8;
   return (
     <div

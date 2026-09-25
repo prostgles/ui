@@ -90,17 +90,21 @@ type FunctionFull<T extends AnyObject = AnyObject> = {
     $filter?: FullFilter<void, void>;
     $orderBy?: OrderBy<T>;
 };
-type FunctionSelect = FunctionShorthand | FunctionFull;
+export type CaseSelect = {
+    $case: readonly (readonly [condition: AnyObject, result: unknown])[];
+    $else?: unknown;
+};
+type FunctionSelect = FunctionShorthand | FunctionFull | CaseSelect;
 type InclusiveSelect = true | 1 | FunctionSelect | JoinSelect;
 type TypedShorthandJoinSelect<T extends AnyObject> = "*" | {
     [K in keyof T]?: 0 | false | 1 | true | FunctionSelect;
 };
 type SchemaJoinSelect<T extends AnyObject, S extends DBSchema | void> = S extends DBSchema ? string extends keyof S ? {} : {
-    [K in keyof S]?: K extends keyof T ? InclusiveSelect : TypedShorthandJoinSelect<S[K]["columns"]> | FunctionFull | DetailedJoinSelect;
+    [K in keyof S]?: K extends keyof T ? InclusiveSelect : TypedShorthandJoinSelect<S[K]["columns"]> | FunctionFull | CaseSelect | DetailedJoinSelect;
 } : {};
 type SelectWithFunctions<T extends AnyObject = AnyObject, IsTyped = false, S extends DBSchema | void = void> = (IsTyped extends true ? {
     [K in keyof T]?: InclusiveSelect;
-} & SchemaJoinSelect<T, S> & Record<string, FunctionFull | JoinSelect> : Record<string, InclusiveSelect>) | {
+} & SchemaJoinSelect<T, S> & Record<string, FunctionFull | CaseSelect | JoinSelect> : Record<string, InclusiveSelect>) | {
     [K in keyof T]?: true | 1 | FunctionShorthand;
 } | {
     [K in keyof T]?: 0 | false;
@@ -267,11 +271,16 @@ type ExplicitJoinResult<J, S extends DBSchema | void, P> = [
 }, S[T]["columns"]>[] : any[] : any[] : any[];
 type ShorthandJoinResult<J, S extends DBSchema | void, TableName extends PropertyKey> = S extends DBSchema ? TableName extends keyof S ? J extends "*" ? NormalizedRow<S[TableName]["columns"]>[] : J extends Record<string, 0 | false> ? Omit<NormalizedRow<S[TableName]["columns"]>, keyof J>[] : J extends Record<string, any> ? ParseSelect<J, NormalizedRow<S[TableName]["columns"]>, S>[] : any[] : any[] : any[];
 /** ParseSelect must check joins first because FunctionFull structurally matches objects without \`$\` keys. */
-export type SelectFunction = FunctionFull;
+export type SelectFunction = FunctionFull | CaseSelect;
+type CaseResult<F> = F extends ({
+    $case: readonly (readonly [unknown, infer Result])[];
+}) ? Result | (F extends {
+    $else: infer ElseResult;
+} ? ElseResult : null) : never;
 type ParseSelect<Select extends SelectParams<TD>["select"], TD extends AnyObject, S extends DBSchema | void> = (Select extends {
     "*": 1;
 } ? NormalizedRow<TD> : {}) & {
-    [Key in keyof Omit<Select, "*"> & string]: Select[Key] extends 1 | true ? NormalizedRow<TD>[Key] : Select[Key] extends ({
+    [Key in keyof Omit<Select, "*"> & string]: Select[Key] extends 1 | true ? NormalizedRow<TD>[Key] : Select[Key] extends CaseSelect ? CaseResult<Select[Key]> : Select[Key] extends ({
         $leftJoin: infer P extends RawJoinPath;
         select: unknown;
     }) ? ExplicitJoinResult<Select[Key], S, P> : Select[Key] extends ({
@@ -378,9 +387,9 @@ export type InsertDataWithNested<TD extends AnyObject, S extends DBSchema | void
 } : {});
 type GetInsertColumns<TD extends AnyObject, S, TName extends PropertyKey> = [
     TName
-] extends [never] ? TD : S extends Record<TName, {
+] extends [never] ? TD : S extends (Record<TName, {
     insertColumns: infer Columns extends AnyObject;
-}> ? Columns : TD;
+}>) ? Columns : TD;
 type GetUpdateData<TD extends AnyObject, S, TName extends PropertyKey> = S extends Record<TName, {
     updateColumns: infer Columns extends AnyObject;
 }> ? UpsertDataToPGCastLax<Columns> : UpsertDataToPGCastLax<TD>;

@@ -7,7 +7,7 @@ import { getRandomElement } from "@common/utils";
 import type { ConditionalStyle } from "./ColumnStyleControls";
 import type { ColumnConfig } from "../ColumnMenu";
 import { getComputedColumnSelect } from "../../tableUtils/getTableSelect";
-import { getSingleShownNestedColumn } from "../../tableUtils/StyledTableColumn";
+import { getSingleShownNestedColumn } from "../../RenderColumn/StyledTableColumn";
 import type { DBSchemaTableWJoins } from "src/dashboard/Dashboard/dashboardUtils";
 
 export type DefaultConditionalStyleArgs =

@@ -1,5 +1,5 @@
 import { mdiFilter, mdiFunction, mdiKey, mdiLink } from "@mdi/js";
-import type { AnyObject } from "prostgles-types";
+import { _PG_numbers, includes, type AnyObject } from "prostgles-types";
 
 import React from "react";
 
@@ -7,25 +7,28 @@ import Btn from "@components/Btn";
 
 import { FlexRow } from "@components/Flex";
 import { Icon } from "@components/Icon/Icon";
-import { quickClone } from "prostgles-client/dist/SyncedTable/SyncedTable";
+import type { TableHandlerClient } from "prostgles-client";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";
+import { onRenderColumn } from "../RenderColumn/onRenderColumn";
+import {
+  getCellStyle,
+  getSingleShownNestedColumn,
+} from "../RenderColumn/StyledTableColumn";
 import type W_Table from "../W_Table";
 import type {
-  ColumnConfigWInfo,
+  ColumnConfigWithInfo,
   MinMaxVals,
   ProstglesColumn,
   W_TableProps,
 } from "../W_Table";
+import { getColumnsWithInfoAndWidth } from "./getColumnsWithInfoAndWidth";
 import type { OnClickEditRow } from "./getEditColumn";
 import { getEditColumn } from "./getEditColumn";
-import { getFullColumnConfig } from "./getFullColumnConfig";
-import { onRenderColumn } from "./onRenderColumn";
-import { getCellStyle, getSingleShownNestedColumn } from "./StyledTableColumn";
-import type { TableHandlerClient } from "prostgles-client";
 import { getColumnFormat } from "../ColumnMenu/ColumnDisplayFormat/getFormatColumnSelect";
 
-export type ProstglesTableColumn = ProstglesColumn & ColumnConfigWInfo;
+export type ProstglesTableColumn = ProstglesColumn &
+  Omit<ColumnConfigWithInfo, "label">;
 
 type GetTableColsArgs = Pick<W_TableProps["prgl"], "db" | "tables" | "sql"> &
   Pick<CommonWindowProps, "suggestions"> & {
@@ -64,34 +67,23 @@ export const getTableCols = ({
     return [];
   }
 
-  const _fullConfigCols = getFullColumnConfig(tables, w, data, windowWidth);
-  const fullConfigCols = _fullConfigCols
-    .filter((c) => c.show)
-    .map((_c) => {
-      const c: ColumnConfigWInfo = quickClone(_c);
-
-      const { tsDataType = "any", udt_name = "text" } =
-        (c.computedConfig ? c.computedConfig : c.info) ?? {};
-
-      return {
-        ...c,
-        tsDataType,
-        udt_name,
-      };
-    });
+  const fullConfigCols = getColumnsWithInfoAndWidth(
+    tables,
+    w,
+    data,
+    windowWidth,
+  ).filter((c) => c.show);
 
   const tblCols: ProstglesTableColumn[] = fullConfigCols.map((c) => {
-    const renderColumn = {
-      ...c,
-      format: getColumnFormat(c),
-    };
+    const renderColumn = c;
+    const format = getColumnFormat(c);
     const nestedCols =
       !c.nested ? null
-      : c.nested.chart ?
-        ` (${c.nested.chart.dateCol}, ${
-          c.nested.chart.yAxis.isCountAll ?
+      : c.nested.display?.type === "timechart" ?
+        ` (${c.nested.display.dateCol}, ${
+          c.nested.display.yAxis.isCountAll ?
             "COUNT(*)"
-          : `${c.nested.chart.yAxis.funcName.slice(1).toUpperCase()}(${c.nested.chart.yAxis.colName})`
+          : `${c.nested.display.yAxis.funcName.slice(1).toUpperCase()}(${c.nested.display.yAxis.colName})`
         })`
       : "";
     // ` (${sliceText(c.nested.columns.filter(c => c.show).map(c => c.name).join(", "), 20)})`;
@@ -128,7 +120,7 @@ export const getTableCols = ({
               e.preventDefault();
 
               const _w = w;
-              _w.$update(
+              void _w.$update(
                 { options: { showFilters: !_w.options.showFilters } },
                 { deepMerge: true },
               );
@@ -137,9 +129,9 @@ export const getTableCols = ({
       </div>
     );
 
-    let labelText = c.info?.label || c.name;
+    let labelText = c.label || c.info?.label || c.name;
     let labelIcon = "";
-    if (c.computedConfig?.isColumn) {
+    if (c.computedConfig?.isColumn && !c.label) {
       labelIcon = mdiFunction;
       labelText = `${c.computedConfig.funcDef.label}(${c.name})`;
     } else if (c.info?.references || c.nested) {
@@ -201,13 +193,18 @@ export const getTableCols = ({
        * Set color based on data type?!
        */
       getCellStyle: (row) => {
-        if (c.style?.type === "Scale" && barchartVals?.[c.name]) {
-          const singleNested = getSingleShownNestedColumn(c, tables);
-          const value =
-            singleNested ?
-              row[c.name]?.[0]?.[singleNested.shownCol.name]
-            : row[c.name];
-          const style = getCellStyle(c, c, value, barchartVals[c.name]);
+        const chartValues = barchartVals?.get(c.name);
+        if (
+          !c.nested &&
+          !c.action &&
+          c.style?.type === "Scale" &&
+          chartValues
+        ) {
+          const style = getCellStyle(
+            c,
+            row[c.name],
+            chartValues.type === "nested" ? undefined : chartValues.range,
+          );
           if (!style?.cellColor && !style?.textColor) {
             return {};
           }
@@ -220,12 +217,21 @@ export const getTableCols = ({
           };
         }
         const isMedia =
-          renderColumn.format?.type === "Media" ||
-          (renderColumn.format?.type === "Internal" &&
-            renderColumn.format.params.component === "File");
-        return isMedia ? { display: "flex" } : {};
+          format?.type === "Media" ||
+          (format?.type === "Internal" && format.params.component === "File");
+        const nestedValue =
+          c.nested?.display?.type !== "entities" &&
+          c.nested?.display?.type !== "timechart" &&
+          getSingleShownNestedColumn(c, tables);
+        const numericType =
+          nestedValue ? nestedValue.colInfo.udt_name : c.udt_name;
+        const isNumeric = includes(_PG_numbers, numericType);
+        return {
+          ...(isMedia && { display: "flex" }),
+          ...(isNumeric && { textAlign: "right" }),
+        };
       },
-      onContextMenu: (e: React.MouseEvent, n: HTMLElement) => {
+      onContextMenu: (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
         const { x, y } = e.currentTarget.getBoundingClientRect();

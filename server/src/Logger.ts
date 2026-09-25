@@ -1,15 +1,16 @@
 import type { EventInfo } from "prostgles-server/dist/Logging";
 import type { TableConfig } from "prostgles-server";
-import { mkdir, writeFile } from "fs/promises";
-import { dirname } from "path";
-import {
-  getSerialisableError,
-  omitKeys,
-  pickKeys,
-  safeStringify,
-} from "prostgles-types";
+import { existsSync } from "fs";
+import { appendFile, mkdir, readdir, rename, rm } from "fs/promises";
+import { join } from "path";
+import { pickKeys } from "prostgles-types";
 import { type DBS } from ".";
 import { getAuthSetupData } from "./authConfig/subscribeToAuthSetupChanges";
+import {
+  serialiseTestLog,
+  shouldLogTestEvent,
+} from "./serialiseTestLog";
+import { getTestLogFiles } from "./testLogFiles";
 
 export const loggerTableConfig: TableConfig<{ en: 1 }> = {
   logs: {
@@ -59,54 +60,102 @@ const logRecords: {
 }[] = [];
 const testLogPath =
   process.env.PRGL_TEST ? process.env.PRGL_TEST_LOG_PATH : undefined;
-const maxTestLogCharacters = 64_000;
-let testLogArtifact = "";
-let testLogWriteTimer: NodeJS.Timeout | undefined;
-let testLogWrite = Promise.resolve();
+const testLogFiles = testLogPath ? getTestLogFiles(testLogPath) : undefined;
+const maxTestLogBytes = 10_000_000;
+const maxTestLogFiles = 10;
+const maxOversizedEventPreviewChars = 10_000;
+const testLogSaveInterval = 1_000;
 
-const serialiseTestLog = (e: EventInfo, connection_id: string | null) => {
-  try {
-    const loggedEvent =
-      e.type === "table" || e.type === "method" ?
-        omitKeys(e, ["localParams"])
-      : undefined;
-    if (!loggedEvent) return undefined;
-    return safeStringify({
-      created: new Date().toISOString(),
-      connection_id,
-      ...(getSerialisableError(e) as {}),
-      loggedEvent,
-    });
-  } catch (error) {
-    return safeStringify({
-      created: new Date().toISOString(),
-      connection_id,
-      type: e.type,
-      serialization_error: getSerialisableError(error),
-    });
-  }
+const deleteExistingTestLogs = async () => {
+  if (!testLogFiles) return;
+  const fileNames = await readdir(testLogFiles.directory).catch(
+    (error: NodeJS.ErrnoException) => {
+      if (error.code === "ENOENT") return [];
+      throw error;
+    },
+  );
+  await Promise.all(
+    fileNames
+      .filter(testLogFiles.isManagedFileName)
+      .map((fileName) =>
+        rm(join(testLogFiles.directory, fileName), { force: true }),
+      ),
+  );
 };
 
+let testLogBytes = 0;
+let pendingTestLogs: string[] = [];
+let testLogWriteTimer: NodeJS.Timeout | undefined;
+let testLogWrite = deleteExistingTestLogs();
+
 const addTestLog = (e: EventInfo, connection_id: string | null) => {
-  if (!testLogPath) return;
-  const line = serialiseTestLog(e, connection_id);
-  if (!line) return;
-  testLogArtifact = (testLogArtifact + line + "\n").slice(
-    -maxTestLogCharacters,
-  );
+  if (!testLogPath || !shouldLogTestEvent(e)) return;
+  const line = serialiseTestLog(e, connection_id) + "\n";
+  pendingTestLogs.push(line);
 
   if (testLogWriteTimer) return;
   testLogWriteTimer = setTimeout(() => {
     testLogWriteTimer = undefined;
+    const logsToWrite = pendingTestLogs;
+    pendingTestLogs = [];
     testLogWrite = testLogWrite
-      .then(async () => {
-        await mkdir(dirname(testLogPath), { recursive: true });
-        await writeFile(testLogPath, testLogArtifact);
-      })
+      .then(() => writeTestLogs(logsToWrite))
       .catch((error: unknown) => {
         console.error("Failed to write test log artifact", error);
       });
-  }, 50);
+  }, testLogSaveInterval);
+};
+
+const writeTestLogs = async (lines: string[]) => {
+  if (!testLogPath || !testLogFiles) return;
+  await mkdir(testLogFiles.directory, { recursive: true });
+
+  let chunk = "";
+  let chunkBytes = 0;
+  const flushChunk = async () => {
+    if (!chunk) return;
+    await appendFile(testLogPath, chunk);
+    testLogBytes += chunkBytes;
+    chunk = "";
+    chunkBytes = 0;
+  };
+
+  for (const originalLine of lines) {
+    let line = originalLine;
+    let lineBytes = Buffer.byteLength(line);
+    if (lineBytes > maxTestLogBytes) {
+      line = `${JSON.stringify({
+        created: new Date().toISOString(),
+        type: "testLog",
+        command: "oversizedEventOmitted",
+        originalBytes: lineBytes,
+        truncatedText: originalLine.slice(0, maxOversizedEventPreviewChars),
+      })}\n`;
+      lineBytes = Buffer.byteLength(line);
+    }
+    if (testLogBytes + chunkBytes + lineBytes > maxTestLogBytes) {
+      await flushChunk();
+      await rotateTestLogs();
+    }
+    chunk += line;
+    chunkBytes += lineBytes;
+  }
+  await flushChunk();
+};
+
+const rotateTestLogs = async () => {
+  if (!testLogPath || !testLogFiles) return;
+  await rm(testLogFiles.getArchivePath(maxTestLogFiles - 1), { force: true });
+  for (let index = maxTestLogFiles - 2; index >= 1; index -= 1) {
+    const source = testLogFiles.getArchivePath(index);
+    if (existsSync(source)) {
+      await rename(source, testLogFiles.getArchivePath(index + 1));
+    }
+  }
+  if (existsSync(testLogPath)) {
+    await rename(testLogPath, testLogFiles.getArchivePath(1));
+  }
+  testLogBytes = 0;
 };
 
 export const addLog = (e: EventInfo, connection_id: string | null) => {

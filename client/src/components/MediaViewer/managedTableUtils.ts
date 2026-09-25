@@ -87,6 +87,10 @@ export type AnnotationsTableRow = TableConfigType<
   typeof annotationsTableColumns
 >;
 
+export type FileTableRowExtraction = TableConfigType<
+  (typeof fileTableExtractionColumns)["columns"]
+>;
+
 export type FilesTableRow = {
   data: ArrayBuffer | Uint8Array;
   url?: string;
@@ -96,11 +100,15 @@ export type FilesTableRow = {
   content_type: string;
   docling_metadata: null | DoclingDocument;
   text_content: null | string[];
-};
+} & FileTableRowExtraction;
 
-export type FileTableRowExtraction = TableConfigType<
-  (typeof fileTableExtractionColumns)["columns"]
->;
+export const FILE_TABLE_SELECT = {
+  id: 1,
+  original_last_modified: 1,
+  original_name: 1,
+  content_type: 1,
+  extraction_status: 1,
+} satisfies Partial<Record<keyof FilesTableRow, 1>>;
 
 export type DBManagedTableSchema = {
   files: {

@@ -21,7 +21,7 @@ import {
   tsDataTypeFromUdtName,
 } from "src/dashboard/SmartForm/SmartFormField/fieldUtils";
 import { getColumnDataColor } from "src/dashboard/SmartForm/SmartFormField/RenderValue";
-import type { ColumnConfigWInfo } from "../../W_Table";
+import type { ColumnConfigWithInfo } from "../../W_Table";
 
 export const getColumnListItem = (
   c: Pick<ValidatedColumnInfo, "name"> &
@@ -31,7 +31,7 @@ export const getColumnListItem = (
         "udt_name" | "tsDataType" | "references" | "is_pkey"
       >
     > & { disabledInfo?: string },
-  columnWInfo?: ColumnConfigWInfo,
+  columnWInfo?: ColumnConfigWithInfo,
 ): Pick<
   SearchListItem,
   "data" | "title" | "subLabel" | "iconLeft" | "disabledInfo"
@@ -51,7 +51,7 @@ export const getColumnListItem = (
   return {
     key: c.name,
     label:
-      c.name +
+      (columnWInfo?.label || columnWInfo?.info?.label || c.name) +
       (!c.references ? "" : (
         `    (${c.references.map((r) => r.ftable).join(", ")})`
       )),
@@ -74,7 +74,7 @@ export const getColumnIconPath = (
       "udt_name" | "tsDataType" | "references" | "is_pkey"
     >
   >,
-  columnWInfo?: ColumnConfigWInfo,
+  columnWInfo?: ColumnConfigWithInfo,
 ) => {
   const tsDataType = c.tsDataType ?? tsDataTypeFromUdtName(c.udt_name ?? "");
   return (
