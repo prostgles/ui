@@ -26,7 +26,7 @@ import type {
   ColumnConfig,
   ColumnSort,
   ColumnSortSQL,
-} from "../W_Table/ColumnMenu/ColumnMenu";
+} from "../W_Table/ColumnMenu/ColumnConfig";
 import type { CardLayout } from "./cardLayout";
 
 export type ChartType =

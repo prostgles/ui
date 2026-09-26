@@ -69,7 +69,7 @@ export async function onSearchItems(
         if (colName) {
           /** If date then put the returned content as value */
           columnTermValue = r.prgl_term_highlight[colName].flat().join("");
-          columnValue = column ? r[column] : columnTermValue;
+          columnValue = r[colName];
 
           node = (
             <div className="flex-col ws-pre f-1">

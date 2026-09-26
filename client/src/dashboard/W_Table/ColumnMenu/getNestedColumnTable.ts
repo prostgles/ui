@@ -3,7 +3,7 @@ import type {
   WindowSyncItem,
 } from "../../Dashboard/dashboardUtils";
 import { getMinimalColumnInfo } from "../tableUtils/tableUtils";
-import type { ColumnConfig } from "./ColumnMenu";
+import type { ColumnConfig } from "./ColumnConfig";
 
 type Result = {
   columns: ColumnConfig[];

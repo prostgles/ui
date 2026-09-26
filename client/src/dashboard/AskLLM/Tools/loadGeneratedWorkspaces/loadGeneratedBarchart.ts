@@ -9,7 +9,7 @@ import { pickKeys } from "prostgles-types";
 import type {
   ColumnConfig,
   NestedColumn,
-} from "src/dashboard/W_Table/ColumnMenu/ColumnMenu";
+} from "src/dashboard/W_Table/ColumnMenu/ColumnConfig";
 
 export const loadGeneratedBarchart = (
   generatedWindow: BarchartWindowInsertModel,

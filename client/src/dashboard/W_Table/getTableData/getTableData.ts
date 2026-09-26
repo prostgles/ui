@@ -253,20 +253,23 @@ export async function getTableData(
             rowCount,
             rowsLoaded: Date.now(),
             totalRows: showCounts ? +((await tableHandler.count?.()) ?? 0) : 0,
-            onRowClick: (row, a2) => {
-              /** Must only include non computed columns  */
-              const rowHasNonComputedFields = this.d.w?.columns?.find(
-                (c) =>
-                  !c.computedConfig &&
-                  !c.format &&
-                  Object.keys(row ?? {}).includes(c.name),
-              );
-              if (row && rowHasNonComputedFields) {
-                this.props.onClickRow?.(row, a2);
-              } else {
-                this.props.onClickRow?.(undefined, a2);
-              }
-            },
+            onRowClick:
+              !this.props.onClickRow ?
+                undefined
+              : (row, a2) => {
+                  /** Must only include non computed columns  */
+                  const rowHasNonComputedFields = this.d.w?.columns?.find(
+                    (c) =>
+                      !c.computedConfig &&
+                      !c.format &&
+                      Object.keys(row ?? {}).includes(c.name),
+                  );
+                  if (row && rowHasNonComputedFields) {
+                    this.props.onClickRow?.(row, a2);
+                  } else {
+                    this.props.onClickRow?.(undefined, a2);
+                  }
+                },
           };
           if (joinFilter) {
             ns.joinFilterStr = JSON.stringify(joinFilter);

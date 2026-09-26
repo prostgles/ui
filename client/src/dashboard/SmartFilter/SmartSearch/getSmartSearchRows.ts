@@ -7,7 +7,7 @@ import {
 } from "prostgles-types";
 import type { Prgl } from "src/App";
 import type { DBSchemaTableWJoins } from "src/dashboard/Dashboard/dashboardUtils";
-import type { ColumnConfig } from "../../W_Table/ColumnMenu/ColumnMenu";
+import type { ColumnConfig } from "src/dashboard/W_Table/ColumnMenu/ColumnConfig";
 import {
   getComputedColumnSelect,
   getTableSelect,

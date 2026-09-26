@@ -1,6 +1,6 @@
 import type { ValidatedColumnInfo } from "prostgles-types";
 import { _PG_date, _PG_interval, _PG_numbers } from "prostgles-types";
-import type { ColumnConfig } from "../ColumnMenu";
+import type { ColumnConfig } from "../ColumnConfig";
 
 const infoTypes = {
   string: { udt_name: "text", tsDataType: "string" },

@@ -24,7 +24,7 @@ import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";
 import ErrorComponent from "@components/ErrorComponent";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import { SQLSmartEditor } from "../../SQLEditor/SQLSmartEditor";
-import type { ColumnConfig } from "../ColumnMenu/ColumnMenu";
+import type { ColumnConfig } from "../ColumnMenu/ColumnConfig";
 import { ColumnsMenu } from "../ColumnMenu/ColumnsMenu";
 import { AutoRefreshMenu } from "./AutoRefreshMenu";
 import { W_TableMenu_AccessRules } from "./W_TableMenu_AccessRules";

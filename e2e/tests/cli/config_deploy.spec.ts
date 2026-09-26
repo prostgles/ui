@@ -1,4 +1,4 @@
-import { expect, test } from "./utils/fixtures";
+import { expect, test } from "../utils/fixtures";
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import {
   existsSync,
@@ -13,7 +13,7 @@ import {
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { USERS } from "utils/constants";
-import { goTo } from "./utils/goTo";
+import { goTo } from "../utils/goTo";
 import * as pg from "pg";
 
 import {
@@ -21,14 +21,14 @@ import {
   login,
   openTable,
   type PageWIds,
-} from "./utils/utils";
+} from "../utils/utils";
 import { getDataKey } from "Testing";
-import { sidKeyName } from "../../common/authTypesAndConstants";
-import { CONFIG_TEST } from "./configTest/constants";
-import { createTestDeployment } from "../../server/dist/server/src/cli/testing";
+import { sidKeyName } from "../../../common/authTypesAndConstants";
+import { CONFIG_TEST } from "../configTest/constants";
+import { createTestDeployment } from "../../../server/dist/server/src/cli/testing";
 import { CHANNELS } from "prostgles-types";
-import type { GroupedDetailedFilter } from "../../common/filterUtils";
-import { createConfigTestProject } from "./utils/createConfigTestProject";
+import type { GroupedDetailedFilter } from "../../../common/filterUtils";
+import { createConfigTestProject } from "../utils/createConfigTestProject";
 
 test("checkFilterDetailed works with grouped existsJoined", async ({
   page,
@@ -730,10 +730,10 @@ module.exports.functions = {
   }
 });
 
-const serverDirectory = resolve(__dirname, "../../server");
+const serverDirectory = resolve(__dirname, "../../../server");
 const cliPath = join(serverDirectory, "dist/server/src/cli/cli.js");
 const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
-const configTestDirectory = resolve(__dirname, "configTest");
+const configTestDirectory = resolve(__dirname, "../configTest");
 
 const getCliEnvironment = (overrides: NodeJS.ProcessEnv = {}) => {
   const environment = { ...process.env, ...overrides };

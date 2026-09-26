@@ -1,13 +1,13 @@
-import { sidKeyName } from "../../common/authTypesAndConstants";
-import { expect, test } from "./utils/fixtures";
+import { sidKeyName } from "../../../common/authTypesAndConstants";
+import { expect, test } from "../utils/fixtures";
 import { rmSync } from "node:fs";
-import { createConfigTestProject } from "./utils/createConfigTestProject";
-import type { SchemaConfig } from "../../server/dist/server/src/schemaConfig";
+import { createConfigTestProject } from "../utils/createConfigTestProject";
+import type { SchemaConfig } from "../../../server/dist/server/src/schemaConfig";
 import {
   createTestDeployment,
   type TestDeployment,
-} from "../../server/dist/server/src/cli/testing";
-import { openTable } from "./utils/utils";
+} from "../../../server/dist/server/src/cli/testing";
+import { openTable } from "../utils/utils";
 
 const sourceColumns = {
   tenant_id: "text NOT NULL",

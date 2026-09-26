@@ -27,7 +27,7 @@ import type {
   SyncDataItem,
 } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import type { DBEventHandles, ValidatedColumnInfo } from "prostgles-types/lib";
-import type { ColumnSortSQL } from "../W_Table/ColumnMenu/ColumnMenu";
+import type { ColumnSortSQL } from "../W_Table/ColumnMenu/ColumnConfig";
 
 import { Icon } from "@components/Icon/Icon";
 import { useIsMounted } from "prostgles-client";

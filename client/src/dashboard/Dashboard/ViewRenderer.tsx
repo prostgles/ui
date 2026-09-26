@@ -301,6 +301,9 @@ export class ViewRenderer extends RTComp<
             links,
             windows,
           );
+          const canClickRow = links.some((link) =>
+            [link.w1_id, link.w2_id].includes(w.id),
+          );
           result = (
             <W_Table
               setLinkMenu={setLinkMenu}
@@ -310,8 +313,11 @@ export class ViewRenderer extends RTComp<
               }
               joinFilter={crossF.activeRowFilter}
               externalFilters={crossF.all}
-              onClickRow={(row) =>
-                onClickRow(row, w.table_name!, w.id, { type: "table-row" })
+              onClickRow={
+                canClickRow ?
+                  (row) =>
+                    onClickRow(row, w.table_name!, w.id, { type: "table-row" })
+                : undefined
               }
               childWindow={childWindow}
               {...commonProps}

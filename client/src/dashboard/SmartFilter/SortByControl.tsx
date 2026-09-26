@@ -3,7 +3,7 @@ import { Select } from "@components/Select/Select";
 import { mdiSortReverseVariant, mdiSortVariant } from "@mdi/js";
 import type { ValidatedColumnInfo } from "prostgles-types";
 import React from "react";
-import type { ColumnSort } from "../W_Table/ColumnMenu/ColumnMenu";
+import type { ColumnSort } from "../W_Table/ColumnMenu/ColumnConfig";
 
 type SortByControlProps = Pick<
   React.HTMLAttributes<HTMLDivElement>,

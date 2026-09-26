@@ -2,7 +2,7 @@ import { tableMightBeUndefinedDueToAccessControl } from "@common/utils";
 import Btn from "@components/Btn";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import React, { useMemo } from "react";
-import type { ColumnConfig } from "./ColumnMenu";
+import type { ColumnConfig } from "./ColumnConfig";
 
 export const UpdateColumnGlobalConfig = ({
   column,

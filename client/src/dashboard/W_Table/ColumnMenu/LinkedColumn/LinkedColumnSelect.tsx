@@ -11,7 +11,7 @@ import { getMinimalColumnInfo } from "../../tableUtils/tableUtils";
 import { AddComputedColMenu } from "../AddComputedColumn/AddComputedColMenu";
 import { QuickAddComputedColumn } from "../AddComputedColumn/QuickAddComputedColumn";
 import { ColumnList } from "../ColumnList";
-import type { ColumnConfig, NestedColumn } from "../ColumnMenu";
+import type { ColumnConfig, NestedColumn } from "../ColumnConfig";
 import { NestedTimechartControls } from "../NestedTimechartControls";
 import type { LinkedColumnProps } from "./LinkedColumn";
 
@@ -55,7 +55,11 @@ export const LinkedColumnSelect = ({
               <Label label="Columns" variant="normal"></Label>
               <Btn
                 variant="faded"
-                color={currentColumn.nested?.display?.type !== "timechart" ? "action" : undefined}
+                color={
+                  currentColumn.nested?.display?.type !== "timechart" ?
+                    "action"
+                  : undefined
+                }
                 data-command="LinkedColumn.ColumnList.toggle"
                 disabledInfo={
                   currentColumn.nested?.display?.type === "timechart" ?
@@ -119,7 +123,11 @@ export const LinkedColumnSelect = ({
         <>
           <NestedTimechartControls
             tableName={table.name}
-            chart={currentColumn?.nested?.display?.type === "timechart" ? currentColumn.nested.display : undefined}
+            chart={
+              currentColumn?.nested?.display?.type === "timechart" ?
+                currentColumn.nested.display
+              : undefined
+            }
             onChange={(chart) => {
               updateNested({
                 display: chart ?? { type: "values" },
@@ -158,7 +166,11 @@ export const LinkedColumnSelect = ({
                     show: !!c.show && !!c.computedConfig?.funcDef.isAggregate,
                   }));
                   const newCols = [
-                    { ...newCol, name: newColumnName, action: { type: "relatedRecords" as const } },
+                    {
+                      ...newCol,
+                      name: newColumnName,
+                      action: { type: "relatedRecords" as const },
+                    },
                     ...oldColumns,
                   ];
                   updateNested({

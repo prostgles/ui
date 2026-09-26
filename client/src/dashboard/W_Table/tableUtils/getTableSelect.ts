@@ -18,7 +18,7 @@ import { getTimeChartSelectParams } from "../../W_TimeChart/fetchData/getTimeCha
 import { getFormatColumnSelect } from "../ColumnMenu/ColumnDisplayFormat/getFormatColumnSelect";
 import { getTableIdentityColumns } from "../ColumnMenu/ColumnDisplayFormat/getTableIdentityColumns";
 import { getParentTableJoinColumnNames } from "../ColumnMenu/ColumnDisplayFormat/getLinkedRecordsFilter";
-import type { ColumnConfig } from "../ColumnMenu/ColumnMenu";
+import type { ColumnConfig } from "../ColumnMenu/ColumnConfig";
 import type { ColumnConfigWithInfo, MinMax } from "../W_Table";
 import {
   fetchChartRangeValues,

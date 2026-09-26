@@ -5,7 +5,7 @@ import type { DBSchemaTableWithRenderInfo } from "../../../Dashboard/getTables";
 import { ViewMoreSmartCardList } from "../../../SmartForm/SmartFormField/ViewMoreSmartCardList";
 import { RenderColumnAction } from "../../RenderColumn/RenderColumnAction";
 import type { ColumnConfigWithInfo } from "../../W_Table";
-import type { ColumnConfig } from "../ColumnMenu";
+import type { ColumnConfig } from "../ColumnConfig";
 import { getLinkedRecordsFilter } from "./getLinkedRecordsFilter";
 import { LinkedRecordSummary } from "./LinkedRecordSummary";
 

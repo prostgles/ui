@@ -27,7 +27,7 @@ import type {
   ColumnSort,
   ColumnSortSQL,
   NestedColumn,
-} from "./ColumnMenu/ColumnMenu";
+} from "./ColumnMenu/ColumnConfig";
 import { ColumnMenu } from "./ColumnMenu/ColumnMenu";
 
 import type { DetailedFilterBase } from "@common/filterUtils";
@@ -727,7 +727,9 @@ export default class W_Table extends RTComp<
                   showSubLabel={w.options.showSubLabel}
                   activeRowStyle={activeRowStyle}
                   activeRowIndex={activeRowIndex}
-                  onRowClick={this.state.onRowClick}
+                  onRowClick={
+                    this.props.onClickRow ? this.state.onRowClick : undefined
+                  }
                   afterLastRowContent={
                     showInsertButton &&
                     !childWindow && (

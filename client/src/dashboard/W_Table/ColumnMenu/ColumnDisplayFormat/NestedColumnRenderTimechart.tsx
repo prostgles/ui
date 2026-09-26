@@ -5,7 +5,7 @@ import {
   type TimeChartLayer,
 } from "../../../Charts/TimeChart/TimeChart";
 import { getYLabelFunc } from "../../../W_TimeChart/fetchData/getTimeChartData";
-import type { ColumnConfigChart } from "../ColumnMenu";
+import type { ColumnConfigChart } from "../ColumnConfig";
 import type { NestedColumnRenderProps } from "./NestedColumnRender";
 import Loading from "@components/Loader/Loading";
 

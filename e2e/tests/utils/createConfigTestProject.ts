@@ -1,10 +1,13 @@
-import { mkdtempSync, symlinkSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import type { SchemaConfig } from "../../../server/dist/server/src/schemaConfig";
 
-export const createConfigTestProject = (config: SchemaConfig) => {
-  const configPath = mkdtempSync(join(tmpdir(), "prostgles-config-e2e-"));
+export const createConfigTestProject = (
+  config: SchemaConfig,
+  configPath = mkdtempSync(join(tmpdir(), "prostgles-config-e2e-")),
+) => {
+  mkdirSync(configPath, { recursive: true });
   symlinkSync(
     resolve(__dirname, "../../../server/node_modules"),
     join(configPath, "node_modules"),

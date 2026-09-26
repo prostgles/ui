@@ -10,7 +10,7 @@ import type {
 } from "../../Dashboard/dashboardUtils";
 import { getColumnsWithInfo } from "../tableUtils/getColumnsWithInfo";
 import { ColumnListItemOptions } from "./ColumnListItemOptions";
-import type { ColumnConfig } from "./ColumnMenu";
+import type { ColumnConfig } from "./ColumnConfig";
 import { getColumnListItem } from "./ColumnSelect/getColumnListItem";
 import { SummariseColumn } from "./SummariseColumns";
 

@@ -19,7 +19,7 @@ import { SmartFilterBar } from "./SmartFilterBar/SmartFilterBar";
 import { SmartForm } from "./SmartForm/SmartForm";
 import { isNumericColumn } from "./W_SQL/getSQLResultTableColumns";
 import { getFormatColumnSelect } from "./W_Table/ColumnMenu/ColumnDisplayFormat/getFormatColumnSelect";
-import type { ColumnSort } from "./W_Table/ColumnMenu/ColumnMenu";
+import type { ColumnSort } from "./W_Table/ColumnMenu/ColumnConfig";
 import { onRenderColumn } from "./W_Table/RenderColumn/onRenderColumn";
 import {
   getEditColumn,

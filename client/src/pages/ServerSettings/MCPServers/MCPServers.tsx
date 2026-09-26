@@ -6,7 +6,7 @@ import { usePromise } from "prostgles-client";
 import React, { useState } from "react";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import { SmartCardList } from "../../../dashboard/SmartCardList/SmartCardList";
-import type { ColumnSort } from "../../../dashboard/W_Table/ColumnMenu/ColumnMenu";
+import type { ColumnSort } from "src/dashboard/W_Table/ColumnMenu/ColumnConfig";
 import { MCPServerConfigProvider } from "./MCPServerConfig/MCPServerConfigProvider";
 import { MCPServerFooterActions } from "./MCPServerFooterActions/MCPServerFooterActions";
 import { MCPServersHeader } from "./MCPServersHeader";

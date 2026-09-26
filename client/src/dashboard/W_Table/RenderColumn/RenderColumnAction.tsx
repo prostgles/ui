@@ -1,7 +1,7 @@
 import Btn from "@components/Btn";
 import React from "react";
 import { _PG_numbers, includes } from "prostgles-types";
-import type { ColumnConfig } from "../ColumnMenu/ColumnMenu";
+import type { ColumnConfig } from "../ColumnMenu/ColumnConfig";
 import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 import { ViewMoreSmartCardList } from "../../SmartForm/SmartFormField/ViewMoreSmartCardList";
 import { LinkedRecordButton } from "../ColumnMenu/ColumnDisplayFormat/LinkedRecordButton";

@@ -12,7 +12,7 @@ import { SmartFilterBar } from "../../../SmartFilterBar/SmartFilterBar";
 import type { ColumnConfigWithInfo } from "../../W_Table";
 import { getColumnsWithInfo } from "../../tableUtils/getColumnsWithInfo";
 import { getRequiredTableSelect } from "../../tableUtils/getTableSelect";
-import type { ColumnConfig } from "../ColumnMenu";
+import type { ColumnConfig } from "../ColumnConfig";
 import {
   getAllJoins,
   JoinPathSelectorV2,

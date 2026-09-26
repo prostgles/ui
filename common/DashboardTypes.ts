@@ -74,6 +74,14 @@ type LinkedDataChart = {
 type LinkedDataTable = {
   limit: number;
   columns: Omit<TableColumn, "nested">[];
+  /** Defaults to values. Entity summaries use the linked table's card configuration. */
+  display?:
+    | {
+        type: "values";
+        /** Auto hides labels for one column and places them above multiple columns. */
+        labels?: "auto" | "none" | "inline" | "above";
+      }
+    | { type: "entities" };
 };
 
 /**
@@ -214,6 +222,14 @@ export type TableColumn = {
    * For nested columns this can be anything. Use the table name or a more descriptive name.
    */
   name: string;
+  /** Display label; does not change the database column name. */
+  label?: string;
+  /**
+   * Open the displayed record or the records behind a linked aggregate.
+   * Linked aggregates default to relatedRecords; null disables that default.
+   * For values, set this on the child column; for entities, on the parent column.
+   */
+  action?: { type: "record" } | { type: "relatedRecords" } | null;
 
   /**
    *
@@ -241,7 +257,15 @@ export type TableColumn = {
    */
   width: number;
 
-  styling?:
+  styling?: (
+    | { type: "None" }
+    | {
+        type: "Fixed";
+        textColor?: string;
+        chipColor?: string;
+        cellColor?: string;
+        borderColor?: string;
+      }
     | {
         type: "conditional";
         conditions: {
@@ -272,39 +296,34 @@ export type TableColumn = {
     | {
         /**
          * Column value will be rendered as a horizontal bar with length proportional to the value.
-         * Can be used together with nested LinkedData as long as it's LinkedDataTable with a single column, for example:
+         * For linked values, set styling on each numeric child in nested.columns.
+         * @example A restaurant's linked order count, styled as a bar and clickable to view its orders:
          * {
-            "name": "orders",
-            "show": true,
-            "style": {
-              "type": "Barchart"
-              "barColor": "blue",
-              "textColor": "#646464",
-            },
-            "width": 150,
-            "nested": {
-              "columns": [
-                {
-                  "name": "COUNT ALL",
-                  "show": true,
-                  "computedConfig": {
-                    "aggregation": "countAll"
-                  }
-                }, 
-              ],
-              "path": [
-                {
-                  "on": [
-                    {
-                      "id": "restaurant_id"
-                    }
-                  ],
-                  "table": "orders"
-                }
-              ],
-              "joinType": "left"
-            }
-          }
+         *   "name": "orders",
+         *   "width": 150,
+         *   "nested": {
+         *     "columns": [
+         *       {
+         *         "name": "Order count",
+         *         "width": 150,
+         *         "computedConfig": { "aggregation": "countAll" },
+         *         "action": { "type": "relatedRecords" },
+         *         "styling": {
+         *           "type": "Barchart",
+         *           "barColor": "blue",
+         *           "textColor": "#646464",
+         *           "buttonVariant": "text"
+         *         }
+         *       }
+         *     ],
+         *     "path": [
+         *       { "on": [{ "id": "restaurant_id" }], "table": "orders" }
+         *     ],
+         *     "joinType": "left",
+         *     "limit": 1,
+         *     "display": { "type": "values", "labels": "none" }
+         *   }
+         * }
          */
         type: "Barchart";
         barColor?: string;
@@ -313,12 +332,18 @@ export type TableColumn = {
     | {
         /**
          * Column value will be rendered with a background color based on the value. The color is determined by dividing the range between min and max into equal segments and assigning a color to each segment.
-         * Can be used together with nested LinkedData as long as it's LinkedDataTable with a single column.
+         * For linked values, set styling on each numeric child in nested.columns.
          */
         type: "Scale";
         barColor?: string;
         textColor?: string;
-      };
+        minColor?: string;
+        maxColor?: string;
+      }
+  ) & {
+    /** For click actions. Defaults to faded for entities and text for values. */
+    buttonVariant?: "text" | "faded" | "filled" | "outline";
+  };
 
   /**
    * If set, column value will rendered in a specific way
@@ -388,7 +413,7 @@ export type TableColumn = {
         type: "Logs";
       }
     | {
-        /** Used internally. Ignore */
+        /** Used internally in files table. Ignore */
         type: "DoclingDocument";
       }
     | {

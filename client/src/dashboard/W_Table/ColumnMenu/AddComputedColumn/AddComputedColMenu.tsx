@@ -24,7 +24,7 @@ import type {
   AggregateOptions,
   ColumnConfig,
   NestedColumn,
-} from "../ColumnMenu";
+} from "../ColumnConfig";
 import { getColumnListItem } from "../ColumnSelect/getColumnListItem";
 import { FunctionSelector } from "../FunctionSelector/FunctionSelector";
 import {

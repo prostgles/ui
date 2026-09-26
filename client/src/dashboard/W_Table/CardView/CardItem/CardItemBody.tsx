@@ -77,7 +77,7 @@ export const CardBody = ({
             style={{
               lineHeight: 1.33,
               ...(c.getCellStyle?.(row, value, value) || {}),
-              maxHeight: `${maxCardRowHeight || 800}px`,
+              maxHeight: `${maxCardRowHeight || 100}px`,
             }}
           >
             {c.onRender?.({

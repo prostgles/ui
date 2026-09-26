@@ -6,7 +6,7 @@ import { getColumnsWithInfo } from "../../tableUtils/getColumnsWithInfo";
 import type { ChartValues } from "../../tableUtils/fetchChartRangeValues";
 import { RenderColumn } from "../../RenderColumn/RenderColumn";
 import type { ColumnConfigWithInfo } from "../../W_Table";
-import type { ColumnConfig } from "../ColumnMenu";
+import type { ColumnConfig } from "../ColumnConfig";
 import { getLinkedRecordsFilter } from "./getLinkedRecordsFilter";
 import { NestedColumnRenderEntities } from "./NestedColumnRenderEntities";
 import { NestedColumnRenderTimechart } from "./NestedColumnRenderTimechart";

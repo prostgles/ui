@@ -23,7 +23,7 @@ import type {
 import type { ColumnConfigWithInfo } from "../W_Table";
 import { AlterColumn } from "./AlterColumn/AlterColumn";
 import { QuickAddComputedColumn } from "./AddComputedColumn/QuickAddComputedColumn";
-import type { ColumnConfig } from "./ColumnMenu";
+import type { ColumnConfig } from "./ColumnConfig";
 import { ColumnDisplayFormat } from "./ColumnDisplayFormat/ColumnDisplayFormat";
 import { getFormatOptions } from "./ColumnDisplayFormat/columnFormatUtils";
 import { ColumnStyleMenu } from "./ColumnStyleControls/ColumnStyleMenu";
@@ -189,7 +189,8 @@ export const ColumnListItemOptions = ({
                 disabledText:
                   column.format?.type === "Media" ?
                     "Cannot style a media format column"
-                  : nestedColumn?.display?.type === "timechart" ? "Cannot style a time chart column"
+                  : nestedColumn?.display?.type === "timechart" ?
+                    "Cannot style a time chart column"
                   : undefined,
                 listProps: {
                   "data-command": "W_TableMenu_ColumnList.style",

@@ -8,7 +8,7 @@ import { SwitchToggle } from "@components/SwitchToggle";
 import type { ColumnConfigWithInfo } from "../W_Table";
 import { FunctionSelector } from "./FunctionSelector/FunctionSelector";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
-import type { AggregateOptions } from "./ColumnMenu";
+import type { AggregateOptions } from "./ColumnConfig";
 import { AggregateFunctionOptions } from "./AddComputedColumn/AggregateFunctionOptions";
 
 type SummariseColumnProps = {

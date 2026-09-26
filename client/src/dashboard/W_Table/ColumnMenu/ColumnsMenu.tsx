@@ -20,7 +20,7 @@ import { updateWCols } from "../tableUtils/tableUtils";
 import { AddColumnMenu } from "./AddColumnMenu";
 import { AddComputedColMenu } from "./AddComputedColumn/AddComputedColMenu";
 import { ColumnList } from "./ColumnList";
-import type { ColumnConfig } from "./ColumnMenu";
+import type { ColumnConfig } from "./ColumnConfig";
 import { LinkedColumn } from "./LinkedColumn/LinkedColumn";
 import type { NestedColumnOpts } from "./getNestedColumnTable";
 

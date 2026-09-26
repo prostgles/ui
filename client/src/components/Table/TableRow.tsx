@@ -1,6 +1,6 @@
 import { sliceText } from "@common/utils";
 import React from "react";
-import type { ColumnSortSQL } from "../../dashboard/W_Table/ColumnMenu/ColumnMenu";
+import type { ColumnSortSQL } from "src/dashboard/W_Table/ColumnMenu/ColumnConfig";
 import Btn from "../Btn";
 import { classOverride } from "../Flex";
 import type { TableProps, TableState } from "./Table";

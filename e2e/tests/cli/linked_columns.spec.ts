@@ -1,16 +1,16 @@
 import { rmSync } from "node:fs";
-import type { ColumnConfig } from "../../client/src/dashboard/W_Table/ColumnMenu/ColumnMenu";
-import { sidKeyName } from "../../common/authTypesAndConstants";
-import type { WorkspaceInsertModel } from "../../common/DashboardTypes";
-import { getProstglesMCPFullToolName } from "../../common/mcpUtils";
+import type { ColumnConfig } from "../../../client/src/dashboard/W_Table/ColumnMenu/ColumnMenu";
+import { sidKeyName } from "../../../common/authTypesAndConstants";
+import type { WorkspaceInsertModel } from "../../../common/DashboardTypes";
+import { getProstglesMCPFullToolName } from "../../../common/mcpUtils";
 import {
   createTestDeployment,
   type TestDeployment,
-} from "../../server/dist/server/src/cli/testing";
-import type { SchemaConfig } from "../../server/dist/server/src/schemaConfig";
-import { getTableConfigMigrations } from "../../server/dist/server/src/tableConfig/tableConfigMigrations";
-import { expect, test } from "./utils/fixtures";
-import { createConfigTestProject } from "./utils/createConfigTestProject";
+} from "../../../server/dist/server/src/cli/testing";
+import type { SchemaConfig } from "../../../server/dist/server/src/schemaConfig";
+import { getTableConfigMigrations } from "../../../server/dist/server/src/tableConfig/tableConfigMigrations";
+import { expect, test } from "../utils/fixtures";
+import { createConfigTestProject } from "../utils/createConfigTestProject";
 
 const config = {
   id: "linked-columns-e2e",
@@ -1240,7 +1240,7 @@ test("database migration preserves legacy nested display settings and drilldowns
   }
 });
 
-test("LLM-generated nested columns render barcharts and conditional styles", async ({
+test("LLM-generated nested columns preserve presentation, actions and styles", async ({
   page,
 }) => {
   const toolName = getProstglesMCPFullToolName(
@@ -1278,6 +1278,7 @@ test("LLM-generated nested columns render barcharts and conditional styles", asy
               path: [{ table: "tasks", on: [{ id: "user_id" }] }],
               joinType: "left",
               limit: 1,
+              display: { type: "values", labels: "inline" },
               columns: [
                 {
                   name: "Total",
@@ -1295,16 +1296,48 @@ test("LLM-generated nested columns render barcharts and conditional styles", asy
                 },
                 {
                   name: "Latest",
+                  label: "Latest task",
                   width: 100,
+                  action: { type: "relatedRecords" },
                   computedConfig: { aggregation: "max", column: "id" },
                   styling: {
                     type: "conditional",
+                    buttonVariant: "outline",
                     conditions: [
                       { operator: ">", value: "2", chipColor: "green" },
                     ],
                   },
                 },
+                {
+                  name: "Earliest",
+                  width: 100,
+                  action: null,
+                  computedConfig: { aggregation: "min", column: "id" },
+                  styling: {
+                    type: "Scale",
+                    minColor: "#123456",
+                    maxColor: "#654321",
+                    buttonVariant: "faded",
+                  },
+                },
               ],
+            },
+          },
+          {
+            name: "Manager",
+            width: 250,
+            action: { type: "record" },
+            styling: {
+              type: "Fixed",
+              textColor: "#123456",
+              buttonVariant: "filled",
+            },
+            nested: {
+              path: [{ table: "users", on: [{ manager_id: "id" }] }],
+              joinType: "left",
+              limit: 1,
+              display: { type: "entities" },
+              columns: [{ name: "name", width: 100 }],
             },
           },
         ],
@@ -1375,9 +1408,44 @@ test("LLM-generated nested columns render barcharts and conditional styles", asy
     const bob = users
       .getByTestId("TableBody")
       .getByRole("row")
-      .filter({ hasText: "Bob" });
+      .filter({ hasText: "Bob", hasNotText: "Alice" });
     await expect(alice.locator(".ProgressBar")).toHaveText("£3.00");
     await expect(bob.locator(".ProgressBar")).toHaveText("£2.00");
+    await expect(alice.getByTestId("LinkedColumn.OpenRecords")).toHaveCount(2);
+    const generatedWorkspace = await state.db.workspaces!.findOne!({
+      name: workspace.name,
+    });
+    const generatedWindow = await state.db.windows!.findOne!({
+      table_name: "users",
+      workspace_id: generatedWorkspace!.id,
+    });
+    expect(
+      generatedWindow!.columns?.find((c) => c.name === "Task statistics")
+        ?.nested?.columns.find((c) => c.name === "Earliest"),
+    ).toMatchObject({
+      style: {
+        type: "Scale",
+        minColor: "#123456",
+        maxColor: "#654321",
+        buttonVariant: "faded",
+      },
+    });
+    const latestLabel = alice.getByText("Latest task", { exact: true });
+    await expect(latestLabel.locator("..")).toHaveClass(/flex-row gap-p25/);
+    await expect(
+      alice
+        .getByTestId("LinkedColumn.OpenRecords")
+        .filter({ hasText: "3", hasNotText: "£" }),
+    ).toHaveClass(/outline/);
+    const manager = alice.getByTestId("LinkedColumn.OpenRecord");
+    await expect(manager).toContainText("Bob");
+    await expect(manager).toHaveClass(/filled/);
+    await expect(manager).toHaveCSS("color", "rgb(18, 52, 86)");
+    await manager.click();
+    await expect(
+      page.getByTestId("SmartForm").locator('[data-key="name"] input'),
+    ).toHaveValue("Bob");
+    await page.getByTestId("Popup.close").last().click();
     await expect(alice.locator(".ProgressBar > .shadow")).toHaveCSS(
       "background-color",
       "rgb(18, 52, 86)",

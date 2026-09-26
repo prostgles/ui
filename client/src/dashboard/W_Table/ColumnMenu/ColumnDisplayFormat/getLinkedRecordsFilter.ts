@@ -5,7 +5,7 @@ import type {
 } from "@common/filterUtils";
 import { reverseParsedPath } from "prostgles-types";
 import { getComputedColumnSelect } from "../../tableUtils/getTableSelect";
-import type { ColumnConfig } from "../ColumnMenu";
+import type { ColumnConfig } from "../ColumnConfig";
 
 export type LinkedRecordsSearchFilter = DetailedFilter | GroupedDetailedFilter;
 

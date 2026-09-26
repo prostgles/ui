@@ -2,7 +2,7 @@ import { Select } from "@components/Select/Select";
 import { mdiFunction, mdiSigma } from "@mdi/js";
 import type { ValidatedColumnInfo } from "prostgles-types";
 import React, { useMemo } from "react";
-import type { ColumnConfig } from "../ColumnMenu";
+import type { ColumnConfig } from "../ColumnConfig";
 import {
   funcAcceptsColumn,
   getAggFuncs,

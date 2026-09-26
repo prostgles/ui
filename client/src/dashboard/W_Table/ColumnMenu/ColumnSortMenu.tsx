@@ -1,7 +1,7 @@
 import React from "react";
 import { FlexCol } from "@components/Flex";
 import { Select } from "@components/Select/Select";
-import type { ColumnConfig, ColumnSort, NestedColumn } from "./ColumnMenu";
+import type { ColumnConfig, ColumnSort, NestedColumn } from "./ColumnConfig";
 import type { ColumnConfigWithInfo } from "../W_Table";
 import type {
   DBSchemaTablesWJoins,

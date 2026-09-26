@@ -30,7 +30,7 @@ export const JoinedFilterControl = ({
     "fieldName" in filter.filter ? { $and: [filter.filter] } : filter.filter;
   return (
     <FlexCol
-      className={`b rounded p-p5 gap-p5 ${props.className ?? ""}`}
+      className={`b -active rounded p-p5 gap-p5 ${props.className ?? ""}`}
       data-command="JoinedFilterControl"
     >
       <FlexRow className="gap-0">

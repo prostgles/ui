@@ -15,6 +15,7 @@ import type {
 } from "prostgles-types";
 import { Client } from "pg";
 import { startTemporaryDatabases } from "../startTemporaryDatabases";
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import { getConnectionPaths } from "@common/utils";
 import { sidKeyName } from "@common/authTypesAndConstants";
 
@@ -93,7 +94,9 @@ export type TestDeployment<
   dashboardUrl: string;
   connectStateAs: (
     userKey: ClientUserType<Schemas>,
-  ) => Promise<TestDeploymentClient<void, ClientFunctionHandler, UserLike>>;
+  ) => Promise<
+    TestDeploymentClient<DBGeneratedSchema, ClientFunctionHandler, UserLike>
+  >;
   connectProjectAs: <UserType extends ClientUserType<Schemas>>(
     userKey: UserType,
   ) => Promise<
@@ -371,7 +374,7 @@ export const createTestDeployment = async <
     };
     const connectStateAs = async (userKey: ClientUserType<Schemas>) =>
       trackClient(
-        await prostgles({
+        await prostgles<DBGeneratedSchema>({
           endpoint,
           token: getToken(userKey),
           socketOptions: {

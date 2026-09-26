@@ -10,7 +10,7 @@ import type { WindowData } from "src/dashboard/Dashboard/dashboardUtils";
 import type {
   ColumnConfig,
   NestedColumn,
-} from "src/dashboard/W_Table/ColumnMenu/ColumnMenu";
+} from "src/dashboard/W_Table/ColumnMenu/ColumnConfig";
 import { CHIP_COLOR_NAMES } from "../../../W_Table/ColumnMenu/ColumnDisplayFormat/ChipStylePalette";
 
 export const loadGeneratedTable = (
@@ -38,7 +38,7 @@ export const loadGeneratedTable = (
                 yAxis: nested.chart.yAxis,
                 renderStyle: "smooth-line",
               }
-            : undefined,
+            : nested.display,
           columns:
             "columns" in nested ?
               [
@@ -48,8 +48,8 @@ export const loadGeneratedTable = (
                     show: true,
                     style: parseColumnStyle(nc.styling),
                     action:
-                      nc.computedConfig ?
-                        { type: "relatedRecords" }
+                      nc.action !== undefined ? (nc.action ?? undefined)
+                      : nc.computedConfig ? { type: "relatedRecords" }
                       : undefined,
                     computedConfig:
                       nc.computedConfig &&
@@ -77,6 +77,7 @@ export const loadGeneratedTable = (
         computedConfig &&
         parseComputedConfig(computedConfig, tables, generatedWindow.table_name),
       show: true,
+      action: c.action ?? undefined,
       style: parseColumnStyle(c.styling),
     };
   });
@@ -97,7 +98,6 @@ export const loadGeneratedTable = (
     options: {
       filterOperand,
       quickFilterGroups,
-      // cardLayout,
     } satisfies WindowData<"table">["options"],
     sort: sort
       ?.map((s) => {
@@ -160,15 +160,17 @@ const parseColumnStyle = (
   }
   if (styling?.type === "Scale") {
     return {
+      ...styling,
       type: "Scale",
-      minColor: "#63f717",
-      maxColor: "#46b5d5",
+      minColor: styling.minColor ?? "#63f717",
+      maxColor: styling.maxColor ?? "#46b5d5",
       textColor: styling.textColor ?? "black",
     };
   }
   if (styling?.type !== "conditional") return styling;
   return {
     type: "Conditional",
+    buttonVariant: styling.buttonVariant,
     conditions: styling.conditions.map((condition) => {
       const style =
         CHIP_COLOR_NAMES[condition.chipColor] ?? CHIP_COLOR_NAMES.blue!;

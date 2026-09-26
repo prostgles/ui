@@ -6,7 +6,7 @@ import { _PG_date, _PG_numbers, includes } from "prostgles-types";
 import React from "react";
 import type { DBSchemaTablesWJoins } from "src/dashboard/Dashboard/dashboardUtils";
 import { RenderValue } from "../../SmartForm/SmartFormField/RenderValue";
-import type { ColumnConfig } from "../ColumnMenu/ColumnMenu";
+import type { ColumnConfig } from "../ColumnMenu/ColumnConfig";
 import type {
   ChipStyle,
   ColumnValue,

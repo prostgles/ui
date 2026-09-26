@@ -1,18 +1,18 @@
 import * as assert from "node:assert/strict";
 import { rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import pgPromise = require("../../server/node_modules/pg-promise");
-import type { TableConfig } from "../../server/node_modules/prostgles-server";
+import pgPromise = require("../../../server/node_modules/pg-promise");
+import type { TableConfig } from "../../../server/node_modules/prostgles-server";
 import type {
   SchemaConfig,
   SchemaConfigAudit,
-} from "../../server/dist/server/src/schemaConfig";
+} from "../../../server/dist/server/src/schemaConfig";
 import {
   createTestDeployment,
   type TestDeployment,
-} from "../../server/dist/server/src/cli/testing";
-import { test, expect } from "./utils/fixtures";
-import { createConfigTestProject } from "./utils/createConfigTestProject";
+} from "../../../server/dist/server/src/cli/testing";
+import { test, expect } from "../utils/fixtures";
+import { createConfigTestProject } from "../utils/createConfigTestProject";
 
 test("PostgreSQL audit triggers capture transactional row changes", async () => {
   test.setTimeout(180_000);

@@ -8,8 +8,8 @@ import {
 } from "../FunctionSelector/functions";
 import { getAllJoins } from "../JoinPathSelectorV2";
 import type { QuickAddComputedColumnProps } from "./QuickAddComputedColumn";
-import type { ColumnConfig } from "../ColumnMenu";
-import type { AggregateOptions } from "../ColumnMenu";
+import type { ColumnConfig } from "../ColumnConfig";
+import type { AggregateOptions } from "../ColumnConfig";
 import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 
 export const useAddComputedColumnState = ({

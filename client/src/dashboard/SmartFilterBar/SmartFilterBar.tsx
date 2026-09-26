@@ -17,7 +17,7 @@ import { SmartAddFilter } from "../SmartFilter/SmartAddFilter";
 import type {
   ColumnConfig,
   ColumnSort,
-} from "../W_Table/ColumnMenu/ColumnMenu";
+} from "../W_Table/ColumnMenu/ColumnConfig";
 import { SmartFilterBarFilters } from "./SmartFilterBarFilters";
 import { SmartFilterBarRightActions } from "./SmartFilterBarRightActions";
 import { SmartFilterBarSearch } from "./SmartFilterBarSearch";

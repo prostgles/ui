@@ -4,7 +4,7 @@ import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable
 import React, { useMemo, useState } from "react";
 import { CodeEditor } from "../CodeEditor/CodeEditor";
 import type { WindowData } from "../Dashboard/dashboardUtils";
-import type { ColumnSortSQL } from "../W_Table/ColumnMenu/ColumnMenu";
+import type { ColumnSortSQL } from "../W_Table/ColumnMenu/ColumnConfig";
 import { TooManyColumnsWarning } from "../W_Table/TooManyColumnsWarning";
 import { CSVRender } from "./CSVRender";
 import { getSQLResultTableColumns } from "./getSQLResultTableColumns";

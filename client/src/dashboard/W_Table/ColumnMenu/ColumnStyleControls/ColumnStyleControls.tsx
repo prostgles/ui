@@ -14,7 +14,7 @@ import {
 import { ConditionalCellIconStyleControls } from "../ColumnDisplayFormat/ConditionalCellIconStyleControls";
 import type { CONDITION_OPERATORS } from "../ColumnDisplayFormat/ConditionalCellStyleControls";
 import { ConditionalCellStyleControls } from "../ColumnDisplayFormat/ConditionalCellStyleControls";
-import type { ColumnConfig, ColumnStyle } from "../ColumnMenu";
+import type { ColumnConfig, ColumnStyle } from "../ColumnConfig";
 import { UpdateColumnGlobalConfig } from "../UpdateColumnGlobalConfig";
 import { getValueColors } from "./getValueColors";
 

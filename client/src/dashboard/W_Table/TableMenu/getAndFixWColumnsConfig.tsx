@@ -2,7 +2,7 @@ import { quickClone } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import type { DBSchemaTableWithRenderInfo } from "src/dashboard/Dashboard/getTables";
 import { isDefined } from "../../../utils/utils";
 import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";
-import type { ColumnConfig, NestedColumn } from "../ColumnMenu/ColumnMenu";
+import type { ColumnConfig, NestedColumn } from "../ColumnMenu/ColumnConfig";
 
 export const getAndFixWColumnsConfig = async (
   tables: DBSchemaTableWithRenderInfo[],

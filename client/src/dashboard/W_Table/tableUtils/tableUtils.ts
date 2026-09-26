@@ -11,7 +11,7 @@ import type {
   ColumnConfig,
   ColumnSortSQL,
   NestedColumn,
-} from "../ColumnMenu/ColumnMenu";
+} from "../ColumnMenu/ColumnConfig";
 import { SORTABLE_CHART_COLUMNS } from "../ColumnMenu/NestedTimechartControls";
 import type { ColumnConfigWithInfo } from "../W_Table";
 
@@ -97,7 +97,9 @@ export const updateWCols = (
   });
 };
 
-export const getSortColumn = <C extends Pick<ColumnConfig, "name" | "idx" | "nested">>(
+export const getSortColumn = <
+  C extends Pick<ColumnConfig, "name" | "idx" | "nested">,
+>(
   sort: ColumnSortSQL,
   columns: C[],
 ): C | undefined => {

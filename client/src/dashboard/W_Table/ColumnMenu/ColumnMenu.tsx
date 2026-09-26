@@ -17,33 +17,14 @@ import {
 } from "@mdi/js";
 import React, { useEffect, useMemo, useState } from "react";
 
-import type {
-  TIMECHART_STAT_TYPES,
-  TimechartRenderStyle,
-} from "../../W_TimeChart/W_TimeChartMenu";
 import { AlterColumn } from "./AlterColumn/AlterColumn";
-import type {
-  BarchartStyle,
-  ConditionalStyle,
-  ConditionalStyleIcons,
-  FixedStyle,
-  ScaleStyle,
-} from "./ColumnStyleControls/ColumnStyleControls";
 import { ColumnStyleMenu } from "./ColumnStyleControls/ColumnStyleMenu";
 
-import type {
-  DetailedFilter,
-  GroupedDetailedFilter,
-} from "@common/filterUtils";
+import type { DetailedFilter } from "@common/filterUtils";
 import Popup from "@components/Popup/Popup";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { useIsMounted } from "prostgles-client";
-import {
-  includes,
-  pickKeys,
-  type ParsedJoinPath,
-  type ValidatedColumnInfo,
-} from "prostgles-types";
+import { includes, pickKeys } from "prostgles-types";
 import { useReactiveState } from "../../../appUtils";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";
@@ -57,128 +38,17 @@ import { AggregateFunctionOptions } from "./AddComputedColumn/AggregateFunctionO
 import { AddComputedColMenu } from "./AddComputedColumn/AddComputedColMenu";
 import { QuickAddComputedColumn } from "./AddComputedColumn/QuickAddComputedColumn";
 import { ColumnDisplayFormat } from "./ColumnDisplayFormat/ColumnDisplayFormat";
-import type { UserColumnFormat } from "./ColumnDisplayFormat/columnFormatUtils";
 import { getFormatOptions } from "./ColumnDisplayFormat/columnFormatUtils";
 import { ColumnQuickStats } from "./ColumnQuickStats/ColumnQuickStats";
 import { ColumnSortMenu } from "./ColumnSortMenu";
 import { ColumnsMenu } from "./ColumnsMenu";
 import { FunctionSelector } from "./FunctionSelector/FunctionSelector";
-import type { FuncDef } from "./FunctionSelector/functions";
 import { LinkedColumn } from "./LinkedColumn/LinkedColumn";
-import type { BtnProps } from "@components/Btn";
-
-export type ColumnConfigChart = {
-  type: "timechart";
-  dateCol: string;
-  renderStyle: TimechartRenderStyle | "smooth-line";
-  yAxis:
-    | {
-        isCountAll: false;
-        colName: string;
-        funcName: (typeof TIMECHART_STAT_TYPES)[number]["func"];
-      }
-    | {
-        isCountAll: true;
-      };
-};
-
-export type NestedColumn<C extends ColumnConfig | ColumnConfigWithInfo> = Omit<
-  C,
-  "nested"
-> & { nested?: never };
-
-export type ColumnAction =
-  | { type: "record" }
-  /** Uses the relationship, aggregate filter and clicked group. */
-  | { type: "relatedRecords" };
-
-export type ColumnStyle = (
-  | { type?: "None" }
-  | ConditionalStyle
-  | ConditionalStyleIcons
-  | FixedStyle
-  | ScaleStyle
-  | BarchartStyle
-) & {
-  /** Colours come from the same fixed/conditional style as plain values. */
-  buttonVariant?: Extract<
-    BtnProps["variant"],
-    "text" | "faded" | "filled" | "outline"
-  >;
-};
-
-export type NestedDisplay =
-  | { type: "values"; labels?: "auto" | "none" | "inline" | "above" }
-  | { type: "entities" }
-  | ColumnConfigChart;
-
-export type NestedColumnConfig = {
-  path: ParsedJoinPath[];
-  columns: NestedColumn<ColumnConfig>[];
-  joinType?: "inner" | "left";
-  limit?: number;
-  sort?: ColumnSort;
-  detailedFilter?: DetailedFilter[];
-  detailedHaving?: DetailedFilter[];
-  /** Defaults to values, with labels omitted for a single shown column. */
-  display?: NestedDisplay;
-};
-
-export type ColumnConfig = {
-  idx?: number;
-  name: string;
-  show?: boolean;
-  width?: number;
-  label?: string;
-  nested?: NestedColumnConfig;
-  style?: ColumnStyle;
-  format?: UserColumnFormat;
-  /** Omit to keep the format's own behaviour without added navigation. */
-  action?: ColumnAction;
-  computedConfig?: ComputedColumnConfig;
-};
-
-export type ComputedColumnConfig = Pick<
-  ValidatedColumnInfo,
-  "tsDataType" | "udt_name"
-> & {
-  /**
-   * If true then this (name === computedConfig.column) represents an actual column and should not be removed
-   */
-  isColumn?: boolean;
-
-  funcDef: Omit<FuncDef, "outType">;
-
-  /**
-   * Undefined for functions that don't need any columns
-   */
-  column: string | undefined;
-  args?: {
-    $duration?: { otherColumn: string };
-    $string_agg?: { separator: string };
-    $template_string?: string;
-  };
-  aggregateOptions?: AggregateOptions;
-};
+import type { ColumnConfig } from "./ColumnConfig";
 
 type P = Pick<CommonWindowProps, "suggestions"> & {
   w: WindowSyncItem<"table">;
   columnMenuState: W_Table["columnMenuState"];
-};
-
-export type ColumnSortSQL = {
-  key: string | number;
-  asc?: boolean | null;
-  nulls?: "first" | "last" | null;
-  nullEmpty?: boolean;
-};
-export type ColumnSort = Omit<ColumnSortSQL, "key"> & {
-  key: string;
-};
-
-export type AggregateOptions = {
-  filter?: GroupedDetailedFilter;
-  orderBy?: ColumnSort;
 };
 
 export const ColumnMenu = (props: P) => {

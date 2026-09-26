@@ -6,7 +6,7 @@ import {
 } from "prostgles-types";
 import type { WindowData } from "../../Dashboard/dashboardUtils";
 import { STARTING_KEYWORDS } from "../../SQLEditor/SQLCompletion/CommonMatchImports";
-import type { ColumnSortSQL } from "../../W_Table/ColumnMenu/ColumnMenu";
+import type { ColumnSortSQL } from "src/dashboard/W_Table/ColumnMenu/ColumnConfig";
 import type { W_SQL, W_SQLState } from "../W_SQL";
 import { SQL_NOT_ALLOWED } from "../W_SQL";
 import { parseExplainResult } from "../parseExplainResult";

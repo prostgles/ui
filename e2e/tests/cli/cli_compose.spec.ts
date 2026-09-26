@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import type { TestDeployment } from "../../server/dist/server/src/cli/testing";
+import type { TestDeployment } from "../../../server/dist/server/src/cli/testing";
 import { spawn, spawnSync } from "node:child_process";
 import {
   copyFileSync,
@@ -12,7 +12,7 @@ import {
 import { createServer } from "node:net";
 import { createRequire } from "node:module";
 import { join, resolve } from "node:path";
-import { parse } from "../../server/node_modules/dotenv";
+import { parse } from "../../../server/node_modules/dotenv";
 
 type RunOptions = {
   capture?: boolean;
@@ -20,14 +20,14 @@ type RunOptions = {
 };
 
 test("formatted CLI apps have no spurious upgrade conflicts", async () => {
-  const serverRoot = resolve(__dirname, "../../server");
+  const serverRoot = resolve(__dirname, "../../../server");
   const cliRoot = join(serverRoot, "dist/server/src/cli");
   const { saveCliTemplateFiles, generatedFolderName } =
-    await import("../../server/dist/server/src/cli/cliTemplateFiles");
+    await import("../../../server/dist/server/src/cli/cliTemplateFiles");
   const { applyCliUpgradeFiles } =
-    await import("../../server/dist/server/src/cli/upgradeCli");
+    await import("../../../server/dist/server/src/cli/upgradeCli");
   const { cliFileNames } =
-    await import("../../server/dist/server/src/cli/cliFileNames");
+    await import("../../../server/dist/server/src/cli/cliFileNames");
   const appRoot = test.info().outputPath("app");
   const incomingPath = test.info().outputPath("incoming");
   const created = spawnSync(
@@ -94,7 +94,7 @@ test("formatted CLI apps have no spurious upgrade conflicts", async () => {
 test("runs a generated config project with temporary databases and Docker Compose", async () => {
   test.setTimeout(900_000);
 
-  const serverRoot = resolve(__dirname, "../../server");
+  const serverRoot = resolve(__dirname, "../../../server");
   const testRoot = test.info().outputPath("project");
   mkdirSync(testRoot, { recursive: true });
   writeFileSync(
@@ -463,7 +463,7 @@ const checkTemporaryDatabases = async (
 ) => {
   const { createTestDeployment } = createRequire(join(appRoot, "package.json"))(
     "@prostgles/app/testing",
-  ) as typeof import("../../server/dist/server/src/cli/testing");
+  ) as typeof import("../../../server/dist/server/src/cli/testing");
   const deployment = await createTestDeployment({
     configId,
     configPath: appRoot,

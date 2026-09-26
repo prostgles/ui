@@ -4,11 +4,11 @@ import { join } from "node:path";
 import {
   createTestDeployment,
   type TestDeployment,
-} from "../../server/dist/server/src/cli/testing";
-import { documentsService } from "../../server/dist/server/src/ServiceManager/services/documents/documents.service";
-import { assertServiceOpenApi } from "./utils/assertServiceOpenApi";
-import { expect, test } from "./utils/fixtures";
-import { createConfigTestProject } from "./utils/createConfigTestProject";
+} from "../../../server/dist/server/src/cli/testing";
+import { documentsService } from "../../../server/dist/server/src/ServiceManager/services/documents/documents.service";
+import { assertServiceOpenApi } from "../utils/assertServiceOpenApi";
+import { expect, test } from "../utils/fixtures";
+import { createConfigTestProject } from "../utils/createConfigTestProject";
 
 test("CLI annotations support PDF uploads without document extraction", async () => {
   const configPath = createConfigTestProject({
@@ -88,7 +88,7 @@ test("CLI annotations support PDF uploads without document extraction", async ()
     );
     const file = await dbo.files!.insert!(
       {
-        data: readFileSync(join(__dirname, "testAskLLM/sample.pdf")),
+        data: readFileSync(join(__dirname, "../testAskLLM/sample.pdf")),
         original_name: "source.pdf",
       },
       { returning: "*" },
@@ -201,7 +201,7 @@ test("CLI text extraction persists Docling profiling without annotations", async
 
     const pdf = await db.files!.insert!(
       {
-        data: readFileSync(join(__dirname, "testAskLLM/sample.pdf")),
+        data: readFileSync(join(__dirname, "../testAskLLM/sample.pdf")),
         original_name: "sample.pdf",
       },
       { returning: "*" },

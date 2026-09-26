@@ -1,6 +1,6 @@
 import { omitKeys, pickKeys, type ValidatedColumnInfo } from "prostgles-types";
 import type { DBSchemaTableWithRenderInfo } from "src/dashboard/Dashboard/getTables";
-import type { ColumnConfig } from "../ColumnMenu/ColumnMenu";
+import type { ColumnConfig } from "../ColumnMenu/ColumnConfig";
 import type { ColumnConfigWithInfo } from "../W_Table";
 
 export const getColumnsWithInfo = (

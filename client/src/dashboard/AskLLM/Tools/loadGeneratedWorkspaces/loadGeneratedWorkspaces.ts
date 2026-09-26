@@ -14,12 +14,7 @@ import { loadGeneratedTimechart } from "./loadGeneratedTimechart";
 export const loadGeneratedWorkspaces = async (
   generatedWorkspaces: WorkspaceInsertModel[],
   tool_use_id: string,
-  {
-    // db,
-    dbs,
-    connectionId,
-    tables,
-  }: Pick<Prgl, "dbs" | "connectionId" | "tables">,
+  { dbs, connectionId, tables }: Pick<Prgl, "dbs" | "connectionId" | "tables">,
 ) => {
   const workspaces = generatedWorkspaces.map((workspace) => {
     const windows: WindowInsertModel[] = workspace.windows.map(

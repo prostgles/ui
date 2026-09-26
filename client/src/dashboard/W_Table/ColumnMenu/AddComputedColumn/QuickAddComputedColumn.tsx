@@ -6,7 +6,7 @@ import React from "react";
 import { t } from "src/i18n/i18nUtils";
 import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 import type { ColumnConfigWithInfo } from "../../W_Table";
-import type { ColumnConfig } from "../ColumnMenu";
+import type { ColumnConfig } from "../ColumnConfig";
 import { AggregateFunctionOptions } from "./AggregateFunctionOptions";
 import { FunctionExtraArguments } from "../FunctionSelector/FunctionExtraArguments";
 import { FunctionSelector } from "../FunctionSelector/FunctionSelector";
@@ -81,7 +81,8 @@ export const QuickAddComputedColumn = ({
             setFuncDef(funcDef);
             setArgs(undefined);
             if (
-              funcDef && column &&
+              funcDef &&
+              column &&
               getColumnsAcceptedByFunction(funcDef, [column])?.length === 0
             ) {
               setColumn(undefined);
@@ -101,15 +102,17 @@ export const QuickAddComputedColumn = ({
         />
       )}
 
-      {allowedColumns && funcDef && !existingColumn?.computedConfig?.isColumn && (
-        <FunctionColumnList
-          allowedColumns={allowedColumns}
-          column={column}
-          onChange={setColumn}
-          setIncludeJoins={state.setIncludeJoins}
-          includeJoins={state.includeJoins}
-        />
-      )}
+      {allowedColumns &&
+        funcDef &&
+        !existingColumn?.computedConfig?.isColumn && (
+          <FunctionColumnList
+            allowedColumns={allowedColumns}
+            column={column}
+            onChange={setColumn}
+            setIncludeJoins={state.setIncludeJoins}
+            includeJoins={state.includeJoins}
+          />
+        )}
 
       {funcDef?.isAggregate && (!allowedColumns || column) && (
         <AggregateFunctionOptions
@@ -119,17 +122,18 @@ export const QuickAddComputedColumn = ({
         />
       )}
 
-      {!state.onAddDisabledInfo && !existingColumn?.computedConfig?.isColumn && (
-        <FormField
-          label="Computed column name"
-          value={name}
-          inputProps={{
-            autoFocus: !funcDef?.requiresArg,
-            "data-command": "QuickAddComputedColumn.name",
-          }}
-          onChange={setName}
-        />
-      )}
+      {!state.onAddDisabledInfo &&
+        !existingColumn?.computedConfig?.isColumn && (
+          <FormField
+            label="Computed column name"
+            value={name}
+            inputProps={{
+              autoFocus: !funcDef?.requiresArg,
+              "data-command": "QuickAddComputedColumn.name",
+            }}
+            onChange={setName}
+          />
+        )}
 
       <FlexRow className="mt-1">
         <Btn onClick={() => onAddColumn(undefined)}>{t.common.Cancel}</Btn>

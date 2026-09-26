@@ -11,7 +11,7 @@ import {
   TIMECHART_STAT_TYPES,
   TimechartRenderStyles,
 } from "../../W_TimeChart/W_TimeChartMenu";
-import type { ColumnConfigChart } from "./ColumnMenu";
+import type { ColumnConfigChart } from "./ColumnConfig";
 
 export const SORTABLE_CHART_COLUMNS = ["date", "value"];
 

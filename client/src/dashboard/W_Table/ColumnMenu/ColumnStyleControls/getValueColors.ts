@@ -5,7 +5,7 @@ import { chipColorsFadedBorder } from "../ColumnDisplayFormat/ChipStylePalette";
 import type { DBS } from "src/dashboard/Dashboard/DBS";
 import { getRandomElement } from "@common/utils";
 import type { ConditionalStyle } from "./ColumnStyleControls";
-import type { ColumnConfig } from "../ColumnMenu";
+import type { ColumnConfig } from "../ColumnConfig";
 import { getComputedColumnSelect } from "../../tableUtils/getTableSelect";
 import { getSingleShownNestedColumn } from "../../RenderColumn/StyledTableColumn";
 import type { DBSchemaTableWJoins } from "src/dashboard/Dashboard/dashboardUtils";

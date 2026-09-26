@@ -5,7 +5,7 @@ import { mdiCheck } from "@mdi/js";
 import React, { useState } from "react";
 import { t } from "../../../../i18n/i18nUtils";
 import { updateWCols } from "../../tableUtils/tableUtils";
-import type { ColumnConfig } from "../ColumnMenu";
+import type { ColumnConfig } from "../ColumnConfig";
 import type { LinkedColumnProps } from "./LinkedColumn";
 
 export const NEW_COL_POSITIONS = [
