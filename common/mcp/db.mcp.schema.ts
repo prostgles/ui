@@ -35,8 +35,8 @@ const selectSchema = {
     { enum: ["*"] },
     {
       description:
-        "Fields to select. Must satisfy the table schema. Example: { id: 1, name: 1 } or { password: 0 }",
-      record: { values: { enum: [1, 0] } },
+        "Fields to select. Must satisfy the table schema. Example: { id: 1, name: 1 }, { password: 0 }, or { page_text: { $array_element: [\"text_content\", 2] } }",
+      record: { values: { oneOf: [{ enum: [1, 0] }, { record: { values: "any" } }] } },
     },
   ],
 } as const;

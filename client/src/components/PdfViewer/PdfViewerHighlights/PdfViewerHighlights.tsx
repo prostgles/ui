@@ -19,6 +19,15 @@ export type HighlightRect = {
 export type Highlight = {
   id: string | number;
   page: number;
+  end_page?: number | null;
+  start_text?: string | null;
+  end_text?: string | null;
+  fallback_edges?: {
+    start_x: number;
+    start_y: number;
+    end_x: number;
+    end_y: number;
+  } | null;
   rects: HighlightRect[];
   color: string;
   leftHandle: React.ReactNode;
@@ -49,6 +58,8 @@ export type PdfViewerHighlightsProps = Pick<
   pageHighlights: Highlight[];
   potentialHighlight: CreatedHighlight | null;
   clearPotentialHighlight: () => void;
+  onStartPageSpan?: (highlight: CreatedHighlight) => void;
+  isFinishingPageSpan?: boolean;
 };
 
 export const PdfViewerHighlights = ({
@@ -59,6 +70,8 @@ export const PdfViewerHighlights = ({
   potentialHighlight,
   onCreateHighlight,
   clearPotentialHighlight,
+  onStartPageSpan,
+  isFinishingPageSpan,
 }: PdfViewerHighlightsProps) => {
   const potentialHighlightLastRect = potentialHighlight?.rects.at(-1);
   return (
@@ -100,29 +113,40 @@ export const PdfViewerHighlights = ({
             {potentialHighlight &&
               potentialHighlightLastRect &&
               onCreateHighlight && (
-                <Btn
-                  title="Add annotation"
-                  color="action"
-                  variant="filled"
-                  iconPath={mdiPlus}
-                  onClick={() => {
-                    clearPotentialHighlight();
-                    onCreateHighlight(potentialHighlight);
-                  }}
+                <div
                   style={{
                     position: "absolute",
                     zIndex: 4,
                     pointerEvents: "auto",
-                    padding: 0,
-                    alignItems: "center",
-                    justifyContent: "center",
                     right: 10,
                     top:
                       (potentialHighlightLastRect.y +
                         potentialHighlightLastRect.height / 2) *
                       viewport.scale,
                   }}
-                />
+                >
+                  <Btn
+                    title={isFinishingPageSpan ? "Finish annotation here" : "Add annotation"}
+                    color="action"
+                    variant="filled"
+                    iconPath={mdiPlus}
+                    onClick={() => {
+                      clearPotentialHighlight();
+                      onCreateHighlight(potentialHighlight);
+                    }}
+                  />
+                  {onStartPageSpan && (
+                    <Btn
+                      title="Continue annotation on another page"
+                      color="action"
+                      variant="filled"
+                      onClick={() => {
+                        onStartPageSpan(potentialHighlight);
+                        clearPotentialHighlight();
+                      }}
+                    >Continue on another page</Btn>
+                  )}
+                </div>
               )}
           </div>,
           pageElement,

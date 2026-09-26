@@ -59,7 +59,7 @@
     "pidusage": "^4.0.1",
     "prettier": "^3.9.6",
     "prostgles-client": "^4.0.405",
-    "prostgles-server": "^4.2.641",
+    "prostgles-server": "^4.2.642",
     "qrcode": "^1.5.4",
     "simple-git": "^3.36.0",
     "smtp-server": "^3.19.12",

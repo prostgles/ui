@@ -55,6 +55,20 @@ export const annotationsTableColumns = {
   name: `TEXT`,
   text: `TEXT NOT NULL`,
   page: "INTEGER NOT NULL CHECK (page >= 1)",
+  end_page: "INTEGER CHECK (end_page >= page)",
+  start_text: "TEXT",
+  end_text: "TEXT",
+  fallback_edges: {
+    nullable: true,
+    jsonbSchema: {
+      type: {
+        start_x: "number",
+        start_y: "number",
+        end_x: "number",
+        end_y: "number",
+      },
+    },
+  },
   rectangles: {
     jsonbSchema: {
       arrayOfType: {

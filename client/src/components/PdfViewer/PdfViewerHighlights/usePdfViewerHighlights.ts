@@ -108,7 +108,7 @@ export const usePdfViewerHighlights = ({
 
   const handlePointerMove = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
-      if (!viewport) {
+      if (!viewport || !pageElement) {
         return;
       }
 
@@ -119,7 +119,7 @@ export const usePdfViewerHighlights = ({
         return;
       }
 
-      const bounds = event.currentTarget.getBoundingClientRect();
+      const bounds = pageElement.getBoundingClientRect();
       const pointerX = event.clientX - bounds.left;
       const pointerY = event.clientY - bounds.top;
 
@@ -163,7 +163,7 @@ export const usePdfViewerHighlights = ({
 
       setActiveTooltip(null);
     },
-    [pageHighlights, viewport],
+    [pageHighlights, viewport, pageElement],
   );
 
   return {

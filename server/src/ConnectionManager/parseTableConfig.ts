@@ -13,6 +13,7 @@ import type { DatabaseConfigs, DBS } from "..";
 import { getCloudClient } from "../cloudClients/cloudClients";
 import type { ConnectionManager } from "./ConnectionManager";
 import { getFilesTableHook } from "./getFilesTableHook";
+import { getAnnotationsTableHook } from "./getAnnotationsTableHook";
 import type { ConnectionHotReloadProperties } from "./getHotReloadConfigs";
 import { getSchemaConfig } from "./getSchemaConfig";
 
@@ -124,7 +125,16 @@ export const parseTableConfig = async ({
     ...(fileTableConfigMerged || {}),
     ...tableConfig,
   };
-  const mergedTableHooks = mergeTableHooks(fileTableHooksMerged, tableHooks);
+  const mergedTableHooks = mergeTableHooks(
+    fileTableHooksMerged,
+    tableHooks,
+    fileTable && fileTableConfig?.annotationsTable ?
+      (getAnnotationsTableHook(
+        fileTableConfig.annotationsTable,
+        fileTable.tableName,
+      ) as TableHooks<void, ProstglesContext>)
+    : undefined,
+  );
 
   return {
     fileTable,

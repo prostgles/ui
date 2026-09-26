@@ -7,6 +7,7 @@ import type { PdfViewerProps } from "./PdfViewer";
 import "./PdfViewer.css";
 import { usePdfViewerHighlights } from "./PdfViewerHighlights/usePdfViewerHighlights";
 import type { CreatedHighlight } from "./PdfViewerHighlights/PdfViewerHighlights";
+import { getTextHighlightRects } from "./PdfViewerHighlights/getTextHighlightRects";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.mjs",
@@ -57,14 +58,17 @@ export const usePdfViewer = ({
   const [error, setError] = useState<unknown>();
 
   const numPages = pdfDocument?.numPages ?? 0;
-  const pageHighlights = useMemo(
-    () => highlights.filter((highlight) => highlight.page === currentPage),
-    [currentPage, highlights],
-  );
   const activeRenderedPage =
     renderedPage?.page === currentPage ? renderedPage : null;
   const viewport = activeRenderedPage?.viewport ?? null;
   const pageElement = activeRenderedPage?.element ?? null;
+  const pageHighlights = useMemo(
+    () => highlights
+      .filter((h) => h.page <= currentPage && (h.end_page ?? h.page) >= currentPage)
+      .map((h) => ({ ...h, rects: pageElement && viewport ?
+        getTextHighlightRects(h, currentPage, pageElement, viewport) : [] })),
+    [currentPage, highlights, pageElement, viewport],
+  );
 
   const [potentialHighlight, setPotentialHighlight] =
     useState<CreatedHighlight | null>(null);

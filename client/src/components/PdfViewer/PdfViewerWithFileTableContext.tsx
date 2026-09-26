@@ -101,10 +101,10 @@ const PdfViewerWithAnnotations = ({
             fullOptions={
               annotations
                 ?.toSorted((a, b) => a.page - b.page)
-                .map(({ id, name, page, text }) => ({
+                .map(({ id, name, page, end_page, text }) => ({
                   key: id,
                   label: name || text,
-                  subLabel: `Page ${page}: ${text}`,
+                  subLabel: `Page ${page}${end_page && end_page !== page ? `–${end_page}` : ""}: ${text}`,
                 })) ?? []
             }
             onChange={(annotationId) => {
@@ -113,9 +113,13 @@ const PdfViewerWithAnnotations = ({
           />
         }
         highlights={
-          annotations?.map(({ id, name, text, page, rectangles }) => ({
+          annotations?.map(({ id, name, text, page, end_page, start_text, end_text, fallback_edges, rectangles }) => ({
             id,
             page,
+            end_page,
+            start_text,
+            end_text,
+            fallback_edges,
             color: "var(--active)",
             rects: rectangles,
             tooltip: name || text,
@@ -150,6 +154,10 @@ const PdfViewerWithAnnotations = ({
             tableName={annotationsTable.name}
             fixedData={{
               page: newAnnotation.page,
+              end_page: newAnnotation.end_page ?? null,
+              start_text: newAnnotation.start_text ?? null,
+              end_text: newAnnotation.end_text ?? null,
+              fallback_edges: newAnnotation.fallback_edges ?? null,
               file_id: fileId,
               rectangles: newAnnotation.rects.map(
                 ({ x, y, height, width }) => ({
@@ -164,7 +172,8 @@ const PdfViewerWithAnnotations = ({
               name: null,
               text: newAnnotation.text,
             }}
-            onClose={() => setActiveAnnotationId(undefined)}
+            onClose={() => setNewAnnotation(undefined)}
+            onInserted={() => setNewAnnotation(undefined)}
           />
         </Popup>
       )}

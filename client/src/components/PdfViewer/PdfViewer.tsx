@@ -1,5 +1,6 @@
 import * as pdfjsLib from "pdfjs-dist";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import Btn from "@components/Btn";
 
 import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol } from "@components/Flex";
@@ -71,6 +72,8 @@ export const PdfViewer = ({
   });
 
   const [showDoclingOverlay, setShowDoclingOverlay] = useState(false);
+  const [annotationStart, setAnnotationStart] = useState<CreatedHighlight>();
+  useEffect(() => setAnnotationStart(undefined), [url]);
 
   return (
     <FlexCol className="PdfViewer bg-color-3 ai-center min-h-0">
@@ -88,6 +91,12 @@ export const PdfViewer = ({
       />
 
       <ErrorComponent error={error} />
+      {annotationStart && (
+        <div className="flex-row ai-center gap-1">
+          Select the ending text on a page after page {annotationStart.page}.
+          <Btn onClick={() => setAnnotationStart(undefined)}>Cancel annotation</Btn>
+        </div>
+      )}
 
       <ScrollFade className="o-auto w-full">
         <div
@@ -115,7 +124,31 @@ export const PdfViewer = ({
           pageElement={pageElement}
           viewport={viewport}
           potentialHighlight={potentialHighlight}
-          onCreateHighlight={onCreateHighlight}
+          onCreateHighlight={onCreateHighlight && (
+            annotationStart && currentPage <= annotationStart.page ? undefined :
+            (selection) => {
+              if (!annotationStart) return onCreateHighlight(selection);
+              const start = annotationStart.rects[0]!;
+              const end = selection.rects.at(-1)!;
+              onCreateHighlight({
+                page: annotationStart.page,
+                end_page: selection.page,
+                start_text: annotationStart.text,
+                end_text: selection.text,
+                text: `${annotationStart.text}\n…\n${selection.text}`,
+                rects: [],
+                fallback_edges: {
+                  start_x: start.x,
+                  start_y: start.y,
+                  end_x: end.x + end.width,
+                  end_y: end.y + end.height,
+                },
+              });
+              setAnnotationStart(undefined);
+            }
+          )}
+          onStartPageSpan={!annotationStart && currentPage < numPages ? setAnnotationStart : undefined}
+          isFinishingPageSpan={!!annotationStart}
           clearPotentialHighlight={() => {
             setPotentialHighlight(null);
           }}

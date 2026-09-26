@@ -65,9 +65,7 @@ export class ColumnsMenu extends RTComp<P, S> {
   get tableName() {
     const { nestedColumnOpts, w } = this.props;
     if (nestedColumnOpts) {
-      // const nestedCol = w.columns?.find(c => c.name === nestedColumnName)
-      // return nestedCol?.nested?.path.at(-1)?.table;
-      return nestedColumnOpts.config.nested?.path.at(-1)?.table;
+      return nestedColumnOpts.config.nested.path.at(-1)?.table;
     }
 
     return w.table_name;
