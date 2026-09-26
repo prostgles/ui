@@ -11,15 +11,15 @@ import { getMinimalColumnInfo } from "../../tableUtils/tableUtils";
 import { AddComputedColMenu } from "../AddComputedColumn/AddComputedColMenu";
 import { QuickAddComputedColumn } from "../AddComputedColumn/QuickAddComputedColumn";
 import { ColumnList } from "../ColumnList";
-import type { ColumnConfig, NestedColumn } from "../ColumnConfig";
+import type { ColumnConfig, ColumnConfigNested, NestedColumn } from "../ColumnConfig";
 import { NestedTimechartControls } from "../NestedTimechartControls";
 import type { LinkedColumnProps } from "./LinkedColumn";
 
 type P = LinkedColumnProps & {
-  updateNested: (newNested: Partial<ColumnConfig["nested"]>) => void;
+  updateNested: (newNested: Partial<ColumnConfigNested["nested"]>) => void;
   table: DBSchemaTableWithRenderInfo | undefined;
-  currentColumn: ColumnConfig | undefined;
-  updateColumn: (newCol: Partial<ColumnConfig>) => void;
+  currentColumn: ColumnConfigNested | undefined;
+  updateColumn: (newCol: Partial<ColumnConfigNested>) => void;
 };
 export const LinkedColumnSelect = ({
   w,
@@ -30,7 +30,7 @@ export const LinkedColumnSelect = ({
   updateColumn,
 }: P) => {
   const { tables, db } = usePrgl();
-  const nestedColumns = currentColumn?.nested?.columns;
+  const nestedColumns = currentColumn?.nested.columns;
   const updateNestedColumns = (newCols: ColumnConfig[]) => {
     if (!table) throw "not ok";
     updateNested({
@@ -56,13 +56,13 @@ export const LinkedColumnSelect = ({
               <Btn
                 variant="faded"
                 color={
-                  currentColumn.nested?.display?.type !== "timechart" ?
+                  currentColumn.nested.display?.type !== "timechart" ?
                     "action"
                   : undefined
                 }
                 data-command="LinkedColumn.ColumnList.toggle"
                 disabledInfo={
-                  currentColumn.nested?.display?.type === "timechart" ?
+                  currentColumn.nested.display?.type === "timechart" ?
                     "Must disable time chart first"
                   : undefined
                 }
@@ -75,7 +75,7 @@ export const LinkedColumnSelect = ({
             return (
               <FlexCol className="min-h-0">
                 <ColumnList
-                  isNested
+                  parentDisplay={currentColumn.nested.display?.type ?? "values"}
                   columns={nestedColumns}
                   table={table}
                   onClose={pClose}
@@ -124,7 +124,7 @@ export const LinkedColumnSelect = ({
           <NestedTimechartControls
             tableName={table.name}
             chart={
-              currentColumn?.nested?.display?.type === "timechart" ?
+              currentColumn?.nested.display?.type === "timechart" ?
                 currentColumn.nested.display
               : undefined
             }
@@ -169,7 +169,6 @@ export const LinkedColumnSelect = ({
                     {
                       ...newCol,
                       name: newColumnName,
-                      action: { type: "relatedRecords" as const },
                     },
                     ...oldColumns,
                   ];

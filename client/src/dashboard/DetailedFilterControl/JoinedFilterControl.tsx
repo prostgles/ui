@@ -30,7 +30,8 @@ export const JoinedFilterControl = ({
     "fieldName" in filter.filter ? { $and: [filter.filter] } : filter.filter;
   return (
     <FlexCol
-      className={`b -active rounded p-p5 gap-p5 ${props.className ?? ""}`}
+      className={`b b-active rounded p-p5 gap-p5 ${props.className ?? ""}`}
+      style={{ borderRadius: collapsed ? "1em" : undefined }}
       data-command="JoinedFilterControl"
     >
       <FlexRow className="gap-0">
@@ -42,11 +43,13 @@ export const JoinedFilterControl = ({
             onClick={() => onChange({ ...filter, disabled: !filter.disabled })}
           />
         )}
-        <JoinFilterTypeToggle
-          value={filter.type}
-          disabled={filter.disabled}
-          onChange={(type) => onChange({ ...filter, type })}
-        />
+        {!collapsed && (
+          <JoinFilterTypeToggle
+            value={filter.type}
+            disabled={filter.disabled}
+            onChange={(type) => onChange({ ...filter, type })}
+          />
+        )}
         <Btn
           variant="text"
           title="Expand/collapse joined conditions"
@@ -56,12 +59,14 @@ export const JoinedFilterControl = ({
             .map((p) => (typeof p === "string" ? p : p.table))
             .join(" > ")}
         </Btn>
-        <Btn
-          iconPath={mdiDelete}
-          className="ml-auto"
-          title="Delete joined filter"
-          onClick={() => onChange()}
-        />
+        {!collapsed && (
+          <Btn
+            iconPath={mdiDelete}
+            className="ml-auto"
+            title="Delete joined filter"
+            onClick={() => onChange()}
+          />
+        )}
       </FlexRow>
       <GroupedFilterControl
         {...props}
@@ -73,6 +78,7 @@ export const JoinedFilterControl = ({
         extraFilters={undefined}
         newFilterType={props.contextData ? "=" : undefined}
         minimised={collapsed ? true : undefined}
+        hideToggle={collapsed || props.hideToggle}
         showAddFilter={!collapsed}
         filter={group}
         onChange={(innerFilter) =>

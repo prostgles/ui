@@ -23,7 +23,7 @@ import type {
 import type { ColumnConfigWithInfo } from "../W_Table";
 import { AlterColumn } from "./AlterColumn/AlterColumn";
 import { QuickAddComputedColumn } from "./AddComputedColumn/QuickAddComputedColumn";
-import type { ColumnConfig } from "./ColumnConfig";
+import type { ColumnConfig, NestedDisplay } from "./ColumnConfig";
 import { ColumnDisplayFormat } from "./ColumnDisplayFormat/ColumnDisplayFormat";
 import { getFormatOptions } from "./ColumnDisplayFormat/columnFormatUtils";
 import { ColumnStyleMenu } from "./ColumnStyleControls/ColumnStyleMenu";
@@ -31,7 +31,7 @@ import { LinkedColumn } from "./LinkedColumn/LinkedColumn";
 
 type P = {
   column: ColumnConfigWithInfo;
-  isNested?: boolean;
+  parentDisplay?: NestedDisplay["type"];
   columns: ColumnConfigWithInfo[];
   onChange: (newCols: ColumnConfig[]) => void;
   onClose: VoidFunction;
@@ -43,7 +43,7 @@ type ColumnListAction = "alter" | "computed" | "format" | "linked" | "style";
 
 export const ColumnListItemOptions = ({
   column,
-  isNested,
+  parentDisplay,
   columns,
   onChange,
   onClose,
@@ -127,6 +127,7 @@ export const ColumnListItemOptions = ({
               )}
               {action === "format" && (
                 <ColumnDisplayFormat
+                  parentDisplay={parentDisplay}
                   db={prgl.db}
                   column={column}
                   tables={prgl.tables}
@@ -136,7 +137,7 @@ export const ColumnListItemOptions = ({
               )}
               {action === "style" && (
                 <ColumnStyleMenu
-                  isNested={isNested}
+                  parentDisplay={parentDisplay}
                   db={prgl.db}
                   tableName={table.name}
                   tables={prgl.tables}
@@ -144,8 +145,12 @@ export const ColumnListItemOptions = ({
                   onUpdate={updateColumn}
                 />
               )}
-              {action === "linked" && (
-                <LinkedColumn w={w} column={column} onClose={close} />
+              {action === "linked" && column.nested && (
+                <LinkedColumn
+                  w={w}
+                  column={{ ...column, nested: column.nested }}
+                  onClose={close}
+                />
               )}
               {action === "computed" && (
                 <QuickAddComputedColumn

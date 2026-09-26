@@ -16,9 +16,8 @@ import {
 } from "../../W_TimeChart/fetchData/getTimeChartLayersWithBins";
 import { getTimeChartSelectParams } from "../../W_TimeChart/fetchData/getTimeChartSelectParams";
 import { getFormatColumnSelect } from "../ColumnMenu/ColumnDisplayFormat/getFormatColumnSelect";
-import { getTableIdentityColumns } from "../ColumnMenu/ColumnDisplayFormat/getTableIdentityColumns";
 import { getParentTableJoinColumnNames } from "../ColumnMenu/ColumnDisplayFormat/getLinkedRecordsFilter";
-import type { ColumnConfig } from "../ColumnMenu/ColumnConfig";
+import type { ColumnConfig, ColumnConfigNested } from "../ColumnMenu/ColumnConfig";
 import type { ColumnConfigWithInfo, MinMax } from "../W_Table";
 import {
   fetchChartRangeValues,
@@ -127,16 +126,6 @@ export const getRequiredTableSelect = (
     getParentTableJoinColumnNames(column).forEach(addColumn);
   });
 
-  const hasAggregate = shownColumns.some(
-    (column) => column.computedConfig?.funcDef.isAggregate,
-  );
-  if (
-    !hasAggregate &&
-    shownColumns.some((column) => column.action?.type === "record")
-  ) {
-    getTableIdentityColumns(table).forEach(({ name }) => addColumn(name));
-  }
-
   return select;
 };
 
@@ -176,8 +165,7 @@ export const getComputedColumnSelect = (
 };
 
 const getNestedColumnSelect = async (
-  parentColumn: Pick<Required<ColumnConfig>, "nested"> &
-    Pick<ColumnConfig, "style" | "width">,
+  parentColumn: Pick<ColumnConfigNested, "nested" | "style" | "width">,
   db: Prgl["db"],
   tables: DBSchemaTableWJoins[],
   withoutData = false,
@@ -233,17 +221,12 @@ const getNestedColumnSelect = async (
         true, // Only build the select; ranges depend on the parent query.
       )
     ).select;
-    if (display?.type === "entities") {
-      getTableIdentityColumns(nestedTable).forEach((column) => {
-        nestedSelect[column.name] ??= 1;
-      });
-    }
   }
 
   const conditionColumn =
     parentColumn.style?.type === "Conditional" && parentColumn.style.column;
   if (
-    display?.type === "entities" &&
+    display?.type === "drillable-records" &&
     conditionColumn &&
     nestedTable.columns.some(
       (column) => column.name === conditionColumn && column.select,
@@ -254,7 +237,7 @@ const getNestedColumnSelect = async (
   if (isEmpty(nestedSelect)) return undefined;
 
   const limit =
-    display?.type === "entities" && parentColumn.nested.limit !== undefined ?
+    display?.type === "drillable-records" && parentColumn.nested.limit !== undefined ?
       parentColumn.nested.limit + 1
     : parentColumn.nested.limit;
 

@@ -235,7 +235,9 @@ export const ColumnMenu = (props: P) => {
         <AddComputedColMenu
           variant="no-popup"
           nestedColumnOpts={
-            column.nested ? { type: "existing", config: column } : undefined
+            column.nested ?
+              { type: "existing", config: { ...column, nested: column.nested } }
+            : undefined
           }
           onClose={onClose}
           tables={tables}
@@ -332,7 +334,13 @@ export const ColumnMenu = (props: P) => {
           "No foreign keys to/from this table"
         : undefined,
       label: `${column.nested ? "Edit" : "Add"} Linked Columns`,
-      content: <LinkedColumn w={w} column={column} onClose={onClose} />,
+      content: (
+        <LinkedColumn
+          w={w}
+          column={column.nested ? { ...column, nested: column.nested } : undefined}
+          onClose={onClose}
+        />
+      ),
     },
     Alter: {
       leftIconPath: mdiTools,

@@ -21,6 +21,8 @@ type Props = Omit<
 export const GroupedFilterControl = ({ filter, onChange, ...props }: Props) => {
   const isAnd = "$and" in filter;
   const filters = isAnd ? filter.$and : filter.$or;
+  const hideOperand =
+    props.hideOperand || (props.minimised && (filters.length <= 1 || isAnd));
   const table = props.tables.find((t) => t.name === props.tableName);
   if (!table?.columns.length) return null;
   const setFilters = (items: (DetailedFilter | GroupedDetailedFilter)[]) =>
@@ -51,11 +53,13 @@ export const GroupedFilterControl = ({ filter, onChange, ...props }: Props) => {
                 filter={item}
                 onChange={updateItem}
               />
-              <Btn
-                iconPath={mdiDelete}
-                title="Delete group"
-                onClick={() => updateItem()}
-              />
+              {!props.minimised && (
+                <Btn
+                  iconPath={mdiDelete}
+                  title="Delete group"
+                  onClick={() => updateItem()}
+                />
+              )}
             </FlexRow>
           );
         }
@@ -72,9 +76,9 @@ export const GroupedFilterControl = ({ filter, onChange, ...props }: Props) => {
           />
         );
       })}
-      {(!props.hideOperand || props.showAddFilter) && (
+      {(!hideOperand || props.showAddFilter) && (
         <FlexRow className="gap-p5">
-          {!props.hideOperand && (
+          {!hideOperand && (
             <Btn
               title="Combine conditions"
               children={isAnd ? "AND" : "OR"}

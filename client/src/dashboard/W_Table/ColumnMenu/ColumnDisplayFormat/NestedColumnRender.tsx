@@ -6,16 +6,16 @@ import { getColumnsWithInfo } from "../../tableUtils/getColumnsWithInfo";
 import type { ChartValues } from "../../tableUtils/fetchChartRangeValues";
 import { RenderColumn } from "../../RenderColumn/RenderColumn";
 import type { ColumnConfigWithInfo } from "../../W_Table";
-import type { ColumnConfig } from "../ColumnConfig";
+import type { ColumnConfigNested } from "../ColumnConfig";
 import { getLinkedRecordsFilter } from "./getLinkedRecordsFilter";
-import { NestedColumnRenderEntities } from "./NestedColumnRenderEntities";
+import { NestedColumnRenderRecords } from "./NestedColumnRenderRecords";
 import { NestedColumnRenderTimechart } from "./NestedColumnRenderTimechart";
 
 export type NestedTimeChartMeta = {
   fullExtent: [Date, Date];
 };
 export type NestedColumnRenderProps = {
-  column: Omit<ColumnConfig, "format">;
+  column: ColumnConfigNested;
   row: AnyObject;
   nestedTimeChartMeta: NestedTimeChartMeta | undefined;
   barchartVals?: ChartValues;
@@ -34,8 +34,8 @@ export const NestedColumnRender = ({
   rootTableName,
 }: NestedColumnRenderProps): JSX.Element => {
   const { nested } = column;
-  const table = tables.find((t) => t.name === nested?.path.at(-1)?.table);
-  if (!nested || !table) return <>Unexpected issue: No nested columns</>;
+  const table = tables.find((t) => t.name === nested.path.at(-1)?.table);
+  if (!table) return <>Unexpected issue: No nested table</>;
   const display = nested.display ?? { type: "values" };
   if (display.type === "timechart") {
     return (
@@ -54,9 +54,9 @@ export const NestedColumnRender = ({
     tables,
     nested.columns,
   ).filter((c) => c.show);
-  if (display.type === "entities") {
+  if (display.type === "drillable-records") {
     return (
-      <NestedColumnRenderEntities
+      <NestedColumnRenderRecords
         column={column}
         table={table}
         tables={tables}
@@ -79,13 +79,14 @@ export const NestedColumnRender = ({
     row: Record<string, unknown>,
   ) => {
     const linkedRecordsFilter =
-      child.action?.type === "relatedRecords" ?
+      child.display === "drillable-records" ?
         getLinkedRecordsFilter({
           column,
           nestedColumn: child,
           nestedRow: row,
           parentRow,
           rootTableName,
+          table,
         })
       : undefined;
     return (

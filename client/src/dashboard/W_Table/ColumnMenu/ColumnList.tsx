@@ -10,7 +10,7 @@ import type {
 } from "../../Dashboard/dashboardUtils";
 import { getColumnsWithInfo } from "../tableUtils/getColumnsWithInfo";
 import { ColumnListItemOptions } from "./ColumnListItemOptions";
-import type { ColumnConfig } from "./ColumnConfig";
+import type { ColumnConfig, NestedDisplay } from "./ColumnConfig";
 import { getColumnListItem } from "./ColumnSelect/getColumnListItem";
 import { SummariseColumn } from "./SummariseColumns";
 
@@ -22,7 +22,7 @@ type P = {
   suggestions: LoadedSuggestions | undefined;
   onClose: VoidFunction;
   showToggle?: boolean;
-  isNested?: boolean;
+  parentDisplay?: NestedDisplay["type"];
 };
 
 export const ColumnList = ({
@@ -30,7 +30,7 @@ export const ColumnList = ({
   table,
   onChange,
   showToggle = true,
-  isNested,
+  parentDisplay,
   w,
   onClose,
 }: P) => {
@@ -96,7 +96,7 @@ export const ColumnList = ({
                   />
                 )}
                 <ColumnListItemOptions
-                  isNested={isNested}
+                  parentDisplay={parentDisplay}
                   column={c}
                   columns={columns}
                   onChange={onChange}

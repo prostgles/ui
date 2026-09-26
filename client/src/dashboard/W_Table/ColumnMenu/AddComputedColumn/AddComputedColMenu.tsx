@@ -23,6 +23,7 @@ import { updateWCols } from "../../tableUtils/tableUtils";
 import type {
   AggregateOptions,
   ColumnConfig,
+  ColumnConfigNested,
   NestedColumn,
 } from "../ColumnConfig";
 import { getColumnListItem } from "../ColumnSelect/getColumnListItem";
@@ -111,12 +112,12 @@ export class AddComputedColMenu extends RTComp<
           );
         }
         const { config } = nestedColumnOpts;
-        const updatedNestedColumn: ColumnConfig = {
+        const updatedNestedColumn: ColumnConfigNested = {
           ...config,
           nested: {
-            ...config.nested!,
+            ...config.nested,
             columns: [
-              ...config.nested!.columns,
+              ...config.nested.columns,
               newCol as NestedColumn<ColumnConfig>,
             ],
           },
@@ -125,7 +126,7 @@ export class AddComputedColMenu extends RTComp<
       } else {
         void updateWCols(
           w,
-          [...nestedColumn.nested!.columns, newCol],
+          [...nestedColumn.nested.columns, newCol],
           nestedColumn.name,
         );
       }

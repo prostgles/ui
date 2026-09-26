@@ -196,7 +196,6 @@ export const getTableCols = ({
         const chartValues = barchartVals?.get(c.name);
         if (
           !c.nested &&
-          !c.action &&
           c.style?.type === "Scale" &&
           chartValues
         ) {
@@ -220,7 +219,7 @@ export const getTableCols = ({
           format?.type === "Media" ||
           (format?.type === "Internal" && format.params.component === "File");
         const nestedValue =
-          c.nested?.display?.type !== "entities" &&
+          c.nested?.display?.type !== "drillable-records" &&
           c.nested?.display?.type !== "timechart" &&
           getSingleShownNestedColumn(c, tables);
         const numericType =
@@ -247,14 +246,9 @@ export const getTableCols = ({
 
   /* Can update table. Add update button */
   if (tableHandler && !hideEditRow && !w.options.hideEditRow) {
-    const _columns = columns.filter(
-      (c) =>
-        !w.columns?.length ||
-        w.columns.some((wc) => wc.name === c.name && wc.show !== false),
-    );
     const editColumn = getEditColumn({
       table,
-      columnConfig: _columns,
+      columnConfig: fullConfigCols,
       tableHandler,
       addColumnProps: {
         w,

@@ -20,7 +20,7 @@ export const ShorterText = ({ value: guid, column, style }: P) => {
         <i>NULL</i>
       : <>
           <div
-            className="f-1 pointer relative"
+            className="f-1 pointer relative text-ellipsis"
             style={{
               color: getColumnDataColor(
                 column ?? { tsDataType: "string", udt_name: "uuid" },

@@ -4,8 +4,10 @@ import type {
   GroupedDetailedFilter,
 } from "@common/filterUtils";
 import { reverseParsedPath } from "prostgles-types";
+import type { DBSchemaTableWJoins } from "../../../Dashboard/dashboardUtils";
 import { getComputedColumnSelect } from "../../tableUtils/getTableSelect";
-import type { ColumnConfig } from "../ColumnConfig";
+import type { ColumnConfig, ColumnConfigNested } from "../ColumnConfig";
+import { getTableIdentityColumns } from "./getTableIdentityColumns";
 
 export type LinkedRecordsSearchFilter = DetailedFilter | GroupedDetailedFilter;
 
@@ -15,21 +17,44 @@ export const getLinkedRecordsFilter = ({
   nestedRow,
   parentRow,
   rootTableName,
+  table,
 }: {
-  column: Omit<ColumnConfig, "format">;
+  column: ColumnConfigNested;
   nestedColumn?: Omit<ColumnConfig, "nested">;
   nestedRow: undefined | Record<string, unknown>;
   parentRow: Record<string, unknown>;
   rootTableName: string;
+  table: DBSchemaTableWJoins;
 }):
   | {
       searchFilter: LinkedRecordsSearchFilter[];
+      rowFilter?: DetailedFilterBase[];
     }
   | undefined => {
   const { nested } = column;
-  const aggregateConfig = nestedColumn?.computedConfig;
-  const firstJoin = nested?.path[0];
-  if (!firstJoin || (nestedColumn && !aggregateConfig?.funcDef.isAggregate)) {
+  const aggregateConfig =
+    nestedColumn?.computedConfig?.funcDef.isAggregate ?
+      nestedColumn.computedConfig
+    : undefined;
+  const identityColumns = getTableIdentityColumns(table, nested.columns);
+  if (
+    nestedRow &&
+    identityColumns.length &&
+    identityColumns.every(
+      ({ name }) =>
+        nestedRow[name] !== undefined &&
+        nestedRow[name] !== null,
+    )
+  ) {
+    const rowFilter = identityColumns.map(({ name }) => ({
+      fieldName: name,
+      value: nestedRow[name],
+      minimised: true,
+    }));
+    return { searchFilter: rowFilter, rowFilter };
+  }
+  const firstJoin = nested.path[0];
+  if (!firstJoin) {
     return;
   }
 
@@ -115,10 +140,9 @@ export const getParentTableJoinColumnNames = (
   if (
     !nested ||
     !(
-      column.action?.type === "relatedRecords" ||
-      nested.display?.type === "entities" ||
+      nested.display?.type === "drillable-records" ||
       nested.columns.some(
-        (child) => child.show && child.action?.type === "relatedRecords",
+        (child) => child.show && child.display === "drillable-records",
       )
     )
   ) {
@@ -126,7 +150,7 @@ export const getParentTableJoinColumnNames = (
   }
   return Array.from(
     new Set(
-      column.nested?.path[0]?.on.flatMap((constraint) =>
+      nested.path[0]?.on.flatMap((constraint) =>
         Object.keys(constraint),
       ) ?? [],
     ),

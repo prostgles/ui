@@ -30,7 +30,7 @@ export const renderNull = (
     return (
       <i
         style={style}
-        className="text-2  noselect"
+        className="text-2 text-ellipsis noselect"
         title={showTitle ? "NULL" : undefined}
       >
         NULL

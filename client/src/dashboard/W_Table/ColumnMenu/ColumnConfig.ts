@@ -39,10 +39,9 @@ export type NestedColumn<C extends ColumnConfig | ColumnConfigWithInfo> = Omit<
   "nested"
 > & { nested?: never };
 
-export type ColumnAction =
-  | { type: "record" }
-  /** Uses the relationship, aggregate filter and clicked group. */
-  | { type: "relatedRecords" };
+export type ColumnConfigNested<C extends ColumnConfig = ColumnConfig> = C & {
+  nested: NonNullable<C["nested"]>;
+};
 
 export type ColumnStyle = (
   | { type?: "None" }
@@ -61,7 +60,8 @@ export type ColumnStyle = (
 
 export type NestedDisplay =
   | { type: "values"; labels?: "auto" | "none" | "inline" | "above" }
-  | { type: "entities" }
+  /** Each linked row is a button that opens its record. */
+  | { type: "drillable-records" }
   | ColumnConfigChart;
 
 export type NestedColumnConfig = {
@@ -85,8 +85,8 @@ export type ColumnConfig = {
   nested?: NestedColumnConfig;
   style?: ColumnStyle;
   format?: UserColumnFormat;
-  /** Omit to keep the format's own behaviour without added navigation. */
-  action?: ColumnAction;
+  /** Opens the records behind a nested value; useful for aggregates. */
+  display?: "drillable-records";
   computedConfig?: ComputedColumnConfig;
 };
 

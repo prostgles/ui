@@ -73,15 +73,18 @@ type LinkedDataChart = {
  */
 type LinkedDataTable = {
   limit: number;
-  columns: Omit<TableColumn, "nested">[];
-  /** Defaults to values. Entity summaries use the linked table's card configuration. */
+  columns: (Omit<TableColumn, "nested"> & {
+    /** Render a value as a button opening its contributing records; useful for aggregates. */
+    display?: "drillable-records";
+  })[];
+  /** Defaults to values. Record summaries use the linked table's card configuration. */
   display?:
     | {
         type: "values";
         /** Auto hides labels for one column and places them above multiple columns. */
         labels?: "auto" | "none" | "inline" | "above";
       }
-    | { type: "entities" };
+    | { type: "drillable-records" };
 };
 
 /**
@@ -222,15 +225,10 @@ export type TableColumn = {
    * For nested columns this can be anything. Use the table name or a more descriptive name.
    */
   name: string;
-  /** Display label; does not change the database column name. */
-  label?: string;
   /**
-   * Open the displayed record or the records behind a linked aggregate.
-   * Linked aggregates default to relatedRecords; null disables that default.
-   * For values, set this on the child column; for entities, on the parent column.
-   */
-  action?: { type: "record" } | { type: "relatedRecords" } | null;
-
+   * Display label; does not change the database column name.
+   * */
+  label?: string;
   /**
    *
    */
@@ -307,7 +305,7 @@ export type TableColumn = {
          *         "name": "Order count",
          *         "width": 150,
          *         "computedConfig": { "aggregation": "countAll" },
-         *         "action": { "type": "relatedRecords" },
+         *         "display": "drillable-records",
          *         "styling": {
          *           "type": "Barchart",
          *           "barColor": "blue",
@@ -341,7 +339,7 @@ export type TableColumn = {
         maxColor?: string;
       }
   ) & {
-    /** For click actions. Defaults to faded for entities and text for values. */
+    /** Defaults to faded for drillable records and text for values. */
     buttonVariant?: "text" | "faded" | "filled" | "outline";
   };
 

@@ -122,13 +122,14 @@ export const ColumnStyleControls = (props: StyleColumnProps) => {
 
   return (
     <FlexCol className="ColumnStyleControls flex-col gap-1">
-      {column.action && (
+      {(column.display === "drillable-records" ||
+        column.nested?.display?.type === "drillable-records") && (
         <Select
           label="Button style"
           options={["text", "faded", "filled", "outline"]}
           value={
             style.buttonVariant ??
-            (column.nested?.display?.type === "entities" ? "faded" : "text")
+            (column.nested?.display?.type === "drillable-records" ? "faded" : "text")
           }
           onChange={(buttonVariant) => updateStylePart({ buttonVariant })}
         />

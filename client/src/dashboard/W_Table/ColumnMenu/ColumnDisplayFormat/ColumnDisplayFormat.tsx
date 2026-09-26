@@ -2,6 +2,7 @@ import { columnDisplayFormatSchema } from "@common/columnDisplayFormat.schema";
 import { getConnectionPaths, type DeepWriteable } from "@common/utils";
 import { FlexCol } from "@components/Flex";
 import { JSONBSchema } from "@components/JSONBSchema/JSONBSchema";
+import { InfoRow } from "@components/InfoRow";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { includes, type DBSchemaTable } from "prostgles-types";
 import React, { useMemo } from "react";
@@ -10,12 +11,15 @@ import type { Prgl } from "src/App";
 import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
 import type { ColumnConfigWithInfo } from "../../W_Table";
 import { UpdateColumnGlobalConfig } from "../UpdateColumnGlobalConfig";
+import type { NestedDisplay } from "../ColumnConfig";
 import type { UserColumnFormat } from "./columnFormatUtils";
 import { getFormatOptions } from "./columnFormatUtils";
+import { getColumnDrillDownDisabledInfo } from "./getColumnDrillDownDisabledInfo";
 
 type P = {
   db: Prgl["db"];
   column: ColumnConfigWithInfo;
+  parentDisplay?: NestedDisplay["type"];
   table: DBSchemaTable;
   tables: DBSchemaTablesWJoins;
   onChange: (newFormat: UserColumnFormat) => void;
@@ -27,6 +31,7 @@ export const ColumnDisplayFormat = ({
   tables,
   onChange,
   db,
+  parentDisplay,
 }: P) => {
   const { connection } = usePrgl();
   const schema = useMemo(() => {
@@ -66,6 +71,9 @@ export const ColumnDisplayFormat = ({
       ) as typeof schemaWithoutAllowedValues.oneOfType;
     return schemaWithoutAllowedValues;
   }, [column, table.columns]);
+  const drillDownDisabledInfo =
+    column.display === "drillable-records" &&
+    getColumnDrillDownDisabledInfo(column, parentDisplay);
 
   return (
     <FlexCol>
@@ -76,6 +84,9 @@ export const ColumnDisplayFormat = ({
         value={column.format}
         onChange={onChange}
       />
+      {drillDownDisabledInfo && (
+        <InfoRow color="warning">{drillDownDisabledInfo}</InfoRow>
+      )}
       {column.format?.type === "Media" && (
         <Link to={getConnectionPaths(connection, "security").config}>
           Content Security Policy settings

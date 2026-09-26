@@ -47,10 +47,6 @@ export const loadGeneratedTable = (
                     ...nc,
                     show: true,
                     style: parseColumnStyle(nc.styling),
-                    action:
-                      nc.action !== undefined ? (nc.action ?? undefined)
-                      : nc.computedConfig ? { type: "relatedRecords" }
-                      : undefined,
                     computedConfig:
                       nc.computedConfig &&
                       parseComputedConfig(
@@ -77,7 +73,6 @@ export const loadGeneratedTable = (
         computedConfig &&
         parseComputedConfig(computedConfig, tables, generatedWindow.table_name),
       show: true,
-      action: c.action ?? undefined,
       style: parseColumnStyle(c.styling),
     };
   });

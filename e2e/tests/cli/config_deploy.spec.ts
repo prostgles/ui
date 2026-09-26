@@ -216,6 +216,10 @@ test("checkFilterDetailed works with grouped existsJoined", async ({
     const collapseJoined = joined.getByTitle(
       "Expand/collapse joined conditions",
     );
+    const disableFilter = joined.getByTitle("Disable filter", { exact: true });
+    await expect(disableFilter).toHaveCount(4);
+    await expect(joined.getByTitle("Delete joined filter")).toBeVisible();
+    await expect(joined.locator(".Select")).toHaveCount(4);
     await collapseJoined.click();
     const summaries = joined.locator(".FilterWrapper_MinimisedRoot");
     await expect(summaries).toHaveCount(3);
@@ -224,8 +228,61 @@ test("checkFilterDetailed works with grouped existsJoined", async ({
     await expect(summaries.nth(1).locator(".FilterWrapper_Type")).toHaveText(
       "=",
     );
+    await expect(disableFilter).toHaveCount(1);
+    await expect(joined.getByTitle("Delete joined filter")).toHaveCount(0);
+    await expect(joined.getByTitle("Delete group", { exact: true })).toHaveCount(
+      0,
+    );
+    await expect(joined.locator(".Select")).toHaveCount(0);
+    await expect(
+      joined.getByRole("button", { name: "AND", exact: true }),
+    ).toHaveCount(0);
+    await expect(
+      joined.getByRole("button", { name: "OR", exact: true }),
+    ).toHaveCount(1);
+    expect(await joined.evaluate((el) => getComputedStyle(el).borderRadius)).toBe(
+      await summaries.first().evaluate((el) => getComputedStyle(el).borderRadius),
+    );
+    await disableFilter.click();
+    const enableFilter = joined.getByTitle("Enable filter", { exact: true });
+    await expect(enableFilter).toHaveCount(1);
+    await enableFilter.click();
+    await expect.poll(async () => {
+      const window = await state.db.windows!.findOne!({ table_name: "records" });
+      return window?.filter?.[0]?.disabled;
+    }).toBe(false);
+    const minimisedGroups: GroupedDetailedFilter[] = [
+      { $and: windowFilter.filter.$and.slice(0, 1) },
+      { $or: windowFilter.filter.$and.slice(0, 1) },
+      {
+        $and: [
+          windowFilter.filter.$and[0]!,
+          { fieldName: "role", type: "=", value: "contributor" },
+        ],
+      },
+    ];
+    for (const filter of minimisedGroups) {
+      await state.db.windows!.update!(
+        { table_name: "records" },
+        { filter: [{ ...windowFilter, filter, minimised: true }] },
+      );
+      await page.reload();
+      await expect(summaries).toHaveCount(
+        "$and" in filter ? filter.$and.length : filter.$or.length,
+      );
+      await expect(joined.getByTitle("Combine conditions")).toHaveCount(0);
+    }
+    await state.db.windows!.update!(
+      { table_name: "records" },
+      { filter: [{ ...windowFilter, minimised: true }] },
+    );
+    await page.reload();
+    await expect(summaries).toHaveCount(3);
     await summaries.nth(1).getByTitle("Click to expand/collapse").click();
     await expect(joined.getByTestId("FilterWrapper")).toHaveCount(3);
+    await expect(disableFilter).toHaveCount(4);
+    await expect(joined.getByTitle("Delete joined filter")).toBeVisible();
+    await expect(joined.locator(".Select")).toHaveCount(4);
     await joined
       .getByRole("button", { name: "Add group", exact: true })
       .last()

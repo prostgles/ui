@@ -1,9 +1,10 @@
 import { FlexCol } from "@components/Flex";
 import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
-import { Select } from "@components/Select/Select";
+import { SwitchToggle } from "@components/SwitchToggle";
 import React from "react";
 import type { ColumnConfigWithInfo } from "../../W_Table";
-import type { ColumnConfig } from "../ColumnConfig";
+import type { ColumnConfig, NestedDisplay } from "../ColumnConfig";
+import { getColumnDrillDownDisabledInfo } from "../ColumnDisplayFormat/getColumnDrillDownDisabledInfo";
 import {
   ColumnStyleControls,
   type StyleColumnProps,
@@ -11,21 +12,20 @@ import {
 
 type Props = Pick<StyleColumnProps, "db" | "tables" | "tableName"> & {
   column: ColumnConfigWithInfo;
-  isNested?: boolean;
+  parentDisplay?: NestedDisplay["type"];
   onUpdate: (update: Partial<ColumnConfig>) => void;
 };
 
 export const ColumnStyleMenu = ({
   column,
   onUpdate,
-  isNested,
+  parentDisplay,
   ...props
 }: Props) => {
   const { nested } = column;
   if (nested?.display?.type === "timechart") return null;
-  const entities = nested?.display?.type === "entities";
-  const showNestedColumnStyles =
-    !entities && nested && nested.columns.some((c) => c.style);
+  const drillableRecords = nested?.display?.type === "drillable-records";
+  const showNestedColumnStyles = !drillableRecords && nested;
   const columns =
     showNestedColumnStyles ? nested.columns.filter((c) => c.show) : [column];
 
@@ -33,7 +33,9 @@ export const ColumnStyleMenu = ({
     <FlexCol className="gap-1">
       {columns.map((c) => {
         const update = (
-          changes: Partial<Pick<ColumnConfig, "style" | "label" | "action">>,
+          changes: Partial<
+            Pick<ColumnConfig, "style" | "label" | "display">
+          >,
         ) => {
           if (!showNestedColumnStyles) {
             onUpdate(changes);
@@ -48,16 +50,6 @@ export const ColumnStyleMenu = ({
             },
           });
         };
-        const isAggregate = c.computedConfig?.funcDef.isAggregate;
-        const actions = [
-          { key: "none" as const, label: "None" },
-          ...(!isAggregate ?
-            [{ key: "record" as const, label: "Open record" }]
-          : []),
-          ...((nested || isNested) && isAggregate ?
-            [{ key: "relatedRecords" as const, label: "Open related records" }]
-          : []),
-        ];
         return (
           <FlexCol key={c.name} data-key={c.name} className="gap-p5">
             {nested && (
@@ -70,12 +62,16 @@ export const ColumnStyleMenu = ({
               placeholder={c.info?.label || c.name}
               onChange={(label) => update({ label })}
             />
-            <Select
-              label="Click action"
-              fullOptions={actions}
-              value={c.action?.type ?? "none"}
-              onChange={(type) =>
-                update({ action: type === "none" ? undefined : { type } })
+            <SwitchToggle
+              label="Drill down to records"
+              title="Open the records behind this value; useful for aggregates."
+              disabledInfo={getColumnDrillDownDisabledInfo(
+                c,
+                showNestedColumnStyles ? "values" : parentDisplay,
+              )}
+              checked={drillableRecords || c.display === "drillable-records"}
+              onChange={(checked) =>
+                update({ display: checked ? "drillable-records" : undefined })
               }
             />
             <ColumnStyleControls

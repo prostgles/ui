@@ -1,5 +1,7 @@
 import { rmSync } from "node:fs";
-import type { ColumnConfig } from "../../../client/src/dashboard/W_Table/ColumnMenu/ColumnMenu";
+import type { ColumnConfig } from "../../../client/src/dashboard/W_Table/ColumnMenu/ColumnConfig";
+import { getTableIdentityColumns } from "../../../client/src/dashboard/W_Table/ColumnMenu/ColumnDisplayFormat/getTableIdentityColumns";
+import type { DBSchemaTableWJoins } from "../../../client/src/dashboard/Dashboard/dashboardUtils";
 import { sidKeyName } from "../../../common/authTypesAndConstants";
 import type { WorkspaceInsertModel } from "../../../common/DashboardTypes";
 import { getProstglesMCPFullToolName } from "../../../common/mcpUtils";
@@ -55,13 +57,13 @@ const config = {
     },
     tasks: {
       columns: {
-        id: "serial PRIMARY KEY",
         user_id: "integer NOT NULL REFERENCES users(id)",
         title: "text NOT NULL",
         status: "text NOT NULL",
         due: "date",
         avatar_url: "text",
         content_type: "text",
+        id: "serial PRIMARY KEY",
       },
     },
   },
@@ -102,7 +104,7 @@ const config = {
                 columns: [
                   {
                     name: "Open",
-                    action: { type: "relatedRecords" },
+                    display: "drillable-records",
                     show: true,
                     computedConfig: {
                       funcDef: {
@@ -129,7 +131,7 @@ const config = {
                   },
                   {
                     name: "Closed",
-                    action: { type: "relatedRecords" },
+                    display: "drillable-records",
                     show: true,
                     computedConfig: {
                       funcDef: {
@@ -166,11 +168,10 @@ const config = {
             },
             {
               name: "Manager",
-              action: { type: "record" },
               show: true,
               nested: {
                 path: [{ table: "users", on: [{ manager_id: "id" }] }],
-                display: { type: "entities" },
+                display: { type: "drillable-records" },
                 columns: [
                   { name: "id", show: false },
                   { name: "name", show: true },
@@ -181,14 +182,13 @@ const config = {
             },
             {
               name: "Tasks",
-              action: { type: "record" },
               show: true,
               nested: {
                 path: [{ table: "tasks", on: [{ id: "user_id" }] }],
-                display: { type: "entities" },
+                display: { type: "drillable-records" },
                 sort: { key: "id", asc: true },
                 columns: [
-                  { name: "id", show: false },
+                  { name: "id", show: true },
                   { name: "user_id", show: false },
                   { name: "title", show: true },
                   { name: "status", show: true },
@@ -246,6 +246,53 @@ test.afterAll(async () => {
 test("linked column cells open filtered aggregates and linked records", async ({
   page,
 }) => {
+  const project = await deployment.connectProjectAs("admin");
+  try {
+    const info = await project.db.users!.getInfo!();
+    const columns = await project.db.users!.getColumns!();
+    expect(info.uniqueColumnGroups).toContainEqual(["id"]);
+    const table = { ...info, columns } as DBSchemaTableWJoins;
+    const composite = {
+      ...table,
+      uniqueColumnGroups: [["id", "email"], ["email"]],
+      columns: columns.map((c) => ({
+        ...c,
+        is_pkey: c.name === "id" || c.name === "email",
+      })),
+    };
+    expect(getTableIdentityColumns(composite).map((c) => c.name)).toEqual(["email"]);
+    const columnConfig: ColumnConfig[] = [
+      { name: "id", show: false },
+      { name: "email", show: true },
+    ];
+    const alternateKeys = { ...table, uniqueColumnGroups: [["id"], ["email"]] };
+    expect(getTableIdentityColumns(alternateKeys, columnConfig).map((c) => c.name))
+      .toEqual(["email"]);
+    expect(getTableIdentityColumns({
+      ...table, uniqueColumnGroups: [["id", "email"]],
+    }, columnConfig)).toEqual([]);
+    expect(getTableIdentityColumns(table, [])).toEqual([]);
+    const aggregate = config.workspaces[0].windows[0].columns
+      .find((c) => c.name === "Task status")!.nested!.columns[0]!;
+    expect(getTableIdentityColumns(alternateKeys, [
+      { ...aggregate, name: "id", show: true },
+      { name: "email", show: true },
+    ]).map((c) => c.name)).toEqual(["email"]);
+    for (const permission of ["select", "filter"] as const) {
+      const restricted = {
+        ...composite,
+        columns: composite.columns.map((c) =>
+          c.name === "id" ? { ...c, [permission]: false } : c,
+        ),
+      };
+      expect(getTableIdentityColumns(restricted).map((c) => c.name)).toEqual(["email"]);
+      expect(getTableIdentityColumns({
+        ...restricted, uniqueColumnGroups: [["id", "email"]],
+      })).toEqual([]);
+    }
+  } finally {
+    project.disconnect();
+  }
   await page
     .context()
     .addCookies([
@@ -264,6 +311,12 @@ test("linked column cells open filtered aggregates and linked records", async ({
     .filter({ hasText: "Alice" });
   const aggregateButtons = alice.getByTestId("LinkedColumn.OpenRecords");
   await expect(aggregateButtons).toHaveText(["2", "1"]);
+
+  // The root row editor must also work when both unique columns are hidden.
+  await alice.getByTestId("dashboard.window.viewEditRow").click();
+  await expect(page.getByTestId("SmartForm").locator('[data-key="name"] input'))
+    .toHaveValue("Alice");
+  await page.getByTestId("Popup.close").last().click();
 
   await aggregateButtons.nth(0).click();
   const aggregatePopup = page.getByTestId("Popup.content").last();
@@ -331,6 +384,16 @@ test("linked column cells open filtered aggregates and linked records", async ({
   );
   await page.getByTestId("Popup.close").last().click();
 
+  await users.locator('[role="columnheader"][data-key="name"]').click({ button: "right" });
+  await page.getByText("Style", { exact: true }).click();
+  const rootToggle = page.getByRole("switch").filter({ hasText: "Drill down to records" });
+  await expect(rootToggle.getByRole("checkbox")).toBeDisabled();
+  await expect(rootToggle).toHaveAttribute(
+    "title",
+    "Drill-down is only available for linked values.",
+  );
+  await page.getByTestId("Popup.close").last().click();
+
   // Card fields and their dependencies are selected before choosing a layout.
   await users.getByTestId("AddColumnMenu").click();
   await page
@@ -355,6 +418,17 @@ test("linked column cells open filtered aggregates and linked records", async ({
     .getByTestId("SearchList.List")
     .locator('[data-key="Tasks"]');
   await tasksColumn.getByTestId("W_TableMenu_ColumnList.options").click();
+  await page.getByTestId("W_TableMenu_ColumnList.style").click();
+  await expect(page.getByText("Click action", { exact: true })).toHaveCount(0);
+  const recordLayoutToggle = page.getByRole("switch").filter({ hasText: "Drill down to records" });
+  await expect(recordLayoutToggle.getByRole("checkbox")).toBeDisabled();
+  await expect(recordLayoutToggle.getByRole("checkbox")).toBeChecked();
+  await expect(recordLayoutToggle).toHaveAttribute(
+    "title",
+    "The drillable-records layout already opens each row's record.",
+  );
+  await expect(page.getByText("Button style", { exact: true })).toBeVisible();
+  await page.getByText("Column options", { exact: true }).click();
   await page.getByTestId("W_TableMenu_ColumnList.linkedColumnOptions").click();
   await page
     .getByTestId("LinkedColumn")
@@ -366,7 +440,7 @@ test("linked column cells open filtered aggregates and linked records", async ({
     .locator('[data-key="values"]')
     .click();
   await page.getByTestId("LinkedColumn.ColumnList.toggle").click();
-  for (const name of ["title", "status"]) {
+  for (const name of ["title", "status", "id"]) {
     await page
       .getByTestId("Popup.content")
       .last()
@@ -381,7 +455,7 @@ test("linked column cells open filtered aggregates and linked records", async ({
   await page.getByTestId("LinkedColumn.layoutType").click();
   await page
     .getByTestId("SearchList.List")
-    .locator('[data-key="entities"]')
+    .locator('[data-key="drillable-records"]')
     .click();
   await expect(page.getByTestId("LinkedColumn.ColumnList.toggle")).toHaveText(
     "0 selected",
@@ -396,6 +470,12 @@ test("linked column cells open filtered aggregates and linked records", async ({
   await expect(page.getByTestId("W_TableMenu_ColumnList.format")).toBeVisible();
   await page.getByTestId("W_TableMenu_ColumnList.style").click();
   await expect(page.getByText("Style mode", { exact: true })).toBeVisible();
+  const nestedToggle = page.getByRole("switch").filter({ hasText: "Drill down to records" });
+  await expect(nestedToggle.getByRole("checkbox")).toBeDisabled();
+  await expect(nestedToggle).toHaveAttribute(
+    "title",
+    "Use the values layout to configure drill-down for individual columns.",
+  );
 });
 
 test("column list edits computed functions and aggregate filters", async ({
@@ -788,7 +868,7 @@ test("linked columns render independent barcharts and scales", async ({
   }
 });
 
-test("nested presentation keeps formats, actions, groups and entity overflow independent", async ({
+test("nested presentation keeps formats, drill-down, groups and entity overflow independent", async ({
   page,
 }) => {
   const originalColumns: ColumnConfig[] =
@@ -799,7 +879,7 @@ test("nested presentation keeps formats, actions, groups and entity overflow ind
     ...source,
     name: "Money",
     label: "Outstanding cost",
-    // Parent value styling must not replace the formatted child or its action.
+    // Parent value styling must not replace the formatted child or its drill-down.
     style: { type: "Fixed", textColor: "#00ff00" },
     nested: {
       ...source.nested!,
@@ -835,7 +915,7 @@ test("nested presentation keeps formats, actions, groups and entity overflow ind
       ),
     },
   };
-  const entities: ColumnConfig = {
+  const drillableRecords: ColumnConfig = {
     ...originalColumns.find((c) => c.name === "Tasks")!,
     style: {
       type: "Conditional",
@@ -852,7 +932,7 @@ test("nested presentation keeps formats, actions, groups and entity overflow ind
     },
     nested: {
       ...originalColumns.find((c) => c.name === "Tasks")!.nested!,
-      display: { type: "entities" },
+      display: { type: "drillable-records" },
       limit: 1,
       detailedFilter: [{ fieldName: "status", type: "$eq", value: "open" }],
       columns: originalColumns
@@ -890,10 +970,10 @@ test("nested presentation keeps formats, actions, groups and entity overflow ind
     show: true,
     style: { type: "Fixed", textColor: "#ff0000" },
     nested: {
-      ...entities.nested!,
+      ...drillableRecords.nested!,
       display: { type: "values" },
       limit: 10,
-      columns: entities.nested!.columns.map((c) => ({
+      columns: drillableRecords.nested!.columns.map((c) => ({
         ...c,
         show: c.name === "id",
       })),
@@ -903,7 +983,7 @@ test("nested presentation keeps formats, actions, groups and entity overflow ind
     name: "Timeline",
     show: true,
     nested: {
-      ...entities.nested!,
+      ...drillableRecords.nested!,
       limit: 200,
       sort: { key: "date", asc: true },
       display: {
@@ -915,7 +995,7 @@ test("nested presentation keeps formats, actions, groups and entity overflow ind
     },
   };
   const rootColumns = originalColumns.filter((c) => !c.nested);
-  let columns = [...rootColumns, money, entities, grouped, raw, chart];
+  let columns = [...rootColumns, money, drillableRecords, grouped, raw, chart];
   const state = await deployment.connectStateAs("admin");
   try {
     await page
@@ -977,12 +1057,13 @@ test("nested presentation keeps formats, actions, groups and entity overflow ind
         { table_name: "users" },
         {
           columns: columns.map((column) =>
-            column === entities ?
+            column === drillableRecords ?
               {
-                ...entities,
+                ...drillableRecords,
                 nested: {
-                  ...entities.nested!,
-                  columns: entities.nested!.columns.map((child) => ({
+                  ...drillableRecords.nested!,
+                  sort: { key: shownNames[0]!, asc: true },
+                  columns: drillableRecords.nested!.columns.map((child) => ({
                     ...child,
                     show: shownNames.includes(child.name),
                   })),
@@ -992,15 +1073,23 @@ test("nested presentation keeps formats, actions, groups and entity overflow ind
           ),
         },
       );
-      await expect(entityButtons).toHaveText(
+      const groupButton = alice.getByTestId("LinkedColumn.OpenRecords").filter({
+        hasText: shownNames.includes("title") ? "Open one" : /^open$/,
+      });
+      await expect(entityButtons).toHaveCount(0);
+      await expect(groupButton).toHaveText(
         shownNames
           .map((name) => (name === "title" ? "Open one" : "open"))
           .join(""),
       );
-      await entityButtons.click();
-      await expect(
-        page.getByTestId("SmartForm").locator('[data-key="title"] input'),
-      ).toHaveValue("Open one");
+      await groupButton.click();
+      await expect(popup).toContainText("Open one");
+      if (shownNames.includes("title")) {
+        await expect(popup).not.toContainText("Open two");
+      } else {
+        await expect(popup).toContainText("Open two");
+      }
+      await expect(popup).not.toContainText("Closed one");
       await page.getByTestId("Popup.close").last().click();
     }
 
@@ -1009,10 +1098,10 @@ test("nested presentation keeps formats, actions, groups and entity overflow ind
         { table_name: "users" },
         {
           columns: columns.map((column) =>
-            column === entities ?
+            column === drillableRecords ?
               {
-                ...entities,
-                nested: { ...entities.nested!, limit },
+                ...drillableRecords,
+                nested: { ...drillableRecords.nested!, limit },
               }
             : column,
           ),
@@ -1044,21 +1133,38 @@ test("nested presentation keeps formats, actions, groups and entity overflow ind
       .evaluate((el) => [...el.parentElement!.children].indexOf(el));
     await expect(alice.getByRole("cell").nth(rawIndex)).toHaveText("12");
 
-    // Removing actions must leave currency formatting and styling intact.
+    // The drillable layout must not inject a hidden identity into GROUP BY.
+    await state.db.windows!.update!({ table_name: "users" }, {
+      columns: [...rootColumns, {
+        ...grouped,
+        nested: { ...grouped.nested!, display: { type: "drillable-records" } },
+      }],
+    });
+    const groupedRecords = alice.getByTestId("LinkedColumn.OpenRecords");
+    await expect(groupedRecords).toHaveCount(2);
+    const openGroup = groupedRecords.filter({ hasText: "open" });
+    await expect(openGroup).toContainText("2");
+    await openGroup.click();
+    await expect(popup).toContainText("Open one");
+    await expect(popup).toContainText("Open two");
+    await expect(popup).not.toContainText("Closed one");
+    await page.getByTestId("Popup.close").last().click();
+
+    // Disabling drill-down must leave currency formatting and styling intact.
     const plainMoney = {
       ...money,
       nested: {
         ...money.nested!,
         columns: money.nested!.columns.map((c) => ({
           ...c,
-          action: undefined,
+          display: undefined,
         })),
       },
     };
     columns = [
       ...rootColumns,
       plainMoney,
-      { ...entities, action: undefined },
+      drillableRecords,
       grouped,
       raw,
       chart,
@@ -1066,18 +1172,24 @@ test("nested presentation keeps formats, actions, groups and entity overflow ind
     await state.db.windows!.update!({ table_name: "users" }, { columns });
     await expect(costButton).toHaveCount(0);
     await expect(alice.getByText("£3.00", { exact: true })).toBeVisible();
-    await expect(entityButtons).toHaveCount(0);
-    await expect(alice.getByText("Open one", { exact: true })).toBeVisible();
+    // Drillable records open their row independently of value drill-down.
+    await expect(entityButtons).toHaveCount(1);
+    await entityButtons.click();
+    await expect(
+      page.getByTestId("SmartForm").locator('[data-key="title"] input'),
+    ).toHaveValue("Open one");
+    await page.getByTestId("Popup.close").last().click();
 
-    // A scalar child can open its own row; interactive formats retain their own link.
+    // Scalar values can drill down; interactive formats retain their own link.
     const recordValues: ColumnConfig = {
       ...raw,
       nested: {
         ...raw.nested!,
+        sort: { key: "title", asc: true },
         columns: raw.nested!.columns.map((c) => ({
           ...c,
           show: c.name === "title",
-          action: { type: "record" },
+          display: "drillable-records",
         })),
       },
     };
@@ -1088,14 +1200,26 @@ test("nested presentation keeps formats, actions, groups and entity overflow ind
       },
     );
     const rawCell = alice.getByRole("cell").nth(rawIndex);
-    await expect(rawCell.getByTestId("LinkedColumn.OpenRecord")).toHaveText([
-      "Open one",
-      "Open two",
-    ]);
-    await rawCell.getByTestId("LinkedColumn.OpenRecord").nth(1).click();
-    await expect(
-      page.getByTestId("SmartForm").locator('[data-key="title"] input'),
-    ).toHaveValue("Open two");
+    await expect(rawCell.getByTestId("LinkedColumn.OpenRecord")).toHaveCount(0);
+    const valueButtons = rawCell.getByTestId("LinkedColumn.OpenRecords");
+    await expect(valueButtons).toHaveText(["Open one", "Open two"]);
+    await users
+      .getByRole("columnheader")
+      .filter({ hasText: "Raw" })
+      .click({ button: "right" });
+    await page.getByText("Style", { exact: true }).click();
+    const drillDownToggle = page.getByLabel("Drill down to records", { exact: true });
+    await expect(drillDownToggle).toBeChecked();
+    await drillDownToggle.uncheck();
+    await expect(valueButtons).toHaveCount(0);
+    await drillDownToggle.check();
+    await expect(valueButtons).toHaveText(["Open one", "Open two"]);
+    await page.getByTestId("Popup.close").last().click();
+    await valueButtons.nth(1).click();
+    await expect(popup).toContainText("Open two");
+    await expect(popup).not.toContainText("Open one");
+    await expect(popup).not.toContainText("Closed one");
+    await expect(popup).not.toContainText("Bob closed");
     await page.getByTestId("Popup.close").last().click();
     await state.db.windows!.update!(
       { table_name: "users" },
@@ -1122,18 +1246,40 @@ test("nested presentation keeps formats, actions, groups and entity overflow ind
     ]);
     await expect(rawCell.locator("button")).toHaveCount(0);
 
-    // UI edits persist a child's label, action and button style independently.
+    // Incompatible formats explain why drill-down is unavailable in both editors.
+    const formatDisabledInfo = "Drill-down is unavailable with the URL format. Choose a plain-value format such as None.";
+    const rawHeader = users.getByRole("columnheader").filter({ hasText: "Raw" });
+    await rawHeader.click({ button: "right" });
+    await page.getByText("Style", { exact: true }).click();
+    const disabledToggle = page.getByRole("switch").filter({ hasText: "Drill down to records" });
+    await expect(disabledToggle.getByRole("checkbox")).toBeDisabled();
+    await expect(disabledToggle).toHaveAttribute("title", formatDisabledInfo);
+    await page.getByTestId("Popup.close").last().click();
+    await rawHeader.click({ button: "right" });
+    await page.getByText("Edit Linked Columns", { exact: true }).click();
+    await page.getByTestId("LinkedColumn.ColumnList.toggle").click();
+    await page.getByTestId("SearchList.List")
+      .locator('[data-key="title"]')
+      .getByTestId("W_TableMenu_ColumnList.options").click();
+    await page.getByTestId("W_TableMenu_ColumnList.format").click();
+    await expect(page.getByText(formatDisabledInfo, { exact: true })).toBeVisible();
+    await page.getByText("URL", { exact: true }).click();
+    await page.getByTestId("SearchList.List").locator('[data-key="NONE"]').click();
+    await expect(page.getByText(formatDisabledInfo, { exact: true })).toHaveCount(0);
+    while (await page.getByTestId("Popup.content").count()) {
+      const popupCount = await page.getByTestId("Popup.content").count();
+      await page.keyboard.press("Escape");
+      await expect(page.getByTestId("Popup.content")).toHaveCount(popupCount - 1);
+    }
+
+    // UI edits persist a child's label, drill-down and button style independently.
     await users
       .getByRole("columnheader")
       .filter({ hasText: "Outstanding cost" })
       .click({ button: "right" });
     await page.getByText("Style", { exact: true }).click();
     await page.getByLabel("Label", { exact: true }).fill("Open balance");
-    await page.getByRole("button", { name: "None", exact: true }).click();
-    await page
-      .getByTestId("SearchList.List")
-      .locator('[data-key="relatedRecords"]')
-      .click();
+    await page.getByLabel("Drill down to records", { exact: true }).check();
     await expect(costButton).toBeVisible();
     await expect
       .poll(async () => {
@@ -1163,14 +1309,14 @@ test("database migration preserves legacy nested display settings and drilldowns
     !column.nested ? column : (
       {
         ...column,
-        action: undefined,
+        display: undefined,
         nested: {
           ...column.nested,
           display: undefined,
           displayMode: column.name === "Task status" ? "no-headers" : "record",
           columns: column.nested.columns.map((child) => ({
             ...child,
-            action: undefined,
+            display: undefined,
           })),
         },
       }
@@ -1222,8 +1368,8 @@ test("database migration preserves legacy nested display settings and drilldowns
       })
       .toEqual([
         { display: { type: "values", labels: "none" }, hasLegacy: false },
-        { display: { type: "entities" }, hasLegacy: false },
-        { display: { type: "entities" }, hasLegacy: false },
+        { display: { type: "drillable-records" }, hasLegacy: false },
+        { display: { type: "drillable-records" }, hasLegacy: false },
       ]);
     await page.reload();
     await expect(alice.getByTestId("LinkedColumn.OpenRecords")).toHaveText([
@@ -1231,6 +1377,7 @@ test("database migration preserves legacy nested display settings and drilldowns
       "1",
     ]);
     await expect(alice.getByTestId("LinkedColumn.OpenRecord")).toHaveCount(4);
+
   } finally {
     await state.db.windows!.update!(
       { table_name: "users" },
@@ -1240,7 +1387,7 @@ test("database migration preserves legacy nested display settings and drilldowns
   }
 });
 
-test("LLM-generated nested columns preserve presentation, actions and styles", async ({
+test("LLM-generated nested columns preserve presentation, drill-down and styles", async ({
   page,
 }) => {
   const toolName = getProstglesMCPFullToolName(
@@ -1283,6 +1430,7 @@ test("LLM-generated nested columns preserve presentation, actions and styles", a
                 {
                   name: "Total",
                   width: 100,
+                  display: "drillable-records",
                   computedConfig: { aggregation: "countAll" },
                   styling: {
                     type: "Barchart",
@@ -1298,7 +1446,7 @@ test("LLM-generated nested columns preserve presentation, actions and styles", a
                   name: "Latest",
                   label: "Latest task",
                   width: 100,
-                  action: { type: "relatedRecords" },
+                  display: "drillable-records",
                   computedConfig: { aggregation: "max", column: "id" },
                   styling: {
                     type: "conditional",
@@ -1311,7 +1459,7 @@ test("LLM-generated nested columns preserve presentation, actions and styles", a
                 {
                   name: "Earliest",
                   width: 100,
-                  action: null,
+                  display: undefined,
                   computedConfig: { aggregation: "min", column: "id" },
                   styling: {
                     type: "Scale",
@@ -1326,7 +1474,6 @@ test("LLM-generated nested columns preserve presentation, actions and styles", a
           {
             name: "Manager",
             width: 250,
-            action: { type: "record" },
             styling: {
               type: "Fixed",
               textColor: "#123456",
@@ -1336,7 +1483,7 @@ test("LLM-generated nested columns preserve presentation, actions and styles", a
               path: [{ table: "users", on: [{ manager_id: "id" }] }],
               joinType: "left",
               limit: 1,
-              display: { type: "entities" },
+              display: { type: "drillable-records" },
               columns: [{ name: "name", width: 100 }],
             },
           },
@@ -1411,7 +1558,7 @@ test("LLM-generated nested columns preserve presentation, actions and styles", a
       .filter({ hasText: "Bob", hasNotText: "Alice" });
     await expect(alice.locator(".ProgressBar")).toHaveText("£3.00");
     await expect(bob.locator(".ProgressBar")).toHaveText("£2.00");
-    await expect(alice.getByTestId("LinkedColumn.OpenRecords")).toHaveCount(2);
+    await expect(alice.getByTestId("LinkedColumn.OpenRecords")).toHaveCount(3);
     const generatedWorkspace = await state.db.workspaces!.findOne!({
       name: workspace.name,
     });
@@ -1420,7 +1567,8 @@ test("LLM-generated nested columns preserve presentation, actions and styles", a
       workspace_id: generatedWorkspace!.id,
     });
     expect(
-      generatedWindow!.columns?.find((c) => c.name === "Task statistics")
+      generatedWindow!.columns
+        ?.find((c) => c.name === "Task statistics")
         ?.nested?.columns.find((c) => c.name === "Earliest"),
     ).toMatchObject({
       style: {
@@ -1437,14 +1585,12 @@ test("LLM-generated nested columns preserve presentation, actions and styles", a
         .getByTestId("LinkedColumn.OpenRecords")
         .filter({ hasText: "3", hasNotText: "£" }),
     ).toHaveClass(/outline/);
-    const manager = alice.getByTestId("LinkedColumn.OpenRecord");
+    const manager = alice.getByTestId("LinkedColumn.OpenRecords").filter({ hasText: "Bob" });
     await expect(manager).toContainText("Bob");
     await expect(manager).toHaveClass(/filled/);
     await expect(manager).toHaveCSS("color", "rgb(18, 52, 86)");
     await manager.click();
-    await expect(
-      page.getByTestId("SmartForm").locator('[data-key="name"] input'),
-    ).toHaveValue("Bob");
+    await expect(page.getByTestId("Popup.content").last()).toContainText("bob@example.com");
     await page.getByTestId("Popup.close").last().click();
     await expect(alice.locator(".ProgressBar > .shadow")).toHaveCSS(
       "background-color",

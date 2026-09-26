@@ -312,13 +312,16 @@ test("runs a generated config project with temporary databases and Docker Compos
     writeFileSync(
       join(appRoot, "e2e/tests/admin/service.spec.ts"),
       `import { test, expect } from "../fixtures";
+       import assert from "node:assert/strict";
        import { setOrAddWorkspace } from "@prostgles/app/testing/ui";
        test("runs configured functions using built-in and app services", async ({ app, deployment }) => {
-         const state = await deployment.connectStateAs("admin");
+         const { methods, db: { services } } = await deployment.connectStateAs("admin");
+         assert(methods);
+         assert(services);
          try {
            // Start the built-in web search service through the state API.
-           await state.methods!.toggleService!({ serviceName: "webSearchSearxng", enable: true });
-           await expect.poll(async () => await state.db.services!.findOne!({ name: "webSearchSearxng" }))
+           await methods.toggleService!({ serviceName: "webSearchSearxng", enable: true });
+           await expect.poll(async () => await services.findOne({ name: "webSearchSearxng" }))
              .toMatchObject({ status: "running", connection_id: null });
            // Run the configured function view, then verify it survives a reload.
            await app.open();
@@ -332,16 +335,16 @@ test("runs a generated config project with temporary databases and Docker Compos
            await controls.getByText("Run", { exact: true }).click();
            await expect(controls).toContainText("Web search returned ");
            // Start the app's custom service and call it through a published function.
-           await state.methods!.toggleService!({ serviceName: "myService", enable: true });
-           await expect.poll(async () => await state.db.services!.findOne!({ name: "myService" }))
+           await methods.toggleService!({ serviceName: "myService", enable: true });
+           await expect.poll(async () => await services.findOne({ name: "myService" }))
              .toMatchObject({ status: "running" });
            const project = await deployment.connectProjectAs("admin");
            expect(await project.methods!.serviceGreeting!(undefined)).toBe("Hello from myService!");
          } finally {
            // Verify both services can be stopped through the state API.
            for (const serviceName of ["webSearchSearxng", "myService"]) {
-             await state.methods!.toggleService!({ serviceName, enable: false });
-             await expect.poll(async () => await state.db.services!.findOne!({ name: serviceName }))
+             await methods.toggleService!({ serviceName, enable: false });
+             await expect.poll(async () => await services.findOne({ name: serviceName }))
                .toMatchObject({ status: "stopped" });
            }
          }

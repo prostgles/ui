@@ -12,7 +12,8 @@ import { SmartFilterBar } from "../../../SmartFilterBar/SmartFilterBar";
 import type { ColumnConfigWithInfo } from "../../W_Table";
 import { getColumnsWithInfo } from "../../tableUtils/getColumnsWithInfo";
 import { getRequiredTableSelect } from "../../tableUtils/getTableSelect";
-import type { ColumnConfig } from "../ColumnConfig";
+import type { ColumnConfig, ColumnConfigNested } from "../ColumnConfig";
+import { getTableIdentityColumns } from "../ColumnDisplayFormat/getTableIdentityColumns";
 import {
   getAllJoins,
   JoinPathSelectorV2,
@@ -23,7 +24,7 @@ import { LinkedColumnSelect } from "./LinkedColumnSelect";
 
 export type LinkedColumnProps = {
   w: WindowSyncItem<"table">;
-  column: ColumnConfigWithInfo | undefined;
+  column: ColumnConfigNested<ColumnConfigWithInfo> | undefined;
   onClose: VoidFunction | undefined;
 };
 
@@ -48,11 +49,11 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
     [w.columns],
   );
 
-  const [localColumn, setLocalColumn] = useState<ColumnConfig>();
+  const [localColumn, setLocalColumn] = useState<ColumnConfigNested>();
   const currentColumn = localColumn ?? props.column;
   const table = useMemo(() => {
     const currentTargetPath =
-      currentColumn?.nested &&
+      currentColumn &&
       getAllJoins({
         tableName: w.table_name,
         tables,
@@ -66,30 +67,30 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
     : undefined;
 
   const updateColumn = useCallback(
-    (newCol: Partial<ColumnConfig>) => {
+    (newCol: Partial<ColumnConfigNested>) => {
       if (!currentColumn) throw "Cannot update a column that does not exist";
       setLocalColumn({ ...currentColumn, ...newCol });
     },
     [currentColumn],
   );
 
-  const updateNested = (newNested: Partial<ColumnConfig["nested"]>) => {
+  const updateNested = (newNested: Partial<ColumnConfigNested["nested"]>) => {
     if (!currentColumn) throw "Cannot update a column that does not exist";
-    return updateColumn({ nested: { ...currentColumn.nested!, ...newNested } });
+    return updateColumn({ nested: { ...currentColumn.nested, ...newNested } });
   };
 
-  const nestedColumns = currentColumn?.nested?.columns;
+  const nestedColumns = currentColumn?.nested.columns;
   const disabledInfo =
     newColumnNameError ??
     (!nestedColumns?.filter((c) => c.show).length ?
       t.LinkedColumn["Must select columns"]
-    : !props.column?.nested && !currentColumn ?
+    : !props.column && !currentColumn ?
       t.LinkedColumn["Must select a table"]
     : undefined);
 
   useEffect(() => {
     if (!localColumn) return;
-    const shownCols = localColumn.nested?.columns.filter((c) => c.show) ?? [];
+    const shownCols = localColumn.nested.columns.filter((c) => c.show);
     const width = shownCols.length > 2 || table?.isFileTable ? 250 : 150;
     if (localColumn.width !== width) {
       setLocalColumn({ ...localColumn, width });
@@ -118,8 +119,9 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
       const newColName = getCol(colName) ? `${colName} (1)` : colName;
 
       const { table } = targetPath;
+      const identityColumns = getTableIdentityColumns(table);
       /**
-       * Show the first 5 cols and configured card fields
+       * Show the first 5 cols, identity columns and configured card fields
        */
       const initialNestedColumns = table.columns.map(
         (c, i) =>
@@ -127,6 +129,7 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
             name: c.name,
             show:
               i < 5 ||
+              identityColumns.some(({ name }) => name === c.name) ||
               [
                 table.card?.avatarColumn,
                 table.card?.headerColumn,
@@ -142,11 +145,12 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
         ...column,
         show: column.show || requiredSelect[column.name] !== undefined,
       }));
-      const newCol: ColumnConfig = {
+      const newCol: ColumnConfigNested = {
         name: newColName,
         show: true,
         width: 250,
         nested: {
+          display: { type: "drillable-records" },
           columns: nestedColumns,
           path: targetPath.path,
           joinType: "left",
@@ -197,7 +201,7 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
         <JoinPathSelectorV2
           tableName={w.table_name}
           tables={tables}
-          value={currentColumn?.nested?.path}
+          value={currentColumn?.nested.path}
           onChange={onJoinPathChange}
         />
       </FlexRowWrap>
@@ -214,77 +218,69 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
             iconPath={mdiDotsHorizontal}
             label={t.LinkedColumn["More options"]}
           >
-            {currentColumn.nested && (
-              <FlexRowWrap className="ai-end">
+            <FlexRowWrap className="ai-end">
+              <Select
+                label={t.LinkedColumn["Layout"]}
+                data-command="LinkedColumn.layoutType"
+                options={["values", "drillable-records"]}
+                disabledInfo={
+                  currentColumn.nested.display?.type === "timechart" ?
+                    "Must disable chart first"
+                  : undefined
+                }
+                value={
+                  currentColumn.nested.display?.type === "drillable-records" ?
+                    "drillable-records"
+                  : "values"
+                }
+                onChange={(type) =>
+                  updateNested({ display: { type } })
+                }
+              />
+              {(!currentColumn.nested.display ||
+                currentColumn.nested.display.type === "values") && (
                 <Select
-                  label={t.LinkedColumn["Layout"]}
-                  data-command="LinkedColumn.layoutType"
-                  options={["values", "entities"]}
-                  disabledInfo={
-                    currentColumn.nested.display?.type === "timechart" ?
-                      "Must disable chart first"
-                    : undefined
-                  }
-                  value={
-                    currentColumn.nested.display?.type === "entities" ?
-                      "entities"
-                    : "values"
-                  }
-                  onChange={(type) =>
-                    updateColumn({
-                      action:
-                        type === "entities" ? { type: "record" } : undefined,
-                      nested: { ...currentColumn.nested!, display: { type } },
-                    })
+                  label="Labels"
+                  options={["auto", "none", "inline", "above"]}
+                  value={currentColumn.nested.display?.labels ?? "auto"}
+                  onChange={(labels) =>
+                    updateNested({ display: { type: "values", labels } })
                   }
                 />
-                {(!currentColumn.nested.display ||
-                  currentColumn.nested.display.type === "values") && (
-                  <Select
-                    label="Labels"
-                    options={["auto", "none", "inline", "above"]}
-                    value={currentColumn.nested.display?.labels ?? "auto"}
-                    onChange={(labels) =>
-                      updateNested({ display: { type: "values", labels } })
-                    }
-                  />
-                )}
-              </FlexRowWrap>
-            )}
+              )}
+            </FlexRowWrap>
             <FlexRowWrap>
               <Select
                 label={t.LinkedColumn["Join type"]}
-                value={currentColumn.nested?.joinType}
+                value={currentColumn.nested.joinType}
                 fullOptions={JOIN_TYPES}
                 data-command="LinkedColumn.joinType"
                 onChange={(joinType) => {
                   updateNested({ joinType });
                 }}
               />
-              {currentColumn.nested && (
-                <FormFieldDebounced
-                  id="nested-col-limit"
-                  label={t.W_SQLBottomBar.Limit}
-                  optional={true}
-                  value={currentColumn.nested.limit}
-                  type="number"
-                  inputProps={{
-                    min: 0,
-                    step: 1,
-                    max: 30,
-                  }}
-                  variant="row"
-                  onChange={(limit) => {
-                    updateNested({
-                      limit:
-                        limit && Number.isFinite(+limit) ? +limit : undefined,
-                    });
-                  }}
-                />
-              )}
+              <FormFieldDebounced
+                id="nested-col-limit"
+                label={t.W_SQLBottomBar.Limit}
+                optional={true}
+                value={currentColumn.nested.limit}
+                type="number"
+                inputProps={{
+                  min: 0,
+                  step: 1,
+                  max: 30,
+                }}
+                variant="row"
+                onChange={(limit) => {
+                  updateNested({
+                    limit:
+                      limit && Number.isFinite(+limit) ? +limit : undefined,
+                  });
+                }}
+              />
             </FlexRowWrap>
 
-            {table && currentColumn.nested && (
+            {table && (
               <>
                 <SmartFilterBar
                   innerClassname="mt-1 px-0"

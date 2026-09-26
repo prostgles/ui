@@ -7,12 +7,13 @@ import type { NestedTimeChartMeta } from "../ColumnMenu/ColumnDisplayFormat/Nest
 import { NestedColumnRender } from "../ColumnMenu/ColumnDisplayFormat/NestedColumnRender";
 import { DISPLAY_FORMATS } from "../ColumnMenu/ColumnDisplayFormat/columnFormatUtils";
 import { getColumnFormat } from "../ColumnMenu/ColumnDisplayFormat/getFormatColumnSelect";
+import { getColumnDrillDownDisabledInfo } from "../ColumnMenu/ColumnDisplayFormat/getColumnDrillDownDisabledInfo";
 import type { NestedColumn } from "../ColumnMenu/ColumnConfig";
 import type { ColumnConfigWithInfo, MinMaxVals } from "../W_Table";
 import {
-  RenderColumnAction,
+  RenderColumnButton,
   type RelatedRecordsContext,
-} from "./RenderColumnAction";
+} from "./RenderColumnButton";
 import { StyledTableColumn } from "./StyledTableColumn";
 
 export type RenderedColumn =
@@ -37,14 +38,9 @@ export const RenderColumn = (
   const { row, column, table, tables, barchartVals, getValues, maxCellChars } =
     args;
   const value = row[column.name];
-  const formatType = getColumnFormat(column)?.type;
-  const canWrapAction =
-    !formatType ||
-    ["NONE", "Currency", "Metric Prefix", "Age", "UNIX Timestamp"].includes(
-      formatType,
-    );
-  const actionColumn =
-    canWrapAction ? column : { ...column, action: undefined };
+  const showDrillDown =
+    !!args.relatedRecords &&
+    !getColumnDrillDownDisabledInfo(column, args.isNested ? "values" : undefined);
   if (column.nested) {
     const chartLimits = barchartVals?.get(column.name);
     const nestedTimeChartMeta: NestedTimeChartMeta | undefined =
@@ -59,7 +55,7 @@ export const RenderColumn = (
     return (
       <NestedColumnRender
         row={row}
-        column={column}
+        column={{ ...column, nested: column.nested }}
         tables={tables}
         rootTableName={table.name}
         nestedTimeChartMeta={nestedTimeChartMeta}
@@ -83,7 +79,7 @@ export const RenderColumn = (
   );
   // Colour and chip styles belong to the action button itself.
   const styleOnButton =
-    actionColumn.action &&
+    showDrillDown &&
     (!column.style?.type ||
       ["None", "Fixed", "Conditional", "Scale"].includes(column.style.type));
   const content =
@@ -100,11 +96,11 @@ export const RenderColumn = (
         barchartVals={barchartVals}
         isNested={args.isNested}
       />;
-  if (!actionColumn.action) return content;
+  if (!showDrillDown) return content;
   return (
-    <RenderColumnAction {...args} column={actionColumn}>
+    <RenderColumnButton {...args}>
       {content}
-    </RenderColumnAction>
+    </RenderColumnButton>
   );
 };
 
@@ -158,7 +154,7 @@ const RenderColumnValue = ({
       showTitle={showTitle}
       style={
         (
-          column.action ||
+          column.display === "drillable-records" ||
           column.style?.type === "Fixed" ||
           column.style?.type === "Conditional"
         ) ?

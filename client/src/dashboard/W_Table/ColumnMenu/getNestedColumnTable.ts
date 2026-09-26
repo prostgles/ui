@@ -3,12 +3,12 @@ import type {
   WindowSyncItem,
 } from "../../Dashboard/dashboardUtils";
 import { getMinimalColumnInfo } from "../tableUtils/tableUtils";
-import type { ColumnConfig } from "./ColumnConfig";
+import type { ColumnConfig, ColumnConfigNested } from "./ColumnConfig";
 
 type Result = {
   columns: ColumnConfig[];
   table: DBSchemaTablesWJoins[number];
-  nestedColumn?: ColumnConfig;
+  nestedColumn?: ColumnConfigNested;
 };
 type ErrorResult = Partial<Record<keyof Result, undefined>>;
 
@@ -18,15 +18,15 @@ type MaybeResult =
 export type NestedColumnOpts =
   | {
       type: "new";
-      config: ColumnConfig;
+      config: ColumnConfigNested;
       /**
        * A new nested column will be kept locally until the user decides to save it
        */
-      onChange: (config: ColumnConfig) => void;
+      onChange: (config: ColumnConfigNested) => void;
     }
   | {
       type: "existing";
-      config: ColumnConfig;
+      config: ColumnConfigNested;
     };
 export const getNestedColumnTable = (
   nestedColumnOpts: NestedColumnOpts | undefined,
@@ -77,5 +77,9 @@ export const getNestedColumnTable = (
     };
   }
 
-  return { table, nestedColumn, columns };
+  return {
+    table,
+    nestedColumn: { ...nestedColumn, nested: nestedColumn.nested },
+    columns,
+  };
 };

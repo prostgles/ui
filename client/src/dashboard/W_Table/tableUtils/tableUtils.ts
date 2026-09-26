@@ -22,7 +22,7 @@ const COLUMN_CONFIG_KEYS: Record<keyof ColumnConfig, 1> = {
   format: 1,
   name: 1,
   label: 1,
-  action: 1,
+  display: 1,
   show: 1,
   style: 1,
   width: 1,

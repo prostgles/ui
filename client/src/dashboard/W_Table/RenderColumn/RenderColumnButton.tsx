@@ -1,4 +1,5 @@
 import Btn from "@components/Btn";
+import type { DetailedFilterBase } from "@common/filterUtils";
 import React from "react";
 import { _PG_numbers, includes } from "prostgles-types";
 import type { ColumnConfig } from "../ColumnMenu/ColumnConfig";
@@ -11,6 +12,7 @@ import { getColumnValueStyle, StyledCell } from "./StyledTableColumn";
 
 export type RelatedRecordsContext = {
   searchFilter: LinkedRecordsSearchFilter[];
+  rowFilter?: DetailedFilterBase[];
   rootTableName: string;
   popupTitle: string;
 };
@@ -23,7 +25,7 @@ type Props = Pick<RenderColumnProps, "table" | "tables" | "barchartVals"> & {
   relatedRecords?: RelatedRecordsContext;
 };
 
-export const RenderColumnAction = ({
+export const RenderColumnButton = ({
   column,
   table,
   tables,
@@ -36,12 +38,12 @@ export const RenderColumnAction = ({
   const targetTable = tables.find((t) => t.name === table.name);
   const colors = getColumnValueStyle({ column, table, row, barchartVals });
   const fallback = <StyledCell style={colors} renderedVal={children} />;
-  if (!column.action || !targetTable || !db[table.name]?.find) {
+  if (!targetTable || !db[table.name]?.find) {
     return fallback;
   }
   const variant =
     column.style?.buttonVariant ??
-    (column.nested?.display?.type === "entities" ? "faded" : "text");
+    (column.nested?.display?.type === "drillable-records" ? "faded" : "text");
   const buttonProps = {
     variant,
     className: `max-w-full text-ellipsis ${includes(_PG_numbers, column.udt_name) ? "as-end" : "as-start"}`,
@@ -57,7 +59,7 @@ export const RenderColumnAction = ({
     },
   };
 
-  if (column.action.type === "record") {
+  if (relatedRecords?.rowFilter) {
     return (
       <LinkedRecordButton
         db={db}
@@ -65,7 +67,7 @@ export const RenderColumnAction = ({
         sql={sql}
         tables={tables}
         table={targetTable}
-        row={row}
+        rowFilter={relatedRecords.rowFilter}
         buttonProps={buttonProps}
       >
         {children}

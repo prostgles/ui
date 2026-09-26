@@ -3,13 +3,13 @@ import React from "react";
 import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 import type { DBSchemaTableWithRenderInfo } from "../../../Dashboard/getTables";
 import { ViewMoreSmartCardList } from "../../../SmartForm/SmartFormField/ViewMoreSmartCardList";
-import { RenderColumnAction } from "../../RenderColumn/RenderColumnAction";
+import { RenderColumnButton } from "../../RenderColumn/RenderColumnButton";
 import type { ColumnConfigWithInfo } from "../../W_Table";
-import type { ColumnConfig } from "../ColumnConfig";
+import type { ColumnConfigNested } from "../ColumnConfig";
 import { getLinkedRecordsFilter } from "./getLinkedRecordsFilter";
 import { LinkedRecordSummary } from "./LinkedRecordSummary";
 
-export const NestedColumnRenderEntities = ({
+export const NestedColumnRenderRecords = ({
   column,
   table,
   tables,
@@ -18,7 +18,7 @@ export const NestedColumnRenderEntities = ({
   rootTableName,
   shownColumns,
 }: {
-  column: ColumnConfig;
+  column: ColumnConfigNested;
   table: DBSchemaTableWithRenderInfo;
   tables: DBSchemaTableWithRenderInfo[];
   rows: Record<string, unknown>[];
@@ -27,38 +27,50 @@ export const NestedColumnRenderEntities = ({
   shownColumns: ColumnConfigWithInfo[];
 }) => {
   const { db, methods, sql } = usePrgl();
-  const previewLimit = column.nested!.limit ?? rows.length;
+  const previewLimit = column.nested.limit ?? rows.length;
   const linkedRecordsFilter = getLinkedRecordsFilter({
     column,
     parentRow,
     nestedRow: undefined,
     rootTableName,
+    table,
   });
   return (
     <div className="flex-row-wrap gap-p25">
-      {rows.slice(0, previewLimit).map((row, index) => (
-        <RenderColumnAction
-          key={index}
-          column={{ ...column, udt_name: "jsonb", tsDataType: "any[]" }}
-          row={row}
-          table={table}
-          tables={tables}
-          barchartVals={undefined}
-          relatedRecords={
-            linkedRecordsFilter && {
-              ...linkedRecordsFilter,
+      {rows.slice(0, previewLimit).map((row, index) => {
+        const filter = getLinkedRecordsFilter({
+          column,
+          table,
+          nestedRow: row,
+          parentRow,
+          rootTableName,
+        });
+        return (
+          <RenderColumnButton
+            key={index}
+            column={{
+              ...column,
+              udt_name: "jsonb",
+              tsDataType: "any[]",
+            }}
+            row={row}
+            table={table}
+            tables={tables}
+            barchartVals={undefined}
+            relatedRecords={filter && {
+              ...filter,
               rootTableName,
               popupTitle: column.label || column.name,
-            }
-          }
-        >
-          <LinkedRecordSummary
-            row={row}
-            shownNestedColumns={shownColumns}
-            table={table}
-          />
-        </RenderColumnAction>
-      ))}
+            }}
+          >
+            <LinkedRecordSummary
+              row={row}
+              shownNestedColumns={shownColumns}
+              table={table}
+            />
+          </RenderColumnButton>
+        );
+      })}
       {rows.length > previewLimit &&
         linkedRecordsFilter &&
         db[table.name]?.find && (

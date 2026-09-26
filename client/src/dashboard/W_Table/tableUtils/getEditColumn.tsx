@@ -8,6 +8,7 @@ import { type DetailedFilterBase } from "@common/filterUtils";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
 import type { AddColumnMenuProps } from "../ColumnMenu/AddColumnMenu";
 import { AddColumnMenu } from "../ColumnMenu/AddColumnMenu";
+import type { ColumnConfig } from "../ColumnMenu/ColumnConfig";
 import type { ProstglesColumn } from "../W_Table";
 import { getRowFilter } from "./getRowFilter";
 
@@ -44,7 +45,7 @@ type GetMenuColumnArgs = {
   tableHandler: Partial<TableHandlerClient>;
   onClickRow: OnClickEditRow;
   table: DBSchemaTableWJoins;
-  columnConfig: { name: string }[] | undefined;
+  columnConfig: ColumnConfig[] | undefined;
   addColumnProps?: AddColumnMenuProps;
   style?: React.CSSProperties;
 };

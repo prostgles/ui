@@ -24,7 +24,7 @@ export const CardHeader = ({
   setDraggedRow,
   props: cardViewProps,
 }: Omit<CardViewRowProps, "cardOpts">) => {
-  const { card, columns } = table;
+  const { card } = table;
   const headerColumn =
     card?.headerColumn ?
       table.columns.find((c) => c.name === card.headerColumn)
@@ -122,7 +122,7 @@ export const CardHeader = ({
           tableHandler={tableHandler}
           table={table}
           allIndexedRows={allIndexedRows}
-          columns={columns}
+          columns={w?.columns ?? undefined}
           onDataChanged={onDataChanged}
           onEditClickRow={onEditClickRow}
           indexedRow={indexedRow}
