@@ -50,11 +50,13 @@ const fileInputDefs = {
 } as const;
 
 export const research = "research" as const;
+export const agentFailure = "agent_goal_fail_please" as const;
 type Mode =
   | "input"
   | "clashing"
   | "noinput"
   | "filesystem"
+  | "agentFailure"
   | "invalidTable"
   | "invalidPermissionTable";
 const getFunc = (mode: Mode) => `
@@ -69,7 +71,16 @@ export default defineAgenticWorkflow(
       databaseAccessDefinitions: {
         mode: "custom",
         tablePermissions: {
-          users: { select: true, insert: true, update: true },
+          users: {
+            select: {
+              fields: "*",
+              forcedFilter: {
+                $and: [{ fieldName: "type", type: "$ne", value: null }],
+              },
+            },
+            insert: true,
+            update: true,
+          },
           new_users: {
             select: true,
             insert: true,
@@ -195,6 +206,7 @@ export default defineAgenticWorkflow(
       });
       runSQL("SELECT * FROM new_users").then((res) => console.log("Users:", res));
     */
+    ${mode === "agentFailure" ? `await researcher(" ${agentFailure} ");` : ""}
     const start = Date.now();
     orchestratorToolHandlers.web.fetch({ url: "https://www.prostgles.com", max_length: 600 }).then(console.log).catch(console.log);
     const filterCount = ${mode !== "input" ? "undefined;//" : ""} await tableHandlers.users.count(userInputValues["table-filter"]);
@@ -248,6 +260,7 @@ export const agenticWorkflowToolUses = Object.fromEntries(
       "input",
       "clashing",
       "noinput",
+      "agentFailure",
       "filesystem",
       "invalidTable",
       "invalidPermissionTable",

@@ -1,8 +1,9 @@
 import type { DetailedFilter } from "@common/filterUtils";
-import type { ChartType, WindowData } from "./dashboardUtils";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 import type { DBS } from "./DBS";
 import type { DBSSchema } from "@common/publishUtils";
 import { pageReload } from "@components/Loader/Loading";
+import type { ChartType } from "@common/ColumnConfig/WindowData";
 
 export const addWindow = async <CT extends ChartType>(
   dbs: DBS,

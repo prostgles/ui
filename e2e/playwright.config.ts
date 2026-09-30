@@ -22,7 +22,7 @@ export default defineConfig({
     testIdAttribute: "data-command",
     actionTimeout: IS_PIPELINE ? 15e3 : 5e3,
   },
-  maxFailures: 0,
+  maxFailures: 1,
   projects: [
     {
       name: "chromium",

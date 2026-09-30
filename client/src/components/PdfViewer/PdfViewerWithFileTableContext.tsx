@@ -1,0 +1,207 @@
+import Btn from "@components/Btn";
+import {
+  PdfViewer,
+  type PdfViewerProps,
+} from "@components/PdfViewer/PdfViewer";
+import Popup from "@components/Popup/Popup";
+import { Select } from "@components/Select/Select";
+import { mdiComment, mdiSearchWeb } from "@mdi/js";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import type { TableHandlerClient } from "prostgles-client";
+import React, { useMemo, useState } from "react";
+import type { DBSchemaTableWJoins } from "src/dashboard/Dashboard/dashboardUtils";
+import { SmartForm } from "src/dashboard/SmartForm/SmartForm";
+import type { DBManagedTableSchema } from "../MediaViewer/managedTableUtils";
+import type { MediaViewerProps } from "../MediaViewer/MediaViewer";
+import type { CreatedHighlight } from "./PdfViewerHighlights/PdfViewerHighlights";
+
+type P = Omit<
+  PdfViewerProps,
+  "highlights" | "onCreateHighlight" | "topLeftControls"
+> & {
+  context: MediaViewerProps["context"];
+};
+
+type AnnotationsContext = {
+  annotationPage: number | undefined;
+  fileTable: DBSchemaTableWJoins;
+  annotationsTable: DBSchemaTableWJoins;
+  fileTableHandler: TableHandlerClient<DBManagedTableSchema, "files">;
+  annotationsTableHandler: TableHandlerClient<
+    DBManagedTableSchema,
+    "file_annotations"
+  >;
+};
+
+const PdfViewerWithAnnotations = ({
+  fileTable,
+  fileTableHandler,
+  annotationsTableHandler,
+  annotationsTable,
+  url,
+  annotationPage,
+  ...pdfProps
+}: Omit<P, "context" | "topLeftControls"> & AnnotationsContext) => {
+  const prgl = usePrgl();
+  const fileId = url.split("/").at(-1)?.split(".")[0] || url;
+  const { data: fileRow } = fileTableHandler.useFindOne(
+    {
+      id: fileId,
+    },
+    {
+      select: {
+        id: 1,
+        original_name: 1,
+        original_last_modified: 1,
+        text_content: 1,
+        docling_metadata: 1,
+      },
+    },
+  );
+  const { data: annotations } = annotationsTableHandler.useSubscribe({
+    $existsJoined: {
+      [fileTable.name as "files"]: {
+        id: fileId,
+      },
+    },
+  });
+
+  const [activeAnnotationId, setActiveAnnotationId] = useState<number>();
+  const activeAnnotation = annotations?.find(
+    (a) => a.id === activeAnnotationId,
+  );
+
+  const [newAnnotation, setNewAnnotation] = useState<CreatedHighlight>();
+
+  return (
+    <>
+      {activeAnnotation !== undefined && (
+        <SmartForm
+          asPopup={true}
+          {...prgl}
+          tableName={annotationsTable.name}
+          rowFilter={[{ fieldName: "id", value: activeAnnotationId }]}
+          onClose={() => setActiveAnnotationId(undefined)}
+        />
+      )}
+      <PdfViewer
+        {...pdfProps}
+        url={url}
+        defaultPage={annotationPage ?? pdfProps.defaultPage}
+        activeHighlightId={activeAnnotationId}
+        doclingDocument={fileRow?.docling_metadata ?? undefined}
+        topLeftControls={
+          <Select
+            emptyLabel={`Annotations (${annotations?.length ?? 0})`}
+            btnProps={{
+              iconPath: mdiSearchWeb,
+              color: "action",
+            }}
+            fullOptions={
+              annotations
+                ?.toSorted((a, b) => a.page - b.page)
+                .map(({ id, name, page, end_page, text }) => ({
+                  key: id,
+                  label: name || text,
+                  subLabel: `Page ${page}${end_page && end_page !== page ? `–${end_page}` : ""}: ${text}`,
+                })) ?? []
+            }
+            onChange={(annotationId) => {
+              setActiveAnnotationId(annotationId);
+            }}
+          />
+        }
+        highlights={
+          annotations?.map(({ id, name, text, page, text_selections }) => ({
+            id,
+            page,
+            text_selections,
+            color: "var(--active)",
+            rects: [],
+            tooltip: name || text,
+            leftHandle: (
+              <Btn
+                title="Show highlight details"
+                iconPath={mdiComment}
+                className="jc-center round"
+                aria-label={`Show details`}
+                color="action"
+                style={{
+                  padding: 0,
+                }}
+                variant="faded"
+                onClick={() => setActiveAnnotationId(id)}
+              />
+            ),
+          })) ?? []
+        }
+        onCreateHighlight={setNewAnnotation}
+      />
+      {newAnnotation && (
+        <Popup
+          title="Add annotation"
+          onClose={() => setNewAnnotation(undefined)}
+          contentClassName="pt-2 min-w-600"
+          positioning="right-panel"
+        >
+          <SmartForm
+            {...prgl}
+            label=""
+            tableName={annotationsTable.name}
+            fixedData={{
+              page: newAnnotation.page,
+              text_selections: newAnnotation.text_selections,
+              file_id: fileId,
+            }}
+            defaultData={{
+              name: null,
+              text: newAnnotation.text,
+            }}
+            onClose={() => setNewAnnotation(undefined)}
+            onInserted={() => setNewAnnotation(undefined)}
+          />
+        </Popup>
+      )}
+    </>
+  );
+};
+
+export const PdfViewerWithFileTableContext = ({ context, ...pdfProps }: P) => {
+  const { db, tables } = usePrgl();
+  const annotationsContext = useMemo(() => {
+    if (!context) return;
+    const fileTable = tables.find((t) => t.managedTableType === "files");
+    const annotationsTable = tables.find(
+      (t) => t.managedTableType === "file-annotations",
+    );
+    const fileTableHandler = fileTable && db[fileTable.name];
+    const annotationsTableHandler =
+      annotationsTable && db[annotationsTable.name];
+    if (
+      !fileTable ||
+      !annotationsTable ||
+      !fileTableHandler?.find ||
+      !annotationsTableHandler?.find
+    ) {
+      return;
+    }
+    return {
+      annotationPage:
+        (
+          context.table.managedTableType === "file-annotations" &&
+          typeof context.row.page === "number"
+        ) ?
+          context.row.page
+        : undefined,
+      fileTable,
+      annotationsTable,
+      fileTableHandler: fileTableHandler as TableHandlerClient,
+      annotationsTableHandler: annotationsTableHandler as TableHandlerClient,
+    };
+  }, [context, db, tables]);
+
+  if (annotationsContext) {
+    return <PdfViewerWithAnnotations {...pdfProps} {...annotationsContext} />;
+  }
+  return <PdfViewer {...pdfProps} />;
+};

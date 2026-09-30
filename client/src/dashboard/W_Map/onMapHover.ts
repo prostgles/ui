@@ -24,7 +24,10 @@ export function onMapHover(
   hoverObj?: AnyObject & HoveredObject,
   hoverCoords?: HoverCoords,
 ) {
-  const { prgl, tables } = this.props;
+  const {
+    prgl,
+    prgl: { tables },
+  } = this.props;
   if (!hoverObj && !this.hovering && !this.state.hoverObj) {
     //  || this.state.clickedItem
     return;

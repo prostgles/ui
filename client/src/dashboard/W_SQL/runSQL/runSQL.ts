@@ -4,9 +4,9 @@ import {
   type SocketSQLStreamHandlers,
   type SQLResultInfo,
 } from "prostgles-types";
-import type { WindowData } from "../../Dashboard/dashboardUtils";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 import { STARTING_KEYWORDS } from "../../SQLEditor/SQLCompletion/CommonMatchImports";
-import type { ColumnSortSQL } from "../../W_Table/ColumnMenu/ColumnMenu";
+import type { ColumnSortSQL } from "@common/ColumnConfig/ColumnConfig";
 import type { W_SQL, W_SQLState } from "../W_SQL";
 import { SQL_NOT_ALLOWED } from "../W_SQL";
 import { parseExplainResult } from "../parseExplainResult";
@@ -139,10 +139,10 @@ export async function runSQL(this: W_SQL, sort: ColumnSortSQL[] = []) {
     }) => {
       this.streamData.set({ rows: [] });
       this.setState({
-        rows: undefined,
-        cols: undefined,
-        sqlResult: false,
-        page: 0,
+        // rows: undefined,
+        // cols: undefined,
+        // sqlResult: false,
+        // page: 0,
         ...extra,
         sort: sqlSorted !== trimmedSql ? sort : [],
         activeQuery: {

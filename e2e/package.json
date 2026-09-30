@@ -4,8 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "setup": "cp ../client/src/Testing.ts ./tests",
-    "test": "npm run setup && playwright test main.spec.ts && playwright test demo_video_setup.spec.ts && playwright test demo_video.spec.ts && playwright test create_docs.spec.ts && playwright test command_palette.spec.ts",
+    "setup": "cp ../client/src/Testing.ts ./tests/utils",
+    "test": "npm run test:main && playwright test demo_video_setup.spec.ts && playwright test demo_video.spec.ts && playwright test create_docs.spec.ts && playwright test command_palette.spec.ts",
+    "test:main": "npm run setup && playwright test main.spec.ts",
+    "test:cli": "npm run setup && playwright test tests/cli --workers=1",
     "demo-video": "playwright test demo_video_setup.spec.ts && playwright test demo_video.spec.ts",
     "create-docs": "npm run setup && npx playwright test create_docs.spec.ts ",
     "command-palette": "npm run setup && npx playwright test command_palette.spec.ts ",
@@ -19,9 +21,11 @@
     "@playwright/test": "^1.59.1",
     "@types/node": "^20.19.39",
     "@types/smtp-server": "^3.5.13",
-    "otplib": "^12.0.1"
+    "otplib": "^13.4.1"
   },
   "dependencies": {
+    "@types/pg": "^8.21.0",
+    "pg": "^8.23.0",
     "prostgles-types": "^4.0.241",
     "smtp-server": "^3.18.4"
   }

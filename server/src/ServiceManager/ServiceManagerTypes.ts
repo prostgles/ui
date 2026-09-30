@@ -15,12 +15,20 @@ export type ProstglesService = {
   label: string;
   description: string;
   port: number;
+  /** Path exposing this service's OpenAPI document. */
+  openApiEndpoint?: string;
   /**
    * Defaults to port.
    * If the port is already in use on the host, a different port will be chosen.
    */
   hostPort?: number;
   env?: Record<string, string>;
+  /**
+   * Directory containing the Docker build context.
+   * Relative paths resolve from the root used to register this service.
+   * Defaults to `<serviceName>/src`.
+   */
+  buildContext?: string;
   configs?: Record<
     string,
     {
@@ -65,8 +73,9 @@ export type ProstglesService = {
       method: "GET" | "POST";
       description: string;
       /* Defaults to 'body' for POST and 'query' for GET */
-      inputType?: /** Will stringify if needed */
-      | "body"
+      inputType?:
+        /** Will stringify if needed */
+        | "body"
         /**
          * Will convert to FormData. Only supports string and Blob values.
          */
@@ -75,9 +84,12 @@ export type ProstglesService = {
 
       inputSchema: JSONB.FieldType | undefined;
       outputSchema: JSONB.FieldType | undefined;
+      /** Set to false for routes intentionally omitted from OpenAPI. */
+      openApi?: false;
     }
   >;
 };
+export type ServiceRegistry = Record<string, ProstglesService>;
 
 export const prostglesServices = {
   speechToText: speechToTextService,

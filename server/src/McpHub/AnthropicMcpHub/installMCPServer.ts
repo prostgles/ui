@@ -1,15 +1,15 @@
+import { getEntries } from "@common/utils";
 import * as fs from "fs";
 import * as path from "path";
 import { simpleGit, type SimpleGit } from "simple-git";
 import type { DBS } from "../..";
-import { getEntries } from "@common/utils";
-import { getRootDir } from "../../electronConfig";
+import { getDataPath } from "../../electronConfig";
 import { runShellCommand } from "./runShellCommand";
 
 let createdMCPDirectory = "";
 export const getMCPDirectory = () => {
   if (!createdMCPDirectory) {
-    const MCP_DIR = path.resolve(path.join(getRootDir(), `/prostgles_mcp`));
+    const MCP_DIR = getDataPath("MCP");
     fs.mkdirSync(MCP_DIR, { recursive: true });
     createdMCPDirectory = MCP_DIR;
   }
@@ -104,7 +104,7 @@ export const installMCPServer = async (dbs: DBS, name: string) => {
         ["install", "--include=dev"],
         { cwd: installationPath },
         (chunk) => {
-          void addLog(chunk);
+          void addLog(chunk.toString());
         },
       );
       if (npmI.err) {

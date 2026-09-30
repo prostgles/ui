@@ -97,15 +97,15 @@ const useSmartFieldForeignKeyOptionsState = ({
   return useMemo(() => {
     const ref = getPossibleNestedInsert(column, tables);
     const fileTableName = tables[0]?.fileTableName;
-    const ftable =
+    const fileTable =
       ref?.ftable ?? (column.file && fileTableName ? fileTableName : undefined);
     const ftableInfo =
-      ftable ? tables.find((t) => t.name === ftable) : undefined;
+      fileTable ? tables.find((t) => t.name === fileTable) : undefined;
     const fTableCols = ftableInfo?.columns;
     const ftableHandler =
-      ftable && column.references?.length ? db[ftable] : undefined;
+      fileTable && column.references?.length ? db[fileTable] : undefined;
     const fcol = ref?.fcols[ref.cols.indexOf(column.name)];
-    if (!ftable || !fcol) return undefined;
+    if (!fileTable || !fcol) return undefined;
 
     /** Show insert if can insert to ftable AND can update column that references ftable */
     const showInsertState =
@@ -115,7 +115,7 @@ const useSmartFieldForeignKeyOptionsState = ({
         ftableHandler?.insert
       ) ?
         {
-          ftable,
+          ftable: fileTable,
           ftableInfo,
           fcol,
           setShowNestedInsertForm,
@@ -132,7 +132,7 @@ const useSmartFieldForeignKeyOptionsState = ({
         hasMultipleCols &&
         !isUpsertingFile
       ) ?
-        { ftable, ftableInfo, fcol }
+        { ftable: fileTable, ftableInfo, fcol }
       : undefined;
 
     if (!showInsertState && !showSearchState) {

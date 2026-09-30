@@ -1,4 +1,4 @@
-import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
+import type { TableConfig } from "prostgles-server";
 
 export const tableConfigWorkspaces: TableConfig<{ en: 1 }> = {
   workspace_layout_modes: {

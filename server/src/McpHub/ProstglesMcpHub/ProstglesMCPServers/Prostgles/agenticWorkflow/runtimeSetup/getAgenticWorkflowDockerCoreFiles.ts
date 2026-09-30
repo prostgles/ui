@@ -1,3 +1,6 @@
+import serverPackageJson from "../../../../../../../package.json";
+import prostglesServerPackageJson from "prostgles-server/package.json";
+
 export const getAgenticWorkflowDockerCoreFiles = (
   package_dependencies: Record<string, string> | undefined,
 ) => {
@@ -83,7 +86,7 @@ RUN npm install --silent
 `;
 
 export const DockerfileForAgenticWorkflow = `
-FROM node:24-slim
+FROM node:24-trixie-slim
 WORKDIR /app
 
 COPY package*.json ./
@@ -96,7 +99,32 @@ RUN npm run build
 CMD ["npm", "start", "--silent"]
 `;
 
-export const packageJsonTemplate = {
+import { getProperty } from "prostgles-types";
+
+type PackageJsonTemplate = Record<
+  "dependencies" | "devDependencies",
+  Record<string, string>
+>;
+
+const fromServerPackageJson = <T extends PackageJsonTemplate>(
+  templatePkg: T,
+): T => {
+  const result = {
+    ...templatePkg,
+  };
+  for (const depProp of ["dependencies", "devDependencies"] as const) {
+    for (const [packageName, version] of Object.entries(templatePkg[depProp])) {
+      const resolvedVersion = getProperty(
+        (serverPackageJson as PackageJsonTemplate)[depProp],
+        packageName,
+      );
+      result[depProp][packageName] = resolvedVersion || version;
+    }
+  }
+  return result;
+};
+
+export const packageJsonTemplate = fromServerPackageJson({
   name: "agentic-workflow",
   version: "1.0.0",
   main: "index.js",
@@ -108,15 +136,16 @@ export const packageJsonTemplate = {
   dependencies: {
     typescript: "^5.9.3",
     tslib: "^2.8.1",
-    "prostgles-types": "^4.0.244",
+    "prostgles-types":
+      prostglesServerPackageJson.dependencies["prostgles-types"],
   },
   devDependencies: {
-    "@types/node": "^22.19.15",
+    "@types/node": "^22.20.0",
     eslint: "^9.39.4",
     "@eslint/js": "^9.39.1",
-    "typescript-eslint": "^8.59.3",
+    "typescript-eslint": "^8.62.0",
   },
-} as const;
+} as const);
 
 const eslintConfigMjs = `
 import eslint from "@eslint/js";
@@ -168,8 +197,6 @@ export default defineConfig(
       "@typescript-eslint/no-require-imports": "error",
       //"import/first": "error",            // enforce all imports at top-level
       "no-empty": "off",
-      "security/detect-object-injection": "off",
-      "security/detect-non-literal-fs-filename": "off",
       "@typescript-eslint/only-throw-error": "off",
       "@typescript-eslint/prefer-promise-reject-errors": "off",
       "@typescript-eslint/restrict-template-expressions": "warn",

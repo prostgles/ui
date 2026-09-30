@@ -5,12 +5,23 @@ import { documentsServiceInputSchemaMcpOptions } from "./documentsServiceInputSc
 export const webMcpSchema = {
   fetch: {
     description:
-      "Fetches content from a URL, with optional conversion for documents",
+      "Fetches from a URL, with optional conversion for documents. DO NOT USE THIS TO FETCH WEBSITE HTML. Use the get_snapshot tool instead.",
     schema: {
       type: {
         url: {
           type: "string",
           description: "URL of the content to fetch",
+        },
+        method: {
+          enum: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+          optional: true,
+          description: "HTTP method to use for the request. Defaults to GET.",
+        },
+        body: {
+          type: "string",
+          optional: true,
+          description:
+            "Request body for POST, PUT, or PATCH requests. Ignored for GET and DELETE requests.",
         },
         mode: {
           enum: ["raw", "convert"],
@@ -210,7 +221,7 @@ export const webMcpConfigSchema = {
 
 export const getDefaultMcpConfig = (
   config_schema: DBSSchema["mcp_servers"]["config_schema"],
-) => {
+): DBSSchema["mcp_server_configs"]["config"] | undefined => {
   if (!config_schema) return;
   const defaultConfigEntries = getEntries(config_schema)
     .map(([key, schema]) => {
@@ -224,7 +235,10 @@ export const getDefaultMcpConfig = (
     return;
   }
   const defaultConfig = Object.fromEntries(defaultConfigEntries);
-  return defaultConfig;
+  return {
+    type: "local",
+    value: defaultConfig,
+  } satisfies DBSSchema["mcp_server_configs"]["config"];
 };
 
 export const GOOGLE_FAVICON_ENDPOINT = "https://www.google.com/s2/favicons";

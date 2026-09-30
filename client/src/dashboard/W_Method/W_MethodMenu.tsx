@@ -57,8 +57,10 @@ export const W_MethodMenu = (
                   return {
                     key: a.name,
                     subLabel:
-                      a.type.startsWith("Lookup") ?
-                        `references ${(a as any).table}`
+                      a.type.includes("Lookup") &&
+                      "table" in a &&
+                      typeof a.table === "string" ?
+                        `references ${a.table}`
                       : a.type,
                     checked,
                     disabledInfo: !a.optional ? "Is required" : undefined,
@@ -95,7 +97,7 @@ export const W_MethodMenu = (
                 dbsMethods={props.prgl.dbsMethods}
                 method={{ ...(editedMethod ?? method) }}
                 dbsTables={props.prgl.dbsTables}
-                tables={props.tables}
+                tables={props.prgl.tables}
                 onChange={(v) => {
                   if (isEqual(v, method)) {
                     setEditedMethod(undefined);

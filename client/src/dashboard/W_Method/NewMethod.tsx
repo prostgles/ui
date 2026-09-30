@@ -84,7 +84,7 @@ export const NewMethod = ({
                   published_method_id: id,
                 });
               }
-              pageReload("inserted published_methods");
+              await pageReload("inserted published_methods");
             }
             onClose();
           },

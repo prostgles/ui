@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./utils/fixtures";
 import { type AnyObject } from "prostgles-types";
 import { USERS } from "utils/constants";
 import { goTo } from "utils/goTo";
@@ -106,12 +106,12 @@ test.describe("Demo video", () => {
           try {
             await (node as any).start();
           } catch (e) {
-            const errorObj = Object.getOwnPropertyNames(
-              typeof e !== "object" ? { error: e } : e,
-            ).reduce(
+            const error =
+              typeof e !== "object" || e === null ? { error: e } : e;
+            const errorObj = Object.getOwnPropertyNames(error).reduce(
               (acc, key) => ({
                 ...acc,
-                [key]: (e as AnyObject)[key],
+                [key]: (error as AnyObject)[key],
               }),
               {},
             );

@@ -98,7 +98,7 @@ const handler = {
             context,
           );
           const result = await tableHandler.delete(filter, {
-            returning: returning as "*",
+            returning: returning as unknown as "*",
           });
           return result;
         },
@@ -109,7 +109,7 @@ const handler = {
           );
           const result = await tableHandler.insert(data, {
             ...params,
-            returning: returning as "*",
+            returning: returning as unknown as "*",
           });
           return result;
         },
@@ -123,7 +123,7 @@ const handler = {
           );
           const result = await tableHandler.insertMany(data, {
             ...params,
-            returning: returning as "*",
+            returning: returning as unknown as "*",
           });
           return result;
         },
@@ -136,7 +136,7 @@ const handler = {
             context,
           );
           const result = await tableHandler.update(filter, data, {
-            returning: returning as "*",
+            returning: returning as unknown as "*",
             ...params,
           });
           return result;
@@ -259,9 +259,8 @@ const runSqlTool = async (
     query_timeout && Number.isInteger(query_timeout) ?
       [`SET LOCAL statement_timeout to '${query_timeout}s'`, sql].join(";\n")
     : sql;
-  const result = await db.any<Record<string, any>>(
-    queryWithTimeout,
-    query_params,
+  const result = await db.tx((t) =>
+    t.any<Record<string, any>>(queryWithTimeout, query_params),
   );
   return result;
 };

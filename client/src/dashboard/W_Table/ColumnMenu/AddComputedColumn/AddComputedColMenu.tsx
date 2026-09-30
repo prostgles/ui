@@ -18,22 +18,27 @@ import type {
   WindowSyncItem,
 } from "../../../Dashboard/dashboardUtils";
 import RTComp from "../../../RTComp";
-import type { ColumnConfigWInfo } from "../../W_Table";
 import { getTableSelect } from "../../tableUtils/getTableSelect";
 import { updateWCols } from "../../tableUtils/tableUtils";
-import type { ColumnConfig } from "../ColumnMenu";
+import type {
+  AggregateOptions,
+  ColumnConfig,
+  ColumnConfigNested,
+  NestedColumn,
+} from "@common/ColumnConfig/ColumnConfig";
+import { getColumnListItem } from "../ColumnSelect/getColumnListItem";
 import { FunctionSelector } from "../FunctionSelector/FunctionSelector";
 import {
   CountAllFunc,
   getColumnsAcceptedByFunction,
   type FuncDef,
-} from "../FunctionSelector/functions";
+} from "@common/ColumnConfig/FUNCTIONS";
 import { NEW_COL_POSITIONS } from "../LinkedColumn/LinkedColumnFooter";
 import {
   getNestedColumnTable,
   type NestedColumnOpts,
 } from "../getNestedColumnTable";
-import { getColumnListItem } from "../ColumnSelect/getColumnListItem";
+import { AggregateFunctionOptions } from "./AggregateFunctionOptions";
 
 const ColTypes = ["Function", "Aggregate Function"] as const;
 
@@ -57,6 +62,7 @@ type AddComputedColMenuS = {
   name?: string;
 
   args?: Required<ColumnConfig>["computedConfig"]["args"];
+  aggregateOptions?: AggregateOptions;
 
   template_string_hint?: string;
   template_string_error?: any;
@@ -81,7 +87,10 @@ export class AddComputedColMenu extends RTComp<
     }
   }
 
-  onAdd = (newCol: ColumnConfig, addTo: AddComputedColMenuS["addTo"]) => {
+  onAdd = (
+    newCol: ColumnConfig | NestedColumn<ColumnConfig>,
+    addTo: AddComputedColMenuS["addTo"],
+  ) => {
     const tableOrError = this.table;
     if (tableOrError.error !== undefined) {
       console.error(tableOrError.error);
@@ -94,22 +103,30 @@ export class AddComputedColMenu extends RTComp<
       if (addTo === "start") newColumns.unshift(newCol);
       else newColumns.push(newCol);
 
-      updateWCols(w, newColumns);
+      void updateWCols(w, newColumns);
     } else {
       if (nestedColumnOpts?.type === "new") {
+        if (newCol.nested) {
+          throw new Error(
+            "Cannot add a nested column to another nested column.",
+          );
+        }
         const { config } = nestedColumnOpts;
-        const updatedNestedColumn: ColumnConfigWInfo = {
+        const updatedNestedColumn: ColumnConfigNested = {
           ...config,
           nested: {
-            ...config.nested!,
-            columns: [...config.nested!.columns, newCol],
+            ...config.nested,
+            columns: [
+              ...config.nested.columns,
+              newCol as NestedColumn<ColumnConfig>,
+            ],
           },
         };
         nestedColumnOpts.onChange(updatedNestedColumn);
       } else {
-        updateWCols(
+        void updateWCols(
           w,
-          [...nestedColumn.nested!.columns, newCol],
+          [...nestedColumn.nested.columns, newCol],
           nestedColumn.name,
         );
       }
@@ -130,6 +147,7 @@ export class AddComputedColMenu extends RTComp<
       template_string_hint,
       template_string_error,
       addTo,
+      aggregateOptions,
     } = this.state;
 
     const name =
@@ -347,6 +365,13 @@ export class AddComputedColMenu extends RTComp<
                   },
                 }))}
             />)}
+        {funcDef?.isAggregate && (
+          <AggregateFunctionOptions
+            table={table}
+            value={aggregateOptions}
+            onChange={(aggregateOptions) => this.setState({ aggregateOptions })}
+          />
+        )}
         {canAdd && (
           <>
             <FormField
@@ -408,6 +433,8 @@ export class AddComputedColMenu extends RTComp<
                 column,
                 ...pickKeys(outInfo, ["tsDataType", "udt_name"]),
                 args: isEmpty(args) ? undefined : args,
+                aggregateOptions:
+                  funcDef.isAggregate ? aggregateOptions : undefined,
               },
             };
             const { select } = await getTableSelect(

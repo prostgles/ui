@@ -38,7 +38,15 @@ export const getDefaultMCPServers = (): Record<
       },
     },
   },
-  github: mcpGithub,
+  apify: {
+    command: "streamable-http",
+    url: "https://mcp.apify.com",
+  },
+  github: {
+    command: "streamable-http",
+    url: "https://api.githubcopilot.com/mcp/",
+  },
+  // github: mcpGithub,
   "google-maps": {
     icon_path: "GoogleMaps",
     command: "npx",

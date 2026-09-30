@@ -1,6 +1,9 @@
 import React, { useMemo } from "react";
 
-import type { DetailedFilter } from "@common/filterUtils";
+import type {
+  DetailedFilter,
+  GroupedDetailedFilter,
+} from "@common/filterUtils";
 import ErrorComponent from "@components/ErrorComponent";
 import { classOverride } from "@components/Flex";
 import Loading from "@components/Loader/Loading";
@@ -18,7 +21,7 @@ import type { FieldConfig, SmartCardProps } from "../SmartCard/SmartCard";
 import { SmartCard } from "../SmartCard/SmartCard";
 import type { InsertButtonProps } from "../SmartForm/InsertButton";
 import type { SmartFormProps } from "../SmartForm/SmartForm";
-import type { ColumnSort } from "../W_Table/ColumnMenu/ColumnMenu";
+import type { ColumnSort } from "@common/ColumnConfig/ColumnConfig";
 import { SmartCardListHeaderControls } from "./SmartCardListHeaderControls";
 import { useSmartCardListState } from "./useSmartCardListState";
 import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
@@ -97,11 +100,11 @@ export type SmartCardListProps<T extends AnyObject = AnyObject> = Pick<
     | FilterItem<T>
     | { $and: FilterItem<T>[] }
     | { $or: FilterItem<T>[] };
-  searchFilter?: DetailedFilter[];
+  searchFilter?: (DetailedFilter | GroupedDetailedFilter)[];
   orderBy?: ColumnSort | ColumnSort[];
   realtime?: boolean;
   throttle?: number;
-  orderByfields?: string[];
+  orderByFields?: string[];
   showEdit?: boolean;
   onSetData?: (items: AnyObject[]) => void;
 } & Pick<TestSelectors, "data-command">;

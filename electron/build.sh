@@ -23,6 +23,7 @@ cd ..
 mkdir -p ./ui/server/src
 mkdir -p ./ui/server/dist
 mkdir -p ./ui/server/connection_dbo
+mkdir -p ./ui/server/scripts
 mkdir -p ./ui/common
 mkdir -p ./ui/client
 mkdir -p ./ui/electron
@@ -40,6 +41,8 @@ cp ./server/tslint.json ./ui/server/
 cp ./server/licenses.json ./ui/server/
 cp ./server/package.json ./ui/server/
 cp ./server/package-lock.json ./ui/server/
+cp ./server/scripts/copyCliDockerfiles.mjs ./ui/server/scripts/
+cp ./Dockerfile ./DB.Dockerfile ./ui/
 
 cd ./ui/server/
 
@@ -63,12 +66,11 @@ cp ./LICENSE ./ui/
 cp ./README.md ./ui/
 cp ./PRIVACY ./ui/
 cp ./server/.gitignore ./ui/
-cp ./Dockerfile ./ui/
 cp ./.env ./ui/ 
 
 mv ./ui ./electron
 
 cd ./electron/
 
-npm ci 
-npm run build-tsc 
+npm ci
+npm run build-tsc

@@ -1,25 +1,23 @@
 import type { PaginationProps } from "@components/Table/Pagination";
 import { Pagination } from "@components/Table/Pagination";
-import type { TableHandlerClient } from "prostgles-client";
+import type { TableHandlerClientForColumns } from "prostgles-client/dist/prostgles";
 import type { AnyObject } from "prostgles-types";
 import React from "react";
-import type {
-  ChartOptions,
-  WindowSyncItem,
-} from "../../Dashboard/dashboardUtils";
+import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";
 import type { W_TableProps, W_TableState } from "../W_Table";
 import type { OnClickEditRow } from "../tableUtils/getEditColumn";
 import type { ProstglesTableColumn } from "../tableUtils/getTableCols";
 import { CardViewColumn } from "./CardViewColumn";
 import { CardViewKanban } from "./CardViewKanban";
 import { useCardViewState } from "./useCardViewState";
+import type { ChartOptions } from "@common/ColumnConfig/WindowData";
 
 export type CardViewProps = {
   props: W_TableProps;
   state: W_TableState;
   cardOpts: Extract<ChartOptions<"table">["viewAs"], { type: "card" }>;
   w?: WindowSyncItem<"table">;
-  tableHandler: Partial<TableHandlerClient<AnyObject, void>>;
+  tableHandler: Partial<TableHandlerClientForColumns<AnyObject>>;
   paginationProps: PaginationProps;
   style?: React.CSSProperties;
   className?: string;

@@ -1,7 +1,7 @@
 import { isObject } from "prostgles-types";
 import React from "react";
 import { vibrateFeedback } from "../../dashboard/Dashboard/dashboardUtils";
-import type { ColumnSortSQL } from "../../dashboard/W_Table/ColumnMenu/ColumnMenu";
+import type { ColumnSortSQL } from "@common/ColumnConfig/ColumnConfig";
 import type { ColumnSortMenuProps } from "../../dashboard/W_Table/ColumnMenu/ColumnSortMenu";
 import {
   ColumnSortMenu,

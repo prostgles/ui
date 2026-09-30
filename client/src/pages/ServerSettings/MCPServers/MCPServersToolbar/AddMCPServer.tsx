@@ -9,14 +9,27 @@ import { SwitchToggle } from "@components/SwitchToggle";
 import { CodeEditorWithSaveButton } from "../../../../dashboard/CodeEditor/CodeEditorWithSaveButton";
 import type { DBS } from "../../../../dashboard/Dashboard/DBS";
 import {
+  newMcpServersJsonSchema,
   useAddMCPServer,
-  type MCPServerConfig as MCPServerJSONConfig,
+  type NewMcpServersJsonConfig,
 } from "./useAddMCPServer";
+import { tableMightBeUndefinedDueToAccessControl } from "@common/utils";
+import { Select } from "@components/Select/Select";
+import ErrorComponent from "@components/ErrorComponent";
 
 export const AddMCPServer = ({ dbs }: { dbs: DBS }) => {
   const [showAddServer, setShowAddServer] = React.useState(false);
   const state = useAddMCPServer(showAddServer);
-  const { configSchemas, mcpServer, value, setValue, setConfigSchemas } = state;
+  const {
+    configSchemas,
+    value,
+    setValue,
+    setActiveMCPServer,
+    activeMCPServerIndex,
+    setActiveMCPServerIndex,
+    mcpServers,
+    error,
+  } = state;
 
   return (
     <>
@@ -40,7 +53,7 @@ export const AddMCPServer = ({ dbs }: { dbs: DBS }) => {
             minHeight: "min(500px, 100vh)",
             paddingTop: 0,
           }}
-          contentClassName="f-1 p-2"
+          contentClassName="f-1 p-2 gap-1"
           onClose={() => setShowAddServer(false)}
           footerButtons={[
             {
@@ -54,16 +67,22 @@ export const AddMCPServer = ({ dbs }: { dbs: DBS }) => {
               className: "ml-auto",
               "data-command": "AddMCPServer.Add",
               disabledInfo:
-                !mcpServer ? "Must provide a config"
-                : !(dbs as any).mcp_servers?.insert ? "Must be admin"
+                !mcpServers?.length ? "Must provide a config"
+                : (
+                  !tableMightBeUndefinedDueToAccessControl(dbs.mcp_servers)
+                    ?.insert
+                ) ?
+                  "Must be admin"
                 : undefined,
               onClickPromise:
-                !mcpServer ? undefined : (
-                  async () => {
-                    await dbs.mcp_servers.insert(mcpServer);
+                !mcpServers?.length ?
+                  undefined
+                : async () => {
+                    await dbs.mcp_servers.insertMany(
+                      mcpServers.map((s) => s.serverData),
+                    );
                     setShowAddServer(false);
-                  }
-                ),
+                  },
             },
           ]}
         >
@@ -72,7 +91,12 @@ export const AddMCPServer = ({ dbs }: { dbs: DBS }) => {
           </p>
           <CodeEditorWithSaveButton
             label=""
-            language={"json"}
+            language={{
+              lang: "json",
+              jsonSchemas: [
+                { id: "mcp_servers", schema: newMcpServersJsonSchema },
+              ],
+            }}
             options={{
               minimap: {
                 enabled: false,
@@ -85,6 +109,20 @@ export const AddMCPServer = ({ dbs }: { dbs: DBS }) => {
             value={value}
             onSave={setValue}
           />
+          <ErrorComponent error={error ? `Config ${error}` : error} />
+          {mcpServers && mcpServers.length > 1 && (
+            <Select
+              label="Select MCP Server to configure"
+              fullOptions={mcpServers.map(
+                ({ serverData: { name } }, index) => ({
+                  key: index,
+                  label: name,
+                }),
+              )}
+              value={activeMCPServerIndex}
+              onChange={(index) => setActiveMCPServerIndex(index)}
+            />
+          )}
           {Boolean(configSchemas?.length) && (
             <ScrollFade
               className="py-1 o-auto flex-col gap-1"
@@ -105,7 +143,7 @@ export const AddMCPServer = ({ dbs }: { dbs: DBS }) => {
                     }
                     return oldS;
                   });
-                  setConfigSchemas(newSchemas);
+                  setActiveMCPServer({ potentialConfigSchemas: newSchemas });
                 };
 
                 return (
@@ -115,6 +153,7 @@ export const AddMCPServer = ({ dbs }: { dbs: DBS }) => {
                       label={`${s.name} (${s.type === "arg" ? `arg ${s.index}` : "env"})`}
                       value={s.description}
                       placeholder="Description"
+                      type="text"
                       onChange={(description) =>
                         update({ description, configurable: true })
                       }
@@ -137,7 +176,7 @@ export const AddMCPServer = ({ dbs }: { dbs: DBS }) => {
   );
 };
 
-const exampleConfig: MCPServerJSONConfig = {
+const exampleConfig: NewMcpServersJsonConfig = {
   mcpServers: {
     github: {
       command: "docker",

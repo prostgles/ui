@@ -106,6 +106,7 @@ export const getSVGifAnimations = (
         animation.type !== "moveCursor" && animation.type !== "wait" ?
           getSVGifTargetBBox({
             elementSelector: animation.elementSelector,
+            nth: "nth" in animation ? animation.nth : undefined,
             svgDom,
             svgFileName,
             width,

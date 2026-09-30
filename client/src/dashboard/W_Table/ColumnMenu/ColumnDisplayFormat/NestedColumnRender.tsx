@@ -1,164 +1,152 @@
 import { FlexRowWrap } from "@components/Flex";
-import { MediaViewer } from "@components/MediaViewer/MediaViewer";
 import type { AnyObject } from "prostgles-types";
-import { omitKeys } from "prostgles-types";
-import React, { useMemo } from "react";
+import React from "react";
 import type { DBSchemaTableWithRenderInfo } from "src/dashboard/Dashboard/getTables";
-import {
-  TimeChart,
-  type TimeChartLayer,
-} from "../../../Charts/TimeChart/TimeChart";
-import { RenderValue } from "../../../SmartForm/SmartFormField/RenderValue";
-import { getYLabelFunc } from "../../../W_TimeChart/fetchData/getTimeChartData";
-import { getColWInfo } from "../../tableUtils/getColWInfo";
-import type { ColumnConfig } from "../ColumnMenu";
-
-const NESTED_LIMIT = 10;
+import { getColumnsWithInfo } from "../../tableUtils/getColumnsWithInfo";
+import type { ChartValues } from "../../tableUtils/fetchChartRangeValues";
+import { RenderColumn } from "../../RenderColumn/RenderColumn";
+import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
+import type { ColumnConfigNested } from "@common/ColumnConfig/ColumnConfig";
+import { getLinkedRecordsFilter } from "./getLinkedRecordsFilter";
+import { NestedColumnRenderRecords } from "./NestedColumnRenderRecords";
+import { NestedColumnRenderTimechart } from "./NestedColumnRenderTimechart";
 
 export type NestedTimeChartMeta = {
   fullExtent: [Date, Date];
-  // binSize: number;
 };
-type P = {
-  c: ColumnConfig;
-  value: (AnyObject | undefined)[] | null;
+export type NestedColumnRenderProps = {
+  column: ColumnConfigNested;
   row: AnyObject;
   nestedTimeChartMeta: NestedTimeChartMeta | undefined;
+  barchartVals?: ChartValues;
   tables: DBSchemaTableWithRenderInfo[];
-  getValues: () => any[];
+  getValues: () => unknown[];
+  rootTableName: string;
 };
+
 export const NestedColumnRender = ({
-  value,
-  c,
-  row,
+  column,
+  row: parentRow,
   nestedTimeChartMeta,
+  barchartVals,
   tables,
   getValues,
-}: P): JSX.Element => {
-  const table = tables.find((t) => t.name === c.nested?.path.at(-1)?.table);
-  const isMedia = table?.isFileTable;
-  const nestedColumns =
-    c.nested && table ? getColWInfo(table, c.nested.columns) : undefined;
-  const layers: TimeChartLayer[] = useMemo(
-    () =>
-      !c.nested?.chart || !nestedTimeChartMeta ?
-        []
-      : [
-          {
-            label: `${Object.entries(omitKeys(row, [c.name])).map(([key, val]) => `${key}: ${JSON.stringify(val)}`)}`,
-            getYLabel: getYLabelFunc(""),
-            color: "rgb(0, 183, 255)",
-            cols: [],
-            data: value as TimeChartLayer["data"],
-            variant:
-              c.nested.chart.renderStyle === "smooth-line" ?
-                "smooth"
-              : undefined,
-            ...nestedTimeChartMeta,
-          },
-        ],
-    [c.name, c.nested?.chart, nestedTimeChartMeta, row, value],
-  );
-  if (!nestedColumns) {
-    return <>Unexpected issue: No nested columns</>;
-  }
-  if (value?.length && c.nested?.chart && nestedTimeChartMeta) {
+  rootTableName,
+}: NestedColumnRenderProps): JSX.Element => {
+  const { nested } = column;
+  const table = tables.find((t) => t.name === nested.path.at(-1)?.table);
+  if (!table) return <>Unexpected issue: No nested table</>;
+  const display = nested.display ?? { type: "values" };
+  if (display.type === "timechart") {
     return (
-      <TimeChart
-        binSize={undefined}
-        showXAxis={false}
-        yAxisVariant="compact"
-        className="bg-transparent"
-        padding={{
-          top: 10,
-          bottom: 10,
-        }}
-        zoomPanDisabled={true}
-        renderStyle={
-          c.nested.chart.renderStyle === "smooth-line" ?
-            undefined
-          : c.nested.chart.renderStyle
-        }
-        layers={layers}
+      <NestedColumnRenderTimechart
+        chart={display}
+        columnName={column.name}
+        row={parentRow}
+        nestedTimeChartMeta={nestedTimeChartMeta}
       />
     );
   }
-  const shownNestedColumns = nestedColumns.filter((c) => c.show);
-  const render = ({ key, value }: { key: string; value: any }) => {
-    const columnWInfo = nestedColumns.find((c) => c.name === key);
-    const datType = columnWInfo?.info ?? columnWInfo?.computedConfig;
-    const columnName =
-      columnWInfo?.computedConfig ?
-        columnWInfo.computedConfig.column
-      : columnWInfo?.name;
-    const tableColumn =
-      columnName ?
-        table?.columns.find((col) => col.name === columnName)
-      : undefined;
-    const renderedValue =
-      columnWInfo ?
-        <RenderValue
-          column={datType}
-          value={value}
-          getValues={() => {
-            const values = getValues().map((row) => row[0]?.[key]);
-            return values;
-          }}
-          maximumFractionDigits={
-            tableColumn?.renderAs?.type === "Currency" ? 2 : undefined
-          }
-        />
-      : JSON.stringify(value);
 
-    return renderedValue;
-  };
-  const valueList = value ?? [];
-  const [firstValue, ...otherValues] = valueList;
-  const isSingleValue = shownNestedColumns.length === 1;
-  if (isSingleValue && !isMedia && firstValue && !otherValues.length) {
-    const [key, value] = Object.entries(firstValue)[0]!;
-    return <>{render({ key, value })}</>;
-  }
-  const content = valueList.slice(0, NESTED_LIMIT).map((nestedObj, idx) => {
-    if (!nestedObj) return null;
-
-    if (isMedia) {
-      return (
-        <MediaViewer
-          style={{ height: "100%" }}
-          key={nestedObj.url}
-          url={nestedObj.url}
-        />
-      );
-    }
-
-    const objectEntries = Object.entries(nestedObj);
-
+  const rows = (parentRow[column.name] ?? []) as Record<string, unknown>[];
+  const shownColumns = getColumnsWithInfo(
+    table.name,
+    tables,
+    nested.columns,
+  ).filter((c) => c.show);
+  if (display.type === "drillable-records") {
     return (
-      <div key={idx} className="flex-row-wrap gap-p5 ws-pre mb-p5">
-        {objectEntries.map(([key, value]) => {
-          const displayModeClass = {
-            column: "flex-col",
-            row: "flex-row gap-p25",
-            "no-headers": "flex-row-wrap gap-p25",
-          };
-          const { displayMode = "column" } = c.nested!;
-          return (
-            <div key={key} className={`${displayModeClass[displayMode]} gap-0`}>
-              {displayMode !== "no-headers" && (
-                <div className="text-2 font-12">{key}</div>
-              )}
-              <div>{render({ key, value })}</div>
-            </div>
-          );
-        })}
-      </div>
+      <NestedColumnRenderRecords
+        column={column}
+        table={table}
+        tables={tables}
+        rows={rows}
+        parentRow={parentRow}
+        rootTableName={rootTableName}
+        shownColumns={shownColumns}
+      />
     );
-  });
-
-  if (isMedia) {
-    return <FlexRowWrap className="max-h-full">{content}</FlexRowWrap>;
   }
 
-  return <>{content}</>;
+  const labels =
+    !display.labels || display.labels === "auto" ?
+      shownColumns.length === 1 ?
+        "none"
+      : "above"
+    : display.labels;
+  const render = (
+    child: ColumnConfigWithInfo,
+    row: Record<string, unknown>,
+  ) => {
+    const linkedRecordsFilter =
+      child.display === "drillable-records" ?
+        getLinkedRecordsFilter({
+          column,
+          nestedColumn: child,
+          nestedRow: row,
+          parentRow,
+          rootTableName,
+          table,
+        })
+      : undefined;
+    return (
+      <RenderColumn
+        column={child}
+        table={table}
+        tables={tables}
+        row={row}
+        barchartVals={barchartVals}
+        isNested
+        getValues={() =>
+          getValues().flatMap(
+            (rows) =>
+              (rows as Record<string, unknown>[] | undefined)?.map(
+                (r) => r[child.name],
+              ) ?? [],
+          )
+        }
+        relatedRecords={
+          linkedRecordsFilter && {
+            ...linkedRecordsFilter,
+            rootTableName,
+            popupTitle: `${child.label || child.info?.label || child.name}: ${table.label}`,
+          }
+        }
+      />
+    );
+  };
+  const firstColumn = shownColumns[0];
+  if (labels === "none" && shownColumns.length === 1 && !table.isFileTable) {
+    return (
+      <>
+        {rows.map((row, index) => (
+          <React.Fragment key={index}>
+            {render(firstColumn!, row)}
+          </React.Fragment>
+        ))}
+      </>
+    );
+  }
+  const content = rows.map((row, index) => (
+    <div key={index} className="flex-row-wrap gap-p5 ws-pre">
+      {shownColumns.map((child) => (
+        <div
+          key={child.name}
+          className={
+            labels === "inline" ? "flex-row gap-p25" : "flex-col gap-0"
+          }
+        >
+          {labels !== "none" && (
+            <span className="text-2 font-12">
+              {child.label || child.info?.label || child.name}
+            </span>
+          )}
+          {render(child, row)}
+        </div>
+      ))}
+    </div>
+  ));
+  return table.isFileTable ?
+      <FlexRowWrap className="max-h-full">{content}</FlexRowWrap>
+    : <>{content}</>;
 };

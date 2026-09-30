@@ -8,6 +8,8 @@ It supports multiple layers, custom basemaps, and various map controls for inter
 ## Features
 
 - **Multiple layer support**: Display multiple layers of geographical data on the same map, each with its own data source and styling options.
+- **Linked/joined layers**: Add related layers with cross-filtering capabilities, allowing you to visualize relationships between different datasets. 
+- **Create and edit features**: Draw and edit points, lines, and polygons directly on the map, and save them back to the database. 
 - **Data-driven styling**: Style your map layers with custom colors or icons based on the attributes of your geographical data for better visualization.
 - **Custom basemaps**: Choose from different basemap options or add your own custom tiles for the map background.
 - **Map controls**: Interact with the map using controls for zooming, panning, and displaying cursor coordinates.

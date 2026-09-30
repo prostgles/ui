@@ -7,7 +7,7 @@ import { AGENT_GOAL_TOOL_NAMES } from "@common/mcp/startAgenticWorkflowSchema";
 
 export const runAgentGoalTool = async ({
   chat,
-  agetGoalTool,
+  agentGoalTool,
   aborter,
   args,
   dbs,
@@ -15,7 +15,7 @@ export const runAgentGoalTool = async ({
 }: {
   chat: DBSSchema["llm_chats"];
   args: Omit<AskLLMArgs, "userMessage" | "type" | "aborter">;
-  agetGoalTool: ToolUseMessage;
+  agentGoalTool: ToolUseMessage;
   aborter: AbortController | undefined;
   dbs: DBS;
   toolUseRequestMessages: ToolUseMessage[];
@@ -37,22 +37,22 @@ export const runAgentGoalTool = async ({
     );
   }
 
-  const goalFailed = agetGoalTool.name === AGENT_GOAL_TOOL_NAMES.FAILED;
+  const goalFailed = agentGoalTool.name === AGENT_GOAL_TOOL_NAMES.FAILED;
   const validationResult =
     goalFailed ? undefined : (
       getJSONBSchemaValidationError(
         { type: agent_info.outputSchema },
-        agetGoalTool.input,
+        agentGoalTool.input,
       )
     );
   const toolResultContent = {
     type: "tool_result",
-    tool_name: agetGoalTool.name,
-    tool_use_id: agetGoalTool.id,
+    tool_name: agentGoalTool.name,
+    tool_use_id: agentGoalTool.id,
     is_error: validationResult?.error !== undefined,
     content:
       goalFailed ?
-        JSON.stringify({ agent_error: "goal-failed", ...agetGoalTool.input })
+        JSON.stringify({ agent_error: "goal-failed", ...agentGoalTool.input })
       : validationResult?.error !== undefined ?
         JSON.stringify({
           message: "goal-data-validation-failure",
@@ -89,27 +89,27 @@ export const runAgentGoalTool = async ({
         goalFailed ?
           {
             state: "goal-failure",
-            data: agetGoalTool.input,
+            data: agentGoalTool.input,
             error: "Agent indicated goal failure",
             timestamp,
           }
         : validationResult?.error !== undefined ?
           {
             state: "goal-data-validation-failure",
-            data: agetGoalTool.input,
+            data: agentGoalTool.input,
             timestamp,
             error: validationResult.error,
           }
         : {
             state: "goal-reached",
             timestamp,
-            data: agetGoalTool.input,
+            data: agentGoalTool.input,
           },
     },
   );
   if (validationResult?.error !== undefined) {
     throw new Error(
-      `Agent goal tool input validation failed: ${validationResult.error} ${JSON.stringify(agetGoalTool.input)}`,
+      `Agent goal tool input validation failed: ${validationResult.error} ${JSON.stringify(agentGoalTool.input)}`,
     );
   }
   return;

@@ -1,11 +1,11 @@
 import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";
 import { isNumericColumn } from "../../W_SQL/getSQLResultTableColumns";
-import type { ColumnConfigWInfo } from "../W_Table";
+import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
 import type { ProstglesTableColumn } from "./getTableCols";
 
 export const prepareColsForRender = (
   cols: ProstglesTableColumn[],
-  getWCols: () => ColumnConfigWInfo[],
+  getWCols: () => ColumnConfigWithInfo[],
   w: WindowSyncItem<"table">,
 ) => {
   return cols

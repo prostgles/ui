@@ -1,38 +1,14 @@
+import type { ColumnOptions, TableOptions } from "@common/managedTableSchema";
 import type { DBSSchema } from "@common/publishUtils";
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
-import type { DBSchemaTable, ValidatedColumnInfo } from "prostgles-types";
-
-import type {
-  MissingBinsOption,
-  ShowBinLabelsMode,
-  StatType,
-  TimeChartBinSize,
-  TimechartRenderStyle,
-  TooltipPosition,
-} from "../W_TimeChart/W_TimeChartMenu";
+import type { DBSchemaTable } from "prostgles-types";
 
 import type { SQLSuggestion } from "../SQLEditor/W_SQLEditor";
-import type { RefreshOptions } from "../W_Table/TableMenu/W_TableMenu";
 
+import type { ColumnSortSQL } from "@common/ColumnConfig/ColumnConfig";
+import type { ChartType, WindowData } from "@common/ColumnConfig/WindowData";
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
-import type { DetailedFilter } from "@common/filterUtils";
 import { type OmitDistributive } from "@common/utils";
-import type { Extent, MapExtentBehavior } from "../Map/DeckGLMap";
-import type {
-  ColumnConfig,
-  ColumnSort,
-  ColumnSortSQL,
-} from "../W_Table/ColumnMenu/ColumnMenu";
-import type { CardLayout } from "./cardLayout";
-
-export type ChartType =
-  | "table"
-  | "map"
-  | "timechart"
-  | "barchart"
-  | "sql"
-  | "card"
-  | "method";
 
 export type DBSSchemaForHandlers = {
   [K in keyof DBGeneratedSchema]: DBGeneratedSchema[K]["columns"];
@@ -57,8 +33,6 @@ export type NewChartOpts = {
   linkOpts: OmitDistributive<ChartLink, "color" | "colorKey">;
 };
 
-export type OnAddChart = (args: NewChartOpts) => void;
-
 export type Query = {
   id: string;
   tableName: string;
@@ -72,218 +46,7 @@ export type Query = {
   layout: { x: number; y: number; w: number; h: number };
 };
 
-export type JoinFilter = {
-  tablePath: string[];
-  filter: any;
-};
-
-export type WQuery = Query & {
-  joins?: string[];
-  joinFilter?: JoinFilter;
-};
-
-export type MapExtent = [[number, number], [number, number]];
-
-export type ChartOptions<CType extends ChartType = "table"> =
-  CType extends "table" ?
-    {
-      hideCount?: boolean;
-      maxRowHeight?: number;
-      maxCellChars?: number;
-      quickFilterGroups?: QuickFilterGroups;
-      viewAs?:
-        | { type: "table" }
-        | { type: "json" }
-        | {
-            type: "card";
-            hideCardFieldNames?: boolean;
-            cardRows?: number;
-            hideEmptyCardCells?: boolean;
-            cardCellMinWidth?: string;
-            cardGroupBy?: string;
-            cardOrderBy?: string;
-            maxCardRowHeight?: number;
-            maxCardWidth?: string;
-          };
-      cardLayout?: CardLayout;
-      hideEditRow?: boolean;
-      hideInsertButton?: boolean;
-      showFilters?: boolean;
-      showSubLabel?: boolean;
-      filterOperand?: "AND" | "OR";
-      havingOperand?: "AND" | "OR";
-    }
-  : CType extends "method" ?
-    {
-      args?: Record<string, any>;
-      disabledArgs?: string[];
-      hiddenArgs?: string[];
-      showCode?: boolean;
-      showLogs?: boolean;
-    }
-  : CType extends "card" ?
-
-    {
-      // sortableFields: string[];
-      // filterFields: string[];
-      // fieldConfigs?: FieldConfigNested[]
-    }
-  : CType extends "map" ?
-    Partial<{
-      extent: [number, number, number, number];
-      latitude: number;
-      longitude: number;
-      zoom: number;
-      pitch: number;
-      bearing: number;
-      colorField?: string;
-      tileURLs?: string[];
-      tileSize?: number;
-      basemapZoomOffset?: number;
-      showAddShapeBtn?: boolean;
-      hideLayersBtn?: boolean;
-      showCardOnClick?: boolean;
-      enableCollisionFilter?: boolean;
-      tileAttribution?: {
-        title: string;
-        url: string;
-      };
-      extentBehavior?: MapExtentBehavior;
-      projection?: "mercator" | "orthographic";
-      target?: [number, number, number];
-      aggregationMode?: {
-        type: "limit" | "wait";
-        limit: number;
-        wait: number;
-      };
-      dataOpacity: number;
-      basemapDesaturate: number;
-      basemapOpacity: number;
-      basemapImage?: {
-        url: string;
-        bounds: Extent;
-      };
-    }>
-  : CType extends "timechart" ?
-    {
-      yScaleMode?: "single" | "multiple";
-      binSize?: TimeChartBinSize;
-      tooltipPosition?: TooltipPosition;
-      missingBins?: MissingBinsOption;
-      renderStyle?: TimechartRenderStyle;
-      showBinLabels?: ShowBinLabelsMode;
-      showGradient?: boolean;
-      binValueLabelMaxDecimals?: number | null;
-      filter?: { min: number; max: number } | null;
-    }
-  : CType extends "sql" ?
-    {
-      /**
-       * Used to show/hide results table in
-       */
-      hideTable?: boolean;
-
-      /**
-       * If false then ask user about saving the query
-       */
-      sqlWasSaved?: boolean;
-
-      /**
-       * Used for sql queries table inserted from search
-       * If sql wasn't changed by user then allow closing window without asking for saving
-       */
-      sqlChanged?: boolean;
-
-      /**
-       * Used to restore cursor position within sql query
-       */
-      cursorPosition?: {
-        column: number;
-        lineNumber: number;
-      };
-
-      sqlResultCols?: (Pick<
-        ValidatedColumnInfo,
-        "tsDataType" | "udt_name" | "name"
-      > & {
-        idx: number;
-        key: string;
-        // label: string;
-        subLabel: string;
-        width?: number;
-        sortable: boolean;
-      })[];
-
-      lastSQL?: string;
-    }
-  : {
-      notSEtYet: "a";
-    };
-
-export const IsMap = (w?: any): w is SyncDataItem<WindowData<"map">> => {
-  return w?.type === "map";
-};
-export const IsTable = (w?: any): w is SyncDataItem<WindowData<"table">> => {
-  return w?.type === "table";
-};
-export const isMethod = (
-  w?: SyncDataItem<WindowData> | WindowData,
-): w is WindowSyncItem<"method"> => {
-  return w?.type === "method";
-};
-export const IsSQL = (w: any): w is SyncDataItem<WindowData<"sql">> => {
-  return w.type === "sql";
-};
-export const IsTimeChart = (
-  w?: any,
-): w is SyncDataItem<WindowData<"timechart">> => {
-  return w?.type === "timechart";
-};
-
-type Windows = Required<DBSSchema>["windows"];
-
 export const TopHeaderClassName = "TopHeader";
-
-export type WindowData<CType extends ChartType = ChartType> = Omit<
-  Windows,
-  "columns" | "options" | "sort" | "filter" | "type" | "having"
-> & {
-  type: CType;
-  id: string;
-  table_oid: number;
-  sql?: string;
-  table_name: CType extends "table" ? Exclude<Windows["table_name"], null>
-  : null | string;
-  method_name: CType extends "method" ? Exclude<Windows["method_name"], null>
-  : null | string;
-  name: string;
-  last_updated: string;
-  fullscreen?: boolean;
-  show_menu?: boolean;
-  closed?: boolean;
-  deleted: boolean;
-  workspace_id?: string;
-  options?: RefreshOptions & ChartOptions<CType>;
-  filter?: DetailedFilter[];
-  having?: DetailedFilter[];
-  columns?: ColumnConfig[] | null;
-  /**
-   * This is either the sql user has selected OR the current code block
-   */
-  selected_sql?: string;
-
-  nested_tables?: Record<
-    string,
-    {
-      label?: string;
-      cols: ColumnConfig[];
-      path: string[];
-    }
-  >;
-  user_id: string;
-  limit: number | null;
-  sort: null | ColumnSort[];
-};
 
 export const windowIs = <T extends ChartType>(
   w: WindowData,
@@ -293,19 +56,25 @@ export const windowIs = <T extends ChartType>(
 };
 
 type ChartsObj = {
-  [type in ChartType]: SyncDataItem<Required<WindowData<type>>, true>;
+  [type in ChartType]: SyncDataItem<
+    Required<WindowData<type>>,
+    { handlesOnData: true; select: "*" }
+  >;
 };
 type ChartsObjOfUnion<U extends ChartType> = { [K in U]: ChartsObj[K] }[U];
 
 export type WindowSyncItem<T extends ChartType = ChartType> =
   ChartsObjOfUnion<T>;
-export type LinkSyncItem = SyncDataItem<Link, true>;
+export type LinkSyncItem = SyncDataItem<Link, { handlesOnData: true }>;
 
 export type WorkspaceSchema = DBSSchema["workspaces"];
 
 export type Workspace = Required<WorkspaceSchema>;
 
-export type WorkspaceSyncItem = SyncDataItem<Workspace, true>;
+export type WorkspaceSyncItem = SyncDataItem<
+  Workspace,
+  { handlesOnData: true }
+>;
 
 export type UserData = Omit<DBSSchema["users"], "password">;
 
@@ -322,7 +91,7 @@ export type UserTypeData = {
   id: string;
 };
 
-export type AcessControlUserTypes = DBSSchema["access_control_user_types"];
+export type AccessControlUserTypes = DBSSchema["access_control_user_types"];
 
 export type Backups = DBSSchema["backups"];
 
@@ -345,33 +114,12 @@ export type Join = {
 };
 export type JoinV2 = Omit<Join, "on"> & { on: [string, string][][] };
 
-export type DBSchemaTableColumn = ValidatedColumnInfo & {
-  icon: string | undefined;
-  renderAs?: any;
-  style?: any;
-  label: string;
-};
-
-type TableOptions = NonNullable<
-  NonNullable<DBSSchema["connections"]["table_options"]>[string]
+export type DBSchemaTableWJoins = DBSchemaTable<
+  Omit<TableOptions, "label" | "columns"> & {
+    label: string;
+    joins: Join[];
+    joinsV2: JoinV2[];
+  },
+  ColumnOptions
 >;
-export type DBSchemaTableWJoins = Omit<DBSchemaTable, "columns"> & {
-  label: string;
-  joins: Join[];
-  joinsV2: JoinV2[];
-  columns: DBSchemaTableColumn[];
-} & Omit<TableOptions, "label" | "columns">;
 export type DBSchemaTablesWJoins = DBSchemaTableWJoins[];
-
-/**
- * Predefined quick filters that the user can toggle on/off
- * These are shown in the filter bar under "Quick Filters"
- */
-export type QuickFilterGroups = {
-  [groupName: string]: {
-    toggledFilterName?: string;
-    filters: {
-      [filterName: string]: {};
-    };
-  };
-};

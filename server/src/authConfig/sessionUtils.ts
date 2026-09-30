@@ -1,15 +1,15 @@
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type { DBSSchema } from "@common/publishUtils";
 import * as crypto from "crypto";
-import type { Request } from "express";
 import { getClientRequestIPsInfo } from "prostgles-server/dist/Auth/AuthHandler";
-import type { BasicSession } from "prostgles-server/dist/Auth/AuthTypes";
-import type { PRGLIOSocket } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
+import type {
+  BasicSession,
+  NetworkClientRequest,
+} from "prostgles-server/dist/Auth/AuthTypes";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
+import type { DB } from "prostgles-server/dist/initProstgles";
 import { PROSTGLES_STRICT_COOKIE } from "../envVars";
 import type { DBS, Users } from "../index";
-import { getPasswordHash } from "./authUtils";
-import type { DB } from "prostgles-server/dist/initProstgles";
 
 export type Sessions = DBSSchema["sessions"];
 export const parseAsBasicSession = (s: Sessions): BasicSession => {
@@ -78,7 +78,7 @@ export const authCookieOpts =
  */
 export const checkClientIP = async (
   dbsOrTxSql: Pick<DB, "oneOrNone">,
-  args: { socket: PRGLIOSocket } | { httpReq: Request },
+  args: NetworkClientRequest,
   {
     id,
     login_rate_limit,
@@ -117,9 +117,5 @@ export const insertUser = async (
   u: Parameters<typeof db.users.insert>[0] & { password: string },
 ) => {
   const user = await db.users.insert(u, { returning: "*" });
-  if (!user.id) throw "User id missing";
-  if (typeof user.password !== "string") throw "Password missing";
-  const hashedPassword = getPasswordHash(user, user.password);
-  await db.users.update({ id: user.id }, { password: hashedPassword });
-  return db.users.findOne({ id: user.id });
+  return user;
 };

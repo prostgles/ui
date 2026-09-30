@@ -11,7 +11,7 @@ import type { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
 import type { TargetPath } from "../tableUtils/getJoinPaths";
 import { getJoinPathStr, getJoinPaths } from "../tableUtils/getJoinPaths";
 import type { SvgIconName } from "@components/SearchList/SearchList";
-type P = {
+export type JoinPathSelectorV2Props = {
   tables: DBSchemaTablesWJoins;
   tableName: string;
   btnProps?: BtnProps<void>;
@@ -33,7 +33,7 @@ type P = {
 
 export const getJoinPathLabel = (
   j: TargetPath,
-  { tableName, tables }: Pick<P, "tableName" | "tables">,
+  { tableName, tables }: Pick<JoinPathSelectorV2Props, "tableName" | "tables">,
 ) => {
   const labels = j.path.map((p, pIdx) => {
     const prevPath = j.path[pIdx - 1];
@@ -66,7 +66,7 @@ export const getAllJoins = ({
   tableName,
   tables,
   value,
-}: Pick<P, "tableName" | "tables" | "value">) => {
+}: Pick<JoinPathSelectorV2Props, "tableName" | "tables" | "value">) => {
   const allJoins = getJoinPaths(tableName, tables);
   const valueStr = value && getJoinPathStr(value);
   const targetPathIdx = allJoins.findIndex((j) => j.pathStr === valueStr);
@@ -87,7 +87,7 @@ export const getAllJoins = ({
   };
 };
 
-export const JoinPathSelectorV2 = (props: P) => {
+export const JoinPathSelectorV2 = (props: JoinPathSelectorV2Props) => {
   const {
     tables,
     tableName,

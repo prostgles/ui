@@ -64,7 +64,7 @@ export const useHighlightDocItem = (
         await tout(
           isPlaywrightTest ? 0
           : itemPosition === "mid" ? 500
-          : 2000,
+          : 1200,
         );
       }
       setHighlights([]);

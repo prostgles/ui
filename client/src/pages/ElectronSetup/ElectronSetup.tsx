@@ -55,7 +55,7 @@ export const ElectronSetup = ({ serverState }: ElectronSetup) => {
             {Boolean(!loading && error) && (
               <ErrorComponent
                 className="rounded f-0"
-                style={{ background: "#fde8e8" }}
+                style={{ background: "#fde8e8", padding: ".5rem" }}
                 withIcon={true}
                 error={
                   serverState?.initState.state === "error" ? error : undefined
@@ -74,6 +74,7 @@ export const ElectronSetup = ({ serverState }: ElectronSetup) => {
               }}
               iconPath={mdiArrowLeft}
               variant="outline"
+              size="default"
               style={{ opacity: step === "2-setup" ? 1 : 0 }}
             >
               Back
@@ -89,6 +90,7 @@ export const ElectronSetup = ({ serverState }: ElectronSetup) => {
                 iconPath={mdiArrowRight}
                 color="action"
                 variant="filled"
+                size="default"
               >
                 Next
               </Btn>
@@ -99,6 +101,7 @@ export const ElectronSetup = ({ serverState }: ElectronSetup) => {
                 className="ml-auto"
                 iconPath={mdiConnection}
                 onClickMessage={onPressDone}
+                size="default"
               >
                 Connect
               </Btn>

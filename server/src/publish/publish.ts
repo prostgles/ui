@@ -11,9 +11,7 @@ import type { SessionUser } from "prostgles-server/dist/Auth/AuthTypes";
 import type { PublishFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
 import { verifySMTPConfig } from "prostgles-server/dist/Prostgles";
 import type { Publish } from "prostgles-server/dist/PublishParser/PublishParser";
-import type { ValidateUpdateRow } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
 import { getKeys, type FilterItem } from "prostgles-types";
-import { getPasswordHash } from "../authConfig/authUtils";
 import { getSMTPWithTLS } from "../authConfig/emailProvider/getEmailSenderWithMockTest";
 import { checkClientIP } from "../authConfig/sessionUtils";
 import { getACRules } from "../ConnectionManager/ConnectionManager";
@@ -32,7 +30,6 @@ export const publish: Publish<
 
   const { id: user_id } = user;
 
-  /** This will prevent admins from seing each others published workspaces?! */
   const accessRules = isAdmin ? undefined : await getACRules(db, user);
 
   const createEditDashboards =
@@ -46,6 +43,15 @@ export const publish: Publish<
       )
       .filter(isDefined) || [];
 
+  const getDashboardEditFilter = (tableName: "workspaces" | "windows" | "links") =>
+    !isAdmin ? { user_id } : {
+      $or: [
+        { user_id },
+        tableName === "workspaces" ? { published: true }
+        : { $existsJoined: { workspaces: { published: true } } },
+      ],
+    };
+
   const dashboardMainTables: Publish<DBGeneratedSchema> = (
     ["windows", "links", "workspaces"] as const
   ).reduce(
@@ -58,19 +64,23 @@ export const publish: Publish<
             $or: [
               { user_id },
               /** User either owns the item or the item has been shared/published to the user */
-              {
-                [tableName === "workspaces" ? "id" : "workspace_id"]: {
-                  $in: publishedWspIDs,
+              isAdmin ?
+                tableName === "workspaces" ?
+                  { published: true }
+                : { $existsJoined: { workspaces: { published: true } } }
+              : {
+                  [tableName === "workspaces" ? "id" : "workspace_id"]: {
+                    $in: publishedWspIDs,
+                  },
                 },
-              },
             ],
           },
         },
         ...(createEditDashboards && {
           update: {
             fields: { user_id: 0 },
-            forcedData: { user_id },
-            forcedFilter: { user_id },
+            forcedData: isAdmin ? undefined : { user_id },
+            forcedFilter: getDashboardEditFilter(tableName),
           },
           insert: {
             fields: "*",
@@ -80,54 +90,20 @@ export const publish: Publish<
               tableName === "workspaces" ? undefined : (
                 {
                   $existsJoined: {
-                    workspaces: {
-                      user_id: user.id,
-                    },
+                    workspaces: getDashboardEditFilter("workspaces"),
                   },
                 }
               ),
           },
           delete: {
             filterFields: "*",
-            forcedFilter: { user_id },
+            forcedFilter: getDashboardEditFilter(tableName),
           },
         }),
       } satisfies PublishFullyTyped<DBGeneratedSchema>["workspaces"],
     }),
     {},
   );
-
-  type User = DBGeneratedSchema["users"]["columns"];
-  const getValidateAndHashUserPassword = (mustUpdate = false) => {
-    const validateFunc: ValidateUpdateRow<User, DBGeneratedSchema> = async ({
-      dbx,
-      filter,
-      update,
-    }) => {
-      if ("password" in update) {
-        //@ts-ignore
-        const [user, ...otherUsers] = await dbx.users.find(filter);
-        if (!user || otherUsers.length) {
-          throw "Cannot update: update filter must match exactly one user";
-        }
-        if (!update.password) {
-          throw "Password cannot be empty";
-        }
-        const hashedPassword = getPasswordHash(user, update.password);
-        if (typeof hashedPassword !== "string") throw "Not ok";
-        if (mustUpdate) {
-          await dbx.users.update(filter, { password: hashedPassword });
-        }
-        return {
-          ...update,
-          password: hashedPassword,
-        };
-      }
-      update.last_updated ??= Date.now().toString();
-      return update;
-    };
-    return validateFunc;
-  };
 
   const userTypeFilter = {
     access_control_user_types: { user_type: user.type },
@@ -177,7 +153,7 @@ export const publish: Publish<
       },
       update: "*",
     },
-    ...getPublishLLM(user_id, isAdmin, accessRules, db),
+    ...getPublishLLM(user_id, isAdmin, accessRules),
     credential_types: isAdmin && { select: "*" },
     access_control: isAdmin ? "*" : undefined,
     database_configs:
@@ -199,6 +175,11 @@ export const publish: Publish<
                 if (!oldValue) {
                   throw "Cannot find existing database config to validate IP changes";
                 }
+
+                if (!clientReq.httpReq && !clientReq.socket) {
+                  throw "Cannot determine client IP for validation";
+                }
+
                 const { isAllowed, ip } = await checkClientIP(
                   tx,
                   {
@@ -314,24 +295,15 @@ export const publish: Publish<
           select: { fields: { "2fa": 0, password: 0 } },
           insert: {
             fields: { created: 0, "2fa": 0, last_updated: 0 },
-            postValidate: async ({ row, dbx, localParams }) => {
-              await getValidateAndHashUserPassword(true)({
-                localParams,
-                update: row,
-                dbx,
-                filter: { id: row.id },
-              });
-            },
           },
           update: {
             fields: {
               options: 1,
             },
-            validate: getValidateAndHashUserPassword(),
             dynamicFields: [
               {
                 /* For own user can only change these fields */
-                fields: { username: 1, password: 1, status: 1, options: 1 },
+                fields: { username: 1, status: 1, options: 1 },
                 filter: { id: user.id },
               },
             ],
@@ -356,9 +328,8 @@ export const publish: Publish<
             forcedFilter: { id: user_id },
           },
           update: {
-            fields: { password: 1, options: 1 },
+            fields: { options: 1 },
             forcedFilter: { id: user_id },
-            validate: getValidateAndHashUserPassword(),
           },
         },
     sessions: {

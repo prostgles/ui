@@ -103,7 +103,7 @@ export const FormFieldSkeleton = forwardRef(
               {...label}
               htmlFor={id}
               variant="normal"
-              style={{ zIndex: 1 }}
+              style={{ zIndex: 1, ...(isObject(label) ? label.style : {}) }}
             />
           : !labelString ?
             undefined

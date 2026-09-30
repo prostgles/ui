@@ -1,10 +1,9 @@
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
-import { authenticator } from "otplib";
 import { type LoginSignupConfig } from "prostgles-server/dist/Auth/AuthTypes";
 import type { DB } from "prostgles-server/dist/initProstgles";
 import type { DBS, Users } from "..";
 import { log } from "../index";
-import { getPasswordHash } from "./authUtils";
+import { getPasswordHash, isTotpTokenValid } from "./authUtils";
 import { getEmailSenderWithMockTest } from "./emailProvider/getEmailSenderWithMockTest";
 import { getRandomSixDigitCode } from "./emailProvider/onEmailRegistration";
 import { loginWithProvider } from "./OAuthProviders/loginWithProvider";
@@ -177,12 +176,7 @@ export const getLogin = async (
           return "invalid-totp-recovery-code";
         }
       } else if (totp_token && typeof totp_token === "string") {
-        if (
-          !authenticator.verify({
-            secret: matchingUser["2fa"].secret,
-            token: totp_token,
-          })
-        ) {
+        if (!(await isTotpTokenValid(matchingUser["2fa"].secret, totp_token))) {
           return "invalid-totp-code";
         }
       } else {

@@ -4,13 +4,13 @@ The AI assistant is an intelligent companion that helps you work more efficientl
 It can generate SQL queries, explain database schemas, analyze data patterns, and assist with various database-related tasks through a conversational interface.
 MCP Servers can be used to extend the AI capabilities with custom tools and integrations.
 
-# Features
+## Features
 
 - **Agentic Workflows**: Generate, save and re-run TypeScript automations in an isolated sandbox with granular access to data, MCP tools and filesystem.
 - **Progressive schema discovery**: Each conversation fetches only the table and tool schemas it actually needs, keeping the context window clean and focused.
 - **Granular per-chat permissions**: Configure database access, schema visibility, and tool permissions independently for each conversation
 - **Works with hosted and local models**: It supports OpenAI, Anthropic, Gemini, OpenRouter, Ollama, and OpenAI-compatible local models.
-- **Multimodal input**: Attach files, convert supported documents and images into markdown context, and use speech-to-text.
+- **Multimodal input with document support**: Attach files, convert supported documents and images into markdown context (Docling), and use speech-to-text (Faster Whisper).
 
 
 <img src="./screenshots/ai_assistant.svgif.svg" alt="AI assistant popup screenshot" style="border: 1px solid; margin: 1em 0;" />
@@ -33,7 +33,7 @@ Supported AI Providers: OpenAI, Anthropic, Google Gemini, OpenRouter, Ollama and
 The message input area allows you to write text, attach files and control other aspects of the AI assistant (change model, add/remove tools, speech to text).
 
   - **Message input**: Input field for entering messages to the AI assistant. Pressing Shift+Enter creates a new line.  
-  - <a href="#mcp_tools_allowed">MCP tools allowed</a>: Opens the MCP tools menu for the current chat. Default tools: filesystem, git, github, google-maps, memory, playwright, web, webdev, slack  
+  - <a href="#mcp_tools_allowed">MCP tools allowed</a>: Opens the MCP tools menu for the current chat. Default tools: filesystem, git, github, google-maps, memory, playwright, web, webdev, slack, apify  
   - **Database access**: Opens the database access settings for the current chat. This controls how the AI assistant can interact with the current database.  
   - **Prompt Selector**: Opens the prompt details for the current chat, allowing you to manage the prompt template and other related settings.  
     - **Prompt preview**: Preview of the prompt with context variables filled in.  

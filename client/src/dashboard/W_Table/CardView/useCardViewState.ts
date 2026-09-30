@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import type { CardViewProps, IndexedRow } from "./CardView";
-import type { KanBanDraggedRow } from "./CardViewRow";
+import type { KanBanDraggedRow } from "./CardItem/CardViewRow";
 
 export const useCardViewState = (_props: CardViewProps) => {
   const { props, state, w, cardOpts } = _props;
@@ -11,7 +11,7 @@ export const useCardViewState = (_props: CardViewProps) => {
       data,
       index,
     }));
-    const { tables } = props;
+    const { tables } = props.prgl;
     const table = tables.find((t) => t.name === w?.table_name);
     return {
       allIndexedRows,

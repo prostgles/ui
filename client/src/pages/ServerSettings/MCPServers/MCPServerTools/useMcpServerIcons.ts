@@ -1,4 +1,5 @@
 import { getMCPToolNameParts } from "@common/mcpUtils";
+import type { DBSSchema } from "@common/publishUtils";
 import type { SvgIconName } from "@components/SearchList/SearchList";
 import { isDefined } from "prostgles-types";
 import { useCallback, useMemo } from "react";
@@ -14,6 +15,7 @@ export const useMcpServerIcons = () => {
         name: 1,
         icon_path: 1,
         config_schema: 1,
+        command: 1,
         mcp_server_tools: { name: 1, icon: 1, description: 1 },
       },
     },
@@ -37,7 +39,7 @@ export const useMcpServerIcons = () => {
         iconMap.set(name, {
           serverIcon: icon_path as SvgIconName,
           toolInfo: new Map(
-            mcp_server_tools
+            (mcp_server_tools as DBSSchema["mcp_server_tools"][])
               .map(
                 (t) =>
                   [

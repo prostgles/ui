@@ -1,6 +1,6 @@
 import type { DetailedFilter } from "@common/filterUtils";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import { type WindowData } from "./dashboardUtils";
+import { type WindowData } from "@common/ColumnConfig/WindowData";
 import { useOnErrorAlert } from "@components/AlertProvider";
 import { useCallback } from "react";
 import type { Prgl } from "src/App";

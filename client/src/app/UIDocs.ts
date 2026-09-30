@@ -54,7 +54,8 @@ type UIDocCommon = {
    */
   childrenTitle?: string;
 
-  docOptions?: /**
+  docOptions?:
+    /**
      * If docs is defined, then it will be rendered as a separate header in the documentation with this title.
      */
     | { title: string }
@@ -71,6 +72,9 @@ type UIDocCommon = {
   /** If true then this is not available for Prostgles Desktop */
   uiVersionOnly?: true;
 
+  /**
+   * If defined, this will be used to render a dynamic component in the Command Palette and documentation.
+   */
   componentName?: keyof DynamicComponentRegistry;
 };
 

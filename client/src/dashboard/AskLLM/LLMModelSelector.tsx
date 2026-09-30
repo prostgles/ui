@@ -6,7 +6,7 @@ import { Select, type FullOption } from "@components/Select/Select";
 import { SvgIconFromURL } from "@components/SvgIcon";
 import { mdiAccountKey, mdiPencil, mdiPlus, mdiRefresh } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import type { DetailedJoinSelect } from "prostgles-types";
+import { defineJoin } from "prostgles-types";
 import React, { useMemo, useState } from "react";
 import { nFormatter } from "src/utils/utils";
 import { SmartForm, SmartFormPopup } from "../SmartForm/SmartForm";
@@ -40,14 +40,17 @@ export const LLMModelSelector = ({
     {
       select: {
         "*": 1,
-        llm_providers: {
-          logo_url: 1,
-        },
-        llm_credentials: {
+        llm_providers: defineJoin({
+          $leftJoin: "llm_providers",
+          select: {
+            logo_url: 1,
+          },
+        }),
+        llm_credentials: defineJoin({
           $leftJoin: ["llm_providers", "llm_credentials"],
           select: "*",
           limit: 1,
-        } satisfies DetailedJoinSelect,
+        }),
       },
       orderBy: {
         key: forAgent ? "agent_suitability_rank" : "chat_suitability_rank",
@@ -69,10 +72,7 @@ export const LLMModelSelector = ({
     return new Map(
       (models ?? [])
         .toSorted((a, b) =>
-          (
-            (a.llm_credentials?.length ?? 0) -
-              (b.llm_credentials?.length ?? 0) || forAgent
-          ) ?
+          a.llm_credentials.length - b.llm_credentials.length || forAgent ?
             (a.agent_suitability_rank || Infinity) -
             (b.agent_suitability_rank || Infinity)
           : Number(a.chat_suitability_rank || Infinity) -
@@ -179,7 +179,7 @@ export const LLMModelSelector = ({
             }) => {
               const name = rawName.split("/")[1] || rawName;
               const noCredentials = !llm_credentials.length;
-              const iconUrl = llm_providers[0]?.logo_url as string | undefined;
+              const iconUrl = llm_providers[0]?.logo_url;
               const isFree = Object.values(pricing_info ?? {}).every(
                 (v) => v === 0,
               );

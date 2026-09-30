@@ -128,11 +128,9 @@ const useServicesFieldConfigs = ({
                     title={isRunning ? "Stop service" : "Start service"}
                     checked={isRunning}
                     onChange={async () =>
-                      await onErrorAlert(async () => {
-                        await toggleService({
-                          serviceName: name,
-                          enable: !isRunning,
-                        });
+                      await toggleService({
+                        serviceName: name,
+                        enable: !isRunning,
                       })
                     }
                   />
@@ -227,7 +225,7 @@ const useServicesFieldConfigs = ({
         ),
       },
     ] satisfies FieldConfig<DBSSchema["services"]>[];
-  }, [dbs.services, onErrorAlert, showSpecificService, toggleService]);
+  }, [dbs.services, showSpecificService, toggleService]);
 
   return { servicesFieldConfigs };
 };

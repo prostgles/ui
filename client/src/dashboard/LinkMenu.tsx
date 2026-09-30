@@ -9,9 +9,9 @@ import type {
   DBSchemaTableWJoins,
   Link,
   LinkSyncItem,
-  WindowData,
   WindowSyncItem,
 } from "./Dashboard/dashboardUtils";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 import RTComp from "./RTComp";
 import { getLinkColorV2 } from "./W_Map/fetchData/getMapLayerQueries";
 import { JoinPathSelectorV2 } from "./W_Table/ColumnMenu/JoinPathSelectorV2";

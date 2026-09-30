@@ -4,17 +4,15 @@ import { pageReload } from "@components/Loader/Loading";
 import PopupMenu from "@components/PopupMenu";
 import { SwitchToggle } from "@components/SwitchToggle";
 import { mdiCog, mdiTable, mdiViewGridPlus } from "@mdi/js";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { useEffectAsync, usePromise } from "prostgles-client";
-import type { DBHandlerClient } from "prostgles-client";
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import React, { useMemo } from "react";
-import type { DashboardProps } from "../Dashboard/Dashboard";
 import type { Workspace } from "../Dashboard/dashboardUtils";
 import { useLocalSettings } from "../localSettings";
 import { SmartForm, type SmartFormProps } from "../SmartForm/SmartForm";
 import { DashboardHotkeys } from "./DashboardHotkeys";
 import { SettingsSection } from "./SettingsSection";
-import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 export { useEffectAsync };
 
 const layoutType = [
@@ -24,7 +22,7 @@ const layoutType = [
 ];
 
 type P = {
-  workspace: SyncDataItem<Workspace, true>;
+  workspace: SyncDataItem<Workspace, { handlesOnData: true }>;
 };
 
 export const DashboardMenuSettings = ({ workspace }: P) => {

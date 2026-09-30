@@ -2,7 +2,8 @@ import { Pan } from "@components/Pan";
 import type { ValidatedColumnInfo } from "prostgles-types";
 import React from "react";
 import type { CardViewProps, IndexedRow } from "./CardView";
-import type { CardViewRowProps } from "./CardViewRow";
+import type { CardViewRowProps } from "./CardItem/CardViewRow";
+import type { ColumnConfig } from "@common/ColumnConfig/ColumnConfig";
 import { useDragHeader } from "./useDragHeader";
 
 export type DragHeaderProps = Pick<
@@ -17,7 +18,7 @@ export type DragHeaderProps = Pick<
     allIndexedRows: IndexedRow[];
     groupByColumn: ValidatedColumnInfo;
     orderByColumn: ValidatedColumnInfo | undefined;
-    columns: ValidatedColumnInfo[];
+    columns: ColumnConfig[] | undefined;
   };
 
 export const DragHeader = (props: DragHeaderProps) => {

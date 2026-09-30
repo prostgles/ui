@@ -1,8 +1,8 @@
-import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
 import {
   OAuthProviderOptions,
   PASSWORDLESS_ADMIN_USERNAME,
 } from "@common/OAuthUtils";
+import type { TableConfig } from "prostgles-server";
 
 export const tableConfigUsers = {
   users: {

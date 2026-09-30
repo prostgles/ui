@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { isEmpty } from "../../../utils/utils";
 import { getDistanceBetweenBoxes } from "../../SilverGrid/SilverGridChild";
 import { getRowFilter } from "../tableUtils/getRowFilter";
-import type { KanBanDraggedRow } from "./CardViewRow";
+import type { KanBanDraggedRow } from "./CardItem/CardViewRow";
 import type { DragHeaderProps } from "./DragHeader";
 
 export const useDragHeader = (props: DragHeaderProps) => {
@@ -72,7 +72,10 @@ export const useDragHeader = (props: DragHeaderProps) => {
   );
 
   const onPanStart = useCallback(
-    ({ node }, e) => {
+    (
+      { node }: { node: HTMLDivElement },
+      e: React.MouseEvent<HTMLDivElement>,
+    ) => {
       e.preventDefault();
       e.stopPropagation();
       const handlerNode = node.getBoundingClientRect();

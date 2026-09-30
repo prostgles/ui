@@ -9,6 +9,7 @@ import Loading from "@components/Loader/Loading";
 import Popup, { type PopupProps } from "@components/Popup/Popup";
 import type { PaginationProps } from "@components/Table/Pagination";
 import { Table } from "@components/Table/Table";
+import type { TableHandlerClient } from "prostgles-client";
 import { type AnyObject, type SubscriptionHandler } from "prostgles-types";
 import React from "react";
 import type { Prgl } from "../App";
@@ -17,15 +18,19 @@ import RTComp from "./RTComp";
 import { SmartFilterBar } from "./SmartFilterBar/SmartFilterBar";
 import { SmartForm } from "./SmartForm/SmartForm";
 import { isNumericColumn } from "./W_SQL/getSQLResultTableColumns";
-import type { ColumnSort } from "./W_Table/ColumnMenu/ColumnMenu";
-import { getEditColumn } from "./W_Table/tableUtils/getEditColumn";
-import { onRenderColumn } from "./W_Table/tableUtils/onRenderColumn";
+import { getFormatColumnSelect } from "./W_Table/ColumnMenu/ColumnDisplayFormat/getFormatColumnSelect";
+import type { ColumnSort } from "@common/ColumnConfig/ColumnConfig";
+import { onRenderColumn } from "./W_Table/RenderColumn/onRenderColumn";
+import {
+  getEditColumn,
+  type OnClickEditRow,
+} from "./W_Table/tableUtils/getEditColumn";
 import type { ProstglesColumn } from "./W_Table/W_Table";
-import type { TableHandlerClient } from "prostgles-client";
 
 type SmartTableProps = Pick<Prgl, "db" | "sql" | "tables" | "methods"> &
   Pick<PopupProps, "clickCatchStyle" | "positioning"> & {
     filter?: DetailedFilter[];
+    fixedFilter?: AnyObject;
     tableName: string;
     tableCols?: ProstglesColumn[];
     selectedColumns?: string[];
@@ -45,6 +50,8 @@ type SmartTableProps = Pick<Prgl, "db" | "sql" | "tables" | "methods"> &
     onFilterChange?: (filter: DetailedFilter[]) => void;
     filterOperand?: "and" | "or";
     realtime?: { throttle?: number };
+    initialSort?: ColumnSort[];
+    hideFilters?: boolean;
   };
 
 type S = {
@@ -65,7 +72,11 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
     pageSize: 25,
     totalRows: 0,
     filteredRows: 0,
-    sort: [],
+    sort:
+      this.props.initialSort ??
+      this.props.tables.find((table) => table.name === this.props.tableName)
+        ?.sort ??
+      [],
     loadedData: false,
   };
 
@@ -92,36 +103,38 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
     const tableHandler = db[tableName] as TableHandlerClient | undefined;
     let _tableCols = tableCols ?? [];
     if (!tableCols) {
-      const onClickEditRow = (editRowFilter) => {
+      const onClickEditRow: OnClickEditRow = (editRowFilter) => {
         this.setState({ editRowFilter });
       };
       const table = tables.find((t) => t.name === tableName);
-      const cols = table?.columns ?? [];
-      _tableCols = cols
+      if (!table) return [];
+      const cols = table.columns;
+      const columnConfigs = cols
         .filter((c) => c.select)
-        .map((c) => {
-          const isNumeric = isNumericColumn(c);
-          return {
-            key: c.name,
-            sortable: true,
-            subLabel: c.data_type,
-            ...c,
-            /* Align numbers to right for an easier read */
-            headerClassname: isNumeric ? " jc-end  " : " ",
-            className: isNumeric ? " ta-right " : " ",
-            onRender: onRenderColumn({
-              column: c,
-              table,
-              tables,
-              barchartVals: undefined,
-              getValues: () => {
-                return this.state.rows.map((r) => r[c.name]);
-              },
-            }),
-          };
-        });
+        .map((c) => ({ ...c, format: c.renderAs, info: c }));
+      _tableCols = columnConfigs.map((c) => {
+        const isNumeric = isNumericColumn(c);
+        return {
+          key: c.name,
+          sortable: true,
+          subLabel: c.data_type,
+          ...c,
+          /* Align numbers to right for an easier read */
+          headerClassname: isNumeric ? " jc-end  " : " ",
+          className: isNumeric ? " ta-right " : " ",
+          onRender: onRenderColumn({
+            column: c,
+            table,
+            tables,
+            barchartVals: undefined,
+            getValues: () => {
+              return this.state.rows.map((r) => r[c.name]);
+            },
+          }),
+        };
+      });
 
-      if (allowEdit && tableHandler && table) {
+      if (allowEdit && tableHandler) {
         _tableCols.unshift(
           getEditColumn({
             table,
@@ -148,7 +161,8 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
 
   loading = true;
   onDelta(deltaP: Partial<SmartTableProps> | undefined): void {
-    const { filter = {}, tableName, db, realtime } = this.props;
+    const { tableName, db, realtime } = this.props;
+    const filter = this.getQueryFilter();
 
     void (async () => {
       const tableHandler = db[tableName] as TableHandlerClient | undefined;
@@ -164,7 +178,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
           sub: await tableHandler.subscribe(
             filter,
             {
-              select: "*",
+              select: this.getDataSelect(),
               limit: 0,
               throttle: this.props.realtime?.throttle ?? 100,
             },
@@ -174,7 +188,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
           ),
           filter,
         };
-      } else if (deltaP?.filter) {
+      } else if (deltaP && ("filter" in deltaP || "fixedFilter" in deltaP)) {
         void this.getData();
       }
     })();
@@ -183,6 +197,17 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
   get filter() {
     return this.props.filter ?? this.state.filter ?? [];
   }
+
+  getQueryFilter = (filter = this.filter): AnyObject => {
+    const queryFilter = getSmartGroupFilter(
+      filter,
+      undefined,
+      this.props.filterOperand,
+    );
+    return this.props.fixedFilter ?
+        { $and: [this.props.fixedFilter, queryFilter] }
+      : queryFilter;
+  };
 
   getData = async (
     filter: DetailedFilter[] = this.filter,
@@ -195,14 +220,11 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
       const tableHandler = db[tableName] as TableHandlerClient | undefined;
       if (!tableHandler) return;
 
-      const _filter = getSmartGroupFilter(
-        filter,
-        undefined,
-        this.props.filterOperand,
-      );
-      const totalRows = await tableHandler.count();
+      const _filter = this.getQueryFilter(filter);
+      const totalRows = await tableHandler.count(this.props.fixedFilter);
       const filteredRows = await tableHandler.count(_filter);
       const rows = await tableHandler.find(_filter, {
+        select: this.getDataSelect(),
         limit: pageSize,
         orderBy: sort,
         offset: page * pageSize,
@@ -223,6 +245,24 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
     }
   };
 
+  getDataSelect = () => {
+    const { tableName, tables } = this.props;
+    const table = tables.find(({ name }) => name === tableName);
+    if (!table || !table.columns.length) return "*" as const;
+
+    const select: AnyObject = {};
+    table.columns.forEach((info) => {
+      if (!info.select) {
+        return;
+      }
+      select[info.name] = 1;
+      const column = { name: info.name, format: info.renderAs, info };
+      const formatSelect = getFormatColumnSelect({ column, table });
+      Object.assign(select, formatSelect);
+    });
+    return select;
+  };
+
   render() {
     const {
       tableName,
@@ -237,6 +277,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
       title,
       clickCatchStyle,
       positioning = "right-panel",
+      hideFilters,
     } = this.props;
     const {
       filter,
@@ -255,7 +296,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
       : (title ?? (
           <span className="text-1 pxd-1 py-p5">
             {titlePrefix ?? tableName}
-            <span>{` (${filteredRows.toLocaleString()}/${totalRows.toLocaleString()})`}</span>
+            <span>{` (${(filteredRows == totalRows ? [filteredRows] : [filteredRows, totalRows]).map((v) => v.toLocaleString()).join("/")})`}</span>
           </span>
         ));
 
@@ -300,28 +341,30 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
           />
         )}
 
-        <SmartFilterBar
-          className="p-1 bg-color-2 min-h-fit"
-          rowCount={totalRows}
-          db={db}
-          sql={sql}
-          methods={this.props.methods}
-          table_name={tableName}
-          tables={tables}
-          filter={filter}
-          onChange={(filter) => {
-            this.props.onFilterChange?.(filter);
-            void this.getData(filter);
-          }}
-          onHavingChange={() => {
-            console.warn("Having change not implemented");
-          }}
-          onSortChange={undefined}
-          hideSort={true}
-          showInsertUpdateDelete={{
-            onSuccess: () => this.getData(),
-          }}
-        />
+        {!hideFilters && (
+          <SmartFilterBar
+            className="p-1 bg-color-2 min-h-fit"
+            rowCount={totalRows}
+            db={db}
+            sql={sql}
+            methods={this.props.methods}
+            table_name={tableName}
+            tables={tables}
+            filter={filter}
+            onChange={(filter) => {
+              this.props.onFilterChange?.(filter);
+              void this.getData(filter);
+            }}
+            onHavingChange={() => {
+              console.warn("Having change not implemented");
+            }}
+            onSortChange={undefined}
+            hideSort={true}
+            showInsertUpdateDelete={{
+              onSuccess: () => this.getData(),
+            }}
+          />
+        )}
         <Table
           rows={rows}
           cols={tableCols}
@@ -329,17 +372,19 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
           onRowClick={onClickRow}
           sort={sort}
           onSort={(sort) => {
-            this.getData(undefined, sort);
+            void this.getData(undefined, sort);
           }}
           onColumnReorder={(newCols) => {
-            const nIdxes = newCols
+            const nonComputedColumnNames = newCols
               .filter((c) => !(c.computed && c.key === "edit_row"))
               .map((c) => c.name);
             this.setState({
               columns: tableCols
                 .slice(0)
                 .sort(
-                  (a, b) => nIdxes.indexOf(a.name) - nIdxes.indexOf(b.name),
+                  (a, b) =>
+                    nonComputedColumnNames.indexOf(a.name) -
+                    nonComputedColumnNames.indexOf(b.name),
                 ),
             });
           }}
@@ -348,17 +393,19 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
             pageSize: 10,
             totalRows,
             onPageChange: (page) => {
-              this.getData(undefined, undefined, page);
+              void this.getData(undefined, undefined, page);
             },
             onPageSizeChange: (pageSize) => {
-              this.getData(undefined, undefined, undefined, pageSize);
+              void this.getData(undefined, undefined, undefined, pageSize);
             },
           }}
         />
       </FlexCol>
     );
 
-    if (!onClosePopup) return content;
+    if (!onClosePopup) {
+      return content;
+    }
 
     return (
       <Popup

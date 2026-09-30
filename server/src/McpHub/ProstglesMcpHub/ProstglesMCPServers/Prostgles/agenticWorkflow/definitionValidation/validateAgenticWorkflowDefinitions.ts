@@ -34,6 +34,7 @@ export const validateAgenticWorkflowDefinitions = async (
       databaseAccessDefinitions,
       usedTables,
       connection_id,
+      allowEmptyTablePermissions: false,
     });
 
   const ensureTablesExistInFutureSchema = (

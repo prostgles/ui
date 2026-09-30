@@ -53,7 +53,7 @@ export const AskLLMChatActionBarMCPTools = (
                 s.name !== "db" &&
                 /** Has tools that should rarely need changing */
                 s.name !== "prostgles-ui" &&
-                /** Has no config */
+                /** Has no config and no security implications */
                 s.name !== "documents"
               );
             })

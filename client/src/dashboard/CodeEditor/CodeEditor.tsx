@@ -105,13 +105,14 @@ export type LanguageConfig =
        * Must be unique for each model
        */
       environment: "react" | "nodejs";
+      projectPath: string | undefined;
       modelFileName: string;
       importedModels?: { [modelName: string]: string };
       tsLibraries?: TSLibrary[];
     }
   | {
       lang: "json";
-      jsonSchemas?: CodeEditorJsonSchema[];
+      jsonSchemas?: readonly CodeEditorJsonSchema[];
     };
 
 export type CodeEditorJsonSchema = { id: string; schema: any };

@@ -3,6 +3,7 @@ import { getProstglesMCPFullToolName } from "@common/mcpUtils";
 import type { DBSSchema, DBSSchemaForInsert } from "@common/publishUtils";
 import type { DBS } from "@src/index";
 import { tout } from "@src/utils/tout";
+import { getSerialisableError } from "prostgles-types";
 import type { getValidatedMcpServerToolsAllowed } from "./agenticWorkflow/definitionValidation/getValidatedMcpServerToolsAllowed";
 import type { getAgentConfigWithDefaults } from "./agenticWorkflow/proxyHandlers/getAgentConfigWithDefaults";
 import { AGENT_GOAL_TOOL_NAMES } from "@common/mcp/startAgenticWorkflowSchema";
@@ -15,6 +16,7 @@ export const startAgent = async (
     configWithDefaults,
     autoApproveAllTools,
     requestTimestamp,
+    databaseAccess,
   }: {
     name: string;
     toolsWithInfo:
@@ -23,6 +25,7 @@ export const startAgent = async (
     configWithDefaults: Awaited<ReturnType<typeof getAgentConfigWithDefaults>>;
     autoApproveAllTools: boolean;
     requestTimestamp: Date;
+    databaseAccess?: DBSSchema["llm_chats"]["db_data_permissions"];
   },
   {
     dbs,
@@ -37,13 +40,13 @@ export const startAgent = async (
   }: {
     dbs: DBS;
     userId: string;
-    chatId: number;
+    chatId?: number;
     connectionId: string;
     askLLM: GeneratedFunctionSchema["askLLM"];
     signal: AbortSignal | undefined;
     timeout: number;
     started: number;
-    messageId: string | number;
+    messageId?: string | number;
   },
 ) => {
   const {
@@ -62,6 +65,7 @@ export const startAgent = async (
       parent_chat_id: chatId,
       parent_chat_message_id: messageId,
       connection_id: connectionId,
+      db_data_permissions: databaseAccess,
       agent_info: {
         type: "agent",
         name,
@@ -76,7 +80,7 @@ export const startAgent = async (
           `\n`,
           `You must use the ${Object.values(AGENT_GOAL_TOOL_NAMES)} tools to return your final answer or bail out, and the output of that tool must match the expected output schema.`,
           "",
-          "Below is your prompt:",
+          "Below is your prompt:\n\n",
           prompt /* provided as first message */,
         ].join("\n"),
         outputSchema,
@@ -96,48 +100,54 @@ export const startAgent = async (
     } satisfies DBSSchemaForInsert["llm_chats"],
     { returning: "*" },
   );
-  if (toolsWithInfo?.length) {
-    await dbs.llm_chats_allowed_mcp_tools.insertMany(
-      toolsWithInfo.map(({ id, server_name, configId }) => {
-        return {
-          chat_id: agentChat.id,
-          tool_id: id,
-          server_name,
-          auto_approve: autoApproveAllTools,
-          server_config_id: configId,
-        } satisfies DBSSchemaForInsert["llm_chats_allowed_mcp_tools"];
-      }),
-    );
-  }
+  try {
+    if (toolsWithInfo?.length) {
+      await dbs.llm_chats_allowed_mcp_tools.insertMany(
+        toolsWithInfo.map(({ id, server_name, configId }) => {
+          return {
+            chat_id: agentChat.id,
+            tool_id: id,
+            server_name,
+            auto_approve: autoApproveAllTools,
+            server_config_id: configId,
+          } satisfies DBSSchemaForInsert["llm_chats_allowed_mcp_tools"];
+        }),
+      );
+    }
 
-  await askLLM({
-    chatId: agentChat.id,
-    type: "new-message",
-    userMessage: [
-      {
-        type: "text",
-        text: agentInput || "continue",
-      },
-    ],
-    connectionId,
-    schema: "",
-  });
+    await askLLM({
+      chatId: agentChat.id,
+      type: "new-message",
+      userMessage: [
+        {
+          type: "text",
+          text: agentInput || "continue",
+        },
+      ],
+      connectionId,
+      schema: "",
+    });
+  } catch (error) {
+    await failAgent(dbs, agentChat.id, error);
+  }
 
   let chatStatus = null as DBSSchema["llm_chats"]["status"];
   do {
     if (Date.now() - started > timeout) {
-      throw new Error(
+      const error = new Error(
         [
           `Agent ${name} timed out after ${(timeout / 1000).toFixed(2)} seconds.`,
           `chat id: ${agentChat.id}`,
           `chat status: ${JSON.stringify(chatStatus)}`,
         ].join("\n"),
       );
+      await failAgent(dbs, agentChat.id, error);
     }
     if (signal?.aborted) {
-      throw new Error(
+      const error = new Error(
         `Agent ${name} stopped due to workflow execution being aborted.`,
       );
+      await failAgent(dbs, agentChat.id, error);
     }
     await tout(500);
     const chat = await dbs.llm_chats.findOne(
@@ -151,10 +161,48 @@ export const startAgent = async (
     throw new Error(`Agent ${name} failed with error: ${chatStatus.reason}`);
   }
 
+  if (chatStatus.state === "goal-failure") {
+    throw new Error(
+      `Agent ${name} failed to achieve goal: ${chatStatus.error}. Data: ${JSON.stringify(chatStatus.data)}`,
+    );
+  }
+
   if (chatStatus.state === "goal-data-validation-failure") {
     throw new Error(
       `Agent ${name} failed because the output did not match the expected schema. Error details: ${chatStatus.error}, Output data: ${JSON.stringify(chatStatus.data)}`,
     );
   }
   return chatStatus.data;
+};
+
+const failAgent = async (
+  dbs: DBS,
+  chatId: number,
+  error: unknown,
+): Promise<never> => {
+  const chat = await dbs.llm_chats.findOne(
+    { id: chatId },
+    { select: { status: 1 } },
+  );
+  if (!chat?.status || chat.status.state === "loading") {
+    await dbs.llm_chats.update(
+      { id: chatId },
+      {
+        status: {
+          state: "goal-failure",
+          data: null,
+          error: getErrorMessage(error),
+          timestamp: new Date().toISOString(),
+        },
+      },
+    );
+  }
+  throw error;
+};
+
+const getErrorMessage = (error: unknown) => {
+  if (error instanceof Error) return error.message;
+  const serialisedError = getSerialisableError(error);
+  if (typeof serialisedError === "string") return serialisedError;
+  return JSON.stringify(serialisedError);
 };

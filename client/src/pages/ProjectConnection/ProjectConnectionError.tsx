@@ -44,6 +44,7 @@ export const ProjectConnectionError = (props: P) => {
           style={{ fontSize: "18px", fontWeight: "bold" }}
           className="mt-1"
           variant="outline"
+          size="default"
           asNavLink={true}
           href={`/`}
           iconPath={mdiArrowLeft}

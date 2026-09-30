@@ -8,8 +8,11 @@
     "outDir": "../tests-out",
     "strict": true,
     "strictNullChecks": true,
+    "jsx": "react",
     "paths": {
+      "Testing": ["./utils/Testing"],
       "common/*": ["../../common/*"]
     }
-  }
+  },
+  "exclude": ["./tests/mockRemoteMcp"]
 }

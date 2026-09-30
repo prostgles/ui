@@ -1,27 +1,30 @@
-import { getConnectionPaths, ROUTES, type DeepWriteable } from "@common/utils";
+import {
+  columnDisplayFormatSchema,
+  type UserColumnFormat,
+} from "@common/columnDisplayFormat.schema";
+import { getConnectionPaths, type DeepWriteable } from "@common/utils";
+import { FlexCol } from "@components/Flex";
 import { JSONBSchema } from "@components/JSONBSchema/JSONBSchema";
+import { InfoRow } from "@components/InfoRow";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { includes, type DBSchemaTable } from "prostgles-types";
 import React, { useMemo } from "react";
+import { Link } from "react-router";
 import type { Prgl } from "src/App";
 import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
-import type { ColumnConfigWInfo } from "../../W_Table";
-import type { ColumnFormat } from "./columnFormatUtils";
-import {
-  // columnDisplayFormatSchema,
-  getFormatOptions,
-} from "./columnFormatUtils";
-import { FlexCol } from "@components/Flex";
-import { Link } from "react-router";
-import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import { columnDisplayFormatSchema } from "@common/columnDisplayFormat.schema";
+import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
 import { UpdateColumnGlobalConfig } from "../UpdateColumnGlobalConfig";
+import type { NestedDisplay } from "@common/ColumnConfig/ColumnConfig";
+import { getFormatOptions } from "./columnFormatUtils";
+import { getColumnDrillDownDisabledInfo } from "./getColumnDrillDownDisabledInfo";
 
 type P = {
   db: Prgl["db"];
-  column: ColumnConfigWInfo;
+  column: ColumnConfigWithInfo;
+  parentDisplay?: NestedDisplay["type"];
   table: DBSchemaTable;
   tables: DBSchemaTablesWJoins;
-  onChange: (newFormat: ColumnFormat) => void;
+  onChange: (newFormat: UserColumnFormat | undefined) => void;
 };
 
 export const ColumnDisplayFormat = ({
@@ -30,8 +33,10 @@ export const ColumnDisplayFormat = ({
   tables,
   onChange,
   db,
+  parentDisplay,
 }: P) => {
   const { connection } = usePrgl();
+  const internalFormat = column.info?.defaultRenderAs;
   const schema = useMemo(() => {
     const schemaWithoutAllowedValues = {
       ...columnDisplayFormatSchema,
@@ -42,7 +47,7 @@ export const ColumnDisplayFormat = ({
     const textCols = table.columns
       .filter((c) => c.tsDataType === "string")
       .map((c) => c.name);
-    schemaWithoutAllowedValues.oneOfType = schemaWithoutAllowedValues.oneOfType
+    const userFormatSchemas = schemaWithoutAllowedValues.oneOfType
       .map((t) => {
         if ("params" in t) {
           if (t.type.enum[0] === "Currency") {
@@ -56,8 +61,8 @@ export const ColumnDisplayFormat = ({
                 subLabel: c.country,
               }));
           } else if (t.type.enum[0] === "Media") {
-            //@ts-ignore
-            t.params.oneOfType[2]!.contentTypeColumnName.allowedValues =
+            // @ts-ignore
+            t.params.type.contentType.oneOfType[2]!.contentTypeColumnName.allowedValues =
               textCols;
           }
         }
@@ -66,9 +71,28 @@ export const ColumnDisplayFormat = ({
       })
       .filter((t) =>
         allowedRenderers.find((df) => includes(t.type.enum, df.type)),
-      ) as typeof schemaWithoutAllowedValues.oneOfType;
-    return schemaWithoutAllowedValues;
-  }, [column, table.columns]);
+      );
+    return {
+      ...schemaWithoutAllowedValues,
+      oneOfType: [
+        ...(internalFormat ?
+          [
+            {
+              type: {
+                enum: ["Internal"] as const,
+                title: "Format",
+                description: "Use the schema-provided internal format",
+              },
+            },
+          ]
+        : []),
+        ...userFormatSchemas,
+      ],
+    };
+  }, [column, internalFormat, table.columns]);
+  const drillDownDisabledInfo =
+    column.display === "drillable-records" &&
+    getColumnDrillDownDisabledInfo(column, parentDisplay);
 
   return (
     <FlexCol>
@@ -76,9 +100,17 @@ export const ColumnDisplayFormat = ({
         schema={schema}
         db={db}
         tables={tables}
-        value={column.format}
-        onChange={onChange}
+        value={
+          column.format ??
+          (internalFormat ? { type: "Internal" } : undefined)
+        }
+        onChange={(format) => {
+          onChange(format.type === "Internal" ? undefined : format);
+        }}
       />
+      {drillDownDisabledInfo && (
+        <InfoRow color="warning">{drillDownDisabledInfo}</InfoRow>
+      )}
       {column.format?.type === "Media" && (
         <Link to={getConnectionPaths(connection, "security").config}>
           Content Security Policy settings

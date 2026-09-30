@@ -1,13 +1,13 @@
-import type { DBS } from "@src/index";
-import { getTemplatedWebAppConnection } from "./getTemplatedWebAppConnection";
+import type { DBSClient } from "@src/index";
+import { isTesting } from "@src/init/utils";
 import { rmSync } from "fs";
 import { join } from "path";
+import { getTemplatedWebAppConnection } from "./getTemplatedWebAppConnection";
 import { runDockerForWebApp } from "./runDockerForWebApp";
-import { isTesting } from "@src/init/utils";
 
 export const buildWebApp = async (
   { connectionId, clean }: { connectionId: string; clean?: boolean },
-  { dbo }: { dbo: DBS },
+  { dbo }: { dbo: DBSClient },
 ) => {
   const { web_app_directory } = await getTemplatedWebAppConnection(
     dbo,
@@ -26,7 +26,7 @@ export const buildWebApp = async (
 
   const result = await runDockerForWebApp({
     web_app_directory,
-    image: "node:24-slim",
+    image: "node:24-trixie-slim",
     shCommand: `cd client && npm i ${isTesting ? "" : "--silent"} && npm run build`,
     env: {
       HOME: "/tmp",

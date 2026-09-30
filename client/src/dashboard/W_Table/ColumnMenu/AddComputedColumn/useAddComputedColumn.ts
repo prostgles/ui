@@ -2,13 +2,14 @@ import { isDefined, pickKeys } from "prostgles-types";
 import type { ValidatedColumnInfo } from "prostgles-types/lib";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  FUCTION_DEFINITIONS,
+  FUNCTION_DEFINITIONS,
   getColumnsAcceptedByFunction,
   type FuncDef,
-} from "../FunctionSelector/functions";
+} from "@common/ColumnConfig/FUNCTIONS";
 import { getAllJoins } from "../JoinPathSelectorV2";
 import type { QuickAddComputedColumnProps } from "./QuickAddComputedColumn";
-import type { ColumnConfig } from "../ColumnMenu";
+import type { ColumnConfig } from "@common/ColumnConfig/ColumnConfig";
+import type { AggregateOptions } from "@common/ColumnConfig/ColumnConfig";
 import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 
 export const useAddComputedColumnState = ({
@@ -32,9 +33,10 @@ export const useAddComputedColumnState = ({
     return {
       args: config.args,
       funcDef:
-        FUCTION_DEFINITIONS.find((f) => f.key === config.funcDef.key) ||
+        FUNCTION_DEFINITIONS.find((f) => f.key === config.funcDef.key) ||
         undefined,
       column: table.columns.find((c) => c.name === config.column),
+      aggregateOptions: config.aggregateOptions,
     };
   }, [existingColumn, table]);
 
@@ -44,6 +46,9 @@ export const useAddComputedColumnState = ({
   const [args, setArgs] = useState<
     Required<ColumnConfig>["computedConfig"]["args"]
   >(existingColumnInfo?.args);
+  const [aggregateOptions, setAggregateOptions] = useState<
+    AggregateOptions | undefined
+  >(existingColumnInfo?.aggregateOptions);
 
   const allowedColumns: undefined | ValidatedColumnInfoWithJoin[] =
     useMemo(() => {
@@ -82,7 +87,7 @@ export const useAddComputedColumnState = ({
   const [name, setName] = useState(existingColumn?.name || "");
 
   useEffect(() => {
-    if (!funcDef) {
+    if (!funcDef || existingColumn) {
       return;
     }
     const name =
@@ -90,7 +95,7 @@ export const useAddComputedColumnState = ({
         `${funcDef.label}( ${[column.join?.table.label, column.name].filter(isDefined).join(".")} )`
       : funcDef.label;
     setName(name);
-  }, [funcDef, column]);
+  }, [funcDef, column, existingColumn]);
 
   const addColumn = useCallback(
     (column: ValidatedColumnInfoWithJoin | undefined, funcDef: FuncDef) => {
@@ -114,6 +119,8 @@ export const useAddComputedColumnState = ({
                   ...pickKeys(outInfo, ["tsDataType", "udt_name"]),
                   funcDef,
                   column: column.name,
+                  aggregateOptions:
+                    funcDef.isAggregate ? aggregateOptions : undefined,
                 },
               },
               ...column.join.table.columns.map((c) => ({
@@ -123,22 +130,25 @@ export const useAddComputedColumnState = ({
             ],
             path: column.join.path,
           },
-          show: true,
+          show: existingColumn?.show ?? true,
         });
       } else {
         onAddColumn({
           name,
-          show: true,
+          show: existingColumn?.show ?? true,
           computedConfig: {
             ...pickKeys(outInfo, ["tsDataType", "udt_name"]),
             funcDef,
+            isColumn: existingColumn?.computedConfig?.isColumn,
             args,
             column: column?.name,
+            aggregateOptions:
+              funcDef.isAggregate ? aggregateOptions : undefined,
           },
         });
       }
     },
-    [onAddColumn, name, args],
+    [aggregateOptions, args, name, onAddColumn, existingColumn],
   );
 
   const [onAddDisabledInfo, onAdd] =
@@ -163,6 +173,8 @@ export const useAddComputedColumnState = ({
     onAdd,
     args,
     setArgs,
+    aggregateOptions,
+    setAggregateOptions,
   };
 };
 

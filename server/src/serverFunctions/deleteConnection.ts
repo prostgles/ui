@@ -14,12 +14,6 @@ export const deleteConnection = async (
       if (con?.is_state_db) {
         throw "Cannot delete a prostgles state database connection";
       }
-      const activeConnections = connectionManager.prglConnections.get(id);
-      if (activeConnections?.state === "started") {
-        activeConnections.methodRunner?.destroy();
-        activeConnections.onMountRunner?.destroy();
-        activeConnections.tableConfigRunner?.destroy();
-      }
       if (opts?.dropDatabase) {
         if (!con?.db_name) throw "Unexpected: Database name missing";
         const { db: cdb, destroy: destroyCdb } = await getCDB(

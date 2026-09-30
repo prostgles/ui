@@ -2,6 +2,7 @@ import React from "react";
 import "./ProgressBar.css";
 import type { DivProps } from "./Flex";
 import { classOverride, FlexRow } from "./Flex";
+import { MINI_BARCHART_COLOR } from "@common/ColumnConfig/COLOR_PALETTE";
 
 type P = {
   messageTop?: React.ReactNode;
@@ -12,8 +13,6 @@ type P = {
   endContent?: React.ReactNode;
   color?: "active" | "gray";
 } & Omit<DivProps, "children">;
-
-export const MINI_BARCHART_COLOR = "var(--active)";
 
 export const ProgressBar = ({
   messageTop,
@@ -100,12 +99,13 @@ export const CellBarchart = ({
   const delta = +max - +min;
   const clampedValue = Math.min(Math.max(+value, +min), +max);
   const valDelta = +clampedValue - +min;
-  const perc = Math.round((100 * valDelta) / delta);
+  const perc = delta === 0 ? 0 : Math.round((100 * valDelta) / delta);
+
   const height = 8;
   return (
     <div
       {...divProps}
-      className={classOverride("ProgressBar flex-col gap-p25", className)}
+      className={classOverride("ProgressBar flex-col gap-p25  ", className)}
       style={style}
     >
       <div

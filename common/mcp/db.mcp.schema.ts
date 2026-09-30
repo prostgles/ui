@@ -31,14 +31,9 @@ const filterSchema = {
 
 const selectSchema = {
   optional: true,
-  oneOf: [
-    { enum: ["*"] },
-    {
-      description:
-        "Fields to select. Must satisfy the table schema. Example: { id: 1, name: 1 } or { password: 0 }",
-      record: { values: { enum: [1, 0] } },
-    },
-  ],
+  record: {
+    values: { oneOf: [{ enum: [1, 0] }, { record: { values: "any" } }] },
+  },
 } as const;
 
 const orderByItemSchema = {
@@ -72,6 +67,7 @@ export const dbMcpSchema = {
     icon: "DatabaseEyeOutline",
     description: fixIndent(`
       Gets the schema of existing tables in the connected database.
+      It ignores the "prostgles" schema (used internally) by default.
       Optionally can provide a list of exact table names ("tableNames") or table name parts ("tableNameParts") to get the schema for specific tables. If not provided, the schema for all tables will be returned.
       `),
     schema: {
@@ -128,7 +124,11 @@ export const dbMcpSchema = {
       type: {
         tableName: "string",
         filter: { optional: true, ...filterSchema.filter },
-        select: selectSchema,
+        select: {
+          description:
+            'Fields to select. Omit to select all fields. Must satisfy the table schema. Example: { id: 1, name: 1 }, { password: 0 }, or { page_text: { $array_element: ["text_content", 2] } }',
+          ...selectSchema,
+        },
         orderBy: orderBySchema,
         limit: {
           optional: true,
@@ -162,7 +162,7 @@ export const dbMcpSchema = {
         },
         returning: {
           description:
-            "Fields to return for newly inserted data. Nothing will be returned otherwise",
+            'Fields to return for newly inserted data. Use { "*": 1 } to return all fields. Nothing will be returned otherwise',
           ...selectSchema,
         },
       },
@@ -198,7 +198,7 @@ export const dbMcpSchema = {
         },
         returning: {
           description:
-            "Fields to return for newly inserted data. Nothing will be returned otherwise",
+            'Fields to return for newly inserted data. Use { "*": 1 } to return all fields. Nothing will be returned otherwise',
           ...selectSchema,
         },
       },
@@ -239,7 +239,7 @@ export const dbMcpSchema = {
         },
         returning: {
           description:
-            "Fields to return for updated data. Nothing will be returned otherwise",
+            'Fields to return for updated data. Use { "*": 1 } to return all fields. Nothing will be returned otherwise',
           ...selectSchema,
         },
       },
@@ -267,7 +267,7 @@ export const dbMcpSchema = {
 
         returning: {
           description:
-            "Fields to return for the deleted rows. Nothing will be returned otherwise",
+            'Fields to return for the deleted rows. Use { "*": 1 } to return all fields. Nothing will be returned otherwise',
           ...selectSchema,
         },
       },

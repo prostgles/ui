@@ -1,4 +1,8 @@
-import { getSmartGroupFilter } from "@common/filterUtils";
+import {
+  getSmartGroupFilter,
+  type DetailedFilter,
+  type GroupedDetailedFilter,
+} from "@common/filterUtils";
 import { useAsyncEffectQueue } from "prostgles-client";
 import { isObject, type AnyObject } from "prostgles-types";
 import { useEffect, useMemo, useState } from "react";
@@ -22,7 +26,7 @@ export const useSmartCardListState = (
     | "realtime"
     | "orderBy"
     | "showTopBar"
-    | "orderByfields"
+    | "orderByFields"
     | "tables"
     | "searchFilter"
   > & {
@@ -30,7 +34,7 @@ export const useSmartCardListState = (
   },
 ) => {
   const {
-    orderByfields,
+    orderByFields,
     tableName,
     db,
     sql,
@@ -51,7 +55,9 @@ export const useSmartCardListState = (
   const [localOrderBy, setLocalOrderBy] = useState(
     Array.isArray(orderBy) ? undefined : orderBy,
   );
-  const [localFilter, setLocalFilter] = useState(searchFilter);
+  const [localFilter, setLocalFilter] = useState<
+    (DetailedFilter | GroupedDetailedFilter)[] | undefined
+  >(searchFilter);
 
   const columns = useSmartCardColumns({
     tableName,
@@ -91,7 +97,7 @@ export const useSmartCardListState = (
       table?.columns.some((c) => c.insert);
 
     const showSort = isObject(showTopBar) ? showTopBar.sort : showTopBar;
-    const willShowSort = showSort && orderByfields?.length !== 0;
+    const willShowSort = showSort && orderByFields?.length !== 0;
     return {
       type: "table",
       tableName,
@@ -121,7 +127,7 @@ export const useSmartCardListState = (
     localOrderBy,
     tables,
     showTopBar,
-    orderByfields?.length,
+    orderByFields?.length,
   ]);
 
   useEffect(() => {

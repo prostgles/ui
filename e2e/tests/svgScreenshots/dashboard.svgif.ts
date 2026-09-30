@@ -13,7 +13,7 @@ import { demoRestaurantName } from "utils/constants";
 
 export const dashboardSvgif: OnBeforeScreenshot = async (
   page,
-  { openConnection, openMenuIfClosed, toggleMenuPinned },
+  { openConnection, openMenuIfClosed },
   { addScene, addSceneAnimation },
 ) => {
   await goTo(page, "/connections");
@@ -67,12 +67,12 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
 
   /** Search all */
   await addScene({
-    caption: "Search all tables (Ctrl+Shift+F)",
+    // caption: "Search all tables (Ctrl+Shift+F)",
     animations: [{ type: "wait", duration: 1000 }],
   });
+
   await page.keyboard.press("Control+Shift+KeyF");
   await page.waitForTimeout(1000);
-  // await addScene({ animations: [{ type: "wait", duration: 1000 }] });
   const searchAllInput = page.getByTestId("SearchAll");
   /** To prevent searching */
   await searchAllInput.evaluate(
@@ -246,6 +246,7 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
       },
       { type: "wait", duration: 500 },
     ],
+    svgFileName: "move_table",
   });
   await page.mouse.move(x + 675, y + 25, {
     steps: 22,

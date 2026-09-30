@@ -1,9 +1,7 @@
 import * as fs from "fs";
-import path from "path";
-import { getRootDir } from "../electronConfig";
 import type { Connections } from "..";
-import type { ConnectionManager } from "./ConnectionManager";
 import type { EnvVars } from "../BackupManager/pipeFromCommand";
+import { getDataPath } from "../electronConfig";
 
 export const saveCertificates = (connections: Connections[]) => {
   connections.forEach((c) => {
@@ -43,13 +41,9 @@ export const saveCertificates = (connections: Connections[]) => {
     }
   });
 };
-const PROSTGLES_CERTS_FOLDER = "prostgles_certificates";
 
 const getCertPath = (conId: string, type?: "ca" | "cert" | "key") => {
-  return path.resolve(
-    `${getRootDir()}/${PROSTGLES_CERTS_FOLDER}/${conId}` +
-      (type ? `/${type}.pem` : ""),
-  );
+  return getDataPath("CERTIFICATES", conId, type ? `/${type}.pem` : "");
 };
 
 export function getSSLEnvVars(c: Connections): EnvVars {

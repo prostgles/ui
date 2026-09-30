@@ -1,22 +1,35 @@
 import { isDocker } from "@src/McpHub/utils";
-import { readFileSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import { join } from "path";
 import type { CreateContainerParams } from "../ProstglesMcpHub/ProstglesMCPServers/Prostgles/schemas/getContainerToolSchemas";
 import type { StrictOmit } from "@common/utils";
+import {
+  DEFAULT_DOCKER_NETWORK_NAME,
+  getDockerRuntime,
+} from "@src/dockerRuntime";
 
-const CUSTOM_BRIDGE_NETWORK_NAME = "prostgles-bridge-net";
 export const INTERNAL_BRIDGE_NETWORK_NAME = "prostgles-bridge-internal-net";
 
 /** Test compose network names */
-if (process.env.NODE_ENV === "development") {
-  const dockerComposeFile = readFileSync(
-    join(__dirname, "..", "..", "..", "..", "..", "..", "docker-compose.yml"),
-    "utf8",
-  );
+const repositoryDockerComposeFile = join(
+  __dirname,
+  "..",
+  "..",
+  "..",
+  "..",
+  "..",
+  "..",
+  "docker-compose.yml",
+);
+if (
+  process.env.NODE_ENV === "development" &&
+  existsSync(repositoryDockerComposeFile)
+) {
+  const dockerComposeFile = readFileSync(repositoryDockerComposeFile, "utf8");
   const networksSection = dockerComposeFile.split("networks:")[1];
-  if (!networksSection?.includes(`name: ${CUSTOM_BRIDGE_NETWORK_NAME}`)) {
+  if (!networksSection?.includes(`name: ${DEFAULT_DOCKER_NETWORK_NAME}`)) {
     throw new Error(
-      `Docker compose file must include a network named ${CUSTOM_BRIDGE_NETWORK_NAME}`,
+      `Docker compose file must include a network named ${DEFAULT_DOCKER_NETWORK_NAME}`,
     );
   }
 }
@@ -40,7 +53,8 @@ export const getNetworkName = (
 ) => {
   return (
     networkMode === "bridge-internal" ? INTERNAL_BRIDGE_NETWORK_NAME
-    : isDocker && networkMode === "bridge" ? CUSTOM_BRIDGE_NETWORK_NAME
+    : isDocker && networkMode === "bridge" ?
+      (getDockerRuntime().networkName ?? DEFAULT_DOCKER_NETWORK_NAME)
     : networkMode
   );
 };

@@ -1,14 +1,14 @@
-import type { DB } from "prostgles-server/dist/initProstgles";
-import { PRGL_PASSWORD, PRGL_USERNAME } from "../envVars";
-import type { DBS, Users } from "..";
 import {
   ELECTRON_USER_AGENT,
   PASSWORDLESS_ADMIN_USERNAME,
 } from "@common/OAuthUtils";
-import { getPasswordHash } from "../authConfig/authUtils";
-import { getElectronConfig } from "../electronConfig";
-import { makeSession } from "../authConfig/sessionUtils";
 import { YEAR } from "@common/utils";
+import type { DB } from "prostgles-server/dist/initProstgles";
+import type { DBS, Users } from "..";
+import { makeSession } from "../authConfig/sessionUtils";
+import { getElectronConfig } from "../electronConfig";
+import { PRGL_PASSWORD, PRGL_USERNAME } from "../envVars";
+import { getPasswordHash } from "@src/authConfig/authUtils";
 
 const EMPTY_PASSWORD = "";
 
@@ -43,6 +43,7 @@ export const getPasswordlessAdmin = async (
 export const initUsers = async (db: DBS, _db: DB) => {
   let username = PRGL_USERNAME,
     password = PRGL_PASSWORD;
+
   if (NoInitialAdminPasswordProvided) {
     username = PASSWORDLESS_ADMIN_USERNAME;
     password = EMPTY_PASSWORD;
@@ -74,7 +75,7 @@ export const initUsers = async (db: DBS, _db: DB) => {
           id: initialAdmin.id,
         },
         {
-          password: password && getPasswordHash(initialAdmin, password),
+          password: getPasswordHash(initialAdmin, password),
           status: "active",
         },
       );
@@ -93,7 +94,9 @@ export const initUsers = async (db: DBS, _db: DB) => {
   const electron = getElectronConfig();
   if (electron?.isElectron) {
     const user = await getPasswordlessAdmin(db);
-    if (!user) throw `Unexpected: Electron passwordless_admin misssing`;
+    if (!user) {
+      throw `Unexpected: Electron passwordless_admin misssing`;
+    }
     await db.sessions.delete({});
     await makeSession(
       user,

@@ -2,6 +2,7 @@ import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type { ProstglesState } from "@common/electronInitTypes";
 import { API_ENDPOINTS, ROUTES } from "@common/utils";
 import { pageReload } from "@components/Loader/Loading";
+import { logClientEvents } from "@pages/ProjectConnection/logClientEvents";
 import {
   useProstglesClient,
   type UseProstglesClientProps,
@@ -9,8 +10,6 @@ import {
 import { useEffect, useMemo } from "react";
 import type { DBSMethods } from "src/dashboard/Dashboard/DBS";
 import type { ClientUser } from "../App";
-import { isPlaywrightTest } from "../i18n/i18nUtils";
-import { playwrightTestLogs } from "../utils/utils";
 
 export const useDBSClient = (
   onDisconnect: (isDisconnected: boolean) => void,
@@ -30,7 +29,7 @@ export const useDBSClient = (
       onDisconnect: () => {
         onDisconnect(true);
       },
-      onDebug: !isPlaywrightTest ? undefined : playwrightTestLogs,
+      onDebug: logClientEvents,
       onReconnect: () => {
         onDisconnect(false);
         if (window.location.pathname.startsWith(ROUTES.CONNECTIONS + "/")) {

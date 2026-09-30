@@ -74,6 +74,13 @@ export const AccessControl = (props: P) => {
 
   return (
     <div className={"flex-col f-1 " + className}>
+      {database_config.config_sync?.type === "cli" && (
+        <InfoRow color="warning">
+          This is a CLI app. Changes made here are not saved to the source code
+          and may be overwritten when the app restarts or syncs. Update the
+          source configuration to keep them.
+        </InfoRow>
+      )}
       <div className="f-1 flex-row min-h-0 ">
         {action ?
           <AccessControlRuleEditor

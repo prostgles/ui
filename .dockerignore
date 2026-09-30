@@ -3,7 +3,9 @@
 .github
 .vscode
 scripts/demo
-e2e
+e2e/*
+!e2e/cli
+!e2e/tests/utils
 electron
 releases
 **/node_modules

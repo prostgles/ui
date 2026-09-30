@@ -28,5 +28,9 @@ export const getTableDataRequestSignature = (
       sigData[key] = argKeyObj[key];
     });
 
-  return JSON.stringify(sigData);
+  return JSON.stringify(sigData, (_key, value) =>
+    value instanceof Map ?
+      [...value].sort(([a], [b]) => a.localeCompare(b))
+    : value,
+  );
 };

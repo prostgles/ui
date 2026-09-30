@@ -8,7 +8,6 @@ import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { useEffectDeep } from "prostgles-client/dist/prostgles";
 import { isEqual } from "prostgles-types";
 import React, { useCallback, useMemo } from "react";
-import { chipColors } from "src/dashboard/W_Table/ColumnMenu/ColumnDisplayFormat/ChipStylePalette";
 import {
   DefaultConditionalStyleLimit,
   fetchColumnValues,
@@ -18,10 +17,11 @@ import { useDebouncedCallback } from "src/hooks/useDebouncedCallback";
 import { isDefined } from "../../../utils/utils";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import { ColorPicker } from "../../W_Table/ColumnMenu/ColorPicker";
-import { type ColumnValue } from "../../W_Table/ColumnMenu/ColumnStyleControls/ColumnStyleControls";
+import { type ColumnValue } from "@common/ColumnConfig/columnStyleTypes";
 import type { W_TimeChartStateLayer } from "../../W_TimeChart/W_TimeChart";
 import { getGroupByValueColor } from "./getGroupByValueColor";
 import { getRandomElement } from "@common/utils";
+import { chipColors } from "@common/ColumnConfig/chipColors";
 
 type P = DivProps &
   Pick<CommonWindowProps, "getLinksAndWindows" | "myLinks" | "w"> & {
@@ -64,7 +64,7 @@ export const ColorByLegend = ({ className, style, onChanged, ...props }: P) => {
   const updateGroupByColumnColors = useCallback(
     (groupByColumnColors: { value: unknown; color: string }[]) => {
       if (!thisLink || !linkOptions) throw "Not expected";
-      thisLink.$update({
+      void thisLink.$update({
         options: {
           ...linkOptions,
           groupByColumnColors,

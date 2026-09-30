@@ -1,5 +1,5 @@
+import { DEFAULT_CHIP_STYLE } from "@common/ColumnConfig/chipColors";
 import { FlexCol, FlexRowWrap } from "@components/Flex";
-import { MINI_BARCHART_COLOR } from "@components/ProgressBar";
 import { Select } from "@components/Select/Select";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { _PG_numbers, includes } from "prostgles-types";
@@ -7,64 +7,17 @@ import type { ValidatedColumnInfo } from "prostgles-types/lib";
 import React from "react";
 import { type Prgl } from "../../../../App";
 import { ColorPicker } from "../ColorPicker";
-import {
-  ChipStylePalette,
-  DEFAULT_CHIP_STYLE,
-} from "../ColumnDisplayFormat/ChipStylePalette";
+import type {
+  ColumnConfig,
+  ColumnStyle,
+} from "@common/ColumnConfig/ColumnConfig";
+import { ChipStylePalette } from "../ColumnDisplayFormat/ChipStylePalette";
 import { ConditionalCellIconStyleControls } from "../ColumnDisplayFormat/ConditionalCellIconStyleControls";
-import type { CONDITION_OPERATORS } from "../ColumnDisplayFormat/ConditionalCellStyleControls";
 import { ConditionalCellStyleControls } from "../ColumnDisplayFormat/ConditionalCellStyleControls";
-import type { ColumnConfig } from "../ColumnMenu";
-import { getValueColors } from "./getValueColors";
 import { UpdateColumnGlobalConfig } from "../UpdateColumnGlobalConfig";
-import { getSingleShownNestedColumn } from "../../tableUtils/StyledTableColumn";
-
-export type ColumnValue = string | number | Date | null | undefined | boolean;
-
-type BasicConditionFilter = {
-  operator: Exclude<(typeof CONDITION_OPERATORS)[number], "in" | "not in">;
-  condition: ColumnValue;
-};
-
-type ConditionFilter =
-  | BasicConditionFilter
-  | {
-      operator: "in" | "not in";
-      condition: BasicConditionFilter["condition"][];
-    };
-
-export type ChipStyle = {
-  textColor?: string;
-  chipColor?: string;
-  cellColor?: string;
-  borderColor?: string;
-};
-
-export type ConditionalStyle = {
-  type: "Conditional";
-  conditions: (ConditionFilter & ChipStyle)[];
-  defaultStyle?: ChipStyle;
-};
-export type ConditionalStyleIcons = {
-  type: "Icons";
-  size?: number;
-  valueToIconMap: Record<string, string>;
-};
-export type FixedStyle = {
-  type: "Fixed";
-} & ChipStyle;
-
-export type ScaleStyle = {
-  type: "Scale";
-  textColor: string;
-  minColor: string;
-  maxColor: string;
-};
-export type BarchartStyle = {
-  type: "Barchart";
-  barColor: string;
-  textColor: string;
-};
+import { getValueColors } from "./getValueColors";
+import type { BarchartStyle } from "@common/ColumnConfig/columnStyleTypes";
+import { MINI_BARCHART_COLOR } from "@common/ColumnConfig/COLOR_PALETTE";
 
 export type StyleColumnProps = Pick<Prgl, "db" | "tables"> & {
   column: ColumnConfig;
@@ -75,11 +28,8 @@ export type StyleColumnProps = Pick<Prgl, "db" | "tables"> & {
 };
 
 export const ColumnStyleControls = (props: StyleColumnProps) => {
-  const { column, onUpdate, tableName, db } = props;
-
-  const nestedColumn = getSingleShownNestedColumn(column, props.tables);
-  const { tsDataType, udt_name } = nestedColumn?.colInfo ?? props;
-  const STYLE_MODES: Array<Required<ColumnConfig>["style"]["type"]> = [
+  const { column, onUpdate, tableName, db, tsDataType, udt_name } = props;
+  const STYLE_MODES: Array<NonNullable<ColumnStyle["type"]>> = [
     "None",
     "Fixed",
     "Conditional",
@@ -95,11 +45,14 @@ export const ColumnStyleControls = (props: StyleColumnProps) => {
     STYLE_MODES.push("Barchart");
   }
 
-  const style_type = style.type;
+  const style_type = style.type ?? "None";
   const setStyle = (newStyle: ColumnConfig["style"]) => {
     /* If different style type then full overwrite. Otherwise update */
     if (newStyle?.type && newStyle.type !== style.type) {
-      let _newStyle = { ...newStyle };
+      let _newStyle: ColumnStyle = {
+        buttonVariant: style.buttonVariant,
+        ...newStyle,
+      };
       if (newStyle.type === "Barchart") {
         _newStyle = {
           barColor: "rgba(0,246,96,1)",
@@ -122,6 +75,20 @@ export const ColumnStyleControls = (props: StyleColumnProps) => {
 
   return (
     <FlexCol className="ColumnStyleControls flex-col gap-1">
+      {(column.display === "drillable-records" ||
+        column.nested?.display?.type === "drillable-records") && (
+        <Select
+          label="Button style"
+          options={["text", "faded", "filled", "outline"]}
+          value={
+            style.buttonVariant ??
+            (column.nested?.display?.type === "drillable-records" ?
+              "faded"
+            : "text")
+          }
+          onChange={(buttonVariant) => updateStylePart({ buttonVariant })}
+        />
+      )}
       <Select
         label="Style mode"
         value={style_type}

@@ -6,21 +6,24 @@ import { mdiPlus, mdiSigma } from "@mdi/js";
 import React, { useState } from "react";
 import type { DBSchemaTableWithRenderInfo } from "src/dashboard/Dashboard/getTables";
 import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
-import type { ColumnConfigWInfo } from "../../W_Table";
-import { getColWInfo } from "../../tableUtils/getColWInfo";
+import { getColumnsWithInfo } from "../../tableUtils/getColumnsWithInfo";
 import { getMinimalColumnInfo } from "../../tableUtils/tableUtils";
 import { AddComputedColMenu } from "../AddComputedColumn/AddComputedColMenu";
 import { QuickAddComputedColumn } from "../AddComputedColumn/QuickAddComputedColumn";
 import { ColumnList } from "../ColumnList";
-import type { ColumnConfig } from "../ColumnMenu";
+import type {
+  ColumnConfig,
+  ColumnConfigNested,
+  NestedColumn,
+} from "@common/ColumnConfig/ColumnConfig";
 import { NestedTimechartControls } from "../NestedTimechartControls";
 import type { LinkedColumnProps } from "./LinkedColumn";
 
 type P = LinkedColumnProps & {
-  updateNested: (newNested: Partial<ColumnConfig["nested"]>) => void;
+  updateNested: (newNested: Partial<ColumnConfigNested["nested"]>) => void;
   table: DBSchemaTableWithRenderInfo | undefined;
-  currentColumn: ColumnConfigWInfo | undefined;
-  updateColumn: (newCol: Partial<ColumnConfig>) => void;
+  currentColumn: ColumnConfigNested | undefined;
+  updateColumn: (newCol: Partial<ColumnConfigNested>) => void;
 };
 export const LinkedColumnSelect = ({
   w,
@@ -31,11 +34,13 @@ export const LinkedColumnSelect = ({
   updateColumn,
 }: P) => {
   const { tables, db } = usePrgl();
-  const nestedColumns = currentColumn?.nested?.columns;
-  const updateNestedColumns = (newCols: ColumnConfigWInfo[]) => {
+  const nestedColumns = currentColumn?.nested.columns;
+  const updateNestedColumns = (newCols: ColumnConfig[]) => {
     if (!table) throw "not ok";
     updateNested({
-      columns: getMinimalColumnInfo(getColWInfo(table, newCols)),
+      columns: getMinimalColumnInfo(
+        getColumnsWithInfo(table.name, tables, newCols),
+      ) as NestedColumn<ColumnConfig>[],
     });
   };
   const [showAddComputedCol, setShowAddComputedCol] = useState(false);
@@ -54,10 +59,14 @@ export const LinkedColumnSelect = ({
               <Label label="Columns" variant="normal"></Label>
               <Btn
                 variant="faded"
-                color={!currentColumn.nested?.chart ? "action" : undefined}
+                color={
+                  currentColumn.nested.display?.type !== "timechart" ?
+                    "action"
+                  : undefined
+                }
                 data-command="LinkedColumn.ColumnList.toggle"
                 disabledInfo={
-                  currentColumn.nested?.chart ?
+                  currentColumn.nested.display?.type === "timechart" ?
                     "Must disable time chart first"
                   : undefined
                 }
@@ -70,6 +79,7 @@ export const LinkedColumnSelect = ({
             return (
               <FlexCol className="min-h-0">
                 <ColumnList
+                  parentDisplay={currentColumn.nested.display?.type ?? "values"}
                   columns={nestedColumns}
                   table={table}
                   onClose={pClose}
@@ -117,9 +127,17 @@ export const LinkedColumnSelect = ({
         <>
           <NestedTimechartControls
             tableName={table.name}
-            chart={currentColumn?.nested?.chart}
+            chart={
+              currentColumn?.nested.display?.type === "timechart" ?
+                currentColumn.nested.display
+              : undefined
+            }
             onChange={(chart) => {
-              updateNested({ chart, limit: chart ? 200 : 20 });
+              updateNested({
+                display: chart ?? { type: "values" },
+                limit: chart ? 200 : 20,
+                sort: chart ? { key: "date", asc: true } : undefined,
+              });
             }}
           />
           <div className="py-p5">OR</div>
@@ -143,12 +161,26 @@ export const LinkedColumnSelect = ({
                   if (!newCol) {
                     return;
                   }
-                  const oldHiddenCols = (nestedColumns ?? []).map((c) => ({
+                  const newColumnName = getUniqueColumnName(
+                    newCol.name,
+                    nestedColumns ?? [],
+                  );
+                  const oldColumns = (nestedColumns ?? []).map((c) => ({
                     ...c,
-                    show: false,
+                    show: !!c.show && !!c.computedConfig?.funcDef.isAggregate,
                   }));
-                  const newCols = [newCol, ...oldHiddenCols];
-                  updateNested({ displayMode: "no-headers", columns: newCols });
+                  const newCols = [
+                    {
+                      ...newCol,
+                      name: newColumnName,
+                      display: "drillable-records" as const,
+                    },
+                    ...oldColumns,
+                  ];
+                  updateNested({
+                    display: { type: "values", labels: "none" },
+                    columns: newCols as NestedColumn<ColumnConfig>[],
+                  });
                 }}
               />
             )}
@@ -157,4 +189,17 @@ export const LinkedColumnSelect = ({
       )}
     </FlexRowWrap>
   );
+};
+
+const getUniqueColumnName = (
+  requestedName: string,
+  columns: Pick<ColumnConfig, "name">[],
+) => {
+  if (!columns.some(({ name }) => name === requestedName)) return requestedName;
+
+  let suffix = 2;
+  while (columns.some(({ name }) => name === `${requestedName} (${suffix})`)) {
+    suffix++;
+  }
+  return `${requestedName} (${suffix})`;
 };

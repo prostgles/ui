@@ -12,6 +12,7 @@ import type {
   GoogleGeminiChatCompletionResponse,
   OpenAIChatCompletionResponse,
 } from "./LLMResponseTypes";
+import { wrapCode } from "@common/llmUtils";
 
 export type LLMResponseParser<T = AnyObject> = (args: {
   provider: string;
@@ -20,6 +21,7 @@ export type LLMResponseParser<T = AnyObject> = (args: {
 }) => LLMParsedResponse;
 
 export type LLMParsedResponse = Pick<LLMMessageWithRole, "content"> & {
+  responseData: AnyObject;
   meta?: AnyObject | null;
   cost: number | undefined;
   total_tokens: number | undefined;
@@ -56,6 +58,7 @@ export const parseLLMResponseObject: LLMResponseParser = ({
       });
     });
     return {
+      responseData,
       content,
       meta: {
         ...meta,
@@ -88,6 +91,7 @@ export const parseLLMResponseObject: LLMResponseParser = ({
       })
       .filter(isDefined);
     return {
+      responseData,
       content,
       meta,
       ...getLLMUsageCost(model, { type: "Anthropic", meta }),
@@ -133,17 +137,19 @@ export const parseLLMResponseObject: LLMResponseParser = ({
             } satisfies LLMMessageWithRole["content"][number];
           }) ?? [];
         return [
-          typeof c.message.content === "string" ?
-            ({
-              type: "text",
-              text: c.message.content,
-              reasoning: c.message.reasoning || undefined,
-            } satisfies LLMMessageWithRole["content"][number])
-          : undefined,
           c.error ?
             ({
               type: "text",
-              text: `🔴 Something went wrong! Error received from from LLM Provider: \n\`\`\`json\n${JSON.stringify(c.error, null, 2)}\n\`\`\``,
+              text: `🔴 Something went wrong! Error received from from LLM Provider: \n${wrapCode("json", JSON.stringify(c, null, 2))}`,
+            } satisfies LLMMessageWithRole["content"][number])
+          : (
+            typeof c.message.content === "string" ||
+            typeof c.message.reasoning === "string"
+          ) ?
+            ({
+              type: "text",
+              text: c.message.content || "",
+              reasoning: c.message.reasoning || undefined,
             } satisfies LLMMessageWithRole["content"][number])
           : undefined,
           ...toolCalls,
@@ -156,6 +162,7 @@ export const parseLLMResponseObject: LLMResponseParser = ({
       meta,
     });
     return {
+      responseData,
       content,
       meta: {
         ...meta,
@@ -179,6 +186,7 @@ export const parseLLMResponseObject: LLMResponseParser = ({
         responseData.filter((_, i) => i !== firstPathItem)
       : omitKeys(responseData, [firstPathItem.toString()]);
     return {
+      responseData,
       content: [{ type: "text", text: messageText }],
       meta,
       cost: undefined,

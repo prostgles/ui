@@ -7,7 +7,7 @@ import {
 } from "prostgles-types";
 import type { Prgl } from "src/App";
 import type { DBSchemaTableWJoins } from "src/dashboard/Dashboard/dashboardUtils";
-import type { ColumnConfig } from "../../W_Table/ColumnMenu/ColumnMenu";
+import type { ColumnConfig } from "@common/ColumnConfig/ColumnConfig";
 import {
   getComputedColumnSelect,
   getTableSelect,
@@ -59,7 +59,7 @@ export const getRows = async (args: Args, limit = 3, matchStart = false) => {
       { matchCase, edgeTruncate: 30, returnType: "object" },
     ],
   };
-  let select: { prgl_term_highlight: AnyObject } = { prgl_term_highlight };
+  let select = { prgl_term_highlight };
   if (column) {
     if (isObject(column)) {
       if (column.computedConfig) {
@@ -81,7 +81,7 @@ export const getRows = async (args: Args, limit = 3, matchStart = false) => {
         }
         select.prgl_term_highlight = getComputedColumnSelect(
           column.computedConfig,
-        );
+        ) as unknown as typeof select.prgl_term_highlight;
       } else {
         select[column.name] = 1;
       }

@@ -8,6 +8,7 @@ import { getServerCoreInfoStr } from "../../../pages/Connections/useConnectionSe
 import { isEmpty } from "../../../utils/utils";
 import type { StatusMonitorProps } from "../StatusMonitor";
 import { StatusMonitorConnections } from "../StatusMonitorConnections";
+import { StatusMonitorSQL } from "../StatusMonitorSQL";
 import { StatusMonitorInfoHeaderCpu } from "./StatusMonitorInfoHeaderCpu";
 import { StatusMonitorInfoHeaderMemory } from "./StatusMonitorInfoHeaderMemory";
 import { useIsMounted } from "prostgles-client";
@@ -30,13 +31,13 @@ export const StatusMonitorInfoHeader = (
     connectionId,
     samplingRate,
     statusError,
-    setStatusError,
+    setStatusError, 
     setNoBash,
     setSamplingRate,
-  } = props;
+  } = props; 
 
-  const [c, setc] = useState<ConnectionStatus>();
-  const noBash = c?.noBash;
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>();
+  const noBash = connectionStatus?.noBash;
   useEffect(() => {
     setNoBash(!!noBash);
   }, [noBash, setNoBash]);
@@ -48,7 +49,7 @@ export const StatusMonitorInfoHeader = (
         if (!getIsMounted()) {
           return;
         }
-        setc(c);
+        setConnectionStatus(c);
         if (!isEmpty(c.getPidStatsErrors)) {
           console.error(c.getPidStatsErrors);
         }
@@ -87,19 +88,20 @@ export const StatusMonitorInfoHeader = (
             {getServerCoreInfoStr(connection)}
           </Chip>
         )}
-        <StatusMonitorInfoHeaderMemory serverStatus={c?.serverStatus} />
-        {c && (
+        <StatusMonitorInfoHeaderMemory serverStatus={connectionStatus?.serverStatus} />
+        {connectionStatus && (
           <StatusMonitorConnections
-            c={c}
+            c={connectionStatus}
             datidFilter={datidFilter}
             connectionId={connectionId}
             onSetDatidFilter={setDatidFilter}
           />
         )}
-        {c?.serverStatus && (
-          <StatusMonitorInfoHeaderCpu serverStatus={c.serverStatus} />
+        {connectionStatus?.serverStatus && (
+          <StatusMonitorInfoHeaderCpu serverStatus={connectionStatus.serverStatus} />
         )}
 
+        <StatusMonitorSQL key={connectionId} connectionId={connectionId} />
         <FormFieldDebounced
           label={"Sampling rate (s)"}
           variant="row"
@@ -119,4 +121,4 @@ export const StatusMonitorInfoHeader = (
       </FlexRow>
     </>
   );
-};
+}; 

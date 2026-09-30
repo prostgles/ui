@@ -1,5 +1,5 @@
-import { expect, test } from "@playwright/test";
-import { COMMAND_SEARCH_ATTRIBUTE_NAME } from "./Testing";
+import { expect, test } from "./utils/fixtures";
+import { COMMAND_SEARCH_ATTRIBUTE_NAME } from "./utils/Testing";
 import { login, MINUTE, PageWIds } from "./utils/utils";
 import { goTo } from "utils/goTo";
 import { IS_GITHUB_WORKER, USERS } from "utils/constants";

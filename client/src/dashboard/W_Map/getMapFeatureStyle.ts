@@ -8,7 +8,7 @@ import type {
 import { blend } from "../W_Table/colorBlend";
 import { MAP_SELECT_COLUMNS } from "./fetchData/getMapData";
 import type { ClickedItem, LayerQuery } from "./W_Map";
-import { asRGB } from "src/utils/colorUtils";
+import { asRGB } from "@common/ColumnConfig/colorUtils";
 
 export const rgbaToString = (rgba: DeckGlColor) => {
   const [r, g, b, a = 1] = rgba.map((v) => (Number.isInteger(v) ? v : 1));

@@ -1,6 +1,7 @@
 import type { DBSSchema } from "@common/publishUtils";
 import { createHttpServer } from "@src/createHttpAndIOServers/createHttpServer";
 import { createIOWebsocketServer } from "@src/createHttpAndIOServers/createIOWebsocketServer";
+import { setHttpAppSecurity } from "@src/createHttpAndIOServers/setHttpAppSecurity";
 import { isEqual } from "prostgles-types";
 import type { ConnectionManager } from "./ConnectionManager";
 import type { ConnectionHotReloadProperties } from "./getHotReloadConfigs";
@@ -73,6 +74,20 @@ export function getConnectionHttpServer(
       );
       return existingServer;
     }
+  }
+
+  if (
+    !is_state_db &&
+    !port &&
+    databaseConfig.config_sync?.type === "cli"
+  ) {
+    setHttpAppSecurity(
+      app,
+      databaseConfig,
+      connection,
+      this.dbsServer.port,
+      this.connectionPorts,
+    );
   }
 
   const newServer =

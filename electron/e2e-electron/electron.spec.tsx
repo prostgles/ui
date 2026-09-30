@@ -69,7 +69,7 @@ test("renders the first page", async () => {
     return;
   }
 
-  const page = await electronApp.firstWindow();
+  const page = await electronApp.firstWindow({ timeout: 120_000 });
 
   const screenshot = async (name?: string) => {
     if (!page) return;

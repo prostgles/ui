@@ -1,5 +1,6 @@
 import type {
   DetailedFilter,
+  DetailedFilterBase,
   DetailedJoinedFilter,
   FilterType,
 } from "@common/filterUtils";
@@ -18,7 +19,7 @@ import { isDefined } from "../../utils/utils";
 import type { DBSchemaTableWJoins, JoinV2 } from "../Dashboard/dashboardUtils";
 import { getDefaultAgeFilter } from "../DetailedFilterControl/DetailedFilterBaseTypes/AgeFilter";
 import { getColumnDataColor } from "../SmartForm/SmartFormField/RenderValue";
-import type { ColumnConfig } from "../W_Table/ColumnMenu/ColumnMenu";
+import type { ColumnConfig } from "@common/ColumnConfig/ColumnConfig";
 import { getJoinPathLabel } from "../W_Table/ColumnMenu/JoinPathSelectorV2";
 import { getJoinPaths } from "../W_Table/tableUtils/getJoinPaths";
 import { getComputedColumnSelect } from "../W_Table/tableUtils/getTableSelect";
@@ -182,7 +183,7 @@ export const SmartAddFilter = (props: SmartAddFilterProps) => {
         : joinPath ? "not null"
         : isCategorical(c) ? "$in"
         : "$between";
-      const innerFilter: DetailedFilter =
+      const innerFilter: DetailedFilterBase =
         includes(_PG_date, c.udt_name) ?
           getDefaultAgeFilter(fieldName, "$ageNow")
         : {

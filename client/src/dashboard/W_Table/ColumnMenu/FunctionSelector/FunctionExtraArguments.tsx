@@ -7,7 +7,7 @@ import { _PG_date } from "prostgles-types";
 import React, { useEffect } from "react";
 import type { Prgl } from "src/App";
 import type { DBSchemaTableWJoins } from "src/dashboard/Dashboard/dashboardUtils";
-import type { ColumnConfig } from "../ColumnMenu";
+import type { ColumnConfig } from "@common/ColumnConfig/ColumnConfig";
 import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
 
 export type FuncArgs = NonNullable<

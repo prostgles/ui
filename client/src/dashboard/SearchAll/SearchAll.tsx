@@ -4,7 +4,7 @@ import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable
 import React from "react";
 import type { Prgl } from "../../App";
 import type { _Dashboard } from "../Dashboard/Dashboard";
-import type { WindowData } from "../Dashboard/dashboardUtils";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 import type { SQLSuggestion } from "../SQLEditor/W_SQLEditor";
 import { SearchAllContent } from "./SearchAllContent";
 import { SearchAllHeader } from "./SearchAllHeader";
@@ -42,7 +42,7 @@ export type SearchAllProps = Pick<Prgl, "db" | "methods" | "tables" | "sql"> & {
   className?: string;
   searchType?: (typeof SEARCH_TYPES)[number]["key"];
   defaultTerm?: string;
-  queries?: SyncDataItem<WindowData<"sql">>[];
+  queries?: SyncDataItem<WindowData<"sql">, { handlesOnData: true }>[];
 };
 
 export const SearchAll = (props: SearchAllProps) => {

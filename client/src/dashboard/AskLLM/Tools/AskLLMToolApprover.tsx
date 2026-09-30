@@ -1,21 +1,22 @@
 import React, { useMemo, useState } from "react";
 
+import { isDefined } from "@common/filterUtils";
 import { getMCPFullToolName } from "@common/mcpUtils";
 import type { DBSSchema } from "@common/publishUtils";
+import { getConnectionPaths, getEntries } from "@common/utils";
+import type { BtnProps } from "@components/Btn";
 import { Marked } from "@components/Chat/Marked";
+import Chip from "@components/Chip";
+import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
 import Popup from "@components/Popup/Popup";
+import { mdiCheckCircleOutline, mdiCloseCircleOutline } from "@mdi/js";
+import { NavLink } from "react-router";
 import { CodeEditorWithSaveButton } from "src/dashboard/CodeEditor/CodeEditorWithSaveButton";
 import type { LoadedSuggestions } from "src/dashboard/Dashboard/dashboardUtils";
 import { isEmpty } from "../../../utils/utils";
 import { ProstglesMCPToolsWithUI } from "../Chat/AskLLMChatMessages/ProstglesToolUseMessage/ProstglesToolUseMessage";
-import type { useAskLLMToolApprove } from "./useAskLLMToolApprover";
-import { NavLink } from "react-router";
-import { getConnectionPaths, getEntries } from "@common/utils";
-import { isDefined } from "@common/filterUtils";
-import type { BtnProps } from "@components/Btn";
-import ErrorComponent from "@components/ErrorComponent";
-import Chip from "@components/Chip";
+import type { AskLLMToolApproveState } from "./useAskLLMToolApprover";
 
 export type AskLLMToolsProps = {
   workspaceId: string | undefined;
@@ -23,7 +24,7 @@ export type AskLLMToolsProps = {
   onOpenChat: (selectedChatId: number) => void;
   openedChatId: number | undefined;
   connectionId: string;
-} & ReturnType<typeof useAskLLMToolApprove>;
+} & AskLLMToolApproveState;
 
 export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
   const {
@@ -46,7 +47,7 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
   );
   const requestItem =
     showRequestId ?
-      requests?.find(({ id }) => id === showRequestId)
+      requests?.find(({ id }) => id == showRequestId)
     : nonIgnoredRequests?.[0];
 
   const toolUse = useMemo(() => {
@@ -87,8 +88,7 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
   } = requestItem;
   const { annotations } = mcp_server_tools[0] ?? {};
   const connections = requestItem.connections as
-    | Pick<DBSSchema["connections"], "id" | "name">[]
-    | undefined;
+    Pick<DBSSchema["connections"], "id" | "name">[] | undefined;
   const description =
     requestItem.mcp_server_tools[0]?.description ??
     "Could not find tool description";
@@ -211,29 +211,35 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
           {source.type === "proxy" && (
             <Chip color="blue">Requested from container</Chip>
           )}
-          {annotations?.title ?? ""}
-          {annotations && !isEmpty(annotations) && (
-            <FlexRowWrap>
-              {getEntries(annotations)
-                .filter(([key]) => key !== "title")
-                .map(([key, yes]) => (
-                  <Chip
-                    color={
-                      key === "destructiveHint" && yes ? "red"
-                      : (
-                        (key === "openWorldHint" && yes) ||
-                        (key === "readOnlyHint" && !yes)
-                      ) ?
-                        "orange"
-                      : "blue"
-                    }
-                  >
-                    {key}
-                  </Chip>
-                ))}
-            </FlexRowWrap>
-          )}
         </FlexRow>
+        {annotations?.title && (
+          <FlexRow title="Title">{annotations.title}</FlexRow>
+        )}
+        {annotations && !isEmpty(annotations) && (
+          <FlexRowWrap title="Annotations" className="gap-p5">
+            {getEntries(annotations)
+              .filter(([key]) => key !== "title")
+              .map(([key, yes]) => (
+                <Chip
+                  key={key}
+                  leftIcon={{
+                    path: yes ? mdiCheckCircleOutline : mdiCloseCircleOutline,
+                  }}
+                  color={
+                    key === "destructiveHint" && yes ? "red"
+                    : (
+                      (key === "openWorldHint" && yes) ||
+                      (key === "readOnlyHint" && !yes)
+                    ) ?
+                      "orange"
+                    : "blue"
+                  }
+                >
+                  {key}
+                </Chip>
+              ))}
+          </FlexRowWrap>
+        )}
         <Marked
           style={{ maxHeight: "200px" }}
           className="ta-start"

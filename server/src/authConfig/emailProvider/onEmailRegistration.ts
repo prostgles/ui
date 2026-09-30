@@ -56,16 +56,19 @@ export const onEmailRegistration = async (
     email,
   });
   const email_confirmation_code = getRandomSixDigitCode();
+  const newUserData = {
+    registration: {
+      type: "password-w-email-confirmation",
+      email_confirmation: {
+        status: "pending",
+        confirmation_code: email_confirmation_code,
+        date: new Date().toISOString(),
+      },
+    },
+  } as const;
   const getUserUpdate = (newUsr: { id: string }) =>
     ({
-      registration: {
-        type: "password-w-email-confirmation",
-        email_confirmation: {
-          status: "pending",
-          confirmation_code: email_confirmation_code,
-          date: new Date().toISOString(),
-        },
-      },
+      ...newUserData,
       password: getPasswordHash(newUsr, password),
     }) as const;
   if (existingUser) {
@@ -80,16 +83,16 @@ export const onEmailRegistration = async (
       getUserUpdate(existingUser),
     );
   } else {
-    const newUser = await dbs.users.insert(
+    await dbs.users.insert(
       {
+        ...newUserData,
         type: newUserType,
         username: email,
         email,
-        ...getUserUpdate({ id: "missing" }),
+        password,
       },
       { returning: "*" },
     );
-    await dbs.users.update({ id: newUser.id }, getUserUpdate(newUser));
   }
 
   await mailClient.sendEmailVerification({

@@ -158,10 +158,20 @@ const upsertRule = async (
     const userGroupNames = access_control_user_types.flatMap((ids) => ids.ids);
 
     const insertRelatedData = async (access_control_id: number) => {
-      await dbs.access_control_user_types.delete({ access_control_id });
-      if (userGroupNames.length) {
+      const existingUserTypes = await dbs.access_control_user_types.find({
+        access_control_id,
+      });
+      await dbs.access_control_user_types.delete({
+        access_control_id,
+        user_type: { $nin: userGroupNames },
+      });
+      const addedUserTypes = userGroupNames.filter(
+        (userType) =>
+          !existingUserTypes.some(({ user_type }) => user_type === userType),
+      );
+      if (addedUserTypes.length) {
         await dbs.access_control_user_types.insertMany(
-          userGroupNames.map((user_type) => ({ access_control_id, user_type })),
+          addedUserTypes.map((user_type) => ({ access_control_id, user_type })),
         );
       }
 
@@ -221,7 +231,7 @@ const upsertRule = async (
       if (overLappingUserGroups.length) {
         throw `Cannot have rules with overlapping user group names: ${overLappingUserGroups.flat().join(", ")}.\nRemove these group names from this rule or from the other rules`;
       } else {
-        const acontrol = await dbs.access_control.insert(
+        const accessControlEntry = await dbs.access_control.insert(
           {
             ...newRuleWithoutSomeExtraKeys,
             database_id,
@@ -234,7 +244,7 @@ const upsertRule = async (
           { returning: "*" },
         );
 
-        await insertRelatedData(acontrol.id);
+        await insertRelatedData(accessControlEntry.id);
       }
     }
   }
