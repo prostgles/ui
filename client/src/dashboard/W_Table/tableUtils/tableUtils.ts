@@ -11,9 +11,9 @@ import type {
   ColumnConfig,
   ColumnSortSQL,
   NestedColumn,
-} from "../ColumnMenu/ColumnConfig";
+} from "@common/ColumnConfig/ColumnConfig";
 import { SORTABLE_CHART_COLUMNS } from "../ColumnMenu/NestedTimechartControls";
-import type { ColumnConfigWithInfo } from "../W_Table";
+import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
 
 /** It's a record to ensure all keys are present */
 const COLUMN_CONFIG_KEYS: Record<keyof ColumnConfig, 1> = {

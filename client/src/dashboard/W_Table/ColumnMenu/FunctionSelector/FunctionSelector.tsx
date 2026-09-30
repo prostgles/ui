@@ -2,13 +2,13 @@ import { Select } from "@components/Select/Select";
 import { mdiFunction, mdiSigma } from "@mdi/js";
 import type { ValidatedColumnInfo } from "prostgles-types";
 import React, { useMemo } from "react";
-import type { ColumnConfig } from "../ColumnConfig";
+import type { ColumnConfig } from "@common/ColumnConfig/ColumnConfig";
 import {
   funcAcceptsColumn,
   getAggFuncs,
   getFuncs,
   type FuncDef,
-} from "./functions";
+} from "@common/ColumnConfig/FUNCTIONS";
 
 type P = {
   selectedFunction?: string;
@@ -32,7 +32,7 @@ export const FunctionSelector = ({
   className,
   currentNestedColumnName,
 }: P) => {
-  const cannotUseAggs = useMemo(
+  const hasNestedColumns = useMemo(
     () =>
       parentColumns?.some(
         (c) => c.show && c.nested && c.name !== currentNestedColumnName,
@@ -77,7 +77,7 @@ export const FunctionSelector = ({
             ...def,
             iconPath: def.isAggregate ? mdiSigma : mdiFunction,
             disabledInfo:
-              cannotUseAggs && def.isAggregate ?
+              hasNestedColumns && def.isAggregate ?
                 "Cannot use aggregations with nested column"
               : def.isAllowedForColumn ? undefined
               : "Not suitable for the selected column data type",

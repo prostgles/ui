@@ -30,7 +30,6 @@ export const publish: Publish<
 
   const { id: user_id } = user;
 
-  /** This will prevent admins from seeing each others published workspaces?! */
   const accessRules = isAdmin ? undefined : await getACRules(db, user);
 
   const createEditDashboards =
@@ -44,6 +43,15 @@ export const publish: Publish<
       )
       .filter(isDefined) || [];
 
+  const getDashboardEditFilter = (tableName: "workspaces" | "windows" | "links") =>
+    !isAdmin ? { user_id } : {
+      $or: [
+        { user_id },
+        tableName === "workspaces" ? { published: true }
+        : { $existsJoined: { workspaces: { published: true } } },
+      ],
+    };
+
   const dashboardMainTables: Publish<DBGeneratedSchema> = (
     ["windows", "links", "workspaces"] as const
   ).reduce(
@@ -56,19 +64,23 @@ export const publish: Publish<
             $or: [
               { user_id },
               /** User either owns the item or the item has been shared/published to the user */
-              {
-                [tableName === "workspaces" ? "id" : "workspace_id"]: {
-                  $in: publishedWspIDs,
+              isAdmin ?
+                tableName === "workspaces" ?
+                  { published: true }
+                : { $existsJoined: { workspaces: { published: true } } }
+              : {
+                  [tableName === "workspaces" ? "id" : "workspace_id"]: {
+                    $in: publishedWspIDs,
+                  },
                 },
-              },
             ],
           },
         },
         ...(createEditDashboards && {
           update: {
             fields: { user_id: 0 },
-            forcedData: { user_id },
-            forcedFilter: { user_id },
+            forcedData: isAdmin ? undefined : { user_id },
+            forcedFilter: getDashboardEditFilter(tableName),
           },
           insert: {
             fields: "*",
@@ -78,16 +90,14 @@ export const publish: Publish<
               tableName === "workspaces" ? undefined : (
                 {
                   $existsJoined: {
-                    workspaces: {
-                      user_id: user.id,
-                    },
+                    workspaces: getDashboardEditFilter("workspaces"),
                   },
                 }
               ),
           },
           delete: {
             filterFields: "*",
-            forcedFilter: { user_id },
+            forcedFilter: getDashboardEditFilter(tableName),
           },
         }),
       } satisfies PublishFullyTyped<DBGeneratedSchema>["workspaces"],
@@ -165,6 +175,11 @@ export const publish: Publish<
                 if (!oldValue) {
                   throw "Cannot find existing database config to validate IP changes";
                 }
+
+                if (!clientReq.httpReq && !clientReq.socket) {
+                  throw "Cannot determine client IP for validation";
+                }
+
                 const { isAllowed, ip } = await checkClientIP(
                   tx,
                   {

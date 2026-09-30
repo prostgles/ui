@@ -13,7 +13,7 @@ import {
 } from "../ConnectionManager/ConnectionManager";
 import { stateServerAdminFunctions } from "./adminServerFunctions/stateServerAdminFunctions";
 import { defineFunctionGroup } from "./defineFunctionGroup";
-import { insertConfigWorkspaces } from "./insertConfigWorkspaces";
+import { loadGeneratedWorkspacesFunction } from "./loadGeneratedWorkspaces/loadGeneratedWorkspacesFunction";
 import { userServerFunctions } from "./userServerFunctions/userServerFunctions";
 
 export const stateServerFunctions = {
@@ -22,6 +22,7 @@ export const stateServerFunctions = {
   anyUser: defineFunctionGroup({
     userFilter: {},
     functions: {
+      loadGeneratedWorkspaces: loadGeneratedWorkspacesFunction,
       startConnection: defineFunction({
         input: { connectionId: "string" },
         unrestrictedDbAccess: true,
@@ -36,7 +37,6 @@ export const stateServerFunctions = {
               _dbs,
               socket,
             );
-            await insertConfigWorkspaces(connectionId, dbs, user.id);
             return socketPathAndUrl;
           } catch (error) {
             console.error("Could not start connection " + connectionId, error);

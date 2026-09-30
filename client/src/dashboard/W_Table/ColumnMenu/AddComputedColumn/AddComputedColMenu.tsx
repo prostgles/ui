@@ -25,14 +25,14 @@ import type {
   ColumnConfig,
   ColumnConfigNested,
   NestedColumn,
-} from "../ColumnConfig";
+} from "@common/ColumnConfig/ColumnConfig";
 import { getColumnListItem } from "../ColumnSelect/getColumnListItem";
 import { FunctionSelector } from "../FunctionSelector/FunctionSelector";
 import {
   CountAllFunc,
   getColumnsAcceptedByFunction,
   type FuncDef,
-} from "../FunctionSelector/functions";
+} from "@common/ColumnConfig/FUNCTIONS";
 import { NEW_COL_POSITIONS } from "../LinkedColumn/LinkedColumnFooter";
 import {
   getNestedColumnTable,

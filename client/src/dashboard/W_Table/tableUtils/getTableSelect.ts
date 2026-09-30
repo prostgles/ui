@@ -6,10 +6,8 @@ import type { AnyObject, Select, SelectFunction } from "prostgles-types";
 import { isDefined } from "prostgles-types";
 import type { Prgl } from "src/App";
 import { isEmpty } from "../../../utils/utils";
-import type {
-  DBSchemaTableWJoins,
-  WindowData,
-} from "../../Dashboard/dashboardUtils";
+import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 import {
   getDesiredTimeChartBinSize,
   getTimeChartMinMax,
@@ -17,8 +15,12 @@ import {
 import { getTimeChartSelectParams } from "../../W_TimeChart/fetchData/getTimeChartSelectParams";
 import { getFormatColumnSelect } from "../ColumnMenu/ColumnDisplayFormat/getFormatColumnSelect";
 import { getParentTableJoinColumnNames } from "../ColumnMenu/ColumnDisplayFormat/getLinkedRecordsFilter";
-import type { ColumnConfig, ColumnConfigNested } from "../ColumnMenu/ColumnConfig";
-import type { ColumnConfigWithInfo, MinMax } from "../W_Table";
+import type {
+  ColumnConfig,
+  ColumnConfigNested,
+} from "@common/ColumnConfig/ColumnConfig";
+import type { MinMax } from "../W_Table";
+import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
 import {
   fetchChartRangeValues,
   type ChartValues,
@@ -237,7 +239,10 @@ const getNestedColumnSelect = async (
   if (isEmpty(nestedSelect)) return undefined;
 
   const limit =
-    display?.type === "drillable-records" && parentColumn.nested.limit !== undefined ?
+    (
+      display?.type === "drillable-records" &&
+      parentColumn.nested.limit !== undefined
+    ) ?
       parentColumn.nested.limit + 1
     : parentColumn.nested.limit;
 

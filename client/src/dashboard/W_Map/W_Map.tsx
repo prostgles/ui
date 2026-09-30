@@ -10,7 +10,8 @@ import {
 } from "prostgles-types";
 import React from "react";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
-import type { WindowData, WindowSyncItem } from "../Dashboard/dashboardUtils";
+import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 import type {
   DeckGlColor,
   GeoJSONFeature,
@@ -583,9 +584,7 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
                 const object = e.object as ClickedItem | undefined;
                 let rowFilter: AnyObject | undefined;
                 const filterOrHash = object?.properties.i as
-                  | string
-                  | AnyObject
-                  | undefined;
+                  string | AnyObject | undefined;
                 if (object && filterOrHash) {
                   if (isObject(filterOrHash)) {
                     rowFilter = filterOrHash;

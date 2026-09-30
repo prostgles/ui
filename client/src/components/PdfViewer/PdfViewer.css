@@ -8,6 +8,11 @@
   border: 0;
 }
 
+.PdfViewer .pdfViewer .pdf-viewer__highlight-layer button,
+.PdfViewer .pdfViewer .pdf-viewer__highlight-layer button * {
+  box-sizing: border-box;
+}
+
 .pdf-viewer__highlight-layer {
   position: absolute;
   inset: 0;

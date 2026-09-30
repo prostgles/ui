@@ -1,3 +1,4 @@
+import type { AnnotationRect, AnnotationTextSelection } from "@common/annotationText";
 import Btn from "@components/Btn";
 import { mdiPlus } from "@mdi/js";
 import type * as pdfjsLib from "pdfjs-dist";
@@ -5,29 +6,12 @@ import React from "react";
 import { createPortal } from "react-dom";
 import type { PdfViewerProps } from "../PdfViewer";
 
-export type HighlightRect = {
-  /**
-   * Unscaled CSS page-space coordinates, relative to the page's top-left
-   * corner. These are deliberately not PDF-point coordinates.
-   */
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-};
+export type HighlightRect = AnnotationRect;
 
 export type Highlight = {
   id: string | number;
   page: number;
-  end_page?: number | null;
-  start_text?: string | null;
-  end_text?: string | null;
-  fallback_edges?: {
-    start_x: number;
-    start_y: number;
-    end_x: number;
-    end_y: number;
-  } | null;
+  text_selections: AnnotationTextSelection[];
   rects: HighlightRect[];
   color: string;
   leftHandle: React.ReactNode;
@@ -50,7 +34,7 @@ export type ActiveTooltip = {
 
 export type PdfViewerHighlightsProps = Pick<
   PdfViewerProps,
-  "onCreateHighlight"
+  "onCreateHighlight" | "activeHighlightId"
 > & {
   viewport: pdfjsLib.PageViewport | null;
   pageElement: HTMLDivElement;
@@ -58,8 +42,8 @@ export type PdfViewerHighlightsProps = Pick<
   pageHighlights: Highlight[];
   potentialHighlight: CreatedHighlight | null;
   clearPotentialHighlight: () => void;
-  onStartPageSpan?: (highlight: CreatedHighlight) => void;
-  isFinishingPageSpan?: boolean;
+  onAddSelection?: (highlight: CreatedHighlight) => void;
+  isAddingSelection?: boolean;
 };
 
 export const PdfViewerHighlights = ({
@@ -67,11 +51,12 @@ export const PdfViewerHighlights = ({
   viewport,
   activeTooltip,
   pageHighlights,
+  activeHighlightId,
   potentialHighlight,
   onCreateHighlight,
   clearPotentialHighlight,
-  onStartPageSpan,
-  isFinishingPageSpan,
+  onAddSelection,
+  isAddingSelection,
 }: PdfViewerHighlightsProps) => {
   const potentialHighlightLastRect = potentialHighlight?.rects.at(-1);
   return (
@@ -82,13 +67,12 @@ export const PdfViewerHighlights = ({
             {pageHighlights.flatMap((highlight) =>
               highlight.rects.map((rect, index) => (
                 <React.Fragment key={`${highlight.id}-${index}`}>
-                  {index === 0 && (
+                  {index === 0 && highlight.leftHandle && (
                     <div
                       style={{
                         position: "absolute",
                         zIndex: 4,
                         pointerEvents: "auto",
-                        // left: 10,
                         right: 10,
                         top: (rect.y + rect.height / 2) * viewport.scale,
                       }}
@@ -99,7 +83,9 @@ export const PdfViewerHighlights = ({
 
                   <div
                     className="pdf-viewer__highlight"
+                    data-annotation-id={highlight.id}
                     style={{
+                      opacity: activeHighlightId !== undefined && highlight.id !== activeHighlightId ? 0.12 : undefined,
                       left: rect.x * viewport.scale,
                       top: rect.y * viewport.scale,
                       width: rect.width * viewport.scale,
@@ -114,6 +100,7 @@ export const PdfViewerHighlights = ({
               potentialHighlightLastRect &&
               onCreateHighlight && (
                 <div
+                  className="pdf-viewer__selection-controls flex-row ai-center gap-p5"
                   style={{
                     position: "absolute",
                     zIndex: 4,
@@ -126,7 +113,8 @@ export const PdfViewerHighlights = ({
                   }}
                 >
                   <Btn
-                    title={isFinishingPageSpan ? "Finish annotation here" : "Add annotation"}
+                    size="small"
+                    title={isAddingSelection ? "Save annotation" : "Add annotation"}
                     color="action"
                     variant="filled"
                     iconPath={mdiPlus}
@@ -135,16 +123,18 @@ export const PdfViewerHighlights = ({
                       onCreateHighlight(potentialHighlight);
                     }}
                   />
-                  {onStartPageSpan && (
+                  {onAddSelection && (
                     <Btn
-                      title="Continue annotation on another page"
+                      size="small"
+                      title="Add another selection"
                       color="action"
+                      iconPath={mdiPlus}
                       variant="filled"
                       onClick={() => {
-                        onStartPageSpan(potentialHighlight);
+                        onAddSelection(potentialHighlight);
                         clearPotentialHighlight();
                       }}
-                    >Continue on another page</Btn>
+                    >Add another selection</Btn>
                   )}
                 </div>
               )}

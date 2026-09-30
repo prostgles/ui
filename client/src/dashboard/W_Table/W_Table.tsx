@@ -9,10 +9,10 @@ import { PAGE_SIZES, Table, closest } from "@components/Table/Table";
 import React from "react";
 import type {
   Query,
-  WindowData,
   WindowSyncItem,
   WorkspaceSyncItem,
 } from "../Dashboard/dashboardUtils";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 import "./ProstglesTable.css";
 
 import type { DeltaOf, DeltaOfData } from "../RTComp";
@@ -23,15 +23,13 @@ import ErrorComponent from "@components/ErrorComponent";
 import type { SingleSyncHandles } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import type { ValidatedColumnInfo } from "prostgles-types/lib";
 import type {
-  ColumnConfig,
+  ColumnConfigWithInfo,
   ColumnSort,
   ColumnSortSQL,
-  NestedColumn,
-} from "./ColumnMenu/ColumnConfig";
+} from "@common/ColumnConfig/ColumnConfig";
 import { ColumnMenu } from "./ColumnMenu/ColumnMenu";
 
 import type { DetailedFilterBase } from "@common/filterUtils";
-import type { InternalColumnFormat } from "@common/managedTableSchema";
 import { matchObj } from "@common/utils";
 import { ClickCatchOverlayZIndex } from "@components/ClickCatchOverlay";
 import { FlexCol, FlexRow } from "@components/Flex";
@@ -177,16 +175,6 @@ export type ProstglesTableD = {
   dataAge?: number;
   wSync?: SingleSyncHandles<Required<WindowData<"table">>, true>;
 };
-
-export type ColumnConfigWithInfo = Omit<ColumnConfig, "nested"> & {
-  /** Defined for plain columns and for computed columns that target a specific table column */
-  info?: ValidatedColumnInfo & {
-    defaultRenderAs?: InternalColumnFormat;
-  };
-  nested?: Omit<NonNullable<ColumnConfig["nested"]>, "columns"> & {
-    columns: NestedColumn<ColumnConfigWithInfo>[];
-  };
-} & Pick<ValidatedColumnInfo, "udt_name" | "tsDataType">;
 
 export default class W_Table extends RTComp<
   W_TableProps,

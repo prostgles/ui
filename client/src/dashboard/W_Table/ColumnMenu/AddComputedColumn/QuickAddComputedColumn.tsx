@@ -5,12 +5,12 @@ import { mdiFunction, mdiSigma } from "@mdi/js";
 import React from "react";
 import { t } from "src/i18n/i18nUtils";
 import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
-import type { ColumnConfigWithInfo } from "../../W_Table";
-import type { ColumnConfig } from "../ColumnConfig";
+import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
+import type { ColumnConfig } from "@common/ColumnConfig/ColumnConfig";
 import { AggregateFunctionOptions } from "./AggregateFunctionOptions";
 import { FunctionExtraArguments } from "../FunctionSelector/FunctionExtraArguments";
 import { FunctionSelector } from "../FunctionSelector/FunctionSelector";
-import { getColumnsAcceptedByFunction } from "../FunctionSelector/functions";
+import { getColumnsAcceptedByFunction } from "@common/ColumnConfig/FUNCTIONS";
 import { FunctionColumnList } from "./FunctionColumnList";
 import { useAddComputedColumnState } from "./useAddComputedColumn";
 

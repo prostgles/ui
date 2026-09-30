@@ -1,7 +1,7 @@
 import { omitKeys, pickKeys, type ValidatedColumnInfo } from "prostgles-types";
 import type { DBSchemaTableWithRenderInfo } from "src/dashboard/Dashboard/getTables";
-import type { ColumnConfig } from "../ColumnMenu/ColumnConfig";
-import type { ColumnConfigWithInfo } from "../W_Table";
+import type { ColumnConfig } from "@common/ColumnConfig/ColumnConfig";
+import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
 
 export const getColumnsWithInfo = (
   tableName: string,
@@ -45,6 +45,7 @@ export const getColumnsWithInfo = (
       return {
         ...c,
         ...columnDataType,
+        show: c.show ?? true,
         format: c.format ?? tableColumn?.renderAs,
         nested:
           nested &&

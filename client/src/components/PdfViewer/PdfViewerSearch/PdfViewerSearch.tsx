@@ -86,9 +86,19 @@ export const PdfViewerSearch = ({
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "f") {
+        const input = inputRef.current;
+        if (!input) return;
+
+        const bounds = input.getBoundingClientRect();
+        const topElement = document.elementFromPoint(
+          bounds.left + bounds.width / 2,
+          bounds.top + bounds.height / 2,
+        );
+        if (!topElement || !input.contains(topElement)) return;
+
         event.preventDefault();
-        inputRef.current?.focus();
-        inputRef.current?.select();
+        input.focus();
+        input.select();
       }
     };
 

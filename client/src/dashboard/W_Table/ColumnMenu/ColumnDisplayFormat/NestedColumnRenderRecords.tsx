@@ -4,8 +4,8 @@ import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 import type { DBSchemaTableWithRenderInfo } from "../../../Dashboard/getTables";
 import { ViewMoreSmartCardList } from "../../../SmartForm/SmartFormField/ViewMoreSmartCardList";
 import { RenderColumnButton } from "../../RenderColumn/RenderColumnButton";
-import type { ColumnConfigWithInfo } from "../../W_Table";
-import type { ColumnConfigNested } from "../ColumnConfig";
+import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
+import type { ColumnConfigNested } from "@common/ColumnConfig/ColumnConfig";
 import { getLinkedRecordsFilter } from "./getLinkedRecordsFilter";
 import { LinkedRecordSummary } from "./LinkedRecordSummary";
 
@@ -57,11 +57,13 @@ export const NestedColumnRenderRecords = ({
             table={table}
             tables={tables}
             barchartVals={undefined}
-            relatedRecords={filter && {
-              ...filter,
-              rootTableName,
-              popupTitle: column.label || column.name,
-            }}
+            relatedRecords={
+              filter && {
+                ...filter,
+                rootTableName,
+                popupTitle: column.label || column.name,
+              }
+            }
           >
             <LinkedRecordSummary
               row={row}

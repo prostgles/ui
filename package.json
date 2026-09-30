@@ -27,5 +27,8 @@
   "devDependencies": {
     "prettier": "^3.9.6",
     "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "prostgles-types": "^4.0.294"
   }
 }

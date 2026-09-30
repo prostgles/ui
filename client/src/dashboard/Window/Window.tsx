@@ -23,9 +23,9 @@ import ReactDOM from "react-dom";
 import { t } from "../../i18n/i18nUtils";
 import type {
   DBSchemaTableWJoins,
-  WindowData,
   WindowSyncItem,
 } from "../Dashboard/dashboardUtils";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 import type { DeepPartial, DeltaOf } from "../RTComp";
 import RTComp from "../RTComp";
 import type { ReactSilverGridNode } from "../SilverGrid/SilverGrid";

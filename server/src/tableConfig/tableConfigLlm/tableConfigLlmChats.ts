@@ -48,6 +48,18 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
             {
               type: {
                 type: { enum: ["agent"] },
+                relatedRecord: {
+                  description: "Related record for the agent",
+                  optional: true,
+                  type: {
+                    tableName: "string",
+                    rowFilter: {
+                      record: {
+                        values: "any",
+                      },
+                    },
+                  },
+                },
                 name: { type: "string", optional: true },
                 toolUseId: { type: "string", optional: true },
                 prompt: {

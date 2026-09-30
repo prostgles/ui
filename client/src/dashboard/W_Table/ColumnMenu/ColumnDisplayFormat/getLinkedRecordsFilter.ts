@@ -6,7 +6,10 @@ import type {
 import { reverseParsedPath } from "prostgles-types";
 import type { DBSchemaTableWJoins } from "../../../Dashboard/dashboardUtils";
 import { getComputedColumnSelect } from "../../tableUtils/getTableSelect";
-import type { ColumnConfig, ColumnConfigNested } from "../ColumnConfig";
+import type {
+  ColumnConfig,
+  ColumnConfigNested,
+} from "@common/ColumnConfig/ColumnConfig";
 import { getTableIdentityColumns } from "./getTableIdentityColumns";
 
 export type LinkedRecordsSearchFilter = DetailedFilter | GroupedDetailedFilter;
@@ -41,9 +44,7 @@ export const getLinkedRecordsFilter = ({
     nestedRow &&
     identityColumns.length &&
     identityColumns.every(
-      ({ name }) =>
-        nestedRow[name] !== undefined &&
-        nestedRow[name] !== null,
+      ({ name }) => nestedRow[name] !== undefined && nestedRow[name] !== null,
     )
   ) {
     const rowFilter = identityColumns.map(({ name }) => ({
@@ -150,9 +151,7 @@ export const getParentTableJoinColumnNames = (
   }
   return Array.from(
     new Set(
-      nested.path[0]?.on.flatMap((constraint) =>
-        Object.keys(constraint),
-      ) ?? [],
+      nested.path[0]?.on.flatMap((constraint) => Object.keys(constraint)) ?? [],
     ),
   );
 };

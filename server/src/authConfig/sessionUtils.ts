@@ -1,10 +1,11 @@
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type { DBSSchema } from "@common/publishUtils";
 import * as crypto from "crypto";
-import type { Request } from "express";
 import { getClientRequestIPsInfo } from "prostgles-server/dist/Auth/AuthHandler";
-import type { BasicSession } from "prostgles-server/dist/Auth/AuthTypes";
-import type { ClientSocketWithCachedData } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
+import type {
+  BasicSession,
+  NetworkClientRequest,
+} from "prostgles-server/dist/Auth/AuthTypes";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
 import type { DB } from "prostgles-server/dist/initProstgles";
 import { PROSTGLES_STRICT_COOKIE } from "../envVars";
@@ -77,7 +78,7 @@ export const authCookieOpts =
  */
 export const checkClientIP = async (
   dbsOrTxSql: Pick<DB, "oneOrNone">,
-  args: { socket: ClientSocketWithCachedData } | { httpReq: Request },
+  args: NetworkClientRequest,
   {
     id,
     login_rate_limit,

@@ -2,7 +2,7 @@ import Btn from "@components/Btn";
 import type { DetailedFilterBase } from "@common/filterUtils";
 import React from "react";
 import { _PG_numbers, includes } from "prostgles-types";
-import type { ColumnConfig } from "../ColumnMenu/ColumnConfig";
+import type { ColumnConfig } from "@common/ColumnConfig/ColumnConfig";
 import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 import { ViewMoreSmartCardList } from "../../SmartForm/SmartFormField/ViewMoreSmartCardList";
 import { LinkedRecordButton } from "../ColumnMenu/ColumnDisplayFormat/LinkedRecordButton";

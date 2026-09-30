@@ -676,7 +676,8 @@ const getCliAgentsFile = () => `
   - ${schemaConfigGuidance.llmCredential}
   - Use \`accessControl[].allowedLLM\` entries shaped as \`{ credentialName, promptName }\` to reference existing, uniquely named LLM credentials and prompts. Set \`llm_daily_limit\` in the access rule when needed.
   - In a server function, call \`ctx.context.startAgent({ prompt, input, outputSchema }, ctx)\`, where \`ctx\` is the function's second argument. This uses Prostgles' configured models and credentials and runs as the caller; pass the original context to retain their identity and request. The returned object is typed from \`outputSchema\`.
-  - \`startAgent\` currently requires \`clientReq\` alongside the validated \`user\`. Use \`ctx.clientReq\` from a server function's second argument, or \`localParams?.clientReq\` from a hook's arguments, and pass it with the validated user as \`{ user, clientReq }\`.
+  - For agentic work triggered by a mutation, use a table \`afterCommit\` hook. Its \`run\` callback receives the committed \`rows\`, \`context\`, \`localParams\`, and \`getClientDBHandlers\`. Resolve permission-checked database handlers with \`await getClientDBHandlers({ userId }, undefined)\`; derive \`userId\` from trusted hook context or committed ownership data, never arbitrary client input.
+  - \`startAgent\` currently requires \`clientReq\` alongside the validated \`user\`. Use \`ctx.clientReq\` from a server function, or \`localParams.clientReq\` with \`localParams.isRemoteRequest.user\` from an \`afterCommit\` hook, and pass them as \`{ user, clientReq }\`. Handle internal mutations explicitly because they have no remote caller context.
   - Read the resolved \`ProstglesContext\` and agent option types before adding tools or database access. \`startAgent\` also accepts \`signal\` and \`timeout\` in milliseconds; tool auto-approval defaults to false.
 
   ## Services
@@ -737,8 +738,8 @@ const getCliAgentsFile = () => `
 
   ## Table hooks
 
-  - ${schemaConfigGuidance.tableHooks} Hooks apply only to table-handler mutations; raw SQL bypasses them. Use \`beforeEach\` to validate or transform pending data, \`afterEach\` for each affected row, and \`afterAll\` once for all affected rows.
-  - The hook \`tx\` and \`dbx\` use the mutation's PostgreSQL transaction. This provides atomicity and read-your-writes, but not serialization between requests. Use the supplied \`dbx\` for transactional reads and writes; a separate handler, including a \`dbo\` captured from \`onMount\`, cannot see uncommitted rows.
+  - ${schemaConfigGuidance.tableHooks} Hooks apply only to table-handler mutations; raw SQL bypasses them. Use \`beforeEach\` to validate or transform pending data, \`afterEach\` for each affected row, \`afterAll\` once for all affected rows, and \`afterCommit\` once after the outer transaction commits with at least one affected row.
+  - Transactional hooks' \`tx\` and \`dbx\` use the mutation's PostgreSQL transaction. This provides atomicity and read-your-writes, but not serialization between requests. Use the supplied \`dbx\` for transactional reads and writes; a separate handler, including a \`dbo\` captured from \`onMount\`, cannot see uncommitted rows.
   - Prefer PostgreSQL constraints or atomic conditional writes for invariants under concurrency. Do not add \`FOR UPDATE\`, advisory locks, mutex helpers, or retry loops unless all of these are true:
     1. The protected invariant and every competing operation are documented.
     2. A deterministic concurrency test reproduces the failure. Sequential tests do not validate concurrency.
@@ -746,7 +747,7 @@ const getCliAgentsFile = () => `
     4. The lock is acquired before reading the protected state.
     5. The smallest relevant row is locked, and multiple locks use a consistent order.
   - Locks acquired in \`afterEach\` or \`afterAll\` cannot protect checks performed earlier; do not use them for that purpose.
-  - Throwing from a hook rolls back the mutation. Use \`onCommit\` for external side effects that must run only after commit; use a transactionally written outbox/queue when delivery must be durable or retried. Do not start detached work from a hook or hold the transaction open across avoidable network calls.
+  - Throwing from a transactional hook rolls back the mutation. An \`afterCommit\` hook is awaited, but its errors are only logged and cannot roll back committed data. Use it for post-commit workflows needing committed rows, app context, or permission-checked user handlers; use a transactionally written outbox/queue when delivery must be durable or retried. Do not start detached work from a hook or hold the transaction open across avoidable network calls.
 
   ## Tables and display options
 
@@ -773,7 +774,36 @@ const getCliAgentsFile = () => `
   - For S3 storage, use \`storageType: { type: "S3", credential_id }\`; configure the credential in Prostgles and never put access keys in this repository.
   - Reference \`files.id\` from application tables with foreign keys rather than storing file URLs. Referencing tables must have a primary key. Use \`referencedTables\` when file type or size restrictions are required.
   - For PDF source references, configure \`annotationsTable: "file_annotations"\` alongside \`fileTable\` and \`storageType\`. Prostgles creates the annotation table and marks it as \`file-annotations\` in the client schema; do not create a replacement annotation table or set that marker manually.
-  - Reference an annotation from a domain row, for example \`conditions.columns.source_annotation_id: "integer REFERENCES file_annotations(id)"\`, or use a junction table for multiple excerpts. To annotate by text, insert \`file_id\`, a one-based \`page\`, \`start_text\`, \`end_text\`, and optionally \`end_page\` (defaults to \`page\`). Both phrases are included. Each phrase must match once on its page; use longer phrases to disambiguate. Matching ignores whitespace and expands ligatures. The server validates against extracted text when available, fills \`text\`, and derives \`fallback_edges\` from Docling. Without extraction, the PDF viewer resolves the phrases later. Do not invent rectangles; manual PDF selections also support continuing an annotation on another page.
+  - Reference an annotation from a domain row, for example \`conditions.columns.source_annotation_id: "integer REFERENCES file_annotations(id)"\`, or use a junction table for multiple excerpts. Insert through \`dbo.file_annotations.insert\` (or the permission-checked client handler), then link the returned \`id\`. Use the configured annotation table name.
+  - Agents can insert a continuous excerpt using \`file_id\`, \`page\`, \`start_text\`, \`end_text\`, and optional \`end_page\` (defaults to \`page\`). Pages are one-based PDF page numbers, not printed labels. Both phrases are included and must match uniquely on their respective pages; use longer verbatim phrases to disambiguate. Matching ignores whitespace and expands ligatures. Omit \`text_selections\` for this shorthand; an empty array is invalid. Multi-page shorthand requires extracted text.
+
+  \`\`\`ts
+  const annotation = await dbo.file_annotations.insert({
+    file_id: fileId,
+    name: "Condition 5",
+    page: 2,
+    end_page: 3,
+    start_text: "Before construction begins,",
+    end_text: "approved in writing.",
+  }, { returning: "*" });
+  // Use annotation.id as the domain row's source_annotation_id.
+  \`\`\`
+
+  - Agents can insert multi-page annotations directly with a non-empty \`text_selections\` array, without supplying rectangles. Provide an entry for every selected page or separate excerpt; multiple entries may use the same page. This supports both continuous multi-page annotations and disjoint excerpts. Omit \`rects\` and \`bounds\` so Prostgles resolves the geometry. Gaps between entries are not selected. Omit the top-level page/anchor fields: the server derives \`page\` and \`end_page\` from the selections.
+
+  \`\`\`ts
+  const annotation = await dbo.file_annotations.insert({
+    file_id: fileId,
+    text_selections: [
+      { page: 2, startText: "The scheme shall include", endText: "maintenance arrangements." },
+      { page: 2, startText: "Monitoring shall continue", endText: "for five years." },
+      { page: 4, startText: "Submit the report annually.", endText: "Submit the report annually." },
+    ],
+  }, { returning: "*" });
+  \`\`\`
+
+  - The server fills \`text\` and saves resolved \`text_selections\`; callers need not populate derived fields. With Docling, it excludes page headers, footers and furniture and supplies per-element \`bounds\`. Check the returned \`text\` before using it as evidence. Without extraction, provide each page selection explicitly; the PDF viewer resolves its anchors. Set \`startText\` and \`endText\` to the same full excerpt when its complete text is known.
+  - Manual PDF selections can supply \`rects\` on each selection: \`{ page, startText: selectedText, endText: selectedText, rects: selectedRects }\`. Rectangles are \`{ x, y, width, height }\` in unscaled page coordinates relative to the top-left; retain the viewer's captured values. Agents should omit \`rects\` and \`bounds\`, never invent coordinates. The renderer uses supplied rectangles or clips matched text to its element bounds; unresolved anchors do not produce guessed highlights.
   - The PDF viewer displays saved highlights and an annotation selector. An FK opens the related annotation row; do not assume it automatically opens the PDF at that highlight. Include the source relation in the row card and verify the full navigation flow. Keep managed table definitions out of \`tableConfig\`, since a same-name definition replaces the managed definition.
   - Configure annotation read/write permissions explicitly and restrict them to files the user may access. A foreign key does not grant permission. Ensure each condition's annotation belongs to its source file/version and project; test that users cannot link another project's excerpt. Once an excerpt is used as reviewed evidence, prevent edits or deletion that would change its text, file, page, or highlight coordinates; create a new annotation for corrections.
   - Set \`extractText: false\` for manual PDF text annotations without server-side extraction, or \`extractText: true\` for extraction through the managed documents service (also supported without an annotation table). Configure Docling with \`extractTextOptions\`, for example \`{ do_ocr: false, table_mode: "fast" }\`; Markdown and JSON outputs remain enabled because the managed extraction columns require them. With annotations configured, omitting \`extractText\` preserves automatic extraction. Older runtimes ignore this flag; upgrade/fix the runtime instead of adding app-level extraction workarounds.

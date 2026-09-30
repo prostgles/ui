@@ -8,7 +8,7 @@ import { type DetailedFilterBase } from "@common/filterUtils";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
 import type { AddColumnMenuProps } from "../ColumnMenu/AddColumnMenu";
 import { AddColumnMenu } from "../ColumnMenu/AddColumnMenu";
-import type { ColumnConfig } from "../ColumnMenu/ColumnConfig";
+import type { ColumnConfig } from "@common/ColumnConfig/ColumnConfig";
 import type { ProstglesColumn } from "../W_Table";
 import { getRowFilter } from "./getRowFilter";
 

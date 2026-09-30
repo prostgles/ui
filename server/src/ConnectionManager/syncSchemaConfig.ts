@@ -6,6 +6,7 @@ import { getSchemaConfig } from "./getSchemaConfig";
 import { getEntries } from "@common/utils";
 import { includes } from "prostgles-types";
 import { syncSchemaConfigResources } from "./syncSchemaConfigResources";
+import { startConnection } from "./startConnection";
 
 /**
  * Build and attach a schema-config project. Only its location is persisted;
@@ -41,22 +42,39 @@ export const syncSchemaConfig = async ({
       config_sync.toggleableProperties[key] = 1;
     }
   });
-  if (schemaConfig.onInitSQL) {
-    await runConnectionQuery(connectionId, schemaConfig.onInitSQL, undefined, {
-      dbs,
-    });
-  }
+  return connectionManager.runConnectionOperation(connectionId, async () => {
+    if (schemaConfig.onInitSQL) {
+      await runConnectionQuery(connectionId, schemaConfig.onInitSQL, undefined, {
+        dbs,
+      });
+    }
 
-  const databaseConfig = await dbs.database_configs.update(
-    { $existsJoined: { connections: { id: connectionId } } },
-    { config_sync: { ...config_sync, configPath: resolvedConfigPath } },
-    { returning: "*", multi: false },
-  );
-  if (!databaseConfig) {
-    throw "Database config not found";
-  }
+    const databaseConfig = await dbs.database_configs.update(
+      { $existsJoined: { connections: { id: connectionId } } },
+      { config_sync: { ...config_sync, configPath: resolvedConfigPath } },
+      { returning: "*", multi: false },
+    );
+    if (!databaseConfig) {
+      throw "Database config not found";
+    }
 
-  if (type === "cli") {
+    // Apply the schema once, before configured workspaces need its tables.
+    if (
+      connectionManager.getActiveConnectionSilentFail(connectionId) ||
+      schemaConfig.workspaces?.length
+    ) {
+      if (!connectionManager.db) throw "Connection manager database is not ready";
+      // Already holding the connection lifecycle queue.
+      await startConnection.call(
+        connectionManager,
+        connectionId,
+        dbs,
+        connectionManager.db,
+        undefined,
+        true,
+      );
+    }
+
     await syncSchemaConfigResources({
       dbs,
       databaseId: databaseConfig.id,
@@ -65,20 +83,12 @@ export const syncSchemaConfig = async ({
       workspaces: schemaConfig.workspaces,
       llmCredential: schemaConfig.llmCredential,
     });
-  }
 
-  /**
-   * Restart instead of updating a second Prostgles instance: config hooks,
-   * migrations, functions, and table config now all share the live instance.
-   */
-  if (connectionManager.getActiveConnectionSilentFail(connectionId)) {
-    if (!connectionManager.db) throw "Connection manager database is not ready";
-    await connectionManager.startConnection(
-      connectionId,
-      dbs,
-      connectionManager.db,
-      undefined,
-      true,
-    );
-  }
+    const activeConnection =
+      connectionManager.getActiveConnectionSilentFail(connectionId);
+    if (activeConnection) {
+      // Still holding the queue: publish the synced rules before returning.
+      await connectionManager.updateConnectionAccess(activeConnection);
+    }
+  });
 };

@@ -55,7 +55,9 @@ export const getConnectionOnReady = ({
           connectionManager.getActiveConnectionSilentFail(id);
         if (maybeActiveConnection) {
           maybeActiveConnection.isReady = false;
-          void maybeActiveConnection.prgl.restart();
+          void connectionManager.withActiveConnection(id, (c) =>
+            c.prgl.restart(),
+          );
         }
       });
     };

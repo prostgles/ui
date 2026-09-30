@@ -12,7 +12,9 @@ ENV PYTHONUNBUFFERED=1
 
 USER root
 
-COPY patch_layout_postprocessor.py ./patch_layout_postprocessor.py
-RUN python patch_layout_postprocessor.py && rm patch_layout_postprocessor.py
+COPY patch_layout_postprocessor.py patch_ocr_regions.py ./
+RUN python patch_layout_postprocessor.py \
+    && python patch_ocr_regions.py \
+    && rm patch_layout_postprocessor.py patch_ocr_regions.py
 
 CMD ["docling-serve", "run"]

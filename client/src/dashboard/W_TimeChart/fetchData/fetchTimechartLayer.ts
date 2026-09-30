@@ -6,12 +6,12 @@ import {
 } from "prostgles-types";
 import type { Prgl } from "src/App";
 import { getMainTimeBinSizes } from "src/dashboard/Charts/TimeChart/getTimechartBinSize";
-import type { ColumnValue } from "src/dashboard/W_Table/ColumnMenu/ColumnStyleControls/ColumnStyleControls";
+import type { ColumnValue } from "@common/ColumnConfig/columnStyleTypes";
 import type {
   DataItem,
   TimeChartLayer,
 } from "../../Charts/TimeChart/TimeChart";
-import type { WindowData } from "../../Dashboard/dashboardUtils";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 import { getSQLQuerySemicolon } from "../../SQLEditor/SQLCompletion/completionUtils/getQueryReturnType";
 import { getGroupByValueColor } from "../../WindowControls/ColorByLegend/getGroupByValueColor";
 import type {
@@ -19,7 +19,7 @@ import type {
   W_TimeChartState,
   W_TimeChartStateLayer,
 } from "../W_TimeChart";
-import { TIMECHART_STAT_TYPES } from "../W_TimeChartMenu";
+import { TIMECHART_STAT_TYPES } from "@common/ColumnConfig/timechartConstants";
 import { TIMECHART_FIELD_NAMES } from "./constants";
 import { getYLabelFunc, type FetchedLayerData } from "./getTimeChartData";
 import { type TimeChartLayerWithBinOrError } from "./getTimeChartLayersWithBins";

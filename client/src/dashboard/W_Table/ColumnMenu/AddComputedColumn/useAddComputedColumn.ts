@@ -5,11 +5,11 @@ import {
   FUNCTION_DEFINITIONS,
   getColumnsAcceptedByFunction,
   type FuncDef,
-} from "../FunctionSelector/functions";
+} from "@common/ColumnConfig/FUNCTIONS";
 import { getAllJoins } from "../JoinPathSelectorV2";
 import type { QuickAddComputedColumnProps } from "./QuickAddComputedColumn";
-import type { ColumnConfig } from "../ColumnConfig";
-import type { AggregateOptions } from "../ColumnConfig";
+import type { ColumnConfig } from "@common/ColumnConfig/ColumnConfig";
+import type { AggregateOptions } from "@common/ColumnConfig/ColumnConfig";
 import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 
 export const useAddComputedColumnState = ({

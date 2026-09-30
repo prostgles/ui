@@ -1,5 +1,5 @@
 import type { ProstglesTimeChartLayer } from "../W_TimeChart";
-import { TIMECHART_STAT_TYPES } from "../W_TimeChartMenu";
+import { TIMECHART_STAT_TYPES } from "@common/ColumnConfig/timechartConstants";
 import { TIMECHART_FIELD_NAMES } from "./constants";
 import type { FetchedLayerData } from "./getTimeChartData";
 

@@ -87,6 +87,38 @@ type PRGLInstance =
 
 export class ConnectionManager {
   prglConnections: Map<string, PRGLInstance> = new Map();
+  private connectionOperations = new Map<string, Promise<unknown>>();
+
+  runConnectionOperation = <T>(conId: string, operation: () => Promise<T>) => {
+    const previous = this.connectionOperations.get(conId);
+    const result = (previous ?? Promise.resolve()).then(operation);
+    // A failed operation must not prevent later restarts or cleanup.
+    const settled = result.then(
+      () => undefined,
+      () => undefined,
+    );
+    this.connectionOperations.set(conId, settled);
+    void settled.then(() => {
+      if (this.connectionOperations.get(conId) === settled) {
+        this.connectionOperations.delete(conId);
+      }
+    });
+    return result;
+  };
+
+  withActiveConnection = async <T>(
+    conId: string,
+    operation: (connection: PRGLInstanceStarted) => Promise<T>,
+  ) => {
+    const connection = this.getActiveConnectionSilentFail(conId);
+    if (!connection) return;
+
+    return this.runConnectionOperation(conId, async () => {
+      // Config sync may have replaced the instance while this callback waited.
+      if (this.prglConnections.get(conId) !== connection) return;
+      return operation(connection);
+    });
+  };
   dbsServer: {
     http: httpServer;
     app: e.Express;
@@ -171,7 +203,7 @@ export class ConnectionManager {
             activeConnection.dbConf.id === reloadedDatabaseConfigId &&
             activeConnection.lastRestart < Date.now() - delay
           ) {
-            void activeConnection.prgl.restart();
+            void this.withActiveConnection(connectionId, (c) => c.prgl.restart());
           }
         },
       );
@@ -223,7 +255,7 @@ export class ConnectionManager {
     if (!prglCon) return;
     const tableConfig =
       disabled ? undefined : getSchemaConfig(config_sync)?.config.tableConfig;
-    await prglCon.prgl.update({ tableConfig });
+    await this.withActiveConnection(conId, (c) => c.prgl.update({ tableConfig }));
   };
 
   setOnMount = async (
@@ -355,6 +387,24 @@ export class ConnectionManager {
     );
   };
 
+  /** Caller must hold the connection lifecycle queue. */
+  updateConnectionAccess = async (connection: PRGLInstanceStarted) => {
+    if (!this.dbs) throw "Dbs not ready";
+    const [functions, publish] = await Promise.all([
+      getConnectionServerFunctions({
+        databaseConfig: connection.dbConf,
+        dbs: this.dbs,
+        connection: connection.con,
+      }),
+      getConnectionPublish({
+        dbConf: connection.dbConf,
+        dbs: this.dbs,
+        connection: connection.con,
+      }),
+    ]);
+    await connection.prgl.update({ functions, publish }, true);
+  };
+
   accessControlSkippedFirst = false;
   accessControlListeners?: SubscriptionHandler[];
   accessControlHotReload = async () => {
@@ -367,23 +417,9 @@ export class ConnectionManager {
       }
       console.log("onAccessChange");
       return Promise.all(
-        connIds.map(async (connection_id) => {
-          const connectionInstance = this.prglConnections.get(connection_id);
-          if (connectionInstance?.state !== "started") return;
-          const [functions, publish] = await Promise.all([
-            getConnectionServerFunctions({
-              databaseConfig: connectionInstance.dbConf,
-              dbs: this.dbs!,
-              connection: connectionInstance.con,
-            }),
-            getConnectionPublish({
-              dbConf: connectionInstance.dbConf,
-              dbs: this.dbs!,
-              connection: connectionInstance.con,
-            }),
-          ]);
-          return connectionInstance.prgl.update({ functions, publish }, true);
-        }),
+        connIds.map((connection_id) =>
+          this.withActiveConnection(connection_id, this.updateConnectionAccess),
+        ),
       );
     };
     this.accessControlListeners = [
@@ -473,19 +509,20 @@ export class ConnectionManager {
     return c;
   };
 
-  disconnect = async (conId: string): Promise<boolean> => {
-    await cdbCache.get(conId)?.destroy();
-    const conn = this.prglConnections.get(conId);
-    let destroyed = false;
-    if (conn?.state === "started") {
-      await this.cleanupOnMount(conn);
-      //TODO: fix re-started connection not working. Might need to use ws instead of socket.io
-      await conn.prgl.destroy();
-      destroyed = true;
-    }
-    this.prglConnections.delete(conId);
-    return destroyed;
-  };
+  disconnect = (conId: string): Promise<boolean> =>
+    this.runConnectionOperation(conId, async () => {
+      await cdbCache.get(conId)?.destroy();
+      const conn = this.prglConnections.get(conId);
+      let destroyed = false;
+      if (conn?.state === "started") {
+        await this.cleanupOnMount(conn);
+        //TODO: fix re-started connection not working. Might need to use ws instead of socket.io
+        await conn.prgl.destroy();
+        destroyed = true;
+      }
+      this.prglConnections.delete(conId);
+      return destroyed;
+    });
 
   async getConnectionData(connection_id: string) {
     const con = await this.dbs?.connections.findOne({ id: connection_id });
@@ -501,7 +538,6 @@ export class ConnectionManager {
     const activeConnection = this.getActiveConnectionSilentFail(con.id);
     const dbs = this.dbs;
     if (!dbs || !activeConnection) return;
-    const { prgl } = activeConnection;
     const { fileTable } = await parseTableConfig({
       type: "new",
       dbs,
@@ -511,25 +547,24 @@ export class ConnectionManager {
       app: activeConnection.app,
       databaseConfig: activeConnection.dbConf,
     });
-    await prgl.update({ fileTable });
+    await this.withActiveConnection(con.id, (c) => c.prgl.update({ fileTable }));
   };
 
-  startConnection = startConnection.bind(this);
+  startConnection = (...args: Parameters<typeof startConnection>) =>
+    this.runConnectionOperation(args[0], () => startConnection.apply(this, args));
 
   destroy = async () => {
     await this.conSub?.unsubscribe();
     await this.dbConfSub?.unsubscribe();
     await this.userSub?.unsubscribe();
     await Promise.all(
-      Array.from(this.prglConnections.values()).map(async (c) => {
-        if (c.state !== "started") return;
-        await this.cleanupOnMount(c);
-        await c.prgl.destroy();
-      }),
-    );
-    await Promise.all(
       this.accessControlListeners?.map((l) => l.unsubscribe()) ?? [],
     );
+    const connectionIds = new Set([
+      ...this.prglConnections.keys(),
+      ...this.connectionOperations.keys(),
+    ]);
+    await Promise.all(Array.from(connectionIds).map(this.disconnect));
   };
 }
 

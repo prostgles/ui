@@ -1,5 +1,5 @@
 import type { DBSchemaTableWJoins } from "../../../Dashboard/dashboardUtils";
-import type { ColumnConfig } from "../ColumnConfig";
+import type { ColumnConfig } from "@common/ColumnConfig/ColumnConfig";
 
 export const getTableIdentityColumns = (
   table: DBSchemaTableWJoins,
@@ -18,7 +18,9 @@ export const getTableIdentityColumns = (
             (!columnConfig ||
               columnConfig.some(
                 (column) =>
-                  column.name === columnName && column.show && !column.computedConfig,
+                  column.name === columnName &&
+                  column.show &&
+                  !column.computedConfig,
               )),
         ),
     )

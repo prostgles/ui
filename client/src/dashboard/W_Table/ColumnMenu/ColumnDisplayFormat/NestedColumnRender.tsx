@@ -5,8 +5,8 @@ import type { DBSchemaTableWithRenderInfo } from "src/dashboard/Dashboard/getTab
 import { getColumnsWithInfo } from "../../tableUtils/getColumnsWithInfo";
 import type { ChartValues } from "../../tableUtils/fetchChartRangeValues";
 import { RenderColumn } from "../../RenderColumn/RenderColumn";
-import type { ColumnConfigWithInfo } from "../../W_Table";
-import type { ColumnConfigNested } from "../ColumnConfig";
+import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
+import type { ColumnConfigNested } from "@common/ColumnConfig/ColumnConfig";
 import { getLinkedRecordsFilter } from "./getLinkedRecordsFilter";
 import { NestedColumnRenderRecords } from "./NestedColumnRenderRecords";
 import { NestedColumnRenderTimechart } from "./NestedColumnRenderTimechart";

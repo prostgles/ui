@@ -1,7 +1,7 @@
 import React, { useRef } from "react";
 import "./Table.css";
 
-import type { ColumnSortSQL } from "src/dashboard/W_Table/ColumnMenu/ColumnConfig";
+import type { ColumnSortSQL } from "@common/ColumnConfig/ColumnConfig";
 import { classOverride } from "../Flex";
 import { Pagination } from "./Pagination";
 import { closest, PAGE_SIZES, type TableProps, type TableState } from "./Table";

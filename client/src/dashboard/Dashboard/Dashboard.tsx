@@ -31,16 +31,16 @@ import type { ViewRendererProps } from "./ViewRenderer";
 import { ViewRendererWrapped } from "./ViewRenderer";
 import { cloneWorkspace, getCanCreateWorkspaces } from "./cloneWorkspace";
 import type {
-  ChartType,
   LinkSyncItem,
   LoadedSuggestions,
-  WindowData,
   WindowSyncItem,
   Workspace,
   WorkspaceSchema,
   WorkspaceSyncItem,
 } from "./dashboardUtils";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 import { TopHeaderClassName } from "./dashboardUtils";
+import type { ChartType } from "@common/ColumnConfig/WindowData";
 
 const FORCED_REFRESH_PREFIX = "force-" as const;
 export const CENTERED_WIDTH_CSS_VAR = "--centered-width";
@@ -202,6 +202,7 @@ export class _Dashboard extends RTComp<
         currentWorkspace = await cloneEditableWorkspaces({
           dbs,
           user_id,
+          isAdmin: this.props.prgl.user?.type === "admin",
           currentWorkspace,
         });
         if (currentWorkspace && requestedWorkspaceId !== currentWorkspace.id) {
@@ -613,13 +614,15 @@ export const getIsPinnedMenu = (workspace: WorkspaceSyncItem) => {
 const cloneEditableWorkspaces = async ({
   dbs,
   user_id,
+  isAdmin,
   currentWorkspace,
 }: {
   dbs: Prgl["dbs"];
   user_id: string | undefined;
+  isAdmin: boolean;
   currentWorkspace: Workspace | undefined;
 }): Promise<Workspace | undefined> => {
-  if (!user_id || !getCanCreateWorkspaces(dbs)) {
+  if (isAdmin || !user_id || !getCanCreateWorkspaces(dbs)) {
     return currentWorkspace;
   }
 

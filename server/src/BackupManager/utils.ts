@@ -1,10 +1,9 @@
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 
 import type { DBSSchema } from "@common/publishUtils";
-import { getAge, ROUTES } from "@common/utils";
+import { getAge } from "@common/utils";
 import { getLocalStorageClient } from "prostgles-server";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
-import type { StorageClient } from "prostgles-server/dist/StorageClient/StorageClientTypes";
 import type { Connections, DBS } from "..";
 import { getCloudClient } from "../cloudClients/cloudClients";
 import { getConnectionDetails } from "../connectionUtils/getConnectionDetails";
@@ -22,7 +21,7 @@ export async function getFileMgr(dbs: DBS, credId: number | null) {
     cred = await dbs.credentials.findOne({ id: credId });
     if (!cred) throw new Error("Could not find the credentials");
   }
-  const fileMgr: StorageClient =
+  const fileMgr =
     cred ?
       getCloudClient({
         accessKeyId: cred.key_id,

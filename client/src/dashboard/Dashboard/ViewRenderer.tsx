@@ -31,15 +31,12 @@ import type {
   DashboardProps,
   DashboardState,
 } from "./Dashboard";
-import type {
-  ChartType,
-  Link,
-  WindowData,
-  WindowSyncItem,
-} from "./dashboardUtils";
+import type { Link, WindowSyncItem } from "./dashboardUtils";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 import { getViewRendererUtils } from "./getViewRendererUtils";
 import { onLinkTable } from "./onLinkTable";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import type { ChartType } from "@common/ColumnConfig/WindowData";
 
 export type ViewRendererProps = Pick<DashboardProps, "prgl"> &
   Pick<DashboardData, "workspace" | "links" | "windows"> &

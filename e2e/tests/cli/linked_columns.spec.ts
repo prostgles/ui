@@ -236,6 +236,14 @@ test.beforeAll(async () => {
       `);
     },
   });
+  const state = await deployment.connectStateAs("admin");
+  try {
+    await state.db.workspaces!.update!(
+      { name: "Linked columns" }, { layout_mode: "editable" },
+    );
+  } finally {
+    state.disconnect();
+  }
 });
 
 test.afterAll(async () => {
@@ -260,24 +268,36 @@ test("linked column cells open filtered aggregates and linked records", async ({
         is_pkey: c.name === "id" || c.name === "email",
       })),
     };
-    expect(getTableIdentityColumns(composite).map((c) => c.name)).toEqual(["email"]);
+    expect(getTableIdentityColumns(composite).map((c) => c.name)).toEqual([
+      "email",
+    ]);
     const columnConfig: ColumnConfig[] = [
       { name: "id", show: false },
       { name: "email", show: true },
     ];
     const alternateKeys = { ...table, uniqueColumnGroups: [["id"], ["email"]] };
-    expect(getTableIdentityColumns(alternateKeys, columnConfig).map((c) => c.name))
-      .toEqual(["email"]);
-    expect(getTableIdentityColumns({
-      ...table, uniqueColumnGroups: [["id", "email"]],
-    }, columnConfig)).toEqual([]);
+    expect(
+      getTableIdentityColumns(alternateKeys, columnConfig).map((c) => c.name),
+    ).toEqual(["email"]);
+    expect(
+      getTableIdentityColumns(
+        {
+          ...table,
+          uniqueColumnGroups: [["id", "email"]],
+        },
+        columnConfig,
+      ),
+    ).toEqual([]);
     expect(getTableIdentityColumns(table, [])).toEqual([]);
-    const aggregate = config.workspaces[0].windows[0].columns
-      .find((c) => c.name === "Task status")!.nested!.columns[0]!;
-    expect(getTableIdentityColumns(alternateKeys, [
-      { ...aggregate, name: "id", show: true },
-      { name: "email", show: true },
-    ]).map((c) => c.name)).toEqual(["email"]);
+    const aggregate = config.workspaces[0].windows[0].columns.find(
+      (c) => c.name === "Task status",
+    )!.nested!.columns[0]!;
+    expect(
+      getTableIdentityColumns(alternateKeys, [
+        { ...aggregate, name: "id", show: true },
+        { name: "email", show: true },
+      ]).map((c) => c.name),
+    ).toEqual(["email"]);
     for (const permission of ["select", "filter"] as const) {
       const restricted = {
         ...composite,
@@ -285,10 +305,15 @@ test("linked column cells open filtered aggregates and linked records", async ({
           c.name === "id" ? { ...c, [permission]: false } : c,
         ),
       };
-      expect(getTableIdentityColumns(restricted).map((c) => c.name)).toEqual(["email"]);
-      expect(getTableIdentityColumns({
-        ...restricted, uniqueColumnGroups: [["id", "email"]],
-      })).toEqual([]);
+      expect(getTableIdentityColumns(restricted).map((c) => c.name)).toEqual([
+        "email",
+      ]);
+      expect(
+        getTableIdentityColumns({
+          ...restricted,
+          uniqueColumnGroups: [["id", "email"]],
+        }),
+      ).toEqual([]);
     }
   } finally {
     project.disconnect();
@@ -314,8 +339,9 @@ test("linked column cells open filtered aggregates and linked records", async ({
 
   // The root row editor must also work when both unique columns are hidden.
   await alice.getByTestId("dashboard.window.viewEditRow").click();
-  await expect(page.getByTestId("SmartForm").locator('[data-key="name"] input'))
-    .toHaveValue("Alice");
+  await expect(
+    page.getByTestId("SmartForm").locator('[data-key="name"] input'),
+  ).toHaveValue("Alice");
   await page.getByTestId("Popup.close").last().click();
 
   await aggregateButtons.nth(0).click();
@@ -384,9 +410,13 @@ test("linked column cells open filtered aggregates and linked records", async ({
   );
   await page.getByTestId("Popup.close").last().click();
 
-  await users.locator('[role="columnheader"][data-key="name"]').click({ button: "right" });
+  await users
+    .locator('[role="columnheader"][data-key="name"]')
+    .click({ button: "right" });
   await page.getByText("Style", { exact: true }).click();
-  const rootToggle = page.getByRole("switch").filter({ hasText: "Drill down to records" });
+  const rootToggle = page
+    .getByRole("switch")
+    .filter({ hasText: "Drill down to records" });
   await expect(rootToggle.getByRole("checkbox")).toBeDisabled();
   await expect(rootToggle).toHaveAttribute(
     "title",
@@ -420,7 +450,9 @@ test("linked column cells open filtered aggregates and linked records", async ({
   await tasksColumn.getByTestId("W_TableMenu_ColumnList.options").click();
   await page.getByTestId("W_TableMenu_ColumnList.style").click();
   await expect(page.getByText("Click action", { exact: true })).toHaveCount(0);
-  const recordLayoutToggle = page.getByRole("switch").filter({ hasText: "Drill down to records" });
+  const recordLayoutToggle = page
+    .getByRole("switch")
+    .filter({ hasText: "Drill down to records" });
   await expect(recordLayoutToggle.getByRole("checkbox")).toBeDisabled();
   await expect(recordLayoutToggle.getByRole("checkbox")).toBeChecked();
   await expect(recordLayoutToggle).toHaveAttribute(
@@ -470,7 +502,9 @@ test("linked column cells open filtered aggregates and linked records", async ({
   await expect(page.getByTestId("W_TableMenu_ColumnList.format")).toBeVisible();
   await page.getByTestId("W_TableMenu_ColumnList.style").click();
   await expect(page.getByText("Style mode", { exact: true })).toBeVisible();
-  const nestedToggle = page.getByRole("switch").filter({ hasText: "Drill down to records" });
+  const nestedToggle = page
+    .getByRole("switch")
+    .filter({ hasText: "Drill down to records" });
   await expect(nestedToggle.getByRole("checkbox")).toBeDisabled();
   await expect(nestedToggle).toHaveAttribute(
     "title",
@@ -1134,12 +1168,21 @@ test("nested presentation keeps formats, drill-down, groups and entity overflow 
     await expect(alice.getByRole("cell").nth(rawIndex)).toHaveText("12");
 
     // The drillable layout must not inject a hidden identity into GROUP BY.
-    await state.db.windows!.update!({ table_name: "users" }, {
-      columns: [...rootColumns, {
-        ...grouped,
-        nested: { ...grouped.nested!, display: { type: "drillable-records" } },
-      }],
-    });
+    await state.db.windows!.update!(
+      { table_name: "users" },
+      {
+        columns: [
+          ...rootColumns,
+          {
+            ...grouped,
+            nested: {
+              ...grouped.nested!,
+              display: { type: "drillable-records" },
+            },
+          },
+        ],
+      },
+    );
     const groupedRecords = alice.getByTestId("LinkedColumn.OpenRecords");
     await expect(groupedRecords).toHaveCount(2);
     const openGroup = groupedRecords.filter({ hasText: "open" });
@@ -1208,7 +1251,9 @@ test("nested presentation keeps formats, drill-down, groups and entity overflow 
       .filter({ hasText: "Raw" })
       .click({ button: "right" });
     await page.getByText("Style", { exact: true }).click();
-    const drillDownToggle = page.getByLabel("Drill down to records", { exact: true });
+    const drillDownToggle = page.getByLabel("Drill down to records", {
+      exact: true,
+    });
     await expect(drillDownToggle).toBeChecked();
     await drillDownToggle.uncheck();
     await expect(valueButtons).toHaveCount(0);
@@ -1247,29 +1292,45 @@ test("nested presentation keeps formats, drill-down, groups and entity overflow 
     await expect(rawCell.locator("button")).toHaveCount(0);
 
     // Incompatible formats explain why drill-down is unavailable in both editors.
-    const formatDisabledInfo = "Drill-down is unavailable with the URL format. Choose a plain-value format such as None.";
-    const rawHeader = users.getByRole("columnheader").filter({ hasText: "Raw" });
+    const formatDisabledInfo =
+      "Drill-down is unavailable with the URL format. Choose a plain-value format such as None.";
+    const rawHeader = users
+      .getByRole("columnheader")
+      .filter({ hasText: "Raw" });
     await rawHeader.click({ button: "right" });
     await page.getByText("Style", { exact: true }).click();
-    const disabledToggle = page.getByRole("switch").filter({ hasText: "Drill down to records" });
+    const disabledToggle = page
+      .getByRole("switch")
+      .filter({ hasText: "Drill down to records" });
     await expect(disabledToggle.getByRole("checkbox")).toBeDisabled();
     await expect(disabledToggle).toHaveAttribute("title", formatDisabledInfo);
     await page.getByTestId("Popup.close").last().click();
     await rawHeader.click({ button: "right" });
     await page.getByText("Edit Linked Columns", { exact: true }).click();
     await page.getByTestId("LinkedColumn.ColumnList.toggle").click();
-    await page.getByTestId("SearchList.List")
+    await page
+      .getByTestId("SearchList.List")
       .locator('[data-key="title"]')
-      .getByTestId("W_TableMenu_ColumnList.options").click();
+      .getByTestId("W_TableMenu_ColumnList.options")
+      .click();
     await page.getByTestId("W_TableMenu_ColumnList.format").click();
-    await expect(page.getByText(formatDisabledInfo, { exact: true })).toBeVisible();
+    await expect(
+      page.getByText(formatDisabledInfo, { exact: true }),
+    ).toBeVisible();
     await page.getByText("URL", { exact: true }).click();
-    await page.getByTestId("SearchList.List").locator('[data-key="NONE"]').click();
-    await expect(page.getByText(formatDisabledInfo, { exact: true })).toHaveCount(0);
+    await page
+      .getByTestId("SearchList.List")
+      .locator('[data-key="NONE"]')
+      .click();
+    await expect(
+      page.getByText(formatDisabledInfo, { exact: true }),
+    ).toHaveCount(0);
     while (await page.getByTestId("Popup.content").count()) {
       const popupCount = await page.getByTestId("Popup.content").count();
       await page.keyboard.press("Escape");
-      await expect(page.getByTestId("Popup.content")).toHaveCount(popupCount - 1);
+      await expect(page.getByTestId("Popup.content")).toHaveCount(
+        popupCount - 1,
+      );
     }
 
     // UI edits persist a child's label, drill-down and button style independently.
@@ -1377,7 +1438,6 @@ test("database migration preserves legacy nested display settings and drilldowns
       "1",
     ]);
     await expect(alice.getByTestId("LinkedColumn.OpenRecord")).toHaveCount(4);
-
   } finally {
     await state.db.windows!.update!(
       { table_name: "users" },
@@ -1585,12 +1645,16 @@ test("LLM-generated nested columns preserve presentation, drill-down and styles"
         .getByTestId("LinkedColumn.OpenRecords")
         .filter({ hasText: "3", hasNotText: "£" }),
     ).toHaveClass(/outline/);
-    const manager = alice.getByTestId("LinkedColumn.OpenRecords").filter({ hasText: "Bob" });
+    const manager = alice
+      .getByTestId("LinkedColumn.OpenRecords")
+      .filter({ hasText: "Bob" });
     await expect(manager).toContainText("Bob");
     await expect(manager).toHaveClass(/filled/);
     await expect(manager).toHaveCSS("color", "rgb(18, 52, 86)");
     await manager.click();
-    await expect(page.getByTestId("Popup.content").last()).toContainText("bob@example.com");
+    await expect(page.getByTestId("Popup.content").last()).toContainText(
+      "bob@example.com",
+    );
     await page.getByTestId("Popup.close").last().click();
     await expect(alice.locator(".ProgressBar > .shadow")).toHaveCSS(
       "background-color",

@@ -1,14 +1,14 @@
 import type { DBHandlerClient, TableHandlerClient } from "prostgles-client";
 import type { AnyObject, SQLHandler } from "prostgles-types";
 import type { Theme } from "src/App";
-import { chipColorsFadedBorder } from "../ColumnDisplayFormat/ChipStylePalette";
 import type { DBS } from "src/dashboard/Dashboard/DBS";
 import { getRandomElement } from "@common/utils";
-import type { ConditionalStyle } from "./ColumnStyleControls";
-import type { ColumnConfig } from "../ColumnConfig";
+import type { ColumnConfig } from "@common/ColumnConfig/ColumnConfig";
 import { getComputedColumnSelect } from "../../tableUtils/getTableSelect";
 import { getSingleShownNestedColumn } from "../../RenderColumn/StyledTableColumn";
 import type { DBSchemaTableWJoins } from "src/dashboard/Dashboard/dashboardUtils";
+import { chipColorsFadedBorder } from "@common/ColumnConfig/chipColors";
+import type { ConditionalStyle } from "@common/ColumnConfig/columnStyleTypes";
 
 export type DefaultConditionalStyleArgs =
   | {
@@ -35,16 +35,16 @@ export const getValueColors = async (
   const { theme } = args;
   const values = await fetchColumnValues(args);
   if (!values) return;
-  const prevSyleIndexes = new Set<number>();
+  const prevStyleIndexes = new Set<number>();
   setStyle({
     type: "Conditional",
     conditions: values.map((v) => {
       const nonPickedStyles =
-        prevSyleIndexes.size === chipColorsFadedBorder.length ?
+        prevStyleIndexes.size === chipColorsFadedBorder.length ?
           chipColorsFadedBorder
-        : chipColorsFadedBorder.filter((_, i) => !prevSyleIndexes.has(i));
+        : chipColorsFadedBorder.filter((_, i) => !prevStyleIndexes.has(i));
       const { elem: style, index } = getRandomElement(nonPickedStyles);
-      prevSyleIndexes.add(index);
+      prevStyleIndexes.add(index);
       return {
         condition: v,
         operator: "=",

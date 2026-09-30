@@ -33,6 +33,7 @@ export const usePdfViewer = ({
   url,
   scale = 1.5,
   highlights = [],
+  activeHighlightId,
   withCredentials = false,
   defaultPage,
 }: PdfViewerProps & {
@@ -53,6 +54,12 @@ export const usePdfViewer = ({
       setCurrentPage(defaultPage);
     }
   }, [defaultPage]);
+  const activeHighlight = highlights.find((h) => h.id === activeHighlightId);
+  useEffect(() => {
+    if (!activeHighlight) return;
+    setCurrentPage((page) => activeHighlight.text_selections.some((s) => s.page === page) ?
+      page : activeHighlight.text_selections[0]!.page);
+  }, [activeHighlight]);
   const [renderedPage, setRenderedPage] = useState<RenderedPage | null>(null);
   const [isRendering, setIsRendering] = useState(false);
   const [error, setError] = useState<unknown>();
@@ -64,7 +71,7 @@ export const usePdfViewer = ({
   const pageElement = activeRenderedPage?.element ?? null;
   const pageHighlights = useMemo(
     () => highlights
-      .filter((h) => h.page <= currentPage && (h.end_page ?? h.page) >= currentPage)
+      .filter((h) => h.text_selections.some((s) => s.page === currentPage))
       .map((h) => ({ ...h, rects: pageElement && viewport ?
         getTextHighlightRects(h, currentPage, pageElement, viewport) : [] })),
     [currentPage, highlights, pageElement, viewport],

@@ -6,11 +6,14 @@ import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 import type {
   DBSchemaTablesWJoins,
   LoadedSuggestions,
-  WindowData,
 } from "../../Dashboard/dashboardUtils";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 import { getColumnsWithInfo } from "../tableUtils/getColumnsWithInfo";
 import { ColumnListItemOptions } from "./ColumnListItemOptions";
-import type { ColumnConfig, NestedDisplay } from "./ColumnConfig";
+import type {
+  ColumnConfig,
+  NestedDisplay,
+} from "@common/ColumnConfig/ColumnConfig";
 import { getColumnListItem } from "./ColumnSelect/getColumnListItem";
 import { SummariseColumn } from "./SummariseColumns";
 

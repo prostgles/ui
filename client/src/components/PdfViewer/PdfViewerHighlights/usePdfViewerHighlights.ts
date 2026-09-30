@@ -1,3 +1,4 @@
+import { intersectAnnotationRects } from "@common/annotationText";
 import type * as pdfjsLib from "pdfjs-dist";
 import {
   useCallback,
@@ -99,6 +100,7 @@ export const usePdfViewerHighlights = ({
       page: currentPage,
       rects,
       text: selectedText,
+      text_selections: [{ page: currentPage, startText: selectedText, endText: selectedText, rects }],
     });
   }, [currentPage, setPotentialHighlight, pageElement, viewport]);
 
@@ -194,7 +196,9 @@ const getSelectedTextRects = (range: Range): DOMRect[] => {
       endsHere ? range.endOffset : textNode.data.length,
     );
 
-    rects.push(...textRange.getClientRects());
+    const bounds = textNode.parentElement!.getBoundingClientRect();
+    rects.push(...Array.from(textRange.getClientRects()).flatMap((rect) =>
+      intersectAnnotationRects(rect, bounds).map((r) => new DOMRect(r.x, r.y, r.width, r.height))));
   };
 
   if (root instanceof Text) {

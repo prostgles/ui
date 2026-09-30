@@ -18,7 +18,6 @@ import {
   useSetActiveWorkspace,
   useWorkspacesSync,
 } from "../../../../../WorkspaceMenu/useWorkspaces";
-import { loadGeneratedWorkspaces } from "../../../../Tools/loadGeneratedWorkspaces/loadGeneratedWorkspaces";
 import type { ProstglesMCPToolsProps } from "../ProstglesToolUseMessage";
 import ErrorComponent from "@components/ErrorComponent";
 import { useLLMSetup } from "src/dashboard/AskLLM/Setup/LLMSetupProvider";
@@ -29,7 +28,11 @@ export const LoadSuggestedDashboards = ({
   resultContent,
 }: ProstglesMCPToolsProps) => {
   const { setWorkspace } = useSetActiveWorkspace(workspaceId);
-  const { dbs, connectionId, tables } = usePrgl();
+  const {
+    dbs,
+    connectionId,
+    dbsMethods: { loadGeneratedWorkspaces },
+  } = usePrgl();
 
   const { setShowChat } = useLLMSetup();
   const workspaces = useWorkspacesSync(dbs, connectionId);
@@ -121,15 +124,11 @@ export const LoadSuggestedDashboards = ({
             : undefined
           }
           onClickPromise={async () => {
-            await loadGeneratedWorkspaces(
-              prostglesWorkspaces,
-              toolUseContent.id,
-              {
-                dbs,
-                connectionId,
-                tables,
-              },
-            )
+            await loadGeneratedWorkspaces!({
+              workspaces: prostglesWorkspaces,
+              toolUseId: toolUseContent.id,
+              connectionId,
+            })
               .then((insertedWorkspaces) => {
                 const [first] = insertedWorkspaces;
                 if (first) {

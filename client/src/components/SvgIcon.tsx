@@ -66,36 +66,39 @@ export const SvgIcon = ({
     />
   );
 };
-
-const fetchIconAndCache = (
+const fetchIconAndCache = async (
   iconPath: string,
   fallbackIcon: string | undefined,
 ): Promise<string> => {
-  return fetch(iconPath)
-    .then((res) => (!res.ok ? Promise.reject(res.statusText) : res.text()))
-    .then((svgRaw) => {
-      const svg = sanitizeHtml(svgRaw, {
-        allowedTags: ["svg", "path"],
-        allowedAttributes: {
-          svg: ["width", "height", "view", "style", "xmlns", "viewBox", "role"],
-          path: ["d", "style"],
-        },
-        parser: {
-          lowerCaseTags: false,
-          lowerCaseAttributeNames: false,
-        },
-      });
-      cachedSvgs.set(iconPath, svg);
-      return svg;
-    })
-    .catch((err) => {
+  try {
+    const res = await fetch(iconPath);
+
+    if (!res.ok) {
       if (fallbackIcon) {
         return fetchIconAndCache(fallbackIcon, undefined);
       }
-      console.error(`Error fetching SVG icon at ${iconPath}:`, err);
-      cachedSvgs.set(iconPath, "");
-      return "";
+      throw new Error(`${res.status} ${res.statusText}`);
+    }
+
+    const svgRaw = await res.text();
+    const svg = sanitizeHtml(svgRaw, {
+      allowedTags: ["svg", "path"],
+      allowedAttributes: {
+        svg: ["width", "height", "view", "style", "xmlns", "viewBox", "role"],
+        path: ["d", "style"],
+      },
+      parser: {
+        lowerCaseTags: false,
+        lowerCaseAttributeNames: false,
+      },
     });
+
+    cachedSvgs.set(iconPath, svg);
+    return svg;
+  } catch (error) {
+    console.error(`Error fetching SVG icon at ${iconPath}:`, error);
+    return "";
+  }
 };
 
 export const getIcon = async (icon: string) => {

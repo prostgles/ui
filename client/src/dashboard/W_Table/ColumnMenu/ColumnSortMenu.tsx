@@ -1,8 +1,12 @@
 import React from "react";
 import { FlexCol } from "@components/Flex";
 import { Select } from "@components/Select/Select";
-import type { ColumnConfig, ColumnSort, NestedColumn } from "./ColumnConfig";
-import type { ColumnConfigWithInfo } from "../W_Table";
+import type {
+  ColumnConfig,
+  ColumnSort,
+  NestedColumn,
+} from "@common/ColumnConfig/ColumnConfig";
+import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
 import type {
   DBSchemaTablesWJoins,
   WindowSyncItem,

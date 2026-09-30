@@ -28,7 +28,7 @@ export type TableOptions = RequiredKeepUndefined<
 export type InternalColumnFormat = {
   type: "Internal";
   params:
-    | { component: "File" }
+    | { component: "File"; dataKey: string }
     | {
         component: "FileAnnotation";
         tableName: string;
@@ -53,29 +53,26 @@ export const annotationsTableColumns = {
   id: `INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY`,
   file_id: `UUID NOT NULL`,
   name: `TEXT`,
-  text: `TEXT NOT NULL`,
-  page: "INTEGER NOT NULL CHECK (page >= 1)",
+  text: `TEXT NOT NULL DEFAULT ''`,
+  page: "INTEGER NOT NULL DEFAULT 1 CHECK (page >= 1)",
   end_page: "INTEGER CHECK (end_page >= page)",
   start_text: "TEXT",
   end_text: "TEXT",
-  fallback_edges: {
-    nullable: true,
-    jsonbSchema: {
-      type: {
-        start_x: "number",
-        start_y: "number",
-        end_x: "number",
-        end_y: "number",
-      },
-    },
-  },
-  rectangles: {
+  text_selections: {
+    defaultValue: "[]",
     jsonbSchema: {
       arrayOfType: {
-        x: "number",
-        y: "number",
-        width: "number",
-        height: "number",
+        page: "integer",
+        startText: "string",
+        endText: "string",
+        rects: {
+          optional: true,
+          arrayOfType: { x: "number", y: "number", width: "number", height: "number" },
+        },
+        bounds: {
+          optional: true,
+          arrayOfType: { x: "number", y: "number", width: "number", height: "number" },
+        },
       },
     },
   },

@@ -1,6 +1,5 @@
 import type { ValidatedColumnInfo } from "prostgles-types";
 import { _PG_date, _PG_interval, _PG_numbers } from "prostgles-types";
-import type { ColumnConfig } from "../ColumnConfig";
 
 const infoTypes = {
   string: { udt_name: "text", tsDataType: "string" },
@@ -11,6 +10,12 @@ const infoTypes = {
   geo: { udt_name: "geography", tsDataType: "any" },
 } as const;
 
+export type FunctionArgs = {
+  $duration?: { otherColumn: string };
+  $string_agg?: { separator: string };
+  $template_string?: string;
+};
+
 export type FuncDef = {
   key: string;
   label: string;
@@ -19,9 +24,7 @@ export type FuncDef = {
   udtDataTypeCol?: "any" | ValidatedColumnInfo["udt_name"][];
   outType: "sameAsInput" | Pick<ValidatedColumnInfo, "tsDataType" | "udt_name">;
   isAggregate?: boolean;
-  requiresArg?: keyof NonNullable<
-    Required<ColumnConfig>["computedConfig"]["args"]
-  >;
+  requiresArg?: keyof FunctionArgs;
 };
 
 export const getFuncs = (): FuncDef[] => {

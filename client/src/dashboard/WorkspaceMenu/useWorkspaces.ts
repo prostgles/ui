@@ -9,6 +9,7 @@ export const useWorkspaces = (
   dbs: DBS,
   userId: string,
   connectionId: string,
+  isAdmin: boolean,
 ) => {
   const unsortedWorkspaces = useWorkspacesSync(dbs, connectionId);
   const canCreateWorkspaces = getCanCreateWorkspaces(dbs);
@@ -24,13 +25,14 @@ export const useWorkspaces = (
         /** Hide editable originals after personal clones are created */
         .filter(
           (wsp) =>
+            isAdmin ||
             !canCreateWorkspaces ||
             wsp.isMine ||
             !wsp.published ||
             wsp.layout_mode === "fixed",
         )
     );
-  }, [canCreateWorkspaces, unsortedWorkspaces, userId]);
+  }, [canCreateWorkspaces, unsortedWorkspaces, userId, isAdmin]);
 
   return { workspaces };
 };

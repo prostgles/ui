@@ -6,7 +6,7 @@ import type {
   DBSchemaTableWJoins,
   WindowSyncItem,
 } from "../Dashboard/dashboardUtils";
-import type { ColumnSort } from "../W_Table/ColumnMenu/ColumnConfig";
+import type { ColumnSort } from "@common/ColumnConfig/ColumnConfig";
 import type { SmartFilterBarProps } from "./SmartFilterBar";
 import { isDefined } from "@common/filterUtils";
 

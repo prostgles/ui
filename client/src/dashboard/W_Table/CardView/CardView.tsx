@@ -3,16 +3,14 @@ import { Pagination } from "@components/Table/Pagination";
 import type { TableHandlerClientForColumns } from "prostgles-client/dist/prostgles";
 import type { AnyObject } from "prostgles-types";
 import React from "react";
-import type {
-  ChartOptions,
-  WindowSyncItem,
-} from "../../Dashboard/dashboardUtils";
+import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";
 import type { W_TableProps, W_TableState } from "../W_Table";
 import type { OnClickEditRow } from "../tableUtils/getEditColumn";
 import type { ProstglesTableColumn } from "../tableUtils/getTableCols";
 import { CardViewColumn } from "./CardViewColumn";
 import { CardViewKanban } from "./CardViewKanban";
 import { useCardViewState } from "./useCardViewState";
+import type { ChartOptions } from "@common/ColumnConfig/WindowData";
 
 export type CardViewProps = {
   props: W_TableProps;

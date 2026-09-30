@@ -44,6 +44,11 @@ test("database tools select one array element with scoped read access", async ()
     const page = await run({ tableName: "notices", filter: {}, select: { page_text: { $array_element: ["pages", 2] } } });
     expect(page.isError).not.toBe(true);
     expect(page.content).toEqual([{ type: "text", text: JSON.stringify([{ page_text: "Second page" }]) }]);
+    const allFields = await run({ tableName: "notices", filter: {} });
+    expect(allFields.isError).not.toBe(true);
+    expect(allFields.content).toEqual([{ type: "text", text: JSON.stringify([{ id: 1, pages: ["First page", "Second page"] }]) }]);
+    const stringWildcard = await run({ tableName: "notices", filter: {}, select: "*" });
+    expect(stringWildcard.isError).toBe(true);
     const hiddenRow = await run({ tableName: "notices", filter: { id: 2 }, select: { page_text: { $array_element: ["pages", 1] } } });
     expect(hiddenRow.isError).not.toBe(true);
     expect(hiddenRow.content).toEqual([{ type: "text", text: "[]" }]);

@@ -20,7 +20,8 @@ type S3Config = {
   accessKeyId: string;
   secretAccessKey: string;
 };
-const getS3CloudClient = (s3Config: S3Config): CloudStorageClient => {
+
+export const getCloudClient = (s3Config: S3Config) => {
   const bucket = pickKeys(s3Config, ["Bucket"]);
 
   // Initialize S3 client
@@ -78,7 +79,7 @@ const getS3CloudClient = (s3Config: S3Config): CloudStorageClient => {
     return uploadedFile;
   };
 
-  return {
+  const client = {
     type: "cloud",
     upload: (file) =>
       uploadToS3(
@@ -110,7 +111,7 @@ const getS3CloudClient = (s3Config: S3Config): CloudStorageClient => {
       });
       return url;
     },
-  };
-};
+  } satisfies CloudStorageClient;
 
-export const getCloudClient = getS3CloudClient;
+  return client;
+};

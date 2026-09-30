@@ -4,7 +4,7 @@ import React from "react";
 import type { DBSchemaTableWJoins } from "src/dashboard/Dashboard/dashboardUtils";
 import { RenderFilter } from "src/dashboard/RenderFilter";
 import { SortByControl } from "src/dashboard/SmartFilter/SortByControl";
-import type { AggregateOptions } from "../ColumnConfig";
+import type { AggregateOptions } from "@common/ColumnConfig/ColumnConfig";
 
 type P = {
   table: DBSchemaTableWJoins;

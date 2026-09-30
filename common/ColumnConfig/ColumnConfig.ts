@@ -1,23 +1,19 @@
-import type {
-  DetailedFilter,
-  GroupedDetailedFilter,
-} from "@common/filterUtils";
-import type { BtnProps } from "@components/Btn";
+import type { UserColumnFormat } from "../columnDisplayFormat.schema";
+import type { DetailedFilter, GroupedDetailedFilter } from "../filterUtils";
+import type { InternalColumnFormat } from "../managedTableSchema";
 import type { ParsedJoinPath, ValidatedColumnInfo } from "prostgles-types";
-import type {
-  TimechartRenderStyle,
-  TIMECHART_STAT_TYPES,
-} from "src/dashboard/W_TimeChart/W_TimeChartMenu";
-import type { ColumnConfigWithInfo } from "../W_Table";
-import type { UserColumnFormat } from "./ColumnDisplayFormat/columnFormatUtils";
 import type {
   ConditionalStyle,
   ConditionalStyleIcons,
   FixedStyle,
   ScaleStyle,
   BarchartStyle,
-} from "./ColumnStyleControls/ColumnStyleControls";
-import type { FuncDef } from "./FunctionSelector/functions";
+} from "./columnStyleTypes";
+import type { FuncDef, FunctionArgs } from "./FUNCTIONS";
+import type {
+  TIMECHART_STAT_TYPES,
+  TimechartRenderStyle,
+} from "./timechartConstants";
 
 export type ColumnConfigChart = {
   type: "timechart";
@@ -33,7 +29,6 @@ export type ColumnConfigChart = {
         isCountAll: true;
       };
 };
-
 export type NestedColumn<C extends ColumnConfig | ColumnConfigWithInfo> = Omit<
   C,
   "nested"
@@ -52,10 +47,7 @@ export type ColumnStyle = (
   | BarchartStyle
 ) & {
   /** Colours come from the same fixed/conditional style as plain values. */
-  buttonVariant?: Extract<
-    BtnProps["variant"],
-    "text" | "faded" | "filled" | "outline"
-  >;
+  buttonVariant?: "text" | "faded" | "filled" | "outline";
 };
 
 export type NestedDisplay =
@@ -105,11 +97,7 @@ export type ComputedColumnConfig = Pick<
    * Undefined for functions that don't need any columns
    */
   column: string | undefined;
-  args?: {
-    $duration?: { otherColumn: string };
-    $string_agg?: { separator: string };
-    $template_string?: string;
-  };
+  args?: FunctionArgs;
   aggregateOptions?: AggregateOptions;
 };
 
@@ -127,3 +115,13 @@ export type AggregateOptions = {
   filter?: GroupedDetailedFilter;
   orderBy?: ColumnSort;
 };
+
+export type ColumnConfigWithInfo = Omit<ColumnConfig, "nested"> & {
+  /** Defined for plain columns and for computed columns that target a specific table column */
+  info?: ValidatedColumnInfo & {
+    defaultRenderAs?: InternalColumnFormat;
+  };
+  nested?: Omit<NonNullable<ColumnConfig["nested"]>, "columns"> & {
+    columns: NestedColumn<ColumnConfigWithInfo>[];
+  };
+} & Pick<ValidatedColumnInfo, "udt_name" | "tsDataType">;

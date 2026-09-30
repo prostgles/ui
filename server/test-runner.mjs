@@ -1,7 +1,22 @@
 import { glob } from "glob";
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { run } from "node:test";
 import { spec } from "node:test/reporters";
 import { basename } from "path";
+
+const rootLock = JSON.parse(
+  readFileSync(new URL("../package-lock.json", import.meta.url), "utf8"),
+);
+const serverLock = JSON.parse(
+  readFileSync(new URL("./package-lock.json", import.meta.url), "utf8"),
+);
+assert.equal(
+  rootLock.packages["node_modules/prostgles-types"].version,
+  serverLock.packages["node_modules/prostgles-types"].version,
+  "Root prostgles-types version must match server/package-lock.json",
+);
+
 /**
  * This approach is used instead of command line node --test because it doesn't find all the spec files
  * */

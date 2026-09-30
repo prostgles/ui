@@ -63,7 +63,7 @@ export const getPublishLLM = (
       },
       delete: isAdmin && "*",
       insert: isAdmin && {
-        fields: { name: 1, provider_id: 1, api_key: 1 },
+        fields: { id: 0, created: 0 },
         forcedData,
       },
       update: isAdmin && {

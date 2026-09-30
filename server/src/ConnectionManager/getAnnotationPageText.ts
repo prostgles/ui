@@ -1,6 +1,8 @@
 type BBox = { l: number; t: number; r: number; b: number; coord_origin: string };
 type Provenance = { page_no: number; bbox: BBox; charspan?: [number, number] };
 type Item = {
+  label?: string;
+  content_layer?: string;
   self_ref?: string;
   text?: string;
   prov?: Provenance[];
@@ -34,10 +36,12 @@ export const getAnnotationPageText = (document: AnnotationDocument, page: number
     segments.push({ start: text.length, end: text.length + value.length, bbox });
     text += value;
   };
-  const visit = (item: Item) => {
+  const visit = (item: Item, excluded = false) => {
     if (visited.has(item)) return;
     visited.add(item);
-    for (const prov of item.prov ?? []) {
+    excluded ||= item === document.furniture || item.content_layer === "furniture" ||
+      item.label === "page_header" || item.label === "page_footer";
+    for (const prov of excluded ? [] : item.prov ?? []) {
       if (prov.page_no !== page) continue;
       if (item.text !== undefined) {
         const value = prov.charspan ? item.text.slice(...prov.charspan) : item.text;
@@ -48,30 +52,26 @@ export const getAnnotationPageText = (document: AnnotationDocument, page: number
     }
     for (const child of item.children ?? []) {
       const childItem = byRef.get(child.$ref);
-      if (childItem) visit(childItem);
+      if (childItem) visit(childItem, excluded);
     }
   };
-  if (document.body) visit(document.body);
   if (document.furniture) visit(document.furniture);
-  items.forEach(visit);
+  if (document.body) visit(document.body);
+  items.forEach((item) => visit(item));
   return {
     text,
-    getBBox: (range: { start: number; end: number }) => {
-      const boxes = segments.filter((s) => s.start < range.end && s.end > range.start)
-        .map(({ bbox }) => ({
-          x: bbox.l,
-          y: bbox.coord_origin === "BOTTOMLEFT" ? size.height - bbox.t : bbox.t,
-          width: bbox.r - bbox.l,
-          height: Math.abs(bbox.b - bbox.t),
-        }));
-      if (!boxes.length) return undefined;
-      const x = Math.min(...boxes.map((box) => box.x));
-      const y = Math.min(...boxes.map((box) => box.y));
-      return {
-        x, y,
-        width: Math.max(...boxes.map((box) => box.x + box.width)) - x,
-        height: Math.max(...boxes.map((box) => box.y + box.height)) - y,
-      };
-    },
+    getSelections: (range: { start: number; end: number }) =>
+      segments.filter((s) => s.start < range.end && s.end > range.start)
+        .map(({ bbox, start, end }) => ({
+          page,
+          startText: text.slice(Math.max(start, range.start), Math.min(end, range.end)),
+          endText: text.slice(Math.max(start, range.start), Math.min(end, range.end)),
+          bounds: [{
+            x: bbox.l,
+            y: bbox.coord_origin === "BOTTOMLEFT" ? size.height - bbox.t : bbox.t,
+            width: bbox.r - bbox.l,
+            height: Math.abs(bbox.b - bbox.t),
+          }],
+        })),
   };
 };

@@ -29,6 +29,7 @@ export const DashboardMenuContent = (props: P) => {
 
   const pinnedMenu = getIsPinnedMenu(workspace);
   const isPublishedReadonlyWorkspace =
+    user?.type !== "admin" &&
     workspace.published && workspace.user_id !== user?.id;
 
   const { centeredLayout } = useLocalSettings();

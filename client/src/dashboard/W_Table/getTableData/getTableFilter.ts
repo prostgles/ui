@@ -6,7 +6,7 @@ import {
 } from "@common/filterUtils";
 import type { AnyObject } from "prostgles-types";
 import { isDefined, isEmpty } from "prostgles-types";
-import type { WindowData } from "../../Dashboard/dashboardUtils";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 import type { W_TableProps } from "../W_Table";
 import type { TableWindowInsertModel } from "@common/DashboardTypes";
 

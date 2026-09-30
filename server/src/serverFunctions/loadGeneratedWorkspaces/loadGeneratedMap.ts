@@ -1,6 +1,6 @@
 import type { MapWindowInsertModel } from "@common/DashboardTypes";
 import type { LinkOption, WindowInsertModel } from "./loadGeneratedWorkspaces";
-import { getPaletteRGBColor } from "src/dashboard/W_Table/ColumnMenu/ColorPicker";
+import { getPaletteRGBColor } from "@common/ColumnConfig/COLOR_PALETTE";
 
 export const loadGeneratedMap = (
   generatedWindow: MapWindowInsertModel,

@@ -13,7 +13,7 @@ import { windowIs } from "../Dashboard/dashboardUtils";
 import { RenderFilter } from "../RenderFilter";
 import { getTableExpressionReturnType } from "../SQLEditor/SQLCompletion/completionUtils/getQueryReturnType";
 import { getTimeChartLayer } from "../W_TimeChart/fetchData/getTimeChartLayers";
-import { TIMECHART_STAT_TYPES } from "../W_TimeChart/W_TimeChartMenu";
+import { TIMECHART_STAT_TYPES } from "@common/ColumnConfig/timechartConstants";
 import type { MapLayerManagerProps } from "./DataLayerManager/DataLayerManager";
 import { SQLChartLayerEditor } from "./SQLChartLayerEditor";
 import FormField from "@components/FormField/FormField";
@@ -109,7 +109,7 @@ export const TimeChartLayerOptions = ({
   };
 
   const updateLinkOpts = (newOpts: Partial<typeof linkOpts>) => {
-    link.$update(
+    void link.$update(
       {
         options: newOpts,
       },

@@ -5,7 +5,7 @@ export const asHex = (v: string) => {
   return rgbToHex(r, g, b);
 };
 
-export const rgbToHex = (r, g, b) =>
+export const rgbToHex = (r: number, g: number, b: number) =>
   "#" +
   [r, g, b]
     .map((x) => {

@@ -15,10 +15,10 @@ import React, { useState } from "react";
 import { type Prgl } from "../../App";
 import { MethodDefinition } from "../AccessControl/Methods/MethodDefinition";
 import { CodeEditor } from "../CodeEditor/CodeEditor";
-import type { WindowData } from "../Dashboard/dashboardUtils";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 import SmartTable from "../SmartTable";
 import { ProcessLogs } from "../TableConfig/ProcessLogs";
-import type { ColumnValue } from "../W_Table/ColumnMenu/ColumnStyleControls/ColumnStyleControls";
+import type { ColumnValue } from "@common/ColumnConfig/columnStyleTypes";
 
 type P = Pick<Prgl, "db" | "methods" | "tables"> & {
   method_name: string;
@@ -88,10 +88,7 @@ export const W_MethodControls = ({
             isRowLookup ? fixedRowArgument.row
             : isValueLookup ? fixedRowArgument.row[arg.column]
             : undefined;
-        } else if (
-          argFullDetails?.defaultValue !== undefined &&
-          !isRowLookup
-        ) {
+        } else if (argFullDetails?.defaultValue !== undefined && !isRowLookup) {
           argDefaults[argName] = argFullDetails.defaultValue;
         }
       },

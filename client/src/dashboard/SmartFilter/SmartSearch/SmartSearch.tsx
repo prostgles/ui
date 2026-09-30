@@ -13,7 +13,7 @@ import { isObject } from "prostgles-types";
 import type { Prgl } from "src/App";
 import type { DBSchemaTableWJoins } from "src/dashboard/Dashboard/dashboardUtils";
 import RTComp from "../../RTComp";
-import type { ColumnConfig } from "src/dashboard/W_Table/ColumnMenu/ColumnConfig";
+import type { ColumnConfig } from "@common/ColumnConfig/ColumnConfig";
 import { onSearchItems } from "./onSearchItems";
 
 export type SmartSearchOnChangeArgs = {

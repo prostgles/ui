@@ -1,11 +1,10 @@
-import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol } from "@components/Flex";
 import { InfoRow } from "@components/InfoRow";
 import type { ValidatedColumnInfo } from "prostgles-types";
 import React, { useMemo } from "react";
-import type { ChartOptions } from "../../Dashboard/dashboardUtils";
 import type { CardViewProps, IndexedRow } from "./CardView";
 import { CardViewColumn, type CardViewColumnProps } from "./CardViewColumn";
+import type { ChartOptions } from "@common/ColumnConfig/WindowData";
 
 const MAX_NUMBER_OF_GROUPS = 20;
 type P = Pick<CardViewProps, "state"> &

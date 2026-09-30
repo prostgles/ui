@@ -5,11 +5,11 @@ import Loading from "@components/Loader/Loading";
 import type { TableColumn, TableProps } from "@components/Table/Table";
 import React, { useEffect } from "react";
 import type {
-  OnAddChart,
+  NewChartOpts,
   Query,
-  WindowData,
   WindowSyncItem,
 } from "../Dashboard/dashboardUtils";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 
 import type { PopupProps } from "@components/Popup/Popup";
 import Popup from "@components/Popup/Popup";
@@ -27,7 +27,7 @@ import type {
   SyncDataItem,
 } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import type { DBEventHandles, ValidatedColumnInfo } from "prostgles-types/lib";
-import type { ColumnSortSQL } from "../W_Table/ColumnMenu/ColumnConfig";
+import type { ColumnSortSQL } from "@common/ColumnConfig/ColumnConfig";
 
 import { Icon } from "@components/Icon/Icon";
 import { useIsMounted } from "prostgles-client";
@@ -45,6 +45,7 @@ import { W_SQLBottomBar } from "./W_SQLBottomBar/W_SQLBottomBar";
 import { ProstglesSQLMenu } from "./W_SQLMenu";
 import { W_SQLResults } from "./W_SQLResults";
 
+export type OnAddChart = (args: NewChartOpts) => void;
 export type W_SQLProps = Omit<CommonWindowProps, "w"> & {
   w: WindowSyncItem<"sql">;
   filter?: any;

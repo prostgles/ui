@@ -21,7 +21,7 @@ import {
   tsDataTypeFromUdtName,
 } from "src/dashboard/SmartForm/SmartFormField/fieldUtils";
 import { getColumnDataColor } from "src/dashboard/SmartForm/SmartFormField/RenderValue";
-import type { ColumnConfigWithInfo } from "../../W_Table";
+import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
 
 export const getColumnListItem = (
   c: Pick<ValidatedColumnInfo, "name"> &

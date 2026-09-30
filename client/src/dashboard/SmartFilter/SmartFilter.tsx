@@ -10,7 +10,7 @@ import type { ContextDataSchema } from "../AccessControl/OptionControllers/Filte
 import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
 import { DetailedFilterControl } from "../DetailedFilterControl/DetailedFilterControl";
 import type { FilterWrapperProps } from "../DetailedFilterControl/FilterWrapper";
-import type { ColumnConfig } from "../W_Table/ColumnMenu/ColumnConfig";
+import type { ColumnConfig } from "@common/ColumnConfig/ColumnConfig";
 import { SmartAddFilter } from "./SmartAddFilter";
 export * from "./smartFilterUtils";
 

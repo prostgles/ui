@@ -5,7 +5,8 @@ import React, { useCallback, useMemo } from "react";
 import type { ReactiveState } from "../../appUtils";
 import { useReactiveState } from "../../appUtils";
 import type { DashboardProps, DashboardState } from "../Dashboard/Dashboard";
-import type { WindowData, Workspace } from "../Dashboard/dashboardUtils";
+import type { Workspace } from "../Dashboard/dashboardUtils";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 import { useAddViewToWorkspace } from "../Dashboard/useAddViewToWorkspace";
 import type { SEARCH_TYPES } from "../SearchAll/SearchAll";
 import { SearchAll } from "../SearchAll/SearchAll";
@@ -71,6 +72,7 @@ export const DashboardMenu = ({
   const pinnedMenu = workspace.options.pinnedMenu && !window.isLowWidthScreen;
   if (!pinnedMenu && !anchor.node && !showSearchAll) return hotKeys;
   const isReadonlyWorkspace =
+    prgl.user?.type !== "admin" &&
     workspace.published && workspace.user_id !== prgl.user?.id;
   const isFixed = isReadonlyWorkspace && workspace.layout_mode === "fixed";
 

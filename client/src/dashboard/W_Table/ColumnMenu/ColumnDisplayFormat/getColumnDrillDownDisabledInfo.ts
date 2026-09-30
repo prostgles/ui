@@ -1,5 +1,5 @@
-import type { ColumnConfigWithInfo } from "../../W_Table";
-import type { NestedDisplay } from "../ColumnConfig";
+import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
+import type { NestedDisplay } from "@common/ColumnConfig/ColumnConfig";
 import { getColumnFormat } from "./getFormatColumnSelect";
 
 export const getColumnDrillDownDisabledInfo = (

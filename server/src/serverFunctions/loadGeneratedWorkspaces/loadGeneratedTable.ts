@@ -1,21 +1,21 @@
+import type { WorkspaceTable } from "./loadGeneratedWorkspaces";
+import { CHIP_COLOR_NAMES } from "@common/ColumnConfig/chipColors";
 import type {
   TableColumn,
   TableWindowInsertModel,
 } from "@common/DashboardTypes";
 import { type DBSSchemaForInsert } from "@common/publishUtils";
-import { MINI_BARCHART_COLOR } from "@components/ProgressBar";
+import { MINI_BARCHART_COLOR } from "@common/ColumnConfig/COLOR_PALETTE";
 import { isDefined, pickKeys } from "prostgles-types";
-import type { Prgl } from "src/App";
-import type { WindowData } from "src/dashboard/Dashboard/dashboardUtils";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 import type {
   ColumnConfig,
   NestedColumn,
-} from "src/dashboard/W_Table/ColumnMenu/ColumnConfig";
-import { CHIP_COLOR_NAMES } from "../../../W_Table/ColumnMenu/ColumnDisplayFormat/ChipStylePalette";
+} from "@common/ColumnConfig/ColumnConfig";
 
 export const loadGeneratedTable = (
-  generatedWindow: TableWindowInsertModel,
-  tables: Prgl["tables"],
+  generatedWindow: Omit<TableWindowInsertModel, "id">,
+  tables: WorkspaceTable[],
 ) => {
   const columns = generatedWindow.columns?.map((c) => {
     const { computedConfig, nested } = c;
@@ -45,7 +45,7 @@ export const loadGeneratedTable = (
                 ...nested.columns.map((nc) => {
                   return {
                     ...nc,
-                    show: true,
+                    show: nc.show ?? true,
                     style: parseColumnStyle(nc.styling),
                     computedConfig:
                       nc.computedConfig &&
@@ -72,7 +72,7 @@ export const loadGeneratedTable = (
       computedConfig:
         computedConfig &&
         parseComputedConfig(computedConfig, tables, generatedWindow.table_name),
-      show: true,
+      show: c.show ?? true,
       style: parseColumnStyle(c.styling),
     };
   });
@@ -111,10 +111,13 @@ export const loadGeneratedTable = (
 };
 
 const parseComputedConfig = (
-  computedConfig: NonNullable<TableColumn["computedConfig"]>,
-  tables: Prgl["tables"],
+  computedConfig: NonNullable<
+    TableColumn["computedConfig"] | ColumnConfig["computedConfig"]
+  >,
+  tables: WorkspaceTable[],
   table_name: string,
 ) => {
+  if ("funcDef" in computedConfig) return computedConfig;
   const table = tables.find((t) => t.name === table_name);
   const computedConfigColumn =
     computedConfig.aggregation !== "countAll" ?

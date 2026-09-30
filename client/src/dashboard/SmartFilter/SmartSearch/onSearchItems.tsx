@@ -9,7 +9,7 @@ import { SearchMatchRow } from "src/dashboard/SearchAll/SearchMatchRow";
 import { isDefined } from "../../../utils/utils";
 import type { SmartSearch } from "./SmartSearch";
 import { getSmartSearchRows } from "./getSmartSearchRows";
-import type { ColumnValue } from "src/dashboard/W_Table/ColumnMenu/ColumnStyleControls/ColumnStyleControls";
+import type { ColumnValue } from "@common/ColumnConfig/columnStyleTypes";
 
 export async function onSearchItems(
   this: SmartSearch,

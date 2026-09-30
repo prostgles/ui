@@ -7,9 +7,9 @@ import { FlexRow } from "@components/Flex";
 import PopupMenu from "@components/PopupMenu";
 import Btn from "@components/Btn";
 import { MapOSMQuery } from "../W_Map/controls/MapOSMQuery";
-import type { Extent } from "../Map/DeckGLMap";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { SvgIcon } from "@components/SvgIcon";
+import type { Extent } from "@common/ColumnConfig/mapConstants";
 
 export const defaultWorldExtent: Extent = [-180, -90, 180, 90];
 

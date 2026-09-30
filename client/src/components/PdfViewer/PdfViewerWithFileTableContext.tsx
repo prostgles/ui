@@ -87,9 +87,8 @@ const PdfViewerWithAnnotations = ({
       <PdfViewer
         {...pdfProps}
         url={url}
-        defaultPage={
-          activeAnnotation?.page ?? annotationPage ?? pdfProps.defaultPage
-        }
+        defaultPage={annotationPage ?? pdfProps.defaultPage}
+        activeHighlightId={activeAnnotationId}
         doclingDocument={fileRow?.docling_metadata ?? undefined}
         topLeftControls={
           <Select
@@ -113,15 +112,12 @@ const PdfViewerWithAnnotations = ({
           />
         }
         highlights={
-          annotations?.map(({ id, name, text, page, end_page, start_text, end_text, fallback_edges, rectangles }) => ({
+          annotations?.map(({ id, name, text, page, text_selections }) => ({
             id,
             page,
-            end_page,
-            start_text,
-            end_text,
-            fallback_edges,
+            text_selections,
             color: "var(--active)",
-            rects: rectangles,
+            rects: [],
             tooltip: name || text,
             leftHandle: (
               <Btn
@@ -154,19 +150,8 @@ const PdfViewerWithAnnotations = ({
             tableName={annotationsTable.name}
             fixedData={{
               page: newAnnotation.page,
-              end_page: newAnnotation.end_page ?? null,
-              start_text: newAnnotation.start_text ?? null,
-              end_text: newAnnotation.end_text ?? null,
-              fallback_edges: newAnnotation.fallback_edges ?? null,
+              text_selections: newAnnotation.text_selections,
               file_id: fileId,
-              rectangles: newAnnotation.rects.map(
-                ({ x, y, height, width }) => ({
-                  x: Number(x.toFixed(2)),
-                  y: Number(y.toFixed(2)),
-                  width: Number(width.toFixed(2)),
-                  height: Number(height.toFixed(2)),
-                }),
-              ),
             }}
             defaultData={{
               name: null,

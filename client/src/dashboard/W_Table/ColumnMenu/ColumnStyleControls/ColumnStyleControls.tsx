@@ -1,5 +1,5 @@
+import { DEFAULT_CHIP_STYLE } from "@common/ColumnConfig/chipColors";
 import { FlexCol, FlexRowWrap } from "@components/Flex";
-import { MINI_BARCHART_COLOR } from "@components/ProgressBar";
 import { Select } from "@components/Select/Select";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { _PG_numbers, includes } from "prostgles-types";
@@ -7,64 +7,17 @@ import type { ValidatedColumnInfo } from "prostgles-types/lib";
 import React from "react";
 import { type Prgl } from "../../../../App";
 import { ColorPicker } from "../ColorPicker";
-import {
-  ChipStylePalette,
-  DEFAULT_CHIP_STYLE,
-} from "../ColumnDisplayFormat/ChipStylePalette";
+import type {
+  ColumnConfig,
+  ColumnStyle,
+} from "@common/ColumnConfig/ColumnConfig";
+import { ChipStylePalette } from "../ColumnDisplayFormat/ChipStylePalette";
 import { ConditionalCellIconStyleControls } from "../ColumnDisplayFormat/ConditionalCellIconStyleControls";
-import type { CONDITION_OPERATORS } from "../ColumnDisplayFormat/ConditionalCellStyleControls";
 import { ConditionalCellStyleControls } from "../ColumnDisplayFormat/ConditionalCellStyleControls";
-import type { ColumnConfig, ColumnStyle } from "../ColumnConfig";
 import { UpdateColumnGlobalConfig } from "../UpdateColumnGlobalConfig";
 import { getValueColors } from "./getValueColors";
-
-export type ColumnValue = string | number | Date | null | undefined | boolean;
-
-type BasicConditionFilter = {
-  operator: Exclude<(typeof CONDITION_OPERATORS)[number], "in" | "not in">;
-  condition: ColumnValue;
-};
-
-type ConditionFilter =
-  | BasicConditionFilter
-  | {
-      operator: "in" | "not in";
-      condition: BasicConditionFilter["condition"][];
-    };
-
-export type ChipStyle = {
-  textColor?: string;
-  chipColor?: string;
-  cellColor?: string;
-  borderColor?: string;
-};
-
-export type ConditionalStyle = {
-  type: "Conditional";
-  column?: string;
-  conditions: (ConditionFilter & ChipStyle)[];
-  defaultStyle?: ChipStyle;
-};
-export type ConditionalStyleIcons = {
-  type: "Icons";
-  size?: number;
-  valueToIconMap: Record<string, string>;
-};
-export type FixedStyle = {
-  type: "Fixed";
-} & ChipStyle;
-
-export type ScaleStyle = {
-  type: "Scale";
-  textColor: string;
-  minColor: string;
-  maxColor: string;
-};
-export type BarchartStyle = {
-  type: "Barchart";
-  barColor: string;
-  textColor: string;
-};
+import type { BarchartStyle } from "@common/ColumnConfig/columnStyleTypes";
+import { MINI_BARCHART_COLOR } from "@common/ColumnConfig/COLOR_PALETTE";
 
 export type StyleColumnProps = Pick<Prgl, "db" | "tables"> & {
   column: ColumnConfig;
@@ -129,7 +82,9 @@ export const ColumnStyleControls = (props: StyleColumnProps) => {
           options={["text", "faded", "filled", "outline"]}
           value={
             style.buttonVariant ??
-            (column.nested?.display?.type === "drillable-records" ? "faded" : "text")
+            (column.nested?.display?.type === "drillable-records" ?
+              "faded"
+            : "text")
           }
           onChange={(buttonVariant) => updateStylePart({ buttonVariant })}
         />

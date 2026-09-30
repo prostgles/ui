@@ -1,6 +1,7 @@
-import type { DBS } from "..";
-import { insertConfigWorkspaces } from "../serverFunctions/insertConfigWorkspaces";
+import { connectionManager, type DBS } from "..";
+import { loadGeneratedWorkspaces } from "../serverFunctions/loadGeneratedWorkspaces/loadGeneratedWorkspaces";
 import type { SchemaConfig, SchemaConfigAccessControl } from "../schemaConfig";
+import { statePrgl } from "../init/startProstgles";
 
 /** Persist configured workspaces, the LLM credential, and access-control rules. */
 export const syncSchemaConfigResources = async ({
@@ -32,29 +33,33 @@ export const syncSchemaConfigResources = async ({
       userTypes.add(userType);
     }
   }
-  await dbs.tx(async (tx) => {
-    const sharedNames = new Set(
-      rules.flatMap(
-        (rule) =>
-          rule.dbsPermissions?.viewPublishedWorkspaces?.workspaceNames ?? [],
-      ),
-    );
-    const publishedWorkspaces = workspaces.filter(({ name }) =>
-      sharedNames.has(name),
-    );
-    if (publishedWorkspaces.length) {
-      const admin = await tx.users.findOne(
-        { type: "admin" },
-        { orderBy: { created: 1 } },
-      );
-      if (!admin)
-        throw new Error("An admin must own published config workspaces");
-      await insertConfigWorkspaces(
+  const sharedNames = new Set(
+    rules.flatMap(
+      (rule) =>
+        rule.dbsPermissions?.viewPublishedWorkspaces?.workspaceNames ?? [],
+    ),
+  );
+  const admin = await dbs.users.findOne(
+    { type: "admin", status: "active" },
+    { orderBy: { created: 1 } },
+  );
+  if (!admin) throw new Error("An admin must own configured resources");
+  if (!statePrgl) throw new Error("State database is not ready");
+  const { withClientDbTx } = await statePrgl.getClientDBHandlers(
+    { userId: admin.id },
+    undefined,
+  );
+  await withClientDbTx(async (tx) => {
+    if (workspaces.length) {
+      await loadGeneratedWorkspaces(workspaces, {
+        dbs: tx,
         connectionId,
-        tx,
-        admin.id,
-        publishedWorkspaces,
-      );
+        userId: admin.id,
+        tables: connectionManager
+          .getConnectionStartedInstance(connectionId)
+          .prgl.getSchema(),
+        config: "shared",
+      });
     }
     // Detach this connection, preserving rules that are still used by others.
     const removedLinks = await tx.access_control_connections.delete(
@@ -71,18 +76,8 @@ export const syncSchemaConfigResources = async ({
       $notExistsJoined: { access_control_connections: {} },
     });
     if (llmCredential) {
-      const admin = await tx.users.findOne(
-        { type: "admin" },
-        { orderBy: { created: 1 } },
-      );
-      if (!admin) {
-        throw new Error("An admin must own the configured LLM credential");
-      }
       await tx.llm_credentials.delete({});
-      await tx.llm_credentials.insert({
-        ...llmCredential,
-        user_id: admin.id,
-      });
+      await tx.llm_credentials.insert({ ...llmCredential, user_id: admin.id });
     }
     const allowedLLMReferences = rules.flatMap((rule) => rule.allowedLLM ?? []);
     const [sharedWorkspaces, publishedMethods, credentials, prompts] =

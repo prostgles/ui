@@ -2,8 +2,11 @@ import { FlexCol } from "@components/Flex";
 import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
 import { SwitchToggle } from "@components/SwitchToggle";
 import React from "react";
-import type { ColumnConfigWithInfo } from "../../W_Table";
-import type { ColumnConfig, NestedDisplay } from "../ColumnConfig";
+import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
+import type {
+  ColumnConfig,
+  NestedDisplay,
+} from "@common/ColumnConfig/ColumnConfig";
 import { getColumnDrillDownDisabledInfo } from "../ColumnDisplayFormat/getColumnDrillDownDisabledInfo";
 import {
   ColumnStyleControls,
@@ -33,9 +36,7 @@ export const ColumnStyleMenu = ({
     <FlexCol className="gap-1">
       {columns.map((c) => {
         const update = (
-          changes: Partial<
-            Pick<ColumnConfig, "style" | "label" | "display">
-          >,
+          changes: Partial<Pick<ColumnConfig, "style" | "label" | "display">>,
         ) => {
           if (!showNestedColumnStyles) {
             onUpdate(changes);

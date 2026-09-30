@@ -7,15 +7,13 @@ import {
   type DateExtent,
 } from "src/dashboard/Charts/TimeChart/getTimechartBinSize";
 import { isDefined, quickClone } from "../../../utils/utils";
-import type {
-  WindowData,
-  WindowSyncItem,
-} from "../../Dashboard/dashboardUtils";
+import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 import { getSQLQuerySemicolon } from "../../SQLEditor/SQLCompletion/completionUtils/getQueryReturnType";
 import type { ProstglesTimeChartLayer, W_TimeChart } from "../W_TimeChart";
-import type { TimeChartBinSize } from "../W_TimeChartMenu";
 import { getTimechartExtentFilter } from "./getTimechartExtentFilter";
 import { getTimeLayerDataSignature } from "./getTimeLayerDataSignature";
+import type { TimeChartBinSize } from "@common/ColumnConfig/timechartConstants";
 
 export const getTimeChartFilters = (
   w: WindowData<"timechart"> | WindowSyncItem<"timechart">,

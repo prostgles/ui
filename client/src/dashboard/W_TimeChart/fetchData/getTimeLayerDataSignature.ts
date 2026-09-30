@@ -1,4 +1,4 @@
-import type { WindowData } from "src/dashboard/Dashboard/dashboardUtils";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 import type { ProstglesTimeChartLayer } from "../W_TimeChart";
 
 export const getTimeLayerDataSignature = (

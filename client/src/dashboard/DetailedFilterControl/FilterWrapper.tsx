@@ -28,7 +28,7 @@ import {
   type FilterColumn,
 } from "../SmartFilter/smartFilterUtils";
 import { colIs } from "../SmartForm/SmartFormField/fieldUtils";
-import type { ColumnConfig } from "../W_Table/ColumnMenu/ColumnConfig";
+import type { ColumnConfig } from "@common/ColumnConfig/ColumnConfig";
 import {
   AgeFilterTypes,
   getDefaultAgeFilter,

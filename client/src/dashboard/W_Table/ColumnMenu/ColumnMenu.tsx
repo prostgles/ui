@@ -31,7 +31,7 @@ import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";
 import { useEffectAsync } from "../../DashboardMenu/DashboardMenuSettings";
 import { getAndFixWColumnsConfig } from "../TableMenu/getAndFixWColumnsConfig";
 import type W_Table from "../W_Table";
-import type { ColumnConfigWithInfo } from "../W_Table";
+import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
 import { getColumnsWithInfoAndWidth } from "../tableUtils/getColumnsWithInfoAndWidth";
 import { updateWCols } from "../tableUtils/tableUtils";
 import { AggregateFunctionOptions } from "./AddComputedColumn/AggregateFunctionOptions";
@@ -44,7 +44,7 @@ import { ColumnSortMenu } from "./ColumnSortMenu";
 import { ColumnsMenu } from "./ColumnsMenu";
 import { FunctionSelector } from "./FunctionSelector/FunctionSelector";
 import { LinkedColumn } from "./LinkedColumn/LinkedColumn";
-import type { ColumnConfig } from "./ColumnConfig";
+import type { ColumnConfig } from "@common/ColumnConfig/ColumnConfig";
 
 type P = Pick<CommonWindowProps, "suggestions"> & {
   w: WindowSyncItem<"table">;
@@ -337,7 +337,9 @@ export const ColumnMenu = (props: P) => {
       content: (
         <LinkedColumn
           w={w}
-          column={column.nested ? { ...column, nested: column.nested } : undefined}
+          column={
+            column.nested ? { ...column, nested: column.nested } : undefined
+          }
           onClose={onClose}
         />
       ),

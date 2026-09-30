@@ -16,14 +16,15 @@ import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable
 import { omitKeys } from "prostgles-types";
 import React, { useState } from "react";
 import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
-import type {
-  DBSchemaTablesWJoins,
-  WindowData,
-} from "../../Dashboard/dashboardUtils";
-import type { ColumnConfigWithInfo } from "../W_Table";
+import type { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
+import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
 import { AlterColumn } from "./AlterColumn/AlterColumn";
 import { QuickAddComputedColumn } from "./AddComputedColumn/QuickAddComputedColumn";
-import type { ColumnConfig, NestedDisplay } from "./ColumnConfig";
+import type {
+  ColumnConfig,
+  NestedDisplay,
+} from "@common/ColumnConfig/ColumnConfig";
 import { ColumnDisplayFormat } from "./ColumnDisplayFormat/ColumnDisplayFormat";
 import { getFormatOptions } from "./ColumnDisplayFormat/columnFormatUtils";
 import { ColumnStyleMenu } from "./ColumnStyleControls/ColumnStyleMenu";

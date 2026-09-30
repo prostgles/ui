@@ -1,3 +1,5 @@
+import type { JSONB } from "prostgles-types";
+
 export const ContentTypes = ["image", "video", "audio"] as const;
 
 const CurrencySchema = {
@@ -229,3 +231,7 @@ export const columnDisplayFormatSchema = {
     MediaSchema,
   ],
 } as const;
+
+export type UserColumnFormat = JSONB.GetSchemaType<
+  typeof columnDisplayFormatSchema
+>;

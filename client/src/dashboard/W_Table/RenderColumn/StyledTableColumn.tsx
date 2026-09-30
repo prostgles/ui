@@ -6,11 +6,11 @@ import { _PG_date, _PG_numbers, includes } from "prostgles-types";
 import React from "react";
 import type { DBSchemaTablesWJoins } from "src/dashboard/Dashboard/dashboardUtils";
 import { RenderValue } from "../../SmartForm/SmartFormField/RenderValue";
-import type { ColumnConfig } from "../ColumnMenu/ColumnConfig";
+import type { ColumnConfig } from "@common/ColumnConfig/ColumnConfig";
 import type {
   ChipStyle,
   ColumnValue,
-} from "../ColumnMenu/ColumnStyleControls/ColumnStyleControls";
+} from "@common/ColumnConfig/columnStyleTypes";
 import { type MinMax } from "../W_Table";
 import { blend } from "../colorBlend";
 import type { ProstglesTableColumn } from "../tableUtils/getTableCols";

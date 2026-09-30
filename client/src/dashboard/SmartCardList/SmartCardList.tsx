@@ -21,7 +21,7 @@ import type { FieldConfig, SmartCardProps } from "../SmartCard/SmartCard";
 import { SmartCard } from "../SmartCard/SmartCard";
 import type { InsertButtonProps } from "../SmartForm/InsertButton";
 import type { SmartFormProps } from "../SmartForm/SmartForm";
-import type { ColumnSort } from "../W_Table/ColumnMenu/ColumnConfig";
+import type { ColumnSort } from "@common/ColumnConfig/ColumnConfig";
 import { SmartCardListHeaderControls } from "./SmartCardListHeaderControls";
 import { useSmartCardListState } from "./useSmartCardListState";
 import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";

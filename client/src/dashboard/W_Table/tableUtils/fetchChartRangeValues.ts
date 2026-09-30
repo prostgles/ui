@@ -1,5 +1,6 @@
 import type { AnyObject, TableHandler } from "prostgles-types";
-import type { ColumnConfigWithInfo, MinMax } from "../W_Table";
+import type { MinMax } from "../W_Table";
+import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
 
 export type ChartValues = Map<string, ColumnChartRanges>;
 
@@ -25,8 +26,14 @@ export const fetchChartRangeValues = async (
   args: Args,
 ): Promise<ColumnChartRanges | undefined> => {
   const { column, parentColumn, findOne, filter, select, withoutData } = args;
-  const columnSelect = parentColumn ? select[parentColumn.name]?.select : select;
-  if (!column.show || !columnSelect?.[column.name] || column.nested?.display?.type === "timechart") return;
+  const columnSelect =
+    parentColumn ? select[parentColumn.name]?.select : select;
+  if (
+    !column.show ||
+    !columnSelect?.[column.name] ||
+    column.nested?.display?.type === "timechart"
+  )
+    return;
 
   if (column.nested) {
     const children = new Map<string, ColumnChartRange>();
@@ -43,7 +50,8 @@ export const fetchChartRangeValues = async (
     return children.size ? { type: "nested", children } : undefined;
   }
 
-  if (column.style?.type !== "Barchart" && column.style?.type !== "Scale") return;
+  if (column.style?.type !== "Barchart" && column.style?.type !== "Scale")
+    return;
   const isDate =
     column.udt_name.startsWith("timestamp") || column.udt_name === "date";
   const type = isDate ? "date" : "number";
@@ -62,7 +70,9 @@ export const fetchChartRangeValues = async (
         },
       });
   const toNumber = (value: string | number | null | undefined) =>
-    value == null ? NaN : isDate ? +new Date(value) : +value;
+    value == null ? NaN
+    : isDate ? +new Date(value)
+    : +value;
   return {
     type,
     range: { min: toNumber(minMax?.min), max: toNumber(minMax?.max) },
@@ -90,6 +100,7 @@ const fetchValue = async (
     orderBy: [{ key: sortByKey, asc, nulls: "last" }],
   });
   return (
-    parentName ? row?.[parentName]?.[0]?.[column.name] : row?.[column.name]
-  ) as string | number | null | undefined;
+    parentName ?
+      row?.[parentName]?.[0]?.[column.name]
+    : row?.[column.name]) as string | number | null | undefined;
 };

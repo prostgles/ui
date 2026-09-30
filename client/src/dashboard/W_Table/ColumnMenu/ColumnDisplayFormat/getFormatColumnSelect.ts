@@ -1,7 +1,7 @@
 import { FILE_TABLE_SELECT } from "@components/MediaViewer/managedTableUtils";
 import type { AnyObject, DBSchemaTable, ParsedJoinPath } from "prostgles-types";
 import { FILE_ANNOTATION_SELECT } from "../../ManagedColumn/fileAnnotation";
-import type { ColumnConfigWithInfo } from "../../W_Table";
+import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
 import type { ColumnFormat } from "./columnFormatUtils";
 
 type FormatColumn = Pick<ColumnConfigWithInfo, "format" | "info" | "name">;
@@ -60,7 +60,7 @@ export const getFormatColumnSelect = ({
       fileTableName!,
       FILE_TABLE_SELECT,
     );
-    return { [column.name]: query };
+    return { [params.dataKey]: query };
   }
 
   const { dataKey, tableName } = params;

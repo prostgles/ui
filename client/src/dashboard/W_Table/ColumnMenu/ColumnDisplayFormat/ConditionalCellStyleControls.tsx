@@ -8,25 +8,13 @@ import { isDefined } from "prostgles-types";
 import { SmartSearch } from "../../../SmartFilter/SmartSearch/SmartSearch";
 import { StyledCell } from "../../RenderColumn/StyledTableColumn";
 import { ColorPicker } from "../ColorPicker";
-import type {
-  ConditionalStyle,
-  StyleColumnProps,
-} from "../ColumnStyleControls/ColumnStyleControls";
-import { ChipStylePalette, DEFAULT_CHIP_STYLE } from "./ChipStylePalette";
-
-export const CONDITION_OPERATORS = [
-  "=",
-  "<=",
-  "<",
-  ">",
-  ">=",
-  "!=",
-  "in",
-  "not in",
-  "contains",
-  "not null",
-  "null",
-] as const;
+import type { StyleColumnProps } from "../ColumnStyleControls/ColumnStyleControls";
+import {
+  type ConditionalStyle,
+  CONDITION_OPERATORS,
+} from "@common/ColumnConfig/columnStyleTypes";
+import { ChipStylePalette } from "./ChipStylePalette";
+import { DEFAULT_CHIP_STYLE } from "@common/ColumnConfig/chipColors";
 
 type P = StyleColumnProps & {
   style: ConditionalStyle;

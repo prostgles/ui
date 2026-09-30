@@ -23,6 +23,8 @@ FROM runtime AS ui
 WORKDIR /usr/src/app
 COPY . .
 
+RUN npm ci
+
 WORKDIR /usr/src/app/client
 
 RUN npm run build && cd ../server && npm run build

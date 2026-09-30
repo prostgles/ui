@@ -1,5 +1,5 @@
 import { toFixed } from "src/app/domToSVG/utils/toFixed";
-import { asRGB } from "src/utils/colorUtils";
+import { asRGB } from "@common/ColumnConfig/colorUtils";
 import { hashCode } from "src/utils/hashCode";
 import type { SVGContext } from "../../../app/domToSVG/containers/elementToSVG";
 import { addImageFromDataURL } from "../../../app/domToSVG/graphics/imgToSVG";
@@ -314,7 +314,7 @@ export const drawShapesOnSVG = (
             y -
             txtSize.actualHeight / 2 -
             txtPaddingAndBorder -
-            1 /* Adjust for visual centering */;
+            1; /* Adjust for visual centering */
         }
 
         const bgWidth = txtSize.width + 2 * txtPaddingAndBorder;

@@ -112,7 +112,10 @@ type TableJoin = {
  * Show linked data from other tables that are linked to this column through foreign keys
  */
 type LinkedData = {
-  joinType: "left" | "inner";
+  /**
+   * Type of join to use when linking tables. Defaults to "left" if not specified.
+   */
+  joinType?: "left" | "inner";
   /**
    * Join to linked table.
    * Last table in the path is the target table that columns will refer to.
@@ -220,6 +223,7 @@ type Filtering = {
 };
 
 export type TableColumn = {
+  show?: boolean;
   /**
    * Column name as it appears in the database.
    * For nested columns this can be anything. Use the table name or a more descriptive name.
@@ -518,14 +522,7 @@ export type TimechartWindowInsertModel = {
   yScaleMode?: "single" | "multiple";
 };
 
-export type BarchartWindowInsertModel = (
-  | (Filtering & {
-      table_name: string;
-    })
-  | {
-      sql: string;
-    }
-) & {
+export type BarchartWindowInsertModel = {
   id: string;
   type: "barchart";
   title?: string;
@@ -539,7 +536,14 @@ export type BarchartWindowInsertModel = (
      */
     joinPath?: TableJoin[];
   };
-};
+} & (
+  | (Filtering & {
+      table_name: string;
+    })
+  | {
+      sql: string;
+    }
+);
 
 export type MethodWindowInsertModel = {
   id: string;

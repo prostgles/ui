@@ -118,6 +118,11 @@ export const startProstgles = async ({
           watchSchema,
           watchSchemaType: "DDL_trigger",
           transactions: true,
+          // Config sync uses admin client handlers before full auth is configured.
+          auth: {
+            getUser: () => undefined,
+            findUser: (filter, dbo) => dbo.users.findOne(filter),
+          },
           onSocketConnect: async ({ socket, dbo, getUser }) => {
             const user = await getUser();
             const userId = user.user?.id;

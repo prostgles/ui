@@ -402,8 +402,10 @@ export const stateServerAdminFunctions = {
       reloadSchema: defineFunction({
         input: { conId: "string" },
         run: async ({ conId }) => {
-          const conn = connectionManager.getConnectionStartedInstance(conId);
-          await conn.prgl.restart();
+          connectionManager.getConnectionStartedInstance(conId);
+          await connectionManager.withActiveConnection(conId, (c) =>
+            c.prgl.restart(),
+          );
         },
       }),
       deleteConnection: defineFunction({

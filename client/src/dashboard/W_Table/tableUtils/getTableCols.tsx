@@ -16,12 +16,8 @@ import {
   getSingleShownNestedColumn,
 } from "../RenderColumn/StyledTableColumn";
 import type W_Table from "../W_Table";
-import type {
-  ColumnConfigWithInfo,
-  MinMaxVals,
-  ProstglesColumn,
-  W_TableProps,
-} from "../W_Table";
+import type { MinMaxVals, ProstglesColumn, W_TableProps } from "../W_Table";
+import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
 import { getColumnsWithInfoAndWidth } from "./getColumnsWithInfoAndWidth";
 import type { OnClickEditRow } from "./getEditColumn";
 import { getEditColumn } from "./getEditColumn";
@@ -194,11 +190,7 @@ export const getTableCols = ({
        */
       getCellStyle: (row) => {
         const chartValues = barchartVals?.get(c.name);
-        if (
-          !c.nested &&
-          c.style?.type === "Scale" &&
-          chartValues
-        ) {
+        if (!c.nested && c.style?.type === "Scale" && chartValues) {
           const style = getCellStyle(
             c,
             row[c.name],

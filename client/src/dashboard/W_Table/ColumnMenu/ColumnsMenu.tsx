@@ -9,10 +9,8 @@ import React from "react";
 import type { Prgl } from "src/App";
 import type { DBSchemaTableWithRenderInfo } from "src/dashboard/Dashboard/getTables";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
-import type {
-  WindowData,
-  WindowSyncItem,
-} from "../../Dashboard/dashboardUtils";
+import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 import RTComp from "../../RTComp";
 import { SQLSmartEditor } from "../../SQLEditor/SQLSmartEditor";
 import { getColumnsWithInfoAndWidth } from "../tableUtils/getColumnsWithInfoAndWidth";
@@ -20,7 +18,7 @@ import { updateWCols } from "../tableUtils/tableUtils";
 import { AddColumnMenu } from "./AddColumnMenu";
 import { AddComputedColMenu } from "./AddComputedColumn/AddComputedColMenu";
 import { ColumnList } from "./ColumnList";
-import type { ColumnConfig } from "./ColumnConfig";
+import type { ColumnConfig } from "@common/ColumnConfig/ColumnConfig";
 import { LinkedColumn } from "./LinkedColumn/LinkedColumn";
 import type { NestedColumnOpts } from "./getNestedColumnTable";
 

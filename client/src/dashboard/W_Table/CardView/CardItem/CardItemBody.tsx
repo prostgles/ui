@@ -1,12 +1,12 @@
+import type { CardLayout } from "@common/ColumnConfig/cardLayout";
 import { FlexRowWrap } from "@components/Flex";
 import { _PG_date, isDefined, type AnyObject } from "prostgles-types";
 import React from "react";
-import type { CardLayout } from "src/dashboard/Dashboard/cardLayout";
 import type { DBSchemaTableWJoins } from "../../../Dashboard/dashboardUtils";
 import { RenderValue } from "../../../SmartForm/SmartFormField/RenderValue";
 import type { IndexedRow } from "../CardView";
-import type { CardViewRowProps } from "./CardViewRow";
 import { CARD_ITEM_PADDING } from "../constants";
+import type { CardViewRowProps } from "./CardViewRow";
 
 export const CardBody = ({
   visibleCols,

@@ -24,7 +24,7 @@ import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";
 import ErrorComponent from "@components/ErrorComponent";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import { SQLSmartEditor } from "../../SQLEditor/SQLSmartEditor";
-import type { ColumnConfig } from "../ColumnMenu/ColumnConfig";
+import type { ColumnConfig } from "@common/ColumnConfig/ColumnConfig";
 import { ColumnsMenu } from "../ColumnMenu/ColumnsMenu";
 import { AutoRefreshMenu } from "./AutoRefreshMenu";
 import { W_TableMenu_AccessRules } from "./W_TableMenu_AccessRules";
@@ -48,13 +48,6 @@ export type W_TableMenuProps = Pick<
   onClose: () => any;
 };
 
-export type RefreshOptions = {
-  readonly refresh?: {
-    readonly type: "Realtime" | "None" | "Interval";
-    intervalSeconds: number;
-    throttleSeconds: number;
-  };
-};
 export type W_TableMenuState = {
   schemaAge?: number;
   indexes?: {

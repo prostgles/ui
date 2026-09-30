@@ -20,6 +20,7 @@ import {
   disablePwdlessAdminAndCreateUser,
   login,
   openTable,
+  setOrAddWorkspace,
   type PageWIds,
 } from "../utils/utils";
 import { getDataKey } from "Testing";
@@ -230,9 +231,9 @@ test("checkFilterDetailed works with grouped existsJoined", async ({
     );
     await expect(disableFilter).toHaveCount(1);
     await expect(joined.getByTitle("Delete joined filter")).toHaveCount(0);
-    await expect(joined.getByTitle("Delete group", { exact: true })).toHaveCount(
-      0,
-    );
+    await expect(
+      joined.getByTitle("Delete group", { exact: true }),
+    ).toHaveCount(0);
     await expect(joined.locator(".Select")).toHaveCount(0);
     await expect(
       joined.getByRole("button", { name: "AND", exact: true }),
@@ -240,17 +241,25 @@ test("checkFilterDetailed works with grouped existsJoined", async ({
     await expect(
       joined.getByRole("button", { name: "OR", exact: true }),
     ).toHaveCount(1);
-    expect(await joined.evaluate((el) => getComputedStyle(el).borderRadius)).toBe(
-      await summaries.first().evaluate((el) => getComputedStyle(el).borderRadius),
+    expect(
+      await joined.evaluate((el) => getComputedStyle(el).borderRadius),
+    ).toBe(
+      await summaries
+        .first()
+        .evaluate((el) => getComputedStyle(el).borderRadius),
     );
     await disableFilter.click();
     const enableFilter = joined.getByTitle("Enable filter", { exact: true });
     await expect(enableFilter).toHaveCount(1);
     await enableFilter.click();
-    await expect.poll(async () => {
-      const window = await state.db.windows!.findOne!({ table_name: "records" });
-      return window?.filter?.[0]?.disabled;
-    }).toBe(false);
+    await expect
+      .poll(async () => {
+        const window = await state.db.windows!.findOne!({
+          table_name: "records",
+        });
+        return window?.filter?.[0]?.disabled;
+      })
+      .toBe(false);
     const minimisedGroups: GroupedDetailedFilter[] = [
       { $and: windowFilter.filter.$and.slice(0, 1) },
       { $or: windowFilter.filter.$and.slice(0, 1) },
@@ -542,12 +551,195 @@ test("checkFilterDetailed works with grouped existsJoined", async ({
   }
 });
 
+test("CLI readiness waits for file table configuration before seeding", async () => {
+  const configPath = createConfigTestProject({
+    id: "startup-readiness-e2e",
+    databaseConfig: {
+      file_table_config: {
+        fileTable: "files",
+        storageType: { type: "local" },
+      },
+    },
+    tableConfig: {
+      startup_checks: {
+        columns: {
+          id: "integer PRIMARY KEY",
+          mounts: "integer NOT NULL",
+          ready: "boolean NOT NULL",
+        },
+      },
+      documents: {
+        columns: {
+          id: "serial PRIMARY KEY",
+          file_id: "uuid REFERENCES files(id)",
+        },
+      },
+    },
+  }, test.info().outputPath("config"));
+  writeFileSync(join(configPath, "index.js"),
+    readFileSync(join(configPath, "index.js"), "utf8") + `
+module.exports.tableConfig.startup_checks.onMount = async ({ _db }) => {
+  await _db.none("INSERT INTO startup_checks VALUES (1, 1, false) ON CONFLICT (id) DO UPDATE SET mounts = startup_checks.mounts + 1, ready = false");
+  await _db.any("SELECT pg_sleep(1)");
+  await _db.none("UPDATE startup_checks SET ready = true");
+};`);
+  const deployment = await createTestDeployment({
+    configPath,
+    configId: "startup-readiness-e2e",
+    logPath: test.info().outputPath("startup-readiness-server.log"),
+    seed: async ({ projectDatabase }) => {
+      const before = await projectDatabase.query("SELECT * FROM startup_checks");
+      expect(before.rows[0]).toMatchObject({ ready: true });
+      await projectDatabase.query("BEGIN");
+      try {
+        await projectDatabase.query("LOCK TABLE documents IN ROW EXCLUSIVE MODE");
+        // Keep seeding active long enough for delayed startup subscriptions to run.
+        await projectDatabase.query("SELECT pg_sleep(2)");
+        const file = await projectDatabase.query(
+          "INSERT INTO files (original_name, data) VALUES ('seed.pdf', decode('01', 'hex')) RETURNING id",
+        );
+        await projectDatabase.query(
+          "INSERT INTO documents (file_id) VALUES ($1)",
+          [file.rows[0].id],
+        );
+        const after = await projectDatabase.query("SELECT * FROM startup_checks");
+        expect(after.rows).toEqual(before.rows);
+        await projectDatabase.query("COMMIT");
+      } catch (error) {
+        await projectDatabase.query("ROLLBACK");
+        throw error;
+      }
+    },
+  });
+  await deployment.dispose();
+});
+
+test("CLI config sync serializes hot reload and restart", async () => {
+  const configPath = createConfigTestProject({
+    id: "lifecycle-sync-e2e",
+    tableConfig: {
+      records: { columns: { id: "serial PRIMARY KEY", name: "text NOT NULL" } },
+    },
+    workspaces: [{
+      name: "Records",
+      layout: {
+        id: "root", type: "tab", size: 1, activeTabKey: "records",
+        items: [{
+          id: "records", type: "item", size: 1,
+          tableName: "records", viewType: "table",
+        }],
+      },
+      windows: [{ id: "records", type: "table", table_name: "records" }],
+    }],
+    accessControl: [{
+      userTypes: ["default"],
+      dbPermissions: {
+        type: "Custom",
+        customTables: [{ tableName: "records", select: true }],
+      },
+    }],
+  }, test.info().outputPath("config"));
+  const source = readFileSync(join(configPath, "index.js"), "utf8") + `
+const stats = globalThis.lifecycleSyncStats ??= {
+  mounts: 0, cleanups: 0, destroys: 0, overlappingDestroy: 0, retiredUpdates: 0
+};
+module.exports.onMount = () => {
+  stats.mounts++;
+  return () => { stats.cleanups++; };
+};
+module.exports.functions = {
+  admins: { userFilter: { type: "admin" }, functions: {
+    observeLifecycle: { input: { connectionId: "string" }, run: ({ connectionId }) => {
+      const runtime = ${JSON.stringify(join(serverDirectory, "dist/server/src"))};
+      const { connectionManager } = require(runtime + "/index");
+      const { prgl } = connectionManager.getConnectionStartedInstance(connectionId);
+      const { update, destroy } = prgl;
+      let updating = 0, retired = false;
+      prgl.update = async (...args) => {
+        if (retired) stats.retiredUpdates++;
+        updating++;
+        try {
+          await new Promise(resolve => setTimeout(resolve, 300));
+          return await update(...args);
+        } finally { updating--; }
+      };
+      prgl.destroy = async () => {
+        stats.destroys++;
+        if (updating) stats.overlappingDestroy++;
+        retired = true;
+        return destroy();
+      };
+    } },
+    lifecycleStatus: { input: {}, run: () => stats }
+  } }
+};`;
+  writeFileSync(join(configPath, "index.js"), source);
+  const deployment = await createTestDeployment({
+    configPath,
+    configId: "lifecycle-sync-e2e",
+    logPath: test.info().outputPath("lifecycle-sync-server.log"),
+    users: [{ key: "admin", type: "admin" }, { key: "member", type: "default" }],
+  });
+  try {
+    const state = await deployment.connectStateAs("admin");
+    const connection = (await state.db.connections!.findOne!({
+      name: "lifecycle-sync-e2e",
+    }))!;
+    for (let i = 1; i <= 2; i++) {
+      const before = await deployment.connectProjectAs("admin");
+      await before.methods!.observeLifecycle!({ connectionId: connection.id });
+      // Changing tableConfig forces the subscription to rebuild the live DBO.
+      writeFileSync(join(configPath, "index.js"), source + `
+module.exports.tableConfig.records.columns.revision = "integer DEFAULT ${i}";
+module.exports.accessControl[0].dbPermissions.customTables[0].insert = ${i === 1};`);
+      await state.methods!.syncSchema!({ connectionId: connection.id, configPath });
+      before.disconnect();
+      const member = await deployment.connectProjectAs("member");
+      if (i === 1) {
+        await member.db.records!.insert!({ name: "member" });
+      } else {
+        expect(member.db.records!.insert).toBeUndefined();
+      }
+      member.disconnect();
+      const after = await deployment.connectProjectAs("admin");
+      const row = await after.db.records!.insert!(
+        { name: "synced" }, { returning: "*" },
+      );
+      expect(row.revision).toBe(i);
+      await after.db.records!.update!({ id: row.id }, { name: "updated" });
+      expect(await after.db.records!.findOne!({ id: row.id })).toMatchObject({
+        name: "updated",
+      });
+      expect(await after.methods!.lifecycleStatus!({})).toEqual({
+        mounts: i + 1, cleanups: i, destroys: i,
+        overlappingDestroy: 0, retiredUpdates: 0,
+      });
+      after.disconnect();
+    }
+    expect(readFileSync(deployment.logPath, "utf8")).not.toContain(
+      "Connection pool of the database object has been destroyed",
+    );
+  } finally {
+    await deployment.dispose();
+  }
+});
+
 test("CLI permission sync preserves shared connections, workspaces and source functions", async ({
   page,
 }) => {
   const configPath = createConfigTestProject({
     id: "permission-sync-e2e",
-    tableConfig: { records: { columns: { id: "serial PRIMARY KEY" } } },
+    tableConfig: {
+      records: {
+        columns: { id: "serial PRIMARY KEY", name: "text NOT NULL" },
+      },
+      details: {
+        columns: {
+          id: "serial PRIMARY KEY",
+          record_id: "integer REFERENCES records(id)",
+        },
+      },
+    },
     workspaces: [
       {
         name: "Shared records",
@@ -555,10 +747,45 @@ test("CLI permission sync preserves shared connections, workspaces and source fu
           id: "root",
           type: "tab",
           size: 1,
-          items: [],
-          activeTabKey: undefined,
+          items: [
+            {
+              id: "records",
+              type: "item",
+              tableName: "records",
+              viewType: "table",
+              size: 1,
+            },
+          ],
+          activeTabKey: "records",
         },
-        windows: [],
+        windows: [
+          {
+            id: "records",
+            type: "table",
+            table_name: "records",
+            columns: [
+              { name: "id", width: 100, show: false },
+              { name: "name", width: 200 },
+              {
+                name: "Details",
+                width: 150,
+                nested: {
+                  path: [{ table: "details", on: [{ id: "record_id" }] }],
+                  limit: 10,
+                  columns: [
+                    { name: "id", width: 100, show: false },
+                    {
+                      name: "Count",
+                      width: 100,
+                      display: "drillable-records",
+                      computedConfig: { aggregation: "countAll" },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
       },
     ],
     accessControl: [
@@ -566,7 +793,10 @@ test("CLI permission sync preserves shared connections, workspaces and source fu
         userTypes: ["default"],
         dbPermissions: {
           type: "Custom",
-          customTables: [{ tableName: "records", select: true }],
+          customTables: [
+            { tableName: "records", select: true },
+            { tableName: "details", select: true },
+          ],
         },
         dbsPermissions: {
           viewPublishedWorkspaces: { workspaceNames: ["Shared records"] },
@@ -580,6 +810,15 @@ test("CLI permission sync preserves shared connections, workspaces and source fu
 module.exports.functions = {
   members: { userFilter: { type: "default" }, functions: {
     sourceFunction: { input: {}, run: () => 42 }
+  } },
+  admins: { userFilter: { type: "admin" }, functions: {
+    syncSampleSchema: { input: { connectionId: "string" }, run: ({ connectionId }) => {
+      const runtime = ${JSON.stringify(join(serverDirectory, "dist/server/src"))};
+      const { syncSchemaConfig } = require(runtime + "/ConnectionManager/syncSchemaConfig");
+      const { statePrgl } = require(runtime + "/init/startProstgles");
+      return syncSchemaConfig({ dbs: statePrgl.db, connectionId,
+        configPath: ${JSON.stringify(configPath)}, type: "sample-schema" });
+    } }
   } }
 };`;
   writeFileSync(join(configPath, "index.js"), source);
@@ -591,6 +830,12 @@ module.exports.functions = {
       { key: "admin", type: "admin" },
       { key: "default", type: "default" },
     ],
+    seed: async ({ projectDatabase }) => {
+      await projectDatabase.query(`
+        INSERT INTO records (name) VALUES ('Solar Farm');
+        INSERT INTO details (record_id) VALUES (1), (1);
+      `);
+    },
   });
   try {
     const state = await deployment.connectStateAs("admin");
@@ -636,6 +881,207 @@ module.exports.functions = {
       name: "Shared records",
       published: true,
     }))!;
+    const admin = (await state.db.users!.findOne!({ username: "admin" }))!;
+    expect(workspace.user_id).not.toBe(admin.id);
+    expect(await state.db.workspaces!.findOne!({ id: workspace.id })).toEqual(
+      workspace,
+    );
+    const window = (await state.db.windows!.findOne!({
+      workspace_id: workspace.id,
+    }))!;
+    expect(window.columns).toMatchObject([
+      { name: "id", show: false },
+      { name: "name", show: true },
+      {
+        name: "Details",
+        show: true,
+        nested: {
+          columns: [
+            { name: "id", show: false },
+            { name: "Count", show: true },
+            { name: "record_id", show: false },
+          ],
+        },
+      },
+    ]);
+    expect(workspace.layout).toMatchObject({
+      activeTabKey: window.id,
+      items: [{ id: window.id }],
+    });
+    expect(window.columns[2].nested.columns[1].computedConfig.funcDef.key).toBe(
+      "$countAll",
+    );
+    const generatedWindows = [
+      { id: "query", type: "sql", name: "Generated query", sql: "SELECT 1" },
+      { id: "method", type: "method", method_name: "sourceFunction" },
+      {
+        id: "bars",
+        type: "barchart",
+        table_name: "records",
+        labelColumn: "name",
+        numericAxis: { column: "id", aggregation: "sum" },
+      },
+      {
+        id: "map",
+        type: "map",
+        layers: [{ sql: "SELECT NULL AS geom", geoColumn: "geom" }],
+      },
+      {
+        id: "time",
+        type: "timechart",
+        layers: [
+          { sql: "SELECT now() AS date", dateColumn: "date", yAxis: "count(*)" },
+        ],
+      },
+    ];
+    const generated = {
+      name: "Generated workspace",
+      layout: {
+        id: "root",
+        type: "tab",
+        size: 1,
+        activeTabKey: "query",
+        items: generatedWindows.map(({ id, type }) => ({
+          id,
+          type: "item",
+          viewType: type === "barchart" ? "table" : type,
+          tableName: null,
+          size: 1,
+        })),
+      },
+      windows: generatedWindows,
+    };
+    const args = {
+      connectionId: connection.id,
+      toolUseId: "workspace-loader-test",
+      workspaces: [generated],
+    };
+    await expect(
+      memberState.methods!.loadGeneratedWorkspaces!(args),
+    ).rejects.toMatchObject({
+      message: "Not allowed to create workspaces",
+    });
+    const [loaded] = await state.methods!.loadGeneratedWorkspaces!(args);
+    expect(loaded).toMatchObject({
+      name: generated.name,
+      user_id: admin.id,
+      source: { tool_use_id: args.toolUseId },
+      layout_mode: "fixed",
+    });
+    const loadedWindows = await state.db.windows!.find!({
+      workspace_id: loaded.id,
+    });
+    expect(loadedWindows).toHaveLength(generatedWindows.length);
+    const ids = loaded.layout.items.map(({ id }) => id);
+    expect(new Set(ids)).toEqual(new Set(loadedWindows.map(({ id }) => id)));
+    expect(loaded.layout.activeTabKey).toBe(ids[0]);
+    expect(loadedWindows.every(({ user_id }) => user_id === admin.id)).toBe(true);
+    expect(
+      loadedWindows.find(({ type }) => type === "table").columns[1]
+        .computedConfig.funcDef.key,
+    ).toBe("$sum");
+    const links = await state.db.links!.find!({ workspace_id: loaded.id });
+    expect(links).toHaveLength(2);
+    for (const link of links) {
+      expect(link.w1_id).toBe(link.w2_id);
+      expect(link.user_id).toBe(admin.id);
+      expect(loadedWindows.find(({ id }) => id === link.w1_id).type).toBe(
+        link.options.type,
+      );
+    }
+    await state.db.workspaces!.delete!({ id: loaded.id });
+    // A failure in a later workspace must roll back the entire request.
+    await expect(
+      state.methods!.loadGeneratedWorkspaces!({
+        ...args, workspaces: [generated, generated],
+      }),
+    ).rejects.toBeTruthy();
+    expect(await state.db.workspaces!.count!({ name: generated.name })).toBe(0);
+    expect(await memberState.db.windows!.findOne!({ id: window.id })).toEqual(
+      window,
+    );
+    // Published access must not expose another admin's private dashboards.
+    const [privateWindow] = await state.sql!(
+      `WITH private_workspace AS (
+        INSERT INTO workspaces (connection_id, user_id, name, last_updated)
+        SELECT connection_id, user_id, 'Private records', last_updated
+        FROM workspaces WHERE id = $1 RETURNING id, user_id, last_updated
+      )
+      INSERT INTO windows (workspace_id, user_id, last_updated, table_name, type)
+      SELECT id, user_id, last_updated, 'records', 'table' FROM private_workspace
+      RETURNING id, workspace_id`,
+      [workspace.id],
+      { returnType: "rows" },
+    );
+    expect(
+      await state.db.workspaces!.findOne!({ id: privateWindow.workspace_id }),
+    ).toBeNull();
+    expect(
+      await state.db.windows!.findOne!({ id: privateWindow.id }),
+    ).toBeNull();
+    for (const [table, id] of [
+      [state.db.workspaces!, privateWindow.workspace_id],
+      [state.db.windows!, privateWindow.id],
+    ] as const) {
+      expect(await table.update!({ id }, { name: "Not allowed" }, { returning: "*" }))
+        .toEqual([]);
+      expect(await table.delete!({ id }, { returning: "*" })).toEqual([]);
+    }
+    await expect(state.db.windows!.insert!({
+      workspace_id: privateWindow.workspace_id, type: "sql", sql: "SELECT 1",
+    })).rejects.toBeDefined();
+    await state.sql!("DELETE FROM workspaces WHERE id = $1", [
+      privateWindow.workspace_id,
+    ]);
+    expect(
+      await state.db.workspaces!.update!(
+        { id: workspace.id },
+        { options: { ...workspace.options, pinnedMenu: true } },
+        { returning: "*" },
+      ),
+    ).toMatchObject([{ id: workspace.id, user_id: workspace.user_id }]);
+    expect(await state.db.windows!.update!(
+      { id: window.id }, { name: "Admin edited" }, { returning: "*" },
+    )).toMatchObject([{ id: window.id, user_id: window.user_id }]);
+    const addedWindow = await state.db.windows!.insert!({
+      workspace_id: workspace.id, type: "sql", sql: "SELECT 1",
+    }, { returning: "*" });
+    const addedLink = await state.db.links!.insert!({
+      workspace_id: workspace.id, w1_id: addedWindow.id, w2_id: window.id,
+      options: { type: "table", tablePath: [] },
+    }, { returning: "*" });
+    expect(addedWindow.user_id).toBe(admin.id);
+    expect(addedLink.user_id).toBe(admin.id);
+    expect(await state.db.links!.update!(
+      { id: addedLink.id }, { disabled: true }, { returning: "*" },
+    )).toMatchObject([{ user_id: admin.id, disabled: true }]);
+    expect(await state.db.links!.delete!({ id: addedLink.id }, { returning: "*" }))
+      .toHaveLength(1);
+    await state.db.windows!.delete!({ id: addedWindow.id });
+    // Existing configured dashboards may already be stored without visibility defaults.
+    await state.sql!(
+      `UPDATE windows SET columns = jsonb_set(
+        jsonb_set(columns, '{1}', (columns->1) - 'show'),
+        '{2,nested,columns,1}', (columns #> '{2,nested,columns,1}') - 'show'
+      ) WHERE id = $1`,
+      [window.id],
+    );
+    const checkDashboard = async (user: "admin" | "default") => {
+      await page.context().addCookies(deployment.storageStateAs(user).cookies);
+      await page.goto(deployment.dashboardUrl);
+      await expect(page.getByTestId("WorkspaceMenu.list")).toContainText(
+        workspace.name,
+      );
+      const table = page.locator('[data-table-name="records"]');
+      await expect(table.getByTestId("TableBody")).toContainText("Solar Farm");
+      await expect(table.getByTestId("LinkedColumn.OpenRecords")).toHaveText(
+        "2",
+      );
+      await expect(
+        table.locator('[role="columnheader"][data-key="id"]'),
+      ).toHaveCount(0);
+    };
+    await checkDashboard("default");
     expect(rule.dbsPermissions).toEqual({
       viewPublishedWorkspaces: { workspaceIds: [workspace.id] },
     });
@@ -781,6 +1227,58 @@ module.exports.functions = {
     expect(revoked.sql).toBeUndefined();
     revoked.disconnect();
     member.disconnect();
+    await checkDashboard("admin");
+    await expect(page.getByTestId("dashboard.menu.tablesSearchList")).toBeVisible();
+    await page.getByTestId("WorkspaceMenu.toggleWorkspaceLayoutMode").click();
+    await expect.poll(async () =>
+      (await state.db.workspaces!.findOne!({ id: workspace.id }))?.layout_mode,
+    ).toBe("editable");
+    await page.reload();
+    await expect(page.getByTestId("WorkspaceMenu.list")).toContainText(workspace.name);
+    expect(await state.db.workspaces!.find!({ connection_id: connection.id }))
+      .toMatchObject([{ id: workspace.id, user_id: workspace.user_id, layout_mode: "editable" }]);
+    const adminProject = await deployment.connectProjectAs("admin");
+    writeFileSync(
+      join(configPath, "index.js"),
+      source + `
+module.exports.workspaces[0].name = "Sample records";
+module.exports.accessControl = [];`,
+    );
+    const sampleFilter = { connection_id: sibling.id, name: "Sample records" };
+    let sampleWorkspaceId: string | undefined;
+    for (let i = 0; i < 2; i++) {
+      await adminProject.methods!.syncSampleSchema!({
+        connectionId: sibling.id,
+      });
+      const samples = await state.db.workspaces!.find!(sampleFilter);
+      expect(samples).toHaveLength(1);
+      expect(samples[0]).toMatchObject({
+        published: true,
+        user_id: workspace.user_id,
+        ...(sampleWorkspaceId && { id: sampleWorkspaceId }),
+      });
+      sampleWorkspaceId = samples[0]!.id;
+      expect(await state.db.windows!.count!({
+        workspace_id: sampleWorkspaceId,
+        user_id: workspace.user_id,
+      })).toBe(1);
+    }
+    await state.methods!.startConnection!({ connectionId: sibling.id });
+    expect(await state.db.workspaces!.count!(sampleFilter)).toBe(1);
+    expect(
+      await state.db.database_configs!.findOne!({ id: rule.database_id }),
+    ).toMatchObject({ config_sync: { type: "sample-schema" } });
+    writeFileSync(
+      join(configPath, "index.js"),
+      source + '\nmodule.exports.workspaces[0].name = "Rejected sample";',
+    );
+    await expect(
+      adminProject.methods!.syncSampleSchema!({ connectionId: sibling.id }),
+    ).rejects.toBeDefined();
+    expect(await state.db.workspaces!.count!({
+      connection_id: sibling.id, name: "Rejected sample",
+    })).toBe(0);
+    adminProject.disconnect();
   } finally {
     await deployment.dispose();
     rmSync(configPath, { recursive: true, force: true });
@@ -1331,6 +1829,8 @@ export default prostgles({
       await connection
         .locator('[data-command="Connection.openConnection"]')
         .click();
+      // Configured workspaces have a fixed layout; use a personal workspace to open views.
+      await setOrAddWorkspace(page, "CLI test workspace");
       const tablesList = page.getByTestId("dashboard.menu.tablesSearchList");
       const publishedTableName = [schemaName, tableName].join(".");
       await expect(

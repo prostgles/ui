@@ -1,11 +1,11 @@
+import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type {
-  AuthClientRequest,
   AuthConfig,
   BasicSession,
+  NetworkClientRequest,
 } from "prostgles-server/dist/Auth/AuthTypes";
 import { omitKeys } from "prostgles-types";
 import type { DBS } from "..";
-import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import { createPasswordlessAdminSessionIfNeeded } from "./createPasswordlessAdminSessionIfNeeded";
 import { createPublicUserSessionIfAllowed } from "./createPublicUserSessionIfAllowed";
 import { getActiveSession } from "./getActiveSession";
@@ -104,5 +104,5 @@ export const getGetUser = (
 export type NewRedirectSession = {
   type: "new-session";
   session: BasicSession;
-  reqInfo: Exclude<AuthClientRequest, { socket: any }>;
+  reqInfo: Extract<NetworkClientRequest, { httpReq: any }>;
 };

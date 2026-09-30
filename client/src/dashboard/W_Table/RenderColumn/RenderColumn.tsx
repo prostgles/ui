@@ -8,8 +8,9 @@ import { NestedColumnRender } from "../ColumnMenu/ColumnDisplayFormat/NestedColu
 import { DISPLAY_FORMATS } from "../ColumnMenu/ColumnDisplayFormat/columnFormatUtils";
 import { getColumnFormat } from "../ColumnMenu/ColumnDisplayFormat/getFormatColumnSelect";
 import { getColumnDrillDownDisabledInfo } from "../ColumnMenu/ColumnDisplayFormat/getColumnDrillDownDisabledInfo";
-import type { NestedColumn } from "../ColumnMenu/ColumnConfig";
-import type { ColumnConfigWithInfo, MinMaxVals } from "../W_Table";
+import type { NestedColumn } from "@common/ColumnConfig/ColumnConfig";
+import type { MinMaxVals } from "../W_Table";
+import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
 import {
   RenderColumnButton,
   type RelatedRecordsContext,
@@ -40,7 +41,10 @@ export const RenderColumn = (
   const value = row[column.name];
   const showDrillDown =
     !!args.relatedRecords &&
-    !getColumnDrillDownDisabledInfo(column, args.isNested ? "values" : undefined);
+    !getColumnDrillDownDisabledInfo(
+      column,
+      args.isNested ? "values" : undefined,
+    );
   if (column.nested) {
     const chartLimits = barchartVals?.get(column.name);
     const nestedTimeChartMeta: NestedTimeChartMeta | undefined =
@@ -97,11 +101,7 @@ export const RenderColumn = (
         isNested={args.isNested}
       />;
   if (!showDrillDown) return content;
-  return (
-    <RenderColumnButton {...args}>
-      {content}
-    </RenderColumnButton>
-  );
+  return <RenderColumnButton {...args}>{content}</RenderColumnButton>;
 };
 
 type RenderColumnValueProps = {

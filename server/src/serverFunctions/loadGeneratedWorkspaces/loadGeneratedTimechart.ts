@@ -1,7 +1,7 @@
 import type { TimechartWindowInsertModel } from "@common/DashboardTypes";
-import { getPaletteRGBColor } from "src/dashboard/W_Table/ColumnMenu/ColorPicker";
+import { getPaletteRGBColor } from "@common/ColumnConfig/COLOR_PALETTE";
 import type { LinkOption, WindowInsertModel } from "./loadGeneratedWorkspaces";
-import type { WindowData } from "src/dashboard/Dashboard/dashboardUtils";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 
 export const loadGeneratedTimechart = (
   generatedWindow: TimechartWindowInsertModel,

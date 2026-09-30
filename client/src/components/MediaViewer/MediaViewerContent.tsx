@@ -114,7 +114,7 @@ export const MediaViewerContent = ({
             size={variant === "thumbnail" ? "large" : undefined}
             loading={isLoading && "allow-clicking"}
             value={content_type ?? "Not found"}
-            title={content_type ?? url}
+            title={isLoading ? "Extracting metadata..." : (content_type ?? url)}
             className="max-w-full"
             onClick={(e) => {
               e.stopPropagation();

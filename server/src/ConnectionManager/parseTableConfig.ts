@@ -114,6 +114,11 @@ export const parseTableConfig = async ({
     fileTableConfigMerged[fileTableConfig.annotationsTable] = {
       columns: annotationsTableColumns,
       constraints: {
+        annotation_selection_pages: `CHECK (
+          jsonb_array_length(text_selections) > 0
+          AND page IS NOT DISTINCT FROM (text_selections->0->>'page')::integer
+          AND end_page IS NOT DISTINCT FROM (text_selections->-1->>'page')::integer
+        )`,
         references_file_table:
           "FOREIGN KEY (file_id) REFERENCES " +
           fileTableConfig.fileTable +

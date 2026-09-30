@@ -7,7 +7,7 @@ import {
   type DetailedFilterBase,
 } from "@common/filterUtils";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
-import type { ColumnConfig } from "../ColumnMenu/ColumnConfig";
+import type { ColumnConfig } from "@common/ColumnConfig/ColumnConfig";
 import { getTableIdentityColumns } from "../ColumnMenu/ColumnDisplayFormat/getTableIdentityColumns";
 
 export const getRowFilter = async (
@@ -81,7 +81,9 @@ export const getRowFilter = async (
       filter: undefined,
       error:
         "Could not create filter for record" +
-        (!identityColumns.length ? ". Create a primary key to fix this issue" : ""),
+        (!identityColumns.length ?
+          ". Create a primary key to fix this issue"
+        : ""),
     };
   }
 
@@ -98,7 +100,9 @@ export const getRowFilter = async (
       filter: undefined,
       error:
         "Could not create a single row filter. More than one record returned" +
-        (!identityColumns.length ? ". Create a primary key to fix this issue" : ""),
+        (!identityColumns.length ?
+          ". Create a primary key to fix this issue"
+        : ""),
     };
   } else {
     return { filter: rowFilter, error: undefined };

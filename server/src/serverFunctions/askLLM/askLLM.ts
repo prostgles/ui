@@ -208,6 +208,8 @@ export const askLLM = async (args: AskLLMArgs) => {
     chat,
   });
   if (limitReached) {
+    if (chat.agent_info?.type === "agent")
+      throw new Error("LLM usage limit reached");
     return;
   }
 
@@ -263,7 +265,10 @@ export const askLLM = async (args: AskLLMArgs) => {
     },
     { returning: "*" },
   );
-  const updateLlmResponseMessageTextWithError = async (messageText: string) => {
+  const updateLlmResponseMessageTextWithError = async (
+    messageText: string,
+    error?: unknown,
+  ) => {
     await dbs.llm_messages.update(
       { id: aiResponseMessagePlaceholder.id },
       {
@@ -275,6 +280,7 @@ export const askLLM = async (args: AskLLMArgs) => {
         ],
       },
     );
+    if (error !== undefined && chat.agent_info?.type === "agent") throw error;
   };
   let toolsWithInfo:
     Awaited<ReturnType<typeof getLLMToolsAllowedInThisChat>> | undefined;
@@ -308,8 +314,7 @@ export const askLLM = async (args: AskLLMArgs) => {
     );
 
     if (!modelData) {
-      await updateLlmResponseMessageTextWithError("Model not found");
-      return;
+      throw new Error("Model not found");
     }
 
     await checkMaxCostLimitForChat(dbs, chat, modelData, pastMessages);
@@ -325,8 +330,7 @@ export const askLLM = async (args: AskLLMArgs) => {
       ...llm_model
     } = modelData;
     if (!llm_provider) {
-      await updateLlmResponseMessageTextWithError("Provider not found");
-      return;
+      throw new Error("Provider not found");
     }
 
     const tools = toolsWithInfo?.map(
@@ -499,7 +503,7 @@ export const askLLM = async (args: AskLLMArgs) => {
       : errorIsString ? errorText
       : ["```json", errorText, "```"].join("\n"),
     ].join(".\n");
-    await updateLlmResponseMessageTextWithError(messageText);
+    await updateLlmResponseMessageTextWithError(messageText, err);
   }
 
   if ((await getChat())?.status?.state === "loading") {

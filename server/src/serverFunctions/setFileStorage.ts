@@ -74,9 +74,9 @@ export const setFileStorage = async (
       if (!opts?.keepFileTable) {
         const { annotationsTable } = existingFileTableConfig;
         if (annotationsTable) {
-          await connectionManager
-            .getActiveConnectionSilentFail(connId)
-            ?.prgl.update({ tableConfig: undefined });
+          await connectionManager.withActiveConnection(connId, (c) =>
+            c.prgl.update({ tableConfig: undefined }),
+          );
         }
         await t.any(
           (existingFileTableConfig.annotationsTable ?

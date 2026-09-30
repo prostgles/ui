@@ -98,7 +98,7 @@ const handler = {
             context,
           );
           const result = await tableHandler.delete(filter, {
-            returning: returning as "*",
+            returning: returning as unknown as "*",
           });
           return result;
         },
@@ -109,7 +109,7 @@ const handler = {
           );
           const result = await tableHandler.insert(data, {
             ...params,
-            returning: returning as "*",
+            returning: returning as unknown as "*",
           });
           return result;
         },
@@ -123,7 +123,7 @@ const handler = {
           );
           const result = await tableHandler.insertMany(data, {
             ...params,
-            returning: returning as "*",
+            returning: returning as unknown as "*",
           });
           return result;
         },
@@ -136,7 +136,7 @@ const handler = {
             context,
           );
           const result = await tableHandler.update(filter, data, {
-            returning: returning as "*",
+            returning: returning as unknown as "*",
             ...params,
           });
           return result;

@@ -9,10 +9,13 @@ import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 import { t } from "../../../../i18n/i18nUtils";
 import type { WindowSyncItem } from "../../../Dashboard/dashboardUtils";
 import { SmartFilterBar } from "../../../SmartFilterBar/SmartFilterBar";
-import type { ColumnConfigWithInfo } from "../../W_Table";
+import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
 import { getColumnsWithInfo } from "../../tableUtils/getColumnsWithInfo";
 import { getRequiredTableSelect } from "../../tableUtils/getTableSelect";
-import type { ColumnConfig, ColumnConfigNested } from "../ColumnConfig";
+import type {
+  ColumnConfig,
+  ColumnConfigNested,
+} from "@common/ColumnConfig/ColumnConfig";
 import { getTableIdentityColumns } from "../ColumnDisplayFormat/getTableIdentityColumns";
 import {
   getAllJoins,
@@ -84,8 +87,7 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
     newColumnNameError ??
     (!nestedColumns?.filter((c) => c.show).length ?
       t.LinkedColumn["Must select columns"]
-    : !props.column && !currentColumn ?
-      t.LinkedColumn["Must select a table"]
+    : !props.column && !currentColumn ? t.LinkedColumn["Must select a table"]
     : undefined);
 
   useEffect(() => {
@@ -233,9 +235,7 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
                     "drillable-records"
                   : "values"
                 }
-                onChange={(type) =>
-                  updateNested({ display: { type } })
-                }
+                onChange={(type) => updateNested({ display: { type } })}
               />
               {(!currentColumn.nested.display ||
                 currentColumn.nested.display.type === "values") && (

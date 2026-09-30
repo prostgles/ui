@@ -12,7 +12,7 @@ import type {
   SingleGroupFilter,
 } from "./AccessControl/OptionControllers/FilterControl";
 import { GroupedFilterControl } from "./SmartFilter/GroupedFilterControl";
-import type { ColumnConfig } from "./W_Table/ColumnMenu/ColumnConfig";
+import type { ColumnConfig } from "@common/ColumnConfig/ColumnConfig";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 
 export type RenderFilterProps = {

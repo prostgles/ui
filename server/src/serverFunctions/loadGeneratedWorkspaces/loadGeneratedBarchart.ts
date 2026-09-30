@@ -1,19 +1,16 @@
 import type { BarchartWindowInsertModel } from "@common/DashboardTypes";
-import type { WindowInsertModel } from "./loadGeneratedWorkspaces";
-import type {
-  DBSchemaTableWJoins,
-  WindowData,
-} from "src/dashboard/Dashboard/dashboardUtils";
-import { aggFunctions } from "src/dashboard/W_Table/ColumnMenu/FunctionSelector/functions";
 import { pickKeys } from "prostgles-types";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 import type {
   ColumnConfig,
   NestedColumn,
-} from "src/dashboard/W_Table/ColumnMenu/ColumnConfig";
+} from "@common/ColumnConfig/ColumnConfig";
+import { aggFunctions } from "@common/ColumnConfig/FUNCTIONS";
+import type { WindowInsertModel, WorkspaceTable } from "./loadGeneratedWorkspaces";
 
 export const loadGeneratedBarchart = (
   generatedWindow: BarchartWindowInsertModel,
-  tables: DBSchemaTableWJoins[],
+  tables: WorkspaceTable[],
 ): WindowInsertModel => {
   const { labelColumn, numericAxis, title } = generatedWindow;
 

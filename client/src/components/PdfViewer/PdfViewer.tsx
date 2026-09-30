@@ -17,6 +17,7 @@ import {
 import { usePdfViewer } from "./usePdfViewer";
 import type { DoclingDocument } from "src/dashboard/AskLLM/Chat/AskLLMChatMessages/ProstglesToolUseMessage/ProstglesMCPTools/DoclingConvertedDocument/DoclingDocument";
 import { PdfViewerDoclingTextOverlay } from "./PdfViewerDoclingTextOverlay";
+import { getTextHighlightRects } from "./PdfViewerHighlights/getTextHighlightRects";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.mjs",
@@ -27,6 +28,7 @@ export type PdfViewerProps = {
   url: string;
   scale?: number;
   highlights?: Highlight[];
+  activeHighlightId?: Highlight["id"];
   withCredentials?: boolean;
   doclingDocument?: DoclingDocument;
   onCreateHighlight?: (highlight: CreatedHighlight) => void;
@@ -38,6 +40,7 @@ export const PdfViewer = ({
   url,
   scale = 1.5,
   highlights = [],
+  activeHighlightId,
   withCredentials = false,
   onCreateHighlight,
   doclingDocument,
@@ -66,14 +69,36 @@ export const PdfViewer = ({
     url,
     scale,
     highlights,
+    activeHighlightId,
     withCredentials,
     onCreateHighlight,
     topLeftControls,
   });
 
   const [showDoclingOverlay, setShowDoclingOverlay] = useState(false);
-  const [annotationStart, setAnnotationStart] = useState<CreatedHighlight>();
-  useEffect(() => setAnnotationStart(undefined), [url]);
+  const [pendingAnnotation, setPendingAnnotation] = useState<CreatedHighlight>();
+  useEffect(() => setPendingAnnotation(undefined), [url]);
+  const clearSelection = () => {
+    setPotentialHighlight(null);
+    window.getSelection()?.removeAllRanges();
+  };
+  const saveAnnotation = (selection = potentialHighlight ?? undefined) => {
+    const annotation = selection ? combineSelections(pendingAnnotation, selection) : pendingAnnotation;
+    if (!annotation || !onCreateHighlight) return;
+    onCreateHighlight(annotation);
+    setPendingAnnotation(undefined);
+    clearSelection();
+  };
+  const pendingHighlight: Highlight | undefined = pendingAnnotation && {
+    ...pendingAnnotation,
+    id: "pending-annotation",
+    color: "var(--active)",
+    leftHandle: null,
+  };
+  const visibleHighlights = pendingHighlight && pageElement && viewport ? [
+    ...pageHighlights,
+    { ...pendingHighlight, rects: getTextHighlightRects(pendingHighlight, currentPage, pageElement, viewport) },
+  ] : pageHighlights;
 
   return (
     <FlexCol className="PdfViewer bg-color-3 ai-center min-h-0">
@@ -91,10 +116,14 @@ export const PdfViewer = ({
       />
 
       <ErrorComponent error={error} />
-      {annotationStart && (
-        <div className="flex-row ai-center gap-1">
-          Select the ending text on a page after page {annotationStart.page}.
-          <Btn onClick={() => setAnnotationStart(undefined)}>Cancel annotation</Btn>
+      {pendingAnnotation && (
+        <div className="pdf-viewer__selection-controls flex-row ai-center gap-p5 p-p5">
+          {pendingAnnotation.text_selections.length} selected. Select more text on this page or another page.
+          <Btn size="small" color="action" variant="filled" onClick={() => saveAnnotation()}>Save annotation</Btn>
+          <Btn size="small" onClick={() => {
+            setPendingAnnotation(undefined);
+            clearSelection();
+          }}>Cancel annotation</Btn>
         </div>
       )}
 
@@ -120,40 +149,25 @@ export const PdfViewer = ({
       {pageElement && (
         <PdfViewerHighlights
           activeTooltip={activeTooltip}
-          pageHighlights={pageHighlights}
+          pageHighlights={visibleHighlights}
+          activeHighlightId={activeHighlightId}
           pageElement={pageElement}
           viewport={viewport}
           potentialHighlight={potentialHighlight}
-          onCreateHighlight={onCreateHighlight && (
-            annotationStart && currentPage <= annotationStart.page ? undefined :
-            (selection) => {
-              if (!annotationStart) return onCreateHighlight(selection);
-              const start = annotationStart.rects[0]!;
-              const end = selection.rects.at(-1)!;
-              onCreateHighlight({
-                page: annotationStart.page,
-                end_page: selection.page,
-                start_text: annotationStart.text,
-                end_text: selection.text,
-                text: `${annotationStart.text}\n…\n${selection.text}`,
-                rects: [],
-                fallback_edges: {
-                  start_x: start.x,
-                  start_y: start.y,
-                  end_x: end.x + end.width,
-                  end_y: end.y + end.height,
-                },
-              });
-              setAnnotationStart(undefined);
-            }
-          )}
-          onStartPageSpan={!annotationStart && currentPage < numPages ? setAnnotationStart : undefined}
-          isFinishingPageSpan={!!annotationStart}
-          clearPotentialHighlight={() => {
-            setPotentialHighlight(null);
-          }}
+          onCreateHighlight={onCreateHighlight && saveAnnotation}
+          onAddSelection={onCreateHighlight && ((selection) =>
+            setPendingAnnotation(combineSelections(pendingAnnotation, selection)))}
+          isAddingSelection={!!pendingAnnotation}
+          clearPotentialHighlight={clearSelection}
         />
       )}
     </FlexCol>
   );
 };
+
+const combineSelections = (previous: CreatedHighlight | undefined, next: CreatedHighlight): CreatedHighlight => ({
+  ...next,
+  page: Math.min(previous?.page ?? next.page, next.page),
+  text: previous ? `${previous.text}\n${next.text}` : next.text,
+  text_selections: [...(previous?.text_selections ?? []), ...next.text_selections],
+});

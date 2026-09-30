@@ -4,9 +4,9 @@ import {
   type SocketSQLStreamHandlers,
   type SQLResultInfo,
 } from "prostgles-types";
-import type { WindowData } from "../../Dashboard/dashboardUtils";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 import { STARTING_KEYWORDS } from "../../SQLEditor/SQLCompletion/CommonMatchImports";
-import type { ColumnSortSQL } from "src/dashboard/W_Table/ColumnMenu/ColumnConfig";
+import type { ColumnSortSQL } from "@common/ColumnConfig/ColumnConfig";
 import type { W_SQL, W_SQLState } from "../W_SQL";
 import { SQL_NOT_ALLOWED } from "../W_SQL";
 import { parseExplainResult } from "../parseExplainResult";

@@ -169,7 +169,7 @@ export async function pgRestore(
       }
     }, 1000);
 
-    bkpStream.on("data", (chunk) => {
+    bkpStream.on("data", (chunk: any) => {
       chunkSum += chunk.length;
       if (is_state_db) {
         console.log(

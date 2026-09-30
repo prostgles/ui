@@ -5,11 +5,11 @@ import type {
   SvgIconName,
 } from "@components/SearchList/SearchList";
 import React, { useMemo } from "react";
-import type { ChartOptions } from "../../Dashboard/dashboardUtils";
 import type { SearchAllProps } from "../SearchAll";
 import { SearchMatchRow } from "../SearchMatchRow";
 import type { SearchAllState } from "./useSearchAllState";
 import type { useSearchTables } from "./useSearchTables";
+import type { ChartOptions } from "@common/ColumnConfig/WindowData";
 
 export const useSearchAllListProps = ({
   mode,

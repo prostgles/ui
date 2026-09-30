@@ -11,7 +11,11 @@ import { getMinimalColumnInfo } from "../../tableUtils/tableUtils";
 import { AddComputedColMenu } from "../AddComputedColumn/AddComputedColMenu";
 import { QuickAddComputedColumn } from "../AddComputedColumn/QuickAddComputedColumn";
 import { ColumnList } from "../ColumnList";
-import type { ColumnConfig, ColumnConfigNested, NestedColumn } from "../ColumnConfig";
+import type {
+  ColumnConfig,
+  ColumnConfigNested,
+  NestedColumn,
+} from "@common/ColumnConfig/ColumnConfig";
 import { NestedTimechartControls } from "../NestedTimechartControls";
 import type { LinkedColumnProps } from "./LinkedColumn";
 
@@ -169,6 +173,7 @@ export const LinkedColumnSelect = ({
                     {
                       ...newCol,
                       name: newColumnName,
+                      display: "drillable-records" as const,
                     },
                     ...oldColumns,
                   ];

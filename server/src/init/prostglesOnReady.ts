@@ -65,19 +65,20 @@ export const prostglesOnReady = async (
     await setupMCPServerHub(db);
 
     await connectionManager.destroy();
-    await connectionManager.init(db, _db);
-    const { serviceManager, isNew: isNewServiceManager } =
-      await initializeServiceManager(db);
-    const startupSchemaConfig = getStartupSchemaConfig();
-    if (isNewServiceManager && startupSchemaConfig?.schemaConfig.services) {
-      await serviceManager.addServices(
-        startupSchemaConfig.schemaConfig.services,
-      );
-    }
-    await applyStartupSchemaConfig({
-      dbs: db,
-      db: _db,
-      startupSchemaConfig,
+    await connectionManager.init(db, _db, async () => {
+      const { serviceManager, isNew: isNewServiceManager } =
+        await initializeServiceManager(db);
+      const startupSchemaConfig = getStartupSchemaConfig();
+      if (isNewServiceManager && startupSchemaConfig?.schemaConfig.services) {
+        await serviceManager.addServices(
+          startupSchemaConfig.schemaConfig.services,
+        );
+      }
+      await applyStartupSchemaConfig({
+        dbs: db,
+        db: _db,
+        startupSchemaConfig,
+      });
     });
 
     backupManager ??= await BackupManager.create(

@@ -6,10 +6,8 @@ import { SwitchToggle } from "@components/SwitchToggle";
 import { isDefined } from "../../utils/utils";
 import type { DBS } from "../Dashboard/DBS";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
-import type {
-  DBSchemaTablesWJoins,
-  WindowData,
-} from "../Dashboard/dashboardUtils";
+import type { DBSchemaTablesWJoins } from "../Dashboard/dashboardUtils";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 import type { DeepPartial } from "../RTComp";
 import { SmartSelect } from "../SmartSelect";
 import type { AccessRule } from "./AccessControl";

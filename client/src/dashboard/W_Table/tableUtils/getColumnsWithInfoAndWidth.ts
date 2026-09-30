@@ -1,7 +1,7 @@
 import type { AnyObject } from "prostgles-types";
 import type { DBSchemaTableWithRenderInfo } from "src/dashboard/Dashboard/getTables";
-import type { WindowData } from "../../Dashboard/dashboardUtils";
-import type { ColumnConfigWithInfo } from "../W_Table";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
+import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
 import { getColumnsWithInfo } from "./getColumnsWithInfo";
 import { getColWidth } from "./getColWidth";
 

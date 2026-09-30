@@ -131,7 +131,9 @@ const getDefaultRenderAs = (
     };
   }
   if (fileTable && referencedTables?.includes(fileTable)) {
-    return { type: "Internal", params: { component: "File" } };
+    const dataKey = getAvailableDataKey(column.name, reservedColumnNames);
+    reservedColumnNames.add(dataKey);
+    return { type: "Internal", params: { component: "File", dataKey } };
   }
 };
 

@@ -51,7 +51,7 @@ export const useSmartFormFieldOnChange = (
       try {
         await onChange({ type: "column", value: newValue });
       } catch (err: any) {
-        error = err.toString();
+        error = err;
       }
       setError(error);
     },

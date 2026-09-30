@@ -1,39 +1,38 @@
-import {
-  includes,
-  isObject,
-  type AnyObject,
-  type DBSchemaTable,
-  type JSONB,
-  type ValidatedColumnInfo,
-} from "prostgles-types";
-import React from "react";
-import sanitizeHtml from "sanitize-html";
+import type { TableWindowInsertModel } from "@common/DashboardTypes";
+import type { InternalColumnFormat } from "@common/managedTableSchema";
 import { getAge, getFileServePath } from "@common/utils";
+import { FlexRowWrap } from "@components/Flex";
+import {
+  MarkdownWithPlugins,
+  MarkdownWithPluginsPopupBtn,
+} from "@components/MarkdownWithPlugins/MarkdownWithPlugins";
 import type {
   FILE_TABLE_SELECT,
   FilesTableRow,
   FileTableRowExtraction,
 } from "@components/MediaViewer/managedTableUtils";
 import { MediaViewer } from "@components/MediaViewer/MediaViewer";
+import { MonacoLogs } from "@components/MonacoLogs/MonacoLogs";
 import { QRCodeImage } from "@components/QRCodeImage";
+import {
+  includes,
+  isObject,
+  type AnyObject,
+  type DBSchemaTable,
+  type ValidatedColumnInfo,
+} from "prostgles-types";
+import React from "react";
+import sanitizeHtml from "sanitize-html";
+import { DoclingDocumentViewerPopupBtn } from "src/dashboard/AskLLM/Chat/AskLLMChatMessages/ProstglesToolUseMessage/ProstglesMCPTools/DoclingConvertedDocument/DoclingDocumentViewer";
+import type { DBSchemaTableWithOptions } from "src/dashboard/Dashboard/getTables";
 import { RenderValue } from "../../../SmartForm/SmartFormField/RenderValue";
 import { StyledInterval } from "../../../W_SQL/customRenderers";
 import type { RenderedColumn } from "../../RenderColumn/RenderColumn";
-import type { TableWindowInsertModel } from "@common/DashboardTypes";
-import { FlexRowWrap } from "@components/Flex";
-import type { columnDisplayFormatSchema } from "@common/columnDisplayFormat.schema";
-import type { InternalColumnFormat } from "@common/managedTableSchema";
-import {
-  MarkdownWithPlugins,
-  MarkdownWithPluginsPopupBtn,
-} from "@components/MarkdownWithPlugins/MarkdownWithPlugins";
-import { DoclingDocumentViewerPopupBtn } from "src/dashboard/AskLLM/Chat/AskLLMChatMessages/ProstglesToolUseMessage/ProstglesMCPTools/DoclingConvertedDocument/DoclingDocumentViewer";
-import type { DBSchemaTableWithOptions } from "src/dashboard/Dashboard/getTables";
-import { MonacoLogs } from "@components/MonacoLogs/MonacoLogs";
 
-import { JSONDiffPopup } from "./JSONDiffPopup";
 import { FileAnnotationViewer } from "../../ManagedColumn/FileAnnotationViewer";
 import { FileExtractionStatus } from "../../ManagedColumn/FileExtractionStatus";
+import { JSONDiffPopup } from "./JSONDiffPopup";
+import type { UserColumnFormat } from "@common/columnDisplayFormat.schema";
 
 const tryParseNumber = (v) => {
   if (typeof v === "string" && v.length && Number.isFinite(+v)) {
@@ -41,10 +40,6 @@ const tryParseNumber = (v) => {
   }
   return v;
 };
-
-export type UserColumnFormat = JSONB.GetSchemaType<
-  typeof columnDisplayFormatSchema
->;
 
 export type ColumnFormat = UserColumnFormat | InternalColumnFormat;
 
@@ -163,7 +158,8 @@ export const DISPLAY_FORMATS = [
         );
       }
 
-      const joinedValue = Array.isArray(value) ? value[0] : value;
+      const fileValue = row[params.dataKey];
+      const joinedValue = Array.isArray(fileValue) ? fileValue[0] : fileValue;
       const joinedFile =
         isObject(joinedValue) ?
           (joinedValue as Pick<

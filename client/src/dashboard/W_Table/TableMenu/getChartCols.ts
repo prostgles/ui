@@ -2,9 +2,9 @@ import type { ParsedJoinPath, ValidatedColumnInfo } from "prostgles-types";
 import { isDefined } from "../../../utils/utils";
 import type {
   DBSchemaTablesWJoins,
-  WindowData,
   WindowSyncItem,
 } from "../../Dashboard/dashboardUtils";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 import type { ChartableSQL } from "../../W_SQL/getChartableSQL";
 import { getAllJoins } from "../ColumnMenu/JoinPathSelectorV2";
 import { getColumnsWithInfo } from "../tableUtils/getColumnsWithInfo";

@@ -5,10 +5,10 @@ import Btn from "@components/Btn";
 import { FlexCol } from "@components/Flex";
 import Popup from "@components/Popup/Popup";
 import { SwitchToggle } from "@components/SwitchToggle";
-import type { ColumnConfigWithInfo } from "../W_Table";
+import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
 import { FunctionSelector } from "./FunctionSelector/FunctionSelector";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
-import type { AggregateOptions } from "./ColumnConfig";
+import type { AggregateOptions } from "@common/ColumnConfig/ColumnConfig";
 import { AggregateFunctionOptions } from "./AddComputedColumn/AggregateFunctionOptions";
 
 type SummariseColumnProps = {
