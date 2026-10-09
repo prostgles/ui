@@ -5,10 +5,11 @@ import {
 import { getFileServePath } from "@common/utils";
 import type { ProstglesContext, SchemaConfigDatabase } from "@src/schemaConfig";
 import type e from "express";
-import type { TableConfig, TableHooks } from "prostgles-server";
+import type { JobsOptions, TableConfig, TableHooks } from "prostgles-server";
 import { getLocalStorageClient } from "prostgles-server";
 import type { FileTableConfig } from "prostgles-server/dist/ProstglesTypes";
 import type { StorageClient } from "prostgles-server/dist/StorageClient/StorageClientTypes";
+import { asName, omitKeys } from "prostgles-types";
 import type { DatabaseConfigs, DBS } from "..";
 import { getCloudClient } from "../cloudClients/cloudClients";
 import type { ConnectionManager } from "./ConnectionManager";
@@ -16,6 +17,7 @@ import { getFilesTableHook } from "./getFilesTableHook";
 import { getAnnotationsTableHook } from "./getAnnotationsTableHook";
 import type { ConnectionHotReloadProperties } from "./getHotReloadConfigs";
 import { getSchemaConfig } from "./getSchemaConfig";
+import { getFileTextExtractionJob } from "./extractFileText";
 
 type ParseTableConfigArgs = {
   dbs: DBS;
@@ -46,6 +48,7 @@ export const parseTableConfig = async ({
   fileTable?: FileTableConfig;
   tableConfig: TableConfig | undefined;
   tableHooks: TableHooks<void, ProstglesContext> | undefined;
+  jobs: JobsOptions<void, ProstglesContext> | undefined;
 }> => {
   const connectionId = con.id;
   let fileTableConfig:
@@ -95,11 +98,14 @@ export const parseTableConfig = async ({
         versioning: fileTableConfig.versioning,
       } satisfies FileTableConfig);
 
-  const { tableHooks, tableConfig } =
+  const { tableHooks, tableConfig, jobs } =
     getSchemaConfig(databaseConfig.config_sync)?.config ?? {};
   // Preserve extraction for existing annotation configs unless explicitly disabled.
   const extractText =
     fileTableConfig?.extractText ?? !!fileTableConfig?.annotationsTable;
+  if (fileTable && extractText && jobs?.definitions.extractFileText) {
+    throw new Error("Job name extractFileText is reserved for managed file extraction");
+  }
   const fileTableHooksMerged: TableHooks<void, ProstglesContext> | undefined =
     fileTable && extractText ?
       getFilesTableHook(
@@ -108,7 +114,14 @@ export const parseTableConfig = async ({
       )
     : undefined;
   const fileTableConfigMerged: TableConfig | undefined = fileTable && {
-    [fileTable.tableName]: fileTableExtractionColumns,
+    [fileTable.tableName]: {
+      ...fileTableExtractionColumns,
+      columns: extractText ? fileTableExtractionColumns.columns
+        : omitKeys(fileTableExtractionColumns.columns, ["extraction_job_id"]),
+      constraints: extractText ? {
+        extraction_job: `FOREIGN KEY (extraction_job_id) REFERENCES ${asName(jobs?.tableName ?? "prostgles_jobs")}(id)`,
+      } : undefined,
+    },
   };
   if (fileTableConfigMerged && fileTableConfig?.annotationsTable) {
     fileTableConfigMerged[fileTableConfig.annotationsTable] = {
@@ -145,6 +158,13 @@ export const parseTableConfig = async ({
     fileTable,
     tableConfig: sourceTableConfig,
     tableHooks: mergedTableHooks,
+    jobs: fileTable && extractText ? {
+      ...jobs,
+      definitions: {
+        ...jobs?.definitions,
+        extractFileText: getFileTextExtractionJob(fileTable),
+      },
+    } : jobs,
   };
 };
 
@@ -169,6 +189,10 @@ const mergeTableHooks = (
         afterAll:
           existing?.afterAll || tableHooks.afterAll ?
             [...(existing?.afterAll ?? []), ...(tableHooks.afterAll ?? [])]
+          : undefined,
+        afterCommit:
+          existing?.afterCommit || tableHooks.afterCommit ?
+            [...(existing?.afterCommit ?? []), ...(tableHooks.afterCommit ?? [])]
           : undefined,
       };
     }

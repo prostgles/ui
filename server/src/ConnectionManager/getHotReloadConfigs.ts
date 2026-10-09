@@ -30,6 +30,7 @@ export type HotReloadConfigOptions = RequiredKeepUndefined<
     | "tableConfig"
     | "tableHooks"
     | "functions"
+    | "jobs"
     | "tsGeneratedTypesDir"
     | "tsGeneratedTypesFunctionsPath"
     | "modifyClientSchema"
@@ -79,7 +80,7 @@ export const getHotReloadConfigs = async ({
     configuredConnection,
     configuredDatabaseConfig,
   );
-  const { fileTable, tableConfig, tableHooks } = await parseTableConfig({
+  const { fileTable, tableConfig, tableHooks, jobs } = await parseTableConfig({
     type: "saved",
     dbs,
     con: configuredConnection,
@@ -126,6 +127,7 @@ export const getHotReloadConfigs = async ({
       fileTable,
       tableConfig,
       tableHooks,
+      jobs,
       audit: schemaConfig?.audit,
       auth,
       schemaFilter: db_schema_filter ?? { public: 1 },

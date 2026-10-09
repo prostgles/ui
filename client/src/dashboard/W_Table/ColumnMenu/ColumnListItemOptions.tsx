@@ -55,7 +55,8 @@ export const ColumnListItemOptions = ({
   const [action, setAction] = useState<ColumnListAction>();
   const nestedColumn = column.nested;
   const removeAction =
-    column.format ? "Remove formatting"
+    (column.format?.type === "Action" || column.format?.type === "ActionColumns") ? "Remove action column"
+    : column.format ? "Remove formatting"
     : column.computedConfig?.isColumn ? "Remove Function"
     : column.computedConfig || column.nested ? "Remove computed field"
     : undefined;
@@ -178,6 +179,7 @@ export const ColumnListItemOptions = ({
                 hide: !!nestedColumn,
                 disabledText:
                   (
+                    (column.format?.type !== "Action" && column.format?.type !== "ActionColumns") &&
                     getFormatOptions(column.info ?? column.computedConfig)
                       .length <= 1
                   ) ?
@@ -207,7 +209,9 @@ export const ColumnListItemOptions = ({
                 key: "alter",
                 label: "Alter column",
                 leftIconPath: mdiPencil,
-                hide: !prgl.sql || !!column.computedConfig || !!nestedColumn,
+                hide:
+                  !prgl.sql || !!column.computedConfig || !!nestedColumn ||
+                  (column.format?.type === "Action" || column.format?.type === "ActionColumns"),
                 listProps: {
                   "data-command": "W_TableMenu_ColumnList.alter",
                 },

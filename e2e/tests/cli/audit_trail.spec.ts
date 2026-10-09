@@ -6,7 +6,7 @@ import type { SchemaConfig } from "../../../server/dist/server/src/schemaConfig"
 import {
   createTestDeployment,
   type TestDeployment,
-} from "../../../server/dist/server/src/cli/testing";
+} from "../../../server/dist/server/src/testing";
 import { openTable } from "../utils/utils";
 
 const sourceColumns = {

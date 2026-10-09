@@ -1,6 +1,9 @@
 import type { BarchartWindowInsertModel } from "@common/DashboardTypes";
 import { pickKeys } from "prostgles-types";
-import type { WindowData } from "@common/ColumnConfig/WindowData";
+import {
+  DEFAULT_TABLE_OPTIONS,
+  type WindowData,
+} from "@common/ColumnConfig/WindowData";
 import type {
   ColumnConfig,
   NestedColumn,
@@ -115,6 +118,7 @@ export const loadGeneratedBarchart = (
     columns,
     filter,
     options: {
+      ...DEFAULT_TABLE_OPTIONS,
       filterOperand,
       quickFilterGroups,
       hideEditRow: true,

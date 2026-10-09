@@ -20,8 +20,7 @@ export const startAgent = async (
   }: {
     name: string;
     toolsWithInfo:
-      | undefined
-      | Awaited<ReturnType<typeof getValidatedMcpServerToolsAllowed>>;
+      undefined | Awaited<ReturnType<typeof getValidatedMcpServerToolsAllowed>>;
     configWithDefaults: Awaited<ReturnType<typeof getAgentConfigWithDefaults>>;
     autoApproveAllTools: boolean;
     requestTimestamp: Date;
@@ -47,6 +46,11 @@ export const startAgent = async (
     timeout: number;
     started: number;
     messageId?: string | number;
+  },
+  relatedRecord?: {
+    tableName: string;
+    rowParts: Record<string, any>[];
+    functionName?: string;
   },
 ) => {
   const {
@@ -85,6 +89,7 @@ export const startAgent = async (
         ].join("\n"),
         outputSchema,
         maxIterations,
+        relatedRecord,
       },
       model: model.id,
       max_total_cost_usd: maxCostUSD.toString(),
@@ -112,6 +117,7 @@ export const startAgent = async (
             server_config_id: configId,
           } satisfies DBSSchemaForInsert["llm_chats_allowed_mcp_tools"];
         }),
+        { onConflict: "DoUpdate" },
       );
     }
 

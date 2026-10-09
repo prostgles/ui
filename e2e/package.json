@@ -4,15 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "setup": "cp ../client/src/Testing.ts ./tests/utils",
     "test": "npm run test:main && playwright test demo_video_setup.spec.ts && playwright test demo_video.spec.ts && playwright test create_docs.spec.ts && playwright test command_palette.spec.ts",
-    "test:main": "npm run setup && playwright test main.spec.ts",
-    "test:cli": "npm run setup && playwright test tests/cli --workers=1",
+    "test:main": "playwright test main.spec.ts",
+    "test:cli": "playwright test tests/cli --workers=1",
     "demo-video": "playwright test demo_video_setup.spec.ts && playwright test demo_video.spec.ts",
-    "create-docs": "npm run setup && npx playwright test create_docs.spec.ts ",
-    "command-palette": "npm run setup && npx playwright test command_palette.spec.ts ",
+    "create-docs": "npx playwright test create_docs.spec.ts ",
+    "command-palette": "npx playwright test command_palette.spec.ts ",
     "test-local": "bash test-local.sh",
-    "test-debug": "npm run setup && playwright test --debug"
+    "test-debug": "playwright test --debug"
   },
   "keywords": [],
   "author": "",

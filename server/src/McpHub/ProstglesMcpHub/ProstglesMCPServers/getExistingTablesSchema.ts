@@ -6,7 +6,7 @@ export const getExistingTablesSchema = async (
     tableNames,
     tableNameRegex,
   }: { tableNames: string[] | undefined; tableNameRegex: string | undefined },
-  { chat, connection_id, clientReq }: McpCallContext,
+  { chat, connection_id, user_id }: McpCallContext,
 ) => {
   const { db_schema_permissions, db_data_permissions } = chat;
 
@@ -16,7 +16,7 @@ export const getExistingTablesSchema = async (
   const {
     clientSchema: { tableSchema },
     clientSql,
-  } = await connection.prgl.getClientDBHandlers(clientReq, {
+  } = await connection.prgl.getClientDBHandlers({ userId: user_id }, {
     allowSql: true,
   });
   const definitions = await (async () => {

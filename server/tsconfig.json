@@ -37,6 +37,7 @@
 		"*.conf",
 		"prostgles_mcp",
 		"src/ServiceManager/services/**/src",
+		"src/testing/ui",
 	],
 	"include": [
 		"src",

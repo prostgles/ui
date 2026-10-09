@@ -49,13 +49,16 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
               type: {
                 type: { enum: ["agent"] },
                 relatedRecord: {
-                  description: "Related record for the agent",
+                  description: "Records that initiated this agent",
                   optional: true,
                   type: {
                     tableName: "string",
-                    rowFilter: {
-                      record: {
-                        values: "any",
+                    functionName: { type: "string", optional: true },
+                    rowParts: {
+                      arrayOf: {
+                        record: {
+                          values: "any",
+                        },
                       },
                     },
                   },

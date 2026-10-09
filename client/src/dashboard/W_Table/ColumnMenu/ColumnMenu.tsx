@@ -113,6 +113,7 @@ export const ColumnMenu = (props: P) => {
   const table = tables.find((t) => t.name === w.table_name);
   const validatedColumn = table?.columns.find((c) => c.name === colName);
 
+  const isAction = column.format?.type === "Action" || column.format?.type === "ActionColumns";
   const isComputed = Boolean(
     column.computedConfig ||
     column.nested?.columns.some((c) => c.computedConfig),
@@ -171,6 +172,7 @@ export const ColumnMenu = (props: P) => {
       leftIconPath: mdiFormatText,
       hide: !!column.nested,
       disabledText:
+        !isAction &&
         getFormatOptions(column.info || column.computedConfig).length <= 1 ?
           "Only text columns can have custom formats at the moment"
         : undefined,
@@ -228,7 +230,7 @@ export const ColumnMenu = (props: P) => {
       ),
     },
     "Add Computed Column": {
-      hide: !!column.nested || isComputed,
+      hide: !!column.nested || isComputed || isAction,
       disabledText: isComputed ? "Not allowed on computed columns" : undefined,
       leftIconPath: mdiTableColumnPlusAfter,
       content: (
@@ -350,7 +352,7 @@ export const ColumnMenu = (props: P) => {
         !sql ? "Not enough privileges"
         : computedType === "added" ? "Cannot alter a computed column"
         : undefined,
-      hide: isComputed,
+      hide: isComputed || isAction,
       content: !!table && (
         <AlterColumn
           table={table}
@@ -366,10 +368,10 @@ export const ColumnMenu = (props: P) => {
       hide: (w.columns?.filter((c) => c.show).length ?? 0) < 2,
     },
     Remove: {
-      label: "Remove computed column",
+      label: isAction ? "Remove action column" : "Remove computed column",
       leftIconPath: mdiEyeRemove,
       style: { color: "var(--text-warning)" },
-      hide: !computedType || computedType === "column",
+      hide: !isAction && (!computedType || computedType === "column"),
     },
     "Hide Others": {
       leftIconPath: mdiEyeOff,

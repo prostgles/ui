@@ -1,3 +1,4 @@
+import type { ActionColumnsParams } from "./actionColumn";
 import { doclingTimingsSchema } from "./documentsServiceOutputSchema";
 import type { DBSSchema } from "./publishUtils";
 import type { RequiredKeepUndefined } from "./utils";
@@ -34,7 +35,8 @@ export type InternalColumnFormat = {
         tableName: string;
         dataKey: string;
       }
-    | { component: "FileExtractionStatus" };
+    | { component: "FileExtractionStatus" }
+    | ({ component: "ActionColumns"; dataKey: string } & ActionColumnsParams);
 };
 
 export type ColumnOptions = RequiredKeepUndefined<
@@ -82,6 +84,7 @@ export const fileTableExtractionColumns = {
   columns: {
     text_content: `TEXT[]`,
     docling_metadata: `JSONB`,
+    extraction_job_id: `UUID`,
     extraction_status: {
       nullable: true,
       jsonbSchema: {

@@ -4,7 +4,7 @@ import { join } from "node:path";
 import {
   createTestDeployment,
   type TestDeployment,
-} from "../../../server/dist/server/src/cli/testing";
+} from "../../../server/dist/server/src/testing";
 import { documentsService } from "../../../server/dist/server/src/ServiceManager/services/documents/documents.service";
 import { assertServiceOpenApi } from "../utils/assertServiceOpenApi";
 import { expect, test } from "../utils/fixtures";
@@ -133,6 +133,7 @@ test("CLI annotations support PDF uploads without document extraction", async ({
     );
     // Previously annotations invoked the documents service despite extractText: false.
     assert.equal(file.extraction_status, null);
+    assert.equal(file.extraction_job_id, undefined);
     assert.equal(file.docling_metadata, null);
     assert.equal(file.version, 1);
     assert.equal(await dbo.file_versions!.count!({ file_id: file.id }), 1);
@@ -395,6 +396,37 @@ test("CLI text annotations validate anchors and span PDF pages", async ({
       label: "text",
       prov: [{ page_no: 2, bbox }],
     });
+    const listItem = {
+      text: "Maintain the landscaped boundary.",
+      marker: "c)",
+      self_ref: "#/texts/7",
+      label: "list_item",
+      prov: [{ page_no: 2, bbox }],
+    };
+    metadata.texts.push(listItem);
+    await db.files!.update!({ id: file.id }, { docling_metadata: metadata });
+    const marked = await db.file_annotations!.insert!(
+      {
+        file_id: file.id,
+        page: 2,
+        start_text: "c) Maintain the landscaped boundary.",
+        end_text: "c) Maintain the landscaped boundary.",
+      },
+      { returning: "*" },
+    );
+    expect(marked).toMatchObject({
+      text: "c) Maintain the landscaped boundary.",
+      text_selections: [
+        {
+          page: 2,
+          startText: "c) Maintain the landscaped boundary.",
+          endText: "c) Maintain the landscaped boundary.",
+          bounds: [{ x: 40, y: 40, width: 180, height: 30 }],
+        },
+      ],
+    });
+    await db.file_annotations!.delete!({ id: marked.id });
+    metadata.texts.pop();
     await db.files!.update!({ id: file.id }, { docling_metadata: metadata });
     const resolved = await db.file_annotations!.insert!(
       { ...anchors, start_text: "Beginning\nphrase" },
@@ -466,7 +498,7 @@ test("CLI text annotations validate anchors and span PDF pages", async ({
       message: expect.stringContaining("was not found"),
     });
     expect(
-      (await db.file_annotations!.findOne!({ id: resolved.id })).start_text,
+      (await db.file_annotations!.findOne!({ id: resolved.id }))?.start_text,
     ).toBe("Beginning\nphrase");
     await db.file_annotations!.delete!({
       id: { $in: [deferred.id, textOnly.id, cell.id, reordered.id] },
@@ -510,7 +542,7 @@ test("CLI text annotations validate anchors and span PDF pages", async ({
       .poll(async () => (await highlights.boundingBox())?.width)
       .toBeLessThan(fullWidth);
     expect(
-      (await db.file_annotations!.findOne!({ id: resolved.id })).text,
+      (await db.file_annotations!.findOne!({ id: resolved.id }))?.text,
     ).toBe("Beginning phrase\nMiddle page\nTable cell\nEnding");
     // A mismatched text layer falls back to the supplied bounds, never the whole page.
     metadata.texts[4]!.text = "Docling-only ending";
@@ -662,6 +694,7 @@ test("CLI text annotations validate anchors and span PDF pages", async ({
       .click();
     await expect(highlights).toHaveCount(0);
     const saved = await db.file_annotations!.findOne!();
+    assert.ok(saved);
     await db.file_annotations!.update!(
       { id: saved.id },
       { name: "Selected annotation" },
@@ -735,6 +768,176 @@ test("CLI text annotations validate anchors and span PDF pages", async ({
   }
 });
 
+test("CLI extraction jobs retry, limit concurrency and preserve configured jobs", async () => {
+  const configId = "extraction-jobs-e2e";
+  const configPath = createConfigTestProject({
+    id: configId,
+    databaseConfig: {
+      file_table_config: {
+        fileTable: "files", storageType: { type: "local" }, extractText: true,
+      },
+    },
+    tableConfig: {
+      extraction_calls: { columns: { id: "serial PRIMARY KEY", name: "text NOT NULL" } },
+      job_checks: { columns: {
+        id: "integer PRIMARY KEY", released: "boolean DEFAULT false", result: "integer DEFAULT 0", job_id: "UUID",
+      } },
+      file_hook_calls: { columns: {
+        id: "serial PRIMARY KEY", file_id: "UUID", phase: "TEXT", text_content: "TEXT[]",
+      } },
+      file_job_links: { columns: {
+        job_id: "UUID PRIMARY KEY", file_id: "UUID NOT NULL",
+      } },
+    },
+  }, test.info().outputPath("config"));
+  const configFile = join(configPath, "index.js");
+  const source = readFileSync(configFile, "utf8") + `
+module.exports.jobs = {
+  tableName: "app_jobs",
+  definitions: {
+    check: {
+      trigger: { type: "row", table: "job_checks", on: ["insert"], jobIdColumn: "job_id" },
+      run: async ({ row, dbo }) => { await dbo.job_checks.update({ id: row.id }, { result: 1 }); },
+    },
+  },
+};
+const recordFileHooks = (dbo, rows, phase) => dbo.file_hook_calls.insertMany(
+  rows.map(row => ({ file_id: row.id, phase, text_content: row.text_content })),
+);
+module.exports.tableHooks = { files: {
+  afterEach: [{
+    commands: { update: 1 }, changedFields: ["extraction_job_id"],
+    validate: async ({ dbx, row }) => {
+      if (row.original_name === "rejected.pdf") throw new Error("Reject extraction job link");
+      await dbx.file_job_links.insert({ job_id: row.extraction_job_id, file_id: row.id });
+    },
+  }, {
+    commands: { insert: 1, update: 1 }, changedFields: ["text_content"],
+    validate: ({ dbx, row }) => recordFileHooks(dbx, [row], "afterEach"),
+  }],
+  afterAll: [{
+    commands: { insert: 1, update: 1 }, changedFields: ["text_content"],
+    validate: ({ dbx, rows }) => recordFileHooks(dbx, rows, "afterAll"),
+  }],
+  afterCommit: [{
+    commands: { insert: 1, update: 1 }, changedFields: ["text_content"],
+    run: ({ dbo, rows }) => recordFileHooks(dbo, rows, "afterCommit"),
+  }],
+} };
+module.exports.onMount = ({ dbo, context }) => {
+  const serviceManager = context.serviceManager;
+  const getService = serviceManager.getServiceWithRetries.bind(serviceManager);
+  serviceManager.getServiceWithRetries = async (name, ...args) => {
+    if (name !== "documents") return getService(name, ...args);
+    return { endpoints: { "/v1/convert/file": async ({ files, md_page_break_placeholder }) => {
+      const name = (await files[0].text()).split("\\n").at(-1);
+      await dbo.extraction_calls.insert({ name });
+      if (name === "blocked") {
+        while (!(await dbo.job_checks.findOne({ id: 1 })).released) {
+          await new Promise(resolve => setTimeout(resolve, 25));
+        }
+      }
+      const attempts = await dbo.extraction_calls.count({ name });
+      if (name === "fail" || (name === "retry" && attempts === 1)) throw new Error("Docling unavailable");
+      return {
+        document: { json_content: { name }, md_content: name + md_page_break_placeholder + "page two" },
+        processing_time: 0.1, timings: {},
+      };
+    } } };
+  };
+  return () => { serviceManager.getServiceWithRetries = getService; };
+};`;
+  writeFileSync(configFile, source);
+  const deployment = await createTestDeployment({
+    configPath, configId, logPath: test.info().outputPath("extraction-jobs.log"),
+  });
+  try {
+    const { db, tableSchema } = await deployment.connectProjectAs("admin");
+    expect(tableSchema?.find(table => table.name === "files")?.columns.find(column =>
+      column.name === "extraction_job_id")?.references).toContainEqual(
+      expect.objectContaining({ ftable: "app_jobs", fcols: ["id"] }),
+    );
+    const check = await db.job_checks!.insert!({ id: 1 }, { returning: "*" });
+    expect(check.job_id).toEqual(expect.any(String));
+    expect(await db.app_jobs!.findOne!({ id: check.job_id })).toMatchObject({ job_name: "check", owner: { id: 1 } });
+    await expect.poll(async () => (await db.job_checks!.findOne!({ id: 1 }))?.result).toBe(1);
+    const upload = async (name: string, id?: string) => {
+      const data = { data: Buffer.from(`%PDF-1.4\n${name}`), original_name: `${name}.pdf` };
+      const file = id ?
+        (await db.files!.update!({ id }, data, { returning: "*" }))?.[0]
+      : await db.files!.insert!(data, { returning: "*" });
+      assert.ok(file);
+      return file;
+    };
+    await expect(upload("rejected")).rejects.toMatchObject({ message: "Reject extraction job link" });
+    expect(await db.files!.count!({ original_name: "rejected.pdf" })).toBe(0);
+    expect(await db.app_jobs!.count!({ job_name: "extractFileText" })).toBe(0);
+    expect(await db.file_job_links!.count!({})).toBe(0);
+    const blocked = await upload("blocked");
+    expect(blocked.extraction_job_id).toEqual(expect.any(String));
+    expect(await db.file_job_links!.findOne!({ job_id: blocked.extraction_job_id })).toMatchObject({
+      file_id: blocked.id,
+    });
+    expect(await db.app_jobs!.findOne!({ id: blocked.extraction_job_id })).toMatchObject({
+      job_name: "extractFileText", owner: { id: blocked.id },
+    });
+    await expect.poll(() => db.extraction_calls!.count!({ name: "blocked" })).toBe(1);
+    const retry = await upload("retry");
+    const fail = await upload("fail");
+    await expect.poll(() => db.app_jobs!.count!({ job_name: "extractFileText", status: "pending" })).toBe(2);
+    expect(await db.app_jobs!.count!({ job_name: "extractFileText", status: "running" })).toBe(1);
+    expect(await db.extraction_calls!.count!({})).toBe(1);
+    await upload("superseded", blocked.id);
+    const replacement = await upload("replacement", blocked.id);
+    expect(replacement.extraction_job_id).not.toBe(blocked.extraction_job_id);
+    expect(await db.file_job_links!.findOne!({ job_id: replacement.extraction_job_id })).toMatchObject({
+      file_id: blocked.id,
+    });
+    await db.job_checks!.update!({ id: 1 }, { released: true });
+    await expect.poll(async () => (await db.files!.findOne!({ id: retry.id }))?.extraction_status?.state,
+      { timeout: 20_000 }).toBe("finished");
+    await expect.poll(async () => (await db.files!.findOne!({ id: fail.id }))?.extraction_status?.state,
+      { timeout: 20_000 }).toBe("error");
+    expect(await db.extraction_calls!.count!({ name: "retry" })).toBe(2);
+    expect(await db.extraction_calls!.count!({ name: "fail" })).toBe(3);
+    expect(await db.files!.findOne!({ id: retry.id })).toMatchObject({
+      text_content: ["retry", "page two"], docling_metadata: { name: "retry" },
+    });
+    await expect.poll(() => db.app_jobs!.count!({ job_name: "extractFileText", status: "failed", attempts: 3 })).toBe(1);
+    await expect.poll(async () => (await db.files!.findOne!({ id: blocked.id }))?.text_content).toEqual(["replacement", "page two"]);
+    expect(await db.extraction_calls!.count!({ name: "superseded" })).toBe(0);
+    expect(await db.file_hook_calls!.count!({ text_content: ["blocked", "page two"] })).toBe(0);
+    for (const phase of ["afterEach", "afterAll", "afterCommit"]) {
+      await expect.poll(() => db.file_hook_calls!.count!({ file_id: retry.id, phase })).toBe(2);
+    }
+    // Metadata/result writes do not enqueue another extraction; new bytes do.
+    await db.files!.update!({ id: retry.id }, { docling_metadata: { note: "metadata only" } });
+    expect(await db.app_jobs!.count!({ job_name: "extractFileText" })).toBe(5);
+    expect(await db.file_job_links!.count!({})).toBe(5);
+    expect(await db.file_hook_calls!.count!({ file_id: retry.id })).toBe(6);
+    await db.files!.update!({ id: retry.id }, { text_content: ["retry", "page two"] });
+    expect(await db.file_hook_calls!.count!({ file_id: retry.id })).toBe(6);
+    await db.files!.update!({ id: retry.id }, { text_content: null });
+    expect(await db.file_hook_calls!.count!({ file_id: retry.id })).toBe(9);
+
+    const state = await deployment.connectStateAs("admin");
+    const connection = (await state.db.connections!.findOne!({ name: configId }))!;
+    writeFileSync(configFile, source + `
+module.exports.jobs.definitions.check.run = async ({ row, dbo }) => {
+  await dbo.job_checks.update({ id: row.id }, { result: 2 });
+};`);
+    await state.methods!.syncSchema!({ connectionId: connection.id, configPath });
+    const reloaded = await deployment.connectProjectAs("admin");
+    await reloaded.db.job_checks!.insert!({ id: 2 });
+    await expect.poll(async () => (await reloaded.db.job_checks!.findOne!({ id: 2 }))?.result).toBe(2);
+    await reloaded.db.files!.insert!({ data: Buffer.from("%PDF-1.4\nafter reload"), original_name: "reload.pdf" });
+    await expect.poll(() => reloaded.db.extraction_calls!.count!({ name: "after reload" })).toBe(1);
+    expect(await reloaded.db.file_job_links!.count!({})).toBe(6);
+  } finally {
+    await deployment.dispose();
+  }
+});
+
 test("CLI text extraction persists Docling profiling without annotations", async () => {
   const configId = "extraction-config-e2e";
   const configPath = createConfigTestProject(
@@ -761,6 +964,9 @@ test("CLI text extraction persists Docling profiling without annotations", async
     const columns = tableSchema?.find(
       (table) => table.name === "files",
     )?.columns;
+    expect(columns?.find(column => column.name === "extraction_job_id")?.references).toContainEqual(
+      expect.objectContaining({ ftable: "prostgles_jobs", fcols: ["id"] }),
+    );
     for (const name of [
       "text_content",
       "docling_metadata",

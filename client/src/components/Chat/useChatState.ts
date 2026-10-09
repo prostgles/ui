@@ -72,29 +72,32 @@ export const useChatState = (
       return;
     }
     setSendingMsg(true);
+    setCurrentMessage("");
+    onCurrentlyTypedMessageChange("");
+    setFiles([]);
     try {
       const { otherFiles = [], docFilesMessages } = await getConvertedDocs();
       await onSend(
         [{ type: "text", text: msg }, ...docFilesMessages],
         otherFiles.map((f) => f.file),
       );
-      if (!textAreaRef.current) return;
-      setCurrentMessage("");
-      onCurrentlyTypedMessageChange("");
-      setFiles([]);
     } catch (e) {
+      setCurrentMessage(msg);
+      onCurrentlyTypedMessageChange(msg);
+      setFiles(files);
       console.error(e);
+    } finally {
+      setSendingMsg(false);
     }
-    setSendingMsg(false);
   }, [
     getCurrentMessage,
+    files,
     filesWithInfo?.length,
     getConvertedDocs,
     onSend,
     onCurrentlyTypedMessageChange,
     setCurrentMessage,
     setFiles,
-    textAreaRef,
   ]);
   const chatIsLoading = isLoading || sendingMsg;
 

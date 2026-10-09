@@ -50,7 +50,7 @@ export type AskLLMArgs = {
   chatId: number;
   dbs: DBS;
   user: Pick<DBSSchema["users"], "id" | "type">;
-  clientReq: AuthClientRequest;
+  clientReq: AuthClientRequest | undefined;
   type:
     | "new-message"
     | "tool-use-result"

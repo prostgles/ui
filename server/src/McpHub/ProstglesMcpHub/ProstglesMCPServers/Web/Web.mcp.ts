@@ -106,8 +106,8 @@ const handler = {
         },
         websearch: async (toolArguments, { clientReq }) => {
           const clientIp =
-            clientReq.httpReq?.ip ||
-            clientReq.socket?.handshake.address ||
+            clientReq?.httpReq?.ip ||
+            clientReq?.socket?.handshake.address ||
             "127.0.0.1";
           const webSearchService =
             await serviceManager.getServiceWithRetries("webSearchSearxng");

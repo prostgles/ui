@@ -62,7 +62,9 @@ export const getColumnsWithInfo = (
     })
     .filter((c) => {
       /** Remove dropped columns */
-      if (!c.computedConfig && !c.info && !c.nested) {
+      if (
+        !c.computedConfig && !c.info && !c.nested && (c.format?.type !== "Action" && c.format?.type !== "ActionColumns")
+      ) {
         return false;
       }
       return true;

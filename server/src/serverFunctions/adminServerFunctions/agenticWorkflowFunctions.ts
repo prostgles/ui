@@ -35,7 +35,7 @@ export const agenticWorkflowFunctions = defineFunctionGroupFunctions({
         executionMode,
         autoApproveAllTools,
       },
-      { dbo: dbs, user, clientReq },
+      { dbo: dbs, user },
     ) => {
       const chat = await dbs.llm_chats.findOne({
         id: chatId,
@@ -85,7 +85,6 @@ export const agenticWorkflowFunctions = defineFunctionGroupFunctions({
         connection_id,
         chat,
         messageId,
-        clientReq,
         executionMode,
         userInputValue: userInputValidation?.value ?? {},
         autoApproveAllTools,

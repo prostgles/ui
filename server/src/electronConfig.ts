@@ -2,6 +2,7 @@ import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import * as fs from "fs";
 import * as path from "path";
 import { RUNTIME_MODE } from "./runtimeMode";
+import { assertPersistentDataPath } from "./assertPersistentDataPath";
 
 export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
 export type DBSConnectionInfo = Pick<
@@ -80,7 +81,15 @@ const getDataDir = () => {
       `Electron userDataDir (${electronConfig.userDataDir}) does not match rootDir (${rootDir}). This should never happen.`,
     );
   }
-  return path.resolve(process.env.PROSTGLES_DATA_DIR || getRootDir());
+  return path.resolve(
+    process.env.PROSTGLES_DATA_DIR ||
+      (RUNTIME_MODE === "cli" ?
+        path.join(
+          process.env.PROSTGLES_UI_CONFIG || process.cwd(),
+          ".prostgles/data",
+        )
+      : getRootDir()),
+  );
 };
 
 export const DATA_FOLDERS = {
@@ -94,11 +103,14 @@ export const DATA_FOLDERS = {
 export const getDataPath = (
   folderLabel?: keyof typeof DATA_FOLDERS,
   ...paths: string[]
-) =>
-  path.join(
+) => {
+  const dataPath = path.join(
     getDataDir(),
     ...[...(folderLabel ? [DATA_FOLDERS[folderLabel]] : []), ...paths],
   );
+  assertPersistentDataPath(dataPath);
+  return dataPath;
+};
 
 export const getElectronConfig = () => {
   const { isElectron, safeStorage, focusWindow, devCredentials } =

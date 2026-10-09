@@ -1,6 +1,9 @@
 import { expect, test } from "@playwright/test";
-import { createTestDeployment } from "../../../server/dist/server/src/cli/testing";
+import { createTestDeployment } from "../../../server/dist/server/src/testing";
 import { createConfigTestProject } from "../utils/createConfigTestProject";
+import { appendFileSync } from "node:fs";
+import { createServer } from "node:http";
+import { join, resolve } from "node:path";
 
 test("database tools select one array element with scoped read access", async () => {
   const config = {
@@ -56,5 +59,89 @@ test("database tools select one array element with scoped read access", async ()
     expect(hiddenColumn.isError).toBe(true);
   } finally {
     await deployment.dispose();
+  }
+});
+
+test("agents without a client request retain scoped database access", async () => {
+  const responses = [
+    { name: "db--find", args: { tableName: "notices", filter: {} } },
+    { name: "db--find", args: { tableName: "notices", select: { secret: 1 } } },
+    { name: "agent_goal_reached", args: { done: true } },
+  ];
+  let requestCount = 0;
+  const provider = createServer((req, res) => {
+    req.resume();
+    const next = responses[requestCount++];
+    res.writeHead(next ? 200 : 500, { "Content-Type": "application/json" });
+    res.end(JSON.stringify(next ? {
+      choices: [{ message: { role: "assistant", content: null, tool_calls: [{
+        id: `tool-${requestCount}`, type: "function",
+        function: { name: next.name, arguments: JSON.stringify(next.args) },
+      }] }, finish_reason: "tool_calls" }],
+      usage: { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 },
+    } : { error: "Unexpected LLM request" }));
+  });
+  await new Promise<void>((resolve) => provider.listen(0, "127.0.0.1", resolve));
+  const address = provider.address();
+  if (!address || typeof address === "string") throw new Error("Missing provider port");
+  const config = {
+    id: "requestless-agent-test",
+    tableConfig: {
+      notices: { columns: { id: "integer PRIMARY KEY", secret: "text" } },
+    },
+  };
+  const configPath = createConfigTestProject(config, test.info().outputPath("config"));
+  const runtimePath = resolve(__dirname, "../../../server/dist/server/src");
+  appendFileSync(join(configPath, "index.js"), `
+    module.exports.functions = {
+      admin: { userFilter: { type: "admin" }, functions: {
+        runAgent: { run: async (_, { context }) => {
+          const { statePrgl } = require(${JSON.stringify(join(runtimePath, "init/startProstgles"))});
+          const { connectionManager } = require(${JSON.stringify(join(runtimePath, "index"))});
+          const connection = await statePrgl.db.connections.findOne({ name: ${JSON.stringify(config.id)} });
+          const { prgl } = connectionManager.getConnectionStartedInstance(connection.id);
+          const prostgles = prgl.db.notices.dboBuilder.prostgles;
+          const execution = prostgles.getExecution();
+          return prostgles.runWithExecution({ ...execution, clientReq: undefined }, () => context.startAgent({
+            name: "Requestless agent", prompt: "Read the permitted notice", modelName: "requestless-agent-test-model",
+            tools: { db: { find: 1 } }, autoApproveAllTools: true, timeout: 15000,
+            outputSchema: { done: { type: "boolean" } },
+            databaseAccess: { mode: "custom", tablePermissions: {
+              notices: { select: { fields: { id: 1 }, forcedFilter: { $and: [{ fieldName: "id", value: 1 }] } } },
+            } },
+          }));
+        } },
+      } },
+    };
+  `);
+  let deployment: Awaited<ReturnType<typeof createTestDeployment>> | undefined;
+  try {
+    deployment = await createTestDeployment({
+      configPath, configId: config.id,
+      logPath: test.info().outputPath("deployment.log"),
+      seed: async ({ projectDatabase, stateDatabase }) => {
+        await projectDatabase.query("INSERT INTO notices VALUES (1, 'secret'), (2, 'hidden')");
+        await stateDatabase.query(
+          "INSERT INTO llm_models (provider_id, name, mcp_tool_support) VALUES ('OpenAI', 'requestless-agent-test-model', true)",
+        );
+        await stateDatabase.query("UPDATE llm_providers SET api_url = $1 WHERE id = 'OpenAI'", [
+          `http://127.0.0.1:${address.port}/completions`,
+        ]);
+        await stateDatabase.query(
+          "INSERT INTO llm_credentials (provider_id, api_key, user_id) SELECT 'OpenAI', 'unused-test-key', id FROM users WHERE username = 'admin'",
+        );
+      },
+    });
+    const project = await deployment.connectProjectAs("admin");
+    expect(await project.methods!.runAgent!()).toEqual({ done: true });
+    expect(requestCount).toBe(3);
+    const state = await deployment.connectStateAs("admin");
+    const calls = await state.db.mcp_server_tool_calls!.find!({}, { orderBy: { called_at: 1 } });
+    expect(calls).toHaveLength(2);
+    expect(calls![0]!.output).toMatchObject({ content: [{ type: "text", text: '[{"id":1}]' }] });
+    expect(calls![1]!.output).toMatchObject({ isError: true });
+  } finally {
+    await deployment?.dispose();
+    await new Promise<void>((resolve, reject) => provider.close((error) => error ? reject(error) : resolve()));
   }
 });

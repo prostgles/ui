@@ -10,6 +10,7 @@
     "strictNullChecks": true,
     "jsx": "react",
     "paths": {
+      "@playwright/test": ["../node_modules/@playwright/test"],
       "Testing": ["./utils/Testing"],
       "common/*": ["../../common/*"]
     }

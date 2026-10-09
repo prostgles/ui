@@ -1,4 +1,6 @@
-import { rmSync } from "node:fs";
+import { appendFileSync, rmSync } from "node:fs";
+import { ROW_ACTIONS_COLUMN } from "../../../server/node_modules/prostgles-client";
+import { createActionColumn } from "../../../server/dist/server/src/schemaConfig";
 import type { ColumnConfig } from "../../../client/src/dashboard/W_Table/ColumnMenu/ColumnConfig";
 import { getTableIdentityColumns } from "../../../client/src/dashboard/W_Table/ColumnMenu/ColumnDisplayFormat/getTableIdentityColumns";
 import type { DBSchemaTableWJoins } from "../../../client/src/dashboard/Dashboard/dashboardUtils";
@@ -8,7 +10,7 @@ import { getProstglesMCPFullToolName } from "../../../common/mcpUtils";
 import {
   createTestDeployment,
   type TestDeployment,
-} from "../../../server/dist/server/src/cli/testing";
+} from "../../../server/dist/server/src/testing";
 import type { SchemaConfig } from "../../../server/dist/server/src/schemaConfig";
 import { getTableConfigMigrations } from "../../../server/dist/server/src/tableConfig/tableConfigMigrations";
 import { expect, test } from "../utils/fixtures";
@@ -53,6 +55,8 @@ const config = {
         name: "text NOT NULL",
         email: "text NOT NULL UNIQUE",
         manager_id: "integer REFERENCES users(id)",
+        action: createActionColumn("startUserAction"),
+        review_action: createActionColumn("inspectEmail"),
       },
     },
     tasks: {
@@ -95,6 +99,8 @@ const config = {
             { name: "name", show: true },
             { name: "email", show: false },
             { name: "manager_id", show: false },
+            { name: "action", show: false },
+            { name: "review_action", show: false },
             {
               name: "Task status",
               show: true,
@@ -177,6 +183,7 @@ const config = {
                   { name: "name", show: true },
                   { name: "email", show: true },
                   { name: "manager_id", show: false },
+                  { name: "action", show: false },
                 ],
               },
             },
@@ -211,7 +218,57 @@ let sessionId: string;
 
 test.beforeAll(async () => {
   test.setTimeout(120_000);
-  configPath = createConfigTestProject(config);
+  configPath = createConfigTestProject(config, test.info().outputPath("app"));
+  appendFileSync(
+    `${configPath}/index.js`,
+    `
+    module.exports.functions = {
+      admins: { userFilter: { type: "admin" }, functions: {
+        inspectUser: {
+          input: { user: { type: "RowLookup", table: "users" } },
+          run: async ({ user }) => ({ received: user }),
+        },
+        inspectEmail: {
+          input: { email: { type: "ValueLookup", table: "users", column: "email" } },
+          run: async ({ email }) => ({ received: email }),
+        },
+        filteredUser: {
+          input: { user: { type: "RowLookup", table: "users", filter: {
+            $and: [
+              { email: { $ilike: "alice@%" } },
+              { name: { $ne: { $prostglesContext: { objectName: "user", objectPropertyName: "id" } } } },
+            ],
+          } } },
+          run: async ({ user }) => ({ received: user }),
+        },
+        filteredEmail: {
+          input: { email: { type: "ValueLookup", table: "users", column: "email", filter: {
+            $existsJoined: { path: [{ table: "tasks", on: [{ id: "user_id" }] }], filter: { status: "open" } },
+          } } },
+          run: async ({ email }) => ({ received: email }),
+        },
+        unrelated: { input: { text: "string" }, run: async ({ text }) => text },
+        startUserAction: {
+          input: { user: { type: "RowLookup", table: "users" } },
+          run: async ({ user }, { dbo }) => {
+            await dbo.users.update({ id: user.id }, { action: {
+              text: "Stop", methodName: "stopUserAction", isLoading: true,
+              details: "**Processing** " + user.email,
+            } });
+          },
+        },
+        stopUserAction: {
+          input: { id: { type: "ValueLookup", table: "users", column: "id" } },
+          run: async ({ id }, { dbo }) => {
+            await dbo.users.update({ id }, { action: {
+              text: "Retry", details: "Stopped. Ready to **retry**.",
+            } });
+          },
+        },
+      } },
+    };
+  `,
+  );
   deployment = await createTestDeployment({
     configPath,
     configId: config.id,
@@ -239,7 +296,8 @@ test.beforeAll(async () => {
   const state = await deployment.connectStateAs("admin");
   try {
     await state.db.workspaces!.update!(
-      { name: "Linked columns" }, { layout_mode: "editable" },
+      { name: "Linked columns" },
+      { layout_mode: "editable" },
     );
   } finally {
     state.disconnect();
@@ -1385,6 +1443,72 @@ test("database migration preserves legacy nested display settings and drilldowns
   );
   const state = await deployment.connectStateAs("admin");
   try {
+    const stateConnection = await state.db.connections!.findOne!({
+      is_state_db: true,
+    });
+    const { onMigrate } = getTableConfigMigrations(stateConnection!);
+    const query = (sql: string, params?: unknown[]) =>
+      state.sql!(sql, params, { returnType: "rows" });
+    // Older saved configurations can omit columns or computed function metadata.
+    const computedColumns = [
+      { name: "Missing", show: true, computedConfig: {} },
+      { name: "Null", show: true, computedConfig: { funcDef: null } },
+      {
+        name: "Non-aggregate",
+        show: true,
+        computedConfig: { funcDef: { isAggregate: false } },
+      },
+      {
+        name: "Aggregate",
+        show: true,
+        computedConfig: { funcDef: { isAggregate: true } },
+      },
+      {
+        name: "Explicit",
+        show: true,
+        computedConfig: {},
+        display: "drillable-records",
+      },
+    ];
+    const legacyNestedColumns = [undefined, null, [], computedColumns].flatMap(
+      (columns) =>
+        [undefined, "record"].map((displayMode) => ({
+          name: "Tasks",
+          nested: { path: [{ table: "tasks" }], columns, displayMode },
+        })),
+    );
+    await query(
+      `UPDATE windows SET columns = $1::jsonb WHERE table_name = 'users'`,
+      [JSON.stringify(legacyNestedColumns)],
+    );
+    await onMigrate({
+      oldVersion: 6,
+      db: { any: query, none: query },
+    } as Parameters<typeof onMigrate>[0]);
+    const migratedWindow = await state.db.windows!.findOne!({
+      table_name: "users",
+    });
+    expect(migratedWindow!.columns).toEqual(
+      legacyNestedColumns.map((column) => ({
+        name: column.name,
+        nested: {
+          path: column.nested.path,
+          columns:
+            column.nested.columns?.length ?
+              [
+                ...computedColumns.slice(0, 3),
+                { ...computedColumns[3], display: "drillable-records" },
+                computedColumns[4],
+              ]
+            : [],
+          display: { type: "values", labels: "above" },
+        },
+      })),
+    );
+    await state.db.windows!.update!(
+      { table_name: "users" },
+      { columns: originalColumns },
+    );
     await page
       .context()
       .addCookies([
@@ -1405,12 +1529,6 @@ test("database migration preserves legacy nested display settings and drilldowns
       { table_name: "users" },
       { columns: legacyColumns },
     );
-    const stateConnection = await state.db.connections!.findOne!({
-      is_state_db: true,
-    });
-    const { onMigrate } = getTableConfigMigrations(stateConnection!);
-    const query = (sql: string, params?: unknown[]) =>
-      state.sql!(sql, params, { returnType: "rows" });
     await onMigrate({
       oldVersion: 6,
       db: { any: query, none: query },
@@ -1678,5 +1796,943 @@ test("LLM-generated nested columns preserve presentation, drill-down and styles"
     await state.db.llm_chats!.delete!({ id: chat!.id });
     await state.db.llm_credentials!.delete!({ id: credential!.id });
     state.disconnect();
+  }
+});
+
+test("stored action columns run, stop, retry and show live Markdown details and related chats", async ({
+  page,
+}) => {
+  const state = await deployment.connectStateAs("admin");
+  const project = await deployment.connectProjectAs("admin");
+  const originalWindow = await state.db.windows!.findOne!({
+    table_name: "users",
+  });
+  const chatIds: number[] = [];
+  const [credential] = await state.sql!(
+    `INSERT INTO llm_credentials (provider_id, api_key, user_id)
+     SELECT 'OpenAI', 'unused-test-key', id FROM users WHERE username = 'admin' RETURNING id`,
+    {},
+    { returnType: "rows" },
+  );
+  try {
+    await project.db.users!.update!(
+      { name: "Alice" },
+      {
+        action: { text: "Start", icon: "Play" },
+        review_action: { text: "Review", disabledInfo: "Review pending" },
+      },
+    );
+    await project.db.users!.update!({ name: "Bob" }, { action: null });
+    await state.db.windows!.update!(
+      { id: originalWindow!.id },
+      {
+        columns: [
+          { name: "name", show: true },
+          { name: "email", show: false },
+          { name: "id", show: false },
+          { name: "action", show: false },
+          { name: "review_action", show: false },
+          {
+            name: "actions",
+            label: "Actions",
+            show: true,
+            width: 440,
+            format: {
+              type: "ActionColumns",
+              params: {
+                actions: [
+                  { columnName: "action" },
+                  { columnName: "review_action" },
+                  {
+                    methodName: "inspectEmail",
+                    argName: "email",
+                    conditions: [
+                      {
+                        filter: {
+                          $and: [
+                            { fieldName: "name", type: "=", value: "Alice" },
+                          ],
+                        },
+                        value: { text: "Inspect email", color: "green" },
+                      },
+                    ],
+                    defaultValue: { text: "Inspect email", color: "warn" },
+                  },
+                ],
+              },
+            },
+          },
+        ],
+        options: {
+          ...originalWindow!.options,
+          refresh: {
+            type: "Realtime",
+            intervalSeconds: 10,
+            throttleSeconds: 0,
+          },
+        },
+      },
+    );
+    await page
+      .context()
+      .addCookies([
+        { name: sidKeyName, value: sessionId, url: deployment.endpoint },
+      ]);
+    await page.goto(
+      `${deployment.dashboardUrl}?workspaceId=${originalWindow!.workspace_id}`,
+    );
+    const rows = page
+      .locator('[data-table-name="users"]')
+      .getByTestId("TableBody")
+      .getByRole("row");
+    const alice = rows.filter({ hasText: "Alice" });
+    await expect(
+      rows
+        .filter({ hasText: "Bob" })
+        .getByRole("button", { name: "Start", exact: true }),
+    ).toHaveCount(0);
+    const actions = alice.getByRole("group", { name: "Actions", exact: true });
+    await expect(actions).toHaveCount(1);
+    await expect(
+      actions.getByRole("button", { name: "Review", exact: true }),
+    ).toHaveAttribute("aria-disabled", "true");
+    await expect(
+      actions.getByRole("button", { name: "Inspect email", exact: true }),
+    ).toHaveClass(/btn-color-green/);
+    await actions
+      .getByRole("button", { name: "Inspect email", exact: true })
+      .click();
+    await page
+      .getByTestId("W_MethodControls")
+      .getByRole("button", { name: "Run", exact: true })
+      .click();
+    await expect(
+      page.getByTestId("W_MethodControls").locator(".monaco-editor"),
+    ).toContainText("alice@example.com");
+    await page.getByTestId("Popup.close").last().click();
+    await project.db.users!.update!({ name: "Alice" }, { review_action: null });
+    await expect(
+      actions.getByRole("button", { name: "Review", exact: true }),
+    ).toHaveCount(0);
+    await page.reload();
+    await expect(
+      actions.getByRole("button", { name: "Inspect email", exact: true }),
+    ).toBeVisible();
+    await alice.getByRole("button", { name: "Start", exact: true }).click();
+    await expect(page.getByTestId("W_MethodControls")).toHaveCount(0);
+    const stop = alice.getByRole("button", { name: "Stop", exact: true });
+    await expect(stop).toHaveAttribute("aria-busy", "true");
+    await expect(stop).not.toHaveAttribute("aria-disabled", "true");
+    await alice
+      .getByRole("button", { name: "Action details", exact: true })
+      .click();
+    await expect(
+      page.getByTestId("Popup.content").locator("strong"),
+    ).toHaveText("Processing");
+    await expect(page.getByTestId("Popup.content")).toContainText(
+      "alice@example.com",
+    );
+    const relatedChats = page.getByRole("region", {
+      name: "Related agent chats",
+    });
+    await expect(relatedChats).toContainText("No related agent chats");
+    const record = await project.db.users!.findOne!({ name: "Alice" });
+    const model = await state.db.llm_models!.findOne!({
+      provider_id: "OpenAI",
+    });
+    const connection = await state.db.connections!.findOne!({
+      name: config.id,
+    });
+    for (const [name, tableName, rowParts, connectionId] of [
+      [
+        "Alice action",
+        "users",
+        [{ id: record!.id, name: "Old name" }],
+        connection!.id,
+      ],
+      [
+        "Alice lookup",
+        "users",
+        [{ email: "bob@example.com" }, { email: record!.email }],
+        connection!.id,
+      ],
+      ["Other row", "users", [{ id: -1 }], connection!.id],
+      ["Other table", "tasks", [{ id: record!.id }], connection!.id],
+      ["Other connection", "users", [{ id: record!.id }], null],
+    ] as const) {
+      const relatedRecord = {
+        tableName,
+        rowParts: [...rowParts],
+        ...(name === "Alice action" ? { functionName: "startUserAction" } : {}),
+      };
+      const chat = await state.db.llm_chats!.insert!(
+        {
+          name,
+          connection_id: connectionId,
+          model: model!.id,
+          agent_info: {
+            type: "agent",
+            prompt: "Test action",
+            outputSchema: {},
+            relatedRecord,
+          },
+        },
+        { returning: "*" },
+      );
+      expect(chat!.agent_info).toMatchObject({ relatedRecord });
+      chatIds.push(chat!.id);
+      await state.db.llm_messages!.insert!({
+        chat_id: chat!.id,
+        llm_model_id: model!.id,
+        total_tokens: 0,
+        message: [{ type: "text", text: `${name} activity` }],
+      });
+    }
+    await expect(relatedChats.getByRole("button")).toHaveText([
+      "Alice lookup",
+      "Alice action",
+    ]);
+    await project.db.users!.update!(
+      { name: "Alice" },
+      {
+        action: {
+          text: "Stop",
+          methodName: "stopUserAction",
+          isLoading: true,
+          details: "**Almost done**",
+        },
+      },
+    );
+    await expect(
+      page.getByTestId("Popup.content").locator("strong"),
+    ).toHaveText("Almost done");
+    await page.getByTestId("Popup.close").last().click();
+    await stop.click();
+    await alice.getByRole("button", { name: "Retry", exact: true }).click();
+    await expect(stop).toBeVisible();
+    await project.db.users!.update!(
+      { name: "Alice" },
+      {
+        action: {
+          text: "Done",
+          disabledInfo: "Already complete",
+          details: "**Result** saved",
+        },
+      },
+    );
+    await expect(
+      alice.getByRole("button", { name: "Done", exact: true }),
+    ).toHaveAttribute("aria-disabled", "true");
+    await alice
+      .getByRole("button", { name: "Action details", exact: true })
+      .click();
+    await expect(
+      page.getByTestId("Popup.content").locator("strong"),
+    ).toHaveText("Result");
+    await page.getByTestId("Popup.close").last().click();
+    await project.db.users!.update!(
+      { name: "Alice" },
+      { action: { text: "Unavailable", methodName: "missing" } },
+    );
+    await expect(
+      alice.getByRole("button", { name: "Unavailable", exact: true }),
+    ).toHaveAttribute("aria-disabled", "true");
+    // Chats remain accessible without Markdown details or an available action.
+    await alice
+      .getByRole("button", { name: "Action details", exact: true })
+      .click();
+    await relatedChats
+      .getByRole("button", { name: "Alice action", exact: true })
+      .click();
+    await expect(page.getByTestId("AskLLM.popup")).toContainText(
+      "Alice action activity",
+    );
+    await page.getByTestId("Popup.close").last().click();
+    await expect(
+      project.sql!("SELECT prostgles.validate_jsonb_schema($1, $2::jsonb)", [
+        JSON.stringify(config.tableConfig.users.columns.action.jsonbSchema),
+        JSON.stringify({ isLoading: "wrong" }),
+      ]),
+    ).rejects.toMatchObject({
+      column: "",
+      hint: expect.stringContaining("isLoading"),
+    });
+  } finally {
+    await state.db.windows!.update!(
+      { id: originalWindow!.id },
+      {
+        columns: originalWindow!.columns,
+        options: originalWindow!.options,
+      },
+    );
+    await project.db.users!.update!({}, { action: null, review_action: null });
+    await state.db.llm_chats!.delete!({ id: { $in: chatIds } });
+    await state.db.llm_credentials!.delete!({ id: credential!.id });
+    state.disconnect();
+    project.disconnect();
+  }
+});
+
+test("action columns hide functions whose lookup filters do not match the row", async ({
+  page,
+}) => {
+  const state = await deployment.connectStateAs("admin");
+  const project = await deployment.connectProjectAs("admin");
+  const originalWindow = await state.db.windows!.findOne!({
+    table_name: "users",
+  });
+  try {
+    expect(project.methodSchema.filteredUser!.input).toMatchObject({
+      user: { filter: { $and: [
+        { email: { $ilike: "alice@%" } },
+        { name: { $ne: { $prostglesContext: { objectName: "user", objectPropertyName: "id" } } } },
+      ] } },
+    });
+    const actionRows = await project.db.users!.find!({}, {
+      select: { name: 1, [ROW_ACTIONS_COLUMN]: 1 },
+    });
+    expect(actionRows.find((row) => row.name === "Alice")?.[ROW_ACTIONS_COLUMN]).toContain("filteredUser");
+    expect(actionRows.find((row) => row.name === "Bob")?.[ROW_ACTIONS_COLUMN]).not.toContain("filteredUser");
+    await expect(project.methods.filteredUser!({ user: { name: "Bob" } })).rejects.toBeDefined();
+    await project.db.users!.update!(
+      {},
+      {
+        action: {
+          text: "Stored lookup",
+          methodName: "filteredUser",
+          details: "Workflow details",
+        },
+        review_action: { text: "Grouped stored", methodName: "filteredUser" },
+      },
+    );
+    await state.db.windows!.update!(
+      { id: originalWindow!.id },
+      {
+        columns: [
+          { name: "name", show: true },
+          { name: "email", show: false },
+          { name: "id", show: false },
+          { name: "manager_id", show: false },
+          { name: "review_action", show: false },
+          { name: "action", show: true },
+          {
+            name: "filtered_single",
+            show: true,
+            format: {
+              type: "Action",
+              params: {
+                methodName: "filteredUser",
+                argName: "user",
+                conditions: [],
+                defaultValue: { text: "Single lookup" },
+              },
+            },
+          },
+          {
+            name: "filtered_group",
+            show: true,
+            width: 500,
+            format: {
+              type: "ActionColumns",
+              params: {
+                actions: [
+                  { columnName: "review_action" },
+                  {
+                    methodName: "filteredUser",
+                    argName: "user",
+                    conditions: [],
+                    defaultValue: { text: "Row lookup" },
+                  },
+                  {
+                    methodName: "filteredEmail",
+                    argName: "email",
+                    conditions: [],
+                    defaultValue: { text: "Value lookup" },
+                  },
+                  {
+                    methodName: "inspectUser",
+                    argName: "user",
+                    conditions: [],
+                    defaultValue: { text: "Unfiltered" },
+                  },
+                ],
+              },
+            },
+          },
+        ],
+        options: {
+          ...originalWindow!.options,
+          refresh: {
+            type: "Realtime",
+            intervalSeconds: 10,
+            throttleSeconds: 0,
+          },
+        },
+      },
+    );
+    await page
+      .context()
+      .addCookies([
+        { name: sidKeyName, value: sessionId, url: deployment.endpoint },
+      ]);
+    await page.goto(deployment.endpoint);
+    await page
+      .locator(`[data-key=${JSON.stringify(config.id)}]`)
+      .getByTestId("Connection.openConnection")
+      .click({ timeout: 30_000 });
+    const rows = page
+      .locator('[data-table-name="users"]')
+      .getByTestId("TableBody")
+      .getByRole("row");
+    const alice = rows.filter({ hasText: "Alice" });
+    const bob = rows.filter({ hasText: "Bob" });
+    for (const name of [
+      "Stored lookup",
+      "Grouped stored",
+      "Single lookup",
+      "Row lookup",
+      "Value lookup",
+    ]) {
+      await expect(
+        alice.getByRole("button", { name, exact: true }),
+      ).toBeVisible();
+      await expect(bob.getByRole("button", { name, exact: true })).toHaveCount(
+        0,
+      );
+    }
+    await expect(
+      bob.getByRole("button", { name: "Unfiltered", exact: true }),
+    ).toBeVisible();
+    await bob
+      .getByRole("button", { name: "Action details", exact: true })
+      .first()
+      .click();
+    await expect(page.getByTestId("Popup.content")).toContainText(
+      "Workflow details",
+    );
+    await page.getByTestId("Popup.close").last().click();
+    await alice
+      .getByRole("button", { name: "Value lookup", exact: true })
+      .click();
+    await page
+      .getByTestId("W_MethodControls")
+      .getByRole("button", { name: "Run", exact: true })
+      .click();
+    await expect(
+      page.getByTestId("W_MethodControls").locator(".monaco-editor"),
+    ).toContainText("alice@example.com");
+    await page.getByTestId("Popup.close").last().click();
+
+    // Hidden source fields still control visibility, and live updates restore it.
+    await project.db.users!.update!(
+      { name: "Alice" },
+      { email: "changed@example.com" },
+    );
+    for (const name of [
+      "Stored lookup",
+      "Grouped stored",
+      "Single lookup",
+      "Row lookup",
+    ]) {
+      await expect(
+        alice.getByRole("button", { name, exact: true }),
+      ).toHaveCount(0);
+    }
+    await project.db.users!.update!(
+      { name: "Alice" },
+      { email: "alice@example.com" },
+    );
+    await expect(
+      alice.getByRole("button", { name: "Row lookup", exact: true }),
+    ).toBeVisible();
+
+    // A stored action can switch methods; linked changes must refresh the new lookup too.
+    await project.db.users!.update!(
+      {},
+      { action: { text: "Stored lookup", methodName: "filteredEmail" } },
+    );
+    await project.db.tasks!.update!({ status: "open" }, { status: "closed" });
+    for (const name of ["Stored lookup", "Value lookup"]) {
+      await expect(
+        alice.getByRole("button", { name, exact: true }),
+      ).toHaveCount(0);
+    }
+    await expect(
+      alice.getByRole("button", { name: "Row lookup", exact: true }),
+    ).toBeVisible();
+    await project.db.tasks!.update!({ title: "Open one" }, { status: "open" });
+    await expect(
+      alice.getByRole("button", { name: "Stored lookup", exact: true }),
+    ).toBeVisible();
+    await expect(
+      alice.getByRole("button", { name: "Value lookup", exact: true }),
+    ).toBeVisible();
+    await page.reload();
+    await expect(
+      bob.getByRole("button", { name: "Value lookup", exact: true }),
+    ).toHaveCount(0);
+    await expect(
+      alice.getByRole("button", { name: "Value lookup", exact: true }),
+    ).toBeVisible();
+  } finally {
+    await state.db.windows!.update!(
+      { id: originalWindow!.id },
+      {
+        columns: originalWindow!.columns,
+        options: originalWindow!.options,
+      },
+    );
+    await project.db.users!.update!(
+      { name: "Alice" },
+      { email: "alice@example.com" },
+    );
+    await project.db.users!.update!({}, { action: null, review_action: null });
+    await project.db.tasks!.update!(
+      { title: { $in: ["Open one", "Open two"] } },
+      { status: "open" },
+    );
+    state.disconnect();
+    project.disconnect();
+  }
+});
+
+test("action columns configure and open row and value lookup functions", async ({
+  page,
+}) => {
+  const state = await deployment.connectStateAs("admin");
+  const originalColumns = config.workspaces[0].windows[0].columns;
+  try {
+    await state.db.windows!.update!(
+      { table_name: "users" },
+      {
+        columns: originalColumns.filter((c) => !c.nested),
+      },
+    );
+    await page
+      .context()
+      .addCookies([
+        { name: sidKeyName, value: sessionId, url: deployment.endpoint },
+      ]);
+    await page.goto(deployment.endpoint);
+    await page
+      .locator(`[data-key=${JSON.stringify(config.id)}]`)
+      .getByTestId("Connection.openConnection")
+      .click({ timeout: 30_000 });
+    const users = page.locator('[data-table-name="users"]');
+    const alice = users
+      .getByTestId("TableBody")
+      .getByRole("row")
+      .filter({ hasText: "Alice" });
+
+    for (const [methodName, argName, buttonText] of [
+      ["inspectUser", "user", "Inspect user"],
+      ["inspectEmail", "email", "Inspect email"],
+    ] as const) {
+      await users.getByTestId("AddColumnMenu").click();
+      await page.getByText("Add action column", { exact: true }).click();
+      await page.getByTestId("ActionFormat.function").click();
+      await expect(
+        page
+          .getByTestId("SearchList.List")
+          .getByText("unrelated", { exact: true }),
+      ).toHaveCount(0);
+      await page
+        .getByText(`${methodName} (${argName})`, { exact: true })
+        .last()
+        .click();
+      await page.getByLabel("Button text", { exact: true }).fill(buttonText);
+      await page
+        .getByRole("button", { name: "Set icon...", exact: true })
+        .click();
+      await page.getByLabel("Search icons", { exact: true }).fill("Play");
+      await page
+        .getByTestId("Popup.content")
+        .last()
+        .locator(".text-ellipsis")
+        .filter({ hasText: /^Play$/ })
+        .click();
+      await page.getByTestId("ActionFormat.variant").click();
+      await page
+        .getByTestId("SearchList.List")
+        .locator('[data-key="outline"]')
+        .click();
+      await page
+        .getByRole("button", { name: "Add action column", exact: true })
+        .click();
+      const button = alice.getByRole("button", {
+        name: buttonText,
+        exact: true,
+      });
+      await expect(button).toHaveClass(/btn-outline/);
+      await expect(button.locator("svg")).toHaveCount(1);
+      await button.click();
+      const form = page.getByTestId("W_MethodControls");
+      await expect(form).toBeVisible();
+      await form.getByRole("button", { name: "Run", exact: true }).click();
+      await expect(form.locator(".monaco-editor")).toContainText(
+        "alice@example.com",
+      );
+      if (argName === "user")
+        await expect(form.locator(".monaco-editor")).toContainText("Alice");
+      await page.getByTestId("Popup.close").last().click();
+    }
+
+    await page.reload();
+    await expect(
+      alice.getByRole("button", { name: "Inspect user", exact: true }),
+    ).toBeVisible();
+    await alice
+      .getByRole("button", { name: "Inspect email", exact: true })
+      .click();
+    await page
+      .getByTestId("W_MethodControls")
+      .getByRole("button", { name: "Run", exact: true })
+      .click();
+    await expect(
+      page.getByTestId("W_MethodControls").locator(".monaco-editor"),
+    ).toContainText("alice@example.com");
+    await page.getByTestId("Popup.close").last().click();
+
+    const emailHeader = users
+      .getByRole("columnheader")
+      .filter({ hasText: "Inspect email" });
+    await emailHeader.click({ button: "right" });
+    await page.getByText("Render as", { exact: true }).click();
+    await page.getByLabel("Button text", { exact: true }).fill("Check email");
+    await page.getByTestId("Popup.close").last().click();
+    await expect(
+      alice.getByRole("button", { name: "Check email", exact: true }),
+    ).toBeVisible();
+    await emailHeader.click({ button: "right" });
+    await page.getByText("Remove action column", { exact: true }).click();
+    await expect(
+      alice.getByRole("button", { name: "Check email", exact: true }),
+    ).toHaveCount(0);
+
+    // Tables without a relevant lookup still expose the disabled menu item.
+    const windowId = await users.getAttribute("data-box-id");
+    expect(windowId).toBeTruthy();
+    await state.db.windows!.update!(
+      { id: windowId! },
+      { table_name: "tasks", columns: null },
+    );
+    await page.reload();
+    const tasks = page.locator(`[data-box-id="${windowId}"]`);
+    await expect(
+      tasks.getByRole("columnheader", { name: "Title", exact: true }),
+    ).toBeVisible();
+    await tasks.getByTestId("AddColumnMenu").click();
+    const actionItem = page
+      .getByTestId("SearchList.List")
+      .locator('[data-key="Action"]');
+    await expect(actionItem).toHaveAttribute(
+      "title",
+      "No functions have a RowLookup or ValueLookup for this table",
+    );
+    await expect(actionItem).toHaveAttribute("aria-disabled", "true");
+    await state.db.windows!.update!(
+      { id: windowId! },
+      { table_name: "users" },
+    );
+  } finally {
+    await state.db.windows!.update!(
+      { table_name: "users" },
+      { columns: originalColumns },
+    );
+    await state.db.windows!.update!(
+      { table_name: "tasks" },
+      { table_name: "users", columns: originalColumns },
+    );
+    state.disconnect();
+  }
+});
+
+test("action columns compute button properties with CASE and linked conditions", async ({
+  page,
+}) => {
+  const state = await deployment.connectStateAs("admin");
+  const project = await deployment.connectProjectAs("admin");
+  const originalColumns = config.workspaces[0].windows[0].columns;
+  const originalWindow = await state.db.windows!.findOne!({
+    table_name: "users",
+  });
+  const isAlice = {
+    $and: [{ fieldName: "name", type: "=" as const, value: "Alice" }],
+  };
+  const taskPath = [{ table: "tasks", on: [{ id: "user_id" }] }];
+  const action = {
+    name: "dynamic_action",
+    label: "Dynamic action",
+    show: true,
+    format: {
+      type: "Action",
+      params: {
+        methodName: "inspectUser",
+        argName: "user",
+        conditions: [
+          {
+            filter: isAlice,
+            value: {
+              text: "Review Alice",
+              icon: "Check",
+              variant: "outline",
+              color: "green",
+            },
+          },
+          {
+            filter: isAlice,
+            value: {
+              text: "Must not override the first match",
+              color: "danger",
+              isLoading: true,
+            },
+          },
+          {
+            filter: { $and: [{ fieldName: "name", type: "=", value: "Bob" }] },
+            value: {
+              text: "Inspect user",
+              variant: "faded",
+              color: "warn",
+              disabledInfo: "Bob is unavailable",
+            },
+          },
+        ],
+        defaultValue: {
+          text: "Inspect user",
+          icon: "Play",
+          variant: "faded",
+          color: "warn",
+        },
+      },
+    },
+  } satisfies ColumnConfig;
+  const columns = [...originalColumns.filter((c) => !c.nested), action];
+  try {
+    await project.db.users!.insert!({
+      name: "No tasks",
+      email: "no-tasks@example.com",
+    });
+    await state.db.windows!.update!(
+      { table_name: "users" },
+      {
+        columns,
+        options: {
+          ...originalWindow!.options,
+          refresh: {
+            type: "Realtime",
+            intervalSeconds: 10,
+            throttleSeconds: 0,
+          },
+        },
+      },
+    );
+    await page
+      .context()
+      .addCookies([
+        { name: sidKeyName, value: sessionId, url: deployment.endpoint },
+      ]);
+    await page.goto(deployment.endpoint);
+    await page
+      .locator(`[data-key=${JSON.stringify(config.id)}]`)
+      .getByTestId("Connection.openConnection")
+      .click({ timeout: 30_000 });
+    const users = page.locator('[data-table-name="users"]');
+    const rows = users.getByTestId("TableBody").getByRole("row");
+    const alice = rows.filter({
+      has: page.getByRole("cell", { name: "Alice", exact: true }),
+    });
+    const bob = rows.filter({ hasText: "Bob" });
+    const button = alice.getByRole("button", {
+      name: "Review Alice",
+      exact: true,
+    });
+    await expect(button).toHaveClass(/btn-outline/);
+    await expect(button).toHaveClass(/btn-color-green/);
+    await expect(button.locator("svg")).toHaveCount(1);
+    const bobButton = bob.getByRole("button", {
+      name: "Inspect user",
+      exact: true,
+    });
+    await expect(bobButton).toHaveClass(/btn-faded/);
+    await expect(bobButton).toHaveClass(/btn-color-warn/);
+    await expect(bobButton).toHaveAttribute("aria-disabled", "true");
+    await expect(bobButton).toHaveAttribute("title", "Bob is unavailable");
+    const noTasks = rows
+      .filter({ hasText: "No tasks" })
+      .getByRole("button", { name: "Inspect user", exact: true });
+    await expect(noTasks).toHaveClass(/btn-color-warn/);
+    await expect(noTasks).not.toHaveAttribute("aria-disabled", "true");
+
+    await button.click();
+    await page
+      .getByTestId("W_MethodControls")
+      .getByRole("button", { name: "Run", exact: true })
+      .click();
+    await expect(
+      page.getByTestId("W_MethodControls").locator(".monaco-editor"),
+    ).toContainText("alice@example.com");
+    await page.getByTestId("Popup.close").last().click();
+
+    // Editing preserves the join and condition configuration.
+    await users
+      .getByRole("columnheader")
+      .filter({ hasText: "Dynamic action" })
+      .click({ button: "right" });
+    await page.getByText("Render as", { exact: true }).click();
+    const stateEditor = page.locator("[data-action-case]");
+    await stateEditor.locator("summary").click();
+    await expect(stateEditor.getByTestId("RenderFilter.edit")).toHaveText([
+      "When (1)",
+      "When (2)",
+      "When (3)",
+    ]);
+    await stateEditor
+      .getByRole("button", { name: "Add condition", exact: true })
+      .click();
+    await stateEditor.getByTestId("RenderFilter.edit").last().click();
+    await page
+      .getByTestId("GroupedFilterControl")
+      .getByTestId("SmartAddFilter")
+      .click();
+    await page
+      .getByTestId("SearchList.List")
+      .locator('[data-key="name"]')
+      .last()
+      .click();
+    await page.getByTestId("FilterWrapper.typeSelect").click();
+    await page.getByTestId("SearchList.List").locator('[data-key="="]').click();
+    await page
+      .getByTestId("FilterWrapper")
+      .locator('.SmartSearch input[type="text"]')
+      .fill("No tasks");
+    await page.locator('[data-label="No tasks"]').last().click();
+    await page.getByTestId("RenderFilter.done").click();
+    await stateEditor
+      .getByLabel("Button text", { exact: true })
+      .last()
+      .fill("Inspect no tasks");
+    await page.getByTestId("Popup.close").last().click();
+    await expect(
+      rows
+        .filter({ hasText: "No tasks" })
+        .getByRole("button", { name: "Inspect no tasks", exact: true }),
+    ).toBeVisible();
+
+    const linkedAction = {
+      ...action,
+      format: {
+        ...action.format,
+        params: {
+          methodName: "inspectUser",
+          argName: "user",
+          joinPath: taskPath,
+          conditions: [
+            {
+              filter: {
+                $and: [{ fieldName: "status", type: "=", value: "processing" }],
+              },
+              value: { text: "Review Alice", color: "danger", isLoading: true },
+            },
+            {
+              filter: {
+                $and: [{ fieldName: "status", type: "=", value: "open" }],
+              },
+              value: {
+                text: "Review Alice",
+                color: "green",
+                variant: "outline",
+              },
+            },
+          ],
+          defaultValue: { text: "Review Alice", color: "warn" },
+        },
+      },
+    } satisfies ColumnConfig;
+    await state.db.windows!.update!(
+      { table_name: "users" },
+      {
+        columns: [...columns.slice(0, -1), linkedAction],
+      },
+    );
+    await expect(button).toHaveClass(/btn-color-green/);
+    // One CASE refreshes the whole state when a linked row changes.
+    await project.db.tasks!.update!(
+      { title: "Open one" },
+      { status: "processing" },
+    );
+    await expect(button).toHaveAttribute("aria-busy", "true");
+    await expect(button).toHaveAttribute("aria-disabled", "true");
+    await expect(button).toHaveClass(/btn-color-danger/);
+    await expect(button).toHaveClass(/btn-filled/);
+    await project.db.tasks!.update!(
+      { title: "Open one" },
+      { status: "closed" },
+    );
+    await project.db.tasks!.update!(
+      { title: "Open two" },
+      { status: "closed" },
+    );
+    await expect(button).not.toHaveAttribute("aria-busy", "true");
+    await expect(button).toHaveClass(/btn-color-warn/);
+    await expect(
+      rows
+        .filter({ hasText: "No tasks" })
+        .getByRole("button", { name: "Review Alice", exact: true }),
+    ).toHaveClass(/btn-color-warn/);
+    await users
+      .getByRole("columnheader")
+      .filter({ hasText: "Dynamic action" })
+      .click({ button: "right" });
+    await page.getByText("Render as", { exact: true }).click();
+    await stateEditor.locator("summary").click();
+    await expect(stateEditor.getByTestId("JoinPathSelectorV2")).toContainText(
+      "tasks",
+    );
+    await expect(stateEditor.getByTestId("RenderFilter.edit")).toHaveText([
+      "When (1)",
+      "When (2)",
+    ]);
+    await page.getByTestId("Popup.close").last().click();
+
+    const iconOnly = {
+      ...action,
+      format: {
+        ...action.format,
+        params: {
+          ...action.format.params,
+          conditions: [],
+          defaultValue: { icon: "Play" },
+        },
+      },
+    };
+    await state.db.windows!.update!(
+      { table_name: "users" },
+      {
+        columns: [...columns.slice(0, -1), iconOnly],
+      },
+    );
+    const iconButton = alice.getByRole("button", {
+      name: "inspectUser",
+      exact: true,
+    });
+    await expect(iconButton).toHaveText("");
+    await expect(iconButton.locator("svg")).toHaveCount(1);
+    await page.reload();
+    await expect(iconButton).toHaveText("");
+  } finally {
+    await state.db.windows!.update!(
+      { table_name: "users" },
+      {
+        columns: originalColumns,
+        options: originalWindow!.options,
+      },
+    );
+    await project.db.tasks!.update!(
+      { title: { $in: ["Open one", "Open two"] } },
+      { status: "open" },
+    );
+    await project.db.users!.delete!({ email: "no-tasks@example.com" });
+    state.disconnect();
+    project.disconnect();
   }
 });

@@ -42,7 +42,7 @@ cp ./server/licenses.json ./ui/server/
 cp ./server/package.json ./ui/server/
 cp ./server/package-lock.json ./ui/server/
 cp ./server/scripts/copyCliDockerfiles.mjs ./ui/server/scripts/
-cp ./Dockerfile ./DB.Dockerfile ./ui/
+cp ./Dockerfile ./DB.Dockerfile ./.prettierrc ./ui/
 
 cd ./ui/server/
 

@@ -4,6 +4,7 @@ import {
 } from "@common/filterUtils";
 import type { AnyObject, Select, SelectFunction } from "prostgles-types";
 import { isDefined } from "prostgles-types";
+import { ROW_ACTIONS_COLUMN } from "prostgles-client";
 import type { Prgl } from "src/App";
 import { isEmpty } from "../../../utils/utils";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
@@ -13,7 +14,7 @@ import {
   getTimeChartMinMax,
 } from "../../W_TimeChart/fetchData/getTimeChartLayersWithBins";
 import { getTimeChartSelectParams } from "../../W_TimeChart/fetchData/getTimeChartSelectParams";
-import { getFormatColumnSelect } from "../ColumnMenu/ColumnDisplayFormat/getFormatColumnSelect";
+import { getColumnFormat, getFormatColumnSelect } from "../ColumnMenu/ColumnDisplayFormat/getFormatColumnSelect";
 import { getParentTableJoinColumnNames } from "../ColumnMenu/ColumnDisplayFormat/getLinkedRecordsFilter";
 import type {
   ColumnConfig,
@@ -73,7 +74,7 @@ export const getTableSelect = async (
           }
           select[c.name] = nestedSel.select;
         }
-      } else {
+      } else if (c.format?.type !== "Action" && c.format?.type !== "ActionColumns") {
         select[c.name] = 1;
       }
     }),
@@ -107,6 +108,9 @@ export const getRequiredTableSelect = (
 ): Select => {
   const select: AnyObject = {};
   const shownColumns = columns.filter((column) => column.show);
+  const hasAggregates = shownColumns.some(
+    (column) => column.computedConfig?.funcDef.isAggregate,
+  );
   const selectableColumnNames = new Set(
     table.columns
       .filter((column) => column.select)
@@ -119,6 +123,9 @@ export const getRequiredTableSelect = (
   };
 
   shownColumns.forEach((column) => {
+    const format = getColumnFormat(column);
+    if (hasAggregates && ((format?.type === "Action" || format?.type === "ActionColumns") ||
+      (format?.type === "Internal" && format.params.component === "ActionColumns"))) return;
     if (!column.computedConfig && !column.nested) {
       Object.assign(select, getFormatColumnSelect({ column, table }));
       addColumn(
@@ -128,6 +135,14 @@ export const getRequiredTableSelect = (
     getParentTableJoinColumnNames(column).forEach(addColumn);
   });
 
+  const hasActions = shownColumns.some((column) => {
+    const format = getColumnFormat(column);
+    return format?.type === "Action" || format?.type === "ActionColumns" ||
+      (format?.type === "Internal" && format.params.component === "ActionColumns");
+  });
+  if (!hasAggregates && hasActions) {
+    select[ROW_ACTIONS_COLUMN] = 1;
+  }
   return select;
 };
 

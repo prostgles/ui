@@ -18,6 +18,9 @@ import type { NestedDisplay } from "@common/ColumnConfig/ColumnConfig";
 import { getFormatOptions } from "./columnFormatUtils";
 import { getColumnDrillDownDisabledInfo } from "./getColumnDrillDownDisabledInfo";
 
+import { ActionColumnsControls } from "./ActionColumnsControls";
+import { ActionFormatControls } from "./ActionFormatControls";
+
 type P = {
   db: Prgl["db"];
   column: ColumnConfigWithInfo;
@@ -93,6 +96,20 @@ export const ColumnDisplayFormat = ({
   const drillDownDisabledInfo =
     column.display === "drillable-records" &&
     getColumnDrillDownDisabledInfo(column, parentDisplay);
+
+  if (column.format?.type === "ActionColumns") {
+    return <ActionColumnsControls table={table} value={column.format} onChange={onChange} />;
+  }
+
+  if (column.format?.type === "Action") {
+    return (
+      <ActionFormatControls
+        table={table}
+        value={column.format}
+        onChange={onChange}
+      />
+    );
+  }
 
   return (
     <FlexCol>

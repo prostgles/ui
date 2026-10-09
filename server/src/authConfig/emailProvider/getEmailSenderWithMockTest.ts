@@ -23,7 +23,7 @@ export const getSMTPWithTLS = (
   };
 };
 
-export type EmailClient = Unpromise<
+export type EmailClient = Awaited<
   ReturnType<typeof getEmailSenderWithMockTest>
 >;
 

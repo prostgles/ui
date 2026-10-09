@@ -10,15 +10,14 @@ export const llmChatsAllowedMcpToolsTableHooks: TableHooks<DBGeneratedSchema> =
         {
           commands: { insert: 1, update: 1 },
           validate: async (args) => {
-            const { dbx, data: _data, rows } = args;
+            const { dbx, rows } = args;
 
-            const data = _data as typeof rows;
             const serverNames = Array.from(
-              new Set(data.map((row) => row.server_name).filter(isDefined)),
+              new Set(rows.map((row) => row.server_name).filter(isDefined)),
             );
             const serversWithoutConfigId = Array.from(
               new Set(
-                data
+                rows
                   .map((row) =>
                     row.server_config_id ? undefined : row.server_name,
                   )

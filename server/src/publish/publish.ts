@@ -258,19 +258,18 @@ export const publish: Publish<
           port: 1,
           web_app_directory: 1,
         },
-        validate: async ({ update, dbx, filter }) => {
-          if (update.port) {
-            const isFree = await isPortFree(update.port);
+        postValidate: async ({ row, data: update, command }) => {
+          if (command !== "update") return;
+          if (update.port && row.port) {
+            const isFree = await isPortFree(row.port);
             if (!isFree) {
-              throw `Port ${update.port} is already in use`;
+              throw `Port ${row.port} is already in use`;
             }
           }
 
-          const row = await dbx.connections.findOne(filter);
-          if (row?.is_state_db && update.table_options) {
+          if (row.is_state_db && update.table_options) {
             throw "Table options cannot be set on state database connections";
           }
-          return update;
         },
       },
     },

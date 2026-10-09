@@ -1,3 +1,4 @@
+import { getActionCaseSelect, getActionValueKey } from "@common/actionColumn";
 import { FILE_TABLE_SELECT } from "@components/MediaViewer/managedTableUtils";
 import type { AnyObject, DBSchemaTable, ParsedJoinPath } from "prostgles-types";
 import { FILE_ANNOTATION_SELECT } from "../../ManagedColumn/fileAnnotation";
@@ -21,6 +22,28 @@ export const getFormatColumnSelect = ({
   const selectableColumns = table.columns
     .filter((c) => c.select)
     .map((c) => c.name);
+  const actionsParams = format?.type === "ActionColumns" ? format.params
+    : format?.type === "Internal" && format.params.component === "ActionColumns" ? format.params
+    : undefined;
+  if (actionsParams) {
+    const dataKey = format?.type === "Internal" && format.params.component === "ActionColumns" ?
+      format.params.dataKey : column.name;
+    const select: AnyObject = { [dataKey]: { $jsonb_build_object: selectableColumns } };
+    actionsParams.actions.forEach((action, index) => {
+      if ("columnName" in action) return;
+      const expression = getActionCaseSelect(action);
+      if (expression) select[getActionValueKey(`${dataKey}_${index}`)] = expression;
+    });
+    return select;
+  }
+  if (format?.type === "Action") {
+    const select: AnyObject = {
+      [column.name]: { $jsonb_build_object: selectableColumns },
+    };
+    const expression = getActionCaseSelect(format.params);
+    if (expression) select[getActionValueKey(column.name)] = expression;
+    return select;
+  }
   if (format?.type === "JSON Diff" || format?.type === "Text Diff") {
     return Object.fromEntries(
       [format.params.oldColumn, format.params.newColumn]
@@ -63,6 +86,7 @@ export const getFormatColumnSelect = ({
     return { [params.dataKey]: query };
   }
 
+  if (params.component !== "FileAnnotation") return {};
   const { dataKey, tableName } = params;
   const query = getNestedJoinSelect(column, tableName, FILE_ANNOTATION_SELECT);
   return { [dataKey]: query };

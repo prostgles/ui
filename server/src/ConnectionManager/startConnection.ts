@@ -204,9 +204,9 @@ export const startConnection = async function (
           disableRealtime: disable_realtime ?? undefined,
           transactions: true,
           joins: schemaProstglesOptions.joins ?? "inferred",
-          createContext: () => ({
+          createContext: ({ getExecution }) => ({
             serviceManager: getServiceManager(),
-            startAgent: getStartAgent(dbs, connectionId),
+            startAgent: getStartAgent(dbs, connectionId, getExecution),
           }),
           publish: await getConnectionPublish({
             dbs,

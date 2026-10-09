@@ -1,4 +1,5 @@
 import { DEFAULT_DUMP_OPTS, DEFAULT_RESTORE_OPTS } from "@common/utils";
+import { pgDump } from "@src/BackupManager/pgDump";
 import { connectionManager } from "@src/index";
 import { getBackupManager } from "@src/init/prostglesOnReady";
 import {
@@ -48,7 +49,7 @@ export const backupServerFunctions = defineFunctionGroupFunctions({
         throw "Some connection names were not found";
       }
       for (const conId of connectionIds) {
-        await backupManager.pgDump(conId, null, {
+        await pgDump(backupManager, conId, null, {
           name,
           options: DEFAULT_DUMP_OPTS.options,
         });
@@ -98,7 +99,7 @@ export const backupServerFunctions = defineFunctionGroupFunctions({
     },
     run: ({ conId, credId, opts }) => {
       const backupManager = getBackupManager();
-      return backupManager.pgDump(conId, credId, opts);
+      return pgDump(backupManager, conId, credId, opts);
     },
   }),
   pgRestore: defineFunction({

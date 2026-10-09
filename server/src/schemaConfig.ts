@@ -1,4 +1,6 @@
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
+export { createActionColumn } from "@common/createActionColumn";
+export type { ActionColumnValue } from "@common/createActionColumn";
 import type { WorkspaceInsertModel } from "@common/DashboardTypes";
 import type { DBSSchema } from "@common/publishUtils";
 import type {
@@ -15,6 +17,7 @@ import type {
 } from "./ServiceManager/ServiceManager";
 import type { LLMProviderName } from "./serverFunctions/askLLM/setupLLMProviders";
 export {
+  createJobDefiner,
   createFunctionGroupDefiner,
   createFunctionGroupDefinerWithContext,
   createFunctionsDefiner,
@@ -131,6 +134,7 @@ export type SchemaConfigProstglesOptions<
   ProstglesInitOptions<S, SUser, ProstglesContext<Services>>,
   | "functions"
   | "joins"
+  | "jobs"
   | "tableHooks"
   | "tableConfig"
   | "tableConfigMigrations"

@@ -69,7 +69,7 @@ export const runApprovedTools = async ({
   toolUseRequestMessages: ToolUseMessage[];
   userApprovals: DBSSchema["mcp_tool_approval_requests"][] | undefined;
   aborter: AbortController;
-  clientReq: AuthClientRequest;
+  clientReq?: AuthClientRequest;
   messageId: DBSSchema["llm_messages"]["id"];
 }) => {
   const { user, chatId, dbs } = args;

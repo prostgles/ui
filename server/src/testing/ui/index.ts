@@ -1,11 +1,11 @@
-import { test as base } from "../tests/utils/fixtures";
+import { test as base } from "./fixtures";
 import { defineConfig, devices } from "@playwright/test";
 import {
   createTestDeployment,
   type CreateTestDeploymentOptions,
   type TestDeployment,
-} from "@prostgles/app/testing";
-import type { PageWIds } from "../tests/utils/utils";
+} from "@testing";
+import type { PageWIds } from "./utils";
 
 export { expect } from "@playwright/test";
 export {
@@ -19,7 +19,7 @@ export {
   getDashboardUtils,
   type PageWIds,
   type LocatorWIds,
-} from "../tests/utils/utils";
+} from "./utils";
 
 /** One isolated app per test; Playwright owns contexts and recording cleanup. */
 export const test = base.extend<{
@@ -49,7 +49,7 @@ export const test = base.extend<{
     await use(deployment.storageStateAs(userKey)),
   app: async ({ page, deployment }, use) => {
     await use({
-      page: page as PageWIds,
+      page,
       open: async () => {
         await page.goto(deployment.dashboardUrl);
         await page.getByTestId("dashboard.menu").waitFor({ state: "visible" });

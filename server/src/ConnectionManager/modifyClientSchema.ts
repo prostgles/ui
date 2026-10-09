@@ -1,4 +1,6 @@
 import { auditOperationStyles } from "@common/auditOperationStyles";
+import { actionColumnValueSchema } from "@common/createActionColumn";
+import { isDeepStrictEqual } from "node:util";
 import type {
   ColumnOptions,
   InternalColumnFormat,
@@ -110,6 +112,17 @@ const getDefaultRenderAs = (
   annotationsTable: string | undefined,
   reservedColumnNames: Set<string>,
 ): InternalColumnFormat | undefined => {
+  if (isDeepStrictEqual(column.jsonbSchema?.type, actionColumnValueSchema)) {
+    const dataKey = getAvailableDataKey(column.name, reservedColumnNames);
+    reservedColumnNames.add(dataKey);
+    return {
+      type: "Internal",
+      params: {
+        component: "ActionColumns", dataKey,
+        actions: [{ columnName: column.name }],
+      },
+    };
+  }
   if (fileTable === tableName && column.name === "extraction_status") {
     return {
       type: "Internal",

@@ -10,7 +10,7 @@ import type {
 import {
   createTestDeployment,
   type TestDeployment,
-} from "../../../server/dist/server/src/cli/testing";
+} from "../../../server/dist/server/src/testing";
 import { test, expect } from "../utils/fixtures";
 import { createConfigTestProject } from "../utils/createConfigTestProject";
 

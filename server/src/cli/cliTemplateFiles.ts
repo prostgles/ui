@@ -1,4 +1,4 @@
-import { getE2ETemplate } from "../../../e2e/cli/template";
+import { getE2ETemplate } from "./cliE2ETemplate";
 import { fixIndent } from "@common/utils";
 import { randomBytes } from "crypto";
 import type { SchemaConfig, SchemaConfigConnection } from "../schemaConfig";
@@ -297,6 +297,7 @@ const getCliTemplateFiles = ({
       build/
       .env
       .prostgles/test-logs/
+      .prostgles/data/
       *.log`,
     [cliFileNames.environmentExample]: `
       # Fixed admin credentials for CLI development.
@@ -657,6 +658,16 @@ const getCliAgentsFile = () => `
   - ${schemaConfigGuidance.watchSchemaType}
   - ${schemaConfigGuidance.onInitSQL} ${schemaConfigGuidance.onMount}
 
+  ## Jobs
+
+  - Configure durable background work with top-level \`jobs: { definitions, tableName? }\`; the managed table defaults to \`prostgles_jobs\`. CLI config reloads update job definitions. The built-in \`extractFileText\` job name is reserved when file text extraction is enabled.
+  - Define jobs with \`createJobDefiner<DBGeneratedSchema, ProstglesContext<typeof services>>()\` from \`@prostgles/app\`. Row triggers use \`{ type: "row", table, on: ["insert", "update"], columns?, jobIdColumn?, when? }\`. Generated \`afterEach\` hooks enqueue jobs before application \`afterEach\` hooks, in the same transaction. Jobs run after commit; rollback removes the queued work and raw SQL bypasses these triggers. On updates, \`columns\` requires an actual value change; restrict it so progress/result writes do not enqueue the job again.
+  - Set \`jobIdColumn\` to an existing non-primary-key UUID column to store the job ID atomically, including on reruns. Link updates run normal table hooks and can trigger other jobs; the originating job hook prevents its own recursion. Throwing from a transactional link hook rolls back the mutation and queued job. The linked ID is included in mutation results. Guard result updates with \`{ id: row.id, job_id: run.id }\` when a newer run may supersede the current one. Managed file extraction uses \`extraction_job_id\` for this guard.
+  - Schedule triggers use \`{ type: "schedule", cron, timezone? }\`; missed occurrences while all workers are stopped are not replayed. \`run\` receives \`row\` (re-fetched on each attempt, absent for schedules), \`params\`, \`dbo\`, \`user\`, \`context\`, \`run\`, \`signal\`, \`progress\`, \`checkpoint\`, and \`fail\`. Params use JSONB column definitions and each needs a default or \`optional: true\`.
+  - Set \`retry: { maxAttempts, backoff, delayMs }\` explicitly when recovery is required; the default is one attempt. Jobs may repeat after failures or worker interruption, so make effects idempotent. \`fail(reason)\` stops retries. \`concurrency\` defaults to 1 across workers and runs for the same job/row key are serialized. \`onConflict\` supports \`queue\` (default), \`replace\`, and \`skip\`.
+  - Cancellation and \`timeoutMs\` are cooperative: pass \`signal\` into service requests as their second argument, \`{ signal }\`, and check it before persisting results. \`replace\` requests cancellation; it cannot undo external effects. Persist inputs or immutable revision IDs instead of relying on upload buffers or a snapshot of the triggering row.
+  - \`runAs\` defaults to \`"system"\`; use \`"user"\` for work that must obey the triggering/rerunning user's current permissions. The instance exposes \`jobs.get\`, \`jobs.cancel\`, and \`jobs.rerun\`; there is no public enqueue API. Start work through a configured row mutation or schedule. Authorize cancel/rerun explicitly in published functions; job-table read permissions do not authorize these server operations.
+
   ## Access control
 
   - Each user type may appear in only one config rule. Keep \`public\` in its own rule; it cannot be combined with non-public user types. Table hooks validate this on access-rule user-type inserts and updates.
@@ -675,9 +686,9 @@ const getCliAgentsFile = () => `
 
   - ${schemaConfigGuidance.llmCredential}
   - Use \`accessControl[].allowedLLM\` entries shaped as \`{ credentialName, promptName }\` to reference existing, uniquely named LLM credentials and prompts. Set \`llm_daily_limit\` in the access rule when needed.
-  - In a server function, call \`ctx.context.startAgent({ prompt, input, outputSchema }, ctx)\`, where \`ctx\` is the function's second argument. This uses Prostgles' configured models and credentials and runs as the caller; pass the original context to retain their identity and request. The returned object is typed from \`outputSchema\`.
+  - In a server function, call \`ctx.context.startAgent({ prompt, input, outputSchema })\`, where \`ctx\` is the function's second argument. This uses Prostgles' configured models and credentials and inherits the caller's identity from the execution context. The returned object is typed from \`outputSchema\`.
   - For agentic work triggered by a mutation, use a table \`afterCommit\` hook. Its \`run\` callback receives the committed \`rows\`, \`context\`, \`localParams\`, and \`getClientDBHandlers\`. Resolve permission-checked database handlers with \`await getClientDBHandlers({ userId }, undefined)\`; derive \`userId\` from trusted hook context or committed ownership data, never arbitrary client input.
-  - \`startAgent\` currently requires \`clientReq\` alongside the validated \`user\`. Use \`ctx.clientReq\` from a server function, or \`localParams.clientReq\` with \`localParams.isRemoteRequest.user\` from an \`afterCommit\` hook, and pass them as \`{ user, clientReq }\`. Handle internal mutations explicitly because they have no remote caller context.
+  - \`startAgent\` requires a user and invocation in the execution context, but no HTTP or socket request. Database tools resolve permission-checked handlers from that user's ID. Internal mutations without an execution user cannot start an agent implicitly.
   - Read the resolved \`ProstglesContext\` and agent option types before adding tools or database access. \`startAgent\` also accepts \`signal\` and \`timeout\` in milliseconds; tool auto-approval defaults to false.
 
   ## Services
@@ -739,6 +750,8 @@ const getCliAgentsFile = () => `
   ## Table hooks
 
   - ${schemaConfigGuidance.tableHooks} Hooks apply only to table-handler mutations; raw SQL bypasses them. Use \`beforeEach\` to validate or transform pending data, \`afterEach\` for each affected row, \`afterAll\` once for all affected rows, and \`afterCommit\` once after the outer transaction commits with at least one affected row.
+  - \`beforeEach\` receives raw input. Upserts use command \`"insertOnConflictDoUpdate"\` with no filter and require applicable before hooks to target both insert and update. After hooks receive actual inserted/updated/deleted rows; use \`rows\` rather than \`data\` for mixed upsert batches. On updates, after-hook \`changedFields\` checks actual PostgreSQL value changes, including changes to null; inserts and deletes always qualify. After hooks require trigger privileges on ordinary or partitioned tables; update \`changedFields\` requires an ordinary table.
+  - Recursion protection is off by default. Nested writes retrigger hooks. Set \`preventRecursion: true\` on an individual \`afterEach\`, \`afterAll\`, or \`afterCommit\` hook when its writes could invoke it again, including indirectly through another table. This skips only that hook while it is in the current hook ancestry; other hooks and permission validation still run, and later independent mutations can invoke it again. It is not a global guard or a concurrency lock. Prefer transforming pending data in \`beforeEach\` when an additional write is unnecessary.
   - Transactional hooks' \`tx\` and \`dbx\` use the mutation's PostgreSQL transaction. This provides atomicity and read-your-writes, but not serialization between requests. Use the supplied \`dbx\` for transactional reads and writes; a separate handler, including a \`dbo\` captured from \`onMount\`, cannot see uncommitted rows.
   - Prefer PostgreSQL constraints or atomic conditional writes for invariants under concurrency. Do not add \`FOR UPDATE\`, advisory locks, mutex helpers, or retry loops unless all of these are true:
     1. The protected invariant and every competing operation are documented.
@@ -747,7 +760,7 @@ const getCliAgentsFile = () => `
     4. The lock is acquired before reading the protected state.
     5. The smallest relevant row is locked, and multiple locks use a consistent order.
   - Locks acquired in \`afterEach\` or \`afterAll\` cannot protect checks performed earlier; do not use them for that purpose.
-  - Throwing from a transactional hook rolls back the mutation. An \`afterCommit\` hook is awaited, but its errors are only logged and cannot roll back committed data. Use it for post-commit workflows needing committed rows, app context, or permission-checked user handlers; use a transactionally written outbox/queue when delivery must be durable or retried. Do not start detached work from a hook or hold the transaction open across avoidable network calls.
+  - Throwing from a transactional hook rolls back the mutation. An \`afterCommit\` hook is awaited, but its errors are only logged and cannot roll back committed data. Use it for post-commit workflows needing committed rows, app context, or permission-checked user handlers; prefer built-in jobs when delivery must be durable or retried. Do not start detached work from a hook or hold the transaction open across avoidable network calls.
 
   ## Tables and display options
 
@@ -767,6 +780,41 @@ const getCliAgentsFile = () => `
 
   - ${schemaConfigGuidance.workspaces} Include tables and, where useful, aggregate SQL results, bar charts, time charts, maps, and summary statistics.
   - Keep window IDs stable and ensure every layout item references the matching window ID.
+
+  ### Action button columns
+
+  - For stored workflow state, import \`createActionColumn\` from \`@prostgles/app\` and use \`tableConfig.orders.columns.action = createActionColumn("startOrder")\`. The typed JSONB column automatically renders as ActionColumns; no workspace format is needed. Null renders nothing.
+  - Store plain values such as \`{ text: "Start", icon: "Play", details: "Ready to **start**" }\`. Fields are optional: \`text\`, \`icon\`, \`variant\`, \`color\`, \`disabledInfo\`, \`isLoading\`, \`details\`, \`methodName\`, \`argName\`. Markdown details open separately and stay readable while disabled.
+  - Clicking calls the published method immediately using its sole matching RowLookup or ValueLookup argument for this table. RowLookup receives readable, filterable primitive row fields, including hidden IDs; ValueLookup receives its column value. Set \`argName\` if multiple lookups match. Other required inputs need a function form instead. The helper's methodName is the fallback; stored methodName overrides it.
+  - Hooks and functions can update the same action column. For Stop, store \`{ text: "Stop", methodName: "stopOrder", isLoading: true }\`; for Retry, store \`{ text: "Retry" }\`. The spinner allows clicking; set disabledInfo to block clicks. Functions should enqueue work and return promptly; the application owns cancellation, concurrency and permission checks. Use realtime refresh below for progress updates.
+
+  - Group stored actions and function buttons in one section with \`format: { type: "ActionColumns", params: { actions: [{ columnName: "action" }, { methodName: "inspectOrder", argName: "order", conditions: [], defaultValue: { text: "Inspect" } }] } }\`. Stored actions keep immediate execution and details; function buttons open their form. Hide the original stored columns to avoid duplicate buttons.
+  - Add a synthetic column to a non-aggregated table window's \`columns\` with a unique \`name\` and \`format: { type: "Action", params: ... }\`. It does not require a database column. Clicking opens the function form with the selected argument populated from the current row, including hidden readable fields; the user then runs the function.
+  - \`methodName\`, \`argName\`, and the optional \`joinPath\` are fixed. The function must be available to the user and its named argument must be a \`RowLookup\` for this table or a \`ValueLookup\` for a readable column of this table. A row lookup receives the row; a value lookup receives its configured column value.
+  - Button state uses one \`conditions: [{ filter, value }]\` list and an optional \`defaultValue\`. Each value is a complete object of optional \`text\`, \`icon\`, \`variant\`, \`color\`, \`disabledInfo\`, and \`isLoading\` properties. One \`$case\` selects the first matching state; otherwise it uses the default state. States do not merge. Use grouped detailed filters such as \`{ $and: [{ fieldName: "status", type: "=", value: "pending" }] }\`, not raw database filters. Use \`conditions: []\` for a default-only state.
+  - The optional \`joinPath\` uses \`[{ table, on: [{ sourceColumn: "targetColumn" }] }]\`. All conditions apply to the final linked table and match if any related row satisfies them; no matching row uses the default state. The join affects button state, not the function's row argument.
+  - Text may be omitted for an icon-only button. Icons use names such as \`Check\`. Variants are \`text\`, \`faded\`, \`filled\`, or \`outline\` (default \`filled\`); colors are \`default\`, \`action\`, \`danger\`, \`warn\`, \`green\`, \`indigo\`, \`inherit\`, \`transparent\`, or \`white\` (default \`action\`). A nonempty \`disabledInfo\` disables the button and supplies its tooltip; \`isLoading: true\` shows a spinner and disables clicking.
+  - For live updates, including linked-row changes, set the table window's \`options.refresh\` to \`{ type: "Realtime", intervalSeconds: 10, throttleSeconds: 0 }\`.
+
+  Example column for an orders table, assuming an available \`approveOrder\` function with an \`order\` RowLookup argument and an \`order_jobs.order_id\` relationship:
+
+  \`\`\`ts
+  {
+    name: "approve_action", label: "Approval", width: 180, show: true,
+    format: {
+      type: "Action",
+      params: {
+        methodName: "approveOrder", argName: "order",
+        joinPath: [{ table: "order_jobs", on: [{ id: "order_id" }] }],
+        conditions: [{
+          filter: { $and: [{ fieldName: "status", type: "=", value: "processing" }] },
+          value: { text: "Processing", icon: "Check", isLoading: true },
+        }],
+        defaultValue: { text: "Approve", icon: "Check" },
+      },
+    },
+  }
+  \`\`\`
 
   ## File storage
 

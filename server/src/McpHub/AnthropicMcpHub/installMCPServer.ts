@@ -1,7 +1,6 @@
 import { getEntries } from "@common/utils";
 import * as fs from "fs";
 import * as path from "path";
-import { simpleGit, type SimpleGit } from "simple-git";
 import type { DBS } from "../..";
 import { getDataPath } from "../../electronConfig";
 import { runShellCommand } from "./runShellCommand";
@@ -161,18 +160,7 @@ export const getMCPServersStatus = async (
 
   const installationPath = getMCPServerInstallationPath(serverName);
   if (source.type === "github") {
-    const git: SimpleGit = simpleGit(installationPath);
-    const status = await git.status();
-
-    return status.behind > 0 ?
-        {
-          ok: false,
-          message: `Repository is behind by ${status.behind} commits`,
-        }
-      : {
-          ok: true,
-          message: `Repository is up to date`,
-        };
+    throw new Error("GitHub source type not supported yet");
   }
 
   const wasInstalled = fs.existsSync(installationPath);

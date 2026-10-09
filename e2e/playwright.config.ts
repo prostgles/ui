@@ -5,6 +5,7 @@ const timeoutMinutes = 6;
 const IS_PIPELINE = !!process.env.CI;
 
 export default defineConfig({
+  tsconfig: "./tests/tsconfig.json",
   timeout: timeoutMinutes * 6e4,
   testDir: "./tests",
   fullyParallel: false,

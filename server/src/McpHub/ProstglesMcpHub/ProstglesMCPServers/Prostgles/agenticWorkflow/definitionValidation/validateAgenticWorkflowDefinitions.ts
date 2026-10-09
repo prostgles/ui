@@ -1,5 +1,4 @@
 import { type DBS } from "@src/index";
-import type { AuthClientRequest } from "prostgles-server";
 import { createWorkflowExecutionHandlers } from "../proxyHandlers/createWorkflowExecutionHandlers";
 import type { ProxyCallDataDefinitions } from "../runtimeSdk/defineAgenticWorkflowHandlers.types";
 import { validateDatabaseAccessDefinitions } from "./validateDatabaseAccessDefinitions";
@@ -11,14 +10,12 @@ export const validateAgenticWorkflowDefinitions = async (
     connection_id,
     dbs,
     chatId,
-    clientReq,
     userId,
     messageId,
   }: {
     connection_id: string;
     dbs: DBS;
     chatId: number;
-    clientReq: AuthClientRequest;
     userId: string;
     messageId: DBSSchema["llm_messages"]["id"];
   },
@@ -79,7 +76,6 @@ export const validateAgenticWorkflowDefinitions = async (
     {
       dbs,
       chatId,
-      clientReq,
       connectionId: connection_id,
       userId,
     },

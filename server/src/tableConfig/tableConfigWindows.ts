@@ -1,4 +1,5 @@
 import type { TableConfig } from "prostgles-server";
+import { DEFAULT_TABLE_OPTIONS } from "@common/ColumnConfig/WindowData";
 
 export const tableConfigWindows = {
   windows: {
@@ -88,7 +89,10 @@ export const tableConfigWindows = {
         },
       },
       having: `JSONB NOT NULL DEFAULT '[]'::jsonb`,
-      options: `JSONB NOT NULL DEFAULT '{}'::jsonb`,
+      options: {
+        defaultValue: DEFAULT_TABLE_OPTIONS,
+        jsonbSchema: { type: "any" },
+      },
       sql_options: {
         defaultValue: {
           executeOptions: "block",

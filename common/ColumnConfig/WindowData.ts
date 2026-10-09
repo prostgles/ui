@@ -20,6 +20,12 @@ export type RefreshOptions = {
   };
 };
 
+export const DEFAULT_TABLE_OPTIONS = {
+  maxCellChars: 500,
+  showFilters: false,
+  refresh: { type: "Realtime", throttleSeconds: 1, intervalSeconds: 1 },
+} as const;
+
 export type ChartType =
   "table" | "map" | "timechart" | "barchart" | "sql" | "card" | "method";
 

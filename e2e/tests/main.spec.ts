@@ -1036,6 +1036,8 @@ test.describe("Main test", () => {
 
     /** Test request tool access */
     await sendAskLLMMessage(page, " request_tool_access ");
+    await expect(textArea).toHaveValue("", { timeout: 1000 });
+    await expect(textArea).toBeDisabled();
     await page
       .getByTestId("RequestToolAccess.Approve")
       .click({ ...TWENTY_SECONDS_OR_MORE });

@@ -3,9 +3,9 @@ export type MigratableColumn = {
   show?: boolean;
   style?: unknown;
   display?: "drillable-records";
-  computedConfig?: { funcDef: { isAggregate?: boolean } };
+  computedConfig?: { funcDef?: { isAggregate?: boolean } | null };
   nested?: {
-    columns: MigratableColumn[];
+    columns?: MigratableColumn[] | null;
     display?: unknown;
     displayMode?: "record" | "row" | "column" | "no-headers";
     chart?: { type: string };
@@ -18,8 +18,9 @@ export const migrateColumnConfig = <C extends MigratableColumn>(column: C): C =>
   if (!nested || nested.display) return column;
 
   const { displayMode, chart, ...query } = nested;
-  const drillableRecords = displayMode === "record" && nested.columns.some((c) => c.show && !c.computedConfig);
-  const shownColumns = nested.columns.filter((c) => c.show);
+  const columns = nested.columns ?? [];
+  const drillableRecords = displayMode === "record" && columns.some((c) => c.show && !c.computedConfig);
+  const shownColumns = columns.filter((c) => c.show);
   return {
     ...column,
     style: drillableRecords ? column.style : undefined,
@@ -30,10 +31,10 @@ export const migrateColumnConfig = <C extends MigratableColumn>(column: C): C =>
         labels: displayMode === "no-headers" ? "none" : shownColumns.length === 1 ? "auto" :
           displayMode === "row" ? "inline" : "above",
       },
-      columns: nested.columns.map((child) => ({
+      columns: columns.map((child) => ({
         ...child,
         style: child.style ?? (!drillableRecords && shownColumns.length === 1 ? column.style : undefined),
-        display: child.display ?? (child.computedConfig?.funcDef.isAggregate ? "drillable-records" : undefined),
+        display: child.display ?? (child.computedConfig?.funcDef?.isAggregate ? "drillable-records" : undefined),
       })),
     },
   };

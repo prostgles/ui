@@ -31,6 +31,8 @@ import type { RenderedColumn } from "../../RenderColumn/RenderColumn";
 
 import { FileAnnotationViewer } from "../../ManagedColumn/FileAnnotationViewer";
 import { FileExtractionStatus } from "../../ManagedColumn/FileExtractionStatus";
+import { ActionButton } from "./ActionButton";
+import { ActionColumns } from "./ActionColumns";
 import { JSONDiffPopup } from "./JSONDiffPopup";
 import type { UserColumnFormat } from "@common/columnDisplayFormat.schema";
 
@@ -136,9 +138,36 @@ const renderDiff: FormattedColRender<
 
 export const DISPLAY_FORMATS = [
   {
+    type: "ActionColumns",
+    tsDataType: undefined,
+    render: (_value, row, { table, column }, { params }) => table ?
+      <ActionColumns params={params} row={row} dataKey={column.name} table={table} /> : null,
+  } satisfies FormattedColRender<Extract<ColumnFormat, { type: "ActionColumns" }>>,
+  {
+    type: "Action",
+    tsDataType: undefined,
+    render: (_value, row, { table, column }, format) =>
+      table ?
+        <ActionButton
+          format={format}
+          row={row}
+          columnName={column.name}
+          table={table}
+        />
+      : null,
+  } satisfies FormattedColRender<Extract<ColumnFormat, { type: "Action" }>>,
+  {
     type: "Internal",
     tsDataType: undefined,
     render: (value, row, { column, table }, { params }, maxCellChars) => {
+      if (params.component === "ActionColumns") {
+        if (!table) {
+          return <>Table not available</>;
+        }
+        return (
+          <ActionColumns params={params} row={row} dataKey={params.dataKey} table={table} />
+        );
+      }
       if (params.component === "FileExtractionStatus") {
         return (
           <FileExtractionStatus
@@ -439,6 +468,8 @@ export function getFormatOptions(
   return DISPLAY_FORMATS.filter(
     (renderer) =>
       renderer.type !== "Internal" &&
+      renderer.type !== "Action" &&
+      renderer.type !== "ActionColumns" &&
       (!renderer.tsDataType ||
         includes(renderer.tsDataType, colInfo.tsDataType)),
   );

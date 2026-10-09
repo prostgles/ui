@@ -84,6 +84,10 @@ export async function initConnectionManager(
     );
     for (const databaseConfig of dbConfigs) {
       for (const connectionPartialItem of databaseConfig.connections) {
+        const prglCon = this.getActiveConnectionSilentFail(
+          connectionPartialItem.id,
+        );
+        if (!prglCon && !connectionPartialItem.is_state_db) continue;
         const schemaConfig = getSchemaConfig(
           databaseConfig.config_sync,
         )?.config;
@@ -95,10 +99,6 @@ export async function initConnectionManager(
           ...connectionPartialItem,
           ...schemaConfig?.connection,
         };
-        const prglCon = this.getActiveConnectionSilentFail(
-          connectionPartialItem.id,
-        );
-
         const stateConnectionPort = stateDatabaseConfig?.connections
           .map((c) => c.port || undefined)
           .find(isDefined);

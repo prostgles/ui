@@ -14,7 +14,7 @@ import type {
   UserLike,
 } from "prostgles-types";
 import { Client } from "pg";
-import { startTemporaryDatabases } from "../startTemporaryDatabases";
+import { startTemporaryDatabases } from "../cli/startTemporaryDatabases";
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import { getConnectionPaths } from "@common/utils";
 import { sidKeyName } from "@common/authTypesAndConstants";
@@ -253,7 +253,7 @@ export const createTestDeployment = async <
     throw error;
   });
   const endpoint = `http://127.0.0.1:${port}`;
-  const cliPath = path.resolve(__dirname, "../cli.js");
+  const cliPath = path.resolve(__dirname, "../cli/cli.js");
   const logFile = await mkdir(path.dirname(resolvedLogPath), {
     recursive: true,
   })

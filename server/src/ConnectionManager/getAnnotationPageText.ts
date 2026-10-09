@@ -2,6 +2,7 @@ type BBox = { l: number; t: number; r: number; b: number; coord_origin: string }
 type Provenance = { page_no: number; bbox: BBox; charspan?: [number, number] };
 type Item = {
   label?: string;
+  marker?: string;
   content_layer?: string;
   self_ref?: string;
   text?: string;
@@ -44,7 +45,10 @@ export const getAnnotationPageText = (document: AnnotationDocument, page: number
     for (const prov of excluded ? [] : item.prov ?? []) {
       if (prov.page_no !== page) continue;
       if (item.text !== undefined) {
-        const value = prov.charspan ? item.text.slice(...prov.charspan) : item.text;
+        let value = prov.charspan ? item.text.slice(...prov.charspan) : item.text;
+        const marker =
+          !prov.charspan || prov.charspan[0] === 0 ? item.marker?.trim() : null;
+        if (marker) value = `${marker} ${value.trimStart()}`;
         append(value, prov.bbox);
       } else if (item.data) {
         for (const cell of item.data.table_cells) append(cell.text, cell.bbox ?? prov.bbox);

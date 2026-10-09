@@ -1,4 +1,5 @@
 import type { JSONB } from "prostgles-types";
+import { actionColumnParamsSchema, actionColumnsParamsSchema } from "./actionColumn";
 
 export const ContentTypes = ["image", "video", "audio"] as const;
 
@@ -97,6 +98,16 @@ export const columnDisplayFormatSchema = {
   title: "Display format",
   description: "Control how data is displayed",
   oneOfType: [
+    {
+      type: { enum: ["ActionColumns"], title: "Format" },
+      params: { type: actionColumnsParamsSchema },
+    },
+    {
+      type: { enum: ["Action"], title: "Format" },
+      params: {
+        type: actionColumnParamsSchema,
+      },
+    },
     {
       type: {
         enum: ["NONE"],

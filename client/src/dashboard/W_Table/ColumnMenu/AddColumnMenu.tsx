@@ -22,8 +22,22 @@ import { QuickAddComputedColumn } from "./AddComputedColumn/QuickAddComputedColu
 import { CreateColumn } from "./AlterColumn/CreateColumn";
 import { LinkedColumn } from "./LinkedColumn/LinkedColumn";
 import type { NestedColumnOpts } from "./getNestedColumnTable";
+import Btn from "@components/Btn";
+import { generateUniqueID } from "@components/FileInput/FileInput";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import {
+  ActionColumnsControls,
+  type ActionColumnsFormat,
+} from "./ColumnDisplayFormat/ActionColumnsControls";
+import { getActionFunctions } from "./ColumnDisplayFormat/getActionFunctions";
 
 const options = [
+  {
+    key: "Action",
+    label: "Add action column",
+    subLabel: "Group stored actions and functions for this row",
+    iconPath: mdiFunction,
+  },
   {
     key: "Computed",
     label: t.AddColumnMenu["Add Computed Field"],
@@ -70,7 +84,12 @@ export const AddColumnMenu = ({
   suggestions,
   sql,
 }: AddColumnMenuProps) => {
+  const { methods } = usePrgl();
   const table = tables.find((t) => t.name === w.table_name);
+  const actions = table ? getActionFunctions(methods, table) : [];
+  const storedActions = table?.columns.filter((c) => c.select &&
+    c.defaultRenderAs?.params.component === "ActionColumns") ?? [];
+  const [actionFormat, setActionFormat] = useState<ActionColumnsFormat>();
   const [colType, setColType] = useState<
     (typeof options)[number]["key"] | void
   >();
@@ -122,7 +141,13 @@ export const AddColumnMenu = ({
         fullOptions={options.map((o) => ({
           ...o,
           disabledInfo:
-            !table.joinsV2.length && o.key === "Referenced" ?
+            o.key === "Action" && !actions.length && !storedActions.length ?
+              "No functions have a RowLookup or ValueLookup for this table"
+            : o.key === "Action" && nestedColumnOpts ?
+              "Not allowed for nested columns"
+            : o.key === "Action" && dissallow === "Referenced" ?
+              "Actions require individual rows, not aggregates"
+            : !table.joinsV2.length && o.key === "Referenced" ?
               t.AddColumnMenu["No foreign keys to/from this table"]
             : nestedColumnOpts && o.key === "Referenced" ?
               t.AddColumnMenu["Not allowed for nested columns"]
@@ -135,7 +160,20 @@ export const AddColumnMenu = ({
               "Cannot add file column to a file table"
             : undefined,
         }))}
-        onChange={(type) => setColType(type)}
+        onChange={(type) => {
+          const action = actions[0];
+          if (type === "Action") {
+            setActionFormat({
+              type: "ActionColumns",
+              params: { actions: action ? [{
+                ...action,
+                conditions: [],
+                defaultValue: { text: action.methodName },
+              }] : storedActions.map((c) => ({ columnName: c.name })) },
+            });
+          }
+          setColType(type);
+        }}
       />
       {!colType || !anchorEl ?
         null
@@ -147,7 +185,8 @@ export const AddColumnMenu = ({
         />
       : <Popup
           title={
-            colType === "Computed" ? t.AddColumnMenu[`Add Computed Field`]
+            colType === "Action" ? "Add action column"
+            : colType === "Computed" ? t.AddColumnMenu[`Add Computed Field`]
             : colType === "Create" ?
               t.AddColumnMenu[`Create new column`]
             : t.AddColumnMenu["Add Referenced/Linked Fields"]
@@ -159,7 +198,33 @@ export const AddColumnMenu = ({
           clickCatchStyle={{ opacity: 0.5 }}
           contentClassName="p-1"
         >
-          {colType === "Computed" ?
+          {colType === "Action" && actionFormat ?
+            <div className="flex-col gap-1">
+              <ActionColumnsControls
+                table={table}
+                value={actionFormat}
+                onChange={setActionFormat}
+              />
+              <Btn
+                variant="filled"
+                disabledInfo={!actionFormat.params.actions.length ? "Add at least one action" : undefined}
+                color="action"
+                onClickPromise={async () => {
+                  const [firstAction] = actionFormat.params.actions;
+                  await updateWCols(w, [{
+                    name: generateUniqueID("action_"),
+                    label: actionFormat.params.actions.length === 1 && firstAction && "methodName" in firstAction ?
+                      firstAction.defaultValue?.text || firstAction.methodName : "Actions",
+                    show: true,
+                    format: actionFormat,
+                  }, ...(w.columns ?? [])]);
+                  onClose();
+                }}
+              >
+                Add action column
+              </Btn>
+            </div>
+          : colType === "Computed" ?
             <QuickAddComputedColumn
               existingColumn={undefined}
               tableName={table.name}

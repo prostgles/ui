@@ -351,6 +351,7 @@ export type TableColumn = {
    * If set, column value will rendered in a specific way
    */
   format?:
+    | Extract<import("./columnDisplayFormat.schema").UserColumnFormat, { type: "Action" | "ActionColumns" }>
     | {
         /**
          * Column value will be rendered as a link with specific behaviour

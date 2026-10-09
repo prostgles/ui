@@ -20,7 +20,7 @@ export const createConfigTestProject = (
   writeFileSync(
     join(configPath, "tsconfig.json"),
     JSON.stringify({
-      compilerOptions: { allowJs: true, outDir: "build", types: [] },
+      compilerOptions: { allowJs: true, outDir: "build", types: [], esModuleInterop: true },
       include: ["index.js"],
     }),
   );

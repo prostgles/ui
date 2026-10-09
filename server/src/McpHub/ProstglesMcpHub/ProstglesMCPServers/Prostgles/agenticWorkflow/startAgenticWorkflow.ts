@@ -4,7 +4,6 @@ import type { DBS } from "@src/index";
 import { runConnectionQuery } from "@src/serverFunctions/stateServerFunctions";
 import { getSerialisableError, omitKeys } from "prostgles-types";
 import { startAgenticWorkflowContainer } from "./execution/startAgenticWorkflowContainer";
-import type { AuthClientRequest } from "prostgles-server";
 import { KeyObjMap } from "@common/KeyObjMap";
 import { tout } from "@src/utils/tout";
 
@@ -56,7 +55,6 @@ export const startAgenticWorkflow = async ({
   dbs,
   chat,
   messageId,
-  clientReq,
   executionMode,
   userInputValue,
   connection_id,
@@ -67,7 +65,6 @@ export const startAgenticWorkflow = async ({
   dbs: DBS;
   chat: DBSSchema["llm_chats"];
   messageId: string;
-  clientReq: AuthClientRequest;
   executionMode: "parallel" | "series";
   autoApproveAllTools: boolean;
   userInputValue: Record<string, unknown>;
@@ -102,7 +99,6 @@ export const startAgenticWorkflow = async ({
         dbs,
         userId: user.id,
         connectionId: connection_id,
-        clientReq,
       },
       { runInSequence: executionMode !== "parallel", autoApproveAllTools },
     );

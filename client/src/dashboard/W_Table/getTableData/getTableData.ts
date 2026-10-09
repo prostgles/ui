@@ -36,6 +36,7 @@ export async function getTableData(
       }
     } else if (
       !rows ||
+      !!dp?.prgl ||
       delta.w?.options?.refresh ||
       delta.w?.options?.quickFilterGroups ||
       delta.dataAge ||
@@ -61,7 +62,7 @@ export async function getTableData(
         select: selectWithoutData,
         barchartVals: barchartValsWithoutData,
       } = await getTableSelect(w, tables, db, filter, true);
-      const strFilter = JSON.stringify(tableFilterHaving);
+      const strFilter = JSON.stringify({ ...tableFilterHaving, select: selectWithoutData });
 
       const clearSub = () => {
         return this.dataSub?.unsubscribe();
@@ -84,8 +85,6 @@ export async function getTableData(
           clearInterval();
 
           try {
-            /** Already getting data on first run */
-            let isInitialRun = true;
             this.dataSub = await tableHandler.subscribe?.(
               filter,
               {
@@ -94,10 +93,7 @@ export async function getTableData(
                 throttle: throttleSeconds * 1000,
               },
               () => {
-                if (isInitialRun) {
-                  isInitialRun = false;
-                  return;
-                }
+                // Include the first notification: data can change while subscribing.
                 this.setData({ dataAge: Date.now() });
               },
             );

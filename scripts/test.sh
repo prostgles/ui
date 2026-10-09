@@ -23,8 +23,9 @@ cd ../server
 rm -rf ./dist
 
 npm i 
+npm run compile
 npm run lint
-npm test
+npm run test:compiled
 
 # Test cli
 cd ../client 

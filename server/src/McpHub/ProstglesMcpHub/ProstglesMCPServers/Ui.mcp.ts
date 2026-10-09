@@ -83,13 +83,13 @@ const handler = {
             timeout,
             ...config
           },
-          { clientReq, connection_id, toolUseId, user_id, chat, messageId },
+          { connection_id, toolUseId, user_id, chat, messageId },
         ) => {
           if (!statePrgl) {
             throw new Error("Prostgles state is not initialized");
           }
           const { clientMethods } = await statePrgl.getClientDBHandlers(
-            clientReq,
+            { userId: user_id },
             {
               methods: { askLLM: true },
             },

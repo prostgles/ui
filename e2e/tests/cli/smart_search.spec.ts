@@ -1,5 +1,5 @@
 import { expect, test } from "../utils/fixtures";
-import { createTestDeployment } from "../../../server/dist/server/src/cli/testing";
+import { createTestDeployment } from "../../../server/dist/server/src/testing";
 import { createConfigTestProject } from "../utils/createConfigTestProject";
 import { openTable, type PageWIds } from "../utils/utils";
 

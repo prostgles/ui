@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import type { TestDeployment } from "../../../server/dist/server/src/cli/testing";
+import type { TestDeployment } from "../../../server/dist/server/src/testing";
 import { spawn, spawnSync } from "node:child_process";
 import {
   copyFileSync,
@@ -37,6 +37,9 @@ test("formatted CLI apps have no spurious upgrade conflicts", async () => {
   );
   expect(created.stderr).toBe("");
   expect(created.status).toBe(0);
+  expect(
+    readFileSync(join(appRoot, "tests/deployment.test.ts"), "utf8"),
+  ).toContain('from "@prostgles/app/testing"');
   const dockerfile = readFileSync(
     join(appRoot, cliFileNames.dockerfile),
     "utf8",
@@ -265,7 +268,7 @@ test("runs a generated config project with temporary databases and Docker Compos
                      input: text,
                      outputSchema: { summary: { type: "string" } },
                      autoApproveAllTools: true,
-                   }, ctx);
+                   });
                    const summary: string = data.summary;
                    // @ts-expect-error Result fields must retain their inferred type.
                    const invalid: number = data.summary;
@@ -302,10 +305,21 @@ test("runs a generated config project with temporary databases and Docker Compos
     writeFileSync(
       join(appRoot, "e2e/tests/admin/workspace.spec.ts"),
       `import { test, expect } from "../fixtures";
-       import { setOrAddWorkspace } from "@prostgles/app/testing/ui";
-       test("admin creates a business workspace", async ({ app }) => {
+       import { defineE2EConfig, openTable, getTableWindow, insertRow,
+         clickInsertRow, fillSmartForm, fillSmartFormAndInsert,
+         setOrAddWorkspace, getDashboardUtils, type PageWIds,
+       } from "@prostgles/app/testing/ui";
+       test("admin creates a business workspace using packaged UI helpers", async ({ app }) => {
+         const page: PageWIds = app.page;
+         for (const helper of [test, expect, openTable, getTableWindow, insertRow,
+           clickInsertRow, fillSmartForm, fillSmartFormAndInsert,
+           setOrAddWorkspace, getDashboardUtils]) {
+           expect(typeof helper).toBe("function");
+         }
+         expect(defineE2EConfig().testDir).toBe("./tests");
          await app.open();
-         await setOrAddWorkspace(app.page, "Review queue");
+         await getDashboardUtils(page).openConnection(${JSON.stringify(configId)});
+         await setOrAddWorkspace(page, "Review queue");
          await expect(app.page.getByTestId("WorkspaceMenu.list")).toContainText("Review queue");
        });`,
     );
@@ -466,7 +480,7 @@ const checkTemporaryDatabases = async (
 ) => {
   const { createTestDeployment } = createRequire(join(appRoot, "package.json"))(
     "@prostgles/app/testing",
-  ) as typeof import("../../../server/dist/server/src/cli/testing");
+  ) as typeof import("../../../server/dist/server/src/testing");
   const deployment = await createTestDeployment({
     configId,
     configPath: appRoot,

@@ -26,7 +26,7 @@ import {
 import { getDataKey } from "Testing";
 import { sidKeyName } from "../../../common/authTypesAndConstants";
 import { CONFIG_TEST } from "../configTest/constants";
-import { createTestDeployment } from "../../../server/dist/server/src/cli/testing";
+import { createTestDeployment } from "../../../server/dist/server/src/testing";
 import { CHANNELS } from "prostgles-types";
 import type { GroupedDetailedFilter } from "../../../common/filterUtils";
 import { createConfigTestProject } from "../utils/createConfigTestProject";
@@ -576,9 +576,24 @@ test("CLI readiness waits for file table configuration before seeding", async ()
       },
     },
   }, test.info().outputPath("config"));
+  const inactiveConfigPath = join(configPath, "unbuilt-sample");
+  mkdirSync(inactiveConfigPath);
+  writeFileSync(join(inactiveConfigPath, "package.json"), JSON.stringify({ main: "dist/index.js" }));
   writeFileSync(join(configPath, "index.js"),
     readFileSync(join(configPath, "index.js"), "utf8") + `
 module.exports.tableConfig.startup_checks.onMount = async ({ _db }) => {
+  // A saved, unopened sample must not prevent the application from starting.
+  const state = new (require("pg").Client)({ connectionString: process.env.PROSTGLES_STATE_DATABASE_URL });
+  await state.connect();
+  try {
+    await state.query(
+      "INSERT INTO database_configs (db_name, db_host, db_port, config_sync) VALUES ('unbuilt_sample', 'localhost', 5432, $1) ON CONFLICT DO NOTHING",
+      [${JSON.stringify({ type: "sample-schema", configPath: inactiveConfigPath, lastSynced: new Date().toISOString(), toggleableProperties: {} })}],
+    );
+    await state.query("INSERT INTO connections (name, db_name, type) SELECT 'Unbuilt sample', 'unbuilt_sample', 'Standard' WHERE NOT EXISTS (SELECT 1 FROM connections WHERE db_name = 'unbuilt_sample')");
+  } finally {
+    await state.end();
+  }
   await _db.none("INSERT INTO startup_checks VALUES (1, 1, false) ON CONFLICT (id) DO UPDATE SET mounts = startup_checks.mounts + 1, ready = false");
   await _db.any("SELECT pg_sleep(1)");
   await _db.none("UPDATE startup_checks SET ready = true");
@@ -889,6 +904,11 @@ module.exports.functions = {
     const window = (await state.db.windows!.findOne!({
       workspace_id: workspace.id,
     }))!;
+    expect(window.options).toMatchObject({
+      maxCellChars: 500,
+      showFilters: false,
+      refresh: { type: "Realtime", throttleSeconds: 1, intervalSeconds: 1 },
+    });
     expect(window.columns).toMatchObject([
       { name: "id", show: false },
       { name: "name", show: true },

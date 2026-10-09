@@ -13,23 +13,14 @@ export const addWindow = async <CT extends ChartType>(
   workspaceId: string,
   filter: DetailedFilter[] = [],
 ) => {
-  const {
-    options = {
-      showFilters: false,
-      refresh: { type: "Realtime", throttleSeconds: 1 },
-    },
-    type,
-    table_name,
-    name,
-    ...otherWindowOpts
-  } = w;
+  const { options, type, table_name, name, ...otherWindowOpts } = w;
   const res = await dbs.windows.insert(
     {
       ...otherWindowOpts,
       name,
       type,
       table_name,
-      options,
+      ...(options && { options }),
       filter,
       fullscreen: false,
       workspace_id: workspaceId,

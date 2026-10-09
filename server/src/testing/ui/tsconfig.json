@@ -7,12 +7,12 @@
     "strict": true,
     "skipLibCheck": true,
     "declaration": true,
-    "rootDir": "../..",
-    "outDir": "../../server/dist",
-    "baseUrl": "../../server",
+    "rootDir": "../../../..",
+    "outDir": "../../../dist",
+    // Use a private alias so rewriting imports cannot alter generated app templates.
+    "baseUrl": "../../../dist",
     "paths": {
-      "@playwright/test": ["./node_modules/@playwright/test"],
-      "@prostgles/app/testing": ["./dist/server/src/cli/testing/index.d.ts"]
+      "@testing": ["./server/src/testing/index"]
     }
   },
   "files": ["index.ts"]

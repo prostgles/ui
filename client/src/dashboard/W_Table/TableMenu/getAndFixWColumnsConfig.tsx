@@ -99,7 +99,8 @@ const getUpdatedColumnsConfig = <
 
       /* Remove missing columns */
       const validWCols = quickClone(existingCols).filter(
-        ({ name, nested, computedConfig }) => {
+        ({ name, nested, computedConfig, format }) => {
+          if (format?.type === "Action" || format?.type === "ActionColumns") return true;
           return tableColumnsConfig.find((c1) => {
             if (nested) {
               return true;

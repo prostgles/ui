@@ -10,7 +10,7 @@ import type { DetailedTableFilterGroup } from "./agenticWorkflow/runtimeSdk/defi
 
 export const validateCreateDashboards = async (
   prostglesWorkspaces: any[],
-  { chat, connection_id, clientReq }: McpCallContext,
+  { chat, connection_id, user_id }: McpCallContext,
 ) => {
   if (!prostglesWorkspaces.length) {
     throw new Error("prostglesWorkspaces must have at least one workspace");
@@ -21,7 +21,7 @@ export const validateCreateDashboards = async (
 
   const { clientDb: _clientDb } = await getClientDBHandlersForChat(
     { ...chat, connection_id },
-    clientReq,
+    user_id,
   );
   const clientDb = _clientDb as DBHandlerServer;
 

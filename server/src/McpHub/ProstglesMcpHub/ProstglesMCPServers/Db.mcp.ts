@@ -205,11 +205,11 @@ const handler = {
 
 const getTableHandlerWithScope = async (
   tableName: string,
-  { chat, clientReq, connection_id }: McpCallContext,
+  { chat, user_id, connection_id }: McpCallContext,
 ) => {
   const { clientDb } = await getClientDBHandlersForChat(
     { ...chat, connection_id },
-    clientReq,
+    user_id,
   );
   const tableHandler = clientDb[tableName] as TableHandler | undefined;
   if (!tableHandler) {

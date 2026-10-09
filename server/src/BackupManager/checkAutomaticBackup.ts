@@ -2,6 +2,7 @@ import type { Connections } from "..";
 import { getDatabaseConfigFilter } from "../ConnectionManager/connectionManagerUtils";
 import type BackupManager from "./BackupManager";
 import { HOUR } from "./BackupManager";
+import { pgDump } from "./pgDump";
 
 export async function checkAutomaticBackup(
   this: BackupManager,
@@ -105,7 +106,7 @@ export async function checkAutomaticBackup(
     }
 
     if (shouldDump) {
-      await this.pgDump(con.id, bkpConf.cloudConfig?.credential_id ?? null, {
+      await pgDump(this, con.id, bkpConf.cloudConfig?.credential_id ?? null, {
         options: { ...bkpConf.dump_options },
         initiator: AUTO_INITIATOR,
       });

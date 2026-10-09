@@ -7,7 +7,10 @@ import type {
 import { type DBSSchemaForInsert } from "@common/publishUtils";
 import { MINI_BARCHART_COLOR } from "@common/ColumnConfig/COLOR_PALETTE";
 import { isDefined, pickKeys } from "prostgles-types";
-import type { WindowData } from "@common/ColumnConfig/WindowData";
+import {
+  DEFAULT_TABLE_OPTIONS,
+  type WindowData,
+} from "@common/ColumnConfig/WindowData";
 import type {
   ColumnConfig,
   NestedColumn,
@@ -85,15 +88,20 @@ export const loadGeneratedTable = (
     table_name,
     title,
   } = generatedWindow;
+  const hasOptions =
+    filterOperand !== undefined || quickFilterGroups !== undefined;
   return {
     type: "table",
     title,
     columns,
     filter,
-    options: {
-      filterOperand,
-      quickFilterGroups,
-    } satisfies WindowData<"table">["options"],
+    ...(hasOptions && {
+      options: {
+        ...DEFAULT_TABLE_OPTIONS,
+        filterOperand,
+        quickFilterGroups,
+      } satisfies WindowData<"table">["options"],
+    }),
     sort: sort
       ?.map((s) => {
         const nestedCol = columns?.find((c) => c.name === s.key && c.nested);

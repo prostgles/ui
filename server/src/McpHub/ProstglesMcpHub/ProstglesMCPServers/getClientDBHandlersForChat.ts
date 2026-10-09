@@ -1,12 +1,11 @@
 import { fromEntries } from "@common/utils";
 import { connectionManager } from "@src/index";
 import type { DbPermissions } from "@src/McpHub/DockerSandbox/dockerMCPServerProxy/dockerContainerAuthRegistry";
-import type { AuthClientRequest } from "prostgles-server";
 import { getProstglesDbDataPermissions } from "./Prostgles/agenticWorkflow/definitionValidation/validateDatabaseAccessDefinitions";
 
 export const getClientDBHandlersForChat = async (
   chat: DbPermissions,
-  clientReq: AuthClientRequest,
+  userId: string,
 ) => {
   const chatDetailedDbPermissions = chat.db_data_permissions;
   const chatDBPermissions =
@@ -17,7 +16,7 @@ export const getClientDBHandlersForChat = async (
   const connection =
     connectionManager.getConnectionStartedInstance(connection_id);
   const db = connection.prgl.db;
-  const handlers = await connection.prgl.getClientDBHandlers(clientReq, {
+  const handlers = await connection.prgl.getClientDBHandlers({ userId }, {
     tables:
       chatDBPermissions?.mode === "custom" ? chatDBPermissions.tablePermissions
       : chatDBPermissions?.mode ?
