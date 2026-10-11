@@ -13,10 +13,15 @@ teardown_test_server() {
 
 trap teardown_test_server EXIT
 
+npm ci --no-audit
+
 # Compile TS to Ensure any errors are caught
 cd client
-npm i
-npx tsc
+npm ci
+npm run tsc
+if [ "${1:-}" = "--typecheck" ]; then
+  exit 0
+fi
 npm run lint
 
 cd ../server
