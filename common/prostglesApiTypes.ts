@@ -102,6 +102,10 @@ type TypedShorthandJoinSelect<T extends AnyObject> = "*" | {
 type SchemaJoinSelect<T extends AnyObject, S extends DBSchema | void> = S extends DBSchema ? string extends keyof S ? {} : {
     [K in keyof S]?: K extends keyof T ? InclusiveSelect : TypedShorthandJoinSelect<S[K]["columns"]> | FunctionFull | CaseSelect | DetailedJoinSelect;
 } : {};
+export declare const ROW_ACTIONS_COLUMN = "$prostgles_actions";
+type RowActionsColumn = {
+    [ROW_ACTIONS_COLUMN]: string[];
+};
 type SelectWithFunctions<T extends AnyObject = AnyObject, IsTyped = false, S extends DBSchema | void = void> = (IsTyped extends true ? {
     [K in keyof T]?: InclusiveSelect;
 } & SchemaJoinSelect<T, S> & Record<string, FunctionFull | CaseSelect | JoinSelect> : Record<string, InclusiveSelect>) | {
@@ -118,9 +122,9 @@ export type Select<T extends AnyObject | void = void, S extends DBSchema | void 
     s: DBSchema;
 } ? SelectWithFunctions<T & {
     $rowhash: string;
-}, true, S> : SelectWithFunctions<AnyObject & {
+} & RowActionsColumn, true, S> : SelectWithFunctions<AnyObject & {
     $rowhash: string;
-}, false>;
+} & RowActionsColumn, false>;
 export type SelectBasic = {
     [key: string]: any;
 } | {} | undefined | "" | "*";
@@ -269,7 +273,9 @@ type ExplicitJoinResult<J, S extends DBSchema | void, P> = [
 } ? SelectDataType<S, {
     select: Sel;
 }, S[T]["columns"]>[] : any[] : any[] : any[];
-type ShorthandJoinResult<J, S extends DBSchema | void, TableName extends PropertyKey> = S extends DBSchema ? TableName extends keyof S ? J extends "*" ? NormalizedRow<S[TableName]["columns"]>[] : J extends Record<string, 0 | false> ? Omit<NormalizedRow<S[TableName]["columns"]>, keyof J>[] : J extends Record<string, any> ? ParseSelect<J, NormalizedRow<S[TableName]["columns"]>, S>[] : any[] : any[] : any[];
+type ShorthandJoinResult<J, S extends DBSchema | void, TableName extends PropertyKey> = S extends DBSchema ? TableName extends keyof S ? J extends "*" | Record<string, any> ? SelectDataType<S, {
+    select: J;
+}, S[TableName]["columns"]>[] : any[] : any[] : any[];
 /** ParseSelect must check joins first because FunctionFull structurally matches objects without \`$\` keys. */
 export type SelectFunction = FunctionFull | CaseSelect;
 type CaseResult<F> = F extends ({
@@ -280,7 +286,7 @@ type CaseResult<F> = F extends ({
 type ParseSelect<Select extends SelectParams<TD>["select"], TD extends AnyObject, S extends DBSchema | void> = (Select extends {
     "*": 1;
 } ? NormalizedRow<TD> : {}) & {
-    [Key in keyof Omit<Select, "*"> & string]: Select[Key] extends 1 | true ? NormalizedRow<TD>[Key] : Select[Key] extends CaseSelect ? CaseResult<Select[Key]> : Select[Key] extends ({
+    [Key in keyof Omit<Select, "*"> & string]: Select[Key] extends 1 | true ? Key extends keyof RowActionsColumn ? RowActionsColumn[Key] : NormalizedRow<TD>[Key] : Select[Key] extends CaseSelect ? CaseResult<Select[Key]> : Select[Key] extends ({
         $leftJoin: infer P extends RawJoinPath;
         select: unknown;
     }) ? ExplicitJoinResult<Select[Key], S, P> : Select[Key] extends ({
@@ -293,19 +299,19 @@ type SelectDataType<S extends DBSchema | void, O, TD extends AnyObject> = O exte
 } ? any : O extends {
     returnType: "values";
     select: Record<string, 1>;
-} ? ValueOf<Pick<NormalizedRow<TD>, keyof O["select"]>> : O extends {
+} ? ValueOf<Pick<NormalizedRow<TD> & RowActionsColumn, keyof O["select"]>> : O extends {
     returnType: "values";
 } ? any : O extends {
     select: "*";
 } ? NormalizedRow<TD> : O extends {
     select: "";
 } ? Record<string, never> : O extends {
-    select: readonly (keyof TD)[];
-} ? Pick<NormalizedRow<TD>, O["select"][number]> : O extends {
+    select: readonly (keyof TD | keyof RowActionsColumn)[];
+} ? (TD extends unknown ? Pick<NormalizedRow<TD> & RowActionsColumn, O["select"][number]> : never) : O extends {
     select: Record<string, 0 | false>;
-} ? Omit<NormalizedRow<TD>, keyof O["select"]> : O extends {
+} ? (TD extends unknown ? Omit<NormalizedRow<TD>, keyof O["select"]> : never) : O extends {
     select: Record<string, any>;
-} ? ParseSelect<O["select"], NormalizedRow<TD>, S> : NormalizedRow<TD>;
+} ? (TD extends unknown ? ParseSelect<O["select"], NormalizedRow<TD>, S> : never) : NormalizedRow<TD>;
 export type SelectReturnType<S extends DBSchema | void, O extends SelectParams<TD, S>, TD extends AnyObject, isMulti extends boolean> = O extends {
     returnType: "statement";
 } ? string : isMulti extends true ? SelectDataType<S, O, TD>[] : SelectDataType<S, O, TD>;
@@ -331,9 +337,9 @@ type GetReturningReturnType<O extends UpdateParams<TD, S>, TD extends AnyObject,
     returning: "";
 } ? Record<string, never> : O extends {
     returning: Record<string, 1>;
-} ? Pick<NormalizedRow<TD>, keyof O["returning"]> : O extends {
+} ? (TD extends unknown ? Pick<NormalizedRow<TD>, keyof O["returning"]> : never) : O extends {
     returning: Record<string, 0>;
-} ? Omit<NormalizedRow<TD>, keyof O["returning"]> : void;
+} ? (TD extends unknown ? Omit<NormalizedRow<TD>, keyof O["returning"]> : never) : void;
 /**
  *
  * Nothing is returned by default.
@@ -542,7 +548,7 @@ export type TableHandlerClientMethods<T extends AnyObject = AnyObject, S extends
      * - any changes to the row using the $update method will be reflected instantly
      *    to all sync subscribers that were initiated with the same syncOptions
      */
-    useSync?: <TD extends T, Opts extends SyncOptions>(basicFilter: EqualityFilter<TD>, syncOptions: Opts, hookOptions?: HookOptions) => AsyncResult<SyncDataItem<Required<TD>, Opts>[] | undefined>;
+    useSync?: <TD extends T = T, Opts extends SyncOptions = SyncOptions>(basicFilter: EqualityFilter<NoInfer<TD>>, syncOptions: Opts, hookOptions?: HookOptions) => AsyncResult<SyncDataItem<Required<TD>, Opts>[] | undefined>;
     sync?: <TD extends T, Opts extends SyncOptions>(basicFilter: EqualityFilter<TD>, options: Opts, onChange: OnChange<TD, Opts>, onError?: OnErrorHandler) => Promise<SyncHandler<TD>>;
     syncOne?: <TD extends T, Opts extends SyncOneOptions>(basicFilter: EqualityFilter<TD>, options: Opts, onChange: OnChangeOne<TD, Opts>, onError?: OnErrorHandler) => Promise<SingleSyncHandles<TD, Opts["handlesOnData"]>>;
     /**
@@ -551,7 +557,7 @@ export type TableHandlerClientMethods<T extends AnyObject = AnyObject, S extends
      * - any changes to the row using the $update method will be reflected instantly
      *    to all sync subscribers that were initiated with the same syncOptions
      */
-    useSyncOne?: <TD extends T, Opts extends SyncOneOptions>(basicFilter: EqualityFilter<TD>, syncOptions: Opts, hookOptions?: HookOptions) => AsyncResult<SyncDataItem<Required<TD>, Opts> | undefined>;
+    useSyncOne?: <TD extends T = T, Opts extends SyncOneOptions = SyncOneOptions>(basicFilter: EqualityFilter<NoInfer<TD>>, syncOptions: Opts, hookOptions?: HookOptions) => AsyncResult<SyncDataItem<Required<TD>, Opts> | undefined>;
     /**
      * Used internally to setup sync
      */

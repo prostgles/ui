@@ -1,4 +1,4 @@
-import type { BeforeEachTsTrigger, DBHandlerServer } from "prostgles-server";
+import type { BeforeEachTsTrigger, DBHandlerServerInternal } from "prostgles-server";
 import {
   getFileTextExtractionOptions,
   type FileTextExtractionOptions,
@@ -45,7 +45,7 @@ export const getFilesTableHook = (
         },
       } satisfies BeforeEachTsTrigger<
         FileTableRowWithExtraction,
-        DBHandlerServer,
+        DBHandlerServerInternal,
         ProstglesContext
       >,
     ],
