@@ -1035,7 +1035,7 @@ test.describe("Main test", () => {
     await expect(userMessages).toHaveCount(messageCount);
 
     /** Test request tool access */
-    await sendAskLLMMessage(page, " request_tool_access ");
+    await sendAskLLMMessage(page, " request_tool_access ", false);
     await expect(textArea).toHaveValue("", { timeout: 1000 });
     await expect(textArea).toBeDisabled();
     await page
@@ -1065,11 +1065,11 @@ test.describe("Main test", () => {
     await expect(page.getByTestId("LLMChatOptions.MCPTools")).toContainText(
       "10",
     );
-    await sendAskLLMMessage(page, " task ");
+    await sendAskLLMMessage(page, " task ", false);
 
     await page
       .getByTestId("RequestToolAccess.Approve")
-      .click({ ...TWENTY_SECONDS_OR_MORE });
+      .click(TWENTY_SECONDS_OR_MORE);
     await expect(page.getByTestId("RequestToolAccess")).toContainText(
       "Added tool access",
       { ...TWENTY_SECONDS_OR_MORE },
@@ -1256,10 +1256,10 @@ test.describe("Main test", () => {
       expectedMsg: string,
       msgType: "last-msg" | "last-tool-use",
     ) => {
-      await sendAskLLMMessage(page, " mcp ");
+      await sendAskLLMMessage(page, " mcp ", false);
       await page
         .getByTestId("AskLLMToolApprover.AllowOnce")
-        .click({ ...TWENTY_SECONDS_OR_MORE });
+        .click(TWENTY_SECONDS_OR_MORE);
       await expect(
         page.getByRole("button", { name: "Approve Once" }),
       ).toHaveCount(0, TWENTY_SECONDS_OR_MORE);
@@ -1295,7 +1295,7 @@ test.describe("Main test", () => {
     /** Ensure chat name updates based on first message */
     await expect(page.getByTestId("LLMChat.select")).toContainText("mcp");
 
-    await sendAskLLMMessage(page, " mcp ");
+    await sendAskLLMMessage(page, " mcp ", false);
     await page
       .getByTestId("AskLLMToolApprover.AllowOnce")
       .waitFor({ state: "visible", ...TWENTY_SECONDS_OR_MORE });
@@ -1359,7 +1359,7 @@ test.describe("Main test", () => {
 
     await toggleMCPTools(page, ["browser_navigate", "browser_snapshot"]);
 
-    await sendAskLLMMessage(page, " mcpplaywright ");
+    await sendAskLLMMessage(page, " mcpplaywright ", false);
     await page.waitForTimeout(2e3);
     await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
     await page.waitForTimeout(200);
@@ -1509,7 +1509,7 @@ test.describe("Main test", () => {
       prepareCb: (() => Promise<void>) | undefined = undefined,
       locator: Locator | undefined = undefined,
     ) => {
-      await sendAskLLMMessage(page, " mcpsandbox ");
+      await sendAskLLMMessage(page, " mcpsandbox ", false);
       await page
         .getByTestId("AskLLMToolApprover.AllowOnce")
         .click({ ...TWENTY_SECONDS_OR_MORE });
@@ -1653,7 +1653,7 @@ test.describe("Main test", () => {
 
     await newChat(page);
     await toggleMCPTools(page, ["fetch"]);
-    await sendAskLLMMessage(page, " parallel_calls ");
+    await sendAskLLMMessage(page, " parallel_calls ", false);
 
     /** Should not request approval for the other 2 requests */
     await page.getByTestId("AskLLMToolApprover.AllowAlways").click();
@@ -1674,7 +1674,7 @@ test.describe("Main test", () => {
     await newChat(page);
     await toggleMCPTools(page, ["websearch", "get_snapshot"]);
     await page.waitForTimeout(7e3); // wait for the server to start
-    await sendAskLLMMessage(page, " websearch ");
+    await sendAskLLMMessage(page, " websearch ", false);
     await page
       .getByTestId("AskLLMToolApprover.AllowAlways")
       .click(TWENTY_SECONDS_OR_MORE);
@@ -1718,6 +1718,7 @@ test.describe("Main test", () => {
     await sendAskLLMMessage(
       page,
       " I need you to create a user list component ",
+      false,
     );
     await page
       .getByTestId("AskLLMToolApprover.AllowAlways")
@@ -1739,7 +1740,7 @@ test.describe("Main test", () => {
 
     /** Test ask tool */
     await newChat(page);
-    await sendAskLLMMessage(page, " ask_tool ");
+    await sendAskLLMMessage(page, " ask_tool ", false);
     await page.getByTestId("AskUserQuestions").getByText("Red").first().click();
     await page
       .getByTestId("AskUserQuestions")
@@ -2097,7 +2098,7 @@ test.describe("Main test", () => {
     /** Test ask tool */
     await newChat(page);
 
-    await sendAskLLMMessage(page, " create_agent ");
+    await sendAskLLMMessage(page, " create_agent ", false);
     await page
       .getByTestId("AskLLMToolApprover.AllowOnce")
       .click(TWENTY_SECONDS_OR_MORE);

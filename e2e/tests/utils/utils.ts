@@ -727,10 +727,13 @@ const waitForAllMatchingLocatorsToDisappear = async (
       } else {
         tries++;
       }
-    } else if (Date.now() - start > timeout) {
-      throw new Error(
-        `Timeout waiting for locators to disappear. Still ${count} remaining.`,
-      );
+    } else {
+      tries = 0;
+      if (Date.now() - start > timeout) {
+        throw new Error(
+          `Timeout waiting for locators to disappear. Still ${count} remaining.`,
+        );
+      }
     }
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
@@ -743,7 +746,7 @@ export const sendAskLLMMessage = async (
     | boolean
     | {
         onAfterSend: () => Promise<void>;
-      } = false,
+      } = true,
 ) => {
   const textArea = page
     .getByTestId("AskLLM.popup")
@@ -759,9 +762,7 @@ export const sendAskLLMMessage = async (
     await waitForAllMatchingLocatorsToDisappear(
       page
         .getByTestId("Chat.messageList")
-        .getByTestId("Loading")
-        // .locator(".message.incoming .Loading")
-        .last(),
+        .getByTestId("Loading"),
     );
   }
 };
