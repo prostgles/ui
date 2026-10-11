@@ -35,6 +35,7 @@ npm run test:compiled
 # Test cli
 cd ../client 
 npm run build
+node ../server/scripts/preparePackage.mjs
 cd ../e2e
 npm i
 npm run test:cli
