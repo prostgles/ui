@@ -17,12 +17,13 @@ test.describe("Demo video setup", () => {
       while (timeout > 0) {
         const canBreak = await check();
         if (canBreak) {
-          break;
+          return true;
         }
         const waitTime = 2000;
         await page.waitForTimeout(waitTime);
         timeout -= waitTime;
       }
+      return false;
     };
     await login(page, USERS.test_user, "http://localhost:3004/login");
     await page.waitForTimeout(2000);
@@ -43,8 +44,7 @@ test.describe("Demo video setup", () => {
     await createDatabase("prostgles_video_demo", page);
     await goTo(page, "http://localhost:3004/connections");
     await createDatabase("food_delivery", page, true);
-    let ordersHaveBeenCreated = false;
-    await awaitCondition(async () => {
+    const ordersHaveBeenCreated = await awaitCondition(async () => {
       const { rowCount } = await runDbSql(
         page,
         `
@@ -61,8 +61,7 @@ test.describe("Demo video setup", () => {
         { demoRestaurantName },
         { returnType: "result" },
       );
-      ordersHaveBeenCreated = rowCount > 0;
-      return ordersHaveBeenCreated;
+      return rowCount > 0;
     }, 220e3);
 
     if (!ordersHaveBeenCreated) {
@@ -90,16 +89,14 @@ test.describe("Demo video setup", () => {
       );
     }
 
-    let hasXrpData = false;
-    await awaitCondition(async () => {
+    const hasXrpData = await awaitCondition(async () => {
       const xrpRows = await runDbSql(
         page,
         "SELECT * FROM futures WHERE symbol = 'XRPUSDT' LIMIT 2",
         {},
         { returnType: "rows" },
       );
-      hasXrpData = xrpRows.length > 0;
-      return hasXrpData;
+      return xrpRows.length > 0;
     });
 
     if (!hasXrpData) {

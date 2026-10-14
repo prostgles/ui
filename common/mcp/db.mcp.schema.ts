@@ -142,7 +142,8 @@ export const dbMcpSchema = {
   },
   insert: {
     icon: "TablePlus",
-    description: "Inserts a row into a table.",
+    description:
+      "Inserts a row into a table. Also uploads a file when tableName is the connection's enabled managed file table: data must contain original_name and data: { encoding: 'base64', data: '<base64 bytes>' }. Storage metadata such as content_type and url is generated automatically.",
     annotations: { readOnlyHint: false },
     schema: {
       type: {
@@ -178,7 +179,8 @@ export const dbMcpSchema = {
   },
   insertMany: {
     icon: "TablePlus",
-    description: "Inserts rows into a table.",
+    description:
+      "Inserts rows into a table. Also uploads files when tableName is the connection's enabled managed file table: each item in data must contain original_name and data: { encoding: 'base64', data: '<base64 bytes>' }. Storage metadata such as content_type and url is generated automatically.",
     annotations: { readOnlyHint: false },
     schema: {
       type: {

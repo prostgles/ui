@@ -1,7 +1,7 @@
 import * as assert from "node:assert/strict";
 import { rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import pgPromise = require("../../../server/node_modules/pg-promise");
+import pgPromise from "../../../server/node_modules/pg-promise";
 import type { TableConfig } from "../../../server/node_modules/prostgles-server";
 import type {
   SchemaConfig,
@@ -323,7 +323,7 @@ test("audits existing and configured tables without inferring names from audit r
     client.disconnect();
 
     const state = await deployment.connectStateAs("admin");
-    assert.ok(state.db.connections?.findOne);
+    assert.ok(state.db.connections);
     const connection = await state.db.connections.findOne({ name: config.id });
     assert.ok(connection);
     for (const enabled of [false, true]) {

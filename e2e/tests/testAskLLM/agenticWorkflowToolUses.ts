@@ -247,7 +247,7 @@ const volumesFunc = `
 
 const filesystemFunc = `
 await orchestratorToolHandlers.filesystem.list_allowed_directories({}).then(({ content  }) => {
-  const [_,allowedDir] = content.split(\"\\n\")
+  const [_,allowedDir] = content.split("\\n")
   orchestratorToolHandlers.filesystem.read_text_file({
     path: allowedDir + "/tsconfig.base.json"
   }).then(({ content }) => console.log(content.slice(0, content.indexOf("resolveJsonModule"))));

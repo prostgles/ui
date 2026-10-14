@@ -1,6 +1,17 @@
+import type { AlertChannel, AlertsOptions } from "./Alerts/AlertTypes";
+export { createAlertDefiner } from "./Alerts/AlertTypes";
+export type {
+  AlertChannel,
+  AlertMessage,
+  AlertType,
+} from "./Alerts/AlertTypes";
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 export { createActionColumn } from "@common/createActionColumn";
 export type { ActionColumnValue } from "@common/createActionColumn";
+export type {
+  FunctionOptions,
+  FunctionOptionsMap,
+} from "@common/functionOptions";
 import type { WorkspaceInsertModel } from "@common/DashboardTypes";
 import type { DBSSchema } from "@common/publishUtils";
 import type {
@@ -18,6 +29,7 @@ import type {
 import type { LLMProviderName } from "./serverFunctions/askLLM/setupLLMProviders";
 export {
   createJobDefiner,
+  createJobControlFunctionDefiner,
   createFunctionGroupDefiner,
   createFunctionGroupDefinerWithContext,
   createFunctionsDefiner,
@@ -81,7 +93,10 @@ export type TableDisplayConfig = Record<string, TableOptions>;
 export type SchemaConfigConnection = Partial<
   Pick<
     DBSSchema["connections"],
-    "db_schema_filter" | "display_options" | "table_options"
+    | "db_schema_filter"
+    | "display_options"
+    | "table_options"
+    | "function_options"
   >
 >;
 
@@ -121,6 +136,14 @@ export type SchemaConfigAccessControl = Omit<
 
 export type { SchemaConfigAudit } from "prostgles-server";
 
+export type SchemaConfigAlerts<S = void> = Omit<
+  AlertsOptions<S>,
+  "channels"
+> & {
+  /** Email uses the connection's configured email provider, falling back to the instance provider. */
+  channels: Record<string, AlertChannel | { type: "email"; from?: string }>;
+};
+
 /**
  * Startup options which a config project may provide to the primary Prostgles
  * instance. Transport, authentication, storage wiring, and connection
@@ -154,6 +177,8 @@ export type SchemaConfig<
   llmCredential?: SchemaConfigLlmCredential;
   /** Audits inserts, updates and deletes and shows the history in row cards. */
   audit?: SchemaConfigAudit<S>;
+  /** Managed editable alerts, recipients and delivery history. */
+  alerts?: SchemaConfigAlerts<S>;
   /** Access rules matched by user type, just like rules configured through the UI. */
   accessControl?: SchemaConfigAccessControl[];
   /** CLI configs use accessControl instead of prostgles-server publish rules. */

@@ -5,7 +5,6 @@ import { compileSchemaConfigProject } from "./compileSchemaConfigProject";
 import { getSchemaConfig } from "./getSchemaConfig";
 import { getEntries } from "@common/utils";
 import { includes } from "prostgles-types";
-import { syncSchemaConfigResources } from "./syncSchemaConfigResources";
 import { startConnection } from "./startConnection";
 
 /**
@@ -44,9 +43,14 @@ export const syncSchemaConfig = async ({
   });
   return connectionManager.runConnectionOperation(connectionId, async () => {
     if (schemaConfig.onInitSQL) {
-      await runConnectionQuery(connectionId, schemaConfig.onInitSQL, undefined, {
-        dbs,
-      });
+      await runConnectionQuery(
+        connectionId,
+        schemaConfig.onInitSQL,
+        undefined,
+        {
+          dbs,
+        },
+      );
     }
 
     const databaseConfig = await dbs.database_configs.update(
@@ -58,31 +62,17 @@ export const syncSchemaConfig = async ({
       throw "Database config not found";
     }
 
-    // Apply the schema once, before configured workspaces need its tables.
-    if (
-      connectionManager.getActiveConnectionSilentFail(connectionId) ||
-      schemaConfig.workspaces?.length
-    ) {
-      if (!connectionManager.db) throw "Connection manager database is not ready";
-      // Already holding the connection lifecycle queue.
-      await startConnection.call(
-        connectionManager,
-        connectionId,
-        dbs,
-        connectionManager.db,
-        undefined,
-        true,
-      );
-    }
-
-    await syncSchemaConfigResources({
-      dbs,
-      databaseId: databaseConfig.id,
+    if (!connectionManager.db) throw "Connection manager database is not ready";
+    // Startup applies table config, then syncs resources before publishing access.
+    // Already holding the connection lifecycle queue.
+    await startConnection.call(
+      connectionManager,
       connectionId,
-      rules: schemaConfig.accessControl,
-      workspaces: schemaConfig.workspaces,
-      llmCredential: schemaConfig.llmCredential,
-    });
+      dbs,
+      connectionManager.db,
+      undefined,
+      true,
+    );
 
     const activeConnection =
       connectionManager.getActiveConnectionSilentFail(connectionId);

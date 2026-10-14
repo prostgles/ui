@@ -56,6 +56,7 @@ export const modifyClientSchema = ({
   return {
     ...table,
     managedTableType: tableOptions.managedTableType,
+    defaultColumns: tableOptions.defaultColumns,
     audit: getTableAuditConfig(table, auditConfig),
     card: tableOptions.card,
     sort: tableOptions.sort?.filter(({ key }) =>
@@ -95,9 +96,10 @@ export const modifyClientSchema = ({
          * Table config might not be the best place for this
          * */
         label:
-          !columnHasLabelFromConfig && capitaliseNames ?
+          columnOptions.label ??
+          (!columnHasLabelFromConfig && capitaliseNames ?
             convertSnakeToReadable(c.name)
-          : c.label,
+          : c.label),
         renderAs: columnOptions.renderAs,
         style: columnOptions.style,
       };
@@ -118,7 +120,8 @@ const getDefaultRenderAs = (
     return {
       type: "Internal",
       params: {
-        component: "ActionColumns", dataKey,
+        component: "ActionColumns",
+        dataKey,
         actions: [{ columnName: column.name }],
       },
     };
@@ -236,16 +239,20 @@ const auditTableOptions: TableOptions = {
   managedTableType: undefined,
   icon: "History",
   label: "Audit trail",
+  defaultColumns: ["created_at", "operation", "table_name", "actor", "new_row"],
   sort: [{ key: "created_at", asc: false, nulls: "last" }],
   rowIconColumn: undefined,
   card: {
     headerColumn: "operation",
     subHeaderColumn: "table_name",
-    visibleColumns: ["created_at", "actor", "old_row", "new_row"],
+    visibleColumns: ["created_at", "actor", "new_row"],
   },
   columns: {
-    created_at: { renderAs: { type: "Age" } },
+    created_at: { label: "Time", renderAs: { type: "Age" } },
+    table_name: { label: "Table" },
+    actor: { label: "User" },
     new_row: {
+      label: "Changes",
       style: { ...auditOperationStyle, column: "operation" },
       renderAs: {
         type: "JSON Diff",
@@ -253,6 +260,7 @@ const auditTableOptions: TableOptions = {
       },
     },
     operation: {
+      label: "Action",
       style: auditOperationStyle,
     },
   },

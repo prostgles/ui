@@ -134,6 +134,7 @@ export const LLMModelSelector = ({
               <Btn
                 title="Refresh models"
                 iconPath={mdiRefresh}
+                loading={refreshing}
                 onClickPromise={async () => {
                   setRefreshing(true);
                   await dbsMethods

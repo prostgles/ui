@@ -43,14 +43,19 @@ export const publish: Publish<
       )
       .filter(isDefined) || [];
 
-  const getDashboardEditFilter = (tableName: "workspaces" | "windows" | "links") =>
-    !isAdmin ? { user_id } : {
-      $or: [
-        { user_id },
-        tableName === "workspaces" ? { published: true }
-        : { $existsJoined: { workspaces: { published: true } } },
-      ],
-    };
+  const getDashboardEditFilter = (
+    tableName: "workspaces" | "windows" | "links",
+  ) =>
+    !isAdmin ?
+      { user_id }
+    : {
+        $or: [
+          { user_id },
+          tableName === "workspaces" ?
+            { published: true }
+          : { $existsJoined: { workspaces: { published: true } } },
+        ],
+      };
 
   const dashboardMainTables: Publish<DBGeneratedSchema> = (
     ["windows", "links", "workspaces"] as const
@@ -253,6 +258,7 @@ export const publish: Publish<
           name: 1,
           url_path: 1,
           table_options: 1,
+          function_options: 1,
           db_schema_filter: 1,
           display_options: 1,
           port: 1,

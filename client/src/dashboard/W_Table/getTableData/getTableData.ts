@@ -18,7 +18,7 @@ export async function getTableData(
   const delta = { ...dp, ...ds, ...dd };
   const { rows } = this.state;
   const {
-    prgl: { tables, db },
+    prgl: { tables, db, methods },
     joinFilter,
   } = this.props;
   const { w } = this.d;
@@ -61,8 +61,11 @@ export async function getTableData(
       const {
         select: selectWithoutData,
         barchartVals: barchartValsWithoutData,
-      } = await getTableSelect(w, tables, db, filter, true);
-      const strFilter = JSON.stringify({ ...tableFilterHaving, select: selectWithoutData });
+      } = await getTableSelect(w, tables, db, filter, true, methods);
+      const strFilter = JSON.stringify({
+        ...tableFilterHaving,
+        select: selectWithoutData,
+      });
 
       const clearSub = () => {
         return this.dataSub?.unsubscribe();
@@ -165,6 +168,8 @@ export async function getTableData(
           tables,
           db,
           filter,
+          false,
+          methods,
         );
         if (barchartVals) {
           ns = ns || ({} as any);

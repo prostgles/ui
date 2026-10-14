@@ -14,7 +14,7 @@ export const saveDocs = async (page: PageWIds) => {
   }
 
   const files: { fileName: string; text: string }[] = await page.evaluate(
-    async () => {
+    () => {
       //@ts-ignore
       return window.documentation;
     },

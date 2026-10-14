@@ -1,4 +1,5 @@
 import { tableOptionsJsonbSchema } from "@common/mcp/tableOptionsJsonbSchema";
+import { functionOptionsJsonbSchema } from "@common/functionOptions";
 import type { TableConfig } from "prostgles-server";
 import { UNIQUE_DB_COLS } from "./tableConfigDatabaseConfig";
 
@@ -100,6 +101,10 @@ export const tableConfigConnections: TableConfig<{ en: 1 }> = {
       table_options: {
         nullable: true,
         jsonbSchema: tableOptionsJsonbSchema,
+      },
+      function_options: {
+        nullable: true,
+        jsonbSchema: functionOptionsJsonbSchema,
       },
       display_options: {
         nullable: true,

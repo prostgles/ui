@@ -24,7 +24,11 @@ export type TableOptions = RequiredKeepUndefined<
     label: string;
     managedTableType?: "files" | "file-annotations";
   }
-> & { audit?: ClientTableAuditConfig };
+> & {
+  audit?: ClientTableAuditConfig;
+  defaultColumns?: string[];
+  columns: Record<string, { label?: string }> | undefined;
+};
 
 export type InternalColumnFormat = {
   type: "Internal";
@@ -69,11 +73,21 @@ export const annotationsTableColumns = {
         endText: "string",
         rects: {
           optional: true,
-          arrayOfType: { x: "number", y: "number", width: "number", height: "number" },
+          arrayOfType: {
+            x: "number",
+            y: "number",
+            width: "number",
+            height: "number",
+          },
         },
         bounds: {
           optional: true,
-          arrayOfType: { x: "number", y: "number", width: "number", height: "number" },
+          arrayOfType: {
+            x: "number",
+            y: "number",
+            width: "number",
+            height: "number",
+          },
         },
       },
     },

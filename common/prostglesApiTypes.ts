@@ -307,11 +307,11 @@ type SelectDataType<S extends DBSchema | void, O, TD extends AnyObject> = O exte
     select: "";
 } ? Record<string, never> : O extends {
     select: readonly (keyof TD | keyof RowActionsColumn)[];
-} ? (TD extends unknown ? Pick<NormalizedRow<TD> & RowActionsColumn, O["select"][number]> : never) : O extends {
+} ? TD extends unknown ? Pick<NormalizedRow<TD> & RowActionsColumn, O["select"][number]> : never : O extends {
     select: Record<string, 0 | false>;
-} ? (TD extends unknown ? Omit<NormalizedRow<TD>, keyof O["select"]> : never) : O extends {
+} ? TD extends unknown ? Omit<NormalizedRow<TD>, keyof O["select"]> : never : O extends {
     select: Record<string, any>;
-} ? (TD extends unknown ? ParseSelect<O["select"], NormalizedRow<TD>, S> : never) : NormalizedRow<TD>;
+} ? TD extends unknown ? ParseSelect<O["select"], NormalizedRow<TD>, S> : never : NormalizedRow<TD>;
 export type SelectReturnType<S extends DBSchema | void, O extends SelectParams<TD, S>, TD extends AnyObject, isMulti extends boolean> = O extends {
     returnType: "statement";
 } ? string : isMulti extends true ? SelectDataType<S, O, TD>[] : SelectDataType<S, O, TD>;
@@ -337,9 +337,9 @@ type GetReturningReturnType<O extends UpdateParams<TD, S>, TD extends AnyObject,
     returning: "";
 } ? Record<string, never> : O extends {
     returning: Record<string, 1>;
-} ? (TD extends unknown ? Pick<NormalizedRow<TD>, keyof O["returning"]> : never) : O extends {
+} ? TD extends unknown ? Pick<NormalizedRow<TD>, keyof O["returning"]> : never : O extends {
     returning: Record<string, 0>;
-} ? (TD extends unknown ? Omit<NormalizedRow<TD>, keyof O["returning"]> : never) : void;
+} ? TD extends unknown ? Omit<NormalizedRow<TD>, keyof O["returning"]> : never : void;
 /**
  *
  * Nothing is returned by default.

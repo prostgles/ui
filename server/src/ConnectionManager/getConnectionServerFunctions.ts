@@ -1,4 +1,5 @@
 import type { DBSSchema } from "@common/publishUtils";
+import type { FunctionOptions } from "@common/functionOptions";
 import type { SUser } from "@src/authConfig/sessionUtils";
 import type { ProstglesContext } from "@src/schemaConfig";
 import { defineJoin, type ServerFunctionDefinitions } from "prostgles-server";
@@ -63,13 +64,29 @@ export const getConnectionServerFunctions = async ({
     }>(m.run)!.run;
     publishMethods[groupName].functions[m.name] = {
       input: m.arguments.reduce((a, v) => ({ ...a, [v.name]: v }), {}),
+      description: m.description,
       run: method,
     };
   });
 
   return {
-    ...getSchemaConfig(databaseConfig.config_sync)?.config.functions,
-    /** Connection-managed functions retain precedence on name collisions. */
-    ...publishMethods,
-  } as ServerFunctionDefinitions<void, SUser, ProstglesContext>;
+    functions: {
+      ...getSchemaConfig(databaseConfig.config_sync)?.config.functions,
+      /** Connection-managed functions retain precedence on name collisions. */
+      ...publishMethods,
+    } as ServerFunctionDefinitions<void, SUser, ProstglesContext>,
+    functionOptions: Object.fromEntries(
+      connectionFunctions.map((method) => [
+        method.name,
+        {
+          defaultArgs: Object.fromEntries(
+            method.arguments
+              .filter((argument) => argument.defaultValue !== undefined)
+              .map((argument) => [argument.name, argument.defaultValue]),
+          ),
+          ...(method.outputTable && { outputTable: method.outputTable }),
+        } satisfies FunctionOptions,
+      ]),
+    ),
+  };
 };

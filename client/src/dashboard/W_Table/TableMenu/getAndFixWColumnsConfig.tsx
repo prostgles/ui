@@ -68,7 +68,7 @@ const getUpdatedColumnsConfig = <
       (c) =>
         ({
           name: c.name,
-          show: true,
+          show: !table.defaultColumns || table.defaultColumns.includes(c.name),
           computed: false,
           format: c.renderAs,
           style: c.style,
@@ -100,7 +100,8 @@ const getUpdatedColumnsConfig = <
       /* Remove missing columns */
       const validWCols = quickClone(existingCols).filter(
         ({ name, nested, computedConfig, format }) => {
-          if (format?.type === "Action" || format?.type === "ActionColumns") return true;
+          if (format?.type === "Action" || format?.type === "ActionColumns")
+            return true;
           return tableColumnsConfig.find((c1) => {
             if (nested) {
               return true;
@@ -118,7 +119,7 @@ const getUpdatedColumnsConfig = <
       /* Add missing columns */
       const newlyCreatedTableCols = tableColumnsConfig
         .filter((c1) => !validWCols.find((nc) => nc.name === c1.name))
-        .map((c) => ({ name: c.name, show: true }));
+        .map((c) => ({ name: c.name, show: c.show }));
 
       return {
         columns: [...validWCols, ...newlyCreatedTableCols] as C[],

@@ -1,7 +1,7 @@
-import { appendFileSync, rmSync } from "node:fs";
+import { appendFileSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { ROW_ACTIONS_COLUMN } from "../../../server/node_modules/prostgles-client";
 import { createActionColumn } from "../../../server/dist/server/src/schemaConfig";
-import type { ColumnConfig } from "../../../client/src/dashboard/W_Table/ColumnMenu/ColumnConfig";
+import type { ColumnConfig } from "../../../common/ColumnConfig/ColumnConfig";
 import { getTableIdentityColumns } from "../../../client/src/dashboard/W_Table/ColumnMenu/ColumnDisplayFormat/getTableIdentityColumns";
 import type { DBSchemaTableWJoins } from "../../../client/src/dashboard/Dashboard/dashboardUtils";
 import { sidKeyName } from "../../../common/authTypesAndConstants";
@@ -19,6 +19,45 @@ import { createConfigTestProject } from "../utils/createConfigTestProject";
 const config = {
   id: "linked-columns-e2e",
   connection: {
+    function_options: {
+      styledUser: {
+        action: {
+          defaultValue: {
+            text: "Shared action",
+            color: "warn",
+            variant: "outline",
+            icon: "Play",
+            disabledInfo: "Waiting for work",
+            isLoading: true,
+          },
+          conditions: [
+            {
+              filter: {
+                $and: [{ fieldName: "name", type: "=", value: "Alice" }],
+              },
+              value: { text: "Shared Alice", color: "green" },
+            },
+          ],
+        },
+        defaultArgs: { note: "Shared note", amount: 0, enabled: false },
+        outputTable: "users",
+      },
+      styledEmail: {
+        action: {
+          defaultValue: {
+            text: "Shared email",
+            color: "indigo",
+            variant: "outline",
+          },
+        },
+      },
+      startTargetJob: {
+        action: {
+          defaultValue: { text: "Start target" },
+          job: { runningText: "Processing target", retryText: "Retry target" },
+        },
+      },
+    },
     table_options: {
       users: {
         label: "Users",
@@ -33,6 +72,19 @@ const config = {
           subHeaderColumn: "status",
         },
         columns: {
+          status: {
+            style: {
+              type: "Conditional",
+              conditions: [
+                {
+                  operator: "=",
+                  condition: "open",
+                  chipColor: "#dbeafe",
+                  textColor: "#1e40af",
+                },
+              ],
+            },
+          },
           avatar_url: {
             renderAs: {
               type: "Media",
@@ -49,13 +101,30 @@ const config = {
     },
   },
   tableConfig: {
+    job_targets: {
+      columns: {
+        id: "serial PRIMARY KEY",
+        job_id: "uuid",
+        blocked: "boolean NOT NULL DEFAULT TRUE",
+        should_fail: "boolean NOT NULL DEFAULT FALSE",
+        action: createActionColumn("startTargetJob", {
+          text: "Start target",
+          disabledInfo: "",
+          isLoading: false,
+        }),
+      },
+      constraints: { job: "FOREIGN KEY (job_id) REFERENCES action_jobs(id)" },
+    },
     users: {
       columns: {
         id: "serial PRIMARY KEY",
         name: "text NOT NULL",
         email: "text NOT NULL UNIQUE",
         manager_id: "integer REFERENCES users(id)",
-        action: createActionColumn("startUserAction"),
+        action: createActionColumn("startUserAction", {
+          text: "Start",
+          icon: "Play",
+        }),
         review_action: createActionColumn("inspectEmail"),
       },
     },
@@ -94,126 +163,135 @@ const config = {
           id: "users",
           type: "table",
           table_name: "users",
-          columns: [
-            { name: "id", show: false },
-            { name: "name", show: true },
-            { name: "email", show: false },
-            { name: "manager_id", show: false },
-            { name: "action", show: false },
-            { name: "review_action", show: false },
-            {
-              name: "Task status",
-              show: true,
-              nested: {
-                path: [{ table: "tasks", on: [{ id: "user_id" }] }],
-                display: { type: "values", labels: "none" },
-                columns: [
-                  {
-                    name: "Open",
-                    display: "drillable-records",
-                    show: true,
-                    computedConfig: {
-                      funcDef: {
-                        key: "$countAll",
-                        label: "Open",
-                        subLabel: "",
-                        isAggregate: true,
-                      },
-                      column: undefined,
-                      tsDataType: "string",
-                      udt_name: "int8",
-                      aggregateOptions: {
-                        filter: {
-                          $and: [
-                            {
-                              fieldName: "status",
-                              type: "$eq",
-                              value: "open",
-                            },
-                          ],
-                        },
-                      },
-                    },
-                  },
-                  {
-                    name: "Closed",
-                    display: "drillable-records",
-                    show: true,
-                    computedConfig: {
-                      funcDef: {
-                        key: "$countAll",
-                        label: "Closed",
-                        subLabel: "",
-                        isAggregate: true,
-                      },
-                      column: undefined,
-                      tsDataType: "string",
-                      udt_name: "int8",
-                      aggregateOptions: {
-                        filter: {
-                          $and: [
-                            {
-                              fieldName: "status",
-                              type: "$eq",
-                              value: "closed",
-                            },
-                          ],
-                        },
-                      },
-                    },
-                  },
-                  { name: "id", show: false },
-                  { name: "user_id", show: false },
-                  { name: "title", show: false },
-                  { name: "status", show: false },
-                  { name: "due", show: false },
-                  { name: "avatar_url", show: false },
-                  { name: "content_type", show: false },
-                ],
-              },
-            },
-            {
-              name: "Manager",
-              show: true,
-              nested: {
-                path: [{ table: "users", on: [{ manager_id: "id" }] }],
-                display: { type: "drillable-records" },
-                columns: [
-                  { name: "id", show: false },
-                  { name: "name", show: true },
-                  { name: "email", show: true },
-                  { name: "manager_id", show: false },
-                  { name: "action", show: false },
-                ],
-              },
-            },
-            {
-              name: "Tasks",
-              show: true,
-              nested: {
-                path: [{ table: "tasks", on: [{ id: "user_id" }] }],
-                display: { type: "drillable-records" },
-                sort: { key: "id", asc: true },
-                columns: [
-                  { name: "id", show: true },
-                  { name: "user_id", show: false },
-                  { name: "title", show: true },
-                  { name: "status", show: true },
-                  { name: "due", show: false },
-                  { name: "avatar_url", show: false },
-                  { name: "content_type", show: false },
-                ],
-              },
-            },
-          ],
+          columns: [{ name: "name", width: 150 }],
         },
       ],
     },
   ],
 } satisfies SchemaConfig;
 
+// Seed saved UI state separately from the public dashboard input format.
+const configuredColumns = [
+  { name: "id", show: false },
+  { name: "name", show: true },
+  { name: "email", show: false },
+  { name: "manager_id", show: false },
+  { name: "action", show: false },
+  { name: "review_action", show: false },
+  {
+    name: "Task status",
+    show: true,
+    nested: {
+      path: [{ table: "tasks", on: [{ id: "user_id" }] }],
+      display: { type: "values", labels: "none" },
+      columns: [
+        {
+          name: "Open",
+          display: "drillable-records",
+          show: true,
+          computedConfig: {
+            funcDef: {
+              key: "$countAll",
+              label: "Open",
+              subLabel: "",
+              isAggregate: true,
+            },
+            column: undefined,
+            tsDataType: "string",
+            udt_name: "int8",
+            aggregateOptions: {
+              filter: {
+                $and: [
+                  {
+                    fieldName: "status",
+                    type: "$eq",
+                    value: "open",
+                  },
+                ],
+              },
+            },
+          },
+        },
+        {
+          name: "Closed",
+          display: "drillable-records",
+          show: true,
+          computedConfig: {
+            funcDef: {
+              key: "$countAll",
+              label: "Closed",
+              subLabel: "",
+              isAggregate: true,
+            },
+            column: undefined,
+            tsDataType: "string",
+            udt_name: "int8",
+            aggregateOptions: {
+              filter: {
+                $and: [
+                  {
+                    fieldName: "status",
+                    type: "$eq",
+                    value: "closed",
+                  },
+                ],
+              },
+            },
+          },
+        },
+        { name: "id", show: false },
+        { name: "user_id", show: false },
+        { name: "title", show: false },
+        { name: "status", show: false },
+        { name: "due", show: false },
+        { name: "avatar_url", show: false },
+        { name: "content_type", show: false },
+      ],
+    },
+  },
+  {
+    name: "Manager",
+    show: true,
+    nested: {
+      path: [{ table: "users", on: [{ manager_id: "id" }] }],
+      display: { type: "drillable-records" },
+      columns: [
+        { name: "id", show: false },
+        { name: "name", show: true },
+        { name: "email", show: true },
+        { name: "manager_id", show: false },
+        { name: "action", show: false },
+      ],
+    },
+  },
+  {
+    name: "Tasks",
+    show: true,
+    nested: {
+      path: [{ table: "tasks", on: [{ id: "user_id" }] }],
+      display: { type: "drillable-records" },
+      sort: { key: "id", asc: true },
+      columns: [
+        { name: "id", show: true },
+        { name: "user_id", show: false },
+        { name: "title", show: true },
+        { name: "status", show: true },
+        { name: "due", show: false },
+        { name: "avatar_url", show: false },
+        { name: "content_type", show: false },
+      ],
+    },
+  },
+] satisfies ColumnConfig[];
+
+const usersWindowFilter = {
+  table_name: "users",
+  $existsJoined: { workspaces: { name: config.workspaces[0]!.name } },
+};
+
 let configPath: string;
 let deployment: TestDeployment;
+let disposeDeployment: TestDeployment["dispose"] | undefined;
 let sessionId: string;
 
 test.beforeAll(async () => {
@@ -229,6 +307,17 @@ test.beforeAll(async () => {
           run: async ({ user }) => ({ received: user }),
         },
         inspectEmail: {
+          input: { email: { type: "ValueLookup", table: "users", column: "email" } },
+          run: async ({ email }) => ({ received: email }),
+        },
+        styledUser: {
+          input: { user: { type: "RowLookup", table: "users" }, note: "string", amount: "number", enabled: "boolean" },
+          run: async ({ user, note, amount, enabled }) => {
+            if (note !== "Shared note" || amount !== 0 || enabled !== false) throw new Error("Function defaults missing");
+            return { received: user };
+          },
+        },
+        styledEmail: {
           input: { email: { type: "ValueLookup", table: "users", column: "email" } },
           run: async ({ email }) => ({ received: email }),
         },
@@ -248,6 +337,22 @@ test.beforeAll(async () => {
           run: async ({ email }) => ({ received: email }),
         },
         unrelated: { input: { text: "string" }, run: async ({ text }) => text },
+        ambiguousUser: {
+          input: {
+            user: { type: "RowLookup", table: "users" },
+            email: { type: "ValueLookup", table: "users", column: "email", optional: true },
+          },
+          run: async ({ user }) => ({ received: user }),
+        },
+        reviewUserWithNote: {
+          input: { user: { type: "RowLookup", table: "users" }, note: "string" },
+          run: async ({ user, note }) => {
+            if (note === "error") throw new Error("Review failed");
+            if (note === "false") return false;
+            if (note === "void") return;
+            return { received: user, note };
+          },
+        },
         startUserAction: {
           input: { user: { type: "RowLookup", table: "users" } },
           run: async ({ user }, { dbo }) => {
@@ -267,6 +372,30 @@ test.beforeAll(async () => {
         },
       } },
     };
+    const { createJobControlFunctionDefiner } = require("prostgles-server");
+    module.exports.jobs = {
+      tableName: "action_jobs",
+      definitions: {
+        processTarget: {
+          trigger: { type: "row", table: "job_targets", on: ["update"], columns: ["job_id"], jobIdColumn: "job_id" },
+          run: async ({ row, dbo, signal, progressMessage, fail }) => {
+            await progressMessage("Working on target");
+            while ((await dbo.job_targets.findOne({ id: row.id })).blocked) {
+              signal.throwIfAborted();
+              await new Promise(resolve => setTimeout(resolve, 20));
+            }
+            if ((await dbo.job_targets.findOne({ id: row.id })).should_fail) fail("Target failed");
+          },
+        },
+      },
+    };
+    const defineJobControl = createJobControlFunctionDefiner()(module.exports.jobs.definitions);
+    for (const [name, operation] of [["startTargetJob", "startOrRetry"], ["rerunTargetJob", "rerun"], ["cancelTargetJob", "cancel"]]) {
+      module.exports.functions.admins.functions[name] = defineJobControl({
+        jobName: "processTarget",
+        operation,
+      });
+    }
   `,
   );
   deployment = await createTestDeployment({
@@ -293,19 +422,23 @@ test.beforeAll(async () => {
       `);
     },
   });
+  disposeDeployment = deployment.dispose;
   const state = await deployment.connectStateAs("admin");
   try {
-    await state.db.workspaces!.update!(
+    await state.db.workspaces!.update(
       { name: "Linked columns" },
       { layout_mode: "editable" },
     );
+    await state.db.windows!.update(usersWindowFilter, {
+      columns: configuredColumns,
+    });
   } finally {
     state.disconnect();
   }
 });
 
 test.afterAll(async () => {
-  await deployment?.dispose();
+  await disposeDeployment?.();
   if (configPath) rmSync(configPath, { recursive: true, force: true });
 });
 
@@ -321,7 +454,7 @@ test("linked column cells open filtered aggregates and linked records", async ({
     const composite = {
       ...table,
       uniqueColumnGroups: [["id", "email"], ["email"]],
-      columns: columns.map((c) => ({
+      columns: table.columns.map((c) => ({
         ...c,
         is_pkey: c.name === "id" || c.name === "email",
       })),
@@ -347,9 +480,8 @@ test("linked column cells open filtered aggregates and linked records", async ({
       ),
     ).toEqual([]);
     expect(getTableIdentityColumns(table, [])).toEqual([]);
-    const aggregate = config.workspaces[0].windows[0].columns.find(
-      (c) => c.name === "Task status",
-    )!.nested!.columns[0]!;
+    const aggregate = configuredColumns.find((c) => c.name === "Task status")!
+      .nested!.columns[0]!;
     expect(
       getTableIdentityColumns(alternateKeys, [
         { ...aggregate, name: "id", show: true },
@@ -411,23 +543,19 @@ test("linked column cells open filtered aggregates and linked records", async ({
   // A layout update must not remount the cells and discard the open popup.
   const state = await deployment.connectStateAs("admin");
   try {
-    await state.db.windows!.update!(
-      { table_name: "users" },
-      {
-        columns: config.workspaces[0].windows[0].columns.map((column) =>
-          column.name === "Tasks" ? { ...column, width: 240 } : column,
-        ),
-      },
-    );
+    await state.db.windows!.update(usersWindowFilter, {
+      columns: configuredColumns.map((column) =>
+        column.name === "Tasks" ? { ...column, width: 240 } : column,
+      ),
+    });
     await expect(
       users.getByRole("columnheader").filter({ hasText: "Tasks" }),
     ).toHaveCSS("width", "240px");
     await expect(aggregatePopup).toContainText("Open one");
   } finally {
-    await state.db.windows!.update!(
-      { table_name: "users" },
-      { columns: config.workspaces[0].windows[0].columns },
-    );
+    await state.db.windows!.update(usersWindowFilter, {
+      columns: configuredColumns,
+    });
     state.disconnect();
   }
   await page.getByTestId("Popup.close").last().click();
@@ -579,6 +707,7 @@ test("column list edits computed functions and aggregate filters", async ({
     width: 180,
     style: { type: "None" },
     computedConfig: {
+      column: undefined,
       funcDef: {
         key: "$countAll",
         label: "Count all",
@@ -603,17 +732,14 @@ test("column list edits computed functions and aggregate filters", async ({
       .click({ timeout: 30_000 });
     const users = page.locator('[data-table-name="users"]');
     await expect(users.getByTestId("TableBody")).toContainText("Alice");
-    await state.db.windows!.update!(
-      { table_name: "users" },
-      {
-        columns: [
-          ...config.workspaces[0].windows[0].columns
-            .filter((column) => !column.nested)
-            .map((column) => ({ ...column, show: false })),
-          computedColumn,
-        ],
-      },
-    );
+    await state.db.windows!.update(usersWindowFilter, {
+      columns: [
+        ...configuredColumns
+          .filter((column) => !column.nested)
+          .map((column) => ({ ...column, show: false })),
+        computedColumn,
+      ],
+    });
     const cell = users.getByTestId("TableBody").getByRole("cell").last();
     await expect(cell).toHaveText("2");
     await users.getByTestId("dashboard.window.menu").click();
@@ -669,11 +795,11 @@ test("column list edits computed functions and aggregate filters", async ({
     await editor.getByTestId("QuickAddComputedColumn.Add").click();
     await expect(cell).toHaveText("2");
 
-    expect
+    await expect
       .poll(() =>
-        state.db.windows!.findOne!({
-          table_name: "users",
-        }).then((w) => w!.columns!.find((c) => c.name === "User total")),
+        state.db
+          .windows!.findOne(usersWindowFilter)
+          .then((w) => w!.columns!.find((c) => c.name === "User total")),
       )
       .toMatchObject({
         name: "User total",
@@ -699,12 +825,9 @@ test("column list edits computed functions and aggregate filters", async ({
       "User total",
     );
   } finally {
-    await state.db.windows!.update!(
-      { table_name: "users" },
-      {
-        columns: config.workspaces[0].windows[0].columns,
-      },
-    );
+    await state.db.windows!.update(usersWindowFilter, {
+      columns: configuredColumns,
+    });
     state.disconnect();
   }
 });
@@ -712,7 +835,7 @@ test("column list edits computed functions and aggregate filters", async ({
 test("linked columns render independent barcharts and scales", async ({
   page,
 }) => {
-  const source = config.workspaces[0].windows[0].columns.find(
+  const source = configuredColumns.find(
     (column) => column.name === "Task status",
   )!;
   const nested = { ...source.nested!, limit: 20 };
@@ -759,17 +882,12 @@ test("linked columns render independent barcharts and scales", async ({
       })),
     },
   };
-  const rootColumns = config.workspaces[0].windows[0].columns.filter(
-    (column) => !column.nested,
-  );
+  const rootColumns = configuredColumns.filter((column) => !column.nested);
   const state = await deployment.connectStateAs("admin");
   try {
-    await state.db.windows!.update!(
-      { table_name: "users" },
-      {
-        columns: [...rootColumns, bars, scales, parentStyleOnly],
-      },
-    );
+    await state.db.windows!.update(usersWindowFilter, {
+      columns: [...rootColumns, bars, scales, parentStyleOnly],
+    });
     await page
       .context()
       .addCookies([
@@ -826,9 +944,7 @@ test("linked columns render independent barcharts and scales", async ({
       .click();
     await expect(aliceBars).toHaveCount(2);
     await expect(bobBars).toHaveCount(2);
-    const savedWindow = await state.db.windows!.findOne!({
-      table_name: "users",
-    });
+    const savedWindow = await state.db.windows!.findOne(usersWindowFilter);
     const savedColumn = savedWindow!.columns!.find(
       (c) => c.name === "Task status",
     )!;
@@ -873,12 +989,9 @@ test("linked columns render independent barcharts and scales", async ({
     );
 
     // Ranges must follow the parent filter, including a constant range.
-    await state.db.windows!.update!(
-      { table_name: "users" },
-      {
-        filter: [{ fieldName: "name", type: "$eq", value: "Alice" }],
-      },
-    );
+    await state.db.windows!.update(usersWindowFilter, {
+      filter: [{ fieldName: "name", type: "$eq", value: "Alice" }],
+    });
     await expect(bob).toHaveCount(0);
     await expect(scaleCells(alice).nth(0)).toHaveCSS(
       "background-color",
@@ -887,52 +1000,49 @@ test("linked columns render independent barcharts and scales", async ({
     await expect(aliceBars.nth(0)).toHaveAttribute("style", /width: 0%;/);
 
     // Raw nested rows use their own extrema, independently of display order.
-    await state.db.windows!.update!(
-      { table_name: "users" },
-      {
-        filter: [],
-        columns: [
-          ...rootColumns,
-          {
-            name: "Raw tasks",
-            show: true,
-            nested: {
-              ...nested,
-              display: { type: "values", labels: "above" },
-              sort: { key: "id", asc: false },
-              detailedFilter: [
-                { fieldName: "status", type: "$eq", value: "open" },
-              ],
-              columns: [
-                {
-                  name: "id",
-                  show: true,
-                  style: {
-                    type: "Barchart",
-                    barColor: "#123456",
-                    textColor: "#000000",
-                  },
+    await state.db.windows!.update(usersWindowFilter, {
+      filter: [],
+      columns: [
+        ...rootColumns,
+        {
+          name: "Raw tasks",
+          show: true,
+          nested: {
+            ...nested,
+            display: { type: "values", labels: "above" },
+            sort: { key: "id", asc: false },
+            detailedFilter: [
+              { fieldName: "status", type: "$eq", value: "open" },
+            ],
+            columns: [
+              {
+                name: "id",
+                show: true,
+                style: {
+                  type: "Barchart",
+                  barColor: "#123456",
+                  textColor: "#000000",
                 },
-                {
-                  name: "due",
-                  show: true,
-                  style: {
-                    type: "Scale",
-                    minColor: "#000000",
-                    maxColor: "#ffffff",
-                    textColor: "#123456",
-                  },
+              },
+              {
+                name: "due",
+                show: true,
+                style: {
+                  type: "Scale",
+                  minColor: "#000000",
+                  maxColor: "#ffffff",
+                  textColor: "#123456",
                 },
-                ...["title", "status", "user_id"].map((name) => ({
-                  name,
-                  show: false,
-                })),
-              ],
-            },
+              },
+              ...["title", "status", "user_id"].map((name) => ({
+                name,
+                show: false,
+              })),
+            ],
           },
-        ],
-      },
-    );
+        },
+      ],
+    });
     await expect(aliceBars).toHaveCount(2);
     await expect(aliceBars.nth(0)).toHaveAttribute("style", /width: 100%;/);
     await expect(aliceBars.nth(1)).toHaveAttribute(
@@ -949,13 +1059,10 @@ test("linked columns render independent barcharts and scales", async ({
     );
     await expect(bobBars).toHaveCount(0);
   } finally {
-    await state.db.windows!.update!(
-      { table_name: "users" },
-      {
-        columns: config.workspaces[0].windows[0].columns,
-        filter: [],
-      },
-    );
+    await state.db.windows!.update(usersWindowFilter, {
+      columns: configuredColumns,
+      filter: [],
+    });
     state.disconnect();
   }
 });
@@ -963,8 +1070,7 @@ test("linked columns render independent barcharts and scales", async ({
 test("nested presentation keeps formats, drill-down, groups and entity overflow independent", async ({
   page,
 }) => {
-  const originalColumns: ColumnConfig[] =
-    config.workspaces[0].windows[0].columns;
+  const originalColumns: ColumnConfig[] = configuredColumns;
   const source = originalColumns.find((c) => c.name === "Task status")!;
   const aggregate = source.nested!.columns.find((c) => c.name === "Open")!;
   const money: ColumnConfig = {
@@ -1106,7 +1212,7 @@ test("nested presentation keeps formats, drill-down, groups and entity overflow 
       .getByRole("row")
       .filter({ hasText: "Alice" });
     await expect(alice).toBeVisible();
-    await state.db.windows!.update!({ table_name: "users" }, { columns });
+    await state.db.windows!.update(usersWindowFilter, { columns });
     await expect(
       users.getByRole("columnheader").filter({ hasText: "Outstanding cost" }),
     ).toBeVisible();
@@ -1145,26 +1251,23 @@ test("nested presentation keeps formats, drill-down, groups and entity overflow 
 
     // Card defaults and hidden styling/identity fields must respect column visibility.
     for (const shownNames of [["title"], ["status"], ["title", "status"]]) {
-      await state.db.windows!.update!(
-        { table_name: "users" },
-        {
-          columns: columns.map((column) =>
-            column === drillableRecords ?
-              {
-                ...drillableRecords,
-                nested: {
-                  ...drillableRecords.nested!,
-                  sort: { key: shownNames[0]!, asc: true },
-                  columns: drillableRecords.nested!.columns.map((child) => ({
-                    ...child,
-                    show: shownNames.includes(child.name),
-                  })),
-                },
-              }
-            : column,
-          ),
-        },
-      );
+      await state.db.windows!.update(usersWindowFilter, {
+        columns: columns.map((column) =>
+          column === drillableRecords ?
+            {
+              ...drillableRecords,
+              nested: {
+                ...drillableRecords.nested!,
+                sort: { key: shownNames[0]!, asc: true },
+                columns: drillableRecords.nested!.columns.map((child) => ({
+                  ...child,
+                  show: shownNames.includes(child.name),
+                })),
+              },
+            }
+          : column,
+        ),
+      });
       const groupButton = alice.getByTestId("LinkedColumn.OpenRecords").filter({
         hasText: shownNames.includes("title") ? "Open one" : /^open$/,
       });
@@ -1186,30 +1289,32 @@ test("nested presentation keeps formats, drill-down, groups and entity overflow 
     }
 
     for (const limit of [0, 2, undefined]) {
-      await state.db.windows!.update!(
-        { table_name: "users" },
-        {
-          columns: columns.map((column) =>
-            column === drillableRecords ?
-              {
-                ...drillableRecords,
-                nested: { ...drillableRecords.nested!, limit },
-              }
-            : column,
-          ),
-        },
-      );
+      await state.db.windows!.update(usersWindowFilter, {
+        columns: columns.map((column) =>
+          column === drillableRecords ?
+            {
+              ...drillableRecords,
+              nested: { ...drillableRecords.nested!, limit },
+            }
+          : column,
+        ),
+      });
       await expect(entityButtons).toHaveCount(limit === 0 ? 0 : 2);
       await expect(alice.getByTestId("LinkedColumn.ViewAll")).toHaveCount(
         limit === 0 ? 1 : 0,
       );
     }
-    await state.db.windows!.update!({ table_name: "users" }, { columns });
+    await state.db.windows!.update(usersWindowFilter, { columns });
 
     const groupButtons = alice
       .getByTestId("LinkedColumn.OpenRecords")
       .filter({ hasText: /^[12]$/ });
     await expect(groupButtons).toHaveText(["1", "2"]);
+    await expect(
+      alice
+        .locator('[style*="background-color"]')
+        .filter({ hasText: /^open$/ }),
+    ).toHaveCSS("background-color", "rgb(219, 234, 254)");
     await groupButtons.nth(0).click();
     await expect(popup).toContainText("Closed one");
     await expect(popup).not.toContainText("Open one");
@@ -1226,21 +1331,18 @@ test("nested presentation keeps formats, drill-down, groups and entity overflow 
     await expect(alice.getByRole("cell").nth(rawIndex)).toHaveText("12");
 
     // The drillable layout must not inject a hidden identity into GROUP BY.
-    await state.db.windows!.update!(
-      { table_name: "users" },
-      {
-        columns: [
-          ...rootColumns,
-          {
-            ...grouped,
-            nested: {
-              ...grouped.nested!,
-              display: { type: "drillable-records" },
-            },
+    await state.db.windows!.update(usersWindowFilter, {
+      columns: [
+        ...rootColumns,
+        {
+          ...grouped,
+          nested: {
+            ...grouped.nested!,
+            display: { type: "drillable-records" },
           },
-        ],
-      },
-    );
+        },
+      ],
+    });
     const groupedRecords = alice.getByTestId("LinkedColumn.OpenRecords");
     await expect(groupedRecords).toHaveCount(2);
     const openGroup = groupedRecords.filter({ hasText: "open" });
@@ -1270,7 +1372,7 @@ test("nested presentation keeps formats, drill-down, groups and entity overflow 
       raw,
       chart,
     ];
-    await state.db.windows!.update!({ table_name: "users" }, { columns });
+    await state.db.windows!.update(usersWindowFilter, { columns });
     await expect(costButton).toHaveCount(0);
     await expect(alice.getByText("£3.00", { exact: true })).toBeVisible();
     // Drillable records open their row independently of value drill-down.
@@ -1294,12 +1396,9 @@ test("nested presentation keeps formats, drill-down, groups and entity overflow 
         })),
       },
     };
-    await state.db.windows!.update!(
-      { table_name: "users" },
-      {
-        columns: columns.map((c) => (c.name === "Raw" ? recordValues : c)),
-      },
-    );
+    await state.db.windows!.update(usersWindowFilter, {
+      columns: columns.map((c) => (c.name === "Raw" ? recordValues : c)),
+    });
     const rawCell = alice.getByRole("cell").nth(rawIndex);
     await expect(rawCell.getByTestId("LinkedColumn.OpenRecord")).toHaveCount(0);
     const valueButtons = rawCell.getByTestId("LinkedColumn.OpenRecords");
@@ -1324,25 +1423,22 @@ test("nested presentation keeps formats, drill-down, groups and entity overflow 
     await expect(popup).not.toContainText("Closed one");
     await expect(popup).not.toContainText("Bob closed");
     await page.getByTestId("Popup.close").last().click();
-    await state.db.windows!.update!(
-      { table_name: "users" },
-      {
-        columns: columns.map((c) =>
-          c.name === "Raw" ?
-            {
-              ...recordValues,
-              nested: {
-                ...recordValues.nested!,
-                columns: recordValues.nested!.columns.map((child) => ({
-                  ...child,
-                  format: { type: "URL" },
-                })),
-              },
-            }
-          : c,
-        ),
-      },
-    );
+    await state.db.windows!.update(usersWindowFilter, {
+      columns: columns.map((c) =>
+        c.name === "Raw" ?
+          {
+            ...recordValues,
+            nested: {
+              ...recordValues.nested!,
+              columns: recordValues.nested!.columns.map((child) => ({
+                ...child,
+                format: { type: "URL" },
+              })),
+            },
+          }
+        : c,
+      ),
+    });
     await expect(rawCell.getByRole("link")).toHaveText([
       "Open one",
       "Open two",
@@ -1402,9 +1498,7 @@ test("nested presentation keeps formats, drill-down, groups and entity overflow 
     await expect(costButton).toBeVisible();
     await expect
       .poll(async () => {
-        const window = await state.db.windows!.findOne!({
-          table_name: "users",
-        });
+        const window = await state.db.windows!.findOne(usersWindowFilter);
         return window!
           .columns!.find((c) => c.name === "Money")!
           .nested!.columns.find((c) => c.name === "Open")!.label;
@@ -1412,10 +1506,10 @@ test("nested presentation keeps formats, drill-down, groups and entity overflow 
       .toBe("Open balance");
     await page.getByTestId("Popup.close").last().click();
   } finally {
-    await state.db.windows!.update!(
-      { table_name: "users" },
-      { columns: originalColumns, filter: [] },
-    );
+    await state.db.windows!.update(usersWindowFilter, {
+      columns: originalColumns,
+      filter: [],
+    });
     state.disconnect();
   }
 });
@@ -1423,7 +1517,7 @@ test("nested presentation keeps formats, drill-down, groups and entity overflow 
 test("database migration preserves legacy nested display settings and drilldowns", async ({
   page,
 }) => {
-  const originalColumns = config.workspaces[0].windows[0].columns;
+  const originalColumns = configuredColumns;
   const legacyColumns = originalColumns.map((column) =>
     !column.nested ? column : (
       {
@@ -1443,7 +1537,7 @@ test("database migration preserves legacy nested display settings and drilldowns
   );
   const state = await deployment.connectStateAs("admin");
   try {
-    const stateConnection = await state.db.connections!.findOne!({
+    const stateConnection = await state.db.connections!.findOne({
       is_state_db: true,
     });
     const { onMigrate } = getTableConfigMigrations(stateConnection!);
@@ -1484,10 +1578,8 @@ test("database migration preserves legacy nested display settings and drilldowns
     await onMigrate({
       oldVersion: 6,
       db: { any: query, none: query },
-    } as Parameters<typeof onMigrate>[0]);
-    const migratedWindow = await state.db.windows!.findOne!({
-      table_name: "users",
-    });
+    } as unknown as Parameters<typeof onMigrate>[0]);
+    const migratedWindow = await state.db.windows!.findOne(usersWindowFilter);
     expect(migratedWindow!.columns).toEqual(
       legacyNestedColumns.map((column) => ({
         name: column.name,
@@ -1505,10 +1597,9 @@ test("database migration preserves legacy nested display settings and drilldowns
         },
       })),
     );
-    await state.db.windows!.update!(
-      { table_name: "users" },
-      { columns: originalColumns },
-    );
+    await state.db.windows!.update(usersWindowFilter, {
+      columns: originalColumns,
+    });
     await page
       .context()
       .addCookies([
@@ -1525,19 +1616,16 @@ test("database migration preserves legacy nested display settings and drilldowns
       .getByRole("row")
       .filter({ hasText: "Alice" });
     await expect(alice).toBeVisible();
-    await state.db.windows!.update!(
-      { table_name: "users" },
-      { columns: legacyColumns },
-    );
+    await state.db.windows!.update(usersWindowFilter, {
+      columns: legacyColumns,
+    });
     await onMigrate({
       oldVersion: 6,
       db: { any: query, none: query },
-    } as Parameters<typeof onMigrate>[0]);
+    } as unknown as Parameters<typeof onMigrate>[0]);
     await expect
       .poll(async () => {
-        const window = await state.db.windows!.findOne!({
-          table_name: "users",
-        });
+        const window = await state.db.windows!.findOne(usersWindowFilter);
         return window!
           .columns!.filter((c) => c.nested)
           .map((c) => ({
@@ -1557,10 +1645,9 @@ test("database migration preserves legacy nested display settings and drilldowns
     ]);
     await expect(alice.getByTestId("LinkedColumn.OpenRecord")).toHaveCount(4);
   } finally {
-    await state.db.windows!.update!(
-      { table_name: "users" },
-      { columns: originalColumns },
-    );
+    await state.db.windows!.update(usersWindowFilter, {
+      columns: originalColumns,
+    });
     state.disconnect();
   }
 });
@@ -1670,9 +1757,11 @@ test("LLM-generated nested columns preserve presentation, drill-down and styles"
     ],
   };
   const state = await deployment.connectStateAs("admin");
-  const connection = await state.db.connections!.findOne!({ name: config.id });
-  const model = await state.db.llm_models!.findOne!({ provider_id: "OpenAI" });
-  const prompt = await state.db.llm_prompts!.findOne!({});
+  const connection = await state.db.connections!.findOne({
+    db_name: deployment.projectDatabaseName,
+  });
+  const model = await state.db.llm_models!.findOne({ provider_id: "OpenAI" });
+  const prompt = await state.db.llm_prompts!.findOne({});
   // Seed directly: credential insertion through the API validates against the provider.
   const [credential] = await state.sql!(
     `INSERT INTO llm_credentials (provider_id, api_key, user_id)
@@ -1680,9 +1769,10 @@ test("LLM-generated nested columns preserve presentation, drill-down and styles"
     {},
     { returnType: "rows" },
   );
-  const chat = await state.db.llm_chats!.insert!(
+  const chat = await state.db.llm_chats!.insert(
     {
       name: workspace.name,
+      user_id: (await state.db.users!.findOne({ username: "admin" }))!.id,
       connection_id: connection!.id,
       model: model!.id,
       llm_prompt_id: prompt!.id,
@@ -1690,8 +1780,8 @@ test("LLM-generated nested columns preserve presentation, drill-down and styles"
     { returning: "*" },
   );
   try {
-    await state.db.llm_messages!.insert!({
-      chat_id: chat!.id,
+    await state.db.llm_messages!.insert({
+      chat_id: chat.id,
       llm_model_id: model!.id,
       total_tokens: 0,
       message: [
@@ -1703,8 +1793,8 @@ test("LLM-generated nested columns preserve presentation, drill-down and styles"
         },
       ],
     });
-    await state.db.llm_messages!.insert!({
-      chat_id: chat!.id,
+    await state.db.llm_messages!.insert({
+      chat_id: chat.id,
       total_tokens: 0,
       message: [
         {
@@ -1737,10 +1827,10 @@ test("LLM-generated nested columns preserve presentation, drill-down and styles"
     await expect(alice.locator(".ProgressBar")).toHaveText("£3.00");
     await expect(bob.locator(".ProgressBar")).toHaveText("£2.00");
     await expect(alice.getByTestId("LinkedColumn.OpenRecords")).toHaveCount(3);
-    const generatedWorkspace = await state.db.workspaces!.findOne!({
+    const generatedWorkspace = await state.db.workspaces!.findOne({
       name: workspace.name,
     });
-    const generatedWindow = await state.db.windows!.findOne!({
+    const generatedWindow = await state.db.windows!.findOne({
       table_name: "users",
       workspace_id: generatedWorkspace!.id,
     });
@@ -1792,9 +1882,628 @@ test("LLM-generated nested columns preserve presentation, drill-down and styles"
     await expect(popup).toContainText("Closed one");
     await expect(popup).not.toContainText("Bob closed");
   } finally {
-    await state.db.workspaces!.delete!({ name: workspace.name });
-    await state.db.llm_chats!.delete!({ id: chat!.id });
-    await state.db.llm_credentials!.delete!({ id: credential!.id });
+    await page.goto("about:blank");
+    await state.db.windows!.delete({
+      $existsJoined: { workspaces: { name: workspace.name } },
+    });
+    await state.db.workspaces!.delete({ name: workspace.name });
+    await state.db.llm_chats!.delete({ id: chat.id });
+    await state.db.llm_credentials!.delete({ id: credential!.id });
+    state.disconnect();
+  }
+});
+
+test("job control metadata derives bindings and enables start, cancel, retry and rerun buttons", async ({
+  page,
+}) => {
+  const state = await deployment.connectStateAs("admin");
+  const project = await deployment.connectProjectAs("admin");
+  const originalWindow = await state.db.windows!.findOne(usersWindowFilter);
+  const target = await project.db.job_targets!.insert!({}, { returning: "*" });
+  try {
+    expect(project.methodSchema!.startTargetJob!.jobControl).toMatchObject({
+      tableName: "action_jobs",
+      columnName: "job_id",
+      operation: "startOrRetry",
+      allowedStatuses: ["failed", "cancelled"],
+    });
+    await state.db.windows!.update(
+      { id: originalWindow!.id },
+      {
+        table_name: "job_targets",
+        options: {
+          refresh: {
+            type: "Realtime",
+            intervalSeconds: 10,
+            throttleSeconds: 0,
+          },
+        },
+        columns: [
+          { name: "id", show: true },
+          ...["startTargetJob", "cancelTargetJob", "rerunTargetJob"].map(
+            (methodName) => ({
+              name: methodName,
+              show: true,
+              format: {
+                type: "Action",
+                params: {
+                  methodName,
+                  defaultValue: {
+                    text: "Start target",
+                    disabledInfo: "",
+                    isLoading: false,
+                  },
+                },
+              },
+            }),
+          ),
+          { name: "action", show: true },
+          {
+            name: "grouped",
+            show: true,
+            format: {
+              type: "ActionColumns",
+              params: {
+                actions: [
+                  {
+                    methodName: "startTargetJob",
+                    defaultValue: {
+                      text: "Start target",
+                      disabledInfo: "",
+                      isLoading: false,
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        ],
+      },
+    );
+    await page
+      .context()
+      .addCookies([
+        { name: sidKeyName, value: sessionId, url: deployment.endpoint },
+      ]);
+    await page.goto(
+      `${deployment.dashboardUrl}?workspaceId=${originalWindow!.workspace_id}`,
+    );
+    const table = page.locator(`[data-box-id="${originalWindow!.id}"]`);
+    const button = (name: string) =>
+      table.getByRole("button", { name, exact: true });
+    const expectStartButtons = async (
+      name: string,
+      enabled: boolean,
+      loading = false,
+    ) => {
+      const buttons = button(name);
+      await expect(buttons).toHaveCount(3);
+      for (const control of await buttons.all()) {
+        if (enabled) await expect(control).toBeEnabled();
+        else await expect(control).toBeDisabled();
+        if (loading) await expect(control).toHaveAttribute("aria-busy", "true");
+        else await expect(control).not.toHaveAttribute("aria-busy", "true");
+      }
+    };
+    const runButton = async (name: string) => {
+      await button(name).first().click();
+      await page
+        .getByTestId("ActionPopup")
+        .getByRole("button", { name: "Run", exact: true })
+        .click();
+      await expect(
+        page.getByTestId("ActionPopup").getByLabel("Action result"),
+      ).toBeVisible();
+      await page.getByTestId("Popup.close").last().click();
+    };
+    const linkedJob = async () => {
+      const row = await project.db.job_targets!.findOne!({ id: target.id });
+      return project.db.action_jobs!.findOne!({ id: row!.job_id });
+    };
+    await expectStartButtons("Start target", true);
+    await expect(button("Cancel")).toBeDisabled();
+    await expect(button("Rerun")).toBeDisabled();
+    await runButton("Start target");
+    await expect.poll(async () => (await linkedJob())!.status).toBe("running");
+    await expectStartButtons("Working on target", false, true);
+    await expect(button("Cancel")).toBeEnabled();
+    await expect(button("Rerun")).toBeDisabled();
+    await runButton("Cancel");
+    await expect
+      .poll(async () => (await linkedJob())!.status)
+      .toBe("cancelled");
+    await expectStartButtons("Retry target", true);
+    await expect(button("Cancel")).toBeDisabled();
+    await expect(button("Rerun")).toBeDisabled();
+    await runButton("Retry target");
+    await expect.poll(async () => (await linkedJob())!.status).toBe("running");
+    await project.db.job_targets!.update!(
+      { id: target.id },
+      { blocked: false },
+    );
+    await expect
+      .poll(async () => (await linkedJob())!.status)
+      .toBe("succeeded");
+    await expectStartButtons("Complete", false);
+    await expect(button("Cancel")).toBeDisabled();
+    await expect(button("Rerun")).toBeEnabled();
+    const previousJobId = (await linkedJob())!.id;
+    await runButton("Rerun");
+    await expect
+      .poll(async () => (await linkedJob())!.status)
+      .toBe("succeeded");
+    expect((await linkedJob())!.id).not.toBe(previousJobId);
+    await project.db.job_targets!.update!(
+      { id: target.id },
+      { should_fail: true },
+    );
+    await runButton("Rerun");
+    await expect.poll(async () => (await linkedJob())!.status).toBe("failed");
+    await expectStartButtons("Retry target", true);
+    await expect(button("Cancel")).toBeDisabled();
+    await expect(button("Rerun")).toBeDisabled();
+    await project.db.job_targets!.update!(
+      { id: target.id },
+      { should_fail: false },
+    );
+    // The stored action column invokes the same control without an input popup.
+    await button("Retry target").nth(1).click();
+    await expect(page.getByTestId("ActionPopup")).toHaveCount(0);
+    await expect
+      .poll(async () => (await linkedJob())!.status)
+      .toBe("succeeded");
+    await expectStartButtons("Complete", false);
+    await table.getByTestId("dashboard.window.viewEditRow").click();
+    const rowCard = page.getByTestId("SmartForm").last();
+    await expect(
+      rowCard.getByRole("button", { name: "Complete", exact: true }),
+    ).toBeDisabled();
+    await expect(
+      rowCard.getByRole("button", { name: "Cancel", exact: true }),
+    ).toBeDisabled();
+    await expect(
+      rowCard.getByRole("button", { name: "Rerun", exact: true }),
+    ).toBeEnabled();
+  } finally {
+    await project.db.job_targets!.update!(
+      { id: target.id },
+      { blocked: false },
+    );
+    await state.db.windows!.update(
+      { id: originalWindow!.id },
+      {
+        table_name: originalWindow!.table_name,
+        columns: originalWindow!.columns,
+        options: originalWindow!.options,
+      },
+    );
+    project.disconnect();
+    state.disconnect();
+  }
+});
+
+test("function metadata shares action styling, conditions and popup defaults across table views", async ({
+  page,
+}) => {
+  const state = await deployment.connectStateAs("admin");
+  const project = await deployment.connectProjectAs("admin");
+  const originalWindow = await state.db.windows!.findOne(usersWindowFilter);
+  const originalAlice = await project.db.users!.findOne!({ name: "Alice" });
+  try {
+    expect(project.methodSchema!.styledUser!.function_options).toEqual(
+      config.connection.function_options.styledUser,
+    );
+    const functionColumn = {
+      name: "shared_action",
+      show: true,
+      format: { type: "Action", params: { methodName: "styledUser" } },
+    } as const;
+    await state.db.windows!.update(
+      { id: originalWindow!.id },
+      {
+        columns: [
+          { name: "name", show: true },
+          { name: "action", show: false },
+          { name: "review_action", show: false },
+          functionColumn,
+          {
+            name: "overridden",
+            show: true,
+            format: {
+              type: "ActionColumns",
+              params: {
+                actions: [
+                  {
+                    methodName: "styledUser",
+                    defaultValue: {
+                      text: "Workspace override",
+                      variant: "filled",
+                    },
+                  },
+                  {
+                    methodName: "styledUser",
+                    joinPath: [{ table: "tasks", on: [{ id: "user_id" }] }],
+                    conditions: [
+                      {
+                        filter: {
+                          $and: [
+                            { fieldName: "status", type: "=", value: "open" },
+                          ],
+                        },
+                        value: { variant: "faded" },
+                      },
+                    ],
+                    defaultValue: { text: "Linked override" },
+                  },
+                  { columnName: "review_action" },
+                ],
+              },
+            },
+          },
+          {
+            name: "manager_actions",
+            show: true,
+            nested: {
+              path: [{ table: "users", on: [{ manager_id: "id" }] }],
+              display: { type: "values", labels: "none" },
+              columns: [{ name: "name", show: true }, functionColumn],
+            },
+          },
+        ],
+      },
+    );
+    await project.db.users!.update!(
+      { name: "Alice" },
+      {
+        review_action: { methodName: "styledEmail", text: "Stored override" },
+      },
+    );
+    await page
+      .context()
+      .addCookies([
+        { name: sidKeyName, value: sessionId, url: deployment.endpoint },
+      ]);
+    await page.goto(
+      `${deployment.dashboardUrl}?workspaceId=${originalWindow!.workspace_id}`,
+    );
+    const users = page.locator('[data-table-name="users"]');
+    const rows = users.getByTestId("TableBody").getByRole("row");
+    const alice = rows.filter({ hasText: "Alice" });
+    const sharedButton = alice.getByRole("button", {
+      name: "Shared Alice",
+      exact: true,
+    });
+    await expect(sharedButton).toHaveClass(/btn-outline/);
+    await expect(sharedButton).toBeEnabled();
+    await expect(sharedButton).not.toHaveAttribute("aria-busy", "true");
+    await expect(sharedButton).toHaveClass(/btn-color-green/);
+    await expect(sharedButton.locator("svg")).toHaveCount(1);
+    const overrideButton = alice.getByRole("button", {
+      name: "Workspace override",
+      exact: true,
+    });
+    await expect(overrideButton).toHaveClass(/btn-filled/);
+    await expect(overrideButton).toHaveClass(/btn-color-green/);
+    const linkedOverride = alice.getByRole("button", {
+      name: "Linked override",
+      exact: true,
+    });
+    await expect(linkedOverride).toHaveClass(/btn-faded/);
+    await expect(linkedOverride).toHaveClass(/btn-color-green/);
+    const storedButton = alice.getByRole("button", {
+      name: "Stored override",
+      exact: true,
+    });
+    await expect(storedButton).toHaveClass(/btn-outline/);
+    await expect(storedButton).toHaveClass(/btn-color-indigo/);
+    const defaultButton = rows
+      .filter({ hasText: "Bob", hasNotText: "Alice" })
+      .getByRole("button", { name: "Shared action", exact: true });
+    await expect(defaultButton).toHaveClass(/btn-color-warn/);
+    await expect(defaultButton).toBeDisabled();
+    await expect(defaultButton).toHaveAttribute("aria-busy", "true");
+
+    await sharedButton.click();
+    const form = page.getByTestId("ActionPopup");
+    await expect(form.getByLabel("note", { exact: true })).toHaveValue(
+      "Shared note",
+    );
+    await expect(form.getByLabel("amount", { exact: true })).toHaveValue("0");
+    await form.getByRole("button", { name: "Run", exact: true }).click();
+    await expect(form.getByTestId("TableBody")).toContainText("Alice");
+    await expect(
+      form.getByRole("button", { name: "Stored override", exact: true }),
+    ).toHaveClass(/btn-color-indigo/);
+    await page.getByTestId("Popup.close").last().click();
+
+    await expect(
+      alice.getByRole("button", { name: "Shared action", exact: true }),
+    ).toHaveClass(/btn-color-warn/);
+    await alice.getByTestId("dashboard.window.viewEditRow").click();
+    const rowCard = page.getByTestId("SmartForm").last();
+    await expect(
+      rowCard.getByRole("button", { name: "Shared Alice", exact: true }),
+    ).toHaveClass(/btn-color-green/);
+    await expect(
+      rowCard.getByRole("button", { name: "Shared email", exact: true }),
+    ).toHaveClass(/btn-color-indigo/);
+  } finally {
+    await state.db.windows!.update(
+      { id: originalWindow!.id },
+      { columns: originalWindow!.columns },
+    );
+    await project.db.users!.update!(
+      { name: "Alice" },
+      { review_action: originalAlice?.review_action ?? null },
+    );
+    project.disconnect();
+    state.disconnect();
+  }
+});
+
+test("action popups validate inputs, keep the selected record fixed and show execution feedback", async ({
+  page,
+}) => {
+  const state = await deployment.connectStateAs("admin");
+  const originalWindow = await state.db.windows!.findOne(usersWindowFilter);
+  try {
+    await state.db.windows!.update(
+      { id: originalWindow!.id },
+      {
+        columns: [
+          { name: "name", show: true },
+          { name: "email", show: true },
+          {
+            name: "review",
+            show: true,
+            format: {
+              type: "Action",
+              params: {
+                methodName: "reviewUserWithNote",
+                defaultValue: { text: "Review user" },
+              },
+            },
+          },
+        ],
+      },
+    );
+    await page
+      .context()
+      .addCookies([
+        { name: sidKeyName, value: sessionId, url: deployment.endpoint },
+      ]);
+    await page.goto(
+      `${deployment.dashboardUrl}?workspaceId=${originalWindow!.workspace_id}`,
+    );
+    const review = page
+      .locator('[data-table-name="users"]')
+      .getByTestId("TableBody")
+      .getByRole("row")
+      .filter({ hasText: "Alice" })
+      .getByRole("button", { name: "Review user", exact: true });
+    await review.click();
+    const popup = page.getByTestId("ActionPopup");
+    await expect(popup).toBeVisible();
+    expect((await popup.boundingBox())!.width).toBeLessThan(650);
+    await expect(popup).toHaveAccessibleName("Review user");
+    await expect(popup.getByTestId("Popup.toggleFullscreen")).not.toHaveClass(
+      /btn-color-action/,
+    );
+    await expect(
+      popup.getByRole("region", { name: "Selected record" }),
+    ).toContainText("Alice · alice@example.com");
+    await expect(popup.getByLabel("user", { exact: true })).toHaveCount(0);
+    await expect(
+      popup.getByText("Collapse input", { exact: true }),
+    ).toHaveCount(0);
+    await expect(popup.getByText("Show results", { exact: true })).toHaveCount(
+      0,
+    );
+    const run = popup
+      .getByTestId("Popup.footer")
+      .getByRole("button", { name: "Run", exact: true });
+    const note = popup.getByLabel("note", { exact: true });
+    const runWithNote = async (value: string) => {
+      await note.fill(value);
+      await expect(run).not.toHaveAttribute("aria-disabled", "true");
+      await expect(popup.getByRole("status")).toHaveCount(0);
+      await expect(popup.getByTestId("ErrorComponent")).toHaveCount(0);
+      await run.click();
+    };
+    await run.click();
+    await expect(popup.getByText("Required", { exact: true })).toBeVisible();
+    await expect(popup.getByRole("status")).toHaveCount(0);
+    await runWithNote("Review note");
+    await expect(popup.getByRole("status")).toHaveText("Action completed");
+    await expect(popup.getByLabel("Action result")).toContainText(
+      '"note": "Review note"',
+    );
+    await expect(popup.getByLabel("Action result")).toContainText(
+      "alice@example.com",
+    );
+    await runWithNote("error");
+    await expect(popup.getByTestId("ErrorComponent")).toContainText(
+      "Review failed",
+    );
+    await expect(popup.getByLabel("Action result")).toHaveCount(0);
+    await runWithNote("false");
+    await expect(popup.getByRole("status")).toHaveText("Action completed");
+    await expect(popup.getByLabel("Action result")).toHaveText("false");
+    await runWithNote("void");
+    await expect(popup.getByRole("status")).toHaveText("Action completed");
+    await expect(popup.getByLabel("Action result")).toHaveCount(0);
+    await popup
+      .getByTestId("Popup.footer")
+      .getByRole("button", { name: "Close", exact: true })
+      .click();
+    await review.click();
+    await expect(note).toHaveValue("");
+    await expect(popup.getByRole("status")).toHaveCount(0);
+    await popup.getByRole("button", { name: "Cancel", exact: true }).click();
+    await expect(popup).toHaveCount(0);
+  } finally {
+    await state.db.windows!.update(
+      { id: originalWindow!.id },
+      { columns: originalWindow!.columns },
+    );
+    state.disconnect();
+  }
+});
+
+test("action columns omit buttons already shown by visible foreign keys", async ({
+  page,
+}) => {
+  const state = await deployment.connectStateAs("admin");
+  const connection = await state.db.connections!.findOne({ name: config.id });
+  const originalWindow = await state.db.windows!.findOne(usersWindowFilter);
+  const sourcePath = `${configPath}/index.js`;
+  const originalSource = readFileSync(sourcePath, "utf8");
+  const sync = () =>
+    state.methods!.syncSchema!({ connectionId: connection!.id, configPath });
+  const columns: ColumnConfig[] = [
+    { name: "id", show: false },
+    { name: "name", show: true },
+    { name: "email", show: false },
+    { name: "manager_id", show: true },
+    { name: "action", show: false },
+    { name: "review_action", show: false },
+    {
+      name: "actions",
+      label: "Actions",
+      show: true,
+      format: {
+        type: "ActionColumns",
+        params: {
+          actions: [
+            { methodName: "inspectUser", argName: "user" },
+            {
+              methodName: "inspectEmail",
+              conditions: [
+                {
+                  filter: {
+                    $and: [{ fieldName: "name", type: "=", value: "Alice" }],
+                  },
+                  value: { text: "Inspect Alice email" },
+                },
+              ],
+            },
+            {
+              methodName: "ambiguousUser",
+              argName: "email",
+              defaultValue: { text: "Inspect by email" },
+            },
+          ],
+        },
+      },
+    },
+    {
+      name: "single_action",
+      label: "Single action",
+      show: true,
+      format: { type: "Action", params: { methodName: "inspectUser" } },
+    },
+  ];
+  try {
+    writeFileSync(
+      sourcePath,
+      originalSource +
+        `
+module.exports.connection.table_options.users.columns = ${JSON.stringify({
+          manager_id: {
+            renderAs: {
+              type: "ActionColumns",
+              params: {
+                actions: [
+                  { methodName: "inspectUser" },
+                  {
+                    methodName: "ambiguousUser",
+                    argName: "user",
+                    defaultValue: { text: "Inspect by row" },
+                  },
+                ],
+              },
+            },
+          },
+        })};`,
+    );
+    await sync();
+    await state.db.windows!.update({ id: originalWindow!.id }, { columns });
+    await page
+      .context()
+      .addCookies([
+        { name: sidKeyName, value: sessionId, url: deployment.endpoint },
+      ]);
+    await page.goto(
+      `${deployment.dashboardUrl}?workspaceId=${originalWindow!.workspace_id}`,
+    );
+    const users = page.locator('[data-table-name="users"]');
+    const alice = users
+      .getByTestId("TableBody")
+      .getByRole("row")
+      .filter({ hasText: "Alice" });
+    const inspectUser = alice.getByRole("button", {
+      name: "inspectUser",
+      exact: true,
+    });
+    await expect(inspectUser).toHaveCount(1);
+    await expect(
+      alice.getByRole("button", { name: "Inspect by row", exact: true }),
+    ).toBeVisible();
+    await expect(
+      alice.getByRole("button", { name: "Inspect by email", exact: true }),
+    ).toBeVisible();
+    await expect(
+      users.getByRole("columnheader").filter({ hasText: "Single action" }),
+    ).toHaveCount(0);
+    const inspectEmail = alice.getByRole("button", {
+      name: "Inspect Alice email",
+      exact: true,
+    });
+    await expect(inspectEmail).toBeVisible();
+    await inspectEmail.click();
+    const form = page.getByTestId("ActionPopup");
+    await form.getByRole("button", { name: "Run", exact: true }).click();
+    await expect(form.getByLabel("Action result")).toContainText(
+      "alice@example.com",
+    );
+    await page.getByTestId("Popup.close").last().click();
+
+    await state.db.windows!.update(
+      { id: originalWindow!.id },
+      {
+        columns: columns.map((column) =>
+          column.name === "manager_id" ? { ...column, show: false } : column,
+        ),
+      },
+    );
+    await expect(inspectUser).toHaveCount(2);
+    await expect(
+      alice.getByRole("button", { name: "Inspect by row", exact: true }),
+    ).toHaveCount(0);
+    await expect(inspectEmail).toBeVisible();
+
+    // An explicit workspace format overrides the FK's default action renderer.
+    await state.db.windows!.update(
+      { id: originalWindow!.id },
+      {
+        columns: columns.map((column) =>
+          column.name === "manager_id" ?
+            { ...column, format: { type: "NONE" } }
+          : column,
+        ),
+      },
+    );
+    await expect(inspectUser).toHaveCount(2);
+    await expect(
+      users.getByRole("columnheader").filter({ hasText: "Manager Id" }),
+    ).toBeVisible();
+  } finally {
+    writeFileSync(sourcePath, originalSource);
+    await sync();
+    await state.db.windows!.update(
+      { id: originalWindow!.id },
+      { columns: originalWindow!.columns },
+    );
     state.disconnect();
   }
 });
@@ -1804,9 +2513,7 @@ test("stored action columns run, stop, retry and show live Markdown details and 
 }) => {
   const state = await deployment.connectStateAs("admin");
   const project = await deployment.connectProjectAs("admin");
-  const originalWindow = await state.db.windows!.findOne!({
-    table_name: "users",
-  });
+  const originalWindow = await state.db.windows!.findOne(usersWindowFilter);
   const chatIds: number[] = [];
   const [credential] = await state.sql!(
     `INSERT INTO llm_credentials (provider_id, api_key, user_id)
@@ -1815,15 +2522,17 @@ test("stored action columns run, stop, retry and show live Markdown details and 
     { returnType: "rows" },
   );
   try {
+    expect(await project.db.users!.findOne!({ name: "Alice" })).toMatchObject({
+      action: { methodName: "startUserAction", text: "Start", icon: "Play" },
+    });
     await project.db.users!.update!(
       { name: "Alice" },
       {
-        action: { text: "Start", icon: "Play" },
         review_action: { text: "Review", disabledInfo: "Review pending" },
       },
     );
     await project.db.users!.update!({ name: "Bob" }, { action: null });
-    await state.db.windows!.update!(
+    await state.db.windows!.update(
       { id: originalWindow!.id },
       {
         columns: [
@@ -1845,7 +2554,6 @@ test("stored action columns run, stop, retry and show live Markdown details and 
                   { columnName: "review_action" },
                   {
                     methodName: "inspectEmail",
-                    argName: "email",
                     conditions: [
                       {
                         filter: {
@@ -1893,6 +2601,17 @@ test("stored action columns run, stop, retry and show live Markdown details and 
     ).toHaveCount(0);
     const actions = alice.getByRole("group", { name: "Actions", exact: true });
     await expect(actions).toHaveCount(1);
+    const users = page.locator('[data-table-name="users"]');
+    await users.getByTestId("dashboard.window.menu").click();
+    await page.getByText("Columns", { exact: true }).click();
+    const columnList = page.getByTestId("SearchList.List");
+    await expect(columnList.locator('[data-key="actions"]')).toContainText(
+      "3 action buttons · 2 stored, 1 function",
+    );
+    await expect(columnList.locator('[data-key="action"]')).toContainText(
+      "Stored action · runs immediately",
+    );
+    await page.getByTestId("Popup.close").last().click();
     await expect(
       actions.getByRole("button", { name: "Review", exact: true }),
     ).toHaveAttribute("aria-disabled", "true");
@@ -1903,11 +2622,11 @@ test("stored action columns run, stop, retry and show live Markdown details and 
       .getByRole("button", { name: "Inspect email", exact: true })
       .click();
     await page
-      .getByTestId("W_MethodControls")
+      .getByTestId("ActionPopup")
       .getByRole("button", { name: "Run", exact: true })
       .click();
     await expect(
-      page.getByTestId("W_MethodControls").locator(".monaco-editor"),
+      page.getByTestId("ActionPopup").getByLabel("Action result"),
     ).toContainText("alice@example.com");
     await page.getByTestId("Popup.close").last().click();
     await project.db.users!.update!({ name: "Alice" }, { review_action: null });
@@ -1919,7 +2638,7 @@ test("stored action columns run, stop, retry and show live Markdown details and 
       actions.getByRole("button", { name: "Inspect email", exact: true }),
     ).toBeVisible();
     await alice.getByRole("button", { name: "Start", exact: true }).click();
-    await expect(page.getByTestId("W_MethodControls")).toHaveCount(0);
+    await expect(page.getByTestId("ActionPopup")).toHaveCount(0);
     const stop = alice.getByRole("button", { name: "Stop", exact: true });
     await expect(stop).toHaveAttribute("aria-busy", "true");
     await expect(stop).not.toHaveAttribute("aria-disabled", "true");
@@ -1937,10 +2656,10 @@ test("stored action columns run, stop, retry and show live Markdown details and 
     });
     await expect(relatedChats).toContainText("No related agent chats");
     const record = await project.db.users!.findOne!({ name: "Alice" });
-    const model = await state.db.llm_models!.findOne!({
+    const model = await state.db.llm_models!.findOne({
       provider_id: "OpenAI",
     });
-    const connection = await state.db.connections!.findOne!({
+    const connection = await state.db.connections!.findOne({
       name: config.id,
     });
     for (const [name, tableName, rowParts, connectionId] of [
@@ -1965,9 +2684,10 @@ test("stored action columns run, stop, retry and show live Markdown details and 
         rowParts: [...rowParts],
         ...(name === "Alice action" ? { functionName: "startUserAction" } : {}),
       };
-      const chat = await state.db.llm_chats!.insert!(
+      const chat = await state.db.llm_chats!.insert(
         {
           name,
+          user_id: (await state.db.users!.findOne({ username: "admin" }))!.id,
           connection_id: connectionId,
           model: model!.id,
           agent_info: {
@@ -1979,10 +2699,10 @@ test("stored action columns run, stop, retry and show live Markdown details and 
         },
         { returning: "*" },
       );
-      expect(chat!.agent_info).toMatchObject({ relatedRecord });
-      chatIds.push(chat!.id);
-      await state.db.llm_messages!.insert!({
-        chat_id: chat!.id,
+      expect(chat.agent_info).toMatchObject({ relatedRecord });
+      chatIds.push(chat.id);
+      await state.db.llm_messages!.insert({
+        chat_id: chat.id,
         llm_model_id: model!.id,
         total_tokens: 0,
         message: [{ type: "text", text: `${name} activity` }],
@@ -2058,7 +2778,7 @@ test("stored action columns run, stop, retry and show live Markdown details and 
       hint: expect.stringContaining("isLoading"),
     });
   } finally {
-    await state.db.windows!.update!(
+    await state.db.windows!.update(
       { id: originalWindow!.id },
       {
         columns: originalWindow!.columns,
@@ -2066,8 +2786,8 @@ test("stored action columns run, stop, retry and show live Markdown details and 
       },
     );
     await project.db.users!.update!({}, { action: null, review_action: null });
-    await state.db.llm_chats!.delete!({ id: { $in: chatIds } });
-    await state.db.llm_credentials!.delete!({ id: credential!.id });
+    await state.db.llm_chats!.delete({ id: { $in: chatIds } });
+    await state.db.llm_credentials!.delete({ id: credential!.id });
     state.disconnect();
     project.disconnect();
   }
@@ -2078,22 +2798,42 @@ test("action columns hide functions whose lookup filters do not match the row", 
 }) => {
   const state = await deployment.connectStateAs("admin");
   const project = await deployment.connectProjectAs("admin");
-  const originalWindow = await state.db.windows!.findOne!({
-    table_name: "users",
-  });
+  const originalWindow = await state.db.windows!.findOne(usersWindowFilter);
   try {
-    expect(project.methodSchema.filteredUser!.input).toMatchObject({
-      user: { filter: { $and: [
-        { email: { $ilike: "alice@%" } },
-        { name: { $ne: { $prostglesContext: { objectName: "user", objectPropertyName: "id" } } } },
-      ] } },
+    expect(project.methodSchema!.filteredUser!.input).toMatchObject({
+      user: {
+        filter: {
+          $and: [
+            { email: { $ilike: "alice@%" } },
+            {
+              name: {
+                $ne: {
+                  $prostglesContext: {
+                    objectName: "user",
+                    objectPropertyName: "id",
+                  },
+                },
+              },
+            },
+          ],
+        },
+      },
     });
-    const actionRows = await project.db.users!.find!({}, {
-      select: { name: 1, [ROW_ACTIONS_COLUMN]: 1 },
-    });
-    expect(actionRows.find((row) => row.name === "Alice")?.[ROW_ACTIONS_COLUMN]).toContain("filteredUser");
-    expect(actionRows.find((row) => row.name === "Bob")?.[ROW_ACTIONS_COLUMN]).not.toContain("filteredUser");
-    await expect(project.methods.filteredUser!({ user: { name: "Bob" } })).rejects.toBeDefined();
+    const actionRows = await project.db.users!.find!(
+      {},
+      {
+        select: { name: 1, [ROW_ACTIONS_COLUMN]: 1 },
+      },
+    );
+    expect(
+      actionRows.find((row) => row.name === "Alice")?.[ROW_ACTIONS_COLUMN],
+    ).toContain("filteredUser");
+    expect(
+      actionRows.find((row) => row.name === "Bob")?.[ROW_ACTIONS_COLUMN],
+    ).not.toContain("filteredUser");
+    await expect(
+      project.methods!.filteredUser!({ user: { name: "Bob" } }),
+    ).rejects.toBeDefined();
     await project.db.users!.update!(
       {},
       {
@@ -2105,7 +2845,7 @@ test("action columns hide functions whose lookup filters do not match the row", 
         review_action: { text: "Grouped stored", methodName: "filteredUser" },
       },
     );
-    await state.db.windows!.update!(
+    await state.db.windows!.update(
       { id: originalWindow!.id },
       {
         columns: [
@@ -2175,11 +2915,9 @@ test("action columns hide functions whose lookup filters do not match the row", 
       .addCookies([
         { name: sidKeyName, value: sessionId, url: deployment.endpoint },
       ]);
-    await page.goto(deployment.endpoint);
-    await page
-      .locator(`[data-key=${JSON.stringify(config.id)}]`)
-      .getByTestId("Connection.openConnection")
-      .click({ timeout: 30_000 });
+    await page.goto(
+      `${deployment.dashboardUrl}?workspaceId=${originalWindow!.workspace_id}`,
+    );
     const rows = page
       .locator('[data-table-name="users"]')
       .getByTestId("TableBody")
@@ -2215,11 +2953,11 @@ test("action columns hide functions whose lookup filters do not match the row", 
       .getByRole("button", { name: "Value lookup", exact: true })
       .click();
     await page
-      .getByTestId("W_MethodControls")
+      .getByTestId("ActionPopup")
       .getByRole("button", { name: "Run", exact: true })
       .click();
     await expect(
-      page.getByTestId("W_MethodControls").locator(".monaco-editor"),
+      page.getByTestId("ActionPopup").getByLabel("Action result"),
     ).toContainText("alice@example.com");
     await page.getByTestId("Popup.close").last().click();
 
@@ -2275,7 +3013,7 @@ test("action columns hide functions whose lookup filters do not match the row", 
       alice.getByRole("button", { name: "Value lookup", exact: true }),
     ).toBeVisible();
   } finally {
-    await state.db.windows!.update!(
+    await state.db.windows!.update(
       { id: originalWindow!.id },
       {
         columns: originalWindow!.columns,
@@ -2300,24 +3038,20 @@ test("action columns configure and open row and value lookup functions", async (
   page,
 }) => {
   const state = await deployment.connectStateAs("admin");
-  const originalColumns = config.workspaces[0].windows[0].columns;
+  const originalWindow = await state.db.windows!.findOne(usersWindowFilter);
+  const originalColumns = configuredColumns;
   try {
-    await state.db.windows!.update!(
-      { table_name: "users" },
-      {
-        columns: originalColumns.filter((c) => !c.nested),
-      },
-    );
+    await state.db.windows!.update(usersWindowFilter, {
+      columns: originalColumns.filter((c) => !c.nested),
+    });
     await page
       .context()
       .addCookies([
         { name: sidKeyName, value: sessionId, url: deployment.endpoint },
       ]);
-    await page.goto(deployment.endpoint);
-    await page
-      .locator(`[data-key=${JSON.stringify(config.id)}]`)
-      .getByTestId("Connection.openConnection")
-      .click({ timeout: 30_000 });
+    await page.goto(
+      `${deployment.dashboardUrl}?workspaceId=${originalWindow!.workspace_id}`,
+    );
     const users = page.locator('[data-table-name="users"]');
     const alice = users
       .getByTestId("TableBody")
@@ -2366,30 +3100,59 @@ test("action columns configure and open row and value lookup functions", async (
       await expect(button).toHaveClass(/btn-outline/);
       await expect(button.locator("svg")).toHaveCount(1);
       await button.click();
-      const form = page.getByTestId("W_MethodControls");
+      const form = page.getByTestId("ActionPopup");
       await expect(form).toBeVisible();
       await form.getByRole("button", { name: "Run", exact: true }).click();
-      await expect(form.locator(".monaco-editor")).toContainText(
+      await expect(form.getByLabel("Action result")).toContainText(
         "alice@example.com",
       );
       if (argName === "user")
-        await expect(form.locator(".monaco-editor")).toContainText("Alice");
+        await expect(form.getByLabel("Action result")).toContainText("Alice");
       await page.getByTestId("Popup.close").last().click();
     }
 
+    const configuredWindow = await state.db.windows!.findOne(usersWindowFilter);
+    await state.db.windows!.update(
+      { id: configuredWindow!.id },
+      {
+        columns: configuredWindow!.columns!.map((column: ColumnConfig) =>
+          column.format?.type === "Action" ?
+            {
+              ...column,
+              format: {
+                type: "Action",
+                params: {
+                  methodName: column.format.params.methodName,
+                  defaultValue: column.format.params.defaultValue,
+                },
+              },
+            }
+          : column,
+        ),
+      },
+    );
     await page.reload();
     await expect(
       alice.getByRole("button", { name: "Inspect user", exact: true }),
     ).toBeVisible();
+    await users.getByTestId("dashboard.window.menu").click();
+    await page.getByText("Columns", { exact: true }).click();
+    await expect(
+      page
+        .getByTestId("SearchList.List")
+        .locator("[data-key]")
+        .filter({ hasText: "Inspect email" }),
+    ).toContainText("Function button · opens a form");
+    await page.getByTestId("Popup.close").last().click();
     await alice
       .getByRole("button", { name: "Inspect email", exact: true })
       .click();
     await page
-      .getByTestId("W_MethodControls")
+      .getByTestId("ActionPopup")
       .getByRole("button", { name: "Run", exact: true })
       .click();
     await expect(
-      page.getByTestId("W_MethodControls").locator(".monaco-editor"),
+      page.getByTestId("ActionPopup").getByLabel("Action result"),
     ).toContainText("alice@example.com");
     await page.getByTestId("Popup.close").last().click();
 
@@ -2412,7 +3175,7 @@ test("action columns configure and open row and value lookup functions", async (
     // Tables without a relevant lookup still expose the disabled menu item.
     const windowId = await users.getAttribute("data-box-id");
     expect(windowId).toBeTruthy();
-    await state.db.windows!.update!(
+    await state.db.windows!.update(
       { id: windowId! },
       { table_name: "tasks", columns: null },
     );
@@ -2430,19 +3193,170 @@ test("action columns configure and open row and value lookup functions", async (
       "No functions have a RowLookup or ValueLookup for this table",
     );
     await expect(actionItem).toHaveAttribute("aria-disabled", "true");
-    await state.db.windows!.update!(
-      { id: windowId! },
-      { table_name: "users" },
-    );
+    await state.db.windows!.update({ id: windowId! }, { table_name: "users" });
   } finally {
-    await state.db.windows!.update!(
-      { table_name: "users" },
-      { columns: originalColumns },
-    );
-    await state.db.windows!.update!(
+    await state.db.windows!.update(usersWindowFilter, {
+      columns: originalColumns,
+    });
+    await state.db.windows!.update(
       { table_name: "tasks" },
       { table_name: "users", columns: originalColumns },
     );
+    state.disconnect();
+  }
+});
+
+test("CLI action columns validate bindings and conditions before publishing", async () => {
+  const state = await deployment.connectStateAs("admin");
+  const sourcePath = `${configPath}/index.js`;
+  const originalSource = readFileSync(sourcePath, "utf8");
+  const connection = await state.db.connections!.findOne({ name: config.id });
+  const invalidActions = [
+    {
+      params: { methodName: "missingAction" },
+      message: 'Action function "missingAction" is not available',
+    },
+    {
+      params: { methodName: "inspectUser", argName: "missing" },
+      message: 'named "missing"',
+    },
+    {
+      params: { methodName: "unrelated" },
+      message: "needs a RowLookup or ValueLookup",
+    },
+    { params: { methodName: "ambiguousUser" }, message: "specify argName" },
+    {
+      params: {
+        methodName: "inspectUser",
+        conditions: [{ filter: { name: "Alice" }, value: {} }],
+      },
+      message: "validation_action",
+    },
+    {
+      params: {
+        methodName: "inspectUser",
+        conditions: [{ filter: { $and: ["Alice"] }, value: {} }],
+      },
+      message: "validation_action",
+    },
+    {
+      params: {
+        methodName: "inspectUser",
+        conditions: [
+          {
+            filter: { $and: [{ fieldName: "missing", type: "=", value: 1 }] },
+            value: {},
+          },
+        ],
+      },
+      message: "invalid action conditions",
+    },
+  ];
+  const sync = () =>
+    state.methods!.syncSchema!({ connectionId: connection!.id, configPath });
+  try {
+    for (const { params, message } of invalidActions) {
+      writeFileSync(
+        sourcePath,
+        originalSource +
+          `
+module.exports.workspaces[0].windows[0].columns.push(${JSON.stringify({
+            name: "validation_action",
+            show: true,
+            format: { type: "Action", params },
+          })});`,
+      );
+      await expect(sync()).rejects.toMatchObject({
+        error: expect.stringContaining(message),
+      });
+    }
+    for (const functionOptions of [
+      { missingFunction: { action: { defaultValue: { text: "Missing" } } } },
+      { inspectUser: { action: { defaultValue: { color: "invalid" } } } },
+      { inspectUser: { action: { job: { runningText: "Running" } } } },
+      {
+        inspectUser: {
+          action: {
+            conditions: [
+              {
+                filter: {
+                  $and: [{ fieldName: "missing", type: "=", value: 1 }],
+                },
+                value: {},
+              },
+            ],
+          },
+        },
+      },
+    ]) {
+      writeFileSync(
+        sourcePath,
+        originalSource +
+          `\nmodule.exports.connection.function_options = ${JSON.stringify(functionOptions)};`,
+      );
+      await expect(sync()).rejects.toMatchObject({
+        error: expect.stringContaining("function_options"),
+      });
+    }
+    writeFileSync(
+      sourcePath,
+      originalSource +
+        `
+module.exports.tableConfig.users.columns.review_action = ${JSON.stringify(createActionColumn("reviewUserWithNote", { text: "Review" }))};`,
+    );
+    await expect(sync()).rejects.toMatchObject({
+      error: expect.stringContaining("needs additional inputs: note"),
+    });
+    writeFileSync(
+      sourcePath,
+      originalSource +
+        `
+module.exports.workspaces[0].windows[0].columns.push(${JSON.stringify({
+          name: "validation_actions",
+          show: true,
+          format: {
+            type: "ActionColumns",
+            params: {
+              actions: [
+                {
+                  methodName: "inspectUser",
+                  defaultValue: { text: "Inspect" },
+                },
+                {
+                  methodName: "ambiguousUser",
+                  argName: "user",
+                  defaultValue: { text: "Inspect user" },
+                },
+                {
+                  methodName: "reviewUserWithNote",
+                  defaultValue: { text: "Review" },
+                  conditions: [
+                    {
+                      filter: {
+                        $or: [
+                          {
+                            $and: [
+                              { fieldName: "name", type: "=", value: "Alice" },
+                            ],
+                          },
+                        ],
+                      },
+                      value: { text: "Review Alice" },
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        })});`,
+    );
+    await sync();
+    const project = await deployment.connectProjectAs("admin");
+    expect(project.methods!.reviewUserWithNote).toBeDefined();
+    project.disconnect();
+  } finally {
+    writeFileSync(sourcePath, originalSource);
+    await sync();
     state.disconnect();
   }
 });
@@ -2452,10 +3366,12 @@ test("action columns compute button properties with CASE and linked conditions",
 }) => {
   const state = await deployment.connectStateAs("admin");
   const project = await deployment.connectProjectAs("admin");
-  const originalColumns = config.workspaces[0].windows[0].columns;
-  const originalWindow = await state.db.windows!.findOne!({
-    table_name: "users",
-  });
+  const originalColumns = configuredColumns;
+  const originalWindow = await state.db.windows!.findOne(usersWindowFilter);
+  const originalAliceAction = await project.db.users!.findOne!(
+    { name: "Alice" },
+    { select: ["action"] },
+  );
   const isAlice = {
     $and: [{ fieldName: "name", type: "=" as const, value: "Alice" }],
   };
@@ -2468,7 +3384,6 @@ test("action columns compute button properties with CASE and linked conditions",
       type: "Action",
       params: {
         methodName: "inspectUser",
-        argName: "user",
         conditions: [
           {
             filter: isAlice,
@@ -2508,34 +3423,34 @@ test("action columns compute button properties with CASE and linked conditions",
   } satisfies ColumnConfig;
   const columns = [...originalColumns.filter((c) => !c.nested), action];
   try {
+    // Stored JSONB state must not be sent through RowLookup.
+    await project.db.users!.update!(
+      { name: "Alice" },
+      { action: { text: "Ready" } },
+    );
     await project.db.users!.insert!({
       name: "No tasks",
       email: "no-tasks@example.com",
     });
-    await state.db.windows!.update!(
-      { table_name: "users" },
-      {
-        columns,
-        options: {
-          ...originalWindow!.options,
-          refresh: {
-            type: "Realtime",
-            intervalSeconds: 10,
-            throttleSeconds: 0,
-          },
+    await state.db.windows!.update(usersWindowFilter, {
+      columns,
+      options: {
+        ...originalWindow!.options,
+        refresh: {
+          type: "Realtime",
+          intervalSeconds: 10,
+          throttleSeconds: 0,
         },
       },
-    );
+    });
     await page
       .context()
       .addCookies([
         { name: sidKeyName, value: sessionId, url: deployment.endpoint },
       ]);
-    await page.goto(deployment.endpoint);
-    await page
-      .locator(`[data-key=${JSON.stringify(config.id)}]`)
-      .getByTestId("Connection.openConnection")
-      .click({ timeout: 30_000 });
+    await page.goto(
+      `${deployment.dashboardUrl}?workspaceId=${originalWindow!.workspace_id}`,
+    );
     const users = page.locator('[data-table-name="users"]');
     const rows = users.getByTestId("TableBody").getByRole("row");
     const alice = rows.filter({
@@ -2565,11 +3480,11 @@ test("action columns compute button properties with CASE and linked conditions",
 
     await button.click();
     await page
-      .getByTestId("W_MethodControls")
+      .getByTestId("ActionPopup")
       .getByRole("button", { name: "Run", exact: true })
       .click();
     await expect(
-      page.getByTestId("W_MethodControls").locator(".monaco-editor"),
+      page.getByTestId("ActionPopup").getByLabel("Action result"),
     ).toContainText("alice@example.com");
     await page.getByTestId("Popup.close").last().click();
 
@@ -2648,12 +3563,9 @@ test("action columns compute button properties with CASE and linked conditions",
         },
       },
     } satisfies ColumnConfig;
-    await state.db.windows!.update!(
-      { table_name: "users" },
-      {
-        columns: [...columns.slice(0, -1), linkedAction],
-      },
-    );
+    await state.db.windows!.update(usersWindowFilter, {
+      columns: [...columns.slice(0, -1), linkedAction],
+    });
     await expect(button).toHaveClass(/btn-color-green/);
     // One CASE refreshes the whole state when a linked row changes.
     await project.db.tasks!.update!(
@@ -2661,9 +3573,46 @@ test("action columns compute button properties with CASE and linked conditions",
       { status: "processing" },
     );
     await expect(button).toHaveAttribute("aria-busy", "true");
-    await expect(button).toHaveAttribute("aria-disabled", "true");
+    await expect(button).not.toHaveAttribute("aria-disabled", "true");
     await expect(button).toHaveClass(/btn-color-danger/);
     await expect(button).toHaveClass(/btn-filled/);
+    await button.click();
+    await page
+      .getByTestId("ActionPopup")
+      .getByRole("button", { name: "Run", exact: true })
+      .click();
+    await expect(
+      page.getByTestId("ActionPopup").getByLabel("Action result"),
+    ).toContainText("alice@example.com");
+    await page.getByTestId("Popup.close").last().click();
+    await state.db.windows!.update(usersWindowFilter, {
+      columns: [
+        ...columns.slice(0, -1),
+        {
+          ...linkedAction,
+          format: {
+            ...linkedAction.format,
+            params: {
+              ...linkedAction.format.params,
+              conditions: linkedAction.format.params.conditions.map(
+                (condition, index) =>
+                  index ? condition : (
+                    {
+                      ...condition,
+                      value: {
+                        ...condition.value,
+                        disabledInfo: "Processing",
+                      },
+                    }
+                  ),
+              ),
+            },
+          },
+        },
+      ],
+    });
+    await expect(button).toHaveAttribute("aria-disabled", "true");
+    await expect(button).toHaveAttribute("title", "Processing");
     await project.db.tasks!.update!(
       { title: "Open one" },
       { status: "closed" },
@@ -2705,12 +3654,9 @@ test("action columns compute button properties with CASE and linked conditions",
         },
       },
     };
-    await state.db.windows!.update!(
-      { table_name: "users" },
-      {
-        columns: [...columns.slice(0, -1), iconOnly],
-      },
-    );
+    await state.db.windows!.update(usersWindowFilter, {
+      columns: [...columns.slice(0, -1), iconOnly],
+    });
     const iconButton = alice.getByRole("button", {
       name: "inspectUser",
       exact: true,
@@ -2720,18 +3666,19 @@ test("action columns compute button properties with CASE and linked conditions",
     await page.reload();
     await expect(iconButton).toHaveText("");
   } finally {
-    await state.db.windows!.update!(
-      { table_name: "users" },
-      {
-        columns: originalColumns,
-        options: originalWindow!.options,
-      },
-    );
+    await state.db.windows!.update(usersWindowFilter, {
+      columns: originalColumns,
+      options: originalWindow!.options,
+    });
     await project.db.tasks!.update!(
       { title: { $in: ["Open one", "Open two"] } },
       { status: "open" },
     );
     await project.db.users!.delete!({ email: "no-tasks@example.com" });
+    await project.db.users!.update!(
+      { name: "Alice" },
+      { action: originalAliceAction?.action ?? null },
+    );
     state.disconnect();
     project.disconnect();
   }

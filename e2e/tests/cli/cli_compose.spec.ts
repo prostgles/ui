@@ -83,9 +83,9 @@ test("formatted CLI apps have no spurious upgrade conflicts", async () => {
       formatConfigPath: appRoot,
     });
     const prompted: string[] = [];
-    await applyCliUpgradeFiles(incomingPath, appRoot, async (file) => {
+    await applyCliUpgradeFiles(incomingPath, appRoot, (file) => {
       prompted.push(file);
-      return "skip";
+      return Promise.resolve("skip");
     });
     expect(prompted).toEqual(
       customConfig ? [join(appRoot, cliFileNames.prettierConfig)] : [],
@@ -589,7 +589,7 @@ const checkConfiguredLlmCredential = async (
   deployment: TestDeployment,
 ) => {
   const state = await deployment.connectStateAs("admin");
-  const connection = await state.db.connections!.findOne!({
+  const connection = await state.db.connections!.findOne({
     name: configId,
   });
   const sourcePath = join(appRoot, "src/index.ts");

@@ -1,5 +1,6 @@
 import type { SearchListItem } from "@components/SearchList/SearchList";
 import {
+  mdiButtonPointer,
   mdiCalendar,
   mdiCodeBrackets,
   mdiCodeJson,
@@ -22,6 +23,7 @@ import {
 } from "src/dashboard/SmartForm/SmartFormField/fieldUtils";
 import { getColumnDataColor } from "src/dashboard/SmartForm/SmartFormField/RenderValue";
 import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
+import { getColumnActions } from "../ColumnDisplayFormat/getFormatColumnSelect";
 
 export const getColumnListItem = (
   c: Pick<ValidatedColumnInfo, "name"> &
@@ -39,15 +41,17 @@ export const getColumnListItem = (
   key: string;
   label: string;
 } => {
+  const actionDescription = getActionColumnDescription(columnWInfo);
   const subLabel =
-    columnWInfo?.nested ?
+    actionDescription ??
+    (columnWInfo?.nested ?
       columnWInfo.nested.columns
         .filter((c) => c.show)
         .map((c) => c.name)
         .join(", ")
     : columnWInfo ?
       `${columnWInfo.info?.udt_name ?? columnWInfo.computedConfig?.udt_name}      ${columnWInfo.info?.is_nullable ? "nullable" : ""}`
-    : c.udt_name;
+    : c.udt_name);
   return {
     key: c.name,
     label:
@@ -58,7 +62,9 @@ export const getColumnListItem = (
     subLabel,
     data: c,
     disabledInfo: c.disabledInfo,
-    title: columnWInfo?.nested ? "referenced data" : c.udt_name || "computed",
+    title:
+      actionDescription ??
+      (columnWInfo?.nested ? "referenced data" : c.udt_name || "computed"),
     iconLeft: {
       type: "Icon",
       style: { color: getColumnDataColor(c, "var(--text-2)") },
@@ -76,6 +82,7 @@ export const getColumnIconPath = (
   >,
   columnWInfo?: ColumnConfigWithInfo,
 ) => {
+  if (getActionColumnDescription(columnWInfo)) return mdiButtonPointer;
   const tsDataType = c.tsDataType ?? tsDataTypeFromUdtName(c.udt_name ?? "");
   return (
     c.is_pkey ? mdiKey
@@ -94,4 +101,20 @@ export const getColumnIconPath = (
     : columnWInfo?.nested ? mdiLink
     : mdiFileQuestion
   );
+};
+
+const getActionColumnDescription = (column?: ColumnConfigWithInfo) => {
+  const actions = getColumnActions(column);
+  if (!actions) return;
+  if (!actions.length) return "No action buttons configured";
+  if (actions.length === 1) {
+    return "columnName" in actions[0]! ?
+        "Stored action · runs immediately"
+      : "Function button · opens a form";
+  }
+  const storedCount = actions.filter((action) => "columnName" in action).length;
+  const functionCount = actions.length - storedCount;
+  if (!storedCount) return `${functionCount} function buttons · open forms`;
+  if (!functionCount) return `${storedCount} stored actions · run immediately`;
+  return `${actions.length} action buttons · ${storedCount} stored, ${functionCount} function${functionCount === 1 ? "" : "s"}`;
 };

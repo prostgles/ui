@@ -18,6 +18,7 @@ import type { DBSchemaTable } from "prostgles-types";
 import React, { useState } from "react";
 import { RenderFilter } from "../../../RenderFilter";
 import { JoinPathSelectorV2 } from "../JoinPathSelectorV2";
+import type { GroupedDetailedFilter } from "@common/filterUtils";
 
 export const ActionCaseControls = ({
   value,
@@ -33,6 +34,7 @@ export const ActionCaseControls = ({
   const update = (patch: Partial<ActionCaseValue>) =>
     onChange({ ...value, ...patch });
   const conditionTable = value.joinPath?.at(-1)?.table ?? table.name;
+  const conditions = value.conditions ?? [];
   return (
     <FlexCol className="gap-p5" data-action-case>
       <div>Default button state</div>
@@ -41,9 +43,7 @@ export const ActionCaseControls = ({
         onChange={(defaultValue) => update({ defaultValue })}
       />
       <details>
-        <summary className="pointer">
-          Conditions ({value.conditions.length})
-        </summary>
+        <summary className="pointer">Conditions ({conditions.length})</summary>
         <FlexCol className="p-p5 gap-1">
           <div className="text-2">
             First match wins; otherwise use the default above.
@@ -68,18 +68,16 @@ export const ActionCaseControls = ({
                 update({
                   joinPath: path,
                   conditions:
-                    path.at(-1)?.table === conditionTable ?
-                      value.conditions
-                    : [],
+                    path.at(-1)?.table === conditionTable ? conditions : [],
                 });
                 setChooseJoin(false);
               }}
             />
           )}
-          {value.conditions.map((condition, index) => {
+          {conditions.map((condition, index) => {
             const updateCondition = (patch: Partial<typeof condition>) =>
               update({
-                conditions: value.conditions.map((c, i) =>
+                conditions: conditions.map((c, i) =>
                   i === index ? { ...c, ...patch } : c,
                 ),
               });
@@ -87,7 +85,7 @@ export const ActionCaseControls = ({
               <FlexCol key={index} className="card p-p5 gap-p5">
                 <FlexRow>
                   <RenderFilter
-                    filter={condition.filter}
+                    filter={condition.filter as GroupedDetailedFilter}
                     tableName={conditionTable}
                     selectedColumns={undefined}
                     contextData={undefined}
@@ -100,12 +98,15 @@ export const ActionCaseControls = ({
                     title="Move condition up"
                     disabledInfo={!index ? "Already first" : undefined}
                     onClick={() => {
-                      const conditions = [...value.conditions];
-                      [conditions[index - 1], conditions[index]] = [
-                        conditions[index]!,
-                        conditions[index - 1]!,
+                      const reorderedConditions = [...conditions];
+                      [
+                        reorderedConditions[index - 1],
+                        reorderedConditions[index],
+                      ] = [
+                        reorderedConditions[index]!,
+                        reorderedConditions[index - 1]!,
                       ];
-                      update({ conditions });
+                      update({ conditions: reorderedConditions });
                     }}
                   />
                   <Btn
@@ -113,9 +114,7 @@ export const ActionCaseControls = ({
                     title="Remove condition"
                     onClick={() =>
                       update({
-                        conditions: value.conditions.filter(
-                          (_, i) => i !== index,
-                        ),
+                        conditions: conditions.filter((_, i) => i !== index),
                       })
                     }
                   />
@@ -133,7 +132,7 @@ export const ActionCaseControls = ({
             onClick={() =>
               update({
                 conditions: [
-                  ...value.conditions,
+                  ...conditions,
                   {
                     filter: { $and: [] },
                     value: value.defaultValue ?? {},

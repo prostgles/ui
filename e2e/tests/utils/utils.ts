@@ -83,7 +83,7 @@ export const getMonacoValue = async (
   // const text = await page.evaluate(
   //   () => window.getSelection()?.toString() ?? "",
   // );
-  const normalizedText = text?.replace(/\u00A0/g, " "); // Replace char 160 with char 32
+  const normalizedText = text.replace(/\u00A0/g, " "); // Replace char 160 with char 32
   return normalizedText;
 };
 
@@ -597,7 +597,7 @@ export const disablePwdlessAdminAndCreateUser = async (page: PageWIds) => {
     .getByRole("link", { name: "Users" })
     .waitFor({ state: "visible", timeout: 60e3 });
   await page.getByRole("link", { name: "Users" }).click();
-  await expect(page as PG).toHaveURL(/.*users/);
+  await expect(page).toHaveURL(/.*users/);
   // const currentUrl = page.url();
   // await page.goto();
   // await page.goto(`${currentUrl}users`, {
@@ -719,7 +719,7 @@ const waitForAllMatchingLocatorsToDisappear = async (
 ) => {
   const start = Date.now();
   let tries = 0;
-  while (true) {
+  for (;;) {
     const count = await locator.count();
     if (!count) {
       if (tries > 2) {
@@ -760,9 +760,7 @@ export const sendAskLLMMessage = async (
       await waitForLoadingToStop.onAfterSend();
     }
     await waitForAllMatchingLocatorsToDisappear(
-      page
-        .getByTestId("Chat.messageList")
-        .getByTestId("Loading"),
+      page.getByTestId("Chat.messageList").getByTestId("Loading"),
     );
   }
 };

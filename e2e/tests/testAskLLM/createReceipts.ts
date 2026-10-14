@@ -120,7 +120,7 @@ export const createReceipts = async (page1: PageWIds, addPngs = false) => {
     const fileName = `hotel_receipt${!index ? "" : index}.png`;
     const filePath = path.join(
       DEMO_HOME_DIR,
-      sample_home_dir_folders[0],
+      sample_home_dir_folders[0]!,
       fileName,
     );
     filePaths.push(filePath);

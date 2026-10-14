@@ -14,7 +14,6 @@ export const getSceneUtils = (
   svgifScenes: SVGifScene[],
 ) => {
   const addScene = async (partialScene?: Partial<SVGifScene>) => {
-    svgifScenes ??= [];
     const sceneFileName = [
       fileName,
       svgifScenes.length.toString().padStart(2, "0"),
@@ -95,7 +94,7 @@ export const getSceneUtils = (
     await scrollElementIntoView(playwrightLocator);
 
     const elementIsVisible = await playwrightLocator.evaluate((n) => {
-      const hoverParent = n.closest(`[class*="hover"]`) as HTMLElement | null;
+      const hoverParent = n.closest<HTMLElement>(`[class*="hover"]`);
       const parentIsNotVisible =
         hoverParent && getComputedStyle(hoverParent).opacity == "0";
       const isVisible =

@@ -66,6 +66,7 @@ export const AuditTrailButton = ({
           methods={methods}
           tableName={audit.tableName}
           title={`History · ${table.label}`}
+          selectedColumns={["created_at", "operation", "actor", "new_row"]}
           fixedFilter={{
             $and: [
               {

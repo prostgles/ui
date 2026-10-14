@@ -8,8 +8,12 @@ import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import type { AnyObject, DBSchemaTable } from "prostgles-types";
 import { ROW_ACTIONS_COLUMN } from "prostgles-client";
 import React, { useState } from "react";
-import { getActionFunctions } from "./getActionFunctions";
+import {
+  getActionLookupRow,
+  resolveActionFunction,
+} from "@common/resolveActionFunction";
 import { ActionColumnChats } from "./ActionColumnChats";
+import { getFunctionActionValue } from "@common/functionOptions";
 
 export const ActionColumnButton = ({
   value,
@@ -29,19 +33,21 @@ export const ActionColumnButton = ({
   if (!value) return null;
   const methodName = value.methodName ?? fallbackMethod;
   const method = methodName ? methods[methodName] : undefined;
-  const matches = getActionFunctions(methods, table).filter(
-    (action) =>
-      action.methodName === methodName &&
-      (!value.argName || action.argName === value.argName),
+  const buttonValue = {
+    text: methodName,
+    ...getFunctionActionValue(method, queryRow, methodName ?? "", value),
+  };
+  const { action, error } = resolveActionFunction(
+    methods,
+    table,
+    { ...value, methodName },
+    true,
   );
-  const action = matches.length === 1 ? matches[0] : undefined;
   const allowedActions = queryRow[ROW_ACTIONS_COLUMN] as string[] | undefined;
   const matchesLookup = !action || allowedActions?.includes(action.methodName);
   const disabledInfo =
-    value.disabledInfo ||
-    (!methodName ? "No action available"
-    : !method ? "This function is no longer available"
-    : !action ? "This function needs one matching row or value lookup argument"
+    buttonValue.disabledInfo ||
+    (error ? error
     : !row ? "Actions require an individual row"
     : undefined);
   return (
@@ -53,12 +59,14 @@ export const ActionColumnButton = ({
         <Btn
           key={methodName}
           size="small"
-          color={value.color ?? "action"}
-          variant={value.variant ?? "filled"}
-          loading={value.isLoading ? "allow-clicking" : false}
-          title={value.text || methodName}
+          color={buttonValue.color ?? "action"}
+          variant={buttonValue.variant ?? "filled"}
+          loading={buttonValue.isLoading ? "allow-clicking" : false}
+          title={buttonValue.text || methodName}
           iconNode={
-            value.icon ? <SvgIcon icon={value.icon} size={16} /> : undefined
+            buttonValue.icon ?
+              <SvgIcon icon={buttonValue.icon} size={16} />
+            : undefined
           }
           disabledInfo={disabledInfo}
           onClickPromiseMode="noTickIcon"
@@ -68,18 +76,11 @@ export const ActionColumnButton = ({
             const input =
               arg && typeof arg !== "string" && arg.type === "ValueLookup" ?
                 row[arg.column]
-              : Object.fromEntries(
-                  Object.entries(row).filter(
-                    ([key, value]) =>
-                      table.columns.some((c) => c.name === key && c.filter) &&
-                      (value === null ||
-                        ["string", "number", "boolean"].includes(typeof value)),
-                  ),
-                );
+              : getActionLookupRow(row, table);
             await method.run({ [action.argName]: input });
           }}
         >
-          {value.text}
+          {buttonValue.text}
         </Btn>
       )}
       {(value.details || row) && (

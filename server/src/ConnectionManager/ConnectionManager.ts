@@ -28,12 +28,13 @@ import type {
 import { UNIQUE_DB_COLS } from "../tableConfig/tableConfigDatabaseConfig";
 import { getConnectionHttpServer } from "./getConnectionHttpServer";
 import { getConnectionServerFunctions } from "./getConnectionServerFunctions";
+import { modifyClientFunctionSchema } from "./modifyClientFunctionSchema";
 import { getSchemaConfig } from "./getSchemaConfig";
 import {
   initConnectionManager,
   type CONNECTION_HOT_RELOAD_COLUMNS,
 } from "./initConnectionManager";
-import { parseTableConfig } from "./parseTableConfig";
+import { parsePlugins } from "../Plugins/parsePlugins";
 import { startConnection } from "./startConnection";
 export type Unpromise<T extends Promise<any>> =
   T extends Promise<infer U> ? U : never;
@@ -88,6 +89,8 @@ type PRGLInstance =
 export class ConnectionManager {
   prglConnections: Map<string, PRGLInstance> = new Map();
   private connectionOperations = new Map<string, Promise<unknown>>();
+
+  readonly jobsTableName = "prostgles_jobs";
 
   runConnectionOperation = <T>(conId: string, operation: () => Promise<T>) => {
     const previous = this.connectionOperations.get(conId);
@@ -203,7 +206,9 @@ export class ConnectionManager {
             activeConnection.dbConf.id === reloadedDatabaseConfigId &&
             activeConnection.lastRestart < Date.now() - delay
           ) {
-            void this.withActiveConnection(connectionId, (c) => c.prgl.restart());
+            void this.withActiveConnection(connectionId, (c) =>
+              c.prgl.restart(),
+            );
           }
         },
       );
@@ -255,7 +260,9 @@ export class ConnectionManager {
     if (!prglCon) return;
     const tableConfig =
       disabled ? undefined : getSchemaConfig(config_sync)?.config.tableConfig;
-    await this.withActiveConnection(conId, (c) => c.prgl.update({ tableConfig }));
+    await this.withActiveConnection(conId, (c) =>
+      c.prgl.update({ tableConfig }),
+    );
   };
 
   setOnMount = async (
@@ -390,7 +397,7 @@ export class ConnectionManager {
   /** Caller must hold the connection lifecycle queue. */
   updateConnectionAccess = async (connection: PRGLInstanceStarted) => {
     if (!this.dbs) throw "Dbs not ready";
-    const [functions, publish] = await Promise.all([
+    const [{ functions, functionOptions }, publish] = await Promise.all([
       getConnectionServerFunctions({
         databaseConfig: connection.dbConf,
         dbs: this.dbs,
@@ -402,7 +409,21 @@ export class ConnectionManager {
         connection: connection.con,
       }),
     ]);
-    await connection.prgl.update({ functions, publish }, true);
+    const configuredConnection = {
+      ...connection.con,
+      ...getSchemaConfig(connection.dbConf.config_sync)?.config.connection,
+    };
+    await connection.prgl.update(
+      {
+        functions,
+        publish,
+        modifyClientFunctionSchema: modifyClientFunctionSchema(
+          configuredConnection.function_options,
+          functionOptions,
+        ),
+      },
+      true,
+    );
   };
 
   accessControlSkippedFirst = false;
@@ -538,7 +559,7 @@ export class ConnectionManager {
     const activeConnection = this.getActiveConnectionSilentFail(con.id);
     const dbs = this.dbs;
     if (!dbs || !activeConnection) return;
-    const { fileTable } = await parseTableConfig({
+    const { fileTable } = await parsePlugins({
       type: "new",
       dbs,
       con,
@@ -547,11 +568,15 @@ export class ConnectionManager {
       app: activeConnection.app,
       databaseConfig: activeConnection.dbConf,
     });
-    await this.withActiveConnection(con.id, (c) => c.prgl.update({ fileTable }));
+    await this.withActiveConnection(con.id, (c) =>
+      c.prgl.update({ fileTable }),
+    );
   };
 
   startConnection = (...args: Parameters<typeof startConnection>) =>
-    this.runConnectionOperation(args[0], () => startConnection.apply(this, args));
+    this.runConnectionOperation(args[0], () =>
+      startConnection.apply(this, args),
+    );
 
   destroy = async () => {
     await this.conSub?.unsubscribe();

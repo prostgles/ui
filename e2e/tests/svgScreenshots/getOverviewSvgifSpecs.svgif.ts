@@ -251,7 +251,7 @@ export const getOverviewSvgifSpecs = async () => {
       //       [...scene.animations]
       //     : [...scene.animations, { type: "wait", duration: 4000 }],
       // })),
-    } as typeof sceneInfo;
+    };
   });
 
   const svgifCovers: { fileName: string; svgSceneFileName: string }[] = [

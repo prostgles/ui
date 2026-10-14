@@ -2,6 +2,7 @@ import Popup, { POPUP_CLASSES } from "@components/Popup/Popup";
 import type { FullOption } from "@components/Select/Select";
 import { Select } from "@components/Select/Select";
 import {
+  mdiButtonPointer,
   mdiFunction,
   mdiLink,
   mdiTableColumnPlusAfter,
@@ -29,14 +30,14 @@ import {
   ActionColumnsControls,
   type ActionColumnsFormat,
 } from "./ColumnDisplayFormat/ActionColumnsControls";
-import { getActionFunctions } from "./ColumnDisplayFormat/getActionFunctions";
+import { getActionFunctions } from "prostgles-types";
 
 const options = [
   {
     key: "Action",
     label: "Add action column",
-    subLabel: "Group stored actions and functions for this row",
-    iconPath: mdiFunction,
+    subLabel: "Show buttons to run actions or open function forms",
+    iconPath: mdiButtonPointer,
   },
   {
     key: "Computed",
@@ -87,8 +88,11 @@ export const AddColumnMenu = ({
   const { methods } = usePrgl();
   const table = tables.find((t) => t.name === w.table_name);
   const actions = table ? getActionFunctions(methods, table) : [];
-  const storedActions = table?.columns.filter((c) => c.select &&
-    c.defaultRenderAs?.params.component === "ActionColumns") ?? [];
+  const storedActions =
+    table?.columns.filter(
+      (c) =>
+        c.select && c.defaultRenderAs?.params.component === "ActionColumns",
+    ) ?? [];
   const [actionFormat, setActionFormat] = useState<ActionColumnsFormat>();
   const [colType, setColType] = useState<
     (typeof options)[number]["key"] | void
@@ -165,11 +169,18 @@ export const AddColumnMenu = ({
           if (type === "Action") {
             setActionFormat({
               type: "ActionColumns",
-              params: { actions: action ? [{
-                ...action,
-                conditions: [],
-                defaultValue: { text: action.methodName },
-              }] : storedActions.map((c) => ({ columnName: c.name })) },
+              params: {
+                actions:
+                  action ?
+                    [
+                      {
+                        methodName: action.methodName,
+                        argName: action.argName,
+                        conditions: [],
+                      },
+                    ]
+                  : storedActions.map((c) => ({ columnName: c.name })),
+              },
             });
           }
           setColType(type);
@@ -186,7 +197,8 @@ export const AddColumnMenu = ({
       : <Popup
           title={
             colType === "Action" ? "Add action column"
-            : colType === "Computed" ? t.AddColumnMenu[`Add Computed Field`]
+            : colType === "Computed" ?
+              t.AddColumnMenu[`Add Computed Field`]
             : colType === "Create" ?
               t.AddColumnMenu[`Create new column`]
             : t.AddColumnMenu["Add Referenced/Linked Fields"]
@@ -207,17 +219,31 @@ export const AddColumnMenu = ({
               />
               <Btn
                 variant="filled"
-                disabledInfo={!actionFormat.params.actions.length ? "Add at least one action" : undefined}
+                disabledInfo={
+                  !actionFormat.params.actions.length ?
+                    "Add at least one action"
+                  : undefined
+                }
                 color="action"
                 onClickPromise={async () => {
                   const [firstAction] = actionFormat.params.actions;
-                  await updateWCols(w, [{
-                    name: generateUniqueID("action_"),
-                    label: actionFormat.params.actions.length === 1 && firstAction && "methodName" in firstAction ?
-                      firstAction.defaultValue?.text || firstAction.methodName : "Actions",
-                    show: true,
-                    format: actionFormat,
-                  }, ...(w.columns ?? [])]);
+                  await updateWCols(w, [
+                    {
+                      name: generateUniqueID("action_"),
+                      label:
+                        (
+                          actionFormat.params.actions.length === 1 &&
+                          firstAction &&
+                          "methodName" in firstAction
+                        ) ?
+                          firstAction.defaultValue?.text ||
+                          firstAction.methodName
+                        : "Actions",
+                      show: true,
+                      format: actionFormat,
+                    },
+                    ...(w.columns ?? []),
+                  ]);
                   onClose();
                 }}
               >

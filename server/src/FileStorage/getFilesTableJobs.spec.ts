@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { getFileTextExtractionOptions } from "./extractFileText";
+import { getFileTextExtractionOptions } from "./getFilesTableJobs";
 
 void test("file text extraction uses configured Docling options", () => {
   const options = getFileTextExtractionOptions({

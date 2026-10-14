@@ -1,4 +1,4 @@
-import type { AnyObject, JSONB, ParsedJoinPath } from "prostgles-types";
+import type { AnyObject, JSONB } from "prostgles-types";
 import {
   getTableFilterFromDetailedGroupFilter,
   type GroupedDetailedFilter,
@@ -41,7 +41,7 @@ export type ActionButtonState = JSONB.GetObjectType<
 
 export const actionColumnParamsSchema = {
   methodName: "string",
-  argName: "string",
+  argName: { type: "string", optional: true },
   joinPath: {
     optional: true,
     arrayOf: {
@@ -52,8 +52,17 @@ export const actionColumnParamsSchema = {
     },
   },
   conditions: {
+    optional: true,
     arrayOf: {
-      type: { filter: "any", value: { type: actionButtonStateSchema } },
+      type: {
+        filter: {
+          oneOfType: [
+            { $and: { arrayOf: { record: { values: "any" } } } },
+            { $or: { arrayOf: { record: { values: "any" } } } },
+          ],
+        },
+        value: { type: actionButtonStateSchema },
+      },
     },
   },
   defaultValue: { type: actionButtonStateSchema, optional: true },
@@ -71,29 +80,35 @@ export type ActionColumnsParams = JSONB.GetObjectType<
   typeof actionColumnsParamsSchema
 >;
 
-export type ActionCaseValue = {
-  conditions: { filter: GroupedDetailedFilter; value: ActionButtonState }[];
-  defaultValue?: ActionButtonState;
-  joinPath?: ParsedJoinPath[];
-};
+export type ActionColumnParams = JSONB.GetObjectType<
+  typeof actionColumnParamsSchema
+>;
+export type ActionCaseValue = Pick<
+  ActionColumnParams,
+  "conditions" | "defaultValue" | "joinPath"
+>;
 
 export const getActionValueKey = (columnName: string) => `${columnName}__state`;
 
 export const getActionCaseSelect = (
   value: ActionCaseValue,
 ): AnyObject | undefined => {
-  const branches = value.conditions.flatMap(({ filter, value: result }) => {
-    const condition = getTableFilterFromDetailedGroupFilter(filter);
-    if (!Object.keys(condition).length) return [];
-    return [
-      [
-        value.joinPath?.length ?
-          { $existsJoined: { path: value.joinPath, filter: condition } }
-        : condition,
-        JSON.stringify(result),
-      ],
-    ];
-  });
+  const branches = (value.conditions ?? []).flatMap(
+    ({ filter, value: result }) => {
+      const condition = getTableFilterFromDetailedGroupFilter(
+        filter as GroupedDetailedFilter,
+      );
+      if (!Object.keys(condition).length) return [];
+      return [
+        [
+          value.joinPath?.length ?
+            { $existsJoined: { path: value.joinPath, filter: condition } }
+          : condition,
+          JSON.stringify(result),
+        ],
+      ];
+    },
+  );
   // A default-only state does not need a database expression.
   if (!branches.length) return;
   return { $case: branches, $else: JSON.stringify(value.defaultValue ?? {}) };

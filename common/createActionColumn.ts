@@ -21,13 +21,16 @@ export type ActionColumnValue = JSONB.GetObjectType<
  * Use in tableConfig.columns. The method receives primitive row fields through its sole
  * matching RowLookup/ValueLookup argument (or argName when explicitly set).
  * The optional methodName is the fallback for subsequent stored states.
+ * initialState supplies the initial button label, icon and other stored properties.
  */
-export const createActionColumn = (methodName?: string) =>
-  ({
+export const createActionColumn = (methodName?: string, initialState: Omit<ActionColumnValue, "methodName"> = {}) => {
+  const defaultValue = { ...(methodName && { methodName }), ...initialState };
+  return {
     nullable: true,
-    defaultValue: JSON.stringify(methodName ? { methodName } : {}),
+    defaultValue: JSON.stringify(defaultValue),
     jsonbSchema: {
       type: actionColumnValueSchema,
-      defaultValue: methodName ? { methodName } : {},
+      defaultValue,
     },
-  }) as const;
+  } as const;
+};

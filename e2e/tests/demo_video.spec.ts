@@ -29,12 +29,12 @@ const videoTestDuration = 12 * 60e3;
 test.describe("Demo video", () => {
   test.setTimeout(videoTestDuration);
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(({ page }) => {
     page.on("console", (msg) =>
       console.log("[browser:" + msg.type() + "]", msg.text()),
     );
     page.on("pageerror", (err) =>
-      console.error("[pageerror]", err?.stack || err),
+      console.error("[pageerror]", err.stack || err),
     );
   });
 

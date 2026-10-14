@@ -3,6 +3,10 @@ import type { DBSSchema } from "@common/publishUtils";
 import { API_ENDPOINTS } from "@common/utils";
 import { IS_PROD } from "@src/init/utils";
 import { createProstgles } from "prostgles-server";
+import {
+  isPublishProfiles,
+  type PublishProfile,
+} from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
 import type { ClientSocketWithCachedData } from "prostgles-server/dist/DboBuilder/DboBuilder";
 import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
@@ -23,7 +27,9 @@ import { getConnectionOnReady } from "./connectionOnReady";
 import { getConnectionPublish } from "../connectionPublish/getConnectionPublish";
 import { getConnectionSocketPath } from "./getConnectionSocketPath";
 import { getHotReloadConfigs } from "./getHotReloadConfigs";
+import { syncSchemaConfigResources } from "./syncSchemaConfigResources";
 import { getStartAgent } from "../McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/getStartAgent";
+import { validateSchemaConfigActions } from "./validateSchemaConfigActions";
 
 export const startConnection = async function (
   this: ConnectionManager,
@@ -167,6 +173,7 @@ export const startConnection = async function (
           accessControl: _accessControl,
           llmCredential: _llmCredential,
           audit: _audit,
+          alerts: _alerts,
           publish: _publish,
           ...schemaProstglesOptions
         } = schemaConfig ?? {};
@@ -196,6 +203,7 @@ export const startConnection = async function (
           attachOnMountCleanup();
         };
         const prostgles = createProstgles<void, SUser>();
+        const connectionPublish: PublishProfile[] = [];
         prgl = await prostgles({
           ...schemaProstglesOptions,
           dbConnection: connectionInfo,
@@ -204,15 +212,41 @@ export const startConnection = async function (
           disableRealtime: disable_realtime ?? undefined,
           transactions: true,
           joins: schemaProstglesOptions.joins ?? "inferred",
-          createContext: ({ getExecution }) => ({
-            serviceManager: getServiceManager(),
-            startAgent: getStartAgent(dbs, connectionId, getExecution),
-          }),
-          publish: await getConnectionPublish({
-            dbs,
-            dbConf: databaseConfig,
-            connection: connection,
-          }),
+          createContext: async ({ getExecution, tables, dbo, reason }) => {
+            if (reason.type === "init") {
+              if (schemaConfig) {
+                await validateSchemaConfigActions({
+                  config: schemaConfig,
+                  functions: hotReloadConfig.functions,
+                  tables,
+                  dbo,
+                });
+                await syncSchemaConfigResources({
+                  dbs,
+                  databaseId: databaseConfig.id,
+                  connectionId,
+                  tables,
+                  rules: schemaConfig.accessControl,
+                  workspaces: schemaConfig.workspaces,
+                  llmCredential: schemaConfig.llmCredential,
+                });
+              }
+              const publish = await getConnectionPublish({
+                dbs,
+                dbConf: databaseConfig,
+                connection,
+              });
+              // Populate the shared array after schema setup, before publish initialization.
+              if (typeof publish !== "function" && isPublishProfiles(publish)) {
+                connectionPublish.push(...publish);
+              }
+            }
+            return {
+              serviceManager: getServiceManager(),
+              startAgent: getStartAgent(dbs, connectionId, getExecution),
+            };
+          },
+          publish: connectionPublish,
           // DEBUG_MODE: true,
           onConnectionError: (error) => {
             const nonReconnectableErrorCodes = {

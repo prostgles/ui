@@ -6,7 +6,7 @@ import type { annotationsTableColumns } from "@common/managedTableSchema";
 import type { ProstglesContext } from "@src/schemaConfig";
 import type { TableHooks } from "prostgles-server";
 import type { TableRowFromColumnDefinitions } from "prostgles-server/dist/TableConfig/TableRowFromColumnDefinitions";
-import type { FileTableRowWithExtraction } from "./extractFileText";
+import type { FileTableRowWithExtraction } from "./getFilesTableJobs";
 import {
   getAnnotationPageText,
   type AnnotationDocument,

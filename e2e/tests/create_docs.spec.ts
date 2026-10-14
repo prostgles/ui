@@ -99,7 +99,7 @@ test.describe("Create docs and screenshots", () => {
         .slice(1)
         .filter((_, index) => index % 2 === 0)
         .map((script) => {
-          return script.split("```")[0].trim();
+          return script.split("```")[0]!.trim();
         });
       return scripts;
     };

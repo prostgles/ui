@@ -1,4 +1,10 @@
-type BBox = { l: number; t: number; r: number; b: number; coord_origin: string };
+type BBox = {
+  l: number;
+  t: number;
+  r: number;
+  b: number;
+  coord_origin: string;
+};
 type Provenance = { page_no: number; bbox: BBox; charspan?: [number, number] };
 type Item = {
   label?: string;
@@ -20,12 +26,17 @@ export type AnnotationDocument = {
   furniture?: Item;
 };
 
-export const getAnnotationPageText = (document: AnnotationDocument, page: number) => {
+export const getAnnotationPageText = (
+  document: AnnotationDocument,
+  page: number,
+) => {
   const size = document.pages[page]?.size;
   if (!size) throw new Error(`Page ${page} is missing from Docling`);
   const items = [
-    ...(document.texts ?? []), ...(document.tables ?? []),
-    ...(document.groups ?? []), ...(document.pictures ?? []),
+    ...(document.texts ?? []),
+    ...(document.tables ?? []),
+    ...(document.groups ?? []),
+    ...(document.pictures ?? []),
   ];
   const byRef = new Map(items.map((item) => [item.self_ref, item]));
   const visited = new Set<Item>();
@@ -34,24 +45,33 @@ export const getAnnotationPageText = (document: AnnotationDocument, page: number
   const append = (value: string, bbox: BBox) => {
     if (!value.trim()) return;
     if (text) text += "\n";
-    segments.push({ start: text.length, end: text.length + value.length, bbox });
+    segments.push({
+      start: text.length,
+      end: text.length + value.length,
+      bbox,
+    });
     text += value;
   };
   const visit = (item: Item, excluded = false) => {
     if (visited.has(item)) return;
     visited.add(item);
-    excluded ||= item === document.furniture || item.content_layer === "furniture" ||
-      item.label === "page_header" || item.label === "page_footer";
-    for (const prov of excluded ? [] : item.prov ?? []) {
+    excluded ||=
+      item === document.furniture ||
+      item.content_layer === "furniture" ||
+      item.label === "page_header" ||
+      item.label === "page_footer";
+    for (const prov of excluded ? [] : (item.prov ?? [])) {
       if (prov.page_no !== page) continue;
       if (item.text !== undefined) {
-        let value = prov.charspan ? item.text.slice(...prov.charspan) : item.text;
+        let value =
+          prov.charspan ? item.text.slice(...prov.charspan) : item.text;
         const marker =
           !prov.charspan || prov.charspan[0] === 0 ? item.marker?.trim() : null;
         if (marker) value = `${marker} ${value.trimStart()}`;
         append(value, prov.bbox);
       } else if (item.data) {
-        for (const cell of item.data.table_cells) append(cell.text, cell.bbox ?? prov.bbox);
+        for (const cell of item.data.table_cells)
+          append(cell.text, cell.bbox ?? prov.bbox);
       }
     }
     for (const child of item.children ?? []) {
@@ -65,17 +85,29 @@ export const getAnnotationPageText = (document: AnnotationDocument, page: number
   return {
     text,
     getSelections: (range: { start: number; end: number }) =>
-      segments.filter((s) => s.start < range.end && s.end > range.start)
+      segments
+        .filter((s) => s.start < range.end && s.end > range.start)
         .map(({ bbox, start, end }) => ({
           page,
-          startText: text.slice(Math.max(start, range.start), Math.min(end, range.end)),
-          endText: text.slice(Math.max(start, range.start), Math.min(end, range.end)),
-          bounds: [{
-            x: bbox.l,
-            y: bbox.coord_origin === "BOTTOMLEFT" ? size.height - bbox.t : bbox.t,
-            width: bbox.r - bbox.l,
-            height: Math.abs(bbox.b - bbox.t),
-          }],
+          startText: text.slice(
+            Math.max(start, range.start),
+            Math.min(end, range.end),
+          ),
+          endText: text.slice(
+            Math.max(start, range.start),
+            Math.min(end, range.end),
+          ),
+          bounds: [
+            {
+              x: bbox.l,
+              y:
+                bbox.coord_origin === "BOTTOMLEFT" ?
+                  size.height - bbox.t
+                : bbox.t,
+              width: bbox.r - bbox.l,
+              height: Math.abs(bbox.b - bbox.t),
+            },
+          ],
         })),
   };
 };

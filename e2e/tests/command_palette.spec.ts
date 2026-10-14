@@ -23,7 +23,7 @@ test.describe("Test command palette", () => {
     timeout: 15 * MINUTE,
   });
 
-  let flatUIDocs: any[];
+  let flatUIDocs: any[] | undefined;
   test.beforeEach(async ({ page: p }) => {
     const page = p as PageWIds;
     page.on("console", console.log);
@@ -36,7 +36,7 @@ test.describe("Test command palette", () => {
         //@ts-ignore
         return window.flatUIDocs;
       });
-      if (!flatUIDocs || !flatUIDocs.length) {
+      if (!flatUIDocs.length) {
         throw new Error("No docs found in the command search");
       }
     }
@@ -54,6 +54,7 @@ test.describe("Test command palette", () => {
       }
       await login(page, USERS.test_user, "/login");
 
+      if (!flatUIDocs) throw new Error("Command search docs were not loaded");
       const workerFlatDocsBatchSize = Math.ceil(flatUIDocs.length / workers);
       const startIndex = i * workerFlatDocsBatchSize;
       const workerFlatDocs = flatUIDocs.slice(

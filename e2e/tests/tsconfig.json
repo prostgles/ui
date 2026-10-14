@@ -1,19 +1,44 @@
 {
+  "extends": "../../client/tsconfig.json",
   "compilerOptions": {
     "baseUrl": ".",
     "target": "ESNext",
-    "module": "commonjs",
+    "module": "ESNext",
     "moduleResolution": "Node",
+    "declaration": false,
+    "declarationMap": false,
     "sourceMap": true,
     "outDir": "../tests-out",
     "strict": true,
     "strictNullChecks": true,
+    "typeRoots": [
+      "../node_modules/@types",
+      "../../server/node_modules/@types",
+      "../../client/node_modules/@types",
+      "../../client/@types"
+    ],
     "jsx": "react",
     "paths": {
       "@playwright/test": ["../node_modules/@playwright/test"],
+      "@prostgles/app": ["../../server/dist/server/src/schemaConfig"],
+      "@modelcontextprotocol/sdk/*": [
+        "../../server/node_modules/@modelcontextprotocol/sdk/dist/cjs/*"
+      ],
       "Testing": ["./utils/Testing"],
-      "common/*": ["../../common/*"]
+      "common/*": ["../../common/*"],
+      "@common/*": ["../../common/*"],
+      "@src/*": ["../../server/src/*"],
+      "src/*": ["../../client/src/*"],
+      "@docs/*": ["../../docs/*"],
+      "@components/*": ["../../client/src/components/*"],
+      "@pages/*": ["../../client/src/pages/*"]
     }
   },
-  "exclude": ["./tests/mockRemoteMcp"]
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "../playwright.config.ts",
+    "../../client/src/**/*.d.ts"
+  ],
+  "exclude": ["**/node_modules", "**/build"]
 }

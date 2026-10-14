@@ -5,7 +5,8 @@ import { Select } from "@components/Select/Select";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import type { DBSchemaTable } from "prostgles-types";
 import React from "react";
-import { getActionFunctions } from "./getActionFunctions";
+import { getActionFunctions } from "prostgles-types";
+import { resolveActionFunction } from "@common/resolveActionFunction";
 
 export type ActionFormat = Extract<UserColumnFormat, { type: "Action" }>;
 
@@ -21,6 +22,7 @@ export const ActionFormatControls = ({
   const { methods } = usePrgl();
   const actions = getActionFunctions(methods, table);
   const { params } = value;
+  const { action } = resolveActionFunction(methods, table, params);
   const update = (patch: Partial<ActionFormat["params"]>) =>
     onChange({ type: "Action", params: { ...params, ...patch } });
   return (
@@ -28,7 +30,10 @@ export const ActionFormatControls = ({
       <Select
         data-command="ActionFormat.function"
         label="Function"
-        value={JSON.stringify([params.methodName, params.argName])}
+        value={JSON.stringify([
+          params.methodName,
+          action?.argName ?? params.argName,
+        ])}
         fullOptions={actions.map(({ methodName, argName }) => ({
           key: JSON.stringify([methodName, argName]),
           label: `${methodName} (${argName})`,

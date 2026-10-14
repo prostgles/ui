@@ -46,7 +46,7 @@ export const getStartAgent =
     }
 
     const relatedRecord = (() => {
-      if (invocation.type === "trigger") {
+      if (invocation.type === "trigger" || invocation.type === "jobControl") {
         const { tableName, rowParts } = invocation;
         return {
           tableName,

@@ -11,6 +11,7 @@ export const getColumnsWithInfo = (
   const table = tables.find((t) => t.name === tableName);
   if (!table) return [];
   const tableColumns = table.columns.slice(0);
+  const { defaultColumns } = table;
   const isAdditionalComputed = (
     computedConfig: ColumnConfigWithInfo["computedConfig"],
   ) => computedConfig && !computedConfig.isColumn;
@@ -45,8 +46,13 @@ export const getColumnsWithInfo = (
       return {
         ...c,
         ...columnDataType,
-        show: c.show ?? true,
+        show:
+          c.show ??
+          (tableColumn && defaultColumns ?
+            defaultColumns.includes(c.name)
+          : true),
         format: c.format ?? tableColumn?.renderAs,
+        style: c.style ?? tableColumn?.style,
         nested:
           nested &&
           ({
@@ -63,7 +69,11 @@ export const getColumnsWithInfo = (
     .filter((c) => {
       /** Remove dropped columns */
       if (
-        !c.computedConfig && !c.info && !c.nested && (c.format?.type !== "Action" && c.format?.type !== "ActionColumns")
+        !c.computedConfig &&
+        !c.info &&
+        !c.nested &&
+        c.format?.type !== "Action" &&
+        c.format?.type !== "ActionColumns"
       ) {
         return false;
       }
@@ -81,9 +91,10 @@ export const getColumnsWithInfo = (
         ({
           info: c,
           format: c.renderAs,
+          style: c.style,
           ...pickKeys(c, ["tsDataType", "udt_name"]),
           name: c.name,
-          show: true,
+          show: !defaultColumns || defaultColumns.includes(c.name),
         }) satisfies ColumnConfigWithInfo,
     ),
   ]).filter((c) => !c.info || c.info.select);

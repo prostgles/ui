@@ -55,12 +55,7 @@ export const getConnectionPublish = async ({
     publish: "*",
   } as const;
 
-  const connectionPublish: Publish<void, SUser> = [
-    ...configuredRules,
-    adminRule,
-  ];
-
-  return connectionPublish;
+  return [...configuredRules, adminRule];
 };
 
 const getPublishObjectFromDbPermissions = (

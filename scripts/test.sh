@@ -2,6 +2,8 @@
 
 set -e
 
+node ./scripts/check-prostgles-types.mjs
+
 START_SCRIPT_PID=""
 
 teardown_test_server() {
@@ -38,6 +40,7 @@ npm run build
 node ../server/scripts/preparePackage.mjs
 cd ../e2e
 npm i
+npm run test:check
 npm run test:cli
 sleep 3
 cd ..
@@ -60,7 +63,7 @@ run_e2e_tests() {
     sleep 1
   done
   echo "UI Compiled"
-  sleep 3
+  sleep 5
 
   (
     cd e2e

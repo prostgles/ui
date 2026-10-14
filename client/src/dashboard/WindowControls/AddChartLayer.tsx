@@ -92,7 +92,6 @@ export const AddChartLayer = (props: MapLayerManagerProps) => {
                   },
                 ],
               },
-              last_updated: undefined as unknown as string,
               user_id: undefined as unknown as string,
             })
             .catch((e) => {
@@ -129,7 +128,6 @@ export const AddChartLayer = (props: MapLayerManagerProps) => {
                     columns: [],
                     dataSource: { type: "osm", osmLayerQuery },
                   },
-                  last_updated: undefined as unknown as string,
                   user_id: undefined as unknown as string,
                 });
               }}

@@ -101,6 +101,11 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
       selectedColumns,
     } = this.props;
     const tableHandler = db[tableName] as TableHandlerClient | undefined;
+    const visibleColumns =
+      selectedColumns ??
+      (!tableCols ?
+        tables.find((t) => t.name === tableName)?.defaultColumns
+      : undefined);
     let _tableCols = tableCols ?? [];
     if (!tableCols) {
       const onClickEditRow: OnClickEditRow = (editRowFilter) => {
@@ -146,9 +151,18 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
       }
     }
 
-    return _tableCols.filter(
-      (c) => !selectedColumns || selectedColumns.includes(c.name),
-    );
+    return _tableCols
+      .filter(
+        (c) =>
+          !visibleColumns ||
+          (!selectedColumns && c.computed && c.key === "edit_row") ||
+          visibleColumns.includes(c.name),
+      )
+      .sort((a, b) =>
+        visibleColumns ?
+          visibleColumns.indexOf(a.name) - visibleColumns.indexOf(b.name)
+        : 0,
+      );
   }
 
   onMount() {
@@ -246,7 +260,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
   };
 
   getDataSelect = () => {
-    const { tableName, tables } = this.props;
+    const { tableName, tables, methods } = this.props;
     const table = tables.find(({ name }) => name === tableName);
     if (!table || !table.columns.length) return "*" as const;
 
@@ -257,7 +271,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
       }
       select[info.name] = 1;
       const column = { name: info.name, format: info.renderAs, info };
-      const formatSelect = getFormatColumnSelect({ column, table });
+      const formatSelect = getFormatColumnSelect({ column, table, methods });
       Object.assign(select, formatSelect);
     });
     return select;

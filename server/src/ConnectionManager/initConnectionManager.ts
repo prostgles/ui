@@ -24,6 +24,7 @@ export const CONNECTION_HOT_RELOAD_COLUMNS = [
   "db_schema_filter",
   "db_watch_schema",
   "table_options",
+  "function_options",
   "display_options",
 ] as const satisfies readonly (keyof DBSSchema["connections"])[];
 
@@ -36,12 +37,16 @@ export async function initConnectionManager(
   this.dbs = dbs;
   this.db = db;
 
+  let startupConfigApplied = !beforeConfigSubscribe;
   await this.conSub?.unsubscribe();
-  this.conSub = await this.dbs.connections.subscribe({}, {}, (connections) => {
+  const onConnections = (
+    connections: NonNullable<ConnectionManager["connections"]>,
+  ) => {
     saveCertificates(connections);
     connections.forEach((updatedConnection) => {
       const prglCon = this.getActiveConnectionSilentFail(updatedConnection.id);
       if (
+        startupConfigApplied &&
         !prglCon &&
         (updatedConnection.port || updatedConnection.web_app_directory)
       ) {
@@ -66,11 +71,14 @@ export async function initConnectionManager(
       }
     });
     this.connections = connections;
-  });
+  };
+  this.conSub = await this.dbs.connections.subscribe({}, {}, onConnections);
 
   await this.dbConfSub?.unsubscribe();
   // Apply startup config before subscribing to avoid replaying its intermediate states.
   await beforeConfigSubscribe?.();
+  startupConfigApplied = true;
+  if (this.connections) onConnections(this.connections);
 
   const dbConfColumnListSelect = fromEntries(
     (await this.dbs.database_configs.getColumns())
@@ -114,11 +122,7 @@ export async function initConnectionManager(
           );
         }
 
-        if (
-          stateDatabaseConfig &&
-          prglCon?.prgl &&
-          !prglCon.con.is_state_db
-        ) {
+        if (stateDatabaseConfig && prglCon?.prgl && !prglCon.con.is_state_db) {
           await this.withActiveConnection(
             connectionPartialItem.id,
             async (activeConnection) => {

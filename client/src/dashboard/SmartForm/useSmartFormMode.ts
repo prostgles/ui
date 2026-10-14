@@ -1,7 +1,10 @@
 import { getSmartGroupFilter, type DetailedFilter } from "@common/filterUtils";
+import { getTableFunctionActionSelect } from "@common/functionOptions";
 import {
   useAsyncEffectQueue,
   useEffectDeep,
+  getActionFunctions,
+  ROW_ACTIONS_COLUMN,
   type TableHandlerClient,
 } from "prostgles-client";
 import { type AnyObject, omitKeys } from "prostgles-types";
@@ -60,13 +63,27 @@ export type SmartFormModeState = Omit<
 export const useSmartFormMode = (
   props: Pick<
     SmartFormProps,
-    "tableName" | "db" | "rowFilter" | "onChange" | "parentForm" | "onLoaded"
+    | "tableName"
+    | "db"
+    | "rowFilter"
+    | "onChange"
+    | "parentForm"
+    | "onLoaded"
+    | "methods"
   > & {
     table: DBSchemaTableWJoins | undefined;
   },
 ) => {
-  const { tableName, rowFilter, db, table, onChange, parentForm, onLoaded } =
-    props;
+  const {
+    tableName,
+    rowFilter,
+    db,
+    table,
+    onChange,
+    parentForm,
+    onLoaded,
+    methods,
+  } = props;
   const [loading, setLoading] = useState(false);
   const tableHandler = db[tableName];
   const [localRowFilter, setLocalRowFilter] = useState(rowFilter);
@@ -133,7 +150,10 @@ export const useSmartFormMode = (
         currentRowInfo?.tableName === tableName ?
           currentRowInfo.row
         : undefined;
-      const select = { "*": 1 } as const;
+      const functionActionSelect = getTableFunctionActionSelect(methods, table);
+      const select: AnyObject = { "*": 1, ...functionActionSelect };
+      if (getActionFunctions(methods, table).length)
+        select[ROW_ACTIONS_COLUMN] = 1;
 
       if (
         table.fileTableName &&
@@ -151,7 +171,8 @@ export const useSmartFormMode = (
             () => {
               const nonInsertableColumns = table.columns
                 .filter((c) => !c.insert || c.is_pkey)
-                .map((c) => c.name);
+                .map((c) => c.name)
+                .concat(Object.keys(functionActionSelect), ROW_ACTIONS_COLUMN);
               const currentRowClone =
                 nonInsertableColumns.length ?
                   omitKeys({ ...currentRow }, nonInsertableColumns)
@@ -192,6 +213,7 @@ export const useSmartFormMode = (
     tableName,
     isManuallyControlled,
     db,
+    methods,
     tableHandlerFindOne,
     tableHandlerGetInfo,
     tableHandlerSubscribeOne,

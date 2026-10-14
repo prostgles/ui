@@ -22,11 +22,15 @@ import { getColumnsWithInfoAndWidth } from "./getColumnsWithInfoAndWidth";
 import type { OnClickEditRow } from "./getEditColumn";
 import { getEditColumn } from "./getEditColumn";
 import { getColumnFormat } from "../ColumnMenu/ColumnDisplayFormat/getFormatColumnSelect";
+import { excludeFkeyActions } from "./excludeFkeyActions";
 
 export type ProstglesTableColumn = ProstglesColumn &
   Omit<ColumnConfigWithInfo, "label">;
 
-type GetTableColsArgs = Pick<W_TableProps["prgl"], "db" | "tables" | "sql"> &
+type GetTableColsArgs = Pick<
+  W_TableProps["prgl"],
+  "db" | "tables" | "sql" | "methods"
+> &
   Pick<CommonWindowProps, "suggestions"> & {
     data?: AnyObject[];
     w?: WindowSyncItem<"table">;
@@ -42,6 +46,7 @@ export const getTableCols = ({
   w,
   db,
   tables,
+  methods,
   data,
   windowWidth,
   onClickEditRow,
@@ -63,11 +68,10 @@ export const getTableCols = ({
     return [];
   }
 
-  const fullConfigCols = getColumnsWithInfoAndWidth(
-    tables,
-    w,
-    data,
-    windowWidth,
+  const fullConfigCols = excludeFkeyActions(
+    getColumnsWithInfoAndWidth(tables, w, data, windowWidth),
+    table,
+    methods,
   ).filter((c) => c.show);
 
   const tblCols: ProstglesTableColumn[] = fullConfigCols.map((c) => {

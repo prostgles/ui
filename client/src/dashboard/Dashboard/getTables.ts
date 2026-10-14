@@ -18,6 +18,12 @@ export const getTables = (
       ...t,
       ...getJoinedTables(schemaTables, t.name, db),
       columns: t.columns.sort((a, b) => {
+        const defaultOrder = (name: string) => {
+          const index = t.defaultColumns?.indexOf(name) ?? -1;
+          return index < 0 ? t.columns.length : index;
+        };
+        const order = defaultOrder(a.name) - defaultOrder(b.name);
+        if (order) return order;
         return a.ordinal_position - b.ordinal_position;
       }),
     };

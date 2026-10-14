@@ -4,6 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "test:types": "tsc --noEmit -p tests/tsconfig.json",
+    "test:lint": "node ../server/node_modules/eslint/bin/eslint.js tests playwright.config.ts --quiet",
+    "test:check": "npm run test:types && npm run test:lint",
     "test": "npm run test:main && playwright test demo_video_setup.spec.ts && playwright test demo_video.spec.ts && playwright test create_docs.spec.ts && playwright test command_palette.spec.ts",
     "test:main": "playwright test main.spec.ts",
     "test:cli": "playwright test tests/cli --workers=1",

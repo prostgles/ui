@@ -1,12 +1,15 @@
-import type { BeforeEachTsTrigger, DBHandlerServerInternal } from "prostgles-server";
+import type {
+  BeforeEachTsTrigger,
+  DBHandlerServerInternal,
+} from "prostgles-server";
 import {
   getFileTextExtractionOptions,
   type FileTextExtractionOptions,
   type FileTableRowWithExtraction,
-} from "./extractFileText";
+} from "./getFilesTableJobs";
 import type { ProstglesContext } from "@src/schemaConfig";
 
-export const getFilesTableHook = (
+export const getFilesTableTextExtractionHook = (
   fileTableName: string,
   extractTextOptions?: FileTextExtractionOptions,
 ) => ({
@@ -22,11 +25,7 @@ export const getFilesTableHook = (
             ["image/", "application/pdf"].some((prefix) =>
               content_type.startsWith(prefix),
             );
-          if (
-            !isImageOrPdf ||
-            !original_name ||
-            !buffer
-          ) {
+          if (!isImageOrPdf || !original_name || !buffer) {
             return;
           }
 

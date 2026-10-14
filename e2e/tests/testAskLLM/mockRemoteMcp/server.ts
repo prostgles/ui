@@ -15,7 +15,7 @@ const createMcpServer = () => {
     { capabilities: { tools: {} } },
   );
 
-  mcpServer.setRequestHandler(ListToolsRequestSchema, async () => ({
+  mcpServer.setRequestHandler(ListToolsRequestSchema, () => ({
     tools: [
       {
         name: "test_tool",

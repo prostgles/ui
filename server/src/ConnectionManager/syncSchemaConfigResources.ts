@@ -1,4 +1,5 @@
-import { connectionManager, type DBS } from "..";
+import type { DBS } from "..";
+import type { TableSchema } from "prostgles-types";
 import { loadGeneratedWorkspaces } from "../serverFunctions/loadGeneratedWorkspaces/loadGeneratedWorkspaces";
 import type { SchemaConfig, SchemaConfigAccessControl } from "../schemaConfig";
 import { statePrgl } from "../init/startProstgles";
@@ -8,6 +9,7 @@ export const syncSchemaConfigResources = async ({
   dbs,
   databaseId,
   connectionId,
+  tables,
   rules = [],
   workspaces = [],
   llmCredential,
@@ -15,6 +17,7 @@ export const syncSchemaConfigResources = async ({
   dbs: DBS;
   databaseId: number;
   connectionId: string;
+  tables: TableSchema[];
   rules?: SchemaConfigAccessControl[];
   workspaces?: SchemaConfig["workspaces"];
   llmCredential?: SchemaConfig["llmCredential"];
@@ -55,9 +58,7 @@ export const syncSchemaConfigResources = async ({
         dbs: tx,
         connectionId,
         userId: admin.id,
-        tables: connectionManager
-          .getConnectionStartedInstance(connectionId)
-          .prgl.getSchema(),
+        tables,
         config: "shared",
       });
     }

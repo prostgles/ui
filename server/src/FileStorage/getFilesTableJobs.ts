@@ -13,9 +13,9 @@ import {
   type TableHandlerForColumns,
 } from "prostgles-types";
 
-export const getFileTextExtractionJob = (fileTable: FileTableConfig) => {
+export const getFilesTableJobs = (fileTable: FileTableConfig) => {
   const maxAttempts = 3;
-  return createJobDefiner<void, ProstglesContext>()({
+  const extractFileText = createJobDefiner<void, ProstglesContext>()({
     trigger: {
       type: "row",
       table: fileTable.tableName,
@@ -28,10 +28,17 @@ export const getFileTextExtractionJob = (fileTable: FileTableConfig) => {
     concurrency: 1,
     run: async ({ row, dbo, context, run, signal }) => {
       const file = row as FileTableRowWithExtraction;
-      if (file.extraction_status?.state !== "loading" || file.extraction_job_id !== run.id) return;
+      if (
+        file.extraction_status?.state !== "loading" ||
+        file.extraction_job_id !== run.id
+      ) {
+        return;
+      }
       const { start, options } = file.extraction_status;
       const extractionOptions = getFileTextExtractionOptions(options);
-      const files = dbo[fileTable.tableName] as TableHandlerForColumns<FileTableRowWithExtraction>;
+      const files = dbo[
+        fileTable.tableName
+      ] as TableHandlerForColumns<FileTableRowWithExtraction>;
       const filter = {
         id: file.id,
         extraction_job_id: run.id,
@@ -40,12 +47,17 @@ export const getFileTextExtractionJob = (fileTable: FileTableConfig) => {
         const documentService =
           await context.serviceManager.getServiceWithRetries("documents");
         const data = await buffer(
-          await fileTable.storageClient.downloadAsStream(getFileStorageKey(file)),
+          await fileTable.storageClient.downloadAsStream(
+            getFileStorageKey(file),
+          ),
         );
-        const result = await documentService.endpoints["/v1/convert/file"]({
-          files: [new Blob([data], { type: file.content_type })],
-          ...extractionOptions,
-        }, { signal });
+        const result = await documentService.endpoints["/v1/convert/file"](
+          {
+            files: [new Blob([data], { type: file.content_type })],
+            ...extractionOptions,
+          },
+          { signal },
+        );
         signal.throwIfAborted();
         await files.update(filter, {
           extraction_status: {
@@ -57,16 +69,19 @@ export const getFileTextExtractionJob = (fileTable: FileTableConfig) => {
             timings: result.timings,
           },
           docling_metadata: result.document.json_content,
-          text_content: result.document.md_content
-            ?.split(extractionOptions.md_page_break_placeholder)
-            .map((page) => page.trim()) ?? null,
+          text_content:
+            result.document.md_content
+              ?.split(extractionOptions.md_page_break_placeholder)
+              .map((page) => page.trim()) ?? null,
         });
       } catch (error) {
         if (run.attempt >= maxAttempts && !signal.aborted) {
           await files.update(filter, {
             extraction_status: {
               state: "error",
-              error: getSerialisableError(error) ?? "Unknown error during document extraction",
+              error:
+                getSerialisableError(error) ??
+                "Unknown error during document extraction",
               options: extractionOptions,
               start,
               end: new Date().toISOString(),
@@ -77,6 +92,8 @@ export const getFileTextExtractionJob = (fileTable: FileTableConfig) => {
       }
     },
   });
+
+  return extractFileText;
 };
 
 type FileTableExtractionRow = TableRowFromColumnDefinitions<

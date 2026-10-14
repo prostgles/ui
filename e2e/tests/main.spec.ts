@@ -76,6 +76,7 @@ import {
 
 import { ROOT_DIR } from "svgScreenshots/utils/constants";
 import { MINUTE } from "common/utils";
+import type { SchemaShape } from "../../client/src/dashboard/SchemaGraph/ERDSchema/useSchemaShapes";
 
 const schemaGraphTestDbName = "financial.sql";
 const DB_NAMES = {
@@ -99,7 +100,7 @@ test.describe("Main test", () => {
   }
   let getEmails: () => any[];
 
-  test.beforeAll(async () => {
+  test.beforeAll(() => {
     ({ getEmails } = startMockSMTPServer());
     console.log("getEmails", getEmails());
     return { getEmails };
@@ -399,27 +400,10 @@ test.describe("Main test", () => {
     await page.getByTestId("Btn.ClickConfirmation.Confirm").click();
 
     const getDrawnInfo = async () => {
-      const drawnInfo: {
-        scale3d: [number, number, number];
-        zoomScale: number;
-        translate: { x: number; y: number };
-        shapes: (
-          | {
-              type: "rectangle";
-              coords: [number, number];
-              data: {
-                name: string;
-              };
-            }
-          | {
-              type: "linkline";
-            }
-        )[];
-      } = await page.evaluate(() => {
-        //@ts-ignore
-        return document.querySelector("canvas")?._drawn;
-      });
-      return drawnInfo;
+      const drawnInfo = await page.evaluate(() => document.querySelector("canvas")?._drawn);
+      if (!drawnInfo) throw new Error("Schema graph has not rendered");
+      // The generic canvas declaration omits the diagram's table metadata.
+      return { ...drawnInfo, shapes: drawnInfo.shapes as unknown as SchemaShape[] };
     };
     const initialShapesInfo = await getDrawnInfo();
 
@@ -2733,7 +2717,7 @@ test.describe("Main test", () => {
       await page.waitForTimeout(1e3);
       await forEachLocator(
         page,
-        async () => page.getByTestId("dashboard.window.viewEditRow"),
+        () => page.getByTestId("dashboard.window.viewEditRow"),
         async (editBtn) => {
           await editBtn.click();
           await page.getByTestId("SmartForm.delete").click();
@@ -3015,8 +2999,8 @@ test.describe("Main test", () => {
     await enableAskLLM(page, 0);
 
     /** Expect LLM to work */
-    const [{ isOk }] = await getLLMResponses(page, ["hehhehey"]);
-    expect(isOk).toBe(true);
+    const [response] = await getLLMResponses(page, ["hehhehey"]);
+    expect(response).toMatchObject({ isOk: true });
 
     /** Clear prev chats to ensure llm limit test works */
     await runDbsSql(page, `TRUNCATE llm_chats CASCADE;`);
@@ -3253,7 +3237,7 @@ test.describe("Main test", () => {
     /** Delete existing duplicate workspace */
     await page.getByTestId("WorkspaceMenuDropDown").click();
     await page.waitForTimeout(1e3);
-    let deleted = false;
+    const deletion = { completed: false };
     await forEachLocator(
       page,
       async () => {
@@ -3265,14 +3249,14 @@ test.describe("Main test", () => {
       },
       async (item) => {
         const deleteWspBtn = await item.getByTestId("WorkspaceDeleteBtn");
-        deleted = true;
+        deletion.completed = true;
         await deleteWspBtn.click();
         await page.waitForTimeout(555);
         await page.getByTestId("WorkspaceDeleteBtn.Confirm").click();
         await page.waitForTimeout(555);
       },
     );
-    if (!deleted) {
+    if (!deletion.completed) {
       await page.locator(`[data-close-popup="true"]`).click();
     }
     await page.getByTestId("WorkspaceMenuDropDown").click();
@@ -3444,7 +3428,7 @@ test.describe("Main test", () => {
       data = [],
       x = -99,
       y = -99,
-    } = await page.evaluate(async () => {
+    } = await page.evaluate(() => {
       try {
         const timeChartRef = document.querySelector(".W_TimeChart")!;
         const bbox = timeChartRef.getBoundingClientRect();
@@ -3515,6 +3499,7 @@ test.describe("Main test", () => {
       const groups = await page.getByTestId("CardView.group").all();
       await expect(groups.length).toBe(2);
       const [firstGroup, secondGroup] = groups;
+      if (!firstGroup || !secondGroup) throw new Error("Expected two card groups");
       await page.waitForTimeout(2e3);
       const firstGroupFirstRow = await firstGroup
         .getByTestId("CardView.row")
@@ -3614,8 +3599,8 @@ test.describe("Main test", () => {
       await page.waitForTimeout(100);
     }
 
-    const startSqlTest = async () =>
-      new Promise(async (resolve, reject) => {
+    const startSqlTest = () =>
+      new Promise((resolve, reject) => {
         page.on("dialog", (dialog) => {
           const msg = dialog.message();
           console.log("1", msg);
@@ -3704,9 +3689,9 @@ test.describe("Main test", () => {
       "hey",
       "hey",
     ]);
-    await expect(response1.isOk).toBe(true);
-    await expect(response2.isOk).toBe(true);
-    await expect(response3.isOk).toBe(true);
+    expect(response1).toMatchObject({ isOk: true });
+    expect(response2).toMatchObject({ isOk: true });
+    expect(response3).toMatchObject({ isOk: true });
   });
 
   test("Public user ask llm limit", async ({ page: p }) => {
@@ -3719,8 +3704,8 @@ test.describe("Main test", () => {
       .getByTestId("dashboard.menu.tablesSearchList")
       .waitFor({ state: "visible", ...TWENTY_SECONDS_OR_MORE });
     const [response1, response2] = await getLLMResponses(page, ["hey", "hey"]);
-    await expect(response1.isOk).toBe(true);
-    await expect(response2.isOk).toBe(false);
+    expect(response1).toMatchObject({ isOk: true });
+    expect(response2).toMatchObject({ isOk: false });
   });
 
   test("MCP Servers", async ({ page: p }) => {
@@ -3874,7 +3859,7 @@ test.describe("Main test", () => {
     });
     try {
       await new Promise((resolve, reject) => {
-        devProc.stdout?.on("data", (data) => {
+        devProc.stdout.on("data", (data) => {
           const str = data.toString();
           console.log("devProc stdout:", str);
           if (str.includes("5173")) {

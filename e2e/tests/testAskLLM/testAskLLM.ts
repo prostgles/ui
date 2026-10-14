@@ -287,9 +287,9 @@ const toolResponses: Record<string, ToolUse> = {
   parallel_calls: {
     content: "I'll fetch in parallel ",
     tool: [
-      mcpFetchToolUse.tool[0],
-      mcpFetchToolUse.tool[0],
-      mcpFetchToolUse.tool[0],
+      mcpFetchToolUse.tool[0]!,
+      mcpFetchToolUse.tool[0]!,
+      mcpFetchToolUse.tool[0]!,
     ].map((t, i) => ({
       ...t,
       id: t.id + "_" + (i + 1),

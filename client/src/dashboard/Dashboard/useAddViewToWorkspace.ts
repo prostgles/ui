@@ -58,8 +58,9 @@ export const addViewToWorkspace = async (
         table_oid = info.oid;
       }
       options =
-        filter.length ? { ...DEFAULT_TABLE_OPTIONS, showFilters: true } :
-        undefined;
+        filter.length ?
+          { ...DEFAULT_TABLE_OPTIONS, showFilters: true }
+        : undefined;
     } else {
       const err =
         db[table] ?
@@ -83,7 +84,6 @@ export const addViewToWorkspace = async (
       fullscreen: false,
       workspace_id,
       /** TODO: add auth to client schema types */
-      last_updated: undefined as unknown as string,
       user_id: undefined as unknown as string,
     },
     { returning: "*" },

@@ -612,6 +612,7 @@ export const COMMANDS = {
   "McpServerOAuthConfigActions.connectionToggle": "",
   MCPServers: "",
   W_MethodControls: "",
+  ActionPopup: "",
 } as const satisfies Record<
   string,
   | string

@@ -10,6 +10,8 @@ import type { ColumnConfigNested } from "@common/ColumnConfig/ColumnConfig";
 import { getLinkedRecordsFilter } from "./getLinkedRecordsFilter";
 import { NestedColumnRenderRecords } from "./NestedColumnRenderRecords";
 import { NestedColumnRenderTimechart } from "./NestedColumnRenderTimechart";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import { excludeFkeyActions } from "../../tableUtils/excludeFkeyActions";
 
 export type NestedTimeChartMeta = {
   fullExtent: [Date, Date];
@@ -33,6 +35,7 @@ export const NestedColumnRender = ({
   getValues,
   rootTableName,
 }: NestedColumnRenderProps): JSX.Element => {
+  const { methods } = usePrgl();
   const { nested } = column;
   const table = tables.find((t) => t.name === nested.path.at(-1)?.table);
   if (!table) return <>Unexpected issue: No nested table</>;
@@ -49,10 +52,10 @@ export const NestedColumnRender = ({
   }
 
   const rows = (parentRow[column.name] ?? []) as Record<string, unknown>[];
-  const shownColumns = getColumnsWithInfo(
-    table.name,
-    tables,
-    nested.columns,
+  const shownColumns = excludeFkeyActions(
+    getColumnsWithInfo(table.name, tables, nested.columns),
+    table,
+    methods,
   ).filter((c) => c.show);
   if (display.type === "drillable-records") {
     return (

@@ -4,7 +4,6 @@ import {
 } from "@common/filterUtils";
 import type { AnyObject, Select, SelectFunction } from "prostgles-types";
 import { isDefined } from "prostgles-types";
-import { ROW_ACTIONS_COLUMN } from "prostgles-client";
 import type { Prgl } from "src/App";
 import { isEmpty } from "../../../utils/utils";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
@@ -14,7 +13,10 @@ import {
   getTimeChartMinMax,
 } from "../../W_TimeChart/fetchData/getTimeChartLayersWithBins";
 import { getTimeChartSelectParams } from "../../W_TimeChart/fetchData/getTimeChartSelectParams";
-import { getColumnFormat, getFormatColumnSelect } from "../ColumnMenu/ColumnDisplayFormat/getFormatColumnSelect";
+import {
+  getColumnFormat,
+  getFormatColumnSelect,
+} from "../ColumnMenu/ColumnDisplayFormat/getFormatColumnSelect";
 import { getParentTableJoinColumnNames } from "../ColumnMenu/ColumnDisplayFormat/getLinkedRecordsFilter";
 import type {
   ColumnConfig,
@@ -27,6 +29,7 @@ import {
   type ChartValues,
 } from "./fetchChartRangeValues";
 import { getColumnsWithInfoAndWidth } from "./getColumnsWithInfoAndWidth";
+import { excludeFkeyActions } from "./excludeFkeyActions";
 
 export const getTableSelect = async (
   w: Pick<WindowData<"table">, "columns" | "table_name">,
@@ -34,13 +37,18 @@ export const getTableSelect = async (
   db: Prgl["db"],
   filter: AnyObject,
   withoutData = false,
+  methods: Prgl["methods"] = {},
 ): Promise<{ barchartVals?: ChartValues; select: AnyObject }> => {
   const select: AnyObject = {};
 
   const barchartVals: ChartValues = new Map();
-  const fullColumns = getColumnsWithInfoAndWidth(tables, w);
   const table = tables.find((t) => t.name === w.table_name);
   if (!table) throw "Table not found";
+  const fullColumns = excludeFkeyActions(
+    getColumnsWithInfoAndWidth(tables, w),
+    table,
+    methods,
+  );
 
   await Promise.all(
     fullColumns.map(async (c) => {
@@ -56,6 +64,7 @@ export const getTableSelect = async (
           db,
           tables,
           withoutData,
+          methods,
         );
         if (nestedSel) {
           if (nestedSel.dateExtent) {
@@ -74,13 +83,16 @@ export const getTableSelect = async (
           }
           select[c.name] = nestedSel.select;
         }
-      } else if (c.format?.type !== "Action" && c.format?.type !== "ActionColumns") {
+      } else if (
+        c.format?.type !== "Action" &&
+        c.format?.type !== "ActionColumns"
+      ) {
         select[c.name] = 1;
       }
     }),
   );
 
-  Object.assign(select, getRequiredTableSelect(fullColumns, table));
+  Object.assign(select, getRequiredTableSelect(fullColumns, table, methods));
 
   await Promise.all(
     fullColumns.map(async (c) => {
@@ -105,6 +117,7 @@ export const getTableSelect = async (
 export const getRequiredTableSelect = (
   columns: ColumnConfigWithInfo[],
   table: DBSchemaTableWJoins,
+  methods: Prgl["methods"] = {},
 ): Select => {
   const select: AnyObject = {};
   const shownColumns = columns.filter((column) => column.show);
@@ -124,10 +137,16 @@ export const getRequiredTableSelect = (
 
   shownColumns.forEach((column) => {
     const format = getColumnFormat(column);
-    if (hasAggregates && ((format?.type === "Action" || format?.type === "ActionColumns") ||
-      (format?.type === "Internal" && format.params.component === "ActionColumns"))) return;
+    if (
+      hasAggregates &&
+      (format?.type === "Action" ||
+        format?.type === "ActionColumns" ||
+        (format?.type === "Internal" &&
+          format.params.component === "ActionColumns"))
+    )
+      return;
     if (!column.computedConfig && !column.nested) {
-      Object.assign(select, getFormatColumnSelect({ column, table }));
+      Object.assign(select, getFormatColumnSelect({ column, table, methods }));
       addColumn(
         column.style?.type === "Conditional" ? column.style.column : undefined,
       );
@@ -135,14 +154,6 @@ export const getRequiredTableSelect = (
     getParentTableJoinColumnNames(column).forEach(addColumn);
   });
 
-  const hasActions = shownColumns.some((column) => {
-    const format = getColumnFormat(column);
-    return format?.type === "Action" || format?.type === "ActionColumns" ||
-      (format?.type === "Internal" && format.params.component === "ActionColumns");
-  });
-  if (!hasAggregates && hasActions) {
-    select[ROW_ACTIONS_COLUMN] = 1;
-  }
   return select;
 };
 
@@ -186,6 +197,7 @@ const getNestedColumnSelect = async (
   db: Prgl["db"],
   tables: DBSchemaTableWJoins[],
   withoutData = false,
+  methods: Prgl["methods"] = {},
 ): Promise<{ select: AnyObject; dateExtent?: MinMax<Date> } | undefined> => {
   let nestedSelect: AnyObject = {};
   let dateExtent: MinMax<Date> | undefined;
@@ -236,6 +248,7 @@ const getNestedColumnSelect = async (
         db,
         {},
         true, // Only build the select; ranges depend on the parent query.
+        methods,
       )
     ).select;
   }

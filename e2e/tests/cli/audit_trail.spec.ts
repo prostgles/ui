@@ -151,6 +151,12 @@ test("history is scoped to the row, newest first, live, and read-only", async ({
   await form.getByTestId("AuditTrail.open").click();
   const history = page.getByRole("dialog").filter({ hasText: "History ·" });
   const rows = history.getByTestId("TableBody").getByRole("row");
+  await expect(history.locator(".table-column-label")).toHaveText([
+    "Time",
+    "Action",
+    "User",
+    "Changes",
+  ]);
   await expect(rows).toHaveCount(2);
   await expect(rows.nth(0)).toContainText("UPDATE");
   await expect(rows.nth(1)).toContainText("INSERT");
@@ -266,6 +272,11 @@ test("card view opens history without opening the row editor", async ({
   try {
     await client.db.records!.delete!({ tenant_id: "b", id: 1 });
     await openTable(page, "audit_events", true);
+    await expect(
+      page
+        .locator('[data-table-name="audit_events"] .table-column-label')
+        .filter({ hasText: /\S/ }),
+    ).toHaveText(["Time", "Action", "Table", "User", "Changes"]);
     const auditRows = page
       .locator('[data-table-name="audit_events"]')
       .getByTestId("TableBody")
@@ -289,6 +300,22 @@ test("card view opens history without opening the row editor", async ({
       diff.locator(".original .view-lines[role=presentation]"),
     ).toContainText("other tenant");
     await diff.getByTestId("Popup.close").click();
+    const auditTable = page.locator('[data-table-name="audit_events"]');
+    await auditTable.getByTestId("dashboard.window.menu").click();
+    await page.getByText("Columns", { exact: true }).click();
+    const contextColumn = page
+      .locator('[data-key="db_context"]')
+      .getByRole("checkbox");
+    await expect(contextColumn).not.toBeChecked();
+    await page.locator('[data-key="db_context"]').click();
+    await page.keyboard.press("Escape");
+    await expect(auditTable.locator(".table-column-label")).toContainText([
+      "Db Context",
+    ]);
+    await auditTable.getByTestId("dashboard.window.menu").click();
+    await page.getByText("Columns", { exact: true }).click();
+    await expect(contextColumn).toBeChecked();
+    await page.keyboard.press("Escape");
   } finally {
     client.disconnect();
   }
@@ -304,7 +331,7 @@ for (const restriction of [
   }) => {
     const state = await deployment.connectStateAs("admin");
     try {
-      await state.db.access_control!.update!(
+      await state.db.access_control!.update(
         { id: accessRuleId },
         {
           dbPermissions: {

@@ -61,7 +61,7 @@ export const timechartSvgif: OnBeforeScreenshot = async (
       animations: [
         isLast ?
           { type: "wait" as const, duration: 3000 }
-        : shortWait.animations[0],
+        : shortWait.animations[0]!,
         // {
         //   type: "custom",
         //   elementSelector:

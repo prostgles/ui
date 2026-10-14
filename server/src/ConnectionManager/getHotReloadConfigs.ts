@@ -6,6 +6,7 @@ import type { ProstglesContext } from "@src/schemaConfig";
 import { join } from "path";
 import type { DB } from "prostgles-server/dist/Prostgles";
 import type { UpdatableOptions } from "prostgles-server/dist/initProstgles";
+import { parsePlugins } from "../Plugins/parsePlugins";
 import type { SUser } from "../authConfig/sessionUtils";
 import type { Connections, DBS, DatabaseConfigs } from "../index";
 import type { ConnectionManager } from "./ConnectionManager";
@@ -15,8 +16,8 @@ import { getConnectionServerFunctions } from "./getConnectionServerFunctions";
 import { getConnectionSocketPath } from "./getConnectionSocketPath";
 import { getSchemaConfig } from "./getSchemaConfig";
 import type { CONNECTION_HOT_RELOAD_COLUMNS } from "./initConnectionManager";
+import { modifyClientFunctionSchema } from "./modifyClientFunctionSchema";
 import { modifyClientSchema } from "./modifyClientSchema";
-import { parseTableConfig } from "./parseTableConfig";
 
 export type HotReloadConfigOptions = RequiredKeepUndefined<
   Pick<
@@ -34,6 +35,7 @@ export type HotReloadConfigOptions = RequiredKeepUndefined<
     | "tsGeneratedTypesDir"
     | "tsGeneratedTypesFunctionsPath"
     | "modifyClientSchema"
+    | "modifyClientFunctionSchema"
   >
 >;
 
@@ -80,7 +82,8 @@ export const getHotReloadConfigs = async ({
     configuredConnection,
     configuredDatabaseConfig,
   );
-  const { fileTable, tableConfig, tableHooks, jobs } = await parseTableConfig({
+
+  const { fileTable, tableConfig, tableHooks, jobs } = await parsePlugins({
     type: "saved",
     dbs,
     con: configuredConnection,
@@ -88,6 +91,7 @@ export const getHotReloadConfigs = async ({
     app,
     databaseConfig: configuredDatabaseConfig,
   });
+
   const auth = await getConnectionAuth(app, dbs, _dbs, {
     type: "connection",
     stateDatabaseConfig,
@@ -114,11 +118,12 @@ export const getHotReloadConfigs = async ({
     db_watch_schema,
   } = configuredConnection;
 
-  const connectionFunctions = await getConnectionServerFunctions({
-    databaseConfig,
-    dbs,
-    connection,
-  });
+  const { functions: connectionFunctions, functionOptions } =
+    await getConnectionServerFunctions({
+      databaseConfig,
+      dbs,
+      connection,
+    });
 
   return {
     config: {
@@ -143,6 +148,10 @@ export const getHotReloadConfigs = async ({
           join(config_sync.configPath, srcFolderName, "index.ts")
         : undefined,
       functions: connectionFunctions,
+      modifyClientFunctionSchema: modifyClientFunctionSchema(
+        configuredConnection.function_options,
+        functionOptions,
+      ),
       modifyClientSchema: (table, tableConfig, userData, auditConfig) =>
         modifyClientSchema({
           connection: configuredConnection,

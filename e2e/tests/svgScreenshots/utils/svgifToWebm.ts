@@ -21,7 +21,7 @@ export const svgifToWebm = async ({
     fs
       .readFileSync(svgifPath, "utf-8")
       .split(`data-duration="`)[1]
-      ?.split(`"`)[0] ?? 1,
+      ?.split(`"`)[0] ?? "",
   );
   if (!durationMillis || isNaN(durationMillis)) {
     throw new Error(`Invalid or missing duration in SVGif: ${svgifPath}`);
@@ -30,7 +30,7 @@ export const svgifToWebm = async ({
   const total = Math.round(fps * durationSeconds);
   const frameDuration = 1000 / fps;
 
-  const fileNameWithoutExt = path.basename(svgifPath).split(".svgif")[0];
+  const fileNameWithoutExt = path.basename(svgifPath).split(".svgif")[0]!;
   const framesDir = path.join(outDir, fileNameWithoutExt);
   fs.mkdirSync(framesDir, { recursive: true });
 
@@ -58,9 +58,9 @@ export const svgifToWebm = async ({
   await page.goto(url, { waitUntil: "networkidle" });
 
   await page.evaluate(async () => {
-    if (document.fonts?.ready) await document.fonts.ready;
+    await document.fonts.ready;
     await Promise.all(
-      Array.from(document.images).map((img) => img.decode?.().catch(() => {})),
+      Array.from(document.images).map((img) => img.decode().catch(() => {})),
     );
   });
 

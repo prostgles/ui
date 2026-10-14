@@ -447,7 +447,7 @@ export default class W_Table extends RTComp<
   };
 
   onSort = async (sort: ColumnSort[]) => {
-    const { tables, db } = this.props.prgl;
+    const { tables, db, methods } = this.props.prgl;
     const { w } = this.d;
     if (!w) return null;
     const { table_name: tableName } = w;
@@ -456,7 +456,7 @@ export default class W_Table extends RTComp<
     try {
       const orderBy = getSort(tables, { ...w, sort }) as ColumnSort[];
       /** Ensure the sort is valid */
-      const { select } = await getTableSelect(w, tables, db, {}, true);
+      const { select } = await getTableSelect(w, tables, db, {}, true, methods);
       await tableHandler?.find!({}, { select, limit: 0, orderBy });
       void w.$update({ sort });
     } catch (error) {
@@ -575,6 +575,7 @@ export default class W_Table extends RTComp<
         data: this.state.rows,
         windowWidth: this.ref?.getBoundingClientRect().width,
         tables,
+        methods: prgl.methods,
         db,
         sql: prgl.sql,
         w: this.d.w,
