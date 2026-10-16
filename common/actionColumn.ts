@@ -3,6 +3,7 @@ import {
   getTableFilterFromDetailedGroupFilter,
   type GroupedDetailedFilter,
 } from "./filterUtils";
+import { parsedJoinPathSchema } from "prostgles-types";
 
 export const ACTION_VARIANTS = ["text", "faded", "filled", "outline"] as const;
 export const ACTION_COLORS = [
@@ -44,12 +45,7 @@ export const actionColumnParamsSchema = {
   argName: { type: "string", optional: true },
   joinPath: {
     optional: true,
-    arrayOf: {
-      type: {
-        table: "string",
-        on: { arrayOf: { record: { values: "string" } } },
-      },
-    },
+    arrayOf: parsedJoinPathSchema,
   },
   conditions: {
     optional: true,

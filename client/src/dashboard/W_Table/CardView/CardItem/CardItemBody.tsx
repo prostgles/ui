@@ -7,6 +7,7 @@ import { RenderValue } from "../../../SmartForm/SmartFormField/RenderValue";
 import type { IndexedRow } from "../CardView";
 import { CARD_ITEM_PADDING } from "../constants";
 import type { CardViewRowProps } from "./CardViewRow";
+import { getColumnActions } from "../../ColumnMenu/ColumnDisplayFormat/getFormatColumnSelect";
 
 export const CardBody = ({
   visibleCols,
@@ -34,68 +35,86 @@ export const CardBody = ({
   table: DBSchemaTableWJoins;
 }) => {
   const { visibleColumns = visibleCols.map((c) => c.name) } = table.card ?? {};
-  const columnNodeList = visibleColumns
+  const displayedColumns = visibleColumns
     .map((c) => {
       const columnName = typeof c === "string" ? c : c.column;
-      return visibleCols.find((vc) => vc.name === columnName);
-    })
-    .filter(isDefined)
-    .map((c, ci) => {
-      const value = row[c.name] as unknown;
-      const renderedVal = <RenderValue column={c} value={value} />;
       return (
-        <div
-          key={ci}
-          title={c.udt_name}
-          className={
-            "flex-col gap-p25 min-w-0 " + (cardRows > 1 ? " h-fit w-fit " : "")
-          }
-          style={{ minWidth: cardCellMinWidth }}
-        >
-          {!hideCardFieldNames && (
-            <div
-              className=" text-2 noselect"
-              onContextMenu={
-                c.onContextMenu &&
-                ((e) => c.onContextMenu?.(e, e.currentTarget, c, () => {}))
-              }
-            >
-              {c.label || c.name}
-            </div>
-          )}
-          <div
-            className=" o-auto "
-            title={
-              (
-                typeof value === "string" &&
-                (_PG_date.some((v) => v === c.udt_name) ||
-                  c.tsDataType === "number")
-              ) ?
-                value
-              : ""
-            }
-            style={{
-              lineHeight: 1.33,
-              ...(c.getCellStyle?.(row, value, value) || {}),
-              maxHeight: `${maxCardRowHeight || 100}px`,
-            }}
-          >
-            {c.onRender?.({
-              row: row,
-              value,
-              renderedVal,
-              rowIndex: rowIndex,
-              nextRow: indexedRows[rowIndex + 1],
-              prevRow: indexedRows[rowIndex - 1],
-            }) ?? renderedVal}
-          </div>
-        </div>
+        visibleCols.find((vc) => vc.name === columnName) ??
+        visibleCols.find(
+          (vc) => vc.defaultConfig?.nested?.fallbackColumn === columnName,
+        )
       );
-    });
+    })
+    .filter(isDefined);
+  const actionColumns = displayedColumns.filter((column) =>
+    getColumnActions(column),
+  );
+  const actionNodes: React.ReactNode[] = [];
+  const columnNodeList = displayedColumns.map((c, ci) => {
+    const isAction = !cardLayout && actionColumns.includes(c);
+    const value = row[c.name] as unknown;
+    const renderedVal = <RenderValue column={c} value={value} />;
+    const columnNode = (
+      <div
+        key={ci}
+        title={c.udt_name}
+        className={
+          "flex-col gap-p25 min-w-0 " +
+          (isAction ? "CardAction"
+          : cardRows > 1 ? " h-fit w-fit "
+          : "")
+        }
+        style={{ minWidth: isAction ? undefined : cardCellMinWidth }}
+      >
+        {!hideCardFieldNames && !isAction && (
+          <div
+            className=" text-2 noselect"
+            onContextMenu={
+              c.onContextMenu &&
+              ((e) => c.onContextMenu?.(e, e.currentTarget, c, () => {}))
+            }
+          >
+            {c.label || c.name}
+          </div>
+        )}
+        <div
+          className={isAction ? "CardActionValue" : " o-auto "}
+          title={
+            (
+              typeof value === "string" &&
+              (_PG_date.some((v) => v === c.udt_name) ||
+                c.tsDataType === "number")
+            ) ?
+              value
+            : ""
+          }
+          style={{
+            lineHeight: 1.33,
+            ...(c.getCellStyle?.(row, value, value) || {}),
+            maxHeight: isAction ? undefined : `${maxCardRowHeight || 100}px`,
+          }}
+        >
+          {c.onRender?.({
+            row: row,
+            value,
+            renderedVal,
+            rowIndex: rowIndex,
+            nextRow: indexedRows[rowIndex + 1],
+            prevRow: indexedRows[rowIndex - 1],
+          }) ?? renderedVal}
+        </div>
+      </div>
+    );
+    if (isAction) {
+      actionNodes.push(columnNode);
+      return null;
+    }
+    return columnNode;
+  });
 
   if (cardLayout) {
     const columnNodes: Record<string, React.ReactNode> = {};
-    visibleCols.forEach((c, i) => {
+    displayedColumns.forEach((c, i) => {
       columnNodes[c.name] = columnNodeList[i];
     });
     return (
@@ -109,14 +128,22 @@ export const CardBody = ({
 
   return (
     <FlexRowWrap
-      className={"CardBody jc-start ai-start f-0 min-w-0"}
+      className={
+        "CardBody jc-start ai-start f-0 min-w-0" +
+        (actionColumns.length === displayedColumns.length ?
+          " CardBody--actions-only"
+        : "")
+      }
       style={{
         gap: CARD_ITEM_PADDING,
-        padding: CARD_ITEM_PADDING,
-        paddingTop: 0,
       }}
     >
       {columnNodeList}
+      {!!actionNodes.length && (
+        <FlexRowWrap className="CardActions w-full gap-p5">
+          {actionNodes}
+        </FlexRowWrap>
+      )}
     </FlexRowWrap>
   );
 };

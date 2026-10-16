@@ -11,6 +11,7 @@ import type { QuickAddComputedColumnProps } from "./QuickAddComputedColumn";
 import type { ColumnConfig } from "@common/ColumnConfig/ColumnConfig";
 import type { AggregateOptions } from "@common/ColumnConfig/ColumnConfig";
 import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
+import { getJoinPathError } from "../../tableUtils/getJoinPaths";
 
 export const useAddComputedColumnState = ({
   tableName,
@@ -61,6 +62,7 @@ export const useAddComputedColumnState = ({
       const { allJoins } = getAllJoins({ tableName, tables, value: undefined });
 
       const joinedColumns = allJoins
+        .filter((join) => !getJoinPathError(tables, tableName, join.path))
         .map((join) => {
           const { table: joinTable } = join;
           const joinColumns = getColumnsAcceptedByFunction(

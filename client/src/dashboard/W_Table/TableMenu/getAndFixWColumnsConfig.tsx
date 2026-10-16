@@ -1,138 +1,25 @@
-import { quickClone } from "prostgles-client/dist/SyncedTable/SyncedTable";
+import { isEqual } from "prostgles-types";
 import type { DBSchemaTableWithRenderInfo } from "src/dashboard/Dashboard/getTables";
-import { isDefined } from "../../../utils/utils";
 import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";
-import type {
-  ColumnConfig,
-  NestedColumn,
-} from "@common/ColumnConfig/ColumnConfig";
+import type { ColumnConfig } from "@common/ColumnConfig/ColumnConfig";
+import { getColumnsWithInfo } from "../tableUtils/getColumnsWithInfo";
+import { getMinimalColumnInfo } from "../tableUtils/tableUtils";
 
 export const getAndFixWColumnsConfig = async (
   tables: DBSchemaTableWithRenderInfo[],
   w: WindowSyncItem<"table">,
 ): Promise<ColumnConfig[]> => {
-  const table = tables.find((t) => t.name === w.table_name);
+  const table = tables.find((table) => table.name === w.table_name);
   if (!table) return [];
   const defaultSort = !w.columns && !w.sort?.length ? table.sort : undefined;
-  const { columns: rootColumns, update: updateRoot } = getUpdatedColumnsConfig(
-    table,
-    w.columns ?? null,
+  const columns = getMinimalColumnInfo(
+    getColumnsWithInfo(table.name, tables, w.columns),
   );
-  let update = updateRoot;
-  const columns: ColumnConfig[] = rootColumns
-    .map((c) => {
-      if (c.nested) {
-        const nestedTable = tables.find(
-          (t) => t.name === c.nested?.path.at(-1)?.table,
-        );
-
-        /** Table was dropped */
-        if (!nestedTable) return undefined;
-
-        const nestedColumns = getUpdatedColumnsConfig(
-          nestedTable,
-          c.nested.columns,
-        );
-        update = update || nestedColumns.update;
-        return {
-          ...c,
-          nested: {
-            ...c.nested,
-            columns: nestedColumns.columns,
-          },
-        };
-      }
-      return c;
-    })
-    .filter(isDefined);
-  if (update || defaultSort?.length) {
+  if (!isEqual(columns, w.columns) || defaultSort?.length) {
     await w.$update({
       columns,
       ...(defaultSort?.length ? { sort: defaultSort } : {}),
     });
   }
   return columns;
-};
-
-const getUpdatedColumnsConfig = <
-  C extends ColumnConfig | NestedColumn<ColumnConfig> = ColumnConfig,
->(
-  table: DBSchemaTableWithRenderInfo,
-  existingCols: C[] | null,
-): {
-  columns: C[];
-  update: boolean;
-} => {
-  try {
-    const tableColumnsConfig = table.columns.map(
-      (c) =>
-        ({
-          name: c.name,
-          show: !table.defaultColumns || table.defaultColumns.includes(c.name),
-          computed: false,
-          format: c.renderAs,
-          style: c.style,
-        }) as ColumnConfig | NestedColumn<ColumnConfig> as C,
-    );
-
-    if (existingCols) {
-      const columnsHaveNotChanged =
-        Array.from(
-          new Set(
-            existingCols
-              .map((c) => c.computedConfig?.column ?? c.name)
-              .filter(isDefined),
-          ),
-        )
-          .toSorted()
-          .join() ===
-        tableColumnsConfig
-          .map((c) => c.name)
-          .toSorted()
-          .join();
-      if (columnsHaveNotChanged) {
-        return {
-          columns: existingCols,
-          update: false,
-        };
-      }
-
-      /* Remove missing columns */
-      const validWCols = quickClone(existingCols).filter(
-        ({ name, nested, computedConfig, format }) => {
-          if (format?.type === "Action" || format?.type === "ActionColumns")
-            return true;
-          return tableColumnsConfig.find((c1) => {
-            if (nested) {
-              return true;
-            }
-            if (computedConfig) {
-              return (
-                !computedConfig.column || computedConfig.column === c1.name
-              );
-            }
-            return name === c1.name;
-          });
-        },
-      );
-
-      /* Add missing columns */
-      const newlyCreatedTableCols = tableColumnsConfig
-        .filter((c1) => !validWCols.find((nc) => nc.name === c1.name))
-        .map((c) => ({ name: c.name, show: c.show }));
-
-      return {
-        columns: [...validWCols, ...newlyCreatedTableCols] as C[],
-        update: true,
-      };
-    }
-
-    return {
-      columns: tableColumnsConfig,
-      update: true,
-    };
-  } catch (e) {
-    console.error(e);
-    throw e;
-  }
 };

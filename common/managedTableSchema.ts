@@ -1,4 +1,5 @@
 import type { ActionColumnsParams } from "./actionColumn";
+import type { ColumnConfig } from "./ColumnConfig/ColumnConfig";
 import { doclingTimingsSchema } from "./documentsServiceOutputSchema";
 import type { DBSSchema } from "./publishUtils";
 import type { RequiredKeepUndefined } from "./utils";
@@ -27,7 +28,10 @@ export type TableOptions = RequiredKeepUndefined<
 > & {
   audit?: ClientTableAuditConfig;
   defaultColumns?: string[];
-  columns: Record<string, { label?: string }> | undefined;
+};
+
+export type ClientTableOptions = Omit<TableOptions, "columns"> & {
+  columnConfigs?: Record<string, Omit<ColumnConfig, "name">>;
 };
 
 export type InternalColumnFormat = {
@@ -44,12 +48,15 @@ export type InternalColumnFormat = {
 };
 
 export type ColumnOptions = RequiredKeepUndefined<
-  NonNullable<
+  Pick<
     NonNullable<
       NonNullable<
-        NonNullable<DBSSchema["connections"]["table_options"]>[string]
-      >["columns"]
-    >[string]
+        NonNullable<
+          NonNullable<DBSSchema["connections"]["table_options"]>[string]
+        >["columns"]
+      >[string]
+    >,
+    "icon" | "renderAs" | "style"
   >
 > & {
   defaultRenderAs?: InternalColumnFormat;

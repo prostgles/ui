@@ -3,6 +3,7 @@ import {
   type ContextValue,
   isObject,
 } from "./publishUtils";
+import type { JoinPath } from "prostgles-types";
 
 type AnyObject = Record<string, any>;
 
@@ -124,10 +125,6 @@ export type DetailedFilterBase = BaseFilter & {
     lang: string;
   };
   complexFilter?: ComplexFilterDetailed;
-};
-type JoinPath = {
-  table: string;
-  on?: Record<string, string>[] | undefined;
 };
 export type DetailedJoinedFilter = BaseFilter & {
   type: (typeof JOINED_FILTER_TYPES)[number];

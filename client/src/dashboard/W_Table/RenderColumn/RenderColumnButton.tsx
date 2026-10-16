@@ -9,6 +9,7 @@ import { LinkedRecordButton } from "../ColumnMenu/ColumnDisplayFormat/LinkedReco
 import type { LinkedRecordsSearchFilter } from "../ColumnMenu/ColumnDisplayFormat/getLinkedRecordsFilter";
 import type { RenderColumnProps } from "./RenderColumn";
 import { getColumnValueStyle, StyledCell } from "./StyledTableColumn";
+import { getColumnFormat } from "../ColumnMenu/ColumnDisplayFormat/getFormatColumnSelect";
 
 export type RelatedRecordsContext = {
   searchFilter: LinkedRecordsSearchFilter[];
@@ -36,7 +37,11 @@ export const RenderColumnButton = ({
 }: Props) => {
   const { db, methods, sql } = usePrgl();
   const targetTable = tables.find((t) => t.name === table.name);
-  const colors = getColumnValueStyle({ column, table, row, barchartVals });
+  // Avatars apply their own colors within the circle.
+  const colors =
+    getColumnFormat(column)?.type === "Avatar" ?
+      undefined
+    : getColumnValueStyle({ column, table, row, barchartVals });
   const fallback = <StyledCell style={colors} renderedVal={children} />;
   if (!targetTable || !db[table.name]?.find) {
     return fallback;

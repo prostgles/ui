@@ -1,5 +1,8 @@
 import { expect, test } from "@playwright/test";
-import type { TestDeployment } from "../../../server/dist/server/src/testing";
+import {
+  createTestDeployment,
+  type TestDeployment,
+} from "../../../server/dist/server/src/testing";
 import { spawn, spawnSync } from "node:child_process";
 import {
   copyFileSync,
@@ -13,6 +16,7 @@ import { createServer } from "node:net";
 import { createRequire } from "node:module";
 import { join, resolve } from "node:path";
 import { parse } from "../../../server/node_modules/dotenv";
+import { createConfigTestProject } from "../utils/createConfigTestProject";
 
 type RunOptions = {
   capture?: boolean;
@@ -91,6 +95,72 @@ test("formatted CLI apps have no spurious upgrade conflicts", async () => {
       customConfig ? [join(appRoot, cliFileNames.prettierConfig)] : [],
     );
     expect(readFileSync(schemaPath, "utf8")).toBe(schema);
+  }
+});
+
+test("temporary databases remove Docker volumes after disposal and failed setup", async () => {
+  const configId = "volume-cleanup-e2e";
+  const configPath = createConfigTestProject(
+    { id: configId },
+    test.info().outputPath("config"),
+  );
+  for (const failSetup of [false, true]) {
+    let volumeNames: string[] = [];
+    const setupError = new Error("Test seed failure");
+    let deployment: TestDeployment | undefined;
+    try {
+      const starting = createTestDeployment({
+        configPath,
+        configId,
+        logPath: test.info().outputPath(`${failSetup}.log`),
+        seed: async ({ stateDatabase }) => {
+          const { rows } = await stateDatabase.query<{ name: string }>(
+            "SELECT current_database() AS name",
+          );
+          const containerName = rows[0]!.name
+            .slice(0, -"_state".length)
+            .replaceAll("_", "-");
+          const inspection = spawnSync(
+            "docker",
+            ["inspect", "--format", "{{json .Mounts}}", containerName],
+            { encoding: "utf8" },
+          );
+          expect(inspection.status, inspection.stderr).toBe(0);
+          const mounts = JSON.parse(inspection.stdout) as {
+            Type: string;
+            Name: string;
+          }[];
+          volumeNames = mounts
+            .filter((mount) => mount.Type === "volume")
+            .map((mount) => mount.Name);
+          expect(volumeNames.length).toBeGreaterThan(0);
+          if (failSetup) throw setupError;
+        },
+      });
+      if (failSetup) {
+        await expect(starting).rejects.toThrow(setupError.message);
+      } else {
+        deployment = await starting;
+        await deployment.dispose();
+      }
+      for (const volumeName of volumeNames) {
+        const inspection = spawnSync(
+          "docker",
+          ["volume", "inspect", volumeName],
+          { encoding: "utf8" },
+        );
+        expect(
+          inspection.status,
+          `Leaked Docker volume: ${volumeName}`,
+        ).not.toBe(0);
+        expect(inspection.stderr).toContain("no such volume");
+      }
+    } finally {
+      await deployment?.dispose();
+      // Remove this test's volumes if the cleanup regression reappears.
+      if (volumeNames.length)
+        spawnSync("docker", ["volume", "rm", ...volumeNames]);
+    }
   }
 });
 

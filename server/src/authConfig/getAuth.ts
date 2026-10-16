@@ -5,7 +5,7 @@ import { getBackupManager } from "@src/init/prostglesOnReady";
 import type { Express } from "express";
 import path from "path";
 import type { AuthConfig } from "prostgles-server/dist/Auth/AuthTypes";
-import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
+import type { DBHandlerServer } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
 import type { DB } from "prostgles-server/dist/Prostgles";
 import { DIRECTORIES } from "../electronConfig";
 import type { DBS } from "../index";
@@ -23,7 +23,7 @@ import {
 import { type AuthConfigForStateOrConnection } from "./subscribeToAuthSetupChanges";
 import { updateRemoteMcpAuthorizationCode } from "@src/McpHub/AnthropicMcpHub/McpOAuth/updateRemoteMcpAuthorizationCode";
 
-export type DBWithAuth = DBOFullyTyped<
+export type DBWithAuth = DBHandlerServer<
   Pick<
     DBGeneratedSchema,
     | "users" // Must sync user id and type to state db to get access control

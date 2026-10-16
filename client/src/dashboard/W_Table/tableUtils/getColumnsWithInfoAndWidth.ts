@@ -10,11 +10,17 @@ export const getColumnsWithInfoAndWidth = (
   w: Pick<WindowData<"table">, "columns" | "table_name">,
   data?: AnyObject[],
   windowWidth?: number,
+  inheritDefaults = true,
 ): ColumnConfigWithInfo[] => {
   try {
     const { table_name } = w;
 
-    const columnsWithInfo = getColumnsWithInfo(table_name, tables, w.columns);
+    const columnsWithInfo = getColumnsWithInfo(
+      table_name,
+      tables,
+      w.columns,
+      inheritDefaults,
+    );
 
     try {
       const columnsWithWidth = getColWidth(

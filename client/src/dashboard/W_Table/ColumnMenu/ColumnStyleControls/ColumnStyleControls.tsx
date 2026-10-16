@@ -51,6 +51,7 @@ export const ColumnStyleControls = (props: StyleColumnProps) => {
     if (newStyle?.type && newStyle.type !== style.type) {
       let _newStyle: ColumnStyle = {
         buttonVariant: style.buttonVariant,
+        fontWeight: style.fontWeight,
         ...newStyle,
       };
       if (newStyle.type === "Barchart") {
@@ -75,6 +76,22 @@ export const ColumnStyleControls = (props: StyleColumnProps) => {
 
   return (
     <FlexCol className="ColumnStyleControls flex-col gap-1">
+      <Select
+        label="Font weight"
+        value={style.fontWeight ?? "default"}
+        fullOptions={
+          [
+            { key: "default", label: "Default (bold for record titles)" },
+            { key: "normal", label: "Normal" },
+            { key: "bold", label: "Bold" },
+          ] as const
+        }
+        onChange={(fontWeight) =>
+          updateStylePart({
+            fontWeight: fontWeight === "default" ? undefined : fontWeight,
+          })
+        }
+      />
       {(column.display === "drillable-records" ||
         column.nested?.display?.type === "drillable-records") && (
         <Select

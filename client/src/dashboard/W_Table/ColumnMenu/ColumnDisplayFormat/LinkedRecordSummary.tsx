@@ -5,6 +5,8 @@ import React from "react";
 import type { DBSchemaTableWithRenderInfo } from "src/dashboard/Dashboard/getTables";
 import { RenderValue } from "../../../SmartForm/SmartFormField/RenderValue";
 import type { getColumnsWithInfo } from "../../tableUtils/getColumnsWithInfo";
+import { Avatar } from "./Avatar";
+import { getColumnFormat } from "./getFormatColumnSelect";
 
 export const LinkedRecordSummary = ({
   row,
@@ -37,22 +39,32 @@ export const LinkedRecordSummary = ({
       fallbackColumns.find(({ name }) => name !== headerColumn?.name)?.name,
     );
   const avatarColumn = getAvailableColumn(table.card?.avatarColumn);
+  const avatarConfig = shownNestedColumns.find(
+    (column) => column.name === avatarColumn?.name,
+  );
+  const avatarFormat = avatarConfig && getColumnFormat(avatarConfig);
   const avatarUrl =
     avatarColumn && typeof row[avatarColumn.name] === "string" ?
       (row[avatarColumn.name] as string)
     : undefined;
   const remainingColumns = shownNestedColumns.filter(
     (column) =>
-      ![
-        avatarColumn?.name,
-        headerColumn?.name,
-        subHeaderColumn?.name,
-      ].includes(column.name),
+      ![avatarColumn?.name, headerColumn?.name, subHeaderColumn?.name].includes(
+        column.name,
+      ),
   );
 
   return (
     <FlexRow className="gap-p5 ai-center ta-left">
-      {avatarUrl ?
+      {avatarConfig && avatarFormat?.type === "Avatar" ?
+        <Avatar
+          value={row[avatarConfig.name]}
+          row={row}
+          column={avatarConfig}
+          table={table}
+          params={avatarFormat.params}
+        />
+      : avatarUrl ?
         <MediaViewer
           style={{
             width: "2em",

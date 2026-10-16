@@ -6,7 +6,7 @@ import {
 } from "prostgles-types";
 import React from "react";
 import { getInputType } from "../../dashboard/SmartForm/SmartFormField/fieldUtils";
-import type { FormFieldProps } from "../FormField/FormField";
+import FormField, { type FormFieldProps } from "../FormField/FormField";
 import type { FullOption } from "../Select/Select";
 import type { JSONBSchemaCommonProps } from "./JSONBSchema";
 import { isCompleteJSONB } from "./isCompleteJSONB";
@@ -32,7 +32,9 @@ export const JSONBSchemaPrimitive = ({
   onChange,
   showErrors,
   noLabels,
+  debounceInputs,
 }: P) => {
+  const Field = debounceInputs === false ? FormField : FormFieldDebounced;
   let fullOptions: FullOption[] | undefined = undefined;
   if (schema.enum?.length || schema.allowedValues?.length) {
     fullOptions = (schema.enum || schema.allowedValues!).map((key) => ({
@@ -67,7 +69,7 @@ export const JSONBSchemaPrimitive = ({
     showErrors && !isCompleteJSONB(value, schema) ? "Required" : undefined;
 
   return (
-    <FormFieldDebounced
+    <Field
       name={schema.title}
       label={
         /**

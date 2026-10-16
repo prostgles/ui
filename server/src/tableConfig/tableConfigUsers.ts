@@ -159,6 +159,17 @@ export const tableConfigUsers = {
       },
     },
     triggers: {
+      updateLastUpdated: {
+        actions: ["update"],
+        type: "before",
+        forEach: "row",
+        query: `
+          BEGIN
+            NEW.last_updated = GREATEST(OLD.last_updated + 1, (EXTRACT(EPOCH FROM clock_timestamp()) * 1000)::BIGINT);
+            RETURN NEW;
+          END;
+        `,
+      },
       atLeastOneActiveAdmin: {
         actions: ["delete", "update"],
         type: "after",

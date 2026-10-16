@@ -32,6 +32,7 @@ export const useAppState = (
     const { tables: dbsTables = [] } = getTables(
       (tableSchema ?? []) as DBSchemaTableWithOptions[],
       dbs,
+      dbsClient.joins,
     );
     (window as any).dbs = dbs;
     (window as any).dbsSql = dbsSql;

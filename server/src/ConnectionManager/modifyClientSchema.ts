@@ -1,8 +1,10 @@
 import { auditOperationStyles } from "@common/auditOperationStyles";
 import { actionColumnValueSchema } from "@common/createActionColumn";
+import type { ColumnConfig } from "@common/ColumnConfig/ColumnConfig";
 import { isDeepStrictEqual } from "node:util";
 import type {
   ColumnOptions,
+  ClientTableOptions,
   InternalColumnFormat,
   TableOptions,
 } from "@common/managedTableSchema";
@@ -12,7 +14,7 @@ import type {
   ResolvedAuditConfig,
   TableConfig,
 } from "prostgles-server";
-import { isObject, type DBSchemaTable } from "prostgles-types";
+import { getProperty, isObject, type DBSchemaTable } from "prostgles-types";
 import type { DatabaseConfigs } from "..";
 import { dbsConnectionOptions } from "./dbsConnectionOptions";
 import type { ConnectionHotReloadProperties } from "./getHotReloadConfigs";
@@ -26,28 +28,88 @@ export const modifyClientSchema = ({
   auditConfig,
 }: {
   connection: ConnectionHotReloadProperties;
-  databaseConfig: Pick<DatabaseConfigs, "file_table_config">;
+  databaseConfig: Pick<DatabaseConfigs, "file_table_config" | "sync_users">;
   table: DBSchemaTable;
   tableConfig: TableConfig[string] | undefined;
   auditConfig: ResolvedAuditConfig | undefined;
   userData: AuthResultWithSID<SUser> | undefined;
-}): DBSchemaTable<Omit<TableOptions, "columns">, ColumnOptions> => {
+}): DBSchemaTable<ClientTableOptions, ColumnOptions> => {
   const { file_table_config } = databaseConfig;
   const { fileTable, annotationsTable } = file_table_config ?? {};
-  const managedTableOptions =
-    fileTable === table.name ? fileTableOptions
-    : fileTable && annotationsTable === table.name ? annotationsTableOptions
-    : auditConfig?.tableName === table.name ? auditTableOptions
-    : undefined;
-  const tableOptions = {
-    ...(connection.is_state_db ?
-      dbsConnectionOptions.table_options[
-        table.name as keyof (typeof dbsConnectionOptions)["table_options"]
-      ]
-    : {}),
-    ...managedTableOptions,
-    ...connection.table_options?.[table.name],
+
+  const managedTableOptions: Record<string, Partial<TableOptions>> = {
+    ...((databaseConfig.sync_users || connection.is_state_db) && {
+      users: userTableOptions,
+    }),
+    ...(auditConfig && { [auditConfig.tableName]: auditTableOptions }),
+    ...(fileTable &&
+      annotationsTable && {
+        [annotationsTable]: annotationsTableOptions,
+      }),
+    ...(fileTable && { [fileTable]: fileTableOptions }),
   };
+  const stateTableOptions: Record<string, Partial<TableOptions>> =
+    connection.is_state_db ? dbsConnectionOptions.table_options : {};
+  const tableOptionsByName: Record<
+    string,
+    Partial<TableOptions>
+  > = Object.fromEntries(
+    Object.keys({
+      ...stateTableOptions,
+      ...managedTableOptions,
+      ...connection.table_options,
+    }).map((tableName) => [
+      tableName,
+      {
+        ...getProperty(stateTableOptions, tableName),
+        ...managedTableOptions[tableName],
+        ...connection.table_options?.[tableName],
+        columns: Object.fromEntries(
+          Object.keys({
+            ...stateTableOptions[tableName]?.columns,
+            ...managedTableOptions[tableName]?.columns,
+            ...connection.table_options?.[tableName]?.columns,
+          }).map((name) => [
+            name,
+            {
+              ...stateTableOptions[tableName]?.columns?.[name],
+              ...managedTableOptions[tableName]?.columns?.[name],
+              ...connection.table_options?.[tableName]?.columns?.[name],
+            },
+          ]),
+        ),
+      },
+    ]),
+  );
+  const tableOptions = tableOptionsByName[table.name] ?? {};
+  const actorOptions = tableOptions.columns?.actor;
+  if (
+    table.name === auditConfig?.tableName &&
+    actorOptions?.nested &&
+    !connection.table_options?.[table.name]?.columns?.actor?.nested
+  ) {
+    const referenceDisplay = tableOptionsByName.users?.referenceDisplay;
+    tableOptions.columns!.actor = {
+      ...actorOptions,
+      nested: {
+        ...actorOptions.nested,
+        columns: (referenceDisplay?.columns ?? [{ name: "username" }]).map(
+          (column) => ({
+            ...column,
+            show: true,
+            display:
+              referenceDisplay?.display?.type === "values" ?
+                undefined
+              : "drillable-records",
+          }),
+        ),
+        display:
+          referenceDisplay?.display?.type === "values" ?
+            referenceDisplay.display
+          : { type: "values", labels: "none" },
+      },
+    };
+  }
 
   const capitaliseNames =
     connection.display_options?.prettyTableAndColumnNames ?? true;
@@ -59,6 +121,13 @@ export const modifyClientSchema = ({
     defaultColumns: tableOptions.defaultColumns,
     audit: getTableAuditConfig(table, auditConfig),
     card: tableOptions.card,
+    referenceDisplay: tableOptions.referenceDisplay,
+    columnConfigs: Object.fromEntries(
+      Object.entries(tableOptions.columns ?? {}).map(([name, options]) => [
+        name,
+        getColumnConfig(options ?? {}),
+      ]),
+    ),
     sort: tableOptions.sort?.filter(({ key }) =>
       table.columns.some((column) => column.name === key && column.orderBy),
     ),
@@ -71,7 +140,7 @@ export const modifyClientSchema = ({
     rowIconColumn: tableOptions.rowIconColumn,
     columns: table.columns.map((c) => {
       const columnOptions = {
-        ...managedTableOptions?.columns?.[c.name],
+        ...managedTableOptions[table.name]?.columns?.[c.name],
         ...tableOptions.columns?.[c.name],
       };
       const columnConfig =
@@ -100,7 +169,7 @@ export const modifyClientSchema = ({
           (!columnHasLabelFromConfig && capitaliseNames ?
             convertSnakeToReadable(c.name)
           : c.label),
-        renderAs: columnOptions.renderAs,
+        renderAs: columnOptions.format ?? columnOptions.renderAs,
         style: columnOptions.style,
       };
     }),
@@ -184,6 +253,7 @@ const convertSnakeToReadable = (str: string) => {
 };
 
 const fileTableOptions: TableOptions = {
+  referenceDisplay: undefined,
   managedTableType: "files",
   sort: undefined,
   card: {
@@ -211,7 +281,15 @@ const fileTableOptions: TableOptions = {
   },
 };
 
+const userTableOptions: Partial<TableOptions> = {
+  label: "Users",
+  icon: "Account",
+  card: { headerColumn: "username", subHeaderColumn: "name" },
+  referenceDisplay: { columns: [{ name: "username" }] },
+};
+
 const annotationsTableOptions: TableOptions = {
+  referenceDisplay: undefined,
   managedTableType: "file-annotations",
   sort: undefined,
   columns: {},
@@ -236,6 +314,7 @@ const auditOperationStyle = {
 } as const;
 
 const auditTableOptions: TableOptions = {
+  referenceDisplay: undefined,
   managedTableType: undefined,
   icon: "History",
   label: "Audit trail",
@@ -250,7 +329,19 @@ const auditTableOptions: TableOptions = {
   columns: {
     created_at: { label: "Time", renderAs: { type: "Age" } },
     table_name: { label: "Table" },
-    actor: { label: "User" },
+    actor: {
+      label: "User",
+      nested: {
+        path: [{ table: "users", on: "prostgles_audit_actor" }],
+        columns: [
+          { name: "username", show: true, display: "drillable-records" },
+        ],
+        fallbackColumn: "actor",
+        display: { type: "values", labels: "none" },
+        joinType: "left",
+        limit: 1,
+      },
+    },
     new_row: {
       label: "Changes",
       style: { ...auditOperationStyle, column: "operation" },
@@ -264,4 +355,28 @@ const auditTableOptions: TableOptions = {
       style: auditOperationStyle,
     },
   },
+};
+
+const getColumnConfig = (
+  options: NonNullable<NonNullable<TableOptions["columns"]>[string]>,
+): Omit<ColumnConfig, "name"> => {
+  const { icon, renderAs, computedConfig, nested, ...config } = options;
+  return {
+    ...config,
+    format: config.format ?? renderAs,
+    computedConfig:
+      computedConfig &&
+      ({
+        ...computedConfig,
+        column: computedConfig.column,
+      } as ColumnConfig["computedConfig"]),
+    nested: nested && {
+      ...nested,
+      columns: nested.columns.map(({ name, ...column }) => ({
+        name,
+        ...getColumnConfig(column),
+        nested: undefined,
+      })),
+    },
+  };
 };

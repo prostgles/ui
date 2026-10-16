@@ -52,6 +52,30 @@ export const ColumnDisplayFormat = ({
       .map((c) => c.name);
     const userFormatSchemas = schemaWithoutAllowedValues.oneOfType
       .map((t) => {
+        if (
+          t.type.enum[0] === "Avatar" &&
+          "params" in t &&
+          "type" in t.params &&
+          "firstNameColumn" in t.params.type
+        ) {
+          return {
+            ...t,
+            type: { ...t.type, enum: ["Avatar"] as const },
+            params: {
+              optional: true as const,
+              type: {
+                firstNameColumn: {
+                  ...t.params.type.firstNameColumn,
+                  allowedValues: textCols,
+                },
+                lastNameColumn: {
+                  ...t.params.type.lastNameColumn,
+                  allowedValues: textCols,
+                },
+              },
+            },
+          };
+        }
         if ("params" in t) {
           if (t.type.enum[0] === "Currency") {
             // @ts-ignore
@@ -98,7 +122,13 @@ export const ColumnDisplayFormat = ({
     getColumnDrillDownDisabledInfo(column, parentDisplay);
 
   if (column.format?.type === "ActionColumns") {
-    return <ActionColumnsControls table={table} value={column.format} onChange={onChange} />;
+    return (
+      <ActionColumnsControls
+        table={table}
+        value={column.format}
+        onChange={onChange}
+      />
+    );
   }
 
   if (column.format?.type === "Action") {
@@ -118,8 +148,7 @@ export const ColumnDisplayFormat = ({
         db={db}
         tables={tables}
         value={
-          column.format ??
-          (internalFormat ? { type: "Internal" } : undefined)
+          column.format ?? (internalFormat ? { type: "Internal" } : undefined)
         }
         onChange={(format) => {
           onChange(format.type === "Internal" ? undefined : format);

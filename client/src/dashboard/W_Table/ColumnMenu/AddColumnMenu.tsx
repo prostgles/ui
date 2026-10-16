@@ -151,8 +151,8 @@ export const AddColumnMenu = ({
               "Not allowed for nested columns"
             : o.key === "Action" && dissallow === "Referenced" ?
               "Actions require individual rows, not aggregates"
-            : !table.joinsV2.length && o.key === "Referenced" ?
-              t.AddColumnMenu["No foreign keys to/from this table"]
+            : !table.joinOptions.length && o.key === "Referenced" ?
+              "No available relationships for this table"
             : nestedColumnOpts && o.key === "Referenced" ?
               t.AddColumnMenu["Not allowed for nested columns"]
             : o.key === "Create" ? cannotCreateColumns

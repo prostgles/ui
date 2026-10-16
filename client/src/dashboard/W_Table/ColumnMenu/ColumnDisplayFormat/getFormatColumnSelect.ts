@@ -18,6 +18,7 @@ import { FILE_ANNOTATION_SELECT } from "../../ManagedColumn/fileAnnotation";
 import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
 import type { ColumnFormat } from "./columnFormatUtils";
 import { ROW_ACTIONS_COLUMN } from "prostgles-client";
+import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
 
 type FormatColumn = Pick<ColumnConfigWithInfo, "format" | "info" | "name">;
 
@@ -99,6 +100,16 @@ export const getFormatColumnSelect = ({
       : undefined;
     return Object.fromEntries(
       [titleColumn, contentTypeColumn]
+        .filter(
+          (name): name is string => !!name && selectableColumns.includes(name),
+        )
+        .map((name) => [name, 1]),
+    );
+  }
+
+  if (format?.type === "Avatar") {
+    return Object.fromEntries(
+      [format.params?.firstNameColumn, format.params?.lastNameColumn]
         .filter(
           (name): name is string => !!name && selectableColumns.includes(name),
         )

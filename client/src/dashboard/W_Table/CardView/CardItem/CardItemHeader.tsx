@@ -7,6 +7,8 @@ import { DragHeader } from "../DragHeader";
 import type { CardViewRowProps } from "./CardViewRow";
 import { CARD_ITEM_PADDING } from "../constants";
 import { AuditTrailButton } from "../../../AuditTrail/AuditTrailButton";
+import { Avatar } from "../../ColumnMenu/ColumnDisplayFormat/Avatar";
+import { getColumnFormat } from "../../ColumnMenu/ColumnDisplayFormat/getFormatColumnSelect";
 
 export const CardHeader = ({
   w,
@@ -41,6 +43,10 @@ export const CardHeader = ({
     : undefined;
 
   const row = indexedRow.data;
+  const avatarConfig =
+    cols.find((column) => column.name === avatarColumn?.name) ??
+    (avatarColumn && { ...avatarColumn, format: avatarColumn.renderAs });
+  const avatarFormat = avatarConfig && getColumnFormat(avatarConfig);
   const avatarUrl =
     avatarColumn && typeof row[avatarColumn.name] === "string" ?
       (row[avatarColumn.name] as string)
@@ -49,35 +55,36 @@ export const CardHeader = ({
   const padding = CARD_ITEM_PADDING;
   return (
     <FlexRow
-      className="CardHeader relative w-full ai-start"
-      style={{ gap: padding, paddingLeft: avatarUrl ? padding : undefined }}
+      className="CardHeader relative w-full min-w-0 ai-start"
+      style={{ gap: padding }}
     >
-      {avatarUrl && (
-        <MediaViewer
-          style={{
-            flex: "none",
-            width: "3em",
-            height: "3em",
-            borderRadius: "50%",
-            overflow: "hidden",
-            alignSelf: "center",
-            border: "1px solid var(--b-color)",
-          }}
-          url={avatarUrl}
-          content_type="image"
+      {avatarConfig && avatarFormat?.type === "Avatar" ?
+        <Avatar
+          value={row[avatarConfig.name]}
+          row={row}
+          column={avatarConfig}
+          table={table}
+          params={avatarFormat.params}
         />
-      )}
+      : avatarUrl && (
+          <MediaViewer
+            style={{
+              flex: "none",
+              width: "3em",
+              height: "3em",
+              borderRadius: "50%",
+              overflow: "hidden",
+              alignSelf: "center",
+              border: "1px solid var(--b-color)",
+            }}
+            url={avatarUrl}
+            content_type="image"
+          />
+        )
+      }
       <FlexCol
-        className="w-full f-1 gap-p25"
-        style={{
-          padding,
-          paddingBottom: ".5em",
-          ...(avatarUrl ?
-            {
-              paddingLeft: 0,
-            }
-          : {}),
-        }}
+        className="f-1 min-w-0 gap-p25"
+        style={{ overflowWrap: "anywhere" }}
       >
         {headerColumn && (
           <div
@@ -130,28 +137,34 @@ export const CardHeader = ({
           setDraggedRow={setDraggedRow}
         />
       )}
-      <AuditTrailButton
-        table={table}
-        row={indexedRow.data}
-        {...cardViewProps.prgl}
-      />
-      {!w?.options.hideEditRow &&
-        getEditColumn({
-          table,
-          columnConfig: w?.columns || undefined,
-          tableHandler,
-          onClickRow: (...args) => {
-            if (draggedRow) return;
-            onEditClickRow(...args);
-          },
-        }).onRender!({
-          value: "",
-          renderedVal: "",
-          row,
-          prevRow: indexedRows[rowIndex - 1],
-          nextRow: indexedRows[rowIndex + 1],
-          rowIndex: rowIndex,
-        })}
+      <FlexRow
+        className="CardHeader_controls relative f-0 gap-0"
+        style={{ zIndex: 1 }}
+      >
+        <AuditTrailButton
+          table={table}
+          row={indexedRow.data}
+          {...cardViewProps.prgl}
+        />
+        {!w?.options.hideEditRow &&
+          getEditColumn({
+            table,
+            columnConfig: w?.columns || undefined,
+            tableHandler,
+            style: { padding: "6px" },
+            onClickRow: (...args) => {
+              if (draggedRow) return;
+              onEditClickRow(...args);
+            },
+          }).onRender!({
+            value: "",
+            renderedVal: "",
+            row,
+            prevRow: indexedRows[rowIndex - 1],
+            nextRow: indexedRows[rowIndex + 1],
+            rowIndex: rowIndex,
+          })}
+      </FlexRow>
     </FlexRow>
   );
 };

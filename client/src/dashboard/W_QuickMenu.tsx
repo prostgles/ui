@@ -58,7 +58,7 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
   const showLinks =
     (!show || show.link) &&
     Boolean(
-      (setLinkMenu && w.table_name && table?.joinsV2.length) ||
+      (setLinkMenu && w.table_name && table?.joinOptions.length) ||
       (w.type !== "sql" && !!myLinks.length),
     );
 

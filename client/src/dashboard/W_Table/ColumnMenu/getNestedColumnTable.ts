@@ -2,6 +2,7 @@ import type {
   DBSchemaTablesWJoins,
   WindowSyncItem,
 } from "../../Dashboard/dashboardUtils";
+import { getColumnsWithInfo } from "../tableUtils/getColumnsWithInfo";
 import { getMinimalColumnInfo } from "../tableUtils/tableUtils";
 import type {
   ColumnConfig,
@@ -36,12 +37,13 @@ export const getNestedColumnTable = (
   w: WindowSyncItem<"table">,
   tables: DBSchemaTablesWJoins,
 ): MaybeResult => {
-  const columns = w.$get()?.columns;
-  if (!columns) {
+  const configuredColumns = w.$get()?.columns;
+  if (!configuredColumns) {
     return {
       error: "w columns missing",
     };
   }
+  const columns = getColumnsWithInfo(w.table_name, tables, configuredColumns);
   const nestedColumnName = nestedColumnOpts?.config.name;
   const nestedColumn =
     !nestedColumnOpts ? undefined

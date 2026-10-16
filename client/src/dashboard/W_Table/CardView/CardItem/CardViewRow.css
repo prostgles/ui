@@ -1,0 +1,53 @@
+.CardView > .CardView_Column > .CardView_Item {
+  container-type: inline-size;
+}
+
+.CardHeader {
+  padding: var(--card-item-padding);
+  padding-bottom: .5em;
+}
+
+.CardBody {
+  padding: 0 var(--card-item-padding) var(--card-item-padding);
+}
+
+.CardBody > .CardActions {
+  flex-basis: 100%;
+}
+
+.CardActionValue,
+.CardActionValue [role="group"][aria-label="Actions"] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5em;
+  min-width: 0;
+}
+
+.CardActionValue .btn {
+  justify-content: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+@container (min-width: 30em) {
+  .CardView_content:has(> .CardBody--actions-only) {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .CardView_content:has(> .CardBody--actions-only) > .CardHeader {
+    flex: 1;
+    width: auto;
+    padding-bottom: var(--card-item-padding);
+  }
+
+  .CardBody--actions-only {
+    flex: 0 1 auto;
+    max-width: 70%;
+    padding-top: var(--card-item-padding);
+  }
+
+  .CardBody--actions-only .CardActions {
+    justify-content: flex-end;
+  }
+}

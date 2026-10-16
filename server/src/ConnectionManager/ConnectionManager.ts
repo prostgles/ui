@@ -8,12 +8,11 @@ import type { Express } from "express";
 import type { Server as httpServer } from "http";
 import type pg from "pg-promise/typescript/pg-subset";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
-import type { Filter } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
 import type { DB } from "prostgles-server/dist/Prostgles";
 import type { FileTableConfig } from "prostgles-server/dist/ProstglesTypes";
 import type { InitResult } from "prostgles-server/dist/initProstgles";
 import type { SubscriptionHandler } from "prostgles-types";
-import { isDefined, pickKeys } from "prostgles-types";
+import { isDefined } from "prostgles-types";
 import type { DefaultEventsMap, Server } from "socket.io";
 import type { SUser } from "../authConfig/sessionUtils";
 import { getDbConnection } from "../connectionUtils/testDBConnection";
@@ -36,8 +35,7 @@ import {
 } from "./initConnectionManager";
 import { parsePlugins } from "../Plugins/parsePlugins";
 import { startConnection } from "./startConnection";
-export type Unpromise<T extends Promise<any>> =
-  T extends Promise<infer U> ? U : never;
+import { setSyncUserSub } from "./setSyncUserSub";
 
 export type ConnectionTableConfig = Pick<FileTableConfig, "referencedTables"> &
   Omit<Exclude<DatabaseConfigs["file_table_config"], null>, "referencedTables">;
@@ -52,8 +50,6 @@ export const getACRules = async (
     $existsJoined: { access_control_user_types: { user_type: user.type } },
   });
 };
-
-type DBWithUsers = { users?: Partial<DBS["users"]> };
 
 type PRGLInstanceStarted = {
   state: "started";
@@ -302,97 +298,10 @@ export class ConnectionManager {
     }
   };
 
-  syncUsers = async (
-    db: DBWithUsers,
-    userTypes: DBSSchema["users"]["type"][],
-    syncableColumns: (keyof DBSSchema["users"])[],
-  ) => {
-    if (!db.users || !this.dbs || !syncableColumns.length) return;
-    const lastUpdateDb = await db.users.findOne?.(
-      {},
-      { select: { last_updated: 1 }, orderBy: { last_updated: -1 } },
-    );
-    const lastUpdateDbs = await this.dbs.users.findOne(
-      { type: { $in: userTypes } },
-      { select: { last_updated: 1 }, orderBy: { last_updated: -1 } },
-    );
-    if (
-      (lastUpdateDbs?.last_updated && !lastUpdateDb?.last_updated) ||
-      (lastUpdateDbs?.last_updated &&
-        +(lastUpdateDb?.last_updated || 0) < +lastUpdateDbs.last_updated)
-    ) {
-      const newUsers = await this.dbs.users.find(
-        {
-          type: { $in: userTypes },
-          "last_updated.>": lastUpdateDb?.last_updated ?? 0,
-        } as Filter,
-        { limit: 1000, orderBy: { last_updated: 1 } },
-      );
-      if (newUsers.length) {
-        await db.users.insertMany?.(
-          newUsers.map((u) => pickKeys(u, syncableColumns)),
-          { onConflict: "DoUpdate" },
-        );
-        void this.syncUsers(db, userTypes, syncableColumns);
-      }
-    }
-  };
-
   userSub?: SubscriptionHandler | undefined;
-  setSyncUserSub = async () => {
-    await this.userSub?.unsubscribe();
-    this.userSub = await this.dbs?.users.subscribe(
-      {},
-      { throttle: 1e3 },
-      async (_users) => {
-        for (const prglCon of Array.from(this.prglConnections.values())) {
-          if (prglCon.state !== "started") continue;
-          const db = prglCon.prgl.db as DBWithUsers;
-          const dbUsersHandler = db.users;
-          const dbConf = await this.dbs?.database_configs.findOne({
-            id: prglCon.dbConf.id,
-          });
-          if (dbUsersHandler && dbConf?.sync_users) {
-            const userTypes = await this.dbs?.access_control_user_types.find(
-              {
-                $existsJoined: {
-                  ["**.connections" as "connections"]: { id: prglCon.con.id },
-                },
-              },
-              {
-                select: { user_type: 1 },
-                returnType: "values",
-              },
-            );
-            const dbCols = await dbUsersHandler.getColumns?.();
-            const dbsCols = await this.dbs?.users.getColumns();
-            if (!dbCols || !dbsCols) return;
-            const requiredColumns = ["id", "last_updated"] as const;
-            const excludedColumns = ["password"];
-            const syncableColumns = dbsCols
-              .filter((c) =>
-                dbCols.some(
-                  (dc) =>
-                    dc.insert &&
-                    dc.name === c.name &&
-                    dc.udt_name === c.udt_name,
-                ),
-              )
-              .map((c) => c.name)
-              .filter(
-                (c) => !excludedColumns.includes(c),
-              ) as (keyof DBSSchema["users"])[];
-            if (
-              userTypes &&
-              requiredColumns.every((c) => syncableColumns.includes(c))
-            ) {
-              void this.syncUsers(db, userTypes, syncableColumns);
-            }
-          }
-        }
-      },
-    );
-  };
+  userSyncSetup = Promise.resolve();
+  userSyncWork = Promise.resolve();
+  setSyncUserSub = setSyncUserSub.bind(this);
 
   /** Caller must hold the connection lifecycle queue. */
   updateConnectionAccess = async (connection: PRGLInstanceStarted) => {
@@ -581,10 +490,12 @@ export class ConnectionManager {
   destroy = async () => {
     await this.conSub?.unsubscribe();
     await this.dbConfSub?.unsubscribe();
-    await this.userSub?.unsubscribe();
     await Promise.all(
       this.accessControlListeners?.map((l) => l.unsubscribe()) ?? [],
     );
+    await this.userSyncSetup;
+    await this.userSub?.unsubscribe();
+    await this.userSyncWork;
     const connectionIds = new Set([
       ...this.prglConnections.keys(),
       ...this.connectionOperations.keys(),

@@ -46,6 +46,7 @@ export type ColumnStyle = (
   | ScaleStyle
   | BarchartStyle
 ) & {
+  fontWeight?: "normal" | "bold";
   /** Colours come from the same fixed/conditional style as plain values. */
   buttonVariant?: "text" | "faded" | "filled" | "outline";
 };
@@ -59,6 +60,8 @@ export type NestedDisplay =
 export type NestedColumnConfig = {
   path: ParsedJoinPath[];
   columns: NestedColumn<ColumnConfig>[];
+  /** Parent-table column to display when the join returns no rows. */
+  fallbackColumn?: string;
   joinType?: "inner" | "left";
   limit?: number;
   sort?: ColumnSort;
@@ -117,6 +120,8 @@ export type AggregateOptions = {
 };
 
 export type ColumnConfigWithInfo = Omit<ColumnConfig, "nested"> & {
+  /** Resolved table defaults, used to persist only dashboard overrides. */
+  defaultConfig?: ColumnConfig;
   /** Defined for plain columns and for computed columns that target a specific table column */
   info?: ValidatedColumnInfo & {
     defaultRenderAs?: InternalColumnFormat;

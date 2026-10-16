@@ -11,17 +11,20 @@ import Popup from "@components/Popup/Popup";
 import { SearchList } from "@components/SearchList/SearchList";
 import { SwitchToggle } from "@components/SwitchToggle";
 import { mdiFilterPlus } from "@mdi/js";
-import type { ValidatedColumnInfo } from "prostgles-types";
+import type { ParsedJoinPath, ValidatedColumnInfo } from "prostgles-types";
 import { _PG_date, _PG_numbers, includes } from "prostgles-types";
 import React, { useState } from "react";
 import type { Prgl } from "src/App";
 import { isDefined } from "../../utils/utils";
-import type { DBSchemaTableWJoins, JoinV2 } from "../Dashboard/dashboardUtils";
+import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
 import { getDefaultAgeFilter } from "../DetailedFilterControl/DetailedFilterBaseTypes/AgeFilter";
 import { getColumnDataColor } from "../SmartForm/SmartFormField/RenderValue";
 import type { ColumnConfig } from "@common/ColumnConfig/ColumnConfig";
 import { getJoinPathLabel } from "../W_Table/ColumnMenu/JoinPathSelectorV2";
-import { getJoinPaths } from "../W_Table/tableUtils/getJoinPaths";
+import {
+  getJoinPathError,
+  getJoinPaths,
+} from "../W_Table/tableUtils/getJoinPaths";
 import { getComputedColumnSelect } from "../W_Table/tableUtils/getTableSelect";
 import { AddJoinFilter } from "./AddJoinFilter";
 import { getFilterableCols } from "./SmartSearch/SmartSearch";
@@ -52,7 +55,7 @@ export const SmartAddFilter = (props: SmartAddFilterProps) => {
     type?: DetailedFilter["type"];
   }>();
   const [joinOpts, setJoinOpts] = useState<{
-    path: JoinV2[];
+    path: ParsedJoinPath[];
     type: DetailedJoinedFilter["type"];
   }>();
   const [popupAnchor, setPopupAnchor] = useState<HTMLElement>();
@@ -80,7 +83,7 @@ export const SmartAddFilter = (props: SmartAddFilterProps) => {
       !includes([..._PG_date, ..._PG_numbers], col.udt_name),
     );
   const lastPathItem = joinOpts?.path.at(-1);
-  const currentTable = lastPathItem?.tableName ?? tableName;
+  const currentTable = lastPathItem?.table ?? tableName;
   const filterableTableColumns = getFilterableCols(
     tables.find((t) => t.name === currentTable)?.columns ?? [],
   ).filter((c) => c.filter && (!filterFields || filterFields.includes(c.name)));
@@ -95,6 +98,8 @@ export const SmartAddFilter = (props: SmartAddFilterProps) => {
       []
     : getJoinPaths(tableName, tables).flatMap((joinPath, i) => {
         const { table, path } = joinPath;
+        // Parameterized paths are configured through the shared "Join to" selector.
+        if (getJoinPathError(tables, tableName, path)) return [];
         const { label, labels } = getJoinPathLabel(joinPath, {
           tableName,
           tables,
@@ -162,12 +167,7 @@ export const SmartAddFilter = (props: SmartAddFilterProps) => {
     const onAddColumnFilter = (c: (typeof columns)[number]) => {
       const fieldName = c.name;
       const isGeo = c.udt_name.startsWith("geo");
-      const joinPath =
-        c.joinInfo?.path ??
-        joinOpts?.path.map((j) => {
-          const onObj = j.on.map((c) => Object.fromEntries(c));
-          return { table: j.tableName, on: onObj };
-        });
+      const joinPath = c.joinInfo?.path ?? joinOpts?.path;
       const joinType =
         (joinOpts?.type ?? c.joinInfo) ? "$existsJoined" : undefined;
 

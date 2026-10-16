@@ -31,6 +31,7 @@ export const loadGeneratedTable = (
         ({
           path: nested.path,
           joinType: nested.joinType,
+          fallbackColumn: nested.fallbackColumn,
           ...("limit" in nested && { limit: nested.limit }),
 
           display:
@@ -177,6 +178,7 @@ const parseColumnStyle = (
   return {
     type: "Conditional",
     buttonVariant: styling.buttonVariant,
+    fontWeight: styling.fontWeight,
     conditions: styling.conditions.map((condition) => {
       const style =
         CHIP_COLOR_NAMES[condition.chipColor] ?? CHIP_COLOR_NAMES.blue!;

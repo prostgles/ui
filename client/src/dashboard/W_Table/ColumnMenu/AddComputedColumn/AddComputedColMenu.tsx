@@ -127,7 +127,7 @@ export class AddComputedColMenu extends RTComp<
         void updateWCols(
           w,
           [...nestedColumn.nested.columns, newCol],
-          nestedColumn.name,
+          nestedColumn,
         );
       }
     }
@@ -156,7 +156,7 @@ export class AddComputedColMenu extends RTComp<
         `${funcDef.label.toUpperCase()}(${column || ""}${args?.$duration?.otherColumn ? ` TO ${args.$duration.otherColumn}` : ""})`
       : "") ||
       "col_name";
-    const { table, error } = this.table;
+    const { table, error, columns: windowColumns } = this.table;
 
     if (!table) return error;
 
@@ -172,7 +172,7 @@ export class AddComputedColMenu extends RTComp<
       : funcDef?.key === "$duration" ? !!args?.$duration?.otherColumn
       : Boolean(funcDef && (column || isAggNocol));
 
-    const hasJoinCols = w.columns?.some((c) => c.nested);
+    const hasJoinCols = windowColumns.some((c) => c.nested);
     const content = (
       <>
         <FlexCol
@@ -262,7 +262,7 @@ export class AddComputedColMenu extends RTComp<
               <Label label="Function" variant="normal" />
               <FunctionSelector
                 column={column}
-                wColumns={w.columns ?? undefined}
+                wColumns={windowColumns}
                 currentNestedColumnName={
                   this.props.nestedColumnOpts?.config.name
                 }

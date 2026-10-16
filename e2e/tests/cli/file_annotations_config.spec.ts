@@ -30,7 +30,6 @@ test("CLI annotations support PDF uploads without document extraction", async ({
         {
           tables: ["conditions", "members"],
           on: [{ id: "condition_id" }],
-          type: "one-many",
         },
       ],
       audit: { tableName: "audit_log", tables: { conditions: 1 } },
@@ -1055,6 +1054,7 @@ module.exports.jobs.definitions.check.run = async ({ row, dbo }) => {
 });
 
 test("CLI text extraction persists Docling profiling without annotations", async () => {
+  test.setTimeout(900_000);
   const configId = "extraction-config-e2e";
   const configPath = createConfigTestProject(
     {
@@ -1075,7 +1075,11 @@ test("CLI text extraction persists Docling profiling without annotations", async
   );
   let deployment: TestDeployment | undefined;
   try {
-    deployment = await createTestDeployment({ configPath, configId });
+    deployment = await createTestDeployment({
+      configPath,
+      configId,
+      logPath: test.info().outputPath("extraction-server.log"),
+    });
     const { db, tableSchema } = await deployment.connectProjectAs("admin");
     const columns = tableSchema?.find(
       (table) => table.name === "files",
@@ -1114,6 +1118,15 @@ test("CLI text extraction persists Docling profiling without annotations", async
     );
     assert.equal(file.extraction_status, null);
 
+    // A cold Docker build can outlast the extraction timeout.
+    await test.step("Start Docling", async () => {
+      const state = await deployment!.connectStateAs("admin");
+      await state.methods!.toggleService!({
+        serviceName: "documents",
+        enable: true,
+      });
+    });
+
     const pdf = await db.files!.insert!(
       {
         data: readFileSync(join(__dirname, "../testAskLLM/sample.pdf")),
@@ -1149,6 +1162,19 @@ test("CLI text extraction persists Docling profiling without annotations", async
         ),
       ).toBe(true);
     }
+  } catch (error) {
+    if (deployment) {
+      const state = await deployment.connectStateAs("admin");
+      await test.info().attach("documents-service", {
+        contentType: "application/json",
+        body: JSON.stringify(
+          await state.db.services!.findOne({ name: "documents" }),
+          null,
+          2,
+        ),
+      });
+    }
+    throw error;
   } finally {
     await deployment?.dispose();
     rmSync(configPath, { recursive: true, force: true });

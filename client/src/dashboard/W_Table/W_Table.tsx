@@ -327,7 +327,9 @@ export default class W_Table extends RTComp<
     /** This is done to prevent errors due to renamed/altered columns */
     if (
       delta.w?.columns?.length &&
-      w.sort?.some((sort) => !getSortColumn(sort, delta.w?.columns ?? []))
+      w.sort?.some(
+        (sort) => !getSortColumn(sort, getColumnsWithInfoAndWidth(tables, w)),
+      )
     ) {
       void w.$update({ sort: [] });
     }

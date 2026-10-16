@@ -29,6 +29,7 @@ export type JSONBSchemaCommonProps = Pick<Prgl, "db" | "tables"> & {
   showErrors?: boolean;
   nestingPath?: (string | number)[];
   allowIncomplete?: boolean;
+  debounceInputs?: boolean;
   noLabels?: boolean;
   schemaStyles?: {
     path: string[];

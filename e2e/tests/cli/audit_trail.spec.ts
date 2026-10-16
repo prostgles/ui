@@ -22,8 +22,13 @@ const config = {
     tableName: "audit_events",
     tables: { records: 1, other_records: 1 },
   },
+  databaseConfig: { sync_users: true },
   connection: {
     table_options: {
+      users: {
+        card: { headerColumn: "name" },
+        referenceDisplay: { columns: [{ name: "name" }, { name: "username" }] },
+      },
       text_versions: {
         sort: [{ key: "id", asc: false }],
         columns: {
@@ -38,6 +43,15 @@ const config = {
     },
   },
   tableConfig: {
+    users: {
+      columns: {
+        id: "uuid PRIMARY KEY",
+        username: "text NOT NULL",
+        name: "text",
+        status: "text NOT NULL",
+        last_updated: "bigint NOT NULL",
+      },
+    },
     text_versions: {
       columns: {
         id: "integer PRIMARY KEY",
@@ -76,6 +90,9 @@ test.beforeAll(async () => {
     ],
     logPath: test.info().outputPath("audit-server.log"),
     seed: async ({ stateDatabase, projectDatabase }) => {
+      await stateDatabase.query(
+        "UPDATE users SET name = 'Audit Administrator' WHERE username = 'admin'",
+      );
       const session = await stateDatabase.query(
         "SELECT id FROM sessions WHERE user_id = (SELECT id FROM users WHERE username = 'admin')",
       );
@@ -201,11 +218,21 @@ test("history is scoped to the row, newest first, live, and read-only", async ({
 
   const client = await deployment.connectProjectAs("admin");
   try {
+    await expect
+      .poll(() => client.db.users!.findOne!({ username: "admin" }))
+      .toMatchObject({ name: "Audit Administrator" });
     await client.db.records!.update!(
       { tenant_id: "a", id: 1 },
       { name: "live change", id: 10 },
     );
     await expect(rows).toHaveCount(3);
+    await expect(rows.first()).toContainText("Audit Administrator");
+    await expect(
+      rows
+        .first()
+        .getByRole("button", { name: "Audit Administrator", exact: true }),
+    ).toBeVisible();
+    await expect(rows.first()).not.toContainText('"type":');
     const updatedSummary = rows.first().getByTitle("View JSON diff");
     await expect(updatedSummary.locator("strong")).toHaveText(["id", "name"]);
     await expect(updatedSummary.locator("del")).toHaveText(["1", "updated"]);
@@ -246,11 +273,26 @@ test("card view opens history without opening the row editor", async ({
     .getByTestId("table.options.displayMode")
     .locator('[data-key="card"]')
     .click();
+  await page.getByTestId("table.options.cardView.groupBy").click();
+  await page
+    .getByTestId("SearchList.List")
+    .locator('[data-key="tenant_id"]')
+    .click();
   await page.keyboard.press("Escape");
   const card = page
     .getByTestId("CardView.row")
     .filter({ hasText: "other tenant" });
-  await card.getByTestId("AuditTrail.open").click();
+  await expect(card.getByTestId("CardView.DragHeader")).toBeVisible();
+  await card.hover();
+  const historyButton = card.getByTestId("AuditTrail.open");
+  const editButton = card.getByTestId("dashboard.window.viewEditRow");
+  await expect(editButton).toBeVisible();
+  const historyBox = await historyButton.boundingBox();
+  const editBox = await editButton.boundingBox();
+  expect(historyBox!.y).toBe(editBox!.y);
+  expect(historyBox!.height).toBe(editBox!.height);
+  expect(historyBox!.x + historyBox!.width).toBeLessThanOrEqual(editBox!.x);
+  await historyButton.click({ position: { x: 8, y: 8 } });
   const history = page.getByRole("dialog").filter({ hasText: "History ·" });
   await expect(history.getByTestId("TableBody").getByRole("row")).toHaveCount(
     1,
@@ -282,6 +324,7 @@ test("card view opens history without opening the row editor", async ({
       .getByTestId("TableBody")
       .getByRole("row");
     await expect(auditRows.first()).toContainText("DELETE");
+    await expect(auditRows.first()).toContainText("Audit Administrator");
     await expect(
       auditRows.first().locator('span[title*="seconds"]'),
     ).toHaveCount(1);
@@ -316,8 +359,100 @@ test("card view opens history without opening the row editor", async ({
     await page.getByText("Columns", { exact: true }).click();
     await expect(contextColumn).toBeChecked();
     await page.keyboard.press("Escape");
+    await auditTable.getByTestId("dashboard.window.menu").click();
+    await page.getByText("Display options", { exact: true }).click();
+    await page
+      .getByTestId("table.options.displayMode")
+      .locator('[data-key="card"]')
+      .click();
+    await page.keyboard.press("Escape");
+    await expect(auditTable.getByTestId("CardView.row").first()).toContainText(
+      "Audit Administrator",
+    );
   } finally {
     client.disconnect();
+  }
+});
+
+test("audit users compose the configured reference fields when the title is empty", async ({
+  page,
+}) => {
+  const client = await deployment.connectProjectAs("admin");
+  try {
+    await client.db.users!.update!({ username: "admin" }, { name: null });
+    await client.db.records!.insert!({
+      tenant_id: "fallback",
+      id: 1,
+      name: "username fallback",
+    });
+    await openTable(page, "audit_events", true);
+    const row = page
+      .locator('[data-table-name="audit_events"]')
+      .getByTestId("TableBody")
+      .getByRole("row")
+      .first();
+    await expect(row).toContainText("username fallback");
+    await expect(row).toContainText("admin");
+    await expect(row).not.toContainText('"type":');
+  } finally {
+    await client.db.users!.update!(
+      { username: "admin" },
+      { name: "Audit Administrator" },
+    );
+    client.disconnect();
+  }
+});
+
+test("audit users respect user table and title permissions", async ({
+  page,
+}) => {
+  const state = await deployment.connectStateAs("admin");
+  try {
+    const admin = await state.db.users!.findOne({ username: "admin" });
+    for (const canReadUsers of [true, false]) {
+      await state.db.access_control!.update(
+        { id: accessRuleId },
+        {
+          dbPermissions: {
+            type: "Custom",
+            customTables: [
+              { tableName: "records", select: true },
+              { tableName: "audit_events", select: true },
+              {
+                tableName: "users",
+                select:
+                  canReadUsers ? { fields: { id: 1, username: 1 } } : false,
+              },
+            ],
+          },
+        },
+      );
+      await page.context().clearCookies();
+      await page
+        .context()
+        .addCookies(deployment.storageStateAs("default").cookies);
+      await page.goto(deployment.endpoint);
+      await page
+        .locator(`[data-key=${JSON.stringify(config.id)}]`)
+        .getByTestId("Connection.openConnection")
+        .click();
+      await openTable(page, "audit_events", true);
+      const row = page
+        .locator('[data-table-name="audit_events"]')
+        .getByTestId("TableBody")
+        .getByRole("row")
+        .first();
+      await expect(row).toContainText(canReadUsers ? "admin" : admin!.id);
+      await expect(row).not.toContainText("Audit Administrator");
+      if (canReadUsers) {
+        await expect(
+          row.getByRole("button", { name: "admin", exact: true }),
+        ).toBeVisible();
+        await expect(row).not.toContainText('"type":');
+      }
+    }
+  } finally {
+    state.disconnect();
   }
 });
 

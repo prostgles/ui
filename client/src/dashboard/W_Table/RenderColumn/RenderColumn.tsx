@@ -71,7 +71,7 @@ export const RenderColumn = (
     );
   }
 
-  const formattedValue = (
+  const renderedValue = (
     <RenderColumnValue
       column={column}
       row={row}
@@ -81,13 +81,30 @@ export const RenderColumn = (
       table={table as DBSchemaTableWithOptions}
     />
   );
+  const fontWeight =
+    column.style?.fontWeight ??
+    ((
+      !column.computedConfig &&
+      (table as DBSchemaTableWithOptions).card?.headerColumn === column.name
+    ) ?
+      "bold"
+    : undefined);
+  const formattedValue =
+    fontWeight ?
+      <div style={{ fontWeight }}>{renderedValue}</div>
+    : renderedValue;
   // Colour and chip styles belong to the action button itself.
   const styleOnButton =
     showDrillDown &&
     (!column.style?.type ||
       ["None", "Fixed", "Conditional", "Scale"].includes(column.style.type));
   const content =
-    !column.style?.type || column.style.type === "None" || styleOnButton ?
+    (
+      !column.style?.type ||
+      column.style.type === "None" ||
+      styleOnButton ||
+      getColumnFormat(column)?.type === "Avatar"
+    ) ?
       formattedValue
     : <StyledTableColumn
         renderedVal={formattedValue}

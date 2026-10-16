@@ -18,7 +18,8 @@ import RTComp from "./RTComp";
 import { SmartFilterBar } from "./SmartFilterBar/SmartFilterBar";
 import { SmartForm } from "./SmartForm/SmartForm";
 import { isNumericColumn } from "./W_SQL/getSQLResultTableColumns";
-import { getFormatColumnSelect } from "./W_Table/ColumnMenu/ColumnDisplayFormat/getFormatColumnSelect";
+import { getTableSelect } from "./W_Table/tableUtils/getTableSelect";
+import { getColumnsWithInfo } from "./W_Table/tableUtils/getColumnsWithInfo";
 import type { ColumnSort } from "@common/ColumnConfig/ColumnConfig";
 import { onRenderColumn } from "./W_Table/RenderColumn/onRenderColumn";
 import {
@@ -106,7 +107,8 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
       (!tableCols ?
         tables.find((t) => t.name === tableName)?.defaultColumns
       : undefined);
-    let _tableCols = tableCols ?? [];
+    let _tableCols: (ProstglesColumn & { sourceColumn?: string })[] =
+      tableCols ?? [];
     if (!tableCols) {
       const onClickEditRow: OnClickEditRow = (editRowFilter) => {
         this.setState({ editRowFilter });
@@ -114,30 +116,37 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
       const table = tables.find((t) => t.name === tableName);
       if (!table) return [];
       const cols = table.columns;
-      const columnConfigs = cols
-        .filter((c) => c.select)
-        .map((c) => ({ ...c, format: c.renderAs, info: c }));
-      _tableCols = columnConfigs.map((c) => {
-        const isNumeric = isNumericColumn(c);
-        return {
-          key: c.name,
-          sortable: true,
-          subLabel: c.data_type,
-          ...c,
-          /* Align numbers to right for an easier read */
-          headerClassname: isNumeric ? " jc-end  " : " ",
-          className: isNumeric ? " ta-right " : " ",
-          onRender: onRenderColumn({
-            column: c,
-            table,
-            tables,
-            barchartVals: undefined,
-            getValues: () => {
-              return this.state.rows.map((r) => r[c.name]);
-            },
-          }),
-        };
-      });
+      const columnConfigs = getColumnsWithInfo(
+        tableName,
+        tables,
+        selectedColumns?.map((name) => ({ name, show: true })),
+      );
+      _tableCols = columnConfigs
+        .filter((column) => column.show)
+        .map((c) => {
+          const isNumeric = isNumericColumn(c);
+          return {
+            key: c.name,
+            sortable: !!c.info?.orderBy,
+            filter: c.info?.filter ?? false,
+            subLabel: c.info?.data_type,
+            ...c,
+            label: c.label ?? c.info?.label ?? c.name,
+            sourceColumn: c.nested?.fallbackColumn,
+            /* Align numbers to right for an easier read */
+            headerClassname: isNumeric ? " jc-end  " : " ",
+            className: isNumeric ? " ta-right " : " ",
+            onRender: onRenderColumn({
+              column: c,
+              table,
+              tables,
+              barchartVals: undefined,
+              getValues: () => {
+                return this.state.rows.map((r) => r[c.name]);
+              },
+            }),
+          };
+        });
 
       if (allowEdit && tableHandler) {
         _tableCols.unshift(
@@ -156,11 +165,13 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
         (c) =>
           !visibleColumns ||
           (!selectedColumns && c.computed && c.key === "edit_row") ||
-          visibleColumns.includes(c.name),
+          visibleColumns.includes(c.name) ||
+          !!(c.sourceColumn && visibleColumns.includes(c.sourceColumn)),
       )
       .sort((a, b) =>
         visibleColumns ?
-          visibleColumns.indexOf(a.name) - visibleColumns.indexOf(b.name)
+          visibleColumns.indexOf(a.sourceColumn ?? a.name) -
+          visibleColumns.indexOf(b.sourceColumn ?? b.name)
         : 0,
       );
   }
@@ -192,7 +203,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
           sub: await tableHandler.subscribe(
             filter,
             {
-              select: this.getDataSelect(),
+              select: await this.getDataSelect(),
               limit: 0,
               throttle: this.props.realtime?.throttle ?? 100,
             },
@@ -238,7 +249,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
       const totalRows = await tableHandler.count(this.props.fixedFilter);
       const filteredRows = await tableHandler.count(_filter);
       const rows = await tableHandler.find(_filter, {
-        select: this.getDataSelect(),
+        select: await this.getDataSelect(),
         limit: pageSize,
         orderBy: sort,
         offset: page * pageSize,
@@ -259,20 +270,22 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
     }
   };
 
-  getDataSelect = () => {
-    const { tableName, tables, methods } = this.props;
+  getDataSelect = async () => {
+    const { tableName, tables, methods, db } = this.props;
     const table = tables.find(({ name }) => name === tableName);
     if (!table || !table.columns.length) return "*" as const;
 
-    const select: AnyObject = {};
-    table.columns.forEach((info) => {
-      if (!info.select) {
-        return;
-      }
-      select[info.name] = 1;
-      const column = { name: info.name, format: info.renderAs, info };
-      const formatSelect = getFormatColumnSelect({ column, table, methods });
-      Object.assign(select, formatSelect);
+    const { select } = await getTableSelect(
+      { table_name: tableName, columns: undefined },
+      tables,
+      db,
+      {},
+      true,
+      methods,
+    );
+    // Row editing still needs the selectable source columns.
+    table.columns.forEach(({ name, select: selectable }) => {
+      if (selectable) select[name] ??= 1;
     });
     return select;
   };

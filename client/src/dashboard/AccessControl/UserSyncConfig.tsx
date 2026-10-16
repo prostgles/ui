@@ -1,6 +1,5 @@
 import { mdiSync } from "@mdi/js";
 import { usePromise } from "prostgles-client";
-import type { ValidatedColumnInfo } from "prostgles-types";
 import React, { useCallback, useState } from "react";
 import type { Prgl } from "../../App";
 import Btn from "@components/Btn";
@@ -10,22 +9,10 @@ import PopupMenu from "@components/PopupMenu";
 import { SwitchToggle } from "@components/SwitchToggle";
 import { getSqlSuggestions } from "../SQLEditor/SQLEditorSuggestions";
 import { SQLSmartEditor } from "../SQLEditor/SQLSmartEditor";
-
-const getColDefs = (columns: ValidatedColumnInfo[]) =>
-  columns.map((c) =>
-    [
-      JSON.stringify(c.name),
-      c.udt_name.toUpperCase(),
-      c.is_pkey ? "PRIMARY KEY"
-      : c.is_nullable ? ""
-      : "NOT NULL",
-      ![null, undefined].includes(c.column_default) ?
-        `DEFAULT ${c.column_default}`
-      : "",
-    ]
-      .filter((v) => v)
-      .join(" "),
-  );
+import {
+  getUserSyncColumnDefinitions,
+  USER_SYNC_REQUIRED_COLUMNS,
+} from "@common/userSync";
 
 export const UserSyncConfig = ({
   databaseId,
@@ -46,9 +33,7 @@ export const UserSyncConfig = ({
       return {
         err: "no-dbs-users-table" as const,
       };
-    const createColStatements = getColDefs(
-      dbsTable.columns.filter((c) => !c.is_generated),
-    );
+    const createColStatements = getUserSyncColumnDefinitions(dbsTable.columns);
     const createUsersTableQuery = `CREATE TABLE users (\n${createColStatements.map((c) => `  ${c}`).join(",\n")}\n);`;
     if (!table) {
       return {
@@ -56,22 +41,29 @@ export const UserSyncConfig = ({
         query: createUsersTableQuery,
       };
     }
-    const requiredSyncFields = ["id", "last_updated"];
     const missingColumns = dbsTable.columns.filter(
       (c) =>
-        requiredSyncFields.includes(c.name) &&
+        USER_SYNC_REQUIRED_COLUMNS.some((name) => name === c.name) &&
         !table.columns.find(
           (tc) => tc.name === c.name && tc.udt_name === c.udt_name,
         ),
     );
-    if (missingColumns.length) {
+    const passwordRequiresValue = table.columns.some(
+      (column) =>
+        column.name === "password" &&
+        !column.is_nullable &&
+        column.column_default == null,
+    );
+    if (missingColumns.length || passwordRequiresValue) {
+      const alterations = getUserSyncColumnDefinitions(missingColumns).map(
+        (definition) => `\nADD COLUMN ${definition}`,
+      );
+      if (passwordRequiresValue) {
+        alterations.push('\nALTER COLUMN "password" DROP NOT NULL');
+      }
       return {
         err: "missing-cols" as const,
-        query: `ALTER TABLE users ${getColDefs(missingColumns)
-          .map((def) => `\nADD COLUMN ${def}`)
-          .join(
-            ",",
-          )};\n\n/* Syncable users fields: */\n${createUsersTableQuery}`,
+        query: `ALTER TABLE users ${alterations.join(",")};\n\n/* Syncable users fields:\n${createUsersTableQuery}\n*/`,
       };
     }
 
@@ -93,7 +85,7 @@ export const UserSyncConfig = ({
     const title =
       localState.err === "no-users-table" ?
         "Must create the users table"
-      : "Must add missing columns to the users table";
+      : "Must update the users table";
     sqlEditor = (
       <SQLSmartEditor
         asPopup={false}
@@ -139,7 +131,8 @@ export const UserSyncConfig = ({
             database.
             <br></br>
             Only columns that match the "users" table columns by name and data
-            type will be upserted.
+            type will be upserted. Authentication secrets are excluded. Users
+            who are deleted or lose access are retained with status "disabled".
           </p>
           <SwitchToggle
             checked={dbConf?.sync_users ?? false}

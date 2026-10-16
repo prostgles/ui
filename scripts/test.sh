@@ -21,9 +21,6 @@ npm ci --no-audit
 cd client
 npm ci
 npm run tsc
-if [ "${1:-}" = "--typecheck" ]; then
-  exit 0
-fi
 npm run lint
 
 cd ../server
@@ -34,13 +31,15 @@ npm run compile
 npm run lint
 npm run test:compiled
 
+cd ../e2e
+npm ci
+npm run test:check
+
 # Test cli
 cd ../client 
 npm run build
 node ../server/scripts/preparePackage.mjs
 cd ../e2e
-npm i
-npm run test:check
 npm run test:cli
 sleep 3
 cd ..

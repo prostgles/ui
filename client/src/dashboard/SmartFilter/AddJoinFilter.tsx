@@ -4,18 +4,16 @@ import { FlexCol, FlexRow } from "@components/Flex";
 import { Label } from "@components/Label";
 import { mdiSetCenter } from "@mdi/js";
 import React from "react";
-import type { DBSchemaTableWJoins, JoinV2 } from "../Dashboard/dashboardUtils";
-import {
-  getHasJoins,
-  JoinPathSelector,
-} from "../W_Table/JoinPathSelector/JoinPathSelector";
+import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
+import type { ParsedJoinPath } from "prostgles-types";
+import { JoinPathSelectorV2 } from "../W_Table/ColumnMenu/JoinPathSelectorV2";
 import { getFilterableCols } from "./SmartSearch/SmartSearch";
 
-type JoinOpts = { path: JoinV2[]; type: DetailedJoinedFilter["type"] };
+type JoinOpts = { path: ParsedJoinPath[]; type: DetailedJoinedFilter["type"] };
 type AddJoinFilterProps = {
   tables: DBSchemaTableWJoins[];
   tableName: string;
-  path?: JoinV2[];
+  path?: ParsedJoinPath[];
   type?: DetailedJoinedFilter["type"];
   onChange: (joinOpts: undefined | JoinOpts) => void;
   disabledInfo?: string;
@@ -29,10 +27,8 @@ export const AddJoinFilter = ({
   onChange,
   disabledInfo,
 }: AddJoinFilterProps) => {
-  const joinableTables = tables.filter(
-    (t) => getFilterableCols(t.columns).length,
-  );
-  const hasJoins = getHasJoins(tableName, tables);
+  const hasJoins = tables.find((table) => table.name === tableName)?.joinOptions
+    .length;
 
   if (!hasJoins) return null;
 
@@ -44,10 +40,23 @@ export const AddJoinFilter = ({
           <Label className="px-1 py-p5 w-full bg-color-2">
             Current join path
           </Label>
-          <JoinPathSelector
-            tables={joinableTables}
+          <JoinPathSelectorV2
+            tables={tables}
             tableName={tableName}
-            onSelect={(path) => {
+            value={path}
+            getFullOption={(joinPath) => ({
+              disabledInfo:
+                (
+                  getFilterableCols(
+                    tables.find(
+                      (table) => table.name === joinPath.at(-1)?.table,
+                    )?.columns ?? [],
+                  ).length
+                ) ?
+                  undefined
+                : "No filterable columns",
+            })}
+            onChange={({ path }) => {
               onChange({ path, type });
             }}
           />

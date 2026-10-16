@@ -88,6 +88,9 @@ export async function startService(
     res: ExecutionResult | { type: "error"; error: unknown },
   ) => {
     const stopReason = "type" in res ? res.type : res.state;
+    if ("log" in res) {
+      logs = res.log;
+    }
     const instance: ServiceInstance =
       abortController.signal.reason === STOPPED_REASON ?
         {
@@ -96,7 +99,9 @@ export async function startService(
       : {
           status: "error",
           error: new Error(
-            `Service ${serviceName} stopped unexpectedly with state: ${stopReason}`,
+            `Service ${serviceName} (container ${containerName}) stopped unexpectedly with state: ${stopReason}` +
+              ("exitCode" in res ? `, exit code: ${res.exitCode}` : ""),
+            { cause: "error" in res ? res.error : undefined },
           ),
         };
     this.activeServices.set(serviceName, instance);
@@ -168,16 +173,21 @@ export async function startService(
 
   const serviceInstance = this.activeServices.get(serviceName);
   if (serviceInstance?.status !== "starting") {
+    const recentLogs = logs
+      .slice(-100)
+      .map(({ text }) => text)
+      .join("")
+      .slice(-8_000);
     const error = new Error(
       startingServiceLabel +
-        "Healthcheck not finished. Service failed to start. Current status:" +
-        serviceInstance?.status,
+        "Healthcheck not finished. Service failed to start. Current status: " +
+        serviceInstance?.status +
+        (recentLogs ? `\nRecent container logs:\n${recentLogs}` : ""),
+      {
+        cause: serviceInstance?.status === "error" ? serviceInstance.error : undefined,
+      },
     );
-    onStopped({
-      type: "error",
-      error,
-    });
-    return Promise.reject(error);
+    throw error;
   }
 
   const runningService: RunningServiceInstance = {

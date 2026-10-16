@@ -33,6 +33,7 @@ export const NestedColumnRenderRecords = ({
     parentRow,
     nestedRow: undefined,
     rootTableName,
+    rootTable: tables.find((table) => table.name === rootTableName),
     table,
   });
   return (
@@ -44,6 +45,7 @@ export const NestedColumnRenderRecords = ({
           nestedRow: row,
           parentRow,
           rootTableName,
+          rootTable: tables.find((table) => table.name === rootTableName),
         });
         return (
           <RenderColumnButton

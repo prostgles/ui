@@ -78,17 +78,22 @@ export class ColumnsMenu extends RTComp<P, S> {
     let table = tables.find((t) => t.name === this.tableName);
     let cols = getColumnsWithInfoAndWidth(tables, w);
     const nestedColumnName = nestedColumnOpts?.config.name;
+    const nestedColumn = cols.find(
+      (column) => column.name === nestedColumnName,
+    );
     const onUpdateCols = (columns: ColumnConfig[]) => {
       if (nestedColumnOpts?.type === "new") {
         throw "Not implemented";
       }
-      return updateWCols(w, columns, nestedColumnName);
+      return updateWCols(
+        w,
+        columns,
+        nestedColumn?.nested ?
+          { ...nestedColumn, nested: nestedColumn.nested }
+        : undefined,
+      );
     };
 
-    const nestedColumn =
-      nestedColumnName ?
-        w.columns?.find((c) => c.name === nestedColumnName)
-      : undefined;
     if (nestedColumn) {
       if (!nestedColumn.nested) {
         return <div>Invalid nested column config</div>;

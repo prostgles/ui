@@ -12,6 +12,7 @@ import { NestedColumnRenderRecords } from "./NestedColumnRenderRecords";
 import { NestedColumnRenderTimechart } from "./NestedColumnRenderTimechart";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { excludeFkeyActions } from "../../tableUtils/excludeFkeyActions";
+import { RenderValue } from "../../../SmartForm/SmartFormField/RenderValue";
 
 export type NestedTimeChartMeta = {
   fullExtent: [Date, Date];
@@ -39,6 +40,22 @@ export const NestedColumnRender = ({
   const { nested } = column;
   const table = tables.find((t) => t.name === nested.path.at(-1)?.table);
   if (!table) return <>Unexpected issue: No nested table</>;
+  const rows = (parentRow[column.name] ?? []) as Record<string, unknown>[];
+  const fallbackColumn =
+    nested.fallbackColumn &&
+    tables
+      .find((table) => table.name === rootTableName)
+      ?.columns.find(
+        (column) => column.name === nested.fallbackColumn && column.select,
+      );
+  if (!rows.length && fallbackColumn) {
+    return (
+      <RenderValue
+        column={fallbackColumn}
+        value={parentRow[fallbackColumn.name]}
+      />
+    );
+  }
   const display = nested.display ?? { type: "values" };
   if (display.type === "timechart") {
     return (
@@ -51,9 +68,8 @@ export const NestedColumnRender = ({
     );
   }
 
-  const rows = (parentRow[column.name] ?? []) as Record<string, unknown>[];
   const shownColumns = excludeFkeyActions(
-    getColumnsWithInfo(table.name, tables, nested.columns),
+    getColumnsWithInfo(table.name, tables, nested.columns, false),
     table,
     methods,
   ).filter((c) => c.show);
@@ -89,6 +105,7 @@ export const NestedColumnRender = ({
           nestedRow: row,
           parentRow,
           rootTableName,
+          rootTable: tables.find((table) => table.name === rootTableName),
           table,
         })
       : undefined;

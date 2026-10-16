@@ -20,6 +20,7 @@ export const getLinkedRecordsFilter = ({
   nestedRow,
   parentRow,
   rootTableName,
+  rootTable,
   table,
 }: {
   column: ColumnConfigNested;
@@ -27,6 +28,7 @@ export const getLinkedRecordsFilter = ({
   nestedRow: undefined | Record<string, unknown>;
   parentRow: Record<string, unknown>;
   rootTableName: string;
+  rootTable: DBSchemaTableWJoins | undefined;
   table: DBSchemaTableWJoins;
 }):
   | {
@@ -59,10 +61,49 @@ export const getLinkedRecordsFilter = ({
     return;
   }
 
-  const rootColumnNames = getParentTableJoinColumnNames(column);
+  // A single join to a unique key identifies the record even when its keys are hidden.
+  const joinColumns =
+    Array.isArray(firstJoin.on) ? Object.entries(firstJoin.on[0] ?? {}) : [];
+  if (
+    nestedRow &&
+    Array.isArray(firstJoin.on) &&
+    nested.path.length === 1 &&
+    firstJoin.on.length === 1 &&
+    !nested.columns.some(
+      (child) => child.show && child.computedConfig?.funcDef.isAggregate,
+    ) &&
+    table.uniqueColumnGroups?.some(
+      (columnNames) =>
+        columnNames.length &&
+        columnNames.every((name) =>
+          joinColumns.some(([, targetColumn]) => targetColumn === name),
+        ),
+    ) &&
+    joinColumns.every(
+      ([sourceColumn, targetColumn]) =>
+        parentRow[sourceColumn] !== undefined &&
+        parentRow[sourceColumn] !== null &&
+        table.columns.some(
+          (column) => column.name === targetColumn && column.filter,
+        ),
+    )
+  ) {
+    const rowFilter = joinColumns.map(([sourceColumn, fieldName]) => ({
+      fieldName,
+      value: parentRow[sourceColumn],
+      minimised: true,
+    }));
+    return { searchFilter: rowFilter, rowFilter };
+  }
+
+  const rootColumnNames = getParentTableJoinColumnNames(column, rootTable);
   if (
     !rootColumnNames.length ||
-    rootColumnNames.some((columnName) => parentRow[columnName] === undefined)
+    rootColumnNames.some(
+      (columnName) =>
+        parentRow[columnName] === undefined ||
+        (typeof firstJoin.on === "string" && parentRow[columnName] === null),
+    )
   ) {
     return;
   }
@@ -136,6 +177,7 @@ export const getLinkedRecordsFilter = ({
  */
 export const getParentTableJoinColumnNames = (
   column: Omit<ColumnConfig, "format">,
+  rootTable: DBSchemaTableWJoins | undefined,
 ) => {
   const nested = column.nested;
   if (
@@ -149,9 +191,15 @@ export const getParentTableJoinColumnNames = (
   ) {
     return [];
   }
+  const firstJoin = nested.path[0];
+  if (typeof firstJoin?.on === "string") {
+    return rootTable ?
+        getTableIdentityColumns(rootTable).map(({ name }) => name)
+      : [];
+  }
   return Array.from(
     new Set(
-      nested.path[0]?.on.flatMap((constraint) => Object.keys(constraint)) ?? [],
+      firstJoin?.on.flatMap((constraint) => Object.keys(constraint)) ?? [],
     ),
   );
 };

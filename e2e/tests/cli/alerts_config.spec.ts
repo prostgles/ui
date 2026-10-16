@@ -79,9 +79,6 @@ test("CLI managed alerts scope recipients, retry deliveries and retain edited ru
               {
                 tableName: "reminders_deliveries",
                 select: true,
-                insert: true,
-                update: true,
-                delete: true,
               },
             ],
           },
@@ -184,7 +181,8 @@ module.exports.alerts = {
       created_by: admin.auth.user!.id,
       enabled: false,
       definition: { type: "outstanding", params: { prefix: "Outstanding" } },
-      schedule: { cron: "* * * * *", timezone: "Europe/London" },
+      // Exercise overlapping occurrences while deliveries retry.
+      schedule: { cron: "* * * * * *", timezone: "Europe/London" },
     };
     await expect(
       dbo.reminders!.insert!({
@@ -230,10 +228,21 @@ module.exports.alerts = {
     ).rejects.toMatchObject({ code: "23514" });
     await dbo.reminders!.update!({ id: alert.id }, { enabled: true });
     await expect
+      .poll(() => dbo.reminders_deliveries!.count!({ alert_id: alert.id }))
+      .toBeGreaterThan(0);
+    const firstDelivery = await dbo.reminders_deliveries!.findOne!(
+      { alert_id: alert.id },
+      { orderBy: { occurrence: 1 } },
+    );
+    const deliveryFilter = {
+      alert_id: alert.id,
+      occurrence: firstDelivery!.occurrence,
+    };
+    await expect
       .poll(
         () =>
           dbo.reminders_deliveries!.count!({
-            alert_id: alert.id,
+            ...deliveryFilter,
             outcome: "sent",
           }),
         { timeout: 20_000 },
@@ -242,24 +251,22 @@ module.exports.alerts = {
     await expect
       .poll(() =>
         dbo.reminders_deliveries!.count!({
-          alert_id: alert.id,
+          ...deliveryFilter,
           outcome: "skipped",
         }),
       )
       .toBe(1);
     await dbo.reminders!.update!({ id: alert.id }, { enabled: false });
+    const deliveries = await dbo.reminders_deliveries!.find!(deliveryFilter);
     expect(
       await dbo.sent!.find!(
-        {},
+        { id: { $in: deliveries.map((delivery) => delivery.id) } },
         { select: ["body", "attempts"], orderBy: { body: 1 } },
       ),
     ).toEqual([
       { body: "Alice's evidence", attempts: 2 },
       { body: "Bob's evidence", attempts: 2 },
     ]);
-    const deliveries = await dbo.reminders_deliveries!.find!({
-      alert_id: alert.id,
-    });
     expect(
       new Set(
         deliveries.map((row) =>
@@ -297,16 +304,23 @@ module.exports.alerts = {
       { id: pending.id },
       { enabled: false, name: "Edited during preparation" },
     );
+    const pendingDeliveries = await dbo.reminders_deliveries!.find!({
+      alert_id: pending.id,
+    });
+    expect(pendingDeliveries.length).toBeGreaterThan(0);
+    const pendingDeliveryFilter = {
+      id: { $in: pendingDeliveries.map((delivery) => delivery.id) },
+    };
     await dbo.gate!.update!({ id: 1 }, { released: true });
     await expect
       .poll(() =>
         dbo.reminders_deliveries!.count!({
-          alert_id: pending.id,
+          ...pendingDeliveryFilter,
           outcome: "skipped",
         }),
       )
-      .toBe(1);
-    expect(await dbo.sent!.count!()).toBe(2);
+      .toBe(pendingDeliveries.length);
+    expect(await dbo.sent!.count!(pendingDeliveryFilter)).toBe(0);
 
     const state = await deployment.connectStateAs("admin");
     const connection = await state.db.connections!.findOne({

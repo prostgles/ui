@@ -59,6 +59,20 @@ export const ConditionalCellStyleControls = ({
 
   return (
     <FlexCol className="ConditionalCellStyleControls">
+      <Select
+        label="Condition column"
+        value={style.column ?? column.name}
+        fullOptions={
+          tables
+            .find((table) => table.name === tableName)
+            ?.columns.filter((candidate) => candidate.select)
+            .map((candidate) => ({
+              key: candidate.name,
+              label: candidate.label || candidate.name,
+            })) ?? []
+        }
+        onChange={(conditionColumn) => updateStyle({ column: conditionColumn })}
+      />
       {conditions.map((cs, condIdx) => (
         <div
           key={condIdx}

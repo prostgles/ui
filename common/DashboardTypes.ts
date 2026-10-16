@@ -101,7 +101,9 @@ type TableJoin = {
    *   table: "users"
    * }
    */
-  on: Record<string, string>[];
+  on: Record<string, string>[] | string;
+  params?: Record<string, unknown>;
+  reversed?: boolean;
   /**
    * Linked table name
    */
@@ -112,6 +114,8 @@ type TableJoin = {
  * Show linked data from other tables that are linked to this column through foreign keys
  */
 type LinkedData = {
+  /** Parent-table column to display when the join returns no rows. */
+  fallbackColumn?: string;
   /**
    * Type of join to use when linking tables. Defaults to "left" if not specified.
    */
@@ -343,6 +347,7 @@ export type TableColumn = {
         maxColor?: string;
       }
   ) & {
+    fontWeight?: "normal" | "bold";
     /** Defaults to faded for drillable records and text for values. */
     buttonVariant?: "text" | "faded" | "filled" | "outline";
   };
@@ -351,7 +356,16 @@ export type TableColumn = {
    * If set, column value will rendered in a specific way
    */
   format?:
-    | Extract<import("./columnDisplayFormat.schema").UserColumnFormat, { type: "Action" | "ActionColumns" }>
+    | { type: "Action"; params: ActionColumnParams }
+    | {
+        type: "ActionColumns";
+        params: { actions: ({ columnName: string } | ActionColumnParams)[] };
+      }
+    | {
+        /** Name initials in a circle. Uses this column's full name when name columns are unset. */
+        type: "Avatar";
+        params?: { firstNameColumn?: string; lastNameColumn?: string };
+      }
     | {
         /**
          * Column value will be rendered as a link with specific behaviour
@@ -423,6 +437,35 @@ export type TableColumn = {
         type: "JSON Diff" | "Text Diff";
         params: { oldColumn: string; newColumn: string };
       };
+};
+
+type ActionColumnParams = {
+  methodName: string;
+  argName?: string;
+  joinPath?: TableJoin[];
+  conditions?: {
+    filter: { $and: Record<string, any>[] } | { $or: Record<string, any>[] };
+    value: ActionButtonState;
+  }[];
+  defaultValue?: ActionButtonState;
+};
+
+type ActionButtonState = {
+  text?: string;
+  icon?: string;
+  variant?: "text" | "faded" | "filled" | "outline";
+  color?:
+    | "default"
+    | "action"
+    | "danger"
+    | "warn"
+    | "green"
+    | "indigo"
+    | "inherit"
+    | "transparent"
+    | "white";
+  disabledInfo?: string;
+  isLoading?: boolean;
 };
 
 export type TableWindowInsertModel = Filtering & {

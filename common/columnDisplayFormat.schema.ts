@@ -1,5 +1,8 @@
 import type { JSONB } from "prostgles-types";
-import { actionColumnParamsSchema, actionColumnsParamsSchema } from "./actionColumn";
+import {
+  actionColumnParamsSchema,
+  actionColumnsParamsSchema,
+} from "./actionColumn";
 
 export const ContentTypes = ["image", "video", "audio"] as const;
 
@@ -144,6 +147,30 @@ export const columnDisplayFormatSchema = {
       },
     },
     CurrencySchema,
+    {
+      type: {
+        enum: ["Avatar"],
+        title: "Format",
+        description: "Name initials in a circle. Set colors in column styles.",
+      },
+      params: {
+        optional: true,
+        type: {
+          firstNameColumn: {
+            type: "string",
+            optional: true,
+            title: "First name column",
+            description:
+              "Leave name columns unset to use this column's full name.",
+          },
+          lastNameColumn: {
+            type: "string",
+            optional: true,
+            title: "Last name column",
+          },
+        },
+      },
+    },
     {
       type: {
         enum: ["Metric Prefix"],

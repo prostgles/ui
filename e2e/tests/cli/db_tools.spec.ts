@@ -229,7 +229,7 @@ test("agents without a client request retain scoped database access", async () =
       },
     });
     const project = await deployment.connectProjectAs("admin");
-    expect(await project.methods!.runAgent!({})).toEqual({ done: true });
+    expect(await project.methods!.runAgent!()).toEqual({ done: true });
     expect(requestCount).toBe(3);
     const state = await deployment.connectStateAs("admin");
     const calls = await state.db.mcp_server_tool_calls!.find(

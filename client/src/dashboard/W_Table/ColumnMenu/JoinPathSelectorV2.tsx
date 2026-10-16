@@ -1,16 +1,21 @@
-import type { BtnProps } from "@components/Btn";
+import Btn, { type BtnProps } from "@components/Btn";
 import { FlexCol } from "@components/Flex";
 import { getSearchRanking } from "@components/SearchList/searchMatchUtils/getSearchRanking";
 import type { FullOption } from "@components/Select/Select";
 import { Select } from "@components/Select/Select";
 import type { ParsedJoinPath } from "prostgles-types";
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { isDefined } from "../../../utils/utils";
 import CodeExample from "../../CodeExample";
 import type { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
 import type { TargetPath } from "../tableUtils/getJoinPaths";
-import { getJoinPathStr, getJoinPaths } from "../tableUtils/getJoinPaths";
+import {
+  getJoinOption,
+  getJoinPathStr,
+  getJoinPaths,
+} from "../tableUtils/getJoinPaths";
 import type { SvgIconName } from "@components/SearchList/SearchList";
+import { JoinPathParameters } from "./JoinPathParameters";
 export type JoinPathSelectorV2Props = {
   tables: DBSchemaTablesWJoins;
   tableName: string;
@@ -38,21 +43,27 @@ export const getJoinPathLabel = (
   const labels = j.path.map((p, pIdx) => {
     const prevPath = j.path[pIdx - 1];
     const hasMultipleFkeyConstraints =
-      !prevPath ?
-        hasMultiFkeys(tables, tableName, p.table)
-      : hasMultiFkeys(tables, p.table, prevPath.table);
-    let label = p.table;
-    if (hasMultipleFkeyConstraints) {
+      typeof p.on === "string" ?
+        undefined
+      : hasMultiFkeys(tables, prevPath?.table ?? tableName, p.table);
+    let label =
+      typeof p.on === "string" ?
+        `${p.table} (${p.on}${p.reversed ? ", reversed" : ""})`
+      : p.table;
+    if (hasMultipleFkeyConstraints && Array.isArray(p.on)) {
       label = `(${Object.entries(p.on[0]!)
         .map(([l, r]) => `${l} = ${r}`)
         .join(" AND ")}) ${p.table}`;
     }
     return {
       label,
-      multiJoin: hasMultipleFkeyConstraints && {
-        value: hasMultipleFkeyConstraints,
-        chosen: Object.entries(p.on[0]!),
-      },
+      multiJoin:
+        hasMultipleFkeyConstraints && Array.isArray(p.on) ?
+          {
+            value: hasMultipleFkeyConstraints,
+            chosen: Object.entries(p.on[0]!),
+          }
+        : undefined,
     };
   });
 
@@ -102,9 +113,23 @@ export const JoinPathSelectorV2 = (props: JoinPathSelectorV2Props) => {
     () => getAllJoins({ tableName, tables, value }),
     [tableName, tables, value],
   );
+  const [pendingPath, setPendingPath] = useState<TargetPath>();
+  const parameterPath =
+    pendingPath ??
+    (isDefined(targetPathIdx) ? allJoins[targetPathIdx] : undefined);
+  const parameterSchema =
+    parameterPath?.path[0] &&
+    getJoinOption(tables, tableName, parameterPath.path[0])?.paramsSchema;
+  const applyPath = (targetPath: TargetPath) => {
+    const { labels } = getJoinPathLabel(targetPath, { tableName, tables });
+    onChange(targetPath, labels.at(-1)?.multiJoin);
+    setPendingPath(undefined);
+  };
+  const hasComputedJoin = value?.some((path) => typeof path.on === "string");
 
   const nestedColumnQuery = useMemo(() => {
-    if (!value) return;
+    if (!value?.length) return;
+    if (hasComputedJoin) return JSON.stringify(value, null, 2);
     const asName = (v) => JSON.stringify(v);
     const rootTable = asName(tableName);
     return [
@@ -112,7 +137,10 @@ export const JoinPathSelectorV2 = (props: JoinPathSelectorV2Props) => {
       `FROM ${rootTable}`,
       ...value.map(
         (path, index) =>
-          `JOIN ${asName(path.table)} \n  ON ${path.on
+          `JOIN ${asName(path.table)} \n  ON ${(Array.isArray(path.on) ?
+            path.on
+          : []
+          )
             .map((on) =>
               Object.entries(on).map(([k, v]) => {
                 const prevTable =
@@ -123,7 +151,7 @@ export const JoinPathSelectorV2 = (props: JoinPathSelectorV2Props) => {
             .join(" AND ")}`,
       ),
     ].join("\n");
-  }, [value, tableName]);
+  }, [value, tableName, hasComputedJoin]);
 
   const fullOptions = useMemo(
     () =>
@@ -154,7 +182,7 @@ export const JoinPathSelectorV2 = (props: JoinPathSelectorV2Props) => {
       <FlexCol>
         <div>Join path details</div>
         <CodeExample
-          language="sql"
+          language={hasComputedJoin ? "json" : "sql"}
           value={nestedColumnQuery}
           style={{
             minWidth: "400px",
@@ -164,7 +192,7 @@ export const JoinPathSelectorV2 = (props: JoinPathSelectorV2Props) => {
       </FlexCol>
     );
 
-  return (
+  const selector = (
     <Select
       label={
         btnProps ? undefined : (
@@ -188,10 +216,51 @@ export const JoinPathSelectorV2 = (props: JoinPathSelectorV2Props) => {
           console.error("Path not found");
           return;
         }
-        const lastJoinLabel = targetPath.labels.at(-1);
-        onChange(targetPath, lastJoinLabel?.multiJoin);
+        const schema =
+          targetPath.path[0] &&
+          getJoinOption(tables, tableName, targetPath.path[0])?.paramsSchema;
+        if (schema && Object.keys(schema).length) {
+          setPendingPath({
+            ...targetPath,
+            path:
+              value && targetPath.pathStr === getJoinPathStr(value) ?
+                value
+              : targetPath.path,
+          });
+        } else {
+          applyPath(targetPath);
+        }
       }}
     />
+  );
+  return (
+    <FlexCol className="gap-1">
+      {selector}
+      {!pendingPath &&
+        parameterPath &&
+        parameterSchema &&
+        Object.keys(parameterSchema).length > 0 && (
+          <Btn
+            onClick={() =>
+              setPendingPath({
+                ...parameterPath,
+                path: value ?? parameterPath.path,
+              })
+            }
+          >
+            Edit parameters
+          </Btn>
+        )}
+      {pendingPath && parameterSchema && (
+        <JoinPathParameters
+          key={pendingPath.pathStr}
+          targetPath={pendingPath}
+          schema={parameterSchema}
+          onApply={applyPath}
+          onCancel={() => setPendingPath(undefined)}
+        />
+      )}
+    </FlexCol>
   );
 };
 
@@ -202,10 +271,14 @@ const hasMultiFkeys = (
 ) => {
   const table = tables.find((t) => t.name === t1);
   if (table) {
-    const join = table.joinsV2.find(
-      (j) => j.tableName === t2 && j.on.length > 1,
-    );
-    return join?.on;
+    const conditions = table.joinOptions
+      .filter((join) => join.table === t2)
+      .flatMap((join) =>
+        typeof join.on === "string" ?
+          []
+        : join.on.map((on) => Object.entries(on)),
+      );
+    return conditions.length > 1 ? conditions : undefined;
   }
 
   return undefined;

@@ -8,6 +8,7 @@ import type { WindowData } from "@common/ColumnConfig/WindowData";
 import type { ChartableSQL } from "../../W_SQL/getChartableSQL";
 import { getAllJoins } from "../ColumnMenu/JoinPathSelectorV2";
 import { getColumnsWithInfo } from "../tableUtils/getColumnsWithInfo";
+import { getJoinPathError } from "../tableUtils/getJoinPaths";
 
 export type ColInfo = Pick<
   ValidatedColumnInfo,
@@ -71,8 +72,10 @@ export const getChartCols = (
     tableName: w.table_name,
     tables,
     value: undefined,
-  });
-  const dateColsJoined = allJoins.allJoins
+  }).allJoins.filter(
+    (join) => !getJoinPathError(tables, w.table_name, join.path),
+  );
+  const dateColsJoined = allJoins
     .flatMap((j) =>
       j.table.columns.filter(isDateCol).map(
         (c) =>
@@ -89,7 +92,7 @@ export const getChartCols = (
       ),
     )
     .filter(isDefined);
-  const geoColsJoined = allJoins.allJoins
+  const geoColsJoined = allJoins
     .flatMap((j) =>
       j.table.columns.filter(isGeoCol).map(
         (c) =>

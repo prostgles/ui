@@ -1,7 +1,10 @@
-import type { ColumnOptions, TableOptions } from "@common/managedTableSchema";
+import type {
+  ClientTableOptions,
+  ColumnOptions,
+} from "@common/managedTableSchema";
 import type { DBSSchema } from "@common/publishUtils";
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
-import type { DBSchemaTable } from "prostgles-types";
+import type { DBSchemaTable, JSONB, ParsedJoinPath } from "prostgles-types";
 
 import type { SQLSuggestion } from "../SQLEditor/W_SQLEditor";
 
@@ -114,11 +117,17 @@ export type Join = {
 };
 export type JoinV2 = Omit<Join, "on"> & { on: [string, string][][] };
 
+export type JoinOption = ParsedJoinPath & {
+  paramsSchema: JSONB.ObjectType["type"] | undefined;
+  supportsMultiHop: boolean;
+};
+
 export type DBSchemaTableWJoins = DBSchemaTable<
-  Omit<TableOptions, "label" | "columns"> & {
+  Omit<ClientTableOptions, "label"> & {
     label: string;
     joins: Join[];
     joinsV2: JoinV2[];
+    joinOptions: JoinOption[];
   },
   ColumnOptions
 >;

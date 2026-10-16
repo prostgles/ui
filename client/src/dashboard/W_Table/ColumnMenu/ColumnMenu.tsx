@@ -113,7 +113,8 @@ export const ColumnMenu = (props: P) => {
   const table = tables.find((t) => t.name === w.table_name);
   const validatedColumn = table?.columns.find((c) => c.name === colName);
 
-  const isAction = column.format?.type === "Action" || column.format?.type === "ActionColumns";
+  const isAction =
+    column.format?.type === "Action" || column.format?.type === "ActionColumns";
   const isComputed = Boolean(
     column.computedConfig ||
     column.nested?.columns.some((c) => c.computedConfig),
@@ -172,8 +173,10 @@ export const ColumnMenu = (props: P) => {
       leftIconPath: mdiFormatText,
       hide: !!column.nested,
       disabledText:
-        !isAction &&
-        getFormatOptions(column.info || column.computedConfig).length <= 1 ?
+        (
+          !isAction &&
+          getFormatOptions(column.info || column.computedConfig).length <= 1
+        ) ?
           "Only text columns can have custom formats at the moment"
         : undefined,
       content: (
@@ -332,8 +335,8 @@ export const ColumnMenu = (props: P) => {
       style: column.nested ? { color: "var(--active)" } : {},
       leftIconPath: mdiLinkPlus,
       disabledText:
-        !table?.joinsV2.length ?
-          "No foreign keys to/from this table"
+        !table?.joinOptions.length ?
+          "No available relationships for this table"
         : undefined,
       label: `${column.nested ? "Edit" : "Add"} Linked Columns`,
       content: (

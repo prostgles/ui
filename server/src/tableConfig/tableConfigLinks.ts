@@ -1,5 +1,5 @@
 import type { TableConfig } from "prostgles-server";
-import type { JSONB } from "prostgles-types";
+import { parsedJoinPathSchema, type JSONB } from "prostgles-types";
 
 const CommonLinkOpts = {
   colorArr: { type: "number[]", optional: true },
@@ -13,10 +13,7 @@ const filter = {
 const joinPath = {
   description:
     "When adding a chart this allows showing data from a table that joins to the current table",
-  arrayOfType: {
-    table: "string",
-    on: { arrayOf: { record: { values: "any" } } },
-  },
+  arrayOf: parsedJoinPathSchema,
   optional: true,
 } as const satisfies JSONB.FieldTypeObj;
 

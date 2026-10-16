@@ -77,7 +77,6 @@ test("checkFilterDetailed works with grouped existsJoined", async ({
       {
         tables: ["records", "memberships"],
         on: [{ project_id: "project_id", discipline_id: "discipline_id" }],
-        type: "many-many",
       },
     ],
     tableConfig: {

@@ -38,6 +38,7 @@ export const getTableSelect = async (
   filter: AnyObject,
   withoutData = false,
   methods: Prgl["methods"] = {},
+  inheritDefaults = true,
 ): Promise<{ barchartVals?: ChartValues; select: AnyObject }> => {
   const select: AnyObject = {};
 
@@ -45,7 +46,13 @@ export const getTableSelect = async (
   const table = tables.find((t) => t.name === w.table_name);
   if (!table) throw "Table not found";
   const fullColumns = excludeFkeyActions(
-    getColumnsWithInfoAndWidth(tables, w),
+    getColumnsWithInfoAndWidth(
+      tables,
+      w,
+      undefined,
+      undefined,
+      inheritDefaults,
+    ),
     table,
     methods,
   );
@@ -92,7 +99,13 @@ export const getTableSelect = async (
     }),
   );
 
-  Object.assign(select, getRequiredTableSelect(fullColumns, table, methods));
+  Object.entries(
+    getRequiredTableSelect(fullColumns, table, tables, methods),
+  ).forEach(([columnName, requiredColumnSelect]) => {
+    // A raw dependency must not replace an existing computed expression.
+    if (requiredColumnSelect === 1 && select[columnName]) return;
+    select[columnName] = requiredColumnSelect;
+  });
 
   await Promise.all(
     fullColumns.map(async (c) => {
@@ -117,6 +130,7 @@ export const getTableSelect = async (
 export const getRequiredTableSelect = (
   columns: ColumnConfigWithInfo[],
   table: DBSchemaTableWJoins,
+  tables: DBSchemaTableWJoins[],
   methods: Prgl["methods"] = {},
 ): Select => {
   const select: AnyObject = {};
@@ -139,19 +153,22 @@ export const getRequiredTableSelect = (
     const format = getColumnFormat(column);
     if (
       hasAggregates &&
-      (format?.type === "Action" ||
+      // Computed-column dependencies must not introduce extra grouping keys.
+      (column.computedConfig ||
+        format?.type === "Action" ||
         format?.type === "ActionColumns" ||
         (format?.type === "Internal" &&
           format.params.component === "ActionColumns"))
     )
       return;
-    if (!column.computedConfig && !column.nested) {
+    if (!column.nested) {
       Object.assign(select, getFormatColumnSelect({ column, table, methods }));
       addColumn(
         column.style?.type === "Conditional" ? column.style.column : undefined,
       );
     }
-    getParentTableJoinColumnNames(column).forEach(addColumn);
+    addColumn(column.nested?.fallbackColumn);
+    getParentTableJoinColumnNames(column, table).forEach(addColumn);
   });
 
   return select;
@@ -249,6 +266,7 @@ const getNestedColumnSelect = async (
         {},
         true, // Only build the select; ranges depend on the parent query.
         methods,
+        false,
       )
     ).select;
   }

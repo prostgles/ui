@@ -24,6 +24,10 @@ import {
 } from "../JoinPathSelectorV2";
 import { LinkedColumnFooter } from "./LinkedColumnFooter";
 import { LinkedColumnSelect } from "./LinkedColumnSelect";
+import {
+  getJoinPathError,
+  getJoinPathStr,
+} from "../../tableUtils/getJoinPaths";
 
 export type LinkedColumnProps = {
   w: WindowSyncItem<"table">;
@@ -85,6 +89,8 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
   const nestedColumns = currentColumn?.nested.columns;
   const disabledInfo =
     newColumnNameError ??
+    (currentColumn &&
+      getJoinPathError(tables, w.table_name, currentColumn.nested.path)) ??
     (!nestedColumns?.filter((c) => c.show).length ?
       t.LinkedColumn["Must select columns"]
     : !props.column && !currentColumn ? t.LinkedColumn["Must select a table"]
@@ -101,6 +107,16 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
 
   const onJoinPathChange: JoinPathSelectorV2Props["onChange"] = useCallback(
     (targetPath, multiJoin) => {
+      if (
+        currentColumn &&
+        getJoinPathStr(currentColumn.nested.path) === targetPath.pathStr
+      ) {
+        setLocalColumn({
+          ...currentColumn,
+          nested: { ...currentColumn.nested, path: targetPath.path },
+        });
+        return;
+      }
       let colName = targetPath.table.name;
       if (multiJoin) {
         const distinctLeftCols = Array.from(
@@ -142,6 +158,7 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
       const requiredSelect = getRequiredTableSelect(
         getColumnsWithInfo(table.name, tables, initialNestedColumns),
         table,
+        tables,
       );
       const nestedColumns = initialNestedColumns.map((column) => ({
         ...column,
@@ -161,7 +178,7 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
       };
       setLocalColumn(newCol);
     },
-    [getCol, tables],
+    [getCol, tables, currentColumn],
   );
 
   return (
@@ -279,6 +296,24 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
                 }}
               />
             </FlexRowWrap>
+            <Select
+              label="Fallback column"
+              title="Show this column's value when no linked records are returned"
+              data-command="LinkedColumn.fallbackColumn"
+              optional
+              emptyLabel="None"
+              value={currentColumn.nested.fallbackColumn}
+              fullOptions={
+                tables
+                  .find((table) => table.name === w.table_name)
+                  ?.columns.filter((column) => column.select)
+                  .map((column) => ({
+                    key: column.name,
+                    label: column.label,
+                  })) ?? []
+              }
+              onChange={(fallbackColumn) => updateNested({ fallbackColumn })}
+            />
 
             {table && (
               <>

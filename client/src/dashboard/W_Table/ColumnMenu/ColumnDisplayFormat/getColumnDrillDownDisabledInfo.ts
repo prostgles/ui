@@ -21,9 +21,14 @@ export const getColumnDrillDownDisabledInfo = (
   const formatType = getColumnFormat(column)?.type;
   if (
     formatType &&
-    !["NONE", "Currency", "Metric Prefix", "Age", "UNIX Timestamp"].includes(
-      formatType,
-    )
+    ![
+      "NONE",
+      "Currency",
+      "Metric Prefix",
+      "Age",
+      "UNIX Timestamp",
+      "Avatar",
+    ].includes(formatType)
   ) {
     return `Drill-down is unavailable with the ${formatType} format. Choose a plain-value format such as None.`;
   }

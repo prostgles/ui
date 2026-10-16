@@ -8,6 +8,7 @@ import type { TableColumn } from "@common/DashboardTypes";
 import { functionOptionsSchema } from "@common/functionOptions";
 import { resolveActionFunction } from "@common/resolveActionFunction";
 import type { UserColumnFormat } from "@common/columnDisplayFormat.schema";
+import type { TableOptions } from "@common/managedTableSchema";
 import { isDeepStrictEqual } from "node:util";
 import type { CreateContextParams } from "prostgles-server/dist/initProstgles";
 import { getJSONBObjectSchemaValidationError } from "prostgles-types";
@@ -150,16 +151,33 @@ export const validateSchemaConfigActions = async ({
       );
     }
   }
+  const validateColumnOptions = async (
+    columns: NonNullable<TableOptions["columns"]>,
+    tableName: string,
+    location: string,
+  ) => {
+    for (const [name, column] of Object.entries(columns)) {
+      await validateFormat(column?.format ?? column?.renderAs, tableName, `${location}.${name}`);
+      if (column?.nested) {
+        await validateColumnOptions(
+          Object.fromEntries(column.nested.columns.map((column) => [column.name, column])),
+          column.nested.path.at(-1)!.table,
+          `${location}.${name}.nested.columns`,
+        );
+      }
+    }
+  };
   for (const [tableName, options] of Object.entries(
     config.connection?.table_options ?? {},
   )) {
-    for (const [columnName, column] of Object.entries(options?.columns ?? {})) {
+    for (const column of options?.referenceDisplay?.columns ?? []) {
       await validateFormat(
-        column?.renderAs,
+        column.format,
         tableName,
-        `table_options.${tableName}.columns.${columnName}`,
+        `table_options.${tableName}.referenceDisplay.columns.${column.name}`,
       );
     }
+    await validateColumnOptions(options?.columns ?? {}, tableName, `table_options.${tableName}.columns`);
   }
   for (const [tableName, tableConfig] of Object.entries(
     config.tableConfig ?? {},

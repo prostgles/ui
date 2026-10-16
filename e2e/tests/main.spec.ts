@@ -400,10 +400,15 @@ test.describe("Main test", () => {
     await page.getByTestId("Btn.ClickConfirmation.Confirm").click();
 
     const getDrawnInfo = async () => {
-      const drawnInfo = await page.evaluate(() => document.querySelector("canvas")?._drawn);
+      const drawnInfo = await page.evaluate(
+        () => document.querySelector("canvas")?._drawn,
+      );
       if (!drawnInfo) throw new Error("Schema graph has not rendered");
       // The generic canvas declaration omits the diagram's table metadata.
-      return { ...drawnInfo, shapes: drawnInfo.shapes as unknown as SchemaShape[] };
+      return {
+        ...drawnInfo,
+        shapes: drawnInfo.shapes as unknown as SchemaShape[],
+      };
     };
     const initialShapesInfo = await getDrawnInfo();
 
@@ -1165,7 +1170,7 @@ test.describe("Main test", () => {
 
       /** Service finished starting. This might take much longer if it needs installing */
       await expect(page.getByLabel("Convert docs to markdown")).toBeChecked(
-        getTimeout(90e3),
+        getTimeout(4 * 60e3),
       );
 
       await page.keyboard.press("Control+KeyK");
@@ -3499,7 +3504,9 @@ test.describe("Main test", () => {
       const groups = await page.getByTestId("CardView.group").all();
       await expect(groups.length).toBe(2);
       const [firstGroup, secondGroup] = groups;
-      if (!firstGroup || !secondGroup) throw new Error("Expected two card groups");
+      if (!firstGroup || !secondGroup) {
+        throw new Error("Expected two card groups");
+      }
       await page.waitForTimeout(2e3);
       const firstGroupFirstRow = await firstGroup
         .getByTestId("CardView.row")

@@ -255,6 +255,7 @@ export const COMMANDS = {
   "WorkspaceDeleteBtn.Confirm": "",
 
   JoinPathSelectorV2: "",
+  JoinPathParameters: "",
   "LinkedColumn.Add": "",
   "LinkedColumn.ColumnList.toggle": "",
 
@@ -498,6 +499,7 @@ export const COMMANDS = {
   "AddComputedColMenu.name": "",
   "AddComputedColMenu.addTo": "",
   "LinkedColumn.joinType": "",
+  "LinkedColumn.fallbackColumn": "",
   "LinkedColumn.layoutType": "",
   "CreateColumn.next": "",
   FileColumnConfigEditor: "",

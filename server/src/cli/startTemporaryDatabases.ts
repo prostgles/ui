@@ -75,7 +75,7 @@ export const startTemporaryDatabases = async ({
   if (runResult.exitCode !== 0) throw getDockerError(runArgs, runResult);
 
   const logFile = await open(logPath, "w").catch(async (error: unknown) => {
-    await runDocker(["rm", "--force", containerName]);
+    await removeContainer(containerName);
     throw error;
   });
   const logProcess = spawn("docker", ["logs", "--follow", containerName], {
@@ -230,7 +230,7 @@ const getDatabaseUrl = (
 const delay = async (milliseconds: number) =>
   await new Promise((resolve) => setTimeout(resolve, milliseconds));
 const removeContainer = async (containerName: string) => {
-  const args = ["rm", "--force", containerName];
+  const args = ["rm", "--force", "--volumes", containerName];
   const result = await runDocker(args);
   if (result.exitCode !== 0 && !result.stderr.includes("No such container")) {
     throw getDockerError(args, result);

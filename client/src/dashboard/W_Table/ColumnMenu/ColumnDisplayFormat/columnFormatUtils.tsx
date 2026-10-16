@@ -34,6 +34,7 @@ import { FileExtractionStatus } from "../../ManagedColumn/FileExtractionStatus";
 import { ActionButton } from "./ActionButton";
 import { ActionColumns } from "./ActionColumns";
 import { JSONDiffPopup } from "./JSONDiffPopup";
+import { Avatar } from "./Avatar";
 import type { UserColumnFormat } from "@common/columnDisplayFormat.schema";
 
 const tryParseNumber = (v) => {
@@ -53,7 +54,7 @@ _ensureAITypesAreInSync;
 
 type RenderDataContext = {
   column: RenderedColumn;
-  table: DBSchemaTableWithOptions | undefined;
+  table: DBSchemaTableWithOptions;
 };
 
 type ColumnRenderer = {
@@ -138,34 +139,56 @@ const renderDiff: FormattedColRender<
 
 export const DISPLAY_FORMATS = [
   {
+    type: "Avatar",
+    tsDataType: ["string"],
+    render: (value, row, { column, table }, { params }) => (
+      <Avatar
+        value={value}
+        row={row}
+        column={column}
+        table={table}
+        params={params}
+      />
+    ),
+  } satisfies FormattedColRender<Extract<ColumnFormat, { type: "Avatar" }>>,
+  {
     type: "ActionColumns",
     tsDataType: undefined,
-    render: (_value, row, { table, column }, { params }) => table ?
-      <ActionColumns params={params} row={row} dataKey={column.name} table={table} /> : null,
-  } satisfies FormattedColRender<Extract<ColumnFormat, { type: "ActionColumns" }>>,
+    render: (_value, row, { table, column }, { params }) => (
+      <ActionColumns
+        params={params}
+        row={row}
+        dataKey={column.name}
+        table={table}
+      />
+    ),
+  } satisfies FormattedColRender<
+    Extract<ColumnFormat, { type: "ActionColumns" }>
+  >,
   {
     type: "Action",
     tsDataType: undefined,
-    render: (_value, row, { table, column }, format) =>
-      table ?
-        <ActionButton
-          format={format}
-          row={row}
-          columnName={column.name}
-          table={table}
-        />
-      : null,
+    render: (_value, row, { table, column }, format) => (
+      <ActionButton
+        format={format}
+        row={row}
+        columnName={column.name}
+        table={table}
+      />
+    ),
   } satisfies FormattedColRender<Extract<ColumnFormat, { type: "Action" }>>,
   {
     type: "Internal",
     tsDataType: undefined,
     render: (value, row, { column, table }, { params }, maxCellChars) => {
       if (params.component === "ActionColumns") {
-        if (!table) {
-          return <>Table not available</>;
-        }
         return (
-          <ActionColumns params={params} row={row} dataKey={params.dataKey} table={table} />
+          <ActionColumns
+            params={params}
+            row={row}
+            dataKey={params.dataKey}
+            table={table}
+          />
         );
       }
       if (params.component === "FileExtractionStatus") {
@@ -197,7 +220,7 @@ export const DISPLAY_FORMATS = [
           >)
         : undefined;
       const fileId = joinedFile?.id ?? value;
-      if (!table || typeof fileId !== "string" || !fileId) return null;
+      if (typeof fileId !== "string" || !fileId) return null;
       const connectionId = location.pathname
         .split("/")
         .find((part, index, parts) => parts[index - 1] === "connections");
@@ -277,7 +300,7 @@ export const DISPLAY_FORMATS = [
             : undefined
           }
           context={
-            isTableColumn && ctx.table ?
+            isTableColumn ?
               {
                 table: ctx.table,
                 columnName: ctx.column.name,

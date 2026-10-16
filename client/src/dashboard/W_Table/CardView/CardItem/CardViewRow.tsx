@@ -6,6 +6,8 @@ import type { CardViewProps, IndexedRow } from "../CardView";
 import type { CardViewState } from "../useCardViewState";
 import { CardBody } from "./CardItemBody";
 import { CardHeader } from "./CardItemHeader";
+import { CARD_ITEM_PADDING } from "../constants";
+import "./CardViewRow.css";
 
 const marginTop = ".5em";
 
@@ -70,6 +72,7 @@ export const CardViewRow = (props: CardViewRowProps) => {
     const isActive =
       joinFilter || (activeRow && matchObj(activeRow.row_filter, row));
     return {
+      "--card-item-padding": CARD_ITEM_PADDING,
       gap: 0,
       padding: 0,
       background: isDragTarget ? "var(--bg-li-selected)" : "var(--bg-color-0)",
@@ -109,11 +112,19 @@ export const CardViewRow = (props: CardViewRowProps) => {
         if (headerFields.includes(c.name)) {
           return false;
         }
+        const value =
+          (
+            c.nested?.fallbackColumn &&
+            Array.isArray(row[c.name]) &&
+            !row[c.name].length
+          ) ?
+            row[c.nested.fallbackColumn]
+          : row[c.name];
         return (
           !c.hidden &&
           !(
             hideEmptyCardCells &&
-            [null, undefined, ""].includes(`${row[c.name] ?? ""}`.trim())
+            [null, undefined, ""].includes(`${value ?? ""}`.trim())
           )
         );
       }),
@@ -142,19 +153,21 @@ export const CardViewRow = (props: CardViewRowProps) => {
         onClickRow?.(row, e);
       }}
     >
-      <CardHeader {...props} />
-      <CardBody
-        visibleCols={visibleCols}
-        cardCellMinWidth={cardCellMinWidth}
-        cardRows={cardRows}
-        row={row}
-        hideCardFieldNames={hideCardFieldNames}
-        maxCardRowHeight={maxCardRowHeight}
-        rowIndex={rowIndex}
-        indexedRows={indexedRows}
-        cardLayout={w?.options.cardLayout}
-        table={table}
-      />
+      <div className="CardView_content flex-col gap-0 min-w-0">
+        <CardHeader {...props} />
+        <CardBody
+          visibleCols={visibleCols}
+          cardCellMinWidth={cardCellMinWidth}
+          cardRows={cardRows}
+          row={row}
+          hideCardFieldNames={hideCardFieldNames}
+          maxCardRowHeight={maxCardRowHeight}
+          rowIndex={rowIndex}
+          indexedRows={indexedRows}
+          cardLayout={w?.options.cardLayout}
+          table={table}
+        />
+      </div>
     </FlexCol>
   );
 };

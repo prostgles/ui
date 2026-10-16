@@ -18,6 +18,7 @@ import { getSchemaConfig } from "./getSchemaConfig";
 import type { CONNECTION_HOT_RELOAD_COLUMNS } from "./initConnectionManager";
 import { modifyClientFunctionSchema } from "./modifyClientFunctionSchema";
 import { modifyClientSchema } from "./modifyClientSchema";
+import { getAuditActorTableConfig } from "./getAuditActorTableConfig";
 
 export type HotReloadConfigOptions = RequiredKeepUndefined<
   Pick<
@@ -130,7 +131,11 @@ export const getHotReloadConfigs = async ({
       io: connectionServers.ioConnection,
       restApi,
       fileTable,
-      tableConfig,
+      tableConfig: getAuditActorTableConfig(
+        tableConfig,
+        schemaConfig?.audit,
+        !!configuredDatabaseConfig.sync_users || !!connection.is_state_db,
+      ),
       tableHooks,
       jobs,
       audit: schemaConfig?.audit,

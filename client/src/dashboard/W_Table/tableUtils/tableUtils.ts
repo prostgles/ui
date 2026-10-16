@@ -1,5 +1,5 @@
 import type { DBSchemaTable } from "prostgles-types";
-import { getKeys, pickKeys } from "prostgles-types";
+import { getKeys, isEqual, pickKeys } from "prostgles-types";
 import type { Prgl } from "src/App";
 import type {
   DBSchemaTableWJoins,
@@ -9,11 +9,13 @@ import type {
 } from "../../Dashboard/dashboardUtils";
 import type {
   ColumnConfig,
+  ColumnConfigNested,
   ColumnSortSQL,
   NestedColumn,
 } from "@common/ColumnConfig/ColumnConfig";
 import { SORTABLE_CHART_COLUMNS } from "../ColumnMenu/NestedTimechartControls";
 import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
+import { getColumnsWithInfo } from "./getColumnsWithInfo";
 
 /** It's a record to ensure all keys are present */
 const COLUMN_CONFIG_KEYS: Record<keyof ColumnConfig, 1> = {
@@ -36,26 +38,36 @@ export const getMinimalColumnInfo = <
   const colconfigKeys = getKeys(COLUMN_CONFIG_KEYS);
   return columns.map((c) => {
     const columnCoreInfo = pickKeys(c, colconfigKeys, true);
-    if (!columnCoreInfo.nested) {
-      return columnCoreInfo;
-    }
-    return {
-      ...columnCoreInfo,
-      nested: {
+    if (columnCoreInfo.nested) {
+      columnCoreInfo.nested = {
         ...columnCoreInfo.nested,
         columns: getMinimalColumnInfo(columnCoreInfo.nested.columns),
-      },
-    };
+      };
+    }
+    const defaultConfig = "defaultConfig" in c && c.defaultConfig;
+    const defaults = defaultConfig && getMinimalColumnInfo([defaultConfig])[0];
+    if (defaults) {
+      colconfigKeys.forEach((key) => {
+        if (
+          key !== "name" &&
+          key !== "show" &&
+          isEqual(columnCoreInfo[key], defaults[key])
+        ) {
+          delete columnCoreInfo[key];
+        }
+      });
+    }
+    return columnCoreInfo;
   });
 };
 
 export const updateWCols = (
   w: WindowSyncItem<"table">,
   newCols: WindowSyncItem<"table">["columns"] = null,
-  nestedColumnName?: string,
+  nestedColumn?: ColumnConfigNested,
 ) => {
   const newMinimalCols = newCols && getMinimalColumnInfo(newCols);
-  if (nestedColumnName) {
+  if (nestedColumn) {
     const currCols = w.$get()?.columns;
     if (!currCols) {
       console.error("No w cols");
@@ -66,28 +78,27 @@ export const updateWCols = (
       return;
     }
     return w.$update({
-      columns: currCols.map((c) => {
-        if (c.name === nestedColumnName) {
-          if (!c.nested) {
-            throw "nestedColumnName not pointing to a nested column";
+      columns: getMinimalColumnInfo(
+        currCols.map((c) => {
+          if (c.name === nestedColumn.name) {
+            /** Prevent hiding all nested cols */
+            // const noColsSelected = !newMinimalCols.some(nc => nc.show)
+            return {
+              ...nestedColumn,
+              nested: {
+                ...nestedColumn.nested,
+                columns: newMinimalCols.map((c) => {
+                  if (c.nested) {
+                    throw "Nested columns within nested columns are not supported";
+                  }
+                  return c as NestedColumn<ColumnConfig>;
+                }),
+              },
+            };
           }
-          /** Prevent hiding all nested cols */
-          // const noColsSelected = !newMinimalCols.some(nc => nc.show)
-          return {
-            ...c,
-            nested: {
-              ...c.nested,
-              columns: newMinimalCols.map((c) => {
-                if (c.nested) {
-                  throw "Nested columns within nested columns are not supported";
-                }
-                return c as NestedColumn<ColumnConfig>;
-              }),
-            },
-          };
-        }
-        return c;
-      }),
+          return c;
+        }),
+      ),
     });
   }
 
@@ -132,7 +143,8 @@ export const getSort = (
   const cols = table?.columns;
   if (!cols) return [];
 
-  const windowColumns = w.columns;
+  const windowColumns =
+    w.columns && getColumnsWithInfo(w.table_name, tables, w.columns);
   _sort = _sort.filter((s) => {
     if (!windowColumns) {
       /** Sort key must match a valid table column */
@@ -140,7 +152,7 @@ export const getSort = (
     } else {
       const windowColumn = getSortColumn(s, windowColumns);
       if (windowColumn?.nested) {
-        return true;
+        return !!windowColumn.show;
       }
       return cols.some((c) => {
         if (windowColumn?.computedConfig) {

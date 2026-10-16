@@ -21,7 +21,7 @@ export const publish: Publish<
   DBGeneratedSchema,
   SessionUser<DBSSchema["users"]>
 > = async (params) => {
-  const { dbo: db, user, db: _db, clientReq } = params;
+  const { dbo: db, user, db: _db, clientReq, sid } = params;
 
   if (!user || !user.id) {
     return null;
@@ -373,7 +373,11 @@ export const publish: Publish<
     },
 
     login_attempts: {
-      select: "*",
+      select: {
+        fields: "*",
+        forcedFilter:
+          isAdmin ? undefined : { $or: [{ username: user.username }, { sid }] },
+      },
     },
     logs: isAdmin && {
       select: "*",

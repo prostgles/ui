@@ -38,6 +38,7 @@ export const useDatabaseAccessEditorTables = ({
           (t) =>
             ({
               managedTableType: undefined,
+              referenceDisplay: undefined,
               sort: undefined,
               card: undefined,
               icon: undefined,
@@ -46,6 +47,7 @@ export const useDatabaseAccessEditorTables = ({
               isView: false,
               joins: [],
               joinsV2: [],
+              joinOptions: [],
               publishInfo: {},
               label: t.name,
               name: t.name,
