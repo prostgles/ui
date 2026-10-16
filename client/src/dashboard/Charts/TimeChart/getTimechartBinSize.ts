@@ -1,5 +1,5 @@
+import type { TimeChartBinSize } from "@common/ColumnConfig/timechartConstants";
 import { DAY, HOUR, MILLISECOND, MINUTE, SECOND, YEAR } from "../../Charts";
-import type { TimeChartBinSize } from "../../W_TimeChart/W_TimeChartMenu";
 
 type Bin = {
   name: Exclude<TimeChartBinSize, "auto">;

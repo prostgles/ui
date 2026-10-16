@@ -16,6 +16,7 @@ import {
 import { Table } from "../../Table/Table";
 import { MarkdownMonacoCodeHeader } from "./MarkdownMonacoCodeHeader";
 import { useOnRunSQL } from "./useOnRunSQL";
+import { SMART_FORM_POPUP_MIN_WIDTH } from "src/dashboard/SmartForm/constants";
 
 const LANGUAGE_FALLBACK = new Map<string, string>([
   ["tsx", "typescript"],
@@ -118,12 +119,14 @@ export const MonacoCodeInMarkdown = (props: MonacoCodeInMarkdownProps) => {
     });
   }, [codeString, resultContent, resultString, setSqlResult]);
 
+  const minHeight = 100;
   return (
     <FullscreenWrapper
       key={codeString}
-      className={classOverride("f-1 f-0 o-hidden", className)}
+      className={classOverride("f-1 o-hidden", className)}
       style={{
-        minWidth: "min(600px, calc(100vw - 4em))",
+        minWidth: `calc(min(${SMART_FORM_POPUP_MIN_WIDTH}px, 100vw) - 4em)`,
+        minHeight: minHeight + "px",
         ...style,
       }}
       data-command="MarkdownMonacoCode"
@@ -138,7 +141,7 @@ export const MonacoCodeInMarkdown = (props: MonacoCodeInMarkdownProps) => {
         language={lang}
         options={monacoOptions}
         onMount={onListenToContentHeightChange}
-        minHeight={100}
+        minHeight={minHeight}
       />
       {sqlResult?.state === "ok-command-result" ?
         <SuccessMessage variant="small" message={sqlResult.commandResult} />

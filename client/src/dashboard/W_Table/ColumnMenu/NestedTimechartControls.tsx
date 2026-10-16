@@ -9,13 +9,13 @@ import React, { useMemo } from "react";
 import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 import {
   TIMECHART_STAT_TYPES,
-  TimechartRenderStyles,
-} from "../../W_TimeChart/W_TimeChartMenu";
-import type { ColumnConfigWInfo } from "../W_Table";
+  TIMECHART_RENDER_STYLE_OPTIONS,
+} from "@common/ColumnConfig/timechartConstants";
+import type { ColumnConfigChart } from "@common/ColumnConfig/ColumnConfig";
 
 export const SORTABLE_CHART_COLUMNS = ["date", "value"];
 
-export type ColTimeChart = Required<ColumnConfigWInfo>["nested"]["chart"];
+export type ColTimeChart = ColumnConfigChart | undefined;
 type P = {
   tableName: string | undefined;
   chart: ColTimeChart;
@@ -55,7 +55,7 @@ export const NestedTimechartControls = ({ tableName, chart, onChange }: P) => {
     onChange(
       !enabled ? undefined : (
         {
-          type: "time",
+          type: "timechart",
           dateCol,
           renderStyle: "smooth-line",
           yAxis: {
@@ -147,7 +147,7 @@ export const NestedTimechartControls = ({ tableName, chart, onChange }: P) => {
                 <Select
                   label="Chart style"
                   value={chart.renderStyle}
-                  fullOptions={TimechartRenderStyles.concat([
+                  fullOptions={TIMECHART_RENDER_STYLE_OPTIONS.concat([
                     { key: "smooth-line", label: "Smooth line" } as any,
                   ])}
                   onChange={(renderStyle) => {

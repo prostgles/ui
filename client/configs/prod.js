@@ -4,12 +4,14 @@ const TerserPlugin = require("terser-webpack-plugin");
 const os = require("os");
 
 const commonConfig = require("./common");
-console.log({
-  cpus: os.cpus().length,
-  cpuSpeed: os.cpus()[0].speed,
-  cpuModel: os.cpus()[0].model,
-  totalmemGb: os.totalmem / (1024 * 1024 * 1024),
-});
+if (process.env.CI) {
+  console.log({
+    cpus: os.cpus().length,
+    cpuSpeed: os.cpus()[0].speed,
+    cpuModel: os.cpus()[0].model,
+    totalmemGb: os.totalmem / (1024 * 1024 * 1024),
+  });
+}
 module.exports = merge(commonConfig, {
   mode: "production",
   entry: "./index.tsx",

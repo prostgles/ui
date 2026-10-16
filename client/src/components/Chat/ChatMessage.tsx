@@ -5,8 +5,9 @@ import type { Message } from "./Chat";
 
 type ChatMessageProps = {
   message: Message;
+  isLast: boolean;
 };
-export const ChatMessage = ({ message: m }: ChatMessageProps) => {
+export const ChatMessage = ({ message: m, isLast }: ChatMessageProps) => {
   const { id, messageTopContent, isLoading } = m;
 
   return (
@@ -16,18 +17,22 @@ export const ChatMessage = ({ message: m }: ChatMessageProps) => {
       }
       key={id}
     >
-      {isLoading ?
-        <div
-          className="content-wrapper"
-          style={{ height: "80px", width: "80px" }}
-        >
-          <Loading className="m-1" sizePx={22} />
-        </div>
-      : <>
-          {messageTopContent}
-          <div className="content-wrapper">{m.message}</div>
-        </>
-      }
+      <>
+        {messageTopContent}
+        <div className="content-wrapper">{m.message}</div>
+        {isLast && (
+          <div
+            className="content-wrapper"
+            style={{
+              height: "80px",
+              width: "80px",
+              visibility: isLoading ? "visible" : "hidden",
+            }}
+          >
+            {isLoading && <Loading className="m-1" sizePx={22} />}
+          </div>
+        )}
+      </>
     </FlexCol>
   );
 };

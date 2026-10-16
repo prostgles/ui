@@ -1,5 +1,5 @@
 import Btn from "@components/Btn";
-import { FlexCol, FlexRow } from "@components/Flex";
+import { FlexRow } from "@components/Flex";
 import { Select } from "@components/Select/Select";
 import { mdiDotsHorizontal, mdiPlus, mdiRobot } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
@@ -69,26 +69,24 @@ export const AskLLMChatHeader = (
             setActiveChat(v);
           }}
         />
-        {!activeChat?.agent_info && (
-          <Btn
-            iconPath={mdiPlus}
-            title={t.AskLLMChatHeader["New chat"]}
-            data-command="AskLLMChat.NewChat"
-            variant="faded"
-            color="action"
-            size="default"
-            disabledInfo={
-              !preferredPromptId ?
-                t.AskLLMChatHeader["No prompt found"]
-              : undefined
-            }
-            onClickPromise={async () => {
-              if (!preferredPromptId)
-                throw new Error(t.AskLLMChatHeader["No prompt found"]);
-              await createNewChat(preferredPromptId);
-            }}
-          />
-        )}
+        <Btn
+          iconPath={mdiPlus}
+          title={t.AskLLMChatHeader["New chat"]}
+          data-command="AskLLMChat.NewChat"
+          variant="faded"
+          color="action"
+          size="default"
+          disabledInfo={
+            !preferredPromptId ?
+              t.AskLLMChatHeader["No prompt found"]
+            : undefined
+          }
+          onClickPromise={async () => {
+            if (!preferredPromptId)
+              throw new Error(t.AskLLMChatHeader["No prompt found"]);
+            await createNewChat(preferredPromptId);
+          }}
+        />
       </FlexRow>
 
       {user && (

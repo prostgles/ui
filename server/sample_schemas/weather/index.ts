@@ -1,0 +1,1 @@
+export { onMount } from "./onMount";

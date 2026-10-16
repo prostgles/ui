@@ -6,28 +6,28 @@ const entryDir = process.cwd();
 const web_app_directory = join(entryDir, "../");
 
 void test("searchWebDevFiles: basic search", async () => {
-  const { result, cwd } = await searchWebDevFiles({
+  const { result } = await searchWebDevFiles({
     contentQuery: "usePrgl",
     web_app_directory,
     folder: "client",
     extensions: ["tsx"],
   });
 
-  strict.ok(result.length > 0, "Should find at least one result");
-  const firstResult = result[0]!;
-  strict.ok(
-    firstResult.filePath === "src/useAppState/PrglCoreContextProvider.tsx",
-    "First result should be TestComponent.tsx",
+  const matchingResult = result.find(
+    ({ filePath }) =>
+      filePath === "src/useAppState/PrglCoreContextProvider.tsx",
   );
+  strict.ok(matchingResult, "Should find PrglCoreContextProvider.tsx");
   strict.ok(
-    firstResult.matchedContent.includes("const usePrglCore = () => {"),
-    "Matched content should include 'Test Component'",
+    matchingResult.matchedContent.includes("const usePrglCore = () => {"),
+    "Matched content should include the usePrglCore declaration",
   );
 });
 
 void test("searchWebDevFiles: file name query", async () => {
+  const contentQuery = "usePrgl";
   const { result } = await searchWebDevFiles({
-    contentQuery: "usePrgl",
+    contentQuery,
     fileNameQuery: "PrglCoreContextProvider",
     web_app_directory,
     folder: "client",

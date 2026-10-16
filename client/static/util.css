@@ -742,6 +742,10 @@
 .ai-start {
   align-items: start;
 }
+.ai-stretch {
+  align-items: stretch;
+}
+
 .ai-end {
   align-items: end;
 }

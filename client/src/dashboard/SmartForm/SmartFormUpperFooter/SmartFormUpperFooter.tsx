@@ -1,5 +1,9 @@
 import type { AnyObject } from "prostgles-types";
-import { isDefined, isObject } from "prostgles-types";
+import { getActionFunctions, isObject } from "prostgles-types";
+import { ROW_ACTIONS_COLUMN } from "prostgles-client";
+import { getFunctionActionValue } from "@common/functionOptions";
+import { getActionLookupRow } from "@common/resolveActionFunction";
+import { SvgIcon } from "@components/SvgIcon";
 import React, { useEffect, useState } from "react";
 import Btn from "@components/Btn";
 import Popup from "@components/Popup/Popup";
@@ -29,29 +33,14 @@ export const SmartFormUpperFooter = (props: SmartFormUpperFooterProps) => {
     sql,
   } = props;
 
-  const dbMethodActions = Object.entries(methods)
-    .map(([methodName, { input }]) => {
-      const argEntries = Object.entries(input ?? {}).map(
-        ([argName, arg]) =>
-          [argName, typeof arg === "string" ? { type: arg } : arg] as const,
-      );
-      const thisTableArgIdx = argEntries.findIndex(
-        ([_, arg]) =>
-          arg.lookup?.type === "data" &&
-          arg.lookup.isFullRow &&
-          arg.lookup.table === tableName,
-      );
-      if (thisTableArgIdx > -1) {
-        return {
-          methodName,
-          argName: argEntries[thisTableArgIdx]![0],
-          arg: argEntries[thisTableArgIdx]![1],
-        };
-      }
-
-      return undefined;
-    })
-    .filter(isDefined);
+  const table = tables.find((table) => table.name === tableName);
+  const allowedActions = row[ROW_ACTIONS_COLUMN] as string[] | undefined;
+  const dbMethodActions =
+    table ?
+      getActionFunctions(methods, table).filter(({ methodName }) =>
+        allowedActions?.includes(methodName),
+      )
+    : [];
 
   const [method, setMethod] = useState<{
     name: string;
@@ -174,20 +163,38 @@ export const SmartFormUpperFooter = (props: SmartFormUpperFooterProps) => {
       )}
       {showMethods && (
         <div className="dbMethodActions flex-row-wrap gap-p5 p-1">
-          {dbMethodActions.map(({ methodName, arg, argName }) => {
-            const { lookup } = arg;
-            const showInRowCard =
-              lookup?.type !== "data" ? undefined : lookup.showInRowCard;
+          {dbMethodActions.map(({ methodName, lookup, argName }) => {
+            const showInRowCard = lookup.showInRowCard;
+            const values = getFunctionActionValue(
+              methods[methodName],
+              row,
+              methodName,
+            );
             return (
               <Btn
-                key={methodName}
-                color={showInRowCard?.actionColor ?? "action"}
-                variant="filled"
+                key={`${methodName}:${argName}`}
+                color={values.color ?? showInRowCard?.actionColor ?? "action"}
+                variant={values.variant ?? "filled"}
+                loading={values.isLoading ? "allow-clicking" : false}
+                disabledInfo={values.disabledInfo}
+                iconNode={
+                  values.icon ?
+                    <SvgIcon icon={values.icon} size={16} />
+                  : undefined
+                }
                 onClick={() => {
-                  setMethod({ name: methodName, row, argName });
+                  setMethodState({});
+                  setMethod({
+                    name: methodName,
+                    row:
+                      lookup.type === "RowLookup" && table ?
+                        getActionLookupRow(row, table)
+                      : row,
+                    argName,
+                  });
                 }}
               >
-                {showInRowCard?.actionLabel ?? methodName}
+                {values.text ?? showInRowCard?.actionLabel ?? methodName}
               </Btn>
             );
           })}

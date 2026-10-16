@@ -1,7 +1,4 @@
-import type {
-  AuthClientRequest,
-  LoginClientInfo,
-} from "prostgles-server/dist/Auth/AuthTypes";
+import type { AuthClientRequest, LoginClientInfo } from "prostgles-server";
 import type { DBS } from "..";
 import { debouncePromise, YEAR } from "@common/utils";
 import { activePasswordlessAdminFilter } from "../init/initUsers";

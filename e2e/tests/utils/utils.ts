@@ -1,58 +1,64 @@
-import { Locator, Page as PG, expect } from "@playwright/test";
+import {
+  type PageWIds,
+  type LocatorWIds,
+  fillSmartFormAndInsert,
+  clickInsertRow,
+  getTestId,
+  MINUTE,
+  getTimeout,
+  openConnection,
+  getDashboardUtils,
+} from "../../../server/src/testing/ui/utils";
+export * from "../../../server/src/testing/ui/utils";
+import { Locator, type Page as PG, expect } from "@playwright/test";
 import * as path from "path";
-import { Command, getCommandElemSelector, getDataKey } from "../Testing";
+import { Command, getCommandElemSelector, getDataKey } from "./Testing";
 import { goTo } from "./goTo";
 import { IS_GITHUB_WORKER, TEST_DB_NAME, USERS } from "./constants";
 
-type FuncNamesReturningLocatorObj = {
-  [prop in keyof PG as PG[prop] extends (...args: any) => any ?
-    prop extends "expect" ? never
-    : prop extends "getByTestId" ? never
-    : prop extends "evaluateHandle" ? never
-    : prop extends "waitForFunction" ? never
-    : ReturnType<PG[prop]> extends Promise<any> ? never
-    : ReturnType<PG[prop]> extends Locator ? prop
-    : never
-  : never]: 1;
-};
-type FuncNames = keyof FuncNamesReturningLocatorObj;
-type LocatorFuncNamesReturningLocatorObj = {
-  [prop in keyof Locator as Locator[prop] extends (...args: any) => any ?
-    prop extends "expect" ? never
-    : prop extends "getByTestId" ? never
-    : prop extends "evaluateHandle" ? never
-    : prop extends "waitForFunction" ? never
-    : ReturnType<Locator[prop]> extends Promise<any> ? never
-    : ReturnType<Locator[prop]> extends Locator ? prop
-    : // ReturnType<Locator[prop]> extends Promise<Locator>? prop :
-      never
-  : never]: 1;
-};
-type LocatorFuncNames = keyof LocatorFuncNamesReturningLocatorObj;
-export type PageWIds = Omit<PG, FuncNames | "getByTestId"> & {
-  getByTestId: (command: Command) => LocatorWIds;
-} & {
-  [funcName in FuncNames]: (
-    ...args: Parameters<PG[funcName]>
-  ) => Omit<ReturnType<PG[funcName]>, "getByTestId"> &
-    Pick<PageWIds, "getByTestId">;
+export const runDbsSql = async (
+  page: PageWIds,
+  query: string,
+  args?: any,
+  opts?: any,
+) => {
+  return runDbSql(page, query, args, opts, "dbs");
 };
 
-type LocatorOverridenFuncNames = "getByTestId" | "all" | "last";
-export type LocatorWIds = Omit<
-  Locator,
-  LocatorFuncNames | LocatorOverridenFuncNames
-> & {
-  getByTestId: (command: Command) => LocatorWIds;
-  all: () => Promise<LocatorWIds[]>;
-  first: () => LocatorWIds;
-  last: () => LocatorWIds;
-} & {
-  [funcName in LocatorFuncNames]: (
-    ...args: Parameters<Locator[funcName]>
-  ) => Omit<ReturnType<Locator[funcName]>, LocatorOverridenFuncNames> &
-    Pick<LocatorWIds, LocatorOverridenFuncNames>;
+export const runDbSql = async (
+  page: PageWIds,
+  query: string,
+  args?: any,
+  opts?: any,
+  dbType: "db" | "dbs" = "db",
+) => {
+  /** Wait for handle to become available */
+  await page.waitForFunction(
+    ({ dbType }) => {
+      return (window as any)[dbType] !== undefined;
+    },
+    { dbType },
+  );
+  const [error, sqlResult] = (await page.evaluate(
+    async ([query, args, opts, dbType]) => {
+      try {
+        const sql = (window as any)[dbType === "db" ? "sql" : "dbsSql"];
+        if (!sql) throw dbType === "db" ? "db is missing" : "dbs is missing";
+        const data = await sql(query, args, opts);
+        return [undefined, data];
+      } catch (error) {
+        return [error];
+      }
+    },
+    [query, args, opts, dbType],
+  )) as any;
+  if (error) {
+    console.error(`Error running sql:`, error);
+    throw error;
+  }
+  return sqlResult;
 };
+
 export const getMonacoEditorBySelector = async (
   page: PageWIds,
   parentSelector: string,
@@ -77,19 +83,13 @@ export const getMonacoValue = async (
   // const text = await page.evaluate(
   //   () => window.getSelection()?.toString() ?? "",
   // );
-  const normalizedText = text?.replace(/\u00A0/g, " "); // Replace char 160 with char 32
+  const normalizedText = text.replace(/\u00A0/g, " "); // Replace char 160 with char 32
   return normalizedText;
 };
 
 type KeyPress = "Control" | "Shift";
 type InputKey =
-  | KeyPress
-  | "Enter"
-  | "Escape"
-  | "Tab"
-  | "Backspace"
-  | "Delete"
-  | "Space";
+  KeyPress | "Enter" | "Escape" | "Tab" | "Backspace" | "Delete" | "Space";
 type ArrowKey = "ArrowUp" | "ArrowDown" | "ArrowLeft" | "ArrowRight";
 type ArrowKeyCombinations = `${KeyPress}+${ArrowKey | InputKey}`;
 export type KeyPressOrCombination = InputKey | ArrowKeyCombinations | ArrowKey;
@@ -164,107 +164,6 @@ export const runSql = async (page: PageWIds, query: string) => {
   await page.waitForTimeout(1e3);
 };
 
-export const fillSmartForm = async (
-  page: PageWIds,
-  tableName: string,
-  values: Record<string, string | Record<string, any> | Record<string, any>[]>,
-) => {
-  const smartFormLocator = `${getTestId("SmartForm")}${getDataKey(tableName)}`;
-  for (const [key, valueOrRowOrRows] of Object.entries(values)) {
-    const unescapedSelector = `${tableName}-${key}`;
-    const escapedSelector = await page.evaluate(
-      (unescapedSelector) => CSS.escape(unescapedSelector),
-      unescapedSelector,
-    );
-    if (typeof valueOrRowOrRows === "string") {
-      const value = valueOrRowOrRows;
-      const elem = await page.locator("input#" + escapedSelector);
-      await elem.fill(value);
-      const selectElem = await page.locator(
-        `[data-key=${JSON.stringify(key)}] .FormField_Select`,
-      );
-      if (await selectElem.isVisible()) {
-        await selectElem.click();
-        await page
-          .getByTestId("SearchList.List")
-          .locator(`[data-key=${JSON.stringify(value)}]`)
-          .click();
-      }
-      /** Joined records */
-    } else if (Array.isArray(valueOrRowOrRows)) {
-      const nestedTableName = key;
-
-      // const tabItem = await page.locator(
-      //   `${smartFormLocator} ${getTestId("JoinedRecords")} ${getDataKey(nestedTableName)}`,
-      // );
-      // const isActive = await tabItem.getAttribute("aria-current");
-      // if (isActive !== "true") {
-      //   await tabItem.click();
-      // }
-      for (const nestedRow of valueOrRowOrRows) {
-        await page
-          .locator(
-            `${getTestId("JoinedRecords.AddRow")}${getDataKey(nestedTableName)}`,
-          )
-          .click();
-        await fillSmartFormAndInsert(page, nestedTableName, nestedRow);
-      }
-
-      /** Nested insert into fkey */
-    } else if (typeof valueOrRowOrRows === "object") {
-      const nestedInsertBtn = await page
-        .locator(
-          `${getTestId("SmartFormField")}${getDataKey(key)} ${getTestId("SmartFormFieldOptions.NestedInsert")}`,
-        )
-        .first();
-      const nestedTableName = await nestedInsertBtn.getAttribute("data-key");
-      if (!nestedTableName) throw `nestedTableName not found for ${key}`;
-      await nestedInsertBtn.click();
-      await fillSmartFormAndInsert(page, nestedTableName, valueOrRowOrRows);
-    }
-  }
-
-  return page.locator(smartFormLocator);
-};
-
-export const fillSmartFormAndInsert = async (
-  page: PageWIds,
-  tableName: string,
-  values: Record<string, string | Record<string, any> | Record<string, any>[]>,
-) => {
-  const form = await fillSmartForm(page, tableName, values);
-  await page.waitForTimeout(200);
-  await form.getByTestId("SmartForm.insert").click();
-  await page.waitForTimeout(200);
-};
-
-export const clickInsertRow = async (
-  page: PageWIds,
-  tableName: string,
-  useTopBtn = false,
-) => {
-  await page
-    .getByTestId(
-      useTopBtn ?
-        "dashboard.window.rowInsertTop"
-      : "dashboard.window.rowInsert",
-    )
-    .and(page.locator(`[data-key=${JSON.stringify(tableName)}]`))
-    .click();
-  await page.waitForTimeout(200);
-};
-
-export const insertRow = async (
-  page: PageWIds,
-  tableName: string,
-  row: Record<string, string>,
-  useTopBtn = false,
-) => {
-  await clickInsertRow(page, tableName, useTopBtn);
-  await fillSmartFormAndInsert(page, tableName, row);
-  await page.waitForTimeout(2200);
-};
-
 export const fillLoginFormAndSubmit = async (
   page: PageWIds,
   userNameAndPassword = "test_user",
@@ -293,7 +192,7 @@ export const login = async (
 ) => {
   await goTo(page, url);
   await fillLoginFormAndSubmit(page, userNameAndPassword);
-  await page.locator("#username").waitFor({ state: "detached", timeout: 30e3 });
+  await page.locator("#username").waitFor({ state: "hidden", timeout: 30e3 });
 };
 
 export const typeConfirmationCode = async (page: PageWIds) => {
@@ -348,9 +247,6 @@ export const closeWorkspaceWindows = async (page: PageWIds) => {
   }
   await page.waitForTimeout(100);
 };
-
-export const getTestId = (testid: Command) =>
-  `[data-command=${JSON.stringify(testid)}]` as const;
 export const getSelector = ({
   testid,
   dataKey,
@@ -520,15 +416,6 @@ export const setTableRule = async (
   await page.waitForTimeout(500);
 };
 
-export const runDbsSql = async (
-  page: PageWIds,
-  query: string,
-  args?: any,
-  opts?: any,
-) => {
-  return runDbSql(page, query, args, opts, "dbs");
-};
-
 export const runDbsMethod = async (
   page: PageWIds,
   methodName: string,
@@ -562,75 +449,6 @@ export const runDbsMethod = async (
   return data;
 };
 
-export const runDbSql = async (
-  page: PageWIds,
-  query: string,
-  args?: any,
-  opts?: any,
-  dbType: "db" | "dbs" = "db",
-) => {
-  /** Wait for handle to become available */
-  await page.waitForFunction(
-    ({ dbType }) => {
-      return (window as any)[dbType] !== undefined;
-    },
-    { dbType },
-  );
-  const [error, sqlResult] = (await page.evaluate(
-    async ([query, args, opts, dbType]) => {
-      try {
-        const sql = (window as any)[dbType === "db" ? "sql" : "dbsSql"];
-        if (!sql) throw dbType === "db" ? "db is missing" : "dbs is missing";
-        const data = await sql(query, args, opts);
-        return [undefined, data];
-      } catch (error) {
-        return [error];
-      }
-    },
-    [query, args, opts, dbType],
-  )) as any;
-  if (error) {
-    console.error(`Error running sql:`, error);
-    throw error;
-  }
-  return sqlResult;
-};
-
-export const openTable = async (
-  page: PageWIds,
-  namePartStart: string,
-  exact = false,
-) => {
-  await page.getByTestId("dashboard.menu").waitFor({ state: "visible" });
-  await page.keyboard.press("Control+KeyP");
-  await page.waitForTimeout(200);
-  const searchAlLInput = await page.getByTestId("SearchAll");
-  await searchAlLInput.waitFor({ state: "visible" });
-  await searchAlLInput.fill(namePartStart);
-  await page.waitForTimeout(200);
-  await page.keyboard.press("Enter");
-  await page.waitForTimeout(500);
-
-  /** Ensure table was opened */
-  const table = page.locator(
-    `[data-table-name${exact ? "=" : "^="}${JSON.stringify(namePartStart)}]`,
-  );
-
-  /** Used for debugging */
-  if (!(await table.isVisible())) {
-    const v_triggers = await runDbsSql(
-      page,
-      `SELECT * FROM prostgles.v_triggers;`,
-      {},
-      { returnType: "rows" },
-    );
-    console.log(JSON.stringify({ v_triggers, namePartStart, expect }));
-    await page.waitForTimeout(500);
-  }
-  await expect(table).toBeVisible();
-  await page.waitForTimeout(1000);
-};
-
 export const addExistingDatabase = async (page: PageWIds, dbName: string) => {
   await goTo(page, "localhost:3004/connections");
   await page.getByTestId("ConnectionServer.add").click();
@@ -644,8 +462,6 @@ export const addExistingDatabase = async (page: PageWIds, dbName: string) => {
     .click();
   await page.getByTestId("ConnectionServer.add.confirm").click();
 };
-
-export const MINUTE = 60e3;
 export const createDatabase = async (
   dbName: string,
   page: PageWIds,
@@ -740,6 +556,7 @@ export const selectAndUpsertFile = async (
       .click();
   }
 };
+export const TWENTY_SECONDS_OR_MORE = getTimeout(20_000);
 
 export const fileName = "icon512.png";
 export const uploadFile = async (page: PageWIds) => {
@@ -748,6 +565,10 @@ export const uploadFile = async (page: PageWIds) => {
   await selectAndUpsertFile(page, (page) =>
     page.getByTestId("FileBtn").click(),
   );
+  const MINUTE = 60e3;
+  await page
+    .getByTestId("Popup.content")
+    .waitFor({ state: "detached", ...getTimeout(2 * MINUTE) });
 };
 
 export const isEmpty = (obj?: any) => {
@@ -759,9 +580,6 @@ export const getSearchListItem = (
   { dataKey }: { dataKey: string },
 ) => {
   return page.getByTestId("SearchList.List").locator(getDataKey(dataKey));
-};
-export const getTableWindow = (page: PageWIds, tableName: string) => {
-  return page.locator(`[data-table-name=${JSON.stringify(tableName)}]`);
 };
 
 export const setWspColLayout = async (page: PageWIds) => {
@@ -775,16 +593,17 @@ export const setWspColLayout = async (page: PageWIds) => {
   await page.getByTestId("Popup.close").click();
 };
 export const disablePwdlessAdminAndCreateUser = async (page: PageWIds) => {
-  await goTo(page);
   await page
     .getByRole("link", { name: "Users" })
     .waitFor({ state: "visible", timeout: 60e3 });
   await page.getByRole("link", { name: "Users" }).click();
-  await expect(page as PG).toHaveURL(/.*users/);
-  await page.goto("localhost:3004/users", {
-    waitUntil: "networkidle",
-    timeout: 10e3,
-  });
+  await expect(page).toHaveURL(/.*users/);
+  // const currentUrl = page.url();
+  // await page.goto();
+  // await page.goto(`${currentUrl}users`, {
+  //   waitUntil: "networkidle",
+  //   timeout: 10e3,
+  // });
   await page.getByRole("button", { name: "Create admin user" }).click();
   await page.locator("#username").fill(USERS.test_user);
   await page.locator("#new-password").fill(USERS.test_user);
@@ -900,7 +719,7 @@ const waitForAllMatchingLocatorsToDisappear = async (
 ) => {
   const start = Date.now();
   let tries = 0;
-  while (true) {
+  for (;;) {
     const count = await locator.count();
     if (!count) {
       if (tries > 2) {
@@ -908,10 +727,13 @@ const waitForAllMatchingLocatorsToDisappear = async (
       } else {
         tries++;
       }
-    } else if (Date.now() - start > timeout) {
-      throw new Error(
-        `Timeout waiting for locators to disappear. Still ${count} remaining.`,
-      );
+    } else {
+      tries = 0;
+      if (Date.now() - start > timeout) {
+        throw new Error(
+          `Timeout waiting for locators to disappear. Still ${count} remaining.`,
+        );
+      }
     }
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
@@ -924,9 +746,13 @@ export const sendAskLLMMessage = async (
     | boolean
     | {
         onAfterSend: () => Promise<void>;
-      } = false,
+      } = true,
 ) => {
-  await page.getByTestId("AskLLM.popup").getByTestId("Chat.textarea").fill(msg);
+  const textArea = page
+    .getByTestId("AskLLM.popup")
+    .getByTestId("Chat.textarea");
+  await expect(textArea).toBeEnabled(TWENTY_SECONDS_OR_MORE);
+  await textArea.fill(msg);
   await page.keyboard.press("Enter");
   await page.waitForTimeout(500);
   if (waitForLoadingToStop) {
@@ -934,11 +760,7 @@ export const sendAskLLMMessage = async (
       await waitForLoadingToStop.onAfterSend();
     }
     await waitForAllMatchingLocatorsToDisappear(
-      page
-        .getByTestId("Chat.messageList")
-        .getByTestId("Loading")
-        // .locator(".message.incoming .Loading")
-        .last(),
+      page.getByTestId("Chat.messageList").getByTestId("Loading"),
     );
   }
 };
@@ -1001,27 +823,6 @@ export const toggleMCPTools = async (
   await page.waitForTimeout(500);
 };
 
-export const openConnection = async (
-  page: PageWIds,
-  connectionName:
-    | "sample_database"
-    | "cloud"
-    | "crypto"
-    | "financial"
-    | "food_delivery"
-    | "Prostgles UI state"
-    | "prostgles_video_demo"
-    | "db_with_owner"
-    | "Prostgles UI automated tests database",
-) => {
-  await goTo(page, "/connections");
-  await page
-    .locator(getDataKey(connectionName))
-    .getByTestId("Connection.openConnection")
-    .click();
-  await page.waitForTimeout(1000);
-};
-
 export const loginWhenSignupIsEnabled = async (
   page: PageWIds,
   userNameAndPassword = "test_user",
@@ -1056,69 +857,20 @@ export const restoreFromBackup = async (
   await page.getByRole("button", { name: "Restore", exact: true }).click();
 };
 
-export const getDashboardUtils = (page: PageWIds) => {
-  const _open = openConnection.bind(null, page);
-  const openMenuIfClosed = async (closeMenu = false) => {
-    await page.waitForTimeout(1500);
-    const menuCloseButton = await page
-      .getByTestId("DashboardMenu")
-      .getByTestId("Popup.close");
-    const menuPinnedButton = await page.locator(
-      getCommandElemSelector("DashboardMenuHeader.togglePinned") +
-        getDataKey("pinned"),
-    );
-    const menuIsOpen =
-      (await menuCloseButton.count()) ? "close"
-      : (await menuPinnedButton.count()) ? "unpinn"
-      : undefined;
-    if (menuIsOpen) {
-      if (closeMenu) {
-        if (menuIsOpen === "close") {
-          await menuCloseButton.click();
-        } else {
-          await menuPinnedButton.click();
-        }
-      }
-      return;
-    }
-    const menuBtn = await page.getByTestId("dashboard.menu");
-    if ((await menuBtn.count()) && (await menuBtn.isEnabled())) {
-      await menuBtn.click();
-    }
-  };
-  const toggleMenuPinned = async (shouldBePinned?: boolean) => {
-    await page.waitForTimeout(1500);
-    const toggleBtn = await page.getByTestId(
-      "DashboardMenuHeader.togglePinned",
-    );
-    const menuBtn = await page.getByTestId("dashboard.menu");
-    const menuIsPinned = await menuBtn.isDisabled();
-    if ((await toggleBtn.count()) && (await toggleBtn.isEnabled())) {
-      if (menuIsPinned && shouldBePinned) {
-        return;
-      }
-      await toggleBtn.click();
-    } else if (shouldBePinned) {
-      await menuBtn.click();
-      await page.getByTestId("DashboardMenuHeader.togglePinned").click();
-    }
-  };
-
-  return {
-    openConnection: _open,
-    openMenuIfClosed,
-    toggleMenuPinned,
-  };
-};
-
 export const setPromptByText = async (
   page: PageWIds,
   text: string,
   closePopup = true,
 ) => {
   await page.getByTestId("LLMChatOptions.Prompt").click();
-  await page.locator(".SmartCard").getByText(text).first().click();
-  await page.waitForTimeout(2e3); // wait for prompt tools to be set
+  const promptBtn = page
+    .locator(".SmartCard button", { hasText: text })
+    .first();
+  if ((await promptBtn.getAttribute("data-color")) !== "action") {
+    await promptBtn.click();
+    await expect(promptBtn).not.toBeDisabled(TWENTY_SECONDS_OR_MORE);
+  }
+  await page.waitForTimeout(3e3); // wait for prompt tools to be set
   if (!closePopup) return;
   await page
     .getByTestId("LLMChatOptions.Prompt")
@@ -1204,31 +956,9 @@ export const deleteAllWorkspaces = async (page: PageWIds): Promise<void> => {
   return deleteAllWorkspaces(page);
 };
 
-export const setOrAddWorkspace = async (
-  page: PageWIds,
-  workspaceName: string,
-) => {
-  const workspaceList = await page.getByTestId("WorkspaceMenu.list");
-  await workspaceList.waitFor({ state: "visible", timeout: 10e3 });
-  await page.waitForTimeout(1500);
-  const toggleBtn = await page
-    .getByTestId("WorkspaceMenu.list")
-    .getByText(workspaceName, { exact: true });
-
-  if (await toggleBtn.count()) {
-    await toggleBtn.click();
-  } else {
-    await page.getByTestId("WorkspaceMenuDropDown").click();
-    await page.getByTestId("WorkspaceMenuDropDown.WorkspaceAddBtn").click();
-    await page.getByLabel("New workspace name").fill(workspaceName);
-    await page.getByTestId("WorkspaceAddBtn.Create").click();
-  }
-  await page.waitForTimeout(1e3);
-};
-
 export const newChat = async (page: PageWIds) => {
   await page.getByTestId("AskLLMChat.NewChat").click();
-  await page.waitForTimeout(1e3);
+  await page.waitForTimeout(2e3);
 };
 
 let setupAuthCount = 0;
@@ -1249,7 +979,7 @@ export const setupMagicLinkAuth = async (page: PageWIds) => {
 
 export const clickAndWait = async (
   btnLocator: LocatorWIds,
-  timeout = IS_GITHUB_WORKER ? 120_000 : 60_000,
+  timeout = IS_GITHUB_WORKER ? 220_000 : 120_000,
 ) => {
   await btnLocator.click();
   await btnLocator.page().waitForTimeout(200);
@@ -1298,4 +1028,18 @@ export const allowOnce = async (page: PageWIds, doClick = true) => {
   await allowOnceBtn.waitFor({ state: "visible", timeout: 15000 });
   doClick && (await allowOnceBtn.click());
   await page.waitForTimeout(2500);
+};
+
+// This function is used to scroll an element into view, playwright's version of this scrollIntoViewIfNeeded() results in flaky tests
+export async function scrollElementIntoView(locator: Locator): Promise<void> {
+  await locator.evaluate((element) => {
+    element.scrollIntoView({ block: "center" });
+  });
+}
+
+export const addFileToChat = async (page: PageWIds, filePath: string) => {
+  const fileChooserPromise = page.waitForEvent("filechooser");
+  await page.getByTestId("Chat.addFiles").click();
+  const fileChooser = await fileChooserPromise;
+  await fileChooser.setFiles(filePath);
 };

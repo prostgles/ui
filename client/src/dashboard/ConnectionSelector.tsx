@@ -13,7 +13,10 @@ type P = {
 };
 
 export const ConnectionSelector = ({ connection, dbs, location }: P) => {
-  const { data: connections } = dbs.connections.useFind();
+  const { data: connections } = dbs.connections.useFind(
+    {},
+    { orderBy: { created: false } },
+  );
   const [isLoading, setIsLoading] = useState(false);
   return (
     <Select

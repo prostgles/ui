@@ -1,8 +1,6 @@
 import type { AuthConfig } from "prostgles-server/dist/Auth/AuthTypes";
 
-import { sidKeyName } from "@common/authTypesAndConstants";
 import type { DB } from "prostgles-server/dist/initProstgles";
-import { getElectronConfig } from "../electronConfig";
 import { checkClientIP } from "./sessionUtils";
 import type { AuthConfigForStateOrConnection } from "./subscribeToAuthSetupChanges";
 
@@ -17,17 +15,17 @@ export const getOnUseOrSocketConnected = (
   ) => {
     const { stateDatabaseConfig: database_config } = authSetupData;
 
-    /** Is this needed? */
-    const electronConfig = getElectronConfig();
-    if (
-      electronConfig?.isElectron &&
-      electronConfig.sidConfig.electronSid !== sid
-    ) {
-      return {
-        httpCode: 400,
-        error: "Not authorized. Expecting a different " + sidKeyName,
-      };
-    }
+    /** Is this needed, given that we use electronSid to create a session */
+    // const electronConfig = getElectronConfig();
+    // if (
+    //   electronConfig?.isElectron &&
+    //   electronConfig.sidConfig.electronSid !== sid
+    // ) {
+    //   return {
+    //     httpCode: 400,
+    //     error: "Not authorized. Expecting a different " + sidKeyName,
+    //   };
+    // }
 
     if (database_config.allowed_ips_enabled) {
       const ipCheck = await checkClientIP(

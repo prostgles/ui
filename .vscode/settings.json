@@ -14,5 +14,33 @@
   "[typescriptreact]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-  "prettier.printWidth": 100
+  "cSpell.ignorePaths": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/.git/**",
+    "**/vendor/**",
+    "**/package-lock.json",
+    "**/pnpm-lock.yaml",
+    "**/yarn.lock"
+  ],
+
+  "cSpell.enabledFileTypes": [
+    "typescript",
+    "typescriptreact",
+    "javascript",
+    "javascriptreact",
+    "markdown"
+  ],
+  "cSpell.allowCompoundWords": true,
+  "cSpell.ignoreRegExpList": [
+    "/from\\s+['\"].*?['\"]/g",
+    "/import\\s+.*?from\\s+['\"].*?['\"]/g",
+    "/require\\(['\"].*?['\"]\\)/g"
+  ],
+  "prettier.printWidth": 100,
+  "cSpell.words": [
+    "cimd",
+    "cmaps"
+  ]
 }

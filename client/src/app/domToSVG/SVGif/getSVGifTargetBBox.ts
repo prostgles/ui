@@ -4,16 +4,24 @@ export const getSVGifTargetBBox = ({
   svgFileName,
   width,
   height,
+  nth = 0,
 }: {
   elementSelector: string;
+  nth: number | undefined;
   svgDom: SVGElement;
   svgFileName: string;
   width: number;
   height: number;
 }) => {
-  const element = svgDom.querySelector<SVGGElement>(elementSelector);
+  const elements = Array.from(
+    svgDom.querySelectorAll<SVGGElement>(elementSelector),
+  );
+  const element = elements.at(nth);
   if (!element) {
-    throw `Element not found: ${elementSelector} in SVG file ${svgFileName}`;
+    throw (
+      `Element not found: ${elementSelector}${nth ? ` nth(${nth})` : ""} in SVG file ${svgFileName}` +
+      (nth ? `. Total matches: ${elements.length}` : "")
+    );
   }
 
   const bbox = element.getBBox();

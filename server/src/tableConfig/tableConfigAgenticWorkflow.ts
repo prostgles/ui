@@ -1,7 +1,8 @@
+import { agentSchemaWithoutOutput } from "@common/mcp/ui.mcp.schema";
 import { fromEntries, getEntries } from "@common/utils";
 import { createContainerSchema } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/schemas/getContainerToolSchemas";
 import type { TableConfig } from "prostgles-server";
-import { omitKeys, pickKeys } from "prostgles-types";
+import { pickKeys } from "prostgles-types";
 import { startAgenticWorkflowSchema } from "../../../common/mcp/startAgenticWorkflowSchema";
 
 export const tableConfigAgenticWorkflow: TableConfig<{ en: 1 }> = {
@@ -48,28 +49,11 @@ export const tableConfigAgenticWorkflow: TableConfig<{ en: 1 }> = {
             record: {
               partial: true,
               values: {
-                type: {
-                  ...omitKeys(
-                    startAgenticWorkflowSchema.agentDefinitions.record.values
-                      .type,
-                    ["outputSchema"],
-                  ),
-                  prompt: { type: "string", optional: true },
-                  modelName: { type: "string", optional: true },
-                  maxCostUSD: { type: "number", optional: true },
-                  maxIterations: { type: "number", optional: true },
-                  mcpServerConfigs: {
-                    optional: true,
-                    record: {
-                      partial: true,
-                      values: {
-                        type: {
-                          configId: { type: "number" },
-                        },
-                      },
-                    },
-                  },
-                },
+                type: fromEntries(
+                  getEntries(agentSchemaWithoutOutput).map(([key, value]) => {
+                    return [key, { ...value, optional: true }] as const;
+                  }),
+                ),
               },
             },
           },

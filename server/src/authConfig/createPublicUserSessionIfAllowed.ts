@@ -27,9 +27,6 @@ export const createPublicUserSessionIfAllowed = async (
       password: "",
       type: "public",
     });
-    if (!newRandomUser) {
-      return;
-    }
 
     return makeSession(
       newRandomUser,
@@ -43,9 +40,6 @@ export const createPublicUserSessionIfAllowed = async (
     );
   });
 
-  if (!session) {
-    return;
-  }
   return {
     type: "new-session",
     session,

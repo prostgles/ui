@@ -1,12 +1,8 @@
 import type { ChartColumn, ColInfo } from "../W_Table/TableMenu/getChartCols";
 import { addLink } from "./addLink";
 import { addWindow } from "./addWindow";
-import type {
-  DBSchemaTableWJoins,
-  Link,
-  NewChartOpts,
-  WindowData,
-} from "./dashboardUtils";
+import type { DBSchemaTableWJoins, Link, NewChartOpts } from "./dashboardUtils";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 import type { DBS } from "./DBS";
 import { getRandomColor } from "./PALETTE";
 import {
@@ -41,8 +37,7 @@ export const addChart = async ({
    * If the chart window already exists (because user is adding multiple charts from the same table/sql window), pass it here to avoid creating multiple chart windows for the same table/sql window.
    */
   existingChartWindow:
-    | undefined
-    | Pick<WindowData, "id" | "workspace_id" | "table_name">;
+    undefined | Pick<WindowData, "id" | "workspace_id" | "table_name">;
   windows: WindowData[];
   myLinks: Link[];
   tables: DBSchemaTableWJoins[];

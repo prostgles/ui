@@ -47,8 +47,11 @@ export type FieldConfigBase<T extends AnyObject | void = void> = {
   label?: string;
 };
 
-export type FieldConfigRender<T extends AnyObject = AnyObject> = (
-  value: any,
+export type FieldConfigRender<
+  T extends AnyObject = AnyObject,
+  K extends keyof T | string = string,
+> = (
+  value: K extends keyof T ? T[K] : any,
   row: T,
   data: {
     rows: T[];
@@ -56,20 +59,23 @@ export type FieldConfigRender<T extends AnyObject = AnyObject> = (
   },
 ) => React.ReactNode;
 
-export type ParsedFieldConfig<T extends AnyObject = AnyObject> =
-  FieldConfigBase<T> & {
-    select?: "*" | number | AnyObject | keyof T;
-    hideIf?: (value, row: T) => boolean;
-    render?: FieldConfigRender<T>;
-    /**
-     * Defaults to "value"
-     */
-    renderMode?: "valueNode" | "value" | "full";
-  };
+export type ParsedFieldConfig<
+  T extends AnyObject = AnyObject,
+  K extends keyof T | string = string,
+> = FieldConfigBase<T> & {
+  select?: "*" | number | AnyObject | keyof T;
+  hideIf?: (value: K extends keyof T ? T[K] : any, row: T) => boolean;
+  render?: FieldConfigRender<T, K>;
+  /**
+   * Defaults to "value"
+   */
+  renderMode?: "valueNode" | "value" | "full";
+};
 
-export type FieldConfig<T extends AnyObject = AnyObject> =
-  | string
-  | ParsedFieldConfig<T>;
+export type FieldConfig<
+  T extends AnyObject = AnyObject,
+  K extends keyof T | string = string,
+> = string | ParsedFieldConfig<T, K>;
 
 export type SmartCardCommonProps = {};
 
@@ -105,7 +111,7 @@ export type SmartCardProps<T extends AnyObject = AnyObject> = Pick<
      * Changing how table columns are displayed
      * Displaying additional custom computed columns
      */
-    fieldConfigs?: FieldConfig<T>[] | string[];
+    fieldConfigs?: FieldConfig<T>[] | (keyof T)[];
 
     title?: (row: T) => React.ReactNode;
     footer?: (row: T) => React.ReactNode;
@@ -114,7 +120,7 @@ export type SmartCardProps<T extends AnyObject = AnyObject> = Pick<
     enableInsert?: boolean;
 
     /**
-     * If true then will not displaye fields with null values
+     * If true then will not displays fields with null values
      * */
     excludeNulls?: boolean;
 

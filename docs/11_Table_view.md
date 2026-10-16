@@ -13,6 +13,7 @@ It supports filtering, sorting, editing, schema-aware row forms, linked data fro
 - **Conditional styling**: Apply value-based cell styles, including text/background colors, icons, scales, and bar-style numeric cells.
 - **Smart forms**: Open a row card to view/edit the row using schema-aware inputs and JSONB support. Related records section to navigate the full relational context without leaving the record
 - **Live data refresh**: Tables and views (and related tables) use realtime subscriptions to show latest data.
+- **Audit history**: View a row’s change history from its card, including what changed, when, and who made the change, when auditing is enabled.
 - **Charts, maps, and cross-filtering**: Add timecharts, maps, and cross-filtered table views from the current table. Interactions in linked views preserve the source context through dashboard filters.
 - **Postgres management**: Inspect table/view details and manage columns, indexes, constraints, triggers, policies, access rules, refresh settings, and the current query from the table menu.
 
@@ -171,6 +172,7 @@ foreign key handling, and support for complex data types.
     - **Table icon in header**: Table icon and table name. Table icon is configurable through the table menu settings.  
     - **Previous row button**: Navigate to the previous row in the dataset. Only shown for tables with primary key. Disabled when there is no previous row available.  
     - **Next row button**: Navigate to the next row in the dataset. Only shown for tables with primary key. Disabled when there is no next row available.  
+    - **Audit history**: Shows the changes recorded for this row, newest first. Only shown when auditing is configured and permitted.  
     - **Fullscreen toggle button**: Toggles the fullscreen mode of the SmartForm popup for an expanded view.  
     - **Close button**: Closes the SmartForm popup without saving any data.  
     - **Form field**: Each form field represents a column from the table, displaying the column name and the corresponding value for the selected row. Users can edit the value if the field is editable.  

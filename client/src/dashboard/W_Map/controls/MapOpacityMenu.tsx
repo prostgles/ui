@@ -2,10 +2,10 @@ import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable
 import React from "react";
 import { classOverride } from "@components/Flex";
 import { Slider } from "@components/Slider";
-import type { WindowData } from "../../Dashboard/dashboardUtils";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 
 type P = {
-  w: SyncDataItem<Required<WindowData<"map">>, true>;
+  w: SyncDataItem<Required<WindowData<"map">>, { handlesOnData: true }>;
   className?: string;
 };
 

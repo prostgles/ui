@@ -24,7 +24,7 @@ const runFfmpeg = (args: string[], cwd?: string) =>
   });
 
 export const startScreencast = async (page: PageWIds, rawName: string) => {
-  if (!rawName?.trim()) throw new Error("Name is required for screencast");
+  if (!rawName.trim()) throw new Error("Name is required for screencast");
 
   const name = sanitizeFileName(rawName);
   const recordingId = `${name}-${Date.now()}`;

@@ -7,7 +7,7 @@ import { classOverride } from "@components/Flex";
 import type { JSONBSchemaCommonProps } from "@components/JSONBSchema/JSONBSchema";
 import Loading from "@components/Loader/Loading";
 import type { AnyObject, ValidatedColumnInfo } from "prostgles-types";
-import { includes, omitKeys } from "prostgles-types";
+import { omitKeys } from "prostgles-types";
 import React, { useCallback, useState } from "react";
 import type { Prgl } from "../../App";
 import { ifEmpty } from "../../utils/utils";
@@ -18,9 +18,9 @@ import { SmartFormFooterButtons } from "./SmartFormFooter/SmartFormFooterButtons
 import { useSmartFormActions } from "./SmartFormFooter/useSmartFormActions";
 import { type NewRowDataHandler } from "./SmartFormNewRowDataHandler";
 import { SmartFormPopupWrapper } from "./SmartFormPopup/SmartFormPopupWrapper";
+import { SmartFormViewAsMarkdown } from "./SmartFormPopup/SmartFormViewAsMarkdown";
 import { SmartFormUpperFooter } from "./SmartFormUpperFooter/SmartFormUpperFooter";
 import { useSmartForm, type SmartFormState } from "./useSmartForm";
-import { SmartFormViewAsMarkdown } from "./SmartFormPopup/SmartFormViewAsMarkdown";
 
 export type getErrorsHook = (
   cb: (
@@ -259,8 +259,15 @@ const SmartFormWithNoError = ({
       displayedColumns={displayedColumns}
       headerText={headerText}
       rowFilterObj={"rowFilterObj" in mode ? mode.rowFilterObj : undefined}
+      row={
+        mode.type === "view" || mode.type === "update" ?
+          mode.currentRow
+        : undefined
+      }
       showAsMarkdown={showAsMarkdown}
-      setShowAsMarkdown={setShowAsMarkdown}
+      setShowAsMarkdown={
+        state.modeType === "insert" ? undefined : setShowAsMarkdown
+      }
     >
       <div
         data-command={isLoading ? undefined : "SmartForm"}
@@ -292,8 +299,8 @@ const SmartFormWithNoError = ({
         <SmartFormUpperFooter {...props} {...state} />
 
         <ErrorComponent
-          className="f-0 b rounded"
-          style={{ flex: "none", padding: "1em" }}
+          className="f-0 b rounded m-p5"
+          style={{ flex: "none" }}
           withIcon={true}
           error={
             error ||

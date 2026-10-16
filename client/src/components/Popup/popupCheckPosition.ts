@@ -130,6 +130,9 @@ export const popupCheckPosition = function (this: Popup) {
     anchorX = anchorXY.x;
     anchorY = anchorXY.y;
   } else if (anchorEl) {
+    if (!anchorEl.isConnected) {
+      console.warn("Popup anchorEl is not connected to the DOM");
+    }
     const anchorR = anchorEl.getBoundingClientRect();
     anchorX = anchorR.x - anchorPadding;
     anchorY = anchorR.y - anchorPadding;

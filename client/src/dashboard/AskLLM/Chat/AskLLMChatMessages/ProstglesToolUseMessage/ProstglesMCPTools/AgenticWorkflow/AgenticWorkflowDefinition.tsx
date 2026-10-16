@@ -63,6 +63,7 @@ export const AgenticWorkflowDefinition = ({
         filePath: `file:///${filePath}`,
         content,
       })),
+      projectPath: undefined,
     } satisfies LanguageConfig;
   }, [agentFiles, tool_use_id]);
 

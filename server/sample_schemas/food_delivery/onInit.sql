@@ -1,6 +1,6 @@
 CREATE EXTENSION IF NOT EXISTS postgis;
 
-SET statement_timeout TO 220e3;
+SET LOCAL statement_timeout TO 220e3;
 
 DROP TABLE IF EXISTS  delivery_status_types , menu_items, menus, order_items, orders, 
 ratings, restaurants, user_types, users, order_status_types, user_addresses,

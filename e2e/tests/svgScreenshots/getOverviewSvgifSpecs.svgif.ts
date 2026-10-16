@@ -67,6 +67,19 @@ export const getOverviewSvgifSpecs = async () => {
       ],
     },
     {
+      fileName: "governed_ai",
+      usedExternally: true,
+      scenes: [
+        ...sliceScenes("ai_assistant", 6, 13),
+        ...sliceScenes(
+          "ai_assistant_agentic_workflow_gov_api",
+          0,
+          undefined,
+          true,
+        ),
+      ],
+    },
+    {
       fileName: "overview_long",
       usedExternally: true,
       scenes: [
@@ -238,7 +251,7 @@ export const getOverviewSvgifSpecs = async () => {
       //       [...scene.animations]
       //     : [...scene.animations, { type: "wait", duration: 4000 }],
       // })),
-    } as typeof sceneInfo;
+    };
   });
 
   const svgifCovers: { fileName: string; svgSceneFileName: string }[] = [

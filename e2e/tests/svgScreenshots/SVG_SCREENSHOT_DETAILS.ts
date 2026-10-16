@@ -2,7 +2,7 @@ import { dashboardSvgif } from "svgScreenshots/dashboard.svgif";
 import { fileImporter } from "svgScreenshots/fileImporter.svgif";
 import { schemaDiagramSvgif } from "svgScreenshots/schemaDiagram.svgif";
 import { goTo } from "utils/goTo";
-import { getCommandElemSelector, getDataKey } from "../Testing";
+import { getCommandElemSelector, getDataKey } from "../utils/Testing";
 import { getDashboardUtils, openTable, type PageWIds } from "../utils/utils";
 import { accountSvgif } from "./account.svgif";
 import { aiAssistantSvgif } from "./aiAssistant.svgif";
@@ -27,9 +27,9 @@ export type OnBeforeScreenshot = (
 ) => Promise<void>;
 
 export const SVG_SCREENSHOT_DETAILS = {
+  table_timechart: tableTimechartSvgif,
   timechart: timechartSvgif,
   ai_assistant_agentic_workflow_gov_api: aiAssistantAgenticWorkflowGovApiSvgif,
-  table_timechart: tableTimechartSvgif,
   sql_editor: sqlEditorSvgif,
   schema_diagram: schemaDiagramSvgif,
   ai_assistant: aiAssistantSvgif,

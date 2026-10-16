@@ -73,6 +73,7 @@ export const domToSVG = async (node: HTMLElement) => {
   moveBordersToTop(svg);
   removeOverflowedElements(svg);
   repositionMasks(svg);
+  removeDoubleSpaceBidiBugForIOS(svg);
   remove();
   await tout(100);
 
@@ -89,6 +90,30 @@ export const domToSVG = async (node: HTMLElement) => {
   }
   firstG.setAttribute("id", rootId);
   return { svgString, svg, rootId };
+};
+
+/** Replace multi space with single space to prevent ios bidi bug */
+const removeDoubleSpaceBidiBugForIOS = (svg: SVGElement) => {
+  // svg.querySelectorAll("text").forEach((text) => {
+  //   text.textContent = text.textContent.replace(/\s+/g, " ");
+  // });
+  svg.querySelectorAll("text, tspan").forEach((node) => {
+    const isTextWithChildren =
+      node instanceof SVGTextElement && node.children.length > 0;
+    if (isTextWithChildren) {
+      return;
+    }
+
+    if (node.closest(`[data-command="MonacoEditor"]`)) {
+      return;
+    }
+
+    const content = node.textContent;
+    if (!content) return;
+
+    // Collapse only repeated regular spaces (not all whitespace/newlines)
+    node.textContent = content.replace(/ {2,}/g, " ");
+  });
 };
 
 /**

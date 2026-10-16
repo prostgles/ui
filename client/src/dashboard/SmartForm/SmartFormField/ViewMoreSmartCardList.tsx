@@ -1,4 +1,7 @@
-import type { DetailedFilter } from "@common/filterUtils";
+import type {
+  DetailedFilter,
+  GroupedDetailedFilter,
+} from "@common/filterUtils";
 import Btn from "@components/Btn";
 import { InfoRow } from "@components/InfoRow";
 import Popup from "@components/Popup/Popup";
@@ -15,11 +18,15 @@ export type ViewMoreSmartCardListProps = Pick<
   "db" | "methods" | "tables" | "sql"
 > & {
   ftable: DBSchemaTableWJoins;
-  searchFilter: DetailedFilter[] | undefined;
+  searchFilter: (DetailedFilter | GroupedDetailedFilter)[] | undefined;
   getActions:
     | ((row: AnyObject, onClosePopup: VoidFunction) => React.ReactNode)
     | undefined;
   rootTableName?: string;
+  popupTitle?: React.ReactNode;
+  renderButton?: (props: {
+    onClick: React.MouseEventHandler<HTMLButtonElement>;
+  }) => React.ReactNode;
 };
 export const ViewMoreSmartCardList = ({
   db,
@@ -29,6 +36,8 @@ export const ViewMoreSmartCardList = ({
   searchFilter,
   getActions,
   rootTableName,
+  popupTitle,
+  renderButton,
   sql,
 }: ViewMoreSmartCardListProps) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement>();
@@ -41,15 +50,25 @@ export const ViewMoreSmartCardList = ({
 
   return (
     <>
-      <Btn
-        iconPath={mdiSearchWeb}
-        title="View more"
-        data-command="ViewMoreSmartCardList"
-        onClick={({ currentTarget }) => setAnchorEl(currentTarget)}
-      />
+      {renderButton?.({
+        onClick: (event) => {
+          event.stopPropagation();
+          setAnchorEl(event.currentTarget);
+        },
+      }) ?? (
+        <Btn
+          iconPath={mdiSearchWeb}
+          title="View more"
+          data-command="ViewMoreSmartCardList"
+          onClick={(event) => {
+            event.stopPropagation();
+            setAnchorEl(event.currentTarget);
+          }}
+        />
+      )}
       {anchorEl && (
         <Popup
-          title={ftable.label}
+          title={popupTitle ?? ftable.label}
           onClose={() => setAnchorEl(undefined)}
           anchorEl={anchorEl}
           onClickClose={false}

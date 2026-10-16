@@ -102,8 +102,12 @@ export const Chat = (props: ChatProps) => {
           }}
           data-command="Chat.messageList"
         >
-          {messages.map((message) => (
-            <ChatMessage key={message.id} message={message} />
+          {messages.map((message, index) => (
+            <ChatMessage
+              key={message.id}
+              message={message}
+              isLast={index === messages.length - 1}
+            />
           ))}
           {/* Spacer */}
           <div

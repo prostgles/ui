@@ -159,7 +159,7 @@ export const getMapLayerQueries = ({
               : undefined;
             const localLayerFilter =
               (!smartGroupFilter ? undefined : (
-                parseFullFilter(smartGroupFilter, undefined, undefined)
+                parseFullFilter(smartGroupFilter, undefined)
               )) ?? {};
             const joinPath =
               lOpts.dataSource?.type === "table" ?

@@ -9,9 +9,9 @@ import type {
   DBSchemaTableWJoins,
   Link,
   LinkSyncItem,
-  WindowData,
   WindowSyncItem,
 } from "./Dashboard/dashboardUtils";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 import RTComp from "./RTComp";
 import { getLinkColorV2 } from "./W_Map/fetchData/getMapLayerQueries";
 import { JoinPathSelectorV2 } from "./W_Table/ColumnMenu/JoinPathSelectorV2";
@@ -166,9 +166,12 @@ export class LinkMenu extends RTComp<P, S> {
           joinTextLines =
             parsedPath?.flatMap((p) => [
               {
-                text: `(${Object.entries(p.on[0]!)
-                  .map(([l, r]) => `${l} = ${r}`)
-                  .join(" AND ")})`,
+                text:
+                  typeof p.on === "string" ?
+                    `${p.on}${p.reversed ? " (reversed)" : ""}`
+                  : `(${Object.entries(p.on[0]!)
+                      .map(([l, r]) => `${l} = ${r}`)
+                      .join(" AND ")})`,
                 color: "blue",
               },
               { text: p.table, color: "black" },
@@ -242,7 +245,7 @@ export class LinkMenu extends RTComp<P, S> {
       )
       .map((w) => w.table_name!);
     const canJoin = tables.some(
-      (t) => t.name === w.table_name && t.joinsV2.length,
+      (t) => t.name === w.table_name && t.joinOptions.length,
     );
 
     return (

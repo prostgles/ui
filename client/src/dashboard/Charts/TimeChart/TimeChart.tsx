@@ -5,7 +5,7 @@ import type { ValidatedColumnInfo } from "prostgles-types";
 
 import { classOverride } from "@components/Flex";
 import React from "react";
-import type { ChartOptions } from "src/dashboard/Dashboard/dashboardUtils";
+import type { ChartOptions } from "@common/ColumnConfig/WindowData";
 import type { Point } from "../../Charts";
 import RTComp from "../../RTComp";
 import type { CanvasChart, Shape } from "../CanvasChart";
@@ -13,7 +13,7 @@ import type { DateExtent } from "./getTimechartBinSize";
 import { getTimechartTooltipIntersections } from "./getTimechartTooltipIntersections";
 import { onDeltaTimechart } from "./onDeltaTimechart";
 import { prepareTimechartData } from "./prepareTimechartData";
-import type { ColumnValue } from "src/dashboard/W_Table/ColumnMenu/ColumnStyleControls/ColumnStyleControls";
+import type { ColumnValue } from "@common/ColumnConfig/columnStyleTypes";
 
 export type DataItem = {
   date: number | string;

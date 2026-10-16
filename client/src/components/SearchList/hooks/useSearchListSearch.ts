@@ -74,11 +74,11 @@ export const useSearchListSearch = (
     (force = false) => {
       if (force || (isSearch && !searchClosed)) {
         searching.current?.cancelCurrentSearch?.();
-        setSearchTerm("");
+        setSearchTerm(getValueAsText(defaultValue) ?? "");
         setSearchClosed(true);
       }
     },
-    [isSearch, searchClosed, setSearchClosed],
+    [defaultValue, isSearch, searchClosed, setSearchClosed],
   );
 
   const onStartSearch = useCallback(

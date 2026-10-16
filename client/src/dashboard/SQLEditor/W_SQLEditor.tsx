@@ -8,8 +8,7 @@ import { registerSuggestions } from "./SQLCompletion/monacoSQLSetup/registerSugg
 export const LANG = "sql";
 
 let monacoPromise:
-  | Promise<typeof import("monaco-editor/esm/vs/editor/editor.api")>
-  | undefined;
+  Promise<typeof import("monaco-editor/esm/vs/editor/editor.api")> | undefined;
 /**
  * This option seems to start downloading monaco (870.js) from the start: webpackPrefetch: true
  */
@@ -194,7 +193,7 @@ import type { SQLHandler } from "prostgles-types";
 import { isEmpty, isEqual, omitKeys } from "prostgles-types";
 import { SECOND } from "../Charts";
 import type { DashboardState } from "../Dashboard/Dashboard";
-import type { WindowData } from "../Dashboard/dashboardUtils";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 import RTComp from "../RTComp";
 import type { editor } from "../W_SQL/monacoEditorTypes";
 import type { TopKeyword } from "./SQLCompletion/KEYWORDS";

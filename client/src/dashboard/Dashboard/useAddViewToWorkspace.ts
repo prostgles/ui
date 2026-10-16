@@ -1,6 +1,9 @@
 import type { DetailedFilter } from "@common/filterUtils";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import { type WindowData } from "./dashboardUtils";
+import {
+  DEFAULT_TABLE_OPTIONS,
+  type WindowData,
+} from "@common/ColumnConfig/WindowData";
 import { useOnErrorAlert } from "@components/AlertProvider";
 import { useCallback } from "react";
 import type { Prgl } from "src/App";
@@ -46,11 +49,6 @@ export const addViewToWorkspace = async (
     workspace_id,
   } = args;
   let options: WindowData["options"] = { hideTable: true };
-  const defaultTableOptions: WindowData["options"] = {
-    maxCellChars: 500,
-    showFilters: filter.length ? true : false,
-    refresh: { type: "Realtime", throttleSeconds: 1, intervalSeconds: 1 },
-  };
   let table_oid: number | undefined;
   if (table) {
     const tableHandler = db[table];
@@ -59,7 +57,10 @@ export const addViewToWorkspace = async (
         const info = await tableHandler.getInfo();
         table_oid = info.oid;
       }
-      options = defaultTableOptions;
+      options =
+        filter.length ?
+          { ...DEFAULT_TABLE_OPTIONS, showFilters: true }
+        : undefined;
     } else {
       const err =
         db[table] ?
@@ -74,7 +75,7 @@ export const addViewToWorkspace = async (
     {
       sql,
       filter,
-      options,
+      ...(options && { options }),
       type,
       table_name: table,
       table_oid,
@@ -83,7 +84,6 @@ export const addViewToWorkspace = async (
       fullscreen: false,
       workspace_id,
       /** TODO: add auth to client schema types */
-      last_updated: undefined as unknown as string,
       user_id: undefined as unknown as string,
     },
     { returning: "*" },

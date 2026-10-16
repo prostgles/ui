@@ -12,6 +12,7 @@ import {
   mdiApplicationBracesOutline,
   mdiApplicationBracketsOutline,
   mdiChartLine,
+  mdiCogSyncOutline,
   mdiDatabaseSync,
   mdiImage,
   mdiLanguageTypescript,
@@ -38,6 +39,7 @@ import { TableConfig } from "../TableConfig/TableConfig";
 import { ServerSideFunctions } from "./ServerSideFunctions";
 import { useConnectionConfigSearchParams } from "./useConnectionConfigSearchParams";
 import { WebAppConfig } from "./WebApp/WebAppConfig";
+import { ConnectionConfigSync } from "./ConnectionConfigSync";
 
 type ConnectionConfigProps = Pick<
   React.HTMLAttributes<HTMLDivElement>,
@@ -181,6 +183,13 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
           listProps: dataCommand("config.methods"),
           leftIconPath: mdiLanguageTypescript,
           content: <ServerSideFunctions />,
+        },
+        config: {
+          label: <>Config sync</>,
+          disabledText: disabledText || stateDisabledInfo,
+          listProps: dataCommand("config.config"),
+          leftIconPath: mdiCogSyncOutline,
+          content: <ConnectionConfigSync />,
         },
       }) as const satisfies Record<
         (typeof CONNECTION_CONFIG_SECTIONS)[number],

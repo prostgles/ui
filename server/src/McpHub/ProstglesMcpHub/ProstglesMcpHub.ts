@@ -149,7 +149,19 @@ const init = async (dbs: DBS) => {
           `Mcp server ${serverName} requires a config to be used, but no valid config was found for this tool call (server_config_id: ${context.server_config_id}).`,
         );
       }
-      const toolCallResult = await toolMethod(args, context, config?.config);
+
+      const configValue = config?.config;
+      if (configValue && configValue.type !== "local") {
+        throw new Error(
+          `Mcp server ${serverName} has a config of type "${configValue.type}", but Prostgles MCP servers only support "local" configs.`,
+        );
+      }
+
+      const toolCallResult = await toolMethod(
+        args,
+        context,
+        configValue?.value,
+      );
       const outputValidation =
         //@ts-ignore
         outputSchema ?

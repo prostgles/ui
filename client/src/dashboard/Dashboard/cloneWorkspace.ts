@@ -1,6 +1,10 @@
+import { tableMightBeUndefinedDueToAccessControl } from "@common/utils";
 import { omitKeys } from "prostgles-types";
 import type { LayoutConfig } from "../SilverGrid/SilverGrid";
 import type { DBS } from "./DBS";
+
+export const getCanCreateWorkspaces = (dbs: DBS) =>
+  !!tableMightBeUndefinedDueToAccessControl(dbs.workspaces)?.insert;
 
 export const cloneWorkspace = async (
   dbs: DBS,

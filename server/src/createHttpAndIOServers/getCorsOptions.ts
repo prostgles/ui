@@ -29,17 +29,24 @@ export const getCorsOptions = (
       const eConfig = getElectronConfig();
       if (eConfig?.isElectron) {
         allowedOrigins.push(`http://localhost:${eConfig.port ?? port}`);
+        allowedOrigins.push(`http://127.0.0.1:${eConfig.port ?? port}`);
       }
       if (cors_csp_devmode_enabled) {
         allowedOrigins.push(`http://localhost:${stateAppPort}`);
+        allowedOrigins.push(`http://127.0.0.1:${stateAppPort}`);
         if (!is_state_db) {
           allowedOrigins.push("http://localhost:5173");
+          allowedOrigins.push("http://127.0.0.1:5173");
           if (port) {
             allowedOrigins.push(`http://localhost:${port}`);
+            allowedOrigins.push(`http://127.0.0.1:${port}`);
           }
         }
       }
-      if (allowedOrigins.includes(requestedOrigin)) {
+      if (
+        allowedOrigins.includes("*") ||
+        allowedOrigins.includes(requestedOrigin)
+      ) {
         return cb(null, true);
       }
       console.error(`CORS policy: Origin ${requestedOrigin} blocked`);

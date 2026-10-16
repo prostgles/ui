@@ -14,7 +14,7 @@ export const FunctionLabel = ({
         <div className="text-2">
           {!args.length ?
             " ()"
-          : ` ({ ${args.map((a) => `${a.name}: ${a.type === "Lookup" ? `${a.lookup.table}.${a.lookup.column}` : ""}`).join("; ")} })`
+          : ` ({ ${args.map((a) => `${a.name}: ${a.type}`).join("; ")} })`
           }
         </div>
       </FlexRow>

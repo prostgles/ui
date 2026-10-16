@@ -1,4 +1,9 @@
-import { ContextDataObject, ContextValue, isObject } from "./publishUtils";
+import {
+  type ContextDataObject,
+  type ContextValue,
+  isObject,
+} from "./publishUtils";
+import type { JoinPath } from "prostgles-types";
 
 type AnyObject = Record<string, any>;
 
@@ -109,7 +114,7 @@ type ComplexFilterDetailed =
     }
   | {
       type: "$filter";
-      leftExpression: Record<string, any[]>;
+      leftExpression: Record<string, any>;
     };
 export type DetailedFilterBase = BaseFilter & {
   fieldName: string;
@@ -121,24 +126,24 @@ export type DetailedFilterBase = BaseFilter & {
   };
   complexFilter?: ComplexFilterDetailed;
 };
-type JoinPath = {
-  table: string;
-  on?: Record<string, string>[] | undefined;
-};
 export type DetailedJoinedFilter = BaseFilter & {
   type: (typeof JOINED_FILTER_TYPES)[number];
   path: (string | JoinPath)[];
-  filter: DetailedFilterBase;
+  filter: DetailedFilterBase | GroupedDetailedFilter;
 };
 export type DetailedFilter = DetailedFilterBase | DetailedJoinedFilter;
 export type DetailedGroupFilter =
-  | { $and: DetailedFilter[] }
-  | { $or: DetailedFilter[] };
+  { $and: DetailedFilter[] } | { $or: DetailedFilter[] };
+
+export type ContextValueMapper = (contextValue: ContextValue) => unknown;
+
+export const identityContextValue: ContextValueMapper = (contextValue) =>
+  contextValue;
 
 export const isJoinedFilter = (f: DetailedFilter): f is DetailedJoinedFilter =>
   Boolean(f.type && JOINED_FILTER_TYPES.includes(f.type as any));
 export const isDetailedFilter = (f: DetailedFilter): f is DetailedFilterBase =>
-  !isJoinedFilter(f.type as any);
+  !isJoinedFilter(f);
 
 type InfoType = "pg";
 export const getFinalFilterInfo = (
@@ -164,10 +169,10 @@ export const getFinalFilterInfo = (
       const path = filter.path
         .map((p) => (typeof p === "string" ? p : p.table))
         .join(" -> ");
-      return `${filter.type === "$existsJoined" ? "Exists" : "Does not exist"} in ${path} where ${filterToString(filter.filter)}`;
+      return `${filter.type === "$existsJoined" ? "Exists" : "Does not exist"} in ${path} where ${getFinalFilterInfo(filter.filter, context, depth + 2, opts)}`;
     }
 
-    const f = getFinalFilter(filter, context, {
+    const f = getFinalFilter(filter, {
       forInfoOnly: opts?.for ?? true,
     });
     if (!f) return undefined;
@@ -219,30 +224,23 @@ export const getFinalFilterInfo = (
   return result;
 };
 
-export const parseContextVal = (
+export const getContextualValue = (
   f: DetailedFilterBase,
-  context: ContextDataObject | undefined,
-  { forInfoOnly }: GetFinalFilterOpts = {},
+  { forInfoOnly, contextValueMapper }: GetFinalFilterOpts = {},
 ): any => {
   if (f.contextValue) {
     if (forInfoOnly) {
-      const objPath = `${f.contextValue.objectName}.${f.contextValue.objectPropertyName}`;
-      if (forInfoOnly === "pg") {
-        if (f.contextValue.objectName === "user") {
-          return `prostgles.user('${f.contextValue.objectPropertyName}')`;
-        }
-        return `current_setting('${objPath}')`;
-      }
+      const { objectName, objectPropertyName } = f.contextValue;
+      const objPath = `${objectName}.${objectPropertyName}`;
+      // if (forInfoOnly === "pg") {
+      //   if (objectName === "user") {
+      //     return `prostgles.user('${objectPropertyName}')`;
+      //   }
+      //   return `current_setting('${objPath}')`;
+      // }
       return `{{${objPath}}}`;
     }
-    if (context) {
-      //@ts-ignore
-      return context[f.contextValue.objectName]?.[
-        f.contextValue.objectPropertyName
-      ];
-    }
-
-    return undefined;
+    return (contextValueMapper ?? identityContextValue)(f.contextValue);
   }
 
   return { ...f }.value;
@@ -251,13 +249,36 @@ export const parseContextVal = (
 type GetFinalFilterOpts = {
   forInfoOnly?: boolean | InfoType;
   columns?: string[];
+  contextValueMapper?: ContextValueMapper;
 };
 export const getFinalFilter = (
-  detailedFilter: DetailedFilter,
-  context?: ContextDataObject,
+  detailedFilter: DetailedFilter | GroupedDetailedFilter,
   opts?: GetFinalFilterOpts,
-) => {
+): AnyObject | undefined => {
   const { forInfoOnly = false } = opts ?? {};
+
+  if ("$and" in detailedFilter || "$or" in detailedFilter) {
+    const isAnd = "$and" in detailedFilter;
+    const filters = isAnd ? detailedFilter.$and : detailedFilter.$or;
+    return {
+      [isAnd ? "$and" : "$or"]: filters
+        .map((filter) => getFinalFilter(filter, opts))
+        .filter(isDefined),
+    };
+  }
+
+  if (detailedFilter.disabled) return undefined;
+
+  if ("path" in detailedFilter) {
+    const filter = getFinalFilter(detailedFilter.filter, {
+      ...opts,
+      columns: undefined,
+    });
+    if (!filter) return undefined;
+    return {
+      [detailedFilter.type]: { path: detailedFilter.path, filter },
+    };
+  }
 
   const checkFieldname = (f: string, columns?: string[]) => {
     if (columns?.length && !columns.includes(f)) {
@@ -269,22 +290,12 @@ export const getFinalFilter = (
     return f;
   };
 
-  if (
-    ("fieldName" in detailedFilter && detailedFilter.disabled) ||
-    (isJoinedFilter(detailedFilter) && detailedFilter.filter.disabled)
-  )
-    return undefined;
-
   const getFilter = (
     f: DetailedFilterBase,
     columns?: string[],
   ): Record<string, any> => {
-    const val = parseContextVal(f, context, opts);
+    const parsedContextValue = getContextualValue(f, opts);
     const fieldName = checkFieldname(f.fieldName, columns);
-
-    if (f.contextValue && !context && !forInfoOnly) {
-      return {};
-    }
 
     if (
       FTS_FILTER_TYPES.some((fts) => fts.key === f.type) &&
@@ -295,7 +306,7 @@ export const getFinalFilter = (
       return {
         [`${fieldName}.${f.type}`]: [
           ...(ftsFilterOptions ? [ftsFilterOptions.lang] : []),
-          parseContextVal(f, context, opts),
+          getContextualValue(f, opts),
         ],
       };
     } else if (f.type === "$term_highlight") {
@@ -304,13 +315,13 @@ export const getFinalFilter = (
       return {
         $term_highlight: [
           [fieldName],
-          parseContextVal(f, context, opts),
+          getContextualValue(f, opts),
           { matchCase: false, edgeTruncate: 30, returnType: "boolean" },
         ],
       };
     } else if (f.type == "$ST_DWithin") {
       return {
-        $filter: [{ $ST_DWithin: [fieldName, { ...val }] }],
+        $filter: [{ $ST_DWithin: [fieldName, { ...parsedContextValue }] }],
       };
     } else if (
       f.complexFilter ||
@@ -341,7 +352,7 @@ export const getFinalFilter = (
           $filter: [
             { [f.type === "$ageNow" ? "$ageNow" : "$age"]: filterArgs },
             comparator,
-            val,
+            parsedContextValue,
           ],
         };
       } else if (f.complexFilter) {
@@ -350,7 +361,7 @@ export const getFinalFilter = (
         }
 
         return {
-          $filter: [f.complexFilter.leftExpression, f.type, val],
+          $filter: [f.complexFilter.leftExpression, f.type, parsedContextValue],
         };
       }
     }
@@ -366,18 +377,9 @@ export const getFinalFilter = (
     }
     return {
       [[fieldName, f.type === "=" ? null : f.type].filter((v) => v).join(".")]:
-        val,
+        parsedContextValue,
     };
   };
-
-  if (isJoinedFilter(detailedFilter)) {
-    return {
-      [detailedFilter.type]: {
-        path: detailedFilter.path,
-        filter: getFilter(detailedFilter.filter),
-      },
-    };
-  }
 
   return getFilter(detailedFilter, opts?.columns);
 };
@@ -405,7 +407,7 @@ export const simplifyFilter = (f: AnyObject | undefined) => {
 };
 
 export const getSmartGroupFilter = (
-  detailedFilter: DetailedFilter[] = [],
+  detailedFilter: (DetailedFilter | GroupedDetailedFilter)[] = [],
   extraFilters?: { detailed?: DetailedFilter[]; filters?: AnyObject[] },
   operand?: "and" | "or",
 ): AnyObject => {
@@ -422,7 +424,7 @@ export const getSmartGroupFilter = (
 };
 
 export const getTableFilterFromDetailedGroupFilter = (
-  detailedGroupFilter: DetailedFilter | DetailedGroupFilter,
+  detailedGroupFilter: DetailedFilter | GroupedDetailedFilter,
 ): AnyObject => {
   const [operand, filterItems] =
     "$and" in detailedGroupFilter ? ["and" as const, detailedGroupFilter.$and]
