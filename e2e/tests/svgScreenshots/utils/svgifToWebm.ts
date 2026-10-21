@@ -1,6 +1,6 @@
-import { spawn } from "child_process";
 import * as fs from "fs";
 import * as path from "path";
+import { pathToFileURL } from "node:url";
 import { chromium } from "playwright";
 
 export const svgifToWebm = async ({
@@ -16,181 +16,62 @@ export const svgifToWebm = async ({
   height?: number;
   pixelRatio?: number;
 }) => {
-  const fps = 60;
   const durationMillis = parseFloat(
     fs
       .readFileSync(svgifPath, "utf-8")
       .split(`data-duration="`)[1]
-      ?.split(`"`)[0] ?? 1,
+      ?.split(`"`)[0] ?? "",
   );
-  if (!durationMillis || isNaN(durationMillis)) {
+  if (!Number.isFinite(durationMillis) || durationMillis <= 0) {
     throw new Error(`Invalid or missing duration in SVGif: ${svgifPath}`);
   }
-  const durationSeconds = Math.ceil(durationMillis / 1000);
-  const total = Math.round(fps * durationSeconds);
-  const frameDuration = 1000 / fps;
 
-  const fileNameWithoutExt = path.basename(svgifPath).split(".svgif")[0];
-  const framesDir = path.join(outDir, fileNameWithoutExt);
-  fs.mkdirSync(framesDir, { recursive: true });
+  const fileNameWithoutExt = path.basename(svgifPath).split(".svgif")[0]!;
+  const outputPath = path.join(outDir, fileNameWithoutExt + ".webm");
+  fs.mkdirSync(outDir, { recursive: true });
 
-  const browser = await chromium.launch({
-    headless: true,
-    args: [
-      "--run-all-compositor-stages-before-draw",
-      "--disable-background-timer-throttling",
-      "--disable-renderer-backgrounding",
-      "--disable-backgrounding-occluded-windows",
-    ],
-  });
-
-  const context = await browser.newContext({
-    viewport: { width, height },
-    deviceScaleFactor: pixelRatio,
-  });
-
-  const page = await context.newPage();
-  const url =
-    svgifPath.startsWith("https://") ? svgifPath : (
-      `file://${path.resolve(svgifPath)}`
-    );
-
-  await page.goto(url, { waitUntil: "networkidle" });
-
-  await page.evaluate(async () => {
-    if (document.fonts?.ready) await document.fonts.ready;
-    await Promise.all(
-      Array.from(document.images).map((img) => img.decode?.().catch(() => {})),
-    );
-  });
-
-  const cdp = await context.newCDPSession(page);
-
-  await cdp.send("Emulation.setVirtualTimePolicy", { policy: "pause" });
-
-  // Advance virtual time by `budget` ms and wait until all JS callbacks
-  // triggered by that advancement have settled before returning.
-  const advanceVirtualTime = (budget: number) =>
-    new Promise((resolve) => {
-      cdp.once("Emulation.virtualTimeBudgetExpired", resolve);
-      void cdp.send("Emulation.setVirtualTimePolicy", {
-        policy: "pauseIfNetworkFetchesPending",
-        budget,
-        maxVirtualTimeTaskStarvationCount: 10000,
-      });
-    });
-
-  // Wait for two rAF ticks: the first lets any pending animation callbacks
-  // fire with the updated virtual timestamp; the second ensures the result
-  // has been composited and is visible to screenshot().
-  const waitForPaint = () =>
-    page.evaluate(
-      () =>
-        new Promise<void>((r) =>
-          requestAnimationFrame(() => requestAnimationFrame(() => r())),
-        ),
-    );
-
-  // CSS/Web Animations run on the compositor's real-time clock, not virtual
-  // time. We pause every animation and manually set its currentTime so each
-  // frame is positioned exactly where it should be regardless of how long
-  // Playwright takes between screenshots.
-  const syncAnimations = (t: number) =>
-    page.evaluate((time) => {
-      for (const anim of document.getAnimations()) {
-        anim.pause();
-        anim.currentTime = time;
-      }
-    }, t);
-
-  console.log(
-    `Capturing ${total} frames at ${fps}fps (duration: ${durationSeconds}s)…`,
-  );
-  for (let i = 0; i < total; i++) {
-    const t = i * frameDuration;
-
-    await syncAnimations(t);
-    await waitForPaint();
-
-    const file = path.join(framesDir, `${String(i).padStart(6, "0")}.png`);
-    await page.screenshot({
-      path: file,
-      type: "png",
-      scale: "device",
-      animations: "allow",
-    });
-
-    if (i < total - 1) {
-      await advanceVirtualTime(frameDuration);
-    }
-  }
-
-  console.log("\nEncoding…");
-  await browser.close();
-
-  const outputFileName = fileNameWithoutExt + ".mp4";
+  // Render the SVG at the output resolution; screencasts use CSS pixels.
+  const size = { width: width * pixelRatio, height: height * pixelRatio };
+  const browser = await chromium.launch({ headless: true });
   try {
-    const webArgs = [
-      "-y",
-      "-framerate",
-      String(fps),
-      "-i",
-      path.join(framesDir, "%06d.png"),
-      "-c:v",
-      "libvpx-vp9",
-      "-b:v",
-      "0",
-      "-crf",
-      "10",
-      "-pix_fmt",
-      "yuv444p",
-      "-vsync",
-      "cfr",
-      "-r",
-      String(fps),
-      outputFileName,
-    ];
+    const page = await browser.newPage({ viewport: size });
+    // Tracing's lower-resolution capture takes precedence over screencast size.
+    await page.context().tracing.stop();
+    await page.goto(pathToFileURL(path.resolve(svgifPath)).href, {
+      waitUntil: "networkidle",
+    });
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+      await Promise.all(
+        Array.from(document.images).map((img) => img.decode().catch(() => {})),
+      );
+      for (const animation of document.getAnimations()) {
+        animation.pause();
+        animation.currentTime = 0;
+      }
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      );
+    });
 
-    const mp4Args = [
-      "-y",
-      "-framerate",
-      String(fps),
-      "-i",
-      path.join(framesDir, "%06d.png"),
-      "-c:v",
-      "libx264",
-      "-crf",
-      "18",
-      "-preset",
-      "medium",
-      "-pix_fmt",
-      "yuv420p",
-      "-movflags",
-      "+faststart",
-      "-vsync",
-      "cfr",
-      "-r",
-      String(fps),
-      outputFileName,
-    ];
-    await runFfmpeg(mp4Args, outDir);
+    await page.screencast.start({
+      path: outputPath,
+      size,
+      fps: 60,
+      quality: 100,
+    });
+    await page.evaluate(() => {
+      const startTime = document.timeline.currentTime;
+      for (const animation of document.getAnimations()) {
+        animation.play();
+        animation.startTime = startTime;
+      }
+    });
+    await page.waitForTimeout(durationMillis);
+    await page.screencast.stop();
   } finally {
-    fs.rmSync(framesDir, { recursive: true, force: true });
+    await browser.close();
   }
 
-  console.log("Done → " + outputFileName);
+  console.log("Done → " + outputPath);
 };
-
-const runFfmpeg = (args: string[], cwd?: string) =>
-  new Promise<void>((resolve, reject) => {
-    const child = spawn("ffmpeg", args, {
-      cwd,
-      stdio: "inherit",
-    });
-
-    child.on("error", reject);
-    child.on("close", (code, signal) => {
-      if (code === 0) return resolve();
-      reject(new Error(`ffmpeg exited code=${code} signal=${signal}`));
-    });
-  });

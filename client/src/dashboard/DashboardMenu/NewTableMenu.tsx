@@ -39,8 +39,8 @@ const items = [
 export const NewTableMenu = (
   p: DashboardMenuProps & { onClose: VoidFunction | undefined },
 ) => {
-  const { prgl, tables, onClose, workspace } = p;
-  const { sql } = prgl;
+  const { prgl, onClose, workspace } = p;
+  const { tables, sql } = prgl;
   const [show, setShow] = useState<(typeof items)[number]["key"]>();
   const { addViewToWorkspace } = useAddViewToWorkspace();
   const { addAlert } = useAlert();

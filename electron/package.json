@@ -1,6 +1,7 @@
 {
   "name": "prostgles-desktop",
-  "homepage": "https://prostgles.com/desktop",
+  "desktopName": "com.electron.prostgles-desktop",
+  "homepage": "https://prostgles.com",
   "description": "Realtime Dashboard and SQL editor for PostgreSQL",
   "author": "Prostgles LTD  <office@prostgles.com>",
   "projectUrl": "https://github.com/prostgles/ui",
@@ -40,11 +41,11 @@
     "url": "https://github.com/prostgles/ui/issues/new/choose"
   },
   "devDependencies": {
-    "@playwright/test": "^1.58.2",
-    "electron": "^38.8.4",
-    "electron-builder": "^26.8.1",
+    "@playwright/test": "^1.62.1",
+    "electron": "^43.2.0",
+    "electron-builder": "^26.15.3",
     "electron-squirrel-startup": "^1.0.1",
-    "tsc-watch": "^7.2.0",
+    "tsc-watch": "^7.2.1",
     "typescript": "^5.9.3"
   },
   "dependencies": {
@@ -106,5 +107,5 @@
       "uninstallDisplayName": "${productName}"
     }
   },
-  "version": "2.3.5"
+  "version": "2.3.6"
 }

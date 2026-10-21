@@ -1,47 +1,53 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type { DBSSchema } from "@common/publishUtils";
 import { API_ENDPOINTS } from "@common/utils";
-import prostgles from "prostgles-server";
+import { IS_PROD } from "@src/init/utils";
+import { createProstgles } from "prostgles-server";
+import {
+  isPublishProfiles,
+  type PublishProfile,
+} from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
-import type { PRGLIOSocket } from "prostgles-server/dist/DboBuilder/DboBuilder";
+import type { ClientSocketWithCachedData } from "prostgles-server/dist/DboBuilder/DboBuilder";
 import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
 import { getIsSuperUser, type DB } from "prostgles-server/dist/Prostgles";
-import {
-  getSerialisableError,
-  pickKeys,
-  type AnyObject,
-} from "prostgles-types";
+import type { InitResult } from "prostgles-server/dist/initProstgles";
+import { defineJoin, pickKeys, type AnyObject } from "prostgles-types";
 import { addLog } from "../Logger";
 import type { SUser } from "../authConfig/sessionUtils";
 import { testDBConnection } from "../connectionUtils/testDBConnection";
 import { log, restartProc } from "../index";
+import { getServiceManager } from "../ServiceManager/getServiceManager";
+import type {
+  ProstglesContext,
+  ProstglesOnMountCleanup,
+} from "../schemaConfig";
 import type { ConnectionManager, User } from "./ConnectionManager";
 import { getConnectionOnReady } from "./connectionOnReady";
-import { getConnectionPublish } from "./getConnectionPublish";
+import { getConnectionPublish } from "../connectionPublish/getConnectionPublish";
 import { getConnectionSocketPath } from "./getConnectionSocketPath";
 import { getHotReloadConfigs } from "./getHotReloadConfigs";
+import { syncSchemaConfigResources } from "./syncSchemaConfigResources";
+import { getStartAgent } from "../McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/getStartAgent";
+import { validateSchemaConfigActions } from "./validateSchemaConfigActions";
 
 export const startConnection = async function (
   this: ConnectionManager,
   connectionId: string,
   dbs: DBOFullyTyped<DBGeneratedSchema>,
   _dbs: DB,
-  socket?: PRGLIOSocket,
+  socket?: ClientSocketWithCachedData,
   restartIfExists = false,
 ): Promise<{ socketPath: string; socketUrl: string | undefined } | undefined> {
   let existingConnection = this.prglConnections.get(connectionId);
   if (existingConnection) {
     if (existingConnection.state === "initializing") {
       existingConnection = await existingConnection.initPromise;
+      restartIfExists = false;
     }
-    if (restartIfExists) {
-      if (existingConnection.state === "started") {
-        await existingConnection.prgl.destroy();
-      }
-      this.prglConnections.delete(connectionId);
-    } else if (existingConnection.state === "error") {
-      throw existingConnection.error;
-    } else {
+    if (!restartIfExists) {
+      if (existingConnection.state === "error") throw existingConnection.error;
       return pickKeys(existingConnection, ["socketPath", "socketUrl"]);
     }
   }
@@ -91,7 +97,10 @@ export const startConnection = async function (
     : existingInstance;
 
   const { socketPath, socketUrl } = getConnectionSocketPath(connection);
-  if (prglInstance) {
+  if (
+    prglInstance &&
+    (!restartIfExists || existingInstance?.state === "initializing")
+  ) {
     if (
       prglInstance.socketPath !== socketPath ||
       prglInstance.socketUrl !== socketUrl
@@ -118,9 +127,9 @@ export const startConnection = async function (
   const result = new Promise<{
     socketPath: string;
     socketUrl: string | undefined;
-  }>(
-    // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    async (resolve, reject) => {
+  }>((resolve, reject) => {
+    // Register initPromise below before running teardown or initialization.
+    void Promise.resolve().then(async () => {
       const initState = {
         prglReady: false,
         onReadyCalled: false,
@@ -132,10 +141,16 @@ export const startConnection = async function (
         }
       };
 
+      let prgl: InitResult<void, SUser, ProstglesContext> | undefined;
       try {
+        if (restartIfExists && prglInstance?.state === "started") {
+          await this.cleanupOnMount(prglInstance);
+          await prglInstance.prgl.destroy();
+        }
         const {
           config: hotReloadConfig,
           connectionServers: { ioConnection, app },
+          schemaConfig,
         } = await getHotReloadConfigs({
           connectionManager: this,
           connection,
@@ -143,66 +158,98 @@ export const startConnection = async function (
           stateDatabaseConfig,
           _dbs,
           dbs,
-          connectionInfo,
         });
-        const watchSchema = connection.db_watch_schema ? "*" : false;
-        const tableConfigRunner = await this.setTableConfig(
-          connection.id,
-          databaseConfig,
-          connectionInfo,
-        ).catch((e) => {
-          void dbs.alerts.insert({
-            severity: "error",
-            message: "Table config was disabled due to error",
-            database_config_id: databaseConfig.id,
-            connection_id: connection.id,
-            ui_path: {
-              page: "/connection-config",
-              section: "table_config",
-            },
-            data: getSerialisableError(e),
-          });
-          void dbs.database_configs.update(
-            { id: databaseConfig.id },
-            { table_config_ts_disabled: true },
-          );
-        });
-        const onMountRunner = await this.setOnMount(
-          databaseConfig.id,
-          connection,
-          connectionInfo,
-        ).catch((e) => {
-          void dbs.alerts.insert({
-            severity: "error",
-            message:
-              "On mount was disabled due to error " +
-              `\n\n${JSON.stringify(getErrorAsObject(e))}`,
-            database_config_id: databaseConfig.id,
-            connection_id: connection.id,
-            ui_path: {
-              page: "/connection-config",
-              section: "methods",
-            },
-          });
-          void dbs.connections.update(
-            { id: connection.id },
-            { on_mount_ts_disabled: true },
-          );
-        });
+        const watchSchema =
+          connection.db_watch_schema ? "*"
+          : !IS_PROD && databaseConfig.config_sync ? "hotReloadMode"
+          : false;
+        const {
+          id: _id,
+          connection: _connectionConfig,
+          databaseConfig: _databaseConfig,
+          onInitSQL: _onInitSQL,
+          onMount: _onMount,
+          services: _services,
+          workspaces: _workspaces,
+          accessControl: _accessControl,
+          userTypes: _userTypes,
+          llmCredential: _llmCredential,
+          audit: _audit,
+          alerts: _alerts,
+          publish: _publish,
+          ...schemaProstglesOptions
+        } = schemaConfig ?? {};
+        const onMount = connection.on_mount_ts_disabled ? undefined : _onMount;
 
         const { disable_realtime } = connection;
-        const prgl = await prostgles<void, SUser>({
+        let onMountCleanup: ProstglesOnMountCleanup | undefined;
+        let connectionStarted = false;
+        const attachOnMountCleanup = () => {
+          if (!connectionStarted || !onMountCleanup) return;
+          const activeConnection = this.getActiveConnectionSilentFail(
+            connection.id,
+          );
+          if (activeConnection && activeConnection.prgl === prgl) {
+            activeConnection.onMountCleanup = onMountCleanup;
+          } else {
+            void Promise.resolve(onMountCleanup()).catch((error: unknown) => {
+              console.error("Error cleaning up an unmounted onMount", error);
+            });
+          }
+        };
+        const setOnMountCleanup = (
+          cleanup: Awaited<ReturnType<NonNullable<typeof onMount>>>,
+        ) => {
+          if (typeof cleanup !== "function") return;
+          onMountCleanup = cleanup;
+          attachOnMountCleanup();
+        };
+        const prostgles = createProstgles<void, SUser>();
+        const connectionPublish: PublishProfile[] = [];
+        prgl = await prostgles({
+          ...schemaProstglesOptions,
           dbConnection: connectionInfo,
           ...hotReloadConfig,
           watchSchema,
           disableRealtime: disable_realtime ?? undefined,
           transactions: true,
-          joins: "inferred",
-          publish: getConnectionPublish({
-            dbs,
-            dbConf: databaseConfig,
-            connection: connection,
-          }),
+          joins: schemaProstglesOptions.joins ?? "inferred",
+          createContext: async ({ getExecution, tables, dbo, reason }) => {
+            if (reason.type === "init") {
+              if (schemaConfig) {
+                await validateSchemaConfigActions({
+                  config: schemaConfig,
+                  functions: hotReloadConfig.functions,
+                  tables,
+                  dbo,
+                });
+                await syncSchemaConfigResources({
+                  dbs,
+                  databaseId: databaseConfig.id,
+                  connectionId,
+                  tables,
+                  rules: schemaConfig.accessControl,
+                  userTypes: schemaConfig.userTypes,
+                  workspaces: schemaConfig.workspaces,
+                  llmCredential: schemaConfig.llmCredential,
+                });
+              }
+              const publish = await getConnectionPublish({
+                dbs,
+                dbConf: databaseConfig,
+                connection,
+              });
+              // Populate the shared array after schema setup, before publish initialization.
+              if (typeof publish !== "function" && isPublishProfiles(publish)) {
+                connectionPublish.push(...publish);
+              }
+            }
+            return {
+              serviceManager: getServiceManager(),
+              startAgent: getStartAgent(dbs, connectionId, getExecution),
+            };
+          },
+          publish: connectionPublish,
           // DEBUG_MODE: true,
           onConnectionError: (error) => {
             const nonReconnectableErrorCodes = {
@@ -215,19 +262,11 @@ export const startConnection = async function (
             }
           },
           publishRawSQL: async ({ user }) => {
-            if (user?.type === "admin") {
-              return true;
-            }
-            const ac = await getAccessRule(
-              dbs,
-              user,
-              databaseConfig.id,
-              connection.id,
-            );
-            if (
-              ac?.dbPermissions.type === "Run SQL" &&
-              ac.dbPermissions.allowSQL
-            ) {
+            if (user?.type === USER_TYPES.ADMIN) return true;
+            const dbPermissions = (
+              await getAccessRule(dbs, user, databaseConfig.id, connection.id)
+            )?.dbPermissions;
+            if (dbPermissions?.type === "Run SQL" && dbPermissions.allowSQL) {
               return true;
             }
             return false;
@@ -235,15 +274,36 @@ export const startConnection = async function (
           onLog: (e) => {
             addLog(e, connectionId);
           },
-          onReady: getConnectionOnReady({
-            connectionManager: this,
-            dbs,
-            connection: connection,
-            databaseConfig,
-            onSetupReady: () => {
-              setInitState({ onReadyCalled: true });
-            },
-          }),
+          onReady: (params, update) => {
+            if (
+              !connection.on_mount_ts_disabled &&
+              onMount &&
+              params.reason.type === "init"
+            ) {
+              void Promise.resolve(onMount(params))
+                .then(setOnMountCleanup)
+                .catch((e: unknown) => {
+                  void dbs.alerts.insert({
+                    severity: "error",
+                    message:
+                      "On mount failed: " +
+                      `\n\n${JSON.stringify(getErrorAsObject(e))}`,
+                    database_config_id: databaseConfig.id,
+                    connection_id: connection.id,
+                    ui_path: { page: "/connection-config", section: "methods" },
+                  });
+                });
+            }
+            return getConnectionOnReady({
+              connectionManager: this,
+              dbs,
+              connection,
+              databaseConfig,
+              onSetupReady: () => {
+                setInitState({ onReadyCalled: true });
+              },
+            })(params, update);
+          },
         });
         this.prglConnections.set(connection.id, {
           state: "started",
@@ -256,15 +316,17 @@ export const startConnection = async function (
           socketUrl,
           con: connection,
           isReady: false,
-          methodRunner: undefined, // Set up later on demand
-          onMountRunner: onMountRunner ?? undefined,
-          tableConfigRunner: tableConfigRunner ?? undefined,
+          onMountCleanup:
+            typeof onMountCleanup === "function" ? onMountCleanup : undefined,
           isSuperUser: await getIsSuperUser(prgl._db),
           lastRestart: Date.now(),
         });
+        connectionStarted = true;
+        attachOnMountCleanup();
         void this.setSyncUserSub();
         setInitState({ prglReady: true });
       } catch (e) {
+        await prgl?.destroy();
         reject(e);
         this.prglConnections.set(connection.id, {
           state: "error",
@@ -274,8 +336,8 @@ export const startConnection = async function (
           con: connection,
         });
       }
-    },
-  );
+    });
+  });
 
   this.prglConnections.set(connection.id, {
     state: "initializing",
@@ -300,22 +362,22 @@ export const startConnection = async function (
   return result;
 };
 
-export const getAccessRule = async (
-  dbs: DBOFullyTyped<DBGeneratedSchema>,
+const getAccessRuleFilter = (
   user: User | undefined,
   database_id: number,
   connection_id: string,
-): Promise<DBSSchema["access_control"] | undefined> => {
-  if (!user) return undefined;
-  return await dbs.access_control.findOne({
+) => {
+  return {
     $and: [
       {
         database_id,
-        $existsJoined: {
-          access_control_user_types: {
-            user_type: user.type,
+        ...(user && {
+          $existsJoined: {
+            access_control_user_types: {
+              user_type: user.type,
+            },
           },
-        },
+        }),
       },
       {
         $existsJoined: {
@@ -325,5 +387,35 @@ export const getAccessRule = async (
         },
       },
     ],
-  });
+  };
+};
+
+export const getAccessRule = async (
+  dbs: DBOFullyTyped<DBGeneratedSchema>,
+  user: User | undefined,
+  database_id: number,
+  connection_id: string,
+): Promise<DBSSchema["access_control"] | undefined> => {
+  if (!user) return undefined;
+  return await dbs.access_control.findOne(
+    getAccessRuleFilter(user, database_id, connection_id),
+  );
+};
+export const getAccessRules = async (
+  dbs: DBOFullyTyped<DBGeneratedSchema>,
+  database_id: number,
+  connection_id: string,
+) => {
+  return await dbs.access_control.find(
+    getAccessRuleFilter(undefined, database_id, connection_id),
+    {
+      select: {
+        "*": 1,
+        userTypes: defineJoin({
+          $leftJoin: "access_control_user_types",
+          select: "*",
+        }),
+      },
+    },
+  );
 };

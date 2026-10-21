@@ -1,8 +1,9 @@
-import { chromium, expect, test, type Locator } from "@playwright/test";
-import { authenticator } from "otplib";
+import { chromium, expect, test, type Locator } from "./utils/fixtures";
+import type { Route } from "@playwright/test";
+import { generate } from "otplib";
 import { speechToTextTest } from "testAskLLM/speechToTextTest";
 
-import { spawn } from "child_process";
+import { execSync, spawn } from "child_process";
 import { fileBrowserGoToPath } from "fileBrowserGoToPath";
 import { writeFileSync } from "fs";
 import { mkdir } from "fs/promises";
@@ -16,10 +17,17 @@ import {
 import { goTo } from "utils/goTo";
 import { isPortFree } from "utils/isPortFree";
 import { startMockSMTPServer } from "./mockSMTPServer";
-import { testAskLLMCode, setupAskLLMToolUse } from "./testAskLLM/testAskLLM";
-import { getCommandElemSelector, getDataKey, getDataLabel } from "./Testing";
+import { setupAskLLMToolUse, testAskLLMCode } from "./testAskLLM/testAskLLM";
+import { testChatListLoading } from "./testAskLLM/testChatListLoading";
+import { testPastedTextAttachments } from "./testAskLLM/testPastedTextAttachments";
+import { testSavedWorkflowDefinition } from "./testAskLLM/testSavedWorkflowDefinition";
 import {
-  addExistingDatabase,
+  getCommandElemSelector,
+  getDataKey,
+  getDataLabel,
+} from "./utils/Testing";
+import {
+  addFileToChat,
   clickAndWait,
   clickInsertRow,
   closeWorkspaceWindows,
@@ -42,6 +50,7 @@ import {
   getSearchListItem,
   getSelector,
   getTableWindow,
+  getTimeout,
   insertRow,
   login,
   loginWhenSignupIsEnabled,
@@ -55,6 +64,7 @@ import {
   runDbSql,
   runDbsSql,
   runSql,
+  scrollElementIntoView,
   selectAndUpsertFile,
   sendAskLLMMessage,
   setModelByText,
@@ -63,10 +73,14 @@ import {
   setupMagicLinkAuth,
   setWspColLayout,
   toggleMCPTools,
+  TWENTY_SECONDS_OR_MORE,
   typeConfirmationCode,
   uploadFile,
 } from "./utils/utils";
-import { createConnection } from "net";
+
+import { ROOT_DIR } from "svgScreenshots/utils/constants";
+import { MINUTE } from "common/utils";
+import type { SchemaShape } from "../../client/src/dashboard/SchemaGraph/ERDSchema/useSchemaShapes";
 
 const schemaGraphTestDbName = "financial.sql";
 const DB_NAMES = {
@@ -77,10 +91,6 @@ const DB_NAMES = {
 };
 const backupDir = resolve(__dirname, "../demo/backups");
 
-const getTimeout = (base: number) => ({
-  timeout: base * (process.env.CI ? 3 : 1),
-});
-const TWENTY_SECONDS_OR_MORE = getTimeout(20_000);
 const viewPortSize = { width: 1080, height: 1080 };
 test.use({
   /** Increase size to ensure agentic workflow fits all logs */
@@ -88,13 +98,25 @@ test.use({
 });
 
 test.describe.configure({ mode: "serial" });
+test("Chat list shows live loading status", async ({ page }) => {
+  await testChatListLoading(page);
+});
+test("Pasted text attachments reach OpenRouter as text", async ({ page }) => {
+  await testPastedTextAttachments(page);
+});
+test("Saved workflow definition edits persist and report validation errors", async ({
+  page,
+}) => {
+  await testSavedWorkflowDefinition(page);
+});
+
 test.describe("Main test", () => {
   if (process.env.ONLY_VIDEO) {
     test.skip();
   }
   let getEmails: () => any[];
 
-  test.beforeAll(async () => {
+  test.beforeAll(() => {
     ({ getEmails } = startMockSMTPServer());
     console.log("getEmails", getEmails());
     return { getEmails };
@@ -188,7 +210,7 @@ test.describe("Main test", () => {
       },
     ]);
     await goTo(newPage);
-    await expect(await newPage.textContent("body")).toContain(
+    await expect(newPage.locator("body")).toContainText(
       "Only 1 session is allowed for the passwordless admin",
     );
     await browser2.close();
@@ -247,6 +269,7 @@ test.describe("Main test", () => {
 
     await page.waitForTimeout(500);
     if (!localNoAuthSetup) {
+      await goTo(page);
       await disablePwdlessAdminAndCreateUser(page);
     }
     await login(page);
@@ -300,6 +323,7 @@ test.describe("Main test", () => {
     await page.getByText("Completed");
 
     await page.getByTestId("config.goToConnDashboard").click();
+    await expect(table).toBeVisible();
     await closeWorkspaceWindows(page);
     await page.reload();
     await expect(table).not.toBeAttached();
@@ -338,6 +362,7 @@ test.describe("Main test", () => {
     console.log("Saved backup dump:", backupFilePath);
 
     await page.getByTestId("config.goToConnDashboard").click();
+    await expect(table).toBeVisible();
     await closeWorkspaceWindows(page);
     await page.reload();
 
@@ -393,27 +418,15 @@ test.describe("Main test", () => {
     await page.getByTestId("Btn.ClickConfirmation.Confirm").click();
 
     const getDrawnInfo = async () => {
-      const drawnInfo: {
-        scale3d: [number, number, number];
-        zoomScale: number;
-        translate: { x: number; y: number };
-        shapes: (
-          | {
-              type: "rectangle";
-              coords: [number, number];
-              data: {
-                name: string;
-              };
-            }
-          | {
-              type: "linkline";
-            }
-        )[];
-      } = await page.evaluate(() => {
-        //@ts-ignore
-        return document.querySelector("canvas")?._drawn;
-      });
-      return drawnInfo;
+      const drawnInfo = await page.evaluate(
+        () => document.querySelector("canvas")?._drawn,
+      );
+      if (!drawnInfo) throw new Error("Schema graph has not rendered");
+      // The generic canvas declaration omits the diagram's table metadata.
+      return {
+        ...drawnInfo,
+        shapes: drawnInfo.shapes as unknown as SchemaShape[],
+      };
     };
     const initialShapesInfo = await getDrawnInfo();
 
@@ -495,7 +508,7 @@ test.describe("Main test", () => {
     }
   });
 
-  test("Email password registration setup", async ({ page: p, browser }) => {
+  test("Email password registration setup", async ({ page: p }) => {
     const page = p as PageWIds;
 
     await login(page);
@@ -817,6 +830,8 @@ test.describe("Main test", () => {
     /** Enable Web app */
     await page.getByTestId("config.webApp").click();
     await page.waitForTimeout(1500);
+    await page.getByTestId("WebApp.directory").hover();
+    await page.waitForTimeout(1500);
     await page.getByTestId("WebApp.directory").click();
     await fileBrowserGoToPath(page.getByTestId("FileTree"), [
       "ui",
@@ -999,7 +1014,37 @@ test.describe("Main test", () => {
 
     await page.getByTestId("AskLLM").click();
 
-    await sendAskLLMMessage(page, " request_tool_access ");
+    /**
+     * Ensure draft message is correctly handled
+     * */
+    const textArea = page.getByTestId("Chat.textarea");
+    await expect(textArea).toHaveValue("");
+    const draft = "Unsent draft should not be resent after clearing";
+    await textArea.fill(draft);
+    await expect
+      .poll(async () =>
+        runDbsSql(
+          page,
+          "SELECT count(*)::int FROM llm_chats WHERE currently_typed_message = $1",
+          [draft],
+          { returnType: "value" },
+        ),
+      )
+      .toBe(1);
+    await page.getByTestId("AskLLM.popup").getByTestId("Popup.close").click();
+    await page.getByTestId("AskLLM").click();
+    await expect(textArea).toHaveValue(draft);
+    const userMessages = page.locator(".message:not(.incoming)");
+    const messageCount = await userMessages.count();
+    await textArea.fill("");
+    await textArea.press("Enter");
+    await page.waitForTimeout(500);
+    await expect(userMessages).toHaveCount(messageCount);
+
+    /** Test request tool access */
+    await sendAskLLMMessage(page, " request_tool_access ", false);
+    await expect(textArea).toHaveValue("", { timeout: 1000 });
+    await expect(textArea).toBeDisabled();
     await page
       .getByTestId("RequestToolAccess.Approve")
       .click({ ...TWENTY_SECONDS_OR_MORE });
@@ -1025,13 +1070,13 @@ test.describe("Main test", () => {
     await setModelByText(page, "son");
 
     await expect(page.getByTestId("LLMChatOptions.MCPTools")).toContainText(
-      "9",
+      "10",
     );
-    await sendAskLLMMessage(page, " task ");
+    await sendAskLLMMessage(page, " task ", false);
 
     await page
       .getByTestId("RequestToolAccess.Approve")
-      .click({ ...TWENTY_SECONDS_OR_MORE });
+      .click(TWENTY_SECONDS_OR_MORE);
     await expect(page.getByTestId("RequestToolAccess")).toContainText(
       "Added tool access",
       { ...TWENTY_SECONDS_OR_MORE },
@@ -1077,10 +1122,13 @@ test.describe("Main test", () => {
     );
     await page
       .getByTestId("AskLLMChat.LoadSuggestedDashboards")
-      .click({ ...TWENTY_SECONDS_OR_MORE });
+      .click(TWENTY_SECONDS_OR_MORE);
 
-    const workspaceBtn = await page.getByTestId("WorkspaceMenu.list");
-    await expect(workspaceBtn).toContainText("Customer Insights");
+    const workspaceBtn = page.getByTestId("WorkspaceMenu.list");
+    await expect(workspaceBtn).toContainText(
+      "Customer Insights",
+      TWENTY_SECONDS_OR_MORE,
+    );
 
     await page.waitForTimeout(1e3);
 
@@ -1093,7 +1141,9 @@ test.describe("Main test", () => {
       .waitFor({ state: "visible", timeout: 60e3 });
 
     await page.getByTestId("AskLLM").click();
-    await page.getByTestId("AskLLMChat.UnloadSuggestedDashboards").click();
+    await page
+      .getByTestId("AskLLMChat.UnloadSuggestedDashboards")
+      .click(TWENTY_SECONDS_OR_MORE);
     await expect(workspaceBtn).not.toContainText("Customer Insights");
 
     await page.waitForTimeout(2e3);
@@ -1116,20 +1166,14 @@ test.describe("Main test", () => {
      * Only test locally due to service image size
      */
     if (!process.env.CI) {
-      const addFile = async () => {
-        const pdfFilePath = join(
-          __dirname,
-          "..",
-          "tests",
-          "testAskLLM",
-          "sample.pdf",
-        );
-        const fileChooserPromise = page.waitForEvent("filechooser");
-        await page.getByTestId("Chat.addFiles").click();
-        const fileChooser = await fileChooserPromise;
-        await fileChooser.setFiles(pdfFilePath);
-      };
-      await addFile();
+      const pdfFilePath = join(
+        __dirname,
+        "..",
+        "tests",
+        "testAskLLM",
+        "sample.pdf",
+      );
+      await addFileToChat(page, pdfFilePath);
       const toggle = page.getByTestId(
         "ChatFileAttachments.convertDocsToMarkdown",
       );
@@ -1144,7 +1188,7 @@ test.describe("Main test", () => {
 
       /** Service finished starting. This might take much longer if it needs installing */
       await expect(page.getByLabel("Convert docs to markdown")).toBeChecked(
-        getTimeout(90e3),
+        getTimeout(4 * 60e3),
       );
 
       await page.keyboard.press("Control+KeyK");
@@ -1175,9 +1219,9 @@ test.describe("Main test", () => {
       await expect(itemBtn).not.toBeAttached();
 
       /** Re-adding the same file works */
-      await addFile();
+      await addFileToChat(page, pdfFilePath);
 
-      await expect(itemBtn).toBeVisible({ ...TWENTY_SECONDS_OR_MORE });
+      await expect(itemBtn).toBeVisible(TWENTY_SECONDS_OR_MORE);
 
       await page.getByTestId("Chat.send").click();
 
@@ -1186,14 +1230,12 @@ test.describe("Main test", () => {
         .getByTestId("Chat.messageList")
         .getByTestId("LLMChatMessageContent.textDocument")
         .getByText("sample.pdf");
-      await expect(inChatItemBtn).toBeVisible({
-        ...TWENTY_SECONDS_OR_MORE,
-      });
+      await expect(inChatItemBtn).toBeVisible(TWENTY_SECONDS_OR_MORE);
 
       /** Agent was provided the text content */
       await expect(page.getByTestId("Chat.messageList")).toContainText(
         "This is a sample PDF",
-        { ...TWENTY_SECONDS_OR_MORE },
+        TWENTY_SECONDS_OR_MORE,
       );
 
       await inChatItemBtn.click();
@@ -1209,6 +1251,7 @@ test.describe("Main test", () => {
 
   test("Test LLM tools", async ({ page: p }) => {
     const page = p as PageWIds;
+    // page.setDefaultTimeout(TWENTY_SECONDS_OR_MORE.timeout);
     await loginWhenSignupIsEnabled(page);
 
     await openConnection(page, "cloud");
@@ -1220,11 +1263,13 @@ test.describe("Main test", () => {
       expectedMsg: string,
       msgType: "last-msg" | "last-tool-use",
     ) => {
-      await sendAskLLMMessage(page, " mcp ");
+      await sendAskLLMMessage(page, " mcp ", false);
       await page
         .getByTestId("AskLLMToolApprover.AllowOnce")
-        .click({ ...TWENTY_SECONDS_OR_MORE });
-      await page.waitForTimeout(1e3);
+        .click(TWENTY_SECONDS_OR_MORE);
+      await expect(
+        page.getByRole("button", { name: "Approve Once" }),
+      ).toHaveCount(0, TWENTY_SECONDS_OR_MORE);
       const mcpToolUse = await getAskLLMLastMessage(page);
 
       const locatorToCheck =
@@ -1257,12 +1302,11 @@ test.describe("Main test", () => {
     /** Ensure chat name updates based on first message */
     await expect(page.getByTestId("LLMChat.select")).toContainText("mcp");
 
-    await sendAskLLMMessage(page, " mcp ");
+    await sendAskLLMMessage(page, " mcp ", false);
     await page
       .getByTestId("AskLLMToolApprover.AllowOnce")
       .waitFor({ state: "visible", ...TWENTY_SECONDS_OR_MORE });
     await page.getByTestId("Popup.close").last().click();
-    await page.waitForTimeout(1e3);
     await sendAskLLMMessage(page, " interrupt tool call ");
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       "Tool use requests were interrupted by the user",
@@ -1281,9 +1325,9 @@ test.describe("Main test", () => {
       .getByText(
         'prostgles-ui--get_specific_tool_schemas\nmcpServerTools: {"web":{"fetch":1}}',
       )
-      .click();
+      .click(TWENTY_SECONDS_OR_MORE);
     await expect(page.getByTestId("Chat.messageList")).toContainText(
-      `Fetches content from a URL`,
+      `Fetches from a URL`,
     );
 
     await page.waitForTimeout(1e3);
@@ -1292,7 +1336,7 @@ test.describe("Main test", () => {
       .getByTestId("ToolUseMessage.toggleGroup")
       .getByText("2 tool calls")
       .last()
-      .click();
+      .click(TWENTY_SECONDS_OR_MORE);
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       `Tool name "playwright--browser_navigate" is invalid. Try enabling and reloading the tools`,
     );
@@ -1322,7 +1366,7 @@ test.describe("Main test", () => {
 
     await toggleMCPTools(page, ["browser_navigate", "browser_snapshot"]);
 
-    await sendAskLLMMessage(page, " mcpplaywright ");
+    await sendAskLLMMessage(page, " mcpplaywright ", false);
     await page.waitForTimeout(2e3);
     await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
     await page.waitForTimeout(200);
@@ -1337,7 +1381,7 @@ test.describe("Main test", () => {
       .getByTestId("Chat.messageList")
       .getByText("browser_snapshot")
       .last();
-    await lastToolUseBtn.scrollIntoViewIfNeeded();
+    await scrollElementIntoView(lastToolUseBtn);
     await page.waitForTimeout(1e3);
     await lastToolUseBtn.click();
     await page.waitForTimeout(1e3);
@@ -1382,22 +1426,36 @@ test.describe("Main test", () => {
       await sendAskLLMMessage(page, "cost", true);
     }
     await expect(page.getByTestId("Chat.messageList")).toContainText(
-      `Maximum total cost of the chat (5) reached. Current cost: 5.4`,
+      `Maximum total cost of the chat (5) reached. Current cost: 5.`,
       { ...TWENTY_SECONDS_OR_MORE },
     );
 
-    const maxCost = 4;
+    /** Test max speculative chat cost */
+    await newChat(page);
+    const costOfNodeModulesToolResult = 0.84;
+    const maxCost = costPerMsg * 2 + 0.8 * costOfNodeModulesToolResult;
     await page.getByTestId("LLMChatOptions.toggle").click();
+    await page.waitForTimeout(1500);
     await fillSmartForm(page, "llm_chats", {
       max_total_cost_usd: maxCost.toString(),
     });
+    await page.waitForTimeout(1500);
     await page.getByTestId("Popup.close").last().click();
-    /** Test max speculative chat cost */
-    await newChat(page);
+    await page.waitForTimeout(1500);
+    await page.getByTestId("LLMChatOptions.toggle").click();
+    await expect(
+      page.locator("input#llm_chats-max_total_cost_usd"),
+    ).toHaveValue(maxCost.toString());
+    await page.getByTestId("Popup.close").last().click();
+
+    /** Install electron to ensure node_modules exists */
+    await execSync("npm install", {
+      cwd: resolve(__dirname, "../../electron"),
+    });
     await enableMCPServers(page, ["filesystem"], true);
     await fileBrowserGoToPath(page.getByTestId("FileTree"), [
       "ui",
-      "client",
+      "electron",
       "node_modules",
     ]);
 
@@ -1412,7 +1470,7 @@ test.describe("Main test", () => {
     await expect(
       page.getByTestId("Chat.messageList").locator(".message").last(),
     ).toContainText(
-      `Maximum total cost of the chat (5) will be reached after sending this message`,
+      `Maximum total cost of the chat (${maxCost}) will be reached after sending this message`,
       getTimeout(30e3),
     );
   });
@@ -1458,7 +1516,7 @@ test.describe("Main test", () => {
       prepareCb: (() => Promise<void>) | undefined = undefined,
       locator: Locator | undefined = undefined,
     ) => {
-      await sendAskLLMMessage(page, " mcpsandbox ");
+      await sendAskLLMMessage(page, " mcpsandbox ", false);
       await page
         .getByTestId("AskLLMToolApprover.AllowOnce")
         .click({ ...TWENTY_SECONDS_OR_MORE });
@@ -1473,6 +1531,7 @@ test.describe("Main test", () => {
       await page
         .getByTestId("DockerSandboxCreateContainer.stop")
         .waitFor({ state: "detached", ...getTimeout(40e3) });
+      await page.waitForTimeout(3e3);
 
       for (const res of Array.isArray(result) ? result : [result]) {
         await expect(
@@ -1565,6 +1624,27 @@ test.describe("Main test", () => {
     );
     await page.keyboard.press("Escape");
 
+    /** SQL result columns must access values by name, including falsy values. */
+    await sendAskLLMMessage(page, " sql_preview ");
+    await page.getByTestId("ToolUseMessage.toggle").last().click();
+    const sqlPreview = page
+      .getByTestId("ToolUseMessage")
+      .last()
+      .getByTestId("MarkdownMonacoCode");
+    const expectedSqlCells = ["preview row", "0", "false", "NULL"];
+    await expect(sqlPreview.getByRole("columnheader")).toHaveText([
+      "display label",
+      "total",
+      "enabled",
+      "missing",
+    ]);
+    await expect(sqlPreview.getByRole("cell")).toHaveText(expectedSqlCells);
+    await sqlPreview.getByRole("button", { name: "Close result" }).click();
+    await sqlPreview
+      .getByRole("button", { name: "Execute SQL (With rollback)", exact: true })
+      .click();
+    await expect(sqlPreview.getByRole("cell")).toHaveText(expectedSqlCells);
+
     /** Test stopping chat */
     await newChat(page);
     await sendAskLLMMessage(page, " longresponse ", {
@@ -1601,7 +1681,7 @@ test.describe("Main test", () => {
 
     await newChat(page);
     await toggleMCPTools(page, ["fetch"]);
-    await sendAskLLMMessage(page, " parallel_calls ");
+    await sendAskLLMMessage(page, " parallel_calls ", false);
 
     /** Should not request approval for the other 2 requests */
     await page.getByTestId("AskLLMToolApprover.AllowAlways").click();
@@ -1622,8 +1702,10 @@ test.describe("Main test", () => {
     await newChat(page);
     await toggleMCPTools(page, ["websearch", "get_snapshot"]);
     await page.waitForTimeout(7e3); // wait for the server to start
-    await sendAskLLMMessage(page, " websearch ");
-    await page.getByTestId("AskLLMToolApprover.AllowAlways").click();
+    await sendAskLLMMessage(page, " websearch ", false);
+    await page
+      .getByTestId("AskLLMToolApprover.AllowAlways")
+      .click(TWENTY_SECONDS_OR_MORE);
     await page.getByTestId("AskLLMToolApprover.AllowAlways").click();
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       "Search done.",
@@ -1664,6 +1746,7 @@ test.describe("Main test", () => {
     await sendAskLLMMessage(
       page,
       " I need you to create a user list component ",
+      false,
     );
     await page
       .getByTestId("AskLLMToolApprover.AllowAlways")
@@ -1685,7 +1768,7 @@ test.describe("Main test", () => {
 
     /** Test ask tool */
     await newChat(page);
-    await sendAskLLMMessage(page, " ask_tool ");
+    await sendAskLLMMessage(page, " ask_tool ", false);
     await page.getByTestId("AskUserQuestions").getByText("Red").first().click();
     await page
       .getByTestId("AskUserQuestions")
@@ -1998,7 +2081,8 @@ test.describe("Main test", () => {
     await expect(
       page.getByTestId("AgenticWorkflow.validationErrorLogs"),
     ).toContainText(
-      `Validation error for databaseHandler usage: the following table names do not match any new tables or existing tables: ["invalid_table"]`,
+      // `Validation error for databaseHandler usage: the following table names do not match any new tables or existing tables: ["invalid_table"]`,
+      `Table "invalid_table" is used in the workflow but not included in tablePermissions`,
       getTimeout(30e3),
     );
 
@@ -2011,6 +2095,274 @@ test.describe("Main test", () => {
       `"invalid_table" does not match any new or existing tables`,
       getTimeout(30e3),
     );
+
+    await page.waitForTimeout(1e3);
+    await newChat(page);
+    await sendAskLLMMessage(page, " agentic_workflow_agent_failure ");
+    await page.getByTestId("AgenticWorkflow.start").click(getTimeout(90e3));
+    await expect(page.getByTestId("Alert")).toContainText(
+      `Agentic workflow container stopped with status: error`,
+      getTimeout(30e3),
+    );
+    await page.getByText("OK", { exact: true }).click();
+    await expect(page.getByTestId("AgenticWorkflow")).toContainText(
+      `The agent failed to complete the task`,
+    );
+    await expect(page.getByTestId("AgenticWorkflow")).not.toContainText(
+      `"<!DOCTYPE html>"`,
+    );
+  });
+
+  test("Create agent", async ({ page: p }) => {
+    const page = p as PageWIds;
+
+    await loginWhenSignupIsEnabled(page);
+    await openConnection(page, "cloud");
+    await closeWorkspaceWindows(page);
+    await page.getByTestId("AskLLM").click();
+
+    await setupAskLLMToolUse(page);
+
+    /** Test ask tool */
+    await newChat(page);
+
+    await sendAskLLMMessage(page, " create_agent ", false);
+    await page
+      .getByTestId("AskLLMToolApprover.AllowOnce")
+      .click(TWENTY_SECONDS_OR_MORE);
+    await page
+      .getByTestId("Agent")
+      .getByText("View activity", { exact: true })
+      .click(TWENTY_SECONDS_OR_MORE);
+
+    await expect(page.getByTestId("Popup.content").last()).toContainText(
+      "Agent goal reached",
+      getTimeout(30e3),
+    );
+  });
+
+  test("Remote MCP server", async ({ page: p }) => {
+    const page = p as PageWIds;
+    const imageName = "mcp-keycloak";
+    const containerName = "mcp-keycloak-e2e";
+
+    execSync(
+      `docker build -t ${imageName} ./e2e/tests/testAskLLM/mockRemoteMcp`,
+      { cwd: ROOT_DIR, stdio: "inherit" },
+    );
+
+    const container = spawn(
+      "docker",
+      [
+        "run",
+        "--rm",
+        "--name",
+        containerName,
+        "-p",
+        "8080:8080",
+        "-p",
+        "3000:3000",
+        imageName,
+      ],
+      { cwd: process.cwd(), stdio: "inherit" },
+    );
+    try {
+      test.setTimeout(4 * 60_000);
+
+      await expect
+        .poll(
+          async () => {
+            try {
+              const ready = await Promise.all([
+                page.request.get(
+                  "http://localhost:3000/.well-known/oauth-protected-resource/mcp",
+                ),
+                page.request.get(
+                  "http://localhost:8080/.well-known/oauth-authorization-server/realms/mcp",
+                ),
+              ]);
+
+              return ready.every((response) => response.status() === 200);
+            } catch {
+              return false;
+            }
+          },
+          {
+            timeout: 2 * 60_000,
+            intervals: [500, 1_000, 2_000],
+          },
+        )
+        .toBe(true);
+      await loginWhenSignupIsEnabled(page);
+      await goTo(page, "/server-settings?section=mcpServers");
+
+      await page.getByTestId("AddMCPServer.Open").click();
+      await monacoType(
+        page,
+        ".SmartCodeEditor",
+        JSON.stringify(
+          {
+            mcpServers: {
+              mock: { url: "http://localhost:3000/mcp" },
+            },
+          },
+          null,
+          2,
+        ),
+        { deleteAllAndFill: true, pressAfterTyping: ["Backspace"] },
+      );
+
+      await page.getByTestId("AddMCPServer.Add").click();
+      await page.getByTestId("AddMCPServer.Add").waitFor({ state: "detached" });
+
+      const serverCard = page
+        .getByTestId("SmartCardList")
+        .locator(getDataKey("mock"));
+      await serverCard.getByTitle("Press to enable").click();
+
+      /** General info */
+      await expect(
+        page.getByTestId("McpServerOAuthConfigTopControls.ShowServerInfo"),
+      ).toHaveAttribute("title", "Show server info", { ignoreCase: false });
+      await page
+        .getByTestId("McpServerOAuthConfigTopControls.ShowServerInfo")
+        .click();
+      await expect(page.getByTestId("Popup.content").last()).toContainText(
+        "authorization_endpoint",
+      );
+      await page.getByTestId("Popup.close").last().click();
+
+      /** DCR */
+      await page
+        .getByTestId("McpServerOAuthConfigActions.LoginWithOAuth")
+        .click(TWENTY_SECONDS_OR_MORE);
+      const authorizationLink = page.getByTestId(
+        "McpServerOAuthConfigAuthorizeUrlBtn.OpenAuthorizationUrl",
+      );
+      await expect(authorizationLink).toBeVisible(TWENTY_SECONDS_OR_MORE);
+      const [popup] = await Promise.all([
+        page.waitForEvent("popup"),
+        authorizationLink.click(),
+      ]);
+      await popup.waitForLoadState("load");
+      await popup.locator("#username").fill("admin1");
+      await popup.locator("#password").fill("admin1");
+      await popup.locator("button[name=login]").click();
+      await popup.locator("button[name=accept]").click(TWENTY_SECONDS_OR_MORE);
+      await popup.close();
+
+      const saveConfigAndRefreshToolsAndDeleteConfig = async () => {
+        await expect(
+          page.getByTestId("McpServerOAuthConfigActions.connectionToggle"),
+        ).toHaveText("Connected", { ...TWENTY_SECONDS_OR_MORE });
+        await page.getByTestId("MCPServerConfig.save").click();
+        await page.waitForTimeout(1e3);
+        await page
+          .locator(
+            getDataKey("mock") +
+              " " +
+              getCommandElemSelector("MCPServerFooterActions.refreshTools"),
+          )
+          .click(TWENTY_SECONDS_OR_MORE);
+        await expect(page.getByTestId("Popup.content").last()).toContainText(
+          ` tool for "mock" server`,
+          TWENTY_SECONDS_OR_MORE,
+        );
+        await page.getByText("OK", { exact: true }).click();
+        await page
+          .locator(
+            getDataKey("mock") +
+              " " +
+              getCommandElemSelector("MCPServerConfigButton"),
+          )
+          .click();
+        await page.getByText("Delete config", { exact: true }).click();
+      };
+      await saveConfigAndRefreshToolsAndDeleteConfig();
+
+      const enableServer = async () => {
+        await page.waitForTimeout(3e3);
+        await page
+          .locator(
+            getDataKey("mock") + " " + getCommandElemSelector("SwitchToggle"),
+          )
+          .click();
+      };
+
+      const setAuthMode = async (
+        mode: "bearer" | "client_credentials" | "authorization_code" | "cimd",
+      ) => {
+        await page
+          .getByTestId("McpServerOAuthConfigTopControls.authMode")
+          .click();
+        await page
+          .getByTestId("McpServerOAuthConfigTopControls.authMode")
+          .locator(getDataKey(mode))
+          .click();
+      };
+
+      /** Bearer */
+      await enableServer();
+      await setAuthMode("bearer");
+      await page.getByLabel("Bearer token").fill("test-token");
+      await page
+        .getByTestId("McpServerOAuthConfigActions.LoginWithOAuth")
+        .click();
+      await saveConfigAndRefreshToolsAndDeleteConfig();
+
+      /** authorization_code */
+      await enableServer();
+      await setAuthMode("authorization_code");
+      await page.getByLabel("Client Id").fill("static-client");
+      await page.getByLabel("Client Secret").fill("static-secret");
+      await page
+        .getByTestId("McpServerOAuthConfigActions.LoginWithOAuth")
+        .click();
+
+      await expect(authorizationLink).toHaveAttribute(
+        "href",
+        /[?&]client_id=static-client&/,
+        TWENTY_SECONDS_OR_MORE,
+      );
+      const [popup2] = await Promise.all([
+        page.waitForEvent("popup"),
+        authorizationLink.click(),
+      ]);
+      await popup2.waitForLoadState("load");
+      await popup2.locator("button[name=accept]").click(TWENTY_SECONDS_OR_MORE);
+      await popup2.close();
+      await saveConfigAndRefreshToolsAndDeleteConfig();
+
+      /** client credentials */
+      await enableServer();
+      await setAuthMode("client_credentials");
+      await page.getByLabel("Client Id").fill("static-client");
+      await page.getByLabel("Client Secret").fill("static-secret");
+      await page
+        .getByTestId("McpServerOAuthConfigActions.LoginWithOAuth")
+        .click();
+      await saveConfigAndRefreshToolsAndDeleteConfig();
+
+      /** TODO: CIMD */
+      // await enableServer();
+      // await setAuthMode("cimd");
+      // const redirectUri = await page
+      //   .locator(`[data-label="Redirect URL"] .input-wrapper`)
+      //   .textContent();
+      // if (!redirectUri) throw new Error("Redirect URI not found");
+      // const searchParams = new URLSearchParams({ redirectUri });
+      // await fetch(
+      //   "http://localhost:3000/set_redirect_uri_for_test?" +
+      //     searchParams.toString(),
+      // );
+      // await page
+      //   .getByLabel("Client metadata URL")
+      //   .fill("http://localhost:3000/metadata.json");
+      // await saveConfigAndRefreshToolsAndDeleteConfig();
+    } finally {
+      container.kill("SIGTERM");
+      execSync(`docker rm -f ${containerName}`, { stdio: "ignore" });
+    }
   });
 
   test("Disable signups", async ({ page: p }) => {
@@ -2216,7 +2568,9 @@ test.describe("Main test", () => {
       );
     `,
     );
+    await page.waitForTimeout(3e3);
     await page.getByTestId("dashboard.goToConnConfig").click();
+    await page.getByTestId("config.details").click();
     await page.getByTestId("NewConnectionForm.MoreOptionsToggle").click();
     await page.getByTestId("NewConnectionForm.schemaFilter").click();
     await page
@@ -2284,7 +2638,7 @@ test.describe("Main test", () => {
       .textContent();
     const createAndFillCode = async () => {
       await page.waitForTimeout(1200);
-      const code = authenticator.generate(Base64Secret ?? "");
+      const code = await generate({ secret: Base64Secret ?? "" });
       await page
         .getByTestId("Setup2FA.Enable.ConfirmCode")
         .locator("input")
@@ -2294,7 +2648,7 @@ test.describe("Main test", () => {
     await createAndFillCode();
 
     /** Allow 1 invalid code */
-    const INVALID_CODE = "Invalid code";
+    const INVALID_CODE = "Invalid totp code";
     await page.waitForTimeout(300);
     const setupErrorNode = await page.getByTestId("Setup2FA.error");
     if (
@@ -2307,7 +2661,7 @@ test.describe("Main test", () => {
     /** Using token */
     await login(page);
     const fillTokenAndSignIn = async () => {
-      const newCode = authenticator.generate(Base64Secret ?? "");
+      const newCode = await generate({ secret: Base64Secret ?? "" });
       await page.locator("#totp_token").fill(newCode);
       await page.getByRole("button", { name: "Sign in", exact: true }).click();
     };
@@ -2349,6 +2703,28 @@ test.describe("Main test", () => {
     const page = p as PageWIds;
 
     await login(page);
+
+    await test.step(
+      "Connections load while the logo request is pending",
+      async () => {
+        let pendingLogoRequest: Route | undefined;
+        const logoPattern = "**/prostgles-logo.svg";
+        await page.route(logoPattern, (route) => {
+          pendingLogoRequest = route;
+        });
+        try {
+          await goTo(page, "/connections");
+          await expect.poll(() => !!pendingLogoRequest).toBe(true);
+          await expect(
+            page.getByTestId("ConnectionServer.add").first(),
+          ).toBeVisible();
+        } finally {
+          await pendingLogoRequest?.continue();
+          await page.unroute(logoPattern);
+        }
+      },
+      { timeout: 10_000 },
+    );
 
     /** Create Sample database */
     await createDatabase("sample_database", page, false);
@@ -2410,7 +2786,7 @@ test.describe("Main test", () => {
       await page.waitForTimeout(1e3);
       await forEachLocator(
         page,
-        async () => page.getByTestId("dashboard.window.viewEditRow"),
+        () => page.getByTestId("dashboard.window.viewEditRow"),
         async (editBtn) => {
           await editBtn.click();
           await page.getByTestId("SmartForm.delete").click();
@@ -2692,8 +3068,8 @@ test.describe("Main test", () => {
     await enableAskLLM(page, 0);
 
     /** Expect LLM to work */
-    const [{ isOk }] = await getLLMResponses(page, ["hehhehey"]);
-    expect(isOk).toBe(true);
+    const [response] = await getLLMResponses(page, ["hehhehey"]);
+    expect(response).toMatchObject({ isOk: true });
 
     /** Clear prev chats to ensure llm limit test works */
     await runDbsSql(page, `TRUNCATE llm_chats CASCADE;`);
@@ -2706,13 +3082,13 @@ test.describe("Main test", () => {
   test("Default user has correct permissions", async ({ page: p }) => {
     const page = p as PageWIds;
 
+    /** Increase test time due to doc processing */
+    test.setTimeout(7 * MINUTE);
+
     await page.request.post("/logout");
     await login(page, USERS.default_user);
 
-    await page.getByRole("link", { name: "Connections" }).click();
-    await page.getByRole("link", { name: TEST_DB_NAME }).click();
-    await page.waitForTimeout(1000);
-    await page.getByTestId("dashboard.menu").waitFor({ state: "visible" });
+    await openConnection(page, TEST_DB_NAME);
     await setWspColLayout(page);
     /** Open table using ctrl+P */
     await openTable(page, "my_tabl");
@@ -2721,6 +3097,11 @@ test.describe("Main test", () => {
     await page.waitForTimeout(1000);
 
     await uploadFile(page);
+
+    /* Ensure that the file is uploaded and visible in the table */
+    await page
+      .getByText("Show parsed document", { exact: true })
+      .waitFor({ state: "visible", ...TWENTY_SECONDS_OR_MORE });
 
     await insertRow(page, "my_table", { content: USERS.default_user });
     await insertRow(page, "orders", { status: "incomplete" });
@@ -2733,9 +3114,7 @@ test.describe("Main test", () => {
     await page.request.post("/logout");
     await login(page, USERS.default_user1);
 
-    await page.getByRole("link", { name: "Connections" }).click();
-    await page.getByRole("link", { name: TEST_DB_NAME }).click();
-    await page.waitForTimeout(1000);
+    await openConnection(page, TEST_DB_NAME);
     await setWspColLayout(page);
 
     /** Open table using ctrl+P */
@@ -2756,8 +3135,7 @@ test.describe("Main test", () => {
 
     await page.request.post("/logout");
     await login(page, USERS.test_user);
-    await page.getByRole("link", { name: "Connections" }).click();
-    await page.getByRole("link", { name: TEST_DB_NAME }).click();
+    await openConnection(page, TEST_DB_NAME);
 
     await setWspColLayout(page);
     await page.waitForTimeout(1e3);
@@ -2773,6 +3151,25 @@ test.describe("Main test", () => {
     await expect(await page.getByText("incomplete").count()).toBe(2);
     await expect(await page.getByText("secret").count()).toBe(1);
     await expect(await page.getByText(fileName).count()).toBe(2);
+
+    /** Replace an existing file through the row editor. */
+    await getTableWindow(page, "files")
+      .getByTestId("dashboard.window.viewEditRow")
+      .first()
+      .click();
+    await page
+      .getByRole("button", { name: "Remove file", exact: true })
+      .click();
+    await selectAndUpsertFile(
+      page,
+      (page) => page.getByTestId("FileBtn").click(),
+      async () => {
+        await expect(page.locator(".FileInputMedia img")).toBeVisible();
+      },
+      true,
+    );
+    await expect(page.getByTestId("SmartForm")).toHaveCount(0);
+    await expect(page.getByText(fileName)).toHaveCount(2);
 
     /** Disable files permissions to test direct insert */
     await page.getByTestId("dashboard.goToConnConfig").click();
@@ -2795,9 +3192,7 @@ test.describe("Main test", () => {
   //   const page = p as PageWIds;
 
   //   await login(page, USERS.test_user);
-  //   await page.getByRole("link", { name: "Connections" }).click();
-  //   await page.getByRole("link", { name: TEST_DB_NAME, exact: true }).click();
-  //   await page.waitForTimeout(1e3);
+  // await openConnection(page, TEST_DB_NAME);
   //   await runDbSql(page, `DELETE FROM my_table WHERE id > 4;`);
   //   await runDbSql(
   //     page,
@@ -2815,10 +3210,8 @@ test.describe("Main test", () => {
     const page = p as PageWIds;
 
     await login(page, USERS.default_user);
-    await page.getByRole("link", { name: "Connections" }).click();
-    await page.getByRole("link", { name: TEST_DB_NAME, exact: true }).click();
-    await page.waitForTimeout(1e3);
 
+    await openConnection(page, TEST_DB_NAME);
     await expect(page.getByText(fileName)).toHaveCount(0);
 
     await clickInsertRow(page, "my_table");
@@ -2856,14 +3249,12 @@ test.describe("Main test", () => {
     await expect(page.locator(`#my_table-id`)).toHaveValue("4");
     await page.keyboard.press("ArrowRight");
 
-    await expect(
-      page.getByTestId("Popup.content").locator("img"),
-    ).toHaveAttribute(
-      "src",
-      // Inserted url starts with /prostgles_storage
-
-      /^\/prostgles_storage/,
-    );
+    /** Valid loaded img */
+    const img = page.getByTestId("Popup.content").locator("img");
+    await expect(img).toHaveAttribute("src", /prostgles_storage/);
+    await expect(img).toBeVisible();
+    await expect(img).toHaveJSProperty("complete", true);
+    await expect(img).not.toHaveJSProperty("naturalWidth", 0);
 
     // Deleting works
     await page
@@ -2896,14 +3287,14 @@ test.describe("Main test", () => {
   test("Table tests", async ({ page: p }) => {
     const page = p as PageWIds;
     await login(page, USERS.test_user);
-    await page.getByRole("link", { name: "Connections" }).click();
-    await page.getByRole("link", { name: TEST_DB_NAME, exact: true }).click();
+
+    await openConnection(page, TEST_DB_NAME);
 
     const wspName = "Table tests";
     /** Delete existing duplicate workspace */
     await page.getByTestId("WorkspaceMenuDropDown").click();
     await page.waitForTimeout(1e3);
-    let deleted = false;
+    const deletion = { completed: false };
     await forEachLocator(
       page,
       async () => {
@@ -2915,14 +3306,14 @@ test.describe("Main test", () => {
       },
       async (item) => {
         const deleteWspBtn = await item.getByTestId("WorkspaceDeleteBtn");
-        deleted = true;
+        deletion.completed = true;
         await deleteWspBtn.click();
         await page.waitForTimeout(555);
         await page.getByTestId("WorkspaceDeleteBtn.Confirm").click();
         await page.waitForTimeout(555);
       },
     );
-    if (!deleted) {
+    if (!deletion.completed) {
       await page.locator(`[data-close-popup="true"]`).click();
     }
     await page.getByTestId("WorkspaceMenuDropDown").click();
@@ -3032,6 +3423,31 @@ test.describe("Main test", () => {
     await page.getByTestId("LinkedColumn.Add").click();
 
     await page.waitForTimeout(1e3);
+    await usersTable.getByTestId("AddColumnMenu").click();
+    await getSearchListItem(page.getByTestId("AddColumnMenu"), {
+      dataKey: "Referenced",
+    }).click();
+    await getSearchListItem(page.getByTestId("JoinPathSelectorV2"), {
+      dataKey: "orders",
+    }).click(TWENTY_SECONDS_OR_MORE);
+    await page.getByTestId("QuickAddComputedColumn").click();
+    await getSearchListItem(page.getByTestId("FunctionSelector"), {
+      dataKey: "$countAll",
+    }).click();
+    await page.getByTestId("QuickAddComputedColumn.Add").click();
+    await page.getByTestId("LinkedColumn.Add").click();
+
+    const linkedRecordsCount = usersTable
+      .getByTestId("LinkedColumn.OpenRecords")
+      .first();
+    await expect(linkedRecordsCount).toHaveText("100", TWENTY_SECONDS_OR_MORE);
+    await linkedRecordsCount.click();
+    const linkedRecordsPopup = page.getByTestId("Popup.content").last();
+    await expect(
+      linkedRecordsPopup.getByTestId("Pagination.pageCountInfo"),
+    ).toContainText("100 rows", TWENTY_SECONDS_OR_MORE);
+    await page.getByTestId("Popup.close").last().click();
+
     await usersTable.getByTestId("AddChartMenu.Map").click();
     await page
       .getByTestId("AddChartMenu.Map")
@@ -3069,7 +3485,7 @@ test.describe("Main test", () => {
       data = [],
       x = -99,
       y = -99,
-    } = await page.evaluate(async () => {
+    } = await page.evaluate(() => {
       try {
         const timeChartRef = document.querySelector(".W_TimeChart")!;
         const bbox = timeChartRef.getBoundingClientRect();
@@ -3115,10 +3531,9 @@ test.describe("Main test", () => {
     await usersTable.getByTestId("dashboard.window.menu").click();
     await page.waitForTimeout(1e3);
     await page.getByText("Display options").click();
-    await page.getByTestId("table.options.displayMode").click();
     await page
-      .getByTestId("SearchList.List")
-      .locator(`[data-key="card"]`)
+      .getByTestId("table.options.displayMode")
+      .locator(getDataKey("card"))
       .click();
     await page.getByTestId("table.options.cardView.groupBy").click();
     await page
@@ -3134,13 +3549,16 @@ test.describe("Main test", () => {
     await page.keyboard.press("Escape");
     await usersTable.getByTestId("dashboard.window.fullscreen").click();
     await page.waitForTimeout(3e3);
-    await expect(await page.getByText("first_name").first()).toBeVisible();
+    await expect(await page.getByText("First Name").first()).toBeVisible();
 
     /** Test groupBy */
     const swapFirstTwoRows = async () => {
       const groups = await page.getByTestId("CardView.group").all();
       await expect(groups.length).toBe(2);
       const [firstGroup, secondGroup] = groups;
+      if (!firstGroup || !secondGroup) {
+        throw new Error("Expected two card groups");
+      }
       await page.waitForTimeout(2e3);
       const firstGroupFirstRow = await firstGroup
         .getByTestId("CardView.row")
@@ -3197,12 +3615,11 @@ test.describe("Main test", () => {
   test("API tests", async ({ page: p }) => {
     const page = p as PageWIds;
     await login(page, USERS.test_user);
-    await page.getByRole("link", { name: "Connections" }).click();
-    await page.getByRole("link", { name: TEST_DB_NAME, exact: true }).click();
+
+    await openConnection(page, TEST_DB_NAME);
     await page
       .getByTestId("dashboard.goToConnConfig")
-      .waitFor({ state: "visible", timeout: 10e3 });
-    await page.getByTestId("dashboard.goToConnConfig").click();
+      .click(TWENTY_SECONDS_OR_MORE);
     await page.getByTestId("config.api").click();
 
     await page
@@ -3223,10 +3640,7 @@ test.describe("Main test", () => {
 
     await page.request.post("/logout");
     await login(page, USERS.test_user);
-    await page.getByRole("link", { name: "Connections" }).click();
-    await page.getByRole("link", { name: TEST_DB_NAME }).click();
-
-    await page.getByTestId("dashboard.menu").waitFor({ state: "visible" });
+    await openConnection(page, TEST_DB_NAME);
     await page.waitForTimeout(3000);
 
     /** Ensure SQL Autocomplete works */
@@ -3240,8 +3654,8 @@ test.describe("Main test", () => {
       await page.waitForTimeout(100);
     }
 
-    const startSqlTest = async () =>
-      new Promise(async (resolve, reject) => {
+    const startSqlTest = () =>
+      new Promise((resolve, reject) => {
         page.on("dialog", (dialog) => {
           const msg = dialog.message();
           console.log("1", msg);
@@ -3317,8 +3731,6 @@ test.describe("Main test", () => {
     const page = p as PageWIds;
     await goTo(page, "localhost:3004/connections");
     await page.reload();
-    await page.getByRole("link", { name: "Connections" }).click();
-    await page.getByRole("link", { name: TEST_DB_NAME }).click();
     await page
       .getByTestId("dashboard.menu.tablesSearchList")
       .waitFor({ state: "visible", ...TWENTY_SECONDS_OR_MORE });
@@ -3330,36 +3742,34 @@ test.describe("Main test", () => {
       "hey",
       "hey",
     ]);
-    await expect(response1.isOk).toBe(true);
-    await expect(response2.isOk).toBe(true);
-    await expect(response3.isOk).toBe(true);
+    expect(response1).toMatchObject({ isOk: true });
+    expect(response2).toMatchObject({ isOk: true });
+    expect(response3).toMatchObject({ isOk: true });
   });
 
   test("Public user ask llm limit", async ({ page: p }) => {
     const page = p as PageWIds;
     await goTo(page, "localhost:3004/connections");
     await page.reload();
-    await page.getByRole("link", { name: "Connections" }).click();
-    await page.getByRole("link", { name: TEST_DB_NAME }).click();
     await page
       .getByTestId("dashboard.menu.tablesSearchList")
       .waitFor({ state: "visible", ...TWENTY_SECONDS_OR_MORE });
     const [response1, response2] = await getLLMResponses(page, ["hey", "hey"]);
-    await expect(response1.isOk).toBe(true);
-    await expect(response2.isOk).toBe(false);
+    expect(response1).toMatchObject({ isOk: true });
+    expect(response2).toMatchObject({ isOk: false });
   });
 
   test("MCP Servers", async ({ page: p }) => {
     const page = p as PageWIds;
     await login(page, USERS.test_user, "localhost:3004/login");
-    await page.getByRole("link", { name: "Connections" }).click();
-    await page.getByRole("link", { name: TEST_DB_NAME }).click();
 
     await runDbsSql(
       page,
       `
       UPDATE mcp_servers SET enabled = false WHERE name = 'myServer';
       DELETE FROM mcp_servers WHERE name = 'myServer';
+
+      DELETE FROM alerts; -- left by mock mcp server oauth flows
     `,
     );
 
@@ -3407,11 +3817,12 @@ test.describe("Main test", () => {
 
     await page.getByLabel("ALLOWED_DIR").fill("/prostgles-mcp-test");
     await page.getByText("Enable", { exact: true }).click();
+    await page.waitForTimeout(1e3);
     await page.getByTestId("Popup.close").last().click();
     await page.getByTestId("Popup.close").last().click();
     await page.getByTestId("Alerts").click(TWENTY_SECONDS_OR_MORE);
     await expect(page.getByTestId("Alerts")).toContainText(
-      "MCP Server Hub Tool Load Error",
+      "MCP server disabled due to error",
     );
     await page.getByText("Go to issue").click();
     await page
@@ -3497,7 +3908,7 @@ test.describe("Main test", () => {
     });
     try {
       await new Promise((resolve, reject) => {
-        devProc.stdout?.on("data", (data) => {
+        devProc.stdout.on("data", (data) => {
           const str = data.toString();
           console.log("devProc stdout:", str);
           if (str.includes("5173")) {

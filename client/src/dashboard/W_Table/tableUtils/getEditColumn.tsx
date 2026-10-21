@@ -1,13 +1,14 @@
+import Btn from "@components/Btn";
 import { mdiOpenInNew, mdiPencilOutline } from "@mdi/js";
 import type { TableHandlerClient } from "prostgles-client";
 import type { AnyObject, ValidatedColumnInfo } from "prostgles-types";
 import React from "react";
-import Btn from "@components/Btn";
 
 import { type DetailedFilterBase } from "@common/filterUtils";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
 import type { AddColumnMenuProps } from "../ColumnMenu/AddColumnMenu";
 import { AddColumnMenu } from "../ColumnMenu/AddColumnMenu";
+import type { ColumnConfig } from "@common/ColumnConfig/ColumnConfig";
 import type { ProstglesColumn } from "../W_Table";
 import { getRowFilter } from "./getRowFilter";
 
@@ -44,8 +45,9 @@ type GetMenuColumnArgs = {
   tableHandler: Partial<TableHandlerClient>;
   onClickRow: OnClickEditRow;
   table: DBSchemaTableWJoins;
-  columnConfig: { name: string }[] | undefined;
+  columnConfig: ColumnConfig[] | undefined;
   addColumnProps?: AddColumnMenuProps;
+  style?: React.CSSProperties;
 };
 export const getEditColumn = ({
   tableHandler,
@@ -53,6 +55,7 @@ export const getEditColumn = ({
   addColumnProps,
   table,
   columnConfig,
+  style = { padding: "12px" },
 }: GetMenuColumnArgs): ProstglesColumn => {
   const viewOnly = !tableHandler.update;
   const title = viewOnly ? "View row" : "View/Edit row",
@@ -75,7 +78,7 @@ export const getEditColumn = ({
         title={title}
         data-command="dashboard.window.viewEditRow"
         iconPath={iconPath}
-        style={{ padding: "12px" }}
+        style={style}
         color="action"
         onClickMessage={async (e, setM) => {
           e.stopPropagation();
@@ -118,7 +121,7 @@ export const getRowSiblingData = async (
   rowIndex: number,
   table: DBSchemaTableWJoins,
   columns: GetMenuColumnArgs["columnConfig"],
-  tableHandler: Partial<TableHandlerClient<AnyObject, void>>,
+  tableHandler: Partial<TableHandlerClient>,
 ) => {
   const prevRow = rows[rowIndex - 1];
   const nextRow = rows[rowIndex + 1];

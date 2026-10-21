@@ -5,11 +5,11 @@ import Loading from "@components/Loader/Loading";
 import type { TableColumn, TableProps } from "@components/Table/Table";
 import React, { useEffect } from "react";
 import type {
-  OnAddChart,
+  NewChartOpts,
   Query,
-  WindowData,
   WindowSyncItem,
 } from "../Dashboard/dashboardUtils";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 
 import type { PopupProps } from "@components/Popup/Popup";
 import Popup from "@components/Popup/Popup";
@@ -27,7 +27,7 @@ import type {
   SyncDataItem,
 } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import type { DBEventHandles, ValidatedColumnInfo } from "prostgles-types/lib";
-import type { ColumnSortSQL } from "../W_Table/ColumnMenu/ColumnMenu";
+import type { ColumnSortSQL } from "@common/ColumnConfig/ColumnConfig";
 
 import { Icon } from "@components/Icon/Icon";
 import { useIsMounted } from "prostgles-client";
@@ -45,6 +45,7 @@ import { W_SQLBottomBar } from "./W_SQLBottomBar/W_SQLBottomBar";
 import { ProstglesSQLMenu } from "./W_SQLMenu";
 import { W_SQLResults } from "./W_SQLResults";
 
+export type OnAddChart = (args: NewChartOpts) => void;
 export type W_SQLProps = Omit<CommonWindowProps, "w"> & {
   w: WindowSyncItem<"sql">;
   filter?: any;
@@ -121,7 +122,7 @@ export type W_SQLState = {
   activeQuery: undefined | W_SQL_ActiveQuery;
   joins: string[];
   error?: unknown;
-  w?: SyncDataItem<WindowData>;
+  w?: SyncDataItem<WindowData, { handlesOnData: true }>;
   hideTable?: boolean;
   sql: string;
   sqlResult?: boolean;
@@ -328,9 +329,9 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
     const {
       onAddChart,
       suggestions,
-      tables,
+
       setLinkMenu,
-      prgl: { db, sql: sqlHandler, dbs, dbsTables, user },
+      prgl: { tables, db, sql: sqlHandler, dbs, dbsTables, user },
       myLinks,
       childWindow,
       workspace,
@@ -541,7 +542,6 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
               {...this.state}
               w={w}
               childWindow={childWindow}
-              tables={tables}
               onPageChange={(newPage) => {
                 this.setState({ page: newPage });
               }}
@@ -553,6 +553,10 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
               }}
               onResize={(newCols) => {
                 this.setState({ cols: newCols });
+                w.$update(
+                  { options: { sqlResultCols: newCols } },
+                  { deepMerge: true },
+                );
               }}
               onSort={(sort) => {
                 void this.runSQL(sort);
@@ -582,7 +586,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
       <Window
         w={w}
         childWindow={childWindow}
-        connection={this.props.prgl.connection}
+        tables={this.props.prgl.tables}
         layoutMode={workspace.layout_mode ?? "editable"}
         quickMenuProps={{
           dbs,

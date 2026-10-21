@@ -1,4 +1,7 @@
-import type { ParsedJoinPath } from "prostgles-types";
+import {
+  getJSONBObjectSchemaValidationError,
+  type ParsedJoinPath,
+} from "prostgles-types";
 import type { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
 
 export const flattenJoinPathsV2 = (
@@ -12,49 +15,86 @@ export const flattenJoinPathsV2 = (
   );
 
   const depth = prevTables.length;
-  if (!_table || depth > maxDepth) return [];
+  if (!_table || depth >= maxDepth) return [];
 
-  const nextJoinsV2 = _table.joinsV2.filter(
-    (j) => !prevTables.includes(j.tableName),
+  const nextJoins = _table.joinOptions.filter(
+    (join) =>
+      !prevTables.includes(join.table) &&
+      (!depth || join.supportsMultiHop) &&
+      tables.some((table) => table.name === join.table),
   );
-  const paths: ParsedJoinPath[][] = nextJoinsV2.flatMap((_j) => {
-    return _j.on.flatMap((singleOn) => {
-      const j: ParsedJoinPath = {
-        on: [Object.fromEntries(singleOn)],
-        table: _j.tableName,
-      };
-
-      const nestedJoins = flattenJoinPathsV2(_j.tableName, tables, [
-        ...prevTables,
-        tableName,
-      ]);
-      const nextPaths = nestedJoins.map((nj) => {
-        const nextPaths = Array.isArray(nj) ? nj : [nj];
-
-        const res: ParsedJoinPath[] = [j, ...nextPaths];
-        return res;
-      });
-      /** Split at current target and continue with the next joins */
-      return [[j], ...nextPaths];
-    });
+  const paths: ParsedJoinPath[][] = nextJoins.flatMap((join) => {
+    const path: ParsedJoinPath = {
+      table: join.table,
+      on: join.on,
+      ...(join.reversed && { reversed: true }),
+    };
+    const nestedJoins =
+      !join.supportsMultiHop ?
+        []
+      : flattenJoinPathsV2(
+          join.table,
+          tables,
+          [...prevTables, tableName],
+          maxDepth,
+        );
+    return [[path], ...nestedJoins.map((nested) => [path, ...nested])];
   });
 
   return paths;
 };
 
 export const getJoinPathStr = (jp: ParsedJoinPath[]) => {
-  return jp
-    .map((p) =>
-      [
-        p.table,
-        p.on
-          .map((cond) =>
-            Object.entries(cond).map((lrFields) => lrFields.join()),
-          )
-          .map((d) => d.sort().join()),
-      ].join(),
-    )
-    .join();
+  // Identify the relationship independently of its editable parameter values.
+  return JSON.stringify(
+    jp.map((path) => [
+      path.table,
+      typeof path.on === "string" ?
+        path.on
+      : path.on.map((condition) =>
+          Object.entries(condition).sort(([left], [right]) =>
+            left.localeCompare(right),
+          ),
+        ),
+      !!path.reversed,
+    ]),
+  );
+};
+
+export const getJoinOption = (
+  tables: DBSchemaTablesWJoins,
+  source: string,
+  path: ParsedJoinPath,
+) =>
+  tables
+    .find((table) => table.name === source)
+    ?.joinOptions.find(
+      (option) => getJoinPathStr([option]) === getJoinPathStr([path]),
+    );
+
+export const getJoinPathError = (
+  tables: DBSchemaTablesWJoins,
+  tableName: string,
+  path: ParsedJoinPath[],
+) => {
+  for (const [index, step] of path.entries()) {
+    const option = getJoinOption(
+      tables,
+      path[index - 1]?.table ?? tableName,
+      step,
+    );
+    if (!option) return `Relationship to ${step.table} is no longer available`;
+    if (path.length > 1 && !option.supportsMultiHop) {
+      return "Computed joins require a direct path";
+    }
+    if (option.paramsSchema) {
+      const { error } = getJSONBObjectSchemaValidationError(
+        option.paramsSchema,
+        step.params ?? {},
+      );
+      if (error) return error;
+    }
+  }
 };
 export type TargetPath = {
   table: DBSchemaTablesWJoins[number];

@@ -206,12 +206,7 @@ export const AskLLMChatActionBarDatabaseAccess = (
               tables={tables}
               schema={{
                 title: "Tables",
-                type: "Lookup[]",
-                lookup: {
-                  isArray: true,
-                  type: "schema",
-                  object: "table",
-                },
+                type: "TableLookup[]",
               }}
               value={schemaPermission.tables}
               onChange={(newTables: string[]) => {

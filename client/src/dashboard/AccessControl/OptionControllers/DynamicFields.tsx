@@ -115,7 +115,7 @@ export const DynamicFields = ({
                 />
                 <FilterControl
                   tableName={table.name}
-                  detailedFilter={filterDetailed as SingleGroupFilter}
+                  detailedFilter={filterDetailed}
                   label={"Filter"}
                   onChange={(newFilter) => {
                     setValue(

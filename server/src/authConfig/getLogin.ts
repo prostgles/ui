@@ -1,10 +1,10 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
-import { authenticator } from "otplib";
 import { type LoginSignupConfig } from "prostgles-server/dist/Auth/AuthTypes";
 import type { DB } from "prostgles-server/dist/initProstgles";
 import type { DBS, Users } from "..";
 import { log } from "../index";
-import { getPasswordHash } from "./authUtils";
+import { getPasswordHash, isTotpTokenValid } from "./authUtils";
 import { getEmailSenderWithMockTest } from "./emailProvider/getEmailSenderWithMockTest";
 import { getRandomSixDigitCode } from "./emailProvider/onEmailRegistration";
 import { loginWithProvider } from "./OAuthProviders/loginWithProvider";
@@ -12,6 +12,7 @@ import type { SUser } from "./sessionUtils";
 import { startRateLimitedLoginAttempt } from "./startRateLimitedLoginAttempt";
 import type { AuthConfigForStateConnection } from "./subscribeToAuthSetupChanges";
 import { upsertSession } from "./upsertSession";
+import { getSignupUserType } from "./getSignupUserType";
 
 export const getLogin = async (
   dbs: DBS,
@@ -79,7 +80,7 @@ export const getLogin = async (
             {
               username,
               email: username,
-              type: "default",
+              type: getSignupUserType(database_config.auth_created_user_type),
               registration: {
                 type: "magic-link",
                 otp_code: newCode,
@@ -177,12 +178,7 @@ export const getLogin = async (
           return "invalid-totp-recovery-code";
         }
       } else if (totp_token && typeof totp_token === "string") {
-        if (
-          !authenticator.verify({
-            secret: matchingUser["2fa"].secret,
-            token: totp_token,
-          })
-        ) {
+        if (!(await isTotpTokenValid(matchingUser["2fa"].secret, totp_token))) {
           return "invalid-totp-code";
         }
       } else {

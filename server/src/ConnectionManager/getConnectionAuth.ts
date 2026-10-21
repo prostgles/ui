@@ -5,6 +5,8 @@ import type e from "express";
 import type { AuthConfig } from "prostgles-server";
 import type { DB } from "prostgles-server/dist/initProstgles";
 import type { DBS } from "..";
+import { getConnectionUser } from "./getConnectionUser";
+import { isObject } from "prostgles-types";
 
 export const getConnectionAuth = async (
   app: e.Express,
@@ -13,25 +15,29 @@ export const getConnectionAuth = async (
   authData: AuthConfigForConnection,
 ) => {
   const auth = await getAuth(app, dbs, _dbs, authData);
-  // if (!auth) return;
-
-  /**
-   * We have two authorization modes:
-   * 1. State database auth
-   *  - Accessing the prostgles-ui interface must give access to all connections
-   * 2. Connection database auth
-   *  - Enabled by specifying a port on the connection which will be proxied to a subpath.
-   *  - Accessing the designated subpath must give access only to that connection and state database users cannot login there.
-   */
-  if (!authData.connection.is_state_db && authData.connection.port) {
-    return auth as any;
-  }
   return {
+    ...(!authData.connection.is_state_db && authData.connection.port ?
+      (auth as unknown as AuthConfig<void, SUser>)
+    : {}),
     sidKeyName: auth.sidKeyName,
-    getUser: (sid, __, _, cl, reqInfo) =>
-      auth.getUser(sid, dbs, _dbs, cl, reqInfo),
-    cacheSession: {
-      getSession: (sid) => auth.cacheSession.getSession(sid, dbs),
+    cacheSession: auth.cacheSession,
+    getUser: async (sid, __, _, cl, reqInfo) => {
+      const result = await auth.getUser(sid, dbs, _dbs, cl, reqInfo);
+      if (!result || !isObject(result) || !("user" in result) || !result.user) {
+        return result;
+      }
+      const user = await getConnectionUser(
+        dbs,
+        authData.connection,
+        result.user,
+      );
+      if (!user) return undefined;
+      return {
+        ...result,
+        user,
+      };
     },
+    findUser: async (filter) =>
+      getConnectionUser(dbs, authData.connection, await auth.findUser(filter)),
   } satisfies AuthConfig<void, SUser>;
 };

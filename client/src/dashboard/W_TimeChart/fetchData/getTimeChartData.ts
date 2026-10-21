@@ -34,7 +34,7 @@ export async function getTimeChartData(
   let erroredLayers: TimeChartLayerWithBinOrError[] = [];
   try {
     const {
-      prgl: { db },
+      prgl: { db, tables },
     } = this.props;
     const { w } = this.d;
     if (!w) {
@@ -77,7 +77,7 @@ export async function getTimeChartData(
       : renderStyle === "scatter plot" ? 2
       : 20;
     const size = chart.getWH();
-    const { getLinksAndWindows, myLinks, tables } = this.props;
+    const { getLinksAndWindows, myLinks } = this.props;
     const { viewPortExtent, visibleDataExtent } = this.state;
     const binOpts = getDesiredTimeChartBinSize({
       width: size.w,

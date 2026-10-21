@@ -6,10 +6,10 @@ import type {
   ToolUseMessage,
 } from "../ToolUseChatMessage/ToolUseChatMessage";
 import { Agent } from "./ProstglesMCPTools/Agent/Agent";
-import { AgentGoallToolCall } from "./ProstglesMCPTools/Agent/AgentGoallToolCall";
+import { AgentGoalToolCall } from "./ProstglesMCPTools/Agent/AgentGoalToolCall";
 import { AgenticWorkflowMessage } from "./ProstglesMCPTools/AgenticWorkflow/AgenticWorkflowMessage";
 import { AskUserQuestions } from "./ProstglesMCPTools/AskUserQuestions";
-import { DoclingConvertedDocument } from "./ProstglesMCPTools/DoclingConvertedDocument/DoclingConvertedDocument";
+import { DoclingToolUseView } from "./ProstglesMCPTools/DoclingConvertedDocument/DoclingToolUseView";
 import { ExecuteSQL } from "./ProstglesMCPTools/ExecuteSQL";
 import { LoadSuggestedDashboards } from "./ProstglesMCPTools/LoadSuggestedDashboards";
 import { RequestToolAccess } from "./ProstglesMCPTools/RequestToolAccess";
@@ -18,6 +18,7 @@ import { RunTypescriptInNodejs } from "./ProstglesMCPTools/RunTypescriptInNodejs
 import { CreateComponentQuickFeedbackPreview } from "./ProstglesMCPTools/Webdev/CreateComponentQuickFeedbackPreview";
 import { Markdown } from "./ProstglesMCPTools/WebSearch/Markdown";
 import { WebSearch } from "./ProstglesMCPTools/WebSearch/WebSearch";
+import { CreateTables } from "./ProstglesMCPTools/CreateTables";
 
 export const ProstglesMCPToolsWithUI = {
   [getProstglesMCPFullToolName("prostgles-ui", "create_dashboards") as string]:
@@ -79,7 +80,11 @@ export const ProstglesMCPToolsWithUI = {
     displayMode: "inline",
   },
   [getProstglesMCPFullToolName("documents", "get_document_text") as string]: {
-    component: DoclingConvertedDocument,
+    component: DoclingToolUseView,
+    displayMode: "inline",
+  },
+  [getProstglesMCPFullToolName("prostgles-ui", "create_tables") as string]: {
+    component: CreateTables,
     displayMode: "inline",
   },
   [getProstglesMCPFullToolName(
@@ -91,7 +96,7 @@ export const ProstglesMCPToolsWithUI = {
     showsError: true,
   },
   [AGENT_GOAL_TOOL_NAMES.REACHED]: {
-    component: AgentGoallToolCall,
+    component: AgentGoalToolCall,
     displayMode: "full",
   },
 } satisfies Record<

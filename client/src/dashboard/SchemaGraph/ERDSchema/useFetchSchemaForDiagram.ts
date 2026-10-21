@@ -6,7 +6,7 @@ import {
   PG_OBJECT_QUERIES,
   type PGConstraint,
 } from "../../SQLEditor/SQLCompletion/getPGObjects";
-import { COLOR_PALETTE } from "../../W_Table/ColumnMenu/ColorPicker";
+import { COLOR_PALETTE } from "@common/ColumnConfig/COLOR_PALETTE";
 import type { ERDSchemaProps } from "./ERDSchema";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 

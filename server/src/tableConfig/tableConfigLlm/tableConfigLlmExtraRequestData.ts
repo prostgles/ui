@@ -1,4 +1,4 @@
-import type { ColumnConfig } from "prostgles-server/dist/TableConfig/TableConfig";
+import type { ColumnConfig } from "prostgles-server/dist/TableConfig/TableConfigTypes";
 
 export const extraRequestData = {
   extra_headers: {

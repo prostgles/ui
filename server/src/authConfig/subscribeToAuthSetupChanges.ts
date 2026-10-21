@@ -113,8 +113,7 @@ export const subscribeToAuthSetupChanges = async (
     },
     (passwordlessAdmin) => {
       setContext({
-        passwordlessAdmin:
-          passwordlessAdmin,
+        passwordlessAdmin: passwordlessAdmin,
       });
     },
   );

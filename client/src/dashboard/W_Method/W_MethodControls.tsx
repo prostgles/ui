@@ -1,4 +1,5 @@
-import { fromEntries, getEntries } from "@common/utils";
+import { getEntries } from "@common/utils";
+import { getFunctionOptions } from "@common/functionOptions";
 import Btn from "@components/Btn";
 import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol, FlexRow } from "@components/Flex";
@@ -10,15 +11,15 @@ import { mdiChevronDown, mdiPlay } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import type { AnyObject, ClientServerFunction, JSONB } from "prostgles-types";
-import { getKeys, getProperty, isEmpty, omitKeys } from "prostgles-types";
+import { getProperty, isEmpty, omitKeys } from "prostgles-types";
 import React, { useState } from "react";
 import { type Prgl } from "../../App";
 import { MethodDefinition } from "../AccessControl/Methods/MethodDefinition";
 import { CodeEditor } from "../CodeEditor/CodeEditor";
-import type { WindowData } from "../Dashboard/dashboardUtils";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 import SmartTable from "../SmartTable";
 import { ProcessLogs } from "../TableConfig/ProcessLogs";
-import type { ColumnValue } from "../W_Table/ColumnMenu/ColumnStyleControls/ColumnStyleControls";
+import type { ColumnValue } from "@common/ColumnConfig/columnStyleTypes";
 
 type P = Pick<Prgl, "db" | "methods" | "tables"> & {
   method_name: string;
@@ -33,7 +34,9 @@ type P = Pick<Prgl, "db" | "methods" | "tables"> & {
     argName: string;
     tableName: string;
   };
-  w: SyncDataItem<Required<WindowData<"method">>, true> | undefined;
+  w:
+    | SyncDataItem<Required<WindowData<"method">>, { handlesOnData: true }>
+    | undefined;
 };
 
 export const W_MethodControls = ({
@@ -50,54 +53,61 @@ export const W_MethodControls = ({
   const [result, setResult] = useState<unknown>();
   const [showResults, setShowResults] = useState(true);
   const methodFromSchema = getProperty(methods, method_name) as
-    | ClientServerFunction
-    | undefined;
+    ClientServerFunction | undefined;
   const [error, setError] = useState<unknown>(
     !methodFromSchema ? `Method named "${method_name}" not found` : undefined,
   );
   const [expandControls, setExpandControls] = useState(true);
   const [showJSONBErrors, setshowJSONBErrors] = useState(false);
   const { dbs, connectionId, sql } = prgl;
+  const { showCode = false, showLogs } = w?.options ?? {};
+  const functionOptions = getFunctionOptions(methodFromSchema);
   const { data: methodFullData, isLoading } =
     dbs.published_methods.useSubscribeOne(
-      { name: w?.method_name, connection_id: connectionId },
-      { limit: w?.method_name ? 1 : 0 },
+      { name: method_name, connection_id: connectionId },
+      { limit: 1 },
+      { skip: !showCode },
     );
-  const methodFullDataArgs =
-    methodFullData &&
-    fromEntries(methodFullData.arguments.map((m) => [m.name, m]));
 
   const [loading, setLoading] = useState(false);
 
   const argDefaults: Record<string, ColumnValue> = {};
-  const disabledArgsDefaults: string[] = [];
+  const optionalArgNames: string[] = [];
   if (methodFromSchema) {
     getEntries(methodFromSchema.input ?? {}).forEach(
       ([argName, stringOrObj]) => {
         const arg =
           typeof stringOrObj === "string" ? { type: stringOrObj } : stringOrObj;
-        const ref = arg.lookup?.type === "data" ? arg.lookup : undefined;
-        const argFullDetails = methodFullDataArgs?.[argName];
+        const isRowLookup = arg.type === "RowLookup";
+        const isValueLookup = arg.type === "ValueLookup";
         if (arg.optional) {
-          disabledArgsDefaults.push(argName);
+          optionalArgNames.push(argName);
         }
         if (fixedRowArgument?.argName === argName) {
           argDefaults[argName] =
-            ref?.isFullRow ? fixedRowArgument.row
-            : ref?.column ? fixedRowArgument.row[ref.column]
+            isRowLookup ? fixedRowArgument.row
+            : isValueLookup ? fixedRowArgument.row[arg.column]
             : undefined;
-        } else if (
-          argFullDetails?.defaultValue !== undefined &&
-          !ref?.isFullRow
-        ) {
-          argDefaults[argName] = argFullDetails.defaultValue;
+        } else if (!isRowLookup) {
+          const defaultValue =
+            (
+              functionOptions?.defaultArgs &&
+              argName in functionOptions.defaultArgs
+            ) ?
+              functionOptions.defaultArgs[argName]
+            : "defaultValue" in arg ? arg.defaultValue
+            : undefined;
+          if (defaultValue !== undefined)
+            argDefaults[argName] = defaultValue as ColumnValue;
         }
       },
     );
   }
 
   const args = otherProps.state.args ?? argDefaults;
-  const disabledArgs = otherProps.state.disabledArgs ?? disabledArgsDefaults;
+  const disabledArgs =
+    otherProps.state.disabledArgs ??
+    optionalArgNames.filter((argName) => args[argName] === undefined);
   const hiddenArgs = otherProps.state.hiddenArgs ?? [];
   const setArgs = (newArgs) => {
     setError(undefined);
@@ -105,57 +115,27 @@ export const W_MethodControls = ({
   };
 
   const inputSchema = methodFromSchema?.input ?? {};
-  const mArgs = getKeys(inputSchema).reduce((a, k) => {
-    const v: keyof typeof inputSchema = k;
-    const rawArg = inputSchema[v];
-    const arg = typeof rawArg === "string" ? { type: rawArg } : rawArg;
-    return {
-      ...a,
-      [v]:
-        arg?.lookup?.type === "data-def" ?
-          {
-            ...arg,
-            lookup: {
-              ...arg.lookup,
-              type: "data",
-            },
-          }
-        : inputSchema[v],
-    };
-  }, {} as JSONB.FieldTypeObj);
-
   const argSchema: JSONB.JSONBSchema = {
     type: {
-      ...omitKeys(mArgs, hiddenArgs as (keyof typeof mArgs)[]),
+      ...omitKeys(inputSchema, hiddenArgs),
     },
-    defaultValue: Object.entries(methodFromSchema?.input ?? {})
-      .filter(
-        ([argName]) =>
-          methodFullDataArgs?.[argName]?.defaultValue !== undefined,
-      )
-      .reduce(
-        (a, [argName]) => ({
-          ...a,
-          [argName]: methodFullDataArgs?.[argName]?.defaultValue,
-        }),
-        {},
-      ),
+    defaultValue: argDefaults,
   };
 
   const hasErrors = !isCompleteJSONB(args, argSchema);
 
   const outputTableInfo =
-    methodFullData?.outputTable ?
-      tables.find((t) => t.name === methodFullData.outputTable)
+    functionOptions?.outputTable ?
+      tables.find((t) => t.name === functionOptions.outputTable)
     : undefined;
-  const { showCode = false, showLogs } = w?.options ?? {};
 
-  if (isLoading) {
+  if (showCode && isLoading) {
     return <Loading />;
   }
 
   return (
     <FlexCol
+      data-command="W_MethodControls"
       className="W_MethodControls f-1  min-s-0 o-auto bg-color-2"
       style={{ gap: "2px" }}
     >
@@ -223,10 +203,10 @@ export const W_MethodControls = ({
                   setLoading(true);
                   setError(undefined);
                   const res = await methodFromSchema.run(
-                    !methodFullData?.arguments.length ? undefined : params,
+                    isEmpty(inputSchema) ? undefined : params,
                   );
                   if (outputTableInfo) {
-                    w?.$update({
+                    void w?.$update({
                       name: `${method_name} - ${await db[outputTableInfo.name]?.count?.()}`,
                     });
                   }
@@ -297,9 +277,9 @@ export const W_MethodControls = ({
           </FlexRow>
         </div>
       )}
-      {methodFullData?.outputTable && !outputTableInfo && (
+      {functionOptions?.outputTable && !outputTableInfo && (
         <ErrorComponent
-          error={`Results table ( ${methodFullData.outputTable} ) missing or not allowed`}
+          error={`Results table ( ${functionOptions.outputTable} ) missing or not allowed`}
           className="m-1"
         />
       )}

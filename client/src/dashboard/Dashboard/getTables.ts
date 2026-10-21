@@ -1,59 +1,51 @@
-import type { DBSSchema } from "@common/publishUtils";
-import type { DBSchemaTable } from "prostgles-types";
+import type {
+  ClientTableOptions,
+  ColumnOptions,
+} from "@common/managedTableSchema";
+import {
+  reverseJoinOn,
+  type ClientJoin,
+  type DBSchemaTable,
+} from "prostgles-types";
 import type { Prgl } from "src/App";
 import { getJoinedTables } from "../W_Table/tableUtils/tableUtils";
-import type { DBSchemaTablesWJoins } from "./dashboardUtils";
+import type { DBSchemaTablesWJoins, JoinOption } from "./dashboardUtils";
+
+export type DBSchemaTableWithOptions = DBSchemaTable<
+  ClientTableOptions,
+  ColumnOptions
+>;
 
 export const getTables = (
-  schemaTables: DBSchemaTable[],
-  connectionTableOptions: DBSSchema["connections"]["table_options"],
+  schemaTables: DBSchemaTableWithOptions[],
   db: Prgl["db"],
-  capitaliseNames = false,
+  joins: ClientJoin[] | undefined,
 ): { tables: DBSchemaTablesWJoins } => {
-  // : { tables: DBSchemaTablesWJoins }
   const tables = schemaTables.map((t) => {
-    const { columns, label, ...tableOpts } =
-      connectionTableOptions?.[t.name] ?? {};
+    const foreignKeyJoins = getJoinedTables(schemaTables, t.name, db);
     const result = {
-      ...tableOpts,
       ...t,
-      label:
-        label ?? (capitaliseNames ? convertSnakeToReadable(t.name) : t.name),
-      ...getJoinedTables(schemaTables, t.name, db),
-      columns: t.columns
-        .map(
-          (c) =>
-            // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-            ({
-              ...c,
-              label: capitaliseNames ? convertSnakeToReadable(c.name) : c.name,
-              icon: columns?.[c.name]?.icon,
-              renderAs: columns?.[c.name]?.renderAs,
-              style: columns?.[c.name]?.style,
-            }) as typeof c & {
-              icon: string;
-              renderAs?: any;
-              style?: any;
-            },
-          // as typeof c &
-          //   Partial<
-          //     Pick<
-          //       NonNullable<
-          //         NonNullable<
-          //           NonNullable<
-          //             NonNullable<
-          //               DBSSchema["connections"]["table_options"]
-          //             >[string]
-          //           >["columns"]
-          //         >[string]
-          //       >,
-          //       "icon" | "renderAs" | "style"
-          //     >
-          //   >,
-        )
-        .sort((a, b) => {
-          return a.ordinal_position - b.ordinal_position;
-        }),
+      ...foreignKeyJoins,
+      joinOptions:
+        joins ?
+          getJoinOptions(joins, t.name)
+        : foreignKeyJoins.joinsV2.flatMap((join): JoinOption[] =>
+            join.on.map((on) => ({
+              table: join.tableName,
+              on: [Object.fromEntries(on)],
+              paramsSchema: undefined,
+              supportsMultiHop: true,
+            })),
+          ),
+      columns: t.columns.sort((a, b) => {
+        const defaultOrder = (name: string) => {
+          const index = t.defaultColumns?.indexOf(name) ?? -1;
+          return index < 0 ? t.columns.length : index;
+        };
+        const order = defaultOrder(a.name) - defaultOrder(b.name);
+        if (order) return order;
+        return a.ordinal_position - b.ordinal_position;
+      }),
     };
     return result;
   });
@@ -64,18 +56,27 @@ export type DBSchemaTableWithRenderInfo = ReturnType<
   typeof getTables
 >["tables"][number];
 
-const convertSnakeToReadable = (str: string) => {
-  // ^[a-z0-9]+    : Starts with one or more lowercase letters or digits
-  // (?:_[a-z0-9]+)* : Followed by zero or more groups of an underscore and one or more lowercase letters/digits
-  // $             : Ends the string
-  const snakeCaseRegex = /^[a-z0-9]+(?:_[a-z0-9]+)*$/;
-
-  if (str && snakeCaseRegex.test(str)) {
-    const words = str.split("_");
-    const readableWords = words.map((word) => {
-      return word.charAt(0).toUpperCase() + word.slice(1);
-    });
-    return readableWords.join(" ");
-  }
-  return str;
-};
+const getJoinOptions = (joins: ClientJoin[], tableName: string): JoinOption[] =>
+  joins.flatMap((join) => {
+    if (!join.tables.includes(tableName)) return [];
+    const [left, right] = join.tables;
+    const target = left === tableName ? right : left;
+    if (typeof join.on === "string") {
+      const option: JoinOption = {
+        table: target,
+        on: join.on,
+        paramsSchema: join.paramsSchema,
+        supportsMultiHop: join.supportsMultiHop,
+      };
+      return left === right ?
+          [option, { ...option, reversed: true }]
+        : [option];
+    }
+    const conditions = left === tableName ? join.on : reverseJoinOn(join.on);
+    return conditions.map((on) => ({
+      table: target,
+      on: [on],
+      paramsSchema: undefined,
+      supportsMultiHop: join.supportsMultiHop,
+    }));
+  });

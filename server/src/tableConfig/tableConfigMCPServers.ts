@@ -1,14 +1,50 @@
-import type { DBSSchema } from "@common/publishUtils";
-import { testMCPServerConfig } from "@src/McpHub/testMCPServerConfig";
-import type {
-  ValidateRowArgsCommon,
-  ValidateRowsArgsCommon,
-} from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
-import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
-import { isDefined } from "prostgles-types";
-import type { DBS } from "..";
-import { fromEntries, getEntries } from "@common/utils";
-import { getDefaultMcpConfig } from "@common/mcp/web.mcp.schema";
+import type { TableConfig } from "prostgles-server";
+import { type JSONB } from "prostgles-types";
+
+export const mcpServerConfigJsonbSchema = {
+  oneOfType: [
+    {
+      type: { enum: ["OAuth"] },
+      scopes: { type: "string[]" },
+      savePngIcon: "boolean",
+      auth: {
+        oneOfType: [
+          { mode: { enum: ["none", "dcr"] } },
+          {
+            mode: { enum: ["cimd"] },
+            clientMetadataUrl: { type: "string" },
+          },
+          {
+            mode: { enum: ["bearer"] },
+            bearerToken: { type: "string" },
+          },
+          {
+            mode: { enum: ["authorization_code"] },
+            clientId: "string",
+            clientSecret: "string",
+          },
+          {
+            mode: { enum: ["client_credentials"] },
+            clientId: "string",
+            clientSecret: "string",
+            tokenEndpoint: "string",
+          },
+        ],
+      },
+    },
+    {
+      type: { enum: ["local"] },
+      value: { record: { values: "unknown" } },
+    },
+  ],
+} as const satisfies JSONB.JSONBSchema;
+
+const commonOAuthSchema = {
+  scopes: "string[]",
+  discoveryState: { record: { values: "unknown" } },
+  clientInformation: { record: { values: "unknown" } },
+  redirectUri: "string",
+} as const satisfies JSONB.ObjectType["type"];
 
 export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
   mcp_servers: {
@@ -16,6 +52,94 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
       name: `TEXT PRIMARY KEY`,
       info: `TEXT`,
       icon_path: `TEXT`,
+      icon_bytes: `BYTEA`,
+      headers: {
+        nullable: true,
+        jsonbSchema: {
+          record: {
+            values: "string",
+          },
+        },
+      },
+      server_version: {
+        nullable: true,
+        jsonbSchemaType: {
+          version: "string",
+          name: "string",
+          websiteUrl: { type: "string", optional: true },
+          description: { type: "string", optional: true },
+          icons: {
+            optional: true,
+            arrayOfType: {
+              src: "string",
+              mimeType: { type: "string", optional: true },
+              sizes: { type: "string[]", optional: true },
+              theme: { enum: ["light", "dark"], optional: true },
+            },
+          },
+          title: { type: "string", optional: true },
+        },
+      },
+      capabilities: {
+        nullable: true,
+        jsonbSchemaType: {
+          experimental: {
+            optional: true,
+            record: { values: "any" },
+          },
+          logging: {
+            optional: true,
+            record: { values: "any" },
+          },
+          completions: {
+            optional: true,
+            record: { values: "any" },
+          },
+          prompts: {
+            optional: true,
+            type: {
+              listChanged: { type: "boolean", optional: true },
+            },
+          },
+          resources: {
+            optional: true,
+            type: {
+              subscribe: { type: "boolean", optional: true },
+              listChanged: { type: "boolean", optional: true },
+            },
+          },
+          tools: {
+            optional: true,
+            type: {
+              listChanged: { type: "boolean", optional: true },
+            },
+          },
+          tasks: {
+            optional: true,
+            type: {
+              list: { record: { values: "any" }, optional: true },
+              cancel: { record: { values: "any" }, optional: true },
+              requests: {
+                optional: true,
+                type: {
+                  tools: {
+                    optional: true,
+                    type: {
+                      call: { record: { values: "any" }, optional: true },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          extensions: {
+            optional: true,
+            record: {
+              values: { record: { values: "any" } },
+            },
+          },
+        },
+      },
       source: {
         nullable: true,
         jsonbSchema: {
@@ -44,8 +168,29 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
         },
       },
       command: {
-        enum: ["npx", "npm", "uvx", "uv", "docker", "prostgles-local"],
+        enum: [
+          "npx",
+          "npm",
+          "uvx",
+          "uv",
+          "docker",
+          "prostgles-local",
+          "streamable-http",
+        ],
       },
+      url: `TEXT`,
+      cwd: `TEXT`,
+      args: `TEXT[]`,
+      stderr: "TEXT",
+      env: {
+        nullable: true,
+        jsonbSchema: {
+          record: {
+            values: "string",
+          },
+        },
+      },
+      env_from_main_process: `TEXT[]`,
       config_schema: {
         jsonbSchema: {
           record: {
@@ -90,18 +235,6 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
         },
         nullable: true,
       },
-      cwd: `TEXT`,
-      args: `TEXT[]`,
-      stderr: "TEXT",
-      env: {
-        nullable: true,
-        jsonbSchema: {
-          record: {
-            values: "string",
-          },
-        },
-      },
-      env_from_main_process: `TEXT[]`,
       enabled: `BOOLEAN NOT NULL DEFAULT FALSE`,
       created: `TIMESTAMPTZ DEFAULT NOW()`,
       installed: `TIMESTAMPTZ`,
@@ -111,7 +244,60 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
     columns: {
       id: `SERIAL PRIMARY KEY`,
       server_name: `TEXT NOT NULL REFERENCES mcp_servers(name) ON DELETE CASCADE`,
-      config: { jsonbSchema: { record: { values: "any" } } },
+      config: { jsonbSchema: mcpServerConfigJsonbSchema },
+      oauth_request_id: `TEXT UNIQUE`,
+      oauth: {
+        nullable: true,
+        jsonbSchema: {
+          oneOfType: [
+            {
+              phase: { enum: ["initializing_dcr"] },
+              redirectUri: "string",
+              scopes: "string[]",
+            },
+            {
+              phase: { enum: ["initializing_client"] },
+              tokenEndpoint: "string",
+              ...commonOAuthSchema,
+            },
+            {
+              phase: { enum: ["initializing_bearer_token"] },
+              redirectUri: "string",
+              bearerToken: "string",
+              scopes: "string[]",
+            },
+            {
+              phase: { enum: ["error"] },
+              error: "string",
+              errorType: { enum: ["dcr_not_supported", "unknown"] },
+              redirectUri: "string",
+              scopes: "string[]",
+            },
+            {
+              phase: { enum: ["awaiting_authorization"] },
+              ...commonOAuthSchema,
+              authorizationUrl: "string",
+              codeVerifier: "string",
+            },
+            {
+              phase: { enum: ["exchanging_code"] },
+              ...commonOAuthSchema,
+              codeVerifier: "string",
+              pendingAuthorizationCode: "string",
+            },
+            {
+              phase: { enum: ["connected"] },
+              ...commonOAuthSchema,
+              tokens: { record: { values: "unknown" } },
+              clientSecret: { type: "string", optional: true },
+            },
+            {
+              phase: { enum: ["connected_bearer"] },
+              bearerToken: "string",
+            },
+          ],
+        },
+      },
       created: `TIMESTAMPTZ DEFAULT NOW()`,
       last_updated: `TIMESTAMPTZ DEFAULT NOW()`,
     },
@@ -124,20 +310,6 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
         type: "UNIQUE",
         content: "server_name, id",
       },
-    },
-    hooks: {
-      afterEach: [
-        {
-          commands: { update: 1 },
-          validate: async (args) => {
-            const { dbx, row } = args as unknown as ValidateRowArgsCommon<
-              DBSSchema["mcp_server_configs"],
-              DBS
-            >;
-            await testMCPServerConfig(dbx, row);
-          },
-        },
-      ],
     },
   },
   mcp_server_tools: {
@@ -185,6 +357,17 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
           },
         },
         nullable: true,
+      },
+      icons: {
+        nullable: true,
+        jsonbSchema: {
+          arrayOfType: {
+            src: "string",
+            mimeType: { type: "string", optional: true },
+            sizes: { type: "string[]", optional: true },
+            theme: { enum: ["light", "dark"], optional: true },
+          },
+        },
       },
       mode: {
         info: { hint: "Used by prostgles mcp tools" },
@@ -239,105 +422,6 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
         unique: true,
         columns: "chat_id, tool_id",
       },
-    },
-    hooks: {
-      afterAll: [
-        {
-          commands: { insert: 1, update: 1 },
-          validate: async (args) => {
-            const { dbx, data, rows } =
-              args as unknown as ValidateRowsArgsCommon<
-                DBSSchema["llm_chats_allowed_mcp_tools"],
-                DBS
-              >;
-            const serverNames = Array.from(
-              new Set(data.map((row) => row.server_name).filter(isDefined)),
-            );
-            const serversWithoutConfigId = Array.from(
-              new Set(
-                data
-                  .map((row) =>
-                    row.server_config_id ? undefined : row.server_name,
-                  )
-                  .filter(isDefined),
-              ),
-            );
-            const serversThatNeedConfigs = await dbx.mcp_servers.find(
-              {
-                name: { $in: serversWithoutConfigId },
-                config_schema: { $ne: null },
-              },
-              { select: { name: 1, config_schema: 1 } },
-            );
-
-            const defaultServerConfigs = serversThatNeedConfigs
-              .map((server) => {
-                const defaultConfig = getDefaultMcpConfig(server.config_schema);
-                if (!defaultConfig) {
-                  return;
-                }
-                return {
-                  server,
-                  defaultConfig,
-                };
-              })
-              .filter(isDefined);
-
-            if (
-              serversThatNeedConfigs.length &&
-              serversThatNeedConfigs.length === defaultServerConfigs.length
-            ) {
-              for (const { server, defaultConfig } of defaultServerConfigs) {
-                const configData = {
-                  server_name: server.name,
-                  config: defaultConfig,
-                };
-                const config =
-                  (await dbx.mcp_server_configs.findOne(configData)) ||
-                  (await dbx.mcp_server_configs.insert(configData, {
-                    returning: { id: 1 },
-                  }));
-                await dbx.llm_chats_allowed_mcp_tools.update(
-                  {
-                    $or: rows
-                      .filter(
-                        (row) =>
-                          row.server_name === server.name &&
-                          row.server_config_id === null,
-                      )
-                      .map(({ server_name, tool_id, chat_id }) => ({
-                        server_name,
-                        tool_id,
-                        chat_id,
-                      })),
-                  },
-                  {
-                    server_config_id: config.id,
-                  },
-                );
-              }
-            } else if (serversThatNeedConfigs.length) {
-              throw new Error(
-                `MCP Servers ${JSON.stringify(
-                  serversThatNeedConfigs.map((s) => s.name).join(", "),
-                )} require a server_config_id to be set for allowed tools. Please provide a valid server_config_id.`,
-              );
-            }
-
-            if (serverNames.length) {
-              await dbx.mcp_servers.update(
-                {
-                  name: { $in: serverNames },
-                  enabled: false,
-                },
-                {
-                  enabled: true,
-                },
-              );
-            }
-          },
-        },
-      ],
     },
   },
   mcp_tool_approval_requests: {

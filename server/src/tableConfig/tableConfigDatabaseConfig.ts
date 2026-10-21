@@ -1,7 +1,9 @@
-import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
+import type { TableConfig } from "prostgles-server";
 import type { JSONB } from "prostgles-types";
+import { documentsServiceInputSchemaMcpOptions } from "@common/mcp/documentsServiceInputSchema";
 import { DUMP_OPTIONS_SCHEMA } from "./tableConfigBackups";
 import { OAuthProviderOptions } from "@common/OAuthUtils";
+import { MANAGED_USER_TYPES } from "@common/authTypesAndConstants";
 
 export const UNIQUE_DB_COLS = ["db_name", "db_host", "db_port"] as const;
 const UNIQUE_DB_FIELDLIST = UNIQUE_DB_COLS.join(", ");
@@ -33,7 +35,7 @@ export const FILE_TABLE_CONFIG_SCHEMA = {
       },
     ],
   },
-  referencedTables: { type: "any", optional: true },
+  referencedTables: { record: { values: "any" }, optional: true },
   delayedDelete: {
     optional: true,
     type: {
@@ -42,10 +44,23 @@ export const FILE_TABLE_CONFIG_SCHEMA = {
        */
       deleteAfterNDays: { type: "number" },
       /**
-       * How freuquently the files will be checked for deletion delay
+       * How frequently the files will be checked for deletion delay
        */
       checkIntervalHours: { type: "number", optional: true },
     },
+  },
+  annotationsTable: { type: "string", optional: true },
+  extractText: { type: "boolean", optional: true },
+  extractTextOptions: {
+    type: documentsServiceInputSchemaMcpOptions,
+    optional: true,
+  },
+  versioning: {
+    type: {
+      tableName: { type: "string", optional: true },
+      maxVersions: { type: "integer", optional: true },
+    },
+    optional: true,
   },
 } as const satisfies JSONB.ObjectType["type"];
 
@@ -129,7 +144,16 @@ const tableConfigSchema: JSONB.JSONBSchema = {
                           },
                           {
                             type: {
-                              enum: ["Lookup", "Lookup[]"],
+                              enum: [
+                                "RowLookup",
+                                "RowLookup[]",
+                                "ValueLookup",
+                                "ValueLookup[]",
+                                "TableLookup",
+                                "TableLookup[]",
+                                "ColumnLookup",
+                                "ColumnLookup[]",
+                              ],
                             },
                             optional: { type: "boolean", optional: true },
                             description: { type: "string", optional: true },
@@ -534,7 +558,11 @@ export const tableConfigDatabaseConfig: TableConfig<{ en: 1 }> = {
         info: {
           hint: "User type assigned to new users. Defaults to 'default'",
         },
-        sqlDefinition: `TEXT REFERENCES user_types`,
+        sqlDefinition: `TEXT REFERENCES user_types CHECK (auth_created_user_type NOT IN (${MANAGED_USER_TYPES.filter(
+          (type) => type !== "default",
+        )
+          .map((type) => `'${type}'`)
+          .join(", ")}))`,
       },
       auth_providers: {
         info: {
@@ -672,6 +700,22 @@ export const tableConfigDatabaseConfig: TableConfig<{ en: 1 }> = {
         sqlDefinition: `BOOLEAN NOT NULL DEFAULT FALSE`,
         info: {
           hint: "If true then all environment variables will be passed to the server side function nodejs. Use at your own risk",
+        },
+      },
+
+      config_sync: {
+        nullable: true,
+        jsonbSchemaType: {
+          configPath: "string",
+          type: { enum: ["sample-schema", "cli"] },
+          toggleableProperties: {
+            record: {
+              partial: true,
+              keysEnum: ["tableConfig", "functions", "onMount"],
+              values: { enum: [1] },
+            },
+          },
+          lastSynced: "Date",
         },
       },
     },

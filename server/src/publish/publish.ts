@@ -1,3 +1,8 @@
+import {
+  canManageBusinessAccess,
+  MANAGED_USER_TYPES,
+  USER_TYPES,
+} from "@common/authTypesAndConstants";
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import { isDefined } from "@common/filterUtils";
 import {
@@ -11,29 +16,44 @@ import type { SessionUser } from "prostgles-server/dist/Auth/AuthTypes";
 import type { PublishFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
 import { verifySMTPConfig } from "prostgles-server/dist/Prostgles";
 import type { Publish } from "prostgles-server/dist/PublishParser/PublishParser";
-import type { ValidateUpdateRow } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
-import { getKeys, type FilterItem } from "prostgles-types";
-import { getPasswordHash } from "../authConfig/authUtils";
+import { getKeys, type FullFilter } from "prostgles-types";
 import { getSMTPWithTLS } from "../authConfig/emailProvider/getEmailSenderWithMockTest";
 import { checkClientIP } from "../authConfig/sessionUtils";
-import { getACRules } from "../ConnectionManager/ConnectionManager";
+import { fetchUserAccessControlRules } from "../ConnectionManager/fetchUserAccessControlRules";
+import { getAllowedConnectionsFilter } from "./getAllowedConnectionsFilter";
+import { getBusinessAccessPublish } from "./getBusinessAccessPublish";
 import { getPublishLLM } from "./getPublishLLM";
 
 export const publish: Publish<
   DBGeneratedSchema,
   SessionUser<DBSSchema["users"]>
 > = async (params) => {
-  const { dbo: db, user, db: _db, clientReq } = params;
+  const { dbo: db, user, db: _db, clientReq, sid } = params;
 
   if (!user || !user.id) {
     return null;
   }
-  const isAdmin = user.type === "admin";
+  const isAdmin = user.type === USER_TYPES.ADMIN;
 
   const { id: user_id } = user;
+  const allowedConnectionFilter: FullFilter<
+    DBSSchema["connections"],
+    DBGeneratedSchema
+  > = isAdmin ? {} : getAllowedConnectionsFilter(user.type, []);
+  const getDashboardConnectionFilter = (
+    tableName: "workspaces" | "windows" | "links",
+  ) =>
+    isAdmin ?
+      {}
+    : getAllowedConnectionsFilter(
+        user.type,
+        tableName === "workspaces" ?
+          ["connections"]
+        : ["workspaces", "connections"],
+      );
 
-  /** This will prevent admins from seing each others published workspaces?! */
-  const accessRules = isAdmin ? undefined : await getACRules(db, user);
+  const accessRules =
+    isAdmin ? undefined : await fetchUserAccessControlRules(db, user);
 
   const createEditDashboards =
     isAdmin ||
@@ -46,6 +66,20 @@ export const publish: Publish<
       )
       .filter(isDefined) || [];
 
+  const getDashboardEditFilter = (
+    tableName: "workspaces" | "windows" | "links",
+  ) =>
+    !isAdmin ?
+      { $and: [{ user_id }, getDashboardConnectionFilter(tableName)] }
+    : {
+        $or: [
+          { user_id },
+          tableName === "workspaces" ?
+            { published: true }
+          : { $existsJoined: { workspaces: { published: true } } },
+        ],
+      };
+
   const dashboardMainTables: Publish<DBGeneratedSchema> = (
     ["windows", "links", "workspaces"] as const
   ).reduce(
@@ -55,13 +89,22 @@ export const publish: Publish<
         select: {
           fields: "*",
           forcedFilter: {
-            $or: [
-              { user_id },
-              /** User either owns the item or the item has been shared/published to the user */
+            $and: [
+              ...(isAdmin ? [] : [getDashboardConnectionFilter(tableName)]),
               {
-                [tableName === "workspaces" ? "id" : "workspace_id"]: {
-                  $in: publishedWspIDs,
-                },
+                $or: [
+                  { user_id },
+                  /** User either owns the item or the item has been shared/published to the user */
+                  canManageBusinessAccess(user.type) ?
+                    tableName === "workspaces" ?
+                      { published: true }
+                    : { $existsJoined: { workspaces: { published: true } } }
+                  : {
+                      [tableName === "workspaces" ? "id" : "workspace_id"]: {
+                        $in: publishedWspIDs,
+                      },
+                    },
+                ],
               },
             ],
           },
@@ -69,69 +112,34 @@ export const publish: Publish<
         ...(createEditDashboards && {
           update: {
             fields: { user_id: 0 },
-            forcedData: { user_id },
-            forcedFilter: { user_id },
+            forcedData: isAdmin ? undefined : { user_id },
+            forcedFilter: getDashboardEditFilter(tableName),
+            checkFilter:
+              isAdmin ? undefined : getDashboardConnectionFilter(tableName),
           },
           insert: {
             fields: "*",
             forcedData: { user_id },
             /** TODO: Add workspace publish modes */
             checkFilter:
-              tableName === "workspaces" ? undefined : (
-                {
+              tableName === "workspaces" ?
+                isAdmin ? undefined
+                : getDashboardConnectionFilter(tableName)
+              : {
                   $existsJoined: {
-                    workspaces: {
-                      user_id: user.id,
-                    },
+                    workspaces: getDashboardEditFilter("workspaces"),
                   },
-                }
-              ),
+                },
           },
           delete: {
             filterFields: "*",
-            forcedFilter: { user_id },
+            forcedFilter: getDashboardEditFilter(tableName),
           },
         }),
       } satisfies PublishFullyTyped<DBGeneratedSchema>["workspaces"],
     }),
     {},
   );
-
-  type User = DBGeneratedSchema["users"]["columns"];
-  const getValidateAndHashUserPassword = (mustUpdate = false) => {
-    const validateFunc: ValidateUpdateRow<User, DBGeneratedSchema> = async ({
-      dbx,
-      filter,
-      update,
-    }) => {
-      if ("password" in update) {
-        //@ts-ignore
-        const [user, ...otherUsers] = await dbx.users.find(filter);
-        if (!user || otherUsers.length) {
-          throw "Cannot update: update filter must match exactly one user";
-        }
-        if (!update.password) {
-          throw "Password cannot be empty";
-        }
-        const hashedPassword = getPasswordHash(user, update.password);
-        if (typeof hashedPassword !== "string") throw "Not ok";
-        if (mustUpdate) {
-          await dbx.users.update(filter, { password: hashedPassword });
-        }
-        return {
-          ...update,
-          password: hashedPassword,
-        };
-      }
-      update.last_updated ??= Date.now().toString();
-      return update;
-    };
-    return validateFunc;
-  };
-
-  const userTypeFilter = {
-    access_control_user_types: { user_type: user.type },
-  };
 
   const forcedData = { user_id: user.id };
 
@@ -147,6 +155,7 @@ export const publish: Publish<
     /* DASHBOARD */
     ...dashboardMainTables,
     access_control_user_types: isAdmin && "*",
+    access_control_connections: isAdmin && "*",
     published_methods:
       isAdmin ? "*" : (
         {
@@ -177,9 +186,9 @@ export const publish: Publish<
       },
       update: "*",
     },
-    ...getPublishLLM(user_id, isAdmin, accessRules, db),
+    ...getPublishLLM(user_id, isAdmin, accessRules),
     credential_types: isAdmin && { select: "*" },
-    access_control: isAdmin ? "*" : undefined,
+    access_control: isAdmin && "*",
     database_configs:
       isAdmin ?
         {
@@ -199,6 +208,11 @@ export const publish: Publish<
                 if (!oldValue) {
                   throw "Cannot find existing database config to validate IP changes";
                 }
+
+                if (!clientReq.httpReq && !clientReq.socket) {
+                  throw "Cannot determine client IP for validation";
+                }
+
                 const { isAllowed, ip } = await checkClientIP(
                   tx,
                   {
@@ -252,61 +266,54 @@ export const publish: Publish<
             { id: 1, name: 1, created: 1, is_state_db: 1, table_options: 1 }
           ),
         orderByFields: { db_conn: 1, created: 1 },
-        forcedFilter:
-          isAdmin ?
-            {}
-          : {
-              $and: [
-                {
-                  $existsJoined: {
-                    "database_configs.access_control.access_control_user_types":
-                      userTypeFilter["access_control_user_types"],
-                  },
-                } as FilterItem,
-                { $existsJoined: { access_control_connections: {} } },
-              ],
-            },
+        forcedFilter: allowedConnectionFilter,
       },
       update: isAdmin && {
         fields: {
           name: 1,
           url_path: 1,
           table_options: 1,
+          function_options: 1,
           db_schema_filter: 1,
           display_options: 1,
           port: 1,
           web_app_directory: 1,
         },
-        validate: async ({ update, dbx, filter }) => {
-          if (update.port) {
-            const isFree = await isPortFree(update.port);
+        postValidate: async ({ row, data: update, command }) => {
+          if (command !== "update") return;
+          if (update.port && row.port) {
+            const isFree = await isPortFree(row.port);
             if (!isFree) {
-              throw `Port ${update.port} is already in use`;
+              throw `Port ${row.port} is already in use`;
             }
           }
 
-          const row = await dbx.connections.findOne(filter);
-          if (row?.is_state_db && update.table_options) {
+          if (row.is_state_db && update.table_options) {
             throw "Table options cannot be set on state database connections";
           }
-          return update;
         },
       },
     },
-    user_types: isAdmin && {
-      insert: "*",
+    user_types: {
       select: {
         fields: "*",
+        forcedFilter:
+          canManageBusinessAccess(user.type) ? {} : { id: user.type },
       },
-      delete: {
-        filterFields: "*",
-        validate: async (filter) => {
-          const adminVal = await db.user_types.findOne({
-            $and: [filter, { id: "admin" }],
-          });
-          if (adminVal) throw "Cannot delete the admin value";
+      ...(canManageBusinessAccess(user.type) && {
+        insert: {
+          fields: ["id", "description"],
+          checkFilter: { id: { $nin: MANAGED_USER_TYPES } },
         },
-      },
+        update: {
+          fields: ["description"],
+          forcedFilter: { id: { $nin: MANAGED_USER_TYPES } },
+        },
+        delete: {
+          filterFields: "*",
+          forcedFilter: { id: { $nin: MANAGED_USER_TYPES } },
+        },
+      }),
     },
     users:
       isAdmin ?
@@ -314,24 +321,20 @@ export const publish: Publish<
           select: { fields: { "2fa": 0, password: 0 } },
           insert: {
             fields: { created: 0, "2fa": 0, last_updated: 0 },
-            postValidate: async ({ row, dbx, localParams }) => {
-              await getValidateAndHashUserPassword(true)({
-                localParams,
-                update: row,
-                dbx,
-                filter: { id: row.id },
-              });
-            },
           },
           update: {
             fields: {
+              username: 1,
+              name: 1,
+              email: 1,
+              type: 1,
+              status: 1,
               options: 1,
             },
-            validate: getValidateAndHashUserPassword(),
             dynamicFields: [
               {
                 /* For own user can only change these fields */
-                fields: { username: 1, password: 1, status: 1, options: 1 },
+                fields: { username: 1, status: 1, options: 1 },
                 filter: { id: user.id },
               },
             ],
@@ -345,20 +348,20 @@ export const publish: Publish<
           select: {
             fields: {
               id: 1,
+              type: 1,
               username: 1,
               name: 1,
+              status: 1,
               email: 1,
               auth_provider: 1,
-              type: 1,
               options: 1,
               created: 1,
             },
             forcedFilter: { id: user_id },
           },
           update: {
-            fields: { password: 1, options: 1 },
+            fields: { options: 1 },
             forcedFilter: { id: user_id },
-            validate: getValidateAndHashUserPassword(),
           },
         },
     sessions: {
@@ -397,7 +400,11 @@ export const publish: Publish<
     },
 
     login_attempts: {
-      select: "*",
+      select: {
+        fields: "*",
+        forcedFilter:
+          isAdmin ? undefined : { $or: [{ username: user.username }, { sid }] },
+      },
     },
     logs: isAdmin && {
       select: "*",
@@ -426,6 +433,13 @@ export const publish: Publish<
         }
       ),
   };
+
+  if (user.type === USER_TYPES.CONNECTION_ADMIN) {
+    dashboardTables = {
+      ...dashboardTables,
+      ...getBusinessAccessPublish(user_id),
+    };
+  }
 
   const curTables = Object.keys(dashboardTables);
   const remainingTables = getKeys(db).filter((k) => {

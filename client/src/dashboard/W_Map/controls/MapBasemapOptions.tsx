@@ -11,13 +11,13 @@ import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import { isDefined, isEqual } from "prostgles-types";
 import React, { useCallback, useState } from "react";
-import type { WindowData } from "../../Dashboard/dashboardUtils";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 import { DEFAULT_TILE_URLS } from "../../Map/mapUtils";
 import SmartTable from "../../SmartTable";
 import { MAP_PROJECTIONS } from "../W_MapMenu";
 
 type P = {
-  w: SyncDataItem<Required<WindowData<"map">>, true>;
+  w: SyncDataItem<Required<WindowData<"map">>, { handlesOnData: true }>;
   className?: string;
   asPopup?: boolean;
 };

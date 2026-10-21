@@ -387,16 +387,6 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
                 this.ref = r;
               }
             }}
-            onClick={
-              !(onClickClose && onClose) ? undefined : (
-                (e) => {
-                  if (window.getSelection()?.toString()) {
-                    return;
-                  }
-                  onClose(e);
-                }
-              )
-            }
             style={{
               boxSizing: "content-box",
               ...style,
@@ -442,6 +432,16 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
                     ...contentFullScreenStyle,
                   }}
                   data-command={"Popup.content" satisfies Command}
+                  onClick={
+                    !(onClickClose && onClose) ? undefined : (
+                      (e) => {
+                        if (window.getSelection()?.toString()) {
+                          return;
+                        }
+                        onClose(e);
+                      }
+                    )
+                  }
                 >
                   <ErrorTrap>{content || children}</ErrorTrap>
                 </div>

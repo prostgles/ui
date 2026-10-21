@@ -74,6 +74,18 @@ export const LLMGroupedToolCallsMessage = ({
   const firstTextMessage = textMessages[0];
   const lastTextMessage = textMessages.at(-1);
 
+  const someToolUseMessagesNeedResult = useMemo(() => {
+    return messages.some(({ message, nextMessage }) => {
+      return message.message.some(
+        (m) =>
+          m.type === "tool_use" &&
+          !nextMessage?.message.some(
+            (m) => m.type === "tool_result" && m.tool_use_id === m.tool_use_id,
+          ),
+      );
+    });
+  }, [messages]);
+
   return (
     <>
       {firstTextMessage && (
@@ -89,10 +101,13 @@ export const LLMGroupedToolCallsMessage = ({
         color={allMessagesAreErrored ? "danger" : undefined}
         onClick={onToggle}
         data-command="ToolUseMessage.toggleGroup"
+        loading={someToolUseMessagesNeedResult ? "allow-clicking" : undefined}
       >
-        {icons.map((iconName) => {
-          return <LLMToolCallIcon key={iconName} iconName={iconName} />;
-        })}
+        {someToolUseMessagesNeedResult ? null : (
+          icons.map((iconName) => {
+            return <LLMToolCallIcon key={iconName} iconName={iconName} />;
+          })
+        )}
         {toolCallCount} tool calls
       </Btn>
       {textMessages.length > 1 && lastTextMessage && (

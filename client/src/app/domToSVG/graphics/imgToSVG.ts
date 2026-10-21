@@ -59,8 +59,7 @@ export const imgToSVG = async (
   context,
 ) => {
   const loadedImage = await loadImage(imgElement);
-
-  const dataUrl = convertImageToDataURL(loadedImage);
+  const dataUrl = await convertImageToDataURL(loadedImage);
   addImageFromDataURL(g, dataUrl, context, layout);
 };
 
@@ -70,14 +69,17 @@ const loadImage = async (
   if (!imgSource.complete) {
     return new Promise((resolve, reject) => {
       imgSource.onload = () => resolve(imgSource);
-      imgSource.onerror = () =>
+      imgSource.onerror = () => {
         reject(new Error("Failed to load the provided image element"));
+      };
     });
   }
   return imgSource;
 };
 
-const convertImageToDataURL = (img: HTMLImageElement): string => {
+const convertImageToDataURL = async (
+  img: HTMLImageElement,
+): Promise<string> => {
   try {
     if (img.src.startsWith("data:")) {
       return img.src;
@@ -96,6 +98,43 @@ const convertImageToDataURL = (img: HTMLImageElement): string => {
   } catch (error) {
     console.error("Error converting image to data URL:", error);
     // Fallback to original source if conversion fails
-    return img.src;
+    try {
+      return await fetchDataUrl(img.src);
+    } catch {
+      return img.src;
+    }
+  }
+};
+
+const fetchDataUrl = async (url: string): Promise<string> => {
+  const isData = url.startsWith("data:");
+  if (isData) return url;
+
+  const proxyUrl = `/dev-proxy/image?url=${encodeURIComponent(url)}`;
+
+  const toDataUrl = async (input: string): Promise<string> => {
+    const response = await fetch(input);
+    if (!response.ok) {
+      throw new Error(`Fetch failed: ${response.status}`);
+    }
+    const blob = await response.blob();
+    return await new Promise<string>((resolve, reject) => {
+      const fr = new FileReader();
+      fr.onload = () => resolve(fr.result as string);
+      fr.onerror = reject;
+      fr.readAsDataURL(blob);
+    });
+  };
+
+  try {
+    // Prefer same-origin proxy to avoid browser CORS restrictions.
+    return await toDataUrl(proxyUrl);
+  } catch {
+    try {
+      // Fallback for environments where proxy route is unavailable.
+      return await toDataUrl(url);
+    } catch {
+      return url;
+    }
   }
 };

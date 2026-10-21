@@ -1,5 +1,5 @@
 import type { DBSchemaTable } from "prostgles-types";
-import { getKeys, pickKeys } from "prostgles-types";
+import { getKeys, isEqual, pickKeys } from "prostgles-types";
 import type { Prgl } from "src/App";
 import type {
   DBSchemaTableWJoins,
@@ -7,9 +7,15 @@ import type {
   JoinV2,
   WindowSyncItem,
 } from "../../Dashboard/dashboardUtils";
-import type { ColumnConfig, ColumnSortSQL } from "../ColumnMenu/ColumnMenu";
+import type {
+  ColumnConfig,
+  ColumnConfigNested,
+  ColumnSortSQL,
+  NestedColumn,
+} from "@common/ColumnConfig/ColumnConfig";
 import { SORTABLE_CHART_COLUMNS } from "../ColumnMenu/NestedTimechartControls";
-import type { ColumnConfigWInfo } from "../W_Table";
+import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
+import { getColumnsWithInfo } from "./getColumnsWithInfo";
 
 /** It's a record to ensure all keys are present */
 const COLUMN_CONFIG_KEYS: Record<keyof ColumnConfig, 1> = {
@@ -17,40 +23,51 @@ const COLUMN_CONFIG_KEYS: Record<keyof ColumnConfig, 1> = {
   computedConfig: 1,
   format: 1,
   name: 1,
+  label: 1,
+  display: 1,
   show: 1,
   style: 1,
   width: 1,
   nested: 1,
 };
-export const getMinimalColumnInfo = <CWI extends ColumnConfigWInfo>(
-  columns: CWI[],
-): Pick<CWI, keyof ColumnConfig>[] => {
+export const getMinimalColumnInfo = <
+  ColumnsWithInfo extends ColumnConfigWithInfo | ColumnConfig,
+>(
+  columns: ColumnsWithInfo[],
+): ColumnConfig[] => {
   const colconfigKeys = getKeys(COLUMN_CONFIG_KEYS);
-  return columns.map((c) => pickKeys(c, colconfigKeys, true));
+  return columns.map((c) => {
+    const columnCoreInfo = pickKeys(c, colconfigKeys, true);
+    if (columnCoreInfo.nested) {
+      columnCoreInfo.nested = {
+        ...columnCoreInfo.nested,
+        columns: getMinimalColumnInfo(columnCoreInfo.nested.columns),
+      };
+    }
+    const defaultConfig = "defaultConfig" in c && c.defaultConfig;
+    const defaults = defaultConfig && getMinimalColumnInfo([defaultConfig])[0];
+    if (defaults) {
+      colconfigKeys.forEach((key) => {
+        if (
+          key !== "name" &&
+          key !== "show" &&
+          isEqual(columnCoreInfo[key], defaults[key])
+        ) {
+          delete columnCoreInfo[key];
+        }
+      });
+    }
+    return columnCoreInfo;
+  });
 };
 
 export const updateWCols = (
   w: WindowSyncItem<"table">,
   newCols: WindowSyncItem<"table">["columns"] = null,
-  nestedColumnName?: string,
+  nestedColumn?: ColumnConfigNested,
 ) => {
-  const newMinimalCols =
-    newCols ?
-      getMinimalColumnInfo(newCols).map((c) => {
-        if (c.nested) {
-          return {
-            ...c,
-            nested: {
-              ...c.nested,
-              columns: getMinimalColumnInfo(c.nested.columns),
-            },
-          };
-        }
-
-        return c;
-      })
-    : null;
-  if (nestedColumnName) {
+  const newMinimalCols = newCols && getMinimalColumnInfo(newCols);
+  if (nestedColumn) {
     const currCols = w.$get()?.columns;
     if (!currCols) {
       console.error("No w cols");
@@ -61,17 +78,27 @@ export const updateWCols = (
       return;
     }
     return w.$update({
-      columns: currCols.map((c) => {
-        if (c.name === nestedColumnName) {
-          if (!c.nested) {
-            throw "nestedColumnName not pointing to a nested column";
+      columns: getMinimalColumnInfo(
+        currCols.map((c) => {
+          if (c.name === nestedColumn.name) {
+            /** Prevent hiding all nested cols */
+            // const noColsSelected = !newMinimalCols.some(nc => nc.show)
+            return {
+              ...nestedColumn,
+              nested: {
+                ...nestedColumn.nested,
+                columns: newMinimalCols.map((c) => {
+                  if (c.nested) {
+                    throw "Nested columns within nested columns are not supported";
+                  }
+                  return c as NestedColumn<ColumnConfig>;
+                }),
+              },
+            };
           }
-          /** Prevent hiding all nested cols */
-          // const noColsSelected = !newMinimalCols.some(nc => nc.show)
-          return { ...c, nested: { ...c.nested, columns: newMinimalCols } };
-        }
-        return c;
-      }),
+          return c;
+        }),
+      ),
     });
   }
 
@@ -81,17 +108,19 @@ export const updateWCols = (
   });
 };
 
-export const getSortColumn = (
+export const getSortColumn = <
+  C extends Pick<ColumnConfig, "name" | "idx" | "nested">,
+>(
   sort: ColumnSortSQL,
-  columns: ColumnConfig[],
-): ColumnConfig | undefined => {
+  columns: C[],
+): C | undefined => {
   return columns.find((c) => {
     return (
       c.name === sort.key ||
       (typeof sort.key === "number" &&
         typeof c.name === "string" &&
         c.idx === sort.key) ||
-      (c.nested?.chart?.type === "time" &&
+      (c.nested?.display?.type === "timechart" &&
         SORTABLE_CHART_COLUMNS.some(
           (sortCol) => sort.key === `${c.name}.${sortCol}`,
         )) ||
@@ -104,33 +133,36 @@ export const getSort = (
   tables: DBSchemaTableWJoins[],
   w: Pick<WindowSyncItem<"table">, "sort" | "columns" | "table_name">,
 ): ColumnSortSQL[] => {
-  const { sort } = w;
+  const table = tables.find((t) => t.name === w.table_name);
+  const sort = !w.columns && !w.sort?.length ? table?.sort : w.sort;
 
   if (!sort) return [];
 
   let _sort: ColumnSortSQL[] = sort.map((s) => ({ ...s }));
 
-  const cols = tables.find((t) => t.name === w.table_name)?.columns;
+  const cols = table?.columns;
   if (!cols) return [];
 
-  const wcols = w.columns;
+  const windowColumns =
+    w.columns && getColumnsWithInfo(w.table_name, tables, w.columns);
   _sort = _sort.filter((s) => {
-    if (!wcols) {
+    if (!windowColumns) {
       /** Sort key must match a valid table column */
       return cols.some((c) => c.name === s.key);
     } else {
-      const wcol = getSortColumn(s, wcols);
-      if (wcol?.nested) {
-        return true;
+      const windowColumn = getSortColumn(s, windowColumns);
+      if (windowColumn?.nested) {
+        return !!windowColumn.show;
       }
       return cols.some((c) => {
-        if (wcol?.computedConfig) {
+        if (windowColumn?.computedConfig) {
           /** CountAll doesn't require a column */
           return (
-            !wcol.computedConfig.column || wcol.computedConfig.column === c.name
+            !windowColumn.computedConfig.column ||
+            windowColumn.computedConfig.column === c.name
           );
-        } else if (wcol) {
-          return wcol.name === c.name;
+        } else if (windowColumn) {
+          return windowColumn.name === c.name;
         }
       });
     }
@@ -238,61 +270,3 @@ export const getJoinedTables = (
     joinsV2,
   };
 };
-
-// static getCellStyle(
-//   row: AnyObject,
-//   wcol: ColumnConfig,
-//   limits?: { minValue: any; maxValue: any; }
-// ): CellStyle {
-//   let res = {};
-
-//   if (wcol && wcol.style && wcol.style.type && wcol.style.type !== "None") {
-
-//     if(wcol.style.type === "Conditional"){
-
-//     /* Need to get min max */
-//     } else if (
-//       wcol.style.type === "Barchart" ||
-//       wcol.style.type === "Scale"
-//     ) {
-//       let { minValue, maxValue } = limits || {};
-//       wcol.style.minValue = minValue;
-//       wcol.style.maxValue = maxValue;
-//     }
-
-//     c.getCellStyle = (row, val, rv) => {
-
-//       const style = StyleColumn.getStyle(wcol, wcol..tsDataType, row);
-//       let res: React.CSSProperties = {}
-//       if (style.cellColor) {
-//         res = { ...res, background: style.cellColor };
-//       }
-//       if (style.textColor) {
-//         res = { ...res, color: style.textColor };
-//       }
-//       if(wcol.style.type === "Barchart"){
-//         res = { ...res, border: "1px solid var(--gray-200)" };
-//       }
-//       return res;
-//     }
-
-//       c.onRender = (row, val, renderedVal) => {
-//         const style = StyleColumn.getStyle(wcol, c.tsDataType, row);
-//         if (style && style.chipColor) {
-//           return <div style={{
-//             backgroundColor: style.chipColor,
-//             padding: "6px 8px",
-//             borderRadius: "1em",
-//             width: "fit-content"
-//           }}>
-//             {renderedVal}
-//           </div>
-//         }
-
-//         return renderedVal;
-//       }
-
-//   }
-
-//   return res;
-// }

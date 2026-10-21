@@ -9,18 +9,16 @@ import React from "react";
 import type { Prgl } from "src/App";
 import type { DBSchemaTableWithRenderInfo } from "src/dashboard/Dashboard/getTables";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
-import type {
-  WindowData,
-  WindowSyncItem,
-} from "../../Dashboard/dashboardUtils";
+import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 import RTComp from "../../RTComp";
 import { SQLSmartEditor } from "../../SQLEditor/SQLSmartEditor";
-import { getFullColumnConfig } from "../tableUtils/getFullColumnConfig";
+import { getColumnsWithInfoAndWidth } from "../tableUtils/getColumnsWithInfoAndWidth";
 import { updateWCols } from "../tableUtils/tableUtils";
 import { AddColumnMenu } from "./AddColumnMenu";
 import { AddComputedColMenu } from "./AddComputedColumn/AddComputedColMenu";
 import { ColumnList } from "./ColumnList";
-import type { ColumnConfig } from "./ColumnMenu";
+import type { ColumnConfig } from "@common/ColumnConfig/ColumnConfig";
 import { LinkedColumn } from "./LinkedColumn/LinkedColumn";
 import type { NestedColumnOpts } from "./getNestedColumnTable";
 
@@ -41,7 +39,7 @@ type S = {
   };
   addColMenu?: Element;
   addRefColMenu?: boolean;
-  w?: SyncDataItem<Required<WindowData<"table">>, true>;
+  w?: SyncDataItem<Required<WindowData<"table">>, { handlesOnData: true }>;
 };
 
 export class ColumnsMenu extends RTComp<P, S> {
@@ -65,9 +63,7 @@ export class ColumnsMenu extends RTComp<P, S> {
   get tableName() {
     const { nestedColumnOpts, w } = this.props;
     if (nestedColumnOpts) {
-      // const nestedCol = w.columns?.find(c => c.name === nestedColumnName)
-      // return nestedCol?.nested?.path.at(-1)?.table;
-      return nestedColumnOpts.config.nested?.path.at(-1)?.table;
+      return nestedColumnOpts.config.nested.path.at(-1)?.table;
     }
 
     return w.table_name;
@@ -80,26 +76,31 @@ export class ColumnsMenu extends RTComp<P, S> {
     if (!w) return null;
 
     let table = tables.find((t) => t.name === this.tableName);
-    let cols = getFullColumnConfig(tables, w);
+    let cols = getColumnsWithInfoAndWidth(tables, w);
     const nestedColumnName = nestedColumnOpts?.config.name;
+    const nestedColumn = cols.find(
+      (column) => column.name === nestedColumnName,
+    );
     const onUpdateCols = (columns: ColumnConfig[]) => {
       if (nestedColumnOpts?.type === "new") {
         throw "Not implemented";
       }
-      return updateWCols(w, columns, nestedColumnName);
+      return updateWCols(
+        w,
+        columns,
+        nestedColumn?.nested ?
+          { ...nestedColumn, nested: nestedColumn.nested }
+        : undefined,
+      );
     };
 
-    const nestedColumn =
-      nestedColumnName ?
-        w.columns?.find((c) => c.name === nestedColumnName)
-      : undefined;
     if (nestedColumn) {
       if (!nestedColumn.nested) {
         return <div>Invalid nested column config</div>;
       }
       const nestedTableName = nestedColumn.nested.path.at(-1)!.table;
       table = tables.find((t) => t.name === nestedTableName);
-      cols = getFullColumnConfig(tables, {
+      cols = getColumnsWithInfoAndWidth(tables, {
         table_name: nestedTableName,
         columns: nestedColumn.nested.columns,
       });

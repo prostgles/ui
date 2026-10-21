@@ -55,7 +55,7 @@ export const WebAppFileBrowser = ({
     [connection.web_app_directory, connectionId, getWebAppFile],
   );
   const isLoadingFile = selectedFileContent?.filePath !== selectedFilePath;
-  const extension = selectedFilePath?.toLowerCase().split(".").pop() ?? "txt";
+  const extension = selectedFilePath?.toLowerCase().split(".").at(-1) ?? "txt";
 
   return (
     <FlexRow className="min-w-0 min-h-0 ai-start gap-p25 h-full w-full max-w-full f-1">

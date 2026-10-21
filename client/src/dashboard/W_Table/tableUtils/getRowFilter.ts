@@ -7,46 +7,38 @@ import {
   type DetailedFilterBase,
 } from "@common/filterUtils";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
+import type { ColumnConfig } from "@common/ColumnConfig/ColumnConfig";
+import { getTableIdentityColumns } from "../ColumnMenu/ColumnDisplayFormat/getTableIdentityColumns";
 
 export const getRowFilter = async (
   row: AnyObject,
   table: DBSchemaTableWJoins,
-  columnConfig: { name: string }[] | undefined,
-  tableHandler: Partial<TableHandlerClient<AnyObject, void>>,
+  columnConfig: ColumnConfig[] | undefined,
+  tableHandler: Partial<TableHandlerClient>,
 ): Promise<
   | { filter: DetailedFilterBase[]; error: undefined }
   | { filter: undefined; error: string }
 > => {
-  let rowFilter: DetailedFilterBase[] | undefined;
+  let rowFilter: DetailedFilterBase[];
   const { columns } = table;
-  let pkeys = columns.filter((c) => c.filter && c.is_pkey);
-  const uniqueColumnGroup = table.uniqueColumnGroups?.find((colNames) =>
-    colNames.every((colName) => columns.some((c) => c.name === colName)),
-  );
-  if (!pkeys.length && uniqueColumnGroup) {
-    pkeys = columns.filter(
-      (c) => c.filter && uniqueColumnGroup.includes(c.name),
-    );
-  }
+  const identityColumns = getTableIdentityColumns(table, columnConfig);
   if (
-    pkeys.length &&
-    (!columnConfig ||
-      columnConfig.some((c) => pkeys.find((pk) => pk.name === c.name)))
-    /** Allow using pkey/unique cols after func applied? */
+    identityColumns.length &&
+    identityColumns.every(
+      ({ name }) => row[name] !== undefined && row[name] !== null,
+    )
   ) {
-    pkeys.map((pkey) => {
-      rowFilter ??= [];
-      rowFilter.push({
-        fieldName: pkey.name,
-        value: row[pkey.name],
-      });
-    });
+    rowFilter = identityColumns.map(({ name }) => ({
+      fieldName: name,
+      value: row[name],
+    }));
   } else {
     const dissallowedUdtTypes = ["interval"];
     const filterCols = columns.filter(
       (c) =>
         !dissallowedUdtTypes.includes(c.udt_name) &&
         c.filter &&
+        row[c.name] !== undefined &&
         (["number", "string", "boolean", "Date"].includes(c.tsDataType) ||
           c.udt_name === "jsonb"),
     );
@@ -61,7 +53,7 @@ export const getRowFilter = async (
     };
 
     rowFilter = filterCols.map((c) => {
-      const val = row[c.name];
+      const val = row[c.name] as unknown;
       return {
         fieldName: c.name,
         value:
@@ -89,7 +81,9 @@ export const getRowFilter = async (
       filter: undefined,
       error:
         "Could not create filter for record" +
-        (!pkeys.length ? ". Create a primary key to fix this issue" : ""),
+        (!identityColumns.length ?
+          ". Create a primary key to fix this issue"
+        : ""),
     };
   }
 
@@ -106,9 +100,11 @@ export const getRowFilter = async (
       filter: undefined,
       error:
         "Could not create a single row filter. More than one record returned" +
-        (!pkeys.length ? ". Create a primary key to fix this issue" : ""),
+        (!identityColumns.length ?
+          ". Create a primary key to fix this issue"
+        : ""),
     };
   } else {
-    return { filter: rowFilter ?? [], error: undefined };
+    return { filter: rowFilter, error: undefined };
   }
 };

@@ -1,13 +1,12 @@
-import type { Email } from "prostgles-server/dist/Auth/AuthTypes";
-import { getEmailSender } from "prostgles-server/dist/Prostgles";
 import {
   getMagicLinkEmailFromTemplate,
   getVerificationEmailFromTemplate,
   MOCK_SMTP_HOST,
 } from "@common/OAuthUtils";
 import type { DBSSchema } from "@common/publishUtils";
-import type { Unpromise } from "../../ConnectionManager/ConnectionManager";
 import { tout } from "@src/utils/tout";
+import type { Email } from "prostgles-server/dist/Auth/AuthTypes";
+import { getEmailSender } from "prostgles-server/dist/Prostgles";
 
 export const getSMTPWithTLS = (
   smtp: NonNullable<
@@ -23,7 +22,7 @@ export const getSMTPWithTLS = (
   };
 };
 
-export type EmailClient = Unpromise<
+export type EmailClient = Awaited<
   ReturnType<typeof getEmailSenderWithMockTest>
 >;
 

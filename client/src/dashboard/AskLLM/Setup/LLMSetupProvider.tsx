@@ -1,3 +1,4 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import React, { createContext, useContext, useState } from "react";
 import type { DbsByUserType } from "src/dashboard/Dashboard/DBS";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
@@ -10,7 +11,7 @@ const useLLMSetupState = () => {
   const { dbs: dbsRaw, user } = usePrglCore();
   const dbs = dbsRaw as DbsByUserType;
   const { data: credentials } = dbs.llm_credentials.useSubscribe();
-  const isAdmin = user?.type === "admin";
+  const isAdmin = user?.type === USER_TYPES.ADMIN;
   const globalSettings = dbs.global_settings?.useSubscribeOne?.();
   const [showChat, setShowChat] = useState<{ selectedChatId?: number }>();
 

@@ -3,7 +3,7 @@ export const dedent = (str: string) => {
   const indent = Math.min(
     ...lines
       .filter((line) => line.trim().length > 0)
-      .map((line) => line.match(/^(\s*)/)![1].length),
+      .map((line) => line.length - line.trimStart().length),
   );
   return lines.map((line) => line.slice(indent)).join("\n");
 };

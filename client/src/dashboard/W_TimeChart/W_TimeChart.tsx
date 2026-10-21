@@ -11,7 +11,8 @@ import { getMainTimeBinSizes } from "../Charts/TimeChart/getTimechartBinSize";
 import type { TimeChartLayer } from "../Charts/TimeChart/TimeChart";
 import { TimeChart } from "../Charts/TimeChart/TimeChart";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
-import type { WindowData, WindowSyncItem } from "../Dashboard/dashboardUtils";
+import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 import RTComp, { type DeltaOf, type DeltaOfData } from "../RTComp";
 import type { LayerBase } from "../W_Map/W_Map";
 import type { ActiveRow } from "../W_Table/W_Table";
@@ -21,8 +22,9 @@ import { getTimeChartLayerQueries } from "./fetchData/getTimeChartLayers";
 import type { TimeChartLayerWithBinOrError } from "./fetchData/getTimeChartLayersWithBins";
 import { getTimeChartSelectDate } from "./fetchData/getTimeChartSelectParams";
 import { W_TimeChartHeaderControls } from "./W_TimeChartHeaderControls";
-import type { TimeChartBinSize } from "./W_TimeChartMenu";
 import { ProstglesTimeChartMenu } from "./W_TimeChartMenu";
+import type { Prgl } from "src/App";
+import type { TimeChartBinSize } from "@common/ColumnConfig/timechartConstants";
 
 export type TimeChartLinkOptions = Extract<
   DBSSchema["links"]["options"],
@@ -102,7 +104,7 @@ type D = {
   extent?: DateExtent;
   w?: WindowSyncItem<"timechart">;
   lCols: {
-    [key: string]: W_TimeChartProps["tables"][number]["columns"];
+    [key: string]: Prgl["tables"][number]["columns"];
   };
   dataAge: number;
 };
@@ -259,7 +261,7 @@ export class W_TimeChart extends RTComp<W_TimeChartProps, W_TimeChartState, D> {
     const {
       onClickRow,
       workspace,
-      prgl: { connection },
+      prgl: { tables },
     } = this.props;
     const { w } = this.d;
     if (!w) return <Loading className="m-auto f-1" />;
@@ -296,7 +298,7 @@ export class W_TimeChart extends RTComp<W_TimeChartProps, W_TimeChartState, D> {
         childWindow={undefined}
         getMenu={this.getMenu}
         layoutMode={workspace.layout_mode ?? "editable"}
-        connection={connection}
+        tables={tables}
       >
         <div
           ref={(r) => {

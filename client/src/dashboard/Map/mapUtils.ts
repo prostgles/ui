@@ -1,4 +1,3 @@
-import type { Extent } from "./DeckGLMap";
 import type { DeckGlLibs } from "./DeckGLWrapped";
 import type { TileLayer, TileLayerProps } from "deck.gl";
 import {
@@ -9,6 +8,7 @@ import {
   getTextColor,
   getTextSize,
 } from "./MVTLayerProps";
+import type { Extent } from "@common/ColumnConfig/mapConstants";
 
 export const DEFAULT_TILE_URLS = [
   // 'http://{s}.tile.stamen.com/watercolor/{z}/{x}/{y}.jpg'

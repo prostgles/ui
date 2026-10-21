@@ -1,3 +1,4 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import { useIsMounted, usePromise } from "prostgles-client";
 import { isEmpty } from "prostgles-types";
 import { useMemo, useState } from "react";
@@ -11,7 +12,7 @@ import { areEqual, quickClone } from "../../utils/utils";
 import type { AccessControlAction, EditedAccessRule } from "./AccessControl";
 import { ACCESS_CONTROL_SELECT } from "./AccessControl";
 import type { PermissionEditProps } from "./AccessControlRuleEditor";
-import type { WorspaceTableAndColumns } from "./PublishedWorkspaceSelector";
+import type { WorkspaceTableAndColumns } from "./PublishedWorkspaceSelector";
 import { getWorkspaceTables } from "./PublishedWorkspaceSelector";
 
 type P = Pick<PermissionEditProps, "action" | "prgl">;
@@ -74,7 +75,7 @@ export type ValidEditedAccessRuleState = (
   userTypes: UserType[];
   ruleWasEdited: boolean;
   ruleErrorMessage: string | undefined;
-  worspaceTableAndColumns: WorspaceTableAndColumns[] | undefined;
+  workspaceTableAndColumns: WorkspaceTableAndColumns[] | undefined;
 };
 
 export type EditedAccessRuleState =
@@ -190,7 +191,7 @@ export const useEditedAccessRule = ({
     ...ruleData,
     newRule: newRule as EditedAccessRule,
     userTypes,
-    worspaceTableAndColumns: wspTables?.worspaceTableAndColumns,
+    workspaceTableAndColumns: wspTables?.workspaceTableAndColumns,
     tableErrors,
     ruleErrorMessage: newRule && getRuleErrorMessage(newRule),
     ruleWasEdited,
@@ -240,7 +241,7 @@ const getRuleErrorMessage = (
 
   const userTypes =
     newRule.access_control_user_types?.flatMap((d) => d.ids) ?? [];
-  if (userTypes.includes("public") && userTypes.length !== 1) {
+  if (userTypes.includes(USER_TYPES.PUBLIC) && userTypes.length !== 1) {
     return "Cannot mix 'public' and non-public user types";
   }
 
@@ -263,25 +264,19 @@ const getAccessRuleTableErrors = async (
   const ruleUser = await dbs.users.findOne({ type: { $in: userTypes } });
 
   if (ruleUser) {
-    const newContextData: ContextDataObject = { user: ruleUser };
     const result: Record<string, TableRulesErrors> = {};
     await Promise.all(
       dbPermissions.customTables.map(async (tableRules) => {
         const tableName = tableRules.tableName;
 
         if (!tables.some((t) => t.name === tableName)) {
-          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
           result[tableName] ??= {};
           result[tableName].all = `Table ${tableName} could not be found`;
         } else if (!result[tableName]?.all) {
           const columnNames = tables
             .find((t) => t.name === tableName)
             ?.columns.map((c) => c.name);
-          const errObj = await getTableRulesErrors(
-            tableRules,
-            columnNames!,
-            newContextData,
-          );
+          const errObj = await getTableRulesErrors(tableRules, columnNames!);
           if (!isEmpty(errObj)) {
             result[tableName] = errObj;
           }

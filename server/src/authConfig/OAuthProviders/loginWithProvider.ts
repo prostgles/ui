@@ -1,3 +1,4 @@
+import { getSignupUserType } from "../getSignupUserType";
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type {
   LoginClientInfo,
@@ -72,7 +73,7 @@ export const loginWithProvider = async (
             profile,
             user_id: auth_provider_user_id,
           },
-          type: database_config.auth_created_user_type ?? "default",
+          type: getSignupUserType(database_config.auth_created_user_type),
           status: "active",
           password: "",
         },

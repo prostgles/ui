@@ -87,11 +87,7 @@ export const tablePermissionsSchema = {
         },
         // columns: {
         //   optional: true,
-        //   type: "Lookup[]",
-        //   lookup: {
-        //     type: "schema",
-        //     object: "column",
-        //   },
+        //   type: "ColumnLookup[]",
         //   description:
         //     "Columns the assistant can access in the table",
         // },

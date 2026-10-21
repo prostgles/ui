@@ -1,18 +1,17 @@
-import React from "react";
-import type { W_TableMenuProps } from "./W_TableMenu";
 import FormField from "@components/FormField/FormField";
-import { ColumnSelect } from "../ColumnMenu/ColumnSelect/ColumnSelect";
-import { Select } from "@components/Select/Select";
-import { includes } from "../../W_SQL/W_SQLBottomBar/W_SQLBottomBar";
 import { IconPalette } from "@components/IconPalette/IconPalette";
+import { Select } from "@components/Select/Select";
+import React from "react";
+import { includes } from "prostgles-types";
+import { ColumnSelect } from "../ColumnMenu/ColumnSelect/ColumnSelect";
+import { TableDisplayOptionsJSON } from "./TableDisplayOptionsJSON";
+import type { W_TableMenuProps } from "./W_TableMenu";
+import ButtonGroup from "@components/ButtonGroup";
 
 type P = W_TableMenuProps;
 
-export const W_TableMenu_DisplayOptions = ({
-  w,
-  workspace,
-  prgl: { tables, connection, dbs },
-}: P) => {
+export const W_TableMenu_DisplayOptions = ({ w, workspace, prgl }: P) => {
+  const { tables, connection, dbs } = prgl;
   const tableName = w.table_name;
   if (!tableName) return null;
   const table = tables.find((t) => t.name === tableName);
@@ -22,9 +21,13 @@ export const W_TableMenu_DisplayOptions = ({
 
   return (
     <div className="flex-col gap-1 ai-start mb-1 f-1 o-auto p-p25 ">
-      <FormField
+      <ButtonGroup
         className=" w-fit f-0"
-        label="Display mode"
+        label={{
+          label: "Display mode",
+          variant: "normal",
+          style: { marginBottom: "4px" },
+        }}
         data-command="table.options.displayMode"
         value={w.options.viewAs?.type ?? "table"}
         fullOptions={(["table", "card", "json"] as const).map((key) => ({
@@ -34,14 +37,7 @@ export const W_TableMenu_DisplayOptions = ({
           w.$update(
             {
               options: {
-                viewAs:
-                  viewAsType === "card" ?
-                    {
-                      type: "card",
-                      maxCardWidth: window.isLowWidthScreen ? "100%" : "700px",
-                      hideEmptyCardCells: true,
-                    }
-                  : { type: viewAsType },
+                viewAs: { type: viewAsType },
               },
             },
             { deepMerge: true },
@@ -56,9 +52,9 @@ export const W_TableMenu_DisplayOptions = ({
             marginBottom: "4px",
           },
         }}
-        iconName={connection.table_options?.[w.table_name]?.icon}
+        iconName={table?.icon}
         onChange={(icon) => {
-          dbs.connections.update(
+          void dbs.connections.update(
             { id: connection.id },
             {
               table_options: {
@@ -133,7 +129,7 @@ export const W_TableMenu_DisplayOptions = ({
             label="Cards order by column"
             data-command="table.options.cardView.orderBy"
             columns={table.columns.map((c) =>
-              includes(c.udt_name, ["numeric", "float4", "float8"]) ? c : (
+              includes(["numeric", "float4", "float8"], c.udt_name) ? c : (
                 {
                   ...c,
                   disabledInfo:
@@ -256,13 +252,15 @@ export const W_TableMenu_DisplayOptions = ({
               className="w-fit f-0"
               value={w.options.maxRowHeight ?? 100}
               options={[25, 50, 100, 150, 200, 300, 400, 500, 600, 700, 800]}
-              onChange={(maxRowHeight) => {
+              onChange={(maxRowHeight: number) => {
                 w.$update({ options: { maxRowHeight } }, { deepMerge: true });
               }}
             />
           )}
         </>
       )}
+
+      {table && <TableDisplayOptionsJSON tableName={table.name} />}
     </div>
   );
 };

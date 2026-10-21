@@ -7,7 +7,7 @@ import { mdiClose, mdiTools } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import type { FilterItem } from "prostgles-types";
 import React, { useEffect, useMemo, useState } from "react";
-import { MCPServerConfig } from "../../../pages/ServerSettings/MCPServers/MCPServerConfig/MCPServerConfig";
+import { MCPServerConfigEditor } from "../../../pages/ServerSettings/MCPServers/MCPServerConfig/MCPServerConfigEditor";
 import { ChatActionBarBtnStyleProps } from "./AskLLMChatActionBar";
 
 export const AskLLMChatActionBarMCPToolsBtn = ({
@@ -152,7 +152,7 @@ export const AskLLMChatActionBarMCPToolsBtn = ({
           </Popup>
         )}
       {serverToConfigure && (
-        <MCPServerConfig
+        <MCPServerConfigEditor
           chatId={activeChat.id}
           existingConfig={undefined}
           onDone={() => {

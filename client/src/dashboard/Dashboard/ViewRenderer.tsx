@@ -1,3 +1,4 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import ErrorComponent, { ErrorTrap } from "@components/ErrorComponent";
 import { FlexCol } from "@components/Flex";
 import { isDefined, isEqual } from "prostgles-types";
@@ -31,19 +32,16 @@ import type {
   DashboardProps,
   DashboardState,
 } from "./Dashboard";
-import type {
-  ChartType,
-  Link,
-  WindowData,
-  WindowSyncItem,
-} from "./dashboardUtils";
+import type { Link, WindowSyncItem } from "./dashboardUtils";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 import { getViewRendererUtils } from "./getViewRendererUtils";
 import { onLinkTable } from "./onLinkTable";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import type { ChartType } from "@common/ColumnConfig/WindowData";
 
 export type ViewRendererProps = Pick<DashboardProps, "prgl"> &
   Pick<DashboardData, "workspace" | "links" | "windows"> &
-  Pick<DashboardState, "tables" | "suggestions" | "isReadonly"> & {
+  Pick<DashboardState, "suggestions" | "isReadonly"> & {
     onCloseUnsavedSQL: (
       q: WindowSyncItem<ChartType>,
       e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
@@ -109,7 +107,7 @@ export class ViewRenderer extends RTComp<
   render() {
     const {
       workspace,
-      tables,
+
       suggestions,
       isReadonly,
       searchParams,
@@ -118,7 +116,8 @@ export class ViewRenderer extends RTComp<
     } = this.props;
     const { links, windows } = this.getOpenedLinksAndWindows();
     const { linkMenuWindow } = this.state;
-    if (!workspace || !tables) return;
+    const { tables } = prgl;
+    if (!workspace) return;
     const { layout_mode } = workspace;
 
     const { onClickRow } = getViewRendererUtils.bind(this)({
@@ -201,7 +200,6 @@ export class ViewRenderer extends RTComp<
         workspace,
         childWindows,
         prgl: this.props.prgl,
-        tables,
         onClose,
         onForceUpdate,
         searchParams,
@@ -301,6 +299,9 @@ export class ViewRenderer extends RTComp<
             links,
             windows,
           );
+          const canClickRow = links.some((link) =>
+            [link.w1_id, link.w2_id].includes(w.id),
+          );
           result = (
             <W_Table
               setLinkMenu={setLinkMenu}
@@ -310,8 +311,11 @@ export class ViewRenderer extends RTComp<
               }
               joinFilter={crossF.activeRowFilter}
               externalFilters={crossF.all}
-              onClickRow={(row) =>
-                onClickRow(row, w.table_name!, w.id, { type: "table-row" })
+              onClickRow={
+                canClickRow ?
+                  (row) =>
+                    onClickRow(row, w.table_name!, w.id, { type: "table-row" })
+                : undefined
               }
               childWindow={childWindow}
               {...commonProps}
@@ -433,7 +437,7 @@ export class ViewRenderer extends RTComp<
           }}
           layoutMode={
             layout_mode === "fixed" ?
-              prgl.user?.type === "admin" ?
+              prgl.user?.type === USER_TYPES.ADMIN ?
                 "semi-fixed"
               : "fixed"
             : "editable"

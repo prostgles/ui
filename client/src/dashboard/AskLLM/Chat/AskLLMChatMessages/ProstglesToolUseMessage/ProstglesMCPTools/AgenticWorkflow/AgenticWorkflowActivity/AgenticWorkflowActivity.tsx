@@ -1,3 +1,4 @@
+import type { DetailedFilter } from "@common/filterUtils";
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import type { DBSSchema } from "@common/publishUtils";
 import { sliceText } from "@common/utils";
@@ -17,6 +18,7 @@ import { useAskLLMSetupState } from "src/dashboard/AskLLM/Setup/LLMSetupProvider
 import SmartTable from "src/dashboard/SmartTable";
 import type { ProstglesMCPToolsProps } from "../../../ProstglesToolUseMessage";
 import { ToolCall } from "./ToolCall";
+import { getToolCallRowFilter } from "./getToolCallRowFilter";
 import { useAgenticWorkflowActivityItems } from "./useAgenticWorkflowActivityItems";
 
 export type AgenticWorkflowActivityProps = Pick<
@@ -37,7 +39,10 @@ export const AgenticWorkflowActivity = ({
   const [selectedMcpToolCall, setSelectedMcpToolCall] =
     useState<DBSSchema["mcp_server_tool_calls"]>();
 
-  const [selectedTableName, setSelectedTableName] = useState<string>();
+  const [selectedTable, setSelectedTable] = useState<{
+    name: string;
+    filter: DetailedFilter[] | undefined;
+  }>();
 
   const { items } = useAgenticWorkflowActivityItems({ chatId, messageId });
   const { getIcon } = useMcpServerIcons();
@@ -102,7 +107,9 @@ export const AgenticWorkflowActivity = ({
             const failed =
               item.type === "agent_chat" ?
                 item.status?.state === "goal-failure" ||
-                item.status?.state === "goal-data-validation-failure"
+                item.status?.state === "goal-data-validation-failure" ||
+                (item.status?.state === "stopped" &&
+                  item.status.reason !== "manual")
               : item.error;
             const errorStyle =
               failed ? { color: "var(--text-danger)" } : undefined;
@@ -157,7 +164,18 @@ export const AgenticWorkflowActivity = ({
                       onClick={(e) => {
                         e.stopPropagation();
                         e.preventDefault();
-                        setSelectedTableName(tableName);
+                        setSelectedTable({
+                          name: tableName,
+                          filter:
+                            item.type === "orchestrator_tool_call" ?
+                              getToolCallRowFilter(
+                                item,
+                                tables.find(
+                                  (table) => table.name === tableName,
+                                ),
+                              )
+                            : undefined,
+                        });
                       }}
                     />
                   )}
@@ -206,15 +224,19 @@ export const AgenticWorkflowActivity = ({
           onClose={() => setSelectedMcpToolCall(undefined)}
         />
       )}
-      {selectedTableName && (
+      {selectedTable && (
         <SmartTable
           db={db}
           tables={tables}
           methods={methods}
           sql={sql}
-          tableName={selectedTableName}
+          tableName={selectedTable.name}
+          filter={selectedTable.filter}
+          onFilterChange={(filter) =>
+            setSelectedTable({ ...selectedTable, filter })
+          }
           positioning="center"
-          onClosePopup={() => setSelectedTableName(undefined)}
+          onClosePopup={() => setSelectedTable(undefined)}
           clickCatchStyle={{ opacity: 1 }}
         />
       )}

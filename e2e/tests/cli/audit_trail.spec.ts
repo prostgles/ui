@@ -1,0 +1,583 @@
+import { sidKeyName } from "../../../common/authTypesAndConstants";
+import { expect, test } from "../utils/fixtures";
+import { rmSync } from "node:fs";
+import { createConfigTestProject } from "../utils/createConfigTestProject";
+import type { SchemaConfig } from "../../../server/dist/server/src/schemaConfig";
+import {
+  createTestDeployment,
+  type TestDeployment,
+} from "../../../server/dist/server/src/testing";
+import { openTable } from "../utils/utils";
+
+const sourceColumns = {
+  tenant_id: "text NOT NULL",
+  id: "integer NOT NULL",
+  name: "text NOT NULL",
+};
+
+// Composite IDs and separate tables exercise both history filters.
+const config = {
+  id: "audit-e2e",
+  audit: {
+    tableName: "audit_events",
+    tables: { records: 1, other_records: 1 },
+  },
+  databaseConfig: { sync_users: true },
+  connection: {
+    table_options: {
+      users: {
+        card: { headerColumn: "name" },
+        referenceDisplay: { columns: [{ name: "name" }, { name: "username" }] },
+      },
+      text_versions: {
+        sort: [{ key: "id", asc: false }],
+        columns: {
+          new_text: {
+            renderAs: {
+              type: "Text Diff",
+              params: { oldColumn: "old_text", newColumn: "new_text" },
+            },
+          },
+        },
+      },
+    },
+  },
+  tableConfig: {
+    users: {
+      columns: {
+        id: "uuid PRIMARY KEY",
+        username: "text NOT NULL",
+        name: "text",
+        status: "text NOT NULL",
+        last_updated: "bigint NOT NULL",
+      },
+    },
+    text_versions: {
+      columns: {
+        id: "integer PRIMARY KEY",
+        old_text: "text",
+        new_text: "text",
+      },
+    },
+    records: {
+      columns: sourceColumns,
+      constraints: { records_pk: "PRIMARY KEY (tenant_id, id)" },
+    },
+    other_records: {
+      columns: sourceColumns,
+      constraints: { other_records_pk: "PRIMARY KEY (tenant_id, id)" },
+    },
+    unaudited: { columns: { id: "integer PRIMARY KEY" } },
+  },
+} satisfies SchemaConfig;
+
+let deployment: TestDeployment;
+let disposeDeployment: (() => Promise<void>) | undefined;
+let configPath: string;
+let sessionId: string;
+let restrictedSessionId: string;
+let accessRuleId: number;
+
+test.beforeAll(async () => {
+  test.setTimeout(120_000);
+  configPath = createConfigTestProject(config);
+  deployment = await createTestDeployment({
+    configPath,
+    configId: config.id,
+    users: [
+      { key: "admin", type: "admin" },
+      { key: "default", username: "restricted", type: "default" },
+    ],
+    logPath: test.info().outputPath("audit-server.log"),
+    seed: async ({ stateDatabase, projectDatabase }) => {
+      await stateDatabase.query(
+        "UPDATE users SET name = 'Audit Administrator' WHERE username = 'admin'",
+      );
+      const session = await stateDatabase.query(
+        "SELECT id FROM sessions WHERE user_id = (SELECT id FROM users WHERE username = 'admin')",
+      );
+      sessionId = session.rows[0].id;
+      const restrictedSession = await stateDatabase.query(
+        "SELECT id FROM sessions WHERE user_id = (SELECT id FROM users WHERE username = 'restricted')",
+      );
+      restrictedSessionId = restrictedSession.rows[0].id;
+      const rule = await stateDatabase.query(
+        `
+        INSERT INTO access_control (database_id, "dbPermissions", "dbsPermissions")
+        SELECT d.id, '{"type":"Custom","customTables":[]}', '{"createWorkspaces":true}'
+        FROM database_configs d JOIN connections c USING (db_name, db_host, db_port)
+        WHERE c.name = $1 RETURNING id
+      `,
+        [config.id],
+      );
+      accessRuleId = rule.rows[0].id;
+      await stateDatabase.query(
+        "INSERT INTO access_control_user_types (access_control_id, user_type) VALUES ($1, 'default')",
+        [accessRuleId],
+      );
+      await stateDatabase.query(
+        "INSERT INTO access_control_connections (access_control_id, connection_id) SELECT $1, id FROM connections WHERE name = $2",
+        [accessRuleId, config.id],
+      );
+
+      await projectDatabase.query(
+        "INSERT INTO text_versions VALUES (1, $1, $2), (2, NULL, 'added text'), (3, 'removed text', NULL), (4, 'clear text', ''), (5, 'a🐈bKEEPx', 'a🐕bKEEPy'), (6, 'same text', 'same text')",
+        ['first line\n  old "value"\n', 'first line\n  new "value"\n'],
+      );
+      await projectDatabase.query(`
+        INSERT INTO records VALUES ('a', 1, 'original'), ('b', 1, 'other tenant'), ('a', 2, 'other row');
+        INSERT INTO other_records VALUES ('a', 1, 'other entity');
+        UPDATE records SET name = 'updated' WHERE tenant_id = 'a' AND id = 1;
+        INSERT INTO unaudited VALUES (1);
+      `);
+    },
+  });
+  disposeDeployment = deployment.dispose;
+});
+
+test.afterAll(async () => {
+  await disposeDeployment?.();
+  if (configPath) rmSync(configPath, { recursive: true, force: true });
+});
+
+test.beforeEach(async ({ page }) => {
+  await page
+    .context()
+    .addCookies([
+      { name: sidKeyName, value: sessionId, url: deployment.endpoint },
+    ]);
+  await page.goto(deployment.endpoint);
+  await page
+    .locator(`[data-key=${JSON.stringify(config.id)}]`)
+    .getByTestId("Connection.openConnection")
+    .click({ timeout: 30_000 });
+});
+
+test("history is scoped to the row, newest first, live, and read-only", async ({
+  page,
+}) => {
+  await openTable(page, "records", true);
+  const row = page
+    .locator('[data-table-name="records"]')
+    .getByRole("row")
+    .filter({ hasText: "updated" });
+  await row.getByTestId("dashboard.window.viewEditRow").click();
+  const form = page
+    .getByRole("dialog")
+    .filter({ has: page.getByTestId("SmartForm") });
+  await form.getByTestId("AuditTrail.open").click();
+  const history = page.getByRole("dialog").filter({ hasText: "History ·" });
+  const rows = history.getByTestId("TableBody").getByRole("row");
+  await expect(history.locator(".table-column-label")).toHaveText([
+    "Time",
+    "Action",
+    "User",
+    "Changes",
+  ]);
+  await expect(rows).toHaveCount(2);
+  await expect(rows.nth(0)).toContainText("UPDATE");
+  await expect(rows.nth(1)).toContainText("INSERT");
+  await expect(rows.first().locator('span[title*="seconds"]')).toHaveCount(1);
+  await expect(history).not.toContainText("other tenant");
+  await expect(history).not.toContainText("other row");
+  await expect(history).not.toContainText("other entity");
+  await expect(history.getByTestId("dashboard.window.viewEditRow")).toHaveCount(
+    0,
+  );
+  await expect(history.getByTestId("SmartForm.update")).toHaveCount(0);
+  await expect(history.getByTestId("SmartForm.delete")).toHaveCount(0);
+
+  const summary = rows.first().getByTitle("View JSON diff");
+  await expect(summary.locator("strong")).toHaveText("name");
+  await expect(summary.locator("del")).toHaveText("original");
+  await expect(summary).toHaveCSS("font-weight", "400");
+  await expect(summary.locator("del")).toHaveCSS("font-weight", "400");
+  await expect(summary.locator("strong")).toHaveCSS("font-weight", "700");
+  await expect(summary.locator("del")).toHaveCSS(
+    "text-decoration-line",
+    "line-through",
+  );
+  await expect(summary.locator("del + span")).toHaveText("updated");
+  await expect(summary).toHaveCSS("color", "rgb(30, 64, 175)");
+  await summary.click();
+  const diff = page.getByRole("dialog").filter({ hasText: "JSON diff" });
+  await expect(diff.locator(".view-line").first()).toHaveCSS(
+    "text-align",
+    "left",
+  );
+  await diff.getByTitle("Side-by-side diff").click();
+  await expect(
+    diff.locator(".original .view-lines[role=presentation]"),
+  ).toContainText("original");
+  await expect(
+    diff.locator(".modified .view-lines[role=presentation]"),
+  ).toContainText("updated");
+  await diff.getByTitle("Inline diff").click();
+  await expect(diff.getByText("Before", { exact: true })).toHaveCount(0);
+  await diff.getByTestId("Popup.close").click();
+
+  const client = await deployment.connectProjectAs("admin");
+  try {
+    await expect
+      .poll(() => client.db.users!.findOne!({ username: "admin" }))
+      .toMatchObject({ name: "Audit Administrator" });
+    await client.db.records!.update!(
+      { tenant_id: "a", id: 1 },
+      { name: "live change", id: 10 },
+    );
+    await expect(rows).toHaveCount(3);
+    await expect(rows.first()).toContainText("Audit Administrator");
+    await expect(
+      rows
+        .first()
+        .getByRole("button", { name: "Audit Administrator", exact: true }),
+    ).toBeVisible();
+    await expect(rows.first()).not.toContainText('"type":');
+    const updatedSummary = rows.first().getByTitle("View JSON diff");
+    await expect(updatedSummary.locator("strong")).toHaveText(["id", "name"]);
+    await expect(updatedSummary.locator("del")).toHaveText(["1", "updated"]);
+    await expect(updatedSummary.locator("del + span")).toHaveText([
+      "10",
+      "live change",
+    ]);
+    await rows.first().getByTitle("View JSON diff").click();
+    await expect(
+      diff.locator(".modified .view-lines[role=presentation]"),
+    ).toContainText("live change");
+    await diff.getByTestId("Popup.close").click();
+  } finally {
+    client.disconnect();
+  }
+  await history.getByTestId("Popup.close").click();
+  await expect(history).toHaveCount(0);
+  await expect(form).toBeVisible();
+  await form.getByTestId("AuditTrail.open").click();
+  await expect(rows).toHaveCount(3);
+});
+
+test("rows without auditing have no history button", async ({ page }) => {
+  await openTable(page, "unaudited", true);
+  await page.getByTestId("dashboard.window.viewEditRow").click();
+  await expect(page.getByTestId("SmartForm")).toBeVisible();
+  await expect(page.getByTestId("AuditTrail.open")).toHaveCount(0);
+});
+
+test("card view opens history without opening the row editor", async ({
+  page,
+}) => {
+  await openTable(page, "records", true);
+  const table = page.locator('[data-table-name="records"]');
+  await table.getByTestId("dashboard.window.menu").click();
+  await page.getByText("Display options", { exact: true }).click();
+  await page
+    .getByTestId("table.options.displayMode")
+    .locator('[data-key="card"]')
+    .click();
+  await page.getByTestId("table.options.cardView.groupBy").click();
+  await page
+    .getByTestId("SearchList.List")
+    .locator('[data-key="tenant_id"]')
+    .click();
+  await page.keyboard.press("Escape");
+  const card = page
+    .getByTestId("CardView.row")
+    .filter({ hasText: "other tenant" });
+  await expect(card.getByTestId("CardView.DragHeader")).toBeVisible();
+  await card.hover();
+  const historyButton = card.getByTestId("AuditTrail.open");
+  const editButton = card.getByTestId("dashboard.window.viewEditRow");
+  await expect(editButton).toBeVisible();
+  const historyBox = await historyButton.boundingBox();
+  const editBox = await editButton.boundingBox();
+  expect(historyBox!.y).toBe(editBox!.y);
+  expect(historyBox!.height).toBe(editBox!.height);
+  expect(historyBox!.x + historyBox!.width).toBeLessThanOrEqual(editBox!.x);
+  await historyButton.click({ position: { x: 8, y: 8 } });
+  const history = page.getByRole("dialog").filter({ hasText: "History ·" });
+  await expect(history.getByTestId("TableBody").getByRole("row")).toHaveCount(
+    1,
+  );
+  const summary = history.getByTitle("View JSON diff");
+  await expect(summary).toContainText("other tenant");
+  await expect(summary.locator("del")).toHaveCount(0);
+  await expect(summary).not.toContainText("—");
+  await expect(summary).toHaveCSS("color", "rgb(22, 101, 52)");
+  await summary.click();
+  const diff = page.getByRole("dialog").filter({ hasText: "JSON diff" });
+  await expect(
+    diff.locator(".modified .view-lines[role=presentation]"),
+  ).toContainText("other tenant");
+  await diff.getByTestId("Popup.close").click();
+  await expect(page.getByTestId("SmartForm")).toHaveCount(0);
+
+  const client = await deployment.connectProjectAs("admin");
+  try {
+    await client.db.records!.delete!({ tenant_id: "b", id: 1 });
+    await openTable(page, "audit_events", true);
+    await expect(
+      page
+        .locator('[data-table-name="audit_events"] .table-column-label')
+        .filter({ hasText: /\S/ }),
+    ).toHaveText(["Time", "Action", "Table", "User", "Changes"]);
+    const auditRows = page
+      .locator('[data-table-name="audit_events"]')
+      .getByTestId("TableBody")
+      .getByRole("row");
+    await expect(auditRows.first()).toContainText("DELETE");
+    await expect(auditRows.first()).toContainText("Audit Administrator");
+    await expect(
+      auditRows.first().locator('span[title*="seconds"]'),
+    ).toHaveCount(1);
+    const deleted = page
+      .locator('[data-table-name="audit_events"]')
+      .getByRole("row")
+      .filter({ hasText: "DELETE" })
+      .getByTitle("View JSON diff");
+    await expect(deleted.locator("del")).toHaveCount(0);
+    await expect(deleted).toContainText("other tenant");
+    await expect(deleted).not.toContainText("→");
+    await expect(deleted).toHaveCSS("color", "rgb(153, 27, 27)");
+    await deleted.click();
+    await diff.getByTitle("Side-by-side diff").click();
+    await expect(
+      diff.locator(".original .view-lines[role=presentation]"),
+    ).toContainText("other tenant");
+    await diff.getByTestId("Popup.close").click();
+    const auditTable = page.locator('[data-table-name="audit_events"]');
+    await auditTable.getByTestId("dashboard.window.menu").click();
+    await page.getByText("Columns", { exact: true }).click();
+    const contextColumn = page
+      .locator('[data-key="db_context"]')
+      .getByRole("checkbox");
+    await expect(contextColumn).not.toBeChecked();
+    await page.locator('[data-key="db_context"]').click();
+    await page.keyboard.press("Escape");
+    await expect(auditTable.locator(".table-column-label")).toContainText([
+      "Db Context",
+    ]);
+    await auditTable.getByTestId("dashboard.window.menu").click();
+    await page.getByText("Columns", { exact: true }).click();
+    await expect(contextColumn).toBeChecked();
+    await page.keyboard.press("Escape");
+    await auditTable.getByTestId("dashboard.window.menu").click();
+    await page.getByText("Display options", { exact: true }).click();
+    await page
+      .getByTestId("table.options.displayMode")
+      .locator('[data-key="card"]')
+      .click();
+    await page.keyboard.press("Escape");
+    await expect(auditTable.getByTestId("CardView.row").first()).toContainText(
+      "Audit Administrator",
+    );
+  } finally {
+    client.disconnect();
+  }
+});
+
+test("audit users compose the configured reference fields when the title is empty", async ({
+  page,
+}) => {
+  const client = await deployment.connectProjectAs("admin");
+  try {
+    await client.db.users!.update!({ username: "admin" }, { name: null });
+    await client.db.records!.insert!({
+      tenant_id: "fallback",
+      id: 1,
+      name: "username fallback",
+    });
+    await openTable(page, "audit_events", true);
+    const row = page
+      .locator('[data-table-name="audit_events"]')
+      .getByTestId("TableBody")
+      .getByRole("row")
+      .first();
+    await expect(row).toContainText("username fallback");
+    await expect(row).toContainText("admin");
+    await expect(row).not.toContainText('"type":');
+  } finally {
+    await client.db.users!.update!(
+      { username: "admin" },
+      { name: "Audit Administrator" },
+    );
+    client.disconnect();
+  }
+});
+
+test("audit users respect user table and title permissions", async ({
+  page,
+}) => {
+  const state = await deployment.connectStateAs("admin");
+  try {
+    const admin = await state.db.users!.findOne({ username: "admin" });
+    for (const canReadUsers of [true, false]) {
+      await state.db.access_control!.update(
+        { id: accessRuleId },
+        {
+          dbPermissions: {
+            type: "Custom",
+            customTables: [
+              { tableName: "records", select: true },
+              { tableName: "audit_events", select: true },
+              {
+                tableName: "users",
+                select:
+                  canReadUsers ? { fields: { id: 1, username: 1 } } : false,
+              },
+            ],
+          },
+        },
+      );
+      await page.context().clearCookies();
+      await page
+        .context()
+        .addCookies(deployment.storageStateAs("default").cookies);
+      await page.goto(deployment.endpoint);
+      await expect(page).toHaveURL(deployment.dashboardUrl);
+      await openTable(page, "audit_events", true);
+      const row = page
+        .locator('[data-table-name="audit_events"]')
+        .getByTestId("TableBody")
+        .getByRole("row")
+        .first();
+      await expect(row).toContainText(canReadUsers ? "admin" : admin!.id);
+      await expect(row).not.toContainText("Audit Administrator");
+      if (canReadUsers) {
+        await expect(
+          row.getByRole("button", { name: "admin", exact: true }),
+        ).toBeVisible();
+        await expect(row).not.toContainText('"type":');
+      }
+    }
+  } finally {
+    state.disconnect();
+  }
+});
+
+for (const restriction of [
+  "row identifiers",
+  "audit table",
+  "audit columns",
+] as const) {
+  test(`insufficient privileges for ${restriction} keeps the dashboard usable`, async ({
+    page,
+  }) => {
+    const state = await deployment.connectStateAs("admin");
+    try {
+      await state.db.access_control!.update(
+        { id: accessRuleId },
+        {
+          dbPermissions: {
+            type: "Custom",
+            customTables: [
+              {
+                tableName: "records",
+                select:
+                  restriction === "row identifiers" ?
+                    { fields: { name: 1 } }
+                  : true,
+              },
+              {
+                tableName: "audit_events",
+                select:
+                  restriction === "audit table" ? false
+                  : restriction === "audit columns" ?
+                    { fields: { operation: 1, new_row: 1 } }
+                  : true,
+              },
+            ],
+          },
+        },
+      );
+    } finally {
+      state.disconnect();
+    }
+    // Permission reloads can disconnect clients while they are connecting.
+    await expect(async () => {
+      const client = await deployment.connectProjectAs("default");
+      try {
+        const records = client.tableSchema?.find(
+          (table) => table.name === "records",
+        );
+        expect(records).toBeDefined();
+        if (restriction === "row identifiers") {
+          expect(records).toHaveProperty(
+            "audit.error",
+            "Insufficient privileges",
+          );
+        } else {
+          const auditTable = client.tableSchema?.find(
+            (table) => table.name === "audit_events",
+          );
+          if (restriction === "audit table") {
+            expect(auditTable).toBeUndefined();
+          } else {
+            expect(
+              auditTable?.columns
+                .filter((column) => column.select)
+                .map((column) => column.name)
+                .sort(),
+            ).toEqual(["new_row", "operation"]);
+          }
+        }
+      } finally {
+        client.disconnect();
+      }
+    }).toPass({ timeout: 10_000 });
+    await page.context().clearCookies();
+    await page.context().addCookies([
+      {
+        name: sidKeyName,
+        value: restrictedSessionId,
+        url: deployment.endpoint,
+      },
+    ]);
+    await page.goto(deployment.endpoint);
+    await expect(page).toHaveURL(deployment.dashboardUrl);
+    await openTable(page, "records", true);
+    const table = page.locator('[data-table-name="records"]');
+    await table.getByTestId("dashboard.window.menu").click();
+    await page.getByText("Display options", { exact: true }).click();
+    await page
+      .getByTestId("table.options.displayMode")
+      .locator('[data-key="card"]')
+      .click();
+    await page.keyboard.press("Escape");
+    const button = page.getByTestId("AuditTrail.open").first();
+    await expect(button).toHaveAttribute("aria-disabled", "true");
+    await expect(button).toHaveAttribute("title", "Insufficient privileges");
+    await expect(page.getByTestId("ProjectConnection.error")).toHaveCount(0);
+  });
+}
+
+test("plain text diffs preserve lines and support both layouts", async ({
+  page,
+}) => {
+  await openTable(page, "text_versions", true);
+  const table = page.locator('[data-table-name="text_versions"]');
+  await expect(
+    table.getByTestId("TableBody").getByRole("row").first(),
+  ).toContainText("same text");
+  const summaries = table.getByTitle("View Text diff");
+  await expect(summaries).toHaveCount(6);
+  await expect(summaries).toHaveText(Array(6).fill("View diff"));
+  await table
+    .getByRole("row")
+    .filter({ hasText: 'old "value"' })
+    .getByTitle("View Text diff")
+    .click();
+  const diff = page.getByRole("dialog").filter({ hasText: "Text diff" });
+  await diff.getByTitle("Side-by-side diff").click();
+  const originalLines = diff.locator(
+    ".original .view-lines[role=presentation] .view-line",
+  );
+  const modifiedLines = diff.locator(
+    ".modified .view-lines[role=presentation] .view-line",
+  );
+  await expect(originalLines.first()).toHaveText("first line");
+  await expect(originalLines.nth(1)).toHaveText('old "value"');
+  await expect(modifiedLines.first()).toHaveText("first line");
+  await expect(modifiedLines.nth(1)).toHaveText('new "value"');
+  await diff.getByTitle("Inline diff").click();
+  await expect(diff.getByText("Before", { exact: true })).toHaveCount(0);
+  await diff.getByTestId("Popup.close").click();
+});

@@ -1,5 +1,6 @@
 import Btn from "@components/Btn";
-import { FlexCol, FlexRow } from "@components/Flex";
+import { FlexRow } from "@components/Flex";
+import Loading from "@components/Loader/Loading";
 import { Select } from "@components/Select/Select";
 import { mdiDotsHorizontal, mdiPlus, mdiRobot } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
@@ -53,6 +54,10 @@ export const AskLLMChatHeader = (
               label: c.name,
               iconPath: c.agent_info ? mdiRobot : undefined,
               subLabel: getPGIntervalAsText(c.created_ago, true, true, true),
+              rightContent:
+                c.status?.state === "loading" ?
+                  <Loading sizePx={16} show />
+                : undefined,
             })) ?? []
           }
           btnProps={{
@@ -69,26 +74,24 @@ export const AskLLMChatHeader = (
             setActiveChat(v);
           }}
         />
-        {!activeChat?.agent_info && (
-          <Btn
-            iconPath={mdiPlus}
-            title={t.AskLLMChatHeader["New chat"]}
-            data-command="AskLLMChat.NewChat"
-            variant="faded"
-            color="action"
-            size="default"
-            disabledInfo={
-              !preferredPromptId ?
-                t.AskLLMChatHeader["No prompt found"]
-              : undefined
-            }
-            onClickPromise={async () => {
-              if (!preferredPromptId)
-                throw new Error(t.AskLLMChatHeader["No prompt found"]);
-              await createNewChat(preferredPromptId);
-            }}
-          />
-        )}
+        <Btn
+          iconPath={mdiPlus}
+          title={t.AskLLMChatHeader["New chat"]}
+          data-command="AskLLMChat.NewChat"
+          variant="faded"
+          color="action"
+          size="default"
+          disabledInfo={
+            !preferredPromptId ?
+              t.AskLLMChatHeader["No prompt found"]
+            : undefined
+          }
+          onClickPromise={async () => {
+            if (!preferredPromptId)
+              throw new Error(t.AskLLMChatHeader["No prompt found"]);
+            await createNewChat(preferredPromptId);
+          }}
+        />
       </FlexRow>
 
       {user && (

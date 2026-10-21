@@ -1,12 +1,12 @@
-import React, { useState } from "react";
 import Btn from "@components/Btn";
 import { FlexRow } from "@components/Flex";
-import type { ColumnConfigWInfo } from "../../W_Table";
-import { updateWCols } from "../../tableUtils/tableUtils";
-import type { LinkedColumnProps } from "./LinkedColumn";
 import { Select } from "@components/Select/Select";
 import { mdiCheck } from "@mdi/js";
+import React, { useState } from "react";
 import { t } from "../../../../i18n/i18nUtils";
+import { updateWCols } from "../../tableUtils/tableUtils";
+import type { ColumnConfigNested } from "@common/ColumnConfig/ColumnConfig";
+import type { LinkedColumnProps } from "./LinkedColumn";
 
 export const NEW_COL_POSITIONS = [
   { key: "start", label: "Start of table" },
@@ -14,7 +14,7 @@ export const NEW_COL_POSITIONS = [
 ] as const;
 
 type P = LinkedColumnProps & {
-  localColumn: ColumnConfigWInfo | undefined;
+  localColumn: ColumnConfigNested | undefined;
   disabledInfo: string | undefined;
 };
 export const LinkedColumnFooter = ({
@@ -28,7 +28,7 @@ export const LinkedColumnFooter = ({
     useState<(typeof NEW_COL_POSITIONS)[number]["key"]>("start");
   return (
     <>
-      {column?.nested && (
+      {column && (
         <FlexRow className="mt-2 ai-end">
           <Select
             label={"Add to"}
@@ -44,12 +44,12 @@ export const LinkedColumnFooter = ({
             {t.common["Cancel"]}
           </Btn>
         )}
-        {column?.nested && (
+        {column && (
           <Btn
             color="danger"
             size="default"
             onClick={() => {
-              updateWCols(
+              void updateWCols(
                 w,
                 w.$get()?.columns?.filter((c) => c.name !== column.name),
               );
@@ -80,7 +80,7 @@ export const LinkedColumnFooter = ({
                 : w.columns.map((c) =>
                     c.name === column.name ? localColumn : c,
                   );
-              updateWCols(w, newColumns);
+              void updateWCols(w, newColumns);
               setM({ ok: t.LinkedColumn["Added!"] });
               onClose?.();
             }}

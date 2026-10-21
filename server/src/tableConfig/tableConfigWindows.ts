@@ -1,4 +1,5 @@
-import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
+import type { TableConfig } from "prostgles-server";
+import { DEFAULT_TABLE_OPTIONS } from "@common/ColumnConfig/WindowData";
 
 export const tableConfigWindows = {
   windows: {
@@ -67,9 +68,31 @@ export const tableConfigWindows = {
       },
       fullscreen: `BOOLEAN DEFAULT TRUE`,
       sort: "JSONB DEFAULT '[]'::jsonb",
-      filter: `JSONB NOT NULL DEFAULT '[]'::jsonb`,
+      filter: {
+        nullable: true,
+        jsonbSchema: {
+          type: "unknown[]",
+          // arrayOfType: {
+          //   fieldName: { type: "string" },
+          //   type: {
+          //     optional: true,
+          //     type: "string",
+          //   },
+          //   value: { type: "unknown" },
+          //   disabled: { optional: true, type: "boolean" },
+          //   minimised: { optional: true, type: "boolean" },
+          //   complexFilter: {
+          //     optional: true,
+          //     type: "unknown",
+          //   },
+          // },
+        },
+      },
       having: `JSONB NOT NULL DEFAULT '[]'::jsonb`,
-      options: `JSONB NOT NULL DEFAULT '{}'::jsonb`,
+      options: {
+        defaultValue: DEFAULT_TABLE_OPTIONS,
+        jsonbSchema: { type: "any" },
+      },
       sql_options: {
         defaultValue: {
           executeOptions: "block",

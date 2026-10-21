@@ -6,7 +6,7 @@ import {
 } from "prostgles-types";
 import React from "react";
 import { getInputType } from "../../dashboard/SmartForm/SmartFormField/fieldUtils";
-import type { FormFieldProps } from "../FormField/FormField";
+import FormField, { type FormFieldProps } from "../FormField/FormField";
 import type { FullOption } from "../Select/Select";
 import type { JSONBSchemaCommonProps } from "./JSONBSchema";
 import { isCompleteJSONB } from "./isCompleteJSONB";
@@ -22,7 +22,7 @@ type P = JSONBSchemaCommonProps & {
 export const JSONBSchemaPrimitiveMatch = (
   s: JSONB.JSONBSchema,
 ): s is JSONB.BasicType | JSONB.EnumType =>
-  !s.lookup &&
+  !(typeof s.type === "string" && s.type.includes("Lookup")) &&
   (!!s.enum?.length ||
     (!s.allowedValues?.length && typeof s.type === "string"));
 
@@ -32,7 +32,9 @@ export const JSONBSchemaPrimitive = ({
   onChange,
   showErrors,
   noLabels,
+  debounceInputs,
 }: P) => {
+  const Field = debounceInputs === false ? FormField : FormFieldDebounced;
   let fullOptions: FullOption[] | undefined = undefined;
   if (schema.enum?.length || schema.allowedValues?.length) {
     fullOptions = (schema.enum || schema.allowedValues!).map((key) => ({
@@ -67,11 +69,11 @@ export const JSONBSchemaPrimitive = ({
     showErrors && !isCompleteJSONB(value, schema) ? "Required" : undefined;
 
   return (
-    <FormFieldDebounced
+    <Field
       name={schema.title}
       label={
         /**
-         * Hacky. TODO: find a better approach showing JSONB controls within a form with existing top label and bottom hint.
+         * Hacky. TODO: find a better approach for showing JSONB controls within a form with existing top label and bottom hint.
          * Should the main column label be removed?!
          */
         noLabels && schema.type !== "boolean" ?
@@ -88,6 +90,7 @@ export const JSONBSchemaPrimitive = ({
       arrayType={arrayType}
       inputProps={schema.type === "integer" ? { step: 1 } : undefined}
       fullOptions={fullOptions}
+      hintWrapperStyle={{ gap: 0 }}
       multiSelect={!!schema.allowedValues?.length && schema.type.endsWith("[]")}
       onChange={(newVal) => {
         if (schema.type === "number[]" || schema.type === "integer[]") {
@@ -191,6 +194,14 @@ const schemaTypeToColType: Record<
     udt_name: "bytea",
   },
   "Blob[]": {
+    tsDataType: "any",
+    udt_name: "bytea",
+  },
+  Uint8Array: {
+    tsDataType: "any",
+    udt_name: "bytea",
+  },
+  "Uint8Array[]": {
     tsDataType: "any",
     udt_name: "bytea",
   },

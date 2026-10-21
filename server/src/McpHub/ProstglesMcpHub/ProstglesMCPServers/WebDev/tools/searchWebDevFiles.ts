@@ -1,7 +1,6 @@
 import { readFile } from "fs/promises";
 import { glob } from "glob";
 import { dirname, join } from "path";
-import { isDefined } from "prostgles-types";
 
 export const searchWebDevFiles = async ({
   contentQuery,
@@ -51,57 +50,62 @@ export const searchWebDevFiles = async ({
   const result: {
     filePath: string;
     matchedContent: string;
-  }[] = (
-    await Promise.all(
-      filteredResults.map(async (filePath) => {
-        const content = await readFile(join(cwd, filePath), "utf-8");
-        if (
-          contentQuery &&
-          !content.toLowerCase().includes(contentQuery.toLowerCase())
-        ) {
-          return;
-        }
+  }[] = [];
 
-        /** Enforce max files per folder */
-        const folderPath = dirname(filePath);
-        const matchingFolder = lastFolderFileCount.get(folderPath);
-        lastFolderFileCount.set(folderPath, (matchingFolder ?? 0) + 1);
-        const currentCount = matchingFolder || 0;
-        if (currentCount >= maxFilesPerFolder) {
-          return {
-            filePath: "[...truncated]",
-            matchedContent: `File limit of ${maxFilesPerFolder} reached for folder ${folderPath}`,
-          };
-        }
+  for (const filePath of filteredResults.slice(0, limit)) {
+    const content = await readFile(join(cwd, filePath), "utf-8");
+    if (
+      contentQuery &&
+      !content.toLowerCase().includes(contentQuery.toLowerCase())
+    ) {
+      continue;
+    }
 
-        /** Return lines surrounding expression */
-        const lines = content.split("\n");
-        const matchingLinesIndices =
-          !contentQuery ?
-            [0]
-          : lines
-              .map((line, index) =>
-                line.toLowerCase().includes(contentQuery.toLowerCase()) ?
-                  index
-                : -1,
-              )
-              .filter((index) => index !== -1);
+    /** Enforce max files per folder */
+    const folderPath = dirname(filePath);
+    const matchingFolderCount = lastFolderFileCount.get(folderPath);
+    lastFolderFileCount.set(folderPath, (matchingFolderCount ?? 0) + 1);
+    const currentCount = matchingFolderCount || 0;
+    if (currentCount >= maxFilesPerFolder) {
+      if (currentCount > maxFilesPerFolder) {
+        // Already added a truncated message for this folder, skip further files
+        continue;
+      }
+      result.push({
+        filePath: "[...truncated]",
+        matchedContent: `File limit of ${maxFilesPerFolder} reached for folder ${folderPath}`,
+      });
+      continue;
+    }
 
-        const contextLines = new Set<string>();
-        matchingLinesIndices.forEach((matchIndex) => {
-          const start = Math.max(0, matchIndex - 5);
-          const end = Math.min(lines.length - 1, matchIndex + 5);
-          for (let i = start; i <= end; i++) {
-            contextLines.add(lines[i]!.slice(0, maxLineLength)); // Limit line length
-          }
-        });
-        return {
-          filePath,
-          matchedContent: Array.from(contextLines).join("\n...\n"),
-        };
-      }),
-    )
-  ).filter(isDefined);
+    /** Return lines surrounding expression */
+    const lines = content.split("\n");
+    const matchingLinesIndices =
+      !contentQuery ?
+        [0]
+      : lines
+          .map((line, index) =>
+            line.toLowerCase().includes(contentQuery.toLowerCase()) ?
+              index
+            : -1,
+          )
+          .filter((index) => index !== -1);
+
+    const contextLines: string[] = [];
+    matchingLinesIndices.forEach((matchIndex) => {
+      const start = Math.max(0, matchIndex - 5);
+      const end = Math.min(lines.length - 1, matchIndex + 5);
+      for (let i = start; i <= end; i++) {
+        // Limit line length
+        contextLines.push(lines[i]!.slice(0, maxLineLength));
+      }
+    });
+
+    result.push({
+      filePath,
+      matchedContent: contextLines.join("\n"),
+    });
+  }
 
   if (filteredResults.length > limit) {
     result.push({

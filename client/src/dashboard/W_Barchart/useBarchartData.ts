@@ -128,7 +128,7 @@ export const useBarchartData = ({
         select: {
           label: { $column: [labelColumn] },
           value: {
-            [funcName]: numericColumn ? [numericColumn] : [],
+            [funcName as "$age"]: numericColumn ? [numericColumn] : [],
           },
         },
         orderBy: sort && {

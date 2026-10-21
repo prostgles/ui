@@ -27,7 +27,7 @@ export const useAskLLMChatSend = ({
     (msg: LLMMessage["message"] | undefined) => {
       if (!msg || !activeChatId) return;
       /** TODO: move dbSchemaForPrompt to server-side */
-      void askLLM({
+      return askLLM({
         connectionId,
         userMessage: msg,
         schema: dbSchemaForPrompt,
@@ -41,6 +41,7 @@ export const useAskLLMChatSend = ({
         addAlert(
           "Error when when sending AI Assistant query: " + errorTextMessage,
         );
+        throw error;
       });
     },
     [activeChatId, askLLM, connectionId, dbSchemaForPrompt, addAlert],

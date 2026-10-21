@@ -1,7 +1,7 @@
 import { CONTENT_TYPE_TO_EXT, getKeys } from "prostgles-types";
+import { useMemo } from "react";
 import type { NewRowDataHandler } from "../../SmartFormNewRowDataHandler";
 import type { SmartFormFieldLinkedDataProps } from "../SmartFormFieldLinkedData";
-import { act, useMemo } from "react";
 
 type P = Pick<SmartFormFieldLinkedDataProps, "column" | "action"> & {
   newRowDataHandler: NewRowDataHandler;
@@ -63,7 +63,8 @@ export const useSmartFormFieldLinkedDataInsert = ({
       newRowDataHandler.setNestedFileColumn(
         column.name,
         file && {
-          name: file.name,
+          original_name: file.name,
+          original_last_modified: new Date(file.lastModified).toISOString(),
           data: file,
         },
       );

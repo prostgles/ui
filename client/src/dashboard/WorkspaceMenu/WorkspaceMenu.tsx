@@ -1,3 +1,4 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import Btn from "@components/Btn";
 import { FlexRow, classOverride } from "@components/Flex";
 import { SvgIcon } from "@components/SvgIcon";
@@ -28,7 +29,8 @@ export const WorkspaceMenu = (props: P) => {
   const isFixedLayout = layout_mode === "fixed";
   const { setWorkspace } = useSetActiveWorkspace(workspace.id);
   const userId = user?.id;
-  const { workspaces } = useWorkspaces(dbs, userId!, workspace.connection_id);
+  const isAdmin = user?.type === USER_TYPES.ADMIN;
+  const { workspaces } = useWorkspaces(dbs, userId!, workspace.connection_id, isAdmin);
 
   useEffect(() => {
     setTimeout(() => {
@@ -72,7 +74,7 @@ export const WorkspaceMenu = (props: P) => {
               title={
                 (wsp.published && !wsp.isMine ?
                   "Shared workspace"
-                : "Workspace") + (wsp.isMine ? "" : " (readonly)")
+                : "Workspace") + (isAdmin || wsp.isMine ? "" : " (readonly)")
               }
               size="default"
               iconNode={wsp.icon ? <SvgIcon icon={wsp.icon} /> : undefined}
@@ -103,7 +105,7 @@ export const WorkspaceMenu = (props: P) => {
         workspaces={workspaces}
       />
 
-      {user?.type === "admin" && !window.isLowWidthScreen && (
+      {user?.type === USER_TYPES.ADMIN && !window.isLowWidthScreen && (
         <Btn
           iconPath={isFixedLayout ? mdiViewDashboardEdit : mdiViewDashboard}
           title={"Toggle Layout Mode"}

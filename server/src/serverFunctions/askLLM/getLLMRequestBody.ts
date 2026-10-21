@@ -27,8 +27,16 @@ export const getLLMRequestBody = ({
   const nonEmptyMessages = maybeEmptyMessages
     .map((m) => {
       const nonEmptyMessageContent = m.content
-        .filter((m) => m.type !== "text" || !("text" in m) || m.text.trim())
         .map((c) => {
+          if (c.type === "text" && "source" in c) {
+            return {
+              type: "text",
+              text: Buffer.from(
+                removeBase64Prefix(c.source.data),
+                "base64",
+              ).toString("utf8"),
+            } as const;
+          }
           if (c.type === "text-document") {
             return {
               type: "text",
@@ -36,7 +44,8 @@ export const getLLMRequestBody = ({
             } as const;
           }
           return c;
-        });
+        })
+        .filter((c) => c.type !== "text" || !("text" in c) || c.text.trim());
       return {
         ...m,
         content: nonEmptyMessageContent,

@@ -1,3 +1,4 @@
+import type { DBSSchema } from "@common/publishUtils";
 import { sliceText } from "@common/utils";
 import Btn from "@components/Btn";
 import Chip from "@components/Chip";
@@ -11,17 +12,17 @@ import {
 } from "@components/SearchList/SearchList";
 import { mdiChat, mdiCubeOutline } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import { defineJoin, type FilterItem, type Select } from "prostgles-types";
 import React, { useMemo, useState } from "react";
 import { AgenticWorkflow } from "../AskLLM/Chat/AskLLMChatMessages/ProstglesToolUseMessage/ProstglesMCPTools/AgenticWorkflow/AgenticWorkflow";
 import { useLLMSetup } from "../AskLLM/Setup/LLMSetupProvider";
-import type { DBSSchema } from "@common/publishUtils";
-import type { FilterItem, Select } from "prostgles-types";
 
 export const SavedAgenticWorkflowsAndContainers = () => {
   const { dbs, connectionId } = usePrgl();
   const [selectedWorkflowId, setSelectedWorkflowId] = useState<number>();
 
   const state = useLLMSetup();
+
   const { data: agenticWorkflows } = dbs.agentic_workflows.useSubscribe(
     {
       connection_id: connectionId,
@@ -29,7 +30,7 @@ export const SavedAgenticWorkflowsAndContainers = () => {
     {
       select: {
         "*": 1,
-        agentic_workflow_runs: {
+        agentic_workflow_runs: defineJoin({
           $leftJoin: "agentic_workflow_runs",
           select: {
             state: 1,
@@ -38,7 +39,7 @@ export const SavedAgenticWorkflowsAndContainers = () => {
           filter: {
             state: { "@>": { status: "running" } },
           } satisfies FilterItem<DBSSchema["agentic_workflow_runs"]>,
-        },
+        }),
       },
       orderBy: [{ key: "created", asc: false }],
     },

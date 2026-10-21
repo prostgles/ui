@@ -9,7 +9,7 @@ import type { ContextDataSchema } from "./OptionControllers/FilterControl";
 
 type P = {
   className?: string;
-  onChange: (contextValue?: ContextValue  ) => void;
+  onChange: (contextValue?: ContextValue) => void;
   value: ContextValue | undefined;
   contextData: ContextDataSchema;
   column: FilterColumn;
@@ -32,7 +32,9 @@ export const ContextDataSelector = ({
       })),
   );
   const valueId =
-    value ? `${value.objectName}.${value.objectPropertyName}` : undefined;
+    value ?
+      `${value.objectName}.${value.objectPropertyName}`
+    : undefined;
 
   return (
     <div
@@ -70,7 +72,7 @@ export const ContextDataSelector = ({
           if (!ctxCol) return;
 
           onChange({
-            objectName: ctxCol.tableName,
+            objectName: "user",
             objectPropertyName: ctxCol.name,
           });
         }}

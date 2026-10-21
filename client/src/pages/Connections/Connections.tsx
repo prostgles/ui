@@ -12,6 +12,8 @@ import { ConnectionsOptions } from "./ConnectionsOptions";
 import { CreateConnection } from "./CreateConnection/CreateConnection";
 import { useConnections } from "./useConnections";
 import { useConnectionServersList } from "./useConnectionServersList";
+import { Navigate } from "react-router";
+import { USER_TYPES } from "@common/authTypesAndConstants";
 
 export const Connections = (props: AppContextProps) => {
   const { user, dbs, dbsMethods, dbsSql } = props;
@@ -19,6 +21,11 @@ export const Connections = (props: AppContextProps) => {
   const { connections, isAdmin, showDbNames } = state;
   const { serverUserGroupings } = useConnectionServersList(state);
   if (!user || !connections || !serverUserGroupings) return <Loading />;
+  if (user.type !== USER_TYPES.ADMIN && connections.length === 1) {
+    return (
+      <Navigate to={`${ROUTES.CONNECTIONS}/${connections[0]!.id}`} replace />
+    );
+  }
 
   const {
     createConnection,

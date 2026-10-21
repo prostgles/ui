@@ -1,5 +1,4 @@
 import type { DBSSchema } from "@common/publishUtils";
-import { getElectronConfig } from "@src/electronConfig";
 import cors from "cors";
 import type e from "express";
 import helmet from "helmet";
@@ -8,8 +7,8 @@ import {
   upsertNamedExpressMiddleware,
 } from "prostgles-server";
 import type { ExpressApp } from "prostgles-server/dist/RestApi";
-import { getCorsOptions } from "./getCorsOptions";
 import { setNonceHandler, withNonce, withSelfAndExtra } from "../init/utils";
+import { getCorsOptions } from "./getCorsOptions";
 
 export type HttpAppSecurityOptions = Pick<
   DBSSchema["database_configs"],
@@ -38,13 +37,19 @@ export const setHttpAppSecurity = (
 
   const addDevDefaultsToStateConnection = (
     currentValue: undefined | string[],
-    protocol: "http" | "wss" = "http",
+    protocols: ("http" | "wss")[] = ["http"],
   ) => {
     const currentValueWithNonce = withNonce(currentValue);
     if (is_state_db && cors_csp_devmode_enabled) {
       return [
         ...currentValueWithNonce,
-        ...connectionPorts.map((port) => `${protocol}://localhost:${port}`),
+        ...connectionPorts.flatMap((port) =>
+          protocols.flatMap((protocol) =>
+            ["localhost", "127.0.0.1"].map(
+              (hostname) => `${protocol}://${hostname}:${port}`,
+            ),
+          ),
+        ),
       ];
     }
     return currentValueWithNonce;
@@ -80,7 +85,8 @@ export const setHttpAppSecurity = (
     frameAncestors,
 
     frameSrc,
-    connectSrc: addDevDefaultsToStateConnection(csp?.connectSrc, "wss"),
+    imgSrc: addDevDefaultsToStateConnection(csp?.imgSrc ?? ["'self'", "data:"]),
+    connectSrc: addDevDefaultsToStateConnection(csp?.connectSrc, ["http", "wss"]),
   };
 
   // !getElectronConfig()?.isElectron &&

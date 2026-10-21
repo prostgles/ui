@@ -5,7 +5,7 @@ import { type Prgl } from "../../../../App";
 import Btn from "@components/Btn";
 import PopupMenu from "@components/PopupMenu";
 import { FileColumnConfigEditor } from "../../../FileTableControls/FileColumnConfigEditor";
-import { useFileTableConfigControls } from "../../../FileTableControls/useFileTableConfigControls";
+import { useFileTableConfigControls } from "../../../FileTableControls/hooks/useFileTableConfigControls";
 
 type P = Pick<
   Prgl,

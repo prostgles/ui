@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./utils/fixtures";
 import { type AnyObject } from "prostgles-types";
 import { USERS } from "utils/constants";
 import { goTo } from "utils/goTo";
@@ -18,6 +18,7 @@ test.use({
   video: {
     mode: "on",
     size: viewPortSize,
+    fps: 60,
   },
   trace: "on",
   launchOptions: {
@@ -29,12 +30,12 @@ const videoTestDuration = 12 * 60e3;
 test.describe("Demo video", () => {
   test.setTimeout(videoTestDuration);
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(({ page }) => {
     page.on("console", (msg) =>
       console.log("[browser:" + msg.type() + "]", msg.text()),
     );
     page.on("pageerror", (err) =>
-      console.error("[pageerror]", err?.stack || err),
+      console.error("[pageerror]", err.stack || err),
     );
   });
 
@@ -106,12 +107,12 @@ test.describe("Demo video", () => {
           try {
             await (node as any).start();
           } catch (e) {
-            const errorObj = Object.getOwnPropertyNames(
-              typeof e !== "object" ? { error: e } : e,
-            ).reduce(
+            const error =
+              typeof e !== "object" || e === null ? { error: e } : e;
+            const errorObj = Object.getOwnPropertyNames(error).reduce(
               (acc, key) => ({
                 ...acc,
-                [key]: (e as AnyObject)[key],
+                [key]: (error as AnyObject)[key],
               }),
               {},
             );

@@ -1,10 +1,10 @@
-import type { DBS } from "@src/index";
+import type { DBSClient } from "@src/index";
 import { getTemplatedWebAppConnection } from "./getTemplatedWebAppConnection";
 import { runDockerForWebApp } from "./runDockerForWebApp";
 
 export const testWebApp = async (
   { connectionId }: { connectionId: string },
-  { dbo }: { dbo: DBS },
+  { dbo }: { dbo: DBSClient },
 ) => {
   const { web_app_directory, port } = await getTemplatedWebAppConnection(
     dbo,
@@ -23,7 +23,7 @@ export const testWebApp = async (
       /** To run tests against built version */
       URL: `http://localhost:${port}`,
     },
-    image: "mcr.microsoft.com/playwright:v1.58.0-noble",
+    image: "mcr.microsoft.com/playwright:v1.63.0-noble",
     shCommand: "cd e2e && npm install --silent && npm test",
   });
   return result;

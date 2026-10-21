@@ -12,7 +12,7 @@ import { addChart } from "src/dashboard/Dashboard/addChart";
 import type { DeckGlColor } from "src/dashboard/Map/DeckGLMap";
 import { t } from "../../../i18n/i18nUtils";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
-import type { WindowData } from "../../Dashboard/dashboardUtils";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 import { rgbaToString } from "../../W_Map/getMapFeatureStyle";
 import type { ChartableSQL } from "../../W_SQL/getChartableSQL";
 import type { ChartColumn } from "./getChartCols";

@@ -32,7 +32,7 @@ export const callMCPServerTool = async ({
   serverName: string;
   toolName: string;
   toolArguments: Record<string, unknown> | undefined;
-  clientReq: AuthClientRequest;
+  clientReq?: AuthClientRequest;
   toolUseId: string | undefined;
   isReRun?: boolean;
   mcp_tool_approval_requests_id: number | undefined;

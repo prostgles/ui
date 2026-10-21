@@ -1,3 +1,9 @@
+import type { JSONB } from "prostgles-types";
+import {
+  actionColumnParamsSchema,
+  actionColumnsParamsSchema,
+} from "./actionColumn";
+
 export const ContentTypes = ["image", "video", "audio"] as const;
 
 const CurrencySchema = {
@@ -32,7 +38,7 @@ const CurrencySchema = {
           type: "string",
           title: "Currency Field",
           description:
-            "Column containint the currency code (EUR, GBP, USD, etc...)",
+            "Column containing the currency code (EUR, GBP, USD, etc...)",
         },
       },
     ],
@@ -46,48 +52,48 @@ const MediaSchema = {
     description: "Display media (video/image/audio) from URL",
   },
   params: {
-    optional: true,
-    oneOfType: [
-      {
-        type: {
-          title: "Content type",
-          enum: ["Auto"],
-          description: "Auto detect from URL and headers (default)",
-        },
+    type: {
+      contentType: {
+        optional: true,
+        title: "Content type",
+        oneOfType: [
+          {
+            mode: {
+              enum: ["Auto"],
+              title: "Auto detect from URL and headers (default)",
+            },
+          },
+          {
+            mode: { enum: ["Fixed"], title: "Fixed" },
+            fixedContentType: {
+              type: "string",
+              title: "Fixed content type",
+              allowedValues: ContentTypes,
+            },
+          },
+          {
+            mode: { enum: ["From column"], title: "From column" },
+            contentTypeColumnName: {
+              title: "MIME column",
+              type: "string",
+              description:
+                "Column that contains valid extension values (img, mp4, mp3, ...)",
+            },
+          },
+          {
+            mode: {
+              enum: ["From URL Extension"],
+              title: "From URL Extension (e.g. .png, .mp4)",
+            },
+          },
+        ],
       },
-      {
-        type: {
-          title: "Content type",
-          enum: ["Fixed"],
-          description: "Fixed",
-        },
-        fixedContentType: {
-          type: "string",
-          title: "Fixed content type",
-          allowedValues: ContentTypes,
-        },
+      titleColumn: {
+        optional: true,
+        type: "string",
+        title: "Title column",
       },
-      {
-        type: {
-          title: "Content type",
-          enum: ["From column"],
-          description: "From column",
-        },
-        contentTypeColumnName: {
-          title: "MIME column",
-          type: "string",
-          description:
-            "Column that contains valid extesion values (img, mp4, mp3, ...)",
-        },
-      },
-      {
-        type: {
-          title: "Content type",
-          enum: ["From URL Extension"],
-          description: "From URL Extension (e.g. .png, .mp4)",
-        },
-      },
-    ],
+    },
   },
 } as const; // satisfies JSONB.JSONBSchema["type"];
 
@@ -95,6 +101,16 @@ export const columnDisplayFormatSchema = {
   title: "Display format",
   description: "Control how data is displayed",
   oneOfType: [
+    {
+      type: { enum: ["ActionColumns"], title: "Format" },
+      params: { type: actionColumnsParamsSchema },
+    },
+    {
+      type: { enum: ["Action"], title: "Format" },
+      params: {
+        type: actionColumnParamsSchema,
+      },
+    },
     {
       type: {
         enum: ["NONE"],
@@ -133,6 +149,30 @@ export const columnDisplayFormatSchema = {
     CurrencySchema,
     {
       type: {
+        enum: ["Avatar"],
+        title: "Format",
+        description: "Name initials in a circle. Set colors in column styles.",
+      },
+      params: {
+        optional: true,
+        type: {
+          firstNameColumn: {
+            type: "string",
+            optional: true,
+            title: "First name column",
+            description:
+              "Leave name columns unset to use this column's full name.",
+          },
+          lastNameColumn: {
+            type: "string",
+            optional: true,
+            title: "Last name column",
+          },
+        },
+      },
+    },
+    {
+      type: {
         enum: ["Metric Prefix"],
         title: "Format",
         description: "Display large numbers with metric prefixes (e.g. 1.2K)",
@@ -160,6 +200,40 @@ export const columnDisplayFormatSchema = {
             enum: ["short", "full"],
           },
         },
+      },
+    },
+    {
+      type: {
+        enum: ["Markdown", "MarkdownPopup"],
+        title: "Format",
+        description: "Display string as Markdown",
+      },
+    },
+    {
+      type: {
+        enum: ["JSON Diff", "Text Diff"],
+        title: "Format",
+        description: "Compare JSON or plain text values from two columns",
+      },
+      params: {
+        type: {
+          oldColumn: "string",
+          newColumn: "string",
+        },
+      },
+    },
+    {
+      type: {
+        enum: ["DoclingDocument"],
+        title: "Format",
+        description: "Renders a Docling parsed document",
+      },
+    },
+    {
+      type: {
+        enum: ["Logs"],
+        title: "Format",
+        description: "Renders a log viewer for text data",
       },
     },
     {
@@ -195,3 +269,7 @@ export const columnDisplayFormatSchema = {
     MediaSchema,
   ],
 } as const;
+
+export type UserColumnFormat = JSONB.GetSchemaType<
+  typeof columnDisplayFormatSchema
+>;

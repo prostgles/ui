@@ -2,7 +2,6 @@ import Btn from "@components/Btn";
 import PopupMenu from "@components/PopupMenu";
 import { mdiMagnify } from "@mdi/js";
 import { usePromise } from "prostgles-client";
-import type { DBHandlerClient } from "prostgles-client";
 import React from "react";
 import type { AppContextProps } from "../../App";
 import SmartTable from "../SmartTable";
@@ -18,20 +17,14 @@ export const UserStats = ({
   dbsMethodSchema,
   dbsSql,
 }: UserStatsProps) => {
-  const existingUserStats = usePromise(
-    () =>
-      dbs.users.find(
-        {},
-        {
-          select: { type: 1, count: { $countAll: [] } },
-          orderBy: { count: -1 } as any,
-        },
-      ) as Promise<
-        {
-          type: string;
-          count: number;
-        }[]
-      >,
+  const existingUserStats = usePromise(() =>
+    dbs.users.find(
+      {},
+      {
+        select: { type: 1, count: { $countAll: [] } },
+        orderBy: { count: -1 } as unknown as { type: 1 },
+      },
+    ),
   );
 
   const userCount = existingUserStats?.reduce((a, v) => a + +v.count, 0) ?? 0;

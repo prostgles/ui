@@ -17,14 +17,14 @@ import RTComp from "../../RTComp";
 
 import FormField from "@components/FormField/FormField";
 import type { TableInfo } from "prostgles-types";
-import type { ColumnConfigWInfo, W_TableProps } from "../W_Table";
+import type { W_TableProps } from "../W_Table";
 
 import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";
 
 import ErrorComponent from "@components/ErrorComponent";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import { SQLSmartEditor } from "../../SQLEditor/SQLSmartEditor";
-import type { ColumnConfig } from "../ColumnMenu/ColumnMenu";
+import type { ColumnConfig } from "@common/ColumnConfig/ColumnConfig";
 import { ColumnsMenu } from "../ColumnMenu/ColumnsMenu";
 import { AutoRefreshMenu } from "./AutoRefreshMenu";
 import { W_TableMenu_AccessRules } from "./W_TableMenu_AccessRules";
@@ -37,26 +37,17 @@ import { W_TableMenu_TableInfo } from "./W_TableMenu_TableInfo";
 import { W_TableMenu_Triggers } from "./W_TableMenu_Triggers";
 import { getAndFixWColumnsConfig } from "./getAndFixWColumnsConfig";
 import { getTableMeta, type W_TableInfo } from "./getTableMeta";
+import { tableMightBeUndefinedDueToAccessControl } from "@common/utils";
 
 export type W_TableMenuProps = Pick<
   W_TableProps,
-  "workspace" | "prgl" | "externalFilters" | "joinFilter" | "tables"
+  "workspace" | "prgl" | "externalFilters" | "joinFilter"
 > & {
   w: WindowSyncItem<"table">;
-  cols: ColumnConfigWInfo[];
   suggestions: CommonWindowProps["suggestions"];
   onClose: () => any;
 };
-export type Unpromise<T extends Promise<any>> =
-  T extends Promise<infer U> ? U : never;
 
-export type RefreshOptions = {
-  readonly refresh?: {
-    readonly type: "Realtime" | "None" | "Interval";
-    intervalSeconds: number;
-    throttleSeconds: number;
-  };
-};
 export type W_TableMenuState = {
   schemaAge?: number;
   indexes?: {
@@ -85,7 +76,7 @@ export type W_TableMenuState = {
   };
   autoRefreshSeconds?: number;
   constraints?: {}[];
-  tableMeta?: Unpromise<ReturnType<typeof getTableMeta>>;
+  tableMeta?: Awaited<ReturnType<typeof getTableMeta>>;
   tableInfo?: TableInfo;
 
   linkTablePath?: string[];
@@ -121,8 +112,8 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
     w: undefined,
   };
 
-  onUnmount = async () => {
-    if (this.wSub) await this.wSub.$unsync();
+  onUnmount = () => {
+    this.wSub?.$unsync();
   };
 
   getTableInfo() {
@@ -144,13 +135,17 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
   wSub?: ReturnType<Required<D>["w"]["$cloneSync"]>;
   autoRefresh: any;
   loading = false;
-  onDelta = async (dP, dS) => {
+  onDelta = (dP, dS) => {
     const w = this.d.w || this.props.w;
     const { table_name: tableName } = w;
 
-    if (tableName && (w as any).$cloneSync && !this.loading) {
+    if (
+      tableName &&
+      (w as Partial<WindowSyncItem>).$cloneSync &&
+      !this.loading
+    ) {
       this.loading = true;
-      this.wSub = await w.$cloneSync((w, delta) => {
+      this.wSub = w.$cloneSync((w, delta) => {
         this.setData({ w }, { w: delta });
       });
       this.getTableInfo();
@@ -211,7 +206,8 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
     const commonProps = {
       ...this.props,
       tableMeta,
-      onSetQuery: (query) => this.setState({ query }),
+      onSetQuery: (query: W_TableMenuState["query"]) =>
+        this.setState({ query }),
     };
     if (w.table_name) {
       l1Opts = {
@@ -281,7 +277,10 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
             label: "Access rules " + tableMeta.accessRules.length,
             leftIconPath: mdiAccountMultiple,
             disabledText:
-              (dbs.access_control as any).find ?
+              (
+                tableMightBeUndefinedDueToAccessControl(dbs.access_control)
+                  ?.find
+              ) ?
                 undefined
               : "Not enough privileges",
             content: <W_TableMenu_AccessRules {...commonProps} />,
@@ -318,12 +317,12 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
           items={l1Opts ?? {}}
           compactMode={window.isMobileDevice ? "hide-inactive" : undefined}
           activeKey={l1Key}
-          onChange={async (l1Key: any) => {
+          onChange={async (l1Key) => {
             this.setState({ l1Key, query: undefined, infoQuery: undefined });
             if (!this.d.w) return;
 
             if (l1Key === "View as card") {
-              this.d.w.$update(
+              void this.d.w.$update(
                 {
                   options: {
                     viewAs: {
@@ -336,12 +335,12 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
               );
             } else if (l1Key === "Columns") {
               const columnsConfig = await getAndFixWColumnsConfig(
-                this.props.tables,
+                this.props.prgl.tables,
                 w,
               );
               this.setState({ columnsConfig });
             } else if (l1Key === "Filter") {
-              this.d.w.$update({
+              void this.d.w.$update({
                 show_menu: false,
                 filter: [],
               });

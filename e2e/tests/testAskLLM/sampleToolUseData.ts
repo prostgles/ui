@@ -922,14 +922,14 @@ export const prostglesUIFoodDeliveryDashboardSample = {
                     computedConfig: {
                       aggregation: "countAll",
                     },
+                    styling: {
+                      type: "Barchart",
+                      barColor: "indigo",
+                      textColor: "#555",
+                    },
                   },
                 ],
                 joinType: "left",
-              },
-              styling: {
-                type: "Barchart",
-                barColor: "indigo",
-                textColor: "#555",
               },
             },
             {
@@ -963,14 +963,14 @@ export const prostglesUIFoodDeliveryDashboardSample = {
                       column: "price",
                       aggregation: "avg",
                     },
+                    styling: {
+                      type: "Barchart",
+                      barColor: "green",
+                      textColor: "#555",
+                    },
                   },
                 ],
                 joinType: "left",
-              },
-              styling: {
-                type: "Barchart",
-                barColor: "green",
-                textColor: "#555",
               },
             },
             {
@@ -995,14 +995,14 @@ export const prostglesUIFoodDeliveryDashboardSample = {
                     computedConfig: {
                       aggregation: "countAll",
                     },
+                    styling: {
+                      type: "Barchart",
+                      barColor: "blue",
+                      textColor: "#555",
+                    },
                   },
                 ],
                 joinType: "left",
-              },
-              styling: {
-                type: "Barchart",
-                barColor: "blue",
-                textColor: "#555",
               },
             },
             {
@@ -1036,14 +1036,14 @@ export const prostglesUIFoodDeliveryDashboardSample = {
                       column: "total_price",
                       aggregation: "sum",
                     },
+                    styling: {
+                      type: "Barchart",
+                      barColor: "purple",
+                      textColor: "#555",
+                    },
                   },
                 ],
                 joinType: "left",
-              },
-              styling: {
-                type: "Barchart",
-                barColor: "purple",
-                textColor: "#555",
               },
             },
             {
@@ -1197,7 +1197,7 @@ export const prostglesUIFoodDeliveryDashboardSample = {
 export const dockerWeatherToolUse = {
   files: {
     Dockerfile:
-      'FROM node:18-alpine\nWORKDIR /app\nCOPY package.json .\nRUN npm install\nCOPY . .\nCMD ["node", "fetch_weather.js"]',
+      'FROM node:24-alpine\nWORKDIR /app\nCOPY package.json .\nRUN npm install\nCOPY . .\nCMD ["node", "fetch_weather.js"]',
     "package.json":
       '{\n  "name": "weather-fetcher",\n  "version": "1.0.0",\n  "dependencies": {\n    "axios": "^1.6.0"\n  }\n}',
     "fetch_weather.js":

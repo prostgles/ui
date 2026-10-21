@@ -241,8 +241,7 @@ export type SampleSchemaDir = {
   onMountTs: string;
   onInitSQL: string;
   workspaceConfig:
-    | { workspaces: DBSSchemaForInsert["workspaces"][] }
-    | undefined;
+    { workspaces: DBSSchemaForInsert["workspaces"][] } | undefined;
   connection:
     | Pick<
         DBSSchema["connections"],
@@ -336,6 +335,7 @@ export const fromEntries = <K extends string | number | symbol, V>(
   return Object.fromEntries(entries) as Record<K, V>;
 };
 export const CONNECTION_CONFIG_SECTIONS = [
+  "members",
   "authentication",
   "access_control",
   "backups",
@@ -347,6 +347,7 @@ export const CONNECTION_CONFIG_SECTIONS = [
   "API",
   "webApp",
   "security",
+  "config",
 ] as const;
 
 export const SERVER_SETTINGS_SECTIONS = [
@@ -431,6 +432,7 @@ export const ROUTES = {
   BACKUPS: "/prostgles_backups",
   STORAGE: "/prostgles_storage",
   PLAYWRIGHT_REPORT: "/playwright-report",
+  MCP_OAUTH_CALLBACK: "/mcp-oauth-callback",
 } as const;
 
 const testForDuplicateValues = <T extends AnyObject>(obj: T, name: string) => {
@@ -442,6 +444,14 @@ const testForDuplicateValues = <T extends AnyObject>(obj: T, name: string) => {
 };
 testForDuplicateValues(API_ENDPOINTS, "API_ENDPOINTS");
 testForDuplicateValues(ROUTES, "ROUTES");
+
+export const getFileServePath = ({
+  connectionId,
+  fileId,
+}: {
+  connectionId: string;
+  fileId: string | undefined;
+}) => [ROUTES.STORAGE, connectionId, fileId].filter(Boolean).join("/");
 
 export const PROSTGLES_CLOUD_URL = "https://cloud1.prostgles.com";
 
@@ -514,7 +524,7 @@ export const getRandomElement = <Arr>(
 };
 
 /**
- * TODO: find a compile time solution
+ * TODO: migrate dbs access control to static rules to enable compile time checks
  */
 export const tableMightBeUndefinedDueToAccessControl = <T>(
   tableHandler: T,

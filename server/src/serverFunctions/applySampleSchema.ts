@@ -10,7 +10,8 @@ import { isDefined } from "@common/filterUtils";
 import type { SampleSchema, SampleSchemaDir } from "@common/utils";
 import { getEvaledExports } from "../ConnectionManager/connectionManagerUtils";
 import { actualRootDir } from "../electronConfig";
-import { runConnectionQuery } from "./getServerFunctions";
+import { runConnectionQuery } from "./stateServerFunctions";
+import { syncSchemaConfig } from "../ConnectionManager/syncSchemaConfig";
 
 export const applySampleSchema = async (
   dbs: DBS,
@@ -26,19 +27,20 @@ export const applySampleSchema = async (
     return;
   }
 
-  const { tableConfigTs, onMountTs, onInitSQL, connection, databaseConfig } =
-    schema;
-  if (onInitSQL) {
-    await runConnectionQuery(connId, onInitSQL, undefined, { dbs });
-  }
-  await dbs.database_configs.update(
-    { $existsJoined: { connections: { id: connId } } },
-    { table_config_ts: tableConfigTs, ...databaseConfig },
-  );
-  await dbs.connections.update(
-    { id: connId },
-    { on_mount_ts: onMountTs, ...connection },
-  );
+  await applySchemaDir(dbs, schema, connId);
+};
+
+export const applySchemaDir = async (
+  dbs: DBS,
+  schema: SampleSchemaDir & { name: string; path: string },
+  connectionId: string,
+) => {
+  await syncSchemaConfig({
+    dbs,
+    connectionId,
+    configPath: path.join(schema.path, schema.name),
+    type: "sample-schema",
+  });
 };
 
 const getFileIfExists = (path: string) => {
@@ -55,32 +57,40 @@ export const getSampleSchemas = (): SampleSchema[] => {
     .filter((name) => !name.startsWith("_"));
   return files
     .map((name) => {
-      const schemaPath = `${sampleSchemasDir}/${name}`;
-      if (fs.statSync(`${schemaPath}`).isDirectory()) {
-        return {
-          path: sampleSchemasDir,
-          name,
-          type: "dir" as const,
-          tableConfigTs: getFileIfExists(`${schemaPath}/tableConfig.ts`) ?? "",
-          onMountTs: getFileIfExists(`${schemaPath}/onMount.ts`) ?? "",
-          onInitSQL: getFileIfExists(`${schemaPath}/onInit.sql`) ?? "",
-          connection: getEvaledExports<{
-            default: SampleSchemaDir["connection"];
-          }>(getFileIfExists(`${schemaPath}/connection.ts`))?.default,
-          databaseConfig: getEvaledExports<{
-            default: SampleSchemaDir["databaseConfig"];
-          }>(getFileIfExists(`${schemaPath}/databaseConfig.ts`) ?? "")?.default,
-          workspaceConfig: getEvaledExports<SampleSchemaDir>(
-            getFileIfExists(`${schemaPath}/workspaceConfig.ts`),
-          )?.workspaceConfig,
-        } satisfies SampleSchema;
-      }
+      const configPath = `${sampleSchemasDir}/${name}`;
       return {
-        name,
         path: sampleSchemasDir,
-        type: "sql" as const,
-        file: getFileIfExists(schemaPath) ?? "",
+        name,
+        ...getSampleSchema(configPath),
       };
     })
     .filter(isDefined);
+};
+
+export const getSampleSchema = (configPath: string) => {
+  if (fs.statSync(`${configPath}`).isDirectory()) {
+    return {
+      // path: sampleSchemasDir,
+      // name,
+      type: "dir" as const,
+      tableConfigTs: getFileIfExists(`${configPath}/tableConfig.ts`) ?? "",
+      onMountTs: getFileIfExists(`${configPath}/onMount.ts`) ?? "",
+      onInitSQL: getFileIfExists(`${configPath}/onInit.sql`) ?? "",
+      connection: getEvaledExports<{
+        default: SampleSchemaDir["connection"];
+      }>(getFileIfExists(`${configPath}/connection.ts`))?.default,
+      databaseConfig: getEvaledExports<{
+        default: SampleSchemaDir["databaseConfig"];
+      }>(getFileIfExists(`${configPath}/databaseConfig.ts`) ?? "")?.default,
+      workspaceConfig: getEvaledExports<SampleSchemaDir>(
+        getFileIfExists(`${configPath}/workspaceConfig.ts`),
+      )?.workspaceConfig,
+    };
+  }
+  return {
+    // name,
+    // path: sampleSchemasDir,
+    type: "sql" as const,
+    file: getFileIfExists(configPath) ?? "",
+  };
 };

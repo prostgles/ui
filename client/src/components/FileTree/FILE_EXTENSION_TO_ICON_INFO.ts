@@ -53,6 +53,11 @@ export const FILE_EXTENSION_TO_ICON_INFO: Record<
     label: "typescript",
     color: "#3178c6",
   },
+  ".spec.ts": {
+    iconPath: mdiLanguageTypescript,
+    label: "typescript",
+    color: "#d97605",
+  },
   mjs: { iconPath: mdiReact, label: "javascript", color: "#cbb60b" },
   cjs: { iconPath: mdiReact, label: "javascript", color: "#cbb60b" },
   jsx: { iconPath: mdiReact, label: "javascript", color: "#34bee4" },
