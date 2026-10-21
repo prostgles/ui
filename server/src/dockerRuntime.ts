@@ -33,7 +33,7 @@ export const getServiceDockerResources = (
     throw new Error("Service name must contain a letter or number.");
 
   const { instanceId, networkName } = getDockerRuntime(environment);
-  const containerName = `${instanceId ?? DEFAULT_INSTANCE_ID}-service-${serviceId}`;
+  const containerName = `${getServiceDockerPrefix(instanceId)}${serviceId}`;
 
   return {
     containerName,
@@ -64,3 +64,6 @@ export const getServiceDockerConnectivity = ({
       : ["-p", `${baseHost}:${containerPort}`],
   };
 };
+
+export const getServiceDockerPrefix = (instanceId: string | undefined) =>
+  `${instanceId ?? DEFAULT_INSTANCE_ID}-service-`;

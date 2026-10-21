@@ -132,32 +132,21 @@ export const refreshModels = async (
   }
 };
 
+export const DEFAULT_AGENT_MODEL = "luna-latest";
+
 export const CHEAPER_AGENTIC_MODEL_RANKING = [
-  "claude-4.5-haiku",
-  "claude-3.5-haiku",
-  "gemini-3-flash",
-  "gemini-2.5-flash",
-  "gemini-2.5-flash-lite",
-  "gpt-5.4-mini",
-  "gpt-5.1-codex-mini",
-  "gpt-4.1-mini",
-  "gpt-4.1-nano",
-  "gpt-4o-mini",
-  "codex-mini",
+  DEFAULT_AGENT_MODEL,
+  "claude-haiku-latest",
+  "claude-sonnet-latest",
   "qwen3.5-flash",
   "kimi-k2.5-0127",
   "minimax-m2.5",
 ];
 
 export const AGENTIC_MODEL_RANKING = [
-  "gpt-5.3-codex",
-  "gpt-5.2-codex",
+  "gpt-codex-latest",
+  "claude-sonnet-latest",
   "qwen3.5-397b-a17b",
-  "claude-4.6-sonnet",
-  // "claude-4.6-opus",
-  "gemini-3.1-pro",
-  "grok-4.1-fast",
-  "grok-4.20-20260309",
   "kimi-k2-thinking",
   "glm-4.7",
   "glm-5",
@@ -165,16 +154,13 @@ export const AGENTIC_MODEL_RANKING = [
   ...CHEAPER_AGENTIC_MODEL_RANKING,
 ];
 
-export const DEFAULT_AGENT_MODEL = "claude-4.6-sonnet";
 const CHAT_MODEL_RANKING = [
-  "gpt-5.6-terra",
-  "gpt-5.6-sol",
-  "gpt-5.3-codex",
-  "gpt-5.2-chat",
+  "gpt-terra-latest",
+  "gpt-sol-latest",
+  "gpt-codex-latest",
   "qwen3.5-397b-a17b",
-  "claude-4.5-haiku",
-  "claude-4.6-sonnet",
-  "gemini-3.1-pro",
+  "claude-haiku-latest",
+  "claude-sonnet-latest",
   "kimi-k2-thinking",
   "glm-5.1",
   "glm-4.7",

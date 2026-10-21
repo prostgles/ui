@@ -1,6 +1,6 @@
+import { canManageBusinessAccess } from "@common/authTypesAndConstants";
 import React from "react";
 
-import type { DBHandlerClient } from "prostgles-client";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import { t } from "../i18n/i18nUtils";
 import { PasswordlessSetup } from "./AccessControl/PasswordlessSetup";
@@ -20,7 +20,7 @@ export const UserManager = () => {
   const { dbs, dbsTables, dbsMethodSchema, dbsSql, user } = usePrglCore();
 
   let content: React.ReactNode;
-  if (user?.type !== "admin") {
+  if (!canManageBusinessAccess(user?.type)) {
     content = <div>Must be admin to access this section</div>;
   } else if (user.passwordless_admin) {
     content = <PasswordlessSetup />;

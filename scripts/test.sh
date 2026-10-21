@@ -2,6 +2,14 @@
 
 set -e
 
+test_console_log="$PWD/e2e/.test-artifacts/latest-test-console.log"
+mkdir -p "$(dirname "$test_console_log")"
+if [ -t 1 ] && [ -z "${NO_COLOR+x}" ] && [ -z "${FORCE_COLOR+x}" ]; then
+  export FORCE_COLOR=1
+fi
+exec > >(tee "$test_console_log") 2>&1
+echo "Test output saved to $test_console_log"
+
 node ./scripts/check-prostgles-types.mjs
 
 START_SCRIPT_PID=""

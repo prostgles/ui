@@ -557,7 +557,7 @@ const checkTemporaryDatabases = async (
     logPath: test.info().outputPath("deployment.log"),
   });
   try {
-    await checkConfiguredLlmCredential(appRoot, configId, deployment);
+    await checkConfiguredLlmCredential(appRoot, deployment);
   } finally {
     await deployment.dispose();
   }
@@ -655,13 +655,9 @@ const checkTemporaryDatabases = async (
 
 const checkConfiguredLlmCredential = async (
   appRoot: string,
-  configId: string,
   deployment: TestDeployment,
 ) => {
   const state = await deployment.connectStateAs("admin");
-  const connection = await state.db.connections!.findOne({
-    name: configId,
-  });
   const sourcePath = join(appRoot, "src/index.ts");
   const source = readFileSync(sourcePath, "utf8");
   const credentialsLine =
@@ -684,10 +680,7 @@ const checkConfiguredLlmCredential = async (
       sourcePath,
       source.replace("llmCredential: undefined,", replacement),
     );
-    await state.methods!.syncSchema!({
-      connectionId: connection!.id,
-      configPath: appRoot,
-    });
+    await deployment.syncSchema();
   };
   try {
     expect(await getCredentials()).toEqual([]);

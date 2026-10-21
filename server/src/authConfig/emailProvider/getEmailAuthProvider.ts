@@ -1,3 +1,4 @@
+import { getSignupUserType } from "../getSignupUserType";
 import type { DBSSchema } from "@common/publishUtils";
 import type { SignupWithEmail } from "prostgles-server/dist/Auth/AuthTypes";
 import type { DBS } from "../..";
@@ -38,7 +39,7 @@ export const getEmailAuthProvider = async (
         mailClient,
         dbs,
         websiteUrl: website_url,
-        newUserType: auth_created_user_type ?? "default",
+        newUserType: getSignupUserType(auth_created_user_type),
       }),
   };
 };

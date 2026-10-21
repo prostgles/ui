@@ -1,3 +1,4 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import type { ContextValue, DBSSchema } from "@common/publishUtils";
 import { parseTableRules } from "@common/publishUtils";
 import type {
@@ -51,7 +52,7 @@ export const getConnectionPublish = async ({
 
   const adminRule = {
     name: "AdminSchema",
-    userTypes: ["admin"],
+    userTypes: [USER_TYPES.ADMIN],
     publish: "*",
   } as const;
 

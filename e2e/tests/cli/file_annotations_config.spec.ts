@@ -1,5 +1,7 @@
 import * as assert from "node:assert/strict";
-import { readFileSync, rmSync, writeFileSync } from "node:fs";
+import { once } from "node:events";
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { createServer } from "node:net";
 import { join } from "node:path";
 import {
   createTestDeployment,
@@ -14,6 +16,14 @@ import { openTable } from "../utils/utils";
 test("CLI annotations support PDF uploads without document extraction", async ({
   page,
 }) => {
+  const portReservation = createServer().listen(0, "127.0.0.1");
+  await once(portReservation, "listening");
+  const address = portReservation.address();
+  assert.ok(address && typeof address === "object");
+  const apiPort = address.port;
+  await new Promise<void>((resolve, reject) => {
+    portReservation.close((error) => (error ? reject(error) : resolve()));
+  });
   const configPath = createConfigTestProject(
     {
       id: "annotations-config-e2e",
@@ -24,6 +34,17 @@ test("CLI annotations support PDF uploads without document extraction", async ({
           annotationsTable: "file_annotations",
           extractText: false,
           versioning: { tableName: "file_versions", maxVersions: 2 },
+        },
+      },
+      connection: {
+        table_options: {
+          documents: {
+            columns: {
+              preview_url: {
+                renderAs: { type: "Media", params: { titleColumn: "title" } },
+              },
+            },
+          },
         },
       },
       joins: [
@@ -39,6 +60,7 @@ test("CLI annotations support PDF uploads without document extraction", async ({
             file_id: "uuid PRIMARY KEY REFERENCES files(id)",
             title: "text NOT NULL",
             __managed_file_id: "text DEFAULT 'reserved'",
+            preview_url: "text",
           },
         },
         members: {
@@ -59,11 +81,21 @@ test("CLI annotations support PDF uploads without document extraction", async ({
   );
   const annotationError =
     "Source annotations are immutable; create a new excerpt for corrections";
+  const webAppDirectory = join(configPath, "web-app");
+  mkdirSync(webAppDirectory);
+  const webAppHtml = "<!doctype html><title>File storage SPA fallback</title>";
+  writeFileSync(join(webAppDirectory, "index.html"), webAppHtml);
   const configFile = join(configPath, "index.js");
   writeFileSync(
     configFile,
     readFileSync(configFile, "utf8") +
       `
+    module.exports.connection = {
+      ...module.exports.connection,
+      port: ${apiPort},
+      web_app_directory: ${JSON.stringify(webAppDirectory)},
+    };
+    module.exports.databaseConfig.cors_csp_devmode_enabled = true;
     module.exports.tableHooks = {
       file_annotations: { afterEach: [{
         commands: { update: 1 },
@@ -86,6 +118,8 @@ test("CLI annotations support PDF uploads without document extraction", async ({
       logPath: test.info().outputPath("annotations-server.log"),
     });
     const { db: dbo, tableSchema } = await deployment.connectProjectAs("admin");
+    const webApp = await page.request.get(`http://localhost:${apiPort}/app-route`);
+    expect(await webApp.text()).toBe(webAppHtml);
     expect(
       tableSchema?.find((table) => table.name === "file_annotations"),
     ).toHaveProperty("managedTableType", "file-annotations");
@@ -188,11 +222,37 @@ test("CLI annotations support PDF uploads without document extraction", async ({
 
     // A file reference used as the row identity must retain its scalar UUID.
     await dbo.documents!.insert!({ file_id: file.id, title: "Original title" });
-    await page.context().addCookies(deployment.storageStateAs("admin").cookies);
-    await page.goto(deployment.dashboardUrl);
+    await page.context().addCookies(
+      deployment.storageStateAs("admin").cookies.map((cookie) => ({
+        ...cookie,
+        domain: "localhost",
+      })),
+    );
+    await page.goto(deployment.dashboardUrl.replace("127.0.0.1", "localhost"));
+    await page.getByTestId("dashboard.menu").waitFor({ state: "visible" });
+    const dashboardUrl = page.url();
+    /* File previews must use connection context, independent of the URL path. */
+    await page.evaluate(() => {
+      window.history.replaceState(window.history.state, "", "/file-preview");
+    });
     await openTable(page, "documents", true);
+    expect(new URL(page.url()).pathname).toBe("/file-preview");
     const documents = page.locator('[data-table-name="documents"]');
     await expect(documents.getByTitle("application/pdf")).toBeVisible();
+    const pdfResponse = page.waitForResponse((response) => {
+      const url = new URL(response.url());
+      return url.port === String(apiPort) && url.pathname.endsWith(`/${file.id}`);
+    });
+    await documents.getByTitle("application/pdf").click();
+    expect((await pdfResponse).status()).toBe(200);
+    await expect(page.locator(".PdfViewer .textLayer").first()).not.toBeEmpty();
+    await expect(
+      page.getByRole("button", { name: "Annotations (1)", exact: true }),
+    ).toBeVisible();
+    await page.getByTestId("Popup.close").last().click();
+    await page.evaluate((url) => {
+      window.history.replaceState(window.history.state, "", url);
+    }, dashboardUrl);
     const fileIdHeader = documents
       .getByRole("columnheader")
       .filter({ hasText: "File Id" });
@@ -245,6 +305,108 @@ test("CLI annotations support PDF uploads without document extraction", async ({
     expect(
       await dbo.file_annotations!.findOne!({ id: annotation.id }),
     ).toMatchObject({ text: "Source excerpt" });
+    await page.getByTestId("Popup.close").last().click();
+    const image = await dbo.files!.insert!(
+      {
+        data: await page.screenshot({ type: "jpeg" }),
+        original_name: "api-port.jpg",
+      },
+      { returning: "*" },
+    );
+    await openTable(page, "files", true);
+    const thumbnail = page.locator(
+      `[data-table-name="files"] img[src$="/${image.id}"]`,
+    );
+    await expect(thumbnail).toBeVisible();
+    const imageUrl = (await thumbnail.getAttribute("src"))!;
+    expect(new URL(imageUrl).origin).toBe(`http://localhost:${apiPort}`);
+    const imageProbe = await page.request.get(imageUrl, {
+      headers: { Range: "bytes=0-0" },
+    });
+    expect(imageProbe.status()).toBe(206);
+    expect(imageProbe.headers()["content-type"]).toContain("image/jpeg");
+    expect(await imageProbe.body()).toEqual(Buffer.from([0xff]));
+    await expect
+      .poll(() =>
+        thumbnail.evaluate((image: HTMLImageElement) => image.naturalWidth),
+      )
+      .toBe(page.viewportSize()!.width);
+
+    const odtData = readFileSync(join(__dirname, "../sample.odt"));
+    const odt = await dbo.files!.insert!(
+      { data: odtData, original_name: "source.odt" },
+      { returning: "*" },
+    );
+    const odtButton = page
+      .locator('[data-table-name="files"]')
+      .getByTitle("application/vnd.oasis.opendocument.text", { exact: true });
+    await expect(odtButton.locator("svg path")).toHaveCSS(
+      "fill",
+      "rgb(10, 124, 58)",
+    );
+    const odtResponse = page.waitForResponse((response) =>
+      new URL(response.url()).pathname.endsWith(`/${odt.id}`),
+    );
+    const downloadPromise = page.waitForEvent("download");
+    await odtButton.click();
+    expect((await odtResponse).status()).toBe(200);
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe("source.odt");
+    expect(await download.failure()).toBeNull();
+    const downloadedPath = await download.path();
+    assert.ok(downloadedPath);
+    expect(readFileSync(downloadedPath)).toEqual(odtData);
+    await expect(page.getByTestId("Popup.content")).toHaveCount(0);
+
+    await page.route((await odtResponse).url(), (route) =>
+      route.fulfill({ status: 403 }),
+    );
+    await odtButton.click();
+    await expect(page.getByTestId("ErrorComponent")).toContainText(
+      "Failed to download file (403)",
+    );
+    await page.getByRole("button", { name: "OK", exact: true }).click();
+
+    await openTable(page, "documents", true);
+    const storedFileUrl = new URL(file.url, `http://localhost:${apiPort}`);
+    const externalFileUrl = `http://127.0.0.1:${apiPort}${storedFileUrl.pathname}`;
+    await page.route(externalFileUrl, (route) =>
+      route.fulfill({
+        contentType: "application/pdf",
+        headers: { "Access-Control-Allow-Origin": "*" },
+        body: readFileSync(join(__dirname, "../testAskLLM/sample.pdf")),
+      }),
+    );
+    for (const previewUrl of [
+      `${storedFileUrl.pathname}?version=1#page=1`,
+      `${storedFileUrl.href}#page=1`,
+      externalFileUrl,
+    ]) {
+      const previewResponse = page.waitForResponse(
+        new URL(previewUrl, storedFileUrl).href.split("#")[0]!,
+      );
+      await dbo.documents!.update!(
+        { file_id: file.id },
+        { preview_url: previewUrl },
+      );
+      expect((await previewResponse).ok()).toBe(true);
+      await documents
+        .getByRole("button", { name: "Updated title", exact: true })
+        .click();
+      await expect(
+        page.locator(".PdfViewer .textLayer").first(),
+      ).not.toBeEmpty();
+      const annotationsButton = page.getByRole("button", {
+        name: "Annotations (1)",
+        exact: true,
+      });
+      if (previewUrl === externalFileUrl) {
+        await expect(annotationsButton).toHaveCount(0);
+      } else {
+        await expect(annotationsButton).toBeVisible();
+      }
+      await page.getByTestId("Popup.close").last().click();
+    }
   } finally {
     await deployment?.dispose();
     rmSync(configPath, { recursive: true, force: true });
@@ -1015,10 +1177,6 @@ module.exports.onMount = ({ dbo, context }) => {
     await db.files!.update!({ id: retry.id }, { text_content: null });
     expect(await db.file_hook_calls!.count!({ file_id: retry.id })).toBe(9);
 
-    const state = await deployment.connectStateAs("admin");
-    const connection = (await state.db.connections!.findOne({
-      name: configId,
-    }))!;
     writeFileSync(
       configFile,
       source +
@@ -1027,11 +1185,7 @@ module.exports.jobs.definitions.check.run = async ({ row, dbo }) => {
   await dbo.job_checks.update({ id: row.id }, { result: 2 });
 };`,
     );
-    await state.methods!.syncSchema!({
-      connectionId: connection.id,
-      configPath,
-    });
-    const reloaded = await deployment.connectProjectAs("admin");
+    const { project: reloaded } = await deployment.syncSchema();
     await reloaded.db.job_checks!.insert!({ id: 2 });
     await expect
       .poll(
@@ -1144,7 +1298,29 @@ test("CLI text extraction persists Docling profiling without annotations", async
 
     const extractedPdf = await db.files!.findOne!({ id: pdf.id });
     assert.equal(extractedPdf?.extraction_status?.state, "finished");
-    await assertServiceOpenApi("documents", documentsService);
+    await test.step("Isolate Docling across deployments of the same app", async () => {
+      const otherDeployment = await createTestDeployment({
+        configPath,
+        configId,
+        logPath: test.info().outputPath("other-extraction-server.log"),
+      });
+      try {
+        expect(otherDeployment.instanceId).not.toBe(deployment!.instanceId);
+        const state = await otherDeployment.connectStateAs("admin");
+        await state.methods!.toggleService!({
+          serviceName: "documents",
+          enable: true,
+        });
+        await assertServiceOpenApi("documents", documentsService, {
+          PROSTGLES_INSTANCE_ID: otherDeployment.instanceId,
+        });
+      } finally {
+        await otherDeployment.dispose();
+      }
+      await assertServiceOpenApi("documents", documentsService, {
+        PROSTGLES_INSTANCE_ID: deployment!.instanceId,
+      });
+    });
     const { timings } = extractedPdf.extraction_status;
     expect(timings.pipeline_total).toBeDefined();
     for (const profilingItem of Object.values<{

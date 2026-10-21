@@ -38,7 +38,7 @@ export const ActionPopup = ({
     [argName]:
       typeof input !== "string" && input?.type === "ValueLookup" ?
         row[input.column]
-      : getActionLookupRow(row, table),
+      : getActionLookupRow(row, table, method),
   };
   const {
     args,

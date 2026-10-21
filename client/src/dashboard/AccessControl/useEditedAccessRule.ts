@@ -1,3 +1,4 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import { useIsMounted, usePromise } from "prostgles-client";
 import { isEmpty } from "prostgles-types";
 import { useMemo, useState } from "react";
@@ -240,7 +241,7 @@ const getRuleErrorMessage = (
 
   const userTypes =
     newRule.access_control_user_types?.flatMap((d) => d.ids) ?? [];
-  if (userTypes.includes("public") && userTypes.length !== 1) {
+  if (userTypes.includes(USER_TYPES.PUBLIC) && userTypes.length !== 1) {
     return "Cannot mix 'public' and non-public user types";
   }
 

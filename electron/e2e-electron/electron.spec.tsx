@@ -1,12 +1,11 @@
 import {
-  expect,
-  test,
-  ElectronApplication,
   _electron as electron,
+  ElectronApplication,
+  expect,
   Page,
+  test,
 } from "@playwright/test";
-import { rmSync } from "original-fs";
-import * as path from "path";
+import { testLocalFileOpening } from "./testLocalFileOpening";
 let electronApp: ElectronApplication | undefined;
 
 const start = Date.now();
@@ -109,6 +108,11 @@ test("renders the first page", async () => {
 
   /** Ensure overflow does not obscure done button */
   await page.getByTestId("NewConnectionForm.MoreOptionsToggle").click();
+  if (process.env.POSTGRES_PORT) {
+    await page
+      .getByLabel("port", { exact: true })
+      .fill(process.env.POSTGRES_PORT);
+  }
   const doneBtn = await page.getByTestId("ElectronSetup.Done");
   await expect(doneBtn).toBeVisible();
   await screenshot();
@@ -146,6 +150,7 @@ test("renders the first page", async () => {
   await page.waitForTimeout(1000);
   await page.getByTestId("dashboard.goToConnections").click();
   await createDatabase("crypto", page, true);
+  await testLocalFileOpening(page, electronApp);
   await screenshot();
   await page.waitForTimeout(5e3);
   await screenshot();

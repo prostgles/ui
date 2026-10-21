@@ -1,3 +1,4 @@
+import { MANAGED_USER_TYPES, USER_TYPES } from "@common/authTypesAndConstants";
 import {
   CONNECTION_CONFIG_SECTIONS,
   ROUTES,
@@ -29,30 +30,29 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
   user_types: {
     isLookupTable: {
       values: {
-        admin: {
-          description: "Highest access level",
-        },
-        public: {
+        [USER_TYPES.ADMIN]: { description: "Highest access level" },
+        [USER_TYPES.PUBLIC]: {
           description:
             "Public user. Account created on login and deleted on logout",
         },
-        default: {},
+        [USER_TYPES.DEFAULT]: {},
+        [USER_TYPES.CONNECTION_ADMIN]: {
+          description: "Manages business users and access rules",
+        },
       },
     },
     triggers: {
       atLeastOneAdminAndPublic: {
         actions: ["delete", "update"],
-        type: "after",
-        forEach: "statement",
+        type: "before",
+        forEach: "row",
         query: ` 
           BEGIN
-            IF NOT EXISTS(SELECT * FROM user_types WHERE id = 'admin') 
-              OR NOT EXISTS(SELECT * FROM user_types WHERE id = 'public')
-            THEN
-              RAISE EXCEPTION 'admin and public user types cannot be deleted/modified';
+            IF OLD.id IN (${MANAGED_USER_TYPES.map((type) => `'${type}'`).join(", ")}) THEN
+              RAISE EXCEPTION 'Managed user types cannot be deleted or modified';
             END IF;
-  
-            RETURN NULL;
+            IF TG_OP = 'DELETE' THEN RETURN OLD; END IF;
+            RETURN NEW;
           END;
         `,
       },

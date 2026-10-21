@@ -17,6 +17,7 @@ export const COMMANDS = {
 
   "config.goToConnDashboard": "Go to connection workspace ",
   "config.details": "",
+  "config.members": "Connection members section",
   "config.bkp": "",
   "config.tableConfig": "",
   "config.bkp.create": "",

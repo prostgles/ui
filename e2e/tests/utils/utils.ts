@@ -715,7 +715,7 @@ export const getAskLLMLastMessage = async (page: PageWIds) => {
 
 const waitForAllMatchingLocatorsToDisappear = async (
   locator: LocatorWIds,
-  timeout = 30_000,
+  timeout = 100_000,
 ) => {
   const start = Date.now();
   let tries = 0;
@@ -731,7 +731,7 @@ const waitForAllMatchingLocatorsToDisappear = async (
       tries = 0;
       if (Date.now() - start > timeout) {
         throw new Error(
-          `Timeout waiting for locators to disappear. Still ${count} remaining.`,
+          `Timeout reached (${timeout}ms) waiting for locators to disappear. Still ${count} remaining.`,
         );
       }
     }

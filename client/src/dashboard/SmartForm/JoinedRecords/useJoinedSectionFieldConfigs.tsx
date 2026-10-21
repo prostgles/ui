@@ -30,7 +30,10 @@ export const useJoinedSectionFieldConfigs = ({
         {
           name: "url",
           render: (url, row) => (
-            <MediaViewer style={{ maxWidth: "300px" }} url={url} />
+            <MediaViewer
+              style={{ maxWidth: "300px" }}
+              {...(typeof row.id === "string" ? { fileId: row.id } : { url })}
+            />
           ),
         },
       ];

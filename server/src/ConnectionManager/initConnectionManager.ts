@@ -9,6 +9,7 @@ import { getSchemaConfig } from "./getSchemaConfig";
 import { saveCertificates } from "./saveCertificates";
 import { startConnectionOnRequestHandler } from "./startConnectionOnRequestHandler";
 import type { DBSSchema } from "@common/publishUtils";
+import { subscribeToSessionAccessChanges } from "@src/authConfig/subscribeToSessionAccessChanges";
 
 export const CONNECTION_HOT_RELOAD_COLUMNS = [
   "id",
@@ -36,6 +37,8 @@ export async function initConnectionManager(
 ) {
   this.dbs = dbs;
   this.db = db;
+  await this.sessionAccessSub?.unsubscribe();
+  this.sessionAccessSub = await subscribeToSessionAccessChanges(dbs);
 
   let startupConfigApplied = !beforeConfigSubscribe;
   await this.conSub?.unsubscribe();

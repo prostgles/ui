@@ -1,3 +1,4 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type { DBSSchema } from "@common/publishUtils";
 import type { Publish } from "prostgles-server/dist/PublishParser/PublishParser";
@@ -58,7 +59,7 @@ export const getPublishLLM = (
         },
     llm_credentials: {
       select: {
-        fields: isAdmin ? { api_key: 0 } : { id: 1, name: 1 },
+        fields: isAdmin ? { api_key: 0 } : { id: 1, name: 1, provider_id: 1 },
         forcedFilter: isAdmin ? undefined : forcedFilterLLM,
       },
       delete: isAdmin && "*",
@@ -138,7 +139,7 @@ export const getPublishLLM = (
               $exists: {
                 users: {
                   id: user_id,
-                  type: "admin",
+                  type: USER_TYPES.ADMIN,
                 },
               },
             },

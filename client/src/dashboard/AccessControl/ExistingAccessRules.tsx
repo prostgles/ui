@@ -1,3 +1,4 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import React from "react";
 import type { AccessRule } from "./AccessControl";
 import Chip from "@components/Chip";
@@ -22,7 +23,7 @@ export const AccessControlRules = ({
   rules,
   onSelect,
   workspaces,
-  prgl: { dbs, connectionId },
+  prgl: { dbs, connectionId, user },
 }: ExistingAccessRulesProps) => {
   const userTypesWithAccess = rules.flatMap((r) =>
     r.access_control_user_types.flatMap((u) => u.ids),
@@ -93,27 +94,29 @@ export const AccessControlRules = ({
                         {userTypes?.join(", ")}
                       </span>
                     </LabeledRow>
-                    <SwitchToggle
-                      checked={!!r.isApplied}
-                      title={
-                        r.isApplied ? "Click to disable" : "Click to enable"
-                      }
-                      onChange={async (isApplied, e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        if (isApplied) {
-                          await dbs.access_control_connections.insert({
-                            connection_id: connectionId,
-                            access_control_id: r.id,
-                          });
-                        } else {
-                          await dbs.access_control_connections.delete({
-                            connection_id: connectionId,
-                            access_control_id: r.id,
-                          });
+                    {user?.type === USER_TYPES.ADMIN && (
+                      <SwitchToggle
+                        checked={!!r.isApplied}
+                        title={
+                          r.isApplied ? "Click to disable" : "Click to enable"
                         }
-                      }}
-                    />
+                        onChange={async (isApplied, e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          if (isApplied) {
+                            await dbs.access_control_connections.insert({
+                              connection_id: connectionId,
+                              access_control_id: r.id,
+                            });
+                          } else {
+                            await dbs.access_control_connections.delete({
+                              connection_id: connectionId,
+                              access_control_id: r.id,
+                            });
+                          }
+                        }}
+                      />
+                    )}
                   </FlexRow>
 
                   <AccessRuleSummary rule={r.dbPermissions} />

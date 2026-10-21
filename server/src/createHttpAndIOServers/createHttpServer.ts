@@ -1,3 +1,4 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import type { DBSSchema } from "@common/publishUtils";
 import { getConnectionPaths, ROUTES } from "@common/utils";
 import cookieParser from "cookie-parser";
@@ -74,7 +75,11 @@ export const createHttpServer = (
 
     app.use(express.static(buildDirectory));
     /** SPA fallback */
-    app.get("*star", (req, res) => {
+    app.get("*star", (req, res, next) => {
+      if (req.path.startsWith(ROUTES.STORAGE + "/")) {
+        next();
+        return;
+      }
       res.sendFile(join(buildDirectory, "index.html"));
     });
 
@@ -98,7 +103,7 @@ export const createHttpServer = (
           } else if (!sessionData.user) {
             res.status(401).send("Unauthorized");
             return;
-          } else if (sessionData.user.type !== "admin") {
+          } else if (sessionData.user.type !== USER_TYPES.ADMIN) {
             res.status(403).send("Forbidden");
             return;
           }

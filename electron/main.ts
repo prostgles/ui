@@ -36,7 +36,7 @@ type SafeStorageHandles = Pick<SafeStorage, "encryptString" | "decryptString">;
 type StartParams = {
   safeStorage: SafeStorageHandles;
   electronSid: string;
-  openPath: (path: string, isFile?: boolean) => void;
+  openPath: (filePath: string) => Promise<string>;
   onReady: (port: number) => void;
   focusWindow: () => void;
   userDataDir: string;
@@ -86,14 +86,7 @@ function initApp() {
         safeStorage,
         userDataDir: app.getPath("userData"),
         electronSid,
-        openPath: (path: string, isFile?: boolean) => {
-          // Show the given file in a file manager. If possible, select the file.
-          if (isFile) {
-            shell.showItemInFolder(path);
-          } else {
-            shell.openPath(path);
-          }
-        },
+        openPath: (filePath: string) => shell.openPath(filePath),
         onReady: (actualPort: number) => {
           console.log("Express server started on port " + actualPort);
           openProstglesApp(actualPort);

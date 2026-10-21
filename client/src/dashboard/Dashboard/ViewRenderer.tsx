@@ -1,3 +1,4 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import ErrorComponent, { ErrorTrap } from "@components/ErrorComponent";
 import { FlexCol } from "@components/Flex";
 import { isDefined, isEqual } from "prostgles-types";
@@ -436,7 +437,7 @@ export class ViewRenderer extends RTComp<
           }}
           layoutMode={
             layout_mode === "fixed" ?
-              prgl.user?.type === "admin" ?
+              prgl.user?.type === USER_TYPES.ADMIN ?
                 "semi-fixed"
               : "fixed"
             : "editable"

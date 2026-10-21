@@ -1,3 +1,4 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type { AllowedChatTool } from "@common/mcpUtils";
 import { generateSecret, generateURI } from "otplib";
@@ -13,7 +14,6 @@ import {
 import { askLLM, type LLMMessage, stopAskLLM } from "../askLLM/askLLM";
 import { getFullPrompt } from "../askLLM/getFullPrompt";
 import { getLLMToolsAllowedInThisChat } from "../askLLM/getLLMToolsAllowedInThisChat";
-import { prostglesSignup } from "../prostglesSignup";
 import { approveToolUse } from "./approveToolUse";
 
 export const userServerFunctions = {
@@ -86,7 +86,7 @@ export const userServerFunctions = {
           if (!chatId) throw "Chat ID is required";
           const chat = await dbs.llm_chats.findOne({ id: chatId });
           if (!chat) throw "Chat not found";
-          if (chat.user_id !== user.id && user.type !== "admin") {
+          if (chat.user_id !== user.id && user.type !== USER_TYPES.ADMIN) {
             throw "You are not allowed to stop this chat";
           }
           stopAskLLM(chatId);
@@ -117,10 +117,6 @@ export const userServerFunctions = {
             body: JSON.stringify({ details, email }),
           });
         },
-      }),
-      prostglesSignup: defineFunction({
-        input: { email: "string", code: "string" },
-        run: ({ email, code }) => prostglesSignup(email, code),
       }),
       generateToken: defineFunction({
         unrestrictedDbAccess: true,

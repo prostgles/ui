@@ -71,7 +71,7 @@ export const SmartFormFileSection = ({
     return (
       <>
         <MediaViewer
-          url={savedMedia.url}
+          fileId={savedMedia.id}
           style={{ width: "100%", height: "auto", flex: "none" }}
         />
         <Btn iconPath={mdiClose} onClick={onRemove} variant="faded">

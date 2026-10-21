@@ -1,3 +1,4 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type { ProstglesInitState } from "@common/electronInitTypes";
 import type { ConnectionDetails } from "@src/connectionUtils/getConnectionDetails";
@@ -176,11 +177,7 @@ export const startProstgles = async ({
               deletedWindows;
             }
           },
-          onSocketDisconnect: async (params) => {
-            const { dbo, getUser } = params;
-
-            const user = await getUser();
-            const sid = user.sid;
+          onSocketDisconnect: async ({ dbo, sid }) => {
             if (sid) {
               await dbo.sessions.update({ id: sid }, { is_connected: false });
             }
@@ -200,7 +197,7 @@ export const startProstgles = async ({
           tableConfigMigrations: getTableConfigMigrations(con),
           publishRawSQL: (params) => {
             const { user } = params;
-            return Boolean(user && user.type === "admin");
+            return Boolean(user && user.type === USER_TYPES.ADMIN);
           },
           functions: stateServerFunctions,
           publish,

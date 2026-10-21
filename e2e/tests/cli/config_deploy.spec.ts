@@ -326,10 +326,8 @@ test("checkFilterDetailed works with grouped existsJoined", async ({
       1,
     );
     admin.disconnect();
-    const publicClient = await deployment.connectProjectAs("public");
-    expect(publicClient.db.records).toBeUndefined();
-    publicClient.disconnect();
-    const { db } = await deployment.connectProjectAs("default");
+    await expect(deployment.connectProjectAs("public")).rejects.toBeTruthy();
+    const { db, socket } = await deployment.connectProjectAs("default");
     const records = db.records!;
     expect(await records.find!({})).toMatchObject([{ value: "editable" }]);
     await expect(
@@ -377,6 +375,7 @@ test("checkFilterDetailed works with grouped existsJoined", async ({
     });
     await expect.poll(() => liveValues).toContain("updated");
     expect(liveValues).not.toContain("protected");
+    await subscription.unsubscribe();
     await page.getByTestId("dashboard.goToConnConfig").click();
     await page.getByTestId("config.ac").click();
     await expect(page.locator(".ExistingAccessRules_Item")).toHaveCount(1);
@@ -396,13 +395,12 @@ test("checkFilterDetailed works with grouped existsJoined", async ({
     await expect(
       page.getByText("Rule updated!", { exact: true }),
     ).toBeVisible();
-    await expect
-      .poll(async () => await records.find!({ value: "protected" }))
-      .toHaveLength(1);
-    await expect.poll(() => liveValues).toContain("protected");
-    await subscription.unsubscribe();
+    await expect.poll(() => socket.connected).toBe(false);
     const sqlClient = await deployment.connectProjectAs("default");
     try {
+      expect(
+        await sqlClient.db.records!.find!({ value: "protected" }),
+      ).toHaveLength(1);
       expect(
         await sqlClient.sql!("SELECT 42", {}, { returnType: "value" }),
       ).toBe(42);
@@ -462,10 +460,7 @@ test("checkFilterDetailed works with grouped existsJoined", async ({
           ],
         })};`,
       );
-      await state.methods!.syncSchema!({
-        connectionId: connection!.id,
-        configPath,
-      });
+      await deployment.syncSchema();
       if (permissions === accessRule.dbPermissions) {
         const restoredClient = await deployment.connectProjectAs("default");
         try {
@@ -522,12 +517,7 @@ test("checkFilterDetailed works with grouped existsJoined", async ({
           validSource.replace('"userTypes":["default"]', '"userTypes":[]'),
         ]) {
           writeFileSync(join(configPath, "index.js"), invalidSource);
-          await expect(
-            state.methods!.syncSchema!({
-              connectionId: connection!.id,
-              configPath,
-            }),
-          ).rejects.toBeDefined();
+          await expect(deployment.syncSchema()).rejects.toBeDefined();
           expect(await state.db.access_control!.find({})).toEqual(syncedRules);
         }
         writeFileSync(join(configPath, "index.js"), validSource);
@@ -741,17 +731,20 @@ module.exports.functions = {
     configId: "lifecycle-sync-e2e",
     logPath: test.info().outputPath("lifecycle-sync-server.log"),
     users: [
-      { key: "admin", type: "admin" },
       { key: "member", type: "default" },
+      { key: "maintainer", type: "admin" },
     ],
   });
   try {
-    const state = await deployment.connectStateAs("admin");
+    const state = await deployment.connectStateAs("maintainer");
     const connection = (await state.db.connections!.findOne({
       name: "lifecycle-sync-e2e",
     }))!;
+    const memberState = await deployment.connectStateAs("member");
+    expect(memberState.methods?.syncSchema).toBeUndefined();
+    memberState.disconnect();
     for (let i = 1; i <= 2; i++) {
-      const before = await deployment.connectProjectAs("admin");
+      const before = await deployment.connectProjectAs("maintainer");
       await before.methods!.observeLifecycle!({ connectionId: connection.id });
       // Changing tableConfig forces the subscription to rebuild the live DBO.
       writeFileSync(
@@ -764,11 +757,16 @@ module.exports.tableConfig.records.columns.revision = "integer DEFAULT ${i}";
 module.exports.accessControl[0].dbPermissions.customTables[0].select.fields = ["id", "name", "revision"];
 module.exports.accessControl[0].dbPermissions.customTables[0].insert = ${i === 1};`,
       );
-      await state.methods!.syncSchema!({
-        connectionId: connection.id,
-        configPath,
-      });
-      before.disconnect();
+      await state.db.connections!.update(
+        { id: connection.id },
+        { name: `Lifecycle revision ${i}` },
+      );
+      const { project: after, connection: syncedConnection } =
+        await deployment.syncSchema();
+      expect(before.socket.connected).toBe(false);
+      expect(after.socket.connected).toBe(true);
+      expect(syncedConnection.id).toBe(connection.id);
+      expect(syncedConnection.name).toBe(`Lifecycle revision ${i}`);
       const member = await deployment.connectProjectAs("member");
       if (i === 1) {
         await member.db.records!.insert!({ name: "member" });
@@ -781,7 +779,6 @@ module.exports.accessControl[0].dbPermissions.customTables[0].insert = ${i === 1
         ]),
       );
       member.disconnect();
-      const after = await deployment.connectProjectAs("admin");
       const row = await after.db.records!.insert!(
         { name: "synced" },
         { returning: "*" },
@@ -810,9 +807,7 @@ module.exports.accessControl[0].dbPermissions.customTables[0].insert = ${i === 1
 module.exports.accessControl[0].dbPermissions.customTables[0].insert = true;
 module.exports.accessControl[0].publishedMethods = ["missing-function"];`,
     );
-    await expect(
-      state.methods!.syncSchema!({ connectionId: connection.id, configPath }),
-    ).rejects.toBeTruthy();
+    await expect(deployment.syncSchema()).rejects.toBeTruthy();
     expect(
       await state.db.access_control!.findOne({
         $existsJoined: {
@@ -822,19 +817,17 @@ module.exports.accessControl[0].publishedMethods = ["missing-function"];`,
     ).toMatchObject({ dbPermissions: { customTables: [{ insert: false }] } });
     await expect(deployment.connectProjectAs("member")).rejects.toBeTruthy();
     writeFileSync(configFile, validSource);
-    await state.methods!.syncSchema!({
-      connectionId: connection.id,
-      configPath,
-    });
-    const recovered = await deployment.connectProjectAs("admin");
+    const { project: recovered } = await deployment.syncSchema();
     expect(await recovered.methods!.lifecycleStatus!({})).toMatchObject({
       mounts: 4,
       schemaErrors: [],
     });
     recovered.disconnect();
-    expect(readFileSync(deployment.logPath, "utf8")).not.toContain(
+    const serverLog = readFileSync(deployment.logPath, "utf8");
+    expect(serverLog).not.toContain(
       "Connection pool of the database object has been destroyed",
     );
+    expect(serverLog).not.toContain("watchSchema: Schema refresh failed");
   } finally {
     await deployment.dispose();
   }
@@ -1360,10 +1353,7 @@ module.exports.functions = {
       source + "\nmodule.exports.accessControl = []; ",
     ]) {
       writeFileSync(join(configPath, "index.js"), configuredSource);
-      await state.methods!.syncSchema!({
-        connectionId: connection.id,
-        configPath,
-      });
+      await deployment.syncSchema();
       expect(
         await state.db.access_control!.find(
           { id: { $in: [rule.id, siblingRule.id] } },
@@ -1392,9 +1382,13 @@ module.exports.functions = {
     expect(await state.db.access_control_allowed_llm!.count(grantFilter)).toBe(
       0,
     );
-    const revoked = await deployment.connectProjectAs("default");
-    expect(revoked.db.records).toBeUndefined();
-    expect(revoked.sql).toBeUndefined();
+    const revoked = await deployment.connectStateAs("default");
+    expect(
+      await revoked.db.connections!.find({ id: connection.id }),
+    ).toEqual([]);
+    await expect(
+      revoked.methods!.startConnection!({ connectionId: connection.id }),
+    ).rejects.toBeTruthy();
     revoked.disconnect();
     member.disconnect();
     await checkDashboard("admin");

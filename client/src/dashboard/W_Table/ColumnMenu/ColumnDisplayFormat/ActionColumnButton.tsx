@@ -76,7 +76,7 @@ export const ActionColumnButton = ({
             const input =
               arg && typeof arg !== "string" && arg.type === "ValueLookup" ?
                 row[arg.column]
-              : getActionLookupRow(row, table);
+              : getActionLookupRow(row, table, method);
             await method.run({ [action.argName]: input });
           }}
         >

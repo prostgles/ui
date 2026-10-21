@@ -50,7 +50,9 @@ export const SmartFormFieldFileSection = ({
     <MediaViewer
       style={{ maxHeight: "250px", flex: "none" }}
       key={url}
-      url={url}
+      {...(typeof localMediaOrMediaId === "string" ?
+        { fileId: localMediaOrMediaId }
+      : { url })}
       name="Click to preview"
       content_type={content_type}
       context={row ? { table, columnName, row } : undefined}

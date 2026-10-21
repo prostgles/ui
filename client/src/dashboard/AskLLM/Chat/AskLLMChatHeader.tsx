@@ -1,5 +1,6 @@
 import Btn from "@components/Btn";
 import { FlexRow } from "@components/Flex";
+import Loading from "@components/Loader/Loading";
 import { Select } from "@components/Select/Select";
 import { mdiDotsHorizontal, mdiPlus, mdiRobot } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
@@ -53,6 +54,10 @@ export const AskLLMChatHeader = (
               label: c.name,
               iconPath: c.agent_info ? mdiRobot : undefined,
               subLabel: getPGIntervalAsText(c.created_ago, true, true, true),
+              rightContent:
+                c.status?.state === "loading" ?
+                  <Loading sizePx={16} show />
+                : undefined,
             })) ?? []
           }
           btnProps={{

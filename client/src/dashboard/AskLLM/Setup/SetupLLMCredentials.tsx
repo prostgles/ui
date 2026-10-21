@@ -1,17 +1,16 @@
-import Btn from "@components/Btn";
-import { FlexCol, FlexRowWrap } from "@components/Flex";
+import { FlexCol } from "@components/Flex";
 import { InfoRow } from "@components/InfoRow";
 import Loading from "@components/Loader/Loading";
 import Popup from "@components/Popup/Popup";
+import Tabs from "@components/Tabs";
 import { mdiKey, mdiLogin } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import React from "react";
 import { isPlaywrightTest } from "../../../i18n/i18nUtils";
 import { AddLLMPromptForm } from "./AddLLMPromptForm";
 import { LLMProviderSetup } from "./LLMProviderSetup";
-import { ProstglesSignup } from "./ProstglesSignup";
 import type { LLMSetupState } from "./LLMSetupProvider";
-import Tabs from "@components/Tabs";
+import { ProstglesSignup } from "./ProstglesSignup";
 
 export type SetupLLMCredentialsProps = {
   setupState: Exclude<LLMSetupState, { state: "ready" }>;

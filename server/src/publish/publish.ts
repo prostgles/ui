@@ -1,3 +1,8 @@
+import {
+  canManageBusinessAccess,
+  MANAGED_USER_TYPES,
+  USER_TYPES,
+} from "@common/authTypesAndConstants";
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import { isDefined } from "@common/filterUtils";
 import {
@@ -11,10 +16,12 @@ import type { SessionUser } from "prostgles-server/dist/Auth/AuthTypes";
 import type { PublishFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
 import { verifySMTPConfig } from "prostgles-server/dist/Prostgles";
 import type { Publish } from "prostgles-server/dist/PublishParser/PublishParser";
-import { getKeys, type FilterItem } from "prostgles-types";
+import { getKeys, type FullFilter } from "prostgles-types";
 import { getSMTPWithTLS } from "../authConfig/emailProvider/getEmailSenderWithMockTest";
 import { checkClientIP } from "../authConfig/sessionUtils";
-import { getACRules } from "../ConnectionManager/ConnectionManager";
+import { fetchUserAccessControlRules } from "../ConnectionManager/fetchUserAccessControlRules";
+import { getAllowedConnectionsFilter } from "./getAllowedConnectionsFilter";
+import { getBusinessAccessPublish } from "./getBusinessAccessPublish";
 import { getPublishLLM } from "./getPublishLLM";
 
 export const publish: Publish<
@@ -26,11 +33,27 @@ export const publish: Publish<
   if (!user || !user.id) {
     return null;
   }
-  const isAdmin = user.type === "admin";
+  const isAdmin = user.type === USER_TYPES.ADMIN;
 
   const { id: user_id } = user;
+  const allowedConnectionFilter: FullFilter<
+    DBSSchema["connections"],
+    DBGeneratedSchema
+  > = isAdmin ? {} : getAllowedConnectionsFilter(user.type, []);
+  const getDashboardConnectionFilter = (
+    tableName: "workspaces" | "windows" | "links",
+  ) =>
+    isAdmin ?
+      {}
+    : getAllowedConnectionsFilter(
+        user.type,
+        tableName === "workspaces" ?
+          ["connections"]
+        : ["workspaces", "connections"],
+      );
 
-  const accessRules = isAdmin ? undefined : await getACRules(db, user);
+  const accessRules =
+    isAdmin ? undefined : await fetchUserAccessControlRules(db, user);
 
   const createEditDashboards =
     isAdmin ||
@@ -47,7 +70,7 @@ export const publish: Publish<
     tableName: "workspaces" | "windows" | "links",
   ) =>
     !isAdmin ?
-      { user_id }
+      { $and: [{ user_id }, getDashboardConnectionFilter(tableName)] }
     : {
         $or: [
           { user_id },
@@ -66,18 +89,23 @@ export const publish: Publish<
         select: {
           fields: "*",
           forcedFilter: {
-            $or: [
-              { user_id },
-              /** User either owns the item or the item has been shared/published to the user */
-              isAdmin ?
-                tableName === "workspaces" ?
-                  { published: true }
-                : { $existsJoined: { workspaces: { published: true } } }
-              : {
-                  [tableName === "workspaces" ? "id" : "workspace_id"]: {
-                    $in: publishedWspIDs,
-                  },
-                },
+            $and: [
+              ...(isAdmin ? [] : [getDashboardConnectionFilter(tableName)]),
+              {
+                $or: [
+                  { user_id },
+                  /** User either owns the item or the item has been shared/published to the user */
+                  canManageBusinessAccess(user.type) ?
+                    tableName === "workspaces" ?
+                      { published: true }
+                    : { $existsJoined: { workspaces: { published: true } } }
+                  : {
+                      [tableName === "workspaces" ? "id" : "workspace_id"]: {
+                        $in: publishedWspIDs,
+                      },
+                    },
+                ],
+              },
             ],
           },
         },
@@ -86,19 +114,22 @@ export const publish: Publish<
             fields: { user_id: 0 },
             forcedData: isAdmin ? undefined : { user_id },
             forcedFilter: getDashboardEditFilter(tableName),
+            checkFilter:
+              isAdmin ? undefined : getDashboardConnectionFilter(tableName),
           },
           insert: {
             fields: "*",
             forcedData: { user_id },
             /** TODO: Add workspace publish modes */
             checkFilter:
-              tableName === "workspaces" ? undefined : (
-                {
+              tableName === "workspaces" ?
+                isAdmin ? undefined
+                : getDashboardConnectionFilter(tableName)
+              : {
                   $existsJoined: {
                     workspaces: getDashboardEditFilter("workspaces"),
                   },
-                }
-              ),
+                },
           },
           delete: {
             filterFields: "*",
@@ -109,10 +140,6 @@ export const publish: Publish<
     }),
     {},
   );
-
-  const userTypeFilter = {
-    access_control_user_types: { user_type: user.type },
-  };
 
   const forcedData = { user_id: user.id };
 
@@ -128,6 +155,7 @@ export const publish: Publish<
     /* DASHBOARD */
     ...dashboardMainTables,
     access_control_user_types: isAdmin && "*",
+    access_control_connections: isAdmin && "*",
     published_methods:
       isAdmin ? "*" : (
         {
@@ -160,7 +188,7 @@ export const publish: Publish<
     },
     ...getPublishLLM(user_id, isAdmin, accessRules),
     credential_types: isAdmin && { select: "*" },
-    access_control: isAdmin ? "*" : undefined,
+    access_control: isAdmin && "*",
     database_configs:
       isAdmin ?
         {
@@ -238,20 +266,7 @@ export const publish: Publish<
             { id: 1, name: 1, created: 1, is_state_db: 1, table_options: 1 }
           ),
         orderByFields: { db_conn: 1, created: 1 },
-        forcedFilter:
-          isAdmin ?
-            {}
-          : {
-              $and: [
-                {
-                  $existsJoined: {
-                    "database_configs.access_control.access_control_user_types":
-                      userTypeFilter["access_control_user_types"],
-                  },
-                } as FilterItem,
-                { $existsJoined: { access_control_connections: {} } },
-              ],
-            },
+        forcedFilter: allowedConnectionFilter,
       },
       update: isAdmin && {
         fields: {
@@ -279,20 +294,26 @@ export const publish: Publish<
         },
       },
     },
-    user_types: isAdmin && {
-      insert: "*",
+    user_types: {
       select: {
         fields: "*",
+        forcedFilter:
+          canManageBusinessAccess(user.type) ? {} : { id: user.type },
       },
-      delete: {
-        filterFields: "*",
-        validate: async (filter) => {
-          const adminVal = await db.user_types.findOne({
-            $and: [filter, { id: "admin" }],
-          });
-          if (adminVal) throw "Cannot delete the admin value";
+      ...(canManageBusinessAccess(user.type) && {
+        insert: {
+          fields: ["id", "description"],
+          checkFilter: { id: { $nin: MANAGED_USER_TYPES } },
         },
-      },
+        update: {
+          fields: ["description"],
+          forcedFilter: { id: { $nin: MANAGED_USER_TYPES } },
+        },
+        delete: {
+          filterFields: "*",
+          forcedFilter: { id: { $nin: MANAGED_USER_TYPES } },
+        },
+      }),
     },
     users:
       isAdmin ?
@@ -303,6 +324,11 @@ export const publish: Publish<
           },
           update: {
             fields: {
+              username: 1,
+              name: 1,
+              email: 1,
+              type: 1,
+              status: 1,
               options: 1,
             },
             dynamicFields: [
@@ -322,11 +348,12 @@ export const publish: Publish<
           select: {
             fields: {
               id: 1,
+              type: 1,
               username: 1,
               name: 1,
+              status: 1,
               email: 1,
               auth_provider: 1,
-              type: 1,
               options: 1,
               created: 1,
             },
@@ -406,6 +433,13 @@ export const publish: Publish<
         }
       ),
   };
+
+  if (user.type === USER_TYPES.CONNECTION_ADMIN) {
+    dashboardTables = {
+      ...dashboardTables,
+      ...getBusinessAccessPublish(user_id),
+    };
+  }
 
   const curTables = Object.keys(dashboardTables);
   const remainingTables = getKeys(db).filter((k) => {

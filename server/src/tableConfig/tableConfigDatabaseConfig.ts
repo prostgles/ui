@@ -3,6 +3,7 @@ import type { JSONB } from "prostgles-types";
 import { documentsServiceInputSchemaMcpOptions } from "@common/mcp/documentsServiceInputSchema";
 import { DUMP_OPTIONS_SCHEMA } from "./tableConfigBackups";
 import { OAuthProviderOptions } from "@common/OAuthUtils";
+import { MANAGED_USER_TYPES } from "@common/authTypesAndConstants";
 
 export const UNIQUE_DB_COLS = ["db_name", "db_host", "db_port"] as const;
 const UNIQUE_DB_FIELDLIST = UNIQUE_DB_COLS.join(", ");
@@ -557,7 +558,11 @@ export const tableConfigDatabaseConfig: TableConfig<{ en: 1 }> = {
         info: {
           hint: "User type assigned to new users. Defaults to 'default'",
         },
-        sqlDefinition: `TEXT REFERENCES user_types`,
+        sqlDefinition: `TEXT REFERENCES user_types CHECK (auth_created_user_type NOT IN (${MANAGED_USER_TYPES.filter(
+          (type) => type !== "default",
+        )
+          .map((type) => `'${type}'`)
+          .join(", ")}))`,
       },
       auth_providers: {
         info: {

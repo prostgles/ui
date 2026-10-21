@@ -12,10 +12,9 @@ export const useConnectionConfigSearchParams = <Items extends TabItems<string>>(
     () => getEntries(connectionConfigItems),
     [connectionConfigItems],
   );
+  const enabledItems = itemEntries.filter(([, item]) => !item.hide && !item.disabledText);
   const activeSection =
-    searchParamSection ?
-      itemEntries.find(([key]) => key === searchParamSection)?.[0]
-    : itemEntries.find(([, v]) => !v.hide && !v.disabledText)?.[0];
+    enabledItems.find(([key]) => key === searchParamSection)?.[0] ?? enabledItems[0]?.[0];
   const setSection = <S extends keyof Items & string>({
     section,
     opts,

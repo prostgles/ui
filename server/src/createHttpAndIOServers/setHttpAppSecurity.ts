@@ -37,13 +37,19 @@ export const setHttpAppSecurity = (
 
   const addDevDefaultsToStateConnection = (
     currentValue: undefined | string[],
-    protocol: "http" | "wss" = "http",
+    protocols: ("http" | "wss")[] = ["http"],
   ) => {
     const currentValueWithNonce = withNonce(currentValue);
     if (is_state_db && cors_csp_devmode_enabled) {
       return [
         ...currentValueWithNonce,
-        ...connectionPorts.map((port) => `${protocol}://localhost:${port}`),
+        ...connectionPorts.flatMap((port) =>
+          protocols.flatMap((protocol) =>
+            ["localhost", "127.0.0.1"].map(
+              (hostname) => `${protocol}://${hostname}:${port}`,
+            ),
+          ),
+        ),
       ];
     }
     return currentValueWithNonce;
@@ -79,7 +85,8 @@ export const setHttpAppSecurity = (
     frameAncestors,
 
     frameSrc,
-    connectSrc: addDevDefaultsToStateConnection(csp?.connectSrc, "wss"),
+    imgSrc: addDevDefaultsToStateConnection(csp?.imgSrc ?? ["'self'", "data:"]),
+    connectSrc: addDevDefaultsToStateConnection(csp?.connectSrc, ["http", "wss"]),
   };
 
   // !getElectronConfig()?.isElectron &&

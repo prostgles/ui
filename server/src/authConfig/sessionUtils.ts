@@ -6,7 +6,7 @@ import type {
   BasicSession,
   NetworkClientRequest,
 } from "prostgles-server/dist/Auth/AuthTypes";
-import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
+import type { DBHandlerServer } from "prostgles-server";
 import type { DB } from "prostgles-server/dist/initProstgles";
 import { PROSTGLES_STRICT_COOKIE } from "../envVars";
 import type { DBS, Users } from "../index";
@@ -31,7 +31,7 @@ export const makeSession = async (
   client: Pick<Sessions, "user_agent" | "ip_address" | "type"> & {
     sid?: string;
   },
-  dbo: DBOFullyTyped<DBGeneratedSchema>,
+  dbo: DBHandlerServer<DBGeneratedSchema>,
   expires = 0,
 ): Promise<BasicSession> => {
   if (user) {

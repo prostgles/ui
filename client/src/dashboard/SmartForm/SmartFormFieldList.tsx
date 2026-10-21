@@ -115,7 +115,9 @@ export const SmartFormFieldList = (props: P) => {
         />
       : row.url ?
         <MediaViewer
-          url={(row as Required<FilesTableRow>).url}
+          {...(table.isFileTable && typeof row.id === "string" ?
+            { fileId: row.id }
+          : { url: (row as Required<FilesTableRow>).url })}
           style={{
             width: "100%",
             height: "auto",

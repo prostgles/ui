@@ -1,3 +1,4 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import Btn from "@components/Btn";
 import { Chat } from "@components/Chat/Chat";
 import { FlexCol } from "@components/Flex";
@@ -69,7 +70,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
     connection,
     activeChat,
   });
-  const isAdmin = user?.type === "admin";
+  const isAdmin = user?.type === USER_TYPES.ADMIN;
   const { chatIsLoading, onStopSending, sendMessage } = useAskLLMChatSend({
     askLLM,
     stopAskLLM,

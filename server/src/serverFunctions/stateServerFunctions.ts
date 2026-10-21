@@ -1,3 +1,4 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type { DBS } from "../index";
 import { connectionManager } from "../index";
@@ -15,6 +16,7 @@ import { stateServerAdminFunctions } from "./adminServerFunctions/stateServerAdm
 import { defineFunctionGroup } from "./defineFunctionGroup";
 import { loadGeneratedWorkspacesFunction } from "./loadGeneratedWorkspaces/loadGeneratedWorkspacesFunction";
 import { userServerFunctions } from "./userServerFunctions/userServerFunctions";
+import { getConnectionUser } from "@src/ConnectionManager/getConnectionUser";
 
 export const stateServerFunctions = {
   ...userServerFunctions,
@@ -31,6 +33,15 @@ export const stateServerFunctions = {
           { user, dbo: dbs, db: _dbs, clientReq: { socket } },
         ) => {
           try {
+            const connection = await dbs.connections.findOne({
+              id: connectionId,
+            });
+            if (
+              !connection ||
+              !(await getConnectionUser(dbs, connection, user))
+            ) {
+              throw new Error("Connection access denied");
+            }
             const socketPathAndUrl = await connectionManager.startConnection(
               connectionId,
               dbs,
@@ -41,7 +52,7 @@ export const stateServerFunctions = {
           } catch (error) {
             console.error("Could not start connection " + connectionId, error);
             /* Used to prevent data leak to client */
-            if (user.type === "admin") {
+            if (user.type === USER_TYPES.ADMIN) {
               throw error;
             } else {
               throw `Something went wrong when connecting to ${connectionId}`;

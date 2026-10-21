@@ -1,4 +1,4 @@
-import { sidKeyName } from "@common/authTypesAndConstants";
+import { sidKeyName, USER_TYPES } from "@common/authTypesAndConstants";
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import { API_ENDPOINTS, ROUTES } from "@common/utils";
 import { getBackupManager } from "@src/init/prostglesOnReady";
@@ -15,11 +15,7 @@ import { getGetUser } from "./getUser";
 import { getOAuthLoginProviders } from "./OAuthProviders/getOAuthLoginProviders";
 import { getOnMagicLinkOrOTP } from "./onMagicLinkOrOTP";
 import { getOnUseOrSocketConnected } from "./onUseOrSocketConnected";
-import {
-  authCookieOpts,
-  parseAsBasicSession,
-  type SUser,
-} from "./sessionUtils";
+import { authCookieOpts, type SUser } from "./sessionUtils";
 import { type AuthConfigForStateOrConnection } from "./subscribeToAuthSetupChanges";
 import { updateRemoteMcpAuthorizationCode } from "@src/McpHub/AnthropicMcpHub/McpOAuth/updateRemoteMcpAuthorizationCode";
 
@@ -51,17 +47,11 @@ export const getAuth = async (
   const { auth_providers, auth_created_user_type = null } = database_config;
   const auth = {
     sidKeyName,
+    cacheSession: true,
     onUseOrSocketConnected: getOnUseOrSocketConnected(_dbs, authSetupData),
     getUser: getGetUser(dbs, authSetupData),
-    findUser: (userFilter) => dbs.users.findOne(userFilter),
-    cacheSession: {
-      getSession: async (sid, _) => {
-        if (!sid) return undefined;
-        const session = await dbs.sessions.findOne({ id: sid });
-        if (!session) return undefined;
-        return parseAsBasicSession(session);
-      },
-    },
+    findUser: (userFilter) =>
+      dbs.users.findOne({ $and: [userFilter, { status: "active" }] }),
 
     loginSignupConfig: {
       app,
@@ -94,17 +84,6 @@ export const getAuth = async (
       onGetRequestOK: async (req, res, { getUser }) => {
         if (req.path.startsWith(ROUTES.MCP_OAUTH_CALLBACK)) {
           /** The confirmation can be initiated on a browser without a session */
-          // const userData = await getUser();
-          // const errorHint =
-          //   "Ensure you're logged in as an admin user in Prostgles and have the correct permissions to perform this action.";
-          // if (!userData.user) {
-          //   res.status(401).send("Unauthorized");
-          //   return;
-          // } else if (userData.user.type !== "admin") {
-          //   res.status(403).send("Forbidden");
-          //   return;
-          // }
-
           const result = await updateRemoteMcpAuthorizationCode(dbs, req.query);
           if (result.success === false) {
             res.status(400).send(result.message);
@@ -125,7 +104,7 @@ export const getAuth = async (
           if (!userData.user) {
             res.status(401).send("Unauthorized");
             return;
-          } else if (userData.user.type !== "admin") {
+          } else if (userData.user.type !== USER_TYPES.ADMIN) {
             res.status(403).send("Forbidden");
             return;
           }

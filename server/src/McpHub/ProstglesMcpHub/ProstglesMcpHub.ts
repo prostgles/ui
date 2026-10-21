@@ -23,17 +23,12 @@ const servers: Map<
 > = new Map();
 
 const init = async (dbs: DBS) => {
-  const sub = await dbs.mcp_servers.subscribe(
-    {
-      command: "prostgles-local",
-    },
-    {
-      select: {
-        "*": 1,
-        mcp_server_configs: "*",
-      },
-    },
-    (serverRecords) => {
+  let serverUpdates = Promise.resolve();
+  const refreshServers = () => {
+    serverUpdates = serverUpdates.catch(() => {}).then(async () => {
+      const serverRecords = await dbs.mcp_servers.find({
+        command: "prostgles-local",
+      });
       for (const serverRecord of serverRecords) {
         const serverInstance = servers.get(serverRecord.name);
         if (!serverInstance && serverRecord.enabled) {
@@ -59,16 +54,24 @@ const init = async (dbs: DBS) => {
             //   continue;
             // }
 
-            void (async () => {
-              const instance = await handler.start(dbs);
-              servers.set(serverRecord.name, instance);
-            })();
+            const instance = await handler.start(dbs);
+            servers.set(serverRecord.name, instance);
           }
         } else if (serverInstance && !serverRecord.enabled) {
-          void serverInstance.stop();
+          await serverInstance.stop();
           servers.delete(serverRecord.name);
         }
       }
+    });
+    return serverUpdates;
+  };
+  const sub = await dbs.mcp_servers.subscribe(
+    { command: "prostgles-local" },
+    { select: { name: 1, enabled: 1 } },
+    () => {
+      void refreshServers().catch((error: unknown) => {
+        console.error("Error updating Prostgles MCP servers", error);
+      });
     },
   );
 
@@ -218,6 +221,7 @@ const init = async (dbs: DBS) => {
   };
 
   return {
+    refreshServers,
     destroy,
     callTool,
     validateToolInput,
@@ -228,9 +232,12 @@ const init = async (dbs: DBS) => {
 };
 
 let inFlightInit: ReturnType<typeof init> | undefined;
-export const getProstglesMcpHub = (dbs: DBS) => {
+export const getProstglesMcpHub = async (dbs: DBS) => {
   inFlightInit ??= init(dbs);
-  return inFlightInit;
+  const hub = await inFlightInit;
+  // Tool calls can arrive before the subscription observes an enabled server.
+  await hub.refreshServers();
+  return hub;
 };
 
 const getProperty = <T extends Record<string, unknown>, K extends keyof T>(

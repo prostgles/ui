@@ -20,7 +20,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@playwright/test": "^1.59.1",
+    "@playwright/test": "^1.64.1",
     "@types/node": "^20.19.39",
     "@types/smtp-server": "^3.5.13",
     "otplib": "^13.4.1"

@@ -1,3 +1,4 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import React from "react";
 
 import type { DBSSchema } from "@common/publishUtils";
@@ -69,8 +70,7 @@ export const AccessControl = (props: P) => {
       </InfoRow>
     );
   }
-  if (!connection || !dbsConnection || !database_config || !rules)
-    return <Loading />;
+  if (!connection || !database_config || !rules) return <Loading />;
 
   return (
     <div className={"flex-col f-1 " + className}>
@@ -106,7 +106,9 @@ export const AccessControl = (props: P) => {
               >
                 Create new rule
               </Btn>
-              <UserSyncConfig {...props.prgl} />
+              {prgl.user?.type === USER_TYPES.ADMIN && (
+                <UserSyncConfig {...props.prgl} />
+              )}
 
               <Btn
                 iconPath={mdiAccountCog}

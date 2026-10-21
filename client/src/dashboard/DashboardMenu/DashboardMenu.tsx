@@ -1,3 +1,4 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import Popup from "@components/Popup/Popup";
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import { includes } from "prostgles-types";
@@ -72,7 +73,7 @@ export const DashboardMenu = ({
   const pinnedMenu = workspace.options.pinnedMenu && !window.isLowWidthScreen;
   if (!pinnedMenu && !anchor.node && !showSearchAll) return hotKeys;
   const isReadonlyWorkspace =
-    prgl.user?.type !== "admin" &&
+    prgl.user?.type !== USER_TYPES.ADMIN &&
     workspace.published && workspace.user_id !== prgl.user?.id;
   const isFixed = isReadonlyWorkspace && workspace.layout_mode === "fixed";
 

@@ -41,7 +41,7 @@ export type DBGeneratedSchema = {
   access_control_user_types: {
     columns: {
       access_control_id: number;
-      user_type: "admin" | "public" | "default"
+      user_type: "admin" | "public" | "default" | "connection_admin"
     };
     
   };
@@ -117,7 +117,7 @@ export type DBGeneratedSchema = {
       title?: null | string;
       ui_path?: 
        | null
-       |  {  page: "/connection-config";  section: "authentication" | "access_control" | "backups" | "table_config" | "details" | "status" | "methods" | "file_storage" | "API" | "webApp" | "security" | "config"; }
+       |  {  page: "/connection-config";  section: "members" | "authentication" | "access_control" | "backups" | "table_config" | "details" | "status" | "methods" | "file_storage" | "API" | "webApp" | "security" | "config"; }
        |  {  page: "/server-settings";  section: "security" | "auth" | "cloud" | "mcpServers" | "llmProviders" | "services"; }
     };
     referencedBy: {"alert_viewed_by":["alert_id"]};
@@ -237,7 +237,7 @@ export type DBGeneratedSchema = {
     columns: {
       allowed_ips?: string[];
       allowed_ips_enabled?: boolean;
-      auth_created_user_type?: null | "admin" | "public" | "default"
+      auth_created_user_type?: null | "admin" | "public" | "default" | "connection_admin"
       auth_providers?: null | {    website_url: string;   email?: |  {  signupType: "withMagicLink";  enabled?: boolean;  smtp: |  {  type: "smtp";  host: string;  port: number;  secure?: boolean;  rejectUnauthorized?: boolean;  user: string;  pass: string; } |  {  type: "aws-ses";  region: string;  accessKeyId: string;  secretAccessKey: string;  sendingRate?: number; };  emailTemplate: {  from: string;  subject: string;  body: string; };  emailConfirmationEnabled?: boolean; }
  |  {  signupType: "withPassword";  enabled?: boolean;  minPasswordLength?: number;  smtp: |  {  type: "smtp";  host: string;  port: number;  secure?: boolean;  rejectUnauthorized?: boolean;  user: string;  pass: string; } |  {  type: "aws-ses";  region: string;  accessKeyId: string;  secretAccessKey: string;  sendingRate?: number; };  emailTemplate: {  from: string;  subject: string;  body: string; };  emailConfirmationEnabled?: boolean; };   google?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  scope: ("profile" | "email" | "calendar" | "calendar.readonly" | "calendar.events" | "calendar.events.readonly")[]; }; };   github?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  scope: ("read:user" | "user:email")[]; }; };   microsoft?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  prompt: "login" | "none" | "consent" | "select_account" | "create";  scope: ("openid" | "profile" | "email" | "offline_access" | "User.Read" | "User.ReadBasic.All" | "User.Read.All")[]; }; };   facebook?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  scope: ("email" | "public_profile" | "user_birthday" | "user_friends" | "user_gender" | "user_hometown")[]; }; };   customOAuth?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  displayName: string;  displayIconPath?: string;  authorizationURL: string;  tokenURL: string;  authOpts?: {  scope: string[]; }; };  };
       backups_config?: null | {    enabled?: boolean;   cloudConfig: null |  {  credential_id?: null | number; };   frequency: "daily" | "monthly" | "weekly" | "hourly";   hour?: number;   dayOfWeek?: number;   dayOfMonth?: number;   keepLast?: number;   err?: null | string;   dump_options: |  {  command: "pg_dumpall";  clean: boolean;  dataOnly?: boolean;  globalsOnly?: boolean;  rolesOnly?: boolean;  schemaOnly?: boolean;  ifExists?: boolean;  encoding?: string;  keepLogs?: boolean; }
@@ -757,7 +757,7 @@ export type DBGeneratedSchema = {
   user_types: {
     columns: {
       description?: null | string;
-      id: "admin" | "public" | "default"
+      id: "admin" | "public" | "default" | "connection_admin"
     };
     referencedBy: {"access_control_user_types":["user_type"],"database_configs":["auth_created_user_type"],"users":["type"]};
   };
@@ -782,7 +782,7 @@ export type DBGeneratedSchema = {
        |  {  type: "magic-link";  otp_code: string;  date: string;  used_on?: string; }
        |  {  type: "OAuth";  provider: "google" | "facebook" | "github" | "microsoft" | "customOAuth";  user_id: string;  profile: any; }
       status?: "active" | "disabled" | "public"
-      type?: "admin" | "public" | "default"
+      type?: "admin" | "public" | "default" | "connection_admin"
       username: string;
     };
     referencedBy: {"agentic_workflow_runs":["user_id"],"agentic_workflows":["user_id"],"alert_viewed_by":["user_id"],"connections":["user_id"],"credentials":["user_id"],"docker_containers":["user_id"],"links":["user_id"],"llm_chats":["user_id"],"llm_credentials":["user_id"],"llm_messages":["user_id"],"llm_prompts":["user_id"],"magic_links":["user_id"],"mcp_server_tool_calls":["user_id"],"mcp_tool_approval_requests":["user_id"],"sessions":["user_id"],"windows":["user_id"],"workspaces":["user_id"]};
@@ -892,13 +892,13 @@ export type GeneratedFunctionSchema = {
   "getFullPrompt": (args: {    prompt: string;   schema: string;   connectionId: string;  }) => Promise<string>;
   "stopAskLLM": (args: {    chatId: number;  }) => Promise<void>;
   "sendFeedback": (args: {    details: string;   email?: string;  }) => Promise<void>;
-  "prostglesSignup": (args: {    email: string;   code: string;  }) => Promise<({ error: unknown; hasError: boolean; token?: undefined; host?: undefined } | { token: string; host: string; error?: undefined; hasError?: undefined })>;
   "generateToken": (args: {    days: number;  }) => Promise<string>;
   "create2FA": () => Promise<{ url: string; secret: string; recoveryCode: string }>;
   "enable2FA": (args: {    token: string;  }) => Promise<string>;
   "disable2FA": () => Promise<(undefined | Array<void>)>;
   "changePassword": (args: {    oldPassword: string;   newPassword: string;  }) => Promise<void>;
   "getLLMAllowedChatTools": (args: {    chatId: number;  }) => Promise<(undefined | Array<(Pick<DBSchema["mcp_server_tools"], ("description" | "server_name" | "mode")> & { tool_id: number; name: string; tool_name: string; input_schema: any; auto_approve: boolean })>)>;
+  "prostglesSignup": (args: {    email: string;   code: string;  }) => Promise<({ error: unknown; hasError: boolean; token?: undefined; host?: undefined } | { token: string; host: string; error?: undefined; hasError?: undefined })>;
   "createWebAppFromTemplate": (args: {    connectionId: string;   clean?: boolean;  }) => Promise<string>;
   "buildWebApp": (args: {    connectionId: string;   clean?: boolean;  }) => Promise<(({ command: string; exitCode: number; timedOut: boolean; executionTime: number; log: Array<{ type: ("stdout" | "stderr" | "error"); text: string }> } & { state: ("error" | "timed-out" | "close" | "aborted") }) | ({ command: string; exitCode: number; timedOut: boolean; executionTime: number; log: Array<{ type: ("stdout" | "stderr" | "error"); text: string }> } & { state: "error"; error: (undefined | null | string | Array<any> | { [key: string]: any }) }))>;
   "testWebApp": (args: {    connectionId: string;  }) => Promise<(({ command: string; exitCode: number; timedOut: boolean; executionTime: number; log: Array<{ type: ("stdout" | "stderr" | "error"); text: string }> } & { state: ("error" | "timed-out" | "close" | "aborted") }) | ({ command: string; exitCode: number; timedOut: boolean; executionTime: number; log: Array<{ type: ("stdout" | "stderr" | "error"); text: string }> } & { state: "error"; error: (undefined | null | string | Array<any> | { [key: string]: any }) }))>;
@@ -920,11 +920,12 @@ export type GeneratedFunctionSchema = {
   "toggleService": (args: {    serviceName: string;   enable: boolean;  }) => Promise<void>;
   "getDBSize": (args: {    conId: string;  }) => Promise<string>;
   "getIsSuperUser": (args: {    conId: string;  }) => Promise<boolean>;
+  "openLocalFile": (args: {    connectionId: string;   fileId: string;  }) => Promise<boolean>;
   "getFileFolderSizeInBytes": (args: {    conId?: string;  }) => Promise<{ size: number; storagePath: string }>;
   "testDBConnection": (args: {    connection: Record<string, unknown>;  }) => Promise<{ prostglesSchemaVersion: (undefined | string); connectionInfo: { ssl: (false | true | { rejectUnauthorized?: (undefined | false | true); ca?: (undefined | string | ArrayBuffer | Uint8Array | Array<(string | ArrayBuffer | Uint8Array)>); pfx?: (undefined | string | ArrayBuffer | Uint8Array | Array<(string | object | ArrayBuffer | Uint8Array)>); cert?: (undefined | string | ArrayBuffer | Uint8Array | Array<(string | ArrayBuffer | Uint8Array)>); key?: (undefined | string | ArrayBuffer | Uint8Array | Array<(object | ArrayBuffer | Uint8Array)>); passphrase?: (undefined | string); secureOptions?: (undefined | number); NPNProtocols?: (undefined | Array<string> | Uint8Array<(ArrayBuffer | SharedArrayBuffer)> | ArrayBuffer | Uint8Array | Array<ArrayBuffer | Uint8Array> | Array<Uint8Array<(ArrayBuffer | SharedArrayBuffer)>>) }); application_name: string; host: string; port: number; user: string; database: string; password: string; connectionTimeoutMillis?: (undefined | number) }; canCreateDb: (undefined | false | true); isSSLModeFallBack?: (undefined | false | true) }>;
   "validateConnection": (args: {    connection: any;  }) => Promise<{ validatedConnection: any }>;
   "getInstalledPsqlVersions": () => Promise<(undefined | ({ os: ("" | "Windows" | "Linux" | "Mac"); filePath: string } & { pg_dump: (undefined | string); pg_restore: (undefined | string); psql: (undefined | string); docker: (undefined | string) }))>;
-  "createConnection": (args: {    connection: Record<string, any>;   origin: string;   sampleSchemaName?: string;  }) => Promise<{ connection: Required<DBSchemaForInsert["connections"]>; database_config: { allowed_ips: Array<string>; allowed_ips_enabled: boolean; auth_created_user_type: (null | "admin" | "public" | "default"); auth_providers: DBSchema["database_configs"]["auth_providers"]; backups_config: DBSchema["database_configs"]["backups_config"]; config_sync: DBSchema["database_configs"]["config_sync"]; cookie_options: DBSchema["database_configs"]["cookie_options"]; cors: DBSchema["database_configs"]["cors"]; cors_csp_devmode_enabled: boolean; csp: DBSchema["database_configs"]["csp"]; csp_add_defaults_enabled: boolean; db_host: string; db_name: string; db_port: number; enable_logs: boolean; file_table_config: DBSchema["database_configs"]["file_table_config"]; id: number; login_rate_limit: DBSchema["database_configs"]["login_rate_limit"]; login_rate_limit_enabled: boolean; magic_link_validity_days: number; pass_process_env_vars_to_server_side_functions: boolean; rest_api_enabled: (null | false | true); session_max_age_days: number; sync_users: (null | false | true); table_config: DBSchema["database_configs"]["table_config"]; table_config_ts: (null | string); table_config_ts_disabled: (null | false | true); table_schema_positions: DBSchema["database_configs"]["table_schema_positions"]; table_schema_transform: DBSchema["database_configs"]["table_schema_transform"]; tableConfig: any; trust_proxy: boolean } }>;
+  "createConnection": (args: {    connection: Record<string, any>;   origin: string;   sampleSchemaName?: string;  }) => Promise<{ connection: Required<DBSchemaForInsert["connections"]>; database_config: { allowed_ips: Array<string>; allowed_ips_enabled: boolean; auth_created_user_type: (null | "admin" | "public" | "default" | "connection_admin"); auth_providers: DBSchema["database_configs"]["auth_providers"]; backups_config: DBSchema["database_configs"]["backups_config"]; config_sync: DBSchema["database_configs"]["config_sync"]; cookie_options: DBSchema["database_configs"]["cookie_options"]; cors: DBSchema["database_configs"]["cors"]; cors_csp_devmode_enabled: boolean; csp: DBSchema["database_configs"]["csp"]; csp_add_defaults_enabled: boolean; db_host: string; db_name: string; db_port: number; enable_logs: boolean; file_table_config: DBSchema["database_configs"]["file_table_config"]; id: number; login_rate_limit: DBSchema["database_configs"]["login_rate_limit"]; login_rate_limit_enabled: boolean; magic_link_validity_days: number; pass_process_env_vars_to_server_side_functions: boolean; rest_api_enabled: (null | false | true); session_max_age_days: number; sync_users: (null | false | true); table_config: DBSchema["database_configs"]["table_config"]; table_config_ts: (null | string); table_config_ts_disabled: (null | false | true); table_schema_positions: DBSchema["database_configs"]["table_schema_positions"]; table_schema_transform: DBSchema["database_configs"]["table_schema_transform"]; tableConfig: any; trust_proxy: boolean } }>;
   "syncSchema": (args: {    connectionId: string;   configPath: string;   setupTemplate?: boolean;  }) => Promise<void>;
   "findSchemaConfigSource": (args: {    connectionId: string;   tableNames: string[];   functionNames: string[];  }) => Promise<Array<{ fileName: string; startLineNumber: number; endLineNumber: number; type: ("function" | "tableConfig" | "tableHooks" | "tableOptions"); name: string }>>;
   "refreshModels": () => Promise<void>;

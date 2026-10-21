@@ -7,6 +7,8 @@ import React, { useState } from "react";
 import { FlexCol } from "../Flex";
 import type { MediaViewerProps } from "./MediaViewer";
 import { PdfViewerWithFileTableContext } from "../PdfViewer/PdfViewerWithFileTableContext";
+import { downloadMediaFile } from "./downloadMediaFile";
+import { useMediaFile } from "./useMediaFile";
 
 export type ValidContentType = (typeof ContentTypes)[number];
 export type UrlInfo = {
@@ -22,6 +24,7 @@ type P = Pick<MediaViewerProps, "context"> & {
   subTitle: string | undefined;
   contentOnly: boolean;
   urlInfo: UrlInfo | undefined;
+  fileId: string | undefined;
   isFocused: boolean;
   style: React.CSSProperties | undefined;
   setIsFocused: (isFocused: boolean) => void;
@@ -34,6 +37,7 @@ export const MediaViewerContent = ({
   isFocused,
   setIsFocused,
   urlInfo,
+  fileId: knownFileId,
   style,
   title,
   subTitle,
@@ -41,6 +45,9 @@ export const MediaViewerContent = ({
   context,
   isLoading,
 }: P) => {
+  const { fileId, withCredentials, openLocalFile } = useMediaFile(
+    knownFileId ? { fileId: knownFileId } : { url: urlInfo?.validated },
+  );
   const [expandedDocUrl, setExpandedDocUrl] = useState<string>();
   if (!urlInfo) return null;
 
@@ -103,20 +110,16 @@ export const MediaViewerContent = ({
         <FlexCol className="f-0 gap-p25 max-w-full">
           <Btn
             variant="faded"
-            iconProps={
-              fileIconInfo?.color ?
-                {
-                  path: fileIconInfo.iconPath ?? mdiFileDocumentOutline,
-                  color: fileIconInfo.color,
-                }
-              : undefined
-            }
+            iconProps={{
+              path: fileIconInfo?.iconPath ?? mdiFileDocumentOutline,
+              color: fileIconInfo?.color,
+            }}
             size={variant === "thumbnail" ? "large" : undefined}
             loading={isLoading && "allow-clicking"}
             value={content_type ?? "Not found"}
             title={isLoading ? "Extracting metadata..." : (content_type ?? url)}
             className="max-w-full"
-            onClick={(e) => {
+            onClickPromise={async (e) => {
               e.stopPropagation();
               e.preventDefault();
               if (
@@ -125,7 +128,8 @@ export const MediaViewerContent = ({
               ) {
                 setExpandedDocUrl(url);
               } else {
-                setIsFocused(true);
+                if (await openLocalFile?.()) return;
+                await downloadMediaFile(url, title, withCredentials);
               }
             }}
             children={
@@ -150,7 +154,12 @@ export const MediaViewerContent = ({
                 contentClassName="p-0"
               >
                 {isPdf ?
-                  <PdfViewerWithFileTableContext url={url} context={context} />
+                  <PdfViewerWithFileTableContext
+                    url={url}
+                    fileId={fileId}
+                    context={context}
+                    withCredentials={withCredentials}
+                  />
                 : <iframe
                     src={url}
                     style={{

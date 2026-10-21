@@ -1,3 +1,4 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import { getPasswordHash } from "@src/authConfig/authUtils";
 import type { TableHooks } from "prostgles-server";
@@ -24,7 +25,7 @@ export const usersTableHooks = {
             data.passwordless_admin ||
             registrationType === "OAuth" ||
             registrationType === "magic-link" ||
-            data.type === "public";
+            data.type === USER_TYPES.PUBLIC;
 
           if (nonPasswordAccount && !data.password) return;
 

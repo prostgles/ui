@@ -1,3 +1,4 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import { PassThrough } from "stream";
 import { getInstalledPsqlVersions } from "./getInstalledPrograms";
@@ -197,7 +198,7 @@ export default class BackupManager {
     userData: SUser | undefined,
     req: Request,
   ) => {
-    if (userData?.user.type !== "admin") {
+    if (userData?.user.type !== USER_TYPES.ADMIN) {
       res.sendStatus(401);
       return;
     }

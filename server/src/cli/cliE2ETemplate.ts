@@ -27,7 +27,7 @@ export const getE2ETemplate = (configId: string) => ({
     - Add non-admin users to deploymentOptions only after defining their access rules, then select one with test.use({ userKey: "default" }). A key matching a published user type lets typed database clients infer the applicable schema; distinct fixture keys may share that user type when tests need multiple identities.
     - Start with await app.open(). Reuse openTable(app.page, tableName, true), getTableWindow(app.page, tableName), insertRow(app.page, tableName, values), fillSmartForm, fillSmartFormAndInsert, clickInsertRow and setOrAddWorkspace before adding selectors. These are the same helpers used by Prostgles UI's e2e tests.
     - Assert visible business outcomes and denied actions for each role. Use deployment.connectProjectAs(userKey) when a database assertion helps. Keep app-specific helper functions here beside the workflows.
-    - Run npm run test:e2e:install once to install Chromium, then npm run test:e2e. To run a role or workflow: npm run test:e2e -- tests/admin or npm run test:e2e -- -g "workflow name".
+    - Run npm run test:e2e; it installs Chromium automatically before running the tests. To run a role or workflow: npm run test:e2e -- tests/admin or npm run test:e2e -- -g "workflow name".
     - Videos and traces for every test, including passing tests, are saved in e2e/test-results/. Deployment and PostgreSQL logs are saved alongside them. Artifacts may contain test data and sessions; do not commit them.
     - Run npm run test:e2e:report and select a test to play its video or inspect its trace. The HTML report is in e2e/playwright-report/. Results are replaced on the next run; copy them elsewhere inside the project if they must be kept.
   `,

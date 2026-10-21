@@ -80,7 +80,9 @@ void describe("Service manager tests", async () => {
     testContext.after(async () => {
       serviceManager.destroy();
       const { imageName } = getServiceDockerResources(serviceName);
-      await executeDockerCommand(["image", "rm", imageName], { timeout: 10_000 });
+      await executeDockerCommand(["image", "rm", imageName], {
+        timeout: 10_000,
+      });
     });
 
     await strict.rejects(
@@ -105,13 +107,14 @@ void describe("Service manager tests", async () => {
       return;
     }
     let logText = "";
-    const serviceManager = await ServiceManager.create(
-      {
-        services: prostglesServices,
-        serviceRoot: "src/ServiceManager/services",
-      },
-      undefined,
-    );
+    const serviceManager: ServiceManager<typeof prostglesServices> =
+      await ServiceManager.create(
+        {
+          services: prostglesServices,
+          serviceRoot: "src/ServiceManager/services",
+        },
+        undefined,
+      );
     testContext.after(() => serviceManager.destroy());
     const res = await serviceManager.enableService("speechToText", (logs) => {
       const lastLog = logs.at(-1)?.text;
@@ -125,12 +128,16 @@ void describe("Service manager tests", async () => {
       "Service did not start correctly",
     );
     strict.ok(res.endpoints["/transcribe"]);
+    // @ts-expect-error Audio must be a Blob.
+    ({ audio: "" }) satisfies Parameters<(typeof res.endpoints)["/transcribe"]>[0];
     const transcriptionResult = await res.endpoints["/transcribe"]({
       audio: await openAsBlob("../e2e/tests/testAskLLM/hello.mp3", {
         type: "audio/mpeg",
       }),
     });
     strict.ok("transcription" in transcriptionResult);
+    // @ts-expect-error Transcription responses have no unknown field.
+    transcriptionResult.invalid;
     strict.equal(transcriptionResult.success, true);
     strict.equal(transcriptionResult.transcription, "Hello.");
   });

@@ -1,3 +1,4 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import {
   filterArr,
   getLLMMessageText,
@@ -489,7 +490,7 @@ export const askLLM = async (args: AskLLMArgs) => {
       });
     }
   } catch (err) {
-    const isAdmin = user.type === "admin";
+    const isAdmin = user.type === USER_TYPES.ADMIN;
     const errorObjOrString = getSerialisableError(err);
     const errorIsString = typeof errorObjOrString === "string";
     const errorTextOrEmpty =

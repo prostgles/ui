@@ -275,7 +275,9 @@ export const fetchSearchResults = async ({
           />
         : fileUrl ?
           <MediaViewer
-            url={row[fileUrl]}
+            {...(typeof row.id === "string" ?
+              { fileId: row.id }
+            : { url: row[fileUrl] })}
             variant="thumbnail"
             style={{
               marginRight: "1em",

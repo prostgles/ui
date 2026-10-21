@@ -45,7 +45,12 @@ export const createMcpOAuthProvider = ({
 
   let state: StreamableHTTPOAuthState =
     oauth.phase === "initializing_dcr" ?
-      {}
+      {
+        clientInformation: configClientInfo && {
+          client_id: configClientInfo.clientId,
+          client_secret: configClientInfo.clientSecret,
+        },
+      }
     : {
         discoveryState: oauth.discoveryState as unknown as OAuthDiscoveryState,
         clientInformation:

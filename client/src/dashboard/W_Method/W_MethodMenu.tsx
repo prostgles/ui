@@ -1,3 +1,4 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import type { DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
 import { FlexCol, FlexRow } from "@components/Flex";
@@ -25,7 +26,7 @@ export const W_MethodMenu = (
   const [editedMethod, setEditedMethod] =
     useState<DBSSchema["published_methods"]>();
 
-  const isAdmin = user?.type === "admin";
+  const isAdmin = user?.type === USER_TYPES.ADMIN;
   const { hiddenArgs = [] } = w.options;
 
   if (!method || isEmpty(method)) return null;

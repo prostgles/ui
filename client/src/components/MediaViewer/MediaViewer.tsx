@@ -7,10 +7,9 @@ import type { AnyObject } from "prostgles-types";
 import { MediaViewerContent, type UrlInfo } from "./MediaViewerContent";
 import { ContentTypes } from "@common/columnDisplayFormat.schema";
 import type { DBSchemaTableWithOptions } from "src/dashboard/Dashboard/getTables";
+import { useMediaFile, type MediaFileSource } from "./useMediaFile";
 
-export type MediaViewerProps = {
-  url: string;
-
+export type MediaViewerProps = MediaFileSource & {
   /**
    * Filename
    */
@@ -48,13 +47,13 @@ export const MediaViewer = (props: MediaViewerProps) => {
     onPrevOrNext,
     style,
     content_type,
-    url,
     allowedHostnames,
     name,
     variant,
     context,
     isLoading,
   } = props;
+  const { url, withCredentials } = useMediaFile(props);
   const [isFocused, setIsFocused] = useState(false);
   const [urlInfo, setUrlInfo] = useState<UrlInfo | undefined>(
     content_type && url ?
@@ -78,7 +77,8 @@ export const MediaViewer = (props: MediaViewerProps) => {
           url.startsWith("data:") ?
             url.split(":")[1]?.split(";")[0]
           : undefined;
-        const mime = mimeFromData ?? (await fetchMimeFromURLHead(url));
+        const mime =
+          mimeFromData ?? (await fetchMimeFromURLHead(url, withCredentials));
         contentType = mimeFromData ?? mime?.split(";")[0]?.trim();
       }
 
@@ -90,7 +90,7 @@ export const MediaViewer = (props: MediaViewerProps) => {
         content_type: contentType,
       });
     },
-    [content_type],
+    [content_type, withCredentials],
   );
 
   useEffect(() => {
@@ -141,6 +141,7 @@ export const MediaViewer = (props: MediaViewerProps) => {
         setIsFocused={setIsFocused}
         style={style}
         urlInfo={urlInfo}
+        fileId={props.fileId}
         contentOnly={false}
         variant={variant}
         context={context}
@@ -193,6 +194,7 @@ export const MediaViewer = (props: MediaViewerProps) => {
               setIsFocused={setIsFocused}
               style={style}
               urlInfo={urlInfo}
+              fileId={props.fileId}
               contentOnly={true}
               context={context}
             />
@@ -206,12 +208,14 @@ export const MediaViewer = (props: MediaViewerProps) => {
 
 export const fetchMimeFromURLHead = async (
   url: string,
+  withCredentials = false,
 ): Promise<string | null> => {
   try {
     const resp = await fetch(
       url,
       // { method: "HEAD" } this approach is not suitable due to CORS issues on some servers
       {
+        credentials: withCredentials ? "include" : "same-origin",
         headers: {
           Range: "bytes=0-0",
         },

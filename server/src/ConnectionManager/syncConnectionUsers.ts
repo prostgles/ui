@@ -1,3 +1,4 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import {
   USER_SYNC_COLUMNS,
   USER_SYNC_REQUIRED_COLUMNS,
@@ -47,19 +48,29 @@ export const syncConnectionUsers = async (
   }
 
   // Sync is configured per database: include access granted through any connection.
-  const accessRuleIds = await dbs.access_control.find(
+  const connectionIds = await dbs.connections.find(
     {
-      database_id: databaseConfig.id,
-      $existsJoined: { access_control_connections: {} },
+      $existsJoined: { database_configs: { id: databaseConfig.id } },
     },
     { select: { id: 1 }, returnType: "values", limit: null },
   );
-  const userTypes = await dbs.access_control_user_types.find(
-    { access_control_id: { $in: accessRuleIds } },
-    { select: { user_type: 1 }, returnType: "values", limit: null },
-  );
   const sourceUsers = await dbs.users.find(
-    { type: { $in: [...userTypes, "admin"] } },
+    {
+      $or: [
+        { type: { $in: [USER_TYPES.ADMIN, USER_TYPES.CONNECTION_ADMIN] } },
+        {
+          $existsJoined: {
+            path: [
+              "user_types",
+              "access_control_user_types",
+              "access_control",
+              "access_control_connections",
+            ],
+            filter: { connection_id: { $in: connectionIds } },
+          },
+        },
+      ],
+    },
     { select: [...syncColumns], limit: null, orderBy: { id: 1 } },
   );
   const sourceUserIds = new Set(sourceUsers.map(({ id }) => id));

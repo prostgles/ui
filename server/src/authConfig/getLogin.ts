@@ -1,3 +1,4 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import { type LoginSignupConfig } from "prostgles-server/dist/Auth/AuthTypes";
 import type { DB } from "prostgles-server/dist/initProstgles";
@@ -11,6 +12,7 @@ import type { SUser } from "./sessionUtils";
 import { startRateLimitedLoginAttempt } from "./startRateLimitedLoginAttempt";
 import type { AuthConfigForStateConnection } from "./subscribeToAuthSetupChanges";
 import { upsertSession } from "./upsertSession";
+import { getSignupUserType } from "./getSignupUserType";
 
 export const getLogin = async (
   dbs: DBS,
@@ -78,7 +80,7 @@ export const getLogin = async (
             {
               username,
               email: username,
-              type: "default",
+              type: getSignupUserType(database_config.auth_created_user_type),
               registration: {
                 type: "magic-link",
                 otp_code: newCode,

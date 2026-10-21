@@ -51,6 +51,7 @@ export const connectToRemoteMCPServer = async ({
 
     let destroyed = false;
     transport.onerror = (error) => {
+      if (destroyed) return;
       const errMsg = "Transport error: " + error.message;
       appendToLog(errMsg);
       const isOAuthAuthorizationUrl = error.message.startsWith(
@@ -63,9 +64,6 @@ export const connectToRemoteMCPServer = async ({
       const isDisconnectedError =
         error.message ===
         "SSE stream disconnected: AbortError: This operation was aborted";
-      if (destroyed && isDisconnectedError) {
-        return;
-      }
       void onLog(
         {
           type: "error",

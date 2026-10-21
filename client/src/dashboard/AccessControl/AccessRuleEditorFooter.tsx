@@ -1,4 +1,5 @@
-import { isDefined, omitKeys } from "prostgles-types";
+import { tableMightBeUndefinedDueToAccessControl } from "@common/utils";
+import { isDefined, isObject, omitKeys, safeStringify } from "prostgles-types";
 import React, { useState } from "react";
 import { SuccessMessage } from "@components/Animations";
 import type { BtnProps } from "@components/Btn";
@@ -20,7 +21,7 @@ type P = {
   dbs: DBS;
   connectionId: string;
   database_id: number;
-  error: any;
+  error: unknown;
   editedRule: ValidEditedAccessRuleState | undefined;
 };
 export const AccessRuleEditorFooter = (props: P) => {
@@ -34,7 +35,7 @@ export const AccessRuleEditorFooter = (props: P) => {
     editedRule,
   } = props;
 
-  const [localError, setLocalError] = useState<any>();
+  const [localError, setLocalError] = useState<string>();
   const [success, setSuccess] = useState("");
 
   const { selectedRuleId } = action;
@@ -94,7 +95,11 @@ export const AccessRuleEditorFooter = (props: P) => {
                       onChange({ ...newRule, access_control_user_types: [] });
                       onCancel();
                     } catch (error) {
-                      setLocalError(error);
+                      setLocalError(
+                        isObject(error) ?
+                          safeStringify(error as Error)
+                        : String(error),
+                      );
                     }
                   },
                 } satisfies BtnProps<void>)
@@ -125,8 +130,10 @@ export const AccessRuleEditorFooter = (props: P) => {
                       !selectedRuleId ? `Rule created!` : `Rule updated!`,
                     );
                     setTimeout(onCancel, 1000);
-                  } catch (e: any) {
-                    setLocalError(e);
+                  } catch (e) {
+                    setLocalError(
+                      isObject(e) ? safeStringify(e as Error) : String(e),
+                    );
                   }
                 },
               } satisfies BtnProps<void>,
@@ -185,11 +192,40 @@ const upsertRule = async (
         );
       }
 
-      await dbs.access_control_allowed_llm.delete({ access_control_id });
-      if (access_control_allowed_llm.length) {
-        await dbs.access_control_allowed_llm.insertMany(
-          access_control_allowed_llm.map((m) => ({ ...m, access_control_id })),
+      const allowedLLM = tableMightBeUndefinedDueToAccessControl(
+        dbs.access_control_allowed_llm,
+      );
+      if (allowedLLM?.insertMany && allowedLLM.delete && allowedLLM.find) {
+        const existingGrants = await allowedLLM.find({ access_control_id });
+        const isSameGrant = (
+          grant: (typeof existingGrants)[number],
+          editedGrant: (typeof access_control_allowed_llm)[number],
+        ) => {
+          return (
+            grant.llm_credential_id === editedGrant.llm_credential_id &&
+            grant.llm_prompt_id === editedGrant.llm_prompt_id
+          );
+        };
+        const addedGrants = access_control_allowed_llm.filter(
+          (grant) =>
+            !existingGrants.some((existing) => isSameGrant(existing, grant)),
         );
+        if (addedGrants.length) {
+          await allowedLLM.insertMany(
+            addedGrants.map((grant) => ({ ...grant, access_control_id })),
+          );
+        }
+        const removedGrants = existingGrants.filter(
+          (existingGrant) =>
+            !access_control_allowed_llm.some((grant) =>
+              isSameGrant(existingGrant, grant),
+            ),
+        );
+        if (removedGrants.length) {
+          await allowedLLM.delete({
+            $or: removedGrants,
+          });
+        }
       }
 
       await dbs.access_control_methods.delete({ access_control_id });

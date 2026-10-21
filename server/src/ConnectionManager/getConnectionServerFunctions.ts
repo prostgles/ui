@@ -1,3 +1,4 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import type { DBSSchema } from "@common/publishUtils";
 import type { FunctionOptions } from "@common/functionOptions";
 import type { SUser } from "@src/authConfig/sessionUtils";
@@ -46,7 +47,7 @@ export const getConnectionServerFunctions = async ({
   /** Combine all userFilter with admin into unique groups */
   connectionFunctions.forEach((m) => {
     const userTypesList = Array.from(
-      new Set(["admin", ...m.user_types.map((r) => r.user_type)]),
+      new Set([USER_TYPES.ADMIN, ...m.user_types.map((r) => r.user_type)]),
     ).toSorted();
     const userFilter = {
       type: { $in: userTypesList },

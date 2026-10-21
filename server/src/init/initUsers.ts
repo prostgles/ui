@@ -1,3 +1,4 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import {
   ELECTRON_USER_AGENT,
   PASSWORDLESS_ADMIN_USERNAME,
@@ -64,7 +65,7 @@ export const initUsers = async (db: DBS, _db: DB) => {
         {
           username,
           password,
-          type: "admin",
+          type: USER_TYPES.ADMIN,
           passwordless_admin: Boolean(NoInitialAdminPasswordProvided),
         },
         { returning: "*" },

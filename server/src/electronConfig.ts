@@ -31,6 +31,7 @@ const electronConfig: {
   electronSid: string;
   safeStorage: SafeStorage | undefined;
   focusWindow: () => void;
+  openPath: (filePath: string) => Promise<string>;
   devCredentials: DBSConnectionInfo | undefined;
   userDataDir: string;
 } = {
@@ -39,6 +40,9 @@ const electronConfig: {
   safeStorage: undefined,
   devCredentials: undefined,
   userDataDir: "",
+  openPath: () => {
+    throw new Error("Opening local files requires Electron");
+  },
   focusWindow: () => {
     throw new Error(
       "focusWindow function not set. This should only be called in electron context.",
@@ -113,7 +117,7 @@ export const getDataPath = (
 };
 
 export const getElectronConfig = () => {
-  const { isElectron, safeStorage, focusWindow, devCredentials } =
+  const { isElectron, safeStorage, focusWindow, openPath, devCredentials } =
     electronConfig;
   if (!isElectron) return undefined;
 
@@ -155,6 +159,7 @@ export const getElectronConfig = () => {
     hasCredentials: () => !!getCredentials(),
     getCredentials,
     focusWindow,
+    openPath,
     setCredentials: (connection?: DBSConnectionInfo) => {
       if (!connection) {
         if (fs.existsSync(electronConfigPath)) {
@@ -184,6 +189,7 @@ export const start = async (params: {
   port?: number;
   devCredentials?: DBSConnectionInfo;
   focusWindow: () => void;
+  openPath: (filePath: string) => Promise<string>;
 }) => {
   const { electronSid, onReady } = params;
   if (!params.userDataDir || typeof params.userDataDir !== "string") {
@@ -203,6 +209,7 @@ export const start = async (params: {
   electronConfig.safeStorage = params.safeStorage;
   electronConfig.devCredentials = params.devCredentials;
   electronConfig.focusWindow = params.focusWindow;
+  electronConfig.openPath = params.openPath;
   const { startServer } = await import("./index");
   const startResult = await startServer(async ({ port: actualPort }) => {
     // const [token] = prostglesTokens;

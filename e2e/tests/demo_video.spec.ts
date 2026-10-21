@@ -18,6 +18,7 @@ test.use({
   video: {
     mode: "on",
     size: viewPortSize,
+    fps: 60,
   },
   trace: "on",
   launchOptions: {

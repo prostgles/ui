@@ -17,10 +17,12 @@ import { Client } from "pg";
 import { startTemporaryDatabases } from "../cli/startTemporaryDatabases";
 import type {
   DBGeneratedSchema,
+  DBSchema,
   GeneratedFunctionSchema,
 } from "@common/DBGeneratedSchema";
 import { getConnectionPaths } from "@common/utils";
-import { sidKeyName } from "@common/authTypesAndConstants";
+import { sidKeyName, USER_TYPES } from "@common/authTypesAndConstants";
+import { cleanupTestServices } from "./cleanupTestServices";
 
 const STATE_SOCKET_PATH = "/ws-api-dbs";
 const START_TIMEOUT_MS = 60_000;
@@ -74,6 +76,8 @@ export type TestDeployment<
   User extends UserLike = UserLike,
 > = {
   endpoint: string;
+  /** Namespace for this deployment's managed Docker services. */
+  instanceId: string;
   stateDatabaseName: string;
   projectDatabaseName: string;
   /** File containing deployment stdout and stderr. */
@@ -109,6 +113,18 @@ export type TestDeployment<
   ) => Promise<
     TestDeploymentClient<ClientSchemaFor<Schemas, UserType>, Functions, User>
   >;
+  /**
+   * Syncs as the first configured admin and closes old project clients. Returns
+   * the updated connection and a fresh client; subscriptions are not restored.
+   */
+  syncSchema: () => Promise<{
+    project: TestDeploymentClient<
+      ClientSchemaFor<Schemas, "admin">,
+      Functions,
+      User
+    >;
+    connection: DBSchema["connections"];
+  }>;
   dispose: () => Promise<void>;
 };
 
@@ -198,7 +214,7 @@ const seedUsers = async (databaseUrl: string, users: TestDeploymentUser[]) => {
       }
       const id = randomUUID();
       const token = randomBytes(48).toString("hex");
-      const userType = userConfig.type ?? "default";
+      const userType = userConfig.type ?? USER_TYPES.DEFAULT;
       await client.query(
         `INSERT INTO users (id, username, password, type, status, passwordless_admin, last_updated)
          VALUES ($1, $2, '', $3, 'active', false, $4)`,
@@ -233,7 +249,7 @@ export const createTestDeployment = async <
   postgresImage,
   seed,
   startupTimeoutMs = START_TIMEOUT_MS,
-  users = [{ key: "admin", type: "admin" }] as TestDeploymentUser<
+  users = [{ key: "admin", type: USER_TYPES.ADMIN }] as TestDeploymentUser<
     ClientUserType<Schemas>
   >[],
 }: CreateTestDeploymentOptions<Schemas>): Promise<
@@ -260,6 +276,7 @@ export const createTestDeployment = async <
     throw error;
   });
   const endpoint = `http://127.0.0.1:${port}`;
+  const instanceId = `prostgles-test-${randomBytes(6).toString("hex")}`;
   const cliPath = path.resolve(__dirname, "../cli/cli.js");
   const logFile = await mkdir(path.dirname(resolvedLogPath), {
     recursive: true,
@@ -276,6 +293,8 @@ export const createTestDeployment = async <
     PRGL_USERNAME: `prostgles_test_bootstrap_${randomBytes(4).toString("hex")}`,
     PROSTGLES_DATABASE_URL: databases.project.url,
     PROSTGLES_STATE_DATABASE_URL: databases.state.url,
+    PROSTGLES_INSTANCE_ID: instanceId,
+    PROSTGLES_DOCKER_NETWORK: "",
     PROSTGLES_UI_HOST: "127.0.0.1",
     PROSTGLES_UI_PORT: String(port),
   };
@@ -304,6 +323,7 @@ export const createTestDeployment = async <
     );
   };
   const clients = new Set<{ disconnect: () => void }>();
+  const projectClients = new Set<{ disconnect: () => void }>();
   let disposed = false;
 
   const dispose = async () => {
@@ -312,8 +332,11 @@ export const createTestDeployment = async <
     for (const client of clients) client.disconnect();
     clients.clear();
     const processCleanup = await Promise.allSettled([stopProcess(child)]);
-    const databaseCleanup = await Promise.allSettled([databases.dispose()]);
-    const cleanupResults = [...processCleanup, ...databaseCleanup];
+    const resourceCleanup = await Promise.allSettled([
+      cleanupTestServices(instanceId),
+      databases.dispose(),
+    ]);
+    const cleanupResults = [...processCleanup, ...resourceCleanup];
     const errors = cleanupResults
       .filter((result) => result.status === "rejected")
       .map((result) => result.reason as unknown);
@@ -374,6 +397,7 @@ export const createTestDeployment = async <
       const disconnect = () => {
         client.socket.disconnect();
         clients.delete(trackedClient);
+        projectClients.delete(trackedClient);
       };
       const trackedClient = Object.assign(client, { disconnect });
       clients.add(trackedClient);
@@ -415,7 +439,7 @@ export const createTestDeployment = async <
         if (!socketInfo?.socketPath) {
           throw new Error("The project socket path was not returned.");
         }
-        return trackClient(
+        const project = trackClient(
           await prostgles<ClientSchemaFor<Schemas, UserType>, Functions, User>({
             endpoint: socketInfo.socketUrl ?? endpoint,
             token: getToken(userKey),
@@ -427,8 +451,41 @@ export const createTestDeployment = async <
             },
           }),
         );
+        projectClients.add(project);
+        return project;
       } finally {
         stateClient.disconnect();
+      }
+    };
+    const syncSchema = async () => {
+      const admin = users.find(({ type }) => type === USER_TYPES.ADMIN);
+      if (!admin) {
+        throw new Error("Schema sync requires a configured admin test user.");
+      }
+      const state = await connectStateAs(admin.key);
+      try {
+        const sync = state.methods?.syncSchema;
+        if (!sync) {
+          throw new Error("syncSchema is not available to the test user.");
+        }
+        await sync({ connectionId, configPath: resolvedConfigPath });
+        for (const project of projectClients) project.disconnect();
+        const connection = await state.db.connections!.findOne({
+          id: connectionId,
+        });
+        if (!connection) {
+          throw new Error("The configured connection was not found.");
+        }
+        const project = (await connectProjectAs(
+          admin.key,
+        )) as TestDeploymentClient<
+          ClientSchemaFor<Schemas, "admin">,
+          Functions,
+          User
+        >;
+        return { project, connection };
+      } finally {
+        state.disconnect();
       }
     };
 
@@ -451,8 +508,10 @@ export const createTestDeployment = async <
       }),
       connectProjectAs,
       connectStateAs,
+      syncSchema,
       dispose,
       endpoint,
+      instanceId,
       logPath: resolvedLogPath,
       databaseLogPath: `${resolvedLogPath}.postgres.log`,
       projectDatabaseName: databases.project.name,

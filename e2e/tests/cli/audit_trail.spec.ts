@@ -432,10 +432,7 @@ test("audit users respect user table and title permissions", async ({
         .context()
         .addCookies(deployment.storageStateAs("default").cookies);
       await page.goto(deployment.endpoint);
-      await page
-        .locator(`[data-key=${JSON.stringify(config.id)}]`)
-        .getByTestId("Connection.openConnection")
-        .click();
+      await expect(page).toHaveURL(deployment.dashboardUrl);
       await openTable(page, "audit_events", true);
       const row = page
         .locator('[data-table-name="audit_events"]')
@@ -494,23 +491,38 @@ for (const restriction of [
     } finally {
       state.disconnect();
     }
-    await expect
-      .poll(async () => {
-        const client = await deployment.connectProjectAs("default");
-        try {
-          return client.tableSchema?.some((table) => table.name === "records");
-        } finally {
-          client.disconnect();
+    // Permission reloads can disconnect clients while they are connecting.
+    await expect(async () => {
+      const client = await deployment.connectProjectAs("default");
+      try {
+        const records = client.tableSchema?.find(
+          (table) => table.name === "records",
+        );
+        expect(records).toBeDefined();
+        if (restriction === "row identifiers") {
+          expect(records).toHaveProperty(
+            "audit.error",
+            "Insufficient privileges",
+          );
+        } else {
+          const auditTable = client.tableSchema?.find(
+            (table) => table.name === "audit_events",
+          );
+          if (restriction === "audit table") {
+            expect(auditTable).toBeUndefined();
+          } else {
+            expect(
+              auditTable?.columns
+                .filter((column) => column.select)
+                .map((column) => column.name)
+                .sort(),
+            ).toEqual(["new_row", "operation"]);
+          }
         }
-      })
-      .toBe(true);
-    const client = await deployment.connectProjectAs("default");
-    if (restriction === "row identifiers") {
-      expect(
-        client.tableSchema?.find((table) => table.name === "records"),
-      ).toHaveProperty("audit.error", "Insufficient privileges");
-    }
-    client.disconnect();
+      } finally {
+        client.disconnect();
+      }
+    }).toPass({ timeout: 10_000 });
     await page.context().clearCookies();
     await page.context().addCookies([
       {
@@ -520,10 +532,7 @@ for (const restriction of [
       },
     ]);
     await page.goto(deployment.endpoint);
-    await page
-      .locator(`[data-key=${JSON.stringify(config.id)}]`)
-      .getByTestId("Connection.openConnection")
-      .click();
+    await expect(page).toHaveURL(deployment.dashboardUrl);
     await openTable(page, "records", true);
     const table = page.locator('[data-table-name="records"]');
     await table.getByTestId("dashboard.window.menu").click();

@@ -430,6 +430,7 @@ const getPackageJson = (configId: string, runtimeDependency?: string) => ({
     "format:check": "prettier --check .",
     start: "prostgles start --config .",
     upgrade: "prostgles upgrade --config .",
+    "pretest:e2e": "npm run test:e2e:install",
     "test:e2e":
       "npm run build && tsc -p e2e/tsconfig.json && playwright test --config e2e/playwright.config.ts",
     "test:e2e:install": "playwright install chromium",

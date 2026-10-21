@@ -196,8 +196,7 @@ export const addLog = (e: EventInfo, connection_id: string | null) => {
         const { clientReq } = e.localParams ?? {};
         return (
           clientReq?.socket ?
-            Array.from(clientReq.socket.__prglCache?.values() ?? [])[0]?.session
-              .sid
+            e.localParams?.isRemoteRequest?.clientInfo?.sid
           : clientReq?.httpReq ?
             (clientReq.httpReq.cookies as Record<string, string>)["sid"]
           : null

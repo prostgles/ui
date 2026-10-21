@@ -322,15 +322,7 @@ module.exports.alerts = {
       .toBe(pendingDeliveries.length);
     expect(await dbo.sent!.count!(pendingDeliveryFilter)).toBe(0);
 
-    const state = await deployment.connectStateAs("admin");
-    const connection = await state.db.connections!.findOne({
-      name: "alerts-config-e2e",
-    });
-    await state.methods!.syncSchema!({
-      connectionId: connection!.id,
-      configPath,
-    });
-    const reconnected = await deployment.connectProjectAs("admin");
+    const { project: reconnected } = await deployment.syncSchema();
     expect(
       await reconnected.db.reminders!.findOne!({ id: pending.id }),
     ).toMatchObject({

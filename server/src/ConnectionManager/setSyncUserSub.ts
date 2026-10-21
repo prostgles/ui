@@ -11,7 +11,15 @@ export function setSyncUserSub(this: ConnectionManager) {
       if (!dbs) return;
       this.userSub = await dbs.users.subscribe(
         {},
-        { select: [...USER_SYNC_COLUMNS], limit: null, throttle: 1000 },
+        {
+          select: {
+            ...Object.fromEntries(
+              USER_SYNC_COLUMNS.map((column) => [column, 1 as const]),
+            ),
+          },
+          limit: null,
+          throttle: 0,
+        },
         () => {
           // Connections can share a database; serialize passes across them too.
           this.userSyncWork = this.userSyncWork.then(async () => {

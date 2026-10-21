@@ -20,7 +20,6 @@ test("PostgreSQL audit triggers capture transactional row changes", async () => 
   let deployment: TestDeployment | undefined;
   let configPath: string | undefined;
   let db!: ReturnType<typeof pgp>;
-  let connectionId!: string;
   try {
     const source: TableConfig = {
       records: {
@@ -66,26 +65,17 @@ test("PostgreSQL audit triggers capture transactional row changes", async () => 
       configPath,
       configId: config.id,
       logPath: test.info().outputPath("audit-server.log"),
-      seed: async ({ projectDatabase, stateDatabase }) => {
+      seed: ({ projectDatabase }) => {
         const { host, port, user, password, database } = projectDatabase;
         db = pgp({ host, port, user, password, database });
-        const connection = await stateDatabase.query(
-          "SELECT id FROM connections WHERE name = $1",
-          [config.id],
-        );
-        connectionId = connection.rows[0].id;
       },
     });
-    const state = await deployment.connectStateAs("admin");
     const reloadAudit = async (audit: SchemaConfigAudit) => {
       writeFileSync(
         join(configPath!, "index.js"),
         `module.exports = ${JSON.stringify({ ...config, audit })};`,
       );
-      await state.methods!.syncSchema!({
-        connectionId,
-        configPath: configPath!,
-      });
+      await deployment!.syncSchema();
     };
     await test.step("creates storage and captures raw SQL with the request actor", async () => {
       await db.tx(async (tx) => {
@@ -322,10 +312,6 @@ test("audits existing and configured tables without inferring names from audit r
     ).not.toHaveProperty("audit.tableName");
     client.disconnect();
 
-    const state = await deployment.connectStateAs("admin");
-    assert.ok(state.db.connections);
-    const connection = await state.db.connections.findOne({ name: config.id });
-    assert.ok(connection);
     for (const enabled of [false, true]) {
       writeFileSync(
         join(configPath, "index.js"),
@@ -337,14 +323,9 @@ test("audits existing and configured tables without inferring names from audit r
           },
         })};`,
       );
-      await state.methods!.syncSchema!({
-        connectionId: connection.id,
-        configPath,
-      });
-      expect(
-        await state.db.connections.findOne({ id: connection.id }),
-      ).toBeTruthy();
-      const excludedClient = await deployment.connectProjectAs("admin");
+      const { project: excludedClient, connection } =
+        await deployment.syncSchema();
+      expect(connection.name).toBe(config.id);
       expect(
         excludedClient.tableSchema?.find(
           (table) => table.name === "existing_records",
@@ -363,7 +344,6 @@ test("audits existing and configured tables without inferring names from audit r
       }
       excludedClient.disconnect();
     }
-    state.disconnect();
   } finally {
     await deployment?.dispose();
     rmSync(configPath, { recursive: true, force: true });

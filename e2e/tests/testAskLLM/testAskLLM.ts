@@ -23,7 +23,7 @@ import { geoQuestionScenario } from "./scenarios/geoQuestion.scenario";
 import { hygieneRatingsApiScenario } from "./scenarios/hygieneRatingsApi.scenario";
 import { receiptImport } from "./scenarios/receiptImport/receiptImport.scenario";
 import { stringify } from "./stringify";
-import { type Scenario, type ToolUse } from "./utils";
+import { makeToolUse, type Scenario, type ToolUse } from "./utils";
 
 export type RequestToolAccess = JSONB.GetType<
   (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["request_tool_access"]["schema"]
@@ -316,6 +316,14 @@ const toolResponses: Record<string, ToolUse> = {
     ],
     result_content:
       "The container has fetched the historical weather data for London for the last 4 years.",
+  },
+  sql_preview: {
+    tool: [
+      makeToolUse("db", "execute_readonly_sql", {
+        sql: `SELECT 'preview row' AS "display label", 0 AS total, false AS enabled, NULL::text AS missing`,
+      }),
+    ],
+    result_content: "SQL preview complete.",
   },
   last: {
     content:

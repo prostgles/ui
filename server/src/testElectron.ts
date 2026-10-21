@@ -30,4 +30,7 @@ void start({
   focusWindow: () => {
     console.log("focusWindow called");
   },
+  openPath: () => {
+    throw new Error("Opening local files requires the Electron desktop app");
+  },
 });

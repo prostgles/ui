@@ -188,7 +188,7 @@ export const SmartFormUpperFooter = (props: SmartFormUpperFooterProps) => {
                     name: methodName,
                     row:
                       lookup.type === "RowLookup" && table ?
-                        getActionLookupRow(row, table)
+                        getActionLookupRow(row, table, methods[methodName]!)
                       : row,
                     argName,
                   });

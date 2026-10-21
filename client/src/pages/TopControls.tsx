@@ -1,3 +1,4 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import { mdiArrowLeft, mdiDatabaseCog } from "@mdi/js";
 import React from "react";
 import type { Prgl } from "../App";
@@ -15,13 +16,11 @@ import { Feedback } from "../dashboard/Feedback";
 import { WorkspaceMenu } from "../dashboard/WorkspaceMenu/WorkspaceMenu";
 import { AppVideoDemo } from "../demo/AppVideoDemo";
 import { Alerts } from "./Alerts";
-import type {
-  Connections,
-  FullExtraProps,
-} from "./ProjectConnection/ProjectConnection";
 import { AskLLM } from "../dashboard/AskLLM/AskLLM";
 import { ROUTES, tableMightBeUndefinedDueToAccessControl } from "@common/utils";
 import { t } from "../i18n/i18nUtils";
+import { AccountMenu } from "./AccountMenu";
+import { canManageBusinessAccess } from "@common/authTypesAndConstants";
 
 type TopControlsProps = {
   prgl: Prgl;
@@ -38,6 +37,10 @@ type TopControlsProps = {
 export const TopControls = (props: TopControlsProps) => {
   const { prgl, location, loadedSuggestions } = props;
   const { connectionId } = prgl;
+  const { data: connections } = prgl.dbs.connections.useSubscribe(
+    {},
+    { select: ["id"] },
+  );
   const menuBtnProps: DashboardMenuBtnProps<any> =
     props.location === "config" ?
       {
@@ -72,7 +75,7 @@ export const TopControls = (props: TopControlsProps) => {
           <FlexRow className={`max-w-fit f-1 gap-p5 ai-center ${paddingClass}`}>
             <DashboardMenuBtn {...menuBtnProps} />
             <ConnectionConfigBtn {...prgl} location={location} />
-            {!window.isMobileDevice && (
+            {connections && connections.length > 1 && !window.isMobileDevice && (
               <ConnectionSelector {...prgl} location={location} />
             )}
           </FlexRow>
@@ -101,17 +104,21 @@ export const TopControls = (props: TopControlsProps) => {
             )}
             <Feedback dbsMethods={prgl.dbsMethods} />
 
-            <Btn
-              data-command="dashboard.goToConnections"
-              title={t.TopControls["Go to Connections"]}
-              href={ROUTES.CONNECTIONS}
-              variant="faded"
-              asNavLink={true}
-              iconPath={mdiArrowLeft}
-              size="default"
-            >
-              {/* {window.isMediumWidthScreen ? null : t.TopControls.Connections} */}
-            </Btn>
+            {(prgl.user?.type === USER_TYPES.ADMIN ||
+              connections?.length !== 1) && (
+              <Btn
+                data-command="dashboard.goToConnections"
+                title={t.TopControls["Go to Connections"]}
+                href={ROUTES.CONNECTIONS}
+                variant="faded"
+                asNavLink={true}
+                iconPath={mdiArrowLeft}
+                size="default"
+              >
+                {/* {window.isMediumWidthScreen ? null : t.TopControls.Connections} */}
+              </Btn>
+            )}
+            <AccountMenu user={prgl.auth.user} />
           </FlexRow>
         </>,
       )}
@@ -119,17 +126,13 @@ export const TopControls = (props: TopControlsProps) => {
   );
 };
 
-type ConnectionConfigBtnProps = Pick<FullExtraProps, "user"> & {
-  connection: Connections;
+type ConnectionConfigBtnProps = Prgl & {
   location: "workspace" | "config";
 };
-export const ConnectionConfigBtn = ({
-  user,
-  connection,
-  location,
-}: ConnectionConfigBtnProps) => {
-  const isAdmin = user?.type === "admin";
-  if (!isAdmin) return null;
+export const ConnectionConfigBtn = (props: ConnectionConfigBtnProps) => {
+  const { connection, location } = props;
+  const canManageMembers = canManageBusinessAccess(props.user?.type);
+  if (!canManageMembers) return null;
   const isOnWorkspace = location === "workspace";
   return (
     <div className="h-full flex-col gap-p25 ai-start ">

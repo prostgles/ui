@@ -1,3 +1,4 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import { FlexCol, FlexRowWrap } from "@components/Flex";
 import { InfoRow } from "@components/InfoRow";
 import { SearchList } from "@components/SearchList/SearchList";
@@ -29,7 +30,7 @@ export const DashboardMenuContent = (props: P) => {
 
   const pinnedMenu = getIsPinnedMenu(workspace);
   const isPublishedReadonlyWorkspace =
-    user?.type !== "admin" &&
+    user?.type !== USER_TYPES.ADMIN &&
     workspace.published && workspace.user_id !== user?.id;
 
   const { centeredLayout } = useLocalSettings();

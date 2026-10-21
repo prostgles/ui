@@ -1,3 +1,7 @@
+import {
+  canManageBusinessAccess,
+  USER_TYPES,
+} from "@common/authTypesAndConstants";
 import type { PropsWithChildren } from "react";
 import React, { useState } from "react";
 
@@ -59,7 +63,7 @@ type UserGroupRuleEditorProps = Pick<CommonWindowProps, "prgl"> & {
   action: AccessControlAction;
   connection: DBSSchema["connections"];
   database_config: DBSSchema["database_configs"];
-  dbsConnection: DBSSchema["connections"];
+  dbsConnection: DBSSchema["connections"] | undefined;
   onCancel: VoidFunction;
 };
 
@@ -203,7 +207,11 @@ export const AccessControlRuleEditor = ({
           <div className="pl-2 mt-p5 " {...dataCommand("config.ac.edit.type")}>
             <ButtonGroup
               value={(newRule ?? rule)?.dbPermissions?.type}
-              options={ACCESS_TYPES}
+              options={ACCESS_TYPES.filter(
+                (accessType) =>
+                  prgl.user?.type === USER_TYPES.ADMIN ||
+                  accessType !== "Run SQL",
+              )}
               onChange={(accessType) => {
                 let dbPermissions: EditedAccessRule["dbPermissions"] = {
                   type: "Custom",
@@ -318,13 +326,15 @@ export const AccessControlRuleEditor = ({
               }
             />
 
-            <AskLLMAccessControl
-              {...prgl}
-              editedRule={editedRule}
-              accessRuleId={
-                action.type === "edit" ? action.selectedRuleId : undefined
-              }
-            />
+            {canManageBusinessAccess(prgl.user?.type) && (
+              <AskLLMAccessControl
+                {...prgl}
+                editedRule={editedRule}
+                accessRuleId={
+                  action.type === "edit" ? action.selectedRuleId : undefined
+                }
+              />
+            )}
           </FlexCol>
         )}
       </ScrollFade>

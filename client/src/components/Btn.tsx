@@ -301,12 +301,13 @@ class Button<HREF extends string | void = void> extends RTComp<
       : sizeFromProps;
 
     const hasBgClassname = (className + "").includes("bg-");
+    const hasIcon = iconPath || iconProps || iconNode;
     _className =
       " f-0 flex-row gap-p5 ai-center  " +
       ("href" in this.props ? " button-css " : "  ") +
       (variant === "outline" ? " b " : "");
 
-    if (children && !iconNode && !iconPath && !loading) {
+    if (children && !hasIcon && !loading) {
       if (variant === "outline") {
         if (!hasBgClassname)
           _className =
@@ -382,7 +383,7 @@ class Button<HREF extends string | void = void> extends RTComp<
       <>
         {iconPosition === "right" && childrenContent}
 
-        {!(iconPath || iconProps?.path || iconNode) || loading ? null : (
+        {!hasIcon || loading ? null : (
           (iconNode ?? (
             <Icon
               path={

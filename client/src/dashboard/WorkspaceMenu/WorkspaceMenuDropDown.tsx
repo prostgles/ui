@@ -1,3 +1,4 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import Btn from "@components/Btn";
 import { FlexCol } from "@components/Flex";
 import PopupMenu from "@components/PopupMenu";
@@ -33,7 +34,7 @@ export const WorkspaceMenuDropDown = ({
   setWorkspace,
 }: P) => {
   const { dbs, dbsTables, dbsMethodSchema, user } = prgl;
-  const isAdmin = user?.type === "admin";
+  const isAdmin = user?.type === USER_TYPES.ADMIN;
   const canCreateWorkspaces = getCanCreateWorkspaces(dbs);
   const sortedWorkspaces = useMemo(
     () =>

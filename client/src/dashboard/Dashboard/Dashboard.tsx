@@ -1,3 +1,4 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import Loading from "@components/Loader/Loading";
 import type {
   MultiSyncHandles,
@@ -202,7 +203,7 @@ export class _Dashboard extends RTComp<
         currentWorkspace = await cloneEditableWorkspaces({
           dbs,
           user_id,
-          isAdmin: this.props.prgl.user?.type === "admin",
+          isAdmin: this.props.prgl.user?.type === USER_TYPES.ADMIN,
           currentWorkspace,
         });
         if (currentWorkspace && requestedWorkspaceId !== currentWorkspace.id) {

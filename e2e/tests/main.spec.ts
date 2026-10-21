@@ -1,4 +1,5 @@
 import { chromium, expect, test, type Locator } from "./utils/fixtures";
+import type { Route } from "@playwright/test";
 import { generate } from "otplib";
 import { speechToTextTest } from "testAskLLM/speechToTextTest";
 
@@ -17,6 +18,9 @@ import { goTo } from "utils/goTo";
 import { isPortFree } from "utils/isPortFree";
 import { startMockSMTPServer } from "./mockSMTPServer";
 import { setupAskLLMToolUse, testAskLLMCode } from "./testAskLLM/testAskLLM";
+import { testChatListLoading } from "./testAskLLM/testChatListLoading";
+import { testPastedTextAttachments } from "./testAskLLM/testPastedTextAttachments";
+import { testSavedWorkflowDefinition } from "./testAskLLM/testSavedWorkflowDefinition";
 import {
   getCommandElemSelector,
   getDataKey,
@@ -94,6 +98,18 @@ test.use({
 });
 
 test.describe.configure({ mode: "serial" });
+test("Chat list shows live loading status", async ({ page }) => {
+  await testChatListLoading(page);
+});
+test("Pasted text attachments reach OpenRouter as text", async ({ page }) => {
+  await testPastedTextAttachments(page);
+});
+test("Saved workflow definition edits persist and report validation errors", async ({
+  page,
+}) => {
+  await testSavedWorkflowDefinition(page);
+});
+
 test.describe("Main test", () => {
   if (process.env.ONLY_VIDEO) {
     test.skip();
@@ -194,7 +210,7 @@ test.describe("Main test", () => {
       },
     ]);
     await goTo(newPage);
-    await expect(await newPage.textContent("body")).toContain(
+    await expect(newPage.locator("body")).toContainText(
       "Only 1 session is allowed for the passwordless admin",
     );
     await browser2.close();
@@ -307,6 +323,7 @@ test.describe("Main test", () => {
     await page.getByText("Completed");
 
     await page.getByTestId("config.goToConnDashboard").click();
+    await expect(table).toBeVisible();
     await closeWorkspaceWindows(page);
     await page.reload();
     await expect(table).not.toBeAttached();
@@ -345,6 +362,7 @@ test.describe("Main test", () => {
     console.log("Saved backup dump:", backupFilePath);
 
     await page.getByTestId("config.goToConnDashboard").click();
+    await expect(table).toBeVisible();
     await closeWorkspaceWindows(page);
     await page.reload();
 
@@ -490,7 +508,7 @@ test.describe("Main test", () => {
     }
   });
 
-  test("Email password registration setup", async ({ page: p, browser }) => {
+  test("Email password registration setup", async ({ page: p }) => {
     const page = p as PageWIds;
 
     await login(page);
@@ -1606,6 +1624,27 @@ test.describe("Main test", () => {
     );
     await page.keyboard.press("Escape");
 
+    /** SQL result columns must access values by name, including falsy values. */
+    await sendAskLLMMessage(page, " sql_preview ");
+    await page.getByTestId("ToolUseMessage.toggle").last().click();
+    const sqlPreview = page
+      .getByTestId("ToolUseMessage")
+      .last()
+      .getByTestId("MarkdownMonacoCode");
+    const expectedSqlCells = ["preview row", "0", "false", "NULL"];
+    await expect(sqlPreview.getByRole("columnheader")).toHaveText([
+      "display label",
+      "total",
+      "enabled",
+      "missing",
+    ]);
+    await expect(sqlPreview.getByRole("cell")).toHaveText(expectedSqlCells);
+    await sqlPreview.getByRole("button", { name: "Close result" }).click();
+    await sqlPreview
+      .getByRole("button", { name: "Execute SQL (With rollback)", exact: true })
+      .click();
+    await expect(sqlPreview.getByRole("cell")).toHaveText(expectedSqlCells);
+
     /** Test stopping chat */
     await newChat(page);
     await sendAskLLMMessage(page, " longresponse ", {
@@ -2197,13 +2236,13 @@ test.describe("Main test", () => {
       await page
         .getByTestId("McpServerOAuthConfigActions.LoginWithOAuth")
         .click(TWENTY_SECONDS_OR_MORE);
+      const authorizationLink = page.getByTestId(
+        "McpServerOAuthConfigAuthorizeUrlBtn.OpenAuthorizationUrl",
+      );
+      await expect(authorizationLink).toBeVisible(TWENTY_SECONDS_OR_MORE);
       const [popup] = await Promise.all([
         page.waitForEvent("popup"),
-        page
-          .getByTestId(
-            "McpServerOAuthConfigAuthorizeUrlBtn.OpenAuthorizationUrl",
-          )
-          .click(TWENTY_SECONDS_OR_MORE),
+        authorizationLink.click(),
       ]);
       await popup.waitForLoadState("load");
       await popup.locator("#username").fill("admin1");
@@ -2227,6 +2266,7 @@ test.describe("Main test", () => {
           .click(TWENTY_SECONDS_OR_MORE);
         await expect(page.getByTestId("Popup.content").last()).toContainText(
           ` tool for "mock" server`,
+          TWENTY_SECONDS_OR_MORE,
         );
         await page.getByText("OK", { exact: true }).click();
         await page
@@ -2279,13 +2319,14 @@ test.describe("Main test", () => {
         .getByTestId("McpServerOAuthConfigActions.LoginWithOAuth")
         .click();
 
+      await expect(authorizationLink).toHaveAttribute(
+        "href",
+        /[?&]client_id=static-client&/,
+        TWENTY_SECONDS_OR_MORE,
+      );
       const [popup2] = await Promise.all([
         page.waitForEvent("popup"),
-        page
-          .getByTestId(
-            "McpServerOAuthConfigAuthorizeUrlBtn.OpenAuthorizationUrl",
-          )
-          .click(),
+        authorizationLink.click(),
       ]);
       await popup2.waitForLoadState("load");
       await popup2.locator("button[name=accept]").click(TWENTY_SECONDS_OR_MORE);
@@ -2529,6 +2570,7 @@ test.describe("Main test", () => {
     );
     await page.waitForTimeout(3e3);
     await page.getByTestId("dashboard.goToConnConfig").click();
+    await page.getByTestId("config.details").click();
     await page.getByTestId("NewConnectionForm.MoreOptionsToggle").click();
     await page.getByTestId("NewConnectionForm.schemaFilter").click();
     await page
@@ -2606,7 +2648,7 @@ test.describe("Main test", () => {
     await createAndFillCode();
 
     /** Allow 1 invalid code */
-    const INVALID_CODE = "Invalid code";
+    const INVALID_CODE = "Invalid totp code";
     await page.waitForTimeout(300);
     const setupErrorNode = await page.getByTestId("Setup2FA.error");
     if (
@@ -2661,6 +2703,28 @@ test.describe("Main test", () => {
     const page = p as PageWIds;
 
     await login(page);
+
+    await test.step(
+      "Connections load while the logo request is pending",
+      async () => {
+        let pendingLogoRequest: Route | undefined;
+        const logoPattern = "**/prostgles-logo.svg";
+        await page.route(logoPattern, (route) => {
+          pendingLogoRequest = route;
+        });
+        try {
+          await goTo(page, "/connections");
+          await expect.poll(() => !!pendingLogoRequest).toBe(true);
+          await expect(
+            page.getByTestId("ConnectionServer.add").first(),
+          ).toBeVisible();
+        } finally {
+          await pendingLogoRequest?.continue();
+          await page.unroute(logoPattern);
+        }
+      },
+      { timeout: 10_000 },
+    );
 
     /** Create Sample database */
     await createDatabase("sample_database", page, false);
@@ -3024,10 +3088,7 @@ test.describe("Main test", () => {
     await page.request.post("/logout");
     await login(page, USERS.default_user);
 
-    await page.getByRole("link", { name: "Connections" }).click();
-    await page.getByRole("link", { name: TEST_DB_NAME }).click();
-    await page.waitForTimeout(1000);
-    await page.getByTestId("dashboard.menu").waitFor({ state: "visible" });
+    await openConnection(page, TEST_DB_NAME);
     await setWspColLayout(page);
     /** Open table using ctrl+P */
     await openTable(page, "my_tabl");
@@ -3053,9 +3114,7 @@ test.describe("Main test", () => {
     await page.request.post("/logout");
     await login(page, USERS.default_user1);
 
-    await page.getByRole("link", { name: "Connections" }).click();
-    await page.getByRole("link", { name: TEST_DB_NAME }).click();
-    await page.waitForTimeout(1000);
+    await openConnection(page, TEST_DB_NAME);
     await setWspColLayout(page);
 
     /** Open table using ctrl+P */
@@ -3076,8 +3135,7 @@ test.describe("Main test", () => {
 
     await page.request.post("/logout");
     await login(page, USERS.test_user);
-    await page.getByRole("link", { name: "Connections" }).click();
-    await page.getByRole("link", { name: TEST_DB_NAME }).click();
+    await openConnection(page, TEST_DB_NAME);
 
     await setWspColLayout(page);
     await page.waitForTimeout(1e3);
@@ -3134,9 +3192,7 @@ test.describe("Main test", () => {
   //   const page = p as PageWIds;
 
   //   await login(page, USERS.test_user);
-  //   await page.getByRole("link", { name: "Connections" }).click();
-  //   await page.getByRole("link", { name: TEST_DB_NAME, exact: true }).click();
-  //   await page.waitForTimeout(1e3);
+  // await openConnection(page, TEST_DB_NAME);
   //   await runDbSql(page, `DELETE FROM my_table WHERE id > 4;`);
   //   await runDbSql(
   //     page,
@@ -3154,10 +3210,8 @@ test.describe("Main test", () => {
     const page = p as PageWIds;
 
     await login(page, USERS.default_user);
-    await page.getByRole("link", { name: "Connections" }).click();
-    await page.getByRole("link", { name: TEST_DB_NAME, exact: true }).click();
-    await page.waitForTimeout(1e3);
 
+    await openConnection(page, TEST_DB_NAME);
     await expect(page.getByText(fileName)).toHaveCount(0);
 
     await clickInsertRow(page, "my_table");
@@ -3195,14 +3249,12 @@ test.describe("Main test", () => {
     await expect(page.locator(`#my_table-id`)).toHaveValue("4");
     await page.keyboard.press("ArrowRight");
 
-    await expect(
-      page.getByTestId("Popup.content").locator("img"),
-    ).toHaveAttribute(
-      "src",
-      // Inserted url starts with /prostgles_storage
-
-      /^\/prostgles_storage/,
-    );
+    /** Valid loaded img */
+    const img = page.getByTestId("Popup.content").locator("img");
+    await expect(img).toHaveAttribute("src", /prostgles_storage/);
+    await expect(img).toBeVisible();
+    await expect(img).toHaveJSProperty("complete", true);
+    await expect(img).not.toHaveJSProperty("naturalWidth", 0);
 
     // Deleting works
     await page
@@ -3235,8 +3287,8 @@ test.describe("Main test", () => {
   test("Table tests", async ({ page: p }) => {
     const page = p as PageWIds;
     await login(page, USERS.test_user);
-    await page.getByRole("link", { name: "Connections" }).click();
-    await page.getByRole("link", { name: TEST_DB_NAME, exact: true }).click();
+
+    await openConnection(page, TEST_DB_NAME);
 
     const wspName = "Table tests";
     /** Delete existing duplicate workspace */
@@ -3563,12 +3615,11 @@ test.describe("Main test", () => {
   test("API tests", async ({ page: p }) => {
     const page = p as PageWIds;
     await login(page, USERS.test_user);
-    await page.getByRole("link", { name: "Connections" }).click();
-    await page.getByRole("link", { name: TEST_DB_NAME, exact: true }).click();
+
+    await openConnection(page, TEST_DB_NAME);
     await page
       .getByTestId("dashboard.goToConnConfig")
-      .waitFor({ state: "visible", timeout: 10e3 });
-    await page.getByTestId("dashboard.goToConnConfig").click();
+      .click(TWENTY_SECONDS_OR_MORE);
     await page.getByTestId("config.api").click();
 
     await page
@@ -3589,10 +3640,7 @@ test.describe("Main test", () => {
 
     await page.request.post("/logout");
     await login(page, USERS.test_user);
-    await page.getByRole("link", { name: "Connections" }).click();
-    await page.getByRole("link", { name: TEST_DB_NAME }).click();
-
-    await page.getByTestId("dashboard.menu").waitFor({ state: "visible" });
+    await openConnection(page, TEST_DB_NAME);
     await page.waitForTimeout(3000);
 
     /** Ensure SQL Autocomplete works */
@@ -3683,8 +3731,6 @@ test.describe("Main test", () => {
     const page = p as PageWIds;
     await goTo(page, "localhost:3004/connections");
     await page.reload();
-    await page.getByRole("link", { name: "Connections" }).click();
-    await page.getByRole("link", { name: TEST_DB_NAME }).click();
     await page
       .getByTestId("dashboard.menu.tablesSearchList")
       .waitFor({ state: "visible", ...TWENTY_SECONDS_OR_MORE });
@@ -3705,8 +3751,6 @@ test.describe("Main test", () => {
     const page = p as PageWIds;
     await goTo(page, "localhost:3004/connections");
     await page.reload();
-    await page.getByRole("link", { name: "Connections" }).click();
-    await page.getByRole("link", { name: TEST_DB_NAME }).click();
     await page
       .getByTestId("dashboard.menu.tablesSearchList")
       .waitFor({ state: "visible", ...TWENTY_SECONDS_OR_MORE });
@@ -3718,8 +3762,6 @@ test.describe("Main test", () => {
   test("MCP Servers", async ({ page: p }) => {
     const page = p as PageWIds;
     await login(page, USERS.test_user, "localhost:3004/login");
-    await page.getByRole("link", { name: "Connections" }).click();
-    await page.getByRole("link", { name: TEST_DB_NAME }).click();
 
     await runDbsSql(
       page,

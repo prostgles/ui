@@ -1,6 +1,6 @@
 import type { TableWindowInsertModel } from "@common/DashboardTypes";
 import type { InternalColumnFormat } from "@common/managedTableSchema";
-import { getAge, getFileServePath } from "@common/utils";
+import { getAge } from "@common/utils";
 import { FlexRowWrap } from "@components/Flex";
 import {
   MarkdownWithPlugins,
@@ -221,15 +221,9 @@ export const DISPLAY_FORMATS = [
         : undefined;
       const fileId = joinedFile?.id ?? value;
       if (typeof fileId !== "string" || !fileId) return null;
-      const connectionId = location.pathname
-        .split("/")
-        .find((part, index, parts) => parts[index - 1] === "connections");
-      if (!connectionId) {
-        return null;
-      }
       return (
         <MediaViewer
-          url={getFileServePath({ connectionId, fileId })}
+          fileId={fileId}
           name={joinedFile?.original_name}
           content_type={joinedFile?.content_type}
           isLoading={joinedFile?.extraction_status?.state === "loading"}

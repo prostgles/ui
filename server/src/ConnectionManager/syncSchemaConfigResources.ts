@@ -1,5 +1,7 @@
+import { MANAGED_USER_TYPES, USER_TYPES } from "@common/authTypesAndConstants";
 import type { DBS } from "..";
 import type { TableSchema } from "prostgles-types";
+import type { DBSSchema } from "@common/publishUtils";
 import { loadGeneratedWorkspaces } from "../serverFunctions/loadGeneratedWorkspaces/loadGeneratedWorkspaces";
 import type { SchemaConfig, SchemaConfigAccessControl } from "../schemaConfig";
 import { statePrgl } from "../init/startProstgles";
@@ -13,6 +15,7 @@ export const syncSchemaConfigResources = async ({
   rules = [],
   workspaces = [],
   llmCredential,
+  userTypes: configuredUserTypes,
 }: {
   dbs: DBS;
   databaseId: number;
@@ -21,6 +24,7 @@ export const syncSchemaConfigResources = async ({
   rules?: SchemaConfigAccessControl[];
   workspaces?: SchemaConfig["workspaces"];
   llmCredential?: SchemaConfig["llmCredential"];
+  userTypes?: SchemaConfig["userTypes"];
 }) => {
   const userTypes = new Set<string>();
   for (const rule of rules) {
@@ -36,6 +40,17 @@ export const syncSchemaConfigResources = async ({
       userTypes.add(userType);
     }
   }
+  const typeDefinitions = Object.entries(configuredUserTypes ?? {}).map(
+    ([id, { description }]) => {
+      if (!id.trim() || MANAGED_USER_TYPES.some((type) => type === id)) {
+        throw new Error(`Invalid app user type: ${id}`);
+      }
+      if (!userTypes.has(id)) {
+        throw new Error(`App user type requires an accessControl rule: ${id}`);
+      }
+      return { id: id as DBSSchema["user_types"]["id"], description };
+    },
+  );
   const sharedNames = new Set(
     rules.flatMap(
       (rule) =>
@@ -43,7 +58,7 @@ export const syncSchemaConfigResources = async ({
     ),
   );
   const admin = await dbs.users.findOne(
-    { type: "admin", status: "active" },
+    { type: USER_TYPES.ADMIN, status: "active" },
     { orderBy: { created: 1 } },
   );
   if (!admin) throw new Error("An admin must own configured resources");
@@ -53,6 +68,11 @@ export const syncSchemaConfigResources = async ({
     undefined,
   );
   await withClientDbTx(async (tx) => {
+    if (typeDefinitions.length) {
+      await tx.user_types.insertMany(typeDefinitions, {
+        onConflict: "DoNothing",
+      });
+    }
     if (workspaces.length) {
       await loadGeneratedWorkspaces(workspaces, {
         dbs: tx,
@@ -156,7 +176,7 @@ export const syncSchemaConfigResources = async ({
           : null,
         access_control_connections: [{ connection_id: connectionId }],
         access_control_user_types: rule.userTypes.map((user_type) => ({
-          user_type,
+          user_type: user_type as DBSSchema["user_types"]["id"],
         })),
         ...(methods.length && { access_control_methods: methods }),
         ...(allowedLLM.length && { access_control_allowed_llm: allowedLLM }),

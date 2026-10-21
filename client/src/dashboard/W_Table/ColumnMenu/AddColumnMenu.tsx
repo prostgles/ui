@@ -259,7 +259,7 @@ export const AddColumnMenu = ({
                   setAnchorEl(undefined);
                   return;
                 }
-                updateWCols(
+                void updateWCols(
                   w,
                   [computedColumn, ...(w.columns ?? [])],
                   undefined,

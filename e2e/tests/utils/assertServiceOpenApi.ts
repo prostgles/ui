@@ -51,8 +51,9 @@ export type OpenApiDocument = {
 export const assertServiceOpenApi = async (
   serviceName: string,
   service: ProstglesService,
+  environment: NodeJS.ProcessEnv = process.env,
 ) => {
-  const openApi = await getServiceOpenApi(serviceName, service);
+  const openApi = await getServiceOpenApi(serviceName, service, environment);
   assertServiceOpenApiDocument(service, openApi);
 };
 
@@ -100,12 +101,13 @@ export const assertServiceOpenApiDocument = (
 const getServiceOpenApi = async (
   serviceName: string,
   service: ProstglesService,
+  environment: NodeJS.ProcessEnv,
 ) => {
   assert.ok(
     service.openApiEndpoint,
     `${service.label} has no OpenAPI endpoint`,
   );
-  const { containerName } = getServiceDockerResources(serviceName);
+  const { containerName } = getServiceDockerResources(serviceName, environment);
   const { stdout } = await execFileAsync(
     "docker",
     ["inspect", "--format", "{{json .NetworkSettings.Ports}}", containerName],

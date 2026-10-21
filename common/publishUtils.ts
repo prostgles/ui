@@ -369,7 +369,7 @@ const parseForcedData = (
       if ("$and" in checkFilter && checkFilter.$and.length) {
         const forcedContextData = (checkFilter.$and as DetailedFilter[])
           .map((f) => {
-            if (f.type !== "=") {
+            if (f.type !== "=" || f.complexFilter) {
               return undefined;
             }
 

@@ -1,3 +1,4 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type { DBSSchema } from "@common/publishUtils";
 import { API_ENDPOINTS } from "@common/utils";
@@ -171,6 +172,7 @@ export const startConnection = async function (
           services: _services,
           workspaces: _workspaces,
           accessControl: _accessControl,
+          userTypes: _userTypes,
           llmCredential: _llmCredential,
           audit: _audit,
           alerts: _alerts,
@@ -227,6 +229,7 @@ export const startConnection = async function (
                   connectionId,
                   tables,
                   rules: schemaConfig.accessControl,
+                  userTypes: schemaConfig.userTypes,
                   workspaces: schemaConfig.workspaces,
                   llmCredential: schemaConfig.llmCredential,
                 });
@@ -259,7 +262,7 @@ export const startConnection = async function (
             }
           },
           publishRawSQL: async ({ user }) => {
-            if (user?.type === "admin") return true;
+            if (user?.type === USER_TYPES.ADMIN) return true;
             const dbPermissions = (
               await getAccessRule(dbs, user, databaseConfig.id, connection.id)
             )?.dbPermissions;

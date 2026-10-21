@@ -56,7 +56,7 @@ test("CLI user sync reconciles profiles and access without copying credentials",
       { key: "admin", type: "admin" },
       { key: "member", type: "default" },
       { key: "removed", type: "default" },
-      { key: "later", type: "public" },
+      { key: "later", type: "default" },
     ],
     seed: async ({ projectDatabase: project, stateDatabase: state }) => {
       const getConfig = ({
@@ -66,6 +66,10 @@ test("CLI user sync reconciles profiles and access without copying credentials",
         password,
         database,
       }: typeof project) => ({ host, port, user, password, database });
+      await state.query("INSERT INTO user_types (id) VALUES ('later_access')");
+      await state.query(
+        "UPDATE users SET type = 'later_access' WHERE username = 'later'",
+      );
       projectDatabase = pgp(getConfig(project));
       stateDatabase = pgp(getConfig(state));
       await state.query(
@@ -104,10 +108,7 @@ test("CLI user sync reconciles profiles and access without copying credentials",
           databaseConfig: { sync_users: syncUsers },
         })};`,
       );
-      await admin.methods!.syncSchema!({
-        connectionId: connection.id,
-        configPath,
-      });
+      await deployment.syncSchema();
     };
 
     await test.step("CLI true enables sync and excludes authentication secrets", async () => {
@@ -226,36 +227,40 @@ test("CLI user sync reconciles profiles and access without copying credentials",
     });
 
     await test.step("access through another connection backfills older users and revocation disables them", async () => {
+      const sibling = await stateDatabase.one<{ id: string }>(
+        `INSERT INTO connections (name, type, db_name, db_host, db_port, db_user, db_pass, db_conn)
+         SELECT 'Other sync connection', type, db_name, db_host, db_port, db_user, db_pass, db_conn
+         FROM connections WHERE id = $1 RETURNING id`,
+        [connection.id],
+      );
+      const rule = await stateDatabase.one<{ id: number }>(
+        `INSERT INTO access_control (database_id, "dbPermissions")
+         SELECT database_id, "dbPermissions" FROM access_control
+         WHERE id IN (SELECT access_control_id FROM access_control_connections WHERE connection_id = $1)
+         LIMIT 1 RETURNING id`,
+        [connection.id],
+      );
       await stateDatabase.none(
-        `WITH connection AS (
-           INSERT INTO connections (name, type, db_name, db_host, db_port, db_user, db_pass, db_conn)
-           SELECT 'Other sync connection', type, db_name, db_host, db_port, db_user, db_pass, db_conn
-           FROM connections WHERE id = $1 RETURNING id
-         ), rule AS (
-           INSERT INTO access_control (database_id, name, "dbPermissions")
-           SELECT id, 'Public sync access', '{"type":"Run SQL","allowSQL":true}'::jsonb
-           FROM database_configs WHERE db_name = $2 RETURNING id
-         ), link AS (
-           INSERT INTO access_control_connections (access_control_id, connection_id)
-           SELECT rule.id, connection.id FROM rule, connection
-         )
-         INSERT INTO access_control_user_types (access_control_id, user_type)
-         SELECT id, 'public' FROM rule`,
-        [connection.id, deployment.projectDatabaseName],
+        "INSERT INTO access_control_user_types VALUES ($1, 'later_access')",
+        [rule.id],
+      );
+      await stateDatabase.none(
+        "INSERT INTO access_control_connections (connection_id, access_control_id) VALUES ($1, $2)",
+        [sibling.id, rule.id],
       );
       await expect
         .poll(() => findProjectUser("later"))
         .toMatchObject({ status: "active" });
       await stateDatabase.none(
-        "DELETE FROM access_control_connections WHERE connection_id = (SELECT id FROM connections WHERE name = 'Other sync connection')",
+        "DELETE FROM access_control_connections WHERE access_control_id = $1",
+        [rule.id],
       );
       await expect
         .poll(() => findProjectUser("later"))
         .toMatchObject({ status: "disabled" });
       await stateDatabase.none(
-        `INSERT INTO access_control_connections (access_control_id, connection_id)
-         SELECT a.id, c.id FROM access_control a, connections c
-         WHERE a.name = 'Public sync access' AND c.name = 'Other sync connection'`,
+        "INSERT INTO access_control_connections (connection_id, access_control_id) VALUES ($1, $2)",
+        [sibling.id, rule.id],
       );
       await expect
         .poll(() => findProjectUser("later"))

@@ -103,6 +103,7 @@ export const onEmailRegistration = async (
       websiteUrl,
     }),
   });
+  await registrationAttempt.onSuccess();
   return {
     success: true,
     code:

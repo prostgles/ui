@@ -1,3 +1,4 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type {
   AuthConfig,
@@ -11,6 +12,7 @@ import { createPublicUserSessionIfAllowed } from "./createPublicUserSessionIfAll
 import { getActiveSession } from "./getActiveSession";
 import {
   PASSWORDLESS_ADMIN_ALREADY_EXISTS_ERROR,
+  parseAsBasicSession,
   type SUser,
 } from "./sessionUtils";
 import type { AuthConfigForStateConnection } from "./subscribeToAuthSetupChanges";
@@ -36,12 +38,12 @@ export const getGetUser = (
       if (failedTooManyTimes) return "rate-limit-exceeded";
       if (validSession) {
         const user = await dbs.users.findOne({ id: validSession.user_id });
-        if (!user) return undefined;
+        if (user?.status !== "active") return undefined;
 
         const suser: SUser = {
           sid: validSession.id,
           user,
-          isAnonymous: user.type === "public",
+          isAnonymous: user.type === USER_TYPES.PUBLIC,
           clientUser: {
             sid: validSession.id,
             uid: user.id,
@@ -51,7 +53,7 @@ export const getGetUser = (
           },
         };
 
-        return suser;
+        return { ...suser, session: parseAsBasicSession(validSession) };
       }
       if (expiredSession) {
         const user = await dbs.users.findOne({ id: expiredSession.user_id });

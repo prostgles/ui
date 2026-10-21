@@ -1,4 +1,5 @@
-import { getACRules } from "@src/ConnectionManager/ConnectionManager";
+import { USER_TYPES } from "@common/authTypesAndConstants";
+import { fetchUserAccessControlRules } from "@src/ConnectionManager/fetchUserAccessControlRules";
 import type { AskLLMArgs } from "./askLLM";
 import { HOUR } from "@common/utils";
 import type { ValidatedAskLLMChatOptions } from "./getValidatedAskLLMChatOptions";
@@ -15,11 +16,11 @@ export const getLlmLimitWasReached = async ({
   "dbs" | "user" | "llm_credential" | "llm_prompt_id" | "chat"
 >) => {
   const chatId = chat.id;
-  const isAdmin = user.type === "admin";
+  const isAdmin = user.type === USER_TYPES.ADMIN;
   if (isAdmin) {
     return;
   }
-  const accessRules = await getACRules(dbs, user);
+  const accessRules = await fetchUserAccessControlRules(dbs, user);
   if (!accessRules.length) {
     return;
   }

@@ -1,4 +1,4 @@
-import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import type { DBSSchema } from "@common/publishUtils";
 import type { ConnectionDetails } from "@src/connectionUtils/getConnectionDetails";
 import type { createHttpServer } from "@src/createHttpAndIOServers/createHttpServer";
@@ -7,7 +7,6 @@ import type e from "express";
 import type { Express } from "express";
 import type { Server as httpServer } from "http";
 import type pg from "pg-promise/typescript/pg-subset";
-import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
 import type { DB } from "prostgles-server/dist/Prostgles";
 import type { FileTableConfig } from "prostgles-server/dist/ProstglesTypes";
 import type { InitResult } from "prostgles-server/dist/initProstgles";
@@ -36,20 +35,12 @@ import {
 import { parsePlugins } from "../Plugins/parsePlugins";
 import { startConnection } from "./startConnection";
 import { setSyncUserSub } from "./setSyncUserSub";
+import { statePrgl } from "../init/startProstgles";
 
 export type ConnectionTableConfig = Pick<FileTableConfig, "referencedTables"> &
   Omit<Exclude<DatabaseConfigs["file_table_config"], null>, "referencedTables">;
 
 export type User = DBSSchema["users"];
-
-export const getACRules = async (
-  dbs: DBOFullyTyped<DBGeneratedSchema>,
-  user: Pick<User, "type">,
-): Promise<DBSSchema["access_control"][]> => {
-  return await dbs.access_control.find({
-    $existsJoined: { access_control_user_types: { user_type: user.type } },
-  });
-};
 
 type PRGLInstanceStarted = {
   state: "started";
@@ -124,7 +115,6 @@ export class ConnectionManager {
     io: Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>;
     port: number;
   };
-  // wss?: WebSocket.Server<WebSocket.WebSocket>;
   dbs?: DBS;
   db?: DB;
   connections?: Connections[];
@@ -179,7 +169,9 @@ export class ConnectionManager {
 
   getConnectionsWithPublicAccess = () => {
     return this.dbConfigs.filter((c) =>
-      c.access_control_user_types.some((u) => u.user_type === "public"),
+      c.access_control_user_types.some(
+        (u) => u.user_type === USER_TYPES.PUBLIC,
+      ),
     );
   };
 
@@ -299,6 +291,7 @@ export class ConnectionManager {
   };
 
   userSub?: SubscriptionHandler | undefined;
+  sessionAccessSub?: SubscriptionHandler;
   userSyncSetup = Promise.resolve();
   userSyncWork = Promise.resolve();
   setSyncUserSub = setSyncUserSub.bind(this);
@@ -340,15 +333,40 @@ export class ConnectionManager {
   accessControlHotReload = async () => {
     if (!this.dbs || this.accessControlListeners?.length) return;
     let previousDbIds: number[] = [];
-    const onAccessChange = (connIds: string[]) => {
+    let previousUserAccess = new Map<DBSSchema["user_types"]["id"], string>();
+    const onAccessChange = async (
+      connIds: string[],
+      changedUserTypes: DBSSchema["user_types"]["id"][],
+    ) => {
       if (!this.accessControlSkippedFirst) {
         this.accessControlSkippedFirst = true;
         return;
       }
       console.log("onAccessChange");
+      const nonAdminUserSessions = await this.dbs?.sessions.find(
+        {
+          $existsJoined: {
+            users: {
+              type: {
+                $in: changedUserTypes.filter(
+                  (type) =>
+                    type !== USER_TYPES.ADMIN &&
+                    type !== USER_TYPES.CONNECTION_ADMIN,
+                ),
+              },
+            },
+          },
+        },
+        { select: { id: 1 }, limit: null },
+      );
+      const sessionIds = nonAdminUserSessions?.map(({ id }) => id) ?? [];
+      statePrgl?.invalidateAuth(sessionIds);
       return Promise.all(
         connIds.map((connection_id) =>
-          this.withActiveConnection(connection_id, this.updateConnectionAccess),
+          this.withActiveConnection(connection_id, async (connection) => {
+            connection.prgl.invalidateAuth(sessionIds);
+            await this.updateConnectionAccess(connection);
+          }),
         ),
       );
     };
@@ -367,6 +385,35 @@ export class ConnectionManager {
           throttle: 1000,
         },
         async (connections) => {
+          const userTypes = new Set(
+            connections.flatMap(({ access_control_user_types }) =>
+              access_control_user_types.map(({ user_type }) => user_type),
+            ),
+          );
+          const currentUserAccess = new Map(
+            [...userTypes].map((userType) => [
+              userType,
+              JSON.stringify(
+                connections
+                  .filter(({ access_control_user_types }) =>
+                    access_control_user_types.some(
+                      ({ user_type }) => user_type === userType,
+                    ),
+                  )
+                  .map(({ access_control_user_types, ...rule }) => rule),
+              ),
+            ]),
+          );
+          const changedUserTypes = [
+            ...new Set([
+              ...previousUserAccess.keys(),
+              ...currentUserAccess.keys(),
+            ]),
+          ].filter(
+            (type) =>
+              previousUserAccess.get(type) !== currentUserAccess.get(type),
+          );
+          previousUserAccess = currentUserAccess;
           const dbIds = Array.from(
             new Set(connections.map((c) => c.database_id)),
           );
@@ -383,30 +430,12 @@ export class ConnectionManager {
               },
               { select: { connIds: { $array_agg: ["id"] } } },
             );
-          await onAccessChange(d?.connIds ?? []);
+          await onAccessChange(d?.connIds ?? [], changedUserTypes);
           await this.setSyncUserSub();
         },
       ),
     ];
   };
-
-  // setUpWSS() {
-  // if(!this.wss){
-  //   this.wss = new WebSocket.Server({ port: 3004, path: "/here" });
-  // }
-  // const clients = new Map();
-  // this.wss.on('connection', (ws) => {
-  //   const id = Date.now() + "." + Math.random()
-  //   const color = Math.floor(Math.random() * 360);
-  //   const metadata = { id, color };
-  //   clients.set(ws, metadata);
-  //   ws.on("message", console.log)
-  //   ws.on("close", () => {
-  //     clients.delete(ws);
-  //   });
-  // });
-  // return this.wss;
-  // }
 
   getFileFolderPath(conId?: string) {
     if (!conId) return getDataPath("STORAGE");
@@ -446,7 +475,6 @@ export class ConnectionManager {
       let destroyed = false;
       if (conn?.state === "started") {
         await this.cleanupOnMount(conn);
-        //TODO: fix re-started connection not working. Might need to use ws instead of socket.io
         await conn.prgl.destroy();
         destroyed = true;
       }
@@ -495,6 +523,7 @@ export class ConnectionManager {
     );
     await this.userSyncSetup;
     await this.userSub?.unsubscribe();
+    await this.sessionAccessSub?.unsubscribe();
     await this.userSyncWork;
     const connectionIds = new Set([
       ...this.prglConnections.keys(),

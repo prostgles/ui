@@ -1,4 +1,7 @@
-import { migrateColumnConfig, type MigratableColumn } from "./migrateColumnConfig";
+import {
+  migrateColumnConfig,
+  type MigratableColumn,
+} from "./migrateColumnConfig";
 import type { TableConfigMigrations } from "prostgles-server/dist/ProstglesTypes";
 import type { DBSConnectionInfo } from "../electronConfig";
 
@@ -9,13 +12,23 @@ export const getTableConfigMigrations = (stateConnection: DBSConnectionInfo) =>
     onMigrate: async ({ db, oldVersion }) => {
       console.warn("Migrating from version: ", oldVersion);
       if (oldVersion !== undefined && oldVersion < 7) {
-        const windows = await db.any<{ id: string; columns: MigratableColumn[] }>(
+        const windows = await db.any<{
+          id: string;
+          columns: MigratableColumn[];
+        }>(
           `SELECT id, columns FROM windows WHERE jsonb_typeof(columns) = 'array'`,
         );
         for (const window of windows) {
-          const columns = window.columns.map((column) => migrateColumnConfig(column));
-          if (columns.some((column, index) => column !== window.columns[index])) {
-            await db.none(`UPDATE windows SET columns = $1::jsonb WHERE id = $2`, [JSON.stringify(columns), window.id]);
+          const columns = window.columns.map((column) =>
+            migrateColumnConfig(column),
+          );
+          if (
+            columns.some((column, index) => column !== window.columns[index])
+          ) {
+            await db.none(
+              `UPDATE windows SET columns = $1::jsonb WHERE id = $2`,
+              [JSON.stringify(columns), window.id],
+            );
           }
         }
       }

@@ -13,7 +13,7 @@ export const PRunSQL = ({
   prgl: { connection, sql },
 }: DBPermissionEditorProps<"Run SQL">) => {
   const roleInfo = usePromise(async () => {
-    return (await sql!(
+    return (await sql?.(
       `
       SELECT r.rolname, r.rolsuper, r.rolinherit, r.rolcreaterole, r.rolcreatedb, r.rolcanlogin, r.rolconnlimit, r.rolvaliduntil, r.rolreplication, r.rolbypassrls
       FROM pg_catalog.pg_roles r
@@ -35,10 +35,9 @@ export const PRunSQL = ({
     };
   });
 
-  const superAccessToSameServerAsDBS = areEqual(connection, dbsConnection, [
-    "db_host",
-    "db_port",
-  ]);
+  const superAccessToSameServerAsDBS =
+    dbsConnection &&
+    areEqual(connection, dbsConnection, ["db_host", "db_port"]);
 
   return (
     <>

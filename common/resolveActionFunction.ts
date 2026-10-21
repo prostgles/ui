@@ -42,8 +42,9 @@ export const resolveActionFunction = (
 export const getActionLookupRow = (
   row: AnyObject,
   table: Pick<DBSchemaTable, "columns">,
-) =>
-  Object.fromEntries(
+  method: Pick<ClientServerFunction, "jobControl">,
+) => {
+  const lookupRow = Object.fromEntries(
     Object.entries(row).filter(
       ([key, value]) =>
         table.columns.some((column) => column.name === key && column.filter) &&
@@ -51,3 +52,16 @@ export const getActionLookupRow = (
           ["string", "number", "boolean"].includes(typeof value)),
     ),
   );
+  // Job controls need a row identity; other fields may already be stale.
+  const identityColumns =
+    method.jobControl &&
+    table.columns
+      .filter((column) => column.is_pkey)
+      .map((column) => column.name);
+  return (
+      identityColumns?.length &&
+        identityColumns.every((name) => lookupRow[name] != null)
+    ) ?
+      Object.fromEntries(identityColumns.map((name) => [name, lookupRow[name]]))
+    : lookupRow;
+};

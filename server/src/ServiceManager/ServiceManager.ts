@@ -205,7 +205,10 @@ export class ServiceManager<
 
   startService = startService.bind(this);
 
-  enableService = enableService.bind(this);
+  enableService = <ServiceName extends StringKeyof<Services>>(
+    serviceName: ServiceName,
+    onLogs: (logs: ProcessLog[]) => void,
+  ) => (enableService<Services, ServiceName>).call(this, serviceName, onLogs);
 
   stopService = stopService.bind(this);
 

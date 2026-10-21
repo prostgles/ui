@@ -6,6 +6,7 @@ export type {
   AlertType,
 } from "./Alerts/AlertTypes";
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
+export { USER_TYPES } from "@common/authTypesAndConstants";
 export { createActionColumn } from "@common/createActionColumn";
 export type { ActionColumnValue } from "@common/createActionColumn";
 export type {
@@ -122,7 +123,7 @@ export type SchemaConfigAccessControl = Omit<
   DBGeneratedSchema["access_control"]["columns"],
   "id" | "database_id" | "created" | "dbsPermissions"
 > & {
-  userTypes: DBSSchema["user_types"]["id"][];
+  userTypes: string[];
   dbsPermissions?: Omit<
     NonNullable<DBSSchema["access_control"]["dbsPermissions"]>,
     "viewPublishedWorkspaces"
@@ -181,6 +182,8 @@ export type SchemaConfig<
   alerts?: SchemaConfigAlerts<S>;
   /** Access rules matched by user type, just like rules configured through the UI. */
   accessControl?: SchemaConfigAccessControl[];
+  /** Create app user types before syncing access rules. Assign them through users.type. */
+  userTypes?: Record<string, { description: string }>;
   /** CLI configs use accessControl instead of prostgles-server publish rules. */
   publish?: never;
   onInitSQL?: string;

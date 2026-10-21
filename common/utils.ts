@@ -335,6 +335,7 @@ export const fromEntries = <K extends string | number | symbol, V>(
   return Object.fromEntries(entries) as Record<K, V>;
 };
 export const CONNECTION_CONFIG_SECTIONS = [
+  "members",
   "authentication",
   "access_control",
   "backups",

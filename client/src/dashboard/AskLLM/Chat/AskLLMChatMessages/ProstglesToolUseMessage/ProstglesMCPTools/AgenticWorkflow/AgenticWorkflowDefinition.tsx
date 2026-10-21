@@ -1,3 +1,4 @@
+import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import { getEntries } from "@common/utils";
 import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol } from "@components/Flex";
@@ -10,6 +11,7 @@ import { useMonacoScrollToLastLine } from "@components/MonacoLogs/MonacoLogs";
 import { mdiGraph, mdiLanguageTypescript, mdiText } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { usePromise } from "prostgles-client";
+import { getJSONBSchemaValidationError } from "prostgles-types";
 import React, { useMemo, useState } from "react";
 import {
   type CodeEditorProps,
@@ -32,12 +34,14 @@ export const AgenticWorkflowDefinition = ({
   const {
     dbsMethods: { getAgenticWorkflowTypes, reRunMCPServerTool },
     connectionId,
+    tables,
   } = usePrgl();
   const { onMount } = useMonacoScrollToLastLine(true);
 
   const agentFilesInfo = usePromise(async () => {
     if (!getAgenticWorkflowTypes) return;
-
+    /** Refresh on schema change */
+    void tables;
     try {
       const agentFiles = await getAgenticWorkflowTypes({
         connectionId,
@@ -50,7 +54,7 @@ export const AgenticWorkflowDefinition = ({
         error,
       };
     }
-  }, [connectionId, getAgenticWorkflowTypes, workflowId]);
+  }, [connectionId, getAgenticWorkflowTypes, workflowId, tables]);
   const { agentFiles, error } = agentFilesInfo || {};
   const language = useMemo(() => {
     if (!agentFiles) return "typescript";
@@ -78,7 +82,7 @@ export const AgenticWorkflowDefinition = ({
     const onSave: CodeEditorProps["onSave"] =
       reRunMCPServerTool ?
         async (newValue) => {
-          await reRunMCPServerTool({
+          const result = await reRunMCPServerTool({
             chatId,
             serverName: "prostgles-ui",
             toolName: "create_agentic_workflow",
@@ -90,6 +94,19 @@ export const AgenticWorkflowDefinition = ({
             } satisfies CreateAgenticWorkflowToolUseArgs,
             reRunToolUseId: tool_use_id,
           });
+          // MCP failures resolve normally; reject to retain the unsaved draft.
+          const { data } = getJSONBSchemaValidationError(
+            PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]
+              .create_agentic_workflow.outputSchema,
+            result.structuredContent,
+            { allowExtraProperties: true },
+          );
+          if (result.isError || !data) {
+            throw result.structuredContent ?? result.content;
+          }
+          if (!data.isValid) {
+            throw data.error ?? (data.logs || "Workflow validation failed");
+          }
         }
       : undefined;
     return { options: monacoOpts, onSave };

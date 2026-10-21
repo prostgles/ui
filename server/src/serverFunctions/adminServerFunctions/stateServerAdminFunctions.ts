@@ -1,3 +1,4 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import { getPasswordHash } from "@src/authConfig/authUtils";
 import { checkClientIP } from "@src/authConfig/sessionUtils";
 import { getAuthSetupData } from "@src/authConfig/subscribeToAuthSetupChanges";
@@ -15,6 +16,7 @@ import { getElectronConfig } from "@src/electronConfig";
 import { connectionManager } from "@src/index";
 import { getPasswordlessAdmin } from "@src/init/initUsers";
 import { getServiceManager } from "@src/ServiceManager/getServiceManager";
+import type { ServiceRegistry } from "@src/ServiceManager/ServiceManagerTypes";
 import { getBackupManager } from "@src/init/prostglesOnReady";
 import { statePrgl } from "@src/init/startProstgles";
 import { getStatus } from "@src/methods/getPidStats";
@@ -26,8 +28,9 @@ import { mkdir } from "fs/promises";
 import { globStream } from "glob";
 import * as os from "os";
 import path, { join } from "path";
-import { defineFunction } from "prostgles-server";
+import { defineFunction, type FileTableRow } from "prostgles-server";
 import { getIsSuperUser } from "prostgles-server/dist/Prostgles";
+import { getFileStorageKey } from "prostgles-server/dist/StorageClient/getFileStorageKey";
 import { isEmpty, type SQLHandler } from "prostgles-types";
 import { getSampleSchemas } from "../applySampleSchema";
 import { getTemplateUserConnection } from "../askLLM/prostglesLLMTools/getTemplateUserConnection";
@@ -36,6 +39,7 @@ import { defineFunctionGroup } from "../defineFunctionGroup";
 import { deleteConnection } from "../deleteConnection";
 import { getConnectionAndDatabaseConfig } from "../getConnectionAndDatabaseConfig";
 import { getNodeTypes } from "../getNodeTypes";
+import { prostglesSignup } from "../prostglesSignup";
 import { setFileStorage } from "../setFileStorage";
 import { runConnectionQuery } from "../stateServerFunctions";
 import { backupServerFunctions } from "./backupServerFunctions";
@@ -44,8 +48,12 @@ import { mcpServerFunctions } from "./mcpServerFunctions";
 import { webAppServerFunctions } from "./webAppServerFunctions";
 export const stateServerAdminFunctions = {
   adminMethods: defineFunctionGroup({
-    userFilter: { type: "admin" },
+    userFilter: { type: USER_TYPES.ADMIN },
     functions: {
+      prostglesSignup: defineFunction({
+        input: { email: "string", code: "string" },
+        run: ({ email, code }) => prostglesSignup(email, code),
+      }),
       ...webAppServerFunctions,
       makeDirectory: defineFunction({
         input: { path: "string", folderName: "string" },
@@ -131,7 +139,7 @@ export const stateServerAdminFunctions = {
             {
               username: newAdmin.username,
               password: getPasswordHash(user, newAdmin.password),
-              type: "admin",
+              type: USER_TYPES.ADMIN,
               passwordless_admin: false,
             },
           );
@@ -233,7 +241,7 @@ export const stateServerAdminFunctions = {
         unrestrictedDbAccess: true,
         input: { serviceName: "string", enable: "boolean" },
         run: async ({ serviceName, enable }, { dbo: dbs }) => {
-          const serviceManager = getServiceManager();
+          const serviceManager = getServiceManager<ServiceRegistry>();
           if (!Object.hasOwn(serviceManager.services, serviceName)) {
             throw "Service not found";
           }
@@ -270,6 +278,37 @@ export const stateServerAdminFunctions = {
         run: async ({ conId }) => {
           const c = connectionManager.getConnectionStartedInstance(conId);
           return getIsSuperUser(c.prgl._db);
+        },
+      }),
+      openLocalFile: defineFunction({
+        input: { connectionId: "string", fileId: "string" },
+        run: async ({ connectionId, fileId }) => {
+          const electron = getElectronConfig();
+          if (!electron) {
+            throw new Error("Opening local files requires Electron");
+          }
+          const { prgl } =
+            connectionManager.getConnectionStartedInstance(connectionId);
+          const fileTable = prgl.options.fileTable;
+          if (!fileTable) throw new Error("File storage is not configured");
+          if (fileTable.storageClient.type === "cloud") return false;
+          const fileTableHandler = prgl.db[fileTable.tableName];
+          if (!fileTableHandler?.findOne) {
+            throw new Error("File table is not available");
+          }
+          const file = (await fileTableHandler.findOne({
+            id: fileId,
+          })) as FileTableRow | undefined;
+          if (!file){ throw new Error("File not found");}
+          const error = await electron.openPath(
+            file.local_file_path ||
+            join(
+              fileTable.storageClient.localFolderPath,
+              getFileStorageKey(file),
+            ),
+          );
+          if (error) throw new Error(error);
+          return true;
         },
       }),
       getFileFolderSizeInBytes: defineFunction({

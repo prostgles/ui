@@ -126,6 +126,7 @@ const config = {
     job_targets: {
       columns: {
         id: "serial PRIMARY KEY",
+        alternate_key: "uuid NOT NULL UNIQUE DEFAULT gen_random_uuid()",
         job_id: "uuid",
         blocked: "boolean NOT NULL DEFAULT TRUE",
         should_fail: "boolean NOT NULL DEFAULT FALSE",
@@ -1074,13 +1075,14 @@ test("record titles and avatars support font overrides, hidden names and conditi
   page,
 }) => {
   const state = await deployment.connectStateAs("admin");
-  const project = await deployment.connectProjectAs("admin");
+  let project = await deployment.connectProjectAs("admin");
   const sourcePath = `${configPath}/index.js`;
   const originalSource = readFileSync(sourcePath, "utf8");
   const originalWindow = await state.db.windows!.findOne(usersWindowFilter);
   const connection = await state.db.connections!.findOne({ name: config.id });
-  const sync = () =>
-    state.methods!.syncSchema!({ connectionId: connection!.id, configPath });
+  const sync = async () => {
+    ({ project } = await deployment.syncSchema());
+  };
   const windowId = originalWindow!.id;
   const plainColumns = configuredColumns.filter((column) => !column.nested);
   try {
@@ -1412,10 +1414,7 @@ test("table column defaults compose custom linked and computed columns", async (
   };
   const sync = async () => {
     await page.goto("about:blank");
-    await state.methods!.syncSchema!({
-      connectionId: connection!.id,
-      configPath,
-    });
+    await deployment.syncSchema();
   };
   const updateDefaults = async () => {
     writeFileSync(
@@ -1499,7 +1498,7 @@ test("reference displays resolve into ordinary linked columns", async ({
   page,
 }) => {
   const state = await deployment.connectStateAs("admin");
-  const project = await deployment.connectProjectAs("admin");
+  let project = await deployment.connectProjectAs("admin");
   const connection = await state.db.connections!.findOne({ name: config.id });
   const originalWindow = await state.db.windows!.findOne(usersWindowFilter);
   const windowId = originalWindow!.id;
@@ -1512,10 +1511,7 @@ test("reference displays resolve into ordinary linked columns", async ({
   const sync = async () => {
     // Close active subscriptions before changing schema and dashboard fixtures.
     await page.goto("about:blank");
-    await state.methods!.syncSchema!({
-      connectionId: connection!.id,
-      configPath,
-    });
+    ({ project } = await deployment.syncSchema());
   };
   const options: NonNullable<typeof connection>["table_options"] = {
     ...connection!.table_options,
@@ -3294,11 +3290,25 @@ test("LLM-generated nested columns preserve presentation, drill-down and styles"
 test("job control metadata derives bindings and enables start, cancel, retry and rerun buttons", async ({
   page,
 }) => {
+  let pauseUpdates = false;
+  const pendingUpdates: (() => void)[] = [];
+  await page.routeWebSocket("**", (socket) => {
+    const server = socket.connectToServer();
+    server.onMessage((message) => {
+      const forward = () => socket.send(message);
+      if (pauseUpdates) pendingUpdates.push(forward);
+      else forward();
+    });
+  });
   const state = await deployment.connectStateAs("admin");
   const project = await deployment.connectProjectAs("admin");
   const originalWindow = await state.db.windows!.findOne(usersWindowFilter);
   const target = await project.db.job_targets!.insert!({}, { returning: "*" });
   try {
+    expect(
+      project.tableSchema!.find(({ name }) => name === "job_targets")
+        ?.uniqueColumnGroups?.[0],
+    ).toEqual(["alternate_key"]);
     expect(project.methodSchema!.startTargetJob!.jobControl).toMatchObject({
       tableName: "action_jobs",
       columnName: "job_id",
@@ -3318,6 +3328,7 @@ test("job control metadata derives bindings and enables start, cancel, retry and
         },
         columns: [
           { name: "id", show: true },
+          { name: "alternate_key", show: true },
           ...["startTargetJob", "cancelTargetJob", "rerunTargetJob"].map(
             (methodName) => ({
               name: methodName,
@@ -3440,6 +3451,8 @@ test("job control metadata derives bindings and enables start, cancel, retry and
     await expectStartButtons("Retry target", true);
     await expect(button("Cancel")).toBeDisabled();
     await expect(button("Rerun")).toBeDisabled();
+    // Retry must work before realtime updates replace the displayed row.
+    pauseUpdates = true;
     await project.db.job_targets!.update!(
       { id: target.id },
       { should_fail: false },
@@ -3450,6 +3463,8 @@ test("job control metadata derives bindings and enables start, cancel, retry and
     await expect
       .poll(async () => (await linkedJob())!.status)
       .toBe("succeeded");
+    pauseUpdates = false;
+    pendingUpdates.splice(0).forEach((forward) => forward());
     await expectStartButtons("Complete", false);
     await table.getByTestId("dashboard.window.viewEditRow").click();
     const rowCard = page.getByTestId("SmartForm").last();
@@ -3752,12 +3767,10 @@ test("action columns omit buttons already shown by visible foreign keys", async 
   page,
 }) => {
   const state = await deployment.connectStateAs("admin");
-  const connection = await state.db.connections!.findOne({ name: config.id });
   const originalWindow = await state.db.windows!.findOne(usersWindowFilter);
   const sourcePath = `${configPath}/index.js`;
   const originalSource = readFileSync(sourcePath, "utf8");
-  const sync = () =>
-    state.methods!.syncSchema!({ connectionId: connection!.id, configPath });
+  const sync = () => deployment.syncSchema();
   const columns: ColumnConfig[] = [
     { name: "id", show: false },
     { name: "name", show: true },
@@ -4605,10 +4618,8 @@ test("action columns configure and open row and value lookup functions", async (
 });
 
 test("CLI action columns validate bindings and conditions before publishing", async () => {
-  const state = await deployment.connectStateAs("admin");
   const sourcePath = `${configPath}/index.js`;
   const originalSource = readFileSync(sourcePath, "utf8");
-  const connection = await state.db.connections!.findOne({ name: config.id });
   const invalidActions = [
     {
       params: { methodName: "missingAction" },
@@ -4650,8 +4661,7 @@ test("CLI action columns validate bindings and conditions before publishing", as
       message: "invalid action conditions",
     },
   ];
-  const sync = () =>
-    state.methods!.syncSchema!({ connectionId: connection!.id, configPath });
+  const sync = () => deployment.syncSchema();
   try {
     for (const { params, message } of invalidActions) {
       writeFileSync(
@@ -4802,14 +4812,12 @@ module.exports.workspaces[0].windows[0].columns.push(${JSON.stringify({
           },
         })});`,
     );
-    await sync();
-    const project = await deployment.connectProjectAs("admin");
+    const { project } = await sync();
     expect(project.methods!.reviewUserWithNote).toBeDefined();
     project.disconnect();
   } finally {
     writeFileSync(sourcePath, originalSource);
     await sync();
-    state.disconnect();
   }
 });
 

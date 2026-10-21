@@ -154,7 +154,12 @@ export const MonacoCodeInMarkdown = (props: MonacoCodeInMarkdownProps) => {
             maxHeight: "70vh",
           }}
           rows={sqlResult.rows}
-          cols={sqlResult.columns as any[]}
+          cols={
+            sqlResult.columns.map((column) => ({
+              ...column,
+              key: column.name,
+            })) as any[]
+          }
         />
       : null}
     </FullscreenWrapper>

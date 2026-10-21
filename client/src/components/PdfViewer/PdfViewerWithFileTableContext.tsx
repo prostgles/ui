@@ -20,9 +20,11 @@ type P = Omit<
   "highlights" | "onCreateHighlight" | "topLeftControls"
 > & {
   context: MediaViewerProps["context"];
+  fileId: string | undefined;
 };
 
 type AnnotationsContext = {
+  fileId: string;
   annotationPage: number | undefined;
   fileTable: DBSchemaTableWJoins;
   annotationsTable: DBSchemaTableWJoins;
@@ -34,6 +36,7 @@ type AnnotationsContext = {
 };
 
 const PdfViewerWithAnnotations = ({
+  fileId,
   fileTable,
   fileTableHandler,
   annotationsTableHandler,
@@ -43,7 +46,6 @@ const PdfViewerWithAnnotations = ({
   ...pdfProps
 }: Omit<P, "context" | "topLeftControls"> & AnnotationsContext) => {
   const prgl = usePrgl();
-  const fileId = url.split("/").at(-1)?.split(".")[0] || url;
   const { data: fileRow } = fileTableHandler.useFindOne(
     {
       id: fileId,
@@ -166,10 +168,14 @@ const PdfViewerWithAnnotations = ({
   );
 };
 
-export const PdfViewerWithFileTableContext = ({ context, ...pdfProps }: P) => {
+export const PdfViewerWithFileTableContext = ({
+  context,
+  fileId,
+  ...pdfProps
+}: P) => {
   const { db, tables } = usePrgl();
   const annotationsContext = useMemo(() => {
-    if (!context) return;
+    if (!context || !fileId) return;
     const fileTable = tables.find((t) => t.managedTableType === "files");
     const annotationsTable = tables.find(
       (t) => t.managedTableType === "file-annotations",
@@ -186,6 +192,7 @@ export const PdfViewerWithFileTableContext = ({ context, ...pdfProps }: P) => {
       return;
     }
     return {
+      fileId,
       annotationPage:
         (
           context.table.managedTableType === "file-annotations" &&
@@ -198,7 +205,7 @@ export const PdfViewerWithFileTableContext = ({ context, ...pdfProps }: P) => {
       fileTableHandler: fileTableHandler as TableHandlerClient,
       annotationsTableHandler: annotationsTableHandler as TableHandlerClient,
     };
-  }, [context, db, tables]);
+  }, [context, fileId, db, tables]);
 
   if (annotationsContext) {
     return <PdfViewerWithAnnotations {...pdfProps} {...annotationsContext} />;

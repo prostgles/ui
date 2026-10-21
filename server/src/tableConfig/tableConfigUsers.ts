@@ -1,3 +1,4 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import {
   OAuthProviderOptions,
   PASSWORDLESS_ADMIN_USERNAME,
@@ -75,7 +76,7 @@ export const tableConfigUsers = {
         info: { hint: "Hashed with the user id on insert/update" },
       },
       type: {
-        sqlDefinition: `TEXT NOT NULL DEFAULT 'default' REFERENCES user_types (id)`,
+        sqlDefinition: `TEXT NOT NULL DEFAULT '${USER_TYPES.DEFAULT}' REFERENCES user_types (id)`,
       },
       passwordless_admin: {
         sqlDefinition: `BOOLEAN`,
@@ -146,10 +147,10 @@ export const tableConfigUsers = {
           enabled: { type: "boolean" },
         },
       },
-      has_2fa_enabled: `BOOLEAN GENERATED ALWAYS AS ( ("2fa"->>'enabled')::BOOLEAN ) STORED`,
+      has_2fa_enabled: `BOOLEAN GENERATED ALWAYS AS (COALESCE(("2fa"->>'enabled')::BOOLEAN, false)) STORED`,
     },
     constraints: {
-      [`passwordless_admin type AND username CHECK`]: `CHECK(COALESCE(passwordless_admin, false) = FALSE OR type = 'admin' AND username = '${PASSWORDLESS_ADMIN_USERNAME}')`,
+      [`passwordless_admin type AND username CHECK`]: `CHECK(COALESCE(passwordless_admin, false) = FALSE OR type = '${USER_TYPES.ADMIN}' AND username = '${PASSWORDLESS_ADMIN_USERNAME}')`,
     },
     indexes: {
       "Only one passwordless_admin admin account allowed": {
@@ -176,7 +177,7 @@ export const tableConfigUsers = {
         forEach: "statement",
         query: `
           BEGIN
-            IF NOT EXISTS(SELECT * FROM users WHERE type = 'admin' AND status = 'active') THEN
+            IF NOT EXISTS(SELECT * FROM users WHERE type = '${USER_TYPES.ADMIN}' AND status = 'active') THEN
               RAISE EXCEPTION 'Must have at least one active admin user';
             END IF;
 

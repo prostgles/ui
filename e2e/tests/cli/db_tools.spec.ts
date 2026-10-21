@@ -83,12 +83,13 @@ test("database tools select one array element with scoped read access", async ()
         reRunToolUseId: toolUseId,
         args,
       });
-    const page = await run({
+    const readPageArgs = {
       tableName: "notices",
       filter: {},
       select: { page_text: { $array_element: ["pages", 2] } },
-    });
-    expect(page.isError).not.toBe(true);
+    };
+    const page = await run(readPageArgs);
+    expect(page.isError, JSON.stringify(page)).not.toBe(true);
     expect(page.content).toEqual([
       { type: "text", text: JSON.stringify([{ page_text: "Second page" }]) },
     ]);
@@ -119,12 +120,20 @@ test("database tools select one array element with scoped read access", async ()
       select: { value: { $column: ["secret"] } },
     });
     expect(hiddenColumn.isError).toBe(true);
+    await state.db.mcp_servers!.update({ name: "db" }, { enabled: false });
+    const disabledServer = await run(readPageArgs);
+    expect(disabledServer).toMatchObject({
+      isError: true,
+      structuredContent: { message: "MCP server db not enabled" },
+    });
+    await state.db.mcp_servers!.update({ name: "db" }, { enabled: true });
+    expect(await run(readPageArgs)).toEqual(page);
   } finally {
     await deployment.dispose();
   }
 });
 
-test("agents without a client request retain scoped database access", async () => {
+test("agents use the default model and retain scoped database access without a client request", async () => {
   const responses = [
     { name: "db--find", args: { tableName: "notices", filter: {} } },
     { name: "db--find", args: { tableName: "notices", select: { secret: 1 } } },
@@ -194,7 +203,7 @@ test("agents without a client request retain scoped database access", async () =
           const prostgles = prgl.db.notices.dboBuilder.prostgles;
           const execution = prostgles.getExecution();
           return prostgles.runWithExecution({ ...execution, clientReq: undefined }, () => context.startAgent({
-            name: "Requestless agent", prompt: "Read the permitted notice", modelName: "requestless-agent-test-model",
+            name: "Requestless agent", prompt: "Read the permitted notice",
             tools: { db: { find: 1 } }, autoApproveAllTools: true, timeout: 15000,
             outputSchema: { done: { type: "boolean" } },
             databaseAccess: { mode: "custom", tablePermissions: {
@@ -217,7 +226,7 @@ test("agents without a client request retain scoped database access", async () =
           "INSERT INTO notices VALUES (1, 'secret'), (2, 'hidden')",
         );
         await stateDatabase.query(
-          "INSERT INTO llm_models (provider_id, name, mcp_tool_support) VALUES ('OpenAI', 'requestless-agent-test-model', true)",
+          "INSERT INTO llm_models (provider_id, name, mcp_tool_support) VALUES ('OpenAI', 'luna-latest', true)",
         );
         await stateDatabase.query(
           "UPDATE llm_providers SET api_url = $1 WHERE id = 'OpenAI'",

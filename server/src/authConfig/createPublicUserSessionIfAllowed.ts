@@ -1,3 +1,4 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import type {
   AuthClientRequest,
   LoginClientInfo,
@@ -25,7 +26,7 @@ export const createPublicUserSessionIfAllowed = async (
     const newRandomUser = await insertUser(dbsTx, {
       username: `user-${new Date().toISOString()}_${Math.round(Math.random() * 1e8)}`,
       password: "",
-      type: "public",
+      type: USER_TYPES.PUBLIC,
     });
 
     return makeSession(
