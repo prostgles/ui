@@ -187,10 +187,17 @@ export const getFinalFilterInfo = (
       }
       return `${fields} contain ${matchCase ? "(case sensitive)" : ""} ${value}`;
     }
-    const [fieldName, operatorRaw = "="] = fieldNameAndOperator.split(".$");
-    const operator =
-      CORE_FILTER_TYPES.find(({ key }) => key === `$${operatorRaw}`)?.label ||
-      operatorRaw;
+    const filterOperator = [
+      ...CORE_FILTER_TYPES,
+      ...NUMERIC_FILTER_TYPES,
+      ...TEXT_FILTER_TYPES,
+      ...FTS_FILTER_TYPES,
+    ].find(({ key }) => fieldNameAndOperator.endsWith(`.${key}`));
+    const fieldName =
+      filterOperator ?
+        fieldNameAndOperator.slice(0, -filterOperator.key.length - 1)
+      : fieldNameAndOperator;
+    const operator = filterOperator?.label ?? "=";
     const value = f[fieldNameAndOperator];
     if ("fieldName" in filter && filter.contextValue?.objectName === "user") {
       return `${fieldName}::TEXT ${operator} ${value}`;
@@ -199,11 +206,12 @@ export const getFinalFilterInfo = (
       ["number", "boolean"].includes(typeof value) ? value
       : value === null ? `null`
       : value === undefined ? ``
-      : `'${JSON.stringify(value).slice(1, -1)}'`;
+      : typeof value === "string" ? `'${value}'`
+      : JSON.stringify(value);
     return `${fieldName} ${operator} ${valueStr}`;
   };
 
-  let result = "";
+  const result = "";
   if (fullFilter) {
     const isAnd = "$and" in fullFilter;
     if (isAnd || "$or" in fullFilter) {
@@ -213,7 +221,7 @@ export const getFinalFilterInfo = (
         .filter(isDefined)
         .filter((v: string) => v.trim().length);
       const finalFilterStr = finalFilters.join(isAnd ? " AND " : " OR ");
-      return finalFilters.length > 1 && depth > 1 ?
+      return finalFilters.length > 1 && depth > 0 ?
           `( ${finalFilterStr} )`
         : finalFilterStr;
     }
@@ -398,7 +406,7 @@ export const simplifyFilter = (f: AnyObject | undefined) => {
         result.$or.length < 2)
     ) {
       if (result.$and) result = result.$and?.[0] ?? {};
-      if (result?.$or) result = result.$or?.[0] ?? {};
+      else if (result?.$or) result = result.$or?.[0] ?? {};
     }
     result ??= {};
   }
@@ -439,55 +447,61 @@ export type GroupedDetailedFilter =
 
 const getDetailedFilterFromTableFilter = (
   tableFilter: AnyObject,
-): DetailedFilter => {
-  const filterType =
-    "$existsJoined" in tableFilter ? "$existsJoined"
-    : "$notExistsJoined" in tableFilter ? "$notExistsJoined"
-    : Object.keys(tableFilter)[0];
-
-  if (filterType === "$existsJoined" || filterType === "$notExistsJoined") {
-    const value = tableFilter.$existsJoined;
-    const tableName = Object.keys(value)[0]!;
-    const filter = value[tableName];
-    return {
-      type: filterType,
-      path: [tableName],
-      filter: getDetailedFilterFromTableFilter(filter) as DetailedFilterBase,
-    };
-  }
-  const fieldName = Object.keys(tableFilter)[0]!;
-  const operator =
-    isObject(tableFilter[fieldName]) ?
-      Object.keys(tableFilter[fieldName])[0]
-    : undefined;
-  return {
-    fieldName,
-    type: operator as FilterType,
-    value: operator ? tableFilter[fieldName][operator] : tableFilter[fieldName],
-  };
+): DetailedFilter | GroupedDetailedFilter => {
+  if (!isObject(tableFilter)) throw new Error("Expected a filter object");
+  const filters = Object.entries(tableFilter).flatMap(
+    ([key, value]): (DetailedFilter | GroupedDetailedFilter)[] => {
+      if ((key === "$and" || key === "$or") && Array.isArray(value)) {
+        const filters = value.map(getDetailedFilterFromTableFilter);
+        return [key === "$and" ? { $and: filters } : { $or: filters }];
+      }
+      if (
+        (key === "$existsJoined" || key === "$notExistsJoined") &&
+        isObject(value)
+      ) {
+        return Object.entries(value).map(([tableName, filter]) => ({
+          type: key,
+          path: [tableName],
+          filter: getDetailedGroupFilterFromTableFilter(filter),
+        }));
+      }
+      if (key.startsWith("$")) throw new Error(`Unsupported filter: ${key}`);
+      const operators = [
+        ...CORE_FILTER_TYPES,
+        ...TEXT_FILTER_TYPES,
+        ...NUMERIC_FILTER_TYPES,
+      ];
+      const suffix = operators.find(({ key: operator }) =>
+        key.endsWith(`.${operator}`),
+      );
+      if (suffix) {
+        return [
+          {
+            fieldName: key.slice(0, -suffix.key.length - 1),
+            type: suffix.key,
+            value,
+          },
+        ];
+      }
+      if (isObject(value)) {
+        if (!Object.keys(value).length)
+          throw new Error("Empty filter operator");
+        return Object.entries(value).map(([operator, operand]) => {
+          const type = operators.find(({ key }) => key === operator)?.key;
+          if (!type)
+            throw new Error(`Unsupported filter operator: ${operator}`);
+          return { fieldName: key, type, value: operand };
+        });
+      }
+      return [{ fieldName: key, type: "=", value }];
+    },
+  );
+  const [firstFilter] = filters;
+  return filters.length === 1 && firstFilter ? firstFilter : { $and: filters };
 };
 export const getDetailedGroupFilterFromTableFilter = (
   tableFilter: AnyObject,
-): DetailedGroupFilter => {
-  const filterType =
-    "$and" in tableFilter && Array.isArray(tableFilter.$and) ? "$and"
-    : "$or" in tableFilter && Array.isArray(tableFilter.$or) ? "$or"
-    : "$existsJoined" in tableFilter ? "$existsJoined"
-    : null;
-
-  if (filterType === "$and") {
-    return {
-      $and: tableFilter.$and.map((f: AnyObject) =>
-        getDetailedFilterFromTableFilter(f),
-      ),
-    };
-  } else if (filterType === "$or") {
-    return {
-      $or: tableFilter.$or.map((f: AnyObject) =>
-        getDetailedFilterFromTableFilter(f),
-      ),
-    };
-  }
-
-  return { $and: [] };
+): GroupedDetailedFilter => {
+  const filter = getDetailedFilterFromTableFilter(tableFilter);
+  return "$and" in filter || "$or" in filter ? filter : { $and: [filter] };
 };

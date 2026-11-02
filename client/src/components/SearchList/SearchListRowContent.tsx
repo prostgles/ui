@@ -8,7 +8,7 @@ export const SearchListRowContent = ({ item }: { item: ParsedListItem }) => {
 
   return (
     <div
-      className="ROWINNER flex-row ai-start f-1 gap-p5 "
+      className="ROWINNER flex-row ai-center f-1 gap-p5 "
       style={item.styles?.rowInner}
     >
       {typeof item.checked === "boolean" && (
@@ -23,7 +23,6 @@ export const SearchListRowContent = ({ item }: { item: ParsedListItem }) => {
       <div
         className="LABELWRAPPER flex-col ai-start f-1"
         style={{
-          ...(contentLeft ? { marginTop: ".125em" } : {}),
           ...item.styles?.labelWrapper,
         }}
       >

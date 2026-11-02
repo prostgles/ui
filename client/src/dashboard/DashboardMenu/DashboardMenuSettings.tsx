@@ -73,6 +73,7 @@ export const DashboardMenuSettings = ({ workspace }: P) => {
         <Btn
           iconPath={mdiCog}
           title="Show settings"
+          size="small"
           className=""
           data-command="dashboard.menu.settingsToggle"
         />
@@ -98,6 +99,16 @@ export const DashboardMenuSettings = ({ workspace }: P) => {
                 confirmUpdates={false}
                 showJoinedTables={false}
               />
+              <SwitchToggle
+                label={{
+                  label: "Open linked records as cards",
+                  info: "Open drill-down and reference clicks as filtered cards. Turn off to open individual records in a smart form.",
+                }}
+                checked={localSettings.openLinkedRecordsAsCards}
+                onChange={(openLinkedRecordsAsCards) => {
+                  localSettings.$set({ openLinkedRecordsAsCards });
+                }}
+              />
             </SettingsSection>
             <SettingsSection title="Dashboard menu" iconPath={mdiTable}>
               <FormField
@@ -118,7 +129,7 @@ export const DashboardMenuSettings = ({ workspace }: P) => {
                 ]}
                 value={workspace.options.tableListSortBy}
                 onChange={(tableListSortBy) => {
-                  workspace.$update(
+                  void workspace.$update(
                     { options: { tableListSortBy } },
                     { deepMerge: true },
                   );

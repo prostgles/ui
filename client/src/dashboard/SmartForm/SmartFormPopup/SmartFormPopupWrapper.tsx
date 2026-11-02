@@ -1,7 +1,6 @@
 import Btn from "@components/Btn";
 import { FlexRow } from "@components/Flex";
 import Popup from "@components/Popup/Popup";
-import { SvgIcon } from "@components/SvgIcon";
 import { mdiTextBoxOutline } from "@mdi/js";
 import { type AnyObject, type ValidatedColumnInfo } from "prostgles-types";
 import React from "react";
@@ -12,6 +11,7 @@ import { useSmartFormPrevNext } from "./useSmartFormPrevNext";
 import { useSmartFormSubTitle } from "./useSmartFormSubTitle";
 import { SMART_FORM_POPUP_MIN_WIDTH } from "../constants";
 import { AuditTrailButton } from "../../AuditTrail/AuditTrailButton";
+import { SmartFormHeader } from "./SmartFormHeader";
 
 type P = Pick<
   SmartFormProps,
@@ -59,15 +59,7 @@ export const SmartFormPopupWrapper = ({
   const autoFocusFirstIfIsInsert = !rowFilterObj;
   return (
     <Popup
-      title={
-        <FlexRow
-          data-command="SmartForm.header.tableIconAndName"
-          className="gap-p25"
-        >
-          {table.icon && <SvgIcon size={24} icon={table.icon} />}
-          {headerText}
-        </FlexRow>
-      }
+      title={<SmartFormHeader table={table} headerText={headerText} />}
       subTitle={subTitle}
       headerRightContent={
         <FlexRow className="gap-p25">
@@ -75,6 +67,7 @@ export const SmartFormPopupWrapper = ({
           <AuditTrailButton
             table={table}
             row={row}
+            headerText={headerText}
             db={db}
             sql={sql}
             tables={tables}

@@ -2,10 +2,7 @@ import type { TableWindowInsertModel } from "@common/DashboardTypes";
 import type { InternalColumnFormat } from "@common/managedTableSchema";
 import { getAge } from "@common/utils";
 import { FlexRowWrap } from "@components/Flex";
-import {
-  MarkdownWithPlugins,
-  MarkdownWithPluginsPopupBtn,
-} from "@components/MarkdownWithPlugins/MarkdownWithPlugins";
+import { MarkdownWithPluginsPopupBtn } from "@components/MarkdownWithPlugins/MarkdownWithPlugins";
 import type {
   FILE_TABLE_SELECT,
   FilesTableRow,
@@ -31,11 +28,13 @@ import type { RenderedColumn } from "../../RenderColumn/RenderColumn";
 
 import { FileAnnotationViewer } from "../../ManagedColumn/FileAnnotationViewer";
 import { FileExtractionStatus } from "../../ManagedColumn/FileExtractionStatus";
-import { ActionButton } from "./ActionButton";
+import { AlertFieldSummary } from "../../ManagedColumn/Alerts/AlertFieldSummary";
 import { ActionColumns } from "./ActionColumns";
 import { JSONDiffPopup } from "./JSONDiffPopup";
 import { Avatar } from "./Avatar";
 import type { UserColumnFormat } from "@common/columnDisplayFormat.schema";
+import { bytesToSize } from "../../../BackupAndRestore/BackupsControls";
+import { MarkdownColumn } from "./MarkdownColumn";
 
 const tryParseNumber = (v) => {
   if (typeof v === "string" && v.length && Number.isFinite(+v)) {
@@ -94,19 +93,31 @@ const removeQuotes = (value: string | number | null) => {
     : v;
 };
 
-const HREFRender: FormattedColRender<any>["render"] = (v, r, ctx) => (
-  <a
-    href={
-      (ctx.column.format?.type === "Email" ? "mailto:"
-      : ctx.column.format?.type === "Tel" ? "tel:"
-      : "") + removeQuotes(v)
-    }
-    target="_blank"
-    rel="noreferrer"
-  >
-    {removeQuotes(v)}
-  </a>
-);
+const HREFRender = (
+  value: string | number | null,
+  row: AnyObject,
+  _ctx: RenderDataContext,
+  format: Extract<ColumnFormat, { type: "URL" | "Email" | "Tel" }> | undefined,
+) => {
+  const urlColumn =
+    format?.type === "URL" ? format.params?.urlColumn : undefined;
+  const url = removeQuotes(urlColumn ? row[urlColumn] : value);
+  const text = removeQuotes(value);
+  if (urlColumn && !url.trim()) return text;
+  return (
+    <a
+      href={
+        (format?.type === "Email" ? "mailto:"
+        : format?.type === "Tel" ? "tel:"
+        : "") + url
+      }
+      target="_blank"
+      rel="noreferrer"
+    >
+      {text}
+    </a>
+  );
+};
 
 const metricPrefixOptions = {
   notation: "compact",
@@ -169,10 +180,10 @@ export const DISPLAY_FORMATS = [
     type: "Action",
     tsDataType: undefined,
     render: (_value, row, { table, column }, format) => (
-      <ActionButton
-        format={format}
+      <ActionColumns
+        params={format.params}
         row={row}
-        columnName={column.name}
+        dataKey={column.name}
         table={table}
       />
     ),
@@ -181,6 +192,15 @@ export const DISPLAY_FORMATS = [
     type: "Internal",
     tsDataType: undefined,
     render: (value, row, { column, table }, { params }, maxCellChars) => {
+      if (params.component === "Alert") {
+        return (
+          <AlertFieldSummary
+            field={params.field}
+            value={value}
+            maxLength={maxCellChars}
+          />
+        );
+      }
       if (params.component === "ActionColumns") {
         return (
           <ActionColumns
@@ -271,6 +291,15 @@ export const DISPLAY_FORMATS = [
     },
   },
   {
+    type: "File size",
+    tsDataType: ["number", "string"],
+    render: (rawValue: any) => {
+      const bytes = tryParseNumber(rawValue);
+      if (!Number.isFinite(bytes) || bytes < 0) return rawValue;
+      return bytesToSize(bytes);
+    },
+  },
+  {
     type: "Media",
     tsDataType: ["string", "string[]"],
     render: (valueOrValues, row, ctx, f) => {
@@ -344,7 +373,7 @@ export const DISPLAY_FORMATS = [
     type: "Markdown",
     tsDataType: ["string"],
     render: (v) => {
-      return <MarkdownWithPlugins content={v} />;
+      return <MarkdownColumn key={v} content={v ?? ""} />;
     },
   } satisfies FormattedColRender<
     Extract<ColumnFormat, { type: "Markdown" | "MarkdownPopup" }>

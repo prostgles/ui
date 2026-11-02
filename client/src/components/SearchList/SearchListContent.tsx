@@ -165,7 +165,11 @@ export const SearchListContent = <M extends boolean = false>(
       style={{ ...style, ...(!isSearch ? rootStyle : {}) }}
     >
       {!!label && (
-        <Label className="mb-p25" variant="normal">
+        <Label
+          className="mb-p25"
+          variant="normal"
+          htmlFor={hasSearch ? id : undefined}
+        >
           {label}
         </Label>
       )}

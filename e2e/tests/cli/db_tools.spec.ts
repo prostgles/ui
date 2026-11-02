@@ -4,6 +4,213 @@ import { createConfigTestProject } from "../utils/createConfigTestProject";
 import { appendFileSync } from "node:fs";
 import { createServer } from "node:http";
 import { join, resolve } from "node:path";
+import type { DBSchema } from "../../../common/DBGeneratedSchema";
+import { getProstglesMCPFullToolName } from "../../../common/mcpUtils";
+
+test("table metadata updates preserve omitted settings and replace arrays", async () => {
+  const config = {
+    id: "table-metadata-test",
+    tableConfig: {
+      notices: {
+        columns: { id: "integer PRIMARY KEY", title: "text", body: "text" },
+      },
+    },
+  };
+  const configPath = createConfigTestProject(
+    config,
+    test.info().outputPath("config"),
+  );
+  const deployment = await createTestDeployment({
+    configPath,
+    configId: config.id,
+    logPath: test.info().outputPath("deployment.log"),
+  });
+  try {
+    const { db, sql, methods } = await deployment.connectStateAs("admin");
+    const connection = await db.connections!.findOne({ name: config.id });
+    const connectionFilter = { id: connection!.id };
+    await db.connections!.update(connectionFilter, { table_options: null });
+    await sql!(
+      "INSERT INTO llm_credentials (provider_id, api_key, user_id) SELECT 'OpenAI', 'unused-test-key', id FROM users WHERE username = 'admin'",
+    );
+    const chat = await db.llm_chats!.insert(
+      {
+        user_id: (await db.users!.findOne({ username: "admin" }))!.id,
+        connection_id: connection!.id,
+      },
+      { returning: "*" },
+    );
+    const toolUseId = "update-table-metadata";
+    const toolName = getProstglesMCPFullToolName(
+      "prostgles-ui",
+      "set_tables_metadata",
+    );
+    const metadataTool = await db.mcp_server_tools!.findOne({
+      server_name: "prostgles-ui",
+      name: "set_tables_metadata",
+    });
+    await db.llm_chats_allowed_mcp_tools!.insert({
+      chat_id: chat.id,
+      server_name: "prostgles-ui",
+      tool_id: metadataTool!.id,
+      auto_approve: true,
+    });
+    await db.llm_messages!.insertMany([
+      {
+        chat_id: chat.id,
+        total_tokens: 0,
+        message: [
+          { type: "tool_use", id: toolUseId, name: toolName, input: {} },
+        ],
+      },
+      {
+        chat_id: chat.id,
+        total_tokens: 0,
+        message: [
+          {
+            type: "tool_result",
+            tool_use_id: toolUseId,
+            tool_name: toolName,
+            content: "Pending",
+          },
+        ],
+      },
+    ]);
+    const updateMetadata = async (
+      metadata: NonNullable<DBSchema["connections"]["table_options"]>,
+    ) => {
+      const result = await methods!.reRunMCPServerTool!({
+        chatId: chat.id,
+        serverName: "prostgles-ui",
+        toolName: "set_tables_metadata",
+        reRunToolUseId: toolUseId,
+        args: { metadata },
+      });
+      expect(result.isError, JSON.stringify(result)).not.toBe(true);
+      return (await db.connections!.findOne(connectionFilter))!.table_options;
+    };
+    const originalMetadata = {
+      notices: {
+        label: "Notices",
+        icon: "Text",
+        columns: {
+          title: { label: "Title", show: true, width: 240 },
+          body: { infoLevel: 1 as const },
+        },
+        card: {
+          headerColumn: "title",
+          subHeaderColumns: ["id", "body"],
+        },
+      },
+      other_table: { label: "Other table" },
+    };
+    expect(await updateMetadata(originalMetadata)).toEqual(originalMetadata);
+    const layout = {
+      type: "grid" as const,
+      columns: 2,
+      fields: { body: { columnSpan: 2, labels: "none" as const } },
+    };
+    expect(await updateMetadata({ notices: { card: { layout } } })).toEqual({
+      ...originalMetadata,
+      notices: {
+        ...originalMetadata.notices,
+        card: { ...originalMetadata.notices.card, layout },
+      },
+    });
+    const updatedMetadata = await updateMetadata({
+      notices: {
+        label: "",
+        columns: { title: { show: false }, body: { infoLevel: 2 } },
+        card: {
+          layout: { fields: { body: { row: 2 } } },
+          subHeaderColumns: ["body"],
+        },
+      },
+    });
+    expect(updatedMetadata).toEqual({
+      ...originalMetadata,
+      notices: {
+        ...originalMetadata.notices,
+        label: "",
+        columns: {
+          title: { label: "Title", show: false, width: 240 },
+          body: { infoLevel: 2 },
+        },
+        card: {
+          ...originalMetadata.notices.card,
+          layout: {
+            ...layout,
+            fields: { body: { ...layout.fields.body, row: 2 } },
+          },
+          subHeaderColumns: ["body"],
+        },
+      },
+    });
+    expect(await updateMetadata({ notices: { card: {} } })).toEqual(
+      updatedMetadata,
+    );
+    const clearedMetadata = await updateMetadata({
+      notices: { card: { subHeaderColumns: [] } },
+    });
+    expect(clearedMetadata).toEqual({
+      ...updatedMetadata,
+      notices: {
+        ...updatedMetadata!.notices,
+        card: { ...updatedMetadata!.notices!.card, subHeaderColumns: [] },
+      },
+    });
+
+    /* Reject the eleventh explicit summary field, including after merged MCP updates. */
+    const summaryColumns = Object.fromEntries(
+      Array.from({ length: 10 }, (_, index) => [
+        `summary_${index}`,
+        { infoLevel: 1 as const },
+      ]),
+    );
+    await updateMetadata({ notices: { columns: summaryColumns } });
+    const rejectedUpdate = await methods!.reRunMCPServerTool!({
+      chatId: chat.id,
+      serverName: "prostgles-ui",
+      toolName: "set_tables_metadata",
+      reRunToolUseId: toolUseId,
+      args: { metadata: { notices: { columns: { body: { infoLevel: 1 } } } } },
+    });
+    expect(rejectedUpdate.isError).toBe(true);
+    expect(JSON.stringify(rejectedUpdate)).toContain("at most 10 columns");
+    const savedMetadata = (await db.connections!.findOne(connectionFilter))!
+      .table_options;
+    expect(savedMetadata!.notices!.columns!.body!.infoLevel).toBe(2);
+    await expect(
+      db.connections!.update(connectionFilter, {
+        table_options: {
+          notices: { columns: { ...summaryColumns, extra: { infoLevel: 1 } } },
+        },
+      }),
+    ).rejects.toMatchObject({
+      message: expect.stringContaining("at most 10 columns"),
+    });
+    await updateMetadata({
+      notices: {
+        columns: Object.fromEntries(
+          Array.from({ length: 15 }, (_, index) => [`unmarked_${index}`, {}]),
+        ),
+      },
+    });
+    appendFileSync(
+      `${configPath}/index.js`,
+      `\nmodule.exports.connection = ${JSON.stringify({
+        table_options: {
+          notices: { columns: { ...summaryColumns, extra: { infoLevel: 1 } } },
+        },
+      })};`,
+    );
+    await expect(deployment.syncSchema()).rejects.toMatchObject({
+      message: expect.stringContaining("at most 10 columns"),
+    });
+  } finally {
+    await deployment.dispose();
+  }
+});
 
 test("database tools select one array element with scoped read access", async () => {
   const config = {
@@ -226,14 +433,11 @@ test("agents use the default model and retain scoped database access without a c
           "INSERT INTO notices VALUES (1, 'secret'), (2, 'hidden')",
         );
         await stateDatabase.query(
-          "INSERT INTO llm_models (provider_id, name, mcp_tool_support) VALUES ('OpenAI', 'luna-latest', true)",
-        );
-        await stateDatabase.query(
-          "UPDATE llm_providers SET api_url = $1 WHERE id = 'OpenAI'",
+          "UPDATE llm_providers SET api_url = $1 WHERE id = 'Prostgles'",
           [`http://127.0.0.1:${address.port}/completions`],
         );
         await stateDatabase.query(
-          "INSERT INTO llm_credentials (provider_id, api_key, user_id) SELECT 'OpenAI', 'unused-test-key', id FROM users WHERE username = 'admin'",
+          "INSERT INTO llm_credentials (provider_id, api_key, user_id) SELECT 'Prostgles', 'unused-test-key', id FROM users WHERE username = 'admin'",
         );
       },
     });

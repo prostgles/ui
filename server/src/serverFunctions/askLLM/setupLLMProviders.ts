@@ -1,5 +1,6 @@
 import type { DBSSchemaForInsert } from "@common/publishUtils";
 import type { DBS } from "../..";
+import { DEFAULT_AGENT_MODEL } from "./refreshModels";
 
 export type LLMProviderName =
   | "OpenAI"
@@ -157,17 +158,6 @@ export const setupLLMProviders = async (dbs: DBS) => {
             pricing_info: null,
             model_created: "2025-03-07 12:19:04.913961",
           },
-          // {
-          //   name: "anthropic/claude-4.6-sonnet",
-          //   pricing_info: {
-          //     input: 3,
-          //     output: 15,
-          //     cachedInput: 1,
-          //     cachedOutput: 0.08,
-          //   },
-          //   model_created: "2024-10-22 12:00:00",
-          //   mcp_tool_support: true,
-          // },
         ],
       },
       {
@@ -176,14 +166,7 @@ export const setupLLMProviders = async (dbs: DBS) => {
         logo_url: "/v2.svg",
         llm_models: [
           {
-            name: "anthropic/claude-4.6-sonnet",
-            pricing_info: {
-              input: 3,
-              output: 15,
-              cachedInput: 1,
-              cachedOutput: 0.08,
-            },
-            model_created: "2024-10-22 12:00:00",
+            name: DEFAULT_AGENT_MODEL,
             mcp_tool_support: true,
           },
         ],

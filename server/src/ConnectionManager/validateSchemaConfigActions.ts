@@ -52,6 +52,18 @@ export const validateSchemaConfigActions = async ({
     const actions =
       format.type === "Action" ? [format.params] : format.params.actions;
     for (const action of actions) {
+      if ("methodsForJobColumn" in action) {
+        if (
+          !table.columns.some(
+            (column) => column.name === action.methodsForJobColumn,
+          )
+        ) {
+          throw new Error(
+            `${location}: job column "${action.methodsForJobColumn}" does not exist`,
+          );
+        }
+        continue;
+      }
       if ("columnName" in action) {
         if (
           !table.columns.some((column) => column.name === action.columnName)
@@ -211,7 +223,6 @@ export const validateSchemaConfigActions = async ({
           })),
         },
         data,
-        true,
       );
       if (resolved.error)
         throw new Error(`${tableName}.${columnName}: ${resolved.error}`);

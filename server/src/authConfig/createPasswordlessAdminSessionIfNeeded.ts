@@ -64,7 +64,7 @@ export const createPasswordlessAdminSessionIfNeeded = debouncePromise(
           user_agent: client.user_agent || null,
           type: "web",
         },
-        dbsTx as DBS,
+        dbsTx,
         Date.now() + Number(1 * YEAR),
       );
     });

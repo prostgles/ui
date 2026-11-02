@@ -1,0 +1,4 @@
+.table-component .d-row:has(.MarkdownColumn[data-expanded="true"]),
+.CardBody [data-card-field] > div:has(.MarkdownColumn[data-expanded="true"]) {
+  max-height: none !important;
+}

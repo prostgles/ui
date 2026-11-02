@@ -62,6 +62,8 @@ export type NestedColumnConfig = {
   columns: NestedColumn<ColumnConfig>[];
   /** Parent-table column to display when the join returns no rows. */
   fallbackColumn?: string;
+  /** Also use the fallback when all displayed values are null or empty strings. */
+  fallbackOnEmpty?: boolean;
   joinType?: "inner" | "left";
   limit?: number;
   sort?: ColumnSort;
@@ -75,12 +77,14 @@ export type ColumnConfig = {
   idx?: number;
   name: string;
   show?: boolean;
+  /** 1: summary and details; 2: details only; omitted: hidden. With no levels configured, headers count toward the first 10 summary fields; the rest appear in details. */
+  infoLevel?: 1 | 2;
   width?: number;
   label?: string;
   nested?: NestedColumnConfig;
   style?: ColumnStyle;
   format?: UserColumnFormat;
-  /** Opens the records behind a nested value; useful for aggregates. */
+  /** Opens the records behind a nested value, or groups a linked row's drillable values. */
   display?: "drillable-records";
   computedConfig?: ComputedColumnConfig;
 };

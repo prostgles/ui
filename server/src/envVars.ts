@@ -4,6 +4,7 @@ import type { DBSConnectionInfo } from "./electronConfig";
 import { actualRootDir } from "./electronConfig";
 import { DB_SSL_ENUM } from "./tableConfig/tableConfigConnections";
 import { validateConnection } from "./connectionUtils/validateConnection";
+import { getCliDatabaseConfig } from "./cli/getCliDatabaseConfig";
 const envFileVars =
   process.env.PROSTGLES_UI_CONFIG ?
     undefined
@@ -22,7 +23,6 @@ export const {
   POSTGRES_PORT,
   POSTGRES_USER,
   POSTGRES_SSL,
-  PROSTGLES_STATE_DATABASE_URL,
   PROSTGLES_STRICT_COOKIE,
 } = {
   ...(envFileVars?.parsed ?? {}),
@@ -34,7 +34,9 @@ const db_ssl: DBSConnectionInfo["db_ssl"] = //@ts-ignore
   "prefer";
 
 const stateDatabaseUrl =
-  process.env.PROSTGLES_UI_CONFIG ? PROSTGLES_STATE_DATABASE_URL : POSTGRES_URL;
+  process.env.PROSTGLES_UI_CONFIG ?
+    getCliDatabaseConfig(process.env).state.url
+  : POSTGRES_URL;
 
 export const DBS_CONNECTION_INFO = validateConnection({
   name: "Prostgles UI state",

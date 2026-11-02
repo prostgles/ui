@@ -2,6 +2,7 @@ import { isObject } from "prostgles-types";
 import { useEffect, useState } from "react";
 
 export type LocalSettings = {
+  openLinkedRecordsAsCards: boolean;
   centeredLayout?: {
     enabled: boolean;
     maxWidth: number;
@@ -16,7 +17,7 @@ let localSettingsListeners: LocalSettingsListener[] = [];
 const LOCALSTORAGE_KEY = "localSettings" as const;
 
 const parseLocalSettings = () => {
-  const localSettings: LocalSettings = {};
+  const localSettings: LocalSettings = { openLinkedRecordsAsCards: true };
   try {
     const savedSettings = window.localStorage.getItem(LOCALSTORAGE_KEY);
     if (savedSettings) {
@@ -24,6 +25,10 @@ const parseLocalSettings = () => {
         JSON.parse(savedSettings);
       if (parsedSavedSettings && isObject(parsedSavedSettings)) {
         const { centeredLayout, themeOverride } = parsedSavedSettings;
+        if (typeof parsedSavedSettings.openLinkedRecordsAsCards === "boolean") {
+          localSettings.openLinkedRecordsAsCards =
+            parsedSavedSettings.openLinkedRecordsAsCards;
+        }
         if (
           centeredLayout &&
           typeof ((centeredLayout as any).enabled ?? false) === "boolean" &&
@@ -40,7 +45,7 @@ const parseLocalSettings = () => {
   } catch (e) {
     console.error("localSettings error: ", e);
   }
-  return {};
+  return localSettings;
 };
 
 window.addEventListener(

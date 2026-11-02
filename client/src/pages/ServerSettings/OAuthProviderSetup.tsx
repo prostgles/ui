@@ -22,7 +22,7 @@ import type { AuthProviderProps } from "./AuthProvidersSetup/useProviderProps";
 type P = AuthProviderProps & {
   provider: keyof Omit<
     AuthProviderProps["authProviders"],
-    "email" | "website_url" | "created_user_type"
+    "email" | "website_url" | "signupMode" | "created_user_type"
   >;
 };
 export const OAuthProviderSetup = ({
@@ -32,7 +32,7 @@ export const OAuthProviderSetup = ({
   provider,
   doUpdate,
 }: P) => {
-  const returnURL = `${authProviders.website_url}/oauth/${provider}/callback`;
+  const returnURL = `${authProviders.website_url}/auth/oauth/${provider}/callback`;
   const auth = authProviders[provider];
   const [_localAuth, _setLocalAuth] = useState(auth);
   const localAuth = _localAuth ?? auth;

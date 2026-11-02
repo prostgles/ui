@@ -4,6 +4,7 @@ import {
   closeWorkspaceWindows,
   monacoType,
   runDbSql,
+  setOrAddWorkspace,
   type KeyPressOrCombination,
 } from "utils/utils";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
@@ -15,7 +16,7 @@ export const sqlEditorSvgif: OnBeforeScreenshot = async (
   { addScene },
 ) => {
   await openConnection("prostgles_video_demo");
-  await page.getByTestId("WorkspaceMenu.list").getByText("default").click();
+  await setOrAddWorkspace(page, "default");
   await toggleMenuPinned();
   await closeWorkspaceWindows(page);
   await openMenuIfClosed();

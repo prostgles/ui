@@ -30,7 +30,7 @@ import {
   ActionColumnsControls,
   type ActionColumnsFormat,
 } from "./ColumnDisplayFormat/ActionColumnsControls";
-import { getActionFunctions } from "prostgles-types";
+import { getRowActionFunctions } from "../../ActionPopup/getJobActionFunctions";
 
 const options = [
   {
@@ -87,7 +87,7 @@ export const AddColumnMenu = ({
 }: AddColumnMenuProps) => {
   const { methods } = usePrgl();
   const table = tables.find((t) => t.name === w.table_name);
-  const actions = table ? getActionFunctions(methods, table) : [];
+  const actions = table ? getRowActionFunctions(methods, table) : [];
   const storedActions =
     table?.columns.filter(
       (c) =>

@@ -23,6 +23,7 @@ export const WorkspaceDeleteBtn = ({
 
   return (
     <PopupMenu
+      className="w-full"
       style={{
         height: "100%",
       }}
@@ -33,8 +34,9 @@ export const WorkspaceDeleteBtn = ({
       button={
         <Btn
           title="Delete this workspace"
+          titleAsLabel={true}
           iconPath={mdiDelete}
-          className="delete-workspace"
+          className="delete-workspace w-full jc-start"
           disabledInfo={disabledInfo}
           data-command="WorkspaceDeleteBtn"
           color="danger"

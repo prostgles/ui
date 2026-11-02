@@ -147,9 +147,8 @@ export default class Window<W extends WindowSyncItem> extends RTComp<
       menuPortal = ReactDOM.createPortal(
         <>
           {this.getTitleIcon()}
-          {layoutMode === "fixed" ?
-            <div style={{ width: ".65em" }}></div>
-          : <Btn
+          {layoutMode !== "fixed" && (
+            <Btn
               className="f-0"
               iconPath={mdiCogOutline}
               title={t.Window["Open menu"]}
@@ -163,7 +162,7 @@ export default class Window<W extends WindowSyncItem> extends RTComp<
                 });
               }}
             />
-          }
+          )}
         </>,
         menuIconContainer,
       );

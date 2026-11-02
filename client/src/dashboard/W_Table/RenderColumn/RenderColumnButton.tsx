@@ -53,7 +53,13 @@ export const RenderColumnButton = ({
     variant,
     className: `max-w-full text-ellipsis ${includes(_PG_numbers, column.udt_name) ? "as-end" : "as-start"}`,
     style: {
-      ...(variant === "text" && { padding: 0, minWidth: "unset" }),
+      padding: "4px 8px",
+      borderRadius: "12px",
+      minHeight: "unset",
+      minWidth: "unset",
+      fontSize: "inherit",
+      lineHeight: "inherit",
+      ...(variant === "text" && !colors?.chipColor && { padding: 0 }),
       ...(colors?.textColor && { color: colors.textColor }),
       ...(colors?.chipColor || colors?.cellColor ?
         {

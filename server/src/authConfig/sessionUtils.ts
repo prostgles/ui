@@ -31,7 +31,7 @@ export const makeSession = async (
   client: Pick<Sessions, "user_agent" | "ip_address" | "type"> & {
     sid?: string;
   },
-  dbo: DBHandlerServer<DBGeneratedSchema>,
+  dbo: Pick<DBHandlerServer<DBGeneratedSchema>, "sessions">,
   expires = 0,
 ): Promise<BasicSession> => {
   if (user) {

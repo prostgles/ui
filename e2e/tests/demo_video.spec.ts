@@ -48,7 +48,7 @@ test.describe("Demo video", () => {
       },
       { CI },
     );
-    await login(page, USERS.test_user, "/login");
+    await login(page, USERS.test_user, "/auth/login");
     await page.waitForTimeout(2000);
 
     await runDbsSql(
@@ -129,7 +129,7 @@ test.describe("Demo video", () => {
 
   test(`Backup databases`, async ({ page: p }) => {
     const page = p as PageWIds;
-    await login(page, USERS.test_user, "/login");
+    await login(page, USERS.test_user, "/auth/login");
     await openConnection(page, "prostgles_video_demo");
     await page.getByTestId("dashboard.goToConnConfig").click();
     await page.getByTestId("config.bkp").click();

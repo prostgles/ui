@@ -53,6 +53,27 @@ export const ColumnDisplayFormat = ({
     const userFormatSchemas = schemaWithoutAllowedValues.oneOfType
       .map((t) => {
         if (
+          t.type.enum[0] === "URL" &&
+          "params" in t &&
+          "type" in t.params &&
+          "urlColumn" in t.params.type
+        ) {
+          const urlSchema = {
+            ...t,
+            type: { ...t.type, enum: ["URL"] as const },
+            params: {
+              optional: true as const,
+              type: {
+                urlColumn: {
+                  ...t.params.type.urlColumn,
+                  allowedValues: textCols,
+                },
+              },
+            },
+          };
+          return urlSchema;
+        }
+        if (
           t.type.enum[0] === "Avatar" &&
           "params" in t &&
           "type" in t.params &&

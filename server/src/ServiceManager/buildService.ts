@@ -51,7 +51,6 @@ export async function buildService(
   const { imageName } = getServiceDockerResources(serviceName);
 
   const { buildArgs } = await getSelectedConfigEnvs(this, serviceName);
-  /** Only rebuild if hash differs */
   const buildHash = await getDockerBuildHash(serviceCwd, buildArgs);
   const buildLabels = {
     "prostgles-build-hash": buildHash,
@@ -61,7 +60,8 @@ export async function buildService(
     "--label",
     `${key}=${value}`,
   ]);
-  const matchingDockerImage = await dockerInspect(imageName);
+  const matchingDockerImage =
+    service.pullBaseImages ? undefined : await dockerInspect(imageName);
   if (
     matchingDockerImage &&
     isEqual(
@@ -82,7 +82,15 @@ export async function buildService(
   const instance: ServiceInstance = {
     status: "building",
     building: executeDockerCommand(
-      ["build", ...buildArgs, "-t", imageName, ...labelArgs, "."],
+      [
+        "build",
+        ...(service.pullBaseImages ? ["--pull"] : []),
+        ...buildArgs,
+        "-t",
+        imageName,
+        ...labelArgs,
+        ".",
+      ],
       {
         timeout: 600_000,
         signal: abortController.signal,

@@ -17,6 +17,7 @@ import { createRequire } from "node:module";
 import { join, resolve } from "node:path";
 import { parse } from "../../../server/node_modules/dotenv";
 import { createConfigTestProject } from "../utils/createConfigTestProject";
+import { Client } from "pg";
 
 type RunOptions = {
   capture?: boolean;
@@ -161,6 +162,114 @@ test("temporary databases remove Docker volumes after disposal and failed setup"
       if (volumeNames.length)
         spawnSync("docker", ["volume", "rm", ...volumeNames]);
     }
+  }
+});
+
+test("configured test databases are recreated and retained after success and failure", async () => {
+  const configId = "persistent-databases-e2e";
+  const configPath = createConfigTestProject(
+    {
+      id: configId,
+      tableConfig: {
+        retained_rows: { columns: { id: "integer PRIMARY KEY" } },
+      },
+    },
+    test.info().outputPath("config"),
+  );
+  const { startTemporaryDatabases } =
+    await import("../../../server/dist/server/src/cli/startTemporaryDatabases");
+  const server = await startTemporaryDatabases({
+    configId,
+    configPath,
+    logPath: test.info().outputPath("postgres.log"),
+  });
+  const serverUrl = new URL(server.state.url);
+  serverUrl.pathname = "";
+  const prefix = "persistent-e2e";
+  const stateName = `${prefix}_state_db`;
+  const appName = `${prefix}_app_db`;
+  const environmentPath = join(configPath, ".env");
+  const writeEnvironment = (maintenanceUrl: string) =>
+    writeFileSync(
+      environmentPath,
+      [
+        `PROSTGLES_PG_SERVER_URL=${serverUrl}`,
+        `PROSTGLES_STATE_DB_NAME=${server.state.name}`,
+        `PROSTGLES_APP_DB_NAME=${server.project.name}`,
+        `PROSTGLES_E2E_PG_SERVER_URL=${maintenanceUrl}`,
+        `PROSTGLES_E2E_DB_NAMES_PREFIX=${prefix}`,
+      ].join("\n"),
+    );
+  let deployment: TestDeployment | undefined;
+  try {
+    /* Each deployment recreates the configured databases before seeding. */
+    for (const [index, failSetup] of [false, false, true].entries()) {
+      writeEnvironment(index ? server.state.url : serverUrl.toString());
+      const starting = createTestDeployment({
+        configId,
+        configPath,
+        logPath: test.info().outputPath(`${index}.log`),
+        seed: async ({ stateDatabase, projectDatabase }) => {
+          for (const [client, name] of [
+            [stateDatabase, stateName],
+            [projectDatabase, appName],
+          ] as const) {
+            expect(
+              (await client.query("SELECT current_database() AS name")).rows,
+            ).toEqual([{ name }]);
+          }
+          expect(
+            (await projectDatabase.query("SELECT * FROM retained_rows")).rows,
+          ).toEqual([]);
+          await projectDatabase.query("INSERT INTO retained_rows VALUES ($1)", [
+            index,
+          ]);
+          if (failSetup) throw new Error("Persistent database seed failure");
+        },
+      });
+      if (failSetup) {
+        await expect(starting).rejects.toThrow(
+          "Persistent database seed failure",
+        );
+      } else {
+        deployment = await starting;
+        /* A second deployment cannot claim databases that are already in use. */
+        await expect(
+          createTestDeployment({ configId, configPath }),
+        ).rejects.toThrow("already in use");
+        expect((await deployment.connectStateAs("admin")).auth.user?.type).toBe(
+          "admin",
+        );
+        await deployment.dispose();
+      }
+      /* Disposal and failed setup retain the latest seeded data for inspection. */
+      const persistedUrl = new URL(serverUrl);
+      persistedUrl.pathname = appName;
+      const persisted = new Client({
+        connectionString: persistedUrl.toString(),
+      });
+      await persisted.connect();
+      try {
+        expect(
+          (await persisted.query("SELECT * FROM retained_rows")).rows,
+        ).toEqual([{ id: index }]);
+      } finally {
+        await persisted.end();
+      }
+    }
+    /* Persistent test databases require both a server URL and a name prefix. */
+    writeFileSync(
+      environmentPath,
+      `PROSTGLES_E2E_PG_SERVER_URL=${serverUrl}\n`,
+    );
+    await expect(
+      createTestDeployment({ configId, configPath }),
+    ).rejects.toThrow(
+      "Set both PROSTGLES_E2E_PG_SERVER_URL and PROSTGLES_E2E_DB_NAMES_PREFIX",
+    );
+  } finally {
+    await deployment?.dispose();
+    await server.dispose();
   }
 });
 
@@ -478,12 +587,12 @@ test("runs a generated config project with temporary databases and Docker Compos
           which "$program"
           "$program" --version
         done
-        psql "$PROSTGLES_DATABASE_URL" -v ON_ERROR_STOP=1 -c "CREATE TABLE backup_restore_check (value text); INSERT INTO backup_restore_check VALUES ('backup-restored');"
-        pg_dump "$PROSTGLES_DATABASE_URL" --format=c --table=backup_restore_check --file=/tmp/backup-check.dump
-        psql "$PROSTGLES_DATABASE_URL" -v ON_ERROR_STOP=1 -c "DROP TABLE backup_restore_check;"
-        pg_restore --dbname="$PROSTGLES_DATABASE_URL" --exit-on-error /tmp/backup-check.dump
-        psql "$PROSTGLES_DATABASE_URL" -At -v ON_ERROR_STOP=1 -c "SELECT value FROM backup_restore_check;"
-        psql "$PROSTGLES_DATABASE_URL" -v ON_ERROR_STOP=1 -c "DROP TABLE backup_restore_check;"
+        psql "$PROSTGLES_PG_SERVER_URL/$PROSTGLES_APP_DB_NAME" -v ON_ERROR_STOP=1 -c "CREATE TABLE backup_restore_check (value text); INSERT INTO backup_restore_check VALUES ('backup-restored');"
+        pg_dump "$PROSTGLES_PG_SERVER_URL/$PROSTGLES_APP_DB_NAME" --format=c --table=backup_restore_check --file=/tmp/backup-check.dump
+        psql "$PROSTGLES_PG_SERVER_URL/$PROSTGLES_APP_DB_NAME" -v ON_ERROR_STOP=1 -c "DROP TABLE backup_restore_check;"
+        pg_restore --dbname="$PROSTGLES_PG_SERVER_URL/$PROSTGLES_APP_DB_NAME" --exit-on-error /tmp/backup-check.dump
+        psql "$PROSTGLES_PG_SERVER_URL/$PROSTGLES_APP_DB_NAME" -At -v ON_ERROR_STOP=1 -c "SELECT value FROM backup_restore_check;"
+        psql "$PROSTGLES_PG_SERVER_URL/$PROSTGLES_APP_DB_NAME" -v ON_ERROR_STOP=1 -c "DROP TABLE backup_restore_check;"
         rm /tmp/backup-check.dump
       `,
       ],
@@ -571,7 +680,7 @@ const checkTemporaryDatabases = async (
   const environment = readFileSync(envPath, "utf8");
   writeFileSync(
     envPath,
-    "PROSTGLES_DATABASE_URL=invalid\nPROSTGLES_STATE_DATABASE_URL=invalid\n",
+    "PROSTGLES_PG_SERVER_URL=invalid\nPROSTGLES_STATE_DB_NAME=invalid\nPROSTGLES_APP_DB_NAME=invalid\n",
   );
   try {
     for (const mode of ["dev", "start"] as const) {
@@ -581,8 +690,9 @@ const checkTemporaryDatabases = async (
         env: {
           ...process.env,
           PROSTGLES_UI_PORT: String(port),
-          PROSTGLES_DATABASE_URL: "invalid",
-          PROSTGLES_STATE_DATABASE_URL: "invalid",
+          PROSTGLES_PG_SERVER_URL: "invalid",
+          PROSTGLES_STATE_DB_NAME: "invalid",
+          PROSTGLES_APP_DB_NAME: "invalid",
         },
         stdio: ["ignore", "pipe", "pipe"],
       });

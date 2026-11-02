@@ -332,7 +332,7 @@ class Button<HREF extends string | void = void> extends RTComp<
         extraStyle.padding = "12px";
       }
 
-      if (variant === "text") {
+      if (variant === "text" && style.padding === undefined) {
         extraStyle.paddingLeft = 0;
       }
     } else {

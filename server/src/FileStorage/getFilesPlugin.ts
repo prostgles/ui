@@ -10,6 +10,7 @@ import type { TableConfig, TableHooks } from "prostgles-server";
 import { getLocalStorageClient } from "prostgles-server";
 import type { FileTableConfig } from "prostgles-server/dist/ProstglesTypes";
 import type { StorageClient } from "prostgles-server/dist/StorageClient/StorageClientTypes";
+import { getFileVersionTableName } from "prostgles-server/dist/StorageClient/fileVersionUtils";
 import { asName, omitKeys } from "prostgles-types";
 import { getCloudClient } from "../cloudClients/cloudClients";
 import { getAnnotationsTableHook } from "../FileStorage/getAnnotationsTableHook";
@@ -105,8 +106,11 @@ export const getFilesPlugin = async ({
         )`,
         references_file_table:
           "FOREIGN KEY (file_id) REFERENCES " +
-          fileTableConfig.fileTable +
+          asName(fileTableConfig.fileTable) +
           "(id) ON DELETE CASCADE",
+        ...(fileTable.versioning && {
+          references_file_version: `FOREIGN KEY (file_id, file_version) REFERENCES ${asName(getFileVersionTableName(fileTable))}(file_id, version)`,
+        }),
       },
     };
   }
@@ -122,6 +126,7 @@ export const getFilesPlugin = async ({
       (getAnnotationsTableHook(
         annotationsTable,
         fileTable.tableName,
+        fileTable.versioning ? getFileVersionTableName(fileTable) : undefined,
       ) as TableHooks<void, ProstglesContext>)
     : undefined),
   };

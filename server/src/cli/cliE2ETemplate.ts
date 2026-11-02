@@ -23,7 +23,7 @@ export const getE2ETemplate = (configId: string) => ({
     # UI workflow tests
 
     - Put business workflows in tests/<role>/*.spec.ts. Import test and expect from ../fixtures and UI helpers from @prostgles/app/testing/ui.
-    - Configure seeded users and deterministic data in tests/fixtures.ts using deploymentOptions.users and deploymentOptions.seed. Each test gets a fresh app and database; Docker must be available.
+    - Configure seeded users and deterministic data in tests/fixtures.ts using deploymentOptions.users and deploymentOptions.seed. Each test gets a fresh app and database. Set PROSTGLES_E2E_PG_SERVER_URL and PROSTGLES_E2E_DB_NAMES_PREFIX in the app’s .env to recreate <prefix>_state_db and <prefix>_app_db before each test and retain them afterwards. With both unset, Docker must be available for disposable databases.
     - Add non-admin users to deploymentOptions only after defining their access rules, then select one with test.use({ userKey: "default" }). A key matching a published user type lets typed database clients infer the applicable schema; distinct fixture keys may share that user type when tests need multiple identities.
     - Start with await app.open(). Reuse openTable(app.page, tableName, true), getTableWindow(app.page, tableName), insertRow(app.page, tableName, values), fillSmartForm, fillSmartFormAndInsert, clickInsertRow and setOrAddWorkspace before adding selectors. These are the same helpers used by Prostgles UI's e2e tests.
     - Assert visible business outcomes and denied actions for each role. Use deployment.connectProjectAs(userKey) when a database assertion helps. Keep app-specific helper functions here beside the workflows.

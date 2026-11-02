@@ -7,7 +7,7 @@ import {
 } from "../McpTypes";
 import { createMcpServerHandlers } from "../createMcpServerHandlers";
 import { fromEntries } from "@common/utils";
-import { OAUTH_AUTHORIZATION_URL_ERROR } from "./createMcpOAuthProvider";
+import { isMcpOAuthAuthorizationRequired } from "./createMcpOAuthProvider";
 
 const chainMap = new Map<string, Promise<any>>();
 
@@ -51,12 +51,9 @@ export const connectToRemoteMCPServer = async ({
 
     let destroyed = false;
     transport.onerror = (error) => {
-      if (destroyed) return;
+      if (destroyed || isMcpOAuthAuthorizationRequired(error)) return;
       const errMsg = "Transport error: " + error.message;
       appendToLog(errMsg);
-      const isOAuthAuthorizationUrl = error.message.startsWith(
-        OAUTH_AUTHORIZATION_URL_ERROR,
-      );
       const dcrNotSupported =
         error.message ===
         "Incompatible auth server: does not support dynamic client registration";
@@ -69,16 +66,13 @@ export const connectToRemoteMCPServer = async ({
           type: "error",
           errorType:
             dcrNotSupported ? "oauth-dcr-not-supported"
-            : isOAuthAuthorizationUrl ? "oauth-authorization-url"
             : isDisconnectedError ? "disconnected"
             : undefined,
           data: error,
         },
         getFullLog(),
       );
-      if (isOAuthAuthorizationUrl || isDisconnectedError) {
-        // do nothing
-      } else {
+      if (!isDisconnectedError) {
         parameters.OAuth?.onAuthError(
           dcrNotSupported ? "dcr_not_supported" : "unknown",
           error.message,

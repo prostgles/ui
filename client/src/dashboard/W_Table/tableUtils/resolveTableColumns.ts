@@ -9,16 +9,20 @@ import { getReferenceColumn } from "./getReferenceColumn";
 export const resolveTableColumns = (
   table: DBSchemaTableWithRenderInfo,
   tables: DBSchemaTableWithRenderInfo[],
-  configuredColumns: ColumnConfig[],
-  inheritDefaults = true,
+  configuredColumns: ColumnConfig[] | null | undefined,
+  allowNestedColumns = true,
+  showAllColumns = false,
 ): (ColumnConfig & Pick<ColumnConfigWithInfo, "defaultConfig">)[] => {
   const defaults = new Map<string, ColumnConfig>();
-  const columnOptions = inheritDefaults ? table.columnConfigs : undefined;
+  const columnOptions = table.columnConfigs;
+  const selectedColumns = configuredColumns ?? [];
+  const hasSelection = selectedColumns.length > 0;
   Object.entries(columnOptions ?? {}).forEach(([name, options]) => {
     const isPhysicalColumn = table.columns.some(
       (column) => column.name === name,
     );
     const { nested, ...config } = options;
+    if (!isPhysicalColumn && nested && !allowNestedColumns) return;
     const availableNested = nested && getAvailableNested(nested, table, tables);
     if (!isPhysicalColumn && nested && !availableNested) return;
     defaults.set(name, {
@@ -28,24 +32,25 @@ export const resolveTableColumns = (
     });
   });
   const columns: ColumnConfig[] = [
-    ...configuredColumns,
+    ...selectedColumns,
     ...Array.from(
-      new Set([...table.columns.map(({ name }) => name), ...defaults.keys()]),
+      new Set([
+        ...table.columns.map(({ name }) => name),
+        ...(!hasSelection || showAllColumns ? defaults.keys() : []),
+      ]),
     )
-      .filter(
-        (name) => !configuredColumns.some((column) => column.name === name),
-      )
+      .filter((name) => !selectedColumns.some((column) => column.name === name))
       .map((name) => ({
         name,
-        ...(!inheritDefaults && { show: false }),
+        show:
+          !hasSelection &&
+          (defaults.get(name)?.show ??
+            (!table.defaultColumns || table.defaultColumns.includes(name))),
       })),
   ].map((column) => ({
-    show:
-      !inheritDefaults ||
-      !table.defaultColumns ||
-      table.defaultColumns.includes(column.name),
     ...defaults.get(column.name),
     ...column,
+    show: showAllColumns || (column.show ?? true),
   }));
   const reservedNames = new Set([
     ...table.columns.map(({ name }) => name),
@@ -56,6 +61,9 @@ export const resolveTableColumns = (
       reservedNames.add(defaultRenderAs.params.dataKey);
     }
   });
+  const hasAggregates = columns.some(
+    (column) => column.show && column.computedConfig?.funcDef.isAggregate,
+  );
   const expandedColumns = columns.flatMap((column) => {
     const info = table.columns.find(({ name }) => name === column.name);
     if (!info?.select) return [column];
@@ -63,6 +71,8 @@ export const resolveTableColumns = (
     let name = baseName;
     let suffix = 1;
     while (reservedNames.has(name)) name = `${baseName}_${suffix++}`;
+    const configuredReference = columns.find((column) => column.name === name);
+    if (!column.show && !configuredReference) return [column];
     const defaultNested = columnOptions?.[column.name]?.nested;
     const nested =
       defaultNested &&
@@ -71,7 +81,8 @@ export const resolveTableColumns = (
       !column.format &&
       getAvailableNested(defaultNested, table, tables);
     const referenceColumn =
-      nested ?
+      hasAggregates ? undefined
+      : nested ?
         {
           ...column,
           name,
@@ -83,14 +94,20 @@ export const resolveTableColumns = (
           tables,
           name,
         );
-    const configuredReference = configuredColumns.find(
-      (column) => column.name === name,
-    );
     if (!referenceColumn) {
-      // Restore the source when its inherited display is no longer available.
+      /* Restore the source when its inherited display is no longer available. */
       return configuredReference?.show && !configuredReference.nested ?
           [{ ...column, show: true }]
         : [column];
+    }
+    /* Joined children cannot contain joins. Preserve raw values when resolved again. */
+    if (!allowNestedColumns) {
+      return [
+        {
+          ...column,
+          format: column.format ?? info.renderAs ?? { type: "NONE" as const },
+        },
+      ];
     }
     reservedNames.add(name);
     defaults.set(name, referenceColumn);

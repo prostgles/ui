@@ -1,24 +1,19 @@
-import type { DetailedFilter } from "@common/filterUtils";
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import type { DBSSchema } from "@common/publishUtils";
 import { sliceText } from "@common/utils";
-import Btn from "@components/Btn";
 import { FlexCol, FlexRow } from "@components/Flex";
 import { InfoRow } from "@components/InfoRow";
 import Loading from "@components/Loader/Loading";
 import { SearchList } from "@components/SearchList/SearchList";
 import { Stopwatch } from "@components/Stopwatch";
-import { mdiTable } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { useMcpServerIcons } from "@pages/ServerSettings/MCPServers/MCPServerTools/useMcpServerIcons";
 import { getKeys, includes } from "prostgles-types";
 import React, { useState } from "react";
 import { AskLLMChat } from "src/dashboard/AskLLM/Chat/AskLLMChat";
 import { useAskLLMSetupState } from "src/dashboard/AskLLM/Setup/LLMSetupProvider";
-import SmartTable from "src/dashboard/SmartTable";
 import type { ProstglesMCPToolsProps } from "../../../ProstglesToolUseMessage";
 import { ToolCall } from "./ToolCall";
-import { getToolCallRowFilter } from "./getToolCallRowFilter";
 import { useAgenticWorkflowActivityItems } from "./useAgenticWorkflowActivityItems";
 
 export type AgenticWorkflowActivityProps = Pick<
@@ -33,19 +28,14 @@ export const AgenticWorkflowActivity = ({
   messageId,
   finishedAt,
 }: AgenticWorkflowActivityProps) => {
-  const { dbsMethods, user, db, tables, sql, methods } = usePrgl();
+  const { dbsMethods, user, tables } = usePrgl();
   const setupState = useAskLLMSetupState();
   const [agentChatId, setAgentChatId] = useState<number>();
   const [selectedMcpToolCall, setSelectedMcpToolCall] =
     useState<DBSSchema["mcp_server_tool_calls"]>();
 
-  const [selectedTable, setSelectedTable] = useState<{
-    name: string;
-    filter: DetailedFilter[] | undefined;
-  }>();
-
   const { items } = useAgenticWorkflowActivityItems({ chatId, messageId });
-  const { getIcon } = useMcpServerIcons();
+  const { getIcon } = useMcpServerIcons(tables);
 
   return (
     <FlexCol className="f-1">
@@ -92,17 +82,6 @@ export const AgenticWorkflowActivity = ({
               : item.finished_at ? new Date(item.finished_at)
               : finishedAt;
 
-            const maybeTableName =
-              (
-                item.type === "orchestrator_tool_call" &&
-                item.mcp_server_name === "db"
-              ) ?
-                item.input?.tableName
-              : undefined;
-
-            const tableName =
-              typeof maybeTableName === "string" ? maybeTableName : undefined;
-
             const isLoading = !endedAt;
             const failed =
               item.type === "agent_chat" ?
@@ -126,7 +105,11 @@ export const AgenticWorkflowActivity = ({
                   item.type === "agent_chat" ?
                     "RobotOutline"
                   : ((item.mcp_server_name && item.mcp_tool_name ?
-                      getIcon(item.mcp_server_name, item.mcp_tool_name)
+                      getIcon(
+                        item.mcp_server_name,
+                        item.mcp_tool_name,
+                        item.input,
+                      )
                     : undefined) ?? "Tools"),
               },
               rowClassname:
@@ -151,34 +134,6 @@ export const AgenticWorkflowActivity = ({
               ).replaceAll("\n", " "),
               contentRight: (
                 <FlexRow className="gap-p5">
-                  {tableName && (
-                    <Btn
-                      iconPath={mdiTable}
-                      size="small"
-                      variant="faded"
-                      color="action"
-                      title="Open table"
-                      children="Open table"
-                      data-key={tableName}
-                      data-command="AgenticWorkflowActivity.openTable"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        setSelectedTable({
-                          name: tableName,
-                          filter:
-                            item.type === "orchestrator_tool_call" ?
-                              getToolCallRowFilter(
-                                item,
-                                tables.find(
-                                  (table) => table.name === tableName,
-                                ),
-                              )
-                            : undefined,
-                        });
-                      }}
-                    />
-                  )}
                   {isLoading && user?.options?.hideLlmLoadingCounter ? null : (
                     <Stopwatch
                       className={failed ? "text-danger" : "text-2"}
@@ -222,22 +177,6 @@ export const AgenticWorkflowActivity = ({
           chatId={chatId}
           toolCall={selectedMcpToolCall}
           onClose={() => setSelectedMcpToolCall(undefined)}
-        />
-      )}
-      {selectedTable && (
-        <SmartTable
-          db={db}
-          tables={tables}
-          methods={methods}
-          sql={sql}
-          tableName={selectedTable.name}
-          filter={selectedTable.filter}
-          onFilterChange={(filter) =>
-            setSelectedTable({ ...selectedTable, filter })
-          }
-          positioning="center"
-          onClosePopup={() => setSelectedTable(undefined)}
-          clickCatchStyle={{ opacity: 1 }}
         />
       )}
     </FlexCol>

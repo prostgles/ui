@@ -1,35 +1,47 @@
-import { asName } from "prostgles-types";
+import type { DBHandlerServer, TableConfig } from "prostgles-server";
 import type { DBTableHandlersFromSchema } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
-import type { TableConfig, DBHandlerServer } from "prostgles-server";
 import type { TableInsertRowFromTableConfig } from "prostgles-server/dist/TableConfig/TableRowFromColumnDefinitions";
+import { asName, pickKeys } from "prostgles-types";
 import type { AlertsOptions } from "./AlertTypes";
+import { alertQuerySchema } from "./alertQuerySchema";
 
 export const getAlertTables = (
   options: AlertsOptions,
   jobsTableName: string,
+  syncUsers: boolean,
 ) => {
   const names = getAlertTableNames(options);
   const id = "UUID PRIMARY KEY DEFAULT gen_random_uuid()";
   const alertReference =
     `UUID NOT NULL REFERENCES ${asName(names.alerts)}(id)` as const;
+  const userReference =
+    syncUsers ? "UUID NOT NULL REFERENCES users(id)" : "UUID NOT NULL";
   return {
     alerts: {
       info: { label: "Alerts" },
       columns: {
         id,
+        config_key: "TEXT",
         name: "TEXT NOT NULL CHECK (length(trim(name)) > 0)",
         enabled: "BOOLEAN NOT NULL DEFAULT TRUE",
-        created_by: "TEXT NOT NULL",
-        definition: {
+        created_by: syncUsers ? "UUID REFERENCES users(id)" : "UUID",
+        user_filter: {
+          nullable: false,
+          jsonbSchema: { record: { values: "unknown" } },
+        },
+        channels: {
           nullable: false,
           jsonbSchema: {
-            oneOfType: Object.entries(options.types).map(
-              ([name, definition]) => ({
-                type: { enum: [name] },
-                params: { type: definition.params },
-              }),
-            ),
+            type: "ValueLookup[]",
+            table: names.channels,
+            column: "id",
+            filter: { id: { $in: Object.keys(options.channels) } },
           },
+        },
+        /* Callback alerts use their config_key to resolve prepare from trusted config. */
+        definition: {
+          nullable: true,
+          jsonbSchema: alertQuerySchema,
         },
         schedule: {
           nullable: false,
@@ -37,6 +49,12 @@ export const getAlertTables = (
         },
         revision: "INTEGER NOT NULL DEFAULT 1",
         created_at: "TIMESTAMPTZ NOT NULL DEFAULT now()",
+      },
+      constraints: {
+        configured_alert: "UNIQUE(config_key)",
+        alert_channels: "CHECK (jsonb_array_length(channels) > 0)",
+        alert_definition:
+          "CHECK (definition IS NOT NULL OR config_key IS NOT NULL)",
       },
       triggers: {
         alert_revision: {
@@ -46,33 +64,38 @@ export const getAlertTables = (
           query: "BEGIN NEW.revision := OLD.revision + 1; RETURN NEW; END;",
         },
       },
-    },
-    recipients: {
-      info: { label: "Alert recipients" },
-      columns: {
-        id,
-        alert_id: alertReference,
-        user_id: "TEXT NOT NULL",
-        channel: { enum: Object.keys(options.channels), nullable: false },
-        enabled: "BOOLEAN NOT NULL DEFAULT TRUE",
+      onMount: async ({ dbo }) => {
+        const rules = Object.entries(options.rules ?? {});
+        if (!rules.length) return;
+        await dbo[names.alerts]!.insertMany(
+          rules.map(([key, rule]) => ({
+            config_key: key,
+            name: rule.name,
+            enabled: rule.enabled,
+            user_filter: rule.userFilter,
+            channels: rule.channels,
+            schedule: rule.schedule,
+            definition:
+              "query" in rule ?
+                pickKeys(rule, ["query", "template", "deduplicate"])
+              : null,
+          })),
+          { onConflict: "DoNothing" },
+        );
       },
-      constraints: { recipient: "UNIQUE(alert_id, user_id, channel)" },
     },
     deliveries: {
       info: { label: "Alert deliveries" },
       columns: {
         id,
         alert_id: alertReference,
-        recipient_id: `UUID NOT NULL REFERENCES ${asName(names.recipients)}(id)`,
-        user_id: "TEXT NOT NULL",
+        user_id: userReference,
         channel: "TEXT NOT NULL",
+        is_test: "BOOLEAN NOT NULL DEFAULT FALSE",
         occurrence: "TIMESTAMPTZ NOT NULL",
-        // Historical definitions remain readable when a type changes or is removed.
         definition: {
-          nullable: false,
-          jsonbSchema: {
-            type: { type: "string", params: { record: { values: "unknown" } } },
-          },
+          nullable: true,
+          jsonbSchema: alertQuerySchema,
         },
         revision: "INTEGER NOT NULL",
         job_id: `UUID REFERENCES ${asName(jobsTableName)}(id)`,
@@ -82,10 +105,20 @@ export const getAlertTables = (
         },
         reason: "TEXT",
         provider_id: "TEXT",
+        deduplication_keys: "TEXT[]",
+        sent_at: "TIMESTAMPTZ",
         created_at: "TIMESTAMPTZ NOT NULL DEFAULT now()",
       },
-      constraints: { occurrence: "UNIQUE(alert_id, recipient_id, occurrence)" },
-      indexes: { [`${names.deliveries}_job`]: { columns: "job_id" } },
+      constraints: {
+        occurrence: "UNIQUE(alert_id, user_id, channel, occurrence)",
+      },
+      indexes: {
+        [`${names.deliveries}_job`]: { columns: "job_id" },
+        [`${names.deliveries}_dedup`]: {
+          columns: "alert_id, user_id, channel, sent_at",
+          where: "deduplication_keys IS NOT NULL",
+        },
+      },
     },
   } as const satisfies TableConfig;
 };
@@ -103,7 +136,7 @@ export const getAlertTableNames = (
   }
   return {
     alerts: alertTableName,
-    recipients: `${alertTableName}_recipients`,
+    channels: `${alertTableName}_channels`,
     deliveries: `${alertTableName}_deliveries`,
   };
 };
@@ -115,17 +148,14 @@ export type AlertSchema = {
   };
 };
 
-// Map configurable SQL names to handlers typed from the managed table definitions.
+/* Map configurable SQL names to handlers typed from the managed table definitions. */
 export const getAlertDb = (
   dbo: DBTableHandlersFromSchema,
-  options: AlertsOptions,
+  options: Pick<AlertsOptions, "tableName">,
 ) => {
   const names = getAlertTableNames(options);
   return {
     alerts: dbo[names.alerts] as DBHandlerServer<AlertSchema>["alerts"],
-    recipients: dbo[
-      names.recipients
-    ] as DBHandlerServer<AlertSchema>["recipients"],
     deliveries: dbo[
       names.deliveries
     ] as DBHandlerServer<AlertSchema>["deliveries"],

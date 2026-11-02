@@ -29,7 +29,7 @@ export const withNonce = (
 const cspNonceHandlerName = "nonceHandler";
 export const setNonceHandler = (app: e.Express, enable: boolean) => {
   if (!enable) {
-    removeExpressRouteByName(app as unknown as ExpressApp, cspNonceHandlerName);
+    removeExpressRouteByName(app, cspNonceHandlerName);
     return;
   }
   const nonceHandler: RequestHandler = (_req, res, next) => {

@@ -109,12 +109,13 @@ const getActionColumnDescription = (column?: ColumnConfigWithInfo) => {
   if (!actions.length) return "No action buttons configured";
   if (actions.length === 1) {
     return "columnName" in actions[0]! ?
-        "Stored action · runs immediately"
-      : "Function button · opens a form";
+      "Stored action"
+    : "Function button";
   }
   const storedCount = actions.filter((action) => "columnName" in action).length;
   const functionCount = actions.length - storedCount;
-  if (!storedCount) return `${functionCount} function buttons · open forms`;
-  if (!functionCount) return `${storedCount} stored actions · run immediately`;
+  if (!storedCount) return `${functionCount} function buttons`;
+  if (!functionCount)
+    return `${storedCount} stored actions`;
   return `${actions.length} action buttons · ${storedCount} stored, ${functionCount} function${functionCount === 1 ? "" : "s"}`;
 };

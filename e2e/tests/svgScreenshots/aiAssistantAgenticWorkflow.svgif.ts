@@ -80,7 +80,7 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
   await newChat(page);
   await deletePreviousMessages(page);
   await setPromptByText(page, "chat");
-  await setModelByText(page, "sonn");
+  await setModelByText(page, "luna");
 
   await deletePreviousMessages(page);
   await setPromptByText(page, "Create workflow");
@@ -322,8 +322,7 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
       nth: 0,
       selector:
         getDataLabel("db insertMany receipts ") +
-        " " +
-        getCommandElemSelector("AgenticWorkflowActivity.openTable"),
+        getCommandElemSelector("AgenticWorkflow.openToolCall"),
     },
     { duration: "fast" },
   );

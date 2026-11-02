@@ -28,7 +28,7 @@ export const FileExtractionStatus = ({
       <PopupMenu
         title={"Extraction details"}
         showFullscreenToggle={{}}
-        positioning="center"
+        positioning="beneath-left"
         button={
           <Btn
             color={

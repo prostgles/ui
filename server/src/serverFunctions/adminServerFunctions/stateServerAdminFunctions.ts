@@ -248,7 +248,7 @@ export const stateServerAdminFunctions = {
           if (enable) {
             await serviceManager.enableService(serviceName, () => {});
           } else {
-            serviceManager.stopService(serviceName);
+            await serviceManager.stopService(serviceName);
           }
         },
       }),

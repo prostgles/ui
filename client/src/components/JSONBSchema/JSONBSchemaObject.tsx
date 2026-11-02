@@ -1,7 +1,7 @@
 import { mdiClose, mdiDotsHorizontal } from "@mdi/js";
 import type { JSONB } from "prostgles-types";
 import { getKeys, isObject, omitKeys } from "prostgles-types";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import Btn from "../Btn";
 import { Label } from "../Label";
 import type { JSONBSchemaCommonProps } from "./JSONBSchema";
@@ -30,6 +30,8 @@ export const JSONBSchemaObject = ({
   ...oProps
 }: P) => {
   const value = isObject(rawValue) ? rawValue : undefined;
+  const latestValue = useRef(value);
+  latestValue.current = value;
   const optionalProps = Object.entries(schema.type)
     .filter(([k, v]) => isObject(v) && v.optional && value?.[k] === undefined)
     .map(([k]) => k);
@@ -98,11 +100,13 @@ export const JSONBSchemaObject = ({
               className={itemStyle?.className}
               onChange={
                 ((newVal) => {
-                  onChange(
-                    (newVal === undefined ?
-                      omitKeys(value ?? {}, [propName])
-                    : { ...value, [propName]: newVal }) as any,
-                  );
+                  /* Preserve field changes queued before the next render. */
+                  const newValue =
+                    newVal === undefined ?
+                      omitKeys(latestValue.current ?? {}, [propName])
+                    : { ...latestValue.current, [propName]: newVal };
+                  latestValue.current = newValue;
+                  onChange(newValue as any);
                 }) as any
               }
               {...oProps}

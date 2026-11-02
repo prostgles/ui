@@ -30,17 +30,9 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
   `,
   );
 
-  const toggleMenuBtn = await page.getByTestId(
-    "DashboardMenuHeader.togglePinned",
-  );
-  await page.getByTestId("WorkspaceMenuDropDown").waitFor({ state: "visible" });
-  if (await toggleMenuBtn.count()) {
-    await toggleMenuBtn.click();
-  }
-
-  await expect(
-    page.getByTestId("DashboardMenuHeader.togglePinned"),
-  ).toHaveCount(0);
+  await page.getByTestId("dashboard.menu").waitFor({ state: "visible" });
+  await openMenuIfClosed(true);
+  await expect(page.getByTestId("DashboardMenu.togglePinned")).toHaveCount(0);
 
   await deleteAllWorkspaces(page);
   await closeWorkspaceWindows(page);

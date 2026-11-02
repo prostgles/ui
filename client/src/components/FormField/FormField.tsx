@@ -38,6 +38,7 @@ export type FormFieldTypes =
   | "username"
   | "url"
   | "date"
+  | "time"
   | "color";
 type FormFieldNullOpt<Nullable = false, Optional = false> =
   Nullable extends true ? null

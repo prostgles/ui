@@ -1,7 +1,8 @@
 import type {
   AnyObject,
+  DBSchemaTable,
   JobControlBinding,
-  JobStatus,
+  JobRecord,
   JSONB,
 } from "prostgles-types";
 import type { ActionButtonState } from "./actionColumn";
@@ -14,22 +15,36 @@ export const jobActionSchema = {
 
 type JobAction = JSONB.GetObjectType<typeof jobActionSchema> &
   JobControlBinding;
-type JobActionRow = { status: JobStatus; progress_message: string | null };
+type JobActionRow = Pick<JobRecord, "status" | "progress_message"> & {
+  cancel_requested: JobRecord["cancel_requested"] | undefined;
+};
 
 export const getJobActionSelect = (
   job: JobAction | undefined,
-  key: string,
+  tables: DBSchemaTable[],
 ): AnyObject =>
   job ?
     {
-      [getJobActionValueKey(key)]: {
+      [getJobActionValueKey(job)]: {
         $leftJoin: [
           {
             table: job.tableName,
             on: [{ [job.columnName]: "id" }],
           },
         ],
-        select: { status: 1, progress_message: 1 },
+        select: {
+          status: 1,
+          progress_message: 1,
+          ...((
+            tables
+              .find(({ name }) => name === job.tableName)
+              ?.columns.some(
+                ({ name, select }) => name === "cancel_requested" && select,
+              )
+          ) ?
+            { cancel_requested: 1 }
+          : {}),
+        },
       },
     }
   : {};
@@ -37,12 +52,11 @@ export const getJobActionSelect = (
 export const getJobActionValue = (
   options: JobAction | undefined,
   row: AnyObject,
-  key: string,
 ): ActionButtonState => {
-  const job = (
-    row[getJobActionValueKey(key)] as JobActionRow[] | undefined
-  )?.[0];
   if (!options) return {};
+  const job = (
+    row[getJobActionValueKey(options)] as JobActionRow[] | undefined
+  )?.[0];
 
   const disabledInfo =
     !job ? "Job has not started"
@@ -55,7 +69,10 @@ export const getJobActionValue = (
         options.operation === "cancel" ?
           (options.runningText ?? "Cancel")
         : (options.succeededText ?? "Rerun"),
-      isLoading: false,
+      isLoading:
+        options.operation === "cancel" &&
+        !!job?.cancel_requested &&
+        (job.status === "pending" || job.status === "running"),
       disabledInfo,
     };
   }
@@ -78,15 +95,14 @@ export const getJobActionValue = (
       disabledInfo,
     };
   }
-  if (job.status === "failed" || job.status === "cancelled") {
-    return {
-      text: options.retryText ?? "Retry",
-      color: "warn",
-      isLoading: false,
-      disabledInfo,
-    };
-  }
-  return {};
+  return {
+    text: options.retryText ?? "Retry",
+    color: "warn",
+    isLoading: false,
+    disabledInfo,
+  };
 };
 
-const getJobActionValueKey = (key: string) => `${key}__job`;
+/* Every control for the same job link shares one lookup, across action columns. */
+const getJobActionValueKey = ({ tableName, columnName }: JobControlBinding) =>
+  `__job_${JSON.stringify([tableName, columnName])}`;

@@ -19,8 +19,24 @@ import { CreateComponentQuickFeedbackPreview } from "./ProstglesMCPTools/Webdev/
 import { Markdown } from "./ProstglesMCPTools/WebSearch/Markdown";
 import { WebSearch } from "./ProstglesMCPTools/WebSearch/WebSearch";
 import { CreateTables } from "./ProstglesMCPTools/CreateTables";
+import { DatabaseToolCall } from "./ProstglesMCPTools/DatabaseToolCall";
 
 export const ProstglesMCPToolsWithUI = {
+  ...Object.fromEntries(
+    (
+      ["find", "count", "insert", "insertMany", "update", "delete"] as const
+    ).map(
+      (toolName) =>
+        [
+          getProstglesMCPFullToolName("db", toolName),
+          {
+            component: DatabaseToolCall,
+            displayMode: "inline",
+            showsError: true,
+          },
+        ] as const,
+    ),
+  ),
   [getProstglesMCPFullToolName("prostgles-ui", "create_dashboards") as string]:
     {
       component: LoadSuggestedDashboards,

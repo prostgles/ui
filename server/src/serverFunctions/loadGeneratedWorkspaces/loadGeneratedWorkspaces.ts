@@ -99,7 +99,6 @@ export const loadGeneratedWorkspaces = async (
         ...metadata,
         ...(config === "shared" && { published: true }),
         ...(toolUseId && { source: { tool_use_id: toolUseId } }),
-        options: { pinnedMenu: false },
         layout_mode: "fixed",
       },
       { returning: "*" },

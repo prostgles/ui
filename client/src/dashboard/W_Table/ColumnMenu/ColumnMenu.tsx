@@ -450,7 +450,7 @@ export const ColumnMenu = (props: P) => {
       rootStyle={{ padding: 0 }}
       contentClassName={"p-0 o-none"}
       showFullscreenToggle={{}}
-      title={colName}
+      title={column.label || column.info?.label || colName}
       positioning="beneath-left"
       onClose={onClose}
       fixedTopLeft={false}

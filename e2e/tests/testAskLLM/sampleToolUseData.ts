@@ -1362,49 +1362,6 @@ export const prostglesUICryptoDashboardSample = {
               },
             },
           ],
-          cardLayout: {
-            type: "container",
-            style: {
-              gap: "8px",
-              display: "flex",
-              flexDirection: "column",
-            },
-            children: [
-              {
-                type: "node",
-                style: {
-                  fontSize: "18px",
-                  fontWeight: "bold",
-                },
-                columnName: "symbol",
-              },
-              {
-                type: "container",
-                style: {
-                  display: "flex",
-                  justifyContent: "space-between",
-                },
-                children: [
-                  {
-                    type: "node",
-                    style: {
-                      color: "#2196F3",
-                      fontSize: "16px",
-                    },
-                    columnName: "price",
-                  },
-                  {
-                    type: "node",
-                    style: {
-                      color: "#999",
-                      fontSize: "12px",
-                    },
-                    columnName: "timestamp",
-                  },
-                ],
-              },
-            ],
-          },
           table_name: "futures",
         },
       ],

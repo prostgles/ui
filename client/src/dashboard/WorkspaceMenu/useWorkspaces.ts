@@ -3,7 +3,7 @@ import { useCallback, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import type { Workspace } from "../Dashboard/dashboardUtils";
 import type { DBS } from "../Dashboard/DBS";
-import { getCanCreateWorkspaces } from "../Dashboard/cloneWorkspace";
+import { canCreateWorkspace } from "../Dashboard/cloneWorkspace";
 
 export const useWorkspaces = (
   dbs: DBS,
@@ -12,7 +12,7 @@ export const useWorkspaces = (
   isAdmin: boolean,
 ) => {
   const unsortedWorkspaces = useWorkspacesSync(dbs, connectionId);
-  const canCreateWorkspaces = getCanCreateWorkspaces(dbs);
+  const canCreateWorkspaces = canCreateWorkspace(dbs);
   const workspaces = useMemo(() => {
     return (
       unsortedWorkspaces
@@ -61,7 +61,10 @@ export const useSetActiveWorkspace = (
         setSearchParams(searchParams);
         return;
       }
-      if (w.id === currentWorkspaceId) {
+      if (
+        w.id ===
+        (searchParams.get(WorkspaceIdSearchParam) ?? currentWorkspaceId)
+      ) {
         return;
       }
       const path = getWorkspacePath(w);

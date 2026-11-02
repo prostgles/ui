@@ -193,10 +193,16 @@ export const userServerFunctions = {
           const isValid = await isTotpTokenValid(secret, token);
 
           if (!isValid) throw "Invalid code";
-          await dbs.users.update(
-            { id: user.id },
-            { "2fa": { ...latestUser["2fa"]!, enabled: true } },
-          );
+          await dbs.tx(async (dbsTx) => {
+            await dbsTx.users.update(
+              { id: user.id },
+              { "2fa": { ...latestUser["2fa"]!, enabled: true } },
+            );
+            await dbsTx.magic_links.delete({
+              user_id: user.id,
+              magic_link_used: null,
+            });
+          });
 
           /** Log out all web sessions after enabling 2fa */
           await dbs.sessions.update(

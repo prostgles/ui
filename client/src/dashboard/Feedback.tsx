@@ -1,4 +1,3 @@
-import { mdiMessageBookmarkOutline } from "@mdi/js";
 import React, { useState } from "react";
 import type { Prgl } from "../App";
 import { Success } from "@components/Animations";
@@ -43,12 +42,11 @@ export const Feedback = (props: Pick<Prgl, "dbsMethods">) => {
       button={
         <Btn
           title={t.Feedback["Leave feedback"]}
-          variant="faded"
+          variant="text"
           data-command="Feedback"
-          iconPath={mdiMessageBookmarkOutline}
           size="default"
         >
-          {/* {window.isMediumWidthScreen ? null : t.Feedback.Feedback} */}
+          {t.Feedback.Feedback}
         </Btn>
       }
       footerButtons={
@@ -57,7 +55,6 @@ export const Feedback = (props: Pick<Prgl, "dbsMethods">) => {
         : (pClose) => [
             {
               label: t.common.Cancel,
-              variant: "outline",
               onClick: (e) => {
                 setFeedBack({ email: "", details: "" });
                 pClose?.(e);
@@ -66,6 +63,7 @@ export const Feedback = (props: Pick<Prgl, "dbsMethods">) => {
             {
               label: t.common.Send,
               variant: "filled",
+              className: "ml-auto",
               color: "action",
               disabledInfo:
                 feedback.sending && !feedback.error ? t.Feedback["Already sent"]

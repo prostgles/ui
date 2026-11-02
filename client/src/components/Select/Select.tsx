@@ -20,6 +20,8 @@ import { SearchList } from "../SearchList/SearchList";
 import "./Select.css";
 import { SelectTriggerButton } from "./SelectTriggerButton";
 
+export const SELECT_SEARCH_THRESHOLD = 15;
+
 export type OptionKey = string | number | boolean | Date | null | undefined;
 export type FullOption<O extends OptionKey = string> = Pick<
   SearchListItem,
@@ -164,7 +166,7 @@ export class Select<
       label,
       variant = "div",
       onSearch,
-      noSearchLimit = 15,
+      noSearchLimit = SELECT_SEARCH_THRESHOLD,
       endOfResultsContent,
       multiSelect,
       asRow,
@@ -428,6 +430,7 @@ export class Select<
     const searchList = (
       <SearchList
         id={id}
+        roundedItems={variant === "search-list-only"}
         style={{
           maxHeight: "500px",
           ...(variant === "button-group-vertical" && {

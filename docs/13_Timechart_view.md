@@ -47,3 +47,24 @@ The timechart view allows you to visualize time-series data from your database.
 The timechart view menu provides options for configuring the timechart.
 
 
+<h3 id="server-side_function_view"> Server-side function view </h3> 
+
+The server-side functions is an experimental feature that allows you to specify and execute server-side Typescript functions directly from the dashboard.
+
+  - **Header section**: Contains menu button, title and window minimise/fullscreen controls.  
+    - **Quick actions**: Quick actions for the view, providing easy access to charting and joins.  
+      - **Toggle filter bar**: Shows or hides the filter bar, allowing users to filter the data displayed in the table.  
+      - **Add cross-filtered table**: Adds a new table view that is cross-filtered by the current table. This allows you to explore related data in a new table view.  
+      - **Add timechart**: Adds a timechart visualization based on the current table. Visible only when the current table (or any linked table) has a timestamp/date column.  
+      - **Add map**: Adds a map visualization based on the current data. Visible only when the current table (or any linked table) has a geometry/geography column (postgis extension must be enabled).  
+    - **View title. Drag to re-arrange layout**: Function name.  
+    - **Collapse the view**: Collapses the view, minimizing it to temporarily save space on the dashboard.   
+    - **Fullscreen**: Expands the view to fill the entire screen.  
+    - **Remove view**: Removes the view from the dashboard.  
+    - <a href="#server-side_function_view_menu">Server-side function view menu</a>: Server-side function menu  
+
+<h4 id="server-side_function_view_menu"> Server-side function view menu </h4> 
+
+The server-side function view menu provides options for executing the function, viewing results, and managing function parameters.
+
+

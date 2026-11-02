@@ -8,21 +8,21 @@ import { isDefined } from "@common/filterUtils";
 import {
   getMagicLinkEmailFromTemplate,
   getVerificationEmailFromTemplate,
-  MOCK_SMTP_HOST,
 } from "@common/OAuthUtils";
 import type { DBSSchema } from "@common/publishUtils";
 import { isPortFree } from "@src/utils/isPortFree";
 import type { SessionUser } from "prostgles-server/dist/Auth/AuthTypes";
 import type { PublishFullyTyped } from "prostgles-server/dist/DBSchemaBuilder/DBSchemaBuilder";
-import { verifySMTPConfig } from "prostgles-server/dist/Prostgles";
+import { verifySMTPConfig } from "../Emails/sendEmail";
 import type { Publish } from "prostgles-server/dist/PublishParser/PublishParser";
 import { getKeys, type FullFilter } from "prostgles-types";
-import { getSMTPWithTLS } from "../authConfig/emailProvider/getEmailSenderWithMockTest";
+import { getSMTPWithTLS } from "../authConfig/emailProvider/getEmailClient";
 import { checkClientIP } from "../authConfig/sessionUtils";
 import { fetchUserAccessControlRules } from "../ConnectionManager/fetchUserAccessControlRules";
 import { getAllowedConnectionsFilter } from "./getAllowedConnectionsFilter";
 import { getBusinessAccessPublish } from "./getBusinessAccessPublish";
 import { getPublishLLM } from "./getPublishLLM";
+import { getPublishAlerts } from "./getPublishAlerts";
 
 export const publish: Publish<
   DBGeneratedSchema,
@@ -154,6 +154,7 @@ export const publish: Publish<
   let dashboardTables: Publish<DBGeneratedSchema> = {
     /* DASHBOARD */
     ...dashboardMainTables,
+    ...getPublishAlerts(user_id, user.type),
     access_control_user_types: isAdmin && "*",
     access_control_connections: isAdmin && "*",
     published_methods:
@@ -226,23 +227,19 @@ export const publish: Publish<
               }
 
               const { email } = row.auth_providers ?? {};
-              if (
-                email?.enabled &&
-                (email.smtp.type !== "smtp" ||
-                  email.smtp.host !== MOCK_SMTP_HOST)
-              ) {
+              if (email?.enabled) {
                 const smtp = getSMTPWithTLS(email.smtp);
                 await verifySMTPConfig(smtp);
               }
 
-              if (email?.signupType === "withPassword") {
+              if (email?.emailLoginType === "withPassword") {
                 getVerificationEmailFromTemplate({
                   template: email.emailTemplate,
                   url: "a",
                   code: "a",
                 });
               }
-              if (email?.signupType === "withMagicLink") {
+              if (email?.emailLoginType === "withMagicLink") {
                 getMagicLinkEmailFromTemplate({
                   template: email.emailTemplate,
                   url: "a",

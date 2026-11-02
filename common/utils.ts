@@ -413,13 +413,14 @@ export const API_ENDPOINTS = {
   REST: "/rest-api",
   WS_DB: "/ws-api",
   WS_DBS: "/ws-api-dbs",
-  MAGIC_LINK: "/magic-link",
+  MAGIC_LINK: "/auth/magic-link",
   DBS: "/dbs",
 } as const;
 
 export const ROUTES = {
-  LOGIN: "/login",
-  LOGOUT: "/logout",
+  LOGIN: "/auth/login",
+  REGISTER: "/auth/register",
+  LOGOUT: "/auth/logout",
   ACCOUNT: "/account",
   CONNECTIONS: "/connections",
   CONFIG: "/connection-config",

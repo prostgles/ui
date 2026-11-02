@@ -264,7 +264,7 @@ export const getSmartSearchRows = async (
   try {
     const { result, isAggregate } = await getRows(args, undefined, true);
     const remaining = 3 - result.length;
-    if (remaining > 0 && !isAggregate) {
+    if (args.term && remaining > 0 && !isAggregate) {
       const moreRows = await getRows(args, remaining);
       return [...result, ...moreRows.result];
     }

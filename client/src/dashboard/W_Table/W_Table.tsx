@@ -553,6 +553,10 @@ export default class W_Table extends RTComp<
             getLinksAndWindows: this.props.getLinksAndWindows,
             show:
               workspace.layout_mode === "fixed" ? { filter: true } : undefined,
+            headerSearch:
+              workspace.layout_mode === "fixed" ?
+                { extraFilters: this.props.externalFilters }
+              : undefined,
           }}
           getMenu={this.getMenu}
         >
@@ -563,6 +567,11 @@ export default class W_Table extends RTComp<
 
     const cardOpts =
       w.options.viewAs?.type === "card" ? w.options.viewAs : undefined;
+    const showFilterBar =
+      w.options.showFilters &&
+      (workspace.layout_mode !== "fixed" ||
+        !!w.filter.length ||
+        !!w.having.length);
     let content: React.ReactNode = null;
     if (tableName && !tableHandler) {
       content = showTableNotFound(tableName);
@@ -600,6 +609,35 @@ export default class W_Table extends RTComp<
       // eslint-disable-next-line @typescript-eslint/unbound-method
       const canInsert = Boolean(tableHandler?.insert);
       const showInsertButton = canInsert && w.options.hideInsertButton !== true;
+      const insertRowControls = showInsertButton && !childWindow && (
+        <FlexRow
+          className="p-1"
+          style={{
+            position: "sticky",
+            left: 0,
+            bottom: 0,
+            /** Below the filter search clickcatch */
+            zIndex: ClickCatchOverlayZIndex - 1,
+          }}
+        >
+          <Btn
+            iconPath={mdiPlus}
+            data-command="dashboard.window.rowInsert"
+            data-key={tableName}
+            title={t.W_Table["Insert row"]}
+            className="shadow w-fit h-fit"
+            color="action"
+            variant={w.options.showFilters ? "outline" : "filled"}
+            onClick={() => {
+              this.rowPanelRState.set({ type: "insert" });
+            }}
+          />
+          <NodeCountChecker
+            parentNode={this.ref}
+            dataAge={this.state.rowsLoaded}
+          />
+        </FlexRow>
+      );
       const pkeys = cols
         .map((c) => (c.show && c.info?.is_pkey ? c.info.name : undefined))
         .filter(isDefined);
@@ -628,7 +666,7 @@ export default class W_Table extends RTComp<
               />
             )}
 
-            {!!w.options.showFilters && (
+            {showFilterBar && (
               <FlexCol
                 key={"W_Table_Filters"}
                 className={`gap-p5 p-p5 bg-color-0 ${childWindow ? " bb b-color " : ""}`}
@@ -646,6 +684,7 @@ export default class W_Table extends RTComp<
                   className=""
                   extraFilters={this.props.externalFilters}
                   hideSort={!cardOpts}
+                  filtersOnly={workspace.layout_mode === "fixed"}
                   showInsertUpdateDelete={{
                     onSuccess: () => {
                       this.setState({ dataAge: Date.now() });
@@ -676,6 +715,7 @@ export default class W_Table extends RTComp<
                   cardOpts={cardOpts}
                   tableHandler={tableHandler!}
                   paginationProps={{ ...this.getPaginationProps() }}
+                  afterLastRowContent={insertRowControls}
                   onEditClickRow={this.onClickEditRow}
                   onDataChanged={() => {
                     this.setState({ dataAge: Date.now() });
@@ -721,38 +761,7 @@ export default class W_Table extends RTComp<
                   onRowClick={
                     this.props.onClickRow ? this.state.onRowClick : undefined
                   }
-                  afterLastRowContent={
-                    showInsertButton &&
-                    !childWindow && (
-                      <FlexRow
-                        className="p-1"
-                        style={{
-                          position: "sticky",
-                          left: 0,
-                          bottom: 0,
-                          /** Below the filter search clickcatch */
-                          zIndex: ClickCatchOverlayZIndex - 1,
-                        }}
-                      >
-                        <Btn
-                          iconPath={mdiPlus}
-                          data-command="dashboard.window.rowInsert"
-                          data-key={tableName}
-                          title={t.W_Table["Insert row"]}
-                          className="shadow w-fit h-fit"
-                          color="action"
-                          variant={w.options.showFilters ? "outline" : "filled"}
-                          onClick={() => {
-                            this.rowPanelRState.set({ type: "insert" });
-                          }}
-                        />
-                        <NodeCountChecker
-                          parentNode={this.ref}
-                          dataAge={this.state.rowsLoaded}
-                        />
-                      </FlexRow>
-                    )
-                  }
+                  afterLastRowContent={insertRowControls}
                 />
               }
             </W_Table_Content>

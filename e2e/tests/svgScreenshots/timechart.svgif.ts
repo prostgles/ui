@@ -6,6 +6,7 @@ import {
   openTable,
   runDbsSql,
   sendAskLLMMessage,
+  setModelByText,
   setPromptByText,
 } from "utils/utils";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
@@ -32,6 +33,7 @@ export const timechartSvgif: OnBeforeScreenshot = async (
     await page.getByTestId("AskLLM").click();
     await setPromptByText(page, "dashboard");
     await newChat(page);
+    await setModelByText(page, "luna");
     await sendAskLLMMessage(page, " funding ");
     await page
       .getByTestId("AskLLMChat.LoadSuggestedDashboards")

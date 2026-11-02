@@ -10,7 +10,10 @@ import { includes, type ColumnInfo } from "prostgles-types";
 import type { DBSchemaTableWJoins } from "src/dashboard/Dashboard/dashboardUtils";
 
 export const getToolCallRowFilter = (
-  toolCall: DBSSchema["mcp_server_tool_calls"],
+  toolCall: Pick<
+    DBSSchema["mcp_server_tool_calls"],
+    "mcp_tool_name" | "input" | "output"
+  >,
   table:
     Pick<DBSchemaTableWJoins, "columns" | "uniqueColumnGroups"> | undefined,
 ): DetailedFilterBase[] | undefined => {
@@ -20,8 +23,6 @@ export const getToolCallRowFilter = (
       ["insert", "insertMany", "update", "find", "count", "delete"],
       toolName,
     ) ||
-    !toolCall.finished_at ||
-    toolCall.error ||
     toolCall.output?.isError
   ) {
     return;

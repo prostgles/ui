@@ -25,7 +25,7 @@ test.describe("Demo video setup", () => {
       }
       return false;
     };
-    await login(page, USERS.test_user, "http://localhost:3004/login");
+    await login(page, USERS.test_user, "http://localhost:3004/auth/login");
     await page.waitForTimeout(2000);
     const getVideoDemoConnection = async () => {
       await page.getByRole("link", { name: "Connections" }).click();

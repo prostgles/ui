@@ -34,9 +34,7 @@ const handler = {
     const serviceManager = getServiceManager();
 
     return {
-      stop: () => {
-        serviceManager.stopService("webSearchSearxng");
-      },
+      stop: () => serviceManager.stopService("webSearchSearxng"),
       tools: {
         fetch: async (
           {

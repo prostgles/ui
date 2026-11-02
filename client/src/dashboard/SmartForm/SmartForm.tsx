@@ -18,6 +18,7 @@ import { SmartFormFooterButtons } from "./SmartFormFooter/SmartFormFooterButtons
 import { useSmartFormActions } from "./SmartFormFooter/useSmartFormActions";
 import { type NewRowDataHandler } from "./SmartFormNewRowDataHandler";
 import { SmartFormPopupWrapper } from "./SmartFormPopup/SmartFormPopupWrapper";
+import { getSmartFormHeaderText } from "./SmartFormPopup/SmartFormHeader";
 import { SmartFormViewAsMarkdown } from "./SmartFormPopup/SmartFormViewAsMarkdown";
 import { SmartFormUpperFooter } from "./SmartFormUpperFooter/SmartFormUpperFooter";
 import { useSmartForm, type SmartFormState } from "./useSmartForm";
@@ -209,18 +210,12 @@ const SmartFormWithNoError = ({
   const { mode, displayedColumns, errors, error, table, loading } = state;
 
   const isLoading = loading || ("loading" in mode ? mode.loading : false);
-  const headerFromCardConfig =
-    (
-      table.card?.headerColumn &&
-      "currentRow" in mode &&
-      mode.currentRow &&
-      table.card.headerColumn in mode.currentRow
-    ) ?
-      (mode.currentRow[table.card.headerColumn] as string)
-    : undefined;
   const headerText =
     label ??
-    (headerFromCardConfig || table.label || table.comment || tableName);
+    getSmartFormHeaderText(
+      table,
+      "currentRow" in mode ? mode.currentRow : undefined,
+    );
 
   const formHeader =
     asPopup ? null
@@ -299,8 +294,8 @@ const SmartFormWithNoError = ({
         <SmartFormUpperFooter {...props} {...state} />
 
         <ErrorComponent
-          className="f-0 b rounded m-p5"
-          style={{ flex: "none" }}
+          className="f-0 b rounded m-p5 p-1 gap-p5"
+          style={{ flex: "none", lineHeight: "1.5rem" }}
           withIcon={true}
           error={
             error ||

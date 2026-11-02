@@ -23,15 +23,15 @@ export const LLMGroupedToolCallsMessage = ({
     return getMessageContentItems({ messages });
   }, [messages]);
 
-  const { sql } = usePrgl();
-  const { getIconFromFullName } = useMcpServerIcons();
+  const { sql, tables } = usePrgl();
+  const { getIconFromFullName } = useMcpServerIcons(tables);
   const { icons, toolCallCount } = useMemo(() => {
     let toolCallCount = 0;
     const iconPaths = messageContentItems
       .map((m) => {
         if (m.type === "tool_use") {
           toolCallCount++;
-          return getIconFromFullName(m.name);
+          return getIconFromFullName(m.name, m.input);
         }
       })
       .filter(isDefined);

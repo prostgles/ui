@@ -69,7 +69,7 @@ export const tableConfigWindows = {
       fullscreen: `BOOLEAN DEFAULT TRUE`,
       sort: "JSONB DEFAULT '[]'::jsonb",
       filter: {
-        nullable: true,
+        defaultValue: [],
         jsonbSchema: {
           type: "unknown[]",
           // arrayOfType: {

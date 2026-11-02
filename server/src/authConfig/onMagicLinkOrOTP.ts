@@ -1,12 +1,20 @@
-import type { LoginSignupConfig } from "prostgles-server/dist/Auth/AuthTypes";
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
-import { makeSession, type SUser } from "./sessionUtils";
+import type { DBSSchema } from "@common/publishUtils";
+import { DAY } from "@common/utils";
+import type { LoginSignupConfig } from "prostgles-server/dist/Auth/AuthTypes";
 import type { AuthResponse } from "prostgles-types";
-import { startRateLimitedLoginAttempt } from "./startRateLimitedLoginAttempt";
 import type { DBS, Users } from "..";
-import { DAY, MINUTE, YEAR } from "@common/utils";
+import { hashRegistrationCode } from "./registrationConfirmation";
+import { makeSession, type SUser } from "./sessionUtils";
+import { startRateLimitedLoginAttempt } from "./startRateLimitedLoginAttempt";
 
-export const getOnMagicLinkOrOTP = (dbs: DBS) => {
+export const getOnMagicLinkOrOTP = (
+  dbs: DBS,
+  stateDatabaseConfig: Pick<
+    DBSSchema["database_configs"],
+    "session_max_age_days" | "auth_providers"
+  >,
+) => {
   const onMagicLinkOrOTP: Required<
     LoginSignupConfig<DBGeneratedSchema, SUser>
   >["onMagicLinkOrOTP"] = async (
@@ -39,133 +47,154 @@ export const getOnMagicLinkOrOTP = (dbs: DBS) => {
       return withError("rate-limit-exceeded");
     }
 
-    let user: Users | undefined;
-    let session_expires = Date.now() + YEAR;
-    if (data.type === "magic-link") {
-      const mlink = await dbs.magic_links.findOne({ id: data.id });
-      if (!mlink) {
-        return withError("no-match");
-      }
-      if (Number(mlink.expires) < Date.now()) {
-        await rateLimitedAttempt.onSuccess();
-        return withError("expired-magic-link", "Expired magic link");
-      }
-      if (mlink.magic_link_used) {
-        await rateLimitedAttempt.onSuccess();
-        return withError("expired-magic-link", "Magic link already used");
-      }
-      user = await dbs.users.findOne({ id: mlink.user_id });
-      if (!user) {
-        return withError("no-match", "User from Magic link not found");
-      }
-      if (user.status !== "active") {
-        return withError("inactive-account", "Account is inactive");
-      }
-
-      /**
-       * This is done to prevent multiple logins with the same magic link
-       * even if the requests are sent at the same time
-       */
-      const usedMagicLink = await dbs.magic_links.update(
-        { id: mlink.id, magic_link_used: null },
-        { magic_link_used: new Date() },
-        { returning: "*" },
-      );
-      if (!usedMagicLink?.length) {
-        return withError("used-magic-link", "Magic link already used");
-      }
-
-      session_expires = Number(mlink.session_expires);
-    } else {
-      user = await dbs.users.findOne({ email: data.email });
-
-      if (!user) {
-        return withError("no-match", "Invalid confirmation code");
-      }
-
-      const { registration } = user;
-      if (registration?.type === "password-w-email-confirmation") {
-        if (
-          registration.email_confirmation.status === "pending" &&
-          new Date(registration.email_confirmation.date).getTime() + DAY <
-            Date.now()
-        ) {
-          return withError("something-went-wrong", "Confirmation code expired");
+    const authenticationResult = await dbs.tx(async (dbsTx) => {
+      let user: Users | undefined;
+      let session_expires =
+        Date.now() + (stateDatabaseConfig.session_max_age_days || 1) * DAY;
+      if (data.type === "magic-link") {
+        const magicLink = await dbsTx.magic_links.findOne({ id: data.id });
+        if (!magicLink) {
+          return withError("no-match");
         }
-        if (
-          registration.email_confirmation.status !== "pending" ||
-          registration.email_confirmation.confirmation_code !== data.code
-        ) {
+        if (Number(magicLink.expires) < Date.now()) {
+          return withError("expired-magic-link", "Expired magic link");
+        }
+        if (magicLink.magic_link_used) {
+          return withError("expired-magic-link", "Magic link already used");
+        }
+        user = await dbsTx.users.findOne({ id: magicLink.user_id });
+        if (!user) {
+          return withError("no-match", "User from Magic link not found");
+        }
+        if (user.status !== "active") {
+          return withError("inactive-account", "Account is inactive");
+        }
+
+        /**
+         * This is done to prevent multiple logins with the same magic link
+         * even if the requests are sent at the same time
+         */
+        const usedMagicLink = await dbsTx.magic_links.update(
+          { id: magicLink.id, magic_link_used: null },
+          { magic_link_used: new Date() },
+          { returning: "*" },
+        );
+        if (!usedMagicLink?.length) {
+          return withError("used-magic-link", "Magic link already used");
+        }
+
+        session_expires = Number(magicLink.session_expires);
+      } else {
+        user = await dbsTx.users.findOne({ email: data.email });
+
+        if (!user) {
           return withError("no-match", "Invalid confirmation code");
         }
 
-        const userId = user.id;
-        await dbs.tx(async (dbsTx) => {
-          const latestUser = await dbsTx.users.findOne({ id: userId });
-          if (
-            latestUser?.registration?.type !==
-              "password-w-email-confirmation" ||
-            latestUser.registration.email_confirmation.status !== "pending"
-          ) {
-            throw new Error("Email confirmation already completed");
-          }
-          await dbsTx.users.update(
-            { id: userId },
-            {
-              registration: {
-                $merge: [
-                  {
-                    email_confirmation: {
-                      status: "confirmed",
-                      date: new Date().toISOString(),
-                    },
-                  },
-                ],
-              },
-            },
+        const { registration } = user;
+        if (!registration || registration.type === "OAuth") {
+          return withError("no-match", "Invalid confirmation code");
+        }
+        const isMagicLink = registration.type === "magic-link";
+        if (
+          !data.code ||
+          registration.code_hash !== hashRegistrationCode(data.code)
+        ) {
+          return withError(
+            isMagicLink ? "invalid-magic-link" : "no-match",
+            "Invalid confirmation code",
           );
-        });
-
-        await rateLimitedAttempt.onSuccess();
-        return {
-          response: { success: true, code: "email-verified" },
-          /** No session because we expect the user to login with email and password for extra security */
-          session: undefined,
-        };
-      }
-      if (user.registration?.type === "magic-link") {
-        if (!data.code || user.registration.otp_code !== data.code) {
-          return withError("invalid-magic-link", "Invalid code");
+        }
+        if (registration.confirmed_on) {
+          return withError(
+            isMagicLink ? "used-magic-link" : "no-match",
+            "Email confirmation already completed",
+          );
+        }
+        if (!(new Date(registration.expires).getTime() > Date.now())) {
+          return withError(
+            isMagicLink ? "expired-magic-link" : "something-went-wrong",
+            "Confirmation code expired",
+          );
+        }
+        /* Returning magic-link users stay active while awaiting a login code. */
+        if (
+          user.status !== "pending" &&
+          !(isMagicLink && user.status === "active")
+        ) {
+          return withError("inactive-account", "Account is inactive");
         }
         if (
-          new Date(user.registration.date).getTime() + 5 * MINUTE <
-          Date.now()
+          registration.type === "invite" &&
+          stateDatabaseConfig.auth_providers?.email?.emailLoginType ===
+            "withPassword"
         ) {
-          await rateLimitedAttempt.onSuccess();
-          return withError("expired-magic-link", "Code expired");
+          return withError(
+            "no-match",
+            "Set a password to accept this invitation",
+          );
         }
-        if (user.registration.used_on) {
-          await rateLimitedAttempt.onSuccess();
-          return withError("used-magic-link", "Magic link already used");
-        }
-        await dbs.users.update(
-          { id: user.id },
-          { registration: { $merge: [{ used_on: new Date().toISOString() }] } },
+
+        const confirmedUsers = await dbsTx.users.update(
+          /* Reject concurrent confirmations or changes to the account. */
+          {
+            id: user.id,
+            status: user.status,
+            type: user.type,
+            "2fa": user["2fa"],
+            registration,
+          },
+          {
+            status: "active",
+            registration: {
+              ...registration,
+              confirmed_on: new Date().toISOString(),
+            },
+          },
+          { returning: "*" },
         );
+        const [confirmedUser] = confirmedUsers ?? [];
+        if (!confirmedUser) {
+          return withError(
+            "no-match",
+            "Confirmation already used or account changed",
+          );
+        }
+        user = confirmedUser;
+
+        if (registration.type === "password-w-email-confirmation") {
+          return {
+            response: {
+              success: true,
+              code: "email-verified",
+            } satisfies AuthResponse.PasswordRegisterEmailConfirmationSuccess,
+            /** No session because we expect the user to login with email and password for extra security */
+            session: undefined,
+          };
+        }
       }
+      const session = await makeSession(
+        user,
+        {
+          ip_address: rateLimitedAttempt.ip,
+          user_agent: user_agent || null,
+          type: "web",
+        },
+        dbsTx,
+        Number(session_expires),
+      );
+      return { session };
+    });
+    const code = authenticationResult.response?.code;
+    if (
+      ("session" in authenticationResult && authenticationResult.session) ||
+      code === "email-verified" ||
+      code === "used-magic-link" ||
+      code === "expired-magic-link"
+    ) {
+      await rateLimitedAttempt.onSuccess();
     }
-    const session = await makeSession(
-      user,
-      {
-        ip_address: rateLimitedAttempt.ip,
-        user_agent: user_agent || null,
-        type: "web",
-      },
-      dbs,
-      Number(session_expires),
-    );
-    await rateLimitedAttempt.onSuccess();
-    return { session };
+    return authenticationResult;
   };
   return onMagicLinkOrOTP;
 };

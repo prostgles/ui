@@ -130,7 +130,7 @@ type RenderColumnValueProps = {
   showTitle?: boolean;
 };
 
-const RenderColumnValue = ({
+export const RenderColumnValue = ({
   table,
   column,
   row,
@@ -165,22 +165,24 @@ const RenderColumnValue = ({
   }
 
   return (
-    <RenderValue
-      column={column.info ?? column.computedConfig ?? column}
-      value={value}
-      showTitle={showTitle}
-      style={
-        (
-          column.display === "drillable-records" ||
-          column.style?.type === "Fixed" ||
-          column.style?.type === "Conditional"
-        ) ?
-          { color: "inherit" }
-        : undefined
-      }
-      maxLength={maxCellChars}
-      maximumFractionDigits={format?.type === "Currency" ? 2 : undefined}
-      getValues={getValues}
-    />
+    <div className="text-ellipsis f-0">
+      <RenderValue
+        column={column.info ?? column.computedConfig ?? column}
+        value={value}
+        showTitle={showTitle}
+        style={
+          (
+            column.display === "drillable-records" ||
+            column.style?.type === "Fixed" ||
+            column.style?.type === "Conditional"
+          ) ?
+            { color: "inherit" }
+          : undefined
+        }
+        maxLength={maxCellChars}
+        maximumFractionDigits={format?.type === "Currency" ? 2 : undefined}
+        getValues={getValues}
+      />
+    </div>
   );
 };

@@ -30,6 +30,7 @@ import {
 } from "./fetchChartRangeValues";
 import { getColumnsWithInfoAndWidth } from "./getColumnsWithInfoAndWidth";
 import { excludeFkeyActions } from "./excludeFkeyActions";
+import { getTableRowIdentityColumns } from "../ColumnMenu/ColumnDisplayFormat/getTableIdentityColumns";
 
 export const getTableSelect = async (
   w: Pick<WindowData<"table">, "columns" | "table_name">,
@@ -38,7 +39,6 @@ export const getTableSelect = async (
   filter: AnyObject,
   withoutData = false,
   methods: Prgl["methods"] = {},
-  inheritDefaults = true,
 ): Promise<{ barchartVals?: ChartValues; select: AnyObject }> => {
   const select: AnyObject = {};
 
@@ -46,13 +46,7 @@ export const getTableSelect = async (
   const table = tables.find((t) => t.name === w.table_name);
   if (!table) throw "Table not found";
   const fullColumns = excludeFkeyActions(
-    getColumnsWithInfoAndWidth(
-      tables,
-      w,
-      undefined,
-      undefined,
-      inheritDefaults,
-    ),
+    getColumnsWithInfoAndWidth(tables, w),
     table,
     methods,
   );
@@ -149,6 +143,14 @@ export const getRequiredTableSelect = (
     }
   };
 
+  /* Row editing needs stable keys even when they are hidden. */
+  if (!hasAggregates) {
+    getTableRowIdentityColumns(
+      table,
+      columns.map((column) => ({ ...column, show: true })),
+    ).forEach(({ name }) => addColumn(name));
+  }
+
   shownColumns.forEach((column) => {
     const format = getColumnFormat(column);
     if (
@@ -162,7 +164,10 @@ export const getRequiredTableSelect = (
     )
       return;
     if (!column.nested) {
-      Object.assign(select, getFormatColumnSelect({ column, table, methods }));
+      Object.assign(
+        select,
+        getFormatColumnSelect({ column, table, tables, methods }),
+      );
       addColumn(
         column.style?.type === "Conditional" ? column.style.column : undefined,
       );
@@ -266,7 +271,6 @@ const getNestedColumnSelect = async (
         {},
         true, // Only build the select; ranges depend on the parent query.
         methods,
-        false,
       )
     ).select;
   }

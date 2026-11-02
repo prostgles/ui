@@ -19,7 +19,10 @@ import { type DBS } from "../..";
 import { fetchLLMResponse, type LLMMessageWithRole } from "./fetchLLMResponse";
 import { getLLMToolsAllowedInThisChat } from "./getLLMToolsAllowedInThisChat";
 
-import { getMCPToolNameParts } from "@common/mcpUtils";
+import {
+  getMCPToolNameParts,
+  getProstglesMCPFullToolName,
+} from "@common/mcpUtils";
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import type { AuthClientRequest } from "prostgles-server/dist/Auth/AuthTypes";
 import { checkMaxCostLimitForChat } from "./checkMaxCostLimitForChat";
@@ -29,6 +32,9 @@ import { getPastMessages } from "./getPastMessages";
 import { getValidatedAskLLMChatOptions } from "./getValidatedAskLLMChatOptions";
 import { handleToolUseResultConfirmation } from "./handleToolUseResultConfirmation";
 import { runApprovedTools } from "./runApprovedTools/runApprovedTools";
+import { applyCreateAgentDefaultsToMessage } from "./applyCreateAgentDefaultsToMessage";
+import { getPendingToolUseMessages } from "./getPendingToolUseMessages";
+import { saveToolUseResults } from "./saveToolUseResults";
 
 export const getBestLLMChatModel = async (
   dbs: DBS,
@@ -97,26 +103,11 @@ export const askLLM = async (args: AskLLMArgs) => {
   const lastMessage = pastMessages.at(-1);
 
   /** If user stopped chat must add tool use responses to prevent errors */
-  const pendingToolUseMessages = pastMessages.flatMap(({ message }, index) => {
-    const result = filterArr(message, {
-      type: "tool_use",
-    } as const).filter(
-      (toolUse) =>
-        !pastMessages
-          .slice(index + 1)
-          .some((maybeResponse) =>
-            maybeResponse.message.some(
-              (n) => n.type === "tool_result" && n.tool_use_id === toolUse.id,
-            ),
-          ),
-    );
-    return result;
-  });
+  const pendingToolUseMessages = getPendingToolUseMessages(pastMessages);
   if (pendingToolUseMessages.length && args.type === "new-message") {
-    await dbs.llm_messages.insert({
-      user_id: user.id,
-      chat_id: chatId,
-      message: pendingToolUseMessages.map((m) => ({
+    await saveToolUseResults({
+      ...args,
+      userMessage: pendingToolUseMessages.map((m) => ({
         type: "tool_result" as const,
         tool_name: m.name,
         tool_use_id: m.id,
@@ -126,8 +117,6 @@ export const askLLM = async (args: AskLLMArgs) => {
             "Tool use requests were stopped by the user"
           : "Tool use requests were interrupted by the user",
       })),
-      llm_model_id: chat.model,
-      total_tokens: 0,
     });
     await dbs.mcp_tool_approval_requests.update(
       {
@@ -166,6 +155,36 @@ export const askLLM = async (args: AskLLMArgs) => {
       await tx.llm_messages.delete({ id: lastMessage.id });
       await tx.llm_messages.insert(newMessageData);
     });
+  } else if (
+    type === "tool-use-result" ||
+    type === "tool-use-result-with-denied"
+  ) {
+    const savedResults = await saveToolUseResults(args);
+    if (!savedResults) return;
+    const { toolUseMessage, remainingTools } = savedResults;
+    if (
+      remainingTools.some(
+        (tool) =>
+          tool.name ===
+          getProstglesMCPFullToolName("prostgles-ui", "ask_user_questions"),
+      )
+    )
+      return;
+    if (remainingTools.length) {
+      await runApprovedTools({
+        allowedTools: await getLLMToolsAllowedInThisChat({ dbs, chat }),
+        args,
+        chat,
+        toolUseRequestMessages: filterArr(toolUseMessage.message, {
+          type: "tool_use" as const,
+        }),
+        userApprovals: undefined,
+        aborter,
+        clientReq,
+        messageId: toolUseMessage.id,
+      });
+      return;
+    }
   } else {
     await dbs.llm_messages.insert(newMessageData);
   }
@@ -216,7 +235,7 @@ export const askLLM = async (args: AskLLMArgs) => {
 
   const hasMessagesThatNeedAIResponse =
     confirmedToolResult ||
-    userMessage.some((m) => {
+    (pastMessages.at(-1)?.message ?? userMessage).some((m) => {
       if (m.type === "tool_result") {
         if (m.is_error) {
           return true;
@@ -391,6 +410,8 @@ export const askLLM = async (args: AskLLMArgs) => {
       const bIsProstglesUIToolUse = getIsProstglesUIToolUse(b);
       return Number(aIsProstglesUIToolUse) - Number(bIsProstglesUIToolUse);
     });
+
+    await applyCreateAgentDefaultsToMessage(aiResponseMessage, chat.id, dbs);
 
     await dbs.llm_messages.update(
       { id: aiResponseMessagePlaceholder.id },

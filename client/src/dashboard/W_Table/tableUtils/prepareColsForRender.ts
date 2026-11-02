@@ -1,7 +1,7 @@
 import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";
-import { isNumericColumn } from "../../W_SQL/getSQLResultTableColumns";
 import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
 import type { ProstglesTableColumn } from "./getTableCols";
+import { isNumericTableColumn } from "./isNumericTableColumn";
 
 export const prepareColsForRender = (
   cols: ProstglesTableColumn[],
@@ -35,18 +35,8 @@ export const prepareColsForRender = (
       /* Align numbers to right for an easier read */
       headerClassname:
         c.style?.type === "Barchart" ? ""
-        : (
-          isNumericColumn(c) ||
-          c.nested?.columns.filter(
-            (nc) =>
-              nc.show &&
-              nc.computedConfig &&
-              isNumericColumn(nc.computedConfig),
-          ).length === 1
-        ) ?
-          " jc-end  "
+        : isNumericTableColumn(c) ? " jc-end  "
         : " ",
-      className: isNumericColumn(c) ? " ta-right " : " ",
       onResize: (width: number) => {
         const wcols = getWCols();
         const currentCols = wcols;

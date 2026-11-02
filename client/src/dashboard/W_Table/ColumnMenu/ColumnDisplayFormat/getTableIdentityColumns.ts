@@ -20,7 +20,10 @@ export const getTableIdentityColumns = (
                 (column) =>
                   column.name === columnName &&
                   column.show &&
-                  !column.computedConfig,
+                  !column.computedConfig &&
+                  !column.nested &&
+                  column.format?.type !== "Action" &&
+                  column.format?.type !== "ActionColumns",
               )),
         ),
     )
@@ -28,4 +31,24 @@ export const getTableIdentityColumns = (
   return table.columns.filter((column) =>
     uniqueColumnNames?.includes(column.name),
   );
+};
+
+export const getTableRowIdentityColumns = (
+  table: DBSchemaTableWJoins,
+  columnConfig?: ColumnConfig[],
+) => {
+  const primaryKeyColumns = getTableIdentityColumns(
+    {
+      ...table,
+      uniqueColumnGroups: [
+        table.columns
+          .filter((column) => column.is_pkey)
+          .map(({ name }) => name),
+      ],
+    },
+    columnConfig,
+  );
+  return primaryKeyColumns.length ? primaryKeyColumns : (
+      getTableIdentityColumns(table, columnConfig)
+    );
 };

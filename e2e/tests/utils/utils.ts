@@ -8,6 +8,7 @@ import {
   getTimeout,
   openConnection,
   getDashboardUtils,
+  openWorkspaceMenu,
 } from "../../../server/src/testing/ui/utils";
 export * from "../../../server/src/testing/ui/utils";
 import { Locator, type Page as PG, expect } from "@playwright/test";
@@ -171,19 +172,25 @@ export const fillLoginFormAndSubmit = async (
   await page.locator("#username").waitFor({ state: "visible", timeout: 30e3 });
   await page.locator("#username").fill("");
   await page.locator("#username").fill(userNameAndPassword);
-  const continueBtn = page.getByRole("button", { name: "Continue" });
-  let isContinueBtnVisible = false;
-  if (await continueBtn.count()) {
-    isContinueBtnVisible = true;
-    await continueBtn.click();
+  const passwordInput = page.locator("#password");
+  const submitButton = getLoginSubmitButton(page);
+  if (!(await passwordInput.isVisible())) {
+    await submitButton.click();
+    await page
+      .locator("#password:visible")
+      .or(page.getByTestId("Login.error"))
+      .first()
+      .waitFor({ state: "visible" });
+    if (!(await passwordInput.isVisible())) return;
   }
-  await page.locator("#password").fill(userNameAndPassword);
-  if (isContinueBtnVisible) {
-    await continueBtn.click();
-  } else {
-    await page.getByRole("button", { name: "Sign in", exact: true }).click();
-  }
+  await passwordInput.fill(userNameAndPassword);
+  await submitButton.click();
 };
+
+export const getLoginSubmitButton = (page: PageWIds) =>
+  page
+    .getByRole("button", { name: "Continue", exact: true })
+    .or(page.getByRole("button", { name: "Sign in", exact: true }));
 
 export const login = async (
   page: PageWIds,
@@ -584,13 +591,14 @@ export const getSearchListItem = (
 
 export const setWspColLayout = async (page: PageWIds) => {
   await page.getByTestId("dashboard.menu").waitFor({ state: "visible" });
+  await getDashboardUtils(page).openMenuIfClosed();
   await page.getByTestId("dashboard.menu.settingsToggle").click();
   await page.getByTestId("dashboard.menu.settings.defaultLayoutType").click();
   await page
     .getByTestId("dashboard.menu.settings.defaultLayoutType")
     .locator(`[data-key="col"]`)
     .click();
-  await page.getByTestId("Popup.close").click();
+  await page.getByTestId("Popup.close").last().click();
 };
 export const disablePwdlessAdminAndCreateUser = async (page: PageWIds) => {
   await page
@@ -827,7 +835,7 @@ export const loginWhenSignupIsEnabled = async (
   page: PageWIds,
   userNameAndPassword = "test_user",
 ) => {
-  await goTo(page, "/login");
+  await goTo(page, "/auth/login");
   await page.locator("#username").fill(userNameAndPassword);
   await page.getByRole("button", { name: "Continue" }).click();
   await page.locator("#password").waitFor({ state: "visible" });
@@ -943,38 +951,80 @@ export const deleteExistingLLMChat = async (page: PageWIds) => {
 };
 
 export const deleteAllWorkspaces = async (page: PageWIds): Promise<void> => {
-  const list = page.getByTestId("WorkspaceMenu.list");
-  await list.waitFor({ state: "visible", timeout: 10e3 });
-  await page.waitForTimeout(1500);
-  const listTextContent = await list.textContent();
-  if (listTextContent?.trim().toLowerCase() === "default") return; // only default workspace exists
-  await page.getByTestId("WorkspaceMenuDropDown").click();
-  await page.getByTestId("WorkspaceDeleteBtn").last().click();
-  await page.getByTestId("WorkspaceDeleteBtn.Confirm").click();
-  await page.waitForTimeout(555);
-  await page.reload();
-  return deleteAllWorkspaces(page);
+  let menu = await openWorkspaceMenu(page);
+  /* Do not delete the replacement created after removing the last workspace. */
+  const workspaceNames = await menu
+    .getByTestId("WorkspaceMenu.SearchList")
+    .getByRole("option")
+    .evaluateAll((rows) =>
+      rows
+        .map((row) => row.getAttribute("data-key")!)
+        .filter((name) => name !== "default"),
+    );
+  for (const workspaceName of workspaceNames) {
+    menu = await openWorkspaceMenu(page);
+    const workspace = menu
+      .getByTestId("WorkspaceMenu.SearchList")
+      .locator(getDataKey(workspaceName));
+    await workspace.hover();
+    await workspace.getByTitle("Workspace actions").click();
+    await page.getByTestId("WorkspaceDeleteBtn").click();
+    await Promise.all([
+      page.waitForEvent("load"),
+      page.getByTestId("WorkspaceDeleteBtn.Confirm").click(),
+    ]);
+  }
+  await page.getByTestId("dashboard.menu").waitFor({
+    state: "visible",
+    timeout: 10e3,
+  });
+  const workspacePopup = page.getByRole("dialog").filter({
+    has: page.getByTestId("WorkspaceMenu.list"),
+  });
+  if (await workspacePopup.isVisible()) {
+    await page.keyboard.press("Escape");
+    await expect(workspacePopup).toBeHidden();
+  }
 };
 
 export const newChat = async (page: PageWIds) => {
+  const chatSelector = page.getByTestId("LLMChat.select");
+  const previousChatId = await chatSelector.getAttribute("data-key");
   await page.getByTestId("AskLLMChat.NewChat").click();
-  await page.waitForTimeout(2e3);
+  await expect
+    .poll(async () => {
+      const activeChatId = await chatSelector.getAttribute("data-key");
+      return !!activeChatId && activeChatId !== previousChatId;
+    }, TWENTY_SECONDS_OR_MORE)
+    .toBe(true);
+  await expect(page.getByTestId("Chat.textarea")).toBeEnabled(
+    TWENTY_SECONDS_OR_MORE,
+  );
 };
 
-let setupAuthCount = 0;
-export const setupMagicLinkAuth = async (page: PageWIds) => {
+export const setupMagicLinkAuth = async (page: PageWIds, smtpPort: number) => {
+  await page.getByTestId("AuthProviderSetup.signupMode").click();
+  await page.locator('[data-key="public"]').click();
   await page.getByTestId("EmailAuthSetup").locator("button").click();
   await page.getByTestId("EmailAuthSetup.SignupType").click();
   await page.locator(`[data-key="withMagicLink"]`).click();
   await page.getByTestId("EmailSMTPAndTemplateSetup").locator("button").click();
   await page.getByTestId("EmailSMTPSetup").locator("button").click();
-  await page.locator("input#smtp-Port").fill((465 + setupAuthCount).toString());
-  await page.locator(`[data-label="Host"] input`).fill("prostgles-test-mock");
-  await page.getByTestId("EmailSMTPAndTemplateSetup.save").click();
+  await page.locator("input#smtp-Port").fill(smtpPort.toString());
+  await page.locator("input#smtp-Host").fill("127.0.0.1");
+  const saveSMTP = page.getByTestId("EmailSMTPAndTemplateSetup.save");
+  if (await saveSMTP.isEnabled()) {
+    await saveSMTP.click();
+  } else {
+    await page.getByRole("button", { name: "Cancel", exact: true }).click();
+    const saveAuth = page
+      .getByTestId("EmailAuthSetup")
+      .getByRole("button", { name: "Save", exact: true });
+    if (await saveAuth.isVisible()) await saveAuth.click();
+  }
   await page.waitForTimeout(1500);
   const errNodeCount = await page.getByTestId("EmailAuthSetup.error").count();
   await expect(errNodeCount).toBe(0);
-  setupAuthCount++;
 };
 
 export const clickAndWait = async (

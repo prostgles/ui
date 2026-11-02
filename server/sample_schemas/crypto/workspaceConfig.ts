@@ -3,7 +3,6 @@ export const workspaces = [
     name: "Crypto markets",
     options: {
       hideCounts: false,
-      pinnedMenu: true,
       tableListSortBy: "extraInfo",
       tableListEndInfo: "count",
       defaultLayoutType: "tab",

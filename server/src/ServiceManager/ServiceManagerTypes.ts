@@ -29,6 +29,12 @@ export type ProstglesService = {
    * Defaults to `<serviceName>/src`.
    */
   buildContext?: string;
+  /**
+   * Refresh base images with `docker build --pull` whenever this service starts.
+   * Defaults to false, reusing the image when source files and build arguments match.
+   * Docker still caches unchanged layers. Already-running services are unaffected.
+   */
+  pullBaseImages?: boolean;
   configs?: Record<
     string,
     {

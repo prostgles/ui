@@ -43,6 +43,12 @@ export type ActionButtonState = JSONB.GetObjectType<
 export const actionColumnParamsSchema = {
   methodName: "string",
   argName: { type: "string", optional: true },
+  runImmediately: {
+    type: "boolean",
+    optional: true,
+    description:
+      "Run without a popup when no additional inputs are needed. Jobs always open their details.",
+  },
   joinPath: {
     optional: true,
     arrayOf: parsedJoinPathSchema,
@@ -67,7 +73,11 @@ export const actionColumnParamsSchema = {
 export const actionColumnsParamsSchema = {
   actions: {
     arrayOf: {
-      oneOfType: [{ columnName: "string" }, actionColumnParamsSchema],
+      oneOfType: [
+        { columnName: "string" },
+        { methodsForJobColumn: "string" },
+        actionColumnParamsSchema,
+      ],
     },
   },
 } as const;

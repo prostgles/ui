@@ -1,8 +1,5 @@
-import {
-  auditTrailFilterColumns,
-  type ClientTableAuditConfig,
-} from "@common/managedTableSchema";
-import type { AuditTableRow, ResolvedAuditConfig } from "prostgles-server";
+import type { ClientTableAuditConfig } from "@common/managedTableSchema";
+import type { ResolvedAuditConfig } from "prostgles-server";
 import type { DBSchemaTable } from "prostgles-types";
 
 /** Publish UI metadata for tables included by the server's audit rules. */
@@ -29,6 +26,3 @@ export const getTableAuditConfig = (
     idColumns,
   };
 };
-
-// Fail compilation if the shared UI filter columns drift from the audit schema.
-auditTrailFilterColumns satisfies readonly (keyof AuditTableRow)[];

@@ -1,12 +1,9 @@
 import {
   getMagicLinkEmailFromTemplate,
   getVerificationEmailFromTemplate,
-  MOCK_SMTP_HOST,
 } from "@common/OAuthUtils";
 import type { DBSSchema } from "@common/publishUtils";
-import { tout } from "@src/utils/tout";
-import type { Email } from "prostgles-server/dist/Auth/AuthTypes";
-import { getEmailSender } from "prostgles-server/dist/Prostgles";
+import { getEmailSender } from "../../Emails/sendEmail";
 
 export const getSMTPWithTLS = (
   smtp: NonNullable<
@@ -22,32 +19,16 @@ export const getSMTPWithTLS = (
   };
 };
 
-export type EmailClient = Awaited<
-  ReturnType<typeof getEmailSenderWithMockTest>
->;
+export type EmailClient = Awaited<ReturnType<typeof getEmailClient>>;
 
-export const getEmailSenderWithMockTest = async (
+export const getEmailClient = async (
   auth_providers: DBSSchema["database_configs"]["auth_providers"] | undefined,
 ) => {
   const { email, website_url } = auth_providers ?? {};
   if (!email || !website_url) return undefined;
   const { smtp: smtpWithoutTLS, emailTemplate } = email;
   const smtp = getSMTPWithTLS(smtpWithoutTLS);
-  let sendEmail: Awaited<ReturnType<typeof getEmailSender>>["sendEmail"];
-
-  /**
-   * Mock email sending for testing
-   * TODO: identify why e2e/tests/mockSMTPServer.ts is not working
-   * from playwright tests while it works from nodejs
-   */
-  if (smtp.type === "smtp" && smtp.host === MOCK_SMTP_HOST) {
-    sendEmail = async (_email: Email) => {
-      console.log("Mock email sent", _email);
-      await tout(100);
-    };
-  } else {
-    ({ sendEmail } = await getEmailSender(smtp, website_url));
-  }
+  const { sendEmail } = await getEmailSender(smtp, website_url);
 
   return {
     sendEmail,
@@ -71,7 +52,7 @@ export const getEmailSenderWithMockTest = async (
     }: {
       to: string;
       url: string;
-      code: string;
+      code: string | undefined;
     }) => {
       const magicLinkEmail = getMagicLinkEmailFromTemplate({
         template: emailTemplate,

@@ -270,6 +270,6 @@ if (RUNTIME_MODE === "cli" || RUNTIME_MODE === "default") {
       console.error("Failed to start prostgles", dbStartupInfo);
       process.exit(1);
     }
-    console.log("Server started", result);
+    console.log("Server started", result, `http://localhost:${result.port}`);
   });
 }

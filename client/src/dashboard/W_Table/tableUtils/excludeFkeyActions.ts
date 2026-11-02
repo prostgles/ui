@@ -1,7 +1,7 @@
-import type { ActionColumnsParams } from "@common/actionColumn";
+import { resolveActionColumns } from "@common/resolveActionColumns";
 import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
+import { resolveActionFunction } from "@common/resolveActionFunction";
 import {
-  getActionFunctions,
   isDefined,
   type DBSchemaTable,
   type ServerFunctionHandler,
@@ -13,15 +13,12 @@ export const excludeFkeyActions = (
   table: DBSchemaTable,
   methods: ServerFunctionHandler,
 ): ColumnConfigWithInfo[] => {
-  const availableActions = getActionFunctions(methods, table);
-  const getBinding = (params: ActionColumnsParams["actions"][number]) => {
+  const getBindingKey = (
+    params: ReturnType<typeof resolveActionColumns>[number],
+  ) => {
     if ("columnName" in params) return;
-    const matches = availableActions.filter(
-      (action) =>
-        action.methodName === params.methodName &&
-        (!params.argName || action.argName === params.argName),
-    );
-    return matches.length === 1 ? matches[0] : undefined;
+    const { action } = resolveActionFunction(methods, table, params);
+    return action && JSON.stringify([action.methodName, action.argName]);
   };
   const fkeyActions = new Set(
     columns
@@ -32,13 +29,17 @@ export const excludeFkeyActions = (
           !column.nested &&
           !column.computedConfig,
       )
-      .flatMap((column) => getColumnActions(column) ?? [])
-      .map(getBinding)
+      .flatMap((column) =>
+        resolveActionColumns(getColumnActions(column) ?? [], methods, table),
+      )
+      .map(getBindingKey)
       .filter(isDefined),
   );
   if (!fkeyActions.size) return columns;
-  const isDuplicate = (params: ActionColumnsParams["actions"][number]) => {
-    const binding = getBinding(params);
+  const isDuplicate = (
+    params: ReturnType<typeof resolveActionColumns>[number],
+  ) => {
+    const binding = getBindingKey(params);
     return binding && fkeyActions.has(binding);
   };
   return columns.flatMap((column) => {
@@ -47,10 +48,13 @@ export const excludeFkeyActions = (
     if (format?.type === "Action")
       return isDuplicate(format.params) ? [] : [column];
     if (format?.type !== "ActionColumns") return [column];
-    const actions = format.params.actions.filter(
-      (params) => !isDuplicate(params),
+    const resolvedActions = resolveActionColumns(
+      format.params.actions,
+      methods,
+      table,
     );
-    if (actions.length === format.params.actions.length) return [column];
+    const actions = resolvedActions.filter((params) => !isDuplicate(params));
+    if (actions.length === resolvedActions.length) return [column];
     return actions.length ?
         [{ ...column, format: { ...format, params: { actions } } }]
       : [];

@@ -1,13 +1,18 @@
-import { getFunctionOptions } from "@common/functionOptions";
-import { getActionLookupRow } from "@common/resolveActionFunction";
+import {
+  getFunctionActionValue,
+  getFunctionOptions,
+} from "@common/functionOptions";
+import { getActionFunctionArgs } from "@common/resolveActionFunction";
 import Btn from "@components/Btn";
 import ErrorComponent from "@components/ErrorComponent";
-import { FlexCol, FlexRow } from "@components/Flex";
+import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
 import { Icon } from "@components/Icon/Icon";
 import { JSONBSchema } from "@components/JSONBSchema/JSONBSchema";
+import { MarkdownWithPlugins } from "@components/MarkdownWithPlugins/MarkdownWithPlugins";
 import Popup from "@components/Popup/Popup";
 import { mdiCheck, mdiPlay } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import { ROW_ACTIONS_COLUMN } from "prostgles-client";
 import type {
   AnyObject,
   ClientServerFunction,
@@ -16,30 +21,39 @@ import type {
 import React from "react";
 import SmartTable from "../SmartTable";
 import { useFunctionExecution } from "./useFunctionExecution";
+import { JobActionDetails } from "./JobActionDetails";
+import { getJobActionFunctions } from "./getJobActionFunctions";
 
 export const ActionPopup = ({
   title,
+  buttonText,
+  disabledInfo,
+  details,
   method,
-  row,
-  table,
-  argName,
+  record,
   onClose,
 }: {
-  title: string;
+  title?: string;
+  buttonText?: string;
+  disabledInfo?: string;
+  details?: string;
   method: ClientServerFunction;
-  row: AnyObject;
-  table: DBSchemaTable;
-  argName: string;
+  record?: {
+    row: AnyObject;
+    queryRow: AnyObject;
+    table: DBSchemaTable;
+    argName: string;
+  };
   onClose: VoidFunction;
 }) => {
   const { db, tables, methods, sql } = usePrgl();
-  const input = method.input?.[argName];
-  const fixedArgs = {
-    [argName]:
-      typeof input !== "string" && input?.type === "ValueLookup" ?
-        row[input.column]
-      : getActionLookupRow(row, table, method),
-  };
+  const functionOptions = getFunctionOptions(method);
+  const actionButtonText =
+    buttonText ?? functionOptions?.action.defaultValue?.text ?? "Run";
+  const fixedArgs =
+    record ?
+      getActionFunctionArgs(method, record.argName, record.row, record.table)
+    : {};
   const {
     args,
     setArgs,
@@ -51,12 +65,25 @@ export const ActionPopup = ({
     execution,
     run,
   } = useFunctionExecution(method, fixedArgs);
-  const tableInfo = tables.find(({ name }) => name === table.name);
+  const markdownResult =
+    (
+      functionOptions?.renderOutputAsMarkdown &&
+      execution.status === "success" &&
+      typeof execution.result === "string"
+    ) ?
+      execution.result
+    : undefined;
+  const isComplete = markdownResult !== undefined;
+  const description = details ?? method.description;
+  const { row = {}, queryRow = {}, table } = record ?? {};
+  const tableInfo = tables.find(({ name }) => name === table?.name);
   const summaryColumns = Array.from(
     new Set([
       tableInfo?.card?.headerColumn,
-      tableInfo?.card?.subHeaderColumn,
-      ...(table.uniqueColumnGroups?.[0] ?? []),
+      ...(tableInfo?.card?.subHeaderColumns ?? [
+        tableInfo?.card?.subHeaderColumn,
+      ]),
+      ...(table?.uniqueColumnGroups?.[0] ?? []),
       ...Object.keys(row),
     ]),
   )
@@ -67,13 +94,22 @@ export const ActionPopup = ({
         ["string", "number", "boolean"].includes(typeof row[column]),
     )
     .slice(0, 3);
-  const outputTableName = getFunctionOptions(method)?.outputTable;
+  const outputTableName = functionOptions?.outputTable;
   const outputTable = tables.find(({ name }) => name === outputTableName);
+  const jobActions =
+    method.jobControl && table ?
+      getJobActionFunctions(
+        methods,
+        table,
+        method.jobControl,
+        queryRow[ROW_ACTIONS_COLUMN],
+      )
+    : [];
 
   return (
     <Popup
       data-command="ActionPopup"
-      title={title}
+      title={title ?? functionOptions?.title ?? actionButtonText}
       onClose={onClose}
       positioning="center"
       rootStyle={{ width: "min(600px, calc(100vw - 2em))" }}
@@ -85,38 +121,92 @@ export const ActionPopup = ({
       }}
       contentClassName="p-1 ta-left"
       footer={
-        <FlexRow className="jc-end w-full">
-          <Btn onClick={onClose}>
-            {execution.status === "success" ? "Close" : "Cancel"}
+        <FlexRowWrap className="jc-end w-full">
+          <Btn onClick={onClose} className="mr-auto">
+            {(
+              method.jobControl ||
+              execution.status === "success" ||
+              actionButtonText === "Cancel"
+            ) ?
+              "Close"
+            : "Cancel"}
           </Btn>
-          <Btn
-            iconPath={mdiPlay}
-            color="action"
-            variant="filled"
-            loading={isRunning}
-            disabledInfo={
-              hasErrors && showErrors ?
-                "Complete the required fields"
-              : undefined
-            }
-            onClick={run}
-          >
-            Run
-          </Btn>
-        </FlexRow>
+          {jobActions.map(({ methodName, argName }) => {
+            const controlMethod = methods[methodName]!;
+            if (!table || controlMethod === method) return null;
+            const values = getFunctionActionValue(
+              controlMethod,
+              queryRow,
+              methodName,
+            );
+            if (values.disabledInfo) return null;
+            return (
+              <Btn
+                key={methodName}
+                color={
+                  values.color ??
+                  (controlMethod.jobControl?.operation === "cancel" ?
+                    "danger"
+                  : "action")
+                }
+                variant={values.variant ?? "filled"}
+                loading={values.isLoading}
+                onClickPromise={async () => {
+                  await controlMethod.run(
+                    getActionFunctionArgs(controlMethod, argName, row, table),
+                  );
+                }}
+              >
+                {values.text ?? methodName}
+              </Btn>
+            );
+          })}
+          {!isComplete && (
+            <Btn
+              iconPath={mdiPlay}
+              color="action"
+              variant="filled"
+              loading={isRunning}
+              disabledInfo={
+                disabledInfo ? disabledInfo
+                : hasErrors && showErrors ?
+                  "Complete the required fields"
+                : undefined
+              }
+              onClick={run}
+            >
+              {actionButtonText}
+            </Btn>
+          )}
+        </FlexRowWrap>
       }
     >
       <FlexCol className="gap-1 min-w-0">
-        <section
-          aria-label="Selected record"
-          className="bg-color-2 rounded p-1"
-        >
-          <div className="text-2 font-12">{tableInfo?.label || table.name}</div>
-          <div>
-            {summaryColumns.map((column) => String(row[column])).join(" · ")}
-          </div>
-        </section>
-        {!!editableArgNames.length && (
+        {table && (
+          <section
+            aria-label="Selected record"
+            className="bg-color-2 rounded p-1"
+          >
+            <div className="text-2 font-12">
+              {tableInfo?.label || table.name}
+            </div>
+            <div>
+              {summaryColumns.map((column) => String(row[column])).join(" · ")}
+            </div>
+          </section>
+        )}
+        {!isComplete && description && (
+          <MarkdownWithPlugins content={description} />
+        )}
+        {method.jobControl && table && (
+          <JobActionDetails
+            job={method.jobControl}
+            row={row}
+            table={table}
+            onClose={onClose}
+          />
+        )}
+        {!isComplete && !!editableArgNames.length && (
           <fieldset
             className="b-unset m-0 p-0 min-w-0"
             disabled={isRunning}
@@ -129,6 +219,7 @@ export const ActionPopup = ({
               db={db}
               tables={tables}
               allowIncomplete={true}
+              debounceInputs={false}
               showErrors={showErrors}
               schemaStyles={editableArgNames.map((name) => ({
                 path: [name],
@@ -140,11 +231,18 @@ export const ActionPopup = ({
         {execution.status === "error" && (
           <ErrorComponent error={execution.error} findMsg={true} />
         )}
-        {execution.status === "success" && (
+        {isComplete && (
+          <MarkdownWithPlugins
+            role="status"
+            aria-label="Action result"
+            content={markdownResult}
+          />
+        )}
+        {execution.status === "success" && !isComplete && (
           <>
             <FlexRow role="status" className="text-green">
               <Icon path={mdiCheck} />
-              Action completed
+              {method.jobControl ? "Job request submitted" : "Action completed"}
             </FlexRow>
             {outputTableName && !outputTable && (
               <ErrorComponent

@@ -1,21 +1,16 @@
 import type { HotReloadConfigOptions } from "@src/ConnectionManager/getHotReloadConfigs";
+import type { TableOptions } from "@common/managedTableSchema";
 import type { ProstglesContext } from "@src/schemaConfig";
 import type {
   JobsOptions,
-  TableDefinition,
+  TableConfig,
   TableHooks,
 } from "prostgles-server";
 
-type TableConfig<
-  LANG_IDS = {
-    en: 1;
-  },
-> = {
-  [table_name: string]: TableDefinition<LANG_IDS>;
-};
-
 export type PluginDefinition = {
+  functions?: HotReloadConfigOptions["functions"];
   tableConfig?: TableConfig;
+  tableOptions?: Record<string, Partial<TableOptions>>;
   tableHooks?: TableHooks<void, ProstglesContext>;
   jobDefinitions?: JobsOptions<void, ProstglesContext>["definitions"];
 } & Partial<Pick<HotReloadConfigOptions, "fileTable">>;

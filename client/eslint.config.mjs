@@ -53,6 +53,26 @@ export default defineConfig(
     },
     rules: {
       ...commonConfig.rules,
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: [
+                "**/server",
+                "**/server/**",
+                "**/prostgles-server",
+                "**/prostgles-server/**",
+                "@prostgles/app",
+                "@prostgles/app/**",
+                "@src/**",
+              ],
+              message:
+                "Client code must not import server modules, including types. Move shared definitions to common or prostgles-types.",
+            },
+          ],
+        },
+      ],
       "react/no-unescaped-entities": "off",
       "react/display-name": "off",
       "react/no-children-prop": "off",

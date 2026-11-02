@@ -6,6 +6,7 @@ import type {
 import type { OAuthClientInformationMixed } from "@modelcontextprotocol/sdk/shared/auth";
 import { getElectronConfig } from "@src/electronConfig";
 import type { DBS } from "@src/index";
+import { isObject } from "prostgles-types";
 import {
   MCP_CLIENT_INFO,
   type RemoteMcpServerParameters,
@@ -227,6 +228,11 @@ export const createMcpOAuthProvider = ({
     },
   } satisfies RemoteMcpServerParameters["OAuth"];
 };
+
+export const isMcpOAuthAuthorizationRequired = (error: unknown) =>
+  isObject(error) &&
+  typeof error.message === "string" &&
+  error.message.startsWith(OAUTH_AUTHORIZATION_URL_ERROR);
 
 const fetchClientCredentialsToken = async ({
   clientId,

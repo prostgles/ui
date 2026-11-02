@@ -94,6 +94,12 @@ const columnFields = {
   idx: { type: "integer", optional: true },
   label: { type: "string", optional: true },
   show: { type: "boolean", optional: true },
+  infoLevel: {
+    enum: [1, 2],
+    optional: true,
+    description:
+      "Card information level. 1 shows the column in summary and detailed cards. 2 shows it only in the detailed card opened by clicking the title. Once any column has an infoLevel, omitted levels hide those columns from both card views, including header and avatar fields. If no columns have an infoLevel, automatically use level 1 for the first 10 fields, prioritizing the avatar, title and subheaders within that limit, then level 2 for the rest. Existing visibility and permissions still apply. At most 10 columns per table may explicitly use infoLevel: 1.",
+  },
   width: { type: "number", optional: true },
   format: { ...columnDisplayFormatSchema, optional: true },
   display: { enum: ["drillable-records"], optional: true },
@@ -176,6 +182,7 @@ export const tableColumnConfigFields = {
       path: { arrayOf: parsedJoinPathSchema },
       columns: { arrayOfType: { name: "string", ...columnFields } },
       fallbackColumn: { type: "string", optional: true },
+      fallbackOnEmpty: { type: "boolean", optional: true },
       joinType: { enum: ["inner", "left"], optional: true },
       limit: { type: "integer", optional: true },
       sort: { type: sortSchema, optional: true },

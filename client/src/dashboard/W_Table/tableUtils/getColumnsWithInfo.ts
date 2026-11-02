@@ -8,12 +8,14 @@ export const getColumnsWithInfo = (
   tableName: string,
   tables: DBSchemaTableWithRenderInfo[],
   cols: ColumnConfig[] | null | undefined,
-  inheritDefaults = true,
+  {
+    allowNestedColumns = true,
+    showAllColumns = false,
+  }: { allowNestedColumns?: boolean; showAllColumns?: boolean } = {},
 ): ColumnConfigWithInfo[] => {
   const table = tables.find((t) => t.name === tableName);
   if (!table) return [];
   const tableColumns = table.columns.slice(0);
-  const { defaultColumns } = table;
   const isAdditionalComputed = (
     computedConfig: ColumnConfigWithInfo["computedConfig"],
   ) => computedConfig && !computedConfig.isColumn;
@@ -46,11 +48,6 @@ export const getColumnsWithInfo = (
     return {
       ...c,
       ...columnDataType,
-      show:
-        c.show ??
-        (tableColumn && defaultColumns ?
-          defaultColumns.includes(c.name)
-        : true),
       format: c.format ?? tableColumn?.renderAs,
       style: c.style ?? tableColumn?.style,
       nested:
@@ -61,7 +58,7 @@ export const getColumnsWithInfo = (
             nested.path.at(-1)!.table,
             tables,
             nested.columns,
-            false,
+            { allowNestedColumns: false },
           ),
         } as ColumnConfigWithInfo["nested"]),
       info: tableColumn && omitKeys(tableColumn, ["renderAs", "style"]),
@@ -71,8 +68,9 @@ export const getColumnsWithInfo = (
   const columns = resolveTableColumns(
     table,
     tables,
-    cols ?? [],
-    inheritDefaults,
+    cols,
+    allowNestedColumns,
+    showAllColumns,
   )
     .map(getColumnWithInfo)
     .filter((c) => {

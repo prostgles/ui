@@ -18,6 +18,8 @@ import { getMostSimilar } from "./getMostSimilar";
 import { runAgentGoalTool } from "./runAgentGoalTool";
 import { validateLastMessageToolUseRequests } from "./validateLastMessageToolUseRequests";
 import { AGENT_GOAL_TOOL_NAMES } from "@common/mcp/startAgenticWorkflowSchema";
+import { getPastMessages } from "../getPastMessages";
+import { getPendingToolUseMessages } from "../getPendingToolUseMessages";
 
 export type ToolUseMessage = Extract<LLMMessage[number], { type: "tool_use" }>;
 type ToolUseMessageWithInfo =
@@ -53,16 +55,23 @@ export type ToolResultMessage = Extract<
   { type: "tool_result" }
 >;
 
-export const runApprovedTools = async ({
-  allowedTools,
-  aborter,
-  args,
-  chat,
-  toolUseRequestMessages,
-  userApprovals,
-  clientReq,
-  messageId,
-}: {
+export const runApprovedTools = async (
+  params: RunApprovedToolsArgs,
+): Promise<void> => {
+  /* An answer and an approval can resume the same batch at the same time. */
+  while (runningToolBatches.has(params.messageId)) {
+    await runningToolBatches.get(params.messageId);
+  }
+  const execution = runPendingTools(params);
+  runningToolBatches.set(params.messageId, execution);
+  try {
+    await execution;
+  } finally {
+    runningToolBatches.delete(params.messageId);
+  }
+};
+
+type RunApprovedToolsArgs = {
   allowedTools: Awaited<ReturnType<typeof getLLMToolsAllowedInThisChat>>;
   args: Omit<AskLLMArgs, "userMessage" | "type" | "aborter">;
   chat: DBSSchema["llm_chats"];
@@ -71,8 +80,29 @@ export const runApprovedTools = async ({
   aborter: AbortController;
   clientReq?: AuthClientRequest;
   messageId: DBSSchema["llm_messages"]["id"];
-}) => {
+};
+const runningToolBatches = new Map<
+  RunApprovedToolsArgs["messageId"],
+  Promise<void>
+>();
+
+const runPendingTools = async ({
+  allowedTools,
+  aborter,
+  args,
+  chat,
+  toolUseRequestMessages: requestedTools,
+  userApprovals,
+  clientReq,
+  messageId,
+}: RunApprovedToolsArgs) => {
   const { user, chatId, dbs } = args;
+  const pendingTools = getPendingToolUseMessages(
+    await getPastMessages(dbs, chatId),
+  );
+  const toolUseRequestMessages = requestedTools.filter((toolUse) =>
+    pendingTools.some(({ id }) => id === toolUse.id),
+  );
   if (!toolUseRequestMessages.length) {
     return;
   }
@@ -84,15 +114,18 @@ export const runApprovedTools = async ({
     throw new Error(`Chat with id ${chatId} does not have a connection_id`);
   }
 
-  /**
-   * Here we expect the user to return a list of approved tools. Anything not in this list that is not auto-approved means denied.
-   */
+  /* Answers and approvals can arrive separately for the same batch. */
   if (userApprovals) {
     validateLastMessageToolUseRequests({
-      toolUseMessages: toolUseRequestMessages,
+      toolUseMessages: requestedTools,
       userToolUseApprovals: userApprovals,
     });
   }
+
+  const approvalRequests = await dbs.mcp_tool_approval_requests.find({
+    chat_id: chatId,
+    message_id: messageId,
+  });
 
   const agentGoalTool = toolUseRequestMessages.find((m) =>
     [AGENT_GOAL_TOOL_NAMES.REACHED, AGENT_GOAL_TOOL_NAMES.FAILED].includes(
@@ -121,7 +154,7 @@ export const runApprovedTools = async ({
         state: "tool-missing",
       } satisfies ToolUseMessageWithInfo;
     }
-    const userApprovalResponse = userApprovals?.find(
+    const userApprovalResponse = approvalRequests.find(
       ({ tool_use_id, server_name, tool_name }) =>
         tool_use_id === toolUse.id &&
         toolUse.name === getMCPFullToolName(server_name, tool_name),
@@ -166,16 +199,15 @@ export const runApprovedTools = async ({
       userApprovalResponse,
       tool,
       state:
-        tool.mode === "always-needs-approval" ? approvalResponse
+        tool.mode === "user-provides-response" ? "user-provides-response"
+        : tool.mode === "always-needs-approval" ? approvalResponse
         : (
           tool.auto_approve ||
           tool.mode === "auto-approved-user-actionable" ||
           approvalResponse === "approved"
         ) ?
           "approved"
-        : tool.mode === "user-provides-response" ? "user-provides-response"
-        : userApprovals ? "denied"
-        : "needs-approval",
+        : approvalResponse,
     } satisfies ToolUseMessageWithInfo;
   });
 
@@ -216,6 +248,7 @@ export const runApprovedTools = async ({
       (tr) => tr.state === "needs-approval",
     );
     for (const toolUseRequest of requestsThatNeedApproval) {
+      if (toolUseRequest.userApprovalResponse) continue;
       const toolNameParts = getMCPToolNameParts(toolUseRequest.name);
       if (!toolNameParts) {
         throw new Error(`Invalid tool name ${toolUseRequest.name}`);
@@ -232,7 +265,11 @@ export const runApprovedTools = async ({
         connection_id,
         source: {
           type: "chat",
-          responseCount: requestsThatNeedApproval.length,
+          responseCount:
+            approvalRequests.length +
+            requestsThatNeedApproval.filter(
+              (request) => !request.userApprovalResponse,
+            ).length,
         },
       });
     }
@@ -283,16 +320,6 @@ export const runApprovedTools = async ({
         })();
         return asResponse(
           `Tool name "${toolUseRequest.name}" ${errorHint}`,
-          true,
-        );
-      }
-
-      if (
-        toolUseRequest.tool.mode === "user-provides-response" &&
-        toolUseRequests.length > 1
-      ) {
-        return asResponse(
-          `Tool use request for "${toolUseRequest.name}" is invalid. This tool cannot be used together with other tools. Please use it in a single tool use request and try again.`,
           true,
         );
       }

@@ -9,5 +9,5 @@ restore_version() {
 }
 trap restore_version EXIT
 
-npm version "${ORIGINAL}-dev.$(date +%s)" --no-git-tag-version
+npm version "${ORIGINAL%%-dev.*}-dev.$(date +%s)" --no-git-tag-version
 npm publish --access=public --tag dev

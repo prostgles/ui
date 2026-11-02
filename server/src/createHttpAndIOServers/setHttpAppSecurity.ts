@@ -112,7 +112,7 @@ export const setHttpAppSecurity = (
     );
   } else {
     removeExpressRouteByName(
-      app as unknown as ExpressApp,
+      app,
       cspHelmetMiddlewareHandlerName,
     );
   }

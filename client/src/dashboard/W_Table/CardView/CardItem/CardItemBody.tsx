@@ -1,8 +1,6 @@
-import type { CardLayout } from "@common/ColumnConfig/cardLayout";
 import { FlexRowWrap } from "@components/Flex";
-import { _PG_date, isDefined, type AnyObject } from "prostgles-types";
+import { _PG_date, type AnyObject } from "prostgles-types";
 import React from "react";
-import type { DBSchemaTableWJoins } from "../../../Dashboard/dashboardUtils";
 import { RenderValue } from "../../../SmartForm/SmartFormField/RenderValue";
 import type { IndexedRow } from "../CardView";
 import { CARD_ITEM_PADDING } from "../constants";
@@ -10,6 +8,7 @@ import type { CardViewRowProps } from "./CardViewRow";
 import { getColumnActions } from "../../ColumnMenu/ColumnDisplayFormat/getFormatColumnSelect";
 
 export const CardBody = ({
+  bodyColumns,
   visibleCols,
   cardCellMinWidth,
   cardRows,
@@ -18,12 +17,11 @@ export const CardBody = ({
   maxCardRowHeight,
   rowIndex,
   indexedRows,
-  cardLayout,
-  table,
 }: Pick<
   Required<CardViewRowProps["cardOpts"]>,
   "cardCellMinWidth" | "cardRows"
 > & {
+  bodyColumns: CardViewRowProps["cardFields"]["bodyColumns"];
   visibleCols: CardViewRowProps["cols"];
   row: AnyObject;
   maxCardRowHeight: number | undefined;
@@ -31,32 +29,23 @@ export const CardBody = ({
   cardCellMinWidth: string;
   rowIndex: number;
   indexedRows: IndexedRow[];
-  cardLayout: CardLayout | undefined;
-  table: DBSchemaTableWJoins;
 }) => {
-  const { visibleColumns = visibleCols.map((c) => c.name) } = table.card ?? {};
-  const displayedColumns = visibleColumns
-    .map((c) => {
-      const columnName = typeof c === "string" ? c : c.column;
-      return (
-        visibleCols.find((vc) => vc.name === columnName) ??
-        visibleCols.find(
-          (vc) => vc.defaultConfig?.nested?.fallbackColumn === columnName,
-        )
-      );
-    })
-    .filter(isDefined);
-  const actionColumns = displayedColumns.filter((column) =>
+  const displayedColumns = bodyColumns.filter(({ column }) =>
+    visibleCols.includes(column),
+  );
+  const actionColumns = displayedColumns.filter(({ column }) =>
     getColumnActions(column),
   );
   const actionNodes: React.ReactNode[] = [];
-  const columnNodeList = displayedColumns.map((c, ci) => {
-    const isAction = !cardLayout && actionColumns.includes(c);
+  const columnNodeList = displayedColumns.map((displayedColumn, ci) => {
+    const { column: c, hideLabel, style } = displayedColumn;
+    const isAction = actionColumns.includes(displayedColumn);
     const value = row[c.name] as unknown;
     const renderedVal = <RenderValue column={c} value={value} />;
     const columnNode = (
       <div
         key={ci}
+        data-card-field={c.name}
         title={c.udt_name}
         className={
           "flex-col gap-p25 min-w-0 " +
@@ -64,9 +53,12 @@ export const CardBody = ({
           : cardRows > 1 ? " h-fit w-fit "
           : "")
         }
-        style={{ minWidth: isAction ? undefined : cardCellMinWidth }}
+        style={{
+          minWidth: isAction ? undefined : cardCellMinWidth,
+          ...style,
+        }}
       >
-        {!hideCardFieldNames && !isAction && (
+        {!hideCardFieldNames && !hideLabel && !isAction && (
           <div
             className=" text-2 noselect"
             onContextMenu={
@@ -94,7 +86,7 @@ export const CardBody = ({
             maxHeight: isAction ? undefined : `${maxCardRowHeight || 100}px`,
           }}
         >
-          {c.onRender?.({
+          {c.onRender({
             row: row,
             value,
             renderedVal,
@@ -112,20 +104,6 @@ export const CardBody = ({
     return columnNode;
   });
 
-  if (cardLayout) {
-    const columnNodes: Record<string, React.ReactNode> = {};
-    displayedColumns.forEach((c, i) => {
-      columnNodes[c.name] = columnNodeList[i];
-    });
-    return (
-      <CardLayoutRenderer
-        cardLayout={cardLayout}
-        columnNodes={columnNodes}
-        item={cardLayout}
-      />
-    );
-  }
-
   return (
     <FlexRowWrap
       className={
@@ -140,39 +118,10 @@ export const CardBody = ({
     >
       {columnNodeList}
       {!!actionNodes.length && (
-        <FlexRowWrap className="CardActions w-full gap-p5">
+        <FlexRowWrap className="CardActions as-end ml-auto gap-p5">
           {actionNodes}
         </FlexRowWrap>
       )}
     </FlexRowWrap>
-  );
-};
-
-const CardLayoutRenderer = ({
-  cardLayout,
-  columnNodes,
-  item,
-}: {
-  cardLayout: CardLayout;
-  columnNodes: Record<string, React.ReactNode>;
-  item: CardLayout["children"][number];
-}) => {
-  if (item.type === "node") {
-    const node = columnNodes[item.columnName];
-    if (!node) return <>Column node missing for {item.columnName}</>;
-    return node;
-  }
-
-  return (
-    <div style={item.style} data-node-type={item.type || "container"}>
-      {item.children.map((childItem, index) => (
-        <CardLayoutRenderer
-          key={index}
-          cardLayout={cardLayout}
-          columnNodes={columnNodes}
-          item={childItem}
-        />
-      ))}
-    </div>
   );
 };

@@ -3,6 +3,7 @@ import { type ToolUse } from "./utils";
 import type { ExtractBy } from "common/utils";
 import { getProstglesMCPFullToolName } from "common/mcpUtils";
 import { stringify } from "./stringify";
+import { DEFAULT_AGENT_MODEL } from "../../../server/dist/server/src/serverFunctions/askLLM/refreshModels";
 type UserInput = NonNullable<
   DBSSchema["agentic_workflows"]["definition_data"]["userInput"]
 >;
@@ -119,7 +120,7 @@ export default defineAgenticWorkflow(
       agentDefinitions: {
         researcher: {
           prompt: "You are a research assistant. ",
-          modelName: "anthropic/claude-4.6-sonnet",
+          modelName: DEFAULT_AGENT_MODEL,
           tools: {
             web: { fetch: 1 },
           },

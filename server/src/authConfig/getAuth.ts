@@ -55,11 +55,7 @@ export const getAuth = async (
 
     loginSignupConfig: {
       app,
-      // authRoutesBasePath:
-      //   authSetupData.type === "connection" && authSetupData.url_path ?
-      //     `/${authSetupData.url_path}`
-      //   : undefined,
-      login: await getLogin(dbs, _dbs, database_config),
+      login: await getLogin(dbs, database_config),
 
       logout: async (sid) => {
         if (!sid) throw "err";
@@ -80,6 +76,7 @@ export const getAuth = async (
         "/robots.txt",
         API_ENDPOINTS.WS_DB,
         ROUTES.MCP_OAUTH_CALLBACK,
+        ROUTES.REGISTER,
       ],
       onGetRequestOK: async (req, res, { getUser }) => {
         if (req.path.startsWith(ROUTES.MCP_OAUTH_CALLBACK)) {
@@ -127,11 +124,14 @@ export const getAuth = async (
         }
       },
       cookieOptions: { ...authCookieOpts, ...database_config.cookie_options },
-      onMagicLinkOrOTP: getOnMagicLinkOrOTP(dbs),
+      onMagicLinkOrOTP: getOnMagicLinkOrOTP(
+        dbs,
+        authSetupData.stateDatabaseConfig,
+      ),
       localLoginMode:
         (
-          auth_providers?.email?.signupType === "withMagicLink" &&
-          auth_providers.email.enabled
+          auth_providers?.email?.enabled &&
+          auth_providers.email.emailLoginType === "withMagicLink"
         ) ?
           "email"
         : "email+password",

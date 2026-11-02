@@ -9,6 +9,7 @@ import {
 } from "./connectToMCPServer";
 import type { createMcpServerHandlers } from "./createMcpServerHandlers";
 import { McpServer, ServersConfig } from "./McpTypes";
+import { isMcpOAuthAuthorizationRequired } from "./McpOAuth/createMcpOAuthProvider";
 
 export type McpConnection = {
   /**
@@ -94,7 +95,10 @@ export class McpHub {
           server_name: otherParams.server_name,
           ...eventOptions,
         });
-        if (!instance.success) {
+        if (
+          !instance.success &&
+          !isMcpOAuthAuthorizationRequired(instance.error)
+        ) {
           void onLog({ type: "error", data: instance.error }, instance.log);
         }
       }

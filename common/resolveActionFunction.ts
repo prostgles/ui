@@ -6,26 +6,24 @@ import {
 } from "prostgles-types";
 
 /** Resolve the sole matching lookup and explain invalid action bindings. */
-export const resolveActionFunction = (
-  methods: Record<string, Pick<ClientServerFunction, "input">>,
+export const resolveActionFunction = <
+  Method extends Pick<ClientServerFunction, "input">,
+>(
+  methods: Record<string, Method>,
   table: Parameters<typeof getActionFunctions>[1],
   { methodName, argName }: { methodName?: string; argName?: string },
-  immediate = false,
 ) => {
   const method = methodName ? methods[methodName] : undefined;
-  const matches = getActionFunctions(methods, table).filter(
-    (action) =>
-      action.methodName === methodName &&
-      (!argName || action.argName === argName),
-  );
+  const matches =
+    methodName && method ?
+      getActionFunctions({ [methodName]: method }, table).filter(
+        (action) => !argName || action.argName === argName,
+      )
+    : [];
   const action = matches.length === 1 ? matches[0] : undefined;
-  const missingInputs = Object.entries(method?.input ?? {})
-    .filter(
-      ([name, input]) =>
-        name !== action?.argName &&
-        (typeof input === "string" || !input.optional),
-    )
-    .map(([name]) => name);
+  const hasAdditionalInputs = Object.keys(method?.input ?? {}).some(
+    (name) => name !== action?.argName,
+  );
   const error =
     !methodName ? "No action available"
     : !method ? `Action function "${methodName}" is not available`
@@ -33,13 +31,26 @@ export const resolveActionFunction = (
       `Action function "${methodName}" needs a RowLookup or ValueLookup for "${table.name}"${argName ? ` named "${argName}"` : ""}`
     : !action ?
       `Action function "${methodName}" has multiple lookups for "${table.name}"; specify argName`
-    : immediate && missingInputs.length ?
-      `Action function "${methodName}" needs additional inputs: ${missingInputs.join(", ")}; use a function form`
     : undefined;
-  return { action, error };
+  return { method, action, error, hasAdditionalInputs };
 };
 
-export const getActionLookupRow = (
+export const getActionFunctionArgs = (
+  method: Pick<ClientServerFunction, "input" | "jobControl">,
+  argName: string,
+  row: AnyObject,
+  table: Pick<DBSchemaTable, "columns">,
+) => {
+  const input = method.input?.[argName];
+  return {
+    [argName]:
+      typeof input !== "string" && input?.type === "ValueLookup" ?
+        row[input.column]
+      : getActionLookupRow(row, table, method),
+  };
+};
+
+const getActionLookupRow = (
   row: AnyObject,
   table: Pick<DBSchemaTable, "columns">,
   method: Pick<ClientServerFunction, "jobControl">,

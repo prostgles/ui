@@ -222,7 +222,7 @@ export const getDashboardUtils = (page: PageWIds) => {
       .getByTestId("DashboardMenu")
       .getByTestId("Popup.close");
     const menuPinnedButton = await page.locator(
-      getCommandElemSelector("DashboardMenuHeader.togglePinned") +
+      getCommandElemSelector("DashboardMenu.togglePinned") +
         getDataKey("pinned"),
     );
     const menuIsOpen =
@@ -239,6 +239,7 @@ export const getDashboardUtils = (page: PageWIds) => {
       }
       return;
     }
+    if (closeMenu) return;
     const menuBtn = await page.getByTestId("dashboard.menu");
     if ((await menuBtn.count()) && (await menuBtn.isEnabled())) {
       await menuBtn.click();
@@ -246,9 +247,7 @@ export const getDashboardUtils = (page: PageWIds) => {
   };
   const toggleMenuPinned = async (shouldBePinned?: boolean) => {
     await page.waitForTimeout(1500);
-    const toggleBtn = await page.getByTestId(
-      "DashboardMenuHeader.togglePinned",
-    );
+    const toggleBtn = await page.getByTestId("DashboardMenu.togglePinned");
     const menuBtn = await page.getByTestId("dashboard.menu");
     const menuIsPinned = await menuBtn.isDisabled();
     if ((await toggleBtn.count()) && (await toggleBtn.isEnabled())) {
@@ -258,7 +257,7 @@ export const getDashboardUtils = (page: PageWIds) => {
       await toggleBtn.click();
     } else if (shouldBePinned) {
       await menuBtn.click();
-      await page.getByTestId("DashboardMenuHeader.togglePinned").click();
+      await page.getByTestId("DashboardMenu.togglePinned").click();
     }
   };
 
@@ -269,24 +268,65 @@ export const getDashboardUtils = (page: PageWIds) => {
   };
 };
 
+export const openWorkspaceMenu = async (page: PageWIds) => {
+  await page.getByTestId("dashboard.menu").waitFor({
+    state: "visible",
+    timeout: 10e3,
+  });
+  const workspaceSelector = page
+    .locator(".TopControls")
+    .getByTestId("WorkspaceMenuDropDown");
+  const requestedWorkspaceId = new URL(page.url()).searchParams.get(
+    "workspaceId",
+  );
+  if (requestedWorkspaceId) {
+    await expect(workspaceSelector).toHaveAttribute(
+      "data-workspace-id",
+      requestedWorkspaceId,
+      { timeout: 10e3 },
+    );
+  }
+  const workspacePopup = page.getByRole("dialog").filter({
+    has: page.getByTestId("WorkspaceMenu.list"),
+  });
+  const dashboardMenu = page.getByTestId("DashboardMenuContent");
+  const menu =
+    (await workspacePopup.isVisible()) ? workspacePopup
+    : (await dashboardMenu.isVisible()) ? dashboardMenu
+    : workspacePopup;
+  if (!(await menu.isVisible())) {
+    await workspaceSelector.click();
+  }
+  const workspaceList = menu.getByTestId("WorkspaceMenu.list");
+  await workspaceList.waitFor({ state: "visible", timeout: 10e3 });
+  const searchInput = workspaceList.getByTestId("SearchList.Input");
+  if (await searchInput.isVisible()) await searchInput.fill("");
+  const activeWorkspaceName = await workspaceSelector.innerText();
+  await workspaceList.getByText(activeWorkspaceName, { exact: true }).waitFor({
+    state: "visible",
+    timeout: 10e3,
+  });
+  return menu;
+};
+
 export const setOrAddWorkspace = async (
   page: PageWIds,
   workspaceName: string,
 ) => {
-  const workspaceList = await page.getByTestId("WorkspaceMenu.list");
-  await workspaceList.waitFor({ state: "visible", timeout: 10e3 });
-  await page.waitForTimeout(1500);
-  const toggleBtn = await page
+  const menu = await openWorkspaceMenu(page);
+  const toggleBtn = menu
     .getByTestId("WorkspaceMenu.list")
     .getByText(workspaceName, { exact: true });
 
   if (await toggleBtn.count()) {
     await toggleBtn.click();
   } else {
-    await page.getByTestId("WorkspaceMenuDropDown").click();
-    await page.getByTestId("WorkspaceMenuDropDown.WorkspaceAddBtn").click();
+    await menu.getByTestId("WorkspaceMenuDropDown.WorkspaceAddBtn").click();
     await page.getByLabel("New workspace name").fill(workspaceName);
     await page.getByTestId("WorkspaceAddBtn.Create").click();
+    await expect(page.getByLabel("New workspace name")).toBeHidden();
   }
-  await page.waitForTimeout(1e3);
+  await expect(
+    page.locator(".TopControls").getByTestId("WorkspaceMenuDropDown"),
+  ).toHaveText(workspaceName, { timeout: 10e3 });
 };

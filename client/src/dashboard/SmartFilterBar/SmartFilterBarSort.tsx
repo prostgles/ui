@@ -8,7 +8,8 @@ import type {
 } from "../Dashboard/dashboardUtils";
 import type { ColumnSort } from "@common/ColumnConfig/ColumnConfig";
 import type { SmartFilterBarProps } from "./SmartFilterBar";
-import { isDefined } from "@common/filterUtils";
+import { getColumnsWithInfo } from "../W_Table/tableUtils/getColumnsWithInfo";
+import { getColumnSortOptions } from "../W_Table/tableUtils/getColumnSortOptions";
 
 type P = SmartFilterBarProps & {
   table: DBSchemaTableWJoins;
@@ -17,6 +18,10 @@ export const SmartFilterBarSort = ({ table, ...props }: P) => {
   const w: WindowSyncItem<"table"> | WindowSyncItem<"card"> | undefined =
     "w" in props ? props.w : undefined;
   const { columns } = "w" in props ? props.w : props;
+  const resolvedColumns =
+    w || columns ?
+      getColumnsWithInfo(table.name, props.tables, columns)
+    : undefined;
   const setSort = (orderByKey: string | undefined, orderAsc = true) => {
     const newSort: ColumnSort | undefined =
       !orderByKey ? undefined : (
@@ -55,33 +60,11 @@ export const SmartFilterBarSort = ({ table, ...props }: P) => {
         asRow={true}
         value={orderByKey}
         fullOptions={
-          columns
-            ?.flatMap((c) => {
-              if (!c.show) return;
-              if (c.nested) {
-                if (c.nested.display?.type === "timechart") {
-                  return ["date", "value"].map((k) => ({
-                    key: `${c.name}.${k}`,
-                    label: `${c.name} - ${k}`,
-                  }));
-                }
-                return c.nested.columns.map((nc) =>
-                  !nc.show ? undefined : (
-                    {
-                      key: `${c.name}.${nc.name}`,
-                      label: `${c.name} - ${nc.name}`,
-                    }
-                  ),
-                );
-              }
-              return {
-                key: c.name,
-                label: c.name,
-              };
-            })
-            .filter(isDefined) ??
+          resolvedColumns
+            ?.filter((column) => column.show)
+            .flatMap(getColumnSortOptions) ??
           table.columns
-            .filter((c) => c.filter)
+            .filter((c) => c.orderBy)
             .flatMap(({ name, label }) => {
               return {
                 key: name,

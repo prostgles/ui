@@ -5,7 +5,7 @@ import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import React from "react";
 import type { DBSchemaTable } from "prostgles-types";
 import { ActionFormatControls } from "./ActionFormatControls";
-import { getActionFunctions } from "prostgles-types";
+import { getRowActionFunctions } from "../../../ActionPopup/getJobActionFunctions";
 
 export type ActionColumnsFormat = Extract<
   UserColumnFormat,
@@ -28,7 +28,7 @@ export const ActionColumnsControls = ({
   ).filter(
     (c) => c.select && c.defaultRenderAs?.params.component === "ActionColumns",
   );
-  const functions = getActionFunctions(methods, table);
+  const functions = getRowActionFunctions(methods, table);
   const update = (actions: ActionColumnsFormat["params"]["actions"]) =>
     onChange({ type: "ActionColumns", params: { actions } });
   return (
@@ -37,6 +37,8 @@ export const ActionColumnsControls = ({
         <div key={index} className="flex-col gap-p5">
           {"columnName" in action ?
             <div>{action.columnName}</div>
+          : "methodsForJobColumn" in action ?
+            <div>Job controls: {action.methodsForJobColumn}</div>
           : <ActionFormatControls
               table={table}
               value={{ type: "Action", params: action }}

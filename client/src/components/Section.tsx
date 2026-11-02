@@ -9,7 +9,7 @@ import type { Command, TestSelectors } from "../Testing";
 
 type SectionProps = TestSelectors & {
   title: React.ReactNode;
-  titleRightContent?: React.ReactNode;
+  titleRightContent?: React.ReactNode | ((open: boolean) => React.ReactNode);
   children: React.ReactNode;
   buttonStyle?: React.CSSProperties;
   btnProps?: BtnProps<void>;
@@ -50,7 +50,7 @@ export const Section = (props: SectionProps) => {
     contentStyle = {},
     buttonStyle = {},
     open: oDef,
-    titleRightContent,
+    titleRightContent: titleRightContentProp,
     titleIcon,
     titleIconPath,
     btnProps,
@@ -60,6 +60,10 @@ export const Section = (props: SectionProps) => {
   } = props;
   const [open, toggle] = useState(oDef);
   const [fullscreen, setFullscreen] = useState(false);
+  const titleRightContent =
+    typeof titleRightContentProp === "function" ?
+      titleRightContentProp(!!open || fullscreen)
+    : titleRightContentProp;
 
   return (
     <div
@@ -101,6 +105,7 @@ export const Section = (props: SectionProps) => {
           }
           size="default"
           title="Expand section"
+          aria-expanded={!!open || fullscreen}
           disabledInfo={disabledInfo}
           style={{
             width: undefined,

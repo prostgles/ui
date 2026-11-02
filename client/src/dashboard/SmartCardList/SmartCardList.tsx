@@ -25,6 +25,8 @@ import type { ColumnSort } from "@common/ColumnConfig/ColumnConfig";
 import { SmartCardListHeaderControls } from "./SmartCardListHeaderControls";
 import { useSmartCardListState } from "./useSmartCardListState";
 import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
+import type { CardLayoutOptions } from "@common/ColumnConfig/cardLayout";
+import { CardItemTitle } from "../W_Table/CardView/CardItem/CardItemTitle";
 
 export type SmartCardListProps<T extends AnyObject = AnyObject> = Pick<
   Prgl,
@@ -42,6 +44,8 @@ export type SmartCardListProps<T extends AnyObject = AnyObject> = Pick<
   className?: string;
   style?: React.CSSProperties;
   variant?: "row" | "col" | "row-wrap";
+  cardLayout?: CardLayoutOptions;
+  infoLevel?: 1 | 2;
 
   hideColumns?: string[];
 
@@ -90,6 +94,7 @@ export type SmartCardListProps<T extends AnyObject = AnyObject> = Pick<
   onSuccess?: SmartFormProps["onSuccess"];
   enableListAnimations?: boolean;
   getActions?: SmartCardProps<T>["getActions"];
+  onClose?: VoidFunction;
   /**
    * Show top N records
    * Defaults to 20
@@ -184,7 +189,17 @@ export const SmartCardList = <T extends AnyObject>(
         />
       )}
       <MaybeFlipMove
-        className="flex-col gap-p5 relative"
+        className={
+          "flex-col relative " +
+          ((
+            props.infoLevel !== 2 &&
+            _fieldConfigs?.some(
+              (field) => typeof field !== "string" && field.cardHeader?.isTitle,
+            )
+          ) ?
+            "gap-0"
+          : "gap-p5")
+        }
         flipMove={enableListAnimations}
       >
         {showNoDataComponent ?
@@ -208,8 +223,29 @@ export const SmartCardList = <T extends AnyObject>(
                   excludeNulls={excludeNulls}
                   popupFixedStyle={popupFixedStyle}
                   fieldConfigs={_fieldConfigs}
+                  cardLayout={props.cardLayout}
+                  infoLevel={props.infoLevel ?? 1}
+                  renderTitle={(value, row) =>
+                    tableControls?.table ?
+                      <CardItemTitle
+                        table={tableControls.table}
+                        tableHandler={db[tableControls.table.name] ?? {}}
+                        columnConfig={undefined}
+                        draggedRow={undefined}
+                        row={row}
+                        prgl={{ db, tables, methods, sql }}
+                        showEdit={props.showEdit}
+                        renderDetails={(detailsProps) => (
+                          <SmartCardList {...detailsProps} />
+                        )}
+                      >
+                        {value}
+                      </CardItemTitle>
+                    : value
+                  }
                   footer={getRowFooter}
                   getActions={getActions}
+                  onClose={props.onClose}
                   smartFormProps={{ onSuccess }}
                   fullData={{
                     index,

@@ -3,9 +3,12 @@ import type { DBSSchema } from "@common/publishUtils";
 import type { SvgIconName } from "@components/SearchList/SearchList";
 import { isDefined } from "prostgles-types";
 import { useCallback, useMemo } from "react";
+import type { DBSchemaTableWJoins } from "src/dashboard/Dashboard/dashboardUtils";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 
-export const useMcpServerIcons = () => {
+export const useMcpServerIcons = (
+  tables?: Pick<DBSchemaTableWJoins, "name" | "icon">[],
+) => {
   const { dbs } = usePrglCore();
 
   const mcpServersRequest = dbs.mcp_servers.useFind(
@@ -56,7 +59,17 @@ export const useMcpServerIcons = () => {
   }, [mcpServers]);
 
   const getIcon = useCallback(
-    (serverName: string, toolName?: string) => {
+    (
+      serverName: string,
+      toolName?: string,
+      input?: DBSSchema["mcp_server_tool_calls"]["input"],
+    ) => {
+      if (serverName === "db" && typeof input?.tableName === "string") {
+        const tableIcon = tables?.find(
+          (table) => table.name === input.tableName,
+        )?.icon;
+        if (tableIcon) return tableIcon as SvgIconName;
+      }
       const serverIcons = mcpServerIcons.get(serverName);
       if (!serverIcons) return undefined;
       if (toolName) {
@@ -66,14 +79,17 @@ export const useMcpServerIcons = () => {
       }
       return serverIcons.serverIcon;
     },
-    [mcpServerIcons],
+    [mcpServerIcons, tables],
   );
 
   const getIconFromFullName = useCallback(
-    (fullName: string) => {
+    (
+      fullName: string,
+      input?: DBSSchema["mcp_server_tool_calls"]["input"],
+    ) => {
       const parts = getMCPToolNameParts(fullName);
       if (!parts) return undefined;
-      return getIcon(parts.serverName, parts.toolName);
+      return getIcon(parts.serverName, parts.toolName, input);
     },
     [getIcon],
   );

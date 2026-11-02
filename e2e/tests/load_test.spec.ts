@@ -11,7 +11,7 @@ test.use({
 test.describe.serial("Load test first cache", () => {
   test("Load test first cache", async ({ page: p }) => {
     const page = p as PageWIds;
-    await login(page, "load_user_0", "http://localhost:3004/login");
+    await login(page, "load_user_0", "http://localhost:3004/auth/login");
   });
 });
 const loadUsers = new Array(22).fill(0).map((_, i) => `load_user_${i}`);
@@ -20,7 +20,7 @@ for (const [idx, user] of loadUsers.entries()) {
   test.describe("Load test_" + idx, () => {
     test("Load test", async ({ page: p }) => {
       const page = p as PageWIds;
-      await login(page, user, "http://localhost:3004/login");
+      await login(page, user, "http://localhost:3004/auth/login");
       await page.waitForTimeout(2000);
       const getVideoDemoConnection = async () => {
         await page

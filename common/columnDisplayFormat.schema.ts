@@ -124,6 +124,18 @@ export const columnDisplayFormatSchema = {
         title: "Format",
         description: "Clickable URL",
       },
+      params: {
+        optional: true,
+        type: {
+          urlColumn: {
+            type: "string",
+            optional: true,
+            title: "URL column",
+            description:
+              "Use another column as the URL, keeping this column as the link text. Leave unset to use this column's value as the URL.",
+          },
+        },
+      },
     },
     {
       type: {
@@ -176,6 +188,13 @@ export const columnDisplayFormatSchema = {
         enum: ["Metric Prefix"],
         title: "Format",
         description: "Display large numbers with metric prefixes (e.g. 1.2K)",
+      },
+    },
+    {
+      type: {
+        enum: ["File size"],
+        title: "Format",
+        description: "Display bytes as a readable file size (e.g. 1.25 MB)",
       },
     },
     {

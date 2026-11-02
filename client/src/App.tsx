@@ -215,6 +215,10 @@ export const App = () => {
           <NonHTTPSWarning {...prglState} />
           <Switch>
             <Route
+              path={ROUTES.REGISTER}
+              element={<Login key="register" {...appContextProps} register />}
+            />
+            <Route
               key="0"
               path="/"
               element={<Navigate to={ROUTES.CONNECTIONS} replace />}
@@ -328,7 +332,7 @@ export const App = () => {
             <Route
               key="10"
               path={ROUTES.LOGIN}
-              element={<Login {...appContextProps} />}
+              element={<Login key="login" {...appContextProps} />}
             />
             <Route
               key="11"

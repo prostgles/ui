@@ -8,6 +8,8 @@ import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
 import type { ColumnConfigNested } from "@common/ColumnConfig/ColumnConfig";
 import { getLinkedRecordsFilter } from "./getLinkedRecordsFilter";
 import { LinkedRecordSummary } from "./LinkedRecordSummary";
+import { FlexRow } from "@components/Flex";
+import { RenderValue } from "../../../SmartForm/SmartFormField/RenderValue";
 
 export const NestedColumnRenderRecords = ({
   column,
@@ -28,6 +30,9 @@ export const NestedColumnRenderRecords = ({
 }) => {
   const { db, methods, sql } = usePrgl();
   const previewLimit = column.nested.limit ?? rows.length;
+  const isAggregate = shownColumns.some(
+    (column) => column.computedConfig?.funcDef.isAggregate,
+  );
   const linkedRecordsFilter = getLinkedRecordsFilter({
     column,
     parentRow,
@@ -67,11 +72,23 @@ export const NestedColumnRenderRecords = ({
               }
             }
           >
-            <LinkedRecordSummary
-              row={row}
-              shownNestedColumns={shownColumns}
-              table={table}
-            />
+            {isAggregate ?
+              <FlexRow className="gap-p5 ai-center">
+                {shownColumns.map((column) => (
+                  <RenderValue
+                    key={column.name}
+                    column={column}
+                    value={row[column.name]}
+                    style={{ color: "inherit" }}
+                  />
+                ))}
+              </FlexRow>
+            : <LinkedRecordSummary
+                row={row}
+                shownNestedColumns={shownColumns}
+                table={table}
+              />
+            }
           </RenderColumnButton>
         );
       })}

@@ -17,10 +17,12 @@ import { defineFunctionGroup } from "./defineFunctionGroup";
 import { loadGeneratedWorkspacesFunction } from "./loadGeneratedWorkspaces/loadGeneratedWorkspacesFunction";
 import { userServerFunctions } from "./userServerFunctions/userServerFunctions";
 import { getConnectionUser } from "@src/ConnectionManager/getConnectionUser";
+import { userInviteFunctions } from "./userInviteFunctions";
 
 export const stateServerFunctions = {
   ...userServerFunctions,
   ...stateServerAdminFunctions,
+  ...userInviteFunctions,
   anyUser: defineFunctionGroup({
     userFilter: {},
     functions: {

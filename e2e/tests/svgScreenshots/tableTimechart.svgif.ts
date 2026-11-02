@@ -3,7 +3,10 @@ import {
   closeWorkspaceWindows,
   deleteAllWorkspaces,
   runDbsSql,
+  TWENTY_SECONDS_OR_MORE,
+  type PageWIds,
 } from "utils/utils";
+import { expect } from "../utils/fixtures";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
 import { clickTableRow } from "./table.svgif";
 
@@ -67,17 +70,7 @@ export const tableTimechartSvgif: OnBeforeScreenshot = async (
   // await page.locator("input#nested-col-name").fill("All orders");
   // await page.waitForTimeout(1500);
   // await page.getByTestId("LinkedColumn.Add").click();
-  const toggleFixedLayout = async (on: boolean) => {
-    await page.reload();
-    const btn = await page.getByTestId(
-      "WorkspaceMenu.toggleWorkspaceLayoutMode",
-    );
-    const isOn = Boolean((await btn.textContent())?.includes("Edit layout"));
-    if (isOn !== on) {
-      await btn.click();
-    }
-  };
-  await toggleFixedLayout(true);
+  await toggleFixedLayout(page, true);
 
   await page.evaluate(() => {
     document.querySelector<HTMLDivElement>(".TopHeader")!.style.display =
@@ -125,7 +118,7 @@ export const tableTimechartSvgif: OnBeforeScreenshot = async (
   await page.waitForTimeout(1500);
 
   await addScene();
-  await toggleFixedLayout(false);
+  await toggleFixedLayout(page, false);
 
   await page.waitForTimeout(2000);
 
@@ -135,7 +128,7 @@ export const tableTimechartSvgif: OnBeforeScreenshot = async (
   await page.getByTestId("DataLayerDataSourceInfo").click();
   await page.locator(getDataKey("addresses.geog")).click();
 
-  await toggleFixedLayout(true);
+  await toggleFixedLayout(page, true);
 
   await clickTableRow({ page, addScene, addSceneAnimation }, 2, undefined, 2);
   await page.waitForTimeout(2_000);
@@ -154,7 +147,23 @@ export const tableTimechartSvgif: OnBeforeScreenshot = async (
     animations: [{ type: "wait", duration: 2000 }],
   });
 
-  await toggleFixedLayout(false);
+  await toggleFixedLayout(page, false);
+};
+
+export const toggleFixedLayout = async (page: PageWIds, on: boolean) => {
+  await page.reload();
+  const layoutToggle = page.getByTestId(
+    "WorkspaceMenu.toggleWorkspaceLayoutMode",
+  );
+  await expect(layoutToggle).toBeVisible(TWENTY_SECONDS_OR_MORE);
+  if ((await layoutToggle.getAttribute("aria-pressed")) !== String(on)) {
+    await layoutToggle.click();
+  }
+  await expect(layoutToggle).toHaveAttribute(
+    "aria-pressed",
+    String(on),
+    TWENTY_SECONDS_OR_MORE,
+  );
 };
 
 const windowConfig = {

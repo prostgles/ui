@@ -2,6 +2,7 @@ import { appendFileSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { ROW_ACTIONS_COLUMN } from "../../../server/node_modules/prostgles-client";
 import { createActionColumn } from "../../../server/dist/server/src/schemaConfig";
 import type { ColumnConfig } from "../../../common/ColumnConfig/ColumnConfig";
+import type { CardLayoutOptions } from "../../../common/ColumnConfig/cardLayout";
 import { getTableIdentityColumns } from "../../../client/src/dashboard/W_Table/ColumnMenu/ColumnDisplayFormat/getTableIdentityColumns";
 import type { DBSchemaTableWJoins } from "../../../client/src/dashboard/Dashboard/dashboardUtils";
 import { sidKeyName } from "../../../common/authTypesAndConstants";
@@ -21,6 +22,13 @@ const config = {
   id: "linked-columns-e2e",
   connection: {
     function_options: {
+      startUserAction: { action: { runImmediately: true } },
+      stopUserAction: { action: { runImmediately: true } },
+      reviewUserWithNote: {
+        action: { runImmediately: true },
+        renderOutputAsMarkdown: true,
+      },
+      ambiguousUser: { action: { runImmediately: true } },
       styledUser: {
         action: {
           defaultValue: {
@@ -54,12 +62,23 @@ const config = {
       },
       startTargetJob: {
         action: {
+          runImmediately: true,
           defaultValue: { text: "Start target" },
           job: { runningText: "Processing target", retryText: "Retry target" },
         },
       },
     },
     table_options: {
+      job_targets: {
+        columns: {
+          job_id: {
+            renderAs: {
+              type: "ActionColumns",
+              params: { actions: [{ methodsForJobColumn: "job_id" }] },
+            },
+          },
+        },
+      },
       users: {
         label: "Users",
         icon: "Account",
@@ -71,9 +90,16 @@ const config = {
           avatarColumn: "avatar_url",
           headerColumn: "title",
           subHeaderColumn: "status",
+          layout: { fields: { due: { labels: "none" } } },
         },
         columns: {
+          title: { infoLevel: 1 },
+          due: { infoLevel: 1 },
+          id: { infoLevel: 2 },
+          user_id: { infoLevel: 2 },
+          content_type: { infoLevel: 2 },
           status: {
+            infoLevel: 1,
             style: {
               type: "Conditional",
               conditions: [
@@ -87,6 +113,7 @@ const config = {
             },
           },
           avatar_url: {
+            infoLevel: 1,
             renderAs: {
               type: "Media",
               params: {
@@ -107,6 +134,7 @@ const config = {
         tenant_id: "integer NOT NULL",
         code: "text NOT NULL",
         label: "text",
+        active: "boolean NOT NULL DEFAULT FALSE",
       },
       constraints: { primary_key: "PRIMARY KEY (tenant_id, code)" },
     },
@@ -129,9 +157,11 @@ const config = {
         alternate_key: "uuid NOT NULL UNIQUE DEFAULT gen_random_uuid()",
         job_id: "uuid",
         blocked: "boolean NOT NULL DEFAULT TRUE",
+        cancel_blocked: "boolean NOT NULL DEFAULT FALSE",
         should_fail: "boolean NOT NULL DEFAULT FALSE",
         action: createActionColumn("startTargetJob", {
           text: "Start target",
+          details: "**Job instructions**",
           disabledInfo: "",
           isLoading: false,
         }),
@@ -386,8 +416,17 @@ test.beforeAll(async () => {
           run: async ({ user, note }) => {
             if (note === "error") throw new Error("Review failed");
             if (note === "false") return false;
+            if (note === "0") return 0;
             if (note === "void") return;
+            if (note === "markdown") return "## Review complete";
+            if (note === "empty") return "";
             return { received: user, note };
+          },
+        },
+        markUser: {
+          input: { user: { type: "RowLookup", table: "users" } },
+          run: async ({ user }, { dbo }) => {
+            await dbo.users.update({ id: user.id }, { action: { text: "Marked" } });
           },
         },
         startUserAction: {
@@ -418,6 +457,9 @@ test.beforeAll(async () => {
           run: async ({ row, dbo, signal, progressMessage, fail }) => {
             await progressMessage("Working on target");
             while ((await dbo.job_targets.findOne({ id: row.id })).blocked) {
+              while (signal.aborted && (await dbo.job_targets.findOne({ id: row.id })).cancel_blocked) {
+                await new Promise(resolve => setTimeout(resolve, 20));
+              }
               signal.throwIfAborted();
               await new Promise(resolve => setTimeout(resolve, 20));
             }
@@ -570,6 +612,36 @@ test("linked column cells open filtered aggregates and linked records", async ({
   await expect(
     page.getByTestId("SmartForm").locator('[data-key="name"] input'),
   ).toHaveValue("Alice");
+
+  /* Inserting from the section header refreshes its count without closing the parent. */
+  const tasksSection = page.locator(
+    '[data-command="JoinedRecords.Section"][data-key="tasks"]',
+  );
+  const tasksSectionToggle = tasksSection.getByTestId(
+    "JoinedRecords.SectionToggle",
+  );
+  await expect(tasksSectionToggle).toHaveText("Tasks3");
+  await tasksSection.hover();
+  await tasksSection.getByTestId("JoinedRecords.AddRow").click();
+  const insertedTaskForm = page.locator(
+    '[data-command="SmartForm"][data-key="tasks"]',
+  );
+  await insertedTaskForm
+    .locator('[data-key="title"] input')
+    .fill("Footer count regression");
+  await insertedTaskForm.locator('[data-key="status"] input').fill("open");
+  await insertedTaskForm.getByTestId("SmartForm.insert").click();
+  await expect(tasksSectionToggle).toHaveText("Tasks4");
+  await tasksSectionToggle.click();
+  await tasksSection
+    .locator(".SmartCard")
+    .filter({ hasText: "Footer count regression" })
+    .getByTestId("SmartCard.viewEditRow")
+    .click();
+  await insertedTaskForm.getByTestId("SmartForm.delete").click();
+  await page.getByTestId("SmartForm.delete.confirm").click();
+  await expect(tasksSectionToggle).toHaveText("Tasks3");
+  await expect(insertedTaskForm).toHaveCount(0);
   await page.getByTestId("Popup.close").last().click();
 
   await aggregateButtons.nth(0).click();
@@ -577,6 +649,36 @@ test("linked column cells open filtered aggregates and linked records", async ({
   await expect(aggregatePopup).toContainText("Open one");
   await expect(aggregatePopup).toContainText("Open two");
   await expect(aggregatePopup).not.toContainText("Closed one");
+  /* Linked cards inherit title/chip styles, hide labels and open the row editor. */
+  const openCard = aggregatePopup
+    .locator(".SmartCard")
+    .filter({ hasText: "Open one" });
+  await expect(openCard.getByText("Open one", { exact: true })).toHaveCSS(
+    "font-weight",
+    "700",
+  );
+  await expect(
+    openCard
+      .locator('[style*="background-color"]')
+      .filter({ hasText: /^open$/ }),
+  ).toHaveCSS("background-color", "rgb(219, 234, 254)");
+  await expect(openCard.locator("label")).toHaveCount(0);
+  await expect(openCard).not.toContainText("user_id");
+  await expect(openCard).toHaveCSS("border-radius", "0px");
+  await openCard.getByRole("button", { name: "Open one", exact: true }).click();
+  const taskDetails = page.getByTestId("Popup.content").last();
+  await expect(taskDetails.locator(".SmartCard")).toHaveCount(1);
+  await expect(taskDetails.locator("label")).toContainText([
+    "User Id",
+    "Content Type",
+    "Id",
+  ]);
+  await page.getByTestId("Popup.close").last().click();
+  await openCard.getByTestId("SmartCard.viewEditRow").click();
+  await expect(
+    page.getByTestId("SmartForm").locator('[data-key="title"] input'),
+  ).toHaveValue("Open one");
+  await page.getByTestId("Popup.close").last().click();
 
   // A layout update must not remount the cells and discard the open popup.
   const state = await deployment.connectStateAs("admin");
@@ -612,12 +714,25 @@ test("linked column cells open filtered aggregates and linked records", async ({
     "Open two",
     "Closed one",
   ]);
+  /* Single linked records open detailed cards with level-2 fields and an inline close button. */
   await taskButtons.filter({ hasText: "Open two" }).click();
-  const form = page.getByTestId("SmartForm");
-  await expect(form.locator('[data-key="title"] input')).toHaveValue(
-    "Open two",
-  );
-  await expect(form.locator('[data-key="status"] input')).toHaveValue("open");
+  const cards = page.getByTestId("SmartCardList").locator(".SmartCard");
+  await expect(cards).toHaveCount(1);
+  await expect(cards).toContainText("Open two");
+  await expect(cards.getByText("open", { exact: true })).toBeVisible();
+  await expect(cards.locator("label")).toContainText([
+    "User Id",
+    "Content Type",
+    "Id",
+  ]);
+  await expect(
+    page.getByTestId("Popup.content").last().locator(".SmartCardListControls"),
+  ).toHaveCount(0);
+  await expect(page.getByTestId("Popup.header")).toHaveCount(0);
+  await expect(
+    cards.getByRole("button", { name: "Close", exact: true }),
+  ).toBeVisible();
+  await expect(page.getByTestId("SmartForm")).toHaveCount(0);
   await page.getByTestId("Popup.close").last().click();
 
   const managerButton = alice
@@ -627,11 +742,43 @@ test("linked column cells open filtered aggregates and linked records", async ({
   await expect(managerButton).toContainText("Bob");
   await expect(managerButton).toContainText("bob@example.com");
   await managerButton.click();
-  await expect(form).toBeVisible();
+  await expect(cards).toHaveCount(1);
+  await expect(cards).toContainText("Bob");
+  await expect(cards).toContainText("bob@example.com");
+  await page.getByTestId("Popup.close").last().click();
+
+  /* The preference restores smart forms and persists across reloads. */
+  await page.getByTestId("dashboard.menu.settingsToggle").click();
+  const cardToggle = page.getByRole("checkbox", {
+    name: "Open linked records as cards",
+    exact: true,
+  });
+  await expect(cardToggle).toBeChecked();
+  await cardToggle.uncheck();
+  await page.getByTestId("Popup.close").last().click();
+  await taskButtons.filter({ hasText: "Open two" }).click();
+  const form = page.getByTestId("SmartForm");
+  await expect(form.locator('[data-key="title"] input')).toHaveValue(
+    "Open two",
+  );
+  await expect(form.locator('[data-key="status"] input')).toHaveValue("open");
+  await page.getByTestId("Popup.close").last().click();
+  await page.reload();
+  await managerButton.click();
   await expect(form.locator('[data-key="name"] input')).toHaveValue("Bob");
   await expect(form.locator('[data-key="email"] input')).toHaveValue(
     "bob@example.com",
   );
+  await page.getByTestId("Popup.close").last().click();
+
+  await page.getByTestId("dashboard.menu.settingsToggle").click();
+  await expect(cardToggle).not.toBeChecked();
+  await cardToggle.check();
+  await page.getByTestId("Popup.close").last().click();
+  await managerButton.click();
+  await expect(cards).toHaveCount(1);
+  await expect(cards).toContainText("bob@example.com");
+  await expect(form).toHaveCount(0);
   await page.getByTestId("Popup.close").last().click();
 
   await users
@@ -933,13 +1080,20 @@ test("computed linked columns discover parameters, persist edits and drill into 
   }
 });
 
-test("cards align header controls and keep content-sized actions below fields or beside compact rows", async ({
+test("cards align header controls and wrap content-sized actions only when space is limited", async ({
   page,
 }) => {
   const state = await deployment.connectStateAs("admin");
-  const project = await deployment.connectProjectAs("admin");
+  let project = await deployment.connectProjectAs("admin");
+  const connection = await state.db.connections!.findOne({ name: config.id });
   const originalWindow = await state.db.windows!.findOne(usersWindowFilter);
   const originalAlice = await project.db.users!.findOne!({ name: "Alice" });
+  const sourcePath = `${configPath}/index.js`;
+  const originalSource = readFileSync(sourcePath, "utf8");
+  const sync = async () => {
+    await page.goto("about:blank");
+    ({ project } = await deployment.syncSchema());
+  };
   const columns: ColumnConfig[] = [
     { name: "name", show: true },
     { name: "email", show: true },
@@ -965,6 +1119,7 @@ test("cards align header controls and keep content-sized actions below fields or
   ];
   const options = {
     ...originalWindow!.options,
+    showFilters: false,
     viewAs: { type: "card", maxCardRowHeight: 1, maxCardWidth: "700px" },
   } as const;
   try {
@@ -984,6 +1139,27 @@ test("cards align header controls and keep content-sized actions below fields or
     const header = card.locator(".CardHeader");
     const body = card.locator(".CardBody");
     const actions = card.locator(".CardAction");
+    const actionGroup = card.locator(".CardActions");
+    const fields = body.locator(":scope > div:not(.CardActions)");
+    /* Card view keeps row insertion available when the filter bar is hidden. */
+    const insertRowButton = page
+      .locator('[data-table-name="users"]')
+      .getByTestId("dashboard.window.rowInsert");
+    await expect(insertRowButton).toBeVisible();
+    await insertRowButton.click();
+    await expect(page.getByTestId("SmartForm")).toBeVisible();
+    await page.getByTestId("SmartForm.close").click();
+    await state.db.windows!.update(usersWindowFilter, {
+      options: { ...options, hideInsertButton: true },
+    });
+    await expect(insertRowButton).toHaveCount(0);
+    await state.db.windows!.update(usersWindowFilter, { options });
+    await expect(insertRowButton).toBeVisible();
+    await expect(card).toHaveCSS("border-radius", "0px");
+    await expect(card).toHaveCSS("margin-top", "0px");
+    expect(await card.evaluate((element) => element.clientWidth)).toBe(
+      await card.evaluate((element) => element.parentElement!.clientWidth),
+    );
     const inspectUser = card.getByRole("button", {
       name: "inspectUser",
       exact: true,
@@ -994,14 +1170,13 @@ test("cards align header controls and keep content-sized actions below fields or
       "flex-direction",
       "column",
     );
-    const fieldBox = await body
-      .locator(":scope > div:not(.CardActions)")
-      .boundingBox();
-    const actionBox = await card.locator(".CardActions").boundingBox();
-    expect(actionBox!.y).toBeGreaterThanOrEqual(fieldBox!.y + fieldBox!.height);
-    expect(actionBox!.width).toBeCloseTo(
+    const fieldBox = await fields.boundingBox();
+    const actionBox = await actionGroup.boundingBox();
+    expect(actionBox!.x).toBeGreaterThanOrEqual(fieldBox!.x + fieldBox!.width);
+    expect(actionBox!.y).toBeLessThan(fieldBox!.y + fieldBox!.height);
+    expect(actionBox!.y + actionBox!.height).toBeGreaterThan(fieldBox!.y);
+    expect(actionBox!.width).toBeLessThan(
       (await body.boundingBox())!.width - 32,
-      0,
     );
     expect((await inspectUser.boundingBox())!.width).toBeLessThan(
       actionBox!.width / 2,
@@ -1009,6 +1184,21 @@ test("cards align header controls and keep content-sized actions below fields or
     await inspectUser.click();
     await expect(page.getByTestId("ActionPopup")).toBeVisible();
     await page.getByTestId("Popup.close").last().click();
+
+    const originalViewport = page.viewportSize()!;
+    await page.setViewportSize({ width: 320, height: 900 });
+    await expect(async () => {
+      const narrowFieldBox = (await fields.boundingBox())!;
+      const wrappedActionBox = (await actionGroup.boundingBox())!;
+      expect(wrappedActionBox.y).toBeGreaterThanOrEqual(
+        narrowFieldBox.y + narrowFieldBox.height,
+      );
+      expect(wrappedActionBox.width).toBeCloseTo(
+        (await body.boundingBox())!.width - 32,
+        0,
+      );
+    }).toPass({ timeout: 5_000 });
+    await page.setViewportSize(originalViewport);
 
     await state.db.windows!.update(usersWindowFilter, {
       columns: columns.map((column) =>
@@ -1029,12 +1219,15 @@ test("cards align header controls and keep content-sized actions below fields or
       { id: originalAlice!.id },
       { name: longName },
     );
-    await state.db.windows!.update(usersWindowFilter, {
-      options: {
-        ...options,
-        viewAs: { ...options.viewAs, maxCardWidth: "280px" },
-      },
-    });
+    /* Details without a layout stay compact even with a long title. */
+    await card.getByRole("button", { name: longName, exact: true }).click();
+    const unconfiguredDetails = page.getByRole("dialog").last();
+    await expect(unconfiguredDetails.locator(".SmartCard")).toBeVisible();
+    expect(
+      (await unconfiguredDetails.boundingBox())!.width,
+    ).toBeLessThanOrEqual(700);
+    await page.getByTestId("Popup.close").last().click();
+    await page.setViewportSize({ width: 420, height: 900 });
     await expect(card.locator(".CardView_content")).toHaveCSS(
       "flex-direction",
       "column",
@@ -1057,7 +1250,220 @@ test("cards align header controls and keep content-sized actions below fields or
     await expect(page.getByTestId("Popup.content").last()).toBeVisible();
     await page.getByTestId("Popup.close").last().click();
     await card.screenshot({ path: test.info().outputPath("narrow-card.png") });
+    await page.setViewportSize(originalViewport);
+
+    /* Explicit levels hide unmarked fields, including IDs, from summaries and details. */
+    await state.db.connections!.update(
+      { id: connection!.id },
+      {
+        table_options: {
+          ...connection!.table_options,
+          users: {
+            ...connection!.table_options?.users,
+            referenceDisplay: { columns: [{ name: "name" }] },
+            columns: {
+              ...connection!.table_options?.users?.columns,
+              name: { infoLevel: 1 },
+              email: {
+                infoLevel: 1,
+                style: { type: "Fixed", textColor: "#1e40af" },
+              },
+              manager_id: { infoLevel: 1, idx: 0 },
+              id: { idx: 1 },
+              action: { infoLevel: 2 },
+              review_action: { infoLevel: 2 },
+              inspect: { infoLevel: 2 },
+              actions: { infoLevel: 2 },
+            },
+            card: {
+              ...connection!.table_options?.users?.card,
+              layout: { fields: { manager_id: { labels: "none" } } },
+            },
+          },
+        },
+      },
+    );
+    const updatedConnection = await state.db.connections!.findOne({
+      id: connection!.id,
+    });
+    writeFileSync(
+      sourcePath,
+      originalSource +
+        `\nmodule.exports.connection.table_options = ${JSON.stringify(updatedConnection!.table_options)};`,
+    );
+    await sync();
+    await state.db.windows!.update(usersWindowFilter, {
+      columns: columns.map((column) =>
+        column.name === "manager_id" ? { ...column, show: true } : column,
+      ),
+      options,
+    });
+    await page.goto(
+      `${deployment.dashboardUrl}?workspaceId=${originalWindow!.workspace_id}`,
+    );
+    await expect(body.locator('[data-card-field="id"]')).toHaveCount(0);
+    await expect(body.locator(":scope > div > .text-2")).toHaveCount(0);
+    await expect(body.locator(":scope > div > .o-auto")).toHaveText(["Bob"]);
+    await expect(actions).toHaveCount(0);
+    await expect(inspectUser).toHaveCount(0);
+
+    /* Detail cards include level-2 and empty fields, while unmarked fields stay hidden. */
+    await card.getByRole("button", { name: longName, exact: true }).click();
+    const details = page.getByTestId("Popup.content").last();
+    const detailFields = details.locator(".SmartCardCol");
+    await expect(details.locator(".SmartCard")).toHaveCount(1);
+    await expect(details.getByTestId("GroupedFilterControl")).toHaveCount(0);
+    /* The card owns its title and keeps Close inside its top-right corner on narrow screens. */
+    await expect(page.getByTestId("Popup.header")).toHaveCount(0);
+    await expect(details.getByText(longName, { exact: true })).toHaveCount(1);
+    await page.setViewportSize({ width: 420, height: 900 });
+    const detailCard = details.locator(".SmartCard");
+    const detailPopup = page.getByRole("dialog").last();
+    await expect(detailPopup).toHaveCSS("border-width", "0px");
+    await expect(detailPopup).toHaveCSS("box-shadow", "none");
+    await expect(details).toHaveCSS("padding", "0px");
+    await expect(detailCard).toHaveCSS("border-width", "1px");
+    const closeDetails = detailCard.getByRole("button", {
+      name: "Close",
+      exact: true,
+    });
+    await expect(closeDetails).toBeVisible();
+    const detailCardBox = (await detailCard.boundingBox())!;
+    const closeDetailsBox = (await closeDetails.boundingBox())!;
+    const detailHeaderBox = (await details
+      .locator(".SmartCardHeader")
+      .boundingBox())!;
+    expect(closeDetailsBox.y - detailCardBox.y).toBeGreaterThanOrEqual(0);
+    expect(closeDetailsBox.y - detailCardBox.y).toBeLessThan(16);
+    const closeRightInset =
+      detailCardBox.x +
+      detailCardBox.width -
+      closeDetailsBox.x -
+      closeDetailsBox.width;
+    expect(closeRightInset).toBeGreaterThanOrEqual(0);
+    expect(closeRightInset).toBeLessThan(16);
+    expect(detailHeaderBox.x + detailHeaderBox.width).toBeLessThanOrEqual(
+      closeDetailsBox.x,
+    );
+    await expect(page.getByTestId("SmartForm")).toHaveCount(0);
+    await expect(detailFields).toHaveCount(5);
+    await expect(detailFields.locator("label")).toHaveText([
+      "Action",
+      "Review Action",
+    ]);
+    await expect(details.locator(".SmartCardHeader")).toContainText(longName);
+    await expect(details.locator(".SmartCardHeader")).toHaveCSS(
+      "display",
+      "flex",
+    );
+    await expect(details.getByText(longName, { exact: true })).toHaveCSS(
+      "font-weight",
+      "700",
+    );
+    await expect(
+      details.getByText(originalAlice!.email, { exact: true }),
+    ).toHaveCSS("color", "rgb(30, 64, 175)");
+    await expect(detailFields.nth(0)).toHaveText("Bob");
+    await expect(
+      details.getByRole("button", { name: "inspectUser", exact: true }),
+    ).toBeVisible();
+    await closeDetails.click();
+    await expect(detailCard).toHaveCount(0);
+    await page.setViewportSize(originalViewport);
+
+    await page
+      .locator('[data-table-name="users"]')
+      .getByTestId("CardView.row")
+      .locator(".CardHeader")
+      .getByRole("button", { name: "Bob", exact: true })
+      .click();
+    await expect(detailFields).toHaveCount(5);
+    await expect(details).toContainText("bob@example.com");
+    await expect(details).not.toContainText(originalAlice!.email);
+    await page.getByTestId("Popup.close").last().click();
+
+    /* Summaries use automatic placement; detail cards retain configured grid positions. */
+    const setCardLayout = async (layout: CardLayoutOptions) => {
+      const tableOptions = updatedConnection!.table_options!;
+      writeFileSync(
+        sourcePath,
+        originalSource +
+          `\nmodule.exports.connection.table_options = ${JSON.stringify({
+            ...tableOptions,
+            users: {
+              ...tableOptions.users,
+              columns: {
+                ...tableOptions.users?.columns,
+                id: { idx: 1, infoLevel: 1 },
+              },
+              card: {
+                ...tableOptions.users?.card,
+                layout,
+              },
+            },
+          })};`,
+      );
+      await sync();
+      await page.goto(
+        `${deployment.dashboardUrl}?workspaceId=${originalWindow!.workspace_id}`,
+      );
+    };
+    await setCardLayout({
+      type: "grid",
+      columns: 2,
+      labels: "inline",
+      fields: {
+        manager_id: { columnSpan: 2, row: 2, labels: "none" },
+        id: { row: 1 },
+      },
+    });
+    const managerField = body
+      .locator("[data-card-field]")
+      .filter({ hasText: "Bob" });
+    const idField = body.locator('[data-card-field="id"]');
+    await expect(body).toHaveCSS("display", "flex");
+    await expect(actions).toHaveCount(0);
+    await expect(body.locator(".CardActions")).toHaveCount(0);
+    await expect(managerField).toHaveCSS("grid-column", "auto");
+    await expect(managerField).toHaveCSS("grid-row-start", "auto");
+    await expect(managerField.locator(".text-2")).toHaveCount(0);
+    await expect(idField).toHaveCSS("flex-direction", "row");
+    await expect(idField.locator(".text-2")).toHaveText("Id");
+
+    await card.getByRole("button", { name: longName, exact: true }).click();
+    const detailBody = details.locator(".SmartCardBody");
+    const detailManager = detailBody.locator(".SmartCardCol").filter({
+      hasText: /^Bob$/,
+    });
+    await expect(detailBody).toHaveCSS("display", "grid");
+    await expect(detailFields).toHaveCount(6);
+    await expect(detailBody).not.toContainText(longName);
+    await expect(detailManager).toHaveCSS("grid-column", "span 2");
+    await expect(detailManager).toHaveCSS("grid-row-start", "2");
+    await expect(detailManager.locator("label")).toHaveCount(0);
+    await expect(
+      detailBody
+        .locator(".SmartCardCol")
+        .filter({ has: page.getByText("Id", { exact: true }) }),
+    ).toHaveCSS("flex-direction", "row");
+    await page.getByTestId("Popup.close").last().click();
+
+    /* Flex ignores grid placement; field labels override the card default. */
+    await setCardLayout({
+      type: "flex",
+      labels: "none",
+      fields: {
+        manager_id: { columnSpan: 2, row: 2, labels: "above" },
+      },
+    });
+    await expect(body).toHaveCSS("display", "flex");
+    await expect(managerField).toHaveCSS("grid-column", "auto");
+    await expect(managerField).toHaveCSS("flex-direction", "column");
+    await expect(managerField.locator(".text-2")).toHaveText("Manager Id");
+    await expect(idField.locator(".text-2")).toHaveCount(0);
   } finally {
+    writeFileSync(sourcePath, originalSource);
+    await sync();
     await state.db.windows!.update(usersWindowFilter, {
       columns: originalWindow!.columns,
       options: originalWindow!.options,
@@ -1065,6 +1471,158 @@ test("cards align header controls and keep content-sized actions below fields or
     await project.db.users!.update!(
       { id: originalAlice!.id },
       { name: "Alice" },
+    );
+    state.disconnect();
+    project.disconnect();
+  }
+});
+
+test("cards without info levels reserve summary slots for headers and keep overflow in details", async ({
+  page,
+}) => {
+  const state = await deployment.connectStateAs("admin");
+  let project = await deployment.connectProjectAs("admin");
+  const originalWindow = await state.db.windows!.findOne(usersWindowFilter);
+  const sourcePath = `${configPath}/index.js`;
+  const originalSource = readFileSync(sourcePath, "utf8");
+  const extraColumns: ColumnConfig[] = Array.from(
+    { length: 8 },
+    (_, index) => ({
+      name: `extra_${index}`,
+      label: `Extra ${index}`,
+      show: true,
+      computedConfig: {
+        column: "title",
+        funcDef: {
+          key: "$upper",
+          label: "Uppercase",
+          subLabel: "",
+          isAggregate: false,
+        },
+        tsDataType: "string",
+        udt_name: "text",
+      },
+    }),
+  );
+  const columns: ColumnConfig[] = [
+    ...["id", "user_id", "due", "content_type"].map((name) => ({
+      name,
+      show: true,
+    })),
+    ...extraColumns,
+    ...["title", "status", "avatar_url"].map((name) => ({ name, show: true })),
+  ];
+  try {
+    writeFileSync(
+      sourcePath,
+      originalSource +
+        "\nmodule.exports.connection.table_options.tasks.columns = {};",
+    );
+    ({ project } = await deployment.syncSchema());
+    await state.db.windows!.update(
+      { id: originalWindow!.id },
+      {
+        table_name: "tasks",
+        columns,
+        options: { ...originalWindow!.options, viewAs: { type: "card" } },
+      },
+    );
+    await page
+      .context()
+      .addCookies([
+        { name: sidKeyName, value: sessionId, url: deployment.endpoint },
+      ]);
+    await page.goto(
+      `${deployment.dashboardUrl}?workspaceId=${originalWindow!.workspace_id}`,
+    );
+    const tasks = page.locator(`[data-box-id="${originalWindow!.id}"]`);
+    const card = tasks
+      .getByTestId("CardView.row")
+      .filter({ hasText: "Open one" });
+    const fields = card.locator("[data-card-field]");
+    /* Avatar, title and status consume three slots even though they occur last and the avatar is empty. */
+    await expect(card.locator(".CardHeader")).toContainText("Open one");
+    await expect(card.locator(".CardHeader")).toContainText("open");
+    await expect(fields).toHaveCount(6);
+    await expect(card.locator('[data-card-field="content_type"]')).toHaveCount(
+      0,
+    );
+    await expect(card.locator('[data-card-field="extra_2"]')).toBeVisible();
+    await expect(card.locator('[data-card-field="extra_3"]')).toHaveCount(0);
+    await card.getByRole("button", { name: "Open one", exact: true }).click();
+    const details = page.getByTestId("Popup.content").last();
+    await expect(details.locator(".SmartCardCol")).toHaveCount(12);
+    await expect(details.locator(".SmartCardHeader")).toContainText("Open one");
+    await expect(details.locator(".SmartCardHeader")).toContainText("open");
+    await expect(details.locator("label")).toContainText(["Extra 7"]);
+    await page.getByTestId("Popup.close").last().click();
+
+    /* Headers hidden in the table still reserve their places in the card summary. */
+    await state.db.windows!.update(
+      { id: originalWindow!.id },
+      {
+        columns: columns.map((column) =>
+          ["title", "avatar_url"].includes(column.name) ?
+            { ...column, show: false }
+          : column,
+        ),
+      },
+    );
+    await expect(fields).toHaveCount(6);
+    await expect(card.locator('[data-card-field="extra_3"]')).toHaveCount(0);
+
+    /* Explicit levels disable automatic summaries even when their window column is hidden. */
+    for (const show of [true, false]) {
+      await state.db.windows!.update(
+        { id: originalWindow!.id },
+        {
+          columns: columns.map((column) =>
+            column.name === "extra_7" ?
+              { ...column, infoLevel: 2, show }
+            : column,
+          ),
+        },
+      );
+      await page.reload();
+      await expect(
+        tasks.getByTestId("CardView.row").first().locator("[data-card-field]"),
+      ).toHaveCount(0);
+      await expect(
+        tasks.getByTestId("CardView.row").first().locator(".CardHeader"),
+      ).not.toContainText("Open");
+    }
+
+    /* Summary and details share explicit levels for hidden secondary fields. */
+    await state.db.windows!.update(
+      { id: originalWindow!.id },
+      {
+        columns: columns.map((column) =>
+          column.name === "title" ? { ...column, infoLevel: 1 }
+          : column.name === "extra_7" ? { ...column, infoLevel: 2, show: false }
+          : column,
+        ),
+      },
+    );
+    await page.reload();
+    await expect(card.locator("[data-card-field]")).toHaveCount(0);
+    await card.getByRole("button", { name: "Open one", exact: true }).click();
+    await expect(details.locator(".SmartCardHeader")).toContainText("Open one");
+    await expect(details.locator(".SmartCardCol")).toHaveCount(1);
+    await expect(details.locator("label")).toHaveText(["Extra 7"]);
+    await page.getByTestId("Popup.close").last().click();
+    await state.db.windows!.update({ id: originalWindow!.id }, { columns });
+    await expect(card.locator('[data-card-field="extra_2"]')).toBeVisible();
+  } finally {
+    await page.goto("about:blank");
+    writeFileSync(sourcePath, originalSource);
+    await deployment.syncSchema();
+    await state.db.windows!.update(
+      { id: originalWindow!.id },
+      {
+        table_name: originalWindow!.table_name,
+        columns: originalWindow!.columns,
+        options: originalWindow!.options,
+      },
     );
     state.disconnect();
     project.disconnect();
@@ -1235,6 +1793,20 @@ test("record titles and avatars support font overrides, hidden names and conditi
         .getByRole("img", { name: "Bob", exact: true }),
     ).toHaveText("B");
 
+    /* References open the detailed card directly, including a shared avatar/title column. */
+    await users
+      .getByTestId("LinkedColumn.OpenRecord")
+      .filter({ has: page.getByRole("img", { name: "Bob", exact: true }) })
+      .click();
+    const detailHeader = page
+      .getByTestId("Popup.content")
+      .last()
+      .locator(".SmartCardHeader");
+    await expect(detailHeader.getByRole("img")).toHaveCount(1);
+    await expect(detailHeader).toContainText("Bob");
+    await expect(detailHeader.getByRole("button")).toHaveCount(0);
+    await page.getByTestId("Popup.close").last().click();
+
     // Use existing text fields as first/last names; both stay hidden in the table.
     await project.db.tasks!.update!(
       { title: "Open one" },
@@ -1346,6 +1918,62 @@ test("record titles and avatars support font overrides, hidden names and conditi
     await expect(
       tasks.getByTitle("View JSON diff").filter({ hasText: "Lovelace" }),
     ).toContainText("OPEN ONE");
+
+    /* URL formats keep the computed label and fetch a hidden URL column. */
+    const taskUrl = "https://example.com/tasks/1";
+    await project.db.tasks!.update!(
+      { title: "Open one" },
+      { avatar_url: taskUrl },
+    );
+    await state.db.windows!.update(
+      { id: windowId },
+      {
+        columns: [
+          {
+            ...computedColumn,
+            format: { type: "URL", params: { urlColumn: "avatar_url" } },
+          },
+          ...hiddenTaskColumns,
+        ],
+      },
+    );
+    await page.reload();
+    const taskLink = tasks.getByRole("link", { name: "OPEN ONE", exact: true });
+    await expect(taskLink).toHaveAttribute("href", taskUrl);
+    await expect(taskLink).toHaveAttribute("target", "_blank");
+    await expect(
+      tasks.getByRole("columnheader").filter({
+        hasNot: page.getByTestId("AddColumnMenu"),
+      }),
+    ).toHaveCount(1);
+    await tasks
+      .getByRole("columnheader", { name: "Uppercase(title)", exact: true })
+      .click({ button: "right" });
+    await page.getByText("Render as", { exact: true }).click();
+    await expect(page.getByText("URL column", { exact: true })).toBeVisible();
+    await page.getByTestId("Popup.close").last().click();
+
+    /* Missing destinations leave the entity label as plain text. */
+    for (const missingUrl of [null, ""]) {
+      await project.db.tasks!.update!(
+        { title: "Open one" },
+        { avatar_url: missingUrl },
+      );
+      await expect(taskLink).toHaveCount(0);
+      await expect(tasks.getByText("OPEN ONE", { exact: true })).toBeVisible();
+    }
+
+    /* Existing URL formats still use their own column as the destination. */
+    await state.db.windows!.update(
+      { id: windowId },
+      {
+        columns: [
+          { ...computedColumn, format: { type: "URL" } },
+          ...hiddenTaskColumns,
+        ],
+      },
+    );
+    await expect(taskLink).toHaveAttribute("href", "OPEN ONE");
   } finally {
     writeFileSync(sourcePath, originalSource);
     await sync();
@@ -1409,6 +2037,13 @@ test("table column defaults compose custom linked and computed columns", async (
             limit: 5,
           },
         },
+        user_actions: {
+          label: "User actions",
+          format: {
+            type: "ActionColumns" as const,
+            params: { actions: [{ methodName: "inspectUser" }] },
+          },
+        },
       },
     },
   };
@@ -1450,6 +2085,9 @@ test("table column defaults compose custom linked and computed columns", async (
     ).toBeVisible();
     await expect(alice).toContainText("Open one");
     await expect(alice).toContainText("Open two");
+    await expect(
+      alice.getByRole("button", { name: "inspectUser", exact: true }),
+    ).toBeVisible();
     const saved = await state.db.windows!.findOne({ id: originalWindow!.id });
     expect(
       saved!.columns!.find(({ name }) => name === "assigned_tasks"),
@@ -1483,12 +2121,317 @@ test("table column defaults compose custom linked and computed columns", async (
       users.getByRole("columnheader").filter({ hasText: "Updated tasks" }),
     ).toBeVisible();
     await expect(alice).toContainText("Open one");
+    /* Explicit selections inherit presentation without adding other defaults. */
+    const selectedColumns: ColumnConfig[] = [
+      { name: "name" },
+      {
+        name: "manager_id",
+        label: "Manager",
+      },
+      { name: "user_actions" },
+    ];
+    await state.db.windows!.update(
+      { id: originalWindow!.id },
+      { columns: selectedColumns },
+    );
+    await openDashboard();
+    const selectedAlice = users
+      .getByTestId("TableBody")
+      .getByRole("row")
+      .filter({ hasText: "Alice" });
+    await expect(users.getByRole("columnheader")).toHaveCount(4);
+    await expect(
+      users.locator('[role="columnheader"][data-key="name"]'),
+    ).toContainText("Updated person");
+    const manager = selectedAlice.getByTestId("LinkedColumn.OpenRecord");
+    await expect(manager).toHaveText("Bob");
+    await expect(
+      selectedAlice.getByRole("button", { name: "inspectUser", exact: true }),
+    ).toBeVisible();
+    await manager.click();
+    const managerCards = page
+      .getByTestId("SmartCardList")
+      .locator(".SmartCard");
+    await expect(managerCards).toHaveCount(1);
+    await expect(managerCards).toContainText("Bob");
+    await page.getByTestId("Popup.close").last().click();
+    await openDashboard();
+    await expect(manager).toHaveText("Bob");
+
+    /* Explicit raw formats and hidden actions override inherited rendering. */
+    await state.db.windows!.update(
+      { id: originalWindow!.id },
+      {
+        columns: selectedColumns.map((column) =>
+          column.name === "manager_id" ? { ...column, format: { type: "NONE" } }
+          : column.name === "user_actions" ? { ...column, show: false }
+          : column,
+        ),
+      },
+    );
+    await expect(manager).toHaveCount(0);
+    await expect(
+      selectedAlice.getByRole("cell", { name: "1", exact: true }),
+    ).toBeVisible();
+    await expect(
+      selectedAlice.getByRole("button", { name: "inspectUser", exact: true }),
+    ).toHaveCount(0);
+
+    /* Omitted fields stay hidden; an empty selection restores all defaults. */
+    await state.db.windows!.update(
+      { id: originalWindow!.id },
+      { columns: [{ name: "name" }] },
+    );
+    await expect(users.getByRole("columnheader")).toHaveCount(2);
+    await expect(
+      selectedAlice.getByRole("button", { name: "inspectUser", exact: true }),
+    ).toHaveCount(0);
+    await state.db.windows!.update(
+      { id: originalWindow!.id },
+      { columns: [{ name: "name", show: false }] },
+    );
+    await expect(users.getByRole("columnheader")).toHaveCount(1);
+    await state.db.windows!.update({ id: originalWindow!.id }, { columns: [] });
+    await expect(alice).toContainText("Open one");
+    await expect(
+      alice.getByRole("button", { name: "inspectUser", exact: true }),
+    ).toBeVisible();
   } finally {
     writeFileSync(sourcePath, originalSource);
     await sync();
     await state.db.windows!.update(
       { id: originalWindow!.id },
       { columns: originalWindow!.columns },
+    );
+    state.disconnect();
+  }
+});
+
+test("cyclic linked defaults stop at raw values and preserve explicit nested formats", async ({
+  page,
+}) => {
+  const state = await deployment.connectStateAs("admin");
+  let project = await deployment.connectProjectAs("admin");
+  const originalWindow = await state.db.windows!.findOne(usersWindowFilter);
+  const windowFilter = { id: originalWindow!.id };
+  const bob = await project.db.users!.findOne!({ name: "Bob" });
+  const alice = await project.db.users!.findOne!({ name: "Alice" });
+  const sourcePath = `${configPath}/index.js`;
+  const originalSource = readFileSync(sourcePath, "utf8");
+  const managerPath = [{ table: "users", on: [{ manager_id: "id" }] }];
+  const tableOptions = {
+    ...config.connection.table_options,
+    tasks: {
+      ...config.connection.table_options.tasks,
+      columns: {
+        ...config.connection.table_options.tasks.columns,
+        user_id: {
+          nested: {
+            path: [{ table: "users", on: [{ user_id: "id" }] }],
+            columns: [{ name: "manager_id" }],
+            display: { type: "values" as const, labels: "none" as const },
+          },
+        },
+      },
+    },
+    users: {
+      ...config.connection.table_options.users,
+      columns: {
+        email: { format: { type: "Email" as const } },
+        manager_id: {
+          label: "Manager chain",
+          style: { type: "Fixed" as const, textColor: "#123456" },
+          nested: {
+            path: managerPath,
+            columns: [{ name: "manager_id" }],
+            display: { type: "values" as const, labels: "none" as const },
+          },
+        },
+      },
+    },
+  };
+  const users = page.locator(`[data-box-id="${originalWindow!.id}"]`);
+  try {
+    writeFileSync(
+      sourcePath,
+      originalSource +
+        `\nmodule.exports.connection.table_options = ${JSON.stringify(tableOptions)};`,
+    );
+    ({ project } = await deployment.syncSchema());
+    await project.db.users!.update!({ id: bob!.id }, { manager_id: alice!.id });
+    await state.db.windows!.update(windowFilter, {
+      columns: [{ name: "name" }, { name: "manager_id" }],
+      options: { ...originalWindow!.options, viewAs: { type: "table" } },
+    });
+    await page
+      .context()
+      .addCookies([
+        { name: sidKeyName, value: sessionId, url: deployment.endpoint },
+      ]);
+    await page.goto(
+      `${deployment.dashboardUrl}?workspaceId=${originalWindow!.workspace_id}`,
+    );
+    const aliceRow = users
+      .getByTestId("TableBody")
+      .getByRole("row")
+      .filter({ hasText: "Alice" });
+    await expect(
+      aliceRow.getByRole("cell", { name: `${alice!.id}`, exact: true }),
+    ).toBeVisible();
+
+    /* Summary and detailed cards query the same bounded inherited default. */
+    await state.db.windows!.update(windowFilter, {
+      options: { ...originalWindow!.options, viewAs: { type: "card" } },
+    });
+    const aliceCard = users
+      .getByTestId("CardView.row")
+      .filter({ hasText: "Alice" });
+    await expect(
+      aliceCard.locator('[data-card-field="__managed_manager_id"]'),
+    ).toContainText(`${alice!.id}`);
+    await aliceCard.getByRole("button", { name: "Alice", exact: true }).click();
+    const details = page.getByTestId("Popup.content").last();
+    await expect(
+      details.locator(".SmartCardCol").filter({ hasText: "Manager chain" }),
+    ).toContainText([`Manager chain${alice!.id}`]);
+    await page.getByTestId("Popup.close").last().click();
+
+    /* A different table's linked default must not add an unsupported child join. */
+    await state.db.windows!.update(windowFilter, {
+      table_name: "tasks",
+      columns: [{ name: "title" }, { name: "user_id" }],
+      options: { ...originalWindow!.options, viewAs: { type: "table" } },
+    });
+    const taskRow = users
+      .getByTestId("TableBody")
+      .getByRole("row")
+      .filter({ hasText: "Open one" });
+    await expect(
+      taskRow.getByRole("cell", { name: `${bob!.id}`, exact: true }),
+    ).toBeVisible();
+
+    /* Explicit finite joins still follow the same table twice and inherit leaf formats. */
+    const managerChain: ColumnConfig = {
+      name: "manager_chain",
+      nested: {
+        path: [...managerPath, ...managerPath],
+        columns: [{ name: "email" }],
+        display: { type: "values", labels: "none" },
+      },
+    };
+    await state.db.windows!.update(windowFilter, {
+      table_name: "users",
+      columns: [{ name: "name" }, managerChain],
+      options: { ...originalWindow!.options, viewAs: { type: "table" } },
+    });
+    await expect(
+      aliceRow.getByRole("link", { name: "alice@example.com" }),
+    ).toHaveAttribute("href", "mailto:alice@example.com");
+  } finally {
+    await page.goto("about:blank");
+    await project.db.users!.update!(
+      { id: bob!.id },
+      { manager_id: bob!.manager_id },
+    );
+    writeFileSync(sourcePath, originalSource);
+    await deployment.syncSchema();
+    await state.db.windows!.update(windowFilter, {
+      table_name: originalWindow!.table_name,
+      columns: originalWindow!.columns,
+      options: originalWindow!.options,
+    });
+    state.disconnect();
+    project.disconnect();
+  }
+});
+
+test("aggregate columns retain foreign key grouping without reference joins", async ({
+  page,
+}) => {
+  const state = await deployment.connectStateAs("admin");
+  const originalWindow = await state.db.windows!.findOne(usersWindowFilter);
+  const originalColumns: ColumnConfig[] = configuredColumns;
+  const aggregate = originalColumns
+    .find((column) => column.name === "Task status")!
+    .nested!.columns.find((column) => column.name === "Open")!;
+  const groupedColumns: ColumnConfig[] = [
+    {
+      ...aggregate,
+      name: "Count",
+      computedConfig: {
+        ...aggregate.computedConfig!,
+        aggregateOptions: undefined,
+      },
+    },
+    { name: "user_id", show: true },
+  ];
+  const openDashboard = () =>
+    page.goto(
+      `${deployment.dashboardUrl}?workspaceId=${originalWindow!.workspace_id}`,
+    );
+  const table = page.locator(`[data-box-id="${originalWindow!.id}"]`);
+  try {
+    await page
+      .context()
+      .addCookies([
+        { name: sidKeyName, value: sessionId, url: deployment.endpoint },
+      ]);
+    await state.db.windows!.update(
+      { id: originalWindow!.id },
+      {
+        table_name: "tasks",
+        columns: groupedColumns,
+      },
+    );
+    await openDashboard();
+    /* Root aggregates retain the raw foreign key as their grouping column. */
+    const rows = table.getByTestId("TableBody").getByRole("row");
+    await expect(rows).toHaveCount(2);
+    await expect(
+      rows.filter({ has: page.getByRole("cell", { name: "3", exact: true }) }),
+    ).toContainText("2");
+    /* Nested aggregates keep that grouping and drill into only the parent's rows. */
+    await state.db.windows!.update(
+      { id: originalWindow!.id },
+      {
+        table_name: "users",
+        columns: [
+          ...configuredColumns.map((column) => ({
+            ...column,
+            show: column.name === "name",
+          })),
+          {
+            name: "Grouped tasks",
+            show: true,
+            nested: {
+              path: [{ table: "tasks", on: [{ id: "user_id" }] }],
+              columns: groupedColumns,
+              display: { type: "drillable-records" },
+            },
+          },
+        ],
+      },
+    );
+    await openDashboard();
+    const alice = rows.filter({ hasText: "Alice" });
+    const groupedRecords = alice.getByTestId("LinkedColumn.OpenRecords");
+    await expect(groupedRecords).toHaveText("32");
+    await expect(
+      rows.filter({ hasText: "Bob" }).getByTestId("LinkedColumn.OpenRecords"),
+    ).toHaveText("21");
+    await groupedRecords.click();
+    const popup = page.getByTestId("Popup.content").last();
+    await expect(popup).toContainText("Open one");
+    await expect(popup).toContainText("Open two");
+    await expect(popup).toContainText("Closed one");
+    await expect(popup).not.toContainText("Bob closed");
+  } finally {
+    await state.db.windows!.update(
+      { id: originalWindow!.id },
+      {
+        table_name: originalWindow!.table_name,
+        columns: originalWindow!.columns,
+      },
     );
     state.disconnect();
   }
@@ -1527,6 +2470,7 @@ test("reference displays resolve into ordinary linked columns", async ({
       },
       columns: {
         name: {
+          label: "Name",
           style: {
             type: "Conditional",
             column: "manager_id",
@@ -1537,22 +2481,10 @@ test("reference displays resolve into ordinary linked columns", async ({
     },
   };
   const taskColumns = [
-    "user_id",
-    "title",
-    "status",
-    "due",
-    "avatar_url",
-    "content_type",
-    "id",
-  ].map((name) => ({ name, show: name === "user_id" || name === "title" }));
-  const userColumns = [
-    "name",
-    "manager_id",
-    "id",
-    "email",
-    "action",
-    "review_action",
-  ].map((name) => ({ name, show: name === "name" || name === "manager_id" }));
+    { name: "user_id", label: "Assignee" },
+    { name: "title", label: "Task title" },
+  ];
+  const userColumns = [{ name: "name" }, { name: "manager_id" }];
   try {
     writeFileSync(
       sourcePath,
@@ -1582,7 +2514,7 @@ test("reference displays resolve into ordinary linked columns", async ({
       table.getByRole("img", { name: "Bob", exact: true }),
     ).toHaveCount(2);
     await expect(
-      table.getByRole("columnheader").filter({ hasText: "User id" }),
+      table.getByRole("columnheader").filter({ hasText: "Assignee" }),
     ).toHaveCount(1);
     expect(
       (await project.db.tasks!.findOne!({ title: "Open one" }))!.user_id,
@@ -1595,11 +2527,20 @@ test("reference displays resolve into ordinary linked columns", async ({
         .first(),
     ).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
     await aliceAvatars.first().click();
-    const form = page.getByTestId("SmartForm");
-    await expect(form.locator('[data-key="name"] input')).toHaveValue("Alice");
-    await expect(form.locator('[data-key="email"] input')).toHaveValue(
-      "alice@example.com",
-    );
+    const cards = page.getByTestId("SmartCardList").locator(".SmartCard");
+    await expect(cards).toHaveCount(1);
+    await expect(cards).toContainText("Alice");
+    await expect(cards).toContainText("alice@example.com");
+    await expect(
+      page
+        .getByTestId("Popup.content")
+        .last()
+        .locator(".SmartCardListControls"),
+    ).toHaveCount(0);
+    await expect(page.getByTestId("Popup.header")).toHaveCount(0);
+    await expect(
+      cards.getByRole("button", { name: "Close", exact: true }),
+    ).toBeVisible();
     await page.getByTestId("Popup.close").last().click();
     await state.db.windows!.update(
       { id: windowId },
@@ -1614,7 +2555,7 @@ test("reference displays resolve into ordinary linked columns", async ({
     await state.db.windows!.update({ id: windowId }, { filter: [] });
     await expect(aliceAvatars).toHaveCount(3);
 
-    // Generated columns use ordinary nested sorting and persist only overrides.
+    /* Generated columns use their visible nested field for header sorting. */
     const referenceName = "__managed_user_id";
     await expect
       .poll(async () => {
@@ -1622,34 +2563,96 @@ test("reference displays resolve into ordinary linked columns", async ({
         return saved!.columns!.find((column) => column.name === referenceName);
       })
       .toEqual({ name: referenceName, show: true });
-    await state.db.windows!.update(
-      { id: windowId },
-      {
-        sort: [{ key: `${referenceName}.name`, asc: true }],
-      },
-    );
+    const referenceHeader = table
+      .getByRole("columnheader")
+      .filter({ hasText: "Assignee" });
     const taskRows = table.getByTestId("TableBody").getByRole("row");
+    await referenceHeader.click();
+    await expect
+      .poll(
+        async () => (await state.db.windows!.findOne({ id: windowId }))!.sort,
+      )
+      .toMatchObject([{ key: `${referenceName}.name`, asc: true }]);
     await expect(taskRows.first().getByRole("img")).toHaveAttribute(
       "aria-label",
       "Alice",
     );
-    await state.db.windows!.update(
-      { id: windowId },
-      {
-        sort: [{ key: `${referenceName}.name`, asc: false }],
-      },
-    );
+    await referenceHeader.click();
     await expect(taskRows.first().getByRole("img")).toHaveAttribute(
       "aria-label",
       "Bob",
     );
-    await table
-      .getByRole("columnheader")
-      .filter({ hasText: "User id" })
-      .click({ button: "right" });
+    await referenceHeader.click();
+
+    /* The column menu uses labels and defaults to the visible nested field. */
+    await referenceHeader.click({ button: "right" });
+    await expect(page.getByTestId("Popup.header").last()).toContainText(
+      "Assignee",
+    );
     await expect(
-      page.getByText("Nested column", { exact: true }),
+      page.getByRole("button", { name: "Assignee.Name", exact: true }),
     ).toBeVisible();
+    await page.getByRole("button", { name: "None", exact: true }).click();
+    await page
+      .getByTestId("SearchList.List")
+      .getByRole("option", { name: "Ascending", exact: true })
+      .click();
+    await expect
+      .poll(
+        async () => (await state.db.windows!.findOne({ id: windowId }))!.sort,
+      )
+      .toMatchObject([{ key: `${referenceName}.name`, asc: true }]);
+    await expect(taskRows.first().getByRole("img")).toHaveAttribute(
+      "aria-label",
+      "Alice",
+    );
+    await page.getByTestId("Popup.close").last().click();
+
+    /* Card sorting resolves inherited columns and shows parent/child labels. */
+    await state.db.windows!.update(
+      { id: windowId },
+      {
+        options: {
+          ...originalWindow!.options,
+          viewAs: { type: "card" },
+          showFilters: true,
+        },
+        sort: [],
+      },
+    );
+    const sortControl = table.locator(".SmartFilterBarRightActions");
+    await sortControl
+      .getByRole("button", { name: "Sort by...", exact: true })
+      .click();
+    const sortList = page.getByTestId("SearchList.List");
+    await expect(sortList.locator('[data-key="title"]')).toHaveText(
+      "Task title",
+    );
+    const referenceSortOption = sortList.locator(
+      `[data-key="${referenceName}.name"]`,
+    );
+    await expect(referenceSortOption).toHaveText("Assignee.Name");
+    await expect(sortList.locator(`[data-key="${referenceName}"]`)).toHaveCount(
+      0,
+    );
+    await referenceSortOption.click();
+    await expect(
+      sortControl.getByRole("button", { name: "Assignee.Name", exact: true }),
+    ).toBeVisible();
+    await expect
+      .poll(
+        async () => (await state.db.windows!.findOne({ id: windowId }))!.sort,
+      )
+      .toEqual([{ key: `${referenceName}.name`, asc: true }]);
+    await state.db.windows!.update(
+      { id: windowId },
+      { options: originalWindow!.options },
+    );
+    await expect(taskRows.first().getByRole("img")).toHaveAttribute(
+      "aria-label",
+      "Alice",
+    );
+    await referenceHeader.click({ button: "right" });
     await page.getByText("Edit Linked Columns", { exact: true }).click();
     await page.getByTestId("LinkedColumn.ColumnList.toggle").click();
     await page
@@ -1740,8 +2743,47 @@ test("reference displays resolve into ordinary linked columns", async ({
     ).toBeVisible();
     await expect(table.getByTestId("LinkedColumn.OpenRecord")).toHaveCount(1);
     await table.getByRole("img", { name: "Bob", exact: true }).click();
-    await expect(form.locator('[data-key="name"] input')).toHaveValue("Bob");
+    await expect(cards).toHaveCount(1);
+    await expect(cards).toContainText("Bob");
     await page.getByTestId("Popup.close").last().click();
+
+    /* Multiple reference fields share one button, including null values. */
+    options.users!.referenceDisplay = {
+      columns: [
+        { name: "name", format: { type: "Avatar" } },
+        { name: "manager_id" },
+      ],
+    };
+    writeFileSync(
+      sourcePath,
+      originalSource +
+        `\nmodule.exports.connection.table_options = ${JSON.stringify(options)};`,
+    );
+    await sync();
+    await state.db.windows!.update(
+      { id: windowId },
+      { table_name: "tasks", columns: taskColumns },
+    );
+    await openDashboard();
+    for (const [title, name, summary] of [
+      ["Bob closed", "Bob", "BNULL"],
+      ["Open one", "Alice", "A1"],
+    ] as const) {
+      const taskRow = table.getByRole("row").filter({ hasText: title });
+      const reference = taskRow.getByTestId("LinkedColumn.OpenRecord");
+      await expect(reference).toHaveCount(1);
+      await expect(reference).toHaveText(summary);
+      await expect(reference.getByRole("img", { name })).toBeVisible();
+      await expect(reference.locator("button")).toHaveCount(0);
+      await reference.click();
+      await expect(cards).toHaveCount(1);
+      await expect(cards).toContainText(name);
+      await page.getByTestId("Popup.close").last().click();
+    }
+    await state.db.windows!.update(
+      { id: windowId },
+      { table_name: "users", columns: userColumns },
+    );
 
     // Reference displays support other formats and multiple fields without changing the source FK.
     options.users!.referenceDisplay = {
@@ -1764,7 +2806,8 @@ test("reference displays resolve into ordinary linked columns", async ({
     const bobReference = table.getByTestId("LinkedColumn.OpenRecord");
     await expect(bobReference).toHaveCount(1);
     await bobReference.click();
-    await expect(form.locator('[data-key="name"] input')).toHaveValue("Bob");
+    await expect(cards).toHaveCount(1);
+    await expect(cards).toContainText("Bob");
     await page.getByTestId("Popup.close").last().click();
 
     // Explicit values mode opts out of drill-down.
@@ -1868,14 +2911,68 @@ test("reference displays resolve into ordinary linked columns", async ({
       table.getByRole("cell", { name: "2", exact: true }),
     ).toHaveCount(3);
 
-    // An explicit source format opts out before reference composition.
-    options.users!.referenceDisplay = { columns: [{ name: "name" }] };
-    writeFileSync(
-      sourcePath,
-      originalSource +
-        `\nmodule.exports.connection.table_options = ${JSON.stringify(options)};`,
-    );
-    await sync();
+    /* An omitted reference display inherits only the card header. */
+    const syncOptions = async () => {
+      writeFileSync(
+        sourcePath,
+        originalSource +
+          `\nmodule.exports.connection.table_options = ${JSON.stringify(options)};`,
+      );
+      await sync();
+    };
+    options.users!.referenceDisplay = undefined;
+    await syncOptions();
+    await state.db.windows!.update({ id: windowId }, { columns: taskColumns });
+    await openDashboard();
+    await expect(table.getByTestId("LinkedColumn.OpenRecord")).toHaveCount(5);
+    await expect(
+      table.getByRole("cell", { name: "Alice", exact: true }),
+    ).toHaveCount(3);
+    await expect(
+      table.getByRole("cell", { name: "Bob", exact: true }),
+    ).toHaveCount(2);
+    await table
+      .getByTestId("LinkedColumn.OpenRecord")
+      .filter({ hasText: "Alice" })
+      .first()
+      .click();
+    await expect(cards).toHaveCount(1);
+    await expect(cards).toContainText("Alice");
+    await page.getByTestId("Popup.close").last().click();
+
+    /* Empty reference columns opt out even with a readable card header. */
+    options.users!.referenceDisplay = { columns: [] };
+    await syncOptions();
+    await openDashboard();
+    await expect(
+      table.getByRole("cell", { name: "2", exact: true }),
+    ).toHaveCount(3);
+    await expect(table.getByTestId("LinkedColumn.OpenRecord")).toHaveCount(0);
+
+    /* Missing or unavailable headers leave the original foreign key visible. */
+    options.users!.referenceDisplay = undefined;
+    for (const card of [undefined, { headerColumn: "unavailable_field" }]) {
+      options.users!.card = card;
+      await syncOptions();
+      await openDashboard();
+      await expect(
+        table.getByRole("cell", { name: "2", exact: true }),
+      ).toHaveCount(3);
+      await expect(table.getByTestId("LinkedColumn.OpenRecord")).toHaveCount(0);
+    }
+
+    /* A foreign-key header must not recursively resolve itself. */
+    options.users!.card = { headerColumn: "manager_id" };
+    await syncOptions();
+    await state.db.windows!.update({ id: windowId }, { columns: taskColumns });
+    await openDashboard();
+    await expect(
+      table.getByRole("cell", { name: "1", exact: true }),
+    ).toHaveCount(5);
+
+    /* An explicit source format also overrides the inherited card header. */
+    options.users!.card = connection!.table_options?.users?.card;
+    await syncOptions();
     await state.db.windows!.update(
       { id: windowId },
       {
@@ -1891,6 +2988,10 @@ test("reference displays resolve into ordinary linked columns", async ({
       table.getByRole("cell", { name: "2", exact: true }),
     ).toHaveCount(3);
     await expect(table.getByTestId("LinkedColumn.OpenRecord")).toHaveCount(0);
+
+    /* Card headers also work for composite foreign keys. */
+    options.categories = { card: { headerColumn: "label" } };
+    await syncOptions();
 
     // Composite FKs include hidden and zero-valued keys; unrelated user_id columns stay plain.
     await project.db.categories!.insertMany!([
@@ -1932,13 +3033,59 @@ test("reference displays resolve into ordinary linked columns", async ({
     await expect(
       table.getByRole("cell", { name: "Existing column", exact: true }),
     ).toBeVisible();
+    /* Physical columns sharing the managed prefix remain sortable. */
+    await expect(
+      table
+        .getByTestId("TableHeader")
+        .locator('[data-key="__managed_category_code"] .sort-none'),
+    ).toHaveCount(1);
     await table.getByTestId("LinkedColumn.OpenRecord").click();
-    await expect(form.locator('[data-key="label"] input')).toHaveValue(
-      "Second category",
-    );
-    await expect(form.locator('[data-key="tenant_id"] input')).toHaveValue("0");
-    await expect(form.locator('[data-key="code"] input')).toHaveValue("shared");
+    await expect(cards).toHaveCount(1);
+    await expect(cards).toContainText("Second category");
+    await expect(cards.getByText("0", { exact: true })).toBeVisible();
+    await expect(cards.getByText("shared", { exact: true })).toBeVisible();
     await page.getByTestId("Popup.close").last().click();
+
+    /* Null and empty headers fall back to the original FK, even with hidden keys. */
+    for (const label of [null, ""]) {
+      await project.db.categories!.update!({ tenant_id: 0 }, { label });
+      await openDashboard();
+      await expect(
+        table.getByRole("cell", { name: "shared", exact: true }),
+      ).toBeVisible();
+    }
+    await project.db.categories!.update!(
+      { tenant_id: 0 },
+      { label: "Second category" },
+    );
+
+    /* Zero and false are valid header values, not empty displays. */
+    for (const [headerColumn, value] of [
+      ["tenant_id", "0"],
+      ["active", "false"],
+    ] as const) {
+      options.categories.card = { headerColumn };
+      await syncOptions();
+      await openDashboard();
+      await expect(
+        table.getByRole("cell", { name: value, exact: true }),
+      ).toBeVisible();
+      await expect(
+        table.getByRole("cell", { name: "shared", exact: true }),
+      ).toHaveCount(0);
+    }
+    /* Explicit displays retain their null rendering and override a different header. */
+    options.categories.referenceDisplay = { columns: [{ name: "label" }] };
+    await project.db.categories!.update!({ tenant_id: 0 }, { label: null });
+    await syncOptions();
+    await openDashboard();
+    await expect(
+      table.getByRole("cell", { name: "NULL", exact: true }),
+    ).toBeVisible();
+    await project.db.categories!.update!(
+      { tenant_id: 0 },
+      { label: "Second category" },
+    );
 
     // An ordinary linked column can fall back to any hidden parent field, including zero.
     const fallback: ColumnConfig = {
@@ -2053,6 +3200,61 @@ test("reference displays resolve into ordinary linked columns", async ({
     );
     state.disconnect();
     project.disconnect();
+  }
+});
+
+test("column quick stats expand an edge-anchored popup before SVG capture", async ({
+  page,
+}) => {
+  const state = await deployment.connectStateAs("admin");
+  try {
+    await state.db.windows!.update(usersWindowFilter, {
+      columns: [
+        { name: "id", show: true, width: 600 },
+        { name: "name", show: true, width: 100 },
+      ],
+    });
+    await page.setViewportSize({ width: 900, height: 900 });
+    await page.context().addCookies(deployment.storageStateAs("admin").cookies);
+    await page.goto(deployment.dashboardUrl);
+    const users = page.locator('[data-table-name="users"]');
+    await expect(users.getByTestId("TableBody")).toContainText("Alice");
+    const nameHeader = users.locator('[role="columnheader"][data-key="name"]');
+    await nameHeader.click({ button: "right" });
+    await page.getByTestId("Popup.close").click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await nameHeader.click({ button: "right" });
+    await expect(page.getByRole("dialog")).toBeVisible();
+    await page.evaluate(() => window.toSVG(document.body));
+    await page.locator('[data-key="Quick Stats"]').click();
+
+    const quickStats = page.getByTestId("ColumnQuickStats");
+    await expect(quickStats).toContainText("Distinct:");
+    await expect(quickStats).toBeInViewport({ ratio: 1 });
+    await expect(page.getByTestId("Popup.header")).toBeInViewport({ ratio: 1 });
+
+    const svgStats = await page.evaluate(async () => {
+      const screenshots = await window.toSVG(document.body);
+      if (!screenshots) throw new Error("SVG screenshot missing");
+      return [screenshots.light, screenshots.dark].map((screenshot) => {
+        const svg = new DOMParser().parseFromString(
+          screenshot,
+          "image/svg+xml",
+        );
+        return svg.querySelector('[data-command="ColumnQuickStats"]')
+          ?.textContent;
+      });
+    });
+    for (const stats of svgStats) {
+      expect(stats).toContain("Alice");
+      expect(stats).toContain("Bob");
+    }
+    await expect(quickStats).toBeInViewport({ ratio: 1 });
+  } finally {
+    await state.db.windows!.update(usersWindowFilter, {
+      columns: configuredColumns,
+    });
+    state.disconnect();
   }
 });
 
@@ -2432,6 +3634,114 @@ test("linked columns render independent barcharts and scales", async ({
   }
 });
 
+test("Markdown columns preview wrapped content and expand inline in tables and cards", async ({
+  page,
+}) => {
+  const state = await deployment.connectStateAs("admin");
+  const project = await deployment.connectProjectAs("admin");
+  const originalWindow = await state.db.windows!.findOne(usersWindowFilter);
+  const markdown = [
+    "**Preview**",
+    "Wrapped Markdown paragraph. ".repeat(40),
+    "```sql\nSELECT 1;\nSELECT 2;\n```",
+    "**Final line**",
+  ].join("\n\n");
+  try {
+    await project.db.users!.update!({ name: "Alice" }, { email: markdown });
+    await project.db.users!.update!({ name: "Bob" }, { email: "**Short**" });
+    await state.db.windows!.update(usersWindowFilter, {
+      columns: [
+        { name: "name", show: true },
+        { name: "email", show: true, width: 240, format: { type: "Markdown" } },
+      ],
+      options: { ...originalWindow!.options, maxRowHeight: 100 },
+    });
+    await page
+      .context()
+      .addCookies([
+        { name: sidKeyName, value: sessionId, url: deployment.endpoint },
+      ]);
+    await page.goto(
+      `${deployment.dashboardUrl}?workspaceId=${originalWindow!.workspace_id}`,
+    );
+    const users = page.locator('[data-table-name="users"]');
+    const row = users.getByRole("row").filter({ hasText: "Alice" });
+    const preview = row.locator(".MarkdownColumn");
+    const previewContent = preview.locator(":scope > .ScrollFade");
+    await expect(previewContent).toHaveCSS("mask-image", /linear-gradient/);
+    await expect(preview.locator("strong").first()).toHaveText("Preview");
+    await expect(
+      preview.getByRole("button", { name: "Expand" }),
+    ).toHaveAttribute("aria-expanded", "false");
+    expect((await row.boundingBox())!.height).toBeLessThanOrEqual(100);
+    await expect(
+      users
+        .getByRole("row")
+        .filter({ hasText: "Bob" })
+        .getByRole("button", { name: "Expand" }),
+    ).toHaveCount(0);
+
+    await preview.getByRole("button", { name: "Expand" }).click();
+    await expect(
+      preview.getByRole("button", { name: "Collapse" }),
+    ).toHaveAttribute("aria-expanded", "true");
+    await expect(previewContent).toHaveCSS("mask-image", "none");
+    await expect(row).toHaveCSS("max-height", "none");
+    expect((await row.boundingBox())!.height).toBeGreaterThan(100);
+    await expect(preview.locator("code")).toHaveText("SELECT 1;\nSELECT 2;\n");
+    await expect(
+      preview.getByText("Final line", { exact: true }),
+    ).toBeVisible();
+    await expect(page.getByTestId("Popup.content")).toHaveCount(0);
+    await preview.getByRole("button", { name: "Collapse" }).press("Enter");
+    await expect(previewContent).toHaveCSS("mask-image", /linear-gradient/);
+    await expect(row).toHaveCSS("max-height", "100px");
+    expect((await row.boundingBox())!.height).toBeLessThanOrEqual(100);
+
+    await state.db.windows!.update(usersWindowFilter, {
+      options: {
+        ...originalWindow!.options,
+        viewAs: { type: "card", maxCardRowHeight: 100 },
+      },
+    });
+    const card = users.getByTestId("CardView.row").filter({ hasText: "Alice" });
+    const cardPreview = card.locator(".MarkdownColumn");
+    await cardPreview.getByRole("button", { name: "Expand" }).click();
+    await expect(
+      cardPreview.getByRole("button", { name: "Collapse" }),
+    ).toBeVisible();
+    expect((await cardPreview.boundingBox())!.height).toBeGreaterThan(100);
+    await expect(page.getByTestId("Popup.content")).toHaveCount(0);
+    await cardPreview.getByRole("button", { name: "Collapse" }).click();
+
+    /* Live value changes reset expansion and hide controls for short or empty content. */
+    await cardPreview.getByRole("button", { name: "Expand" }).click();
+    await project.db.users!.update!(
+      { name: "Alice" },
+      { email: "**Updated**" },
+    );
+    await expect(cardPreview.locator("strong")).toHaveText(["Updated"]);
+    await expect(cardPreview.getByRole("button")).toHaveCount(0);
+    await project.db.users!.update!({ name: "Alice" }, { email: "" });
+    await expect(cardPreview).toHaveText("");
+  } finally {
+    await project.db.users!.update!(
+      { name: "Alice" },
+      { email: "alice@example.com" },
+    );
+    await project.db.users!.update!(
+      { name: "Bob" },
+      { email: "bob@example.com" },
+    );
+    await state.db.windows!.update(usersWindowFilter, {
+      columns: originalWindow!.columns,
+      options: originalWindow!.options,
+    });
+    project.disconnect();
+    state.disconnect();
+  }
+});
+
 test("nested presentation keeps formats, drill-down, groups and entity overflow independent", async ({
   page,
 }) => {
@@ -2557,7 +3867,21 @@ test("nested presentation keeps formats, drill-down, groups and entity overflow 
       },
     },
   };
-  const rootColumns = originalColumns.filter((c) => !c.nested);
+  const rootColumns = originalColumns
+    .filter((column) => !column.nested)
+    .map((column) =>
+      column.name === "id" ?
+        {
+          ...column,
+          show: true,
+          style: {
+            type: "Scale" as const,
+            minColor: "#000000",
+            maxColor: "#ffffff",
+          },
+        }
+      : column,
+    );
   let columns = [...rootColumns, money, drillableRecords, grouped, raw, chart];
   const state = await deployment.connectStateAs("admin");
   try {
@@ -2592,6 +3916,34 @@ test("nested presentation keeps formats, drill-down, groups and entity overflow 
     await expect(costButton).toHaveCSS("color", "rgb(153, 27, 27)");
     const costCell = alice.getByRole("cell").filter({ hasText: "£3.00" });
     await expect(costCell).toHaveCSS("text-align", "right");
+    /* Numeric headers align with their values; mixed grouped headers stay left. */
+    await expect(
+      users
+        .getByRole("columnheader", { name: "Outstanding cost", exact: true })
+        .locator(":scope > .flex-row"),
+    ).toHaveCSS("justify-content", "end");
+    const numericHeader = users.locator('[role="columnheader"][data-key="id"]');
+    await expect(numericHeader.locator(":scope > .flex-row")).toHaveCSS(
+      "justify-content",
+      "end",
+    );
+    const numericColumnIndex = await numericHeader.evaluate((header) =>
+      [...header.parentElement!.children].indexOf(header),
+    );
+    await expect(alice.getByRole("cell").nth(numericColumnIndex)).toHaveCSS(
+      "text-align",
+      "right",
+    );
+    await expect(
+      users
+        .getByRole("columnheader", { name: "Grouped", exact: true })
+        .locator(":scope > .flex-row"),
+    ).toHaveCSS("justify-content", "normal");
+    await expect(
+      users
+        .getByRole("columnheader", { name: "Raw", exact: true })
+        .locator(":scope > .flex-row"),
+    ).toHaveCSS("justify-content", "end");
     await expect(costCell).not.toContainText("Open cost"); // Auto labels omit the single header.
     await costButton.click();
     const popup = page.getByTestId("Popup.content").last();
@@ -2614,7 +3966,44 @@ test("nested presentation keeps formats, drill-down, groups and entity overflow 
     await expect(popup).not.toContainText("Bob closed");
     await page.getByTestId("Popup.close").last().click();
 
-    // Card defaults and hidden styling/identity fields must respect column visibility.
+    /* A null avatar field can derive initials from another column. */
+    await state.db.windows!.update(usersWindowFilter, {
+      columns: columns.map((column) =>
+        column === drillableRecords ?
+          {
+            ...column,
+            nested: {
+              ...column.nested!,
+              columns: column.nested!.columns.map((child) =>
+                child.name === "avatar_url" ?
+                  {
+                    ...child,
+                    show: true,
+                    format: {
+                      type: "Avatar",
+                      params: { firstNameColumn: "title" },
+                    },
+                  }
+                : child.name === "content_type" ? { ...child, show: true }
+                : child,
+              ),
+            },
+          }
+        : column,
+      ),
+    });
+    await expect(
+      entityButtons.getByRole("img", { name: "Open one", exact: true }),
+    ).toHaveText("OO");
+    await expect(
+      entityButtons.getByText("NULL", { exact: true }),
+    ).toBeVisible();
+
+    /* Hidden keys and the preview limit must not narrow non-unique values. */
+    const taskGroupButton = alice
+      .getByRole("cell")
+      .filter({ has: page.getByTestId("LinkedColumn.ViewAll") })
+      .getByTestId("LinkedColumn.OpenRecords");
     for (const shownNames of [["title"], ["status"], ["title", "status"]]) {
       await state.db.windows!.update(usersWindowFilter, {
         columns: columns.map((column) =>
@@ -2623,7 +4012,6 @@ test("nested presentation keeps formats, drill-down, groups and entity overflow 
               ...drillableRecords,
               nested: {
                 ...drillableRecords.nested!,
-                sort: { key: shownNames[0]!, asc: true },
                 columns: drillableRecords.nested!.columns.map((child) => ({
                   ...child,
                   show: shownNames.includes(child.name),
@@ -2633,16 +4021,14 @@ test("nested presentation keeps formats, drill-down, groups and entity overflow 
           : column,
         ),
       });
-      const groupButton = alice.getByTestId("LinkedColumn.OpenRecords").filter({
-        hasText: shownNames.includes("title") ? "Open one" : /^open$/,
-      });
       await expect(entityButtons).toHaveCount(0);
-      await expect(groupButton).toHaveText(
+      await expect(taskGroupButton).toHaveCount(1);
+      await expect(taskGroupButton).toHaveText(
         shownNames
           .map((name) => (name === "title" ? "Open one" : "open"))
           .join(""),
       );
-      await groupButton.click();
+      await taskGroupButton.click();
       await expect(popup).toContainText("Open one");
       if (shownNames.includes("title")) {
         await expect(popup).not.toContainText("Open two");
@@ -2650,6 +4036,11 @@ test("nested presentation keeps formats, drill-down, groups and entity overflow 
         await expect(popup).toContainText("Open two");
       }
       await expect(popup).not.toContainText("Closed one");
+      await expect(popup).not.toContainText("Bob closed");
+      await expect(popup.locator(".SmartCard")).toHaveCount(
+        shownNames.includes("title") ? 1 : 2,
+      );
+      await expect(popup.locator(".SmartCardListControls")).toHaveCount(1);
       await page.getByTestId("Popup.close").last().click();
     }
 
@@ -2670,16 +4061,50 @@ test("nested presentation keeps formats, drill-down, groups and entity overflow 
       );
     }
     await state.db.windows!.update(usersWindowFilter, { columns });
+    await expect(entityButtons).toHaveCount(1);
 
     const groupButtons = alice
       .getByTestId("LinkedColumn.OpenRecords")
       .filter({ hasText: /^[12]$/ });
     await expect(groupButtons).toHaveText(["1", "2"]);
-    await expect(
-      alice
-        .locator('[style*="background-color"]')
-        .filter({ hasText: /^open$/ }),
-    ).toHaveCSS("background-color", "rgb(219, 234, 254)");
+    const statusChip = alice
+      .locator('[style*="background-color"]')
+      .filter({ hasText: /^open$/ });
+    await expect(statusChip).toHaveCSS(
+      "background-color",
+      "rgb(219, 234, 254)",
+    );
+    /* Styled drill-down buttons use the same dimensions as ordinary value chips. */
+    for (const property of [
+      "padding",
+      "border-radius",
+      "font-size",
+      "line-height",
+    ]) {
+      const chipValue = await statusChip.evaluate(
+        (element, property) =>
+          getComputedStyle(element).getPropertyValue(property),
+        property,
+      );
+      await expect(costButton).toHaveCSS(property, chipValue);
+      await expect(entityButtons).toHaveCSS(property, chipValue);
+    }
+    /* Text variants retain chip padding without enlarging plain group links. */
+    await state.db.windows!.update(usersWindowFilter, {
+      columns: columns.map((column) =>
+        column === drillableRecords ?
+          {
+            ...column,
+            style: { ...column.style!, buttonVariant: "text" },
+          }
+        : column,
+      ),
+    });
+    await expect(entityButtons).toHaveClass(/btn-text/);
+    await expect(entityButtons).toHaveCSS("padding", "4px 8px");
+    await expect(groupButtons.first()).toHaveCSS("padding", "0px");
+    await expect(groupButtons.first()).toHaveCSS("min-height", "auto");
+    await expect(groupButtons.first()).toHaveCSS("min-width", "auto");
     await groupButtons.nth(0).click();
     await expect(popup).toContainText("Closed one");
     await expect(popup).not.toContainText("Open one");
@@ -2694,6 +4119,10 @@ test("nested presentation keeps formats, drill-down, groups and entity overflow 
       .filter({ hasText: "Raw" })
       .evaluate((el) => [...el.parentElement!.children].indexOf(el));
     await expect(alice.getByRole("cell").nth(rawIndex)).toHaveText("12");
+    await expect(alice.getByRole("cell").nth(rawIndex)).toHaveCSS(
+      "text-align",
+      "right",
+    );
 
     // The drillable layout must not inject a hidden identity into GROUP BY.
     await state.db.windows!.update(usersWindowFilter, {
@@ -2701,6 +4130,18 @@ test("nested presentation keeps formats, drill-down, groups and entity overflow 
         ...rootColumns,
         {
           ...grouped,
+          style: {
+            type: "Conditional",
+            column: "status",
+            conditions: [
+              {
+                operator: "=",
+                condition: "open",
+                chipColor: "#dbeafe",
+                textColor: "#1e40af",
+              },
+            ],
+          },
           nested: {
             ...grouped.nested!,
             display: { type: "drillable-records" },
@@ -2710,8 +4151,15 @@ test("nested presentation keeps formats, drill-down, groups and entity overflow 
     });
     const groupedRecords = alice.getByTestId("LinkedColumn.OpenRecords");
     await expect(groupedRecords).toHaveCount(2);
+    await expect(
+      users
+        .getByRole("columnheader", { name: "Grouped", exact: true })
+        .locator(":scope > .flex-row"),
+    ).toHaveCSS("justify-content", "normal");
     const openGroup = groupedRecords.filter({ hasText: "open" });
-    await expect(openGroup).toContainText("2");
+    await expect(openGroup).toHaveText("2open");
+    await expect(openGroup).toHaveCSS("background-color", "rgb(219, 234, 254)");
+    await expect(openGroup.locator("button")).toHaveCount(0);
     await openGroup.click();
     await expect(popup).toContainText("Open one");
     await expect(popup).toContainText("Open two");
@@ -2743,9 +4191,10 @@ test("nested presentation keeps formats, drill-down, groups and entity overflow 
     // Drillable records open their row independently of value drill-down.
     await expect(entityButtons).toHaveCount(1);
     await entityButtons.click();
-    await expect(
-      page.getByTestId("SmartForm").locator('[data-key="title"] input'),
-    ).toHaveValue("Open one");
+    const entityCards = popup.locator(".SmartCard");
+    await expect(entityCards).toHaveCount(1);
+    await expect(entityCards).toContainText("Open one");
+    await expect(popup.locator(".SmartCardListControls")).toHaveCount(0);
     await page.getByTestId("Popup.close").last().click();
 
     // Scalar values can drill down; interactive formats retain their own link.
@@ -2765,7 +4214,6 @@ test("nested presentation keeps formats, drill-down, groups and entity overflow 
       columns: columns.map((c) => (c.name === "Raw" ? recordValues : c)),
     });
     const rawCell = alice.getByRole("cell").nth(rawIndex);
-    await expect(rawCell.getByTestId("LinkedColumn.OpenRecord")).toHaveCount(0);
     const valueButtons = rawCell.getByTestId("LinkedColumn.OpenRecords");
     await expect(valueButtons).toHaveText(["Open one", "Open two"]);
     await users
@@ -2787,6 +4235,7 @@ test("nested presentation keeps formats, drill-down, groups and entity overflow 
     await expect(popup).not.toContainText("Open one");
     await expect(popup).not.toContainText("Closed one");
     await expect(popup).not.toContainText("Bob closed");
+    await expect(popup.locator(".SmartCardListControls")).toHaveCount(1);
     await page.getByTestId("Popup.close").last().click();
     await state.db.windows!.update(usersWindowFilter, {
       columns: columns.map((c) =>
@@ -3128,8 +4577,9 @@ test("LLM-generated nested columns preserve presentation, drill-down and styles"
             name: "Manager",
             width: 250,
             styling: {
-              type: "Fixed",
-              textColor: "#123456",
+              type: "conditional",
+              column: "name",
+              conditions: [{ operator: "=", value: "Bob", chipColor: "green" }],
               buttonVariant: "filled",
             },
             nested: {
@@ -3215,8 +4665,12 @@ test("LLM-generated nested columns preserve presentation, drill-down and styles"
       .filter({ hasText: "Bob", hasNotText: "Alice" });
     await expect(alice.locator(".ProgressBar")).toHaveText("£3.00");
     await expect(bob.locator(".ProgressBar")).toHaveText("£2.00");
+    await expect(users.getByRole("columnheader")).toHaveCount(4);
+    const managerCell = alice.getByRole("cell").last();
     await expect(alice.getByTestId("LinkedColumn.OpenRecords")).toHaveCount(2);
-    await expect(alice.getByTestId("LinkedColumn.OpenRecord")).toHaveCount(1);
+    await expect(
+      managerCell.getByTestId("LinkedColumn.OpenRecord"),
+    ).toHaveCount(1);
     const generatedWorkspace = await state.db.workspaces!.findOne({
       name: workspace.name,
     });
@@ -3247,16 +4701,18 @@ test("LLM-generated nested columns preserve presentation, drill-down and styles"
         .getByTestId("LinkedColumn.OpenRecords")
         .filter({ hasText: "3", hasNotText: "£" }),
     ).toHaveClass(/outline/);
-    const manager = alice
+    const manager = managerCell
       .getByTestId("LinkedColumn.OpenRecord")
       .filter({ hasText: "Bob" });
     await expect(manager).toContainText("Bob");
     await expect(manager).toHaveClass(/filled/);
-    await expect(manager).toHaveCSS("color", "rgb(18, 52, 86)");
+    await expect(manager).toHaveCSS("color", "rgb(0, 173, 68)");
     await manager.click();
-    await expect(
-      page.getByTestId("SmartForm").locator('[data-key="email"] input'),
-    ).toHaveValue("bob@example.com");
+    const managerCards = page
+      .getByTestId("SmartCardList")
+      .locator(".SmartCard");
+    await expect(managerCards).toHaveCount(1);
+    await expect(managerCards).toContainText("bob@example.com");
     await page.getByTestId("Popup.close").last().click();
     await expect(alice.locator(".ProgressBar > .shadow")).toHaveCSS(
       "background-color",
@@ -3287,13 +4743,179 @@ test("LLM-generated nested columns preserve presentation, drill-down and styles"
   }
 });
 
-test("job control metadata derives bindings and enables start, cancel, retry and rerun buttons", async ({
+test("unconfigured job columns show status and group job controls before other actions", async ({
+  page,
+}) => {
+  const state = await deployment.connectStateAs("admin");
+  let project = await deployment.connectProjectAs("admin");
+  const originalWindow = await state.db.windows!.findOne(usersWindowFilter);
+  const sourcePath = `${configPath}/index.js`;
+  const originalSource = readFileSync(sourcePath, "utf8");
+  const unconfiguredSource =
+    originalSource +
+    `
+    delete module.exports.connection.table_options.job_targets;
+    module.exports.tableConfig.job_targets.columns.review_action = ${JSON.stringify(
+      createActionColumn("inspectTarget", { text: "Inspect target" }),
+    )};
+    module.exports.functions.admins.functions.inspectTarget = {
+      input: { row: { type: "RowLookup", table: "job_targets" } },
+      run: async ({ row }) => ({ received: row }),
+    };
+    module.exports.functions.admins.functions.describeTarget = {
+      input: { row: { type: "RowLookup", table: "job_targets" } },
+      run: async ({ row }) => row.id,
+    };
+  `;
+  const target = await project.db.job_targets!.insert!(
+    { blocked: false },
+    { returning: "*" },
+  );
+  const openDashboard = () =>
+    page.goto(
+      `${deployment.dashboardUrl}?workspaceId=${originalWindow!.workspace_id}`,
+    );
+  try {
+    writeFileSync(sourcePath, unconfiguredSource);
+    project = (await deployment.syncSchema()).project;
+    await state.db.windows!.update(
+      { id: originalWindow!.id },
+      { table_name: "job_targets", columns: null },
+    );
+    await page
+      .context()
+      .addCookies([
+        { name: sidKeyName, value: sessionId, url: deployment.endpoint },
+      ]);
+    await openDashboard();
+    const table = page.locator(`[data-box-id="${originalWindow!.id}"]`);
+    const row = table.getByTestId("TableBody").getByRole("row");
+    const actions = row.getByRole("group", { name: "Actions", exact: true });
+    const actionButtons = actions.getByRole("button").filter({ hasText: /\S/ });
+    await expect(actionButtons).toHaveText([
+      "Start target",
+      "Inspect target",
+      "describeTarget",
+    ]);
+    for (const name of ["action", "review_action", "job_id"]) {
+      await expect(
+        table.locator(`[role="columnheader"][data-key="${name}"]`),
+      ).toHaveCount(0);
+    }
+    await expect(
+      table.locator('[role="columnheader"][data-key="__actions"]'),
+    ).toHaveText("Actions");
+    await actions
+      .getByRole("button", { name: "Start target", exact: true })
+      .click();
+    const popup = page.getByTestId("ActionPopup");
+    /* Combining stored job controls must preserve their instructions. */
+    await expect(
+      popup.getByText("Job instructions", { exact: true }),
+    ).toBeVisible();
+    await popup
+      .getByRole("button", { name: "Start target", exact: true })
+      .click();
+    await expect(
+      page.getByRole("region", { name: "Job details", exact: true }),
+    ).toContainText("Status: succeeded");
+    await popup.getByTestId("Popup.close").click();
+    await expect(actionButtons).toHaveText([
+      "Complete",
+      "Inspect target",
+      "describeTarget",
+    ]);
+    const jobReference = row.getByTestId("LinkedColumn.OpenRecord");
+    await expect(jobReference).toHaveText("succeeded");
+    const linkedTarget = await project.db.job_targets!.findOne!({
+      id: target.id,
+    });
+    const jobId = linkedTarget!.job_id as string;
+    await expect(row.getByText(jobId, { exact: true })).toHaveCount(0);
+
+    /* Explicit selections can expose the raw ID and original stored action. */
+    await state.db.windows!.update(
+      { id: originalWindow!.id },
+      {
+        columns: [
+          { name: "job_id", format: { type: "NONE" } },
+          { name: "action" },
+        ],
+      },
+    );
+    await expect(jobReference).toHaveCount(0);
+    await expect(row.locator(".ShorterText")).toContainText(jobId.slice(0, 8));
+    await expect(actionButtons).toHaveText(["Complete"]);
+    await expect(
+      table.locator('[role="columnheader"][data-key="__actions"]'),
+    ).toHaveCount(0);
+    await state.db.windows!.update({ id: originalWindow!.id }, { columns: [] });
+    await expect(jobReference).toHaveText("succeeded");
+    await expect(actionButtons).toHaveText([
+      "Complete",
+      "Inspect target",
+      "describeTarget",
+    ]);
+
+    /* Explicit reference and stored-column formats override the defaults. */
+    await page.goto("about:blank");
+    writeFileSync(
+      sourcePath,
+      unconfiguredSource +
+        `
+        module.exports.connection.table_options.action_jobs = { referenceDisplay: { columns: [{ name: "id" }] } };
+        module.exports.connection.table_options.job_targets = { columns: { review_action: { format: { type: "NONE" } } } };
+        `,
+    );
+    project = (await deployment.syncSchema()).project;
+    await openDashboard();
+    await expect(jobReference).toContainText(jobId.slice(0, 8));
+    await expect(
+      table.locator('[role="columnheader"][data-key="review_action"]'),
+    ).toBeVisible();
+    await expect(actionButtons).toHaveText([
+      "Complete",
+      "describeTarget",
+      "inspectTarget",
+    ]);
+  } finally {
+    await page.goto("about:blank");
+    writeFileSync(sourcePath, originalSource);
+    project = (await deployment.syncSchema()).project;
+    await state.db.windows!.update(
+      { id: originalWindow!.id },
+      {
+        table_name: originalWindow!.table_name,
+        columns: originalWindow!.columns,
+      },
+    );
+    await project.db.job_targets!.delete!({ id: target.id });
+    project.disconnect();
+    state.disconnect();
+  }
+});
+
+test("job action buttons show state and keep cancel, retry and rerun in the popup footer", async ({
   page,
 }) => {
   let pauseUpdates = false;
   const pendingUpdates: (() => void)[] = [];
+  const jobJoinCounts: number[] = [];
   await page.routeWebSocket("**", (socket) => {
     const server = socket.connectToServer();
+    socket.onMessage((message) => {
+      if (typeof message === "string" && message.startsWith("42")) {
+        const [, request] = JSON.parse(message.slice(message.indexOf("[")));
+        if (request?.tableName === "job_targets" && request.param2?.select) {
+          const jobJoins = Object.values(request.param2.select).filter(
+            (expression: any) =>
+              expression?.$leftJoin?.[0]?.table === "action_jobs",
+          );
+          if (jobJoins.length) jobJoinCounts.push(jobJoins.length);
+        }
+      }
+      server.send(message);
+    });
     server.onMessage((message) => {
       const forward = () => socket.send(message);
       if (pauseUpdates) pendingUpdates.push(forward);
@@ -3303,7 +4925,10 @@ test("job control metadata derives bindings and enables start, cancel, retry and
   const state = await deployment.connectStateAs("admin");
   const project = await deployment.connectProjectAs("admin");
   const originalWindow = await state.db.windows!.findOne(usersWindowFilter);
-  const target = await project.db.job_targets!.insert!({}, { returning: "*" });
+  const target = await project.db.job_targets!.insert!(
+    { cancel_blocked: true },
+    { returning: "*" },
+  );
   try {
     expect(
       project.tableSchema!.find(({ name }) => name === "job_targets")
@@ -3315,6 +4940,13 @@ test("job control metadata derives bindings and enables start, cancel, retry and
       operation: "startOrRetry",
       allowedStatuses: ["failed", "cancelled"],
     });
+    expect(
+      project
+        .tableSchema!.find(({ name }) => name === "job_targets")
+        ?.columns.find(({ name }) => name === "job_id")?.renderAs,
+    ).toEqual(
+      config.connection.table_options.job_targets.columns.job_id.renderAs,
+    );
     await state.db.windows!.update(
       { id: originalWindow!.id },
       {
@@ -3328,7 +4960,8 @@ test("job control metadata derives bindings and enables start, cancel, retry and
         },
         columns: [
           { name: "id", show: true },
-          { name: "alternate_key", show: true },
+          { name: "job_id", show: false },
+          { name: "alternate_key", show: true, width: 540 },
           ...["startTargetJob", "cancelTargetJob", "rerunTargetJob"].map(
             (methodName) => ({
               name: methodName,
@@ -3348,6 +4981,19 @@ test("job control metadata derives bindings and enables start, cancel, retry and
           ),
           { name: "action", show: true },
           {
+            name: "job_controls",
+            show: true,
+            format: {
+              type: "ActionColumns",
+              params: {
+                actions: [
+                  { methodsForJobColumn: "job_id" },
+                  { methodName: "startTargetJob" },
+                ],
+              },
+            },
+          },
+          {
             name: "grouped",
             show: true,
             format: {
@@ -3362,7 +5008,44 @@ test("job control metadata derives bindings and enables start, cancel, retry and
                       isLoading: false,
                     },
                   },
+                  { methodName: "cancelTargetJob" },
+                  { methodName: "rerunTargetJob" },
+                  { columnName: "action" },
                 ],
+              },
+            },
+          },
+          {
+            name: "unavailable",
+            show: true,
+            format: {
+              type: "ActionColumns",
+              params: {
+                actions: [
+                  { methodName: "unpublishedStart" },
+                  { methodName: "unpublishedCancel" },
+                  { methodName: "unpublishedRerun" },
+                ],
+              },
+            },
+          },
+          {
+            name: "waiting",
+            show: true,
+            format: {
+              type: "ActionColumns",
+              params: {
+                actions: [
+                  "startTargetJob",
+                  "cancelTargetJob",
+                  "rerunTargetJob",
+                ].map((methodName) => ({
+                  methodName,
+                  defaultValue: {
+                    text: "Awaiting approval",
+                    disabledInfo: "Approval is required",
+                  },
+                })),
               },
             },
           },
@@ -3380,28 +5063,52 @@ test("job control metadata derives bindings and enables start, cancel, retry and
     const table = page.locator(`[data-box-id="${originalWindow!.id}"]`);
     const button = (name: string) =>
       table.getByRole("button", { name, exact: true });
-    const expectStartButtons = async (
+    const actionCell = async (name: string) => {
+      const columnIndex = await table
+        .locator(`[role="columnheader"][data-key="${name}"]`)
+        .evaluate((header) =>
+          [...header.parentElement!.children].indexOf(header),
+        );
+      return table
+        .getByTestId("TableBody")
+        .getByRole("row")
+        .getByRole("cell")
+        .nth(columnIndex);
+    };
+    const groupedActions = await actionCell("grouped");
+    const expectGroupedAction = async (
       name: string,
       enabled: boolean,
-      loading = false,
+      count = 1,
     ) => {
+      await expect(groupedActions.getByRole("button")).toHaveCount(count);
+      const control = groupedActions.getByRole("button", { name, exact: true });
+      if (enabled) await expect(control).toBeEnabled();
+      else await expect(control).toBeDisabled();
+    };
+    const expectStartButtons = async (name: string, loading = false) => {
       const buttons = button(name);
-      await expect(buttons).toHaveCount(3);
+      await expect(buttons).toHaveCount(4);
       for (const control of await buttons.all()) {
-        if (enabled) await expect(control).toBeEnabled();
-        else await expect(control).toBeDisabled();
+        await expect(control).toBeEnabled();
         if (loading) await expect(control).toHaveAttribute("aria-busy", "true");
         else await expect(control).not.toHaveAttribute("aria-busy", "true");
       }
     };
+    const popupFooter = page
+      .getByTestId("ActionPopup")
+      .getByTestId("Popup.footer");
+    const secondaryControls = popupFooter.getByRole("button", {
+      name: /^(Cancel|Rerun)$/,
+    });
     const runButton = async (name: string) => {
-      await button(name).first().click();
-      await page
-        .getByTestId("ActionPopup")
-        .getByRole("button", { name: "Run", exact: true })
-        .click();
+      await groupedActions.getByRole("button").click();
+      await expect(secondaryControls).toHaveText(
+        name === "Rerun" ? ["Rerun"] : [],
+      );
+      await popupFooter.getByRole("button", { name, exact: true }).click();
       await expect(
-        page.getByTestId("ActionPopup").getByLabel("Action result"),
+        page.getByRole("region", { name: "Job details", exact: true }),
       ).toBeVisible();
       await page.getByTestId("Popup.close").last().click();
     };
@@ -3409,21 +5116,127 @@ test("job control metadata derives bindings and enables start, cancel, retry and
       const row = await project.db.job_targets!.findOne!({ id: target.id });
       return project.db.action_jobs!.findOne!({ id: row!.job_id });
     };
-    await expectStartButtons("Start target", true);
-    await expect(button("Cancel")).toBeDisabled();
-    await expect(button("Rerun")).toBeDisabled();
+    /* Job actions keep their generated function binding and require a popup. */
+    await expectStartButtons("Start target");
+    await expectGroupedAction("Start target", true);
+    /* Explicit, stored and column-discovered controls share one job lookup. */
+    expect(jobJoinCounts.length).toBeGreaterThan(0);
+    expect(new Set(jobJoinCounts)).toEqual(new Set([1]));
+    await expect(
+      (await actionCell("job_controls")).getByRole("button"),
+    ).toHaveCount(1);
+    await table.getByTestId("AddColumnMenu").click();
+    await page.getByText("Add action column", { exact: true }).click();
+    const functionPicker = page.getByTestId("ActionFormat.function");
+    await expect(functionPicker).toContainText("startTargetJob (row)");
+    await expect(functionPicker).toBeDisabled();
+    await expect(
+      page.getByLabel("Run without a popup", { exact: true }),
+    ).toBeDisabled();
+    await page.getByTestId("Popup.close").last().click();
+    /* Unavailable or blocked job actions collapse into one disabled button. */
+    const unavailableActions = await actionCell("unavailable");
+    await expect(unavailableActions.getByRole("button")).toHaveCount(1);
+    await expect(
+      unavailableActions.getByRole("button", {
+        name: "Action unavailable",
+        exact: true,
+      }),
+    ).toBeDisabled();
+    const waitingActions = await actionCell("waiting");
+    await expect(waitingActions.getByRole("button")).toHaveCount(1);
+    await expect(
+      waitingActions.getByRole("button", {
+        name: "Awaiting approval",
+        exact: true,
+      }),
+    ).toBeDisabled();
+    /* Removing an action column preserves the remaining configured widths. */
+    const configuredWindow = await state.db.windows!.findOne({
+      id: originalWindow!.id,
+    });
+    await state.db.windows!.update(
+      { id: originalWindow!.id },
+      {
+        columns: configuredWindow!.columns?.filter(
+          ({ name }) => name !== "waiting",
+        ),
+      },
+    );
+    await expect(
+      table.locator('[role="columnheader"][data-key="waiting"]'),
+    ).toHaveCount(0);
+    await expect(
+      table.locator('[role="columnheader"][data-key="grouped"]'),
+    ).toHaveCSS("width", "800px");
+    await expect(
+      table.locator('[role="columnheader"][data-key="alternate_key"]'),
+    ).toHaveCSS("width", "540px");
+    await expect(button("Cancel")).toHaveCount(0);
+    await expect(button("Rerun")).toHaveCount(0);
+    /* Running jobs stay inspectable, with cancellation only in the popup footer. */
     await runButton("Start target");
-    await expect.poll(async () => (await linkedJob())!.status).toBe("running");
-    await expectStartButtons("Working on target", false, true);
-    await expect(button("Cancel")).toBeEnabled();
-    await expect(button("Rerun")).toBeDisabled();
-    await runButton("Cancel");
+    await expect.poll(async () => (await linkedJob())?.status).toBe("running");
+    await expectStartButtons("Working on target", true);
+    await expectGroupedAction("Working on target", true);
+    const runningControl = groupedActions.getByRole("button", {
+      name: "Working on target",
+      exact: true,
+    });
+    await expect(runningControl).toHaveAttribute("aria-busy", "true");
+    await runningControl.click();
+    await expect(
+      page
+        .getByTestId("ActionPopup")
+        .getByRole("button", { name: "Working on target", exact: true }),
+    ).toBeDisabled();
+    const jobDetails = page.getByRole("region", {
+      name: "Job details",
+      exact: true,
+    });
+    await expect(jobDetails).toContainText("Status: running");
+    await expect(jobDetails).toContainText("Working on target");
+    await expect(secondaryControls).toHaveText(["Cancel"]);
+    await expect(
+      jobDetails.getByRole("button", { name: "Cancel", exact: true }),
+    ).toHaveCount(0);
+    const cancelButton = popupFooter.getByRole("button", {
+      name: "Cancel",
+      exact: true,
+    });
+    await cancelButton.click();
+    await expect
+      .poll(async () => (await linkedJob())!.cancel_requested)
+      .toBe(true);
+    await expect(cancelButton).toHaveAttribute("aria-busy", "true");
+    await expect(cancelButton).toBeDisabled();
+    /* Cancellation remains in progress until the worker finishes cleanup. */
+    await page.getByTestId("ActionPopup").getByTestId("Popup.close").click();
+    await runningControl.click();
+    await expect(jobDetails).toContainText("Status: running");
+    await expect(cancelButton).toHaveAttribute("aria-busy", "true");
+    await expect(cancelButton).toBeDisabled();
+    await project.db.job_targets!.update!(
+      { id: target.id },
+      { cancel_blocked: false },
+    );
     await expect
       .poll(async () => (await linkedJob())!.status)
       .toBe("cancelled");
-    await expectStartButtons("Retry target", true);
-    await expect(button("Cancel")).toBeDisabled();
-    await expect(button("Rerun")).toBeDisabled();
+    await expect(jobDetails).toContainText("Status: cancelled");
+    await expect(secondaryControls).toHaveCount(0);
+    await expect(
+      page
+        .getByTestId("ActionPopup")
+        .getByTestId("Popup.footer")
+        .getByRole("button", { name: "Retry target", exact: true }),
+    ).toBeEnabled();
+    await page.getByTestId("ActionPopup").getByTestId("Popup.close").click();
+    await expectStartButtons("Retry target");
+    await expectGroupedAction("Retry target", true);
+    await expect(button("Cancel")).toHaveCount(0);
+    await expect(button("Rerun")).toHaveCount(0);
+    /* Cancelled jobs can be retried and completed successfully. */
     await runButton("Retry target");
     await expect.poll(async () => (await linkedJob())!.status).toBe("running");
     await project.db.job_targets!.update!(
@@ -3433,9 +5246,11 @@ test("job control metadata derives bindings and enables start, cancel, retry and
     await expect
       .poll(async () => (await linkedJob())!.status)
       .toBe("succeeded");
-    await expectStartButtons("Complete", false);
-    await expect(button("Cancel")).toBeDisabled();
-    await expect(button("Rerun")).toBeEnabled();
+    await expectStartButtons("Complete");
+    await expectGroupedAction("Complete", true);
+    await expect(button("Cancel")).toHaveCount(0);
+    await expect(button("Rerun")).toHaveCount(0);
+    /* Rerunning a completed job creates a new job; failures expose retry. */
     const previousJobId = (await linkedJob())!.id;
     await runButton("Rerun");
     await expect
@@ -3448,39 +5263,62 @@ test("job control metadata derives bindings and enables start, cancel, retry and
     );
     await runButton("Rerun");
     await expect.poll(async () => (await linkedJob())!.status).toBe("failed");
-    await expectStartButtons("Retry target", true);
-    await expect(button("Cancel")).toBeDisabled();
-    await expect(button("Rerun")).toBeDisabled();
-    // Retry must work before realtime updates replace the displayed row.
+    await expectStartButtons("Retry target");
+    await expectGroupedAction("Retry target", true);
+    await expect(button("Cancel")).toHaveCount(0);
+    await expect(button("Rerun")).toHaveCount(0);
+    /* Retry must work before realtime updates replace the displayed row. */
     pauseUpdates = true;
     await project.db.job_targets!.update!(
       { id: target.id },
       { should_fail: false },
     );
-    // The stored action column invokes the same control without an input popup.
+    /* Stored job actions use the same details popup. */
     await button("Retry target").nth(1).click();
-    await expect(page.getByTestId("ActionPopup")).toHaveCount(0);
+    await expect(page.getByTestId("ActionPopup")).toBeVisible();
+    await expect(secondaryControls).toHaveCount(0);
+    await expect(
+      page
+        .getByTestId("ActionPopup")
+        .getByText("Job instructions", { exact: true }),
+    ).toBeVisible();
+    await page
+      .getByTestId("ActionPopup")
+      .getByRole("button", { name: "Retry target", exact: true })
+      .click();
     await expect
       .poll(async () => (await linkedJob())!.status)
       .toBe("succeeded");
     pauseUpdates = false;
     pendingUpdates.splice(0).forEach((forward) => forward());
-    await expectStartButtons("Complete", false);
+    await expectStartButtons("Complete");
+    await expect(jobDetails).toContainText("Status: succeeded");
+    await expect(secondaryControls).toHaveText(["Rerun"]);
+    await page.getByTestId("ActionPopup").getByTestId("Popup.close").click();
+    /* Row forms open the same job details and keep rerun in the popup footer. */
     await table.getByTestId("dashboard.window.viewEditRow").click();
     const rowCard = page.getByTestId("SmartForm").last();
     await expect(
       rowCard.getByRole("button", { name: "Complete", exact: true }),
-    ).toBeDisabled();
+    ).toBeEnabled();
     await expect(
       rowCard.getByRole("button", { name: "Cancel", exact: true }),
-    ).toBeDisabled();
+    ).toHaveCount(0);
     await expect(
       rowCard.getByRole("button", { name: "Rerun", exact: true }),
+    ).toHaveCount(0);
+    await rowCard
+      .getByRole("button", { name: "Complete", exact: true })
+      .click();
+    await expect(jobDetails).toContainText("Status: succeeded");
+    await expect(secondaryControls).toHaveText(["Rerun"]);
+    await expect(
+      popupFooter.getByRole("button", { name: "Rerun", exact: true }),
     ).toBeEnabled();
   } finally {
     await project.db.job_targets!.update!(
       { id: target.id },
-      { blocked: false },
+      { blocked: false, cancel_blocked: false },
     );
     await state.db.windows!.update(
       { id: originalWindow!.id },
@@ -3546,7 +5384,11 @@ test("function metadata shares action styling, conditions and popup defaults acr
                         value: { variant: "faded" },
                       },
                     ],
-                    defaultValue: { text: "Linked override" },
+                    defaultValue: {
+                      text: "Linked override",
+                      disabledInfo: "Waiting for linked work",
+                      isLoading: true,
+                    },
                   },
                   { columnName: "review_action" },
                 ],
@@ -3603,6 +5445,9 @@ test("function metadata shares action styling, conditions and popup defaults acr
     });
     await expect(linkedOverride).toHaveClass(/btn-faded/);
     await expect(linkedOverride).toHaveClass(/btn-color-green/);
+    /* Matching action conditions clear fallback disabled/loading flags. */
+    await expect(linkedOverride).toBeEnabled();
+    await expect(linkedOverride).not.toHaveAttribute("aria-busy", "true");
     const storedButton = alice.getByRole("button", {
       name: "Stored override",
       exact: true,
@@ -3622,7 +5467,9 @@ test("function metadata shares action styling, conditions and popup defaults acr
       "Shared note",
     );
     await expect(form.getByLabel("amount", { exact: true })).toHaveValue("0");
-    await form.getByRole("button", { name: "Run", exact: true }).click();
+    await form
+      .getByRole("button", { name: "Shared Alice", exact: true })
+      .click();
     await expect(form.getByTestId("TableBody")).toContainText("Alice");
     await expect(
       form.getByRole("button", { name: "Stored override", exact: true }),
@@ -3640,14 +5487,51 @@ test("function metadata shares action styling, conditions and popup defaults acr
     await expect(
       rowCard.getByRole("button", { name: "Shared email", exact: true }),
     ).toHaveClass(/btn-color-indigo/);
+    /* Row-form actions bind the current record and retain configured defaults. */
+    await rowCard
+      .getByRole("button", { name: "Shared Alice", exact: true })
+      .click();
+    await expect(form.getByLabel("user", { exact: true })).toHaveCount(0);
+    await expect(form.getByLabel("note", { exact: true })).toHaveValue(
+      "Shared note",
+    );
+    await expect(form.getByLabel("amount", { exact: true })).toHaveValue("0");
+    /* Live row changes update whether the open action can run. */
+    await project.db.users!.update!(
+      { id: originalAlice!.id },
+      { name: "Paused" },
+    );
+    await expect(
+      form.getByRole("button", { name: "Shared action", exact: true }),
+    ).toBeDisabled();
+    await project.db.users!.update!(
+      { id: originalAlice!.id },
+      { name: "Alice" },
+    );
+    await form
+      .getByRole("button", { name: "Shared Alice", exact: true })
+      .click();
+    await expect(form.getByRole("status")).toHaveText("Action completed");
+    await expect(form.getByTestId("TableBody")).toContainText("Alice");
+    await form.getByTestId("Popup.close").click();
+    await rowCard
+      .getByRole("button", { name: "Shared email", exact: true })
+      .click();
+    await expect(form.getByLabel("email", { exact: true })).toHaveCount(0);
+    await form
+      .getByRole("button", { name: "Shared email", exact: true })
+      .click();
+    await expect(form.getByLabel("Action result")).toContainText(
+      "alice@example.com",
+    );
   } finally {
     await state.db.windows!.update(
       { id: originalWindow!.id },
       { columns: originalWindow!.columns },
     );
     await project.db.users!.update!(
-      { name: "Alice" },
-      { review_action: originalAlice?.review_action ?? null },
+      { id: originalAlice!.id },
+      { name: "Alice", review_action: originalAlice?.review_action ?? null },
     );
     project.disconnect();
     state.disconnect();
@@ -3714,7 +5598,7 @@ test("action popups validate inputs, keep the selected record fixed and show exe
     );
     const run = popup
       .getByTestId("Popup.footer")
-      .getByRole("button", { name: "Run", exact: true });
+      .getByRole("button", { name: "Review user", exact: true });
     const note = popup.getByLabel("note", { exact: true });
     const runWithNote = async (value: string) => {
       await note.fill(value);
@@ -3745,6 +5629,13 @@ test("action popups validate inputs, keep the selected record fixed and show exe
     await runWithNote("void");
     await expect(popup.getByRole("status")).toHaveText("Action completed");
     await expect(popup.getByLabel("Action result")).toHaveCount(0);
+    /* String results replace the form with Markdown; other types retain JSON output. */
+    await runWithNote("markdown");
+    await expect(
+      popup.getByRole("heading", { name: "Review complete", level: 2 }),
+    ).toBeVisible();
+    await expect(run).toHaveCount(0);
+    await expect(note).toHaveCount(0);
     await popup
       .getByTestId("Popup.footer")
       .getByRole("button", { name: "Close", exact: true })
@@ -3754,6 +5645,38 @@ test("action popups validate inputs, keep the selected record fixed and show exe
     await expect(popup.getByRole("status")).toHaveCount(0);
     await popup.getByRole("button", { name: "Cancel", exact: true }).click();
     await expect(popup).toHaveCount(0);
+
+    /* Row-form actions hide the bound record input and validate extra inputs. */
+    await page
+      .locator('[data-table-name="users"]')
+      .getByTestId("TableBody")
+      .getByRole("row")
+      .filter({ hasText: "Alice" })
+      .getByTestId("dashboard.window.viewEditRow")
+      .click();
+    await page
+      .getByTestId("SmartForm")
+      .getByRole("button", { name: "reviewUserWithNote", exact: true })
+      .click();
+    await expect(
+      popup.getByRole("region", { name: "Selected record" }),
+    ).toContainText("Alice · alice@example.com");
+    await expect(popup.getByLabel("user", { exact: true })).toHaveCount(0);
+    const rowFormRun = popup.getByRole("button", { name: "Run", exact: true });
+    await rowFormRun.click();
+    await expect(popup.getByText("Required", { exact: true })).toBeVisible();
+    /* False and zero are successful results and must remain visible. */
+    for (const value of ["false", "0"]) {
+      await note.fill(value);
+      await rowFormRun.click();
+      await expect(popup.getByRole("status")).toHaveText("Action completed");
+      await expect(popup.getByLabel("Action result")).toHaveText(value);
+    }
+    /* Empty strings are still successful Markdown results. */
+    await note.fill("empty");
+    await rowFormRun.click();
+    await expect(popup.getByLabel("Action result")).toHaveText("");
+    await expect(rowFormRun).toHaveCount(0);
   } finally {
     await state.db.windows!.update(
       { id: originalWindow!.id },
@@ -3873,7 +5796,9 @@ module.exports.connection.table_options.users.columns = ${JSON.stringify({
     await expect(inspectEmail).toBeVisible();
     await inspectEmail.click();
     const form = page.getByTestId("ActionPopup");
-    await form.getByRole("button", { name: "Run", exact: true }).click();
+    await form
+      .getByRole("button", { name: "Inspect Alice email", exact: true })
+      .click();
     await expect(form.getByLabel("Action result")).toContainText(
       "alice@example.com",
     );
@@ -3915,6 +5840,130 @@ module.exports.connection.table_options.users.columns = ${JSON.stringify({
       { id: originalWindow!.id },
       { columns: originalWindow!.columns },
     );
+    state.disconnect();
+  }
+});
+
+test("action buttons run immediately only when configured and without additional inputs", async ({
+  page,
+}) => {
+  const state = await deployment.connectStateAs("admin");
+  const project = await deployment.connectProjectAs("admin");
+  const originalWindow = await state.db.windows!.findOne(usersWindowFilter);
+  const originalAlice = await project.db.users!.findOne!({ name: "Alice" });
+  const resetAction = () =>
+    project.db.users!.update!(
+      { id: originalAlice!.id },
+      { action: { text: "Start" } },
+    );
+  const actionText = async () =>
+    (await project.db.users!.findOne!({ id: originalAlice!.id }))!.action.text;
+  try {
+    await resetAction();
+    await state.db.windows!.update(
+      { id: originalWindow!.id },
+      {
+        columns: [
+          { name: "name", show: true },
+          { name: "action", show: true },
+          ...[
+            { methodName: "markUser", defaultValue: { text: "Confirm mark" } },
+            {
+              methodName: "markUser",
+              runImmediately: true,
+              defaultValue: { text: "Mark now" },
+            },
+            {
+              methodName: "startUserAction",
+              runImmediately: false,
+              defaultValue: { text: "Confirm start" },
+            },
+            {
+              methodName: "reviewUserWithNote",
+              runImmediately: true,
+              defaultValue: { text: "Review" },
+            },
+          ].map((params, index) => ({
+            name: `action_${index}`,
+            show: true,
+            format: { type: "Action", params },
+          })),
+        ],
+      },
+    );
+    await page
+      .context()
+      .addCookies([
+        { name: sidKeyName, value: sessionId, url: deployment.endpoint },
+      ]);
+    await page.goto(
+      `${deployment.dashboardUrl}?workspaceId=${originalWindow!.workspace_id}`,
+    );
+    const table = page.locator(`[data-box-id="${originalWindow!.id}"]`);
+    const alice = table
+      .getByTestId("TableBody")
+      .getByRole("row")
+      .filter({ hasText: "Alice" });
+    const popup = page.getByTestId("ActionPopup");
+
+    /* Actions require confirmation unless immediate execution is enabled. */
+    await alice
+      .getByRole("button", { name: "Confirm mark", exact: true })
+      .click();
+    await expect(popup).toBeVisible();
+    expect(await actionText()).toBe("Start");
+    await popup
+      .getByRole("button", { name: "Confirm mark", exact: true })
+      .click();
+    await expect.poll(actionText).toBe("Marked");
+    await popup.getByTestId("Popup.close").click();
+
+    /* A column can opt into immediate execution when no extra inputs are needed. */
+    await resetAction();
+    await alice.getByRole("button", { name: "Mark now", exact: true }).click();
+    await expect.poll(actionText).toBe("Marked");
+    await expect(popup).toHaveCount(0);
+
+    /* Stored actions inherit immediate execution from their function metadata. */
+    await resetAction();
+    await alice.getByRole("button", { name: "Start", exact: true }).click();
+    await expect.poll(actionText).toBe("Stop");
+    await expect(popup).toHaveCount(0);
+
+    /* An explicit false overrides the function's immediate-execution default. */
+    await resetAction();
+    await alice
+      .getByRole("button", { name: "Confirm start", exact: true })
+      .click();
+    await expect(popup).toBeVisible();
+    expect(await actionText()).toBe("Start");
+    await popup.getByTestId("Popup.close").click();
+
+    /* Required extra inputs force a form even when immediate execution is set. */
+    await alice.getByRole("button", { name: "Review", exact: true }).click();
+    await expect(popup.getByLabel("note", { exact: true })).toBeVisible();
+    await popup.getByRole("button", { name: "Review", exact: true }).click();
+    await expect(popup.getByText("Required", { exact: true })).toBeVisible();
+    await popup.getByTestId("Popup.close").click();
+
+    /* Row-form actions also honor the function's immediate-execution default. */
+    await alice.getByTestId("dashboard.window.viewEditRow").click();
+    const rowCard = page.getByTestId("SmartForm").last();
+    await rowCard
+      .getByRole("button", { name: "startUserAction", exact: true })
+      .click();
+    await expect.poll(actionText).toBe("Stop");
+    await expect(popup).toHaveCount(0);
+  } finally {
+    await state.db.windows!.update(
+      { id: originalWindow!.id },
+      { columns: originalWindow!.columns },
+    );
+    await project.db.users!.update!(
+      { id: originalAlice!.id },
+      { action: originalAlice!.action },
+    );
+    project.disconnect();
     state.disconnect();
   }
 });
@@ -4020,7 +6069,7 @@ test("stored action columns run, stop, retry and show live Markdown details and 
       "3 action buttons · 2 stored, 1 function",
     );
     await expect(columnList.locator('[data-key="action"]')).toContainText(
-      "Stored action · runs immediately",
+      "Stored action",
     );
     await page.getByTestId("Popup.close").last().click();
     await expect(
@@ -4034,12 +6083,44 @@ test("stored action columns run, stop, retry and show live Markdown details and 
       .click();
     await page
       .getByTestId("ActionPopup")
-      .getByRole("button", { name: "Run", exact: true })
+      .getByRole("button", { name: "Inspect email", exact: true })
       .click();
     await expect(
       page.getByTestId("ActionPopup").getByLabel("Action result"),
     ).toContainText("alice@example.com");
     await page.getByTestId("Popup.close").last().click();
+    /* Stored actions bind the chosen lookup and prompt for required extra inputs. */
+    for (const [methodName, argName, note] of [
+      ["reviewUserWithNote", undefined, "Stored review"],
+      ["ambiguousUser", "user", undefined],
+    ] as const) {
+      await project.db.users!.update!(
+        { name: "Alice" },
+        { review_action: { methodName, argName, text: "Review" } },
+      );
+      await actions
+        .getByRole("button", { name: "Review", exact: true })
+        .click();
+      const form = page.getByTestId("ActionPopup");
+      await expect(form).toBeVisible();
+      await expect(form.getByLabel("user", { exact: true })).toHaveCount(0);
+      await expect(form.getByLabel("Selected record")).toContainText("Alice");
+      const run = form.getByRole("button", { name: "Review", exact: true });
+      if (note) {
+        await run.click();
+        await expect(form.getByText("Required", { exact: true })).toBeVisible();
+        await expect(form.getByRole("status")).toHaveCount(0);
+        await form.getByLabel("note", { exact: true }).fill(note);
+      }
+      await run.click();
+      await expect(form.getByRole("status")).toHaveText("Action completed");
+      await expect(form.getByLabel("Action result")).toContainText(
+        "alice@example.com",
+      );
+      if (note)
+        await expect(form.getByLabel("Action result")).toContainText(note);
+      await form.getByTestId("Popup.close").click();
+    }
     await project.db.users!.update!({ name: "Alice" }, { review_action: null });
     await expect(
       actions.getByRole("button", { name: "Review", exact: true }),
@@ -4365,7 +6446,7 @@ test("action columns hide functions whose lookup filters do not match the row", 
       .click();
     await page
       .getByTestId("ActionPopup")
-      .getByRole("button", { name: "Run", exact: true })
+      .getByRole("button", { name: "Value lookup", exact: true })
       .click();
     await expect(
       page.getByTestId("ActionPopup").getByLabel("Action result"),
@@ -4476,14 +6557,13 @@ test("action columns configure and open row and value lookup functions", async (
       await users.getByTestId("AddColumnMenu").click();
       await page.getByText("Add action column", { exact: true }).click();
       await page.getByTestId("ActionFormat.function").click();
-      await expect(
-        page
-          .getByTestId("SearchList.List")
-          .getByText("unrelated", { exact: true }),
-      ).toHaveCount(0);
-      await page
+      const functionOptions = page
+        .getByTestId("ActionFormat.function")
+        .getByTestId("SearchList.List");
+      await expect(functionOptions).toBeVisible();
+      await expect(functionOptions).not.toContainText("unrelated");
+      await functionOptions
         .getByText(`${methodName} (${argName})`, { exact: true })
-        .last()
         .click();
       await page.getByLabel("Button text", { exact: true }).fill(buttonText);
       await page
@@ -4513,7 +6593,7 @@ test("action columns configure and open row and value lookup functions", async (
       await button.click();
       const form = page.getByTestId("ActionPopup");
       await expect(form).toBeVisible();
-      await form.getByRole("button", { name: "Run", exact: true }).click();
+      await form.getByRole("button", { name: buttonText, exact: true }).click();
       await expect(form.getByLabel("Action result")).toContainText(
         "alice@example.com",
       );
@@ -4553,14 +6633,14 @@ test("action columns configure and open row and value lookup functions", async (
         .getByTestId("SearchList.List")
         .locator("[data-key]")
         .filter({ hasText: "Inspect email" }),
-    ).toContainText("Function button · opens a form");
+    ).toContainText("Function button");
     await page.getByTestId("Popup.close").last().click();
     await alice
       .getByRole("button", { name: "Inspect email", exact: true })
       .click();
     await page
       .getByTestId("ActionPopup")
-      .getByRole("button", { name: "Run", exact: true })
+      .getByRole("button", { name: "Inspect email", exact: true })
       .click();
     await expect(
       page.getByTestId("ActionPopup").getByLabel("Action result"),
@@ -4680,6 +6760,14 @@ module.exports.workspaces[0].windows[0].columns.push(${JSON.stringify({
     }
     for (const columns of [
       {
+        invalid_job: {
+          renderAs: {
+            type: "ActionColumns",
+            params: { actions: [{ methodsForJobColumn: "missing_job_id" }] },
+          },
+        },
+      },
+      {
         invalid_action: {
           format: { type: "Action", params: { methodName: "missingFunction" } },
         },
@@ -4760,15 +6848,16 @@ module.exports.workspaces[0].windows[0].columns.push(${JSON.stringify({
         error: expect.stringContaining("function_options"),
       });
     }
+    /* Stored actions with extra inputs remain publishable because they use a form. */
     writeFileSync(
       sourcePath,
       originalSource +
         `
 module.exports.tableConfig.users.columns.review_action = ${JSON.stringify(createActionColumn("reviewUserWithNote", { text: "Review" }))};`,
     );
-    await expect(sync()).rejects.toMatchObject({
-      error: expect.stringContaining("needs additional inputs: note"),
-    });
+    const { project: storedActionProject } = await sync();
+    expect(storedActionProject.methods!.reviewUserWithNote).toBeDefined();
+    storedActionProject.disconnect();
     writeFileSync(
       sourcePath,
       originalSource +
@@ -4877,6 +6966,8 @@ test("action columns compute button properties with CASE and linked conditions",
           icon: "Play",
           variant: "faded",
           color: "warn",
+          disabledInfo: "Waiting for a matching condition",
+          isLoading: true,
         },
       },
     },
@@ -4921,6 +7012,9 @@ test("action columns compute button properties with CASE and linked conditions",
       name: "Review Alice",
       exact: true,
     });
+    /* A matching CASE branch replaces the fallback disabled/loading state. */
+    await expect(button).toBeEnabled();
+    await expect(button).not.toHaveAttribute("aria-busy", "true");
     await expect(button).toHaveClass(/btn-outline/);
     await expect(button).toHaveClass(/btn-color-green/);
     await expect(button.locator("svg")).toHaveCount(1);
@@ -4932,16 +7026,19 @@ test("action columns compute button properties with CASE and linked conditions",
     await expect(bobButton).toHaveClass(/btn-color-warn/);
     await expect(bobButton).toHaveAttribute("aria-disabled", "true");
     await expect(bobButton).toHaveAttribute("title", "Bob is unavailable");
+    await expect(bobButton).not.toHaveAttribute("aria-busy", "true");
+    /* Rows matching no CASE branch retain the fallback disabled/loading state. */
     const noTasks = rows
       .filter({ hasText: "No tasks" })
       .getByRole("button", { name: "Inspect user", exact: true });
     await expect(noTasks).toHaveClass(/btn-color-warn/);
-    await expect(noTasks).not.toHaveAttribute("aria-disabled", "true");
+    await expect(noTasks).toBeDisabled();
+    await expect(noTasks).toHaveAttribute("aria-busy", "true");
 
     await button.click();
     await page
       .getByTestId("ActionPopup")
-      .getByRole("button", { name: "Run", exact: true })
+      .getByRole("button", { name: "Review Alice", exact: true })
       .click();
     await expect(
       page.getByTestId("ActionPopup").getByLabel("Action result"),
@@ -5039,7 +7136,7 @@ test("action columns compute button properties with CASE and linked conditions",
     await button.click();
     await page
       .getByTestId("ActionPopup")
-      .getByRole("button", { name: "Run", exact: true })
+      .getByRole("button", { name: "Review Alice", exact: true })
       .click();
     await expect(
       page.getByTestId("ActionPopup").getByLabel("Action result"),

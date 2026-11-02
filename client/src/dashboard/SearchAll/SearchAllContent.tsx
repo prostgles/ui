@@ -23,13 +23,13 @@ export const SearchAllContent = (props: SearchAllProps & SearchAllState) => {
   });
 
   return (
-    <div
-      className="flex-row aai-start w-full min-h-0"
-      style={{ width: "hh550px", maxWidth: "88vw", alignSelf: "center" }}
-    >
+    <div className="flex-row w-full min-h-0">
       <FlexCol className="min-w-0 min-h-0 f-1">
         <SearchList
-          key="search-all-db"
+          key={props.mode}
+          autoFocus={true}
+          leftContent={props.leftContent}
+          onType={props.onType}
           inputProps={{
             "data-command": "SearchAll",
           }}
@@ -51,7 +51,6 @@ export const SearchAllContent = (props: SearchAllProps & SearchAllState) => {
           }
           id="search-all-db"
           className={"f-1 min-w-0 flex-col "}
-          searchStyle={{ maxWidth: "500px" }}
           defaultSearch={defaultTerm}
           limit={1000}
           noSearchLimit={0}

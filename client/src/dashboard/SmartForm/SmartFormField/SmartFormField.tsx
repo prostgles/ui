@@ -41,6 +41,7 @@ import { useSmartFormFieldAsJSON } from "./useSmartFormFieldAsJSON";
 import { useSmartFormFieldOnChange } from "./useSmartFormFieldOnChange";
 import type { LocalMedia } from "@components/FileInput/FileInput";
 import { FlexRow } from "@components/Flex";
+import { AlertFieldEditor } from "../../W_Table/ManagedColumn/Alerts/AlertFieldEditor";
 
 export type SmartFormFieldValue = string | number | LocalMedia | null;
 
@@ -199,6 +200,7 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
   const ftableIcon =
     column.icon ?? foreignDataState?.insertAndSearchState?.ftableInfo?.icon;
   const id = tableName + "-" + column.name;
+  const internalFormat = column.defaultRenderAs?.params;
   return (
     <>
       {sectionHeader && (
@@ -233,7 +235,19 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
         asJSON={renderAsJSON?.component}
         showFullScreenToggle={renderAsJSON?.component === "codeEditor"}
         inputContent={
-          renderAsJSON?.component === "JSONBSchema" ?
+          internalFormat?.component === "Alert" ?
+            <AlertFieldEditor
+              field={internalFormat.field}
+              value={value}
+              onChange={onCheckAndChange}
+              readOnly={readOnly}
+              column={column}
+              db={db}
+              tables={tables}
+              row={row}
+              asJSON={renderAsJSON}
+            />
+          : renderAsJSON?.component === "JSONBSchema" ?
             <JSONBSchemaA
               db={db}
               schema={renderAsJSON.jsonbSchema}

@@ -188,6 +188,7 @@ export class SmartSearch extends RTComp<P, S> {
         className={`SmartSearch ${className}`}
         items={searchItems}
         variant={variant ?? "search"}
+        roundedItems={false}
         searchEmpty={searchEmpty}
         onSearchItems={this.onSearchItems}
         inputStyle={inputStyle}

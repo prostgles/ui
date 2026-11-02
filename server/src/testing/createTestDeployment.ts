@@ -14,7 +14,8 @@ import type {
   UserLike,
 } from "prostgles-types";
 import { Client } from "pg";
-import { startTemporaryDatabases } from "../cli/startTemporaryDatabases";
+import { getConfigEnvironment } from "../cli/getConfigEnvironment";
+import { startTestDatabases } from "./startTestDatabases";
 import type {
   DBGeneratedSchema,
   DBSchema,
@@ -264,13 +265,17 @@ export const createTestDeployment = async <
         `${Date.now()}-${randomBytes(4).toString("hex")}.log`,
       ),
   );
-  const databases = await startTemporaryDatabases({
-    configPath: resolvedConfigPath,
-    configId,
-    postgresImage,
-    startupTimeoutMs,
-    logPath: `${resolvedLogPath}.postgres.log`,
-  });
+  const configuredEnvironment = getConfigEnvironment(resolvedConfigPath);
+  const databases = await startTestDatabases(
+    {
+      configPath: resolvedConfigPath,
+      configId,
+      postgresImage,
+      startupTimeoutMs,
+      logPath: `${resolvedLogPath}.postgres.log`,
+    },
+    configuredEnvironment,
+  );
   const port = await getFreePort().catch(async (error: unknown) => {
     await databases.dispose();
     throw error;
@@ -287,12 +292,13 @@ export const createTestDeployment = async <
       throw error;
     });
   const environment: NodeJS.ProcessEnv = {
-    ...process.env,
+    ...configuredEnvironment,
     NODE_ENV: "production",
     PRGL_PASSWORD: randomBytes(32).toString("base64url"),
     PRGL_USERNAME: `prostgles_test_bootstrap_${randomBytes(4).toString("hex")}`,
-    PROSTGLES_DATABASE_URL: databases.project.url,
-    PROSTGLES_STATE_DATABASE_URL: databases.state.url,
+    PROSTGLES_PG_SERVER_URL: databases.state.url,
+    PROSTGLES_STATE_DB_NAME: databases.state.name,
+    PROSTGLES_APP_DB_NAME: databases.project.name,
     PROSTGLES_INSTANCE_ID: instanceId,
     PROSTGLES_DOCKER_NETWORK: "",
     PROSTGLES_UI_HOST: "127.0.0.1",

@@ -7,7 +7,6 @@ import type {
   TimechartRenderStyle,
   TooltipPosition,
 } from "./timechartConstants";
-import type { CardLayout } from "./cardLayout";
 import type { Extent, MapExtentBehaviorOptions } from "./mapConstants";
 import type { DetailedFilter } from "../filterUtils";
 import type { ColumnConfig, ColumnSort } from "./ColumnConfig";
@@ -50,7 +49,6 @@ export type ChartOptions<CType extends ChartType = "table"> =
             maxCardRowHeight?: number;
             maxCardWidth?: string;
           };
-      cardLayout?: CardLayout;
       hideEditRow?: boolean;
       hideInsertButton?: boolean;
       showFilters?: boolean;
@@ -202,6 +200,7 @@ export type WindowData<CType extends ChartType = ChartType> = Omit<
   options?: RefreshOptions & ChartOptions<CType>;
   filter?: DetailedFilter[];
   having?: DetailedFilter[];
+  /** For table views, omitted or empty uses defaults; a nonempty list selects the visible columns. */
   columns?: ColumnConfig[] | null;
   /**
    * This is either the sql user has selected OR the current code block

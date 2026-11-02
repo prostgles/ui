@@ -151,7 +151,9 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
               [
                 table.card?.avatarColumn,
                 table.card?.headerColumn,
-                table.card?.subHeaderColumn,
+                ...(table.card?.subHeaderColumns ?? [
+                  table.card?.subHeaderColumn,
+                ]),
               ].includes(c.name),
           }) satisfies ColumnConfig,
       );

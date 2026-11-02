@@ -25,6 +25,8 @@ import { validateCreateDashboards } from "./Prostgles/validateCreateDashboards";
 import { glob } from "glob";
 import { DIRECTORIES } from "@src/electronConfig";
 import { validateDatabaseAccessDefinitions } from "./Prostgles/agenticWorkflow/definitionValidation/validateDatabaseAccessDefinitions";
+import { getCreateAgentInputWithDefaults } from "@src/serverFunctions/askLLM/getCreateAgentInputWithDefaults";
+import { mergeTableMetadata } from "./Prostgles/mergeTableMetadata";
 
 const serverName = "prostgles-ui" as const;
 const tools = PROSTGLES_MCP_SERVERS_AND_TOOLS[serverName];
@@ -75,14 +77,7 @@ const handler = {
           return "" as any;
         },
         create_agent: async (
-          {
-            name,
-            firstMessage,
-            autoApproveAllTools,
-            tools,
-            timeout,
-            ...config
-          },
+          input,
           { connection_id, toolUseId, user_id, chat, messageId },
         ) => {
           if (!statePrgl) {
@@ -100,6 +95,14 @@ const handler = {
             };
           };
 
+          const {
+            name,
+            firstMessage,
+            autoApproveAllTools,
+            tools,
+            timeout,
+            ...config
+          } = await getCreateAgentInputWithDefaults(input, chat.id, dbs);
           const configWithDefaults = await getAgentConfigWithDefaults(
             {
               agentName: name,
@@ -307,10 +310,10 @@ const handler = {
           await dbs.connections.update(
             { id: connection_id },
             {
-              table_options: {
-                ...con.table_options,
-                ...(metadata as typeof con.table_options),
-              },
+              table_options: mergeTableMetadata(
+                con.table_options,
+                metadata,
+              ) as typeof con.table_options,
             },
           );
         },

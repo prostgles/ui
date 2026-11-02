@@ -93,6 +93,9 @@ export const JoinedRecords = (props: JoinedRecordsProps) => {
       {sections.map((section) => {
         const { label, path, count, table } = section;
         const icon = table.icon;
+        const onSuccess = () => {
+          void sectionData.refreshSectionCount(section);
+        };
         return (
           <Section
             key={path.join(".")}
@@ -130,6 +133,7 @@ export const JoinedRecords = (props: JoinedRecordsProps) => {
                   )}
                   <JoinedRecordsAddRow
                     {...props}
+                    onSuccess={onSuccess}
                     btnProps={{ size: "small" }}
                     section={section}
                     newRowDataHandler={props.newRowDataHandler}
@@ -143,9 +147,7 @@ export const JoinedRecords = (props: JoinedRecordsProps) => {
               section={section}
               descendants={descendants}
               isInsert={isInsert}
-              onSuccess={() => {
-                void sectionData.refreshSectionCount(section);
-              }}
+              onSuccess={onSuccess}
             />
           </Section>
         );

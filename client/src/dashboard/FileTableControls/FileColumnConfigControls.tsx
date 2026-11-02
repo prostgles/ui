@@ -99,6 +99,7 @@ export const FileColumnConfigControls = (
       )}
       <SearchList
         className="b b-color"
+        roundedItems={false}
         items={linkedTables.map((linkedTable, i) => {
           return {
             key: linkedTable.key,

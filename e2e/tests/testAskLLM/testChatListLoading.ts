@@ -2,6 +2,7 @@ import type { Page } from "@playwright/test";
 import { createTestDeployment } from "../../../server/dist/server/src/testing";
 import { createConfigTestProject } from "../utils/createConfigTestProject";
 import { expect, test } from "../utils/fixtures";
+import { newChat, setPromptByText } from "../utils/utils";
 
 export const testChatListLoading = async (page: Page) => {
   const configId = "chat-list-loading-e2e";
@@ -66,6 +67,19 @@ export const testChatListLoading = async (page: Page) => {
       },
     );
     await expect(backgroundChat.getByTestId("Loading")).toHaveCount(0);
+
+    /* New chats must become active before opening their prompt picker, even with identical names. */
+    await page.keyboard.press("Escape");
+    await newChat(page);
+    await expect(page.getByTestId("LLMChat.select")).toHaveText("New chat");
+    await newChat(page);
+    await expect.poll(() => db.llm_chats!.count({ name: "New chat" })).toBe(2);
+    await setPromptByText(page, "Empty", false);
+    await expect(
+      page
+        .getByTestId("LLMChatOptions.Prompt")
+        .getByRole("heading", { name: "Prompt Selector" }),
+    ).toBeVisible();
   } finally {
     await deployment.dispose();
   }

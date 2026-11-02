@@ -1,5 +1,5 @@
 import { mdiFilter, mdiFunction, mdiKey, mdiLink } from "@mdi/js";
-import { _PG_numbers, includes, type AnyObject } from "prostgles-types";
+import type { AnyObject } from "prostgles-types";
 
 import React from "react";
 
@@ -11,10 +11,7 @@ import type { TableHandlerClient } from "prostgles-client";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";
 import { onRenderColumn } from "../RenderColumn/onRenderColumn";
-import {
-  getCellStyle,
-  getSingleShownNestedColumn,
-} from "../RenderColumn/StyledTableColumn";
+import { getCellStyle } from "../RenderColumn/StyledTableColumn";
 import type W_Table from "../W_Table";
 import type { MinMaxVals, ProstglesColumn, W_TableProps } from "../W_Table";
 import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
@@ -23,9 +20,12 @@ import type { OnClickEditRow } from "./getEditColumn";
 import { getEditColumn } from "./getEditColumn";
 import { getColumnFormat } from "../ColumnMenu/ColumnDisplayFormat/getFormatColumnSelect";
 import { excludeFkeyActions } from "./excludeFkeyActions";
+import { isNumericTableColumn } from "./isNumericTableColumn";
 
 export type ProstglesTableColumn = ProstglesColumn &
-  Omit<ColumnConfigWithInfo, "label">;
+  Omit<ColumnConfigWithInfo, "label"> & {
+    onRender: NonNullable<ProstglesColumn["onRender"]>;
+  };
 
 type GetTableColsArgs = Pick<
   W_TableProps["prgl"],
@@ -77,6 +77,8 @@ export const getTableCols = ({
   const tblCols: ProstglesTableColumn[] = fullConfigCols.map((c) => {
     const renderColumn = c;
     const format = getColumnFormat(c);
+    const alignmentStyle: React.CSSProperties =
+      isNumericTableColumn(c) ? { textAlign: "right" } : {};
     const nestedCols =
       !c.nested ? null
       : c.nested.display?.type === "timechart" ?
@@ -201,9 +203,10 @@ export const getTableCols = ({
             chartValues.type === "nested" ? undefined : chartValues.range,
           );
           if (!style?.cellColor && !style?.textColor) {
-            return {};
+            return alignmentStyle;
           }
           return {
+            ...alignmentStyle,
             ...(style.cellColor && {
               backgroundColor: style.cellColor,
               borderColor: style.cellColor,
@@ -214,16 +217,9 @@ export const getTableCols = ({
         const isMedia =
           format?.type === "Media" ||
           (format?.type === "Internal" && format.params.component === "File");
-        const nestedValue =
-          c.nested?.display?.type !== "drillable-records" &&
-          c.nested?.display?.type !== "timechart" &&
-          getSingleShownNestedColumn(c, tables);
-        const numericType =
-          nestedValue ? nestedValue.colInfo.udt_name : c.udt_name;
-        const isNumeric = includes(_PG_numbers, numericType);
         return {
+          ...alignmentStyle,
           ...(isMedia && { display: "flex" }),
-          ...(isNumeric && { textAlign: "right" }),
         };
       },
       onContextMenu: (e: React.MouseEvent) => {

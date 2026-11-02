@@ -1,7 +1,7 @@
 import { getFinalFilter } from "@common/filterUtils";
 import type { JSONB } from "prostgles-types";
 import { getKeys, isEmpty, isObject, pickKeys } from "prostgles-types";
-import React from "react";
+import React, { useId } from "react";
 import { SmartSearch } from "../../dashboard/SmartFilter/SmartSearch/SmartSearch";
 import { areEqual } from "../../utils/utils";
 import { Select } from "../Select/Select";
@@ -44,6 +44,7 @@ export const JSONBSchemaLookup = ({
   tables,
   ...otherProps
 }: P) => {
+  const inputId = useId();
   const setValue = (newValue: unknown) => {
     onChange(newValue as JSONB.GetType<Schema>);
   };
@@ -182,6 +183,7 @@ export const JSONBSchemaLookup = ({
 
   return (
     <SmartSearch
+      id={inputId}
       label={otherProps.noLabels ? undefined : schema.title}
       variant="search-no-shadow"
       defaultValue={defaultValue ?? ""}
@@ -189,9 +191,14 @@ export const JSONBSchemaLookup = ({
       db={db}
       columns={dataSchema.searchColumns}
       tableName={dataSchema.table}
+      extraFilters={dataSchema.filter ? [dataSchema.filter] : undefined}
       tables={tables}
       error={error}
+      searchEmpty
       searchOptions={{ includeColumnNames: false, hideMatchCase: true }}
+      onType={(term) => {
+        if (!term && defaultValue) setValue(undefined);
+      }}
       onChange={async (searchArgs) => {
         if (!searchArgs) {
           setValue(undefined);
@@ -201,7 +208,11 @@ export const JSONBSchemaLookup = ({
         const filterItem = searchArgs.filter[0];
         if (!filterItem) return;
 
-        const finalFilter = getFinalFilter(filterItem);
+        const selectedFilter = getFinalFilter(filterItem);
+        const finalFilter =
+          dataSchema.filter ?
+            { $and: [dataSchema.filter, selectedFilter] }
+          : selectedFilter;
         const firstMatchingRow = await db[dataSchema.table]?.findOne!(
           finalFilter,
         );

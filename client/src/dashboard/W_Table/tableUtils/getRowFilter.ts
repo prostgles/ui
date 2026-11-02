@@ -8,7 +8,7 @@ import {
 } from "@common/filterUtils";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
 import type { ColumnConfig } from "@common/ColumnConfig/ColumnConfig";
-import { getTableIdentityColumns } from "../ColumnMenu/ColumnDisplayFormat/getTableIdentityColumns";
+import { getTableRowIdentityColumns } from "../ColumnMenu/ColumnDisplayFormat/getTableIdentityColumns";
 
 export const getRowFilter = async (
   row: AnyObject,
@@ -21,7 +21,14 @@ export const getRowFilter = async (
 > => {
   let rowFilter: DetailedFilterBase[];
   const { columns } = table;
-  const identityColumns = getTableIdentityColumns(table, columnConfig);
+  const identityColumns = getTableRowIdentityColumns(
+    table,
+    columns.map(({ name }) => ({
+      ...columnConfig?.find((column) => column.name === name),
+      name,
+      show: row[name] !== undefined,
+    })),
+  );
   if (
     identityColumns.length &&
     identityColumns.every(

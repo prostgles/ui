@@ -11,9 +11,7 @@ export const useSearchAllState = ({
   const [typesToSearch, setTypesToSearch] = useState<
     ("tables" | "queries" | "actions")[]
   >(["tables", "queries", "actions"]);
-  const [mode, setMode] = useState<"views and queries" | "rows">(
-    searchType ?? "rows",
-  );
+  const mode = searchType ?? "rows";
   const tablesAndViews = useTablesAndViewsSearchItems({
     db,
     suggestions,
@@ -33,7 +31,6 @@ export const useSearchAllState = ({
     typesToSearch,
     setTypesToSearch,
     mode,
-    setMode,
     matchCase,
     setMatchCase,
     loading,

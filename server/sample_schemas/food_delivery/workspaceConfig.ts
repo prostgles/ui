@@ -4,7 +4,6 @@ export const workspaceConfig = {
       name: "Main",
       options: {
         hideCounts: false,
-        pinnedMenu: true,
         tableListSortBy: "extraInfo",
         tableListEndInfo: "count",
         defaultLayoutType: "tab",

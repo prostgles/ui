@@ -304,11 +304,17 @@ const getCliTemplateFiles = ({
       PRGL_USERNAME=admin
       PRGL_PASSWORD=${environmentDefaults?.PRGL_PASSWORD ?? randomBytes(24).toString("base64url")}
 
-      # Prostgles UI state. Created automatically when missing.
-      PROSTGLES_STATE_DATABASE_URL=postgres://user:password@localhost:5432/prostgles_state_database
+      # PostgreSQL server URL, optionally including an existing maintenance database.
+      PROSTGLES_PG_SERVER_URL=postgres://user:password@localhost:5432
+      # State and app databases are created automatically when missing.
+      PROSTGLES_STATE_DB_NAME=prostgles_state_database
+      PROSTGLES_APP_DB_NAME=${configId}
 
-      # Database exposed by this config. Must use the same server as the state database.
-      PROSTGLES_DATABASE_URL=postgres://user:password@localhost:5432/${configId}
+      # Optional: recreate these test databases on your server and retain them after tests.
+      # PROSTGLES_E2E_PG_SERVER_URL=postgres://user:password@localhost:5432
+      # PROSTGLES_E2E_DB_NAMES_PREFIX=${configId}_e2e
+      # This recreates ${configId}_e2e_state_db and ${configId}_e2e_app_db before each test.
+      # Leave both unset to use disposable Docker databases.
 
       # Used by compose.yaml for its private PostgreSQL instance.
       PROSTGLES_DOCKER_DB_PASSWORD=${environmentDefaults?.PROSTGLES_DOCKER_DB_PASSWORD ?? randomBytes(24).toString("base64url")}
@@ -343,7 +349,7 @@ export const getCliComposeFiles = ({ configId }: { configId: string }) =>
       WORKDIR /app
 
       COPY . .
-      RUN npm install
+      RUN npm ci
       RUN npm run build
 
       ENV NODE_ENV=production
@@ -354,7 +360,9 @@ export const getCliComposeFiles = ({ configId }: { configId: string }) =>
 
       services:
         app:
-          build: .
+          build:
+            context: .
+            pull: true
           init: true
           restart: unless-stopped
           depends_on:
@@ -367,8 +375,9 @@ export const getCliComposeFiles = ({ configId }: { configId: string }) =>
             PRGL_PASSWORD: \${PRGL_PASSWORD:?Set PRGL_PASSWORD in .env}
             PROSTGLES_UI_HOST: "0.0.0.0"
             PROSTGLES_DATA_DIR: /var/lib/prostgles
-            PROSTGLES_STATE_DATABASE_URL: postgres://postgres:\${PROSTGLES_DOCKER_DB_PASSWORD:?Set PROSTGLES_DOCKER_DB_PASSWORD in .env}@db:5432/prostgles_state
-            PROSTGLES_DATABASE_URL: postgres://postgres:\${PROSTGLES_DOCKER_DB_PASSWORD:?Set PROSTGLES_DOCKER_DB_PASSWORD in .env}@db:5432/${configId}
+            PROSTGLES_PG_SERVER_URL: postgres://postgres:\${PROSTGLES_DOCKER_DB_PASSWORD:?Set PROSTGLES_DOCKER_DB_PASSWORD in .env}@db:5432
+            PROSTGLES_STATE_DB_NAME: prostgles_state
+            PROSTGLES_APP_DB_NAME: ${configId}
             PROSTGLES_DOCKER_NETWORK: \${PROSTGLES_DOCKER_NETWORK:-${configId}-runtime}
             PROSTGLES_INSTANCE_ID: \${PROSTGLES_INSTANCE_ID:-${configId}}
           ports:
@@ -622,7 +631,7 @@ const connectionGuidance = {
   display_options:
     "Use `connection.display_options` for connection-wide display behavior.",
   table_options:
-    "Populate `connection.table_options` for every user-facing table so data renders clearly. Add useful labels and icons, column renderers and styles, and a practical `card` layout with header, subheader, avatar, and visible columns where appropriate.",
+    "Configure `connection.table_options` for application-owned tables where defaults need improvement. Add useful labels, icons, column renderers, styles, and `card` layouts. Preserve built-in display options for managed tables; omit overrides unless a specific application requirement improves on them.",
 } satisfies ConnectionGuidance;
 
 const getCliAgentsFile = () => `
@@ -675,8 +684,48 @@ const getCliAgentsFile = () => `
   - Define, for example, \`const processOrder = defineJobControl({ jobName: "processOrder", operation: "startOrRetry" });\`, then include it in a published function group's \`functions\`. Define separate \`cancel\` and \`rerun\` functions with the same helper. Each accepts \`{ row: { id } }\` (include every primary-key column) and returns \`{ jobId }\`. The helper supplies the RowLookup and server-resolved job binding; do not duplicate these in UI config.
   - \`startOrRetry\` starts an unlinked row or creates a new run after \`failed\`/\`cancelled\`; \`rerun\` creates a new run only after \`succeeded\`; \`cancel\` requests cancellation only during \`pending\`/\`running\`. Cancellation is cooperative, so a running job may remain running until it observes its signal. The server rechecks status and row access transactionally; UI disabling is only feedback.
   - Function publication controls who may invoke each operation, and the caller must be able to read the target row and its primary key. The helper uses privileged transactional handlers after those checks. Its optional \`run: async ({ row, dbx, context }) => { ... }\` prepares or validates the locked row before the operation; throwing rolls back preparation and the operation. Use \`dbx\` for those writes and preserve the target row and job link. Keep role/tenant permissions in \`accessControl\` and function publication.
-  - Published controls appear in row cards and can be placed in workspace \`Action\`/\`ActionColumns\` formats or referenced by \`createActionColumn\`. Function actions open an input/result popup; stored action columns invoke immediately. Grant appropriate job-table select access to \`id\`, \`status\`, and \`progress_message\`, plus filter access needed for the row's job-link join, so realtime controls can read job state. Scope job reads to authorized rows.
-  - \`startOrRetry\` shows the configured initial label before starting, a disabled spinner with \`progress_message\` (or Queued/Running) during work, disabled green Complete after success, and an enabled warning-colored Retry after failure/cancellation. Cancel and Rerun are enabled only in their allowed states. Customize labels via \`connection.function_options.<functionName>.action.job: { runningText, succeededText, retryText }\` and initial styling via \`action.defaultValue\`. For cancel, \`runningText\` labels Cancel; for rerun, \`succeededText\` labels Rerun. Job status takes precedence over action styling for status labels, loading, and disallowed operations; additional configured disabled reasons still apply. Do not maintain a second job-status field or hand-build conditional controls.
+  - Without a saved column selection or an explicit action-column format, the UI supplies one Actions column with job controls first, followed by stored actions and other published row methods. Stored action columns are hidden from the default view to avoid duplicate buttons. Explicit column selections and formats take precedence. Job-ID references default to the managed job table's \`referenceDisplay: { columns: [{ name: "status" }] }\`; customize \`referenceDisplay\` or the source column to override it.
+  - Published controls for the same job render as one button, with cancel/retry/rerun in its details popup. Keep methods for the same job together; do not split them into separate action columns. All controls using the same job table and job-ID column share one job-state lookup.
+  - Avoid repeating job method names: set a column's \`renderAs\` or workspace \`format\` to \`{ type: "ActionColumns", params: { actions: [{ methodsForJobColumn: "condition_extraction_job_id" }] } }\`. This resolves published controls for that job-ID column on the current table. It can be combined with other actions; explicit \`methodName\` entries remain supported and controls for the same job stay grouped. Hide duplicate stored/action columns when placing the same job elsewhere.
+  - Job buttons always open their details, including stored job actions and controls configured with \`runImmediately\`. During work they show \`progress_message\` (or Queued/Running), after success green Complete, and after failure/cancellation Retry. Existing jobs remain inspectable; the popup enables operations only in allowed states. Customize labels via \`connection.function_options.<functionName>.action.job: { runningText, succeededText, retryText }\` and initial styling via \`action.defaultValue\`. For cancel, \`runningText\` labels Cancel; for rerun, \`succeededText\` labels Rerun. Additional configured disabled reasons still apply.
+  - Grant appropriate job-table select access to \`id\`, \`status\`, and \`progress_message\`, plus optional \`cancel_requested\` and filter access for the row's job-link join. Scope job reads to authorized rows. Do not maintain a second job-status field or hand-build conditional controls.
+
+  ## Alerts
+
+  - Configure scheduled notifications with top-level \`alerts: { channels, rules?, tableName? }\`. For in-app notifications, use \`channels: { inApp: { type: "inApp" } }\` and select \`channels: ["inApp"]\` on each rule. Keep configured rule keys stable: each seeds one shared alert, and later config syncs preserve UI edits to existing alerts.
+  - Each rule needs \`name\`, \`enabled\`, \`schedule: { cron, timezone }\`, \`userFilter\`, and \`channels\`. \`userFilter\` is a normal Prostgles filter selecting active recipients at each occurrence. It selects who receives an alert; the query determines which records to include.
+  - Alert queries run with each recipient's current \`accessControl\` table, column, and row permissions. Admin recipients retain their normal admin access. Configure authorization through \`accessControl\`; alerts have no separate \`permissionScope\` option. Add ordinary query conditions when a reminder needs a narrower set of records than the recipient can access.
+  - Use \`query\` and \`template\` for saved, UI-editable alerts. A query sends only when it returns rows. \`query.filter\` and optional \`query.having\` use the UI's grouped detailed-filter format: \`{ $and: [...] }\` or \`{ $or: [...] }\`, with conditions such as \`{ fieldName: "status", type: "=", value: "pending" }\`. These compile to normal Prostgles filters, including joined and function filters. Raw \`$filter\` expressions belong in normal database calls; use the detailed-filter representation below in a saved alert.
+  - Relative dates use the existing \`$age\` or \`$ageNow\` filters, evaluated by PostgreSQL on every execution. \`$age\` measures from the start of the database's current day; \`$ageNow\` measures from the current timestamp. Future dates have negative ages. Alert-specific \`$ref\`, \`$date\`, and \`$if\` bindings are not supported.
+  - \`schedule.timezone\` controls when the alert runs; it does not change the database session timezone used by date filters. \`localDate\` is a \`YYYY-MM-DD\` string in the schedule's timezone, available to message templates and callbacks. It does not bind query values.
+
+  This saved query selects tasks overdue by at least seven days, using the standard age filter controls:
+
+  \`\`\`ts
+  import type { AlertQueryDefinition } from "@prostgles/app";
+
+  const overdueQuery = {
+    table: "tasks",
+    filter: {
+      $and: [{
+        fieldName: "due_date",
+        type: "$age",
+        value: "7 days",
+        complexFilter: {
+          type: "controlled",
+          funcName: "$age",
+          argsLeftToRight: true,
+          comparator: ">=",
+        },
+      }],
+    },
+    select: ["id", "title", "due_date"],
+  } satisfies AlertQueryDefinition["query"];
+  \`\`\`
+
+  - For tasks due within the next seven days, combine two age conditions: \`>= "-7 days"\` and \`<= "0 days"\`. Both boundaries are inclusive.
+  - Set the rule's \`query: overdueQuery\` and provide \`template: { title, body, data }\`. Templates can reference \`{{rows.length}}\`, \`{{rows.0.title}}\`, \`{{recipientId}}\`, and \`{{localDate}}\`. To render every row, define \`data: { tasks: { text: "{{title}}: {{due_date}}", separator: "\\n" } }\` and use \`{{data.tasks}}\` in the body. Optional \`deduplicate: { key: ["id"], for: "24h" }\` suppresses previously sent items per recipient and channel; select every key column in the query.
+  - For logic that cannot be expressed as a saved query, use a configured \`prepare({ clientDb, recipientId, localDate, signal })\` callback instead of \`query\`/\`template\`. Read through the recipient-scoped \`clientDb\` and return \`{ title, body }\` or \`null\` to skip. Callbacks remain in trusted config and do not support automatic query-row deduplication.
 
   ## Access control
 
@@ -750,10 +799,10 @@ const getCliAgentsFile = () => `
 
   ## Tests
 
-  - Do not manually start PostgreSQL containers or supply database credentials for tests. Run the existing \`npm test\` workflow directly; it provisions and cleans up its own databases. Build and lint commands do not need a database.
+  - Do not manually start PostgreSQL containers for tests. Run the existing \`npm test\` workflow directly; it provisions and cleans up its own databases. Build and lint commands do not need a database.
   - Run \`npm test\` before committing. Tests use \`@prostgles/app/testing\` to start the real app against fresh state and project databases without opening the UI.
   - For browser workflows, use \`e2e/AGENTS.md\`, \`npm run test:e2e\`, and the shared \`@prostgles/app/testing/ui\` helpers. Play passing and failing test videos with \`npm run test:e2e:report\`.
-  - Keep deployment tests in \`tests/\`. Each call to \`createTestDeployment\` uses the current app directory and its \`DB.Dockerfile\` when present, starts a disposable PostgreSQL Docker container bound only to \`127.0.0.1\`, creates fresh state and project databases, and removes the container during cleanup. Set \`PROSTGLES_TEST_POSTGRES_IMAGE\` only to override the Dockerfile.
+  - Keep deployment tests in \`tests/\`. Each call to \`createTestDeployment\` uses the current app directory and its \`DB.Dockerfile\` when present, starts a disposable PostgreSQL Docker container bound only to \`127.0.0.1\`, creates fresh state and project databases, and removes the container during cleanup. Set \`PROSTGLES_TEST_POSTGRES_IMAGE\` only to override the Dockerfile. To inspect test data, set PROSTGLES_E2E_PG_SERVER_URL and PROSTGLES_E2E_DB_NAMES_PREFIX in the app’s .env: the helper recreates <prefix>_state_db and <prefix>_app_db before each deployment and retains them after success or failure. Run these deployments serially; overlapping use of the same prefix is rejected. With both settings unset, Docker remains the default.
   - \`npm test\` automatically saves each test deployment's stdout and stderr to \`.prostgles/test-logs/<timestamp>-<random>.log\` relative to the app root. Logs remain after cleanup; the exact file is returned as \`deployment.logPath\` and included in deployment startup errors. No custom logging command or output redirection is needed to capture deployment logs.
   - PostgreSQL stdout and stderr are also saved to \`deployment.databaseLogPath\` (the app log path plus \`.postgres.log\`), including database startup failures. These logs remain after cleanup.
   - After a test failure, inspect the existing logs before rerunning tests or requesting custom commands. Use \`ls -t .prostgles/test-logs/\` to find recent logs, then \`tail -n 200 .prostgles/test-logs/<filename>\` or \`rg -n -i 'error|failed' .prostgles/test-logs/<filename>\`. Logs may be large; do not read an entire log unless its size is known to be small.
@@ -791,6 +840,25 @@ const getCliAgentsFile = () => `
   - Follow PostgreSQL schema best practices: use primary and foreign keys, appropriate nullability, unique constraints, and indexes. Model fixed sets of values as lookup tables with \`isLookupTable\` and references instead of \`CHECK (value IN (...))\` constraints.
   - ${schemaConfigGuidance.joins}
 
+  ### Preserve managed display defaults
+
+  \`*.tableOptions.ts\` modules supply \`connection.table_options\`; they are optional overrides, not a checklist to fill for every table. Inspect the installed \`@prostgles/app\` defaults in \`dist/server/src/ConnectionManager/modifyClientSchema.js\` and \`dist/server/src/Alerts/getAlertTableOptions.js\` before changing managed tables. Use the configured table names; file, annotation, audit, and alert table names can differ between apps.
+
+  | Managed table | Built-in display to preserve |
+  | --- | --- |
+  | Synced \`users\` | Users label, Account icon, card header \`username\` and subheader \`name\`; \`referenceDisplay: { columns: [{ name: "username", format: { type: "Avatar" } }] }\` supplies avatar references. |
+  | File table | Card header \`original_name\`, subheader from \`original_last_modified\` and \`content_length\`, icon from \`url\`, media rendering for \`url\`, Docling rendering for \`docling_metadata\`, and extraction-status controls. Foreign keys use the built-in file viewer. |
+  | File annotations | Card header \`name\` and subheader \`text\`; foreign keys use the built-in annotation viewer. |
+  | Audit table | Newest-first rows with Time, Action, Table, User, and Changes columns; relative time, operation colors, and JSON diffs. User summaries follow \`users.referenceDisplay\` unless \`columns.actor.nested\` is explicitly replaced. |
+  | Alerts | Name references, name card header, Rule rendering for \`definition\`, and default columns for name, enabled, rule, and schedule. |
+  | Alert recipients | References show \`user_id\` and \`channel\`; cards use them as header/subheader, with Alert and Recipient column labels. |
+  | Alert deliveries | Newest occurrence first, outcome card header, recipient subheader, outcome colors, and Rule snapshot rendering. |
+
+  - Omitted options inherit managed defaults. Table properties merge shallowly; \`columns\` merge by column name and then by property. Supplying \`card\`, \`referenceDisplay\`, \`sort\`, or a column's \`format\`, \`style\`, or \`nested\` replaces that entire value, not its individual fields or array entries. For example, \`users: { label: "Team" }\` preserves the avatar references and card; \`users: { card: { headerColumn: "name" } }\` also removes the default card subheader.
+  - \`referenceDisplay\` belongs to the **referenced table** and controls how foreign keys pointing to it appear. With no explicit or managed \`referenceDisplay\`, ordinary references use \`card.headerColumn\`; file and annotation references retain their specialized viewers. Do not add a generic name/ID reference display to those tables unless replacing their viewer is intentional.
+  - Reference fields are ordered by \`columns\` and inherit the target column's format/style when omitted. The default display provides drill-down without labels; \`display: { type: "values", labels: "inline" }\` opts out of record drill-down. \`referenceDisplay: { columns: [] }\` disables automatic reference display. Explicit FK column formats, computed columns, and linked-column configs take precedence.
+  - Replacing \`users.referenceDisplay\` with plain \`username\` or \`name\` fields loses the built-in Avatar format. If adding fields, retain \`{ name: "username", format: { type: "Avatar" } }\` unless the user requests otherwise. Prefer minimal overrides and avoid copying defaults into app config or workspace columns. Verify references, cards, file/annotation navigation, and audit diffs as the intended non-admin user; reference fields must be readable.
+
   ## Table forms first
 
   - Table insert/edit forms derive controls from column types, defaults, JSONB schemas, foreign keys, and permissions. They provide FK autocomplete, related-row search, nested inserts where permitted, and file uploads. Model relationships and configure useful referenced-table card labels instead of asking users to enter raw IDs or duplicate existing organisations by name.
@@ -804,23 +872,23 @@ const getCliAgentsFile = () => `
 
   ### Action button columns
 
-  Stored action columns execute immediately; configured function buttons always open a form. Grouping them does not change either behaviour.
+  Action buttons, including stored actions, open a confirmation/input popup by default. Set \`connection.function_options.<methodName>.action.runImmediately\` to \`true\` to run directly when the bound row/value is the only input. A single \`Action\` can override this in \`params.runImmediately\`; an \`ActionColumns\` function entry can override it in \`runImmediately\`. Explicit \`false\` restores the popup. Any additional input, including optional inputs, requires the popup. Jobs always open their details.
 
   - Set shared styling in \`connection.function_options.startOrder = { action: { defaultValue: { text: "Start", icon: "Play" }, conditions: [] } }\`. Function metadata supplies these defaults to table, linked-table, and row-card actions; workspace styling and stored row values override them. Shared conditions filter the function's lookup table; workspace conditions use their own \`joinPath\`. Set \`defaultArgs\` and \`outputTable\` here for function forms, including popups.
   - For stored workflow state, import \`createActionColumn\` from \`@prostgles/app\` and use \`tableConfig.orders.columns.action = createActionColumn("startOrder", { text: "Start", icon: "Play" })\`. The optional second argument sets the initial button state. The typed JSONB column automatically renders as ActionColumns; no workspace format is needed. Null renders nothing.
-  - Store plain values such as \`{ text: "Start", icon: "Play", details: "Ready to **start**" }\`. Fields are optional: \`text\`, \`icon\`, \`variant\`, \`color\`, \`disabledInfo\`, \`isLoading\`, \`details\`, \`methodName\`, \`argName\`. The separate details button displays Markdown and related agent chats, and remains usable while execution is disabled.
-  - Clicking calls the published method immediately using its sole matching RowLookup or ValueLookup argument for this table. RowLookup receives readable, filterable primitive row fields, including hidden IDs; ValueLookup receives its column value. Set \`argName\` if multiple lookups match. Only that argument is sent; other required inputs need a function form instead. The helper's methodName is the fallback; stored methodName overrides it. The return value is not displayed; persist progress and results in the row or its \`details\`.
+  - Store plain values such as \`{ text: "Start", icon: "Play", details: "Ready to **start**" }\`. Fields are optional: \`text\`, \`icon\`, \`variant\`, \`color\`, \`disabledInfo\`, \`isLoading\`, \`details\`, \`methodName\`, \`argName\`. Non-job stored actions also have a separate details button for Markdown and related agent chats, usable while execution is disabled. Job details appear in the job popup.
+  - Execution binds the sole matching RowLookup or ValueLookup argument for this table. RowLookup receives readable, filterable primitive row fields, including hidden IDs; ValueLookup receives its column value. Set \`argName\` if multiple lookups match. The helper's methodName is the fallback; stored methodName overrides it. Stored actions inherit \`runImmediately\` from the selected function's metadata. Popups collect additional inputs and show results; immediate execution does not display a return value, so persist progress and results in the row or its \`details\`.
   - Hooks and functions can update the same action column. For Stop, store \`{ text: "Stop", methodName: "stopOrder", isLoading: true }\`; for Retry, replace the value with \`{ text: "Retry" }\` to use the helper's fallback method again. For stored actions, \`isLoading: true\` shows a spinner and still allows clicking; set a nonempty \`disabledInfo\` to block clicks. Functions should enqueue work and return promptly; the application owns cancellation, concurrency and permission checks. Use realtime refresh below for progress updates.
 
-  - Group stored actions and function buttons in one section with \`format: { type: "ActionColumns", params: { actions: [{ columnName: "action" }, { methodName: "inspectOrder", argName: "order", conditions: [], defaultValue: { text: "Inspect" } }] } }\`. Stored actions keep immediate execution and details; function buttons open their form. Hide the original stored columns to avoid duplicate buttons.
-  - Add a synthetic column to a non-aggregated table window's \`columns\` with a unique \`name\` and \`format: { type: "Action", params: ... }\`. It does not require a database column. Clicking always opens the function form, even when the row lookup is its only input. RowLookup is prefilled with readable, filterable primitive row fields, including hidden IDs; ValueLookup uses its configured column value. The user presses Run and sees the result in the form.
+  - Group stored actions and function buttons in one section with \`format: { type: "ActionColumns", params: { actions: [{ columnName: "action" }, { methodName: "inspectOrder", argName: "order", conditions: [], defaultValue: { text: "Inspect" } }] } }\`. Grouping preserves each action's execution settings. Set \`runImmediately\` on a function entry to override its shared default. Hide the original stored columns to avoid duplicate buttons.
+  - Add a synthetic column to a non-aggregated table window's \`columns\` with a unique \`name\` and \`format: { type: "Action", params: ... }\`. It does not require a database column. The popup keeps the bound row/value fixed, lets the user complete other inputs, and displays the result after execution.
   - \`methodName\` and the optional \`joinPath\` are fixed. Omit \`argName\` when the function has exactly one matching \`RowLookup\` for this table or \`ValueLookup\` for a readable column of this table; specify it when multiple lookups match. Plain string IDs and array lookups are not eligible row-action arguments. A row lookup receives the row; a value lookup receives its configured column value.
   - Button state uses an optional \`conditions: [{ filter, value }]\` list (default \`[]\`) and an optional \`defaultValue\`. Each value is a complete object of optional \`text\`, \`icon\`, \`variant\`, \`color\`, \`disabledInfo\`, and \`isLoading\` properties. One \`$case\` selects the first matching state; otherwise it uses the default state. States do not merge. Omitting \`defaultValue\` uses \`{}\`, which does not hide the button. Filters require a \`$and\` or \`$or\` array of objects, containing detailed filters such as \`{ $and: [{ fieldName: "status", type: "=", value: "pending" }] }\`, not raw database filters. Omit \`conditions\` for a default-only state.
   - The optional \`joinPath\` uses \`[{ table, on: [{ sourceColumn: "targetColumn" }] }]\`. All conditions apply to the final linked table and match if any related row satisfies them; when no condition matches, the default state applies. The join affects button state, not the function's row argument. Without a shared \`joinPath\`, grouped filters can combine current-row fields with \`$existsJoined\` or \`$notExistsJoined\` filters carrying their own \`path\` and \`filter\`.
   - Text may be omitted for an icon-only button. Icons use names such as \`Check\`. Variants are \`text\`, \`faded\`, \`filled\`, or \`outline\` (default \`filled\`); colors are \`default\`, \`action\`, \`danger\`, \`warn\`, \`green\`, \`indigo\`, \`inherit\`, \`transparent\`, or \`white\` (default \`action\`). For both button types, \`isLoading: true\` shows a spinner and still allows clicking; a nonempty \`disabledInfo\` blocks execution or opening the form and supplies its tooltip. Loading state does not start or track a job.
-  - CLI startup validates configured action functions, lookup arguments, stored defaults and conditional queries before publishing workspaces. Unknown methods, ambiguous lookups, missing required inputs for stored actions and invalid conditions fail with the configuration location. Stored values changed later are checked by the renderer and server when used.
+  - CLI startup validates configured action functions, lookup arguments, stored defaults and conditional queries before publishing workspaces. Unknown methods, ambiguous lookups and invalid conditions fail with the configuration location. Stored values changed later are checked by the renderer and server when used.
   - Recognized actions are hidden when the server's per-row allowed-action list excludes their method. An unavailable method/lookup renders disabled. Display conditions do not authorize execution; enforce access and workflow prerequisites on the server.
-  - There are currently no action configuration options for an execution-mode switch, preset arguments, confirmation, a \`hidden\` state, or automatic result downloads. Use the supported function form for additional input and propose shared source-package changes when more behaviour is needed.
+  - Action columns do not support per-column preset arguments, a \`hidden\` state, or automatic result downloads. Use shared \`defaultArgs\` for popup defaults and propose shared source-package changes when more behaviour is needed.
   - For live updates, including linked-row changes, set the table window's \`options.refresh\` to \`{ type: "Realtime", intervalSeconds: 10, throttleSeconds: 0 }\`.
 
   Example column for an orders table, assuming an available \`approveOrder\` function with an \`order\` RowLookup argument and an \`order_jobs.order_id\` relationship:
@@ -879,6 +947,7 @@ const getCliAgentsFile = () => `
 
   - The server fills \`text\` and saves resolved \`text_selections\`; callers need not populate derived fields. With Docling, it excludes page headers, footers and furniture and supplies per-element \`bounds\`. Check the returned \`text\` before using it as evidence. Without extraction, provide each page selection explicitly; the PDF viewer resolves its anchors. Set \`startText\` and \`endText\` to the same full excerpt when its complete text is known.
   - Manual PDF selections can supply \`rects\` on each selection: \`{ page, startText: selectedText, endText: selectedText, rects: selectedRects }\`. Rectangles are \`{ x, y, width, height }\` in unscaled page coordinates relative to the top-left; retain the viewer's captured values. Agents should omit \`rects\` and \`bounds\`, never invent coordinates. The renderer uses supplied rectangles or clips matched text to its element bounds; unresolved anchors do not produce guessed highlights.
+  - With file \`versioning\` enabled, annotations store \`file_version\`, the integer revision number paired with \`file_id\`. Supply it when citing a historical revision; inserts otherwise use the current revision. Text anchors resolve against that revision's extracted text, and the PDF viewer loads its bytes and highlights. Grant annotation read/insert access to \`file_version\`. Existing annotations without a known revision remain unassigned; migrate them only from reliable source references. Referenced revisions cannot be pruned while annotations use them.
   - The PDF viewer displays saved highlights and an annotation selector. An FK opens the related annotation row; do not assume it automatically opens the PDF at that highlight. Include the source relation in the row card and verify the full navigation flow. Keep managed table definitions out of \`tableConfig\`, since a same-name definition replaces the managed definition.
   - Configure annotation read/write permissions explicitly and restrict them to files the user may access. A foreign key does not grant permission. Ensure each condition's annotation belongs to its source file/version and project; test that users cannot link another project's excerpt. Once an excerpt is used as reviewed evidence, prevent edits or deletion that would change its text, file, page, or highlight coordinates; create a new annotation for corrections.
   - Set \`extractText: false\` for manual PDF text annotations without server-side extraction, or \`extractText: true\` for extraction through the managed documents service (also supported without an annotation table). Configure Docling with \`extractTextOptions\`, for example \`{ do_ocr: false, table_mode: "fast" }\`; Markdown and JSON outputs remain enabled because the managed extraction columns require them. With annotations configured, omitting \`extractText\` preserves automatic extraction. Older runtimes ignore this flag; upgrade/fix the runtime instead of adding app-level extraction workarounds.
@@ -897,7 +966,7 @@ const getCliAgentsFile = () => `
 
   - Searches use a non-empty literal string (not a regex), are case-insensitive by default, and return non-overlapping matches in page/offset order. Options are \`matchCase\` (default \`false\`), \`contextChars\` (default \`80\` on each side, range 0–10000), and \`limit\` (default \`20\` matches per file, range 1–1000). No matches or null text returns \`[]\`. With \`find\`, this select does not itself filter out files with no matches; scope the row filter and limit the rows separately.
   - Each match's \`index\` is the PostgreSQL array subscript: for managed extracted text, use it directly as the annotation's \`page\` (not a printed page label), or subtract 1 to access the JavaScript \`text_content\` array. \`offset\` is a zero-based character offset within that page, not a JavaScript UTF-16 offset. \`match\` contains the matched text and \`snippet\` includes surrounding context; verify the excerpt and choose unique annotation anchors before citing it. Permission-checked handlers require read access to \`text_content\`.
-  - File retention is not revision history. Managed file storage does not currently provide a logical document/revision model. When revisions are required, retain a distinct file per immutable revision and reference that revision from evidence, submissions, and annotations. Keep domain metadata and review/approval rules in the app. Propose reusable file versioning in \`prostgles-server\` before duplicating storage/version-management machinery in consuming apps; audit row history does not preserve overwritten file bytes.
+  - Enable \`versioning: {}\` to retain file revisions in the managed \`files_versions\` table (or \`versioning.tableName\`). Reference revision rows from evidence and submissions, and use their \`version\` as an annotation's \`file_version\`. Keep domain metadata and review/approval rules in the app; audit row history alone does not preserve overwritten file bytes.
   - Local file data lives outside PostgreSQL. Use persistent storage and include it in deployment backups.
 
   ## Server-side functions

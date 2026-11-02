@@ -83,7 +83,9 @@ test("CLI user sync reconciles profiles and access without copying credentials",
           },
           {
             type: "magic-link",
-            otp_code: "123456",
+            code_hash: "private-code-hash",
+            confirmed_on: null,
+            expires: new Date(Date.now() + 300_000).toISOString(),
             date: new Date().toISOString(),
           },
         ],
@@ -136,7 +138,9 @@ test("CLI user sync reconciles profiles and access without copying credentials",
         label: "Users",
         icon: "Account",
         card: { headerColumn: "username", subHeaderColumn: "name" },
-        referenceDisplay: { columns: [{ name: "username" }] },
+        referenceDisplay: {
+          columns: [{ name: "username", format: { type: "Avatar" } }],
+        },
       });
       expect(
         await member.db.users!.findOne!({ username: "removed" }),

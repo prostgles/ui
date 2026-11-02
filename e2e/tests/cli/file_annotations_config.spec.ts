@@ -55,6 +55,12 @@ test("CLI annotations support PDF uploads without document extraction", async ({
       ],
       audit: { tableName: "audit_log", tables: { conditions: 1 } },
       tableConfig: {
+        files: {
+          columns: {
+            caption: "text",
+            category: "text NOT NULL DEFAULT 'general'",
+          },
+        },
         documents: {
           columns: {
             file_id: "uuid PRIMARY KEY REFERENCES files(id)",
@@ -107,8 +113,8 @@ test("CLI annotations support PDF uploads without document extraction", async ({
   // Fixture database URLs must override an app's local environment file.
   writeFileSync(
     join(configPath, ".env"),
-    "PROSTGLES_DATABASE_URL=postgres://invalid:invalid@127.0.0.1:1/app\n" +
-      "PROSTGLES_STATE_DATABASE_URL=postgres://invalid:invalid@127.0.0.1:1/state\n",
+    "PROSTGLES_PG_SERVER_URL=postgres://invalid:invalid@127.0.0.1:1\n" +
+      "PROSTGLES_APP_DB_NAME=app\nPROSTGLES_STATE_DB_NAME=state\n",
   );
   let deployment: TestDeployment | undefined;
   try {
@@ -123,6 +129,25 @@ test("CLI annotations support PDF uploads without document extraction", async ({
     expect(
       tableSchema?.find((table) => table.name === "file_annotations"),
     ).toHaveProperty("managedTableType", "file-annotations");
+    /* Managed files publish card headers and file-size formatting defaults. */
+    expect(tableSchema?.find((table) => table.name === "files")).toMatchObject({
+      card: {
+        headerColumn: "original_name",
+        subHeaderColumns: ["original_last_modified", "content_length"],
+      },
+      columnConfigs: {
+        content_length: { label: "Size", format: { type: "File size" } },
+      },
+      columns: expect.arrayContaining([
+        expect.objectContaining({
+          name: "extraction_status",
+          defaultRenderAs: {
+            type: "Internal",
+            params: { component: "FileExtractionStatus" },
+          },
+        }),
+      ]),
+    });
     expect(
       tableSchema
         ?.find((table) => table.name === "conditions")
@@ -161,6 +186,7 @@ test("CLI annotations support PDF uploads without document extraction", async ({
       {
         data: readFileSync(join(__dirname, "../testAskLLM/sample.pdf")),
         original_name: "source.pdf",
+        original_last_modified: "2024-03-15T12:30:00.000Z",
       },
       { returning: "*" },
     );
@@ -231,6 +257,34 @@ test("CLI annotations support PDF uploads without document extraction", async ({
     await page.goto(deployment.dashboardUrl.replace("127.0.0.1", "localhost"));
     await page.getByTestId("dashboard.menu").waitFor({ state: "visible" });
     const dashboardUrl = page.url();
+    /* File cards show name, modified date and size without repeating metadata. */
+    await openTable(page, "files", true);
+    const state = await deployment.connectStateAs("admin");
+    const fileWindow = await state.db.windows!.findOne({ table_name: "files" });
+    assert.ok(fileWindow);
+    const setFileView = async (type: "card" | "table") => {
+      await state.db.windows!.update(
+        { table_name: "files" },
+        { options: { ...fileWindow.options, viewAs: { type } } },
+      );
+    };
+    await setFileView("card");
+    const fileCard = page
+      .locator('[data-table-name="files"]')
+      .getByTestId("CardView.row");
+    const fileHeader = fileCard.locator(".CardHeader");
+    await expect(fileHeader).toContainText("source.pdf");
+    await expect(
+      fileHeader.getByTitle("Last modified", { exact: true }),
+    ).toContainText("2024-03-15");
+    await expect(fileHeader.getByTitle("Size", { exact: true })).toHaveText(
+      `${file.content_length} Bytes`,
+    );
+    await expect(fileHeader).toContainText(" · ");
+    await expect(fileCard.locator(".CardBody")).not.toContainText(
+      "Last modified",
+    );
+    await setFileView("table");
     /* File previews must use connection context, independent of the URL path. */
     await page.evaluate(() => {
       window.history.replaceState(window.history.state, "", "/file-preview");
@@ -314,6 +368,19 @@ test("CLI annotations support PDF uploads without document extraction", async ({
       { returning: "*" },
     );
     await openTable(page, "files", true);
+    /* Missing modification dates omit the separator; larger sizes use KB/MB. */
+    await setFileView("card");
+    const imageHeader = fileCard
+      .filter({ hasText: "api-port.jpg" })
+      .locator(".CardHeader");
+    await expect(
+      imageHeader.getByTitle("Last modified", { exact: true }),
+    ).toHaveCount(0);
+    await expect(imageHeader.getByTitle("Size", { exact: true })).toHaveText(
+      /\d+\.\d+ (KB|MB)/,
+    );
+    await expect(imageHeader).not.toContainText(" · ");
+    await setFileView("table");
     const thumbnail = page.locator(
       `[data-table-name="files"] img[src$="/${image.id}"]`,
     );
@@ -407,9 +474,218 @@ test("CLI annotations support PDF uploads without document extraction", async ({
       }
       await page.getByTestId("Popup.close").last().click();
     }
+    /* File forms preserve custom values and defaults across file selection and replacement. */
+    await openTable(page, "files", true);
+    await setFileView("table");
+    const filesTable = page.locator('[data-table-name="files"]');
+    await filesTable.getByTestId("dashboard.window.rowInsert").click();
+    const fileForm = page.getByTestId("SmartForm");
+    const captionInput = fileForm
+      .locator('[data-key="caption"]')
+      .getByRole("textbox");
+    const categoryInput = fileForm
+      .locator('[data-key="category"]')
+      .getByRole("textbox");
+    await captionInput.fill("Custom caption");
+    await expect(categoryInput).toHaveValue("general");
+    await expect(
+      fileForm.locator('[data-key="content_length"]'),
+    ).toHaveCount(0);
+    await expect(
+      fileForm.locator('[data-key="extraction_status"]'),
+    ).toHaveCount(0);
+    for (const name of ["initial.txt", "replacement.txt"]) {
+      await fileForm.locator('input[type="file"]').setInputFiles({
+        name,
+        mimeType: "text/plain",
+        buffer: Buffer.from("File with custom fields"),
+      });
+      await expect(captionInput).toHaveValue("Custom caption");
+      await expect(categoryInput).toHaveValue("general");
+      if (name === "initial.txt") {
+        await fileForm.locator(".FileInputMedia .Chip_DeleteBtn").click();
+      }
+    }
+    await fileForm.getByTestId("SmartForm.insert").click();
+    await expect(fileForm).toBeHidden();
+    const customFileFilter = { original_name: "replacement.txt" };
+    await expect
+      .poll(() => dbo.files!.findOne!(customFileFilter))
+      .toMatchObject({ caption: "Custom caption", category: "general" });
+
+    /* Updating custom columns does not replace the stored file. */
+    const insertedFile = await dbo.files!.findOne!(customFileFilter);
+    assert.ok(insertedFile);
+    await filesTable
+      .getByRole("row")
+      .filter({ hasText: "replacement.txt" })
+      .getByTestId("dashboard.window.viewEditRow")
+      .click();
+    await captionInput.fill("Updated caption");
+    await fileForm.getByTestId("SmartForm.update").click();
+    await page.getByTestId("SmartForm.update.confirm").click();
+    await expect
+      .poll(() => dbo.files!.findOne!(customFileFilter))
+      .toMatchObject({
+        caption: "Updated caption",
+        category: "general",
+        storage_key: insertedFile.storage_key,
+        version: insertedFile.version,
+      });
   } finally {
     await deployment?.dispose();
     rmSync(configPath, { recursive: true, force: true });
+  }
+});
+
+test("CLI annotations stay bound to file revisions", async ({ page }) => {
+  const configId = "annotation-revisions-e2e";
+  const configPath = createConfigTestProject(
+    {
+      id: configId,
+      databaseConfig: {
+        file_table_config: {
+          fileTable: "files",
+          annotationsTable: "file_annotations",
+          storageType: { type: "local" },
+          versioning: { tableName: "revisions" },
+          extractText: false,
+        },
+      },
+    },
+    test.info().outputPath("config"),
+  );
+  const deployment = await createTestDeployment({ configId, configPath });
+  try {
+    const { db, sql } = await deployment.connectProjectAs("admin");
+    const file = await db.files!.insert!(
+      {
+        original_name: "revisions.pdf",
+        data: createAnnotationPdf(),
+        text_content: ["Beginning phrase"],
+      },
+      { returning: "*" },
+    );
+    const original = await db.file_annotations!.insert!(
+      {
+        file_id: file.id,
+        page: 1,
+        start_text: "Beginning",
+        end_text: "phrase",
+      },
+      { returning: "*" },
+    );
+    expect(original.file_version).toBe(1);
+    await db.files!.update!(
+      { id: file.id },
+      {
+        original_name: "revisions.pdf",
+        data: createAnnotationPdf("Replacement phrase"),
+        text_content: ["Replacement phrase"],
+      },
+    );
+    const replacement = await db.file_annotations!.insert!(
+      {
+        file_id: file.id,
+        page: 1,
+        start_text: "Replacement",
+        end_text: "phrase",
+      },
+      { returning: "*" },
+    );
+    expect(replacement.file_version).toBe(2);
+    const historical = await db.file_annotations!.insert!(
+      {
+        file_id: file.id,
+        file_version: 1,
+        page: 1,
+        start_text: "Beginning",
+        end_text: "phrase",
+      },
+      { returning: "*" },
+    );
+    expect(historical.text).toBe("Beginning phrase");
+    await db.file_annotations!.delete!({ id: historical.id });
+    await db.file_annotations!.update!(
+      { id: original.id },
+      { end_text: "phrase" },
+    );
+    expect(
+      await db.file_annotations!.findOne!({ id: original.id }),
+    ).toMatchObject({
+      file_version: 1,
+      text: "Beginning phrase",
+    });
+    for (const fileVersion of [2, 99]) {
+      await expect(
+        db.file_annotations!.insert!({
+          file_id: file.id,
+          file_version: fileVersion,
+          page: 1,
+          start_text: "Beginning",
+          end_text: "phrase",
+        }),
+      ).rejects.toBeDefined();
+    }
+    await expect(
+      db.file_annotations!.update!(
+        { id: original.id },
+        {
+          file_version: null,
+        },
+      ),
+    ).rejects.toMatchObject({ message: "Provide an annotation file_version" });
+    assert.ok(sql);
+    await expect(
+      sql("UPDATE file_annotations SET file_version = 99 WHERE id = $1", [
+        original.id,
+      ]),
+    ).rejects.toBeDefined();
+    await expect(
+      sql("DELETE FROM revisions WHERE file_id = $1 AND version = 1", [
+        file.id,
+      ]),
+    ).rejects.toBeDefined();
+
+    await page.context().addCookies(deployment.storageStateAs("admin").cookies);
+    await page.goto(deployment.dashboardUrl);
+    await openTable(page, "files", true);
+    await page
+      .locator('[data-table-name="files"]')
+      .getByTitle("application/pdf")
+      .click();
+    const viewer = page.locator(".PdfViewer");
+    await expect(viewer.locator(".textLayer")).toContainText(
+      "Replacement phrase",
+    );
+    await expect(
+      viewer.locator(`[data-annotation-id="${replacement.id}"]`),
+    ).toBeVisible();
+    await expect(
+      viewer.locator(`[data-annotation-id="${original.id}"]`),
+    ).toHaveCount(0);
+    await page.getByTestId("Popup.close").last().click();
+    await openTable(page, "file_annotations", true);
+    await page
+      .locator('[data-table-name="file_annotations"]')
+      .getByRole("row")
+      .filter({ hasText: "Beginning phrase" })
+      .getByTestId("dashboard.window.viewEditRow")
+      .click();
+    await page.getByTestId("SmartForm").getByTitle("application/pdf").click();
+    await expect(viewer.locator(".textLayer")).toContainText(
+      "Beginning phrase",
+    );
+    await expect(
+      viewer.locator(`[data-annotation-id="${original.id}"]`),
+    ).toBeVisible();
+    await expect(
+      viewer.locator(`[data-annotation-id="${replacement.id}"]`),
+    ).toHaveCount(0);
+    await db.files!.delete!({ id: file.id });
+    expect(await db.file_annotations!.count!({ file_id: file.id })).toBe(0);
+  } finally {
+    await deployment.dispose();
   }
 });
 
@@ -941,6 +1217,14 @@ test("CLI extraction jobs retry, limit concurrency and preserve configured jobs"
           extractText: true,
         },
       },
+      connection: {
+        table_options: {
+          app_jobs: {
+            label: "Background jobs",
+            columns: { status: { label: "State" } },
+          },
+        },
+      },
       tableConfig: {
         extraction_calls: {
           columns: { id: "serial PRIMARY KEY", name: "text NOT NULL" },
@@ -1038,6 +1322,41 @@ module.exports.onMount = ({ dbo, context }) => {
   });
   try {
     const { db, tableSchema } = await deployment.connectProjectAs("admin");
+    /* Job display defaults survive merging plugin jobs and custom table options. */
+    expect(
+      tableSchema?.find((table) => table.name === "app_jobs"),
+    ).toMatchObject({
+      label: "Background jobs",
+      sort: [{ key: "created_at", asc: false }],
+      referenceDisplay: { columns: [{ name: "status" }] },
+      card: { headerColumn: "job_name", subHeaderColumn: "status" },
+      defaultColumns: expect.arrayContaining(["job_name", "status", "error"]),
+      columnConfigs: {
+        id: { infoLevel: 2 },
+        created_at: { format: { type: "Age" } },
+        status: {
+          label: "State",
+          infoLevel: 1,
+          style: {
+            type: "Conditional",
+            conditions: [
+              "pending",
+              "running",
+              "succeeded",
+              "failed",
+              "cancelled",
+            ].map((condition) =>
+              expect.objectContaining({
+                operator: "=",
+                condition,
+                chipColor: expect.stringMatching(/\S/),
+                textColor: expect.stringMatching(/\S/),
+              }),
+            ),
+          },
+        },
+      },
+    });
     expect(
       tableSchema
         ?.find((table) => table.name === "files")
@@ -1357,14 +1676,14 @@ test("CLI text extraction persists Docling profiling without annotations", async
   }
 });
 
-const createAnnotationPdf = () => {
+const createAnnotationPdf = (firstPageText = "Beginning phrase") => {
   const objects = [
     "<< /Type /Catalog /Pages 2 0 R >>",
     "<< /Type /Pages /Kids [4 0 R 6 0 R 8 0 R] /Count 3 >>",
     "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
   ];
   for (const [i, text] of [
-    "Beginning phrase",
+    firstPageText,
     "Middle page",
     "Ending phrase",
   ].entries()) {

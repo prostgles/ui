@@ -122,6 +122,7 @@ export const PCustomTables = ({
       <SearchList
         id="custom-tables"
         className="shadow"
+        roundedItems={false}
         placeholder={`Search ${tables.length} tables & views`}
         limit={200}
         items={tablesWithRules

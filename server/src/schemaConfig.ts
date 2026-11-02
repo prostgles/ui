@@ -1,9 +1,16 @@
 import type { AlertChannel, AlertsOptions } from "./Alerts/AlertTypes";
-export { createAlertDefiner } from "./Alerts/AlertTypes";
+import type { EmailOutboxOptions } from "./Emails/EmailOutboxTypes";
+export type {
+  EmailOutboxOptions,
+  EmailOutboxInput,
+  EmailTemplate,
+} from "./Emails/EmailOutboxTypes";
+export type { AlertQueryDefinition } from "./Alerts/alertQuerySchema";
 export type {
   AlertChannel,
+  AlertContext,
   AlertMessage,
-  AlertType,
+  AlertRule,
 } from "./Alerts/AlertTypes";
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 export { USER_TYPES } from "@common/authTypesAndConstants";
@@ -51,7 +58,14 @@ import {
 export type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 export type * from "@common/DashboardTypes";
 export type { DBSSchema } from "@common/publishUtils";
-export type { DBOFullyTyped, TableConfig, TableHooks } from "prostgles-server";
+export type {
+  DBHandlerServer,
+  DBHandlerServerRestricted,
+  DBOFullyTyped,
+  DBOFullyTypedClient,
+  TableConfig,
+  TableHooks,
+} from "prostgles-server";
 
 type DBSSchemaForInsertWithNested = {
   [K in keyof DBGeneratedSchema]: InsertDataWithNested<
@@ -142,7 +156,12 @@ export type SchemaConfigAlerts<S = void> = Omit<
   "channels"
 > & {
   /** Email uses the connection's configured email provider, falling back to the instance provider. */
-  channels: Record<string, AlertChannel | { type: "email"; from?: string }>;
+  channels: Record<
+    string,
+    | AlertChannel
+    | { type: "email"; from?: string; templateKey?: string }
+    | { type: "inApp" }
+  >;
 };
 
 /**
@@ -180,6 +199,8 @@ export type SchemaConfig<
   audit?: SchemaConfigAudit<S>;
   /** Managed editable alerts, recipients and delivery history. */
   alerts?: SchemaConfigAlerts<S>;
+  /** Managed email outbox and templates. Also enabled automatically by email alert channels. */
+  emailOutbox?: EmailOutboxOptions;
   /** Access rules matched by user type, just like rules configured through the UI. */
   accessControl?: SchemaConfigAccessControl[];
   /** Create app user types before syncing access rules. Assign them through users.type. */

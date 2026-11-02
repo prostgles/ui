@@ -1,3 +1,16 @@
+import { getJoinPathStr } from "../../dashboard/W_Table/tableUtils/getJoinPaths";
+import { getDataKey } from "../../Testing";
+
+const getChatMemberUserFilterSelector = (tableName: "chats" | "messages") => {
+  const path = [
+    ...(tableName === "messages" ?
+      [{ table: "chats", on: [{ chat_id: "id" }] }]
+    : []),
+    { table: "chat_members", on: [{ id: "chat_id" }] },
+  ];
+  return `[data-command="SmartAddFilter"] [data-command="Popup.content"] [data-command="SearchList.List"] ${getDataKey(`${getJoinPathStr(path)}.user_id`)}`;
+};
+
 const startCreatingAccessRule = [
   {
     selector: '[data-command="config.ac.create"]',
@@ -52,8 +65,7 @@ const setChatsRules = [
     timestamp: 19411,
   },
   {
-    selector:
-      '[data-command="SmartAddFilter"] [data-command="Popup.content"] [data-command="SearchList.List"] [data-key="chat_members,id,chat_id.user_id"]',
+    selector: getChatMemberUserFilterSelector("chats"),
     timestamp: 35371,
   },
   {
@@ -102,7 +114,7 @@ const setMessagesRules = [
     timestamp: 19411,
   },
   {
-    selector: `[data-command="SmartAddFilter"] [data-command="Popup.content"] [data-command="SearchList.List"] [data-key="chats,chat_id,id,chat_members,id,chat_id.user_id"]`,
+    selector: getChatMemberUserFilterSelector("messages"),
     timestamp: 31371,
   },
   {
@@ -143,7 +155,7 @@ const setMessagesRules = [
     timestamp: 19411,
   },
   {
-    selector: `[data-command="SmartAddFilter"] [data-command="Popup.content"] [data-command="SearchList.List"] [data-key="chats,chat_id,id,chat_members,id,chat_id.user_id"]`,
+    selector: getChatMemberUserFilterSelector("messages"),
     timestamp: 31371,
   },
   {

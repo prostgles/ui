@@ -56,7 +56,7 @@ test.describe("Create docs and screenshots", () => {
   test(`Restore databases`, async ({ page: p }) => {
     const page = p as PageWIds;
 
-    await login(page, USERS.test_user, "/login");
+    await login(page, USERS.test_user, "/auth/login");
     // await saveSVGifs(page); throw "hehe"; // For debugging
     await openConnection(page, "prostgles_video_demo");
     await page.getByTestId("dashboard.goToConnConfig").click();
@@ -80,7 +80,7 @@ test.describe("Create docs and screenshots", () => {
   test("Create docs", async ({ page: p }) => {
     const page = p as PageWIds;
 
-    await login(page, USERS.test_user, "/login");
+    await login(page, USERS.test_user, "/auth/login");
 
     await saveDocs(page);
 
@@ -121,7 +121,7 @@ test.describe("Create docs and screenshots", () => {
   test("Create screenshots", async ({ page: p }) => {
     const page = p as PageWIds;
 
-    await login(page, USERS.test_user, "/login");
+    await login(page, USERS.test_user, "/auth/login");
     if (!IS_GITHUB_WORKER) {
       await page.waitForTimeout(1100);
 
@@ -133,7 +133,7 @@ test.describe("Create docs and screenshots", () => {
   test("Create overviews and verify screenshots", async ({ page: p }) => {
     const page = p as PageWIds;
 
-    await login(page, USERS.test_user, "/login");
+    await login(page, USERS.test_user, "/auth/login");
     if (!IS_GITHUB_WORKER) {
       await page.waitForTimeout(1100);
 

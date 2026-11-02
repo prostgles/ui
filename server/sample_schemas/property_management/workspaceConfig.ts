@@ -39,7 +39,6 @@ export const workspaceConfig: WorkspaceConfig = {
       name: "Property Management Dashboard",
       options: {
         hideCounts: false,
-        pinnedMenu: true,
         tableListSortBy: "extraInfo",
         tableListEndInfo: "count",
         defaultLayoutType: "tab",

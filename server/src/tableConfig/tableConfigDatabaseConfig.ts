@@ -571,12 +571,19 @@ export const tableConfigDatabaseConfig: TableConfig<{ en: 1 }> = {
         nullable: true,
         jsonbSchemaType: {
           website_url: { type: "string", title: "Website URL" },
+          signupMode: { enum: ["public", "invitationOnly"] },
           email: {
             optional: true,
             oneOfType: [
               {
-                signupType: { enum: ["withMagicLink"] },
+                emailLoginType: { enum: ["withMagicLink"] },
                 enabled: { type: "boolean", optional: true },
+                allowInvites: {
+                  type: "boolean",
+                  optional: true,
+                  description:
+                    "Allow creating and resending invitations. Defaults to false.",
+                },
                 smtp: SMTPConfig,
                 emailTemplate: EmailTemplateConfig,
                 emailConfirmationEnabled: {
@@ -586,8 +593,14 @@ export const tableConfigDatabaseConfig: TableConfig<{ en: 1 }> = {
                 },
               },
               {
-                signupType: { enum: ["withPassword"] },
+                emailLoginType: { enum: ["withPassword"] },
                 enabled: { type: "boolean", optional: true },
+                allowInvites: {
+                  type: "boolean",
+                  optional: true,
+                  description:
+                    "Allow creating and resending invitations. Defaults to false.",
+                },
                 minPasswordLength: {
                   optional: true,
                   type: "integer",

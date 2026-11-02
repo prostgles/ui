@@ -25,7 +25,10 @@ export const useProviderProps = ({
   };
 
   const authProps = {
-    authProviders: auth_providers ?? { website_url: "" },
+    authProviders: auth_providers ?? {
+      website_url: "",
+      signupMode: "invitationOnly" as const,
+    },
     dbsTables,
     disabledInfo:
       !auth_providers?.website_url ? "Must setup website URL first" : undefined,

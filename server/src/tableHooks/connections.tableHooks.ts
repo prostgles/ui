@@ -2,6 +2,7 @@ import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import { getEntries } from "@common/utils";
 import { assertIconExists } from "@src/utils/assertIconExists";
 import type { TableHooks } from "prostgles-server";
+import { validateTableInfoLevels } from "../ConnectionManager/validateTableInfoLevels";
 
 export const connectionsTableHooks: TableHooks<DBGeneratedSchema> = {
   connections: {
@@ -11,6 +12,7 @@ export const connectionsTableHooks: TableHooks<DBGeneratedSchema> = {
         changedFields: ["table_options"],
         validate: async (args) => {
           const { row } = args;
+          validateTableInfoLevels(row.table_options);
           /** Ensure icons exist */
           for (const [tableName, tableOption] of getEntries(
             row.table_options ?? {},

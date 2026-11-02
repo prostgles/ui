@@ -25,9 +25,7 @@ const handler = {
     const serviceManager = getServiceManager();
 
     return {
-      stop: () => {
-        serviceManager.stopService("documents");
-      },
+      stop: () => serviceManager.stopService("documents"),
       tools: {
         get_document_text: async ({
           fileAsBase64,

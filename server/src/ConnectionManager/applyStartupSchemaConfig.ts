@@ -5,6 +5,7 @@ import { upsertConnection } from "../upsertConnection";
 import { getSchemaConfig } from "./getSchemaConfig";
 import { syncSchemaConfig } from "./syncSchemaConfig";
 import type { DB } from "prostgles-server/dist/Prostgles";
+import { getCliDatabaseConfig } from "../cli/getCliDatabaseConfig";
 
 export const getStartupSchemaConfig = () => {
   const configPath = process.env.PROSTGLES_UI_CONFIG;
@@ -21,12 +22,7 @@ export const getStartupSchemaConfig = () => {
       "The config must export an `id` when started through the CLI.",
     );
   }
-  const databaseUrl = process.env.PROSTGLES_DATABASE_URL;
-  if (!databaseUrl) {
-    throw new Error(
-      "PROSTGLES_DATABASE_URL is required when started through the CLI.",
-    );
-  }
+  const databaseUrl = getCliDatabaseConfig(process.env).project.url;
 
   return {
     configPath: loadedSchemaConfig.configPath,

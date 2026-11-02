@@ -164,8 +164,9 @@ const getRectanglePath = (
     rect.setAttribute("y", adjusted.y);
     rect.setAttribute("width", adjusted.width);
     rect.setAttribute("height", adjusted.height);
-    rect.setAttribute("rx", rtl);
-    rect.setAttribute("ry", rtl);
+    const radius = Math.min(rtl, adjusted.width / 2, adjusted.height / 2);
+    rect.setAttribute("rx", radius);
+    rect.setAttribute("ry", radius);
     if (strokeDasharray) {
       rect.setAttribute("stroke-dasharray", strokeDasharray.toString());
     }

@@ -30,23 +30,26 @@ export const SegmentedToggle = <O extends string>({
       {...divProps}
       className={
         "SegmentedToggle " +
-        classOverride("rounded bg-color-3 gap-0", className)
+        classOverride("rounded bg-color-3 gap-0 w-fit", className)
       }
       style={{
         padding: "2px",
+        boxShadow: "inset 0 1px 3px var(--shadow1)",
         ...divProps.style,
       }}
     >
       {getEntries(options).map(([key, btnProps]) => {
+        const isSelected = value === key;
         return (
           <Btn
             key={key}
             size={"micro"}
             data-key={key}
+            className={isSelected ? "shadow" : undefined}
             {...btnProps}
-            variant={value === key ? "faded" : undefined}
+            variant={isSelected ? "faded" : undefined}
             style={{
-              background: value === key ? "var(--bg-color-0)" : "transparent",
+              background: isSelected ? "var(--bg-color-0)" : "transparent",
             }}
             onClick={() => onChange(key)}
           />

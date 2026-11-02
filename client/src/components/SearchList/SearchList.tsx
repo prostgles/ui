@@ -134,6 +134,8 @@ export type SearchListProps<M extends boolean = false> = TestSelectors & {
   selectedKey?: OptionKey;
   rootStyle?: React.CSSProperties;
   listStyle?: React.CSSProperties;
+  /** Defaults to true. Disable when rows sit flush against borders or shadows. */
+  roundedItems?: boolean;
 
   /**
    * Number of rows to slice from result

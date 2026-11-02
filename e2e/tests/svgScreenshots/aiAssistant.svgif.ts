@@ -11,6 +11,7 @@ import {
   deletePreviousMessages,
   newChat,
   runDbsMethod,
+  setModelByText,
   setPromptByText,
 } from "utils/utils";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
@@ -72,6 +73,7 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   await deleteAllWorkspaces(page);
   await page.getByTestId("AskLLM").click();
   await newChat(page);
+  await setModelByText(page, "luna");
   await setPromptByText(page, "dashboard");
 
   await typeSendAddScenes(
@@ -90,6 +92,7 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   await openConnection("cloud");
   await page.getByTestId("AskLLM").click();
   await newChat(page);
+  await setModelByText(page, "luna");
   await setPromptByText(page, "chat");
   await typeSendAddScenes(
     page,
@@ -185,6 +188,7 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   await page.getByTestId("AskLLM").click();
   await setPromptByText(page, "chat");
   await newChat(page);
+  await setModelByText(page, "luna");
 
   await typeSendAddScenes(
     page,

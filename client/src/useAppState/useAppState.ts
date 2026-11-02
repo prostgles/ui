@@ -33,6 +33,7 @@ export const useAppState = (
       (tableSchema ?? []) as DBSchemaTableWithOptions[],
       dbs,
       dbsClient.joins,
+      dbsClient.methodSchema ?? {},
     );
     (window as any).dbs = dbs;
     (window as any).dbsSql = dbsSql;

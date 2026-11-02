@@ -1,32 +1,22 @@
-import type { JSONB, MaybePromise } from "prostgles-types";
-import type { DBHandlerServerRestricted } from "prostgles-server";
-import type { PermissionScope } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
+import type { FullFilter, MaybePromise } from "prostgles-types";
+import type {
+  DBHandlerServer,
+  DBHandlerServerRestricted,
+} from "prostgles-server";
+import type { AlertQueryDefinition } from "./alertQuerySchema";
 
 export type AlertMessage = { title: string; body: string };
-export type AlertType<
-  S = void,
-  P extends JSONB.ObjectType["type"] = JSONB.ObjectType["type"],
-> = {
-  params: P;
-  permissionScope?: (recipientId: string) => PermissionScope;
-  prepare: (context: {
-    clientDb: DBHandlerServerRestricted<S>;
-    params: JSONB.GetObjectType<P>;
-    recipientId: string;
-    localDate: string;
-    signal: AbortSignal;
-  }) => Promise<AlertMessage | null>;
+export type AlertContext<S = void> = {
+  clientDb: DBHandlerServerRestricted<S>;
+  recipientId: string;
+  localDate: string;
+  signal: AbortSignal;
 };
-
-/** Register reusable behaviour. Individual alerts and recipients live in managed tables. */
-export const createAlertDefiner =
-  <S = void>() =>
-  <const P extends JSONB.ObjectType["type"]>(definition: AlertType<S, P>) =>
-    definition;
-
 export type AlertChannel = {
   /** At-least-once delivery: use idempotencyKey when supported. Re-resolve the destination and honour signal. */
   send: (context: {
+    dbo: DBHandlerServer;
+    jobId: string;
     recipientId: string;
     message: AlertMessage;
     idempotencyKey: string;
@@ -35,8 +25,24 @@ export type AlertChannel = {
 };
 
 export type AlertsOptions<S = void> = {
-  /** Defaults to alerts; also manages <tableName>_recipients and <tableName>_deliveries. */
+  /** Defaults to alerts; also manages <tableName>_channels and <tableName>_deliveries. */
   tableName?: string;
-  types: Record<string, AlertType<S, any>>;
+  /** Stable keys create one shared alert each. Existing alerts retain UI edits. */
+  rules?: Record<string, AlertRule<S>>;
   channels: Record<string, AlertChannel>;
 };
+
+export type AlertRule<S = void> = {
+  name: string;
+  enabled: boolean;
+  schedule: { cron: string; timezone: string };
+  /** Matching active users are resolved when the alert runs. */
+  userFilter: FullFilter<{ id: string; username: string; type: string }, void>;
+  channels: string[];
+} & (
+  | AlertQueryDefinition
+  | {
+      prepare: (context: AlertContext<S>) => Promise<AlertMessage | null>;
+      deduplicate?: never;
+    }
+);

@@ -25,10 +25,10 @@ export const dashboardMenuUIDoc = {
     },
     {
       type: "popup",
-      selectorCommand: "dashboard.menu.quickSearch",
-      title: "Quick search",
+      selectorCommand: "Feedback",
+      title: "Feedback",
       description:
-        "Opens the quick search menu for searching across all available tables and views from the current database.",
+        "Opens the feedback form, allowing you to provide feedback about the application.",
       children: [],
     },
     {
@@ -42,10 +42,10 @@ export const dashboardMenuUIDoc = {
     },
     {
       type: "button",
-      selectorCommand: "DashboardMenuHeader.togglePinned",
+      selectorCommand: "DashboardMenu.togglePinned",
       title: "Pin/Unpin menu",
       description:
-        "Toggles the pinning of the dashboard menu. Pinned menus remain open until unpinned or accessing from a low width screen.",
+        "Toggles menu docking from the footer. This preference applies across all workspaces for your account. Narrow screens always use a popup menu.",
     },
     {
       type: "drag-handle",

@@ -8,6 +8,7 @@ import { CardBody } from "./CardItemBody";
 import { CardHeader } from "./CardItemHeader";
 import { CARD_ITEM_PADDING } from "../constants";
 import "./CardViewRow.css";
+import type { CardViewFields } from "../getCardViewFields";
 
 const marginTop = ".5em";
 
@@ -29,6 +30,8 @@ export type CardViewRowProps = Pick<
     rowIndex: number;
     indexedRows: IndexedRow[];
     table: DBSchemaTableWJoins;
+    summaryRow: boolean;
+    cardFields: CardViewFields;
   };
 
 export type KanBanDraggedRow = IndexedRow & {
@@ -41,12 +44,12 @@ export const CardViewRow = (props: CardViewRowProps) => {
     props: { activeRow, activeRowColor, joinFilter, onClickRow },
     indexedRow,
     cardOpts,
-    table,
     indexedRows,
     rowIndex,
     cols,
-    w,
     draggedRow,
+    summaryRow,
+    cardFields,
   } = props;
 
   const {
@@ -84,6 +87,7 @@ export const CardViewRow = (props: CardViewRowProps) => {
           width: cardRows > 1 ? `calc(${99 / cardRows}% - .5em)` : "",
         }),
       margin: `${itemMarginTop} ${marginRight} 0 ${marginLeftRight}`,
+      ...(summaryRow && { width: "100%", margin: 0, borderRadius: 0 }),
       ...(isActive && {
         boxShadow: `inset 0 0 10px ${activeRowColor}`,
       }),
@@ -99,19 +103,12 @@ export const CardViewRow = (props: CardViewRowProps) => {
     marginRight,
     maxCardWidth,
     row,
+    summaryRow,
   ]);
 
   const visibleCols = useMemo(
     () =>
       cols.filter((c) => {
-        const headerFields = [
-          table.card?.headerColumn,
-          table.card?.subHeaderColumn,
-          table.card?.avatarColumn,
-        ];
-        if (headerFields.includes(c.name)) {
-          return false;
-        }
         const value =
           (
             c.nested?.fallbackColumn &&
@@ -128,14 +125,7 @@ export const CardViewRow = (props: CardViewRowProps) => {
           )
         );
       }),
-    [
-      cols,
-      hideEmptyCardCells,
-      row,
-      table.card?.avatarColumn,
-      table.card?.headerColumn,
-      table.card?.subHeaderColumn,
-    ],
+    [cols, hideEmptyCardCells, row],
   );
 
   return (
@@ -145,7 +135,8 @@ export const CardViewRow = (props: CardViewRowProps) => {
       data-row-index={indexedRow.index}
       className={
         "CardView_Item relative card jc-start ai-stretch f-0 min-w-0 " +
-        (cardRows > 1 ? " fit " : "")
+        (cardRows > 1 ? " fit " : "") +
+        (summaryRow ? " CardView_Item--row" : "")
       }
       style={style}
       onClick={(e) => {
@@ -156,6 +147,7 @@ export const CardViewRow = (props: CardViewRowProps) => {
       <div className="CardView_content flex-col gap-0 min-w-0">
         <CardHeader {...props} />
         <CardBody
+          bodyColumns={cardFields.bodyColumns}
           visibleCols={visibleCols}
           cardCellMinWidth={cardCellMinWidth}
           cardRows={cardRows}
@@ -164,8 +156,6 @@ export const CardViewRow = (props: CardViewRowProps) => {
           maxCardRowHeight={maxCardRowHeight}
           rowIndex={rowIndex}
           indexedRows={indexedRows}
-          cardLayout={w?.options.cardLayout}
-          table={table}
         />
       </div>
     </FlexCol>

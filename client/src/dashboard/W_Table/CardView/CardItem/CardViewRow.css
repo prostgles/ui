@@ -2,9 +2,15 @@
   container-type: inline-size;
 }
 
+.CardView_Item--row {
+  border: 0;
+  border-bottom: 1px solid var(--b-color);
+  box-shadow: none;
+}
+
 .CardHeader {
   padding: var(--card-item-padding);
-  padding-bottom: .5em;
+  padding-bottom: 0.5em;
 }
 
 .CardBody {
@@ -12,14 +18,16 @@
 }
 
 .CardBody > .CardActions {
-  flex-basis: 100%;
+  flex: 1 1 auto;
+  justify-content: flex-end;
+  min-width: 0;
 }
 
 .CardActionValue,
 .CardActionValue [role="group"][aria-label="Actions"] {
   display: flex;
   flex-wrap: wrap;
-  gap: .5em;
+  gap: 0.5em;
   min-width: 0;
 }
 

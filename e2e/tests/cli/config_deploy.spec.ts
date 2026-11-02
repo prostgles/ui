@@ -159,6 +159,39 @@ test("checkFilterDetailed works with grouped existsJoined", async ({
     },
   });
   try {
+    const state = await deployment.connectStateAs("admin");
+    /*
+     * Reproduce two dashboards creating the default workspace at once: intercept
+     * this dashboard's insert after its count returned zero, create the same
+     * workspace through a second connection, then forward the original insert.
+     * Verify onConflict: "DoNothing" lets the dashboard load with one workspace.
+     */
+    let concurrentWorkspaceCreation: Promise<unknown> | undefined;
+    await page.routeWebSocket(
+      (url) => url.pathname.startsWith("/ws-api-dbs"),
+      (socket) => {
+        const server = socket.connectToServer();
+        socket.onMessage(async (message) => {
+          if (typeof message === "string" && message.startsWith("42")) {
+            const [channel, request] = JSON.parse(
+              message.slice(message.indexOf("[")),
+            );
+            if (
+              channel === CHANNELS._preffix &&
+              request.tableName === "workspaces" &&
+              request.command === "insert"
+            ) {
+              /* Another dashboard creates the workspace after this one's count. */
+              concurrentWorkspaceCreation ??= state.db.workspaces!.insert(
+                request.param1,
+              );
+              await concurrentWorkspaceCreation;
+            }
+          }
+          server.send(message);
+        });
+      },
+    );
     await page
       .context()
       .addCookies([
@@ -170,7 +203,10 @@ test("checkFilterDetailed works with grouped existsJoined", async ({
       .getByTestId("Connection.openConnection")
       .click();
     await openTable(page, "records", true);
-    const state = await deployment.connectStateAs("admin");
+    expect(concurrentWorkspaceCreation).toBeDefined();
+    expect(await state.db.workspaces!.find({ name: "default" })).toHaveLength(
+      1,
+    );
     const accessRules = await state.db.access_control!.find({});
     expect(accessRules).toHaveLength(1);
     const accessRule = accessRules[0]!;
@@ -259,7 +295,7 @@ test("checkFilterDetailed works with grouped existsJoined", async ({
         const window = await state.db.windows!.findOne({
           table_name: "records",
         });
-        return window?.filter?.[0];
+        return window?.filter[0];
       })
       .toMatchObject({ disabled: false });
     const minimisedGroups: GroupedDetailedFilter[] = [
@@ -579,7 +615,9 @@ test("CLI readiness waits for file table configuration before seeding", async ()
       `
 module.exports.tableConfig.startup_checks.onMount = async ({ _db }) => {
   // A saved, unopened sample must not prevent the application from starting.
-  const state = new (require("pg").Client)({ connectionString: process.env.PROSTGLES_STATE_DATABASE_URL });
+  const stateUrl = new URL(process.env.PROSTGLES_PG_SERVER_URL);
+  stateUrl.pathname = process.env.PROSTGLES_STATE_DB_NAME;
+  const state = new (require("pg").Client)({ connectionString: stateUrl.toString() });
   await state.connect();
   try {
     await state.query(
@@ -995,6 +1033,26 @@ module.exports.functions = {
     expect(await state.db.workspaces!.findOne({ id: workspace.id })).toEqual(
       workspace,
     );
+    await test.step("Bundled sample workspace options pass database validation", async () => {
+      for (const sampleSchema of await state.methods!.getSampleSchemas!()) {
+        if (sampleSchema.type !== "dir" || !sampleSchema.workspaceConfig)
+          continue;
+        for (const sampleWorkspace of sampleSchema.workspaceConfig.workspaces) {
+          const updatedWorkspaces = await state.db.workspaces!.update(
+            { id: workspace.id },
+            { options: sampleWorkspace.options },
+            { returning: "*" },
+          );
+          expect(updatedWorkspaces?.[0]?.options).toEqual(
+            sampleWorkspace.options,
+          );
+        }
+      }
+      await state.db.workspaces!.update(
+        { id: workspace.id },
+        { options: workspace.options },
+      );
+    });
     const window = (await state.db.windows!.findOne({
       workspace_id: workspace.id,
     }))!;
@@ -1013,7 +1071,6 @@ module.exports.functions = {
           columns: [
             { name: "id", show: false },
             { name: "Count", show: true },
-            { name: "record_id", show: false },
           ],
         },
       },
@@ -1178,7 +1235,7 @@ module.exports.functions = {
     expect(
       await state.db.workspaces!.update(
         { id: workspace.id },
-        { options: { ...workspace.options, pinnedMenu: true } },
+        { options: { ...workspace.options, hideCounts: false } },
         { returning: "*" },
       ),
     ).toMatchObject([{ id: workspace.id, user_id: workspace.user_id }]);
@@ -1235,6 +1292,24 @@ module.exports.functions = {
       await expect(page.getByTestId("WorkspaceMenu.list")).toContainText(
         workspace.name,
       );
+      /* Desktop workspace navigation appears in the sidebar, outside the top bar. */
+      await expect(
+        page.locator(".TopControls").getByTestId("WorkspaceMenu.list"),
+      ).toHaveCount(0);
+      await expect(
+        page
+          .getByTestId("DashboardMenuContent")
+          .getByTestId("WorkspaceMenu.list"),
+      ).toBeVisible();
+      if (user === "default") {
+        /* Published-workspace viewers have no SQL editor or table search. */
+        await expect(page.getByTestId("dashboard.menu.sqlEditor")).toHaveCount(
+          0,
+        );
+        await expect(
+          page.getByTestId("dashboard.menu.tablesSearchList"),
+        ).toHaveCount(0);
+      }
       const table = page.locator('[data-table-name="records"]');
       await expect(table.getByTestId("TableBody")).toContainText("Solar Farm");
       await expect(table.getByTestId("LinkedColumn.OpenRecords")).toHaveText(
@@ -1271,13 +1346,34 @@ module.exports.functions = {
     await expect(
       page.getByText("Workspace not found", { exact: true }),
     ).toHaveCount(0);
-    await page.getByTestId("WorkspaceMenuDropDown").click();
+    /* Published-workspace viewers cannot create or clone workspaces. */
     await expect(
       page.getByTestId("WorkspaceMenuDropDown.WorkspaceAddBtn"),
     ).toHaveCount(0);
+    await page.getByTitle("Workspace actions").click();
     await expect(page.getByTestId("WorkspaceMenu.CloneWorkspace")).toHaveCount(
       0,
     );
+    await page.keyboard.press("Escape");
+    /* Menu pinning changes only the member's preferences and can be restored. */
+    const memberPinToggle = page
+      .getByTestId("DashboardMenuContent")
+      .locator("footer")
+      .getByTestId("DashboardMenu.togglePinned");
+    await memberPinToggle.click();
+    await expect(page.getByTestId("DashboardMenuContent")).toBeHidden();
+    await expect
+      .poll(
+        async () =>
+          (await memberState.db.users!.findOne({}))?.options?.pinnedMenu,
+      )
+      .toBe(false);
+    expect((await state.db.users!.findOne({ id: admin.id }))?.options).toEqual(
+      admin.options,
+    );
+    await page.getByTestId("dashboard.menu").click();
+    await memberPinToggle.click();
+    await expect(memberPinToggle).toHaveAttribute("data-key", "pinned");
     expect(
       await state.sql!(
         "SELECT count(*)::int FROM workspaces WHERE connection_id = $1",
@@ -1383,9 +1479,9 @@ module.exports.functions = {
       0,
     );
     const revoked = await deployment.connectStateAs("default");
-    expect(
-      await revoked.db.connections!.find({ id: connection.id }),
-    ).toEqual([]);
+    expect(await revoked.db.connections!.find({ id: connection.id })).toEqual(
+      [],
+    );
     await expect(
       revoked.methods!.startConnection!({ connectionId: connection.id }),
     ).rejects.toBeTruthy();
@@ -1395,6 +1491,87 @@ module.exports.functions = {
     await expect(
       page.getByTestId("dashboard.menu.tablesSearchList"),
     ).toBeVisible();
+    /* Admins see new workspaces, workspace search, and delete/clone actions. */
+    const otherWorkspace = await state.db.workspaces!.insert(
+      {
+        connection_id: connection.id,
+        user_id: admin.id,
+        name: "Menu navigation",
+      },
+      { returning: "*" },
+    );
+    const workspaceList = page.getByTestId("WorkspaceMenu.list");
+    const currentWorkspaceRow = workspaceList.locator(
+      getDataKey(workspace.name),
+    );
+    const otherWorkspaceRow = workspaceList.locator(
+      getDataKey(otherWorkspace.name),
+    );
+    await expect(otherWorkspaceRow).toBeVisible();
+    await expect(
+      workspaceList.getByTestId("WorkspaceMenu.SearchList"),
+    ).toBeVisible();
+    await otherWorkspaceRow.hover();
+    await otherWorkspaceRow.getByTitle("Workspace actions").click();
+    await expect(page.getByTestId("WorkspaceDeleteBtn")).toBeVisible();
+    await expect(
+      page.getByTestId("WorkspaceMenu.CloneWorkspace"),
+    ).toBeVisible();
+    await page.keyboard.press("Escape");
+    /* Desktop workspace rows stack vertically above the SQL editor. */
+    const currentWorkspaceBounds = (await currentWorkspaceRow.boundingBox())!;
+    const otherWorkspaceBounds = (await otherWorkspaceRow.boundingBox())!;
+    const sqlEditorBounds = (await page
+      .getByTestId("dashboard.menu.sqlEditor")
+      .boundingBox())!;
+    expect(otherWorkspaceBounds.y).toBeGreaterThanOrEqual(
+      currentWorkspaceBounds.y + currentWorkspaceBounds.height,
+    );
+    expect(sqlEditorBounds.y).toBeGreaterThan(otherWorkspaceBounds.y);
+    await page.screenshot({
+      path: test.info().outputPath("workspace-menu-desktop.png"),
+    });
+    /* Desktop switching updates the URL and keeps the workspace list visible. */
+    await otherWorkspaceRow
+      .getByText(otherWorkspace.name, { exact: true })
+      .click();
+    await expect(page).toHaveURL(new RegExp(otherWorkspace.id));
+    await expect(workspaceList).toBeVisible();
+    await expect(otherWorkspaceRow).toBeVisible();
+    await currentWorkspaceRow
+      .getByText(workspace.name, { exact: true })
+      .click();
+    await expect(page).toHaveURL(new RegExp(workspace.id));
+    await expect(page.getByTestId("DashboardMenu")).toHaveCount(0);
+    await expect(workspaceList).toBeVisible();
+
+    /* Mobile switching updates the URL and label, then closes the list. */
+    const desktopViewport = page.viewportSize()!;
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.reload();
+    const mobileWorkspaceSelector = page
+      .locator(".TopControls")
+      .getByTestId("WorkspaceMenuDropDown");
+    await expect(mobileWorkspaceSelector).toHaveText(workspace.name);
+    await expect(workspaceList).toHaveCount(0);
+    await mobileWorkspaceSelector.click();
+    await otherWorkspaceRow
+      .getByText(otherWorkspace.name, { exact: true })
+      .click();
+    await expect(page).toHaveURL(new RegExp(otherWorkspace.id));
+    await expect(mobileWorkspaceSelector).toHaveText(otherWorkspace.name);
+    await expect(workspaceList).toHaveCount(0);
+    await mobileWorkspaceSelector.click();
+    await currentWorkspaceRow
+      .getByText(workspace.name, { exact: true })
+      .click();
+    await expect(page).toHaveURL(new RegExp(workspace.id));
+    await page.screenshot({
+      path: test.info().outputPath("workspace-menu-mobile.png"),
+    });
+    await page.setViewportSize(desktopViewport);
+    await page.reload();
+    await state.db.workspaces!.delete({ id: otherWorkspace.id });
     await page.getByTestId("WorkspaceMenu.toggleWorkspaceLayoutMode").click();
     await expect
       .poll(
@@ -1683,9 +1860,14 @@ test.describe("Published config CLI", () => {
         .find((line) => line.startsWith("PRGL_PASSWORD="))
         ?.slice("PRGL_PASSWORD=".length);
       expect(adminPassword?.length).toBe(32);
-      expect(envExample).toContain("PROSTGLES_STATE_DATABASE_URL=");
-      expect(envExample).toContain("/prostgles_state_database");
-      expect(envExample).toContain("PROSTGLES_DATABASE_URL=");
+      /* Generated env covers app/e2e server URLs, database names and prefixes. */
+      expect(envExample).toContain("PROSTGLES_PG_SERVER_URL=");
+      expect(envExample).toContain(
+        "PROSTGLES_STATE_DB_NAME=prostgles_state_database",
+      );
+      expect(envExample).toContain("PROSTGLES_APP_DB_NAME=");
+      expect(envExample).toContain("PROSTGLES_E2E_PG_SERVER_URL=");
+      expect(envExample).toContain("PROSTGLES_E2E_DB_NAMES_PREFIX=");
       expect(envExample).toContain("PROSTGLES_TEST_POSTGRES_IMAGE=");
       expect(envExample).not.toContain("PROSTGLES_TEST_DATABASE_URL=");
       const deploymentTest = readFileSync(
@@ -1838,9 +2020,9 @@ export default prostgles({
         "dev",
         configDirectory,
         getCliEnvironment({
-          PROSTGLES_STATE_DATABASE_URL: `postgres://usr:psw@127.0.0.1:5432/${CONFIG_TEST.applicationStateDatabaseName}`,
-          PROSTGLES_DATABASE_URL:
-            "postgres://usr:psw@127.0.0.1:5432/cli_e2e_config_db",
+          PROSTGLES_PG_SERVER_URL: "postgres://usr:psw@127.0.0.1:5432",
+          PROSTGLES_STATE_DB_NAME: CONFIG_TEST.applicationStateDatabaseName,
+          PROSTGLES_APP_DB_NAME: CONFIG_TEST.applicationDatabaseName,
           PROSTGLES_UI_PORT: "0",
         }),
       );
@@ -1986,9 +2168,10 @@ export default prostgles({
         configTestDirectory,
       );
       const configEnvironment = getCliEnvironment({
-        PROSTGLES_STATE_DATABASE_URL: `postgres://usr:psw@127.0.0.1:5432/${applicationStateDatabaseName}`,
+        PROSTGLES_PG_SERVER_URL: "postgres://usr:psw@127.0.0.1:5432/postgres",
+        PROSTGLES_STATE_DB_NAME: applicationStateDatabaseName,
+        PROSTGLES_APP_DB_NAME: applicationDatabaseName,
         PROSTGLES_UI_PORT: String(port),
-        PROSTGLES_DATABASE_URL: `postgres://usr:psw@127.0.0.1:5432/${applicationDatabaseName}`,
       });
       configProcess = await startConfigScript(
         "start",

@@ -3,6 +3,7 @@ import type {
   DetailedFilterBase,
   GroupedDetailedFilter,
 } from "@common/filterUtils";
+import { auditActorJoinName } from "@common/managedTableSchema";
 import { reverseParsedPath } from "prostgles-types";
 import type { DBSchemaTableWJoins } from "../../../Dashboard/dashboardUtils";
 import { getComputedColumnSelect } from "../../tableUtils/getTableSelect";
@@ -41,7 +42,25 @@ export const getLinkedRecordsFilter = ({
     nestedColumn?.computedConfig?.funcDef.isAggregate ?
       nestedColumn.computedConfig
     : undefined;
-  const identityColumns = getTableIdentityColumns(table, nested.columns);
+  const hasAggregates = nested.columns.some(
+    (child) => child.show && child.computedConfig?.funcDef.isAggregate,
+  );
+  const [firstJoin] = nested.path;
+  const isAuditActorJoin =
+    !hasAggregates &&
+    nested.path.length === 1 &&
+    firstJoin?.table === "users" &&
+    firstJoin.on === auditActorJoinName;
+  /* Hidden keys must not narrow a non-unique displayed value to one record. */
+  const identityColumns = getTableIdentityColumns(
+    table,
+    nested.columns.map((child) =>
+      /* The built-in actor join fixes users.id; its uniqueness is checked below. */
+      isAuditActorJoin && child.name === "id" ?
+        { ...child, show: true }
+      : child,
+    ),
+  );
   if (
     nestedRow &&
     identityColumns.length &&
@@ -56,7 +75,6 @@ export const getLinkedRecordsFilter = ({
     }));
     return { searchFilter: rowFilter, rowFilter };
   }
-  const firstJoin = nested.path[0];
   if (!firstJoin) {
     return;
   }
@@ -69,9 +87,7 @@ export const getLinkedRecordsFilter = ({
     Array.isArray(firstJoin.on) &&
     nested.path.length === 1 &&
     firstJoin.on.length === 1 &&
-    !nested.columns.some(
-      (child) => child.show && child.computedConfig?.funcDef.isAggregate,
-    ) &&
+    !hasAggregates &&
     table.uniqueColumnGroups?.some(
       (columnNames) =>
         columnNames.length &&

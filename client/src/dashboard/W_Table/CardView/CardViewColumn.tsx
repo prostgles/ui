@@ -3,6 +3,7 @@ import type { DBSchemaTableWJoins } from "src/dashboard/Dashboard/dashboardUtils
 import type { CardViewProps, IndexedRow } from "./CardView";
 import { CardViewRow } from "./CardItem/CardViewRow";
 import type { CardViewState } from "./useCardViewState";
+import type { CardViewFields } from "./getCardViewFields";
 
 export type CardViewColumnProps = Pick<
   CardViewProps,
@@ -21,6 +22,7 @@ export type CardViewColumnProps = Pick<
   > & {
     indexedRows: IndexedRow[];
     table: DBSchemaTableWJoins;
+    cardFields: CardViewFields;
   };
 
 export const CardViewColumn = (_props: CardViewColumnProps) => {
@@ -35,6 +37,7 @@ export const CardViewColumn = (_props: CardViewColumnProps) => {
     tableHandler,
     indexedRows,
     table,
+    cardFields,
     draggedRow,
     setDraggedRow,
     moveItemsProps,
@@ -43,13 +46,15 @@ export const CardViewColumn = (_props: CardViewColumnProps) => {
   const { rows: _rows = [] } = state;
 
   const { cardRows = 1 } = cardOpts;
+  const summaryRow = cardRows === 1 && !cardOpts.cardGroupBy;
 
   return (
     <div
       className={
         "CardView_Column" +
         (cardRows > 1 ? " flex-row-wrap " : " flex-col ") +
-        " p-p25 o-auto no-scroll-bar f-1 min-w-0 min-h-0 px-p5 pt-p5"
+        " o-auto no-scroll-bar f-1 min-w-0 min-h-0" +
+        (summaryRow ? " CardView_Column--rows" : " p-p25 px-p5 pt-p5")
       }
       style={{
         placeContent: cardRows > 1 ? "flex-start" : undefined,
@@ -59,6 +64,7 @@ export const CardViewColumn = (_props: CardViewColumnProps) => {
         return (
           <CardViewRow
             key={indexedRow.index}
+            summaryRow={summaryRow}
             indexedRow={indexedRow}
             rowIndex={rowIndex}
             cardOpts={cardOpts}
@@ -67,6 +73,7 @@ export const CardViewColumn = (_props: CardViewColumnProps) => {
             onEditClickRow={onEditClickRow}
             props={props}
             table={table}
+            cardFields={cardFields}
             tableHandler={tableHandler}
             cols={cols}
             draggedRow={draggedRow}

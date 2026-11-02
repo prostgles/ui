@@ -3,7 +3,7 @@ import type {
   GroupedDetailedFilter,
 } from "@common/filterUtils";
 import Btn from "@components/Btn";
-import { FlexCol, FlexRow } from "@components/Flex";
+import { FlexRow, FlexRowWrap } from "@components/Flex";
 import { mdiDelete, mdiFilterVariantPlus } from "@mdi/js";
 import React from "react";
 import { SmartAddFilter } from "./SmartAddFilter";
@@ -29,7 +29,7 @@ export const GroupedFilterControl = ({ filter, onChange, ...props }: Props) => {
     onChange(isAnd ? { $and: items } : { $or: items });
 
   return (
-    <FlexCol
+    <FlexRowWrap
       className="gap-p5 min-w-0 ai-start"
       data-command="GroupedFilterControl"
     >
@@ -112,6 +112,6 @@ export const GroupedFilterControl = ({ filter, onChange, ...props }: Props) => {
           )}
         </FlexRow>
       )}
-    </FlexCol>
+    </FlexRowWrap>
   );
 };

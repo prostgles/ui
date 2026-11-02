@@ -215,6 +215,12 @@ export const parsedError = (rawVal, findMsg?: boolean): string => {
   if (typeof val === "string") res = val;
   else if (Array.isArray(val)) {
     res = val.map((v) => parsedError(v)).join("\n");
+  } else if (
+    val &&
+    Object.keys(val).length === 1 &&
+    typeof val.message === "string"
+  ) {
+    res = val.message;
   } else if (val && !isEmpty(val) && Object.keys(val).length) {
     if (findMsg) {
       res = getErrorMessage(val);

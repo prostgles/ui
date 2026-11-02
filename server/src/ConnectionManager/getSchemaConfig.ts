@@ -3,6 +3,7 @@ import path from "path";
 import type { DatabaseConfigs } from "..";
 import { actualRootDir } from "../electronConfig";
 import type { SchemaConfig } from "../schemaConfig";
+import { validateTableInfoLevels } from "./validateTableInfoLevels";
 
 const schemaConfigCache = new Map<
   string,
@@ -79,6 +80,7 @@ export const getSchemaConfig = <T extends ConfigSync | undefined | null>(
   const config =
     (exports as { default?: SchemaConfig }).default ??
     (exports as SchemaConfig);
+  validateTableInfoLevels(config.connection?.table_options);
   schemaConfigCache.set(configPath, { lastSynced, config });
   return { config, configPath } as SchemaConfigResult<T>;
 };

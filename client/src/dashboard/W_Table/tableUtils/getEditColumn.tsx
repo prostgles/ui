@@ -10,6 +10,7 @@ import type { AddColumnMenuProps } from "../ColumnMenu/AddColumnMenu";
 import { AddColumnMenu } from "../ColumnMenu/AddColumnMenu";
 import type { ColumnConfig } from "@common/ColumnConfig/ColumnConfig";
 import type { ProstglesColumn } from "../W_Table";
+import type { ProstglesTableColumn } from "./getTableCols";
 import { getRowFilter } from "./getRowFilter";
 
 export const getUnknownColInfo = (
@@ -56,12 +57,12 @@ export const getEditColumn = ({
   table,
   columnConfig,
   style = { padding: "12px" },
-}: GetMenuColumnArgs): ProstglesColumn => {
+}: GetMenuColumnArgs): ProstglesTableColumn => {
   const viewOnly = !tableHandler.update;
   const title = viewOnly ? "View row" : "View/Edit row",
     iconPath = viewOnly ? mdiOpenInNew : mdiPencilOutline;
 
-  const res: ProstglesColumn = {
+  const res: ProstglesTableColumn = {
     ...getUnknownColInfo("edit_row", " ", "any", true),
     filter: false,
     sortable: false,

@@ -6,6 +6,7 @@ import { FlexCol, FlexRow } from "@components/Flex";
 import { isCompleteJSONB } from "@components/JSONBSchema/isCompleteJSONB";
 import { JSONBSchema } from "@components/JSONBSchema/JSONBSchema";
 import Loading from "@components/Loader/Loading";
+import { MarkdownWithPlugins } from "@components/MarkdownWithPlugins/MarkdownWithPlugins";
 import { SwitchToggle } from "@components/SwitchToggle";
 import { mdiChevronDown, mdiPlay } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
@@ -227,7 +228,7 @@ export const W_MethodControls = ({
                 : undefined
               }
             >
-              Run
+              {functionOptions?.action.defaultValue?.text ?? "Run"}
             </Btn>
 
             {!isEmpty(inputSchema) && (
@@ -295,6 +296,11 @@ export const W_MethodControls = ({
               tables={tables}
               realtime={{}}
             />
+          : (
+            functionOptions?.renderOutputAsMarkdown &&
+            typeof result === "string"
+          ) ?
+            <MarkdownWithPlugins className="p-1" content={result} />
           : result ?
             <CodeEditor
               className="b-unset"

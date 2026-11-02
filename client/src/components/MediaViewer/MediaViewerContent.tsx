@@ -181,7 +181,7 @@ export const MediaViewerContent = ({
     const fullscreenTypes = ["video"];
     return (
       <div
-        className={`MediaViewer relative f-1 noselect flex-row min-h-0 ai-start`}
+        className={`MediaViewer relative f-1 noselect flex-row min-h-0 ai-center`}
         data-command="MediaViewer"
         style={style}
       >

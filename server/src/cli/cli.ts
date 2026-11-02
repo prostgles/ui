@@ -4,7 +4,6 @@ import { cliFileNames } from "./cliFileNames";
 import { spawn, spawnSync, type ChildProcess } from "child_process";
 import { randomBytes } from "node:crypto";
 import { startTemporaryDatabases } from "./startTemporaryDatabases";
-import { parse } from "dotenv";
 import { existsSync, mkdirSync, readdirSync, readFileSync, watch } from "fs";
 import path from "path";
 import { compileSchemaConfigProject } from "../ConnectionManager/compileSchemaConfigProject";
@@ -16,6 +15,8 @@ import {
 } from "./cliTemplateFiles";
 import { ensureCliDatabases } from "./ensureCliDatabases";
 import { upgradeCli } from "./upgradeCli";
+import { getCliDatabaseConfig } from "./getCliDatabaseConfig";
+import { getConfigEnvironment } from "./getConfigEnvironment";
 
 const usage = `Usage:
   prostgles create <directory> [--skip-install]
@@ -92,37 +93,17 @@ const initialiseCompose = async (configPath: string) => {
   );
 };
 
-const getConfigEnvironment = (configPath: string) => {
-  const environmentFile = path.join(configPath, ".env");
-  return existsSync(environmentFile) ?
-      parse(readFileSync(environmentFile))
-    : {};
-};
-
 const validateEnvironmentSetup = (configPath: string) => {
   const environmentFile = path.join(configPath, ".env");
   if (!existsSync(environmentFile)) {
     console.warn(
-      `Warning: No .env file found at ${environmentFile}. Copy .env.example to .env and configure both database URLs.`,
+      `Warning: No .env file found at ${environmentFile}. Copy .env.example to .env and configure the PostgreSQL server URL and database names.`,
     );
   }
 
-  const environment = { ...getConfigEnvironment(configPath), ...process.env };
-  const hasValue = (value: string | undefined) => Boolean(value?.trim());
-  if (!hasValue(environment.PROSTGLES_STATE_DATABASE_URL)) {
-    throw new Error(
-      "Prostgles UI state database credentials are missing. Set PROSTGLES_STATE_DATABASE_URL.",
-    );
-  }
-  if (!hasValue(environment.PROSTGLES_DATABASE_URL)) {
-    throw new Error(
-      "Configured database credentials are missing. Set PROSTGLES_DATABASE_URL.",
-    );
-  }
-  return environment as NodeJS.ProcessEnv & {
-    PROSTGLES_STATE_DATABASE_URL: string;
-    PROSTGLES_DATABASE_URL: string;
-  };
+  const environment = getConfigEnvironment(configPath);
+  getCliDatabaseConfig(environment);
+  return environment;
 };
 
 const serverEntryPath = path.join(__dirname, "..", "cliServer.js");
@@ -157,10 +138,7 @@ const watchConfig = (configPath: string, onChange: () => void) => {
 const run = async (configPath: string, isDev: boolean, temporary: boolean) => {
   const configuredEnvironment =
     temporary ? undefined : validateEnvironmentSetup(configPath);
-  const environment = configuredEnvironment ?? {
-    ...getConfigEnvironment(configPath),
-    ...process.env,
-  };
+  const environment = configuredEnvironment ?? getConfigEnvironment(configPath);
   mkdirSync(path.join(configPath, generatedFolderName), { recursive: true });
   await compileSchemaConfigProject(configPath);
   const shutdown = new AbortController();
@@ -180,8 +158,9 @@ const run = async (configPath: string, isDev: boolean, temporary: boolean) => {
       })
     : undefined;
   if (databases) {
-    environment.PROSTGLES_STATE_DATABASE_URL = databases.state.url;
-    environment.PROSTGLES_DATABASE_URL = databases.project.url;
+    environment.PROSTGLES_PG_SERVER_URL = databases.state.url;
+    environment.PROSTGLES_STATE_DB_NAME = databases.state.name;
+    environment.PROSTGLES_APP_DB_NAME = databases.project.name;
     environment.PROSTGLES_UI_HOST = "127.0.0.1";
     environment.PRGL_USERNAME ||= "admin";
     if (!environment.PRGL_PASSWORD) {

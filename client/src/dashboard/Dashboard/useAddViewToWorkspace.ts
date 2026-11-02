@@ -4,7 +4,8 @@ import {
   DEFAULT_TABLE_OPTIONS,
   type WindowData,
 } from "@common/ColumnConfig/WindowData";
-import { useOnErrorAlert } from "@components/AlertProvider";
+import { tableMightBeUndefinedDueToAccessControl } from "@common/utils";
+import { useAlert, useOnErrorAlert } from "@components/AlertProvider";
 import { useCallback } from "react";
 import type { Prgl } from "src/App";
 
@@ -21,15 +22,20 @@ export type AddViewToWorkspaceArgs = {
 
 export const useAddViewToWorkspace = () => {
   const { db, dbs } = usePrgl();
+  const { addAlert } = useAlert();
   const { onErrorAlert } = useOnErrorAlert();
 
   const addViewToWorkspaceWithErrorAlert = useCallback(
     async (args: AddViewToWorkspaceArgs) => {
+      if (!tableMightBeUndefinedDueToAccessControl(dbs.windows)?.insert) {
+        addAlert("You do not have permission to add views to this workspace.");
+        return;
+      }
       await onErrorAlert(async () => {
         await addViewToWorkspace(args, { db, dbs });
       });
     },
-    [db, dbs, onErrorAlert],
+    [db, dbs, addAlert, onErrorAlert],
   );
 
   return { addViewToWorkspace: addViewToWorkspaceWithErrorAlert };

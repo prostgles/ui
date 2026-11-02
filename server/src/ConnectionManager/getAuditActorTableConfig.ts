@@ -1,3 +1,4 @@
+import { auditActorJoinName } from "@common/managedTableSchema";
 import type { SchemaConfigAudit, TableConfig } from "prostgles-server";
 
 export const getAuditActorTableConfig = (
@@ -25,7 +26,7 @@ export const getAuditActorTableConfig = (
             tables: [audit.tableName, "users"],
             on: [
               {
-                $joinName: "prostgles_audit_actor",
+                $joinName: auditActorJoinName,
                 $sql: ({ left, right }) =>
                   `${left("actor")} ->> 'id' = ${right("id")}::text`,
               },

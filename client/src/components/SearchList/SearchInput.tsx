@@ -50,8 +50,6 @@ export const SearchInput = (props: SearchInputProps) => {
     ...inputProps
   } = props;
 
-  const size = window.isLowWidthScreen ? "small" : undefined;
-
   return (
     <FlexRow
       ref={inputWrapperRef}
@@ -85,10 +83,9 @@ export const SearchInput = (props: SearchInputProps) => {
             borderTopRightRadius: 0,
             borderBottomRightRadius: 0,
           }),
-          ...(size !== "small" && {
-            padding: "0.5em",
-            paddingRight: 0,
-          }),
+          lineHeight: "20px",
+          padding: "3px 8px",
+          paddingRight: 0,
           ...(leftContent && {
             paddingLeft: 0,
           }),
@@ -128,9 +125,8 @@ export const SearchInput = (props: SearchInputProps) => {
             iconPath={mdiFormatLetterCase}
             style={{
               visibility: isLoading ? "hidden" : "visible",
-              padding: "6px",
             }}
-            size="small"
+            size="micro"
             color={matchCaseState.value ? "action" : undefined}
             onClick={() => {
               matchCaseState.onChange(!matchCaseState.value);

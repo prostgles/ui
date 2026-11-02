@@ -2,6 +2,7 @@ import { getMCPFullToolName } from "common/mcpUtils";
 import type { editor } from "../../../client/src/dashboard/W_SQL/monacoEditorTypes";
 import { createTestDeployment } from "../../../server/dist/server/src/testing";
 import { createConfigTestProject } from "../utils/createConfigTestProject";
+import { DEFAULT_AGENT_MODEL } from "../../../server/dist/server/src/serverFunctions/askLLM/refreshModels";
 import { expect, test } from "../utils/fixtures";
 import {
   getMonacoEditorBySelector,
@@ -16,6 +17,24 @@ export const testSavedWorkflowDefinition = async (page: PageWIds) => {
     configId,
     configPath: createConfigTestProject({
       id: configId,
+      connection: {
+        table_options: {
+          workflow_items: {
+            label: "Workflow records",
+            icon: "ClipboardListOutline",
+            sort: [{ key: "id", asc: false }],
+            card: { headerColumn: "label" },
+            columns: {
+              label: { infoLevel: 1 },
+              group_id: { label: "Group", infoLevel: 1 },
+              id: { infoLevel: 2 },
+            },
+          },
+          workflow_items_without_key: { label: "workflow_items_without_key" },
+          workflow_items_single_key: { label: "workflow_items_single_key" },
+          workflow_items_unique_keys: { label: "workflow_items_unique_keys" },
+        },
+      },
       tableConfig: {
         workflow_items: {
           columns: {
@@ -76,6 +95,7 @@ export const testSavedWorkflowDefinition = async (page: PageWIds) => {
       "prostgles-ui",
       "create_agentic_workflow",
     );
+    const missingModelMessage = `Default Model ${DEFAULT_AGENT_MODEL} not found or has no credentials`;
     const definitionData = {
       containerConfiguration: { timeout: 60_000 },
       databaseAccessDefinitions: { mode: "execute_readonly_sql" as const },
@@ -121,7 +141,11 @@ export default defineAgenticWorkflow(
           type: "tool_result",
           tool_use_id: toolUseId,
           tool_name: toolName,
-          content: JSON.stringify({ isValid: true, workflowId: workflow.id }),
+          content: JSON.stringify({
+            isValid: false,
+            error: { message: missingModelMessage },
+            logs: "",
+          }),
         },
       ],
       total_tokens: 0,
@@ -138,6 +162,14 @@ export default defineAgenticWorkflow(
     });
     await methods!.startConnection!({ connectionId: connection.id });
     await page.context().addCookies(deployment.storageStateAs("admin").cookies);
+    /* Workflow validation shows the missing-model error in the chat. */
+    const errorPage = await page.context().newPage();
+    await errorPage.goto(deployment.dashboardUrl);
+    await errorPage.getByTestId("AskLLM").click();
+    await expect(
+      errorPage.getByTestId("AgenticWorkflow.validationErrorLogs"),
+    ).toHaveText(missingModelMessage);
+    await errorPage.close();
     await page.goto(deployment.dashboardUrl);
 
     const openDefinition = async () => {
@@ -311,9 +343,9 @@ export default defineAgenticWorkflow(
         ],
       );
     };
-    const openActivityTable = async (
+    const openActivityToolCall = async (
       tableName: string,
-      expectedCount: string,
+      expectedCount: number,
     ) => {
       await page.reload();
       await openDefinition();
@@ -321,28 +353,72 @@ export default defineAgenticWorkflow(
         .getByTestId("AgenticWorkflow")
         .getByRole("button", { name: "Activity", exact: true })
         .click();
-      await page.getByTestId("AgenticWorkflowActivity.openTable").click();
-      const tablePopup = page.getByRole("dialog").last();
-      await expect(tablePopup.getByRole("heading")).toHaveText(
-        `${tableName} (${expectedCount})`,
+      await page.getByTestId("AgenticWorkflow.openToolCall").click();
+      const tablePopup = page.getByTestId("ToolCall");
+      const cardList = tablePopup.getByTestId("SmartCardList");
+      const tableLabel =
+        connection.table_options?.[tableName]?.label ?? tableName;
+      await expect(cardList.getByRole("heading")).toHaveText(
+        `${tableLabel} (${expectedCount})`,
       );
+      await expect(cardList.locator(".SmartCard")).toHaveCount(expectedCount);
       return tablePopup;
     };
-    const filteredTable = await openActivityTable("workflow_items", "1/3");
+    /* Activity results use the configured table icon, label and card fields. */
+    const filteredTable = await openActivityToolCall("workflow_items", 1);
+    const configuredTableIconPath = await page
+      .locator('[data-label="Workflow records"] svg path')
+      .getAttribute("d");
+    expect(configuredTableIconPath).toBeTruthy();
+    for (const icon of [
+      page
+        .getByTestId("AgenticWorkflow.openToolCall")
+        .locator("svg path")
+        .first(),
+      filteredTable.getByRole("banner").locator("svg path").first(),
+      filteredTable.locator(".SmartCardListControls svg path").first(),
+    ]) {
+      await expect(icon).toHaveAttribute("d", configuredTableIconPath!);
+    }
     await expect(filteredTable).toContainText("inserted row");
     await expect(filteredTable).not.toContainText("same id");
     await expect(filteredTable).not.toContainText("same group");
-    await expect(filteredTable.getByTestId("FilterWrapper")).toHaveCount(2);
+    const recordFields = filteredTable.locator(".SmartCard .SmartCardCol");
+    await expect(recordFields).toHaveCount(1);
+    await expect(filteredTable.locator(".SmartCardHeader")).toHaveText(
+      "inserted row",
+    );
+    await expect(recordFields).toContainText("Group");
+    /* Tool calls toggle between record cards and their raw input/output. */
+    await filteredTable
+      .getByRole("button", { name: "JSON input/output" })
+      .click();
+    await expect(filteredTable.getByTestId("SmartCardList")).not.toBeVisible();
+    await expect(filteredTable).toContainText("Input:");
+    await expect(filteredTable).toContainText("Output:");
+    await filteredTable.getByRole("button", { name: "Tool UI" }).click();
+    await expect(filteredTable.getByTestId("SmartCardList")).toBeVisible();
+    await expect(filteredTable.getByTestId("FilterWrapper")).toHaveCount(0);
+    /* Expanding and removing key filters broadens the cards and updates counts. */
+    const filterSummaries = filteredTable.getByTitle(
+      "Click to expand/collapse",
+    );
+    await expect(filterSummaries).toHaveCount(2);
+    await filterSummaries.first().click();
     await filteredTable
       .getByTestId("FilterWrapper.deleteFilter")
       .first()
       .click();
-    await expect(filteredTable.getByRole("heading")).toHaveText(
-      "workflow_items (2/3)",
-    );
+    await expect(
+      filteredTable.getByTestId("SmartCardList").getByRole("heading"),
+    ).toHaveText("Workflow records (2)");
+    await filterSummaries.click();
     await filteredTable.getByTestId("FilterWrapper.deleteFilter").click();
-    await expect(filteredTable.getByRole("heading")).toHaveText(
-      "workflow_items (3)",
+    await expect(
+      filteredTable.getByTestId("SmartCardList").getByRole("heading"),
+    ).toHaveText("Workflow records (3)");
+    await expect(filteredTable.locator(".SmartCard").first()).toContainText(
+      "same group",
     );
     await filteredTable.getByTestId("Popup.close").click();
 
@@ -351,15 +427,29 @@ export default defineAgenticWorkflow(
       { tableName: "workflow_items", data: { group_id: 0, id: 0 } },
       { content: [] },
     );
-    const inputFilteredTable = await openActivityTable("workflow_items", "1/3");
+    const inputFilteredTable = await openActivityToolCall("workflow_items", 1);
     await inputFilteredTable.getByTestId("Popup.close").click();
+
+    /* Chat results provide returned rows as JSON text. */
+    for (const content of [
+      JSON.stringify({ group_id: 0, id: 0 }),
+      [{ type: "text", text: JSON.stringify({ group_id: 0, id: 0 }) }],
+    ]) {
+      await updateActivity(
+        { tableName: "workflow_items", data: { group_id: 9, id: 9 } },
+        { content },
+      );
+      const textResultTable = await openActivityToolCall("workflow_items", 1);
+      await expect(textResultTable).toContainText("inserted row");
+      await textResultTable.getByTestId("Popup.close").click();
+    }
 
     // An incomplete composite key must not produce a partial filter.
     await updateActivity(
       { tableName: "workflow_items", data: {} },
       { structuredContent: { id: 0 } },
     );
-    const unfilteredTable = await openActivityTable("workflow_items", "3");
+    const unfilteredTable = await openActivityToolCall("workflow_items", 3);
     await unfilteredTable.getByTestId("Popup.close").click();
 
     await updateActivity(
@@ -369,9 +459,9 @@ export default defineAgenticWorkflow(
       },
       { structuredContent: { label: "first row" } },
     );
-    const tableWithoutKey = await openActivityTable(
+    const tableWithoutKey = await openActivityToolCall(
       "workflow_items_without_key",
-      "2",
+      2,
     );
     await expect(tableWithoutKey).toContainText("first row");
     await expect(tableWithoutKey).toContainText("second row");
@@ -391,7 +481,7 @@ export default defineAgenticWorkflow(
         output,
         "update",
       );
-      const updatedTable = await openActivityTable("workflow_items", "1/3");
+      const updatedTable = await openActivityToolCall("workflow_items", 1);
       await expect(updatedTable).toContainText("inserted row");
       await updatedTable.getByTestId("Popup.close").click();
     }
@@ -410,7 +500,7 @@ export default defineAgenticWorkflow(
         output,
         "update",
       );
-      const updatedKeyTable = await openActivityTable("workflow_items", "1/3");
+      const updatedKeyTable = await openActivityToolCall("workflow_items", 1);
       await updatedKeyTable.getByTestId("Popup.close").click();
     }
 
@@ -424,9 +514,9 @@ export default defineAgenticWorkflow(
         { content: [] },
         toolName,
       );
-      const inputFilterTable = await openActivityTable(
+      const inputFilterTable = await openActivityToolCall(
         "workflow_items_without_key",
-        "1/2",
+        1,
       );
       await expect(inputFilterTable).toContainText("first row");
       await expect(inputFilterTable).not.toContainText("second row");
@@ -443,9 +533,9 @@ export default defineAgenticWorkflow(
         { structuredContent: [{ id: 0 }, { id: 1 }] },
         toolName,
       );
-      const multipleRowsTable = await openActivityTable(
+      const multipleRowsTable = await openActivityToolCall(
         "workflow_items_single_key",
-        "2/3",
+        2,
       );
       await multipleRowsTable.getByTestId("Popup.close").click();
     }
@@ -455,9 +545,9 @@ export default defineAgenticWorkflow(
       { content: [] },
       "insertMany",
     );
-    const insertedRowsTable = await openActivityTable(
+    const insertedRowsTable = await openActivityToolCall(
       "workflow_items_single_key",
-      "2/3",
+      2,
     );
     await insertedRowsTable.getByTestId("Popup.close").click();
 
@@ -471,9 +561,9 @@ export default defineAgenticWorkflow(
         { tableName: "workflow_items_unique_keys", data },
         { content: [] },
       );
-      const uniqueKeyTable = await openActivityTable(
+      const uniqueKeyTable = await openActivityToolCall(
         "workflow_items_unique_keys",
-        "1/3",
+        1,
       );
       await expect(uniqueKeyTable).toContainText("inserted row");
       await uniqueKeyTable.getByTestId("Popup.close").click();
@@ -484,7 +574,7 @@ export default defineAgenticWorkflow(
       { structuredContent: [] },
       "find",
     );
-    const emptyResultTable = await openActivityTable("workflow_items", "0/3");
+    const emptyResultTable = await openActivityToolCall("workflow_items", 0);
     await emptyResultTable.getByTestId("Popup.close").click();
 
     // Changed filter fields and unsupported conditions must not leave a misleading filter.
@@ -501,9 +591,9 @@ export default defineAgenticWorkflow(
         { content: [] },
         "update",
       );
-      const unfilteredUpdateTable = await openActivityTable(
+      const unfilteredUpdateTable = await openActivityToolCall(
         "workflow_items_without_key",
-        "2",
+        2,
       );
       await unfilteredUpdateTable.getByTestId("Popup.close").click();
     }

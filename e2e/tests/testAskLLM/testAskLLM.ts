@@ -24,6 +24,7 @@ import { hygieneRatingsApiScenario } from "./scenarios/hygieneRatingsApi.scenari
 import { receiptImport } from "./scenarios/receiptImport/receiptImport.scenario";
 import { stringify } from "./stringify";
 import { makeToolUse, type Scenario, type ToolUse } from "./utils";
+import { DEFAULT_AGENT_MODEL } from "../../../server/dist/server/src/serverFunctions/askLLM/refreshModels";
 
 export type RequestToolAccess = JSONB.GetType<
   (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["request_tool_access"]["schema"]
@@ -99,7 +100,7 @@ const webSearchToolUse: ToolUse = {
       function: {
         name: getProstglesMCPFullToolName("web", "get_snapshot"),
         arguments: stringify({
-          url: "http://127.0.0.1:3004/login",
+          url: "http://127.0.0.1:3004/auth/login",
         }),
       },
     },
@@ -153,7 +154,7 @@ const mcpFetchToolUse: ToolUse = {
       function: {
         name: "web--fetch",
         arguments: stringify({
-          url: "http://localhost:3004/login",
+          url: "http://localhost:3004/auth/login",
         }),
       },
     },
@@ -169,7 +170,7 @@ const playwrightMCPToolUse: ToolUse = {
       function: {
         name: "playwright--browser_navigate",
         arguments: stringify({
-          url: "http://localhost:3004/login",
+          url: "http://localhost:3004/auth/login",
         }),
       },
     },
@@ -179,7 +180,7 @@ const playwrightMCPToolUse: ToolUse = {
       function: {
         name: "playwright--browser_snapshot",
         arguments: stringify({
-          url: "http://localhost:3004/login",
+          url: "http://localhost:3004/auth/login",
         }),
       },
     },
@@ -355,10 +356,9 @@ const toolResponses: Record<string, ToolUse> = {
           arguments: stringify({
             tableName: "receipts",
             data: {
-              extracted_text: "Item1 $10.00\nItem2 $15.00\nTotal $25.00",
               amount: 450,
               currency: "USD",
-              company: "Grand Ocean Hotel",
+              company_name: "Grand Ocean Hotel",
               date: "2025-09-12",
               created_at: new Date().toISOString(),
             },
@@ -473,20 +473,14 @@ const toolResponses: Record<string, ToolUse> = {
           name: getProstglesMCPFullToolName("prostgles-ui", "create_agent"),
           arguments: stringify({
             name: "Test Agent",
-            // tools: {}
+            tools: { web: { fetch: 1 } },
             firstMessage: " Do the research please",
             prompt: "Provide useful research to the user.",
             timeout: 120000,
             maxTokens: 5000,
-            modelName: "anthropic/claude-4.6-sonnet",
             maxCostUSD: 1,
             temperature: 0.1,
             maxIterations: 8,
-            // mcpServerConfigs: {
-            //   "brave-search": {
-            //     configId: 35,
-            //   },
-            // },
             autoApproveAllTools: true,
           }),
         },
@@ -553,6 +547,15 @@ export const setupAskLLMToolUse = async (page: PageWIds) => {
   if (!existingFunc) {
     throw new Error("askLLM function not found in the database");
   }
+  /* Fixed mock prices keep the spending-limit scenarios deterministic. */
+  await runDbsSql(
+    page,
+    "UPDATE llm_models SET pricing_info = $1 WHERE provider_id = 'Prostgles' AND name = $2",
+    [
+      { input: 3, output: 15, cachedInput: 1, cachedOutput: 0.08 },
+      DEFAULT_AGENT_MODEL,
+    ],
+  );
   const newDefinition = [
     `export const run: ProstglesMethod = async (args, { db, dbo, user, callMCPServerTool }) => {`,
     testAskLLMCode,

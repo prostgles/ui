@@ -1,5 +1,6 @@
 import { tableColumnConfigFields } from "../ColumnConfig/columnConfigSchema";
 import { columnDisplayFormatSchema } from "../columnDisplayFormat.schema";
+import { cardLayoutOptionsSchema } from "../ColumnConfig/cardLayout";
 
 export const tableOptionsJsonbSchema = {
   record: {
@@ -16,7 +17,7 @@ export const tableOptionsJsonbSchema = {
         referenceDisplay: {
           optional: true,
           description:
-            "Default display for foreign keys referencing this table. Explicit foreign-key column formats override it.",
+            "Default display for foreign keys referencing this table. Defaults to card.headerColumn when omitted. Explicit foreign-key column formats override it; empty columns disable it.",
           type: {
             columns: {
               description:
@@ -28,7 +29,8 @@ export const tableOptionsJsonbSchema = {
             },
             display: {
               optional: true,
-              description: "Defaults to drillable values without labels.",
+              description:
+                "Defaults to drillable values without labels, grouped when every field supports drill-down.",
               oneOfType: [
                 {
                   type: { enum: ["values"] },
@@ -58,7 +60,8 @@ export const tableOptionsJsonbSchema = {
         },
         columns: {
           optional: true,
-          description: "Default column configs. Names absent from the table schema define custom columns.",
+          description:
+            "Default column configs. Names absent from the table schema define custom columns.",
           record: {
             partial: true,
             values: {
@@ -77,6 +80,12 @@ export const tableOptionsJsonbSchema = {
           optional: true,
           description: "Card view options",
           type: {
+            layout: {
+              ...cardLayoutOptionsSchema,
+              optional: true,
+              description:
+                "Field layout for the detailed card opened from the title. Summary rows use automatic placement and share the field label settings.",
+            },
             avatarColumn: {
               type: "string",
               description:
@@ -95,35 +104,13 @@ export const tableOptionsJsonbSchema = {
               description:
                 "Column name that should be used as the sub-header in card view.",
             },
-            visibleColumns: {
+            subHeaderColumns: {
               optional: true,
+              type: "string[]",
               description:
-                "Array of column names that should be visible in card view by default",
-              arrayOf: {
-                oneOf: [
-                  "string",
-                  {
-                    type: {
-                      column: "string",
-                      hideLabel: { type: "boolean", optional: true },
-                      // maxHeightPx: { type: "integer", optional: true },
-                      // widthPerc: { type: "integer", optional: true },
-                      // gridColumn: { optional: true, type: "string" },
-                      // gridRow: { optional: true, type: "string" },
-                    },
-                  },
-                ],
-              },
+                "Columns shown together in the card sub-header, in order. Overrides subHeaderColumn when provided.",
             },
           },
-          // layout: {
-          //   optional: true,
-          //   type: {
-          //     type: { enum: ["CardLayout"] },
-          //     // Recursive type, so we need to use `any` here
-          //     children: "any",
-          //   },
-          // },
         },
       },
     },

@@ -1,4 +1,5 @@
 import Btn from "@components/Btn";
+import ErrorComponent from "@components/ErrorComponent";
 import {
   PdfViewer,
   type PdfViewerProps,
@@ -29,6 +30,9 @@ type AnnotationsContext = {
   fileTable: DBSchemaTableWJoins;
   annotationsTable: DBSchemaTableWJoins;
   fileTableHandler: TableHandlerClient<DBManagedTableSchema, "files">;
+  fileVersionsTableHandler:
+    TableHandlerClient<DBManagedTableSchema, "files_versions"> | undefined;
+  requestedFileVersion: number | null | undefined;
   annotationsTableHandler: TableHandlerClient<
     DBManagedTableSchema,
     "file_annotations"
@@ -37,19 +41,22 @@ type AnnotationsContext = {
 
 const PdfViewerWithAnnotations = ({
   fileId,
-  fileTable,
   fileTableHandler,
+  fileVersionsTableHandler,
+  fileVersion,
   annotationsTableHandler,
   annotationsTable,
   url,
   annotationPage,
   ...pdfProps
-}: Omit<P, "context" | "topLeftControls"> & AnnotationsContext) => {
+}: Omit<P, "context" | "topLeftControls"> &
+  AnnotationsContext & {
+    fileVersion: number | null;
+  }) => {
   const prgl = usePrgl();
-  const { data: fileRow } = fileTableHandler.useFindOne(
-    {
-      id: fileId,
-    },
+  const sourceTableHandler = fileVersionsTableHandler ?? fileTableHandler;
+  const { data: fileRow } = sourceTableHandler.useFindOne(
+    fileVersion ? { file_id: fileId, version: fileVersion } : { id: fileId },
     {
       select: {
         id: 1,
@@ -61,11 +68,8 @@ const PdfViewerWithAnnotations = ({
     },
   );
   const { data: annotations } = annotationsTableHandler.useSubscribe({
-    $existsJoined: {
-      [fileTable.name as "files"]: {
-        id: fileId,
-      },
-    },
+    file_id: fileId,
+    file_version: fileVersion,
   });
 
   const [activeAnnotationId, setActiveAnnotationId] = useState<number>();
@@ -74,6 +78,10 @@ const PdfViewerWithAnnotations = ({
   );
 
   const [newAnnotation, setNewAnnotation] = useState<CreatedHighlight>();
+  const revisionUrl = new URL(url, window.location.href);
+  if (fileVersion) {
+    revisionUrl.searchParams.set("version", String(fileVersion));
+  }
 
   return (
     <>
@@ -88,7 +96,7 @@ const PdfViewerWithAnnotations = ({
       )}
       <PdfViewer
         {...pdfProps}
-        url={url}
+        url={revisionUrl.href}
         defaultPage={annotationPage ?? pdfProps.defaultPage}
         activeHighlightId={activeAnnotationId}
         doclingDocument={fileRow?.docling_metadata ?? undefined}
@@ -137,7 +145,7 @@ const PdfViewerWithAnnotations = ({
             ),
           })) ?? []
         }
-        onCreateHighlight={setNewAnnotation}
+        onCreateHighlight={fileRow ? setNewAnnotation : undefined}
       />
       {newAnnotation && (
         <Popup
@@ -154,6 +162,7 @@ const PdfViewerWithAnnotations = ({
               page: newAnnotation.page,
               text_selections: newAnnotation.text_selections,
               file_id: fileId,
+              file_version: fileVersion,
             }}
             defaultData={{
               name: null,
@@ -165,6 +174,41 @@ const PdfViewerWithAnnotations = ({
         </Popup>
       )}
     </>
+  );
+};
+
+const PdfViewerWithResolvedVersion = (
+  props: Omit<P, "context"> & AnnotationsContext,
+) => {
+  const {
+    fileTable,
+    fileTableHandler,
+    fileVersionsTableHandler,
+    requestedFileVersion,
+  } = props;
+  const hasVersioning = fileTable.columns.some(
+    ({ name }) => name === "version",
+  );
+  const { data: currentFile } = fileTableHandler.useFindOne(
+    { id: props.fileId },
+    { select: hasVersioning ? { version: 1 } : { id: 1 } },
+  );
+  if (!currentFile) return null;
+  const fileVersion = (
+    requestedFileVersion === undefined ?
+      (currentFile.version ?? null)
+    : requestedFileVersion) as number | null;
+  if (hasVersioning && (!fileVersion || !fileVersionsTableHandler)) {
+    return (
+      <ErrorComponent error="The annotation's file revision is missing or unavailable." />
+    );
+  }
+  return (
+    <PdfViewerWithAnnotations
+      key={`${props.fileId}:${fileVersion}`}
+      {...props}
+      fileVersion={fileVersion}
+    />
   );
 };
 
@@ -191,8 +235,30 @@ export const PdfViewerWithFileTableContext = ({
     ) {
       return;
     }
+    const fileVersionsTable = annotationsTable.columns
+      .find(({ name }) => name === "file_version")
+      ?.references?.find(({ fcols }) => fcols.includes("version"))?.ftable;
+    const urlVersion = new URL(
+      pdfProps.url,
+      window.location.href,
+    ).searchParams.get("version");
+    const requestedFileVersion =
+      context.table.managedTableType === "file-annotations" ?
+        typeof context.row.file_version === "number" ?
+          context.row.file_version
+        : null
+      : urlVersion ? Number(urlVersion)
+      : undefined;
     return {
       fileId,
+      requestedFileVersion,
+      fileVersionsTableHandler:
+        fileVersionsTable ?
+          (db[fileVersionsTable] as TableHandlerClient<
+            DBManagedTableSchema,
+            "files_versions"
+          >)
+        : undefined,
       annotationPage:
         (
           context.table.managedTableType === "file-annotations" &&
@@ -205,10 +271,12 @@ export const PdfViewerWithFileTableContext = ({
       fileTableHandler: fileTableHandler as TableHandlerClient,
       annotationsTableHandler: annotationsTableHandler as TableHandlerClient,
     };
-  }, [context, fileId, db, tables]);
+  }, [context, fileId, db, tables, pdfProps.url]);
 
   if (annotationsContext) {
-    return <PdfViewerWithAnnotations {...pdfProps} {...annotationsContext} />;
+    return (
+      <PdfViewerWithResolvedVersion {...pdfProps} {...annotationsContext} />
+    );
   }
   return <PdfViewer {...pdfProps} />;
 };

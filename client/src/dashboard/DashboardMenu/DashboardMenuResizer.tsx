@@ -1,14 +1,15 @@
 import React, { useRef } from "react";
-import type { DashboardMenuProps } from "./DashboardMenu";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { useLocalSettings } from "../localSettings";
 import { Pan } from "@components/Pan";
 
 type P = {
   dashboardMenuRef: HTMLDivElement | null;
-} & Pick<DashboardMenuProps, "workspace">;
+};
 
-export const DashboardMenuResizer = ({ dashboardMenuRef, workspace }: P) => {
+export const DashboardMenuResizer = ({ dashboardMenuRef }: P) => {
   const localSettings = useLocalSettings();
+  const { user, dbs } = usePrgl();
 
   const dragging = useRef<{
     startClientX: number;
@@ -16,7 +17,7 @@ export const DashboardMenuResizer = ({ dashboardMenuRef, workspace }: P) => {
     startWidth: number;
   }>();
 
-  if (!dashboardMenuRef) return null;
+  if (!dashboardMenuRef || !user) return null;
 
   return (
     <Pan
@@ -27,7 +28,7 @@ export const DashboardMenuResizer = ({ dashboardMenuRef, workspace }: P) => {
         right: 0,
         top: 0,
         bottom: 0,
-        width: "25px",
+        width: "4px",
         cursor: "ew-resize",
       }}
       onPress={(e, node) => {
@@ -58,9 +59,13 @@ export const DashboardMenuResizer = ({ dashboardMenuRef, workspace }: P) => {
       }}
       onPanEnd={(e) => {
         dragging.current = undefined;
-        workspace.$update(
-          { options: { pinnedMenuWidth: dashboardMenuRef.clientWidth } },
-          { deepMerge: true },
+        void dbs.users.update(
+          { id: user.id },
+          {
+            options: {
+              $merge: [{ pinnedMenuWidth: dashboardMenuRef.clientWidth }],
+            },
+          },
         );
       }}
     />

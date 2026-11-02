@@ -17,10 +17,9 @@ export async function enableService<
   const activeService = this.activeServices.get(serviceName);
   if (activeService?.status === "running") {
     return activeService as RunningServiceInstance<Services[ServiceName]>;
-  } else {
-    this.stopService(serviceName);
   }
   const enabling = async () => {
+    await this.stopService(serviceName);
     const buildResult = await this.buildService(serviceName, onLogs);
     if (buildResult !== "close") {
       throw new Error(

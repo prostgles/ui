@@ -1,15 +1,18 @@
+import type { AuditTableRow } from "prostgles-types";
 import type { ActionColumnsParams } from "./actionColumn";
 import type { ColumnConfig } from "./ColumnConfig/ColumnConfig";
 import { doclingTimingsSchema } from "./documentsServiceOutputSchema";
 import type { DBSSchema } from "./publishUtils";
 import type { RequiredKeepUndefined } from "./utils";
 
+export const auditActorJoinName = "prostgles_audit_actor";
+
 export const auditTrailFilterColumns = [
   "schema_name",
   "table_name",
   "old_id",
   "new_id",
-] as const;
+] as const satisfies readonly (keyof AuditTableRow)[];
 
 export type ClientTableAuditConfig =
   | { error: string }
@@ -18,12 +21,23 @@ export type ClientTableAuditConfig =
       idColumns: readonly string[];
     };
 
+type ConnectionTableOptions = NonNullable<
+  NonNullable<DBSSchema["connections"]["table_options"]>[string]
+>;
+
 export type TableOptions = RequiredKeepUndefined<
-  NonNullable<
-    NonNullable<DBSSchema["connections"]["table_options"]>[string]
-  > & {
+  Omit<ConnectionTableOptions, "columns"> & {
+    columns?: Partial<
+      Record<
+        string,
+        NonNullable<NonNullable<ConnectionTableOptions["columns"]>[string]> & {
+          defaultRenderAs?: InternalColumnFormat;
+        }
+      >
+    >;
     label: string;
-    managedTableType?: "files" | "file-annotations";
+    managedTableType?:
+      "files" | "file-annotations" | "alerts" | "alert-deliveries";
   }
 > & {
   audit?: ClientTableAuditConfig;
@@ -44,8 +58,17 @@ export type InternalColumnFormat = {
         dataKey: string;
       }
     | { component: "FileExtractionStatus" }
+    | { component: "Alert"; field: AlertFieldName }
     | ({ component: "ActionColumns"; dataKey: string } & ActionColumnsParams);
 };
+
+export const alertFieldNames = [
+  "definition",
+  "schedule",
+  "user_filter",
+  "channels",
+] as const;
+export type AlertFieldName = (typeof alertFieldNames)[number];
 
 export type ColumnOptions = RequiredKeepUndefined<
   Pick<
@@ -65,6 +88,7 @@ export type ColumnOptions = RequiredKeepUndefined<
 export const annotationsTableColumns = {
   id: `INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY`,
   file_id: `UUID NOT NULL`,
+  file_version: "INTEGER CHECK (file_version >= 1)",
   name: `TEXT`,
   text: `TEXT NOT NULL DEFAULT ''`,
   page: "INTEGER NOT NULL DEFAULT 1 CHECK (page >= 1)",

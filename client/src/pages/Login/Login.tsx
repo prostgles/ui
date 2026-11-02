@@ -4,30 +4,42 @@ import { FlexCol } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
 import { useAuthState } from "prostgles-client";
 import React from "react";
+import { useNavigate } from "react-router";
+import { ROUTES } from "@common/utils";
 import type { Prgl } from "../../App";
 import { AuthenticationNotificationPopup } from "./AuthenticationNotificationPopup";
 import { LoginTotpFormFields } from "./LoginTotpForm";
 import { LoginWithProviders } from "./LoginWithProviders";
 
-export type LoginFormProps = Pick<Prgl, "auth">;
+export type LoginFormProps = Pick<Prgl, "auth"> & { register?: boolean };
 
-export const Login = ({ auth }: LoginFormProps) => {
-  const authState = useAuthState({ auth });
+export const Login = ({ auth, register = false }: LoginFormProps) => {
+  const navigate = useNavigate();
+  const params = new URLSearchParams(window.location.search);
+  const invitationToken =
+    register ? (params.get("invitationToken") ?? undefined) : undefined;
+  const authState = useAuthState({
+    auth,
+    initialState: register ? "registerWithPassword" : "login",
+    initialUsername: register ? (params.get("email") ?? "") : "",
+    invitationToken,
+  });
   const {
     formHandlers,
     isOnLogin,
-    registerTypeAllowed,
-    setState,
     error,
     loading,
     authResponse,
+    result,
     clearAuthResponse,
     onAuthCall,
   } = authState;
 
   const headerTitle =
-    !isOnLogin ? "Sign up"
-    : !formHandlers?.setPassword ? "Signup or Login"
+    !isOnLogin ?
+      invitationToken ? "Set your password"
+      : "Sign up"
+    : !formHandlers?.show.password ? "Continue with email"
     : "Sign in";
 
   const {
@@ -54,7 +66,16 @@ export const Login = ({ auth }: LoginFormProps) => {
       {authResponse && (
         <AuthenticationNotificationPopup
           {...authResponse}
-          onClose={clearAuthResponse}
+          onClose={() => {
+            clearAuthResponse();
+            if (
+              register &&
+              result?.success &&
+              result.code === "email-verified"
+            ) {
+              void navigate(ROUTES.LOGIN);
+            }
+          }}
         />
       )}
       <FlexCol className="p-2">
@@ -127,6 +148,8 @@ export const Login = ({ auth }: LoginFormProps) => {
               : "Sign in"
             : formHandlers?.state === "registerWithPasswordConfirmationCode" ?
               "Confirm email"
+            : invitationToken ?
+              "Activate account"
             : "Sign up"
           }
           size="large"
@@ -134,27 +157,34 @@ export const Login = ({ auth }: LoginFormProps) => {
         />
         <LoginWithProviders auth={auth} />
       </FlexCol>
-      {!formHandlers && <ErrorComponent error="Invalid state" />}
-      {auth.signupWithEmailAndPassword && (
-        <Btn
-          style={{
-            fontSize: "14px",
-            width: "100%",
-            borderTopLeftRadius: 0,
-            borderTopRightRadius: 0,
-          }}
-          variant="faded"
-          data-command="Login.toggle"
-          color="action"
-          onClick={() => {
-            setState(isOnLogin ? registerTypeAllowed : "login");
-          }}
-        >
-          {isOnLogin ?
-            "No account? Sign up with email"
-          : "Already have an account? Sign in"}
-        </Btn>
+      {!formHandlers && (
+        <ErrorComponent
+          error={
+            register && auth.signupWithEmailOptions?.requireInvitation ?
+              "An invitation is required to register"
+            : "Email registration is unavailable"
+          }
+        />
       )}
+      {auth.signupWithEmail &&
+        (!auth.signupWithEmailOptions?.requireInvitation || !isOnLogin) && (
+          <Btn
+            style={{
+              fontSize: "14px",
+              width: "100%",
+              borderTopLeftRadius: 0,
+              borderTopRightRadius: 0,
+            }}
+            variant="faded"
+            data-command="Login.toggle"
+            color="action"
+            onClick={() => navigate(isOnLogin ? ROUTES.REGISTER : ROUTES.LOGIN)}
+          >
+            {isOnLogin ?
+              "No account? Sign up with email"
+            : "Already have an account? Sign in"}
+          </Btn>
+        )}
     </form>
   );
 };

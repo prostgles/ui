@@ -26,6 +26,7 @@ const COLUMN_CONFIG_KEYS: Record<keyof ColumnConfig, 1> = {
   label: 1,
   display: 1,
   show: 1,
+  infoLevel: 1,
   style: 1,
   width: 1,
   nested: 1,
@@ -116,7 +117,7 @@ export const getSortColumn = <
 ): C | undefined => {
   return columns.find((c) => {
     return (
-      c.name === sort.key ||
+      (!c.nested && c.name === sort.key) ||
       (typeof sort.key === "number" &&
         typeof c.name === "string" &&
         c.idx === sort.key) ||

@@ -9,6 +9,7 @@ import {
 } from "prostgles-types";
 import type { Prgl } from "src/App";
 import { getJoinedTables } from "../W_Table/tableUtils/tableUtils";
+import { getColumnConfigsWithDefaultActions } from "../W_Table/tableUtils/getColumnConfigsWithDefaultActions";
 import type { DBSchemaTablesWJoins, JoinOption } from "./dashboardUtils";
 
 export type DBSchemaTableWithOptions = DBSchemaTable<
@@ -20,11 +21,14 @@ export const getTables = (
   schemaTables: DBSchemaTableWithOptions[],
   db: Prgl["db"],
   joins: ClientJoin[] | undefined,
+  methods: Prgl["methods"],
 ): { tables: DBSchemaTablesWJoins } => {
   const tables = schemaTables.map((t) => {
     const foreignKeyJoins = getJoinedTables(schemaTables, t.name, db);
     const result = {
       ...t,
+      columnConfigs:
+        getColumnConfigsWithDefaultActions(t, methods) ?? t.columnConfigs,
       ...foreignKeyJoins,
       joinOptions:
         joins ?

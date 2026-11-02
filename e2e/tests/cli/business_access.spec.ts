@@ -67,7 +67,7 @@ test("business admins manage global users, types and rules without state adminis
       { key: "admin", type: "admin" },
       { key: "owner", type: "connection_admin" },
       { key: "reader", type: readerType },
-      { key: "editor", type: editorType },
+      { key: "rule-reader", type: readerType },
       { key: "outsider" },
     ],
     logPath: test.info().outputPath("business-access.log"),
@@ -482,7 +482,7 @@ test("business admins manage global users, types and rules without state adminis
           { returning: "*" },
         ),
       ).toEqual([]);
-      expect(await owner.db.user_types!.find({ id: sqlType })).toEqual([]);
+      expect(await owner.db.user_types!.count({ id: sqlType })).toEqual(1);
       await expect(
         owner.db.users!.insert({
           username: "forged-sql",
@@ -884,37 +884,6 @@ test("business admins manage global users, types and rules without state adminis
       ]);
     });
 
-    await test.step("removing a type's rule revokes its live connections", async () => {
-      const reader = await deployment.connectProjectAs("reader");
-      const state = await deployment.connectStateAs("reader");
-      const removedGrants = await owner.db.access_control_user_types!.delete(
-        { access_control_id: readerRule.id, user_type: readerType },
-        { returning: "*" },
-      );
-      expect(removedGrants).toHaveLength(1);
-      await expect
-        .poll(
-          () =>
-            reader.db.records?.count?.().then(
-              () => true,
-              () => false,
-            ) ?? false,
-        )
-        .toBe(false);
-      await expect
-        .poll(() => state.db.connections!.count().catch(() => 0))
-        .toBe(0);
-      const revoked = await deployment.connectStateAs("reader");
-      expect(await revoked.db.connections!.count()).toBe(0);
-      await expect(
-        revoked.methods!.startConnection!({ connectionId: connection.id }),
-      ).rejects.toBeTruthy();
-      await owner.db.access_control_user_types!.insert({
-        access_control_id: readerRule.id,
-        user_type: readerType,
-      });
-    });
-
     await test.step("type changes revoke cached access and preserve function filter semantics", async () => {
       const reader = await deployment.connectProjectAs("reader");
       expect(reader.auth.user!.type).toBe(readerType);
@@ -947,6 +916,33 @@ test("business admins manage global users, types and rules without state adminis
         )
         .toBe(false);
       const revoked = await deployment.connectStateAs("reader");
+      expect(await revoked.db.connections!.count()).toBe(0);
+      await expect(
+        revoked.methods!.startConnection!({ connectionId: connection.id }),
+      ).rejects.toBeTruthy();
+    });
+
+    await test.step("removing a type's rule revokes its live connections", async () => {
+      const reader = await deployment.connectProjectAs("rule-reader");
+      const state = await deployment.connectStateAs("rule-reader");
+      const removedGrants = await owner.db.access_control_user_types!.delete(
+        { access_control_id: readerRule.id, user_type: readerType },
+        { returning: "*" },
+      );
+      expect(removedGrants).toHaveLength(1);
+      await expect
+        .poll(
+          () =>
+            reader.db.records?.count?.().then(
+              () => true,
+              () => false,
+            ) ?? false,
+        )
+        .toBe(false);
+      await expect
+        .poll(() => state.db.connections!.count().catch(() => 0))
+        .toBe(0);
+      const revoked = await deployment.connectStateAs("rule-reader");
       expect(await revoked.db.connections!.count()).toBe(0);
       await expect(
         revoked.methods!.startConnection!({ connectionId: connection.id }),

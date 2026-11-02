@@ -207,10 +207,11 @@ export const useNewRowDataHandler = (args: Args) => {
     onChanged: (newRow) => setNewRowData({ ...newRow }),
   });
 
-  const [newRow, setNewRow] = useState<AnyObject>();
+  const newRow = useMemo(
+    () => newRowDataHandler.getRow(),
+    [newRowData, newRowDataHandler],
+  );
   useEffect(() => {
-    const newRow = newRowDataHandler.getRow();
-    setNewRow(newRow);
     setErrors({});
     setError(undefined);
   }, [newRowData, newRowDataHandler]);

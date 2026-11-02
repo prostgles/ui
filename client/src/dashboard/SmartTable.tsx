@@ -4,7 +4,7 @@ import {
   type DetailedFilterBase,
 } from "@common/filterUtils";
 import ErrorComponent from "@components/ErrorComponent";
-import { FlexCol } from "@components/Flex";
+import { FlexCol, FlexRowWrap } from "@components/Flex";
 import Loading from "@components/Loader/Loading";
 import Popup, { type PopupProps } from "@components/Popup/Popup";
 import type { PaginationProps } from "@components/Table/Pagination";
@@ -16,6 +16,7 @@ import type { Prgl } from "../App";
 import { quickClone } from "../utils/utils";
 import RTComp from "./RTComp";
 import { SmartFilterBar } from "./SmartFilterBar/SmartFilterBar";
+import { SmartFilterBarSearch } from "./SmartFilterBar/SmartFilterBarSearch";
 import { SmartForm } from "./SmartForm/SmartForm";
 import { isNumericColumn } from "./W_SQL/getSQLResultTableColumns";
 import { getTableSelect } from "./W_Table/tableUtils/getTableSelect";
@@ -29,7 +30,7 @@ import {
 import type { ProstglesColumn } from "./W_Table/W_Table";
 
 type SmartTableProps = Pick<Prgl, "db" | "sql" | "tables" | "methods"> &
-  Pick<PopupProps, "clickCatchStyle" | "positioning"> & {
+  Pick<PopupProps, "clickCatchStyle" | "positioning" | "subTitle"> & {
     filter?: DetailedFilter[];
     fixedFilter?: AnyObject;
     tableName: string;
@@ -52,7 +53,7 @@ type SmartTableProps = Pick<Prgl, "db" | "sql" | "tables" | "methods"> &
     filterOperand?: "and" | "or";
     realtime?: { throttle?: number };
     initialSort?: ColumnSort[];
-    hideFilters?: boolean;
+    filterMode?: "hidden" | "bar" | "header";
   };
 
 type S = {
@@ -223,6 +224,11 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
     return this.props.filter ?? this.state.filter ?? [];
   }
 
+  onFilterChange = (filter: DetailedFilter[]) => {
+    this.props.onFilterChange?.(filter);
+    void this.getData(filter, undefined, 0);
+  };
+
   getQueryFilter = (filter = this.filter): AnyObject => {
     const queryFilter = getSmartGroupFilter(
       filter,
@@ -302,22 +308,27 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
       noDataComponent,
       titlePrefix,
       title,
+      subTitle,
       clickCatchStyle,
       positioning = "right-panel",
-      hideFilters,
+      filterMode = "bar",
+      fixedFilter,
     } = this.props;
     const {
-      filter,
       rows,
       sort,
       page,
+      pageSize,
       filteredRows,
       totalRows,
       editRowFilter,
       loadedData,
       error,
     } = this.state;
-    const titleNode =
+    const filter = this.filter;
+    const extraFilters = fixedFilter ? [fixedFilter] : undefined;
+    const showHeaderSearch = filterMode === "header";
+    const titleContent =
       typeof title === "function" ?
         title({ filteredRows, totalRows })
       : (title ?? (
@@ -326,6 +337,31 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
             <span>{` (${(filteredRows == totalRows ? [filteredRows] : [filteredRows, totalRows]).map((v) => v.toLocaleString()).join("/")})`}</span>
           </span>
         ));
+    const titleNode =
+      showHeaderSearch ?
+        <FlexRowWrap className="gap-p5">
+          <FlexCol className="f-1 min-w-0 gap-p25">
+            {titleContent}
+            {onClosePopup && subTitle && (
+              <span
+                className="font-14 font-normal text-ellipsis text-1"
+                title={subTitle}
+              >
+                {subTitle}
+              </span>
+            )}
+          </FlexCol>
+          <SmartFilterBarSearch
+            db={db}
+            tables={tables}
+            tableName={tableName}
+            filter={filter}
+            extraFilters={extraFilters}
+            onFilterChange={this.onFilterChange}
+            style={{ width: "240px", maxWidth: "100%", margin: "unset" }}
+          />
+        </FlexRowWrap>
+      : titleContent;
 
     if (error) {
       return <ErrorComponent error={error} />;
@@ -335,7 +371,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
       return <Loading />;
     }
 
-    if (noDataComponent && !this.state.filter?.length && !rows.length) {
+    if (noDataComponent && !filter.length && !rows.length) {
       return noDataComponent;
     }
 
@@ -368,7 +404,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
           />
         )}
 
-        {!hideFilters && (
+        {filterMode !== "hidden" && (
           <SmartFilterBar
             className="p-1 bg-color-2 min-h-fit"
             rowCount={totalRows}
@@ -378,10 +414,9 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
             table_name={tableName}
             tables={tables}
             filter={filter}
-            onChange={(filter) => {
-              this.props.onFilterChange?.(filter);
-              void this.getData(filter);
-            }}
+            extraFilters={extraFilters}
+            filtersOnly={showHeaderSearch}
+            onChange={this.onFilterChange}
             onHavingChange={() => {
               console.warn("Having change not implemented");
             }}
@@ -417,13 +452,13 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
           }}
           pagination={{
             page,
-            pageSize: 10,
-            totalRows,
+            pageSize,
+            totalRows: filteredRows,
             onPageChange: (page) => {
               void this.getData(undefined, undefined, page);
             },
             onPageSizeChange: (pageSize) => {
-              void this.getData(undefined, undefined, undefined, pageSize);
+              void this.getData(undefined, undefined, 0, pageSize);
             },
           }}
         />
@@ -437,6 +472,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
     return (
       <Popup
         title={titleNode}
+        subTitle={showHeaderSearch ? undefined : subTitle}
         positioning={positioning}
         onClose={onClosePopup}
         contentStyle={{

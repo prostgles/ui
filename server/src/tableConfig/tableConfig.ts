@@ -60,7 +60,7 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
   },
   user_statuses: {
     isLookupTable: {
-      values: { active: {}, disabled: {}, public: {} },
+      values: { active: {}, disabled: {}, public: {}, pending: {} },
     },
   },
 
@@ -140,6 +140,8 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
       database_config_id:
         "INTEGER REFERENCES database_configs(id) ON DELETE SET NULL",
       connection_id: "UUID REFERENCES connections(id) ON DELETE SET NULL",
+      user_id: "UUID REFERENCES users(id) ON DELETE CASCADE",
+      delivery_id: "UUID",
       ui_path: {
         jsonbSchema: {
           oneOfType: [
@@ -158,6 +160,7 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
       data: "JSONB",
       created: "TIMESTAMPTZ DEFAULT NOW()",
     },
+    constraints: { delivery: "UNIQUE(delivery_id)" },
   },
   alert_viewed_by: {
     columns: {

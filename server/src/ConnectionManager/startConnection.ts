@@ -176,6 +176,7 @@ export const startConnection = async function (
           llmCredential: _llmCredential,
           audit: _audit,
           alerts: _alerts,
+          emailOutbox: _emailOutbox,
           publish: _publish,
           ...schemaProstglesOptions
         } = schemaConfig ?? {};

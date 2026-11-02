@@ -134,10 +134,7 @@ export type McpServerEvents = {
       | { type: "stderr"; data: string }
       | {
           type: "error";
-          errorType?:
-            | "oauth-authorization-url"
-            | "oauth-dcr-not-supported"
-            | "disconnected";
+          errorType?: "oauth-dcr-not-supported" | "disconnected";
           data: unknown;
         },
     fullLog: string,

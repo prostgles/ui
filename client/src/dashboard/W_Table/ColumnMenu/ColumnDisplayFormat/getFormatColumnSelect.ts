@@ -3,11 +3,14 @@ import {
   getActionValueKey,
   type ActionColumnsParams,
 } from "@common/actionColumn";
+import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
 import {
   getFunctionActionSelect,
   getTableFunctionActionSelect,
 } from "@common/functionOptions";
+import { resolveActionColumns } from "@common/resolveActionColumns";
 import { FILE_TABLE_SELECT } from "@components/MediaViewer/managedTableUtils";
+import { ROW_ACTIONS_COLUMN } from "prostgles-client";
 import type {
   AnyObject,
   DBSchemaTable,
@@ -15,10 +18,7 @@ import type {
   ServerFunctionHandler,
 } from "prostgles-types";
 import { FILE_ANNOTATION_SELECT } from "../../ManagedColumn/fileAnnotation";
-import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
 import type { ColumnFormat } from "./columnFormatUtils";
-import { ROW_ACTIONS_COLUMN } from "prostgles-client";
-import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
 
 type FormatColumn = Pick<ColumnConfigWithInfo, "format" | "info" | "name">;
 
@@ -29,19 +29,21 @@ export const getColumnFormat = (
 export const getFormatColumnSelect = ({
   column,
   table,
+  tables,
   methods,
 }: {
   column: FormatColumn;
   table: DBSchemaTable;
+  tables: DBSchemaTable[];
   methods: ServerFunctionHandler;
 }): AnyObject => {
   const format = getColumnFormat(column);
   const selectableColumns = table.columns
     .filter((c) => c.select)
     .map((c) => c.name);
-  const actions =
-    format?.type === "Action" ? undefined : getColumnActions(column);
-  if (actions) {
+  const configuredActions = getColumnActions(column);
+  if (configuredActions) {
+    const actions = resolveActionColumns(configuredActions, methods, table);
     const dataKey =
       (
         format?.type === "Internal" &&
@@ -53,35 +55,28 @@ export const getFormatColumnSelect = ({
       [dataKey]: { $jsonb_build_object: selectableColumns },
       [ROW_ACTIONS_COLUMN]: 1,
     };
-    if (actions.some((action) => "columnName" in action)) {
-      Object.assign(select, getTableFunctionActionSelect(methods, table));
+    if (
+      actions.some(
+        (action) =>
+          "columnName" in action || methods[action.methodName]?.jobControl,
+      )
+    ) {
+      Object.assign(
+        select,
+        getTableFunctionActionSelect(methods, table, tables),
+      );
     }
     actions.forEach((action, index) => {
       if ("columnName" in action) return;
+      const stateKey =
+        format?.type === "Action" ? dataKey : `${dataKey}_${index}`;
       Object.assign(
         select,
-        getFunctionActionSelect(
-          methods[action.methodName],
-          `${dataKey}_${index}`,
-        ),
+        getFunctionActionSelect(methods[action.methodName], stateKey, tables),
       );
       const expression = getActionCaseSelect(action);
-      if (expression)
-        select[getActionValueKey(`${dataKey}_${index}`)] = expression;
+      if (expression) select[getActionValueKey(stateKey)] = expression;
     });
-    return select;
-  }
-  if (format?.type === "Action") {
-    const select: AnyObject = {
-      [column.name]: { $jsonb_build_object: selectableColumns },
-      [ROW_ACTIONS_COLUMN]: 1,
-    };
-    const expression = getActionCaseSelect(format.params);
-    Object.assign(
-      select,
-      getFunctionActionSelect(methods[format.params.methodName], column.name),
-    );
-    if (expression) select[getActionValueKey(column.name)] = expression;
     return select;
   }
   if (format?.type === "JSON Diff" || format?.type === "Text Diff") {
@@ -105,6 +100,13 @@ export const getFormatColumnSelect = ({
         )
         .map((name) => [name, 1]),
     );
+  }
+
+  if (format?.type === "URL") {
+    const urlColumn = format.params?.urlColumn;
+    return urlColumn && selectableColumns.includes(urlColumn) ?
+        { [urlColumn]: 1 }
+      : {};
   }
 
   if (format?.type === "Avatar") {

@@ -1,5 +1,6 @@
 import { auditOperationStyles } from "@common/auditOperationStyles";
 import { actionColumnValueSchema } from "@common/createActionColumn";
+import { auditActorJoinName } from "@common/managedTableSchema";
 import type { ColumnConfig } from "@common/ColumnConfig/ColumnConfig";
 import { isDeepStrictEqual } from "node:util";
 import type {
@@ -26,6 +27,7 @@ export const modifyClientSchema = ({
   table,
   tableConfig,
   auditConfig,
+  pluginTableOptions,
 }: {
   connection: ConnectionHotReloadProperties;
   databaseConfig: Pick<DatabaseConfigs, "file_table_config" | "sync_users">;
@@ -33,11 +35,13 @@ export const modifyClientSchema = ({
   tableConfig: TableConfig[string] | undefined;
   auditConfig: ResolvedAuditConfig | undefined;
   userData: AuthResultWithSID<SUser> | undefined;
+  pluginTableOptions?: Record<string, Partial<TableOptions>>;
 }): DBSchemaTable<ClientTableOptions, ColumnOptions> => {
   const { file_table_config } = databaseConfig;
   const { fileTable, annotationsTable } = file_table_config ?? {};
 
   const managedTableOptions: Record<string, Partial<TableOptions>> = {
+    ...pluginTableOptions,
     ...((databaseConfig.sync_users || connection.is_state_db) && {
       users: userTableOptions,
     }),
@@ -97,16 +101,9 @@ export const modifyClientSchema = ({
           (column) => ({
             ...column,
             show: true,
-            display:
-              referenceDisplay?.display?.type === "values" ?
-                undefined
-              : "drillable-records",
           }),
         ),
-        display:
-          referenceDisplay?.display?.type === "values" ?
-            referenceDisplay.display
-          : { type: "values", labels: "none" },
+        display: referenceDisplay?.display ?? { type: "drillable-records" },
       },
     };
   }
@@ -152,13 +149,14 @@ export const modifyClientSchema = ({
       );
       return {
         ...c,
-        defaultRenderAs: getDefaultRenderAs(
-          c,
-          table.name,
-          fileTable,
-          annotationsTable,
-          reservedColumnNames,
-        ),
+        defaultRenderAs:
+          columnOptions.defaultRenderAs ??
+          getDefaultRenderAs(
+            c,
+            fileTable,
+            annotationsTable,
+            reservedColumnNames,
+          ),
         icon: columnOptions.icon,
         /**
          * TODO: move label and rendering logic to one place only.
@@ -178,7 +176,6 @@ export const modifyClientSchema = ({
 
 const getDefaultRenderAs = (
   column: DBSchemaTable["columns"][number],
-  tableName: string,
   fileTable: string | undefined,
   annotationsTable: string | undefined,
   reservedColumnNames: Set<string>,
@@ -195,13 +192,6 @@ const getDefaultRenderAs = (
       },
     };
   }
-  if (fileTable === tableName && column.name === "extraction_status") {
-    return {
-      type: "Internal",
-      params: { component: "FileExtractionStatus" },
-    };
-  }
-
   const referencedTables = column.references?.map(({ ftable }) => ftable);
   if (annotationsTable && referencedTables?.includes(annotationsTable)) {
     const dataKey = getAvailableDataKey(column.name, reservedColumnNames);
@@ -258,12 +248,14 @@ const fileTableOptions: TableOptions = {
   sort: undefined,
   card: {
     headerColumn: "original_name",
-    subHeaderColumn: "url",
+    subHeaderColumns: ["original_last_modified", "content_length"],
   },
   icon: "File",
   label: "Files",
   rowIconColumn: "url",
   columns: {
+    original_last_modified: { label: "Last modified" },
+    content_length: { label: "Size", renderAs: { type: "File size" } },
     url: {
       renderAs: {
         type: "Media",
@@ -278,6 +270,12 @@ const fileTableOptions: TableOptions = {
         type: "DoclingDocument",
       },
     },
+    extraction_status: {
+      defaultRenderAs: {
+        type: "Internal",
+        params: { component: "FileExtractionStatus" },
+      },
+    },
   },
 };
 
@@ -285,7 +283,9 @@ const userTableOptions: Partial<TableOptions> = {
   label: "Users",
   icon: "Account",
   card: { headerColumn: "username", subHeaderColumn: "name" },
-  referenceDisplay: { columns: [{ name: "username" }] },
+  referenceDisplay: {
+    columns: [{ name: "username", format: { type: "Avatar" } }],
+  },
 };
 
 const annotationsTableOptions: TableOptions = {
@@ -324,15 +324,27 @@ const auditTableOptions: TableOptions = {
   card: {
     headerColumn: "operation",
     subHeaderColumn: "table_name",
-    visibleColumns: ["created_at", "actor", "new_row"],
   },
   columns: {
-    created_at: { label: "Time", renderAs: { type: "Age" } },
-    table_name: { label: "Table" },
+    created_at: {
+      label: "Time",
+      width: 140,
+      renderAs: { type: "Age" },
+      infoLevel: 1,
+    },
+    id: { infoLevel: 2 },
+    schema_name: { infoLevel: 2 },
+    old_id: { infoLevel: 2 },
+    new_id: { infoLevel: 2 },
+    old_row: { infoLevel: 2 },
+    db_context: { infoLevel: 2 },
+    table_name: { label: "Table", infoLevel: 1 },
     actor: {
+      infoLevel: 1,
       label: "User",
+      width: 200,
       nested: {
-        path: [{ table: "users", on: "prostgles_audit_actor" }],
+        path: [{ table: "users", on: auditActorJoinName }],
         columns: [
           { name: "username", show: true, display: "drillable-records" },
         ],
@@ -343,6 +355,7 @@ const auditTableOptions: TableOptions = {
       },
     },
     new_row: {
+      infoLevel: 1,
       label: "Changes",
       style: { ...auditOperationStyle, column: "operation" },
       renderAs: {
@@ -351,7 +364,9 @@ const auditTableOptions: TableOptions = {
       },
     },
     operation: {
+      infoLevel: 1,
       label: "Action",
+      width: 100,
       style: auditOperationStyle,
     },
   },
@@ -360,7 +375,14 @@ const auditTableOptions: TableOptions = {
 const getColumnConfig = (
   options: NonNullable<NonNullable<TableOptions["columns"]>[string]>,
 ): Omit<ColumnConfig, "name"> => {
-  const { icon, renderAs, computedConfig, nested, ...config } = options;
+  const {
+    icon,
+    renderAs,
+    defaultRenderAs: _defaultRenderAs,
+    computedConfig,
+    nested,
+    ...config
+  } = options;
   return {
     ...config,
     format: config.format ?? renderAs,

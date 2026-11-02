@@ -5,7 +5,10 @@ import { SmartFilter } from "../SmartFilter/SmartFilter";
 import type { SmartFilterBarProps } from "./SmartFilterBar";
 import type { useSmartFilterBarState } from "./useSmartFilterBarState";
 
-type P = Pick<SmartFilterBarProps, "db" | "tables" | "extraFilters"> & {
+type P = Pick<
+  SmartFilterBarProps,
+  "db" | "tables" | "extraFilters" | "filtersOnly"
+> & {
   state: Exclude<ReturnType<typeof useSmartFilterBarState>, { type: "error" }>;
 };
 
@@ -14,6 +17,7 @@ export const SmartFilterBarFilters = ({
   db,
   tables,
   extraFilters,
+  filtersOnly,
 }: P) => {
   const {
     hasFilters,
@@ -30,6 +34,9 @@ export const SmartFilterBarFilters = ({
     onFilterOperandChange,
     onHavingOperandChange,
   } = state;
+  const groupSpacing = filtersOnly ? "" : "my-p5";
+  const filterClassName =
+    filtersOnly ? filterLayoutClass : `mr-1 mt-p5 ${filterLayoutClass}`;
 
   return (
     <>
@@ -37,7 +44,7 @@ export const SmartFilterBarFilters = ({
         <FlexCol
           key="having"
           data-key={"having"}
-          className={`gap-p5 min-h-0 f-0 relative ai-start my-p5 ${hasFilters ? "bb b-color" : ""} pb-p5`}
+          className={`gap-p5 min-h-0 f-0 relative ai-start ${groupSpacing} ${hasFilters ? "bb b-color" : ""} pb-p5`}
         >
           <Label
             variant="normal"
@@ -46,7 +53,7 @@ export const SmartFilterBarFilters = ({
             Having
           </Label>
           <SmartFilter
-            className={`mr-1 mt-p5 ${filterLayoutClass}`}
+            className={filterClassName}
             type="having"
             selectedColumns={selectedColumns ?? []}
             itemName="filter"
@@ -66,7 +73,7 @@ export const SmartFilterBarFilters = ({
         <FlexCol
           key="where"
           data-key={"where"}
-          className={"gap-p5 min-h-0 f-0 relative ai-start my-p5"}
+          className={`gap-p5 min-h-0 f-0 relative ai-start ${groupSpacing}`}
         >
           {hasHavingFilters && (
             <Label
@@ -82,7 +89,7 @@ export const SmartFilterBarFilters = ({
             </Label>
           )}
           <SmartFilter
-            className={`mr-1 mt-p5 ${filterLayoutClass}`}
+            className={filterClassName}
             type="where"
             selectedColumns={selectedColumns ?? []}
             itemName="filter"

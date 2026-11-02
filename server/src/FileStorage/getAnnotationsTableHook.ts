@@ -15,6 +15,7 @@ import {
 export const getAnnotationsTableHook = (
   annotationsTable: string,
   fileTable: string,
+  fileVersionsTable: string | undefined,
 ): TableHooks<AnnotationSchema, ProstglesContext> => ({
   [annotationsTable as "file_annotations"]: {
     beforeEach: [
@@ -23,32 +24,67 @@ export const getAnnotationsTableHook = (
         validate: async ({ data, command, dbx, filter }) => {
           const anchorFields = [
             "file_id",
+            "file_version",
             "page",
             "end_page",
             "start_text",
             "end_text",
             "text_selections",
           ];
-          if (command === "update" && !anchorFields.some((key) => key in data))
+          if (
+            command === "update" &&
+            !anchorFields.some((key) => key in data)
+          ) {
             return;
+          }
           const previous =
             command === "update" ?
               await dbx[annotationsTable as "file_annotations"].find(filter, {
                 limit: 2,
               })
             : [];
-          if (command === "update" && !previous.length) return;
-          if (previous.length > 1)
+          if (command === "update" && !previous.length) {
+            return;
+          }
+          if (previous.length > 1) {
             throw new Error(
               "Update annotation anchors one annotation at a time",
             );
+          }
           const row = { ...previous[0], ...data };
-          if (typeof row.file_id !== "string")
+          if (typeof row.file_id !== "string") {
             throw new Error("Provide an annotation file_id");
-          const file = await dbx[fileTable as "files"].findOne({
+          }
+          const currentFile = await dbx[fileTable as "files"].findOne({
             id: row.file_id,
           });
-          if (!file) throw new Error("Annotation file was not found");
+          if (!currentFile) {
+            throw new Error("Annotation file was not found");
+          }
+          const fileVersion =
+            row.file_version ??
+            (command === "insert" && fileVersionsTable ?
+              currentFile.version
+            : null);
+          if (
+            fileVersionsTable &&
+            (!fileVersion || !Number.isInteger(fileVersion))
+          ) {
+            throw new Error("Provide an annotation file_version");
+          }
+          if (!fileVersionsTable && fileVersion !== null) {
+            throw new Error("Annotation file_version requires file versioning");
+          }
+          const file =
+            fileVersionsTable && fileVersion ?
+              await dbx[fileVersionsTable as "files_versions"].findOne({
+                file_id: row.file_id,
+                version: fileVersion,
+              })
+            : currentFile;
+          if (!file) {
+            throw new Error("Annotation file version was not found");
+          }
           const getPage = (page: number) => {
             if (!Number.isInteger(page) || page < 1)
               throw new Error("Annotation pages must be positive integers");
@@ -183,6 +219,7 @@ export const getAnnotationsTableHook = (
           return {
             row: {
               ...data,
+              file_version: fileVersion,
               page: selections[0]!.page,
               end_page: selections.at(-1)!.page,
               text_selections: selections,
@@ -205,8 +242,12 @@ export const getAnnotationsTableHook = (
 type AnnotationSchema = {
   files: {
     columns: Omit<FileTableRowWithExtraction, "docling_metadata"> & {
+      version: number | null;
       docling_metadata: AnnotationDocument | null;
     };
+  };
+  files_versions: {
+    columns: AnnotationSchema["files"]["columns"] & { file_id: string };
   };
   file_annotations: {
     columns: TableRowFromColumnDefinitions<typeof annotationsTableColumns>;

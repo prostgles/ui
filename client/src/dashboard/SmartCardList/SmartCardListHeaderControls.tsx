@@ -75,10 +75,10 @@ export const SmartCardListHeaderControls = (
     <FlexCol className="SmartCardListControls gap-p5 aid-end py-p25">
       {titleNode}
 
-      {showTopBar && (
-        <FlexRowWrap className=" ">
+      {(showTopBar || filterProps) && (
+        <FlexRowWrap className="gap-p5">
           {isObject(showTopBar) && showTopBar.leftContent}
-          {tableControls?.willShowInsert && (
+          {showTopBar && tableControls?.willShowInsert && (
             <InsertButton
               buttonProps={{
                 children: "Add",
@@ -93,7 +93,7 @@ export const SmartCardListHeaderControls = (
               tableName={tableControls.tableName}
             />
           )}
-          {showSearch && tableControls && !noItemsToShow && (
+          {showTopBar && showSearch && tableControls && !noItemsToShow && (
             <SmartFilterBarSearch
               db={db}
               tableName={tableControls.tableName}
@@ -111,9 +111,9 @@ export const SmartCardListHeaderControls = (
               )}
               extraFilters={undefined}
               style={{
-                width: "unset",
+                width: "240px",
+                maxWidth: "100%",
                 margin: "unset",
-                flex: "1",
               }}
             />
           )}
@@ -124,17 +124,18 @@ export const SmartCardListHeaderControls = (
               onChange={tableControls.setLocalOrderBy}
             />
           )}
+          {filterProps && (
+            <div className="min-w-0" style={{ flex: "1 1 240px" }}>
+              <RenderFilter
+                contextData={undefined}
+                selectedColumns={undefined}
+                itemName={"filter"}
+                hideOperand={true}
+                {...filterProps}
+              />
+            </div>
+          )}
         </FlexRowWrap>
-      )}
-
-      {filterProps && (
-        <RenderFilter
-          contextData={undefined}
-          selectedColumns={undefined}
-          itemName={"filter"}
-          hideOperand={true}
-          {...filterProps}
-        />
       )}
     </FlexCol>
   );

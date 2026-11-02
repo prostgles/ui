@@ -48,6 +48,7 @@ export const AskLLMChatHeader = (
         <Select
           title={t.AskLLMChatHeader.Chat}
           data-command="LLMChat.select"
+          data-key={activeChatId?.toString()}
           fullOptions={
             latestChats?.map((c) => ({
               key: c.id,

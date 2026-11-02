@@ -2,7 +2,7 @@ import { getSignupUserType } from "../getSignupUserType";
 import type { DBSSchema } from "@common/publishUtils";
 import type { SignupWithEmail } from "prostgles-server/dist/Auth/AuthTypes";
 import type { DBS } from "../..";
-import { getEmailSenderWithMockTest } from "./getEmailSenderWithMockTest";
+import { getEmailClient } from "./getEmailClient";
 import { onEmailRegistration } from "./onEmailRegistration";
 
 export const getEmailAuthProvider = async (
@@ -18,22 +18,18 @@ export const getEmailAuthProvider = async (
   const { email: emailAuthConfig, website_url } = auth_providers ?? {};
   if (
     !emailAuthConfig?.enabled ||
-    emailAuthConfig.signupType !== "withPassword"
+    emailAuthConfig.emailLoginType !== "withPassword"
   ) {
     return undefined;
   }
   if (!website_url) throw "website_url is required for email auth";
 
-  const mailClient = await getEmailSenderWithMockTest(auth_providers);
+  const mailClient = await getEmailClient(auth_providers);
 
   return {
-    minPasswordLength:
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      emailAuthConfig.signupType === "withPassword" ?
-        emailAuthConfig.minPasswordLength
-      : undefined,
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    requirePassword: emailAuthConfig.signupType === "withPassword",
+    minPasswordLength: emailAuthConfig.minPasswordLength,
+    requirePassword: true,
+    requireInvitation: auth_providers?.signupMode !== "public",
     onRegister: async (args) =>
       onEmailRegistration(args, {
         mailClient,

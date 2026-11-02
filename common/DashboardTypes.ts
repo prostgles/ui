@@ -228,6 +228,8 @@ type Filtering = {
 
 export type TableColumn = {
   show?: boolean;
+  /** 1: summary and details; 2: details only; omitted: hidden. With no levels configured, headers count toward the first 10 summary fields; the rest appear in details. */
+  infoLevel?: 1 | 2;
   /**
    * Column name as it appears in the database.
    * For nested columns this can be anything. Use the table name or a more descriptive name.
@@ -274,6 +276,8 @@ export type TableColumn = {
       }
     | {
         type: "conditional";
+        /** Column whose values determine the colour, including a linked aggregate's grouping column. */
+        column?: string;
         conditions: {
           chipColor:
             | "red"
@@ -359,7 +363,13 @@ export type TableColumn = {
     | { type: "Action"; params: ActionColumnParams }
     | {
         type: "ActionColumns";
-        params: { actions: ({ columnName: string } | ActionColumnParams)[] };
+        params: {
+          actions: (
+            | { columnName: string }
+            | { methodsForJobColumn: string }
+            | ActionColumnParams
+          )[];
+        };
       }
     | {
         /** Name initials in a circle. Uses this column's full name when name columns are unset. */
@@ -381,6 +391,10 @@ export type TableColumn = {
     | {
         /** Display large numbers with metric prefixes (e.g. 1.2K) */
         type: "Metric Prefix";
+      }
+    | {
+        /** Display bytes as a readable file size (e.g. 1.25 MB) */
+        type: "File size";
       }
     | {
         /**
@@ -409,11 +423,16 @@ export type TableColumn = {
         };
       }
     | {
+        /**
+         * Render column value as Markdown content.
+         * Will show first few lines of the content with an expand button.
+         */
         type: "Markdown";
       }
     | {
         /**
          * Same as "Markdown" but will show a popup with the full content when clicked.
+         * Only use this when the content is not of importance for immediate viewing.
          */
         type: "MarkdownPopup";
       }
@@ -442,6 +461,7 @@ export type TableColumn = {
 type ActionColumnParams = {
   methodName: string;
   argName?: string;
+  runImmediately?: boolean;
   joinPath?: TableJoin[];
   conditions?: {
     filter: { $and: Record<string, any>[] } | { $or: Record<string, any>[] };
@@ -477,6 +497,7 @@ export type TableWindowInsertModel = Filtering & {
    */
   title?: string;
   table_name: string;
+  /** Omitted or empty uses table defaults. Otherwise, only listed columns are shown unless show is false. */
   columns?: TableColumn[];
 
   /**

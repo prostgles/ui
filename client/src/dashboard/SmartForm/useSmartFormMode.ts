@@ -70,6 +70,7 @@ export const useSmartFormMode = (
     | "parentForm"
     | "onLoaded"
     | "methods"
+    | "tables"
   > & {
     table: DBSchemaTableWJoins | undefined;
   },
@@ -83,6 +84,7 @@ export const useSmartFormMode = (
     parentForm,
     onLoaded,
     methods,
+    tables,
   } = props;
   const [loading, setLoading] = useState(false);
   const tableHandler = db[tableName];
@@ -150,7 +152,11 @@ export const useSmartFormMode = (
         currentRowInfo?.tableName === tableName ?
           currentRowInfo.row
         : undefined;
-      const functionActionSelect = getTableFunctionActionSelect(methods, table);
+      const functionActionSelect = getTableFunctionActionSelect(
+        methods,
+        table,
+        tables,
+      );
       const select: AnyObject = { "*": 1, ...functionActionSelect };
       if (getActionFunctions(methods, table).length)
         select[ROW_ACTIONS_COLUMN] = 1;
@@ -209,6 +215,7 @@ export const useSmartFormMode = (
     //@ts-ignore
   }, [
     table,
+    tables,
     rowFilter,
     tableName,
     isManuallyControlled,

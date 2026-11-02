@@ -6,10 +6,15 @@ import React, { useState } from "react";
 import type { Prgl } from "../../App";
 import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
 import SmartTable from "../SmartTable";
+import {
+  getSmartFormHeaderText,
+  SmartFormHeader,
+} from "../SmartForm/SmartFormPopup/SmartFormHeader";
 
 type AuditTrailButtonProps = Pick<Prgl, "db" | "sql" | "tables" | "methods"> & {
   table: DBSchemaTableWJoins;
   row: AnyObject | undefined;
+  headerText?: string;
 };
 
 export const AuditTrailButton = ({
@@ -19,6 +24,7 @@ export const AuditTrailButton = ({
   sql,
   tables,
   methods,
+  headerText,
 }: AuditTrailButtonProps) => {
   const [showHistory, setShowHistory] = useState(false);
   if (!table.audit || !row) return null;
@@ -65,7 +71,13 @@ export const AuditTrailButton = ({
           tables={tables}
           methods={methods}
           tableName={audit.tableName}
-          title={`History · ${table.label}`}
+          title={
+            <SmartFormHeader
+              table={table}
+              headerText={headerText ?? getSmartFormHeaderText(table, row)}
+            />
+          }
+          subTitle={`History · ${table.label}`}
           selectedColumns={["created_at", "operation", "actor", "new_row"]}
           fixedFilter={{
             $and: [
@@ -77,7 +89,7 @@ export const AuditTrailButton = ({
             ],
           }}
           allowEdit={false}
-          hideFilters={true}
+          filterMode="header"
           realtime={{ throttle: 200 }}
           onClosePopup={() => setShowHistory(false)}
         />

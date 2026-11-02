@@ -4,6 +4,7 @@ import {
   allowOnce,
   newChat,
   scrollElementIntoView,
+  setModelByText,
   setPromptByText,
 } from "utils/utils";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
@@ -20,6 +21,7 @@ export const aiAssistantAgenticWorkflowGovApiSvgif: OnBeforeScreenshot = async (
   await page.waitForTimeout(1000);
 
   await newChat(page);
+  await setModelByText(page, "luna");
   await setPromptByText(page, "Create workflow");
   await typeSendAddScenes(
     page,
@@ -107,7 +109,9 @@ export const aiAssistantAgenticWorkflowGovApiSvgif: OnBeforeScreenshot = async (
   // );
   await addSceneAnimation({
     nth: -2,
-    selector: getCommandElemSelector("AgenticWorkflowActivity.openTable"),
+    selector:
+      getCommandElemSelector("AgenticWorkflow.openToolCall") +
+      '[data-label^="db "]',
   });
   await addScene({
     svgFileName: "hygiene_ratings_table",

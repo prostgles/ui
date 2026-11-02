@@ -24,8 +24,11 @@ export function setSyncUserSub(this: ConnectionManager) {
           // Connections can share a database; serialize passes across them too.
           this.userSyncWork = this.userSyncWork.then(async () => {
             for (const connectionId of this.prglConnections.keys()) {
-              await this.withActiveConnection(connectionId, (connection) =>
-                syncConnectionUsers(dbs, connection),
+              await this.withActiveConnection(
+                connectionId,
+                async (connection) => {
+                  await syncConnectionUsers(dbs, connection);
+                },
               ).catch((error: unknown) => {
                 console.error(
                   `User sync failed for connection ${connectionId}`,

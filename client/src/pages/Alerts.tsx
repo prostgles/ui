@@ -1,26 +1,27 @@
-import type { DBSSchema } from "@common/publishUtils";
+import { tableMightBeUndefinedDueToAccessControl } from "@common/utils";
 import Btn from "@components/Btn";
-import { FlexCol, FlexRow } from "@components/Flex";
-import { InfoRow } from "@components/InfoRow";
+import ErrorComponent from "@components/ErrorComponent";
+import { FlexRow } from "@components/Flex";
 import PopupMenu from "@components/PopupMenu";
-import { mdiBellBadgeOutline, mdiDelete } from "@mdi/js";
-import React, { useMemo } from "react";
-import { NavLink } from "react-router";
-import type { FieldConfig } from "../dashboard/SmartCard/SmartCard";
-import { SmartCardList } from "../dashboard/SmartCardList/SmartCardList";
-import { StyledInterval } from "../dashboard/W_SQL/customRenderers";
+import { SegmentedToggle } from "@components/SegmentedToggle";
+import { mdiBellBadgeOutline, mdiBellOutline } from "@mdi/js";
+import { useSubscribe } from "prostgles-client";
+import React, { useMemo, useState } from "react";
+import { AlertNotifications } from "./Alerts/AlertNotifications";
+import { ManagedAlerts } from "./Alerts/ManagedAlerts";
 import { usePrgl } from "./ProjectConnection/PrglContextProvider";
 
 export const Alerts = () => {
-  const { connectionId, dbs, user, dbsSql, dbsMethodSchema, dbsTables } =
-    usePrgl();
-  const user_id = user?.id;
-  const alertsFilter = useMemo(() => {
-    return {
+  const { connectionId, dbs, db, tables, user } = usePrgl();
+  const [section, setSection] = useState<string>();
+  const userId = user?.id;
+  const subscribe = tableMightBeUndefinedDueToAccessControl(
+    dbs.alerts,
+  )?.subscribe;
+  const filters = useMemo(() => {
+    const connectionFilter = {
       $and: [
-        {
-          $notExistsJoined: { alert_viewed_by: { user_id } },
-        } as Record<string, any>,
+        { user_id: { $in: [userId, null] } },
         {
           $or: [
             { connection_id: { $in: [connectionId, null] } },
@@ -33,150 +34,110 @@ export const Alerts = () => {
         },
       ],
     };
-  }, [connectionId, user_id]);
-  const { data: alerts } = dbs.alerts.useSubscribe(alertsFilter);
-  const highestSeverityColor = useMemo(() => {
-    let hasWarning = false;
-    for (const alertItem of alerts ?? []) {
-      if (alertItem.severity === "error") return "danger";
-      if (alertItem.severity === "warning") hasWarning = true;
-    }
-    return hasWarning ? "warn" : "action";
-  }, [alerts]);
-
-  const listProps = useMemo(() => {
-    const fieldConfigs = [
-      {
-        name: "severity",
-        hide: true,
-      },
-      {
-        name: "title",
-        hide: true,
-      },
-      {
-        name: "age",
-        select: {
-          $ageNow: ["created"],
-        },
-        hide: true,
-      },
-      {
-        name: "ui_path",
-        hide: true,
-      },
-      {
-        name: "connection_id",
-        hide: true,
-      },
-      {
-        name: "message",
-        renderMode: "full",
-        render: (message, row) => {
-          const {
-            severity,
-            title,
-            age,
-            id: alert_id,
-            connection_id,
-            ui_path,
-          } = row as DBSSchema["alerts"] & { age: any };
-          return (
-            <FlexRow className="ai-start f-1">
-              <InfoRow
-                iconPath=""
-                variant="naked"
-                color={
-                  severity === "error" ? "danger"
-                  : severity === "warning" ?
-                    "warning"
-                  : "info"
-                }
-              >
-                <FlexCol className="gap-p5">
-                  <StyledInterval
-                    value={age}
-                    style={{ color: "var(--text-0)" }}
-                  />
-                  {title && <div className="bold">{title}</div>}
-                  <div>{message}</div>
-                  {ui_path && (
-                    <NavLink
-                      to={`${ui_path.page}/${connection_id || ""}?section=${ui_path.section}`}
-                    >
-                      Go to issue
-                    </NavLink>
-                  )}
-                </FlexCol>
-              </InfoRow>
-              <Btn
-                className="ml-auto"
-                iconPath={mdiDelete}
-                onClickPromise={() =>
-                  dbs.alert_viewed_by.insert({
-                    alert_id,
-                    user_id,
-                  })
-                }
-              />
-            </FlexRow>
-          );
-        },
-      },
-      {
-        name: "id",
-        hide: true,
-      },
-    ] satisfies FieldConfig[];
-    const rowProps = {
-      className: "ai-center",
-    };
     return {
-      fieldConfigs,
-      rowProps,
+      unread: {
+        $and: [
+          ...connectionFilter.$and,
+          { $notExistsJoined: { alert_viewed_by: { user_id: userId } } },
+        ],
+      },
+      read: {
+        $and: [
+          ...connectionFilter.$and,
+          { $existsJoined: { alert_viewed_by: { user_id: userId } } },
+        ],
+      },
     };
-  }, [dbs, user_id]);
-
-  if (!alerts?.length) return null;
+  }, [connectionId, userId]);
+  const { data: unread, error } = useSubscribe(
+    subscribe!,
+    false,
+    filters.unread,
+    { select: ["severity"], limit: null },
+    { skip: !subscribe || !userId },
+  );
+  const managedTables = tables.filter(
+    (table) =>
+      (table.managedTableType === "alerts" ||
+        table.managedTableType === "alert-deliveries") &&
+      db[table.name]?.find,
+  );
+  if (!userId || (!subscribe && !managedTables.length)) return null;
+  const rules = managedTables.filter(
+    (table) => table.managedTableType !== "alert-deliveries",
+  );
+  const deliveries = managedTables.filter(
+    (table) => table.managedTableType === "alert-deliveries",
+  );
+  const sections: Record<string, { label: string; content: React.ReactNode }> =
+    {
+      ...(subscribe && {
+        notifications: {
+          label: "Notifications",
+          content: <AlertNotifications filters={filters} />,
+        },
+      }),
+      ...(rules.length && {
+        rules: {
+          label: "Rules",
+          content: <ManagedAlerts tables={rules} />,
+        },
+      }),
+      ...(deliveries.length && {
+        deliveries: {
+          label: "Delivery history",
+          content: <ManagedAlerts tables={deliveries} />,
+        },
+      }),
+    };
+  const [defaultSection] = Object.keys(sections);
+  const activeSection = section && sections[section] ? section : defaultSection;
+  const color =
+    unread?.some((notification) => notification.severity === "error") ? "danger"
+    : unread?.some((notification) => notification.severity === "warning") ?
+      "warn"
+    : "action";
 
   return (
     <PopupMenu
+      key={connectionId}
       data-command="Alerts"
+      title={
+        <FlexRow className="gap-1">
+          <span>Alerts</span>
+          {Object.keys(sections).length > 1 && (
+            <SegmentedToggle
+              className="font-14"
+              value={activeSection}
+              onChange={setSection}
+              options={Object.fromEntries(
+                Object.entries(sections).map(([key, { label }]) => [
+                  key,
+                  { title: label, children: label, iconPath: "" },
+                ]),
+              )}
+            />
+          )}
+        </FlexRow>
+      }
       button={
-        <div>
-          <Btn
-            variant="faded"
-            color={highestSeverityColor}
-            iconPath={mdiBellBadgeOutline}
-            size="default"
-          />
-        </div>
+        <Btn
+          title="Alerts"
+          aria-label="Alerts"
+          variant="faded"
+          color={color}
+          iconPath={unread?.length ? mdiBellBadgeOutline : mdiBellOutline}
+        >
+          {unread?.length || undefined}
+        </Btn>
       }
       positioning="beneath-center"
-      // contentStyle={{
-      //   background: "var(--bg-color-0)",
-      // }}
-      // contentClassName="bg-color-0 shadow"
       onClickClose={false}
-      // rootStyle={{
-      //   border: "unset",
-      //   boxShadow: "unset",
-      //   background: "transparent",
-      // }}
+      clickCatchStyle={{ opacity: 1 }}
+      contentStyle={{ width: "min(900px, 90vw)", maxHeight: "75vh" }}
     >
-      {!!alerts.length && (
-        <SmartCardList
-          db={dbs}
-          sql={dbsSql}
-          methods={dbsMethodSchema}
-          tables={dbsTables}
-          tableName={"alerts"}
-          realtime={true}
-          filter={alertsFilter}
-          showEdit={false}
-          {...listProps}
-        />
-      )}
+      <ErrorComponent error={error} />
+      {activeSection && sections[activeSection]?.content}
     </PopupMenu>
   );
 };

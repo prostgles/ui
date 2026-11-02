@@ -25,6 +25,7 @@ export const usersTableHooks = {
             data.passwordless_admin ||
             registrationType === "OAuth" ||
             registrationType === "magic-link" ||
+            registrationType === "invite" ||
             data.type === USER_TYPES.PUBLIC;
 
           if (nonPasswordAccount && !data.password) return;

@@ -162,7 +162,7 @@ export const uiMcpSchema = {
       "This is meant to be used when the information cannot be easily obtained from the schema or tools available and is necessary to remove ambiguity from user intent.",
       `Refrain from asking "free-text" unless absolutely necessary. Always try to use more ergonomic types ("choice", "table-name", "table-columns" etc.) type questions when possible to reduce user input errors and eliminate the effort of manually typing long responses.`,
       "Always try to infer missing information from the schema and tools before asking the user.",
-      "DO NOT SEND OTHER TOOL USE REQUESTS TOGETHER WITH THIS TOOL. It must be a single tool use request",
+      "Other tool calls in the same message will wait until the user has answered all questions and approved any pending tools.",
       "Be as short and as concise as possible.",
       "Do not ask more than 4 questions at a time.",
       `Each "choice" type question should have a list of suggested answers to choose from.`,
@@ -457,7 +457,8 @@ export const uiMcpSchema = {
   set_tables_metadata: {
     icon: "Table",
     mode: undefined,
-    description: "Set rendering metadata for database tables",
+    description:
+      "Update rendering metadata for database tables. Nested objects are merged, preserving omitted settings (including card columns when changing layout). Arrays are replaced in full; use an empty array to clear a list.",
     schema: { type: { metadata: tableOptionsJsonbSchema } },
     outputSchema: {
       type: "unknown",

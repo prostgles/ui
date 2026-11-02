@@ -5,6 +5,7 @@ import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import { t } from "../i18n/i18nUtils";
 import { PasswordlessSetup } from "./AccessControl/PasswordlessSetup";
 import SmartTable from "./SmartTable";
+import { InviteUser } from "./AccessControl/InviteUser";
 
 export type Users = {
   created?: Date;
@@ -26,18 +27,21 @@ export const UserManager = () => {
     content = <PasswordlessSetup />;
   } else {
     content = (
-      <SmartTable
-        className="w-full"
-        db={dbs}
-        sql={dbsSql}
-        methods={dbsMethodSchema}
-        titlePrefix={t.Users["Prostgles UI users"]}
-        tableName="users"
-        tables={dbsTables}
-        showInsert={true}
-        allowEdit={true}
-        realtime={{}}
-      />
+      <>
+        <InviteUser />
+        <SmartTable
+          className="w-full"
+          db={dbs}
+          sql={dbsSql}
+          methods={dbsMethodSchema}
+          titlePrefix={t.Users["Prostgles UI users"]}
+          tableName="users"
+          tables={dbsTables}
+          showInsert={true}
+          allowEdit={true}
+          realtime={{}}
+        />
+      </>
     );
   }
 

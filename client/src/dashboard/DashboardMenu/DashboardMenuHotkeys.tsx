@@ -1,16 +1,13 @@
 import React, { useEffect, useRef } from "react";
 import { getFileText } from "../W_SQL/W_SQLMenu";
-import type { DashboardMenuProps, DashboardMenuState } from "./DashboardMenu";
+import type { DashboardMenuProps } from "./DashboardMenu";
 import { getKeys } from "../../utils/utils";
 import { includes } from "../W_SQL/W_SQLBottomBar/W_SQLBottomBar";
 import { useAddViewToWorkspace } from "../Dashboard/useAddViewToWorkspace";
+import { setShowSection } from "src/app/CommandPalette/commandPaletteStore";
 
-type P = Pick<DashboardMenuProps, "workspace"> & {
-  setShowSearchAll: React.Dispatch<
-    React.SetStateAction<DashboardMenuState["showSearchAll"]>
-  >;
-};
-export const DashboardMenuHotkeys = ({ workspace, setShowSearchAll }: P) => {
+type P = Pick<DashboardMenuProps, "workspace">;
+export const DashboardMenuHotkeys = ({ workspace }: P) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const { addViewToWorkspace } = useAddViewToWorkspace();
   useEffect(() => {
@@ -19,7 +16,7 @@ export const DashboardMenuHotkeys = ({ workspace, setShowSearchAll }: P) => {
       const mode = getHotkey(e);
       if (mode && !includes(mode, ["rows", "open file", "commands"])) {
         e.preventDefault();
-        setShowSearchAll({ mode, term });
+        setShowSection(mode, term);
       }
     };
 
@@ -33,9 +30,7 @@ export const DashboardMenuHotkeys = ({ workspace, setShowSearchAll }: P) => {
         }
       } else if (mode === "views and queries" || mode === "rows") {
         e.preventDefault();
-        setShowSearchAll({ mode, term });
-      } else if (e.key === "Escape") {
-        setShowSearchAll(undefined);
+        setShowSection(mode, term);
       }
     };
     window.addEventListener("keyup", onKeyUp, true);
@@ -45,7 +40,7 @@ export const DashboardMenuHotkeys = ({ workspace, setShowSearchAll }: P) => {
       window.removeEventListener("keyup", onKeyUp, true);
       window.removeEventListener("keydown", onKeyDown, true);
     };
-  }, [inputRef, setShowSearchAll]);
+  }, [inputRef]);
 
   const fileSelected: React.ChangeEventHandler<HTMLInputElement> = async (
     e,

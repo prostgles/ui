@@ -71,7 +71,7 @@ export const useJoinedRecordsSections = (props: JoinedRecordsProps) => {
   const currentSections = useRef<JoinedRecordSection[]>([]);
   const isInsert = !rowFilter;
 
-  const { diplayedTables, descendants } = useMemo(() => {
+  const { diplayedTables: displayedTables, descendants } = useMemo(() => {
     const tableJoins = table?.joins.filter((j) => j.hasFkeys) ?? [];
     const diplayedTables = tableJoins.filter(
       (t) =>
@@ -151,7 +151,7 @@ export const useJoinedRecordsSections = (props: JoinedRecordsProps) => {
   );
 
   const sectionsWithoutCounts = useMemo(() => {
-    const allSections = diplayedTables.map((j) => {
+    const allSections = displayedTables.map((j) => {
       const canInsert = db[j.tableName]?.insert && j.hasFkeys;
       if (action === "insert" && !canInsert) return;
       const path = [j.tableName];
@@ -193,7 +193,7 @@ export const useJoinedRecordsSections = (props: JoinedRecordsProps) => {
       );
     return sections;
   }, [
-    diplayedTables,
+    displayedTables,
     action,
     db,
     rowFilter,

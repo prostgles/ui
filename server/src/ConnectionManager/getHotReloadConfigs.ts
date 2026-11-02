@@ -84,14 +84,15 @@ export const getHotReloadConfigs = async ({
     configuredDatabaseConfig,
   );
 
-  const { fileTable, tableConfig, tableHooks, jobs } = await parsePlugins({
-    type: "saved",
-    dbs,
-    con: configuredConnection,
-    conMgr: connectionManager,
-    app,
-    databaseConfig: configuredDatabaseConfig,
-  });
+  const { fileTable, tableConfig, tableHooks, jobs, tableOptions, functions } =
+    await parsePlugins({
+      type: "saved",
+      dbs,
+      con: configuredConnection,
+      conMgr: connectionManager,
+      app,
+      databaseConfig: configuredDatabaseConfig,
+    });
 
   const auth = await getConnectionAuth(app, dbs, _dbs, {
     type: "connection",
@@ -125,6 +126,12 @@ export const getHotReloadConfigs = async ({
       dbs,
       connection,
     });
+  for (const groupName of Object.keys(functions ?? {})) {
+    if (connectionFunctions[groupName])
+      throw new Error(
+        `Function group "${groupName}" conflicts with a plugin definition`,
+      );
+  }
 
   return {
     config: {
@@ -152,7 +159,7 @@ export const getHotReloadConfigs = async ({
         !IS_PROD && db_watch_schema && config_sync?.type === "cli" ?
           join(config_sync.configPath, srcFolderName, "index.ts")
         : undefined,
-      functions: connectionFunctions,
+      functions: { ...connectionFunctions, ...functions },
       modifyClientFunctionSchema: modifyClientFunctionSchema(
         configuredConnection.function_options,
         functionOptions,
@@ -165,6 +172,7 @@ export const getHotReloadConfigs = async ({
           tableConfig,
           userData,
           auditConfig,
+          pluginTableOptions: tableOptions,
         }),
     } satisfies HotReloadConfigOptions,
     connectionServers,

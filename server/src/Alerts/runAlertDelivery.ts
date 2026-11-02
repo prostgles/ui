@@ -1,6 +1,12 @@
 import type { DBHandlerServer, GetClientDBHandlers } from "prostgles-server";
 import type { AlertsOptions } from "./AlertTypes";
 import { getAlertDb, type AlertSchema } from "./getAlertTables";
+import type { EmailOutboxOptions } from "../Emails/EmailOutboxTypes";
+import { getEmailOutboxDb } from "../Emails/getEmailOutboxTables";
+import { prepareAlert } from "./prepareAlert";
+import type { DBS } from "..";
+import { getAlertRecipients } from "./getAlertRecipients";
+import { deduplicateAlertRows } from "./deduplicateAlertRows";
 
 export const runAlertDelivery = async (
   dbo: DBHandlerServer,
@@ -8,58 +14,93 @@ export const runAlertDelivery = async (
   getClientDBHandlers: GetClientDBHandlers,
   delivery: Required<AlertSchema["deliveries"]["columns"]>,
   signal: AbortSignal,
+  jobId: string,
+  emailOutbox: EmailOutboxOptions | undefined,
+  dbs: DBS,
+  syncUsers: boolean,
+  jobsTableName: string,
 ) => {
   if (delivery.outcome !== "pending") return;
-  const { alerts, recipients, deliveries } = getAlertDb(dbo, options);
+  const { alerts, deliveries } = getAlertDb(dbo, options);
+  const outbox =
+    emailOutbox ? getEmailOutboxDb(dbo, emailOutbox).outbox : undefined;
+  const sentEmail = await outbox?.findOne({
+    alert_delivery_id: delivery.id,
+    outcome: "sent",
+  });
+  if (sentEmail) {
+    await deliveries.update(
+      { id: delivery.id },
+      {
+        outcome: "sent",
+        provider_id: sentEmail.provider_id,
+        sent_at: sentEmail.sent_at,
+      },
+    );
+    return;
+  }
   const eligible = async () => {
     const alert = await alerts.findOne({
       id: delivery.alert_id,
-      enabled: true,
+      ...(!delivery.is_test && { enabled: true }),
       revision: delivery.revision,
     });
-    const recipient = await recipients.findOne({
-      id: delivery.recipient_id,
-      alert_id: delivery.alert_id,
-      user_id: delivery.user_id,
-      channel: delivery.channel,
-      enabled: true,
-    });
-    return alert && recipient ? alert : undefined;
+    if (!alert?.channels.includes(delivery.channel)) return undefined;
+    const [recipient] = await getAlertRecipients(
+      dbs,
+      dbo,
+      delivery.is_test ?
+        { id: delivery.user_id, type: "admin" }
+      : { $and: [alert.user_filter, { id: delivery.user_id }] },
+      syncUsers,
+    );
+    return recipient ? alert : undefined;
   };
-  const skip = (reason: string) =>
-    deliveries.update({ id: delivery.id }, { outcome: "skipped", reason });
+  const skip = async (reason: string) => {
+    await dbo.tx(async (dbx) => {
+      await getAlertDb(dbx, options).deliveries.update(
+        { id: delivery.id },
+        { outcome: "skipped", reason },
+      );
+      if (emailOutbox) {
+        await getEmailOutboxDb(dbx, emailOutbox).outbox.update(
+          { alert_delivery_id: delivery.id, outcome: "pending" },
+          { outcome: "skipped", reason },
+        );
+      }
+    });
+  };
   const alert = await eligible();
   if (!alert) {
     await skip("Alert or recipient changed or was disabled");
     return;
   }
-  const definition = options.types[delivery.definition.type];
+  const definition = delivery.definition;
   const channel = options.channels[delivery.channel];
-  if (!definition || !channel)
-    throw new Error("Alert type or channel is no longer configured");
-  const { clientDb } = await getClientDBHandlers(
-    { userId: delivery.user_id },
-    definition.permissionScope?.(delivery.user_id),
-  );
-  const parts = new Intl.DateTimeFormat("en-GB", {
-    timeZone: alert.schedule.timezone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(new Date());
-  const date = Object.fromEntries(
-    parts.map(({ type, value }) => [type, value]),
-  );
-  signal.throwIfAborted();
-  const message = await definition.prepare({
-    clientDb,
-    params: delivery.definition.params,
+  if (!channel) throw new Error("Alert channel is no longer configured");
+  const message = await prepareAlert({
+    options,
+    alert: { ...alert, definition },
+    getClientDBHandlers,
     recipientId: delivery.user_id,
-    localDate: `${date.year}-${date.month}-${date.day}`,
     signal,
+    filterRows: (rows) =>
+      delivery.is_test ?
+        Promise.resolve(rows)
+      : deduplicateAlertRows(
+          dbo,
+          options,
+          jobsTableName,
+          delivery,
+          definition?.deduplicate,
+          rows,
+        ),
   });
   if (!message) {
-    await skip("No matching items");
+    if (delivery.is_test) {
+      throw new Error("Cannot send test alert: no matching items to notify");
+    }
+    await skip("No matching items to notify");
     return;
   }
   signal.throwIfAborted();
@@ -68,13 +109,22 @@ export const runAlertDelivery = async (
     return;
   }
   const result = await channel.send({
+    dbo,
+    jobId,
     recipientId: delivery.user_id,
-    message,
+    message:
+      delivery.is_test ?
+        { ...message, title: `[TEST] ${message.title}` }
+      : message,
     idempotencyKey: delivery.id,
     signal,
   });
   await deliveries.update(
     { id: delivery.id },
-    { outcome: "sent", provider_id: result.providerId },
+    {
+      outcome: "sent",
+      provider_id: result.providerId,
+      sent_at: new Date().toISOString(),
+    },
   );
 };

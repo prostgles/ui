@@ -1,12 +1,9 @@
-import { FlexCol, FlexRow } from "@components/Flex";
-import { MediaViewer } from "@components/MediaViewer/MediaViewer";
-import { SvgIcon } from "@components/SvgIcon";
+import { FlexRow } from "@components/Flex";
 import React from "react";
 import type { DBSchemaTableWithRenderInfo } from "src/dashboard/Dashboard/getTables";
+import { RecordSummary } from "../../../SmartCard/RecordSummary";
 import { RenderValue } from "../../../SmartForm/SmartFormField/RenderValue";
 import type { getColumnsWithInfo } from "../../tableUtils/getColumnsWithInfo";
-import { Avatar } from "./Avatar";
-import { getColumnFormat } from "./getFormatColumnSelect";
 
 export const LinkedRecordSummary = ({
   row,
@@ -33,66 +30,42 @@ export const LinkedRecordSummary = ({
   const headerColumn =
     getAvailableColumn(table.card?.headerColumn) ??
     getAvailableColumn(fallbackColumns[0]?.name);
-  const subHeaderColumn =
-    getAvailableColumn(table.card?.subHeaderColumn, headerColumn?.name) ??
-    getAvailableColumn(
-      fallbackColumns.find(({ name }) => name !== headerColumn?.name)?.name,
+  const subHeaderNames = table.card?.subHeaderColumns ?? [
+    table.card?.subHeaderColumn,
+  ];
+  const preferredSubHeaderColumns = subHeaderNames.flatMap((name) => {
+    const column = fallbackColumns.find(
+      (column) => column.name === name && column.name !== headerColumn?.name,
     );
+    return column ? [column] : [];
+  });
+  const subHeaderColumns =
+    table.card?.subHeaderColumns || preferredSubHeaderColumns.length ?
+      preferredSubHeaderColumns
+    : fallbackColumns
+        .filter((column) => column.name !== headerColumn?.name)
+        .slice(0, 1);
   const avatarColumn = getAvailableColumn(table.card?.avatarColumn);
   const avatarConfig = shownNestedColumns.find(
     (column) => column.name === avatarColumn?.name,
   );
-  const avatarFormat = avatarConfig && getColumnFormat(avatarConfig);
-  const avatarUrl =
-    avatarColumn && typeof row[avatarColumn.name] === "string" ?
-      (row[avatarColumn.name] as string)
-    : undefined;
   const remainingColumns = shownNestedColumns.filter(
     (column) =>
-      ![avatarColumn?.name, headerColumn?.name, subHeaderColumn?.name].includes(
-        column.name,
-      ),
+      ![avatarColumn?.name, headerColumn?.name].includes(column.name) &&
+      !subHeaderColumns.some((subHeader) => subHeader.name === column.name),
   );
 
   return (
     <FlexRow className="gap-p5 ai-center ta-left">
-      {avatarConfig && avatarFormat?.type === "Avatar" ?
-        <Avatar
-          value={row[avatarConfig.name]}
-          row={row}
-          column={avatarConfig}
-          table={table}
-          params={avatarFormat.params}
-        />
-      : avatarUrl ?
-        <MediaViewer
-          style={{
-            width: "2em",
-            height: "2em",
-            borderRadius: "50%",
-            overflow: "hidden",
-          }}
-          url={avatarUrl}
-          content_type="image"
-        />
-      : table.icon ?
-        <SvgIcon icon={table.icon} size={20} />
-      : null}
-      <FlexCol className="gap-0 min-w-0">
-        {headerColumn && (
-          <div>
-            <RenderValue column={headerColumn} value={row[headerColumn.name]} />
-          </div>
-        )}
-        {subHeaderColumn && (
-          <div className="text-2 font-12">
-            <RenderValue
-              column={subHeaderColumn}
-              value={row[subHeaderColumn.name]}
-            />
-          </div>
-        )}
-      </FlexCol>
+      <RecordSummary
+        row={row}
+        table={table}
+        avatarColumn={avatarConfig}
+        avatarValue={avatarColumn && row[avatarColumn.name]}
+        headerColumn={headerColumn}
+        subHeaderColumns={subHeaderColumns}
+        compact={true}
+      />
       {remainingColumns.length > 0 && (
         <FlexRow className="gap-p5 min-w-0">
           {remainingColumns.map((column) => (

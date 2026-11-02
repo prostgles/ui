@@ -186,6 +186,7 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
       (tableSchema ?? []) as DBSchemaTableWithOptions[],
       db as DBHandlerClient,
       dbState.dbPrgl.joins,
+      methodSchema,
     );
 
     const { path } = dbState;

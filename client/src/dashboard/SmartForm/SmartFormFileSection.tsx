@@ -33,7 +33,6 @@ export const SmartFormFileSection = ({
   const { isFileTable } = table;
   const tableName = table.name;
   const media: Media[] | undefined = useMemo(() => {
-   
     const data = newRowData?.data?.value;
     if (data instanceof File) {
       return [
@@ -50,7 +49,7 @@ export const SmartFormFileSection = ({
     }
     if (defaultData && !isEmpty(defaultData)) return [defaultData as Media];
     return [];
-  }, [row,  defaultData, newRowData, removed]);
+  }, [row, defaultData, newRowData, removed]);
 
   if ("loading" in action && action.loading) return null;
   if (!newRowDataHandler) return null;
@@ -85,7 +84,7 @@ export const SmartFormFileSection = ({
     <>
       <FileInput
         key={tableName}
-        className={"mt-p5 f-0  min-w-300" }
+        className={"mt-p5 f-0  min-w-300"}
         media={media}
         // minSize={isFileTable ? 470 : 450}
         maxFileCount={1}
@@ -104,9 +103,11 @@ export const SmartFormFileSection = ({
             },
             data: { type: "column", value: file.data },
           };
- 
-          /** Prevent default column values for file tables */
-          newRowDataHandler.setNewRow(newFileRow);
+
+          newRowDataHandler.setNewRow({
+            ...newRowDataHandler.getNewRow(),
+            ...newFileRow,
+          });
         }}
         onDelete={onRemove}
       />

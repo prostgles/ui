@@ -36,7 +36,7 @@ export const createPublicUserSessionIfAllowed = async (
         user_agent: client.user_agent || null,
         type: "web",
       },
-      dbsTx as DBS,
+      dbsTx,
       Date.now() + Number(7 * DAY),
     );
   });

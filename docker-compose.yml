@@ -14,6 +14,7 @@ x-ui-base: &ui-base
   build:
     context: .
     dockerfile: Dockerfile
+    pull: true
   environment:
     <<: *ui-environment
   depends_on:

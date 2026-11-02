@@ -4,23 +4,18 @@ import type { WindowData } from "@common/ColumnConfig/WindowData";
 import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
 import { getColumnsWithInfo } from "./getColumnsWithInfo";
 import { getColWidth } from "./getColWidth";
+import { getColumnActions } from "../ColumnMenu/ColumnDisplayFormat/getFormatColumnSelect";
 
 export const getColumnsWithInfoAndWidth = (
   tables: DBSchemaTableWithRenderInfo[],
   w: Pick<WindowData<"table">, "columns" | "table_name">,
   data?: AnyObject[],
   windowWidth?: number,
-  inheritDefaults = true,
 ): ColumnConfigWithInfo[] => {
   try {
     const { table_name } = w;
 
-    const columnsWithInfo = getColumnsWithInfo(
-      table_name,
-      tables,
-      w.columns,
-      inheritDefaults,
-    );
+    const columnsWithInfo = getColumnsWithInfo(table_name, tables, w.columns);
 
     try {
       const columnsWithWidth = getColWidth(
@@ -28,10 +23,15 @@ export const getColumnsWithInfoAndWidth = (
         data,
         "name",
         windowWidth,
-      ).map((c) => ({
-        ...c,
-        width: c.info?.udt_name === "uuid" ? 150 : c.width,
-      }));
+      ).map((column, index) => {
+        const actions = getColumnActions(column);
+        return {
+          ...column,
+          width:
+            columnsWithInfo[index]?.width ??
+            (actions?.length ? actions.length * 200 : column.width),
+        };
+      });
 
       return columnsWithWidth;
     } catch (e) {

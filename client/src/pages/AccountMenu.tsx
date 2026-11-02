@@ -29,7 +29,6 @@ export const AccountMenu = ({ user, forNavBar }: P) => {
         <Btn
           variant="filled"
           color="action"
-          size="default"
           asNavLink
           href={ROUTES.LOGIN}
           children={t.common["Login"]}
@@ -128,6 +127,7 @@ export const AccountMenu = ({ user, forNavBar }: P) => {
           }}
           iconProps={{
             path: "",
+            style: { fontSize: "18px" },
             children: (
               <text
                 x="12"

@@ -39,6 +39,7 @@ export type SmartFilterBarProps = PrglCore & {
   };
   rowCount: number;
   hideSort?: boolean;
+  filtersOnly?: boolean;
   extraFilters?: AnyObject[];
   fixedData?: AnyObject;
 } & (
@@ -85,6 +86,24 @@ export const SmartFilterBar = (props: SmartFilterBarProps) => {
     setColFilterLayout,
   } = state;
 
+  const filters = (
+    <SmartFilterBarFilters
+      state={state}
+      db={db}
+      tables={tables}
+      extraFilters={props.extraFilters}
+      filtersOnly={props.filtersOnly}
+    />
+  );
+  if (props.filtersOnly) {
+    if (!state.hasFilters && !state.hasHavingFilters) return null;
+    return (
+      <FlexCol className={className} style={style}>
+        {filters}
+      </FlexCol>
+    );
+  }
+
   return (
     <FlexCol
       className={classOverride(
@@ -98,7 +117,7 @@ export const SmartFilterBar = (props: SmartFilterBarProps) => {
 
       <FlexRowWrap
         className={classOverride(
-          "min-h-0 f-0 relative ai-center gap-p5",
+          "TopRow min-h-0 f-0 relative ai-center gap-p5",
           innerClassname,
         )}
       >
@@ -153,12 +172,7 @@ export const SmartFilterBar = (props: SmartFilterBarProps) => {
           <SmartFilterBarRightActions {...props} />
         </FlexRow>
       </FlexRowWrap>
-      <SmartFilterBarFilters
-        state={state}
-        db={db}
-        tables={tables}
-        extraFilters={props.extraFilters}
-      />
+      {filters}
     </FlexCol>
   );
 };

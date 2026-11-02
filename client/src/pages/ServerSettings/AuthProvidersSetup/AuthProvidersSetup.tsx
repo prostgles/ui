@@ -12,6 +12,7 @@ import React, { useCallback, useEffect, useMemo } from "react";
 import { SmartForm } from "src/dashboard/SmartForm/SmartForm";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import { t } from "../../../i18n/i18nUtils";
+import { Select } from "@components/Select/Select";
 import { EmailAuthSetup } from "../EmailAuthSetup";
 import { OAuthProviderSetup } from "../OAuthProviderSetup";
 import { useProviderProps } from "./useProviderProps";
@@ -49,6 +50,7 @@ export const AuthProviderSetup = ({
         auth_providers:
           !auth ? undefined : (
             {
+              signupMode: "invitationOnly",
               website_url:
                 databaseConfig?.auth_providers?.website_url ??
                 window.location.origin,
@@ -101,6 +103,18 @@ export const AuthProviderSetup = ({
         login providers to control access.
       </InfoRow>
       <FlexCol className="p-1 gap-2">
+        <Select
+          label="Signup access"
+          data-command="AuthProviderSetup.signupMode"
+          value={auth_providers?.signupMode ?? "invitationOnly"}
+          fullOptions={
+            [
+              { key: "public", label: "Public signup" },
+              { key: "invitationOnly", label: "Invitation only" },
+            ] as const
+          }
+          onChange={(signupMode) => updateAuth({ signupMode })}
+        />
         <FlexRow>
           <FormField
             data-command="AuthProviderSetup.websiteURL"

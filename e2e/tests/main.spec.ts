@@ -1,6 +1,7 @@
 import { chromium, expect, test, type Locator } from "./utils/fixtures";
 import type { Route } from "@playwright/test";
 import { generate } from "otplib";
+import { createHash } from "node:crypto";
 import { speechToTextTest } from "testAskLLM/speechToTextTest";
 
 import { execSync, spawn } from "child_process";
@@ -16,11 +17,15 @@ import {
 } from "utils/constants";
 import { goTo } from "utils/goTo";
 import { isPortFree } from "utils/isPortFree";
+import { getFreePort } from "@src/utils/isPortFree";
 import { startMockSMTPServer } from "./mockSMTPServer";
 import { setupAskLLMToolUse, testAskLLMCode } from "./testAskLLM/testAskLLM";
 import { testChatListLoading } from "./testAskLLM/testChatListLoading";
 import { testPastedTextAttachments } from "./testAskLLM/testPastedTextAttachments";
+import { testQuestionToolBatches } from "./testAskLLM/testQuestionToolBatches";
 import { testSavedWorkflowDefinition } from "./testAskLLM/testSavedWorkflowDefinition";
+import { testQueryAlerts } from "./testQueryAlerts";
+import { testWorkspaceSwitching } from "./testWorkspaceSwitching";
 import {
   getCommandElemSelector,
   getDataKey,
@@ -45,6 +50,7 @@ import {
   forEachLocator,
   getAskLLMLastMessage,
   getLLMResponses,
+  getLoginSubmitButton,
   getMonacoEditorBySelector,
   getMonacoValue,
   getSearchListItem,
@@ -68,6 +74,7 @@ import {
   selectAndUpsertFile,
   sendAskLLMMessage,
   setModelByText,
+  setOrAddWorkspace,
   setPromptByText,
   setTableRule,
   setupMagicLinkAuth,
@@ -80,6 +87,7 @@ import {
 
 import { ROOT_DIR } from "svgScreenshots/utils/constants";
 import { MINUTE } from "common/utils";
+import { DEFAULT_AGENT_MODEL } from "../../server/dist/server/src/serverFunctions/askLLM/refreshModels";
 import type { SchemaShape } from "../../client/src/dashboard/SchemaGraph/ERDSchema/useSchemaShapes";
 
 const schemaGraphTestDbName = "financial.sql";
@@ -98,11 +106,19 @@ test.use({
 });
 
 test.describe.configure({ mode: "serial" });
+test("Workspace switching preserves the dashboard", async ({ page }) => {
+  await testWorkspaceSwitching(page);
+});
 test("Chat list shows live loading status", async ({ page }) => {
   await testChatListLoading(page);
 });
 test("Pasted text attachments reach OpenRouter as text", async ({ page }) => {
   await testPastedTextAttachments(page);
+});
+test("Question tool batches preserve answers through context compaction", async ({
+  page,
+}) => {
+  await testQuestionToolBatches(page);
 });
 test("Saved workflow definition edits persist and report validation errors", async ({
   page,
@@ -110,16 +126,32 @@ test("Saved workflow definition edits persist and report validation errors", asy
   await testSavedWorkflowDefinition(page);
 });
 
+const alertTest = test.extend({ video: "on", trace: "on" });
+alertTest(
+  "Saved query alerts are editable, scoped and support custom callbacks",
+  async ({ page }) => {
+    await testQueryAlerts(page);
+  },
+);
+
 test.describe("Main test", () => {
   if (process.env.ONLY_VIDEO) {
     test.skip();
   }
-  let getEmails: () => any[];
+  let smtp: Awaited<ReturnType<typeof startMockSMTPServer>> | undefined;
+  const getSMTPServer = () => {
+    if (!smtp) throw new Error("SMTP server has not started");
+    return smtp;
+  };
 
-  test.beforeAll(() => {
-    ({ getEmails } = startMockSMTPServer());
-    console.log("getEmails", getEmails());
-    return { getEmails };
+  test.beforeAll(async () => {
+    smtp = await startMockSMTPServer({
+      disabledCommands: ["AUTH", "STARTTLS"],
+    });
+  });
+
+  test.afterAll(async () => {
+    await smtp?.close();
   });
 
   test.beforeEach(async ({ page, browser }, testInfo) => {
@@ -133,7 +165,7 @@ test.describe("Main test", () => {
     const helperContext = await browser.newContext();
     const helperPage = (await helperContext.newPage()) as PageWIds;
 
-    await login(helperPage, USERS.test_user, "/login");
+    await login(helperPage, USERS.test_user, "/auth/login");
     const backupName = testInfo.title;
 
     const restoreCount = await runDbsMethod(helperPage, "restoreConnections", {
@@ -146,7 +178,7 @@ test.describe("Main test", () => {
         allActive: true,
       });
     }
-    await helperPage.request.post("/logout").catch(() => {});
+    await helperPage.request.post("/auth/logout").catch(() => {});
     await helperContext.close();
   });
 
@@ -193,7 +225,9 @@ test.describe("Main test", () => {
 
     await page.getByRole("link", { name: "Connections" }).click();
     await page.getByRole("link", { name: "Prostgles UI state" }).click();
-    await page.getByTestId("Feedback").waitFor({ state: "visible" });
+    await page
+      .getByTestId("dashboard.menu.quickSearch")
+      .waitFor({ state: "visible" });
 
     const browser2 = await chromium.launch();
     const newPage = await browser2.newPage();
@@ -307,7 +341,7 @@ test.describe("Main test", () => {
 
   test("State db backup and restore works", async ({ page: p }) => {
     const page = p as PageWIds;
-    await login(page, USERS.test_user, "/login");
+    await login(page, USERS.test_user, "/auth/login");
     await openConnection(page, "Prostgles UI state");
 
     const table = page.locator(`[data-table-name="user_types"]`);
@@ -320,7 +354,9 @@ test.describe("Main test", () => {
     await page
       .getByRole("button", { name: "Start backup", exact: true })
       .click();
-    await page.getByText("Completed");
+    await expect(
+      page.getByTestId("BackupControls.Restore").first(),
+    ).toBeVisible(TWENTY_SECONDS_OR_MORE);
 
     await page.getByTestId("config.goToConnDashboard").click();
     await expect(table).toBeVisible();
@@ -342,7 +378,7 @@ test.describe("Main test", () => {
 
   test("State db restore from file works", async ({ page: p }) => {
     const page = p as PageWIds;
-    await login(page, USERS.test_user, "/login");
+    await login(page, USERS.test_user, "/auth/login");
     await openConnection(page, "Prostgles UI state");
 
     const table = page.locator(`[data-table-name="user_types"]`);
@@ -386,7 +422,7 @@ test.describe("Main test", () => {
     await page.waitForTimeout(8e3);
     await page.reload();
 
-    await login(page, USERS.test_user, "/login");
+    await login(page, USERS.test_user, "/auth/login");
     await openConnection(page, "Prostgles UI state");
     // await page.getByTestId("config.goToConnDashboard").click();
     await expect(table).toBeVisible();
@@ -481,7 +517,7 @@ test.describe("Main test", () => {
 
   test("Server settings and account tabs work ", async ({ page: p }) => {
     const page = p as PageWIds;
-    await login(page, USERS.test_user, "/login");
+    await login(page, USERS.test_user, "/auth/login");
 
     for (const pageWithTabs of ["/server-settings", "/account"] as const) {
       await goTo(page, pageWithTabs);
@@ -533,6 +569,12 @@ test.describe("Main test", () => {
     await expect(await input.getAttribute("value")).toEqual(
       "http://localhost:3004",
     );
+    await page.getByTestId("AuthProviderSetup.signupMode").click();
+    await page.locator('[data-key="public"]').click();
+    /* Changing signup access refreshes the app and resets expanded sections. */
+    await expect(page.getByTestId("AuthProviderSetup.signupMode")).toHaveText(
+      "Public signup",
+    );
     await page.getByTestId("EmailAuthSetup").locator("button").click();
     await page.getByTestId("EmailAuthSetup.SignupType").click();
     await page.locator(`[data-key="withPassword"]`).click();
@@ -540,23 +582,19 @@ test.describe("Main test", () => {
       await page.getByTestId("EmailSMTPAndTemplateSetup").click();
       await page.getByText("Email Provider").click();
       await page.locator(`[data-label="Host"] input`).fill(hostVal);
+      await page.locator("input#smtp-Port").fill(String(getSMTPServer().port));
       await page
         .getByTestId("EmailSMTPAndTemplateSetup")
         .getByText("Save")
         .click();
     };
-    await fillHostAndTest("invalid___prostgles-test-mock");
+    await fillHostAndTest("invalid-smtp.invalid");
     await page.getByText("Enabled").click();
     await page.getByText("Save").click({ timeout: 10e3 });
     const errNode = await page.getByTestId("EmailAuthSetup.error");
-    await expect(await errNode.textContent()).toContain(
-      // "getaddrinfo ENOTFOUND invalid___prostgles-test-mock", // or EAI_AGAIN
-      "getaddrinfo E",
-    );
-    await expect(await errNode.textContent()).toContain(
-      "invalid___prostgles-test-mock",
-    );
-    await fillHostAndTest("prostgles-test-mock");
+    await expect(await errNode.textContent()).toContain("getaddrinfo E");
+    await expect(await errNode.textContent()).toContain("invalid-smtp.invalid");
+    await fillHostAndTest("127.0.0.1");
     await page.waitForTimeout(1500);
     const errNode1 = await page.getByTestId("EmailAuthSetup.error");
     await expect(await errNode1.count()).toBe(0);
@@ -567,14 +605,16 @@ test.describe("Main test", () => {
     const newPage = p as PageWIds;
     await login(page);
 
-    await goTo(newPage, "/login");
+    await goTo(newPage, "/auth/login");
 
-    /** Test failed login throttle */
+    /* Unknown emails fail password login and are throttled. */
     await newPage.locator("#username").fill(USERS.new_user);
     await newPage.locator("#password").fill(USERS.new_user);
     const start = Date.now();
-    await newPage.getByRole("button", { name: "Sign in" }).click();
-    await newPage.getByTestId("Login.error").waitFor({ state: "visible" });
+    await newPage.getByRole("button", { name: "Sign in", exact: true }).click();
+    await expect(newPage.getByTestId("Login.error")).toHaveText(
+      "Invalid credentials",
+    );
     await expect(Date.now() - start).toBeGreaterThan(499);
     await newPage.reload();
 
@@ -604,22 +644,25 @@ test.describe("Main test", () => {
       [USERS.new_user],
       { returnType: "row" },
     );
-    const code = newUser?.registration?.email_confirmation?.confirmation_code;
+    const code = getSMTPServer().getLatestCode();
+    expect(newUser?.registration?.code_hash).toBe(
+      createHash("sha256").update(code).digest("hex"),
+    );
     await expect(typeof code).toBe("string");
     await expect(code.length).toBe(6);
+    expect(getSMTPServer().getEmails().at(-1)).toContain(code);
+    expect(getSMTPServer().getEmails().at(-1)).toContain(
+      `To: ${USERS.new_user}`,
+    );
     await newPage.locator("#email-verification-code").fill(code);
     await newPage.getByRole("button", { name: "Confirm email" }).click();
     await expect(
-      await newPage
-        .getByTestId("AuthNotifPopup")
-        .getByTestId("Popup.content")
-        .textContent(),
-    ).toBe("Your email has been confirmed. You can now sign in");
-    await newPage.getByRole("button", { name: "Ok" }).click();
+      newPage.getByTestId("AuthNotifPopup").getByTestId("Popup.content"),
+    ).toHaveText("Your email has been confirmed. You can now sign in");
+    await newPage.getByRole("button", { name: "OK", exact: true }).click();
+    await expect(newPage).toHaveURL("http://localhost:3004/auth/login");
 
-    await newPage.locator("#username").fill(USERS.new_user);
-    await newPage.locator("#password").fill(USERS.new_user);
-    await newPage.getByRole("button", { name: "Sign in" }).click();
+    await fillLoginFormAndSubmit(newPage, USERS.new_user);
 
     await newPage.getByTestId("App.colorScheme").waitFor({ state: "visible" });
   });
@@ -632,7 +675,7 @@ test.describe("Main test", () => {
     await login(page);
     await goTo(page, "/server-settings");
     await page.locator(`[data-key="auth"]`).click();
-    await setupMagicLinkAuth(page);
+    await setupMagicLinkAuth(page, getSMTPServer().port);
 
     await goTo(page, "/connections");
     await page.getByTestId("App.LanguageSelector").click();
@@ -653,7 +696,7 @@ test.describe("Main test", () => {
     /**
      * Can still login with password with email magic link registrations
      */
-    await goTo(page, "/login");
+    await goTo(page, "/auth/login");
     await page.locator("#username").fill(USERS.test_user);
     await page.getByRole("button", { name: "Continue" }).click();
     await page.locator("#password").waitFor({ state: "visible" });
@@ -661,7 +704,7 @@ test.describe("Main test", () => {
     await page.getByRole("button", { name: "Continue" }).click();
     await page.getByTestId("App.colorScheme").waitFor({ state: "visible" });
 
-    await goTo(newPage, "/login");
+    await goTo(newPage, "/auth/login");
 
     await newPage.locator("#username").fill(USERS.new_user1);
     await newPage.getByRole("button", { name: "Continue" }).click();
@@ -694,9 +737,19 @@ test.describe("Main test", () => {
       { returnType: "rows" },
     );
     console.log("failedAttempts", failedAttempts);
-    const code = newUser?.registration.otp_code;
+    const code = getSMTPServer().getLatestCode();
+    expect(newUser?.registration?.code_hash).toBe(
+      createHash("sha256").update(code).digest("hex"),
+    );
     await expect(typeof code).toBe("string");
-    await goTo(newPage, `/magic-link?code=${code}&email=${USERS.new_user1}`);
+    expect(getSMTPServer().getEmails().at(-1)).toContain(code);
+    expect(getSMTPServer().getEmails().at(-1)).toContain(
+      `To: ${USERS.new_user1}`,
+    );
+    await goTo(
+      newPage,
+      `/auth/magic-link?code=${code}&email=${USERS.new_user1}`,
+    );
 
     await newPage.getByTestId("App.colorScheme").waitFor({ state: "visible" });
 
@@ -760,7 +813,7 @@ test.describe("Main test", () => {
     await page.getByTestId("dashboard.goToConnConfig").click();
 
     await page.getByTestId("config.auth").click();
-    await setupMagicLinkAuth(page);
+    await setupMagicLinkAuth(page, getSMTPServer().port);
     await page.getByText("Enabled").click();
     await page.getByText("Save").click();
 
@@ -910,11 +963,19 @@ test.describe("Main test", () => {
       "max_tokens",
       "temperature",
     ].entries()) {
-      await page.getByTitle("Add new item").click();
+      await page
+        .getByRole("button", { name: "Add new item", exact: true })
+        .click();
       await page.getByLabel("Argument name").last().fill(argName);
       await page.getByLabel("Data type").last().click();
       await page.locator(`[data-key="any"]`).click();
-      await page.waitForTimeout(500); // Popup closes but also has this "Show more" button
+      /* Selecting a type must retain the argument name and finish adding it. */
+      await expect(
+        page.getByRole("heading", { name: "Add new item", exact: true }),
+      ).toBeHidden();
+      await expect(page.getByLabel("Argument name").last()).toHaveValue(
+        argName,
+      );
       await page.getByTitle("Show more").click();
       await page.getByText("Optional", { exact: true }).nth(index).click();
       await page.waitForTimeout(500);
@@ -961,8 +1022,15 @@ test.describe("Main test", () => {
       [USERS.free_llm_user1],
       { returnType: "row" },
     );
-    const freeLLMCode = llmUser?.registration.otp_code;
+    const freeLLMCode = getSMTPServer().getLatestCode();
+    expect(llmUser?.registration?.code_hash).toBe(
+      createHash("sha256").update(freeLLMCode).digest("hex"),
+    );
     await expect(typeof freeLLMCode).toBe("string");
+    expect(getSMTPServer().getEmails().at(-1)).toContain(freeLLMCode);
+    expect(getSMTPServer().getEmails().at(-1)).toContain(
+      `To: ${USERS.free_llm_user1}`,
+    );
     await page.locator("input#otp-code").fill(freeLLMCode);
     await page.getByTestId("ProstglesSignup.continue").click();
     await page.waitForTimeout(1e3);
@@ -1067,10 +1135,10 @@ test.describe("Main test", () => {
     await page.getByTestId("Popup.close").last().click();
     await newChat(page);
 
-    await setModelByText(page, "son");
+    await setModelByText(page, "luna");
 
     await expect(page.getByTestId("LLMChatOptions.MCPTools")).toContainText(
-      "10",
+      "11",
     );
     await sendAskLLMMessage(page, " task ", false);
 
@@ -1087,7 +1155,7 @@ test.describe("Main test", () => {
     );
 
     await expect(page.getByTestId("LLMChatOptions.MCPTools")).toContainText(
-      "12",
+      "13",
     );
 
     const dbToolsBtn = await page
@@ -1124,15 +1192,22 @@ test.describe("Main test", () => {
       .getByTestId("AskLLMChat.LoadSuggestedDashboards")
       .click(TWENTY_SECONDS_OR_MORE);
 
-    const workspaceBtn = page.getByTestId("WorkspaceMenu.list");
-    await expect(workspaceBtn).toContainText(
+    /* Generated dashboards appear in the selector and open their saved views. */
+    const workspaceSelector = page.getByTestId("WorkspaceMenuDropDown");
+    await expect(workspaceSelector).toHaveText(
+      "Order Management",
+      TWENTY_SECONDS_OR_MORE,
+    );
+    await workspaceSelector.click();
+    const workspaceList = page
+      .getByRole("dialog")
+      .getByTestId("WorkspaceMenu.list");
+    await expect(workspaceList).toContainText(
       "Customer Insights",
       TWENTY_SECONDS_OR_MORE,
     );
 
-    await page.waitForTimeout(1e3);
-
-    await page.locator(getDataKey("Restaurant Performance")).click();
+    await workspaceList.locator(getDataKey("Restaurant Performance")).click();
     await page
       .getByTestId("TableBody")
       .locator(".ProgressBar")
@@ -1140,11 +1215,17 @@ test.describe("Main test", () => {
       // .scrollIntoViewIfNeeded({ timeout: 60e3 });
       .waitFor({ state: "visible", timeout: 60e3 });
 
+    /* Unloading generated dashboards removes them from the workspace menu. */
     await page.getByTestId("AskLLM").click();
-    await page
-      .getByTestId("AskLLMChat.UnloadSuggestedDashboards")
-      .click(TWENTY_SECONDS_OR_MORE);
-    await expect(workspaceBtn).not.toContainText("Customer Insights");
+    await Promise.all([
+      page.waitForEvent("load"),
+      page
+        .getByTestId("AskLLMChat.UnloadSuggestedDashboards")
+        .click(TWENTY_SECONDS_OR_MORE),
+    ]);
+    await workspaceSelector.click();
+    await expect(workspaceList).toBeVisible();
+    await expect(workspaceList).not.toContainText("Customer Insights");
 
     await page.waitForTimeout(2e3);
 
@@ -1344,6 +1425,18 @@ test.describe("Main test", () => {
       `Tool name "playwright--browser_snapshot" is invalid. Try enabling and reloading the tools`,
     );
 
+    /* Use the same installed Chromium as the browser tests, without a desktop display. */
+    await runDbsSql(
+      page,
+      "UPDATE mcp_servers SET env = env || $1::jsonb WHERE name = 'playwright'",
+      [
+        JSON.stringify({
+          PLAYWRIGHT_MCP_EXECUTABLE_PATH: chromium.executablePath(),
+          PLAYWRIGHT_MCP_HEADLESS: "true",
+          PLAYWRIGHT_MCP_ISOLATED: "true",
+        }),
+      ],
+    );
     await enableMCPServers(page, ["playwright"]);
     await page
       .getByText("browser_tabs")
@@ -1387,7 +1480,11 @@ test.describe("Main test", () => {
     await page.waitForTimeout(1e3);
     /** Can be flaky */
     await expect(page.getByTestId("MarkdownMonacoCode").last()).toContainText(
-      `Page Title: Prostgles`,
+      "Prostgles UI",
+      { ...TWENTY_SECONDS_OR_MORE },
+    );
+    await expect(page.getByTestId("MarkdownMonacoCode").last()).toContainText(
+      "http://localhost:3004/auth/login",
       { ...TWENTY_SECONDS_OR_MORE },
     );
     await lastToolUseBtn.click();
@@ -2113,7 +2210,9 @@ test.describe("Main test", () => {
     );
   });
 
-  test("Create agent", async ({ page: p }) => {
+  test("Create agent shows and uses the default model and parent chat MCP config", async ({
+    page: p,
+  }) => {
     const page = p as PageWIds;
 
     await loginWhenSignupIsEnabled(page);
@@ -2123,15 +2222,52 @@ test.describe("Main test", () => {
 
     await setupAskLLMToolUse(page);
 
-    /** Test ask tool */
     await newChat(page);
+    await sendAskLLMMessage(page, "Agent defaults test setup");
+    const parentChat: { id: number } = await runDbsSql(
+      page,
+      `SELECT chat_id AS id FROM llm_messages
+       WHERE message @> $1::jsonb ORDER BY id DESC LIMIT 1`,
+      [JSON.stringify([{ type: "text", text: "Agent defaults test setup" }])],
+      { returnType: "row" },
+    );
+    const chatConfig: { id: number } = await runDbsSql(
+      page,
+      `INSERT INTO mcp_server_configs (server_name, config)
+       VALUES ('web', $1) ON CONFLICT (server_name, config)
+       DO UPDATE SET config = EXCLUDED.config RETURNING id`,
+      [
+        {
+          type: "local",
+          value: {
+            access: { mode: "allow", urls: ["agent-defaults.example"] },
+          },
+        },
+      ],
+      { returnType: "row" },
+    );
+    await runDbsSql(
+      page,
+      `INSERT INTO llm_chats_allowed_mcp_tools (chat_id, server_name, tool_id, server_config_id)
+       SELECT $1, server_name, id, $2 FROM mcp_server_tools
+       WHERE server_name = 'web' AND name = 'fetch'
+       ON CONFLICT (chat_id, tool_id) DO UPDATE SET server_config_id = EXCLUDED.server_config_id`,
+      [parentChat.id, chatConfig.id],
+    );
 
     await sendAskLLMMessage(page, " create_agent ", false);
+    const agent = page.getByTestId("AskLLM.popup").getByTestId("Agent");
+    await expect(agent.getByTestId("LLMChatOptions.Model")).toContainText(
+      DEFAULT_AGENT_MODEL,
+      TWENTY_SECONDS_OR_MORE,
+    );
+    await expect(agent.getByTestId("McpToolAccess.configure")).toContainText(
+      "agent-defaults.example",
+    );
     await page
       .getByTestId("AskLLMToolApprover.AllowOnce")
       .click(TWENTY_SECONDS_OR_MORE);
-    await page
-      .getByTestId("Agent")
+    await agent
       .getByText("View activity", { exact: true })
       .click(TWENTY_SECONDS_OR_MORE);
 
@@ -2139,6 +2275,20 @@ test.describe("Main test", () => {
       "Agent goal reached",
       getTimeout(30e3),
     );
+    const agentConfig = await runDbsSql(
+      page,
+      `SELECT models.name AS "modelName", tools.server_config_id AS "configId"
+       FROM llm_chats AS chats
+       JOIN llm_models AS models ON models.id = chats.model
+       JOIN llm_chats_allowed_mcp_tools AS tools ON tools.chat_id = chats.id
+       WHERE chats.parent_chat_id = $1 AND tools.server_name = 'web'`,
+      [parentChat.id],
+      { returnType: "row" },
+    );
+    expect(agentConfig).toEqual({
+      modelName: DEFAULT_AGENT_MODEL,
+      configId: chatConfig.id,
+    });
   });
 
   test("Remote MCP server", async ({ page: p }) => {
@@ -2151,6 +2301,12 @@ test.describe("Main test", () => {
       { cwd: ROOT_DIR, stdio: "inherit" },
     );
 
+    const [mcpPort, keycloakPort] = await Promise.all([
+      getFreePort(),
+      getFreePort(),
+    ]);
+    const mcpOrigin = `http://localhost:${mcpPort}`;
+    const keycloakOrigin = `http://localhost:${keycloakPort}`;
     const container = spawn(
       "docker",
       [
@@ -2159,9 +2315,13 @@ test.describe("Main test", () => {
         "--name",
         containerName,
         "-p",
-        "8080:8080",
+        `${keycloakPort}:8080`,
         "-p",
-        "3000:3000",
+        `${mcpPort}:3000`,
+        "-e",
+        `MCP_ORIGIN=${mcpOrigin}`,
+        "-e",
+        `KC_HOSTNAME=${keycloakOrigin}`,
         imageName,
       ],
       { cwd: process.cwd(), stdio: "inherit" },
@@ -2175,10 +2335,10 @@ test.describe("Main test", () => {
             try {
               const ready = await Promise.all([
                 page.request.get(
-                  "http://localhost:3000/.well-known/oauth-protected-resource/mcp",
+                  `${mcpOrigin}/.well-known/oauth-protected-resource/mcp`,
                 ),
                 page.request.get(
-                  "http://localhost:8080/.well-known/oauth-authorization-server/realms/mcp",
+                  `${keycloakOrigin}/.well-known/oauth-authorization-server/realms/mcp`,
                 ),
               ]);
 
@@ -2203,7 +2363,7 @@ test.describe("Main test", () => {
         JSON.stringify(
           {
             mcpServers: {
-              mock: { url: "http://localhost:3000/mcp" },
+              mock: { url: `${mcpOrigin}/mcp` },
             },
           },
           null,
@@ -2219,6 +2379,21 @@ test.describe("Main test", () => {
         .getByTestId("SmartCardList")
         .locator(getDataKey("mock"));
       await serverCard.getByTitle("Press to enable").click();
+
+      /* OAuth authorization must not log errors, disable the server, or create alerts. */
+      const expectNoAuthorizationErrors = async () => {
+        expect(
+          await runDbsSql(
+            page,
+            `SELECT enabled,
+              (SELECT count(*)::int FROM mcp_server_logs WHERE server_name = 'mock') AS log_count,
+              (SELECT count(*)::int FROM alerts WHERE title = 'mock MCP server disabled due to error') AS alert_count
+            FROM mcp_servers WHERE name = 'mock'`,
+            undefined,
+            { returnType: "rows" },
+          ),
+        ).toEqual([{ enabled: true, log_count: 0, alert_count: 0 }]);
+      };
 
       /** General info */
       await expect(
@@ -2240,6 +2415,7 @@ test.describe("Main test", () => {
         "McpServerOAuthConfigAuthorizeUrlBtn.OpenAuthorizationUrl",
       );
       await expect(authorizationLink).toBeVisible(TWENTY_SECONDS_OR_MORE);
+      await expectNoAuthorizationErrors();
       const [popup] = await Promise.all([
         page.waitForEvent("popup"),
         authorizationLink.click(),
@@ -2255,6 +2431,7 @@ test.describe("Main test", () => {
         await expect(
           page.getByTestId("McpServerOAuthConfigActions.connectionToggle"),
         ).toHaveText("Connected", { ...TWENTY_SECONDS_OR_MORE });
+        await expectNoAuthorizationErrors();
         await page.getByTestId("MCPServerConfig.save").click();
         await page.waitForTimeout(1e3);
         await page
@@ -2400,15 +2577,15 @@ test.describe("Main test", () => {
       },
     });
 
-    await login(page, USERS.test_user, "/login");
+    await login(page, USERS.test_user, "/auth/login");
     await page.waitForTimeout(1500);
 
     await runDbsSql(
       page,
       `DELETE FROM login_attempts; UPDATE database_configs SET login_rate_limit = '{"groupBy": "x-real-ip", "maxAttemptsPerHour": 5}'`,
     );
-    await page.request.post("/logout");
-    await goTo(page, "/login");
+    await page.request.post("/auth/logout");
+    await goTo(page, "/auth/login");
     const loginAndExpectError = async (
       errorMessage: string,
       user: string,
@@ -2469,7 +2646,7 @@ test.describe("Main test", () => {
         "x-real-ip": "1.1.1.3",
       },
     });
-    await login(newPage, USERS.test_user, "/login");
+    await login(newPage, USERS.test_user, "/auth/login");
     await newPage.waitForTimeout(1500);
     await runDbsSql(
       newPage,
@@ -2610,7 +2787,7 @@ test.describe("Main test", () => {
   test("Open redirect returnUrl", async ({ page: p }) => {
     const page = p as PageWIds;
     const requestedUrl =
-      "http://localhost:3004/login?returnURL=/%2F%2Fwikipedia.org";
+      "http://localhost:3004/auth/login?returnURL=/%2F%2Fwikipedia.org";
     await login(page, undefined, requestedUrl);
     await goTo(page, requestedUrl);
     await goTo(page, requestedUrl);
@@ -2663,7 +2840,7 @@ test.describe("Main test", () => {
     const fillTokenAndSignIn = async () => {
       const newCode = await generate({ secret: Base64Secret ?? "" });
       await page.locator("#totp_token").fill(newCode);
-      await page.getByRole("button", { name: "Sign in", exact: true }).click();
+      await getLoginSubmitButton(page).click();
     };
     await fillTokenAndSignIn();
     await page.waitForTimeout(1e3);
@@ -2682,13 +2859,13 @@ test.describe("Main test", () => {
       .waitFor({ state: "visible", ...TWENTY_SECONDS_OR_MORE });
 
     /** Using recovery code */
-    await page.request.post("/logout");
+    await page.request.post("/auth/logout");
     await login(page);
     await page
       .getByRole("button", { name: "Enter recovery code", exact: true })
       .click();
     await page.locator("#totp_recovery_code").fill(recoveryCode ?? "");
-    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+    await getLoginSubmitButton(page).click();
     await page.waitForTimeout(3e3);
     await page
       .getByRole("link", { name: "Connections" })
@@ -3085,7 +3262,7 @@ test.describe("Main test", () => {
     /** Increase test time due to doc processing */
     test.setTimeout(7 * MINUTE);
 
-    await page.request.post("/logout");
+    await page.request.post("/auth/logout");
     await login(page, USERS.default_user);
 
     await openConnection(page, TEST_DB_NAME);
@@ -3111,7 +3288,7 @@ test.describe("Main test", () => {
   test("Default user1 has correct permissions", async ({ page: p }) => {
     const page = p as PageWIds;
 
-    await page.request.post("/logout");
+    await page.request.post("/auth/logout");
     await login(page, USERS.default_user1);
 
     await openConnection(page, TEST_DB_NAME);
@@ -3133,7 +3310,7 @@ test.describe("Main test", () => {
   test("Admin user (test_user) can see all data", async ({ page: p }) => {
     const page = p as PageWIds;
 
-    await page.request.post("/logout");
+    await page.request.post("/auth/logout");
     await login(page, USERS.test_user);
     await openConnection(page, TEST_DB_NAME);
 
@@ -3168,7 +3345,10 @@ test.describe("Main test", () => {
       },
       true,
     );
-    await expect(page.getByTestId("SmartForm")).toHaveCount(0);
+    await expect(page.locator(".SmartForm")).toHaveCount(
+      0,
+      TWENTY_SECONDS_OR_MORE,
+    );
     await expect(page.getByText(fileName)).toHaveCount(2);
 
     /** Disable files permissions to test direct insert */
@@ -3291,37 +3471,8 @@ test.describe("Main test", () => {
     await openConnection(page, TEST_DB_NAME);
 
     const wspName = "Table tests";
-    /** Delete existing duplicate workspace */
-    await page.getByTestId("WorkspaceMenuDropDown").click();
-    await page.waitForTimeout(1e3);
-    const deletion = { completed: false };
-    await forEachLocator(
-      page,
-      async () => {
-        //.getByText("WorkspaceMenu.SearchList")
-        const res = await page
-          .getByTestId("WorkspaceMenu.SearchList")
-          .locator(`[data-key=${JSON.stringify(wspName)}]`);
-        return res;
-      },
-      async (item) => {
-        const deleteWspBtn = await item.getByTestId("WorkspaceDeleteBtn");
-        deletion.completed = true;
-        await deleteWspBtn.click();
-        await page.waitForTimeout(555);
-        await page.getByTestId("WorkspaceDeleteBtn.Confirm").click();
-        await page.waitForTimeout(555);
-      },
-    );
-    if (!deletion.completed) {
-      await page.locator(`[data-close-popup="true"]`).click();
-    }
-    await page.getByTestId("WorkspaceMenuDropDown").click();
-    await page.getByTestId("WorkspaceMenuDropDown.WorkspaceAddBtn").click();
-    await page.waitForTimeout(1e3);
-    await page.keyboard.insertText(wspName);
-    await page.keyboard.press("Enter");
-    await page.waitForTimeout(1e3);
+    await setOrAddWorkspace(page, wspName);
+    await closeWorkspaceWindows(page);
     await setWspColLayout(page);
 
     const query = `
@@ -3638,7 +3789,7 @@ test.describe("Main test", () => {
     const sqlTestTimeout = { total: 9 * 6e4, sql: 8 * 6e4 };
     test.setTimeout(sqlTestTimeout.total);
 
-    await page.request.post("/logout");
+    await page.request.post("/auth/logout");
     await login(page, USERS.test_user);
     await openConnection(page, TEST_DB_NAME);
     await page.waitForTimeout(3000);
@@ -3761,7 +3912,8 @@ test.describe("Main test", () => {
 
   test("MCP Servers", async ({ page: p }) => {
     const page = p as PageWIds;
-    await login(page, USERS.test_user, "localhost:3004/login");
+    await login(page, USERS.test_user, "localhost:3004/auth/login");
+    await openConnection(page, TEST_DB_NAME);
 
     await runDbsSql(
       page,
@@ -3836,7 +3988,7 @@ test.describe("Main test", () => {
   /** Flaky on github */
   test("Web template build works", async ({ page: p }) => {
     const page = p as PageWIds;
-    await login(page, USERS.test_user, "localhost:3004/login");
+    await login(page, USERS.test_user, "localhost:3004/auth/login");
     await page.getByRole("link", { name: "cloud" }).click();
     await page.getByTestId("dashboard.goToConnConfig").click();
     await page.getByTestId("config.webApp").click();
@@ -3874,7 +4026,7 @@ test.describe("Main test", () => {
     page: p,
   }) => {
     const page = p as PageWIds;
-    await login(page, USERS.test_user, "localhost:3004/login");
+    await login(page, USERS.test_user, "localhost:3004/auth/login");
     await page.getByRole("link", { name: "sample_database" }).click();
     await page.getByTestId("AskLLM").click();
     await page.getByTestId("AskLLM.popup").waitFor({ state: "visible" });

@@ -1,19 +1,18 @@
-import { FlexCol, FlexRow } from "@components/Flex";
-import { MediaViewer } from "@components/MediaViewer/MediaViewer";
+import { FlexRow } from "@components/Flex";
 import React from "react";
-import { RenderValue } from "../../../SmartForm/SmartFormField/RenderValue";
 import { getEditColumn } from "../../tableUtils/getEditColumn";
 import { DragHeader } from "../DragHeader";
 import type { CardViewRowProps } from "./CardViewRow";
 import { CARD_ITEM_PADDING } from "../constants";
 import { AuditTrailButton } from "../../../AuditTrail/AuditTrailButton";
-import { Avatar } from "../../ColumnMenu/ColumnDisplayFormat/Avatar";
-import { getColumnFormat } from "../../ColumnMenu/ColumnDisplayFormat/getFormatColumnSelect";
+import { RecordSummary } from "../../../SmartCard/RecordSummary";
+import { CardItemTitle } from "./CardItemTitle";
+import { SmartCardList } from "../../../SmartCardList/SmartCardList";
 
 export const CardHeader = ({
   w,
   table,
-  cols,
+  cardFields,
   indexedRow,
   indexedRows,
   rowIndex,
@@ -26,31 +25,9 @@ export const CardHeader = ({
   setDraggedRow,
   props: cardViewProps,
 }: Omit<CardViewRowProps, "cardOpts">) => {
-  const { card } = table;
-  const headerColumn =
-    card?.headerColumn ?
-      table.columns.find((c) => c.name === card.headerColumn)
-    : undefined;
-
-  const subHeaderColumn =
-    card?.subHeaderColumn ?
-      cols.find((c) => c.name === card.subHeaderColumn)
-    : undefined;
-
-  const avatarColumn =
-    card?.avatarColumn ?
-      table.columns.find((c) => c.name === card.avatarColumn)
-    : undefined;
-
+  const { headerColumn, avatarColumn, avatarConfig, subHeaderColumns } =
+    cardFields;
   const row = indexedRow.data;
-  const avatarConfig =
-    cols.find((column) => column.name === avatarColumn?.name) ??
-    (avatarColumn && { ...avatarColumn, format: avatarColumn.renderAs });
-  const avatarFormat = avatarConfig && getColumnFormat(avatarConfig);
-  const avatarUrl =
-    avatarColumn && typeof row[avatarColumn.name] === "string" ?
-      (row[avatarColumn.name] as string)
-    : undefined;
 
   const padding = CARD_ITEM_PADDING;
   return (
@@ -58,70 +35,39 @@ export const CardHeader = ({
       className="CardHeader relative w-full min-w-0 ai-start"
       style={{ gap: padding }}
     >
-      {avatarConfig && avatarFormat?.type === "Avatar" ?
-        <Avatar
-          value={row[avatarConfig.name]}
-          row={row}
-          column={avatarConfig}
-          table={table}
-          params={avatarFormat.params}
-        />
-      : avatarUrl && (
-          <MediaViewer
-            style={{
-              flex: "none",
-              width: "3em",
-              height: "3em",
-              borderRadius: "50%",
-              overflow: "hidden",
-              alignSelf: "center",
-              border: "1px solid var(--b-color)",
-            }}
-            url={avatarUrl}
-            content_type="image"
-          />
-        )
-      }
-      <FlexCol
-        className="f-1 min-w-0 gap-p25"
-        style={{ overflowWrap: "anywhere" }}
-      >
-        {headerColumn && (
-          <div
-            className="w-full f-1"
-            title={headerColumn.label || headerColumn.name}
-            style={{
-              fontWeight: "bold",
-              fontSize: "1.1em",
-            }}
+      <RecordSummary
+        row={row}
+        table={table}
+        avatarColumn={avatarConfig}
+        avatarValue={avatarColumn && row[avatarColumn.name]}
+        headerColumn={headerColumn}
+        subHeaderColumns={subHeaderColumns}
+        compact={false}
+        renderHeader={(renderedValue) => (
+          <CardItemTitle
+            table={table}
+            tableHandler={tableHandler}
+            columnConfig={w?.columns ?? undefined}
+            showEdit={!w?.options.hideEditRow}
+            draggedRow={draggedRow}
+            row={row}
+            prgl={cardViewProps.prgl}
+            renderDetails={(props) => <SmartCardList {...props} />}
           >
-            <RenderValue column={headerColumn} value={row[headerColumn.name]} />
-          </div>
+            {renderedValue}
+          </CardItemTitle>
         )}
-        {subHeaderColumn && (
-          <div
-            className="w-full f-1 text-1"
-            title={subHeaderColumn.info?.label || subHeaderColumn.name}
-            style={{
-              fontSize: "0.9em",
-            }}
-          >
-            {subHeaderColumn.onRender?.({
-              row: row,
-              value: row[subHeaderColumn.name],
-              renderedVal: (
-                <RenderValue
-                  column={subHeaderColumn}
-                  value={row[subHeaderColumn.name]}
-                />
-              ),
-              rowIndex: rowIndex,
-              nextRow: indexedRows[rowIndex + 1],
-              prevRow: indexedRows[rowIndex - 1],
-            })}
-          </div>
-        )}
-      </FlexCol>
+        renderSubHeader={(subHeaderColumn, renderedVal) =>
+          subHeaderColumn.onRender({
+            row,
+            value: row[subHeaderColumn.name],
+            renderedVal,
+            rowIndex,
+            nextRow: indexedRows[rowIndex + 1],
+            prevRow: indexedRows[rowIndex - 1],
+          })
+        }
+      />
       {moveItemsProps && (
         <DragHeader
           {...moveItemsProps}
@@ -156,7 +102,7 @@ export const CardHeader = ({
               if (draggedRow) return;
               onEditClickRow(...args);
             },
-          }).onRender!({
+          }).onRender({
             value: "",
             renderedVal: "",
             row,

@@ -8,6 +8,8 @@ const app = express();
 app.use(express.json());
 
 const PORT = 3000;
+const mcpOrigin = process.env.MCP_ORIGIN ?? `http://localhost:${PORT}`;
+const keycloakOrigin = process.env.KC_HOSTNAME ?? "http://localhost:8080";
 
 const createMcpServer = () => {
   const mcpServer = new Server(
@@ -53,8 +55,8 @@ const createMcpServer = () => {
 
 app.get("/.well-known/oauth-protected-resource/mcp", (_req, res) => {
   res.json({
-    resource: "http://localhost:3000/mcp",
-    authorization_servers: ["http://localhost:8080/realms/mcp"],
+    resource: `${mcpOrigin}/mcp`,
+    authorization_servers: [`${keycloakOrigin}/realms/mcp`],
   });
 });
 
@@ -64,7 +66,7 @@ app.use("/mcp", (req, res, next) => {
   if (!authorization?.startsWith("Bearer ")) {
     res.setHeader(
       "WWW-Authenticate",
-      'Bearer resource_metadata="http://localhost:3000/.well-known/oauth-protected-resource/mcp"',
+      `Bearer resource_metadata="${mcpOrigin}/.well-known/oauth-protected-resource/mcp"`,
     );
     return res.status(401).send("Unauthorized");
   }

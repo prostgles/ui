@@ -34,13 +34,15 @@ export const getSQLResultTableColumns = ({
          * Use href to link to the row details page as in AskLLM
          */
         return (
-          <RenderValue
-            column={c}
-            value={value}
-            getValues={() => rows.map((r) => r[i])}
-            maximumFractionDigits={12}
-            maxLength={maxCharsPerCell || 1000}
-          />
+          <div className="text-ellipsis f-0">
+            <RenderValue
+              column={c}
+              value={value}
+              getValues={() => rows.map((r) => r[i])}
+              maximumFractionDigits={12}
+              maxLength={maxCharsPerCell || 1000}
+            />
+          </div>
         );
       },
       onResize: (width) => {

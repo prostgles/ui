@@ -14,6 +14,7 @@ import type {
 import { GroupedFilterControl } from "./SmartFilter/GroupedFilterControl";
 import type { ColumnConfig } from "@common/ColumnConfig/ColumnConfig";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import type { SmartFilterProps } from "./SmartFilter/SmartFilter";
 
 export type RenderFilterProps = {
   filter: SingleGroupFilter | undefined;
@@ -24,6 +25,7 @@ export type RenderFilterProps = {
   itemName: "filter" | "condition";
   selectedColumns: ColumnConfig[] | undefined;
   hideOperand?: boolean;
+  source?: Pick<SmartFilterProps, "db" | "tables">;
 } & Pick<ForcedFilterControlProps, "tableName">;
 
 export const RenderFilter = (props: RenderFilterProps) => {
@@ -38,7 +40,8 @@ export const RenderFilter = (props: RenderFilterProps) => {
     selectedColumns,
     hideOperand,
   } = props;
-  const { db, tables } = usePrgl();
+  const prgl = usePrgl();
+  const { db, tables } = props.source ?? prgl;
   const isAndOrFilter = "$and" in f || "$or" in f;
   const minimised = mode && mode === "minimised";
   const filters = "$and" in f ? f.$and : f.$or;
@@ -52,6 +55,7 @@ export const RenderFilter = (props: RenderFilterProps) => {
       <GroupedFilterControl
         type="where"
         itemName={itemName}
+        filterClassName="b b-action"
         contextData={contextData}
         variant={
           minimised ? "row"
@@ -129,7 +133,7 @@ export const RenderFilter = (props: RenderFilterProps) => {
   );
 };
 
-const hasDisabledFilter = (
+export const hasDisabledFilter = (
   filter: DetailedFilter | GroupedDetailedFilter,
 ): boolean => {
   if ("$and" in filter) return filter.$and.some(hasDisabledFilter);

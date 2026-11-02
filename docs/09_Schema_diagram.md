@@ -33,14 +33,14 @@ Each workspace allows you to work with a separate set of data and configurations
 The menu also includes options to clone existing workspaces and delete them if they are no longer needed.
 
   - **Workspaces**: List of available workspaces. Click to switch to a different workspace.  
-    - **Delete workspace**: Opens the delete workspace confirmation dialog  
-      - **Delete workspace**: Confirms the deletion of the selected workspace.  
-    - **Clone workspace**: Creates a copy of the selected workspace with a new name.  
-    - **Workspace settings**: Opens the settings for the selected workspace, allowing you to manage its properties.  
+    - **Workspace actions**: Opens the workspace actions menu.  
+      - **Delete workspace**: Opens the delete workspace confirmation dialog  
+        - **Delete workspace**: Confirms the deletion of the selected workspace.  
+      - **Clone workspace**: Creates a copy of the selected workspace with a new name.  
+      - **Workspace settings**: Opens the settings for the selected workspace, allowing you to manage its properties.  
   - **Create new workspace**: Opens the form to create a new workspace for the selected connection.  
     - **Workspace name**: Name of the new workspace.  
     - **Create workspace**: Create and switch to the new workspace with the specified name.  
-  - **Toggle layout mode**: Switches between fixed and editable layout modes for the current workspace. Fixed mode locks the layout, preventing it from being changed by the user.  
 
 <h2 id="workspace_area"> Workspace area </h2> 
 
@@ -60,4 +60,5 @@ It includes the SQL editor, data tables, maps, and timecharts, allowing you to e
   - <a href="#table_view">Table view</a>: Allows interacting with a table/view from the database.  
   - <a href="#map_view">Map view</a>: Displays a map visualization based on the Table/SQL query results.  
   - <a href="#timechart_view">Timechart view</a>: Displays a timechart based on the Table/SQL query results.  
+  - <a href="#server-side_function_view">Server-side function view</a>: Allows executing server-side functions and viewing results.  
 

@@ -8,6 +8,7 @@ import {
   getDefaultSort,
 } from "../../dashboard/W_Table/ColumnMenu/ColumnSortMenu";
 import { getSortColumn } from "../../dashboard/W_Table/tableUtils/tableUtils";
+import { getColumnSortOptions } from "../../dashboard/W_Table/tableUtils/getColumnSortOptions";
 import type { ProstglesColumn } from "../../dashboard/W_Table/W_Table";
 import { quickClone } from "../../utils/utils";
 import { classOverride } from "../Flex";
@@ -220,15 +221,12 @@ export class TableHeader<Sort extends ColumnSortSQL> extends React.Component<
                       let newSort = quickClone(mySort);
                       if (!newSort) {
                         if (isObject(col.sortable)) {
-                          const [col1, col2] =
-                            col.sortable.column.nested?.columns.filter(
-                              (c) => c.show,
-                            ) ?? [];
-                          const onlyOneActiveColumn = col1 && !col2;
-                          if (onlyOneActiveColumn) {
+                          const [firstSortOption, secondSortOption] =
+                            getColumnSortOptions(col.sortable.column);
+                          if (firstSortOption && !secondSortOption) {
                             newSort = getDefaultSort(
-                              `${col.key}.${col1.name}`,
-                            ) as Sort; // { key: `${col.key}.${onlyOneActiveColumn.name}`, asc: true };
+                              firstSortOption.key,
+                            ) as Sort;
                           } else {
                             this.setState({
                               showNestedSortOptions: {

@@ -22,8 +22,6 @@ export const loadGeneratedTable = (
 ) => {
   const columns = generatedWindow.columns?.map((c) => {
     const { computedConfig, nested } = c;
-    const nestedTable =
-      nested && tables.find((t) => t.name === nested.path.at(-1)?.table);
     return {
       ...c,
       nested:
@@ -45,32 +43,20 @@ export const loadGeneratedTable = (
             : nested.display,
           columns:
             "columns" in nested ?
-              [
-                ...nested.columns.map((nc) => {
-                  return {
-                    ...nc,
-                    show: nc.show ?? true,
-                    style: parseColumnStyle(nc.styling),
-                    computedConfig:
-                      nc.computedConfig &&
-                      parseComputedConfig(
-                        nc.computedConfig,
-                        tables,
-                        nested.path.at(-1)!.table,
-                      ),
-                  } as NestedColumn<ColumnConfig>;
-                }),
-                ...nestedTable!.columns
-                  .filter((c) => {
-                    return !nested.columns.some(
-                      (nc) => !nc.computedConfig && nc.name === c.name,
-                    );
-                  })
-                  .map((c) => ({
-                    name: c.name,
-                    show: false,
-                  })),
-              ]
+              nested.columns.map((nc) => {
+                return {
+                  ...nc,
+                  show: nc.show ?? true,
+                  style: parseColumnStyle(nc.styling),
+                  computedConfig:
+                    nc.computedConfig &&
+                    parseComputedConfig(
+                      nc.computedConfig,
+                      tables,
+                      nested.path.at(-1)!.table,
+                    ),
+                } as NestedColumn<ColumnConfig>;
+              })
             : [],
         } satisfies ColumnConfig["nested"]),
       computedConfig:
@@ -85,7 +71,6 @@ export const loadGeneratedTable = (
     filter,
     filterOperand,
     quickFilterGroups,
-    // cardLayout,
     table_name,
     title,
   } = generatedWindow;
@@ -177,6 +162,7 @@ const parseColumnStyle = (
   if (styling?.type !== "conditional") return styling;
   return {
     type: "Conditional",
+    column: styling.column,
     buttonVariant: styling.buttonVariant,
     fontWeight: styling.fontWeight,
     conditions: styling.conditions.map((condition) => {

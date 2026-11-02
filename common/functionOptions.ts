@@ -2,6 +2,7 @@ import {
   getActionFunctions,
   type AnyObject,
   type ClientServerFunction,
+  type DBSchemaTable,
   type JSONB,
 } from "prostgles-types";
 import {
@@ -16,9 +17,11 @@ import {
 } from "./jobAction";
 
 export const functionOptionsSchema = {
+  title: { type: "string", optional: true },
   action: {
     optional: true,
     type: {
+      runImmediately: actionColumnParamsSchema.runImmediately,
       conditions: actionColumnParamsSchema.conditions,
       defaultValue: actionColumnParamsSchema.defaultValue,
       /** Labels for a job control function; its binding and status policy are derived automatically. */
@@ -27,6 +30,11 @@ export const functionOptionsSchema = {
   },
   defaultArgs: { record: { values: "any" }, optional: true },
   outputTable: { type: "string", optional: true },
+  renderOutputAsMarkdown: {
+    type: "boolean",
+    optional: true,
+    description: "Render string results as Markdown",
+  },
 } as const;
 
 export const functionOptionsJsonbSchema = {
@@ -55,13 +63,14 @@ export const getFunctionActionValueKey = (key: string) =>
 export const getFunctionActionSelect = (
   method: ClientServerFunction | undefined,
   key: string,
+  tables: DBSchemaTable[],
 ): AnyObject => {
   const action = getFunctionOptions(method)?.action;
   const expression = getActionCaseSelect(
     action?.job ? { ...action, defaultValue: {} } : (action ?? {}),
   );
   return {
-    ...getJobActionSelect(action?.job, key),
+    ...getJobActionSelect(action?.job, tables),
     ...(expression ? { [getFunctionActionValueKey(key)]: expression } : {}),
   };
 };
@@ -69,11 +78,12 @@ export const getFunctionActionSelect = (
 export const getTableFunctionActionSelect = (
   methods: Record<string, ClientServerFunction>,
   table: Parameters<typeof getActionFunctions>[1],
+  tables: DBSchemaTable[],
 ): AnyObject =>
   Object.assign(
     {},
     ...getActionFunctions(methods, table).map(({ methodName }) =>
-      getFunctionActionSelect(methods[methodName], methodName),
+      getFunctionActionSelect(methods[methodName], methodName, tables),
     ),
   );
 
@@ -94,7 +104,7 @@ export const getFunctionActionValue = (
     ...(state ? (JSON.parse(state) as ActionButtonState) : {}),
     ...overrides,
   };
-  const jobValue = getJobActionValue(action?.job, row, key);
+  const jobValue = getJobActionValue(action?.job, row);
   return {
     ...values,
     ...jobValue,

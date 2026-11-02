@@ -26,8 +26,13 @@ const config = {
   connection: {
     table_options: {
       users: {
-        card: { headerColumn: "name" },
+        card: { headerColumn: "name", avatarColumn: "username" },
         referenceDisplay: { columns: [{ name: "name" }, { name: "username" }] },
+        columns: { username: { renderAs: { type: "Avatar" } } },
+      },
+      records: {
+        icon: "TextBoxOutline",
+        card: { headerColumn: "name" },
       },
       text_versions: {
         sort: [{ key: "id", asc: false }],
@@ -119,6 +124,13 @@ test.beforeAll(async () => {
         "INSERT INTO access_control_connections (access_control_id, connection_id) SELECT $1, id FROM connections WHERE name = $2",
         [accessRuleId, config.id],
       );
+      await stateDatabase.query(
+        `INSERT INTO workspaces (connection_id, user_id, name, last_updated)
+         SELECT c.id, u.id, 'Audit tests', 0
+         FROM connections c CROSS JOIN users u
+         WHERE c.name = $1 AND u.username IN ('admin', 'restricted')`,
+        [config.id],
+      );
 
       await projectDatabase.query(
         "INSERT INTO text_versions VALUES (1, $1, $2), (2, NULL, 'added text'), (3, 'removed text', NULL), (4, 'clear text', ''), (5, 'a🐈bKEEPx', 'a🐕bKEEPy'), (6, 'same text', 'same text')",
@@ -165,8 +177,16 @@ test("history is scoped to the row, newest first, live, and read-only", async ({
   const form = page
     .getByRole("dialog")
     .filter({ has: page.getByTestId("SmartForm") });
+  /* History reuses the record title/icon and omits form-only controls. */
+  const formTitle = form.getByTestId("SmartForm.header.tableIconAndName");
+  await expect(formTitle).toHaveText("updated");
   await form.getByTestId("AuditTrail.open").click();
   const history = page.getByRole("dialog").filter({ hasText: "History ·" });
+  const historyTitle = history.getByTestId("SmartForm.header.tableIconAndName");
+  await expect(historyTitle).toHaveText(await formTitle.innerText());
+  await expect(historyTitle.locator("svg")).toHaveCount(1);
+  await expect(history.getByTestId("AuditTrail.open")).toHaveCount(0);
+  await expect(history.getByTitle("Show as markdown")).toHaveCount(0);
   const rows = history.getByTestId("TableBody").getByRole("row");
   await expect(history.locator(".table-column-label")).toHaveText([
     "Time",
@@ -174,6 +194,13 @@ test("history is scoped to the row, newest first, live, and read-only", async ({
     "User",
     "Changes",
   ]);
+  /* Change details receive more width than the time and action columns. */
+  const headers = history.getByRole("columnheader");
+  const timeWidth = (await headers.nth(0).boundingBox())!.width;
+  const actionWidth = (await headers.nth(1).boundingBox())!.width;
+  const changesWidth = (await headers.nth(3).boundingBox())!.width;
+  expect(changesWidth).toBeGreaterThan(timeWidth);
+  expect(changesWidth).toBeGreaterThan(actionWidth);
   await expect(rows).toHaveCount(2);
   await expect(rows.nth(0)).toContainText("UPDATE");
   await expect(rows.nth(1)).toContainText("INSERT");
@@ -186,6 +213,27 @@ test("history is scoped to the row, newest first, live, and read-only", async ({
   );
   await expect(history.getByTestId("SmartForm.update")).toHaveCount(0);
   await expect(history.getByTestId("SmartForm.delete")).toHaveCount(0);
+
+  /* Header search and suggestions stay scoped to this record's history. */
+  const search = history
+    .getByTestId("Popup.header")
+    .getByTestId("SearchList.Input");
+  await search.fill("other tenant");
+  await expect(history.getByTestId("SearchList.List")).toContainText(
+    "No results",
+  );
+  await search.press("Enter");
+  await expect(rows).toHaveCount(0);
+  await history.getByTitle("Click to expand/collapse").click();
+  await history.getByTestId("FilterWrapper.deleteFilter").click();
+  await expect(rows).toHaveCount(2);
+  await search.fill("UPDATE");
+  await history
+    .getByTestId("SearchList.List")
+    .getByText("UPDATE", { exact: true })
+    .click();
+  await expect(rows).toHaveCount(1);
+  await expect(rows.first()).toContainText("UPDATE");
 
   const summary = rows.first().getByTitle("View JSON diff");
   await expect(summary.locator("strong")).toHaveText("name");
@@ -225,13 +273,16 @@ test("history is scoped to the row, newest first, live, and read-only", async ({
       { tenant_id: "a", id: 1 },
       { name: "live change", id: 10 },
     );
-    await expect(rows).toHaveCount(3);
+    await expect(rows).toHaveCount(2);
     await expect(rows.first()).toContainText("Audit Administrator");
-    await expect(
-      rows
-        .first()
-        .getByRole("button", { name: "Audit Administrator", exact: true }),
-    ).toBeVisible();
+    /* The actor's name and single avatar share one record button. */
+    const actor = rows.first().getByRole("cell").nth(2);
+    await expect(actor.getByRole("button")).toHaveCount(1);
+    await expect(actor.getByRole("button")).toContainText(
+      "Audit Administrator",
+    );
+    await expect(actor.getByRole("img")).toHaveCount(1);
+    await expect(actor.getByRole("img", { name: "admin" })).toBeVisible();
     await expect(rows.first()).not.toContainText('"type":');
     const updatedSummary = rows.first().getByTitle("View JSON diff");
     await expect(updatedSummary.locator("strong")).toHaveText(["id", "name"]);
@@ -248,6 +299,9 @@ test("history is scoped to the row, newest first, live, and read-only", async ({
   } finally {
     client.disconnect();
   }
+  await history.getByTitle("Click to expand/collapse").click();
+  await history.getByTestId("FilterWrapper.deleteFilter").click();
+  await expect(rows).toHaveCount(3);
   await history.getByTestId("Popup.close").click();
   await expect(history).toHaveCount(0);
   await expect(form).toBeVisible();
@@ -394,6 +448,25 @@ test("audit users compose the configured reference fields when the title is empt
     await expect(row).toContainText("username fallback");
     await expect(row).toContainText("admin");
     await expect(row).not.toContainText('"type":');
+    /* A null title keeps the username as text and a single avatar. */
+    const actor = row.getByRole("cell").filter({
+      has: page.getByRole("img", { name: "admin" }),
+    });
+    await expect(actor.getByRole("button")).toHaveCount(1);
+    await expect(actor.getByRole("button")).toContainText("admin");
+    await expect(actor.getByRole("img")).toHaveCount(1);
+    await expect(actor.getByRole("img", { name: "admin" })).toBeVisible();
+    await expect(actor.getByText("NULL", { exact: true })).toBeVisible();
+    await actor.getByTestId("LinkedColumn.OpenRecord").click();
+    const details = page.getByRole("dialog").last();
+    const users = details.getByTestId("SmartCardList");
+    await expect(users.locator(".SmartCard")).toHaveCount(1);
+    await expect(users.getByRole("img", { name: "admin" })).toBeVisible();
+    await expect(users.locator("label")).toContainText(["Last Updated"]);
+    await expect(details.locator(".SmartCardListControls")).toHaveCount(0);
+    await expect(details.getByTestId("Popup.header")).toHaveCount(0);
+    await users.getByRole("button", { name: "Close", exact: true }).click();
+    await expect(details).toHaveCount(0);
   } finally {
     await client.db.users!.update!(
       { username: "admin" },
@@ -443,8 +516,8 @@ test("audit users respect user table and title permissions", async ({
       await expect(row).not.toContainText("Audit Administrator");
       if (canReadUsers) {
         await expect(
-          row.getByRole("button", { name: "admin", exact: true }),
-        ).toBeVisible();
+          row.locator('[data-command^="LinkedColumn.OpenRecord"]'),
+        ).toHaveCount(1);
         await expect(row).not.toContainText('"type":');
       }
     }

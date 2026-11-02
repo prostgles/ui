@@ -1,13 +1,8 @@
-import type { AnyObject } from "prostgles-types";
 import { getActionFunctions, isObject } from "prostgles-types";
 import { ROW_ACTIONS_COLUMN } from "prostgles-client";
-import { getFunctionActionValue } from "@common/functionOptions";
-import { getActionLookupRow } from "@common/resolveActionFunction";
-import { SvgIcon } from "@components/SvgIcon";
 import React, { useEffect, useState } from "react";
-import Btn from "@components/Btn";
-import Popup from "@components/Popup/Popup";
-import { W_MethodControls } from "../../W_Method/W_MethodControls";
+import { ActionButton } from "../../W_Table/ColumnMenu/ColumnDisplayFormat/ActionButton";
+import { getActionButtonState } from "../../W_Table/ColumnMenu/ColumnDisplayFormat/getActionButtonState";
 import { JoinedRecords } from "../JoinedRecords/JoinedRecords";
 import { useActiveJoinedRecordsTab } from "./useActiveJoinedRecordsTab";
 import type { SmartFormProps } from "../SmartForm";
@@ -42,19 +37,8 @@ export const SmartFormUpperFooter = (props: SmartFormUpperFooterProps) => {
       )
     : [];
 
-  const [method, setMethod] = useState<{
-    name: string;
-    row: AnyObject;
-    argName: string;
-  }>();
-
   const showChanges =
     onChange && mode.type === "update" && Object.keys(newRowData ?? {}).length;
-
-  const [methodState, setMethodState] = useState<{
-    args?: AnyObject | undefined;
-    disabledArgs?: string[] | undefined;
-  }>({});
 
   const rootDivRef = React.useRef<HTMLDivElement>(null);
   const [isFocused, setIsFocused] = useState(false);
@@ -72,7 +56,7 @@ export const SmartFormUpperFooter = (props: SmartFormUpperFooterProps) => {
     return () => {
       document.removeEventListener("click", onClickListener);
     };
-  }, [method]);
+  }, []);
 
   const { activeJoinedRecordsTab, setActiveJoinedRecordsTab } =
     useActiveJoinedRecordsTab({
@@ -95,7 +79,7 @@ export const SmartFormUpperFooter = (props: SmartFormUpperFooterProps) => {
 
   const showMethods = dbMethodActions.length > 0 && row;
 
-  if (!(method || showJoinedTables || showMethods)) return null;
+  if (!(showJoinedTables || showMethods)) return null;
 
   return (
     <div
@@ -115,30 +99,6 @@ export const SmartFormUpperFooter = (props: SmartFormUpperFooterProps) => {
         // }),
       }}
     >
-      {method && (
-        <Popup
-          onClose={() => setMethod(undefined)}
-          title={method.name}
-          showFullscreenToggle={{
-            defaultValue: true,
-          }}
-        >
-          <W_MethodControls
-            method_name={method.name}
-            fixedRowArgument={{
-              argName: method.argName,
-              row: method.row,
-              tableName,
-            }}
-            db={db}
-            tables={tables}
-            methods={methods}
-            state={methodState}
-            setState={setMethodState}
-            w={undefined}
-          />
-        </Popup>
-      )}
       {showJoinedTables && (
         <JoinedRecords
           modeType={modeType}
@@ -161,43 +121,22 @@ export const SmartFormUpperFooter = (props: SmartFormUpperFooterProps) => {
           row={row}
         />
       )}
-      {showMethods && (
+      {showMethods && table && (
         <div className="dbMethodActions flex-row-wrap gap-p5 p-1">
-          {dbMethodActions.map(({ methodName, lookup, argName }) => {
-            const showInRowCard = lookup.showInRowCard;
-            const values = getFunctionActionValue(
-              methods[methodName],
-              row,
-              methodName,
-            );
-            return (
-              <Btn
-                key={`${methodName}:${argName}`}
-                color={values.color ?? showInRowCard?.actionColor ?? "action"}
-                variant={values.variant ?? "filled"}
-                loading={values.isLoading ? "allow-clicking" : false}
-                disabledInfo={values.disabledInfo}
-                iconNode={
-                  values.icon ?
-                    <SvgIcon icon={values.icon} size={16} />
-                  : undefined
-                }
-                onClick={() => {
-                  setMethodState({});
-                  setMethod({
-                    name: methodName,
-                    row:
-                      lookup.type === "RowLookup" && table ?
-                        getActionLookupRow(row, table, methods[methodName]!)
-                      : row,
-                    argName,
-                  });
-                }}
-              >
-                {values.text ?? showInRowCard?.actionLabel ?? methodName}
-              </Btn>
-            );
-          })}
+          {dbMethodActions.map(({ methodName, argName }) => (
+            <ActionButton
+              key={`${methodName}:${argName}`}
+              table={table}
+              state={getActionButtonState({
+                methods,
+                table,
+                params: { methodName, argName },
+                row,
+                queryRow: row,
+                stateKey: methodName,
+              })}
+            />
+          ))}
         </div>
       )}
     </div>
