@@ -1,8 +1,9 @@
 import type { DetailedFilter } from "@common/filterUtils";
-import type { ChartType, WindowData } from "./dashboardUtils";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 import type { DBS } from "./DBS";
 import type { DBSSchema } from "@common/publishUtils";
 import { pageReload } from "@components/Loader/Loading";
+import type { ChartType } from "@common/ColumnConfig/WindowData";
 
 export const addWindow = async <CT extends ChartType>(
   dbs: DBS,
@@ -12,23 +13,14 @@ export const addWindow = async <CT extends ChartType>(
   workspaceId: string,
   filter: DetailedFilter[] = [],
 ) => {
-  const {
-    options = {
-      showFilters: false,
-      refresh: { type: "Realtime", throttleSeconds: 1 },
-    },
-    type,
-    table_name,
-    name,
-    ...otherWindowOpts
-  } = w;
+  const { options, type, table_name, name, ...otherWindowOpts } = w;
   const res = await dbs.windows.insert(
     {
       ...otherWindowOpts,
       name,
       type,
       table_name,
-      options,
+      ...(options && { options }),
       filter,
       fullscreen: false,
       workspace_id: workspaceId,

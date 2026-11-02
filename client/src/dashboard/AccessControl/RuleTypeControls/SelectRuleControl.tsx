@@ -91,7 +91,7 @@ export const SelectRuleControl = ({
                 </div>
               </FlexCol>
             }
-            detailedFilter={rule.forcedFilterDetailed as SingleGroupFilter}
+            detailedFilter={rule.forcedFilterDetailed}
             tableName={table.name}
             contextData={contextData}
             onChange={(forcedFilterDetailed) => {

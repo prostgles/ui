@@ -1,4 +1,5 @@
 import React from "react";
+import { persistClientLogs } from "../../pages/ProjectConnection/logClientEvents";
 import RTComp from "../../dashboard/RTComp";
 import { tout } from "../../utils/utils";
 import { classOverride, FlexRow } from "../Flex";
@@ -6,6 +7,7 @@ import "./Loading.css";
 import { SpinnerV4 } from "./SpinnerV4";
 export const pageReload = async (reason: string) => {
   console.log("pageReload due to: ", reason);
+  persistClientLogs(reason);
   await tout(200);
   window.location.reload();
 };
@@ -104,7 +106,20 @@ export default class Loading extends RTComp<P, S> {
               this.setState({ timeoutMessage: this.props.onTimeout.message });
             }
           } else {
-            pageReload("Loader refreshPageTimeout");
+            const reason = "Loader refreshPageTimeout";
+            const previousLoaderTimeout = window.localStorage.getItem(reason);
+            if (
+              previousLoaderTimeout &&
+              Date.now() - Number(previousLoaderTimeout) < 8_000
+            ) {
+              console.log(
+                "Not refreshing page because loader was shown recently",
+                message,
+              );
+              return;
+            }
+            window.localStorage.setItem(reason, Date.now().toString());
+            pageReload(reason);
           }
         }, onTimeout?.timeout ?? refreshPageTimeout!);
       }

@@ -7,7 +7,7 @@ import { classOverride } from "@components/Flex";
 import type { JSONBSchemaCommonProps } from "@components/JSONBSchema/JSONBSchema";
 import Loading from "@components/Loader/Loading";
 import type { AnyObject, ValidatedColumnInfo } from "prostgles-types";
-import { includes, omitKeys } from "prostgles-types";
+import { omitKeys } from "prostgles-types";
 import React, { useCallback, useState } from "react";
 import type { Prgl } from "../../App";
 import { ifEmpty } from "../../utils/utils";
@@ -18,9 +18,10 @@ import { SmartFormFooterButtons } from "./SmartFormFooter/SmartFormFooterButtons
 import { useSmartFormActions } from "./SmartFormFooter/useSmartFormActions";
 import { type NewRowDataHandler } from "./SmartFormNewRowDataHandler";
 import { SmartFormPopupWrapper } from "./SmartFormPopup/SmartFormPopupWrapper";
+import { getSmartFormHeaderText } from "./SmartFormPopup/SmartFormHeader";
+import { SmartFormViewAsMarkdown } from "./SmartFormPopup/SmartFormViewAsMarkdown";
 import { SmartFormUpperFooter } from "./SmartFormUpperFooter/SmartFormUpperFooter";
 import { useSmartForm, type SmartFormState } from "./useSmartForm";
-import { SmartFormViewAsMarkdown } from "./SmartFormPopup/SmartFormViewAsMarkdown";
 
 export type getErrorsHook = (
   cb: (
@@ -209,18 +210,12 @@ const SmartFormWithNoError = ({
   const { mode, displayedColumns, errors, error, table, loading } = state;
 
   const isLoading = loading || ("loading" in mode ? mode.loading : false);
-  const headerFromCardConfig =
-    (
-      table.card?.headerColumn &&
-      "currentRow" in mode &&
-      mode.currentRow &&
-      table.card.headerColumn in mode.currentRow
-    ) ?
-      (mode.currentRow[table.card.headerColumn] as string)
-    : undefined;
   const headerText =
     label ??
-    (headerFromCardConfig || table.label || table.comment || tableName);
+    getSmartFormHeaderText(
+      table,
+      "currentRow" in mode ? mode.currentRow : undefined,
+    );
 
   const formHeader =
     asPopup ? null
@@ -259,8 +254,15 @@ const SmartFormWithNoError = ({
       displayedColumns={displayedColumns}
       headerText={headerText}
       rowFilterObj={"rowFilterObj" in mode ? mode.rowFilterObj : undefined}
+      row={
+        mode.type === "view" || mode.type === "update" ?
+          mode.currentRow
+        : undefined
+      }
       showAsMarkdown={showAsMarkdown}
-      setShowAsMarkdown={setShowAsMarkdown}
+      setShowAsMarkdown={
+        state.modeType === "insert" ? undefined : setShowAsMarkdown
+      }
     >
       <div
         data-command={isLoading ? undefined : "SmartForm"}
@@ -292,8 +294,8 @@ const SmartFormWithNoError = ({
         <SmartFormUpperFooter {...props} {...state} />
 
         <ErrorComponent
-          className="f-0 b rounded"
-          style={{ flex: "none", padding: "1em" }}
+          className="f-0 b rounded m-p5 p-1 gap-p5"
+          style={{ flex: "none", lineHeight: "1.5rem" }}
           withIcon={true}
           error={
             error ||

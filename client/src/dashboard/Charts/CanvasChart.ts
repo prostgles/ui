@@ -1,4 +1,4 @@
-import { asRGB } from "src/utils/colorUtils";
+import { asRGB } from "@common/ColumnConfig/colorUtils";
 import type { Coords, Point } from "../Charts";
 import type { PanListeners } from "../setPan";
 import { setPan } from "../setPan";
@@ -93,11 +93,7 @@ export type Polygon<T = any> = ShapeBase<T> &
   };
 
 export type Shape<T = any> =
-  | Rectangle<T>
-  | Circle<T>
-  | ChartedText<T>
-  | MultiLine<T>
-  | Polygon<T>;
+  Rectangle<T> | Circle<T> | ChartedText<T> | MultiLine<T> | Polygon<T>;
 
 export type TextMeasurement = {
   width: number;

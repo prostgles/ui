@@ -2,7 +2,7 @@ import type { editor, IRange } from "monaco-editor";
 import type { MonacoError } from "../W_SQLEditor";
 import type { CodeBlock } from "../SQLCompletion/completionUtils/getCodeBlock";
 import { scrollToLineIfNeeded } from "./scrollToLineIfNeeded";
-import type { WindowData } from "../../Dashboard/dashboardUtils";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 import type { MonacoEditorImport } from "../../CodeEditor/utils/useSetMonacoTsLibraries";
 
 export const setMonacEditorError = async (

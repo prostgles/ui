@@ -22,6 +22,7 @@ import {
 } from "./SmartFormNewRowDataHandler";
 import type { useSmartFormMode } from "./useSmartFormMode";
 import { isJoinedFilter } from "@common/filterUtils";
+import { useMemoDeep } from "prostgles-client";
 
 type Args = {
   columns: ValidatedColumnInfo[];
@@ -55,7 +56,8 @@ export const useNewRowDataHandler = (args: Args) => {
     parentForm,
   } = args;
   const [error, setError] = useState<undefined | string>();
-  const [errors, setErrors] = useState<AnyObject>({});
+  const [_errors, setErrors] = useState<AnyObject>({});
+  const errors = useMemoDeep(() => _errors, [_errors]);
   const columnMap = useMemo(() => {
     const colMap: Map<string, ValidatedColumnInfo> = new Map();
     columns.forEach((c) => {
@@ -205,10 +207,11 @@ export const useNewRowDataHandler = (args: Args) => {
     onChanged: (newRow) => setNewRowData({ ...newRow }),
   });
 
-  const [newRow, setNewRow] = useState<AnyObject>();
+  const newRow = useMemo(
+    () => newRowDataHandler.getRow(),
+    [newRowData, newRowDataHandler],
+  );
   useEffect(() => {
-    const newRow = newRowDataHandler.getRow();
-    setNewRow(newRow);
     setErrors({});
     setError(undefined);
   }, [newRowData, newRowDataHandler]);

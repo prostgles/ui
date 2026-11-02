@@ -1,3 +1,4 @@
+import type { DetailedFilter } from "@common/filterUtils";
 import { FlexCol, FlexRowWrap } from "@components/Flex";
 import { isObject, type ValidatedColumnInfo } from "prostgles-types";
 import React, { useMemo } from "react";
@@ -38,9 +39,10 @@ export const SmartCardListHeaderControls = (
     return {
       tableName: tableControls.tableName,
       filter: { $and: tableControls.localFilter },
-      onChange: (newf) => {
-        const items = "$and" in newf ? newf.$and : newf.$or;
-        tableControls.setLocalFilter(items);
+      onChange: (newFilter) => {
+        tableControls.setLocalFilter(
+          "$and" in newFilter ? newFilter.$and : [newFilter],
+        );
       },
     } satisfies Pick<RenderFilterProps, "filter" | "onChange" | "tableName">;
   }, [tableControls]);
@@ -55,28 +57,28 @@ export const SmartCardListHeaderControls = (
     return null;
   }
 
-  if (
-    !(
-      titleNode ||
-      (showTopBar &&
-        ((isObject(showTopBar) && showTopBar.leftContent) ||
-          tableControls?.willShowInsert ||
-          (showSearch && tableControls) ||
-          (tableControls?.setLocalOrderBy && showSort))) ||
-      filterProps
-    )
-  ) {
+  if (!(
+    titleNode ||
+    (showTopBar &&
+      ((isObject(showTopBar) && showTopBar.leftContent) ||
+        tableControls?.willShowInsert ||
+        (showSearch && tableControls) ||
+        (tableControls?.setLocalOrderBy && showSort))) ||
+    filterProps
+  )) {
     return null;
   }
+
+  const noItemsToShow = !props.itemsLength && !props.totalRows;
 
   return (
     <FlexCol className="SmartCardListControls gap-p5 aid-end py-p25">
       {titleNode}
 
-      {showTopBar && (
-        <FlexRowWrap className=" ">
+      {(showTopBar || filterProps) && (
+        <FlexRowWrap className="gap-p5">
           {isObject(showTopBar) && showTopBar.leftContent}
-          {tableControls?.willShowInsert && (
+          {showTopBar && tableControls?.willShowInsert && (
             <InsertButton
               buttonProps={{
                 children: "Add",
@@ -91,18 +93,27 @@ export const SmartCardListHeaderControls = (
               tableName={tableControls.tableName}
             />
           )}
-          {showSearch && tableControls && (
+          {showTopBar && showSearch && tableControls && !noItemsToShow && (
             <SmartFilterBarSearch
               db={db}
               tableName={tableControls.tableName}
               tables={tables}
-              onFilterChange={tableControls.setLocalFilter}
-              filter={tableControls.localFilter ?? []}
+              onFilterChange={(filters) =>
+                tableControls.setLocalFilter([
+                  ...filters,
+                  ...(tableControls.localFilter ?? []).filter(
+                    (f) => "$and" in f || "$or" in f,
+                  ),
+                ])
+              }
+              filter={(tableControls.localFilter ?? []).filter(
+                (f): f is DetailedFilter => !("$and" in f || "$or" in f),
+              )}
               extraFilters={undefined}
               style={{
-                width: "unset",
+                width: "240px",
+                maxWidth: "100%",
                 margin: "unset",
-                flex: "1",
               }}
             />
           )}
@@ -113,17 +124,18 @@ export const SmartCardListHeaderControls = (
               onChange={tableControls.setLocalOrderBy}
             />
           )}
+          {filterProps && (
+            <div className="min-w-0" style={{ flex: "1 1 240px" }}>
+              <RenderFilter
+                contextData={undefined}
+                selectedColumns={undefined}
+                itemName={"filter"}
+                hideOperand={true}
+                {...filterProps}
+              />
+            </div>
+          )}
         </FlexRowWrap>
-      )}
-
-      {filterProps && (
-        <RenderFilter
-          contextData={undefined}
-          selectedColumns={undefined}
-          itemName={"filter"}
-          hideOperand={true}
-          {...filterProps}
-        />
       )}
     </FlexCol>
   );

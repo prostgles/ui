@@ -25,40 +25,39 @@ export const WorkspaceAddBtn = ({
   const { dbs, connectionId } = usePrgl();
 
   const getIsMounted = useIsMounted();
-  const insertNewWorkspace = useCallback(async () => {
-    try {
-      const newWsp = await dbs.workspaces.insert(
-        {
-          name,
-          connection_id: connectionId,
-        } as DBSSchema["workspaces"],
-        { returning: "*" },
-      );
-      if (!getIsMounted()) return;
-      setWorkspace(newWsp);
-    } catch (newWspErr: any) {
-      if (
-        isObject(newWspErr) &&
-        newWspErr.columns?.join?.() ===
-          ["user_id", "connection_id", "name"].join()
-      ) {
-        setError("Already exists");
-      } else {
-        setError(newWspErr);
+  const insertNewWorkspace = useCallback(
+    async (closePopup: VoidFunction) => {
+      try {
+        const newWsp = await dbs.workspaces.insert(
+          {
+            name,
+            connection_id: connectionId,
+          } as DBSSchema["workspaces"],
+          { returning: "*" },
+        );
+        if (!getIsMounted()) return;
+        setWorkspace(newWsp);
+        closePopup();
+      } catch (newWspErr: any) {
+        if (
+          isObject(newWspErr) &&
+          newWspErr.columns?.join?.() ===
+            ["user_id", "connection_id", "name"].join()
+        ) {
+          setError("Already exists");
+        } else {
+          setError(newWspErr);
+        }
       }
-    }
-  }, [dbs, name, connectionId, setError, setWorkspace, getIsMounted]);
+    },
+    [dbs, name, connectionId, setError, setWorkspace, getIsMounted],
+  );
 
   return (
     <PopupMenu
       style={{}}
       onClickClose={false}
       className={className}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") {
-          insertNewWorkspace();
-        }
-      }}
       autoFocusFirst={"content"}
       positioning="inside"
       data-command="WorkspaceAddBtn"
@@ -72,8 +71,15 @@ export const WorkspaceAddBtn = ({
           {...btnProps}
         />
       }
-      content={
-        <div>
+      render={(closePopup) => (
+        <div
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              void insertNewWorkspace(closePopup);
+            }
+          }}
+        >
           <FormField
             label="New workspace name"
             value={name}
@@ -84,8 +90,8 @@ export const WorkspaceAddBtn = ({
             error={error}
           />
         </div>
-      }
-      footerButtons={[
+      )}
+      footerButtons={(closePopup) => [
         {
           label: "Cancel",
           onClickClose: true,
@@ -96,7 +102,8 @@ export const WorkspaceAddBtn = ({
           variant: "filled",
           iconPath: mdiPlus,
           "data-command": "WorkspaceAddBtn.Create",
-          onClickPromise: insertNewWorkspace,
+          onClickPromise: (event) =>
+            insertNewWorkspace(() => closePopup?.(event)),
         },
       ]}
     />

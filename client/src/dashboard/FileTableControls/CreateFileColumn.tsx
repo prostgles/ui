@@ -9,7 +9,7 @@ import React, { useState } from "react";
 import { Link } from "react-router";
 import { usePrgl } from "src/pages/ProjectConnection/PrglContextProvider";
 import { FileColumnConfigEditor } from "./FileColumnConfigEditor";
-import { useFileTableConfigControls } from "./useFileTableConfigControls";
+import { useFileTableConfigControls } from "./hooks/useFileTableConfigControls";
 
 type CreateReferencedColumnProps = {
   fileTable: string | undefined;

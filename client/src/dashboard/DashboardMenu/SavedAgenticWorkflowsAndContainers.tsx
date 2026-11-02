@@ -1,4 +1,6 @@
+import type { DBSSchema } from "@common/publishUtils";
 import { sliceText } from "@common/utils";
+import { useAlert } from "@components/AlertProvider";
 import Btn from "@components/Btn";
 import Chip from "@components/Chip";
 import { Icon } from "@components/Icon/Icon";
@@ -9,19 +11,21 @@ import {
   SearchList,
   type SearchListItem,
 } from "@components/SearchList/SearchList";
-import { mdiChat, mdiCubeOutline } from "@mdi/js";
+import { mdiChat, mdiCubeOutline, mdiPlus } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import { defineJoin, type FilterItem, type Select } from "prostgles-types";
 import React, { useMemo, useState } from "react";
 import { AgenticWorkflow } from "../AskLLM/Chat/AskLLMChatMessages/ProstglesToolUseMessage/ProstglesMCPTools/AgenticWorkflow/AgenticWorkflow";
 import { useLLMSetup } from "../AskLLM/Setup/LLMSetupProvider";
-import type { DBSSchema } from "@common/publishUtils";
-import type { FilterItem, Select } from "prostgles-types";
+import { DashboardMenuSection } from "./DashboardMenuSection";
 
 export const SavedAgenticWorkflowsAndContainers = () => {
-  const { dbs, connectionId } = usePrgl();
+  const { dbs, connectionId, sql } = usePrgl();
+  const { addAlert } = useAlert();
   const [selectedWorkflowId, setSelectedWorkflowId] = useState<number>();
 
   const state = useLLMSetup();
+
   const { data: agenticWorkflows } = dbs.agentic_workflows.useSubscribe(
     {
       connection_id: connectionId,
@@ -29,7 +33,7 @@ export const SavedAgenticWorkflowsAndContainers = () => {
     {
       select: {
         "*": 1,
-        agentic_workflow_runs: {
+        agentic_workflow_runs: defineJoin({
           $leftJoin: "agentic_workflow_runs",
           select: {
             state: 1,
@@ -38,7 +42,7 @@ export const SavedAgenticWorkflowsAndContainers = () => {
           filter: {
             state: { "@>": { status: "running" } },
           } satisfies FilterItem<DBSSchema["agentic_workflow_runs"]>,
-        },
+        }),
       },
       orderBy: [{ key: "created", asc: false }],
     },
@@ -103,16 +107,42 @@ export const SavedAgenticWorkflowsAndContainers = () => {
   }, [agenticWorkflows, selectedWorkflowId]);
   return (
     <>
-      <SearchList
-        placeholder="Search agentic workflows"
-        data-command="SavedAgenticWorkflowsAndContainers"
-        {...searchListProps}
-        noResultsContent={null}
-        searchEmpty={true}
-        style={{
-          maxWidth: "600px",
-        }}
-      />
+      <DashboardMenuSection
+        title="Agentic workflows"
+        itemCount={searchListProps.items.length}
+        addButton={
+          sql && (
+            <Btn
+              title="Create Agentic Workflow"
+              iconPath={mdiPlus}
+              size="small"
+              color="action"
+              onClick={() => {
+                addAlert({
+                  children: (
+                    <>
+                      Agentic workflows are created through the{" "}
+                      <strong>Create workflow</strong> prompt in the AI
+                      Assistant chat.
+                    </>
+                  ),
+                });
+              }}
+            />
+          )
+        }
+      >
+        <SearchList
+          placeholder="Search agentic workflows"
+          data-command="SavedAgenticWorkflowsAndContainers"
+          {...searchListProps}
+          noResultsContent={null}
+          searchEmpty={true}
+          style={{
+            maxWidth: "600px",
+          }}
+        />
+      </DashboardMenuSection>
       {selectedWorkflow && (
         <Popup
           positioning="fullscreen"

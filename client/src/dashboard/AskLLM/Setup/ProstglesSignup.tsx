@@ -61,6 +61,7 @@ export const ProstglesSignup = ({
         variant="filled"
         color="action"
         className="mt-1"
+        size="default"
         data-command="ProstglesSignup.continue"
         onClickPromise={async () => {
           setError(undefined);

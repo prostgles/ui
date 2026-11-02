@@ -12,6 +12,7 @@ Configure the selected database connection. Set connection details, manage users
 - <a href="#api">API</a>: Configure API access settings and view API documentation.  
 - **Table config**: Advanced table configuration using TypeScript (experimental feature).  
 - **Server-side functions**: Configure and manage server-side functions (experimental feature).  
+- **Config sync**: Sync schema and application configuration—including database settings, table behavior, functions, access rules, auditing, workspaces, services, and lifecycle hooks—from a local TypeScript project.  
 
 <h2 id="connection_details"> Connection details </h2> 
 

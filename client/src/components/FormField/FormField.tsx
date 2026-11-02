@@ -6,7 +6,10 @@ import type { ValidatedColumnInfo } from "prostgles-types";
 import { includes, isDefined } from "prostgles-types";
 import { scrollIntoViewIfNeeded } from "src/utils/utils";
 import { ChipArrayEditor } from "../../dashboard/SmartForm/ChipArrayEditor";
-import { getInputType } from "../../dashboard/SmartForm/SmartFormField/fieldUtils";
+import {
+  getInputAutocomplete,
+  getInputType,
+} from "../../dashboard/SmartForm/SmartFormField/fieldUtils";
 import { RenderValue } from "../../dashboard/SmartForm/SmartFormField/RenderValue";
 import type { AsJSON } from "../../dashboard/SmartForm/SmartFormField/useSmartFormFieldAsJSON";
 import type { TestSelectors } from "../../Testing";
@@ -35,6 +38,7 @@ export type FormFieldTypes =
   | "username"
   | "url"
   | "date"
+  | "time"
   | "color";
 type FormFieldNullOpt<Nullable = false, Optional = false> =
   Nullable extends true ? null
@@ -217,7 +221,11 @@ export default class FormField<
     timeout: any;
   };
 
-  onChange = (input: HTMLInputElement) => {
+  onChange = (
+    input: HTMLInputElement,
+    event:
+      React.ChangeEvent<HTMLInputElement> | React.KeyboardEvent<HTMLDivElement>,
+  ) => {
     const { onChange, onSuggest } = this.props;
 
     if (!onChange) return;
@@ -226,7 +234,7 @@ export default class FormField<
       input.type === "file" ? input.files
       : input.type === "checkbox" ? input.checked
       : input.value;
-    onChange(value as FormFieldValueType<T, Nullable, Optional>);
+    onChange(value as FormFieldValueType<T, Nullable, Optional>, event);
 
     if (!onSuggest) return;
     if (this.changing) clearTimeout(this.changing.timeout);
@@ -427,9 +435,10 @@ export default class FormField<
       ...{ autoCorrect: "off", autoCapitalize: "off" },
       ..._inputProps,
       style: { ...extraInptStyle, ...inputStyle, ..._inputProps.style },
-      onChange: ({ currentTarget }) => {
+      onChange: (event) => {
+        const { currentTarget } = event;
         this.cursorPosition = currentTarget.selectionStart!;
-        return this.onChange(currentTarget);
+        return this.onChange(currentTarget, event);
       },
       onKeyDown:
         type === "number" ?
@@ -670,6 +679,7 @@ export default class FormField<
             asJSON === "JSONBSchema") && {
             border: "unset",
             boxShadow: "unset",
+            borderRadius: "unset",
             /**
              * To ensure focus-border on select controls is visible
              */

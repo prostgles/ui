@@ -34,7 +34,7 @@ const getValidWorkflowDefinition = async (
     aborter: AbortController;
     tableSchemaOpts: TableSchemaOpts;
   },
-  { user_id, chat, dbs, clientReq, messageId, toolUseId }: McpCallContext,
+  { user_id, chat, dbs, messageId, toolUseId }: McpCallContext,
 ) => {
   if (!toolUseId) {
     throw new Error(
@@ -92,7 +92,6 @@ const getValidWorkflowDefinition = async (
           chatId: chat.id,
           connection_id,
           dbs,
-          clientReq,
           userId: user_id,
           messageId,
         }).then(({ agentConfigsWithDefaults, newTables }) => {

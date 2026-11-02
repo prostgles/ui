@@ -4,7 +4,6 @@ import Btn from "@components/Btn";
 import Chip from "@components/Chip";
 import { FlexRow } from "@components/Flex";
 import { InfoRow } from "@components/InfoRow";
-import Loading from "@components/Loader/Loading";
 import PopupMenu from "@components/PopupMenu";
 import { mdiCancel, mdiStopCircleOutline } from "@mdi/js";
 import { usePromise } from "prostgles-client";
@@ -12,10 +11,12 @@ import React, { useMemo, useState } from "react";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import type { AppContextProps } from "../../App";
 import CodeExample from "../CodeExample";
+import type { FieldConfig } from "../SmartCard/SmartCard";
 import type { SmartCardListProps } from "../SmartCardList/SmartCardList";
 import { SmartCardList } from "../SmartCardList/SmartCardList";
 import { StyledInterval } from "../W_SQL/customRenderers";
 import type { StatusMonitorProps } from "./StatusMonitor";
+import { StatusMonitorBlockedByPid } from "./StatusMonitorBlockedByPid";
 import { StatusMonitorProcListControlsHeader } from "./StatusMonitorProcListControlsHeader";
 
 export const StatusMonitorViewTypes = [
@@ -102,7 +103,6 @@ export const StatusMonitorProcList = (
     };
   }, [datidFilter, viewType]);
 
-  if (!datidFilter) return <Loading />;
   return (
     <SmartCardList
       sql={dbsSql}
@@ -234,16 +234,14 @@ const useStatusMonitorProcListProps = (
         label: "Blocked by pids",
         hideIf: (value) => !value?.length,
         renderMode: "valueNode",
-        render: (pids, row) => (
+        render: (blocked_by) => (
           <FlexRow>
-            {pids?.map((pid, i) => (
-              <Chip key={pid} className="mt-p25" color="red">
-                {pid}
-              </Chip>
+            {blocked_by?.map((pid) => (
+              <StatusMonitorBlockedByPid key={pid} pid={pid} />
             ))}
           </FlexRow>
         ),
-      },
+      } satisfies FieldConfig<DBSSchema["stats"], "blocked_by">,
       {
         name: "running_time",
         ...hideOverflowStyle,

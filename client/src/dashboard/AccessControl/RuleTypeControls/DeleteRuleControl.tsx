@@ -59,7 +59,7 @@ export const DeleteRuleControl = ({
               </div>
             }
             contextData={contextData}
-            detailedFilter={rule.forcedFilterDetailed as SingleGroupFilter}
+            detailedFilter={rule.forcedFilterDetailed}
             tableName={table.name}
             onSetError={console.error}
             onChange={(forcedFilterDetailed) => {

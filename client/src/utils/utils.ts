@@ -1,4 +1,3 @@
-import type { InitOptions } from "prostgles-client/dist/prostgles";
 import type { AnyObject } from "prostgles-types";
 import { getKeys, isDefined, isEmpty, isObject } from "prostgles-types";
 export { getKeys, isDefined, isEmpty };
@@ -164,24 +163,6 @@ export const areEqual = <T extends AnyObject>(
       typeof obj1[k] !== typeof obj2[k] ||
       JSON.stringify(obj1[k]) !== JSON.stringify(obj2[k]),
   );
-};
-
-export const playwrightTestLogs: InitOptions["onDebug"] = (ev) => {
-  //@ts-ignore
-  window.prostgles_logs ??= [];
-  //@ts-ignore
-  window.prostgles_logs.push({ ...ev, ts: new Date() });
-  const trackedTableNames: string[] = [];
-  if (ev.type === "table" && trackedTableNames.includes(ev.tableName)) {
-    // if(ev.command === "unsubscribe") debugger;
-    console.log(Date.now(), "DBS client", ev);
-  } else if (
-    ev.type === "onReady" ||
-    ev.type === "onReady.call" ||
-    ev.type === "onReady.notMounted"
-  ) {
-    console.log(Date.now(), "DBS client", ev);
-  }
 };
 
 export const tout = (timeout: number) => {

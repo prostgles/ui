@@ -13,7 +13,7 @@ type QueryType = (typeof QUERY_TYPES)[number];
 export const W_TableMenu_CurrentQuery = (props: W_TableMenuProps) => {
   const {
     w,
-    prgl: { tables, db },
+    prgl: { tables, db, methods },
   } = props;
   const [{ query, type }, setQuery] = useState<{
     query: string;
@@ -36,7 +36,14 @@ export const W_TableMenu_CurrentQuery = (props: W_TableMenuProps) => {
                 return;
               }
               const { filter, having } = getTableFilter(w, props);
-              const { select } = await getTableSelect(w, tables, db, filter);
+              const { select } = await getTableSelect(
+                w,
+                tables,
+                db,
+                filter,
+                false,
+                methods,
+              );
               const orderBy = getSort(tables, w);
               let currentQuery = "";
               const selectParams = { select, having, orderBy };

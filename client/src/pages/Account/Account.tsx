@@ -1,8 +1,8 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import { FlexRow } from "@components/Flex";
 import { InfoRow } from "@components/InfoRow";
 import Tabs from "@components/Tabs";
 import { mdiAccount, mdiApplicationBracesOutline, mdiSecurity } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client";
 import { getKeys } from "prostgles-types";
 import React from "react";
 import { useSearchParams } from "react-router";
@@ -30,7 +30,7 @@ export const Account = () => {
       <p>You are not allowed to access</p>
     </InfoRow>
   );
-  if (!user || user.type === "public") {
+  if (!user || user.type === USER_TYPES.PUBLIC) {
     return notAllowedBanner;
   }
 

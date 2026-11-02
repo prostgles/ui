@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { classOverride } from "./Flex";
 
 export const Stopwatch = ({
@@ -13,6 +13,25 @@ export const Stopwatch = ({
   title?: string;
   className?: string;
   style?: React.CSSProperties;
+}) => {
+  const { displayTime } = useStopwatch({ startTime, endTime });
+  return (
+    <div
+      title={title}
+      className={classOverride("Stopwatch ws-nowrap", className)}
+      style={style}
+    >
+      {displayTime}
+    </div>
+  );
+};
+
+export const useStopwatch = ({
+  startTime,
+  endTime,
+}: {
+  startTime: Date;
+  endTime: Date | undefined;
 }) => {
   const [elapsed, setElapsed] = useState(0);
 
@@ -32,15 +51,54 @@ export const Stopwatch = ({
   const displayTime = getDurationAsStr(elapsed, {
     excludeMs: endTime === undefined,
   });
-  return (
-    <div
-      title={title}
-      className={classOverride("Stopwatch ws-nowrap", className)}
-      style={style}
-    >
-      {displayTime}
-    </div>
-  );
+
+  return {
+    elapsed,
+    displayTime,
+  };
+};
+
+export const useCountdown = () => {
+  const [state, start] = useState<
+    { endTime: Date; onFinish: () => void } | undefined
+  >(undefined);
+
+  const [elapsed, setElapsed] = useState("");
+
+  useEffect(() => {
+    if (!state) {
+      return;
+    }
+
+    const onElapsedUpdate = () => {
+      setElapsed(
+        getDurationAsStr(state.endTime.getTime() - Date.now(), {
+          excludeMs: true,
+        }),
+      );
+    };
+    const interval = setInterval(() => {
+      if (Date.now() >= state.endTime.getTime()) {
+        state.onFinish();
+        clearInterval(interval);
+        start(undefined);
+        setElapsed("");
+      } else {
+        onElapsedUpdate();
+      }
+    }, 1_000);
+    return () => clearInterval(interval);
+  }, [state]);
+
+  const stop = useCallback(() => {
+    start(undefined);
+    setElapsed("");
+  }, []);
+  return {
+    start,
+    elapsed: state?.endTime ? elapsed : "",
+    stop,
+  };
 };
 
 type DurationOpts = {

@@ -13,7 +13,7 @@ import { isObject } from "prostgles-types";
 import type { Prgl } from "src/App";
 import type { DBSchemaTableWJoins } from "src/dashboard/Dashboard/dashboardUtils";
 import RTComp from "../../RTComp";
-import type { ColumnConfig } from "../../W_Table/ColumnMenu/ColumnMenu";
+import type { ColumnConfig } from "@common/ColumnConfig/ColumnConfig";
 import { onSearchItems } from "./onSearchItems";
 
 export type SmartSearchOnChangeArgs = {
@@ -188,6 +188,7 @@ export class SmartSearch extends RTComp<P, S> {
         className={`SmartSearch ${className}`}
         items={searchItems}
         variant={variant ?? "search"}
+        roundedItems={false}
         searchEmpty={searchEmpty}
         onSearchItems={this.onSearchItems}
         inputStyle={inputStyle}

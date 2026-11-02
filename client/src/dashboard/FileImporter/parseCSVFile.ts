@@ -43,7 +43,7 @@ export async function parseCSVFile(
     papa,
   });
 
-  const header = await hasHeaders(data);
+  const header = hasHeaders(data);
 
   const results = await getCSVFirstChunk({
     file,

@@ -1,3 +1,4 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import React from "react";
 
 import type { DBSSchema } from "@common/publishUtils";
@@ -69,11 +70,17 @@ export const AccessControl = (props: P) => {
       </InfoRow>
     );
   }
-  if (!connection || !dbsConnection || !database_config || !rules)
-    return <Loading />;
+  if (!connection || !database_config || !rules) return <Loading />;
 
   return (
     <div className={"flex-col f-1 " + className}>
+      {database_config.config_sync?.type === "cli" && (
+        <InfoRow color="warning" className="mb-1">
+          This is a CLI app. Changes made here are not saved to the source code
+          and may be overwritten when the app restarts or syncs. Update the
+          source configuration to keep them.
+        </InfoRow>
+      )}
       <div className="f-1 flex-row min-h-0 ">
         {action ?
           <AccessControlRuleEditor
@@ -99,7 +106,9 @@ export const AccessControl = (props: P) => {
               >
                 Create new rule
               </Btn>
-              <UserSyncConfig {...props.prgl} />
+              {prgl.user?.type === USER_TYPES.ADMIN && (
+                <UserSyncConfig {...props.prgl} />
+              )}
 
               <Btn
                 iconPath={mdiAccountCog}

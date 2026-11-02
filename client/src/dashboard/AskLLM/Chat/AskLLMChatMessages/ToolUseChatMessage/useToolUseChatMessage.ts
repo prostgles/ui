@@ -1,5 +1,6 @@
 import type { DBSSchema } from "@common/publishUtils";
 import type { MonacoCodeInMarkdownProps } from "@components/Chat/MonacoCodeInMarkdown/MonacoCodeInMarkdown";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { useMcpServerIcons } from "@pages/ServerSettings/MCPServers/MCPServerTools/useMcpServerIcons";
 import { useMemo } from "react";
 import { getToolUseResult } from "./utils/getToolUseResult";
@@ -12,7 +13,8 @@ export type ToolUseMessageProps = {
 } & Pick<MonacoCodeInMarkdownProps, "sqlHandler" | "loadedSuggestions">;
 
 export const useToolUseChatMessage = (props: ToolUseMessageProps) => {
-  const { getIconFromFullName } = useMcpServerIcons();
+  const { tables } = usePrgl();
+  const { getIconFromFullName } = useMcpServerIcons(tables);
   const { message, nextMessage, toolUseMessageContentIndex } = props;
 
   const toolUseMessage = message;
@@ -21,7 +23,10 @@ export const useToolUseChatMessage = (props: ToolUseMessageProps) => {
 
   const iconName = useMemo(() => {
     return toolUseMessageContent?.type === "tool_use" ?
-        getIconFromFullName(toolUseMessageContent.name)
+        getIconFromFullName(
+          toolUseMessageContent.name,
+          toolUseMessageContent.input,
+        )
       : undefined;
   }, [getIconFromFullName, toolUseMessageContent]);
 

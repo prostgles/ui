@@ -3,6 +3,7 @@ import { type ToolUse } from "./utils";
 import type { ExtractBy } from "common/utils";
 import { getProstglesMCPFullToolName } from "common/mcpUtils";
 import { stringify } from "./stringify";
+import { DEFAULT_AGENT_MODEL } from "../../../server/dist/server/src/serverFunctions/askLLM/refreshModels";
 type UserInput = NonNullable<
   DBSSchema["agentic_workflows"]["definition_data"]["userInput"]
 >;
@@ -50,11 +51,13 @@ const fileInputDefs = {
 } as const;
 
 export const research = "research" as const;
+export const agentFailure = "agent_goal_fail_please" as const;
 type Mode =
   | "input"
   | "clashing"
   | "noinput"
   | "filesystem"
+  | "agentFailure"
   | "invalidTable"
   | "invalidPermissionTable";
 const getFunc = (mode: Mode) => `
@@ -69,7 +72,16 @@ export default defineAgenticWorkflow(
       databaseAccessDefinitions: {
         mode: "custom",
         tablePermissions: {
-          users: { select: true, insert: true, update: true },
+          users: {
+            select: {
+              fields: "*",
+              forcedFilter: {
+                $and: [{ fieldName: "type", type: "$ne", value: null }],
+              },
+            },
+            insert: true,
+            update: true,
+          },
           new_users: {
             select: true,
             insert: true,
@@ -108,7 +120,7 @@ export default defineAgenticWorkflow(
       agentDefinitions: {
         researcher: {
           prompt: "You are a research assistant. ",
-          modelName: "anthropic/claude-4.6-sonnet",
+          modelName: DEFAULT_AGENT_MODEL,
           tools: {
             web: { fetch: 1 },
           },
@@ -195,6 +207,7 @@ export default defineAgenticWorkflow(
       });
       runSQL("SELECT * FROM new_users").then((res) => console.log("Users:", res));
     */
+    ${mode === "agentFailure" ? `await researcher(" ${agentFailure} ");` : ""}
     const start = Date.now();
     orchestratorToolHandlers.web.fetch({ url: "https://www.prostgles.com", max_length: 600 }).then(console.log).catch(console.log);
     const filterCount = ${mode !== "input" ? "undefined;//" : ""} await tableHandlers.users.count(userInputValues["table-filter"]);
@@ -235,7 +248,7 @@ const volumesFunc = `
 
 const filesystemFunc = `
 await orchestratorToolHandlers.filesystem.list_allowed_directories({}).then(({ content  }) => {
-  const [_,allowedDir] = content.split(\"\\n\")
+  const [_,allowedDir] = content.split("\\n")
   orchestratorToolHandlers.filesystem.read_text_file({
     path: allowedDir + "/tsconfig.base.json"
   }).then(({ content }) => console.log(content.slice(0, content.indexOf("resolveJsonModule"))));
@@ -248,6 +261,7 @@ export const agenticWorkflowToolUses = Object.fromEntries(
       "input",
       "clashing",
       "noinput",
+      "agentFailure",
       "filesystem",
       "invalidTable",
       "invalidPermissionTable",

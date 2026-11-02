@@ -6,10 +6,12 @@ import { setupAskLLMToolUse } from "testAskLLM/testAskLLM";
 import {
   allowOnce,
   closeWorkspaceWindows,
+  deleteAllWorkspaces,
   deleteExistingLLMChat,
   deletePreviousMessages,
   newChat,
   runDbsMethod,
+  setModelByText,
   setPromptByText,
 } from "utils/utils";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
@@ -68,8 +70,10 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   // });
 
   await openConnection("crypto");
+  await deleteAllWorkspaces(page);
   await page.getByTestId("AskLLM").click();
   await newChat(page);
+  await setModelByText(page, "luna");
   await setPromptByText(page, "dashboard");
 
   await typeSendAddScenes(
@@ -88,6 +92,7 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   await openConnection("cloud");
   await page.getByTestId("AskLLM").click();
   await newChat(page);
+  await setModelByText(page, "luna");
   await setPromptByText(page, "chat");
   await typeSendAddScenes(
     page,
@@ -96,7 +101,7 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
     undefined,
     undefined,
     undefined,
-    "request_tool_access",
+    "request_tool_access_message",
   );
   const loadToolsBtn = await page
     .getByTestId("RequestToolAccess.Approve")
@@ -104,7 +109,9 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
 
   await loadToolsBtn.waitFor({ state: "visible", timeout: 15000 });
 
-  await addSceneAnimation(getCommandElemSelector("RequestToolAccess.Approve"));
+  await addSceneAnimation(getCommandElemSelector("RequestToolAccess.Approve"), {
+    svgFileName: "request_tool_access",
+  });
 
   await page.getByText("Added tool access").waitFor({ state: "visible" });
   await page.waitForTimeout(1000);
@@ -181,6 +188,7 @@ export const aiAssistantSvgif: OnBeforeScreenshot = async (
   await page.getByTestId("AskLLM").click();
   await setPromptByText(page, "chat");
   await newChat(page);
+  await setModelByText(page, "luna");
 
   await typeSendAddScenes(
     page,

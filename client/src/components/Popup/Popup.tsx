@@ -73,12 +73,14 @@ export type PopupProps = TestSelectors & {
   ) => void;
   title?: React.ReactNode | ((rootDiv: HTMLDivElement) => React.ReactNode);
   subTitle?: string;
+  headerIcon?: React.ReactNode;
   headerRightContent?: React.ReactNode;
   content?: React.ReactNode;
   footer?: React.ReactNode;
   contentClassName?: string;
   rootChildClassname?: string;
   contentStyle?: React.CSSProperties;
+  footerStyle?: React.CSSProperties;
 
   children?: React.ReactNode;
   clickCatchStyle?: React.CSSProperties;
@@ -89,8 +91,7 @@ export type PopupProps = TestSelectors & {
    * */
   onClickClose?: boolean;
   footerButtons?:
-    | FooterButton[]
-    | ((popupClose: PopupProps["onClose"]) => FooterButton[]);
+    FooterButton[] | ((popupClose: PopupProps["onClose"]) => FooterButton[]);
   anchorEl?: HTMLElement | Element;
   /**
    * Number of pixels to offset from anchor
@@ -271,6 +272,14 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
     if (deltaS && "fullScreen" in deltaS) {
       this.toggledFullScreen = Date.now();
     }
+    /* Content can outgrow a constrained popup without resizing its root. */
+    if (
+      !this.props.persistInitialSize &&
+      deltaP &&
+      ("children" in deltaP || "content" in deltaP)
+    ) {
+      this.checkPosition();
+    }
     this.setMainNodeVisibility(this.state.fullScreen !== true);
   }
 
@@ -387,16 +396,6 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
                 this.ref = r;
               }
             }}
-            onClick={
-              !(onClickClose && onClose) ? undefined : (
-                (e) => {
-                  if (window.getSelection()?.toString()) {
-                    return;
-                  }
-                  onClose(e);
-                }
-              )
-            }
             style={{
               boxSizing: "content-box",
               ...style,
@@ -442,6 +441,16 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
                     ...contentFullScreenStyle,
                   }}
                   data-command={"Popup.content" satisfies Command}
+                  onClick={
+                    !(onClickClose && onClose) ? undefined : (
+                      (e) => {
+                        if (window.getSelection()?.toString()) {
+                          return;
+                        }
+                        onClose(e);
+                      }
+                    )
+                  }
                 >
                   <ErrorTrap>{content || children}</ErrorTrap>
                 </div>
@@ -454,6 +463,7 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
                 "footer",
                 "onClose",
               ] satisfies (keyof FooterButtonsProps)[])}
+              style={this.props.footerStyle}
               data-command="Popup.footer"
             />
           </div>

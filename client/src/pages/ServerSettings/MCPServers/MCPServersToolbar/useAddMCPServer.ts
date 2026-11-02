@@ -1,11 +1,19 @@
-import { useEffect, useMemo, useState } from "react";
-import { isObject, type DBSSchema } from "@common/publishUtils";
-import { isEmpty } from "../../../../utils/utils";
+import { type DBSSchema } from "@common/publishUtils";
+import { fromEntries } from "@common/utils";
+import {
+  getJSONBSchemaAsJSONSchema,
+  getJSONBSchemaValidationError,
+  type JSONB,
+} from "prostgles-types";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-type NewMCPServer = Pick<
+type MCPServerData = Pick<
   DBSSchema["mcp_servers"],
-  "name" | "command" | "args" | "env" | "config_schema"
+  "name" | "command" | "args" | "env" | "config_schema" | "url"
 >;
+
+type ConfigSchema = NonNullable<MCPServerData["config_schema"]>;
+type ConfigSchemaItem = ConfigSchema[string];
 
 export const useAddMCPServer = (showAddServer: boolean) => {
   const [value, setValue] = useState("");
@@ -13,123 +21,183 @@ export const useAddMCPServer = (showAddServer: boolean) => {
   useEffect(() => {
     setValue("");
   }, [showAddServer]);
-  const [config, setConfig] = useState<MCPServerConfig>();
-  const [mcpServer, setMCPServer] = useState<NewMCPServer>();
+  const [config, setConfig] = useState<NewMcpServersJsonConfig>();
+  const [mcpServersWithoutSchema, setMCPServers] = useState<
+    {
+      serverData: MCPServerData;
+      potentialConfigSchemas: ReturnType<typeof getPotentialConfigSchemas>;
+    }[]
+  >();
+  const mcpServers = useMemo(() => {
+    if (!mcpServersWithoutSchema) return undefined;
+    return mcpServersWithoutSchema.map((s) => {
+      const configSchema: ConfigSchema | undefined =
+        !s.potentialConfigSchemas.length ?
+          undefined
+        : fromEntries(
+            s.potentialConfigSchemas
+              .filter((s) => s.configurable)
+              .map((schema) => {
+                if (schema.type === "env") {
+                  return [
+                    schema.name,
+                    {
+                      type: schema.type,
+                      title: schema.name,
+                      description: schema.description,
+                    },
+                  ] as [string, ConfigSchemaItem];
+                }
+                return [
+                  schema.name,
+                  {
+                    type: schema.type,
+                    title: schema.name,
+                    description: schema.description,
+                    index: schema.index,
+                  },
+                ] as [string, ConfigSchemaItem];
+              }),
+          );
+      return {
+        ...s,
+        serverData: {
+          ...s.serverData,
+          config_schema: configSchema ?? null,
+        },
+      };
+    });
+  }, [mcpServersWithoutSchema]);
+  const [activeMCPServerIndex, setActiveMCPServerIndex] = useState(0);
+  const mcpServer = useMemo(() => {
+    if (!mcpServers || !mcpServers.length) return undefined;
+    return mcpServers[activeMCPServerIndex];
+  }, [mcpServers, activeMCPServerIndex]);
 
-  const potentialConfigSchemas = useMemo(
-    () => mcpServer && getPotentialConfigSchemas(mcpServer),
-    [mcpServer],
-  );
-  const [configSchemas, setConfigSchemas] =
-    useState<typeof potentialConfigSchemas>();
-
-  const configSchema = useMemo(() => {
-    if (!configSchemas) return undefined;
-    const schema: NewMCPServer["config_schema"] = Object.fromEntries(
-      configSchemas
-        .filter((s) => s.configurable)
-        .map((schema) => {
-          if (schema.type === "env") {
-            return [
-              schema.name,
-              {
-                type: schema.type,
-                title: schema.name,
-                description: schema.description,
-              } satisfies {
-                type: "env";
-                title?: string;
-                optional?: boolean;
-                description?: string;
-              },
-            ];
-          }
-          return [
-            schema.name,
-            {
-              type: schema.type,
-              title: schema.name,
-              description: schema.description,
-              index: schema.index,
-            } satisfies {
-              type: "arg" | "...args";
-              title?: string;
-              optional?: boolean;
-              description?: string;
-              index?: number;
-            },
-          ];
-        }),
-    );
-    return schema;
-  }, [configSchemas]);
-
-  useEffect(() => {
-    setConfigSchemas(potentialConfigSchemas);
-  }, [potentialConfigSchemas]);
+  const configSchemas =
+    mcpServers?.[activeMCPServerIndex]?.potentialConfigSchemas;
 
   useEffect(() => {
     if (!config) {
-      setMCPServer(undefined);
+      setMCPServers(undefined);
     } else {
-      const [mcpServer, ...otherServers] = Object.entries(
-        config.mcpServers,
-      ).map(
-        ([name, config]) =>
-          ({
+      const mcpServers = Object.entries(config.mcpServers).map(
+        ([name, config]) => {
+          if ("url" in config) {
+            return {
+              name,
+              ...config,
+              command: "streamable-http",
+              url: config.url,
+              args: null,
+              env: null,
+              config_schema: null,
+            } satisfies MCPServerData;
+          }
+          return {
             name,
             ...config,
-            command: config.command as "docker",
-            env: config.env ?? null,
+            env: config.env || null,
+            args: config.args || null,
+            url: null,
+            command: config.command,
             config_schema: null,
-          }) satisfies NewMCPServer,
+          } satisfies MCPServerData;
+        },
       );
-      if (otherServers.length) {
-        alert("Only one MCP server can be added at a time");
-        return;
-      }
-      setMCPServer(mcpServer);
+
+      setMCPServers(
+        mcpServers.map((serverData) => {
+          const potentialConfigSchemas = getPotentialConfigSchemas(serverData);
+
+          return {
+            serverData,
+            potentialConfigSchemas,
+          };
+        }),
+      );
     }
   }, [config]);
 
+  const [error, setError] = useState<string>();
   useEffect(() => {
     try {
       const parsedConfig = JSON.parse(value);
-      if (
-        !parsedConfig ||
-        !isObject(parsedConfig) ||
-        !parsedConfig.mcpServers ||
-        isEmpty(parsedConfig.mcpServers)
-      ) {
-        throw new Error("Invalid config");
+      const validation = getJSONBSchemaValidationError(
+        newMcpServersJsonbSchema,
+        parsedConfig,
+      );
+      setError(validation.error);
+      if (validation.data) {
+        setConfig(parsedConfig as NewMcpServersJsonConfig);
+      } else {
+        setConfig(undefined);
       }
-      setConfig(parsedConfig as MCPServerConfig);
     } catch (e) {
       setConfig(undefined);
     }
   }, [value]);
 
-  return {
-    mcpServer: mcpServer && {
-      ...mcpServer,
-      config_schema: isEmpty(configSchema) ? null : configSchema,
+  const setActiveMCPServer = useCallback(
+    (newData: Partial<NonNullable<typeof mcpServers>[number]>) => {
+      if (!mcpServers) return;
+      const newMcpServers = [...mcpServers].map((s, i) => ({
+        ...s,
+        ...(activeMCPServerIndex === i && newData),
+      }));
+      setMCPServers(newMcpServers);
     },
+    [activeMCPServerIndex, mcpServers],
+  );
+
+  return {
+    mcpServers,
+    activeMCPServerIndex,
+    setActiveMCPServerIndex,
+    mcpServer,
     configSchemas,
-    setConfigSchemas,
+    setActiveMCPServer,
     value,
     setValue,
+    error,
   };
 };
 
-type MCPConfig = {
-  command: string;
-  args: string[] | null;
-  env?: Record<string, string> | null;
-};
+const newMcpServerJsonbSchema = {
+  oneOfType: [
+    {
+      command: { enum: ["npx", "npm", "uvx", "uv", "docker"] },
+      args: { type: "string[]", optional: true },
+      env: { record: { values: "string" }, optional: true },
+    },
+    {
+      command: { enum: ["streamable-http"], optional: true },
+      url: "string",
+      headers: { record: { values: "string" }, optional: true },
+    },
+  ],
+} as const satisfies JSONB.JSONBSchema;
 
-export type MCPServerConfig = {
-  mcpServers: Record<string, MCPConfig>;
-};
+const newMcpServersJsonbSchema = {
+  record: {
+    keysEnum: ["mcpServers"],
+    values: {
+      record: {
+        values: newMcpServerJsonbSchema,
+      },
+    },
+  },
+} as const satisfies JSONB.FieldType;
+
+export const newMcpServersJsonSchema = getJSONBSchemaAsJSONSchema(
+  "",
+  "",
+  newMcpServersJsonbSchema,
+);
+
+export type NewMcpServersJsonConfig = JSONB.GetType<
+  typeof newMcpServersJsonbSchema
+>;
 
 type ArgDef =
   | {
@@ -145,7 +213,9 @@ type ArgDef =
       index: number;
       configurable?: boolean;
     };
-const getPotentialConfigSchemas = (config: MCPConfig): ArgDef[] => {
+const getPotentialConfigSchemas = (
+  config: Pick<MCPServerData, "env" | "args">,
+): ArgDef[] => {
   const envs: ArgDef[] = [];
   const args: ArgDef[] = [];
   config.args?.forEach((arg, argIndex) => {

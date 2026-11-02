@@ -1,5 +1,5 @@
 import { isEqual } from "prostgles-types";
-import React, { useCallback, useMemo, useRef } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import { CodeEditorWithSaveButton } from "../../CodeEditor/CodeEditorWithSaveButton";
 import type { MethodDefinitionProps } from "./MethodDefinition";
 import { useCodeEditorTsTypes } from "./useCodeEditorTsTypes";
@@ -41,6 +41,15 @@ export const MethodFunctionDefinition = (props: MethodDefinitionProps) => {
     };
   }, []);
 
+  /**
+   * Hiding PublishedMethods until OnMountFunction is loaded
+   * is done to prevent flaky tests when creating function
+   */
+  const [libsLoaded, setLibsLoaded] = useState(false);
+  const onTsLoaded = useCallback(() => {
+    setLibsLoaded(true);
+  }, []);
+
   const renderCode = renderMode === "Code";
   if (!languageObj) {
     return <Loading style={{ margin: "4em" }} />;
@@ -52,6 +61,8 @@ export const MethodFunctionDefinition = (props: MethodDefinitionProps) => {
           "Server-side TypeScript function triggered by a button press"
         )
       }
+      style={libsLoaded ? {} : { visibility: "hidden" }}
+      onTSLibraryChange={onTsLoaded}
       language={languageObj}
       value={method.run ?? ""}
       options={options}

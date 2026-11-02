@@ -39,23 +39,45 @@ export const getConnectionDetails = (c: Connections): ConnectionDetails => {
   const default_application_name = "";
 
   if (c.type === "Connection URI") {
-    const cs = new ConnectionString(c.db_conn);
-    const params = cs.params ?? {};
+    const connectionUri = c.db_conn ?? "";
+    /**
+     * Parse the query separately because `connection-string` treats unescaped
+     * slashes in values as path separators. PostgreSQL commonly uses them in
+     * Unix-socket URLs such as `?host=/var/run/postgresql`.
+     */
+    const queryStart = connectionUri.indexOf("?");
+    const cs = new ConnectionString(
+      queryStart === -1 ? connectionUri : connectionUri.slice(0, queryStart),
+    );
+    const params =
+      queryStart === -1 ?
+        {}
+      : Object.fromEntries(
+          new URLSearchParams(connectionUri.slice(queryStart + 1)).entries(),
+        );
     const {
       sslmode,
+      host,
+      port,
       application_name = default_application_name,
       connect_timeout = 10,
     } = params;
+    const parsedPort = Number(port);
+    const parsedConnectTimeout = Number(connect_timeout);
     const conn = {
       application_name,
-      host: cs.hosts![0]!.name ?? c.db_host, // fallback to db_host for pg_dump state_db
-      port: cs.hosts![0]!.port!,
+      host: cs.hosts?.[0]?.name ?? host ?? c.db_host,
+      port:
+        cs.hosts?.[0]?.port ??
+        (Number.isFinite(parsedPort) && parsedPort > 0 ?
+          parsedPort
+        : c.db_port),
       user: cs.user!,
       password: cs.password!,
       database: cs.path![0]!,
-      ssl: getSSLOpts(sslmode) ?? false,
-      ...(Number.isFinite(connect_timeout) && {
-        connectionTimeoutMillis: Math.ceil(connect_timeout) * 1000,
+      ssl: getSSLOpts(sslmode as Connections["db_ssl"]) ?? false,
+      ...(Number.isFinite(parsedConnectTimeout) && {
+        connectionTimeoutMillis: Math.ceil(parsedConnectTimeout) * 1000,
       }),
     };
     return conn;

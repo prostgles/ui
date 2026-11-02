@@ -1,8 +1,7 @@
-import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
-import type { DBOFullyTyped } from "prostgles-server";
+import type { DBSClient } from "@src/index";
 
 export const getTemplatedWebAppConnection = async (
-  dbo: DBOFullyTyped<DBGeneratedSchema>,
+  dbo: DBSClient,
   connectionId: string,
   allowNonTemplated = false,
 ) => {

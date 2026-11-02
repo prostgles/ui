@@ -24,7 +24,7 @@ export const insertMcpServerList = async (dbs: DBS) => {
   await dbs.mcp_servers.insertMany(defaultServers, { onConflict: "DoUpdate" });
 
   /** Insert default configs */
-  const defaultConfigs = (
+  const defaultConfigs: DBSSchemaForInsert["mcp_server_configs"][] = (
     await Promise.all(
       defaultServers.map(async (s) => {
         if (!s.config_schema) return;

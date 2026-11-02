@@ -1,26 +1,26 @@
 import type { PaginationProps } from "@components/Table/Pagination";
 import { Pagination } from "@components/Table/Pagination";
-import type { TableHandlerClient } from "prostgles-client";
+import type { TableHandlerClientForColumns } from "prostgles-client/dist/prostgles";
 import type { AnyObject } from "prostgles-types";
-import React from "react";
-import type {
-  ChartOptions,
-  WindowSyncItem,
-} from "../../Dashboard/dashboardUtils";
+import React, { useMemo } from "react";
+import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";
 import type { W_TableProps, W_TableState } from "../W_Table";
 import type { OnClickEditRow } from "../tableUtils/getEditColumn";
 import type { ProstglesTableColumn } from "../tableUtils/getTableCols";
 import { CardViewColumn } from "./CardViewColumn";
 import { CardViewKanban } from "./CardViewKanban";
 import { useCardViewState } from "./useCardViewState";
+import type { ChartOptions } from "@common/ColumnConfig/WindowData";
+import { getCardViewFields } from "./getCardViewFields";
 
 export type CardViewProps = {
   props: W_TableProps;
   state: W_TableState;
   cardOpts: Extract<ChartOptions<"table">["viewAs"], { type: "card" }>;
   w?: WindowSyncItem<"table">;
-  tableHandler: Partial<TableHandlerClient<AnyObject, void>>;
+  tableHandler: Partial<TableHandlerClientForColumns<AnyObject>>;
   paginationProps: PaginationProps;
+  afterLastRowContent: React.ReactNode;
   style?: React.CSSProperties;
   className?: string;
   onEditClickRow: OnClickEditRow;
@@ -46,8 +46,12 @@ export const CardView = (_props: CardViewProps) => {
     setDraggedRow,
     moveItemsProps,
   } = cardViewState;
+  const cardFields = useMemo(
+    () => table && getCardViewFields(table, _props.cols, _props.w?.columns),
+    [table, _props.cols, _props.w?.columns],
+  );
 
-  if (!table) {
+  if (!table || !cardFields) {
     return <div>Table info missing</div>;
   }
 
@@ -66,6 +70,7 @@ export const CardView = (_props: CardViewProps) => {
           groupByColumn={groupByColumn}
           allIndexedRows={allIndexedRows}
           table={table}
+          cardFields={cardFields}
           draggedRow={draggedRow}
           setDraggedRow={setDraggedRow}
           moveItemsProps={moveItemsProps}
@@ -74,6 +79,7 @@ export const CardView = (_props: CardViewProps) => {
           key="column"
           {..._props}
           table={table}
+          cardFields={cardFields}
           indexedRows={allIndexedRows}
           draggedRow={draggedRow}
           setDraggedRow={setDraggedRow}
@@ -81,6 +87,7 @@ export const CardView = (_props: CardViewProps) => {
           allIndexedRows={allIndexedRows}
         />
       }
+      {_props.afterLastRowContent}
       <Pagination {...paginationProps} />
     </div>
   );

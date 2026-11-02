@@ -38,7 +38,8 @@ export type McpCallContext = {
   chat: DBSSchema["llm_chats"];
   connection_id: string;
   user_id: DBSSchema["users"]["id"];
-  clientReq: AuthClientRequest;
+  /** Optional network metadata. Database permissions are resolved from user_id. */
+  clientReq?: AuthClientRequest;
   dbs: DBS;
   toolUseId: string | undefined;
   messageId: DBSSchema["llm_messages"]["id"];

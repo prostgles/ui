@@ -164,6 +164,7 @@ export const JSONBSchemaArray = ({
               }) as any
             }
             {...oProps}
+            allowIncomplete={false}
           />
         </Popup>
       )}

@@ -1,10 +1,10 @@
-import { useCallback, useMemo, useState } from "react";
 import { getSmartGroupFilter } from "@common/filterUtils";
 import type { ConfirmDialogProps } from "@components/ConfirmationDialog";
+import { useCallback, useMemo, useState } from "react";
+import { areEqual } from "../../../utils/utils";
 import type { SmartFormProps } from "../SmartForm";
 import type { SmartFormNewRowState } from "../useNewRowDataHandler";
 import type { SmartFormState } from "../useSmartForm";
-import { areEqual } from "../../../utils/utils";
 
 type ConfirmationPopup = Pick<
   ConfirmDialogProps,
@@ -162,14 +162,12 @@ export const useSmartFormActions = ({
     }
     const { tableHandlerUpdate, tableHandlerDelete } = mode;
     if (mode.type === "update" || mode.type === "multiUpdate") {
-      if (
-        !(
-          !confirmUpdates ||
-          !newRowWithUpdates ||
-          !tableHandlerUpdate ||
-          disabledActions?.includes("update")
-        )
-      ) {
+      if (!(
+        !confirmUpdates ||
+        !newRowWithUpdates ||
+        !tableHandlerUpdate ||
+        disabledActions?.includes("update")
+      )) {
         return {
           onClickUpdate: async () => {
             return performAction(() => {
@@ -224,7 +222,7 @@ export const useSmartFormActions = ({
                     returning: "*",
                   });
 
-                  if (!nr?.length) {
+                  if (!nr.length) {
                     throw "No rows were deleted. Access rules may not allow this update.";
                   }
                   onSuccess?.("delete");

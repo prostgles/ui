@@ -13,7 +13,6 @@ export const useSearchTables = (props: SearchAllProps & SearchAllState) => {
     tablesToSearch,
     matchCase,
     setCurrentSearchedTable,
-    sql,
   } = props;
 
   const [matchedRows, setMatchedRows] = useState<
@@ -51,7 +50,7 @@ export const useSearchTables = (props: SearchAllProps & SearchAllState) => {
       searchingRef.current.timeout = setTimeout(async () => {
         const term = searchingRef.current?.term ?? searchTerm;
 
-        if (mode === "rows" && sql) {
+        if (mode === "rows") {
           setLoading(true);
 
           // setItems(undefined);

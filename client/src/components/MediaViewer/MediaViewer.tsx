@@ -3,16 +3,13 @@ import { mdiChevronLeft } from "@mdi/js";
 import React, { useCallback, useEffect, useState } from "react";
 import { Icon } from "../Icon/Icon";
 import Popup from "../Popup/Popup";
-import {
-  RenderMedia,
-  type UrlInfo,
-  type ValidContentType,
-} from "./RenderMedia";
+import type { AnyObject } from "prostgles-types";
+import { MediaViewerContent, type UrlInfo } from "./MediaViewerContent";
 import { ContentTypes } from "@common/columnDisplayFormat.schema";
+import type { DBSchemaTableWithOptions } from "src/dashboard/Dashboard/getTables";
+import { useMediaFile, type MediaFileSource } from "./useMediaFile";
 
-type P = {
-  url: string;
-
+export type MediaViewerProps = MediaFileSource & {
   /**
    * Filename
    */
@@ -32,12 +29,31 @@ type P = {
   /**
    * If present then use this
    */
-  content_type?: ValidContentType;
+  content_type?: string;
+
+  isLoading?: boolean;
+
+  variant?: "thumbnail";
+
+  context?: {
+    table: DBSchemaTableWithOptions;
+    columnName: string;
+    row: AnyObject;
+  };
 };
 
-export const MediaViewer = (props: P) => {
-  const { onPrevOrNext, style, content_type, url, allowedHostnames, name } =
-    props;
+export const MediaViewer = (props: MediaViewerProps) => {
+  const {
+    onPrevOrNext,
+    style,
+    content_type,
+    allowedHostnames,
+    name,
+    variant,
+    context,
+    isLoading,
+  } = props;
+  const { url, withCredentials } = useMediaFile(props);
   const [isFocused, setIsFocused] = useState(false);
   const [urlInfo, setUrlInfo] = useState<UrlInfo | undefined>(
     content_type && url ?
@@ -45,7 +61,7 @@ export const MediaViewer = (props: P) => {
         raw: url,
         validated: url,
         forDisplay: sliceText(url, 100),
-        type: content_type,
+        type: ContentTypes.find((type) => content_type.startsWith(type)),
         content_type,
       }
     : undefined,
@@ -61,7 +77,8 @@ export const MediaViewer = (props: P) => {
           url.startsWith("data:") ?
             url.split(":")[1]?.split(";")[0]
           : undefined;
-        const mime = mimeFromData ?? (await fetchMimeFromURLHead(url));
+        const mime =
+          mimeFromData ?? (await fetchMimeFromURLHead(url, withCredentials));
         contentType = mimeFromData ?? mime?.split(";")[0]?.trim();
       }
 
@@ -73,7 +90,7 @@ export const MediaViewer = (props: P) => {
         content_type: contentType,
       });
     },
-    [content_type],
+    [content_type, withCredentials],
   );
 
   useEffect(() => {
@@ -117,25 +134,31 @@ export const MediaViewer = (props: P) => {
     );
   return (
     <>
-      <RenderMedia
+      <MediaViewerContent
         title={name}
+        subTitle={undefined}
         isFocused={isFocused}
         setIsFocused={setIsFocused}
         style={style}
         urlInfo={urlInfo}
+        fileId={props.fileId}
         contentOnly={false}
+        variant={variant}
+        context={context}
+        isLoading={isLoading}
       />
       {isFocused && (
         <Popup
           rootStyle={{ padding: 0, borderRadius: 0 }}
           clickCatchStyle={{ opacity: 0.2 }}
-          contentClassName="o-hidden"
+          contentClassName="o-hidden p-0"
           onClose={() => {
             setIsFocused(false);
           }}
           positioning="fullscreen"
           autoFocusFirst={"content"}
           focusTrap={true}
+
           title={
             name ??
             (!urlInfo ? "" : (
@@ -164,13 +187,16 @@ export const MediaViewer = (props: P) => {
             }
           >
             {toggleClick && ToggleBtn(true, () => toggleClick(-1))}
-            <RenderMedia
+            <MediaViewerContent
               title={name}
+              subTitle={undefined}
               isFocused={isFocused}
               setIsFocused={setIsFocused}
               style={style}
               urlInfo={urlInfo}
+              fileId={props.fileId}
               contentOnly={true}
+              context={context}
             />
             {toggleClick && ToggleBtn(false, () => toggleClick(1))}
           </div>
@@ -182,12 +208,14 @@ export const MediaViewer = (props: P) => {
 
 export const fetchMimeFromURLHead = async (
   url: string,
+  withCredentials = false,
 ): Promise<string | null> => {
   try {
     const resp = await fetch(
       url,
       // { method: "HEAD" } this approach is not suitable due to CORS issues on some servers
       {
+        credentials: withCredentials ? "include" : "same-origin",
         headers: {
           Range: "bytes=0-0",
         },

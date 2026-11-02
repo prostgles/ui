@@ -7,12 +7,13 @@ import { JSONBSchemaA } from "@components/JSONBSchema/JSONBSchema";
 import Loading from "@components/Loader/Loading";
 import { SvgIcon } from "@components/SvgIcon";
 import { mdiDotsHorizontal } from "@mdi/js";
-import { isObject, type AnyObject } from "prostgles-types";
+import {
+  isObject,
+  type AnyObject,
+  type PG_COLUMN_UDT_DATA_TYPE,
+} from "prostgles-types";
 import React, { useCallback, useState } from "react";
-import type {
-  DBSchemaTableColumn,
-  DBSchemaTableWJoins,
-} from "../../Dashboard/dashboardUtils";
+import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
 import { getPGIntervalAsText } from "../../W_SQL/customRenderers";
 import type { ColumnDisplayConfig, SmartFormProps } from "../SmartForm";
 import type {
@@ -38,15 +39,11 @@ import {
 } from "./fieldUtils";
 import { useSmartFormFieldAsJSON } from "./useSmartFormFieldAsJSON";
 import { useSmartFormFieldOnChange } from "./useSmartFormFieldOnChange";
+import type { LocalMedia } from "@components/FileInput/FileInput";
+import { FlexRow } from "@components/Flex";
+import { AlertFieldEditor } from "../../W_Table/ManagedColumn/Alerts/AlertFieldEditor";
 
-type SmartFormFieldValue =
-  | string
-  | number
-  | {
-      data: File;
-      name: string;
-    }
-  | null;
+export type SmartFormFieldValue = string | number | LocalMedia | null;
 
 export type SmartFormFieldProps = Pick<
   SmartFormProps,
@@ -73,7 +70,8 @@ export type SmartFormFieldProps = Pick<
   newRowDataHandler: NewRowDataHandler;
   someColumnsHaveIcons: boolean;
 };
-export type SmartColumnInfo = DBSchemaTableColumn & ColumnDisplayConfig;
+export type SmartColumnInfo = DBSchemaTableWJoins["columns"][number] &
+  ColumnDisplayConfig;
 
 /**
  * Allows displaying and editing a single column from a SmartForm based on table schema and config
@@ -105,7 +103,7 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
 
   const onChange = useCallback(
     (newColData: ColumnData) => {
-      newRowDataHandler.setColumnData(column.name, newColData);
+      return newRowDataHandler.setColumnData(column.name, newColData);
     },
     [newRowDataHandler, column.name],
   );
@@ -158,6 +156,9 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
       return (
         <Btn
           className="mt-1"
+          style={{
+            marginLeft: someColumnsHaveIcons ? "24px" : undefined,
+          }}
           title="Expand"
           iconPath={mdiDotsHorizontal}
           onClick={() => {
@@ -171,7 +172,7 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
   let parsedValue;
   try {
     parsedValue = parseValue(column, value);
-  } catch (e: any) {
+  } catch {
     parsedValue = value;
   }
   if (readOnly && column.udt_name === "interval" && isObject(value)) {
@@ -185,10 +186,12 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
 
   let arrayType: FormFieldProps<"text">["arrayType"];
   if (column.tsDataType.endsWith("[]") && !column.tsDataType.includes("any")) {
-    const elemTSType = tsDataTypeFromUdtName(column.element_udt_name as any);
+    const elemTSType = tsDataTypeFromUdtName(column.element_udt_name ?? "text");
     arrayType = {
       tsDataType: elemTSType,
-      udt_name: column.element_udt_name as any,
+      udt_name:
+        (column.element_udt_name as PG_COLUMN_UDT_DATA_TYPE | undefined) ??
+        "text",
     };
   }
 
@@ -197,6 +200,7 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
   const ftableIcon =
     column.icon ?? foreignDataState?.insertAndSearchState?.ftableInfo?.icon;
   const id = tableName + "-" + column.name;
+  const internalFormat = column.defaultRenderAs?.params;
   return (
     <>
       {sectionHeader && (
@@ -213,17 +217,10 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
         id={id}
         data-key={column.name}
         leftIcon={
-          ftableIcon ?
-            <SvgIcon className="f-0 text-1 mr-p5" icon={ftableIcon} />
-          : someColumnsHaveIcons && (
-              <div
-                className="mt-p25 mr-p5"
-                style={{
-                  width: "24px",
-                  height: "24px",
-                }}
-              />
-            )
+          <SmartFormFieldIcon
+            icon={ftableIcon}
+            someColumnsHaveIcons={someColumnsHaveIcons}
+          />
         }
         label={column.hideLabel ? "" : column.label}
         data-command="SmartFormField"
@@ -238,7 +235,19 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
         asJSON={renderAsJSON?.component}
         showFullScreenToggle={renderAsJSON?.component === "codeEditor"}
         inputContent={
-          renderAsJSON?.component === "JSONBSchema" ?
+          internalFormat?.component === "Alert" ?
+            <AlertFieldEditor
+              field={internalFormat.field}
+              value={value}
+              onChange={onCheckAndChange}
+              readOnly={readOnly}
+              column={column}
+              db={db}
+              tables={tables}
+              row={row}
+              asJSON={renderAsJSON}
+            />
+          : renderAsJSON?.component === "JSONBSchema" ?
             <JSONBSchemaA
               db={db}
               schema={renderAsJSON.jsonbSchema}
@@ -321,11 +330,44 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
         hint={hint}
         hideClearButton={hideNullBtn}
       />
-      {column.file ?
-        typeof value === "number" ?
-          <ErrorComponent error={"Unexpected number data type"} />
-        : <SmartFormFieldFileSection db={db} table={table} media={value} />
-      : null}
+      {!column.file ? null : (
+        <FlexRow className="SmartFormField_SmartFormFieldFileSection gap-0">
+          <SmartFormFieldIcon
+            icon={undefined}
+            someColumnsHaveIcons={someColumnsHaveIcons}
+          />
+          {typeof value === "number" ?
+            <ErrorComponent error={"Unexpected number data type"} />
+          : <SmartFormFieldFileSection
+              db={db}
+              table={table}
+              columnName={column.name}
+              row={row}
+              media={value}
+            />
+          }
+        </FlexRow>
+      )}
     </>
   );
+};
+
+export const SmartFormFieldIcon = ({
+  icon,
+  someColumnsHaveIcons,
+}: {
+  icon: string | undefined;
+  someColumnsHaveIcons: boolean;
+}) => {
+  return icon ?
+      <SvgIcon className="f-0 text-1 mr-p5" icon={icon} />
+    : someColumnsHaveIcons && (
+        <div
+          className="mt-p25 mr-p5"
+          style={{
+            width: "24px",
+            height: "24px",
+          }}
+        />
+      );
 };

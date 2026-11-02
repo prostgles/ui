@@ -20,7 +20,7 @@ const getSavedSVGFiles = () => {
   return { savedSVGFiles, svgFileNames };
 };
 
-export const svgScreenshotsCompleteReferenced = async (
+export const svgScreenshotsCompleteReferenced = (
   svgifScenes: SVGifScene[],
   svgifFilesUsedExternally: string[],
 ) => {
@@ -34,12 +34,12 @@ export const svgScreenshotsCompleteReferenced = async (
       .map((v) => {
         const startsWithDot = v.startsWith(".");
         const src = v
-          .split(`"`)[0]
+          .split(`"`)[0]!
           .slice(SCREENSHOTS_PATH.length + (startsWithDot ? 2 : 1));
         return {
           docName: f.fileName,
           srcWithFragment: src.includes("#") ? src : undefined,
-          src: src.split("#")[0].slice(0, -4),
+          src: src.split("#")[0]!.slice(0, -4),
         };
       }),
   );

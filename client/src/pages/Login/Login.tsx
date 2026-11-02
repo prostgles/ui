@@ -1,34 +1,57 @@
-import React from "react";
-import type { Prgl } from "../../App";
 import Btn from "@components/Btn";
 import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
-import { AuthNotifPopup } from "./AuthNotifPopup";
+import { useAuthState } from "prostgles-client";
+import React from "react";
+import { useNavigate } from "react-router";
+import { ROUTES } from "@common/utils";
+import type { Prgl } from "../../App";
+import { AuthenticationNotificationPopup } from "./AuthenticationNotificationPopup";
 import { LoginTotpFormFields } from "./LoginTotpForm";
 import { LoginWithProviders } from "./LoginWithProviders";
-import { useAuthState } from "prostgles-client";
 
-export type LoginFormProps = Pick<Prgl, "auth">;
+export type LoginFormProps = Pick<Prgl, "auth"> & { register?: boolean };
 
-export const Login = ({ auth }: LoginFormProps) => {
-  const authState = useAuthState({ auth });
+export const Login = ({ auth, register = false }: LoginFormProps) => {
+  const navigate = useNavigate();
+  const params = new URLSearchParams(window.location.search);
+  const invitationToken =
+    register ? (params.get("invitationToken") ?? undefined) : undefined;
+  const authState = useAuthState({
+    auth,
+    initialState: register ? "registerWithPassword" : "login",
+    initialUsername: register ? (params.get("email") ?? "") : "",
+    invitationToken,
+  });
   const {
     formHandlers,
     isOnLogin,
-    registerTypeAllowed,
-    setState,
     error,
     loading,
     authResponse,
+    result,
     clearAuthResponse,
     onAuthCall,
   } = authState;
 
   const headerTitle =
-    !isOnLogin ? "Sign up"
-    : !formHandlers?.setPassword ? "Signup or Login"
+    !isOnLogin ?
+      invitationToken ? "Set your password"
+      : "Sign up"
+    : !formHandlers?.show.password ? "Continue with email"
     : "Sign in";
+
+  const {
+    username,
+    setUsername,
+    password,
+    setPassword,
+    confirmPassword,
+    setConfirmPassword,
+    show,
+  } = formHandlers ?? {};
+
   return (
     <form
       className="LoginForm flex-col gap-1 rounded shadow m-auto w-fit bg-color-0"
@@ -41,40 +64,65 @@ export const Login = ({ auth }: LoginFormProps) => {
       }}
     >
       {authResponse && (
-        <AuthNotifPopup {...authResponse} onClose={clearAuthResponse} />
+        <AuthenticationNotificationPopup
+          {...authResponse}
+          onClose={() => {
+            clearAuthResponse();
+            if (
+              register &&
+              result?.success &&
+              result.code === "email-verified"
+            ) {
+              void navigate(ROUTES.LOGIN);
+            }
+          }}
+        />
       )}
       <FlexCol className="p-2">
         <h2 className="mt-0">{headerTitle}</h2>
-        {formHandlers?.setUsername && (
+        <FormField
+          key="username"
+          id="username"
+          label="Email"
+          value={username}
+          type="username"
+          autoComplete="username"
+          style={{
+            display: show?.username ? undefined : "none",
+          }}
+          onChange={(value) => {
+            setUsername?.(value);
+          }}
+        />
+        <FormField
+          key="password"
+          id="password"
+          label="Password"
+          value={password}
+          type="password"
+          autoComplete={isOnLogin ? "current-password" : "new-password"}
+          style={{
+            display: show?.password ? undefined : "none",
+          }}
+          onChange={(value) => {
+            if (!setPassword) return;
+            setPassword(value);
+          }}
+        />
+        {show?.confirmPassword && (
           <FormField
-            id="username"
-            label="Email"
-            value={formHandlers.username}
-            type="username"
-            onChange={formHandlers.setUsername}
-          />
-        )}
-        {formHandlers?.setPassword && (
-          <FormField
-            id="password"
-            label="Password"
-            value={formHandlers.password}
-            type="password"
-            onChange={formHandlers.setPassword}
-          />
-        )}
-        {formHandlers?.setConfirmPassword && (
-          <FormField
+            key="new-password"
             id="new-password"
             label="Confirm password"
-            value={formHandlers.confirmPassword}
+            value={confirmPassword}
             type="password"
             autoComplete="new-password"
-            onChange={formHandlers.setConfirmPassword}
+            onChange={setConfirmPassword}
           />
         )}
-        {formHandlers?.setEmailVerificationCode && (
+        {formHandlers && show?.emailVerificationCode && (
           <FormField
+            key="email-verification-code"
             id="email-verification-code"
             label="Email verification code"
             value={formHandlers.emailVerificationCode}
@@ -100,6 +148,8 @@ export const Login = ({ auth }: LoginFormProps) => {
               : "Sign in"
             : formHandlers?.state === "registerWithPasswordConfirmationCode" ?
               "Confirm email"
+            : invitationToken ?
+              "Activate account"
             : "Sign up"
           }
           size="large"
@@ -107,27 +157,34 @@ export const Login = ({ auth }: LoginFormProps) => {
         />
         <LoginWithProviders auth={auth} />
       </FlexCol>
-      {!formHandlers && <ErrorComponent error="Invalid state" />}
-      {auth.signupWithEmailAndPassword && (
-        <Btn
-          style={{
-            fontSize: "14px",
-            width: "100%",
-            borderTopLeftRadius: 0,
-            borderTopRightRadius: 0,
-          }}
-          variant="faded"
-          data-command="Login.toggle"
-          color="action"
-          onClick={() => {
-            setState(isOnLogin ? registerTypeAllowed : "login");
-          }}
-        >
-          {isOnLogin ?
-            "No account? Sign up with email"
-          : "Already have an account? Sign in"}
-        </Btn>
+      {!formHandlers && (
+        <ErrorComponent
+          error={
+            register && auth.signupWithEmailOptions?.requireInvitation ?
+              "An invitation is required to register"
+            : "Email registration is unavailable"
+          }
+        />
       )}
+      {auth.signupWithEmail &&
+        (!auth.signupWithEmailOptions?.requireInvitation || !isOnLogin) && (
+          <Btn
+            style={{
+              fontSize: "14px",
+              width: "100%",
+              borderTopLeftRadius: 0,
+              borderTopRightRadius: 0,
+            }}
+            variant="faded"
+            data-command="Login.toggle"
+            color="action"
+            onClick={() => navigate(isOnLogin ? ROUTES.REGISTER : ROUTES.LOGIN)}
+          >
+            {isOnLogin ?
+              "No account? Sign up with email"
+            : "Already have an account? Sign in"}
+          </Btn>
+        )}
     </form>
   );
 };

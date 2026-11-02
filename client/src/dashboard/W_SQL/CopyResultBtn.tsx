@@ -13,7 +13,6 @@ import ErrorComponent from "@components/ErrorComponent";
 import { Label } from "@components/Label";
 import { PopupMenuList } from "@components/PopupMenuList";
 import { download } from "./W_SQL";
-import type { Unpromise } from "./W_SQLMenu";
 import { isObject } from "@common/publishUtils";
 import { usePromise } from "prostgles-client";
 import { getPapa } from "../FileImporter/FileImporter";
@@ -44,8 +43,7 @@ export const CopyResultBtn = (props: {
   const res = usePromise(async () => {
     try {
       const rows = rawValues.map((row) => getStringifiedObjects(row, cols));
-      let escapedNames: Unpromise<ReturnType<typeof getValidPGColumnNames>> =
-        [];
+      let escapedNames: Awaited<ReturnType<typeof getValidPGColumnNames>> = [];
       if (!cols.length || !rows.length) return;
       try {
         escapedNames = await getValidPGColumnNames(

@@ -1,7 +1,6 @@
 import Btn from "@components/Btn";
 import { FlexRow } from "@components/Flex";
 import Popup from "@components/Popup/Popup";
-import { SvgIcon } from "@components/SvgIcon";
 import { mdiTextBoxOutline } from "@mdi/js";
 import { type AnyObject, type ValidatedColumnInfo } from "prostgles-types";
 import React from "react";
@@ -10,8 +9,14 @@ import type { SmartFormState } from "../useSmartForm";
 import { SmartFormPrevNext } from "./SmartFormPrevNext";
 import { useSmartFormPrevNext } from "./useSmartFormPrevNext";
 import { useSmartFormSubTitle } from "./useSmartFormSubTitle";
+import { SMART_FORM_POPUP_MIN_WIDTH } from "../constants";
+import { AuditTrailButton } from "../../AuditTrail/AuditTrailButton";
+import { SmartFormHeader } from "./SmartFormHeader";
 
-type P = Pick<SmartFormProps, "onPrevOrNext" | "prevNext" | "asPopup"> & {
+type P = Pick<
+  SmartFormProps,
+  "onPrevOrNext" | "prevNext" | "asPopup" | "db" | "sql" | "tables" | "methods"
+> & {
   rowFilterObj: AnyObject | undefined;
   displayedColumns: Pick<
     ValidatedColumnInfo,
@@ -23,6 +28,7 @@ type P = Pick<SmartFormProps, "onPrevOrNext" | "prevNext" | "asPopup"> & {
   onClose: () => void;
   table: SmartFormState["table"];
   showAsMarkdown: boolean;
+  row: AnyObject | undefined;
   setShowAsMarkdown: React.Dispatch<React.SetStateAction<boolean>> | undefined;
 };
 export const SmartFormPopupWrapper = ({
@@ -38,6 +44,11 @@ export const SmartFormPopupWrapper = ({
   table,
   setShowAsMarkdown,
   showAsMarkdown,
+  row,
+  db,
+  sql,
+  tables,
+  methods,
 }: P) => {
   const prevNextState = useSmartFormPrevNext({ onPrevOrNext, prevNext });
   const { subTitle } = useSmartFormSubTitle({ displayedColumns, rowFilterObj });
@@ -48,19 +59,20 @@ export const SmartFormPopupWrapper = ({
   const autoFocusFirstIfIsInsert = !rowFilterObj;
   return (
     <Popup
-      title={
-        <FlexRow
-          data-command="SmartForm.header.tableIconAndName"
-          className="gap-p25"
-        >
-          {table.icon && <SvgIcon size={24} icon={table.icon} />}
-          {headerText}
-        </FlexRow>
-      }
+      title={<SmartFormHeader table={table} headerText={headerText} />}
       subTitle={subTitle}
       headerRightContent={
         <FlexRow className="gap-p25">
           {prevNextState && <SmartFormPrevNext {...prevNextState} />}
+          <AuditTrailButton
+            table={table}
+            row={row}
+            headerText={headerText}
+            db={db}
+            sql={sql}
+            tables={tables}
+            methods={methods}
+          />
           {setShowAsMarkdown && (
             <Btn
               title="Show as markdown"
@@ -80,7 +92,9 @@ export const SmartFormPopupWrapper = ({
       clickCatchStyle={{ opacity: 0.2 }}
       showFullscreenToggle={{
         getStyle: (fullscreen) =>
-          fullscreen ? {} : { width: "min(600px, 100vw)" },
+          fullscreen ?
+            {}
+          : { width: `min(${SMART_FORM_POPUP_MIN_WIDTH}px, 100vw)` },
       }}
     >
       {children}

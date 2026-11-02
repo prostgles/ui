@@ -1,5 +1,10 @@
 import type { DBSSchema } from "@common/publishUtils";
 import { useMemoDeep, usePromise } from "prostgles-client";
+import {
+  getJSONBTSTypes,
+  type JSONB,
+  type TableSchema,
+} from "prostgles-types";
 import { useRef } from "react";
 import { fixIndent } from "../../../demo/scripts/sqlVideoDemo";
 import { isDefined } from "../../../utils/utils";
@@ -12,8 +17,6 @@ type Props = Pick<
 > & {
   method: MethodDefinitionProps["method"] | undefined;
 };
-
-let nodeLibs: TSLibrary[] | undefined;
 
 export const useCodeEditorTsTypes = (
   props: Props,
@@ -91,6 +94,7 @@ export const useCodeEditorTsTypes = (
   return {
     lang: "typescript",
     environment: "nodejs",
+    projectPath: undefined,
     ...tsLibrariesAndModelName,
   };
 };
@@ -106,20 +110,11 @@ const fetchMethodDefinitionTypes = async ({
   const userTypes = await dbs.user_types.find();
   const argumentTypes = args.map((a) => {
     let type: string = a.type;
-    if (a.type === "Lookup" && (a.lookup as any)) {
-      const refT = tables.find((t) => t.name === a.lookup.table);
-      if (refT) {
-        // TODO: fix type. Maybe add a LookupDefinition type?
-        //@ts-ignore
-        if (a.lookup.isFullRow) {
-          type = `{ ${refT.columns.map((c) => `${c.name}: ${c.tsDataType}`).join("; ")} }`;
-        } else {
-          const col = refT.columns.find((c) => c.name === a.lookup.column);
-          if (col) {
-            type = col.tsDataType;
-          }
-        }
-      }
+    if (a.type.includes("Lookup")) {
+      type = getJSONBTSTypes(
+        tables as unknown as TableSchema[],
+        a as unknown as JSONB.FieldType,
+      );
     }
     return `    ${a.name}${a.optional ? "?" : ""}: ${type};\n`;
   });

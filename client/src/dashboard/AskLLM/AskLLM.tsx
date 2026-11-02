@@ -36,14 +36,13 @@ export const AskLLM = (props: AskLLMProps) => {
   return (
     <ErrorTrap>
       <Btn
+        data-command="AskLLM"
         title={
           t.AskLLM["Chat to an AI Assistant to get help with your queries"]
         }
         variant="faded"
         color="action"
         iconPath={mdiAssistant}
-        data-command="AskLLM"
-        size="default"
         onClick={() => {
           setShowChat({});
         }}

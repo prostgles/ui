@@ -1,4 +1,8 @@
-import { mdiChartLine, mdiDatabaseCogOutline } from "@mdi/js";
+import {
+  mdiChartLine,
+  mdiCogSyncOutline,
+  mdiDatabaseCogOutline,
+} from "@mdi/js";
 import { fixIndent, ROUTES } from "@common/utils";
 import type { UIDocContainers } from "../../UIDocs";
 import { editConnectionUIDoc } from "../editConnectionUIDoc";
@@ -73,6 +77,16 @@ export const connectionConfigUIDoc = {
       componentName: "ServerSideFunctions",
       description:
         "Configure and manage server-side functions (experimental feature).",
+      children: [],
+    },
+    {
+      type: "tab",
+      selectorCommand: "config.config",
+      title: "Config sync",
+      iconPath: mdiCogSyncOutline,
+      componentName: "ConnectionConfigSync",
+      description:
+        "Sync schema and application configuration—including database settings, table behavior, functions, access rules, auditing, workspaces, services, and lifecycle hooks—from a local TypeScript project.",
       children: [],
     },
   ],

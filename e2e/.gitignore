@@ -3,4 +3,5 @@ node_modules/
 /electron-report/
 /playwright-report/
 /playwright/.cache/
+/.test-artifacts/
 demo

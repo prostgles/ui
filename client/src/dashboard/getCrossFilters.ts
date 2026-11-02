@@ -2,11 +2,8 @@ import { getFinalFilter } from "@common/filterUtils";
 import type { AnyObject, ParsedJoinPath } from "prostgles-types";
 import { reverseParsedPath } from "prostgles-types";
 import { isDefined, quickClone } from "../utils/utils";
-import type {
-  Link,
-  WindowData,
-  WindowSyncItem,
-} from "./Dashboard/dashboardUtils";
+import type { Link, WindowSyncItem } from "./Dashboard/dashboardUtils";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 import W_Map from "./W_Map/W_Map";
 import type { ActiveRow } from "./W_Table/W_Table";
 import { getTimeChartFilters } from "./W_TimeChart/fetchData/getTimeChartLayersWithBins";

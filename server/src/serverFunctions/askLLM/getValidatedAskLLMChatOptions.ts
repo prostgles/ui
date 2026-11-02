@@ -1,6 +1,9 @@
 import type { Filter } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
 import { getBestLLMChatModel, type AskLLMArgs } from "./askLLM";
 
+export type ValidatedAskLLMChatOptions = Awaited<
+  ReturnType<typeof getValidatedAskLLMChatOptions>
+>;
 export const getValidatedAskLLMChatOptions = async ({
   userMessage,
   type,

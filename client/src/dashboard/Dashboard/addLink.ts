@@ -40,7 +40,6 @@ export const addLink = ({
       w2_id,
       workspace_id,
       options,
-      last_updated: undefined as unknown as string,
       user_id: undefined as unknown as string,
     },
     { returning: "*" },

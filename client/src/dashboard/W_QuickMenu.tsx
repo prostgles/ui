@@ -1,22 +1,32 @@
 import {
   mdiChartBoxMultipleOutline,
+  mdiCodeJson,
+  mdiCogOutline,
   mdiMagnify,
   mdiSetLeftCenter,
+  mdiTableLarge,
+  mdiViewAgendaOutline,
 } from "@mdi/js";
 
 import Btn from "@components/Btn";
-import React from "react";
+import React, { useState } from "react";
 import type { CommonWindowProps } from "./Dashboard/Dashboard";
 import type { WindowSyncItem } from "./Dashboard/dashboardUtils";
 
 import { isJoinedFilter } from "@common/filterUtils";
+import { tableMightBeUndefinedDueToAccessControl } from "@common/utils";
 import { classOverride, FlexRow } from "@components/Flex";
+import Popup from "@components/Popup/Popup";
+import { Select } from "@components/Select/Select";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import type { AnyObject } from "prostgles-types";
 import { t } from "../i18n/i18nUtils";
 import type { DBS } from "./Dashboard/DBS";
+import { SmartFilterBarSearch } from "./SmartFilterBar/SmartFilterBarSearch";
 import { getLinkColorV2 } from "./W_Map/fetchData/getMapLayerQueries";
 import type { ChartableSQL } from "./W_SQL/getChartableSQL";
 import { AddChartMenu } from "./W_Table/TableMenu/AddChartMenu";
-import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
+import { TableDisplayOptionsJSON } from "./W_Table/TableMenu/TableDisplayOptionsJSON";
 
 export type ProstglesQuickMenuProps = Pick<
   CommonWindowProps,
@@ -32,6 +42,7 @@ export type ProstglesQuickMenuProps = Pick<
    * If undefined then will show all
    */
   show?: { filter?: boolean; link?: boolean };
+  headerSearch?: { extraFilters: AnyObject[] };
   chartableSQL: ChartableSQL | undefined;
 };
 
@@ -40,17 +51,18 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
     w,
     setLinkMenu,
     show,
+    headerSearch,
     chartableSQL,
     myLinks,
     childWindows,
     getLinksAndWindows,
   } = props;
-  const { tables, dbs } = usePrgl();
+  const { tables, dbs, db } = usePrgl();
   const table = tables.find((t) => t.name === w.table_name);
   const showLinks =
     (!show || show.link) &&
     Boolean(
-      (setLinkMenu && w.table_name && table?.joinsV2.length) ||
+      (setLinkMenu && w.table_name && table?.joinOptions.length) ||
       (w.type !== "sql" && !!myLinks.length),
     );
 
@@ -70,6 +82,42 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
     (w) => (w.type === "timechart" || w.type === "map") && w.minimised,
   );
   const hasMinimisedCharts = minimisedCharts.length > 0;
+  const showTableViewOptions =
+    !show && !window.isMobileDevice && !!setLinkMenu && w.type === "table";
+  const [showCardViewOptions, setShowCardViewOptions] = useState<HTMLElement>();
+
+  const hasActiveFilters = w.filter.some(
+    (f) =>
+      !f.disabled ||
+      f.type === "not null" ||
+      f.type === "null" ||
+      (isJoinedFilter(f) ?
+        "fieldName" in f.filter && f.filter.value !== undefined
+      : f.value !== undefined),
+  );
+  const filterButton = table &&
+    (!show || show.filter) &&
+    w.type === "table" && (
+      <Btn
+        title={t.W_QuickMenu["Show/Hide filtering"]}
+        data-command="dashboard.window.toggleFilterBar"
+        size="small"
+        variant="faded"
+        iconPath={mdiMagnify}
+        color={hasActiveFilters ? "action" : undefined}
+        onClick={() => {
+          void w.$update(
+            { options: { showFilters: !w.options.showFilters } },
+            { deepMerge: true },
+          );
+        }}
+      />
+    );
+
+  const showAddChartMenu =
+    Boolean(tableMightBeUndefinedDueToAccessControl(dbs.windows)?.insert) &&
+    addChartProps &&
+    !show;
 
   return (
     <>
@@ -81,7 +129,37 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
         style={{ maxWidth: "fit-content", margin: "2px 0", gap: "1px" }}
         ref={divRef}
       >
-        {Boolean((dbs.windows as any).insert) && addChartProps && !show && (
+        {headerSearch && filterButton && w.options.showFilters && (
+          <SmartFilterBarSearch
+            db={db}
+            tables={tables}
+            tableName={w.table_name}
+            filter={w.filter}
+            extraFilters={headerSearch.extraFilters}
+            onFilterChange={(filter) => {
+              void w.$update({ filter }, { deepMerge: true });
+            }}
+            style={{
+              width: "240px",
+              maxWidth: "40vw",
+              margin: "unset",
+              marginRight: ".25em",
+            }}
+          />
+        )}
+        {filterButton}
+        {filterButton &&
+          (hasMinimisedCharts || showTableViewOptions || showAddChartMenu) && (
+            <div
+              className="divider mx-p5 f-0"
+              style={{
+                width: "1px",
+                height: "24px",
+                background: "var(--b-color)",
+              }}
+            />
+          )}
+        {showAddChartMenu && (
           <AddChartMenu
             {...addChartProps}
             childWindows={childWindows}
@@ -99,61 +177,82 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
             size="small"
             onClick={() => {
               minimisedCharts.forEach((w) => {
-                w.$update({ minimised: false });
+                void w.$update({ minimised: false });
               });
             }}
           />
         )}
-        {showLinks &&
-          !window.isMobileDevice &&
-          !!setLinkMenu &&
-          w.type === "table" && (
-            <Btn
-              title={t.W_QuickMenu["Cross filter tables"]}
-              data-command="Window.W_QuickMenu.addCrossFilteredTable"
-              size="small"
-              variant="icon"
-              iconPath={mdiSetLeftCenter}
-              style={
-                firstLink && { color: getLinkColorV2(firstLink, 1).colorStr }
+        {showTableViewOptions && (
+          <>
+            {showCardViewOptions && (
+              <Popup
+                onClose={() => setShowCardViewOptions(undefined)}
+                title="Card view options"
+                positioning="center"
+                clickCatchStyle={{ opacity: 1 }}
+              >
+                <TableDisplayOptionsJSON tableName={w.table_name} />
+              </Popup>
+            )}
+            {showLinks && (
+              <Btn
+                title={t.W_QuickMenu["Cross filter tables"]}
+                data-command="Window.W_QuickMenu.addCrossFilteredTable"
+                size="small"
+                variant="icon"
+                iconPath={mdiSetLeftCenter}
+                style={
+                  firstLink && { color: getLinkColorV2(firstLink, 1).colorStr }
+                }
+                onClick={(e) => {
+                  setLinkMenu({
+                    w,
+                    anchorEl: e.currentTarget,
+                  });
+                }}
+              />
+            )}
+            <Select
+              title="View mode"
+              fullOptions={
+                [
+                  {
+                    key: "table",
+                    iconPath: mdiTableLarge,
+                  },
+                  {
+                    key: "card",
+                    iconPath: mdiViewAgendaOutline,
+                    rightContent: (
+                      <Btn
+                        iconPath={mdiCogOutline}
+                        size="micro"
+                        onClick={(e) => setShowCardViewOptions(e.currentTarget)}
+                      />
+                    ),
+                  },
+                  {
+                    key: "json",
+                    iconPath: mdiCodeJson,
+                  },
+                ] as const
               }
-              onClick={(e) => {
-                setLinkMenu({
-                  w,
-                  anchorEl: e.currentTarget,
+              btnProps={{
+                variant: "icon",
+              }}
+              showSelected="icon"
+              value={w.options.viewAs?.type ?? "table"}
+              onChange={(viewAsType) => {
+                void w.$update({
+                  options: {
+                    viewAs: {
+                      type: viewAsType,
+                    },
+                  },
                 });
               }}
             />
-          )}
-        {table && (!show || show.filter) && w.type === "table" && (
-          <Btn
-            title={t.W_QuickMenu["Show/Hide filtering"]}
-            data-command="dashboard.window.toggleFilterBar"
-            size="small"
-            variant="faded"
-            iconPath={mdiMagnify}
-            color={
-              (
-                w.filter.some(
-                  (f) =>
-                    !f.disabled ||
-                    f.type === "not null" ||
-                    f.type === "null" ||
-                    (isJoinedFilter(f) ?
-                      f.filter.value !== undefined
-                    : f.value !== undefined),
-                )
-              ) ?
-                "action"
-              : undefined
-            }
-            onClick={() => {
-              w.$update(
-                { options: { showFilters: !w.options.showFilters } },
-                { deepMerge: true },
-              );
-            }}
-          />
+          </>
         )}
       </FlexRow>
     </>

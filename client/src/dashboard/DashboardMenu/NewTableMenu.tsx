@@ -1,19 +1,11 @@
-import {
-  mdiCube,
-  mdiFileUploadOutline,
-  mdiFunction,
-  mdiPlus,
-  mdiTable,
-} from "@mdi/js";
+import { mdiFileUploadOutline, mdiPlus, mdiTable } from "@mdi/js";
 import React, { useState } from "react";
 import type { FullOption } from "@components/Select/Select";
 import { Select } from "@components/Select/Select";
 import { FileImporter } from "../FileImporter/FileImporter";
-import { NewMethod } from "../W_Method/NewMethod";
 import { CreateTable } from "./CreateTable";
 import type { DashboardMenuProps } from "./DashboardMenu";
 import { useAddViewToWorkspace } from "../Dashboard/useAddViewToWorkspace";
-import { useAlert } from "@components/AlertProvider";
 
 const items = [
   { key: "new table", label: "Create table", iconPath: mdiTable },
@@ -23,33 +15,20 @@ const items = [
     subLabel: "Supported types: csv/geojson/json",
     iconPath: mdiFileUploadOutline,
   },
-  {
-    key: "new function",
-    label: "Create TS Function",
-    subLabel: "(Experimental)",
-    iconPath: mdiFunction,
-  },
-  {
-    key: "agentic workflow",
-    label: "Create Agentic Workflow",
-    iconPath: mdiCube,
-  },
 ] as const satisfies FullOption[];
 
 export const NewTableMenu = (
   p: DashboardMenuProps & { onClose: VoidFunction | undefined },
 ) => {
-  const { prgl, tables, onClose, workspace } = p;
-  const { sql } = prgl;
+  const { prgl, onClose, workspace } = p;
+  const { tables, sql } = prgl;
   const [show, setShow] = useState<(typeof items)[number]["key"]>();
   const { addViewToWorkspace } = useAddViewToWorkspace();
-  const { addAlert } = useAlert();
-  // if (!sql) return null;
 
   return (
     <>
       <Select
-        title="Create/Import"
+        title="Create/import table"
         data-command="dashboard.menu.create"
         iconPath=""
         btnProps={{
@@ -57,8 +36,8 @@ export const NewTableMenu = (
           iconPosition: "left",
           iconClassname: "",
           color: "action",
-          variant: "filled",
-          size: "default",
+          variant: "text",
+          size: "small",
           className: "",
           children: null,
           style: {
@@ -66,21 +45,7 @@ export const NewTableMenu = (
           },
         }}
         fullOptions={items}
-        onChange={(o) => {
-          if (o === "agentic workflow") {
-            addAlert({
-              children: (
-                <>
-                  Agentic workflows are created through the{" "}
-                  <strong>Create workflow</strong> prompt in the AI Assistant
-                  chat.
-                </>
-              ),
-            });
-          } else {
-            setShow(o);
-          }
-        }}
+        onChange={setShow}
       />
       {show === "new table" && (
         <CreateTable
@@ -106,14 +71,6 @@ export const NewTableMenu = (
               table,
             });
           }}
-        />
-      )}
-      {show === "new function" && (
-        <NewMethod
-          {...prgl}
-          access_rule_id={undefined}
-          onClose={() => setShow(undefined)}
-          methodId={undefined}
         />
       )}
     </>

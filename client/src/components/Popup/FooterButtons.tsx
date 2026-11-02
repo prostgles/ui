@@ -31,9 +31,11 @@ export const FooterButtons = ({
     typeof footerButtons === "function" ?
       footerButtons(onClose)
     : footerButtons).filter(isDefined);
+
   if (!bottomBtns.length && !footer) {
     return null;
   }
+
   return (
     <Footer {...divProps} style={{ padding: "1em", ...divProps.style }}>
       {footer}

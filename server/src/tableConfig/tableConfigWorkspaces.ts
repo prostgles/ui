@@ -1,4 +1,4 @@
-import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
+import type { TableConfig } from "prostgles-server";
 
 export const tableConfigWorkspaces: TableConfig<{ en: 1 }> = {
   workspace_layout_modes: {
@@ -38,7 +38,6 @@ export const tableConfigWorkspaces: TableConfig<{ en: 1 }> = {
           tableListEndInfo: "size",
           tableListSortBy: "extraInfo",
           hideCounts: false,
-          pinnedMenu: true,
         },
         jsonbSchemaType: {
           hideCounts: {
@@ -60,14 +59,6 @@ export const tableConfigWorkspaces: TableConfig<{ en: 1 }> = {
           defaultLayoutType: {
             optional: true,
             enum: ["row", "tab", "col"],
-          },
-          pinnedMenu: {
-            optional: true,
-            type: "boolean",
-          },
-          pinnedMenuWidth: {
-            optional: true,
-            type: "number",
           },
         },
       },

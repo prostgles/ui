@@ -15,8 +15,8 @@ normalized AS (
          deliverer_id,
          address_id,
          CASE
-           WHEN postal_code ~* '^[A-Z]{1,2}[0-9][0-9A-Z]?\s?[0-9][A-Z]{2}$' THEN upper(replace(postal_code, ' ', ''))
-           WHEN country ~* '^[A-Z]{1,2}[0-9][0-9A-Z]?\s?[0-9][A-Z]{2}$' THEN upper(replace(country, ' ', ''))
+           WHEN postal_code ~* '^[A-Z]{1,2}[0-9][0-9A-Z]?\\s?[0-9][A-Z]{2}$' THEN upper(replace(postal_code, ' ', ''))
+           WHEN country ~* '^[A-Z]{1,2}[0-9][0-9A-Z]?\\s?[0-9][A-Z]{2}$' THEN upper(replace(country, ' ', ''))
            ELSE NULL
          END AS full_pc
   FROM o30

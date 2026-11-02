@@ -1,8 +1,26 @@
-import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
+import { USER_TYPES } from "@common/authTypesAndConstants";
+import type { DBSchema } from "@common/DBGeneratedSchema";
 import {
   OAuthProviderOptions,
   PASSWORDLESS_ADMIN_USERNAME,
 } from "@common/OAuthUtils";
+import { escapeLiteral } from "pg";
+import type { TableConfig } from "prostgles-server";
+
+const registrationConfirmation = {
+  code_hash: "string",
+  confirmed_on: { type: "Date", nullable: true },
+  expires: "Date",
+} as const;
+
+const pendingRegistrationTypes = [
+  "invite",
+  "password-w-email-confirmation",
+  "magic-link",
+] satisfies Extract<
+  NonNullable<DBSchema["users"]["registration"]>,
+  { confirmed_on: unknown }
+>["type"][];
 
 export const tableConfigUsers = {
   users: {
@@ -13,38 +31,31 @@ export const tableConfigUsers = {
         info: { hint: "Only active users can access the system" },
       },
       username: {
-        sqlDefinition: `TEXT NOT NULL UNIQUE CHECK(length(username) > 0)`,
+        sqlDefinition: `TEXT NOT NULL UNIQUE CHECK(length(username) BETWEEN 1 AND 255)`,
       },
       name: {
         sqlDefinition: `TEXT`,
         info: { hint: "Display name, if empty username will be shown" },
       },
-      email: { sqlDefinition: `TEXT` },
+      email: { sqlDefinition: `TEXT CHECK(length(email) BETWEEN 1 AND 255)` },
       registration: {
         nullable: true,
         jsonbSchema: {
           oneOfType: [
             {
+              type: { enum: ["invite"] },
+              invited_by: "string",
+              date: "Date",
+              ...registrationConfirmation,
+            },
+            {
               type: { enum: ["password-w-email-confirmation"] },
-              email_confirmation: {
-                oneOfType: [
-                  {
-                    status: { enum: ["confirmed"] },
-                    date: "Date",
-                  },
-                  {
-                    status: { enum: ["pending"] },
-                    confirmation_code: { type: "string" },
-                    date: "Date",
-                  },
-                ],
-              },
+              ...registrationConfirmation,
             },
             {
               type: { enum: ["magic-link"] },
-              otp_code: { type: "string" },
               date: "Date",
-              used_on: { type: "Date", optional: true },
+              ...registrationConfirmation,
             },
             {
               type: { enum: ["OAuth"] },
@@ -75,7 +86,7 @@ export const tableConfigUsers = {
         info: { hint: "Hashed with the user id on insert/update" },
       },
       type: {
-        sqlDefinition: `TEXT NOT NULL DEFAULT 'default' REFERENCES user_types (id)`,
+        sqlDefinition: `TEXT NOT NULL DEFAULT '${USER_TYPES.DEFAULT}' REFERENCES user_types (id)`,
       },
       passwordless_admin: {
         sqlDefinition: `BOOLEAN`,
@@ -90,6 +101,16 @@ export const tableConfigUsers = {
       options: {
         nullable: true,
         jsonbSchemaType: {
+          pinnedMenu: {
+            type: "boolean",
+            optional: true,
+            description: "Keep the dashboard menu docked on wide screens",
+          },
+          pinnedMenuWidth: {
+            type: "number",
+            optional: true,
+            description: "Width of the docked dashboard menu in pixels",
+          },
           showStateDB: {
             type: "boolean",
             optional: true,
@@ -146,10 +167,17 @@ export const tableConfigUsers = {
           enabled: { type: "boolean" },
         },
       },
-      has_2fa_enabled: `BOOLEAN GENERATED ALWAYS AS ( ("2fa"->>'enabled')::BOOLEAN ) STORED`,
+      has_2fa_enabled: `BOOLEAN GENERATED ALWAYS AS (COALESCE(("2fa"->>'enabled')::BOOLEAN, false)) STORED`,
     },
     constraints: {
-      [`passwordless_admin type AND username CHECK`]: `CHECK(COALESCE(passwordless_admin, false) = FALSE OR type = 'admin' AND username = '${PASSWORDLESS_ADMIN_USERNAME}')`,
+      [`passwordless_admin type AND username CHECK`]: `CHECK(COALESCE(passwordless_admin, false) = FALSE OR type = '${USER_TYPES.ADMIN}' AND username = '${PASSWORDLESS_ADMIN_USERNAME}')`,
+      users_pending_registration_check: `CHECK(
+        status <> ${escapeLiteral("pending" satisfies DBSchema["users"]["status"])} OR (
+          email IS NOT NULL
+          AND registration->>'type' IN (${pendingRegistrationTypes.map(escapeLiteral).join(", ")})
+          AND registration->'confirmed_on' = 'null'::jsonb
+        ) IS TRUE
+      )`,
     },
     indexes: {
       "Only one passwordless_admin admin account allowed": {
@@ -159,13 +187,44 @@ export const tableConfigUsers = {
       },
     },
     triggers: {
+      validateInvitationUserType: {
+        actions: ["insert", "update"],
+        type: "before",
+        forEach: "row",
+        query: `
+          BEGIN
+            IF NEW.registration->>'type' = '${"invite" satisfies NonNullable<DBSchema["users"]["registration"]>["type"]}'
+              AND NEW.type IN ('${USER_TYPES.ADMIN}', '${USER_TYPES.PUBLIC}')
+              AND (
+                TG_OP = 'INSERT'
+                OR OLD.registration->>'confirmed_on' IS NULL
+                OR NEW.registration->>'confirmed_on' IS NULL
+              )
+            THEN
+              RAISE EXCEPTION 'This user type cannot be invited';
+            END IF;
+            RETURN NEW;
+          END;
+        `,
+      },
+      updateLastUpdated: {
+        actions: ["update"],
+        type: "before",
+        forEach: "row",
+        query: `
+          BEGIN
+            NEW.last_updated = GREATEST(OLD.last_updated + 1, (EXTRACT(EPOCH FROM clock_timestamp()) * 1000)::BIGINT);
+            RETURN NEW;
+          END;
+        `,
+      },
       atLeastOneActiveAdmin: {
         actions: ["delete", "update"],
         type: "after",
         forEach: "statement",
         query: `
           BEGIN
-            IF NOT EXISTS(SELECT * FROM users WHERE type = 'admin' AND status = 'active') THEN
+            IF NOT EXISTS(SELECT * FROM users WHERE type = '${USER_TYPES.ADMIN}' AND status = 'active') THEN
               RAISE EXCEPTION 'Must have at least one active admin user';
             END IF;
 

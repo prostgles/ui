@@ -167,12 +167,12 @@ const DataLayerDataSourceInfo = ({
               const leftCondition =
                 !i || !prevOn ?
                   ""
-                : ` (${prevOn.map((cond) => Object.keys(cond))})`;
+                : ` (${typeof prevOn === "string" ? prevOn : prevOn.map((cond) => Object.keys(cond))})`;
 
               const nextOn = on;
               const rightCondition =
                 nextOn.length ?
-                  ` (${nextOn.map((cond) => Object.values(cond) as string[])})`
+                  ` (${typeof nextOn === "string" ? nextOn : nextOn.map((cond) => Object.values(cond))})`
                 : "";
               return (
                 <div key={i} style={{ marginLeft: `${i}em` }}>

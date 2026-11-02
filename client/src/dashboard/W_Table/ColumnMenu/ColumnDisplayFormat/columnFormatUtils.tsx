@@ -1,113 +1,40 @@
+import type { TableWindowInsertModel } from "@common/DashboardTypes";
+import type { InternalColumnFormat } from "@common/managedTableSchema";
+import { getAge } from "@common/utils";
+import { FlexRowWrap } from "@components/Flex";
+import { MarkdownWithPluginsPopupBtn } from "@components/MarkdownWithPlugins/MarkdownWithPlugins";
+import type {
+  FILE_TABLE_SELECT,
+  FilesTableRow,
+  FileTableRowExtraction,
+} from "@components/MediaViewer/managedTableUtils";
+import { MediaViewer } from "@components/MediaViewer/MediaViewer";
+import { MonacoLogs } from "@components/MonacoLogs/MonacoLogs";
+import { QRCodeImage } from "@components/QRCodeImage";
 import {
   includes,
+  isObject,
   type AnyObject,
   type DBSchemaTable,
-  type JSONB,
   type ValidatedColumnInfo,
 } from "prostgles-types";
 import React from "react";
 import sanitizeHtml from "sanitize-html";
-import { getAge } from "@common/utils";
-import { MediaViewer } from "@components/MediaViewer/MediaViewer";
-import { QRCodeImage } from "@components/QRCodeImage";
+import { DoclingDocumentViewerPopupBtn } from "src/dashboard/AskLLM/Chat/AskLLMChatMessages/ProstglesToolUseMessage/ProstglesMCPTools/DoclingConvertedDocument/DoclingDocumentViewer";
+import type { DBSchemaTableWithOptions } from "src/dashboard/Dashboard/getTables";
 import { RenderValue } from "../../../SmartForm/SmartFormField/RenderValue";
 import { StyledInterval } from "../../../W_SQL/customRenderers";
-import type { RenderedColumn } from "../../tableUtils/onRenderColumn";
-import type { ColumnConfig } from "../ColumnMenu";
-import type { TableWindowInsertModel } from "@common/DashboardTypes";
-import { FlexRowWrap } from "@components/Flex";
-import type { columnDisplayFormatSchema } from "@common/columnDisplayFormat.schema";
+import type { RenderedColumn } from "../../RenderColumn/RenderColumn";
 
-// const CurrencySchema = {
-//   type: {
-//     title: "Format",
-//     enum: ["Currency"],
-//     description: "With currency symbol",
-//   },
-//   params: {
-//     oneOfType: [
-//       {
-//         mode: { enum: ["Fixed"], title: "Type" },
-//         metricPrefix: {
-//           type: "boolean",
-//           title: "Use Metric Prefix",
-//           optional: true,
-//         },
-//         currencyCode: {
-//           type: "string",
-//           title: "Currency code",
-//           description: "EUR, GBP, USD, etc...",
-//         },
-//       },
-//       {
-//         mode: { enum: ["From column"], title: "Type" },
-//         metricPrefix: {
-//           type: "boolean",
-//           title: "Use Metric Prefix",
-//           optional: true,
-//         },
-//         currencyCodeField: {
-//           type: "string",
-//           title: "Currency Field",
-//           description:
-//             "Column containint the currency code (EUR, GBP, USD, etc...)",
-//         },
-//       },
-//     ],
-//   },
-// } as const satisfies JSONB.ObjectType["type"];
-
-// const MediaSchema = {
-//   type: {
-//     enum: ["Media"],
-//     title: "Format",
-//     description: "Display media (video/image/audio) from URL",
-//   },
-//   params: {
-//     optional: true,
-//     oneOfType: [
-//       {
-//         type: {
-//           title: "Content type",
-//           enum: ["Auto"],
-//           description: "Auto detect from URL and headers (default)",
-//         },
-//       },
-//       {
-//         type: {
-//           title: "Content type",
-//           enum: ["Fixed"],
-//           description: "Fixed",
-//         },
-//         fixedContentType: {
-//           type: "string",
-//           title: "Fixed content type",
-//           allowedValues: ContentTypes,
-//         },
-//       },
-//       {
-//         type: {
-//           title: "Content type",
-//           enum: ["From column"],
-//           description: "From column",
-//         },
-//         contentTypeColumnName: {
-//           title: "MIME column",
-//           type: "string",
-//           description:
-//             "Column that contains valid extesion values (img, mp4, mp3, ...)",
-//         },
-//       },
-//       {
-//         type: {
-//           title: "Content type",
-//           enum: ["From URL Extension"],
-//           description: "From URL Extension (e.g. .png, .mp4)",
-//         },
-//       },
-//     ],
-//   },
-// } as const satisfies JSONB.JSONBSchema["type"];
+import { FileAnnotationViewer } from "../../ManagedColumn/FileAnnotationViewer";
+import { FileExtractionStatus } from "../../ManagedColumn/FileExtractionStatus";
+import { AlertFieldSummary } from "../../ManagedColumn/Alerts/AlertFieldSummary";
+import { ActionColumns } from "./ActionColumns";
+import { JSONDiffPopup } from "./JSONDiffPopup";
+import { Avatar } from "./Avatar";
+import type { UserColumnFormat } from "@common/columnDisplayFormat.schema";
+import { bytesToSize } from "../../../BackupAndRestore/BackupsControls";
+import { MarkdownColumn } from "./MarkdownColumn";
 
 const tryParseNumber = (v) => {
   if (typeof v === "string" && v.length && Number.isFinite(+v)) {
@@ -116,129 +43,27 @@ const tryParseNumber = (v) => {
   return v;
 };
 
-// export const columnDisplayFormatSchema = {
-//   title: "Display format",
-//   description: "Control how data is displayed",
-//   oneOfType: [
-//     {
-//       type: {
-//         enum: ["NONE"],
-//         title: "Format",
-//         description: "Display data as is. Default",
-//       },
-//     },
-//     {
-//       type: {
-//         enum: ["URL"],
-//         title: "Format",
-//         description: "Clickable URL",
-//       },
-//     },
-//     {
-//       type: {
-//         enum: ["Email"],
-//         title: "Format",
-//         description: "Email link",
-//       },
-//     },
-//     {
-//       type: {
-//         enum: ["Tel"],
-//         title: "Format",
-//         description: "Telephone number link",
-//       },
-//     },
-//     {
-//       type: {
-//         enum: ["QR Code"],
-//         title: "Format",
-//         description: "Display a URL as an image",
-//       },
-//     },
-//     CurrencySchema,
-//     {
-//       type: {
-//         enum: ["Metric Prefix"],
-//         title: "Format",
-//         description: "Display large numbers with metric prefixes (e.g. 1.2K)",
-//       },
-//     },
-//     {
-//       type: {
-//         enum: ["UNIX Timestamp"],
-//         title: "Format",
-//         description: "Display unix timestamp as datetime",
-//       },
-//     },
-//     {
-//       type: {
-//         enum: ["Age"],
-//         title: "Format",
-//         description: "Display time difference between now and the value",
-//       },
-//       params: {
-//         optional: true,
-//         type: {
-//           variant: {
-//             title: "Variant",
-//             description: "Short shows top two biggest units",
-//             enum: ["short", "full"],
-//           },
-//         },
-//       },
-//     },
-//     {
-//       type: {
-//         enum: ["HTML"],
-//         title: "Format",
-//         description: "Display string as sanitised HTML",
-//       },
-//       params: {
-//         type: {
-//           noSanitize: {
-//             type: "boolean",
-//             title: "Do not sanitize HTML",
-//             description: "Leave unchecked if you understand the risks",
-//             optional: true,
-//           },
-//           allowedHTMLTags: {
-//             title: "Allowed HTML Tags",
-//             type: "string[]",
-//             allowedValues: [
-//               { key: "img", label: "Image" },
-//               { key: "video", label: "Video" },
-//               { key: "audio", label: "Audio" },
-//               { key: "svg", label: "SVG" },
-//               { key: "path", label: "Path (SVG)" },
-//             ].map((v) => v.key),
-//             description: "List of allowed HTML tags. E.g.: div, p, html",
-//             optional: true,
-//           },
-//         },
-//       },
-//     },
-//     MediaSchema,
-//   ],
-// } as const satisfies JSONB.JSONBSchema;
-
-export type ColumnFormat = JSONB.GetSchemaType<
-  typeof columnDisplayFormatSchema
->;
+export type ColumnFormat = UserColumnFormat | InternalColumnFormat;
 
 const _ensureAITypesAreInSync = {} as Exclude<
-  ColumnFormat,
+  UserColumnFormat,
   { type: "NONE" | "UNIX Timestamp" }
 > satisfies NonNullable<TableWindowInsertModel["columns"]>[number]["format"];
 _ensureAITypesAreInSync;
 
+type RenderDataContext = {
+  column: RenderedColumn;
+  table: DBSchemaTableWithOptions;
+};
+
 type ColumnRenderer = {
   type: ColumnFormat["type"];
   tsDataType: ValidatedColumnInfo["tsDataType"][] | undefined;
-  match?: (table: DBSchemaTable, column: ColumnConfig) => boolean | undefined;
+  match?: (table: DBSchemaTable, columnName: string) => boolean | undefined;
   render: (
     value: any,
     row: AnyObject,
-    c: RenderedColumn,
+    ctx: RenderDataContext,
     format: ColumnFormat,
     maxCellChars: number,
   ) => React.ReactNode;
@@ -253,7 +78,7 @@ type FormattedColRender<F extends ColumnFormat> = Pick<
   render: (
     value: any,
     row: AnyObject,
-    c: RenderedColumn,
+    ctx: RenderDataContext,
     format: F,
     maxCellChars: number,
   ) => any;
@@ -268,26 +93,176 @@ const removeQuotes = (value: string | number | null) => {
     : v;
 };
 
-const HREFRender: FormattedColRender<any>["render"] = (v, r, c) => (
-  <a
-    href={
-      (c.format?.type === "Email" ? "mailto:"
-      : c.format?.type === "Tel" ? "tel:"
-      : "") + removeQuotes(v)
-    }
-    target="_blank"
-    rel="noreferrer"
-  >
-    {removeQuotes(v)}
-  </a>
-);
+const HREFRender = (
+  value: string | number | null,
+  row: AnyObject,
+  _ctx: RenderDataContext,
+  format: Extract<ColumnFormat, { type: "URL" | "Email" | "Tel" }> | undefined,
+) => {
+  const urlColumn =
+    format?.type === "URL" ? format.params?.urlColumn : undefined;
+  const url = removeQuotes(urlColumn ? row[urlColumn] : value);
+  const text = removeQuotes(value);
+  if (urlColumn && !url.trim()) return text;
+  return (
+    <a
+      href={
+        (format?.type === "Email" ? "mailto:"
+        : format?.type === "Tel" ? "tel:"
+        : "") + url
+      }
+      target="_blank"
+      rel="noreferrer"
+    >
+      {text}
+    </a>
+  );
+};
 
 const metricPrefixOptions = {
   notation: "compact",
   compactDisplay: "short",
 } as const;
 
+const renderDiff: FormattedColRender<
+  Extract<ColumnFormat, { type: "JSON Diff" | "Text Diff" }>
+>["render"] = (value, row, { column }, { type, params }, maxCellChars) => {
+  if (
+    row[params.oldColumn] === undefined ||
+    row[params.newColumn] === undefined
+  ) {
+    return (
+      <RenderValue
+        column={column.computedConfig ?? column.info}
+        value={value}
+        maxLength={maxCellChars}
+      />
+    );
+  }
+  return (
+    <JSONDiffPopup
+      language={type === "Text Diff" ? "plaintext" : "json"}
+      oldValue={row[params.oldColumn]}
+      newValue={row[params.newColumn]}
+    />
+  );
+};
+
 export const DISPLAY_FORMATS = [
+  {
+    type: "Avatar",
+    tsDataType: ["string"],
+    render: (value, row, { column, table }, { params }) => (
+      <Avatar
+        value={value}
+        row={row}
+        column={column}
+        table={table}
+        params={params}
+      />
+    ),
+  } satisfies FormattedColRender<Extract<ColumnFormat, { type: "Avatar" }>>,
+  {
+    type: "ActionColumns",
+    tsDataType: undefined,
+    render: (_value, row, { table, column }, { params }) => (
+      <ActionColumns
+        params={params}
+        row={row}
+        dataKey={column.name}
+        table={table}
+      />
+    ),
+  } satisfies FormattedColRender<
+    Extract<ColumnFormat, { type: "ActionColumns" }>
+  >,
+  {
+    type: "Action",
+    tsDataType: undefined,
+    render: (_value, row, { table, column }, format) => (
+      <ActionColumns
+        params={format.params}
+        row={row}
+        dataKey={column.name}
+        table={table}
+      />
+    ),
+  } satisfies FormattedColRender<Extract<ColumnFormat, { type: "Action" }>>,
+  {
+    type: "Internal",
+    tsDataType: undefined,
+    render: (value, row, { column, table }, { params }, maxCellChars) => {
+      if (params.component === "Alert") {
+        return (
+          <AlertFieldSummary
+            field={params.field}
+            value={value}
+            maxLength={maxCellChars}
+          />
+        );
+      }
+      if (params.component === "ActionColumns") {
+        return (
+          <ActionColumns
+            params={params}
+            row={row}
+            dataKey={params.dataKey}
+            table={table}
+          />
+        );
+      }
+      if (params.component === "FileExtractionStatus") {
+        return (
+          <FileExtractionStatus
+            value={value as FileTableRowExtraction["extraction_status"]}
+          />
+        );
+      }
+
+      if (params.component === "FileAnnotation") {
+        return (
+          <FileAnnotationViewer
+            value={row[params.dataKey]}
+            fallbackValue={value}
+            tableName={params.tableName}
+            maxCellChars={maxCellChars}
+          />
+        );
+      }
+
+      const fileValue = row[params.dataKey];
+      const joinedValue = Array.isArray(fileValue) ? fileValue[0] : fileValue;
+      const joinedFile =
+        isObject(joinedValue) ?
+          (joinedValue as Pick<
+            Partial<FilesTableRow>,
+            keyof typeof FILE_TABLE_SELECT
+          >)
+        : undefined;
+      const fileId = joinedFile?.id ?? value;
+      if (typeof fileId !== "string" || !fileId) return null;
+      return (
+        <MediaViewer
+          fileId={fileId}
+          name={joinedFile?.original_name}
+          content_type={joinedFile?.content_type}
+          isLoading={joinedFile?.extraction_status?.state === "loading"}
+          style={{ maxHeight: "100%" }}
+          context={{ table, columnName: column.name, row }}
+        />
+      );
+    },
+  } satisfies FormattedColRender<InternalColumnFormat>,
+  {
+    type: "JSON Diff",
+    tsDataType: ["any"],
+    render: renderDiff,
+  },
+  {
+    type: "Text Diff",
+    tsDataType: ["string"],
+    render: renderDiff,
+  },
   {
     type: "NONE",
     tsDataType: undefined,
@@ -316,20 +291,44 @@ export const DISPLAY_FORMATS = [
     },
   },
   {
+    type: "File size",
+    tsDataType: ["number", "string"],
+    render: (rawValue: any) => {
+      const bytes = tryParseNumber(rawValue);
+      if (!Number.isFinite(bytes) || bytes < 0) return rawValue;
+      return bytesToSize(bytes);
+    },
+  },
+  {
     type: "Media",
     tsDataType: ["string", "string[]"],
-    render: (valueOrValues, row, c, f) => {
+    render: (valueOrValues, row, ctx, f) => {
       const mediaFormat = f;
-      const params = mediaFormat.params;
+      const { contentType, titleColumn } = mediaFormat.params;
+      const name = titleColumn ? row[titleColumn] : undefined;
+      const isTableColumn = !ctx.column.computedConfig && !ctx.column.nested;
       const onRender = (v: string) => (
         <MediaViewer
           key={v}
           url={v}
           style={{ maxHeight: "100%" }}
+          name={name}
           content_type={
-            params?.type === "Fixed" ? params.fixedContentType
-            : params?.type === "From column" && params.contentTypeColumnName ?
-              row[params.contentTypeColumnName]
+            contentType?.mode === "Fixed" ? contentType.fixedContentType
+            : (
+              contentType?.mode === "From column" &&
+              contentType.contentTypeColumnName
+            ) ?
+              row[contentType.contentTypeColumnName]
+            : undefined
+          }
+          context={
+            isTableColumn ?
+              {
+                table: ctx.table,
+                columnName: ctx.column.name,
+                row,
+              }
             : undefined
           }
           // onPrevOrNext={!allowMediaSkip ? undefined : (increment) => {
@@ -352,20 +351,42 @@ export const DISPLAY_FORMATS = [
   {
     type: "URL",
     tsDataType: ["string"],
-    match: (t, c) =>
-      t.isFileTable && ["cloud_url", "signed_url"].includes(c.name),
+    match: (t, columnName) =>
+      t.isFileTable && ["cloud_url", "signed_url"].includes(columnName),
     render: HREFRender,
   } satisfies FormattedColRender<Extract<ColumnFormat, { type: "URL" }>>,
   {
     type: "QR Code",
     tsDataType: ["string"],
-    render: (v, r, c, p, maxCellChars) => {
+    render: (v, r, { column }, p, maxCellChars) => {
       // Using "90px" because default max row height is 100px
       return v?.toString().trim().length ?
           <QRCodeImage url={v} size={90} variant="table-cell" />
-        : <RenderValue column={c} value={v} maxLength={maxCellChars} />;
+        : <RenderValue
+            column={column.computedConfig ?? column.info}
+            value={v}
+            maxLength={maxCellChars}
+          />;
     },
   } satisfies FormattedColRender<Extract<ColumnFormat, { type: "QR Code" }>>,
+  {
+    type: "Markdown",
+    tsDataType: ["string"],
+    render: (v) => {
+      return <MarkdownColumn key={v} content={v ?? ""} />;
+    },
+  } satisfies FormattedColRender<
+    Extract<ColumnFormat, { type: "Markdown" | "MarkdownPopup" }>
+  >,
+  {
+    type: "MarkdownPopup",
+    tsDataType: ["string"],
+    render: (v) => {
+      return <MarkdownWithPluginsPopupBtn content={v} />;
+    },
+  } satisfies FormattedColRender<
+    Extract<ColumnFormat, { type: "Markdown" | "MarkdownPopup" }>
+  >,
   {
     type: "HTML",
     tsDataType: ["string"],
@@ -451,6 +472,38 @@ export const DISPLAY_FORMATS = [
       return v;
     },
   } satisfies FormattedColRender<Extract<ColumnFormat, { type: "Currency" }>>,
+  {
+    type: "DoclingDocument",
+    tsDataType: ["string"],
+    render: (rawValue, row) => {
+      if (!rawValue) {
+        return null;
+      }
+      return (
+        <DoclingDocumentViewerPopupBtn
+          document={rawValue}
+          markdownContent=""
+          data={undefined}
+        />
+      );
+    },
+  } satisfies FormattedColRender<
+    Extract<ColumnFormat, { type: "DoclingDocument" }>
+  >,
+  {
+    type: "Logs",
+    tsDataType: ["string", "string[]"],
+    render: (rawValue, row) => {
+      const strValue = Array.isArray(rawValue) ? rawValue.join("\n") : rawValue;
+      if (!strValue) {
+        return null;
+      }
+      if (typeof strValue !== "string") {
+        return <div>Invalid value log data type: {typeof strValue}</div>;
+      }
+      return <MonacoLogs logs={strValue} />;
+    },
+  } satisfies FormattedColRender<Extract<ColumnFormat, { type: "Logs" }>>,
 ] as ColumnRenderer[];
 
 export function getFormatOptions(
@@ -459,6 +512,11 @@ export function getFormatOptions(
   if (!colInfo) return [];
 
   return DISPLAY_FORMATS.filter(
-    (r) => !r.tsDataType || includes(r.tsDataType, colInfo.tsDataType),
+    (renderer) =>
+      renderer.type !== "Internal" &&
+      renderer.type !== "Action" &&
+      renderer.type !== "ActionColumns" &&
+      (!renderer.tsDataType ||
+        includes(renderer.tsDataType, colInfo.tsDataType)),
   );
 }

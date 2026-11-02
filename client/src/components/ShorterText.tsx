@@ -20,7 +20,7 @@ export const ShorterText = ({ value: guid, column, style }: P) => {
         <i>NULL</i>
       : <>
           <div
-            className="f-1 pointer relative"
+            className="f-1 pointer relative text-ellipsis"
             style={{
               color: getColumnDataColor(
                 column ?? { tsDataType: "string", udt_name: "uuid" },
@@ -28,7 +28,8 @@ export const ShorterText = ({ value: guid, column, style }: P) => {
               ...style,
             }}
             title="Click to copy value"
-            onClick={() => {
+            onClick={(e) => {
+              if (hasClickableParent(e.currentTarget)) return;
               navigator.clipboard.writeText(guid);
               setCopied(true);
               setTimeout(() => {
@@ -53,4 +54,13 @@ export const ShorterText = ({ value: guid, column, style }: P) => {
       }
     </div>
   );
+};
+
+const hasClickableParent = (element: HTMLElement) => {
+  let parent = element.parentElement;
+  while (parent) {
+    if (getComputedStyle(parent).cursor === "pointer") return true;
+    parent = parent.parentElement;
+  }
+  return false;
 };

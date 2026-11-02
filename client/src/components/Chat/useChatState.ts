@@ -17,8 +17,14 @@ export const useChatState = (
     textAreaRef: React.RefObject<HTMLTextAreaElement>;
   },
 ) => {
-  const { messages, onSend, isLoading, textAreaRef, currentlyTypedMessage } =
-    props;
+  const {
+    messages,
+    onSend,
+    isLoading,
+    textAreaRef,
+    currentlyTypedMessage,
+    onCurrentlyTypedMessageChange,
+  } = props;
 
   const [scrollRef, setScrollRef] = useState<HTMLDivElement | null>(null);
 
@@ -33,7 +39,7 @@ export const useChatState = (
   }, [lastMessageId, scrollRef]);
 
   const getCurrentMessage = useCallback(
-    () => textAreaRef.current?.value || currentlyTypedMessage || "",
+    () => textAreaRef.current?.value ?? currentlyTypedMessage ?? "",
     [currentlyTypedMessage, textAreaRef],
   );
   const setCurrentMessage = useCallback(
@@ -66,23 +72,30 @@ export const useChatState = (
       return;
     }
     setSendingMsg(true);
+    setCurrentMessage("");
+    onCurrentlyTypedMessageChange("");
+    setFiles([]);
     try {
       const { otherFiles = [], docFilesMessages } = await getConvertedDocs();
       await onSend(
         [{ type: "text", text: msg }, ...docFilesMessages],
         otherFiles.map((f) => f.file),
       );
-      setCurrentMessage("");
-      setFiles([]);
     } catch (e) {
+      setCurrentMessage(msg);
+      onCurrentlyTypedMessageChange(msg);
+      setFiles(files);
       console.error(e);
+    } finally {
+      setSendingMsg(false);
     }
-    setSendingMsg(false);
   }, [
     getCurrentMessage,
+    files,
     filesWithInfo?.length,
     getConvertedDocs,
     onSend,
+    onCurrentlyTypedMessageChange,
     setCurrentMessage,
     setFiles,
   ]);

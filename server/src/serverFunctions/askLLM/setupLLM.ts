@@ -8,6 +8,7 @@ import { createAgenticWorkflowPrompt } from "./defaultPrompts/createAgenticWorkf
 import { setupLLMProviders } from "./setupLLMProviders";
 import { createDashboardsPrompt } from "./defaultPrompts/createDashboards.prompt";
 import { basePrompt } from "./defaultPrompts/base.prompt";
+import { IS_PROD } from "@src/init/utils";
 
 type UiToolName =
   keyof (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"];
@@ -42,6 +43,8 @@ export const setupLLM = async (dbs: DBS) => {
               get_specific_tool_schemas: "auto-approve",
               get_tool_list: "auto-approve",
               compact_context: "auto-approve",
+              find_icons: "auto-approve",
+              create_agent: 1,
             }),
             database_access: "execute_readonly_sql",
           },
@@ -58,7 +61,9 @@ export const setupLLM = async (dbs: DBS) => {
               compact_context: "auto-approve",
               get_specific_tool_schemas: "auto-approve",
               get_tool_list: "auto-approve",
+              find_icons: "auto-approve",
               request_tool_access: 1,
+              create_agent: 1,
             }),
 
             database_access: "execute_readonly_sql",
@@ -80,10 +85,12 @@ export const setupLLM = async (dbs: DBS) => {
             max_tokens: 18_000,
             mcp_server_tools: allowProstglesUITools({
               create_agentic_workflow: 1,
+              create_agent: 1,
               ask_user_questions: 1,
               compact_context: "auto-approve",
               get_specific_tool_schemas: "auto-approve",
               get_tool_list: "auto-approve",
+              find_icons: "auto-approve",
               request_tool_access: 1,
               run_typescript_in_nodejs: 1,
             }),
@@ -106,10 +113,7 @@ export const setupLLM = async (dbs: DBS) => {
       { onConflict: "DoUpdate", returning: { name: 1 } },
     );
 
-    if (
-      !getElectronConfig()?.isElectron &&
-      process.env.NODE_ENV !== "production"
-    ) {
+    if (!getElectronConfig()?.isElectron && !IS_PROD) {
       await dbs.llm_prompts.insert(
         {
           name: "Web app development",
@@ -133,6 +137,7 @@ export const setupLLM = async (dbs: DBS) => {
                 get_specific_tool_schemas: "auto-approve",
                 get_tool_list: "auto-approve",
                 compact_context: "auto-approve",
+                find_icons: "auto-approve",
               }),
             },
             database_access: "execute_readonly_sql",

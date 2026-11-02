@@ -18,7 +18,7 @@ export type LayoutItem = {
    *  'my_table'
    */
   tableName: string | null;
-  viewType: "table" | "map" | "timechart" | "sql" | "barchart";
+  viewType: "table" | "map" | "timechart" | "sql" | "barchart" | "method";
   /**
    * Flex size of the item
    */
@@ -73,7 +73,18 @@ type LinkedDataChart = {
  */
 type LinkedDataTable = {
   limit: number;
-  columns: Omit<TableColumn, "nested" | "styling">[];
+  columns: (Omit<TableColumn, "nested"> & {
+    /** Render a value as a button opening its contributing records; useful for aggregates. */
+    display?: "drillable-records";
+  })[];
+  /** Defaults to values. Record summaries use the linked table's card configuration. */
+  display?:
+    | {
+        type: "values";
+        /** Auto hides labels for one column and places them above multiple columns. */
+        labels?: "auto" | "none" | "inline" | "above";
+      }
+    | { type: "drillable-records" };
 };
 
 /**
@@ -90,7 +101,9 @@ type TableJoin = {
    *   table: "users"
    * }
    */
-  on: Record<string, string>[];
+  on: Record<string, string>[] | string;
+  params?: Record<string, unknown>;
+  reversed?: boolean;
   /**
    * Linked table name
    */
@@ -101,7 +114,12 @@ type TableJoin = {
  * Show linked data from other tables that are linked to this column through foreign keys
  */
 type LinkedData = {
-  joinType: "left" | "inner";
+  /** Parent-table column to display when the join returns no rows. */
+  fallbackColumn?: string;
+  /**
+   * Type of join to use when linking tables. Defaults to "left" if not specified.
+   */
+  joinType?: "left" | "inner";
   /**
    * Join to linked table.
    * Last table in the path is the target table that columns will refer to.
@@ -209,12 +227,18 @@ type Filtering = {
 };
 
 export type TableColumn = {
+  show?: boolean;
+  /** 1: summary and details; 2: details only; omitted: hidden. With no levels configured, headers count toward the first 10 summary fields; the rest appear in details. */
+  infoLevel?: 1 | 2;
   /**
    * Column name as it appears in the database.
    * For nested columns this can be anything. Use the table name or a more descriptive name.
    */
   name: string;
-
+  /**
+   * Display label; does not change the database column name.
+   * */
+  label?: string;
   /**
    *
    */
@@ -241,9 +265,19 @@ export type TableColumn = {
    */
   width: number;
 
-  styling?:
+  styling?: (
+    | { type: "None" }
+    | {
+        type: "Fixed";
+        textColor?: string;
+        chipColor?: string;
+        cellColor?: string;
+        borderColor?: string;
+      }
     | {
         type: "conditional";
+        /** Column whose values determine the colour, including a linked aggregate's grouping column. */
+        column?: string;
         conditions: {
           chipColor:
             | "red"
@@ -272,39 +306,34 @@ export type TableColumn = {
     | {
         /**
          * Column value will be rendered as a horizontal bar with length proportional to the value.
-         * Can be used together with nested LinkedData as long as it's LinkedDataTable with a single column, for example:
+         * For linked values, set styling on each numeric child in nested.columns.
+         * @example A restaurant's linked order count, styled as a bar and clickable to view its orders:
          * {
-            "name": "orders",
-            "show": true,
-            "style": {
-              "type": "Barchart"
-              "barColor": "blue",
-              "textColor": "#646464",
-            },
-            "width": 150,
-            "nested": {
-              "columns": [
-                {
-                  "name": "COUNT ALL",
-                  "show": true,
-                  "computedConfig": {
-                    "aggregation": "countAll"
-                  }
-                }, 
-              ],
-              "path": [
-                {
-                  "on": [
-                    {
-                      "id": "restaurant_id"
-                    }
-                  ],
-                  "table": "orders"
-                }
-              ],
-              "joinType": "left"
-            }
-          }
+         *   "name": "orders",
+         *   "width": 150,
+         *   "nested": {
+         *     "columns": [
+         *       {
+         *         "name": "Order count",
+         *         "width": 150,
+         *         "computedConfig": { "aggregation": "countAll" },
+         *         "display": "drillable-records",
+         *         "styling": {
+         *           "type": "Barchart",
+         *           "barColor": "blue",
+         *           "textColor": "#646464",
+         *           "buttonVariant": "text"
+         *         }
+         *       }
+         *     ],
+         *     "path": [
+         *       { "on": [{ "id": "restaurant_id" }], "table": "orders" }
+         *     ],
+         *     "joinType": "left",
+         *     "limit": 1,
+         *     "display": { "type": "values", "labels": "none" }
+         *   }
+         * }
          */
         type: "Barchart";
         barColor?: string;
@@ -313,17 +342,40 @@ export type TableColumn = {
     | {
         /**
          * Column value will be rendered with a background color based on the value. The color is determined by dividing the range between min and max into equal segments and assigning a color to each segment.
-         * Can be used together with nested LinkedData as long as it's LinkedDataTable with a single column.
+         * For linked values, set styling on each numeric child in nested.columns.
          */
         type: "Scale";
         barColor?: string;
         textColor?: string;
-      };
+        minColor?: string;
+        maxColor?: string;
+      }
+  ) & {
+    fontWeight?: "normal" | "bold";
+    /** Defaults to faded for drillable records and text for values. */
+    buttonVariant?: "text" | "faded" | "filled" | "outline";
+  };
 
   /**
    * If set, column value will rendered in a specific way
    */
   format?:
+    | { type: "Action"; params: ActionColumnParams }
+    | {
+        type: "ActionColumns";
+        params: {
+          actions: (
+            | { columnName: string }
+            | { methodsForJobColumn: string }
+            | ActionColumnParams
+          )[];
+        };
+      }
+    | {
+        /** Name initials in a circle. Uses this column's full name when name columns are unset. */
+        type: "Avatar";
+        params?: { firstNameColumn?: string; lastNameColumn?: string };
+      }
     | {
         /**
          * Column value will be rendered as a link with specific behaviour
@@ -339,6 +391,10 @@ export type TableColumn = {
     | {
         /** Display large numbers with metric prefixes (e.g. 1.2K) */
         type: "Metric Prefix";
+      }
+    | {
+        /** Display bytes as a readable file size (e.g. 1.25 MB) */
+        type: "File size";
       }
     | {
         /**
@@ -367,13 +423,69 @@ export type TableColumn = {
         };
       }
     | {
+        /**
+         * Render column value as Markdown content.
+         * Will show first few lines of the content with an expand button.
+         */
+        type: "Markdown";
+      }
+    | {
+        /**
+         * Same as "Markdown" but will show a popup with the full content when clicked.
+         * Only use this when the content is not of importance for immediate viewing.
+         */
+        type: "MarkdownPopup";
+      }
+    | {
         /** Text content as sanitised html */
         type: "HTML";
       }
     | {
         /** Displays the media from URL. Accepted formats: image, audio or video. Media/Mime type will be used from headers */
         type: "Media";
+      }
+    | {
+        /** Display process logs */
+        type: "Logs";
+      }
+    | {
+        /** Used internally in files table. Ignore */
+        type: "DoclingDocument";
+      }
+    | {
+        type: "JSON Diff" | "Text Diff";
+        params: { oldColumn: string; newColumn: string };
       };
+};
+
+type ActionColumnParams = {
+  methodName: string;
+  argName?: string;
+  runImmediately?: boolean;
+  joinPath?: TableJoin[];
+  conditions?: {
+    filter: { $and: Record<string, any>[] } | { $or: Record<string, any>[] };
+    value: ActionButtonState;
+  }[];
+  defaultValue?: ActionButtonState;
+};
+
+type ActionButtonState = {
+  text?: string;
+  icon?: string;
+  variant?: "text" | "faded" | "filled" | "outline";
+  color?:
+    | "default"
+    | "action"
+    | "danger"
+    | "warn"
+    | "green"
+    | "indigo"
+    | "inherit"
+    | "transparent"
+    | "white";
+  disabledInfo?: string;
+  isLoading?: boolean;
 };
 
 export type TableWindowInsertModel = Filtering & {
@@ -385,6 +497,7 @@ export type TableWindowInsertModel = Filtering & {
    */
   title?: string;
   table_name: string;
+  /** Omitted or empty uses table defaults. Otherwise, only listed columns are shown unless show is false. */
   columns?: TableColumn[];
 
   /**
@@ -474,14 +587,7 @@ export type TimechartWindowInsertModel = {
   yScaleMode?: "single" | "multiple";
 };
 
-export type BarchartWindowInsertModel = (
-  | (Filtering & {
-      table_name: string;
-    })
-  | {
-      sql: string;
-    }
-) & {
+export type BarchartWindowInsertModel = {
   id: string;
   type: "barchart";
   title?: string;
@@ -495,9 +601,24 @@ export type BarchartWindowInsertModel = (
      */
     joinPath?: TableJoin[];
   };
+} & (
+  | (Filtering & {
+      table_name: string;
+    })
+  | {
+      sql: string;
+    }
+);
+
+export type MethodWindowInsertModel = {
+  id: string;
+  type: "method";
+  method_name: string;
+  name?: string;
 };
 
 export type WindowInsertModel =
+  | MethodWindowInsertModel
   | MapWindowInsertModel
   | SqlWindowInsertModel
   /**

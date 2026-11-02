@@ -28,6 +28,8 @@ import { getDockerGatewayIP } from "./getDockerGatewayIP";
 import { createSessionSecret } from "@src/authConfig/sessionUtils";
 import { tout } from "@src/utils/tout";
 import type { DBSSchemaForInsert } from "@common/publishUtils";
+import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
+import { getMCPFullToolName } from "@common/mcpUtils";
 
 const PREFERRED_PORT = 3089;
 const DEFAULT_GATEWAY_IP = "0.0.0.0" as const;
@@ -286,9 +288,13 @@ const mcpRequestHandler: RequestHandler = async (
       });
     }
     if (server_name === "prostgles-ui") {
-      return res.status(HTTP_FAIL_CODES.BAD_REQUEST).json({
-        error: `Tool server "prostgles-ui" is reserved for internal use and cannot be called directly.`,
-      });
+      const uiToolName =
+        tool_name as keyof (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"];
+      if (uiToolName === "create_agentic_workflow") {
+        return res.status(HTTP_FAIL_CODES.BAD_REQUEST).json({
+          error: `Tool server ${JSON.stringify(getMCPFullToolName(server_name, tool_name))} cannot be called from a container.`,
+        });
+      }
     }
     const timeoutMinutes = 5;
     const waitForApprovalTimeout = timeoutMinutes * 60 * 1000;

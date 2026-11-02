@@ -1,17 +1,17 @@
 import type { DetailedFilter } from "@common/filterUtils";
-import Popup from "@components/Popup/Popup";
+import { Footer } from "@components/Popup/Footer";
+import type { SearchListProps } from "@components/SearchList/SearchList";
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import React from "react";
 import type { Prgl } from "../../App";
-import type { _Dashboard } from "../Dashboard/Dashboard";
-import type { WindowData } from "../Dashboard/dashboardUtils";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 import type { SQLSuggestion } from "../SQLEditor/W_SQLEditor";
 import { SearchAllContent } from "./SearchAllContent";
 import { SearchAllHeader } from "./SearchAllHeader";
 import { useSearchAllState } from "./hooks/useSearchAllState";
 
 export const SEARCH_TYPES = [
-  { key: "views and queries", label: "Tables/Queries" },
+  { key: "views and queries", label: "Views" },
   { key: "rows", label: "Data" },
 ] as const;
 
@@ -42,36 +42,19 @@ export type SearchAllProps = Pick<Prgl, "db" | "methods" | "tables" | "sql"> & {
   className?: string;
   searchType?: (typeof SEARCH_TYPES)[number]["key"];
   defaultTerm?: string;
-  queries?: SyncDataItem<WindowData<"sql">>[];
+  leftContent: React.ReactNode;
+  onType: NonNullable<SearchListProps["onType"]>;
+  queries?: SyncDataItem<WindowData<"sql">, { handlesOnData: true }>[];
 };
 
 export const SearchAll = (props: SearchAllProps) => {
   const state = useSearchAllState(props);
-  const { isLowWidthScreen } = window;
-  const margin = isLowWidthScreen ? 0 : "2em";
   return (
-    <Popup
-      anchorXY={{ x: 20, y: 20 }}
-      positioning="inside-top-center"
-      title={<SearchAllHeader {...state} {...props} />}
-      contentClassName=" p-1"
-      clickCatchStyle={{ opacity: 1 }}
-      contentStyle={{ overflow: "unset", paddingTop: "1em" }}
-      data-command="SearchAll.Popup"
-      rootStyle={{
-        minHeight: "50vh",
-        top: margin,
-        right: margin,
-        left: margin,
-        maxHeight: `calc(100vh - 4em)`,
-      }}
-      onClose={props.onClose}
-      focusTrap={true}
-      autoFocusFirst={{
-        selector: "input",
-      }}
-    >
+    <div className="flex-col min-h-0 gap-1" data-command="SearchAll.Popup">
       <SearchAllContent {...state} {...props} />
-    </Popup>
+      <Footer className="f-0 px-0 pt-p5">
+        <SearchAllHeader {...state} />
+      </Footer>
+    </div>
   );
 };

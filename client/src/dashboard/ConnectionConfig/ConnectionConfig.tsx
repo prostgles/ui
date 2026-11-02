@@ -1,3 +1,4 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import {
   tableMightBeUndefinedDueToAccessControl,
   type CONNECTION_CONFIG_SECTIONS,
@@ -12,6 +13,7 @@ import {
   mdiApplicationBracesOutline,
   mdiApplicationBracketsOutline,
   mdiChartLine,
+  mdiCogSyncOutline,
   mdiDatabaseSync,
   mdiImage,
   mdiLanguageTypescript,
@@ -38,6 +40,9 @@ import { TableConfig } from "../TableConfig/TableConfig";
 import { ServerSideFunctions } from "./ServerSideFunctions";
 import { useConnectionConfigSearchParams } from "./useConnectionConfigSearchParams";
 import { WebAppConfig } from "./WebApp/WebAppConfig";
+import { ConnectionConfigSync } from "./ConnectionConfigSync";
+import { UserManager } from "../UserManager";
+import { canManageBusinessAccess } from "@common/authTypesAndConstants";
 
 type ConnectionConfigProps = Pick<
   React.HTMLAttributes<HTMLDivElement>,
@@ -49,10 +54,11 @@ type ConnectionConfigProps = Pick<
 export const ConnectionConfig = (props: ConnectionConfigProps) => {
   const { className = "", style = {}, connection } = props;
   const prgl = usePrgl();
+  const canManageMembers = canManageBusinessAccess(prgl.user?.type);
   const { serverState, dbs, connectionId, db, dbsMethods } = prgl;
   const propsWithPrgl = useMemo(() => ({ ...props, prgl }), [props, prgl]);
   const disabledText =
-    tableMightBeUndefinedDueToAccessControl(dbs.access_control)?.update ?
+    prgl.user?.type === USER_TYPES.ADMIN ?
       undefined
     : t.ConnectionConfig["Must be admin to access this"];
   const stateDisabledInfo =
@@ -65,6 +71,13 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
   const sectionItems = useMemo(
     () =>
       ({
+        members: {
+          label: "Users",
+          leftIconPath: mdiAccountMultiple,
+          disabledText: stateDisabledInfo || (!canManageMembers ? "Connection admin required" : undefined),
+          listProps: dataCommand("config.members"),
+          content: <UserManager />,
+        },
         details: {
           label: t.ConnectionConfig["Connection details"],
           leftIconPath: mdiPencil,
@@ -97,7 +110,7 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
           listProps: dataCommand("config.ac"),
           leftIconPath: mdiAccountMultiple,
           disabledText:
-            disabledText ||
+            (!canManageMembers ? "Connection admin required" : undefined) ||
             stateDisabledInfo ||
             (isElectron ? "Not available for desktop" : undefined),
           content: (
@@ -182,6 +195,13 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
           leftIconPath: mdiLanguageTypescript,
           content: <ServerSideFunctions />,
         },
+        config: {
+          label: <>Config sync</>,
+          disabledText: disabledText || stateDisabledInfo,
+          listProps: dataCommand("config.config"),
+          leftIconPath: mdiCogSyncOutline,
+          content: <ConnectionConfigSync />,
+        },
       }) as const satisfies Record<
         (typeof CONNECTION_CONFIG_SECTIONS)[number],
         TabItem
@@ -198,10 +218,18 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
       propsWithPrgl,
       serverState.isElectron,
       stateDisabledInfo,
+      canManageMembers,
     ],
   );
+  const availableSections =
+    prgl.user?.type === USER_TYPES.ADMIN ?
+      sectionItems
+    : {
+        members: sectionItems.members,
+        access_control: sectionItems.access_control,
+      };
   const { activeSection, setSection } =
-    useConnectionConfigSearchParams(sectionItems);
+    useConnectionConfigSearchParams(availableSections);
 
   return (
     <div className={`flex-col f-1 min-s-0 ${className}`} style={style}>
@@ -225,7 +253,7 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
           onChange={(section) => {
             setSection({ section });
           }}
-          items={sectionItems}
+          items={availableSections}
           contentClass="o-auto flex-row jc-center bg-color-2 f-1"
           onRender={(item) => (
             <div className="flex-col f-1  min-w-0 bg-color-0 shadow">

@@ -9,9 +9,10 @@ import express, { json, urlencoded } from "express";
 import _http from "http";
 import path from "path";
 import { Server } from "socket.io";
-import { actualRootDir } from "../electronConfig";
+import { actualRootDir, DIRECTORIES } from "../electronConfig";
 import { includes } from "prostgles-types";
 import { isTesting } from "./utils";
+import { addDevImageProxyRoute } from "./addDevImageProxyRoute";
 
 export const initExpressAndIOServers = () => {
   const app = express();
@@ -49,14 +50,14 @@ export const initExpressAndIOServers = () => {
   const http = _http.createServer(app);
 
   app.use(
-    express.static(path.resolve(actualRootDir + "/../client/build"), {
+    express.static(DIRECTORIES.CLIENT_BUILD, {
       index: false,
       cacheControl: false,
     }),
   );
   app.use(
     "/icons",
-    express.static(path.resolve(actualRootDir + "/../client/static/icons"), {
+    express.static(DIRECTORIES.CLIENT_ICONS, {
       cacheControl: true,
       maxAge: "1y",
       index: false,
@@ -64,7 +65,7 @@ export const initExpressAndIOServers = () => {
     }),
   );
   app.use(
-    express.static(path.resolve(actualRootDir + "/../client/static"), {
+    express.static(DIRECTORIES.CLIENT_STATIC, {
       cacheControl: true,
       maxAge: "1y",
       index: false,
@@ -72,7 +73,7 @@ export const initExpressAndIOServers = () => {
   );
   app.use(
     "/screenshots",
-    express.static(path.resolve(actualRootDir + "/../docs/screenshots"), {
+    express.static(DIRECTORIES.DOCS_SCREENSHOTS, {
       index: false,
       cacheControl: false,
       fallthrough: false,
@@ -90,6 +91,8 @@ export const initExpressAndIOServers = () => {
   );
 
   app.use(cookieParser());
+
+  addDevImageProxyRoute(app);
 
   const io = new Server(http, {
     path: API_ENDPOINTS.WS_DBS,

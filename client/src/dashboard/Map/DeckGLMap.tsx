@@ -9,8 +9,6 @@ import type { Bounds, DeckGlLibs } from "./DeckGLWrapped";
 import { DeckWrapped, getDeckLibs, getViewState } from "./DeckGLWrapped";
 import { makeImageLayer, makeTileLayer } from "./mapUtils";
 
-export type Extent = [number, number, number, number];
-
 type OnClickEvent = {
   coordinate?: [number, number];
   devicePixel: any;
@@ -46,13 +44,14 @@ export type Point = [number, number];
 
 import type { GeoJsonLayer } from "deck.gl";
 import type { Feature } from "geojson";
-import type { MapExtent } from "../Dashboard/dashboardUtils";
 import type { MAP_SELECT_COLUMNS } from "../W_Map/fetchData/getMapData";
 import { InMapControls } from "./InMapControls";
+import type { Extent } from "@common/ColumnConfig/mapConstants";
+
+type MapExtent = [[number, number], [number, number]];
 
 export type DeckGlColor =
-  | [number, number, number]
-  | [number, number, number, number];
+  [number, number, number] | [number, number, number, number];
 
 export type GeoJSONFeature = Omit<Feature, "properties"> & {
   properties: (
@@ -127,25 +126,6 @@ export type HoverCoords = {
   screenCoordinates?: [number, number];
   coordinates?: [number, number];
 };
-export const MapExtentBehavior = [
-  {
-    key: "autoZoomToData",
-    label: "Follow data",
-    subLabel: "Will zoom to data extent on data change",
-  },
-  {
-    key: "filterToMapBounds",
-    label: "Follow map",
-    subLabel: "Filters data to map bounds",
-  },
-  {
-    key: "freeRoam",
-    label: "Free roam",
-    subLabel: "Map bounds filter not applied",
-  },
-] as const;
-
-export type MapExtentBehavior = (typeof MapExtentBehavior)[number]["key"];
 
 export type DecKGLMapProps = {
   basemapOpacity: number;

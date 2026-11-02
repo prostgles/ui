@@ -84,13 +84,33 @@ const applyHighlights = (ranges: Range[], activeIndex: number): void => {
 };
 
 const scrollRangeIntoView = (range: Range): void => {
-  const el = range.startContainer.parentElement;
-  el?.scrollIntoView({
-    block: "center",
-    inline: "nearest",
+  const parent = range.startContainer.parentElement;
+  const matchRect = range.getBoundingClientRect();
+  if (!parent || matchRect.height === 0) return;
+
+  const parentRect = parent.getBoundingClientRect();
+  parent.scrollBy({
+    top:
+      matchRect.top -
+      parentRect.top -
+      parent.clientTop -
+      (parent.clientHeight - matchRect.height) / 2,
+    left:
+      matchRect.left -
+      parentRect.left -
+      parent.clientLeft -
+      (parent.clientWidth - matchRect.width) / 2,
     behavior: "smooth",
   });
 };
+// const scrollRangeIntoView = (range: Range): void => {
+//   const el = range.startContainer.parentElement;
+//   el?.scrollIntoView({
+//     block: "center",
+//     inline: "nearest",
+//     behavior: "smooth",
+//   });
+// };
 
 export const ElectronSearchBar = (): JSX.Element | null => {
   const [open, setOpen] = useState(false);
@@ -157,7 +177,6 @@ export const ElectronSearchBar = (): JSX.Element | null => {
   const navigate = useCallback(
     (direction: 1 | -1) => {
       if (matchCount === 0) return;
-      console.log(rangesRef.current);
       setActiveIndex((prev) => (prev + direction + matchCount) % matchCount);
     },
     [matchCount],

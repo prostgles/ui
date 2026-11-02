@@ -1,13 +1,14 @@
 import React from "react";
 import { FlexCol } from "@components/Flex";
 import { Select } from "@components/Select/Select";
-import type { ColumnSort } from "./ColumnMenu";
-import type { ColumnConfigWInfo } from "../W_Table";
+import type { ColumnSort } from "@common/ColumnConfig/ColumnConfig";
+import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
 import type {
   DBSchemaTablesWJoins,
   WindowSyncItem,
 } from "../../Dashboard/dashboardUtils";
 import FormField from "@components/FormField/FormField";
+import { getColumnSortOptions } from "../tableUtils/getColumnSortOptions";
 
 const SORT_NULLS_OPTIONS = [
   { key: "first", label: "First" },
@@ -22,7 +23,7 @@ const SORT_OPTIONS = [
 ] as const;
 
 export type ColumnSortMenuProps = {
-  column: ColumnConfigWInfo;
+  column: ColumnConfigWithInfo;
   w: WindowSyncItem<"table">;
   tables: DBSchemaTablesWJoins;
 };
@@ -36,16 +37,17 @@ export const getDefaultSort = (columnName: string): ColumnSort => {
 };
 
 export const ColumnSortMenu = ({ column, w }: ColumnSortMenuProps) => {
+  const sortOptions = getColumnSortOptions(column);
+  const [firstSortOption] = sortOptions;
   /**
    * w.$get is used because newest w is not propagated from Table.tsx
    */
-  const existingSort = (w.$get()?.sort || []).find((s) =>
-    column.nested ?
-      `${s.key}`.startsWith(`${column.name}.`)
-    : s.key === column.name,
+  const existingSort = (w.$get()?.sort || []).find((sort) =>
+    sortOptions.some((option) => option.key === sort.key),
   );
+  if (!firstSortOption) return null;
   const sort: ColumnSort = existingSort || {
-    ...getDefaultSort(column.name),
+    ...getDefaultSort(firstSortOption.key),
     asc: null,
   };
   const colIsText =
@@ -65,39 +67,24 @@ export const ColumnSortMenu = ({ column, w }: ColumnSortMenuProps) => {
     } else if (!matched as any) {
       newSort.push(newColSort);
     }
-    w.$update({ sort: newSort });
+    void w.$update({ sort: newSort });
   };
 
-  const nested = column.nested && {
-    ...column.nested,
-    table: column.nested.path.at(-1)!.table,
-  };
-  const nestedCols =
-    nested?.chart ?
-      [
-        { name: "date", show: true },
-        { name: "value", show: true },
-      ]
-    : nested?.columns;
   return (
     <FlexCol>
-      {nestedCols?.length && (
+      {column.nested && (
         <Select
           label={"Nested column"}
-          fullOptions={nestedCols.map((nc) => ({
-            key: `${column.name}.${nc.name}`,
-            disabledInfo:
-              nc.show ? undefined : "Must unhide column before sorting",
-          }))}
-          value={existingSort?.key}
-          onChange={(key, e) => {
+          fullOptions={sortOptions}
+          value={sort.key}
+          onChange={(key) => {
             const newSort =
               existingSort ?
                 w.sort!.map((s) =>
                   s.key === existingSort.key ? { ...existingSort, key } : s,
                 )
               : [{ key, asc: true }];
-            w.$update({ sort: newSort });
+            void w.$update({ sort: newSort });
           }}
         />
       )}

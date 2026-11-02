@@ -18,7 +18,6 @@ import {
   useSetActiveWorkspace,
   useWorkspacesSync,
 } from "../../../../../WorkspaceMenu/useWorkspaces";
-import { loadGeneratedWorkspaces } from "../../../../Tools/loadGeneratedWorkspaces/loadGeneratedWorkspaces";
 import type { ProstglesMCPToolsProps } from "../ProstglesToolUseMessage";
 import ErrorComponent from "@components/ErrorComponent";
 import { useLLMSetup } from "src/dashboard/AskLLM/Setup/LLMSetupProvider";
@@ -29,7 +28,11 @@ export const LoadSuggestedDashboards = ({
   resultContent,
 }: ProstglesMCPToolsProps) => {
   const { setWorkspace } = useSetActiveWorkspace(workspaceId);
-  const { dbs, connectionId, tables } = usePrgl();
+  const {
+    dbs,
+    connectionId,
+    dbsMethods: { loadGeneratedWorkspaces },
+  } = usePrgl();
 
   const { setShowChat } = useLLMSetup();
   const workspaces = useWorkspacesSync(dbs, connectionId);
@@ -120,11 +123,11 @@ export const LoadSuggestedDashboards = ({
               "No workspaces found in the code block."
             : undefined
           }
-          onClick={() => {
-            loadGeneratedWorkspaces(prostglesWorkspaces, toolUseContent.id, {
-              dbs,
+          onClickPromise={async () => {
+            await loadGeneratedWorkspaces!({
+              workspaces: prostglesWorkspaces,
+              toolUseId: toolUseContent.id,
               connectionId,
-              tables,
             })
               .then((insertedWorkspaces) => {
                 const [first] = insertedWorkspaces;
@@ -134,6 +137,7 @@ export const LoadSuggestedDashboards = ({
                 }
               })
               .catch((error) => {
+                console.error("Error loading workspaces", error);
                 if (isObject(error) && error.code === "23505") {
                   addAlert(
                     `Workspace with this name already exists. Must delete or rename the clashing workspaces: \n${prostglesWorkspaces.map((w) => w.name).join(", ")}`,

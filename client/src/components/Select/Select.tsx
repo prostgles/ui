@@ -1,9 +1,9 @@
-import React, { useMemo } from "react";
-import "./Select.css";
 import { sliceText } from "@common/utils";
+import React from "react";
 import type { TestSelectors } from "../../Testing";
 import RTComp from "../../dashboard/RTComp";
 import type { BtnProps } from "../Btn";
+import Btn from "../Btn";
 import Chip from "../Chip";
 import { generateUniqueID } from "../FileInput/FileInput";
 import { FlexCol, FlexRow } from "../Flex";
@@ -17,8 +17,10 @@ import type {
   SearchListProps,
 } from "../SearchList/SearchList";
 import { SearchList } from "../SearchList/SearchList";
+import "./Select.css";
 import { SelectTriggerButton } from "./SelectTriggerButton";
-import Btn from "../Btn";
+
+export const SELECT_SEARCH_THRESHOLD = 15;
 
 export type OptionKey = string | number | boolean | Date | null | undefined;
 export type FullOption<O extends OptionKey = string> = Pick<
@@ -164,7 +166,7 @@ export class Select<
       label,
       variant = "div",
       onSearch,
-      noSearchLimit = 15,
+      noSearchLimit = SELECT_SEARCH_THRESHOLD,
       endOfResultsContent,
       multiSelect,
       asRow,
@@ -223,6 +225,9 @@ export class Select<
         label: o.label ?? ((o.label as any) === null ? "NULL" : ""),
       }))
       .toSorted((a, b) => {
+        if (!onSearch && fullOptions.length < noSearchLimit) {
+          return 0;
+        }
         /** Bring selected first */
         if (multiSelect) {
           if (a.checked && !b.checked) return -1;
@@ -425,6 +430,7 @@ export class Select<
     const searchList = (
       <SearchList
         id={id}
+        roundedItems={variant === "search-list-only"}
         style={{
           maxHeight: "500px",
           ...(variant === "button-group-vertical" && {

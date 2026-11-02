@@ -10,12 +10,12 @@ import { ROUTES } from "@common/utils";
 
 type WorkspaceDeleteBtnProps = Pick<Prgl, "dbs"> &
   Pick<BtnProps, "disabledInfo"> & {
-    w: Workspace;
+    workspace: Workspace;
     activeWorkspaceId: string;
   };
 export const WorkspaceDeleteBtn = ({
   dbs,
-  w,
+  workspace,
   activeWorkspaceId,
   disabledInfo,
 }: WorkspaceDeleteBtnProps) => {
@@ -23,6 +23,7 @@ export const WorkspaceDeleteBtn = ({
 
   return (
     <PopupMenu
+      className="w-full"
       style={{
         height: "100%",
       }}
@@ -33,8 +34,9 @@ export const WorkspaceDeleteBtn = ({
       button={
         <Btn
           title="Delete this workspace"
+          titleAsLabel={true}
           iconPath={mdiDelete}
-          className="delete-workspace"
+          className="delete-workspace w-full jc-start"
           disabledInfo={disabledInfo}
           data-command="WorkspaceDeleteBtn"
           color="danger"
@@ -64,9 +66,12 @@ export const WorkspaceDeleteBtn = ({
             e.preventDefault();
             e.stopPropagation();
             try {
-              await dbs.workspaces.update({ id: w.id }, { deleted: true });
-              if (w.id === activeWorkspaceId) {
-                const path = [ROUTES.CONNECTIONS, w.connection_id]
+              await dbs.workspaces.update(
+                { id: workspace.id },
+                { deleted: true },
+              );
+              if (workspace.id === activeWorkspaceId) {
+                const path = [ROUTES.CONNECTIONS, workspace.connection_id]
                   .filter((v) => v)
                   .join("/");
                 window.location.href = path;

@@ -1,3 +1,4 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import { useState } from "react";
 import type { AppContextProps } from "../../App";
 import { usePromise } from "prostgles-client";
@@ -26,7 +27,7 @@ export const useConnections = (props: AppContextProps) => {
   const [showStateConfirm, setShowStateConfirm] = useState<HTMLInputElement>();
   const [showDbNames, setShowDbNames] = useState(false);
   const { dbs, user, dbsMethods } = props;
-  const isAdmin = user?.type === "admin";
+  const isAdmin = user?.type === USER_TYPES.ADMIN;
 
   const showStateConn = user?.options?.showStateDB ?? true;
   const { data: _connections } = dbs.connections.useSubscribe(

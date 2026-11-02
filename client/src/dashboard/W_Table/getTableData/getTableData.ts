@@ -18,9 +18,8 @@ export async function getTableData(
   const delta = { ...dp, ...ds, ...dd };
   const { rows } = this.state;
   const {
-    prgl: { db },
+    prgl: { tables, db, methods },
     joinFilter,
-    tables,
   } = this.props;
   const { w } = this.d;
   if (!w) return;
@@ -37,6 +36,7 @@ export async function getTableData(
       }
     } else if (
       !rows ||
+      !!dp?.prgl ||
       delta.w?.options?.refresh ||
       delta.w?.options?.quickFilterGroups ||
       delta.dataAge ||
@@ -61,8 +61,11 @@ export async function getTableData(
       const {
         select: selectWithoutData,
         barchartVals: barchartValsWithoutData,
-      } = await getTableSelect(w, tables, db, filter, true);
-      const strFilter = JSON.stringify(tableFilterHaving);
+      } = await getTableSelect(w, tables, db, filter, true, methods);
+      const strFilter = JSON.stringify({
+        ...tableFilterHaving,
+        select: selectWithoutData,
+      });
 
       const clearSub = () => {
         return this.dataSub?.unsubscribe();
@@ -85,8 +88,6 @@ export async function getTableData(
           clearInterval();
 
           try {
-            /** Already getting data on first run */
-            let isInitialRun = true;
             this.dataSub = await tableHandler.subscribe?.(
               filter,
               {
@@ -95,10 +96,7 @@ export async function getTableData(
                 throttle: throttleSeconds * 1000,
               },
               () => {
-                if (isInitialRun) {
-                  isInitialRun = false;
-                  return;
-                }
+                // Include the first notification: data can change while subscribing.
                 this.setData({ dataAge: Date.now() });
               },
             );
@@ -170,13 +168,12 @@ export async function getTableData(
           tables,
           db,
           filter,
+          false,
+          methods,
         );
         if (barchartVals) {
           ns = ns || ({} as any);
-          ns!.barchartVals = {
-            ...this.state.barchartVals,
-            ...barchartVals,
-          };
+          ns!.barchartVals = barchartVals;
         }
 
         if (Object.keys(select).length) {
@@ -239,8 +236,11 @@ export async function getTableData(
             ...r,
           }));
 
+          const tableLabel =
+            tables.find((table) => table.name === tableName)?.label ??
+            tableName;
           const nameTemplate =
-            w.title || `${w.table_name} ${showCounts ? "${rowCount}" : ""}`;
+            w.title || `${tableLabel}${showCounts ? " ${rowCount}" : ""}`;
           const newName = nameTemplate.replace(
             "${rowCount}",
             (showCounts ? (rowCount ?? "") : "").toLocaleString(),
@@ -254,20 +254,23 @@ export async function getTableData(
             rowCount,
             rowsLoaded: Date.now(),
             totalRows: showCounts ? +((await tableHandler.count?.()) ?? 0) : 0,
-            onRowClick: (row, a2) => {
-              /** Must only include non computed columns  */
-              const rowHasNonComputedFields = this.d.w?.columns?.find(
-                (c) =>
-                  !c.computedConfig &&
-                  !c.format &&
-                  Object.keys(row ?? {}).includes(c.name),
-              );
-              if (row && rowHasNonComputedFields) {
-                this.props.onClickRow?.(row, a2);
-              } else {
-                this.props.onClickRow?.(undefined, a2);
-              }
-            },
+            onRowClick:
+              !this.props.onClickRow ?
+                undefined
+              : (row, a2) => {
+                  /** Must only include non computed columns  */
+                  const rowHasNonComputedFields = this.d.w?.columns?.find(
+                    (c) =>
+                      !c.computedConfig &&
+                      !c.format &&
+                      Object.keys(row ?? {}).includes(c.name),
+                  );
+                  if (row && rowHasNonComputedFields) {
+                    this.props.onClickRow?.(row, a2);
+                  } else {
+                    this.props.onClickRow?.(undefined, a2);
+                  }
+                },
           };
           if (joinFilter) {
             ns.joinFilterStr = JSON.stringify(joinFilter);

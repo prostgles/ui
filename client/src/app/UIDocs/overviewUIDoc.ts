@@ -10,9 +10,9 @@ export const overviewUIDoc = {
     <img src="./screenshots/overview.svgif.svg" alt="Prostgles UI Overview" width="100%" />
 
     ## Features
-    - SQL Editor with syntax highlighting and auto-completion
-    - Real-time dashboards with charts
-    - AI assistant with MCP support
+    - SQL editor with syntax highlighting and auto-completion
+    - Real-time dashboards and charts
+    - AI assistant with MCP support and agentic workflows
     - User authentication (email, third-party OAuth and two-factor authentication)
     - Role-based access control
     - Database management
@@ -22,10 +22,10 @@ export const overviewUIDoc = {
     - Mobile friendly
 
     It comes in two versions: 
-    - **Prostgles UI** - a web-based application with the complete feature set accessible through any modern browser.
-    - **Prostgles Desktop** - a native desktop application based on Electron available for Linux, MacOS and Windows. 
-    It has a subset of the core features from Prostgles UI for data exploration and database management. 
-    User Management and other multi-user focused features are not available in the desktop version.
+    - **Prostgles UI** - Web-based app with the full feature set, accessible from modern browsers.
+    - **Prostgles Desktop** - Electron-based app for Linux, macOS, and Windows, focused on data exploration and database management.
+  
+    Note: Multi-user features such as User Management are not available in the desktop version.
   `,
   docOptions: "asSeparateFile",
 } as const satisfies UIDoc;

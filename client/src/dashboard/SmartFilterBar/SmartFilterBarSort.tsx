@@ -6,8 +6,10 @@ import type {
   DBSchemaTableWJoins,
   WindowSyncItem,
 } from "../Dashboard/dashboardUtils";
-import type { ColumnSort } from "../W_Table/ColumnMenu/ColumnMenu";
+import type { ColumnSort } from "@common/ColumnConfig/ColumnConfig";
 import type { SmartFilterBarProps } from "./SmartFilterBar";
+import { getColumnsWithInfo } from "../W_Table/tableUtils/getColumnsWithInfo";
+import { getColumnSortOptions } from "../W_Table/tableUtils/getColumnSortOptions";
 
 type P = SmartFilterBarProps & {
   table: DBSchemaTableWJoins;
@@ -16,6 +18,10 @@ export const SmartFilterBarSort = ({ table, ...props }: P) => {
   const w: WindowSyncItem<"table"> | WindowSyncItem<"card"> | undefined =
     "w" in props ? props.w : undefined;
   const { columns } = "w" in props ? props.w : props;
+  const resolvedColumns =
+    w || columns ?
+      getColumnsWithInfo(table.name, props.tables, columns)
+    : undefined;
   const setSort = (orderByKey: string | undefined, orderAsc = true) => {
     const newSort: ColumnSort | undefined =
       !orderByKey ? undefined : (
@@ -30,7 +36,6 @@ export const SmartFilterBarSort = ({ table, ...props }: P) => {
       props.onSortChange(newSort);
     }
   };
-  const orderableFields = columns ?? table.columns.filter((c) => c.filter);
   let orderByKey: string | undefined;
   let orderAsc = true;
   if ("w" in props) {
@@ -54,10 +59,19 @@ export const SmartFilterBarSort = ({ table, ...props }: P) => {
         emptyLabel="Sort by..."
         asRow={true}
         value={orderByKey}
-        fullOptions={orderableFields.map((f) => ({
-          key: f.name,
-          label: "label" in f ? f.label || f.name : f.name,
-        }))}
+        fullOptions={
+          resolvedColumns
+            ?.filter((column) => column.show)
+            .flatMap(getColumnSortOptions) ??
+          table.columns
+            .filter((c) => c.orderBy)
+            .flatMap(({ name, label }) => {
+              return {
+                key: name,
+                label: label || name,
+              };
+            })
+        }
         onChange={(orderByKey) => {
           setSort(orderByKey, orderAsc);
         }}

@@ -1,20 +1,25 @@
 import type { ProcessLog } from "@src/McpHub/DockerSandbox/executeDockerCommand";
-import type { prostglesServices } from "./ServiceManagerTypes";
-import type { ServiceManager } from "./ServiceManager";
+import type { ServiceManager, StringKeyof } from "./ServiceManager";
+import type {
+  RunningServiceInstance,
+  ServiceRegistry,
+} from "./ServiceManagerTypes";
 
-export async function enableService(
-  this: ServiceManager,
-  serviceName: keyof typeof prostglesServices,
+export async function enableService<
+  Services extends ServiceRegistry,
+  ServiceName extends StringKeyof<Services>,
+>(
+  this: ServiceManager<Services>,
+  serviceName: ServiceName,
   onLogs: (logs: ProcessLog[]) => void,
-) {
+): Promise<RunningServiceInstance<Services[ServiceName]>> {
   await this.enablingServices.get(serviceName);
   const activeService = this.activeServices.get(serviceName);
   if (activeService?.status === "running") {
-    return activeService;
-  } else {
-    this.stopService(serviceName);
+    return activeService as RunningServiceInstance<Services[ServiceName]>;
   }
   const enabling = async () => {
+    await this.stopService(serviceName);
     const buildResult = await this.buildService(serviceName, onLogs);
     if (buildResult !== "close") {
       throw new Error(
@@ -37,5 +42,5 @@ export async function enableService(
     this.enablingServices.delete(serviceName);
   });
   this.enablingServices.set(serviceName, result);
-  return result;
+  return result as Promise<RunningServiceInstance<Services[ServiceName]>>;
 }

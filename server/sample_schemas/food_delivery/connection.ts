@@ -3,7 +3,7 @@ const table_options = {
     card: {
       headerColumn: "email",
     },
-    icon: "AccountMultiple",
+    icon: "Account",
     label: "Users",
     columns: {
       id: {
@@ -1000,7 +1000,7 @@ const table_options = {
       },
     },
   },
-} satisfies typeof import("../../../common/DBGeneratedSchema");
+};
 
 export default {
   table_options,

@@ -1,4 +1,4 @@
-import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
+import type { TableConfig } from "prostgles-server";
 import type { JSONB } from "prostgles-types";
 
 const FieldFilterSchema = {
@@ -177,7 +177,7 @@ export const tableConfigAccessControl: TableConfig<{ en: 1 }> = {
   access_control_user_types: {
     columns: {
       access_control_id: `INTEGER NOT NULL REFERENCES access_control(id)  ON DELETE CASCADE`,
-      user_type: `TEXT NOT NULL REFERENCES user_types(id)  ON DELETE CASCADE`,
+      user_type: `TEXT NOT NULL REFERENCES user_types(id)`,
     },
     constraints: {
       NoDupes: "UNIQUE(access_control_id, user_type)",

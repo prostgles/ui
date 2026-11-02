@@ -6,27 +6,15 @@ import { mdiClose, mdiPlus } from "@mdi/js";
 import React from "react";
 import { isDefined } from "prostgles-types";
 import { SmartSearch } from "../../../SmartFilter/SmartSearch/SmartSearch";
-import { StyledCell } from "../../tableUtils/StyledTableColumn";
+import { StyledCell } from "../../RenderColumn/StyledTableColumn";
 import { ColorPicker } from "../ColorPicker";
-import type {
-  ConditionalStyle,
-  StyleColumnProps,
-} from "../ColumnStyleControls/ColumnStyleControls";
-import { ChipStylePalette, DEFAULT_CHIP_STYLE } from "./ChipStylePalette";
-
-export const CONDITION_OPERATORS = [
-  "=",
-  "<=",
-  "<",
-  ">",
-  ">=",
-  "!=",
-  "in",
-  "not in",
-  "contains",
-  "not null",
-  "null",
-] as const;
+import type { StyleColumnProps } from "../ColumnStyleControls/ColumnStyleControls";
+import {
+  type ConditionalStyle,
+  CONDITION_OPERATORS,
+} from "@common/ColumnConfig/columnStyleTypes";
+import { ChipStylePalette } from "./ChipStylePalette";
+import { DEFAULT_CHIP_STYLE } from "@common/ColumnConfig/chipColors";
 
 type P = StyleColumnProps & {
   style: ConditionalStyle;
@@ -71,6 +59,20 @@ export const ConditionalCellStyleControls = ({
 
   return (
     <FlexCol className="ConditionalCellStyleControls">
+      <Select
+        label="Condition column"
+        value={style.column ?? column.name}
+        fullOptions={
+          tables
+            .find((table) => table.name === tableName)
+            ?.columns.filter((candidate) => candidate.select)
+            .map((candidate) => ({
+              key: candidate.name,
+              label: candidate.label || candidate.name,
+            })) ?? []
+        }
+        onChange={(conditionColumn) => updateStyle({ column: conditionColumn })}
+      />
       {conditions.map((cs, condIdx) => (
         <div
           key={condIdx}
@@ -79,7 +81,7 @@ export const ConditionalCellStyleControls = ({
         >
           <FlexRowWrap className="gap-p5">
             <Btn color="action" variant="faded" className="max-w-full">
-              {column.name}
+              {style.column ?? column.name}
             </Btn>
             <Select
               className="ml-p25"
@@ -100,7 +102,7 @@ export const ConditionalCellStyleControls = ({
                 variant="search-no-shadow"
                 tables={tables}
                 defaultValue={(cs.condition ?? "").toString()}
-                column={column.name}
+                column={style.column ?? column.name}
                 onPressEnter={(term) => {
                   updateCondStyle({ condition: term }, condIdx);
                 }}

@@ -1,5 +1,8 @@
 import React, { useEffect, useRef } from "react";
 
+/**
+ * Used for debugging DO NOT DELETE
+ */
 export function useWhyDidYouUpdate(props) {
   // Store previous props in a ref
   const prevProps = useRef<any>();

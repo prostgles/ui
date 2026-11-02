@@ -1,15 +1,14 @@
+import { getEntries } from "@common/utils";
 import * as fs from "fs";
 import * as path from "path";
-import { simpleGit, type SimpleGit } from "simple-git";
 import type { DBS } from "../..";
-import { getEntries } from "@common/utils";
-import { getRootDir } from "../../electronConfig";
+import { getDataPath } from "../../electronConfig";
 import { runShellCommand } from "./runShellCommand";
 
 let createdMCPDirectory = "";
 export const getMCPDirectory = () => {
   if (!createdMCPDirectory) {
-    const MCP_DIR = path.resolve(path.join(getRootDir(), `/prostgles_mcp`));
+    const MCP_DIR = getDataPath("MCP");
     fs.mkdirSync(MCP_DIR, { recursive: true });
     createdMCPDirectory = MCP_DIR;
   }
@@ -104,7 +103,7 @@ export const installMCPServer = async (dbs: DBS, name: string) => {
         ["install", "--include=dev"],
         { cwd: installationPath },
         (chunk) => {
-          void addLog(chunk);
+          void addLog(chunk.toString());
         },
       );
       if (npmI.err) {
@@ -161,18 +160,7 @@ export const getMCPServersStatus = async (
 
   const installationPath = getMCPServerInstallationPath(serverName);
   if (source.type === "github") {
-    const git: SimpleGit = simpleGit(installationPath);
-    const status = await git.status();
-
-    return status.behind > 0 ?
-        {
-          ok: false,
-          message: `Repository is behind by ${status.behind} commits`,
-        }
-      : {
-          ok: true,
-          message: `Repository is up to date`,
-        };
+    throw new Error("GitHub source type not supported yet");
   }
 
   const wasInstalled = fs.existsSync(installationPath);

@@ -33,6 +33,7 @@ export const startDevHotReloadNotifier = ({
       io.emit("server-restart-request");
       showMessage();
     });
+    if (fs.existsSync(lastCompiledPath)) showMessage();
   } else {
     showMessage();
   }

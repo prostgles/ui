@@ -1,7 +1,4 @@
-import type {
-  AuthClientRequest,
-  LoginClientInfo,
-} from "prostgles-server/dist/Auth/AuthTypes";
+import type { AuthClientRequest, LoginClientInfo } from "prostgles-server";
 import type { DBS } from "..";
 import { debouncePromise, YEAR } from "@common/utils";
 import { activePasswordlessAdminFilter } from "../init/initUsers";
@@ -67,7 +64,7 @@ export const createPasswordlessAdminSessionIfNeeded = debouncePromise(
           user_agent: client.user_agent || null,
           type: "web",
         },
-        dbsTx as DBS,
+        dbsTx,
         Date.now() + Number(1 * YEAR),
       );
     });

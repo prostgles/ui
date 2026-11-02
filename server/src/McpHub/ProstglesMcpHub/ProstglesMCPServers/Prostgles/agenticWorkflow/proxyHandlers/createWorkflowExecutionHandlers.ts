@@ -2,7 +2,6 @@ import type { GeneratedFunctionSchema } from "@common/DBGeneratedSchema";
 import type { DBSSchema } from "@common/publishUtils";
 import type { DBS } from "@src/index";
 import { statePrgl } from "@src/init/startProstgles";
-import type { AuthClientRequest } from "prostgles-server";
 import { startAgent } from "../../startAgent";
 import { getValidatedMcpServerToolsAllowed } from "../definitionValidation/getValidatedMcpServerToolsAllowed";
 import type { DefineAgenticWorkflow } from "../runtimeSdk/defineAgenticWorkflow";
@@ -34,13 +33,11 @@ export const createWorkflowExecutionHandlers = async <
     chatId,
     userId,
     connectionId,
-    clientReq,
   }: {
     dbs: DBS;
     chatId: number;
     userId: string;
     connectionId: string;
-    clientReq: AuthClientRequest;
   },
   {
     runInSequence = true,
@@ -53,7 +50,7 @@ export const createWorkflowExecutionHandlers = async <
   if (!statePrgl) {
     throw new Error("Prostgles state is not initialized");
   }
-  const { clientMethods } = await statePrgl.getClientDBHandlers(clientReq, {
+  const { clientMethods } = await statePrgl.getClientDBHandlers({ userId }, {
     methods: { askLLM: true },
   });
   const dbsClientFunctions = clientMethods as unknown as {

@@ -86,7 +86,7 @@ export const ProjectConnection = (props: ProjectProps) => {
       >
         <PrglProvider prgl={prgl}>
           <Dashboard
-            key={workspaceId}
+            key={connectionId}
             workspaceId={workspaceId}
             onLoaded={() => {}}
           />

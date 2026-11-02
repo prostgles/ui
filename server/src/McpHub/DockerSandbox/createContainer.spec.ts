@@ -2,6 +2,7 @@ import { strict } from "assert";
 import { test } from "node:test";
 import { createContainer } from "./createContainer.js";
 import type { CreateContainerParams } from "../ProstglesMcpHub/ProstglesMCPServers/Prostgles/schemas/getContainerToolSchemas.js";
+import { safeStringify } from "prostgles-types";
 
 const testContainerName = `test-container-${Date.now()}`;
 void test("createContainer build error", async () => {
@@ -36,7 +37,7 @@ void test("createContainer run error", async () => {
     networkMode: "bridge",
   } satisfies CreateContainerParams;
   const sandbox = await createContainer(testContainerName, config);
-  strict.equal(sandbox.state, "error");
+  strict.equal(sandbox.state, "error", safeStringify(sandbox));
   const stderr = sandbox.log
     .filter((l) => l.type === "stderr")
     .map((l) => l.text)
@@ -175,7 +176,7 @@ console.log('Fetch app started. Will attempt to fetch from host:3004 every 30 se
 `;
 
 const Dockerfile = `
-FROM node:18-alpine
+FROM node:24-alpine
 
 WORKDIR /workspace
 

@@ -1,3 +1,7 @@
+import {
+  USER_TYPES,
+  canManageBusinessAccess,
+} from "@common/authTypesAndConstants";
 import { ROUTES } from "@common/utils";
 import {
   mdiAccountMultiple,
@@ -21,7 +25,7 @@ export const useNavBarItems = ({ user, serverState }: AppContextProps) => {
         {
           label: t["App"]["Users"],
           to: ROUTES.USERS,
-          forAdmin: true,
+          forAdmin: !canManageBusinessAccess(user?.type),
           iconPath: mdiAccountMultiple,
         }
       ),
@@ -35,6 +39,6 @@ export const useNavBarItems = ({ user, serverState }: AppContextProps) => {
       // { label: "Permissions", to: "/access-management", forAdmin: true },
     ]
       .filter(isDefined)
-      .filter((o) => !o.forAdmin || user?.type === "admin");
+      .filter((o) => !o.forAdmin || user?.type === USER_TYPES.ADMIN);
   }, [user, serverState]);
 };

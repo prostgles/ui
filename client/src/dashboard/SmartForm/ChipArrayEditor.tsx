@@ -41,7 +41,7 @@ export const ChipArrayEditor = ({
       className={
         "ChipArrayEditor flex-row-wrap gap-p5 ptd-p25 ai-center no-decor"
       }
-      style={{ listStyle: "none" }}
+      style={{ listStyle: "none", maxHeight: "150px", overflow: "auto" }}
     >
       {renderedValues.map(({ value, isLastNew }, idx) => (
         //  Bad UX when selecting text

@@ -1,3 +1,4 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import React from "react";
 
 import { Select } from "@components/Select/Select";
@@ -43,13 +44,13 @@ export const ChatSpeechSetup = ({
         variant="button-group-vertical"
       />
       {speechToTextMode === "stt-local" &&
-        user?.type !== "admin" &&
+        user?.type !== USER_TYPES.ADMIN &&
         mustEnableTranscriptionService && (
           <ErrorComponent
             error={"Transcription service must be enabled by an admin user."}
           />
         )}
-      {speechToTextMode === "stt-local" && user?.type === "admin" && (
+      {speechToTextMode === "stt-local" && user?.type === USER_TYPES.ADMIN && (
         <Services
           showSpecificService={{
             color: mustEnableTranscriptionService ? "red" : undefined,

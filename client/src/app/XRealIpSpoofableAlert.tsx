@@ -1,3 +1,4 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import { ROUTES } from "@common/utils";
 import Btn from "@components/Btn";
 import { InfoRow } from "@components/InfoRow";
@@ -13,7 +14,7 @@ export const XRealIpSpoofableAlert = ({ serverState, prglState }: P) => {
   const user = prglState?.user;
   return (
     <>
-      {serverState?.xRealIpSpoofable && user?.type === "admin" && (
+      {serverState?.xRealIpSpoofable && user?.type === USER_TYPES.ADMIN && (
         <PopupMenu
           button={
             <Btn color="danger" iconPath={mdiAlertOutline} variant="filled">

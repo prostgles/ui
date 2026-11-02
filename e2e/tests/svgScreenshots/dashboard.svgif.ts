@@ -13,7 +13,7 @@ import { demoRestaurantName } from "utils/constants";
 
 export const dashboardSvgif: OnBeforeScreenshot = async (
   page,
-  { openConnection, openMenuIfClosed, toggleMenuPinned },
+  { openConnection, openMenuIfClosed },
   { addScene, addSceneAnimation },
 ) => {
   await goTo(page, "/connections");
@@ -30,17 +30,9 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
   `,
   );
 
-  const toggleMenuBtn = await page.getByTestId(
-    "DashboardMenuHeader.togglePinned",
-  );
-  await page.getByTestId("WorkspaceMenuDropDown").waitFor({ state: "visible" });
-  if (await toggleMenuBtn.count()) {
-    await toggleMenuBtn.click();
-  }
-
-  await expect(
-    page.getByTestId("DashboardMenuHeader.togglePinned"),
-  ).toHaveCount(0);
+  await page.getByTestId("dashboard.menu").waitFor({ state: "visible" });
+  await openMenuIfClosed(true);
+  await expect(page.getByTestId("DashboardMenu.togglePinned")).toHaveCount(0);
 
   await deleteAllWorkspaces(page);
   await closeWorkspaceWindows(page);
@@ -67,12 +59,12 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
 
   /** Search all */
   await addScene({
-    caption: "Search all tables (Ctrl+Shift+F)",
+    // caption: "Search all tables (Ctrl+Shift+F)",
     animations: [{ type: "wait", duration: 1000 }],
   });
+
   await page.keyboard.press("Control+Shift+KeyF");
   await page.waitForTimeout(1000);
-  // await addScene({ animations: [{ type: "wait", duration: 1000 }] });
   const searchAllInput = page.getByTestId("SearchAll");
   /** To prevent searching */
   await searchAllInput.evaluate(
@@ -246,6 +238,7 @@ export const dashboardSvgif: OnBeforeScreenshot = async (
       },
       { type: "wait", duration: 500 },
     ],
+    svgFileName: "move_table",
   });
   await page.mouse.move(x + 675, y + 25, {
     steps: 22,

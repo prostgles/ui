@@ -1,17 +1,17 @@
 import { getMCPFullToolName } from "../mcpUtils";
 import { fixIndent } from "../utils";
-import { databaseAccessSchema } from "./databaseAccessSchema";
+import { databaseAccessSchemaWithoutDDL } from "./databaseAccessSchema";
 import { runCodeInSandboxSchema } from "./runCodeInSandboxSchema";
 import {
   agentDefinitionsSchema,
   mcpServerToolsAllowed,
 } from "./startAgenticWorkflowSchema";
 import { tableOptionsJsonbSchema } from "./tableOptionsJsonbSchema";
-import { tablePermissionsSchema } from "./tablePermissionsSchema";
 
 const { outputSchema, ...agentSchemaWithoutOutput } =
   agentDefinitionsSchema.record.values.type;
 
+export { agentSchemaWithoutOutput };
 const { files, userInput, userInputValue, ...runTsSchema } =
   runCodeInSandboxSchema.type;
 
@@ -62,7 +62,7 @@ export const uiMcpSchema = {
         ${"```json"}
         {
           "files": {
-            "Dockerfile": "FROM node:18\nWORKDIR /app\nCOPY . .\nRUN npm install\nCMD [\"node\", \"index.js\"]",
+            "Dockerfile": "FROM node:24-trixie-slim\nWORKDIR /app\nCOPY . .\nRUN npm install\nCMD [\"node\", \"index.js\"]",
             "index.ts": "import type { JSONB } from \"prostgles-types\"; console.log('hello world');"
           }
         }
@@ -162,7 +162,7 @@ export const uiMcpSchema = {
       "This is meant to be used when the information cannot be easily obtained from the schema or tools available and is necessary to remove ambiguity from user intent.",
       `Refrain from asking "free-text" unless absolutely necessary. Always try to use more ergonomic types ("choice", "table-name", "table-columns" etc.) type questions when possible to reduce user input errors and eliminate the effort of manually typing long responses.`,
       "Always try to infer missing information from the schema and tools before asking the user.",
-      "DO NOT SEND OTHER TOOL USE REQUESTS TOGETHER WITH THIS TOOL. It must be a single tool use request",
+      "Other tool calls in the same message will wait until the user has answered all questions and approved any pending tools.",
       "Be as short and as concise as possible.",
       "Do not ask more than 4 questions at a time.",
       `Each "choice" type question should have a list of suggested answers to choose from.`,
@@ -294,8 +294,7 @@ export const uiMcpSchema = {
     description: fixIndent(
       `Request access to mcp tools/database. 
       USE THE STRICTEST LEAST-PRIVILEGE ACCESS POSSIBLE when requesting database access.
-      Prefer to use mode=custom for database access and specify the exact tables and permissions needed instead of using mode=execute_sql or execute_readonly_sql which provide much broader access.
-      The user will be prompted to approve or deny access. 
+      Prefer to use mode=custom for database access and specify the exact tables and permissions needed instead of using mode=execute_sql or execute_readonly_sql which provide much broader access.      The user will be prompted to approve or deny access. 
       Use this tool when you need access to a tool that you don't have access to yet. 
       The user will then approve access if they are comfortable with it based on the tool description and the context of the conversation.`,
     ),
@@ -312,15 +311,7 @@ export const uiMcpSchema = {
           optional: true,
           ...mcpServerToolsAllowed,
         },
-        databaseAccess: databaseAccessSchema,
-        // databaseAccess: {
-        //   optional: true,
-        //   oneOf: [
-        //     { enum: ["execute_readonly_sql"] },
-        //     { enum: ["execute_sql"] },
-        //     tablePermissionsSchema,
-        //   ],
-        // },
+        databaseAccess: databaseAccessSchemaWithoutDDL,
       },
     },
     outputSchema: {
@@ -333,6 +324,31 @@ export const uiMcpSchema = {
           },
         },
         status: { optional: true, enum: ["approved", "denied"] },
+      },
+    },
+  },
+  create_tables: {
+    icon: "TablePlus",
+    mode: undefined,
+    description: fixIndent(`
+      Creates tables in the database. 
+      The user will be prompted to approve or deny access.
+      Use this tool when you need to create tables in the database. 
+      The user will then approve access if they are comfortable with it based on the table definitions and the context of the conversation.
+      Only CREATE TABLE, CREATE VIEW and CREATE INDEX statements are allowed.
+    `),
+    schema: {
+      type: {
+        ddlStatements: {
+          description:
+            "SQL DDL statements to create tables. Only CREATE TABLE, CREATE VIEW and CREATE INDEX statements are allowed.",
+          type: "string",
+        },
+      },
+    },
+    outputSchema: {
+      type: {
+        data: "unknown[]",
       },
     },
   },
@@ -355,6 +371,12 @@ export const uiMcpSchema = {
             "List of MCP server tools available to the agent. Example: { web: { fetch: 1 } }",
           optional: true,
           ...mcpServerToolsAllowed,
+        },
+        firstMessage: {
+          description:
+            "The first message to send to the agent. If not provided, the agent will start with an empty message.",
+          optional: true,
+          type: "string",
         },
       },
     },
@@ -435,10 +457,25 @@ export const uiMcpSchema = {
   set_tables_metadata: {
     icon: "Table",
     mode: undefined,
-    description: "Set rendering metadata for database tables",
+    description:
+      "Update rendering metadata for database tables. Nested objects are merged, preserving omitted settings (including card columns when changing layout). Arrays are replaced in full; use an empty array to clear a list.",
     schema: { type: { metadata: tableOptionsJsonbSchema } },
     outputSchema: {
       type: "unknown",
+    },
+  },
+  find_icons: {
+    icon: "ImageSearch",
+    mode: undefined,
+    description:
+      "Search for icons by name. Returns a list of icon names that match the search query.",
+    schema: {
+      type: {
+        query: "string",
+      },
+    },
+    outputSchema: {
+      type: "string[]",
     },
   },
   create_dashboards: {

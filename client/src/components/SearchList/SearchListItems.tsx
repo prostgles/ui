@@ -1,4 +1,5 @@
 import { useScrollFade } from "@components/ScrollFade/ScrollFade";
+import { useAutoScrollToBottom } from "@components/ScrollFade/useAutoScrollToBottom";
 import React, {
   forwardRef,
   useCallback,
@@ -19,7 +20,6 @@ import type {
   SearchListProps,
 } from "./SearchList";
 import { SearchListRowContent } from "./SearchListRowContent";
-import { useAutoScrollToBottom } from "@components/ScrollFade/useAutoScrollToBottom";
 
 export type SearchListItemsProps = Pick<
   SearchListProps,
@@ -30,8 +30,8 @@ export type SearchListItemsProps = Pick<
   | "endOfResultsContent"
   | "noResultsContent"
   | "onReorder"
-  | "onMultiToggle"
   | "listStyle"
+  | "roundedItems"
   | "autoScrollToBottom"
 > & {
   renderedItems: ParsedListItem[];
@@ -59,10 +59,11 @@ export const SearchListItems = forwardRef<
     searchingItems,
     endSearch,
     onReorder,
-    onMultiToggle,
     showFirstItemAsFocused,
     autoScrollToBottom,
+    roundedItems = true,
   } = props;
+  const itemBorderRadius = roundedItems ? "var(--rounded)" : 0;
   const inputWrapper = inputWrapperRef.current;
   const notAllItemsShown =
     renderedItems.length && renderedItems.length < items.length && !searchTerm;
@@ -177,6 +178,12 @@ export const SearchListItems = forwardRef<
                     title={renderedItem.disabledInfo ?? renderedItem.title}
                     style={{
                       ...renderedItem.rowStyle,
+                      /* Override shorthand and individual corner styles. */
+                      borderRadius: itemBorderRadius,
+                      borderTopLeftRadius: itemBorderRadius,
+                      borderTopRightRadius: itemBorderRadius,
+                      borderBottomLeftRadius: itemBorderRadius,
+                      borderBottomRightRadius: itemBorderRadius,
                       ...(renderedItem.disabledInfo ?
                         {
                           cursor: "not-allowed",

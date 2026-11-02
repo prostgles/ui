@@ -1,6 +1,6 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import type { DBSSchema } from "@common/publishUtils";
 import { mdiAccountOutline, mdiAccountQuestion, mdiAccountStar } from "@mdi/js";
-import type { TableHandlerClient } from "prostgles-client";
 import React from "react";
 import type { TestSelectors } from "../../Testing";
 import type { DBS } from "../Dashboard/DBS";
@@ -49,7 +49,7 @@ export const UserTypeSelect = (props: P) => {
         const id = _id as UserType;
         let subLabel = "",
           disabledInfo = "";
-        if (id === "admin") {
+        if (id === USER_TYPES.ADMIN) {
           disabledInfo = "Cannot change admin";
           subLabel = "Can always access everything";
         } else {
@@ -59,10 +59,11 @@ export const UserTypeSelect = (props: P) => {
             disabledInfo = "Need to remove from existing access rule first";
             subLabel = `Already assigned permissions`;
           } else if (
-            (userTypes.includes("public") && !userTypes.includes(id)) ||
+            (userTypes.includes(USER_TYPES.PUBLIC) &&
+              !userTypes.includes(id)) ||
             (userTypes.length &&
-              !userTypes.includes("public") &&
-              id === "public")
+              !userTypes.includes(USER_TYPES.PUBLIC) &&
+              id === USER_TYPES.PUBLIC)
           ) {
             disabledInfo = "Cannot mix 'public' with other user types";
           }
@@ -75,8 +76,8 @@ export const UserTypeSelect = (props: P) => {
             type: "Icon",
             style: { opacity: 0.75 },
             path:
-              id === "admin" ? mdiAccountStar
-              : id === "public" ? mdiAccountQuestion
+              id === USER_TYPES.ADMIN ? mdiAccountStar
+              : id === USER_TYPES.PUBLIC ? mdiAccountQuestion
               : mdiAccountOutline,
           },
         };

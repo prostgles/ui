@@ -1,3 +1,4 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import { getObjectEntries } from "prostgles-types";
 import React from "react";
 import type { AppContextProps } from "../../App";
@@ -12,7 +13,7 @@ import {
 
 export const LoginWithProviders = ({ auth }: Pick<AppContextProps, "auth">) => {
   const { user } = auth;
-  if (user && user.type !== "public") return null;
+  if (user && user.type !== USER_TYPES.PUBLIC) return null;
   const providerConfigs = getObjectEntries(auth.loginWithProvider ?? {});
   if (!providerConfigs.length) return null;
   return (

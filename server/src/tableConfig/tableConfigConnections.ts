@@ -1,6 +1,7 @@
-import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
-import { UNIQUE_DB_COLS } from "./tableConfigDatabaseConfig";
 import { tableOptionsJsonbSchema } from "@common/mcp/tableOptionsJsonbSchema";
+import { functionOptionsJsonbSchema } from "@common/functionOptions";
+import type { TableConfig } from "prostgles-server";
+import { UNIQUE_DB_COLS } from "./tableConfigDatabaseConfig";
 
 const UNIQUE_DB_FIELD_LIST = UNIQUE_DB_COLS.join(", ");
 
@@ -82,12 +83,6 @@ export const tableConfigConnections: TableConfig<{ en: 1 }> = {
         sqlDefinition: `BOOLEAN`,
         info: { hint: `If true then this DB is used to run the dashboard` },
       },
-      on_mount_ts: {
-        sqlDefinition: "TEXT",
-        info: {
-          hint: `On mount typescript function. Must export const onMount`,
-        },
-      },
       on_mount_ts_disabled: {
         sqlDefinition: "BOOLEAN",
         info: { hint: `If true then On mount typescript will not be executed` },
@@ -106,6 +101,10 @@ export const tableConfigConnections: TableConfig<{ en: 1 }> = {
       table_options: {
         nullable: true,
         jsonbSchema: tableOptionsJsonbSchema,
+      },
+      function_options: {
+        nullable: true,
+        jsonbSchema: functionOptionsJsonbSchema,
       },
       display_options: {
         nullable: true,
@@ -136,6 +135,13 @@ export const tableConfigConnections: TableConfig<{ en: 1 }> = {
             AND (type <> 'Prostgles' OR length(prgl_url) > 0)
           )`,
       database_config_fkey: `FOREIGN KEY (${UNIQUE_DB_FIELD_LIST}) REFERENCES database_configs( ${UNIQUE_DB_FIELD_LIST} )`,
+    },
+    indexes: {
+      "Only one state connection allowed": {
+        unique: true,
+        columns: "is_state_db",
+        where: "is_state_db = true",
+      },
     },
   },
 };

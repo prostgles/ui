@@ -190,8 +190,6 @@ export const getEmailFromTemplate = <
   };
 };
 
-export const MOCK_SMTP_HOST = "prostgles-test-mock";
-
 export const DEFAULT_EMAIL_VERIFICATION_TEMPLATE = {
   from: `noreply@abc.com`,
   subject: "Please verify your email address",
@@ -219,9 +217,7 @@ export const DEFAULT_MAGIC_LINK_TEMPLATE = {
   body: fixIndent(`
     Hey,
     <br/><br/>
-    Login by clicking <a href="{{url}}">here</a>. Or by entering the code below on the login page:
-    <br/><br/>
-    {{code}}
+    Login by clicking <a href="{{url}}">here</a>.
     <br/><br/>
     If you didn't request this email there's nothing to worry about - you can safely ignore it.`),
 } as const;
@@ -232,14 +228,14 @@ export const getMagicLinkEmailFromTemplate = ({
   code,
 }: {
   url: string;
-  code: string;
+  code: string | undefined;
   template: { from: string; subject: string; body: string };
 }) => {
   return getEmailFromTemplate(
     template,
     {},
     {
-      code: { required: true, value: code },
+      code: { value: code ?? "" },
       url: { required: true, value: url },
     },
   );
