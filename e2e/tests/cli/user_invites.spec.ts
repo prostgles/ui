@@ -1,6 +1,6 @@
 import { generate } from "otplib";
 import { createHash } from "node:crypto";
-import { appendFileSync } from "node:fs";
+import { appendFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { getPasswordHash } from "../../../server/dist/server/src/authConfig/authUtils";
 import prostgles from "../../../server/node_modules/prostgles-client";
@@ -15,6 +15,232 @@ import type { DBSSchema } from "../../../common/publishUtils";
 import { startMockSMTPServer } from "../mockSMTPServer";
 import { createConfigTestProject } from "../utils/createConfigTestProject";
 import { test, expect } from "../utils/fixtures";
+import { openTable } from "../utils/utils";
+
+test("synced users expose connection-scoped invitations using state authentication", async ({
+  browser,
+  request,
+}) => {
+  const emails: { recipient: string; message: string }[] = [];
+  const smtp = await startMockSMTPServer({
+    port: 0,
+    disabledCommands: ["AUTH", "STARTTLS"],
+    onEmail: (email, callback) => {
+      emails.push(email);
+      callback();
+    },
+  });
+  let deployment: Awaited<ReturnType<typeof createTestDeployment>> | undefined;
+  try {
+    const config = {
+      id: "connection-user-invites-e2e",
+      databaseConfig: { sync_users: true },
+      userTypes: {
+        connection_reader: { description: "Read synced users" },
+        connection_sql: { description: "Run SQL" },
+      },
+      tableConfig: {
+        users: {
+          columns: {
+            id: "uuid PRIMARY KEY",
+            username: "text NOT NULL",
+            status: "text NOT NULL",
+            last_updated: "bigint NOT NULL",
+          },
+        },
+      },
+      accessControl: [
+        {
+          userTypes: ["connection_reader"],
+          dbPermissions: {
+            type: "All views/tables",
+            allowAllTables: ["select"],
+          },
+        },
+        {
+          userTypes: ["connection_sql"],
+          dbPermissions: { type: "Run SQL", allowSQL: true },
+        },
+      ],
+    } satisfies SchemaConfig;
+    const configPath = createConfigTestProject(config);
+    deployment = await createTestDeployment({
+      configPath,
+      configId: config.id,
+      users: [
+        { key: "admin", type: "admin" },
+        { key: "owner", type: "connection_admin" },
+        { key: "reader", type: "connection_reader" },
+      ],
+      logPath: test.info().outputPath("connection-user-invites-server.log"),
+    });
+    const stateAdmin = await deployment.connectStateAs("admin");
+    await stateAdmin.db.database_configs!.update(
+      { $existsJoined: { connections: { is_state_db: true } } },
+      {
+        auth_providers: {
+          website_url: deployment.endpoint,
+          signupMode: "invitationOnly",
+          email: {
+            enabled: true,
+            allowInvites: true,
+            emailLoginType: "withMagicLink",
+            smtp: {
+              type: "smtp",
+              host: "127.0.0.1",
+              port: smtp.port,
+              user: "",
+              pass: "",
+            },
+            emailTemplate: DEFAULT_EMAIL_VERIFICATION_TEMPLATE,
+          },
+        },
+      },
+    );
+    const projectAdmin = await deployment.connectProjectAs("admin");
+    const projectOwner = await deployment.connectProjectAs("owner");
+    const projectReader = await deployment.connectProjectAs("reader");
+    const connectionInvite = projectAdmin.methods?.inviteUser;
+    const connectionOwnerInvite = projectOwner.methods?.inviteUser;
+    if (!connectionInvite || !connectionOwnerInvite) {
+      throw new Error("Connection invitation function missing");
+    }
+    expect(projectReader.methods?.inviteUser).toBeUndefined();
+    expect(projectAdmin.methodSchema?.inviteUser?.function_options).toEqual(
+      stateAdmin.methodSchema?.inviteUser?.function_options,
+    );
+    expect(projectAdmin.methodSchema?.inviteUser?.input).toMatchObject({
+      userType: {
+        enum: ["connection_reader", "connection_sql"],
+        title: "User type",
+      },
+    });
+    for (const userType of ["admin", "public", "default", "missing-type"]) {
+      await expect(
+        connectionInvite({ email: "forbidden@example.com", userType }),
+      ).rejects.toBeTruthy();
+    }
+    await expect(
+      connectionOwnerInvite({
+        email: "sql@example.com",
+        userType: "connection_sql",
+      }),
+    ).rejects.toBeTruthy();
+    expect(emails).toHaveLength(0);
+    await connectionOwnerInvite({
+      email: "owner-invited@example.com",
+      userType: "connection_reader",
+    });
+    expect(
+      await stateAdmin.db.users!.findOne({
+        email: "owner-invited@example.com",
+      }),
+    ).toMatchObject({ status: "pending" });
+
+    const adminContext = await browser.newContext({
+      storageState: deployment.storageStateAs("admin"),
+    });
+    const page = await adminContext.newPage();
+    await page.goto(deployment.dashboardUrl);
+    await openTable(page, "users", true);
+    const tableHeader = page.locator(
+      '[data-table-name="users"] > .silver-grid-item-header',
+    );
+    const inviteButton = tableHeader.getByRole("button", {
+      name: "Invite user",
+      exact: true,
+    });
+    const searchButton = tableHeader.getByTestId(
+      "dashboard.window.toggleFilterBar",
+    );
+    await expect(inviteButton).toBeVisible();
+    await expect(searchButton).toBeVisible();
+    const inviteBounds = await inviteButton.boundingBox();
+    const searchBounds = await searchButton.boundingBox();
+    if (!inviteBounds || !searchBounds)
+      throw new Error("Table header buttons missing");
+    expect(inviteBounds.x + inviteBounds.width).toBeLessThanOrEqual(
+      searchBounds.x,
+    );
+    expect(
+      Math.abs(
+        inviteBounds.y +
+          inviteBounds.height / 2 -
+          (searchBounds.y + searchBounds.height / 2),
+      ),
+    ).toBeLessThanOrEqual(1);
+    await inviteButton.click();
+    const form = page.getByTestId("ActionPopup");
+    const recipient = "connection-invited@example.com";
+    await form.getByLabel("email", { exact: true }).fill(recipient);
+    await form.getByLabel("User type", { exact: true }).click();
+    await page
+      .getByRole("option", { name: "connection_reader", exact: true })
+      .click();
+    await form
+      .getByRole("button", { name: "Send invitation", exact: true })
+      .click();
+    await expect(form.getByRole("status")).toHaveText(
+      `Invitation sent to ${recipient}. They can sign in after confirming their email.`,
+    );
+    expect(
+      await stateAdmin.db.users!.findOne({ email: recipient }),
+    ).toMatchObject({
+      type: "connection_reader",
+      status: "pending",
+      registration: { type: "invite", confirmed_on: null },
+    });
+    await expect
+      .poll(() => projectAdmin.db.users!.findOne!({ username: recipient }))
+      .toMatchObject({ status: "pending" });
+    const invitationUrl = getLatestEmailUrl(emails, recipient);
+    expect(
+      (await request.get(invitationUrl, { maxRedirects: 0 })).status(),
+    ).toBe(302);
+    await expect
+      .poll(() => projectAdmin.db.users!.findOne!({ username: recipient }))
+      .toMatchObject({ status: "active" });
+    await adminContext.close();
+
+    const { syncSchema } = deployment;
+    await test.step("schema sync rejects configured and published inviteUser collisions", async () => {
+      const collisionError = {
+        message: 'Function "inviteUser" conflicts with built-in invitations',
+      };
+      appendFileSync(
+        join(configPath, "index.js"),
+        `
+module.exports.functions = {
+  customInvites: {
+    userFilter: { type: "admin" },
+    functions: { inviteUser: { run: async () => "Custom invitation" } },
+  },
+};`,
+      );
+      await expect(syncSchema()).rejects.toMatchObject(collisionError);
+      writeFileSync(
+        join(configPath, "index.js"),
+        `module.exports = ${JSON.stringify(config)};`,
+      );
+      const { connection } = await syncSchema();
+      const publishedInvite = await stateAdmin.db.published_methods!.insert(
+        {
+          connection_id: connection.id,
+          name: "inviteUser",
+          run: 'exports.run = async () => "Custom invitation";',
+        },
+        { returning: "*" },
+      );
+      await expect(syncSchema()).rejects.toMatchObject(collisionError);
+      await stateAdmin.db.published_methods!.delete({ id: publishedInvite.id });
+      const { project } = await syncSchema();
+      expect(project.methods?.inviteUser).toBeDefined();
+    });
+  } finally {
+    await deployment?.dispose();
+    await smtp.close();
+  }
+});
 
 test("user invitations confirm email, enforce roles independently of connection access, and support later sign-ins", async ({
   browser,
@@ -145,15 +371,7 @@ test("user invitations confirm email, enforce roles independently of connection 
         "UPDATE database_configs SET auth_providers = jsonb_set(auth_providers, '{email,allowInvites}', $1::jsonb) WHERE id = $2",
         [JSON.stringify(allowInvites), stateConfig.id],
       );
-    const getEmailUrl = (email: string) => {
-      const sent = emails.filter(({ recipient }) => recipient === email).at(-1);
-      const message = sent?.message
-        .replace(/=\r?\n/g, "")
-        .replaceAll("=3D", "=");
-      const url = message?.match(/http:\/\/[^\s<>"]+/)?.[0];
-      if (!url) throw new Error(`Invitation email missing for ${email}`);
-      return url;
-    };
+    const getEmailUrl = (email: string) => getLatestEmailUrl(emails, email);
     const rejectLink = async (url: string) => {
       await admin.sql!("DELETE FROM login_attempts");
       const response = await request.get(url, { maxRedirects: 0 });
@@ -1511,3 +1729,16 @@ test("user invitations confirm email, enforce roles independently of connection 
     await smtp.close();
   }
 });
+
+const getLatestEmailUrl = (
+  emails: { recipient: string; message: string }[],
+  recipient: string,
+) => {
+  const sentEmail = emails.findLast((email) => email.recipient === recipient);
+  const url = sentEmail?.message
+    .replace(/=\r?\n/g, "")
+    .replaceAll("=3D", "=")
+    .match(/http:\/\/[^\s<>"]+/)?.[0];
+  if (!url) throw new Error(`Invitation email missing for ${recipient}`);
+  return url;
+};

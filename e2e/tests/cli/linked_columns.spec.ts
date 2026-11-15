@@ -5539,6 +5539,14 @@ test("database migration preserves legacy nested display settings and drilldowns
     const { onMigrate } = getTableConfigMigrations(stateConnection!);
     const query = (sql: string, params?: unknown[]) =>
       state.sql!(sql, params, { returnType: "rows" });
+    const migrationDatabase = {
+      any: query,
+      none: query,
+      oneOrNone: async (sql: string, params?: unknown[]) => {
+        const [row] = await query(sql, params);
+        return row ?? null;
+      },
+    };
     // Older saved configurations can omit columns or computed function metadata.
     const computedColumns = [
       { name: "Missing", show: true, computedConfig: {} },
@@ -5573,7 +5581,7 @@ test("database migration preserves legacy nested display settings and drilldowns
     );
     await onMigrate({
       oldVersion: 6,
-      db: { any: query, none: query },
+      db: migrationDatabase,
     } as unknown as Parameters<typeof onMigrate>[0]);
     const migratedWindow = await state.db.windows!.findOne(usersWindowFilter);
     expect(migratedWindow!.columns).toEqual(
@@ -5617,7 +5625,7 @@ test("database migration preserves legacy nested display settings and drilldowns
     });
     await onMigrate({
       oldVersion: 6,
-      db: { any: query, none: query },
+      db: migrationDatabase,
     } as unknown as Parameters<typeof onMigrate>[0]);
     await expect
       .poll(async () => {

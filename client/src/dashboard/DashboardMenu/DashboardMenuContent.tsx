@@ -72,7 +72,10 @@ export const DashboardMenuContent = (props: P) => {
     >
       <FlexCol
         className={
-          "f-1 min-h-0 o-auto " + (window.isMobileDevice ? "p-p25" : "p-p5")
+          "f-1 min-h-0 o-auto " +
+          (window.isMobileDevice ?
+            "px-p25 pb-p25 mt-p25"
+          : "px-p5 pb-p5 mt-p5")
         }
       >
         <WorkspaceMenu

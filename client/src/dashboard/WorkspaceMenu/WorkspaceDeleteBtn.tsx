@@ -29,6 +29,7 @@ export const WorkspaceDeleteBtn = ({
       }}
       onClickClose={false}
       contentStyle={{ maxWidth: "300px" }}
+      footerStyle={{ padding: ".5em" }}
       clickCatchStyle={{ opacity: 0.2 }}
       positioning="beneath-center"
       button={
@@ -55,11 +56,13 @@ export const WorkspaceDeleteBtn = ({
       footerButtons={[
         {
           label: "Cancel",
+          size: "small",
           onClickClose: true,
         },
         {
           color: "danger",
           label: "Delete workspace",
+          size: "small",
           variant: "faded",
           "data-command": "WorkspaceDeleteBtn.Confirm",
           onClick: async (e) => {

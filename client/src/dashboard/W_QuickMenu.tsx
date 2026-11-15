@@ -21,6 +21,7 @@ import { Select } from "@components/Select/Select";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import type { AnyObject } from "prostgles-types";
 import { t } from "../i18n/i18nUtils";
+import { TableHeaderActions } from "./ActionPopup/TableHeaderActions";
 import type { DBS } from "./Dashboard/DBS";
 import { SmartFilterBarSearch } from "./SmartFilterBar/SmartFilterBarSearch";
 import { getLinkColorV2 } from "./W_Map/fetchData/getMapLayerQueries";
@@ -58,7 +59,7 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
     childWindows,
     getLinksAndWindows,
   } = props;
-  const { tables, dbs, db } = usePrgl();
+  const { tables, dbs, db, methods } = usePrgl();
   const table = tables.find((t) => t.name === w.table_name);
   const showLinks =
     (!show || show.link) &&
@@ -148,6 +149,13 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
               margin: "unset",
               marginRight: ".25em",
             }}
+          />
+        )}
+        {w.type === "table" && (
+          <TableHeaderActions
+            className="f-0 flex-row gap-p5"
+            methods={methods}
+            tableName={w.table_name}
           />
         )}
         {filterButton}

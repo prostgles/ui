@@ -1,11 +1,15 @@
 import { USER_TYPES } from "@common/authTypesAndConstants";
+import type { FunctionOptions } from "@common/functionOptions";
 import type { DBSSchema } from "@common/publishUtils";
 import { defineFunction } from "prostgles-server";
+import type { DBS } from "..";
 import { sendInviteEmail } from "../authConfig/invites/sendInviteEmail";
 import { getUserTypeWithoutSQLFilter } from "../publish/getAllowedConnectionsFilter";
 import { defineFunctionGroup } from "./defineFunctionGroup";
 
-export const userInviteFunctions = {
+export const getUserInviteFunctions = (
+  connection: { dbs: DBS; id: string; userTypes: string[] } | undefined,
+) => ({
   userInvites: defineFunctionGroup({
     userFilter: {
       type: { $in: [USER_TYPES.ADMIN, USER_TYPES.CONNECTION_ADMIN] },
@@ -16,17 +20,21 @@ export const userInviteFunctions = {
           "The user inherits the selected type's access. Sending again replaces a pending invitation. Disable the user to revoke it.",
         input: {
           email: "string",
-          userType: {
-            type: "ValueLookup",
-            table: "user_types",
-            column: "id",
-            title: "User type",
-            searchColumns: ["id"],
-            filter: { id: { $nin: [USER_TYPES.ADMIN, USER_TYPES.PUBLIC] } },
-          },
+          userType:
+            connection ?
+              { enum: connection.userTypes, title: "User type" }
+            : {
+                type: "ValueLookup",
+                table: "user_types",
+                column: "id",
+                title: "User type",
+                searchColumns: ["id"],
+                filter: { id: { $nin: [USER_TYPES.ADMIN, USER_TYPES.PUBLIC] } },
+              },
         },
         unrestrictedDbAccess: true,
-        run: async ({ email: inputEmail, userType }, { dbo: dbs, user }) => {
+        run: async ({ email: inputEmail, userType }, { dbo, user }) => {
+          const dbs = connection?.dbs ?? dbo;
           if (user.passwordless_admin) {
             throw new Error("Set an admin password before inviting users");
           }
@@ -36,6 +44,7 @@ export const userInviteFunctions = {
           }
           const allowedType = await dbs.user_types.findOne({
             id: userType as DBSSchema["user_types"]["id"],
+            ...(connection && getConnectionInviteUserTypeFilter(connection.id)),
             ...(user.type === USER_TYPES.CONNECTION_ADMIN &&
               getUserTypeWithoutSQLFilter([])),
           });
@@ -91,4 +100,35 @@ export const userInviteFunctions = {
       }),
     },
   }),
-};
+});
+
+export const userInviteFunctions = getUserInviteFunctions(undefined);
+
+export const userInviteFunctionOptions = {
+  inviteUser: {
+    title: "Invite user",
+    showInTableHeader: ["users"],
+    action: {
+      defaultValue: {
+        text: "Send invitation",
+        icon: "AccountPlusOutline",
+        color: "green",
+      },
+    },
+    renderOutputAsMarkdown: true,
+  },
+} satisfies Record<
+  keyof typeof userInviteFunctions.userInvites.functions,
+  FunctionOptions
+>;
+
+export const getConnectionInviteUserTypeFilter = (connectionId: string) => ({
+  $existsJoined: {
+    path: [
+      "access_control_user_types",
+      "access_control",
+      "access_control_connections",
+    ],
+    filter: { connection_id: connectionId },
+  },
+});

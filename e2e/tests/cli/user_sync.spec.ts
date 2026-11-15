@@ -165,6 +165,12 @@ test("CLI user sync reconciles profiles and access without copying credentials",
           auth_provider_profile: null,
         });
       const member = await deployment.connectProjectAs("member");
+      expect(member.methods?.inviteUser).toBeUndefined();
+      const projectAdmin = await deployment.connectProjectAs("admin");
+      expect(projectAdmin.methodSchema?.inviteUser).toMatchObject({
+        function_options: { showInTableHeader: ["users"] },
+      });
+      projectAdmin.disconnect();
       const syncedUsers = member.tableSchema?.find(
         (table) => table.name === "users",
       );
@@ -322,6 +328,9 @@ test("CLI user sync reconciles profiles and access without copying credentials",
         [deployment.projectDatabaseName],
       );
       await reloadConfig(false);
+      const unsyncedAdmin = await deployment.connectProjectAs("admin");
+      expect(unsyncedAdmin.methods?.inviteUser).toBeUndefined();
+      unsyncedAdmin.disconnect();
       await stateDatabase.none(
         "UPDATE users SET name = 'While disabled' WHERE username = 'member'",
       );
@@ -330,6 +339,9 @@ test("CLI user sync reconciles profiles and access without copying credentials",
         "Updated outside the old cursor",
       );
       await reloadConfig(true);
+      const syncedAdmin = await deployment.connectProjectAs("admin");
+      expect(syncedAdmin.methods?.inviteUser).toBeDefined();
+      syncedAdmin.disconnect();
       await expect
         .poll(() => findProjectUser("member"))
         .toMatchObject({ name: "While disabled" });

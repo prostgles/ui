@@ -23,7 +23,6 @@ import { createReactiveState } from "../../appUtils";
 import { t } from "../../i18n/i18nUtils";
 import { CodeEditor } from "../CodeEditor/CodeEditor";
 import { SmartFilterBar } from "../SmartFilterBar/SmartFilterBar";
-import { TableHeaderActions } from "../ActionPopup/TableHeaderActions";
 import Window from "../Window/Window";
 import { CardView } from "./CardView/CardView";
 import { ColumnMenu, type ColumnMenuState } from "./ColumnMenu/ColumnMenu";
@@ -290,11 +289,6 @@ const W_Table = (props: W_TableProps) => {
             />
           )}
 
-          <TableHeaderActions
-            className="p-p5"
-            methods={prgl.methods}
-            tableName={tableName}
-          />
           {showFilterBar && (
             <FlexCol
               key={"W_Table_Filters"}

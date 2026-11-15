@@ -3,6 +3,7 @@ import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type { ProstglesInitState } from "@common/electronInitTypes";
 import type { ConnectionDetails } from "@src/connectionUtils/getConnectionDetails";
 import { stateServerFunctions } from "@src/serverFunctions/stateServerFunctions";
+import { userInviteFunctionOptions } from "@src/serverFunctions/userInviteFunctions";
 import { modifyClientFunctionSchema } from "@src/ConnectionManager/modifyClientFunctionSchema";
 import type { Express } from "express";
 import { existsSync } from "fs";
@@ -201,20 +202,10 @@ export const startProstgles = async ({
             return Boolean(user && user.type === USER_TYPES.ADMIN);
           },
           functions: stateServerFunctions,
-          modifyClientFunctionSchema: modifyClientFunctionSchema(undefined, {
-            inviteUser: {
-              title: "Invite user",
-              showInTableHeader: ["users"],
-              action: {
-                defaultValue: {
-                  text: "Send invitation",
-                  icon: "AccountPlusOutline",
-                  color: "green",
-                },
-              },
-              renderOutputAsMarkdown: true,
-            },
-          }),
+          modifyClientFunctionSchema: modifyClientFunctionSchema(
+            undefined,
+            userInviteFunctionOptions,
+          ),
           publish,
           joins: "inferred",
           onReady: async (params, update) => {
