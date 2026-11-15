@@ -12,8 +12,9 @@ import remarkGfm from "remark-gfm";
 
 type P = {
   isElectron: boolean;
+  className?: string;
 };
-export const Documentation = ({ isElectron }: P) => {
+export const Documentation = ({ isElectron, className = "p-1" }: P) => {
   const { docFiles, docFilesMap } = useMemo(() => {
     const docFiles = getDocumentationFiles(isElectron).map((d) => ({
       ...d,
@@ -36,7 +37,7 @@ export const Documentation = ({ isElectron }: P) => {
   const WrappingElement = window.isLowWidthScreen ? FlexCol : FlexRow;
 
   return (
-    <FlexCol className="Documentation min-s-0 bg-color-0 p-1">
+    <FlexCol className={`Documentation min-s-0 bg-color-0 ${className}`}>
       <WrappingElement className="ai-start min-s-0 f-1">
         <ScrollFade role="navigation">
           {docFiles.map((docFile) => (

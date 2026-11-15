@@ -21,7 +21,7 @@ export type RenderFilterProps = {
   onChange: (filter: SingleGroupFilter) => void;
   contextData: ContextDataSchema | undefined;
   title?: string;
-  mode?: ("micro" | BtnProps) | "compact" | "minimised";
+  mode?: ("micro" | BtnProps) | "compact" | "minimised" | "minimised-popup";
   itemName: "filter" | "condition";
   selectedColumns: ColumnConfig[] | undefined;
   hideOperand?: boolean;
@@ -50,12 +50,11 @@ export const RenderFilter = (props: RenderFilterProps) => {
     return <>Unexpected {itemName}. Expecting $and / $or</>;
   }
 
-  const content = (showAddFilter?: boolean) => (
+  const content = (showAddFilter?: boolean, asMinimised = minimised) => (
     <>
       <GroupedFilterControl
         type="where"
         itemName={itemName}
-        filterClassName="b b-action"
         contextData={contextData}
         variant={
           minimised ? "row"
@@ -69,10 +68,12 @@ export const RenderFilter = (props: RenderFilterProps) => {
         selectedColumns={selectedColumns}
         hideOperand={hideOperand}
         filter={f}
-        onChange={onChange}
+        onChange={
+          mode === "minimised-popup" && asMinimised ? () => {} : onChange
+        }
         newFilterType={contextData ? "=" : undefined}
         hideToggle={true}
-        minimised={minimised}
+        minimised={asMinimised}
         showAddFilter={showAddFilter}
         extraFilters={undefined}
         showNoFilterInfoRow={true}
@@ -100,14 +101,15 @@ export const RenderFilter = (props: RenderFilterProps) => {
       positioning="center"
       onClickClose={false}
       button={
-        <Btn
-          title={title}
-          iconPath={mdiFilter}
-          // variant="icon"
-          color={filterIsNotEmpty ? "action" : undefined}
-          {...(mode === "micro" ? {} : mode)}
-          data-command="RenderFilter.edit"
-        />
+        mode === "minimised-popup" ?
+          content(false, true)
+        : <Btn
+            title={title}
+            iconPath={mdiFilter}
+            color={filterIsNotEmpty ? "action" : undefined}
+            {...(mode === "micro" ? {} : mode)}
+            data-command="RenderFilter.edit"
+          />
       }
       contentStyle={{
         minWidth: "400px",

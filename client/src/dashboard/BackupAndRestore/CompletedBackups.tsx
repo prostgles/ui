@@ -136,7 +136,9 @@ export const CompletedBackups = ({
           name: "created_ago" as "created",
           label: "Created",
           select: { $ageNow: ["created", null, "second"] },
-          render: (value: AnyObject) => <StyledInterval value={value} />,
+          render: (value: AnyObject) => (
+            <StyledInterval value={value} showAgo />
+          ),
         },
         {
           name: "dbSizeInBytes",
@@ -189,7 +191,9 @@ export const CompletedBackups = ({
           label: "Last restored",
           hideIf: (v) => !v,
           select: { $ageNow: ["restore_end", null, "second"] },
-          render: (value: AnyObject) => <StyledInterval value={value} />,
+          render: (value: AnyObject) => (
+            <StyledInterval value={value} showAgo />
+          ),
         },
         restoreLogsFConf,
       ]}

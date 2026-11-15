@@ -7,6 +7,7 @@ import { t } from "../../../../i18n/i18nUtils";
 import { updateWCols } from "../../tableUtils/tableUtils";
 import type { ColumnConfigNested } from "@common/ColumnConfig/ColumnConfig";
 import type { LinkedColumnProps } from "./LinkedColumn";
+import { getColumnsAfterRemoving } from "../../tableUtils/getColumnsAfterRemoving";
 
 export const NEW_COL_POSITIONS = [
   { key: "start", label: "Start of table" },
@@ -51,12 +52,14 @@ export const LinkedColumnFooter = ({
             onClick={() => {
               void updateWCols(
                 w,
-                w.$get()?.columns?.filter((c) => c.name !== column.name),
+                getColumnsAfterRemoving(w.$get()?.columns ?? [], column),
               );
               onClose?.();
             }}
           >
-            {t.common.Remove}
+            {column.defaultConfig?.nested?.fallbackColumn ?
+              "Remove reference display"
+            : t.common.Remove}
           </Btn>
         )}
 

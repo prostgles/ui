@@ -40,7 +40,8 @@ export const useMCPServerEnable = ({
 
     const mustProvideConfig =
       newEnabled &&
-      (config_schema || command === "streamable-http") &&
+      (Object.keys(config_schema ?? {}).length ||
+        command === "streamable-http") &&
       lastConfigId === undefined &&
       !defaultConfig;
     if (mustProvideConfig) {

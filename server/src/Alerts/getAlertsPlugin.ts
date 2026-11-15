@@ -42,9 +42,7 @@ export const getAlertsPlugin = (
     if ("query" in alert) {
       if ("prepare" in alert)
         throw new Error(`Alert ${key} must use either query or prepare`);
-      validateAlertQuery(
-        pickKeys(alert, ["query", "template", "deduplicate"]),
-      );
+      validateAlertQuery(pickKeys(alert, ["query", "template", "deduplicate"]));
     } else if (typeof alert.prepare !== "function") {
       throw new Error(`Alert ${key} requires a query or prepare callback`);
     } else if ("deduplicate" in alert) {
@@ -96,7 +94,7 @@ export const getAlertsPlugin = (
   } satisfies JobsOptions<void, ProstglesContext>["definitions"];
 
   return {
-    functions: getAlertFunctions(options, dbs, syncUsers, getClientDBHandlers),
+    ...getAlertFunctions(options, dbs, syncUsers, getClientDBHandlers),
     tableOptions: getAlertTableOptions(names),
     tableConfig: {
       [names.channels]: {
@@ -106,12 +104,12 @@ export const getAlertsPlugin = (
             channelNames.map((channel) => [channel, {}]),
           ),
         },
-        publish: { insert: false, update: false, delete: false },
+        publishRestrictions: { insert: false, update: false, delete: false },
       },
       [names.alerts]: tables.alerts,
       [names.deliveries]: {
         ...tables.deliveries,
-        publish: { insert: false, update: false, delete: false },
+        publishRestrictions: { insert: false, update: false, delete: false },
       },
     },
     tableHooks: {

@@ -1,49 +1,54 @@
 import type { TableOptions } from "../managedTableSchema";
 
-const cardLabelSchema = {
-  enum: ["above", "inline", "none"],
+export const cardLayoutSectionsSchema = {
   optional: true,
-} as const;
-
-export const cardLayoutOptionsSchema = {
-  type: {
-    type: { enum: ["flex", "grid"], optional: true },
+  description:
+    "Ordered detail sections below the summary. Fields not used by the header, summary or sections appear under Show additional fields. Array order controls field placement; do not repeat fields. An empty array explicitly selects no detail fields.",
+  arrayOfType: {
+    header: { type: "string", optional: true },
+    layout: {
+      enum: ["grid", "inline"],
+      optional: true,
+      description:
+        "Defaults to grid. Inline sizes fields to their content and wraps them onto new lines as needed.",
+    },
     columns: {
-      type: "integer",
+      enum: [1, 2, 3, 4],
       optional: true,
-      description: "Number of grid columns, starting at 1. Defaults to 2.",
+      description:
+        "Grid only. Defaults to 2. Grid sections collapse to one column when narrow.",
     },
-    labels: {
-      ...cardLabelSchema,
-      description: "Default field label display. Defaults to above.",
-    },
-    fields: {
-      optional: true,
-      description: "Card-only layout overrides, keyed by field name.",
-      record: {
-        partial: true,
-        values: {
-          type: {
-            columnSpan: {
-              type: "integer",
-              optional: true,
-              description:
-                "Grid columns occupied by this field. Defaults to 1.",
+    items: {
+      arrayOf: {
+        oneOf: [
+          "string",
+          {
+            type: {
+              key: "string",
+              labelPlacement: {
+                enum: ["hidden", "above", "inline"],
+                optional: true,
+                description: "Defaults to above.",
+              },
+              columnSpan: {
+                enum: [1, 2, 3, 4],
+                optional: true,
+                description:
+                  "Grid only. Defaults to 1. Must not exceed section columns.",
+              },
             },
-            row: {
-              type: "integer",
-              optional: true,
-              description:
-                "Starting grid row, numbered from 1. Omit for automatic placement.",
-            },
-            labels: cardLabelSchema,
           },
-        },
+        ],
       },
     },
   },
 } as const;
 
-export type CardLayoutOptions = NonNullable<
-  NonNullable<TableOptions["card"]>["layout"]
->;
+export const hasCardFieldLists = (card: TableOptions["card"]) =>
+  !!(card?.summaryFields || card?.layoutSections);
+
+export type CardLayoutSection = NonNullable<
+  NonNullable<TableOptions["card"]>["layoutSections"]
+>[number];
+
+export type CardMode = "summary" | "details" | "expanded";

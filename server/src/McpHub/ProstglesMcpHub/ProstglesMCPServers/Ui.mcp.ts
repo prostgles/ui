@@ -307,13 +307,14 @@ const handler = {
           if (!con) {
             throw new Error(`Connection with id ${connection_id} not found`);
           }
+          const tableOptions = mergeTableMetadata(
+            con.table_options,
+            metadata,
+          ) as NonNullable<typeof con.table_options>;
           await dbs.connections.update(
             { id: connection_id },
             {
-              table_options: mergeTableMetadata(
-                con.table_options,
-                metadata,
-              ) as typeof con.table_options,
+              table_options: tableOptions,
             },
           );
         },

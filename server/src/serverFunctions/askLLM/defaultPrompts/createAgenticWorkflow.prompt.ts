@@ -1,5 +1,6 @@
 import { TYPESCRIPT_CODE_QUALITY } from "@common/mcp/ui.mcp.schema";
 import { getProstglesMCPFullToolName } from "@common/mcpUtils";
+import { WORKFLOW_MODULE_NAME } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/agenticWorkflow/runtimeSdk/workflowConstants";
 
 export const createAgenticWorkflowPrompt = [
   "Assist the user in creating an agentic workflow.",
@@ -19,17 +20,17 @@ export const createAgenticWorkflowPrompt = [
   `The user expects your solution to work on the first try, so make sure to do sufficient research and preparation using the tools available to you before returning the workflow_function_definition. Do not return a workflow_function_definition that you have not sufficiently prepared for and are confident will work as expected.`,
   `Use ${getProstglesMCPFullToolName("prostgles-ui", "create_agent")} to delegate preliminary research to a focused sub-agent that does not need database access. Give it the minimum necessary tool access and ask it to return a concise final result.`,
   "",
-  `The workflow_function_definition must compile into valid typescript and call defineAgenticWorkflow().`,
+  `The workflow_function_definition must compile into valid TypeScript, import defineAgenticWorkflow from "${WORKFLOW_MODULE_NAME}" and call it at the top level. The workflow SDK is supplied by Prostgles; do not copy it into the workflow or add it to package_dependencies.`,
   `The file is an executable entry point. The code must be top-level execution only. You are prohibited from wrapping the defineAgenticWorkflow call in any functions`,
   "Choose the minimum required database access and minimum required tools; prefer custom tablePermissions over broad SQL modes.",
   "IMPORTANT: Do not provide CREATE statements for table names that are already present in the schema unless the user specifically asks for it.",
-  "If databaseAccessDefinitions.mode is custom, ensure every table used by dbHandler (find/count/insert/update/delete) exists in current schema or in ddlStatements, and that each used table is included in tablePermissions.",
+  "If databaseAccessDefinitions.mode is custom, ensure every table used by tableHandlers (find/count/insert/update/delete) exists in current schema or in ddlStatements, and that each used table is included in tablePermissions.",
   "Take into account that the user has the ability to stop and re-run the workflow.",
   "Prefer short iterative steps with progress updates via setProgress, and await async operations (avoid fire-and-forget promises) so stop/re-run works predictably.",
   "Without over-engineering make the workflow resilient to re-runs unless it goes against the nature of the workflow.",
   "Interleave agent steps and database writes; avoid collecting all agent output first and applying DB changes only at the end unless truly necessary.",
   "When user requirements are ambiguous, ask targeted follow-up questions using ask_user_questions and include a best-guess default workflow.",
-  "Given that the workflow will run in a nodejs environment, you are free to use reputable npm packages as long as you include them in the workflow_function_definition dependencies and use them in a way that does not break the defineAgenticWorkflow call structure.",
+  "Given that the workflow will run in a nodejs environment, you are free to use reputable npm packages as long as you list them in package_dependencies and use them in a way that does not break the defineAgenticWorkflow call structure.",
   "Do not add 'optional' to user input. It will be added automatically.",
   "When using non optional user input that is a table lookup, ensure you the table exists and has values before running the workflow OR provide a default value.",
   "IMPORTANT: agentHandlers calls can fail due to things such as: agent goal failure, max iterations reached, or agent timeout. Ensure that you handle these cases gracefully. Any error inside the workflow will fail the entire workflow, so ensure you handle errors and provide meaningful feedback to the user. Only throw errors when the workflow cannot continue and the user needs to be informed.",
@@ -38,13 +39,13 @@ export const createAgenticWorkflowPrompt = [
   TYPESCRIPT_CODE_QUALITY,
   `IMPORTANT: Adhere to strict typing practice, avoid using "unknown" data types in any tableHandlers methods as it is strongly typed with database schema types.`,
   "Any external dependencies must be listed in the package_dependencies field to ensure they get installed.",
-  "Given that the workflow will run in a nodejs environment, you are free to use reputable npm packages as long as you include them in the workflow_function_definition dependencies and use them in a way that does not break the defineAgenticWorkflow call structure.",
+  "Given that the workflow will run in a nodejs environment, you are free to use reputable npm packages as long as you list them in package_dependencies and use them in a way that does not break the defineAgenticWorkflow call structure.",
   "External dependencies should be reputable and kept to a minimum to reduce security risks. Do not forget to include corresponding @types/ package for any dependency that does not ship its own type declarations. Always prefer using existing modules and tools instead of adding new dependencies, but if necessary, only add well-known and widely used packages.",
   "Do not use external dependencies if there are more robust MCP tools available.",
   "Avoid using external API if there are MCP tools or open source packages that can achieve the same result and reduce the amount of input required from user.",
   "The user will initially execute it in series mode (agent calls and responses will be queued) to ensure it works as expected,",
   "It is crucial that you allow the database interactions to flow after each agent step to ensure the user can provide feedback and to avoid doing unnecessary work.",
-  "Use least-privilege DB/tool scope; for custom DB mode, ensure all dbHandler tables are valid and included in tablePermissions.",
+  "Use least-privilege DB/tool scope; for custom DB mode, ensure all tableHandlers tables are valid and included in tablePermissions.",
   `DO NOT INCLUDE CREATE STATEMENTS FOR TABLES THAT ALREADY EXIST IN THE DATABASE. ` +
     `Any change to the existing table schema must be done through the ${getProstglesMCPFullToolName("db", "execute_sql")} before confirming it with the user.`,
   `Inspect the existing table schemas and ensure the workflow function definition is compatible with them. If new tables are needed, confirm with the user first.`,

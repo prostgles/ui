@@ -1,26 +1,24 @@
 import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
 import { isDefined } from "prostgles-types";
 import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
-import { getCardFieldLayout } from "./getCardLayoutStyle";
+import { getColumnActions } from "../W_Table/ColumnMenu/ColumnDisplayFormat/getFormatColumnSelect";
+import {
+  hasCardFieldLists,
+  type CardMode,
+} from "@common/ColumnConfig/cardLayout";
+import { getSectionedCardColumns } from "./getSectionedCardColumns";
 
 export const getTableCardColumns = <
   Column extends Pick<
     ColumnConfigWithInfo,
-    "name" | "show" | "infoLevel" | "idx" | "nested" | "defaultConfig"
+    "name" | "show" | "idx" | "nested" | "defaultConfig" | "format" | "info"
   >,
 >(
-  table: Pick<DBSchemaTableWJoins, "card" | "columnConfigs" | "columns">,
+  table: Pick<DBSchemaTableWJoins, "card" | "columns">,
   columns: Column[],
-  infoLevel: 1 | 2 = 1,
-  columnConfig: Pick<ColumnConfigWithInfo, "infoLevel">[] = columns,
+  cardMode: CardMode = "summary",
 ) => {
-  const hasInfoLevels =
-    columnConfig.some((column) => column.infoLevel) ||
-    columns.some((column) => column.infoLevel) ||
-    Object.values(table.columnConfigs ?? {}).some((column) => column.infoLevel);
   const { card } = table;
-  const layout =
-    infoLevel === 1 ? { ...card?.layout, type: "flex" as const } : card?.layout;
   const resolveColumn = (name: string | undefined) => {
     if (!name) return;
     return (
@@ -61,39 +59,36 @@ export const getTableCardColumns = <
         .filter(isDefined),
     ]),
   );
-  const visibleColumns = new Set(
-    orderedColumns.filter((column, index) => {
-      const level =
-        hasInfoLevels ? column.infoLevel
-        : index + missingHeaderCount < 10 ? 1
-        : 2;
-      return level && level <= infoLevel;
-    }),
+  const summaryColumns = orderedColumns.filter(
+    (column, index) =>
+      index + missingHeaderCount < 10 || !!getColumnActions(column),
   );
-  const isVisible = (column: Column | undefined): column is Column =>
-    !!column && visibleColumns.has(column);
-  const bodyColumns = orderedColumns
-    .filter((column) => isVisible(column) && !headerColumns.includes(column))
-    .map((column) => {
-      const fallbackName =
-        column.nested?.fallbackColumn ??
-        column.defaultConfig?.nested?.fallbackColumn;
-      return {
-        column,
-        ...getCardFieldLayout(
-          layout,
-          card?.layout?.fields?.[column.name] ??
-            (fallbackName ? card?.layout?.fields?.[fallbackName] : undefined),
-          false,
-        ),
-      };
-    });
-
+  const resolvedCard =
+    card && hasCardFieldLists(card) ? card : (
+      {
+        summaryFields: summaryColumns
+          .filter((column) => !headerColumns.includes(column))
+          .map(({ name }) => name),
+        layoutSections: [
+          {
+            items: orderedColumns
+              .filter((column) => !summaryColumns.includes(column))
+              .map(({ name }) => name),
+          },
+        ],
+      }
+    );
   return {
-    avatarColumn: isVisible(avatarColumn) ? avatarColumn : undefined,
-    headerColumn: isVisible(headerColumn) ? headerColumn : undefined,
-    subHeaderColumns: subHeaderColumns.filter(isVisible),
-    headerColumns: headerColumns.filter(isVisible),
-    bodyColumns,
+    avatarColumn,
+    headerColumn,
+    subHeaderColumns,
+    headerColumns,
+    ...getSectionedCardColumns({
+      card: resolvedCard,
+      columns: orderedColumns,
+      headerColumns,
+      resolveColumn,
+      cardMode,
+    }),
   };
 };

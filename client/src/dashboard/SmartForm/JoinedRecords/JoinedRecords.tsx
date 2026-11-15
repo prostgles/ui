@@ -71,9 +71,7 @@ export const JoinedRecords = (props: JoinedRecordsProps) => {
     }
   }, [sections, onTabChange, activeTabKey]);
 
-  if (isLoadingSections) {
-    return <Loading className="m-1 as-center" />;
-  } else if (!sections.length) {
+  if (!sections.length) {
     return null;
   }
 
@@ -85,11 +83,12 @@ export const JoinedRecords = (props: JoinedRecordsProps) => {
     <FlexCol
       data-command="JoinedRecords"
       className={classOverride(
-        "gap-0 bt b-color min-h-0 bg-inherit f-1",
+        "gap-0 bt b-color min-h-0 bg-inherit f-1 relative",
         className,
       )}
       style={style}
     >
+      {isLoadingSections && <Loading variant="cover" />}
       {sections.map((section) => {
         const { label, path, count, table } = section;
         const icon = table.icon;

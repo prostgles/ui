@@ -1,5 +1,7 @@
 import { FTS_FILTER_TYPES, TEXT_FILTER_TYPES } from "@common/filterUtils";
 import Btn from "@components/Btn";
+import { useAlert } from "@components/AlertProvider";
+import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol, FlexRow } from "@components/Flex";
 import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
 import PopupMenu from "@components/PopupMenu";
@@ -25,6 +27,7 @@ export type FilterProps = BaseFilterProps &
   };
 
 export const DetailedFilterBaseControlRouter = (props: FilterProps) => {
+  const { addAlert } = useAlert();
   const {
     column,
     tables,
@@ -53,11 +56,22 @@ export const DetailedFilterBaseControlRouter = (props: FilterProps) => {
   ) {
     return <GeoFilter filter={propsFilter} {...props} error={error} />;
   } else if (includes(AgeFilterTypes, propsFilter?.type)) {
-    return <AgeFilter {...props} error={error} />;
+    return <AgeFilter {...props} error={error} part="value" />;
   } else if (propsFilter?.type === "not null" || propsFilter?.type === "null") {
     return null;
   } else if (includes(ListFilter.TYPES, propsFilter?.type)) {
-    return <ListFilter {...props} error={error} />;
+    return (
+      <ListFilter
+        {...props}
+        error={error}
+        onError={(error) => {
+          addAlert({
+            title: "Could not load filter options",
+            children: <ErrorComponent error={error} findMsg={true} />,
+          });
+        }}
+      />
+    );
   } else {
     const textFilterType =
       ["$ilike", "$like", "$nilike", "$nlike"].includes(filter.type) ? "text"
@@ -67,7 +81,8 @@ export const DetailedFilterBaseControlRouter = (props: FilterProps) => {
     if (textFilterType) {
       return (
         <FormFieldDebounced
-          className="m-p5"
+          className="FilterWrapper_TextInput"
+          inputStyle={{ minHeight: "30px" }}
           type="text"
           autoComplete="off"
           value={filter.value}
@@ -83,6 +98,7 @@ export const DetailedFilterBaseControlRouter = (props: FilterProps) => {
               <PopupMenu
                 button={
                   <Btn
+                    size="small"
                     iconPath={
                       filter.ftsFilterOptions?.lang === "simple" ?
                         mdiFormatLetterMatches
@@ -141,7 +157,7 @@ export const DetailedFilterBaseControlRouter = (props: FilterProps) => {
       );
       return (
         <SmartSearch
-          className=" "
+          className="FilterWrapper_TextInput"
           key={key}
           db={db}
           extraFilters={extraFilters}

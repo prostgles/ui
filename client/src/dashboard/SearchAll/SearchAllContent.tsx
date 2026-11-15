@@ -23,7 +23,7 @@ export const SearchAllContent = (props: SearchAllProps & SearchAllState) => {
   });
 
   return (
-    <div className="flex-row w-full min-h-0">
+    <div className="flex-row f-1 w-full min-h-0">
       <FlexCol className="min-w-0 min-h-0 f-1">
         <SearchList
           key={props.mode}

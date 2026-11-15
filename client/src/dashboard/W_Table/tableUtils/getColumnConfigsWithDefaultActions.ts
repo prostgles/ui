@@ -1,5 +1,7 @@
 import type { ActionColumnsParams } from "@common/actionColumn";
 import type { ActionColumnValue } from "@common/createActionColumn";
+import { hasCardFieldLists } from "@common/ColumnConfig/cardLayout";
+import { getFunctionOptions } from "@common/functionOptions";
 import {
   getActionFunctions,
   isDefined,
@@ -10,7 +12,7 @@ import type { DBSchemaTableWithOptions } from "../../Dashboard/getTables";
 export const getColumnConfigsWithDefaultActions = (
   table: DBSchemaTableWithOptions,
   methods: ServerFunctionHandler,
-): DBSchemaTableWithOptions["columnConfigs"] => {
+): Pick<DBSchemaTableWithOptions, "columnConfigs" | "card"> => {
   const { columnConfigs } = table;
   if (
     Object.values(columnConfigs ?? {}).some(
@@ -18,7 +20,7 @@ export const getColumnConfigsWithDefaultActions = (
         format?.type === "Action" || format?.type === "ActionColumns",
     )
   ) {
-    return columnConfigs;
+    return { columnConfigs, card: table.card };
   }
 
   const storedActions = table.columns
@@ -43,7 +45,10 @@ export const getColumnConfigsWithDefaultActions = (
     })
     .filter(isDefined);
 
-  const functions = getActionFunctions(methods, table);
+  const functions = getActionFunctions(methods, table).filter(
+    ({ methodName }) =>
+      !getFunctionOptions(methods[methodName])?.showInTableHeader?.length,
+  );
   const jobColumns = Array.from(
     new Set(
       functions.flatMap(({ methodName }) => {
@@ -73,28 +78,40 @@ export const getColumnConfigsWithDefaultActions = (
       .map(({ methodName, argName }) => ({ methodName, argName })),
   ];
   if (!actions.length) {
-    return columnConfigs;
+    return { columnConfigs, card: table.card };
   }
   const reservedNames = new Set([
     ...table.columns.map(({ name }) => name),
     ...Object.keys(columnConfigs ?? {}),
   ]);
-  let name = "__actions";
+  let name = "Actions";
   let suffix = 1;
   while (reservedNames.has(name)) {
-    name = `__actions_${suffix++}`;
+    name = `Actions_${suffix++}`;
   }
   return {
-    ...columnConfigs,
-    ...Object.fromEntries(
-      storedActions.map(({ column, config }) => [
-        column.name,
-        { show: false, ...config },
-      ]),
-    ),
-    [name]: {
-      label: "Actions",
-      format: { type: "ActionColumns", params: { actions } },
+    columnConfigs: {
+      ...columnConfigs,
+      ...Object.fromEntries(
+        storedActions.map(({ column, config }) => [
+          column.name,
+          { show: false, ...config },
+        ]),
+      ),
+      [name]: {
+        label: "Actions",
+        show: true,
+        format: { type: "ActionColumns", params: { actions } },
+      },
     },
+    card:
+      table.card && hasCardFieldLists(table.card) ?
+        {
+          ...table.card,
+          summaryFields: [
+            ...new Set([...(table.card.summaryFields ?? []), name]),
+          ],
+        }
+      : table.card,
   };
 };

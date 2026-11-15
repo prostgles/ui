@@ -7,10 +7,7 @@ import type {
 import { type DBSSchemaForInsert } from "@common/publishUtils";
 import { MINI_BARCHART_COLOR } from "@common/ColumnConfig/COLOR_PALETTE";
 import { isDefined, pickKeys } from "prostgles-types";
-import {
-  DEFAULT_TABLE_OPTIONS,
-  type WindowData,
-} from "@common/ColumnConfig/WindowData";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 import type {
   ColumnConfig,
   NestedColumn,
@@ -66,14 +63,8 @@ export const loadGeneratedTable = (
       style: parseColumnStyle(c.styling),
     };
   });
-  const {
-    sort,
-    filter,
-    filterOperand,
-    quickFilterGroups,
-    table_name,
-    title,
-  } = generatedWindow;
+  const { sort, filter, filterOperand, quickFilterGroups, table_name, title } =
+    generatedWindow;
   const hasOptions =
     filterOperand !== undefined || quickFilterGroups !== undefined;
   return {
@@ -83,7 +74,6 @@ export const loadGeneratedTable = (
     filter,
     ...(hasOptions && {
       options: {
-        ...DEFAULT_TABLE_OPTIONS,
         filterOperand,
         quickFilterGroups,
       } satisfies WindowData<"table">["options"],
@@ -154,9 +144,9 @@ const parseColumnStyle = (
     return {
       ...styling,
       type: "Scale",
-      minColor: styling.minColor ?? "#63f717",
-      maxColor: styling.maxColor ?? "#46b5d5",
-      textColor: styling.textColor ?? "black",
+      minColor: styling.minColor ?? "var(--light-blue)",
+      maxColor: styling.maxColor ?? "var(--blue)",
+      textColor: styling.textColor ?? "var(--text-0)",
     };
   }
   if (styling?.type !== "conditional") return styling;
@@ -166,14 +156,12 @@ const parseColumnStyle = (
     buttonVariant: styling.buttonVariant,
     fontWeight: styling.fontWeight,
     conditions: styling.conditions.map((condition) => {
-      const style =
-        CHIP_COLOR_NAMES[condition.chipColor] ?? CHIP_COLOR_NAMES.blue!;
+      const style = CHIP_COLOR_NAMES[condition.chipColor];
       return {
         condition: condition.value,
         operator: condition.operator,
         textColor: style.textColor,
         chipColor: style.color,
-        textColorDarkMode: style.textColorDarkMode,
       };
     }),
   };

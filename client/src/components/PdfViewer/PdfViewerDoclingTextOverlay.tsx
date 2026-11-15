@@ -32,7 +32,6 @@ export const PdfViewerDoclingTextOverlay = ({
         zIndex: 3,
         pointerEvents: "none",
       }}
-      className="PdfViewerDoclingTextOverlay"
     >
       <DoclingDocumentViewerPage
         document={doclingDocument}

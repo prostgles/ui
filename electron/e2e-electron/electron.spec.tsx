@@ -6,14 +6,23 @@ import {
   test,
 } from "@playwright/test";
 import { testLocalFileOpening } from "./testLocalFileOpening";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { testStartupErrors } from "./testStartupErrors";
 let electronApp: ElectronApplication | undefined;
+const userDataDir = mkdtempSync(join(tmpdir(), "prostgles-desktop-e2e-"));
 
 const start = Date.now();
 const urlsOpened: string[] = [];
 test.beforeAll(async () => {
   process.env.CI = "e2e";
   electronApp = await electron.launch({
-    args: [__dirname + "/../build/main.js", "--no-sandbox"],
+    args: [
+      __dirname + "/../build/main.js",
+      "--no-sandbox",
+      `--user-data-dir=${userDataDir}`,
+    ],
     env: {
       ...process.env,
       NODE_ENV: "development",
@@ -22,7 +31,7 @@ test.beforeAll(async () => {
     // tracesDir: './dist',
     // recordVideo: { dir: './dist' }
   });
-  electronApp.on("window", async (page) => {
+  electronApp.on("window", (page) => {
     urlsOpened.push(page.url());
     console.log(`Windows opened: `, urlsOpened);
 
@@ -56,6 +65,7 @@ test.afterAll(async () => {
     }
   }, 1e3);
   await electronApp?.close();
+  rmSync(userDataDir, { recursive: true, force: true });
   waitTimeSeconds = 0;
   console.log("afterAll electronApp", !!electronApp);
 });
@@ -69,9 +79,9 @@ test("renders the first page", async () => {
   }
 
   const page = await electronApp.firstWindow({ timeout: 120_000 });
+  await testStartupErrors(page, electronApp, userDataDir);
 
   const screenshot = async (name?: string) => {
-    if (!page) return;
     await page.screenshot({
       path: `../e2e/electron-report/s-${name ?? new Date().toISOString().replaceAll(":", "")}.png`,
     });

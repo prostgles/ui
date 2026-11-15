@@ -5,7 +5,6 @@ import Btn from "../Btn";
 import { classOverride, FlexRow } from "../Flex";
 import { Input } from "../Input";
 import Loading from "../Loader/Loading";
-import { ClickCatchOverlayZIndex } from "@components/ClickCatchOverlay";
 
 export const SearchInputZIndex = 2;
 
@@ -73,11 +72,9 @@ export const SearchInput = (props: SearchInputProps) => {
         type={type}
         ref={inputRef}
         style={{
-          minWidth: "5em",
           ...(mode?.["!noList"] && {
             borderBottomLeftRadius: 0,
             borderBottomRightRadius: 0,
-            zIndex: ClickCatchOverlayZIndex + 1,
           }),
           ...(matchCaseState && {
             borderTopRightRadius: 0,

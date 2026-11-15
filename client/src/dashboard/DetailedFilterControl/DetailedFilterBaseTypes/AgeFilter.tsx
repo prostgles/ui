@@ -10,7 +10,9 @@ import { Select } from "@components/Select/Select";
 import React from "react";
 import type { BaseFilterProps } from "../../SmartFilter/SmartFilter";
 
-type FilterProps = BaseFilterProps;
+type FilterProps = BaseFilterProps & {
+  part: "reference" | "value";
+};
 
 export const getDefaultAgeFilter = (
   fieldName: string,
@@ -35,7 +37,7 @@ export const AgeFilterTypes = [
 ] satisfies FilterType[];
 
 export const AgeFilter = (props: FilterProps) => {
-  const { filter, onChange, tables, column, tableName } = props;
+  const { filter, onChange, tables, column, tableName, part } = props;
 
   const otherDateCols = tables
     .find((t) => t.name === tableName)
@@ -67,82 +69,86 @@ export const AgeFilter = (props: FilterProps) => {
     });
   };
 
-  const colOptsions = [
+  const columnOptions = [
     { key: null, label: "NOW" },
     ...otherDateCols.map((c) => ({ key: c.name, label: c.label })),
   ];
 
-  return (
-    <div className="AgeFilter flex-row gap-p25">
-      {filter.type !== "$age" && (
-        <div className="flex-row p-p25 gap-p25 ai-center">
-          <Btn
-            size="small"
-            color="action"
-            data-command="AgeFilter.argsLeftToRight"
-            onClick={() => {
-              updateComplex({ argsLeftToRight: !complex.argsLeftToRight });
-            }}
-          >
-            {complex.argsLeftToRight === false ? "Up to" : "Since"}
-          </Btn>
-          <Select
-            value={complex.otherField ?? null}
-            fullOptions={colOptsions}
-            btnProps={{
-              size: "small",
-            }}
-            onChange={(otherField) => {
-              updateComplex({ otherField });
-            }}
-          />
-        </div>
-      )}
-      <div className="flex-row gap-p5 ai-center">
+  if (part === "reference") {
+    if (filter.type === "$age") return null;
+    return (
+      <div className="AgeFilter_Reference flex-row-wrap gap-p25 ai-center min-w-0 max-w-full">
+        <Btn
+          className="FilterWrapper_Type"
+          size="small"
+          color="default"
+          data-command="AgeFilter.argsLeftToRight"
+          onClick={() => {
+            updateComplex({ argsLeftToRight: !complex.argsLeftToRight });
+          }}
+        >
+          {complex.argsLeftToRight === false ? "up to" : "since"}
+        </Btn>
         <Select
-          className="text-action"
           iconPath=""
-          data-command="AgeFilter.comparator"
+          value={complex.otherField ?? null}
+          fullOptions={columnOptions}
+          style={{
+            minHeight: "30px",
+            padding: "4px 6px",
+            gap: "4px",
+          }}
           btnProps={{
-            style: { borderRadius: 0 },
-            color: "default",
+            size: "small",
             variant: "default",
           }}
-          value={complex.comparator}
-          fullOptions={[
-            ...NUMERIC_FILTER_TYPES,
-            ...CORE_FILTER_TYPES.filter(
-              ({ key }) => key === "<>" || key === "=",
-            ),
-          ]}
-          onChange={(comparator) => {
-            updateComplex({ comparator });
-          }}
-        />
-        <FormFieldDebounced
-          type="text"
-          autoComplete="off"
-          value={filter.value}
-          maxWidth="10em"
-          inputStyle={{
-            minHeight: "44px",
-            padding: "8px 0 8px 1em",
-          }}
-          wrapperStyle={{
-            borderRadius: "0",
-            borderTop: "none",
-            borderBottom: "none",
-          }}
-          placeholder="1 month 2 days"
-          onChange={(value) => {
-            onChange({
-              ...filter,
-              disabled: false,
-              value: `${value}`,
-            });
+          onChange={(otherField) => {
+            updateComplex({ otherField });
           }}
         />
       </div>
+    );
+  }
+
+  return (
+    <div className="AgeFilter flex-row gap-p5 ai-center min-w-0 max-w-full px-p25 pb-p25">
+      <Select
+        className="FilterWrapper_Type"
+        size="small"
+        iconPath=""
+        data-command="AgeFilter.comparator"
+        btnProps={{
+          style: { borderRadius: 0 },
+          color: "default",
+          variant: "default",
+        }}
+        value={complex.comparator}
+        fullOptions={[
+          ...NUMERIC_FILTER_TYPES,
+          ...CORE_FILTER_TYPES.filter(({ key }) => key === "<>" || key === "="),
+        ]}
+        onChange={(comparator) => {
+          updateComplex({ comparator });
+        }}
+      />
+      <FormFieldDebounced
+        type="text"
+        autoComplete="off"
+        value={filter.value}
+        maxWidth="10em"
+        inputStyle={{
+          minHeight: "30px",
+          padding: "4px 8px",
+        }}
+        placeholder="1 month 2 days"
+        onChange={(value) => {
+          onChange({
+            ...filter,
+            disabled: false,
+            value: `${value}`,
+          });
+        }}
+      />
     </div>
   );
 };

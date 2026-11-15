@@ -511,6 +511,8 @@ type RequiredKeys<T> = Exclude<keyof T, OptionalKeys<T>>;
 
 type Simplify<T> = { [K in keyof T]: T[K] };
 
+export type DataRow = Record<string, unknown>;
+
 export type RequiredKeepUndefined<T> = Simplify<
   { [K in RequiredKeys<T>]: T[K] } & {
     [K in OptionalKeys<T>]: T[K] | undefined;

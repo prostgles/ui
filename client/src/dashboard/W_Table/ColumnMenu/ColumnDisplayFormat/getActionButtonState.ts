@@ -55,32 +55,51 @@ export const getActionButtonState = ({
   const executionValues = {
     text: action?.lookup.showInRowCard?.actionLabel,
     color: action?.lookup.showInRowCard?.actionColor,
-    ...getFunctionActionValue(method, queryRow, stateKey, {
-      ...params.defaultValue,
-      ...(stateValue ? { disabledInfo: undefined, isLoading: undefined } : {}),
-      ...(stateValue ? (JSON.parse(stateValue) as ActionButtonState) : {}),
-    }),
+    ...getFunctionActionValue(
+      method,
+      queryRow,
+      stateKey,
+      {
+        ...params.defaultValue,
+        ...(stateValue ?
+          { disabledInfo: undefined, isLoading: undefined }
+        : {}),
+        ...(stateValue ? (JSON.parse(stateValue) as ActionButtonState) : {}),
+      },
+      false,
+    ),
   };
-  const jobOptions = getFunctionOptions(method)?.action.job;
+  const functionOptions = getFunctionOptions(method);
+  const jobOptions = functionOptions?.action.job;
+  const actionText = executionValues.text ?? jobOptions?.jobName;
+  const jobExecutionValues = getJobActionValue(jobOptions, queryRow);
   const values = {
     ...executionValues,
-    ...getJobActionValue(
-      jobOptions && { ...jobOptions, operation: "startOrRetry" },
-      queryRow,
-    ),
-    disabledInfo: executionValues.disabledInfo,
+    ...getJobActionValue(jobOptions, queryRow, "startOrRetry"),
+    text: actionText,
+    disabledInfo:
+      jobExecutionValues.disabledInfo || executionValues.disabledInfo,
   };
   const disabledInfo =
     error ? error
     : !row ? "Actions require an individual row"
     : values.disabledInfo || undefined;
   return {
+    params,
+    stateKey,
+    actionName:
+      params.defaultValue?.text ??
+      functionOptions?.title ??
+      action?.lookup.showInRowCard?.actionLabel ??
+      functionOptions?.action.defaultValue?.text ??
+      jobOptions?.jobName ??
+      params.methodName,
     method,
     action,
     row,
     queryRow,
     values,
-    buttonText: executionValues.text,
+    buttonText: jobExecutionValues.text ?? executionValues.text,
     text: values.text ?? (method ? params.methodName : "Action unavailable"),
     disabledInfo,
     buttonDisabledInfo:

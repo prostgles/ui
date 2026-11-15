@@ -46,7 +46,6 @@ const getLoader = () => {
         ]
       : []),
     ],
-    plugins: ["dynamic-import-node"],
   };
 
   const babel = {
@@ -113,6 +112,20 @@ const debouncedProgressHandler = (percentage, message, ...args) => {
 
 module.exports = {
   target: ["web", "es2020"],
+  cache: {
+    type: "filesystem",
+    cacheDirectory: resolve(__dirname, "../../.cache/webpack"),
+    buildDependencies: {
+      config: [
+        __filename,
+        resolve(__dirname, "dev.js"),
+        resolve(__dirname, "prod.js"),
+        resolve(__dirname, "../tsconfig.json"),
+        resolve(__dirname, "../package-lock.json"),
+        resolve(__dirname, "../../package-lock.json"),
+      ],
+    },
+  },
   resolve: {
     extensions: [".ts", ".tsx", ".js", ".jsx"],
     plugins: [new TsconfigPathsPlugin({/* options: see below */})],

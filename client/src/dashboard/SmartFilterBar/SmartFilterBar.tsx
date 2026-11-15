@@ -22,6 +22,7 @@ import { SmartFilterBarFilters } from "./SmartFilterBarFilters";
 import { SmartFilterBarRightActions } from "./SmartFilterBarRightActions";
 import { SmartFilterBarSearch } from "./SmartFilterBarSearch";
 import { useSmartFilterBarState } from "./useSmartFilterBarState";
+import { getColumnsWithInfo } from "../W_Table/tableUtils/getColumnsWithInfo";
 
 export type SmartFilterBarProps = PrglCore & {
   className?: string;
@@ -37,7 +38,7 @@ export type SmartFilterBarProps = PrglCore & {
     showupdate?: boolean;
     showdelete?: boolean;
   };
-  rowCount: number;
+  rowCount: number | undefined;
   hideSort?: boolean;
   filtersOnly?: boolean;
   extraFilters?: AnyObject[];
@@ -164,6 +165,7 @@ export const SmartFilterBar = (props: SmartFilterBarProps) => {
           <SmartFilterBarSearch
             db={db}
             tableName={table.name}
+            columns={getColumnsWithInfo(table.name, tables, selectedColumns)}
             tables={tables}
             onFilterChange={onFilterChange}
             filter={filter}

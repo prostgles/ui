@@ -260,9 +260,9 @@ export const getCellStyle = (
     }
   } else if (style.type === "Scale") {
     const {
-      textColor = "black",
-      minColor = "#63f717",
-      maxColor = "#46b5d5",
+      textColor = "var(--text-0)",
+      minColor = "var(--light-blue)",
+      maxColor = "var(--blue)",
     } = style;
     const dateOrNumber = includes(_PG_date, udt_name) ? +new Date(val) : +val;
     const { max, min } = dataRange ?? {};
@@ -277,7 +277,10 @@ export const getCellStyle = (
 
       res = {
         textColor,
-        cellColor: blend(minColor, maxColor, perc),
+        cellColor:
+          minColor.includes("var(") || maxColor.includes("var(") ?
+            `color-mix(in srgb, ${minColor} ${(1 - perc) * 100}%, ${maxColor})`
+          : blend(minColor, maxColor, perc),
       };
     }
   }

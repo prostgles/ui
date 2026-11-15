@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { AlertQueryDefinition } from "../../server/dist/server/src/schemaConfig";
 import type { TestDeployment } from "../../server/dist/server/src/testing";
-import { expect, test } from "./utils/fixtures";
+import { expect, test, type Locator } from "./utils/fixtures";
 import type { PageWIds } from "./utils/utils";
 
 export const testAlertFunctions = async ({
@@ -53,12 +53,19 @@ export const testAlertFunctions = async ({
       alertId: { type: "ValueLookup", table: "alerts", column: "id" },
       channel: { type: "ValueLookup", table: "alerts_channels", column: "id" },
     });
+    expect(admin.methodSchema!.previewAlert!.function_options).toMatchObject({
+      renderOutputAsMarkdown: true,
+      action: { defaultValue: { text: "Preview", icon: "EyeOutline" } },
+    });
+    expect(admin.methodSchema!.sendTestAlert!.function_options).toMatchObject({
+      renderOutputAsMarkdown: true,
+      action: { defaultValue: { text: "Send test", icon: "SendCheckOutline" } },
+    });
     expect(alice.methods?.previewAlert).toBeUndefined();
     expect(alice.methods?.sendTestAlert).toBeUndefined();
-    expect(await preview({ alertId: alert.id })).toEqual({
-      title: definition.template.title,
-      body: "Admin evidence",
-    });
+    expect(await preview({ alertId: alert.id })).toBe(
+      `## ${definition.template.title}\n\nAdmin evidence`,
+    );
     const alicePreview = await preview({
       alertId: alert.id,
       recipientId: alice.auth.user!.id,
@@ -67,9 +74,7 @@ export const testAlertFunctions = async ({
     expect(JSON.stringify(alicePreview)).not.toContain("Admin evidence");
     expect(
       await preview({ alertId: alert.id, recipientId: outsider.auth.user!.id }),
-    ).toEqual({
-      reason: "No matching items to notify",
-    });
+    ).toBe("No matching items to notify");
     await expect(preview({ alertId: randomUUID() })).rejects.toBeTruthy();
     await expect(
       preview({ alertId: alert.id, recipientId: randomUUID() }),
@@ -81,10 +86,9 @@ export const testAlertFunctions = async ({
       sendTest({ alertId: alert.id, channel: "secondary" }),
     ).rejects.toBeTruthy();
     const callback = await db.alerts!.findOne!({ config_key: "custom" });
-    expect(await preview({ alertId: callback!.id })).toEqual({
-      title: "Custom callback",
-      body: expect.stringContaining("Alice <evidence>"),
-    });
+    const callbackPreview = await preview({ alertId: callback!.id });
+    expect(callbackPreview).toContain("## Custom callback\n\n");
+    expect(callbackPreview).toContain("Alice <evidence>");
     await db.alerts!.update!(
       { id: alert.id },
       {
@@ -121,9 +125,28 @@ export const testAlertFunctions = async ({
     await alertsPanel
       .getByRole("button", { name: "Rules", exact: true })
       .click();
+    await test.step("Alert list controls render in the popup header", async () => {
+      await expect(
+        alertsHeader.getByRole("button", { name: "Add", exact: true }),
+      ).toBeVisible();
+      await expect(alertsHeader.locator(".SmartSearch input")).toBeVisible();
+      const sortButton = alertsHeader.getByRole("button", {
+        name: "Sort by...",
+        exact: true,
+      });
+      await expect(sortButton).toBeVisible();
+      await expect(sortButton).toHaveText("");
+      await expect(sortButton.locator("svg")).toBeVisible();
+      await expect(
+        alertsPanel.locator(".SmartCardList .SmartSearch input"),
+      ).toHaveCount(0);
+    });
     const card = alertsPanel
       .locator(".SmartCard")
       .filter({ hasText: "Test alert functions" });
+    await test.step("Alert rule headers keep their popup anchor connected", async () => {
+      await expectAlertCardDetails(page, card);
+    });
     await card.getByRole("button", { name: "Preview", exact: true }).click();
     const popup = page.getByTestId("ActionPopup");
     await popup.getByRole("button", { name: "Show more", exact: true }).click();
@@ -133,6 +156,11 @@ export const testAlertFunctions = async ({
       .locator(`[data-label="${alice.auth.user!.id}"]`)
       .click();
     await popup.getByRole("button", { name: "Preview", exact: true }).click();
+    await expect(
+      popup.getByLabel("Action result").getByRole("heading", {
+        name: definition.template.title,
+      }),
+    ).toBeVisible();
     await expect(popup.getByLabel("Action result")).toContainText("Alice");
     await expect(popup.getByLabel("Action result")).not.toContainText(
       "Admin evidence",
@@ -141,6 +169,17 @@ export const testAlertFunctions = async ({
     await card.getByRole("button", { name: "Send test", exact: true }).click();
     /* Empty lookups offer selectable suggestions without typing. */
     await popup.locator(".SmartSearch input").click();
+    await test.step("Channel suggestions close on clickaway without closing Send test", async () => {
+      const channelSearch = popup.locator(".SmartSearch");
+      await expect(channelSearch.getByTestId("SearchList.List")).toBeVisible();
+      await channelSearch
+        .getByTestId("ClickCatchOverlay")
+        .click({ position: { x: 5, y: 5 } });
+      await expect(channelSearch.getByTestId("SearchList.List")).toBeHidden();
+      await expect(popup).toBeVisible();
+      await expect(channelSearch.locator("input")).toHaveValue("");
+      await channelSearch.locator("input").click();
+    });
     await page
       .getByTestId("SearchList.List")
       .locator('[data-label="test"]')
@@ -172,7 +211,11 @@ export const testAlertFunctions = async ({
       }
     });
     await popup.getByRole("button", { name: "Send test", exact: true }).click();
-    await expect(popup.getByLabel("Action result")).toContainText("deliveryId");
+    await expect(
+      popup.getByLabel("Action result").getByRole("heading", {
+        name: "Test alert queued",
+      }),
+    ).toBeVisible();
     await popup.getByTestId("Popup.close").click();
     await alertsPanel.getByTestId("Popup.close").click();
     await expect
@@ -195,6 +238,17 @@ export const testAlertFunctions = async ({
     });
     expect(await db.alerts!.findOne!({ id: alert.id })).toMatchObject({
       enabled: false,
+    });
+    await test.step("Delivery history cards have borders and retain their popup anchor", async () => {
+      await page.getByRole("button", { name: "Alerts", exact: true }).click();
+      await alertsHeader
+        .getByRole("button", { name: "Delivery history", exact: true })
+        .click();
+      await expectAlertCardDetails(
+        page,
+        alertsPanel.locator(".SmartCard").first(),
+      );
+      await alertsPanel.getByTestId("Popup.close").click();
     });
   });
 
@@ -242,11 +296,26 @@ export const testAlertFunctions = async ({
           { timeout: 15_000 },
         )
         .toBe(2);
-      expect(await preview({ alertId: alert.id })).toMatchObject({
-        body: "Admin evidence",
-      });
+      expect(await preview({ alertId: alert.id })).toContain("Admin evidence");
     } finally {
       await db.alerts!.update!({ id: alert.id }, { enabled: false });
     }
   });
+};
+
+const expectAlertCardDetails = async (page: PageWIds, card: Locator) => {
+  await expect(card).toHaveCSS("border-width", "1px");
+  const headerButton = card.locator(".SmartCardHeader button").first();
+  const anchor = await headerButton.evaluateHandle((button) => button);
+  try {
+    await headerButton.click();
+    const details = page.locator(".DetailedCardPopup");
+    await expect(details.locator(".SmartCardHeader")).toBeVisible();
+    expect(await anchor.evaluate((button) => button.isConnected)).toBe(true);
+    await details.getByTestId("Popup.close").click();
+    await expect(details).toBeHidden();
+    expect(await anchor.evaluate((button) => button.isConnected)).toBe(true);
+  } finally {
+    await anchor.dispose();
+  }
 };

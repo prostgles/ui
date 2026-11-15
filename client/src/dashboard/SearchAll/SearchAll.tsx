@@ -7,7 +7,7 @@ import type { Prgl } from "../../App";
 import type { WindowData } from "@common/ColumnConfig/WindowData";
 import type { SQLSuggestion } from "../SQLEditor/W_SQLEditor";
 import { SearchAllContent } from "./SearchAllContent";
-import { SearchAllHeader } from "./SearchAllHeader";
+import { SearchAllFooter } from "./SearchAllFooter";
 import { useSearchAllState } from "./hooks/useSearchAllState";
 
 export const SEARCH_TYPES = [
@@ -27,6 +27,7 @@ export type SearchAllSuggestion = Pick<
   "schema" | "subLabel" | "name" | "escapedIdentifier" | "definition"
 > & {
   type: "table" | "function" | "view" | "mview";
+  label: string;
   icon?: string;
 };
 
@@ -50,10 +51,10 @@ export type SearchAllProps = Pick<Prgl, "db" | "methods" | "tables" | "sql"> & {
 export const SearchAll = (props: SearchAllProps) => {
   const state = useSearchAllState(props);
   return (
-    <div className="flex-col min-h-0 gap-1" data-command="SearchAll.Popup">
+    <div className="flex-col f-1 min-h-0 gap-1" data-command="SearchAll.Popup">
       <SearchAllContent {...state} {...props} />
       <Footer className="f-0 px-0 pt-p5">
-        <SearchAllHeader {...state} />
+        <SearchAllFooter {...state} />
       </Footer>
     </div>
   );

@@ -2,8 +2,9 @@
   min-width: 16rem;
 }
 
-.pdf-viewer-search__input {
+input.pdf-viewer-search__input {
   min-width: 10rem;
+  padding: 0.375rem 0.5rem;
 }
 
 .pdf-viewer-search__count {
@@ -11,11 +12,15 @@
   text-align: center;
 }
 
+.PdfViewer .textLayer {
+  mix-blend-mode: multiply;
+}
+
 ::highlight(pdf-viewer-search) {
-  color: inherit;
+  color: transparent;
   background-color: rgb(255 212 59 / 72%);
 }
 ::highlight(pdf-viewer-search-active) {
-  color: #fff;
+  color: transparent;
   background-color: rgb(255 107 0 / 90%);
 }

@@ -1,5 +1,5 @@
 import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
-import { FlexCol } from "@components/Flex";
+import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
 import { MediaViewer } from "@components/MediaViewer/MediaViewer";
 import { SvgIcon } from "@components/SvgIcon";
 import React from "react";
@@ -7,6 +7,7 @@ import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
 import { RenderValue } from "../SmartForm/SmartFormField/RenderValue";
 import { Avatar } from "../W_Table/ColumnMenu/ColumnDisplayFormat/Avatar";
 import { getColumnFormat } from "../W_Table/ColumnMenu/ColumnDisplayFormat/getFormatColumnSelect";
+import { isEmptyColumnValue } from "../W_Table/ColumnMenu/ColumnDisplayFormat/isEmptyColumnValue";
 import { RenderColumnValue } from "../W_Table/RenderColumn/RenderColumn";
 
 export const RecordSummary = <
@@ -53,7 +54,7 @@ export const RecordSummary = <
   const avatarFormat = avatarColumn && getColumnFormat(avatarColumn);
   const avatarUrl = typeof avatarValue === "string" ? avatarValue : undefined;
   const visibleSubHeaderColumns = subHeaderColumns.filter(
-    (column) => !hideEmptySubHeaders || row[column.name] != null,
+    (column) => !hideEmptySubHeaders || !isEmptyColumnValue(column, row),
   );
   const headerValue = headerColumn && (
     <RenderValue column={headerColumn} value={row[headerColumn.name]} />
@@ -106,14 +107,17 @@ export const RecordSummary = <
           </div>
         )}
         {!!visibleSubHeaderColumns.length && (
-          <div
-            className={compact ? "text-2 font-12" : "w-full f-1 text-1"}
+          <FlexRowWrap
+            className={`RecordSummary_subHeader gap-p25 ${compact ? "text-2 font-12" : "w-full f-1 text-1"}`}
             style={compact ? undefined : { fontSize: "0.9em" }}
           >
             {visibleSubHeaderColumns.map((column, index) => (
-              <React.Fragment key={column.name}>
-                {index > 0 && " · "}
-                <span title={column.info?.label || column.name}>
+              <FlexRow key={column.name} className="gap-p25 min-w-0 max-w-full">
+                {index > 0 && <span className="f-0">·</span>}
+                <div
+                  className="min-w-0"
+                  title={column.info?.label || column.name}
+                >
                   {renderSubHeader ?
                     renderSubHeader(
                       column,
@@ -127,12 +131,13 @@ export const RecordSummary = <
                       table={table}
                       getValues={() => [row[column.name]]}
                       maxCellChars={undefined}
+                      fontWeight={undefined}
                     />
                   }
-                </span>
-              </React.Fragment>
+                </div>
+              </FlexRow>
             ))}
-          </div>
+          </FlexRowWrap>
         )}
       </FlexCol>
     </>

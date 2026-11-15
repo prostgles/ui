@@ -3,7 +3,7 @@ import {
   type ContextValue,
   isObject,
 } from "./publishUtils";
-import type { JoinPath } from "prostgles-types";
+import type { JoinPath, ParsedJoinPath, SelectFunction } from "prostgles-types";
 
 type AnyObject = Record<string, any>;
 
@@ -15,35 +15,35 @@ export const CORE_FILTER_TYPES = [
   { key: "$eq", label: "=" },
   { key: "<>", label: "!=" },
   { key: "$ne", label: "!=" },
-  { key: "$in", label: "IN" },
-  { key: "$nin", label: "NOT IN" },
-  { key: "not null", label: "IS NOT NULL" },
-  { key: "null", label: "IS NULL" },
-  { key: "$term_highlight", label: "CONTAINS" },
+  { key: "$in", label: "in" },
+  { key: "$nin", label: "not in" },
+  { key: "not null", label: "is not null" },
+  { key: "null", label: "is null" },
+  { key: "$term_highlight", label: "contains" },
 ] as const;
 
 export const FTS_FILTER_TYPES = [
   {
     key: "@@.to_tsquery",
-    label: "Search",
+    label: "search",
     subLabel:
       "(to_tsquery) normalizes each token into a lexeme using the specified or default configuration, and discards any tokens that are stop words according to the configuration",
   },
   {
     key: "@@.plainto_tsquery",
-    label: "Plain search",
+    label: "plain search",
     subLabel:
       "(plainto_tsquery) The text is parsed and normalized much as for to_tsvector, then the & (AND) tsquery operator is inserted between surviving words",
   },
   {
     key: "@@.phraseto_tsquery",
-    label: "Phrase search",
+    label: "phrase search",
     subLabel:
       "(phraseto_tsquery) phraseto_tsquery behaves much like plainto_tsquery, except that it inserts the <-> (FOLLOWED BY) operator between surviving words instead of the & (AND) operator. Also, stop words are not simply discarded, but are accounted for by inserting <N> operators rather than <-> operators. This function is useful when searching for exact lexeme sequences, since the FOLLOWED BY operators check lexeme order not just the presence of all the lexemes",
   },
   {
     key: "@@.websearch_to_tsquery",
-    label: "Web search",
+    label: "web search",
     subLabel:
       "(websearch_to_tsquery) Unlike plainto_tsquery and phraseto_tsquery, it also recognizes certain operators. Moreover, this function will never raise syntax errors, which makes it possible to use raw user-supplied input for search. The following syntax is supported",
   },
@@ -53,21 +53,21 @@ const likeInfo =
 export const TEXT_FILTER_TYPES = [
   {
     key: "$ilike",
-    label: "ILIKE",
+    label: "ilike",
     subLabel: "Case-insensitive text search. " + likeInfo,
   },
   {
     key: "$like",
-    label: "LIKE",
+    label: "like",
     subLabel: "Case-sensitive text search. " + likeInfo,
   },
-  { key: "$nilike", label: "NOT ILIKE" },
-  { key: "$nlike", label: "NOT LIKE" },
+  { key: "$nilike", label: "not ilike" },
+  { key: "$nlike", label: "not like" },
   // { key: "$term_highlightNOT", label: "DOES NOT CONTAIN"},
 ] as const;
 
 export const NUMERIC_FILTER_TYPES = [
-  { key: "$between", label: "Between" },
+  { key: "$between", label: "between" },
   { key: ">", label: ">" },
   { key: ">=", label: ">=" },
   { key: "<", label: "<" },
@@ -79,13 +79,13 @@ export const NUMERIC_FILTER_TYPES = [
 ] as const;
 
 export const DATE_FILTER_TYPES = [
-  { key: "$age", label: "Age at start of day" },
-  { key: "$ageNow", label: "Age" },
-  { key: "$duration", label: "Duration" },
+  { key: "$age", label: "age at start of day" },
+  { key: "$ageNow", label: "age" },
+  { key: "$duration", label: "duration" },
 ] as const;
 
 export const GEO_FILTER_TYPES = [
-  { key: "$ST_DWithin", label: "Within" },
+  { key: "$ST_DWithin", label: "within" },
 ] as const;
 
 export type FilterType =
@@ -118,6 +118,8 @@ type ComplexFilterDetailed =
     };
 export type DetailedFilterBase = BaseFilter & {
   fieldName: string;
+  /** Restrict a term search to configured columns, including joined columns. */
+  searchColumns?: TermSearchColumn[];
   type?: FilterType;
   value?: any;
   contextValue?: ContextValue;
@@ -132,6 +134,12 @@ export type DetailedJoinedFilter = BaseFilter & {
   filter: DetailedFilterBase | GroupedDetailedFilter;
 };
 export type DetailedFilter = DetailedFilterBase | DetailedJoinedFilter;
+export type TermSearchColumn = {
+  name: string;
+  expression?: SelectFunction;
+  path?: ParsedJoinPath[];
+  filter?: DetailedFilter[];
+};
 export type DetailedGroupFilter =
   { $and: DetailedFilter[] } | { $or: DetailedFilter[] };
 
@@ -139,6 +147,20 @@ export type ContextValueMapper = (contextValue: ContextValue) => unknown;
 
 export const identityContextValue: ContextValueMapper = (contextValue) =>
   contextValue;
+
+export const getContextValueMapper =
+  (
+    context: Record<string, Record<string, unknown> | undefined>,
+  ): ContextValueMapper =>
+  ({ objectName, objectPropertyName }) => {
+    const value = context[objectName]?.[objectPropertyName];
+    if (value === undefined) {
+      throw new Error(
+        `No context value available for ${objectName}.${objectPropertyName}`,
+      );
+    }
+    return value;
+  };
 
 export const isJoinedFilter = (f: DetailedFilter): f is DetailedJoinedFilter =>
   Boolean(f.type && JOINED_FILTER_TYPES.includes(f.type as any));
@@ -266,8 +288,9 @@ export const getFinalFilter = (
   const { forInfoOnly = false } = opts ?? {};
 
   if ("$and" in detailedFilter || "$or" in detailedFilter) {
-    const isAnd = "$and" in detailedFilter;
-    const filters = isAnd ? detailedFilter.$and : detailedFilter.$or;
+    const filter = flattenGroupedFilter(detailedFilter);
+    const isAnd = "$and" in filter;
+    const filters = isAnd ? filter.$and : filter.$or;
     return {
       [isAnd ? "$and" : "$or"]: filters
         .map((filter) => getFinalFilter(filter, opts))
@@ -301,9 +324,16 @@ export const getFinalFilter = (
   const getFilter = (
     f: DetailedFilterBase,
     columns?: string[],
-  ): Record<string, any> => {
+  ): Record<string, any> | undefined => {
     const parsedContextValue = getContextualValue(f, opts);
     const fieldName = checkFieldname(f.fieldName, columns);
+
+    if (
+      (f.type === "$in" || f.type === "$nin") &&
+      parsedContextValue === undefined
+    ) {
+      return undefined;
+    }
 
     if (
       FTS_FILTER_TYPES.some((fts) => fts.key === f.type) &&
@@ -318,6 +348,32 @@ export const getFinalFilter = (
         ],
       };
     } else if (f.type === "$term_highlight") {
+      if (f.searchColumns) {
+        return {
+          $or: f.searchColumns.map(({ name, path, filter, expression }) => {
+            const columnFilter: DetailedFilterBase = {
+              ...f,
+              fieldName: name,
+              searchColumns: undefined,
+              ...(expression && {
+                type: "$ilike",
+                value: `%${parsedContextValue}%`,
+                complexFilter: { type: "$filter", leftExpression: expression },
+              }),
+            };
+            return getFinalFilter(
+              path ?
+                {
+                  type: "$existsJoined",
+                  path,
+                  filter: { $and: [...(filter ?? []), columnFilter] },
+                }
+              : columnFilter,
+              opts,
+            );
+          }),
+        };
+      }
       const fieldName =
         f.fieldName ? checkFieldname(f.fieldName, opts?.columns) : "*";
       return {
@@ -406,7 +462,7 @@ export const simplifyFilter = (f: AnyObject | undefined) => {
         result.$or.length < 2)
     ) {
       if (result.$and) result = result.$and?.[0] ?? {};
-      else if (result?.$or) result = result.$or?.[0] ?? {};
+      else if (result.$or) result = result.$or?.[0] ?? {};
     }
     result ??= {};
   }
@@ -432,8 +488,10 @@ export const getSmartGroupFilter = (
 };
 
 export const getTableFilterFromDetailedGroupFilter = (
-  detailedGroupFilter: DetailedFilter | GroupedDetailedFilter,
+  filter: DetailedFilter | GroupedDetailedFilter,
 ): AnyObject => {
+  const detailedGroupFilter =
+    "$and" in filter || "$or" in filter ? flattenGroupedFilter(filter) : filter;
   const [operand, filterItems] =
     "$and" in detailedGroupFilter ? ["and" as const, detailedGroupFilter.$and]
     : "$or" in detailedGroupFilter ? ["or" as const, detailedGroupFilter.$or]
@@ -444,6 +502,23 @@ export const getTableFilterFromDetailedGroupFilter = (
 export type GroupedDetailedFilter =
   | { $and: (DetailedFilter | GroupedDetailedFilter)[] }
   | { $or: (DetailedFilter | GroupedDetailedFilter)[] };
+
+export const flattenGroupedFilter = (
+  filter: GroupedDetailedFilter,
+): GroupedDetailedFilter => {
+  const isAnd = "$and" in filter;
+  const conditions = isAnd ? filter.$and : filter.$or;
+  const filters = conditions.flatMap(
+    (condition): (DetailedFilter | GroupedDetailedFilter)[] => {
+      if (!("$and" in condition || "$or" in condition)) return [condition];
+      const group = flattenGroupedFilter(condition);
+      if (isAnd && "$and" in group) return group.$and;
+      if (!isAnd && "$or" in group) return group.$or;
+      return [group];
+    },
+  );
+  return isAnd ? { $and: filters } : { $or: filters };
+};
 
 const getDetailedFilterFromTableFilter = (
   tableFilter: AnyObject,

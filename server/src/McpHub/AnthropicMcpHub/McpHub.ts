@@ -99,7 +99,7 @@ export class McpHub {
           !instance.success &&
           !isMcpOAuthAuthorizationRequired(instance.error)
         ) {
-          void onLog({ type: "error", data: instance.error }, instance.log);
+          await onLog({ type: "error", data: instance.error }, instance.log);
         }
       }
     }

@@ -77,8 +77,6 @@ export type ColumnConfig = {
   idx?: number;
   name: string;
   show?: boolean;
-  /** 1: summary and details; 2: details only; omitted: hidden. With no levels configured, headers count toward the first 10 summary fields; the rest appear in details. */
-  infoLevel?: 1 | 2;
   width?: number;
   label?: string;
   nested?: NestedColumnConfig;

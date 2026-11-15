@@ -32,6 +32,11 @@ export type AskLLMChatProps = Pick<
         id: number;
         parent_message_id: DBSSchema["llm_messages"]["id"];
       }
+    | {
+        type: "agenticWorkflow";
+        id: number;
+        parent_agentic_workflow_run_id: DBSSchema["agentic_workflow_runs"]["id"];
+      }
     | undefined;
 };
 
@@ -89,7 +94,10 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
     [activeChatId, chatIsLoading, dbs.llm_chats],
   );
 
-  const agentChat = selectedChat?.type === "agent" ? activeChat : undefined;
+  const agentChat =
+    selectedChat?.type === "agent" || selectedChat?.type === "agenticWorkflow" ?
+      activeChat
+    : undefined;
 
   /* Prevents flickering when popup is opened */
   if (!messages) return;

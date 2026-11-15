@@ -1,5 +1,6 @@
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import { getBestLLMChatModel } from "@src/serverFunctions/askLLM/askLLM";
+import { getAgenticWorkflowAccessFilter } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/agenticWorkflow/getConfiguredWorkflow";
 import type { Filter } from "prostgles-server/dist/DboBuilder/DboBuilder";
 import type { Publish } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
 
@@ -40,18 +41,21 @@ export const getPublishLlmChats = (user_id: string, isAdmin: boolean) => {
     agentic_workflows: {
       select: {
         fields: "*",
-        forcedFilter,
+        forcedFilter: getAgenticWorkflowAccessFilter(user_id, isAdmin),
       },
       insert: {
-        fields: "*",
+        fields: { source_key: 0 },
         forcedData,
       },
       update: {
-        fields: "*",
+        fields: { source_key: 0 },
         forcedData,
-        forcedFilter,
+        forcedFilter: { ...forcedFilter, source_key: null },
       },
-      delete: { forcedFilter, filterFields: "*" },
+      delete: {
+        forcedFilter: { ...forcedFilter, source_key: null },
+        filterFields: "*",
+      },
     },
     agentic_workflow_runs: {
       select: {

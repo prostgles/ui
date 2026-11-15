@@ -112,7 +112,7 @@ export default defineConfig(
         },
       ],
       "@typescript-eslint/no-misused-promises": [
-        "warn",
+        "error",
         { checksVoidReturn: false },
       ],
       "@typescript-eslint/no-unsafe-assignment": "warn",

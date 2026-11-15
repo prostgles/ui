@@ -1,10 +1,12 @@
+import { getSmartGroupFilter } from "@common/filterUtils";
 import Btn from "@components/Btn";
+import ErrorComponent from "@components/ErrorComponent";
 import { FlexRow } from "@components/Flex";
 import Loading from "@components/Loader/Loading";
 import { Select } from "@components/Select/Select";
 import { mdiDotsHorizontal, mdiPlus, mdiRobot } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import React from "react";
+import React, { useState } from "react";
 import { t } from "../../../i18n/i18nUtils";
 import { getPGIntervalAsText } from "../../W_SQL/customRenderers";
 import {
@@ -21,6 +23,7 @@ export const AskLLMChatHeader = (
     credentials,
     activeChatId,
     latestChats,
+    chatsFilter,
     createNewChat,
     preferredPromptId,
     setActiveChat,
@@ -29,6 +32,34 @@ export const AskLLMChatHeader = (
   } = props;
 
   const { dbs, user } = usePrgl();
+  const [searchTerm, setSearchTerm] = useState("");
+  const { data: matchingChats, error: searchError } = dbs.llm_chats.useFind(
+    {
+      $and: [
+        chatsFilter,
+        getSmartGroupFilter([
+          {
+            fieldName: "*",
+            type: "$term_highlight",
+            value: searchTerm,
+            searchColumns: [
+              { name: "name" },
+              {
+                name: "message",
+                path: [{ table: "llm_messages", on: [{ id: "chat_id" }] }],
+              },
+            ],
+          },
+        ]),
+      ],
+    },
+    { select: { id: 1 }, limit: null },
+    { skip: !searchTerm },
+  );
+  const visibleChats = latestChats?.filter(
+    (chat) =>
+      !searchTerm || matchingChats?.some((match) => match.id === chat.id),
+  );
 
   return (
     <FlexRow className="AskLLMChatHeader">
@@ -49,8 +80,15 @@ export const AskLLMChatHeader = (
           title={t.AskLLMChatHeader.Chat}
           data-command="LLMChat.select"
           data-key={activeChatId?.toString()}
+          noSearchLimit={0}
+          onSearch={setSearchTerm}
+          endOfResultsContent={
+            searchTerm && searchError ?
+              <ErrorComponent error={searchError} />
+            : undefined
+          }
           fullOptions={
-            latestChats?.map((c) => ({
+            visibleChats?.map((c) => ({
               key: c.id,
               label: c.name,
               iconPath: c.agent_info ? mdiRobot : undefined,
@@ -63,6 +101,7 @@ export const AskLLMChatHeader = (
           }
           btnProps={{
             size: "default",
+            children: <div className="text-ellipsis">{activeChat?.name}</div>,
           }}
           value={activeChatId}
           showSelectedSublabel={true}

@@ -10,6 +10,9 @@ app.use(express.json());
 const PORT = 3000;
 const mcpOrigin = process.env.MCP_ORIGIN ?? `http://localhost:${PORT}`;
 const keycloakOrigin = process.env.KC_HOSTNAME ?? "http://localhost:8080";
+const accessTokens = new Set<string>();
+const expiredAccessTokens = new Set<string>();
+let initializedSessions = 0;
 
 const createMcpServer = () => {
   const mcpServer = new Server(
@@ -63,7 +66,10 @@ app.get("/.well-known/oauth-protected-resource/mcp", (_req, res) => {
 app.use("/mcp", (req, res, next) => {
   const authorization = req.headers.authorization;
 
-  if (!authorization?.startsWith("Bearer ")) {
+  if (
+    !authorization?.startsWith("Bearer ") ||
+    expiredAccessTokens.has(authorization)
+  ) {
     res.setHeader(
       "WWW-Authenticate",
       `Bearer resource_metadata="${mcpOrigin}/.well-known/oauth-protected-resource/mcp"`,
@@ -71,10 +77,26 @@ app.use("/mcp", (req, res, next) => {
     return res.status(401).send("Unauthorized");
   }
 
+  accessTokens.add(authorization);
   next();
 });
 
 const transports = new Map<string, StreamableHTTPServerTransport>();
+
+app.post("/test/expire-sessions", async (_req, res) => {
+  for (const transport of transports.values()) await transport.close();
+  transports.clear();
+  res.json({ initializedSessions });
+});
+
+app.post("/test/expire-access-tokens", (_req, res) => {
+  accessTokens.forEach((token) => expiredAccessTokens.add(token));
+  res.json({ success: true });
+});
+
+app.get("/test/status", (_req, res) => {
+  res.json({ initializedSessions });
+});
 
 app.post("/mcp", async (req, res) => {
   const sessionId = req.headers["mcp-session-id"];
@@ -97,6 +119,7 @@ app.post("/mcp", async (req, res) => {
   const transport = new StreamableHTTPServerTransport({
     sessionIdGenerator: randomUUID,
     onsessioninitialized: (newSessionId) => {
+      initializedSessions++;
       transports.set(newSessionId, transport);
     },
   });

@@ -37,7 +37,9 @@ export const useStopwatch = ({
 
   useEffect(() => {
     const updateElapsed = () => {
-      setElapsed((endTime?.getTime() ?? Date.now()) - startTime.getTime());
+      setElapsed(
+        Math.max(0, (endTime?.getTime() ?? Date.now()) - startTime.getTime()),
+      );
     };
 
     updateElapsed();

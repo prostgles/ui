@@ -1,31 +1,47 @@
 import { startAgenticWorkflowSchema } from "@common/mcp/startAgenticWorkflowSchema";
-import { validateUserInput } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/agenticWorkflow/definitionValidation/validateUserInput";
 import { instrumentWorkflowFile } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/agenticWorkflow/runtimeSdk/addInstrumentationToTsLogic";
 import {
   renderSummary,
   summariseWorkflowFile,
 } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/agenticWorkflow/runtimeSdk/getTsLogicSummary";
 import { getAgenticWorkflowFiles } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/agenticWorkflow/runtimeSetup/getDefineAgenticWorkflowTsWithDbAndMcpTypes";
+import { getWorkflowDeclaration } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/agenticWorkflow/runtimeSetup/getWorkflowDeclaration";
+import {
+  WORKFLOW_MODULE_NAME,
+  WORKFLOW_SDK_FILE_NAME,
+  WORKFLOW_TYPES_FILE_NAME,
+} from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/agenticWorkflow/runtimeSdk/workflowConstants";
 import {
   startAgenticWorkflow,
   stopAgenticWorkflow,
 } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/agenticWorkflow/startAgenticWorkflow";
 import { stopContainer } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/runCodeInSandboxContainer";
+import {
+  getAgenticWorkflowAccessFilter,
+  getConfiguredWorkflow,
+  getConfiguredWorkflowSource,
+} from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/agenticWorkflow/getConfiguredWorkflow";
+import { validateWorkflowDefinition } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/agenticWorkflow/createAgenticWorkflow";
+import { readFile, writeFile } from "node:fs/promises";
 import { defineFunction } from "prostgles-server";
-import { pickKeys } from "prostgles-types";
+import { omitKeys, pickKeys } from "prostgles-types";
 import { defineFunctionGroupFunctions } from "../defineFunctionGroup";
 
 export const agenticWorkflowFunctions = defineFunctionGroupFunctions({
   startAgenticWorkflow: defineFunction({
     unrestrictedDbAccess: true,
-    input: pickKeys(startAgenticWorkflowSchema, [
-      "chatId",
-      "workflowId",
-      "userInputValue",
-      "messageId",
-      "executionMode",
-      "autoApproveAllTools",
-    ]),
+    input: {
+      ...pickKeys(startAgenticWorkflowSchema, [
+        "chatId",
+        "workflowId",
+        "userInputValue",
+        "messageId",
+        "executionMode",
+        "autoApproveAllTools",
+      ]),
+      chatId: { type: "integer", optional: true },
+      messageId: { type: "string", optional: true },
+    },
     run: async (
       {
         chatId,
@@ -37,46 +53,40 @@ export const agenticWorkflowFunctions = defineFunctionGroupFunctions({
       },
       { dbo: dbs, user },
     ) => {
-      const chat = await dbs.llm_chats.findOne({
-        id: chatId,
-        user_id: user.id,
+      let workflow = await dbs.agentic_workflows.findOne({
+        $and: [
+          { id: workflowId },
+          getAgenticWorkflowAccessFilter(user.id, true),
+        ],
       });
-      if (!chat) {
-        return {
-          state: "init-error" as const,
-          message: "Chat not found",
-          error: undefined,
-        };
+      if (workflow?.source_key && workflow.connection_id) {
+        workflow = await getConfiguredWorkflow(
+          dbs,
+          workflow.connection_id,
+          user.id,
+          workflow.source_key,
+        );
       }
-      const { connection_id } = chat;
-      if (!connection_id) {
-        return {
-          state: "init-error" as const,
-          message: `Chat with id ${chatId} does not have a connection_id`,
-          error: undefined,
-        };
-      }
-
-      const workflow = await dbs.agentic_workflows.findOne({
-        id: workflowId,
-        chat_id: chatId,
-      });
-      if (!workflow) {
-        return {
-          state: "init-error" as const,
-          message: `Workflow with id ${workflowId} not found for chat ${chatId}`,
-          error: undefined,
-        };
-      }
-      const userInputValidation =
-        workflow.definition_data.userInput &&
-        validateUserInput(userInputValue, workflow.definition_data.userInput);
-      if (userInputValidation?.isValid === false) {
-        return {
-          state: "init-error" as const,
-          message: userInputValidation.error,
-          error: undefined,
-        };
+      if (!workflow?.connection_id) throw new Error("Workflow not found");
+      const connection_id = workflow.connection_id;
+      const chat =
+        chatId === undefined ? undefined : (
+          await dbs.llm_chats.findOne({
+            id: chatId,
+            user_id: user.id,
+            connection_id,
+          })
+        );
+      if (chatId !== undefined && !chat) throw new Error("Chat not found");
+      if (
+        messageId &&
+        (!chat ||
+          !(await dbs.llm_messages.findOne({
+            id: messageId,
+            chat_id: chat.id,
+          })))
+      ) {
+        throw new Error("Originating message not found");
       }
       return startAgenticWorkflow({
         workflow,
@@ -86,7 +96,7 @@ export const agenticWorkflowFunctions = defineFunctionGroupFunctions({
         chat,
         messageId,
         executionMode,
-        userInputValue: userInputValidation?.value ?? {},
+        userInputValue,
         autoApproveAllTools,
       });
     },
@@ -94,16 +104,64 @@ export const agenticWorkflowFunctions = defineFunctionGroupFunctions({
   stopAgenticWorkflow: defineFunction({
     unrestrictedDbAccess: true,
     input: {
-      chatId: "integer",
-      messageId: "string",
+      runId: "integer",
     },
-    run: async ({ chatId, messageId }, { user, dbo: dbs }) => {
-      return stopAgenticWorkflow({
-        dbs,
-        chatId,
-        messageId,
-        userId: user.id,
+    run: async ({ runId }, { user, dbo: dbs }) => {
+      return stopAgenticWorkflow({ dbs, runId, userId: user.id });
+    },
+  }),
+  saveWorkflowSource: defineFunction({
+    unrestrictedDbAccess: true,
+    input: {
+      workflowId: "integer",
+      definition: "string",
+      expectedDefinition: "string",
+    },
+    run: async (
+      { workflowId, definition, expectedDefinition },
+      { dbo: dbs, user },
+    ) => {
+      const workflow = await dbs.agentic_workflows.findOne({
+        $and: [
+          { id: workflowId },
+          getAgenticWorkflowAccessFilter(user.id, true),
+        ],
       });
+      if (!workflow?.source_key || !workflow.connection_id)
+        throw new Error("Registered workflow not found");
+      const {
+        sourcePath,
+        config,
+        definition: sourceDefinition,
+      } = await getConfiguredWorkflowSource(
+        dbs,
+        workflow.connection_id,
+        workflow.source_key,
+      );
+      if (sourceDefinition !== expectedDefinition) {
+        throw new Error(
+          "Workflow source changed on disk. Reload before saving.",
+        );
+      }
+      const result = await validateWorkflowDefinition(
+        {
+          workflow_function_definition: definition,
+          workflow_function_definition_summary: workflow.definition_summary,
+          package_dependencies: config.packageDependencies,
+        },
+        { dbs, user_id: user.id, connection_id: workflow.connection_id },
+      );
+      if (!result.isValid)
+        throw new Error(result.logs || JSON.stringify(result.error));
+      if ((await readFile(sourcePath, "utf8")) !== expectedDefinition)
+        throw new Error(
+          "Workflow source changed on disk. Reload before saving.",
+        );
+      await writeFile(sourcePath, definition);
+      await dbs.agentic_workflows.update(
+        { id: workflow.id },
+        { ...omitKeys(result.data, ["user_id"]), definition_override: null },
+      );
     },
   }),
   getAgenticWorkflowTypes: defineFunction({
@@ -116,8 +174,10 @@ export const agenticWorkflowFunctions = defineFunctionGroupFunctions({
       const workflow =
         !workflowId ? undefined : (
           await dbs.agentic_workflows.findOne({
-            id: workflowId,
-            user_id: user.id,
+            $and: [
+              { id: workflowId },
+              getAgenticWorkflowAccessFilter(user.id, true),
+            ],
           })
         );
 
@@ -136,13 +196,29 @@ export const agenticWorkflowFunctions = defineFunctionGroupFunctions({
             : undefined,
         },
       );
-      const astInfo = summariseWorkflowFile(workflow?.definition ?? "");
+      const sourceDefinition =
+        workflow?.source_key && workflow.connection_id ?
+          (
+            await getConfiguredWorkflowSource(
+              dbs,
+              workflow.connection_id,
+              workflow.source_key,
+            )
+          ).definition
+        : undefined;
+      const astInfo = summariseWorkflowFile(
+        sourceDefinition ?? workflow?.definition ?? "",
+      );
       const summary = renderSummary(astInfo);
       const instrumentedFile = instrumentWorkflowFile(
-        files["defineAgenticWorkflow.ts"],
+        files[WORKFLOW_SDK_FILE_NAME],
       );
       return {
-        files,
+        files: {
+          ...files,
+          [WORKFLOW_TYPES_FILE_NAME]: `declare module "${WORKFLOW_MODULE_NAME}" {\n${getWorkflowDeclaration(files[WORKFLOW_SDK_FILE_NAME])}\n}`,
+        },
+        sourceDefinition,
         astNodes: astInfo as any,
         summary,
         instrumentedFile,

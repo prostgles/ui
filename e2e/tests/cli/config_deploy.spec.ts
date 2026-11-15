@@ -30,6 +30,7 @@ import { createTestDeployment } from "../../../server/dist/server/src/testing";
 import { CHANNELS } from "prostgles-types";
 import type {
   DetailedFilter,
+  DetailedJoinedFilter,
   GroupedDetailedFilter,
 } from "../../../common/filterUtils";
 import { createConfigTestProject } from "../utils/createConfigTestProject";
@@ -73,6 +74,15 @@ test("checkFilterDetailed works with grouped existsJoined", async ({
   } satisfies GroupedDetailedFilter;
   const configPath = createConfigTestProject({
     id: "joined-permissions-e2e",
+    connection: {
+      table_options: {
+        records: { label: "Project records", icon: "FileDocumentOutline" },
+        memberships: {
+          label: "Project members",
+          columns: { user_id: { label: "Member" } },
+        },
+      },
+    },
     joins: [
       {
         tables: ["records", "memberships"],
@@ -250,17 +260,46 @@ test("checkFilterDetailed works with grouped existsJoined", async ({
     const groups = joined.getByTestId("GroupedFilterControl");
     await expect(groups).toHaveCount(2);
     await expect(
-      groups.nth(1).getByRole("button", { name: "OR", exact: true }),
-    ).toHaveText("OR");
+      groups.nth(1).getByRole("button", { name: "or", exact: true }),
+    ).toHaveText("or");
     const collapseJoined = joined.getByTitle(
       "Expand/collapse joined conditions",
     );
+    await expect(collapseJoined).toHaveText("Project members");
     const disableFilter = joined.getByTitle("Disable filter", { exact: true });
     await expect(disableFilter).toHaveCount(4);
     await expect(joined.getByTitle("Delete joined filter")).toBeVisible();
     await expect(joined.locator(".Select")).toHaveCount(4);
+
+    /* Enabling direct or nested children enables their join; disabling does not. */
+    const childFilters = joined.getByTestId("FilterWrapper");
+    for (const childFilter of [childFilters.first(), childFilters.last()]) {
+      await joined
+        .locator(".JoinedFilterControl_Header")
+        .getByTitle("Disable filter", { exact: true })
+        .click();
+      await childFilter.getByTitle("Disable filter", { exact: true }).click();
+      await expect(joined).toHaveAttribute("data-filter-disabled", "true");
+      await childFilter.getByTitle("Enable filter", { exact: true }).click();
+      await expect(joined).not.toHaveAttribute("data-filter-disabled");
+    }
+    await expect
+      .poll(async () => {
+        const window = await state.db.windows!.findOne({
+          table_name: "records",
+        });
+        return window?.filter[0];
+      })
+      .toMatchObject({
+        disabled: false,
+        filter: {
+          $and: [{ disabled: false }, { $or: [{}, { disabled: false }] }],
+        },
+      });
     await collapseJoined.click();
-    const summaries = joined.locator(".FilterWrapper_MinimisedRoot");
+    const summaries = page
+      .locator('[data-table-name="records"]')
+      .locator(".FilterWrapper_MinimisedRoot");
     await expect(summaries).toHaveCount(3);
     await expect(joined.getByTestId("FilterWrapper")).toHaveCount(0);
     await expect(summaries.nth(1)).toContainText('"contributor"');
@@ -274,11 +313,11 @@ test("checkFilterDetailed works with grouped existsJoined", async ({
     ).toHaveCount(0);
     await expect(joined.locator(".Select")).toHaveCount(0);
     await expect(
-      joined.getByRole("button", { name: "AND", exact: true }),
+      joined.getByRole("button", { name: "and", exact: true }),
     ).toHaveCount(0);
     await expect(
-      joined.getByRole("button", { name: "OR", exact: true }),
-    ).toHaveCount(1);
+      joined.getByRole("button", { name: "or", exact: true }),
+    ).toHaveCount(0);
     expect(
       await joined.evaluate((el) => getComputedStyle(el).borderRadius),
     ).toBe(
@@ -298,7 +337,8 @@ test("checkFilterDetailed works with grouped existsJoined", async ({
         return window?.filter[0];
       })
       .toMatchObject({ disabled: false });
-    const minimisedGroups: GroupedDetailedFilter[] = [
+    const minimisedFilters: DetailedJoinedFilter["filter"][] = [
+      { fieldName: "user_id", type: "=", value: memberId },
       { $and: windowFilter.filter.$and.slice(0, 1) },
       { $or: windowFilter.filter.$and.slice(0, 1) },
       {
@@ -308,16 +348,76 @@ test("checkFilterDetailed works with grouped existsJoined", async ({
         ],
       },
     ];
-    for (const filter of minimisedGroups) {
+    for (const filter of minimisedFilters) {
       await state.db.windows!.update(
         { table_name: "records" },
         { filter: [{ ...windowFilter, filter, minimised: true }] },
       );
       await page.reload();
-      await expect(summaries).toHaveCount(
-        "$and" in filter ? filter.$and.length : filter.$or.length,
-      );
+      const conditionCount =
+        "fieldName" in filter ? 1
+        : "$and" in filter ? filter.$and.length
+        : filter.$or.length;
+      await expect(summaries).toHaveCount(conditionCount);
       await expect(joined.getByTitle("Combine conditions")).toHaveCount(0);
+      if (conditionCount === 1) {
+        /* Single joined conditions use the simple editor in both display modes. */
+        await expect(joined).toHaveCount(0);
+        await expect(
+          summaries.getByTestId("FilterWrapper_FieldName"),
+        ).toHaveText("Project members.Member");
+        await expect(
+          summaries.getByRole("img", { name: "exists", exact: true }),
+        ).toBeVisible();
+        await summaries.click();
+        const singleFilter = page
+          .locator('[data-table-name="records"]')
+          .getByTestId("FilterWrapper");
+        await expect(joined).toHaveCount(0);
+        await expect(
+          singleFilter.getByTestId("FilterWrapper_Field"),
+        ).toHaveText("Project members.Member");
+        await singleFilter
+          .getByTitle("Disable filter", { exact: true })
+          .click();
+        await singleFilter.getByTitle("Enable filter", { exact: true }).click();
+        await singleFilter.getByTestId("FilterWrapper_Field").click();
+        await expect
+          .poll(async () => {
+            const window = await state.db.windows!.findOne({
+              table_name: "records",
+            });
+            return window?.filter[0];
+          })
+          .toMatchObject({
+            ...windowFilter,
+            filter,
+            minimised: true,
+            disabled: false,
+          });
+        await state.db.windows!.update(
+          { table_name: "records" },
+          {
+            filter: [
+              {
+                ...windowFilter,
+                type: "$notExistsJoined",
+                filter,
+                minimised: true,
+              },
+            ],
+          },
+        );
+        await expect(
+          summaries.getByRole("img", { name: "not exists", exact: true }),
+        ).toBeVisible();
+        await summaries.click();
+        await expect(singleFilter).toBeVisible();
+        await expect(singleFilter.getByTitle("Delete filter")).toBeVisible();
+        await expect(
+          singleFilter.getByTitle("Add condition or group"),
+        ).toBeVisible();
+      }
     }
     await state.db.windows!.update(
       { table_name: "records" },
@@ -325,7 +425,7 @@ test("checkFilterDetailed works with grouped existsJoined", async ({
     );
     await page.reload();
     await expect(summaries).toHaveCount(3);
-    await summaries.nth(1).getByTitle("Click to expand/collapse").click();
+    await summaries.nth(1).click();
     await expect(joined.getByTestId("FilterWrapper")).toHaveCount(3);
     await expect(disableFilter).toHaveCount(4);
     await expect(joined.getByTitle("Delete joined filter")).toBeVisible();
@@ -422,6 +522,62 @@ test("checkFilterDetailed works with grouped existsJoined", async ({
       page.getByText("This is a CLI app.", { exact: false }),
     ).toBeVisible();
     await page.locator(".ExistingAccessRules_Item_Header").click();
+    await test.step("Context filters preview and validate using the rule's user", async () => {
+      const selectRule = page
+        .locator(getDataKey("records"))
+        .getByTestId("selectRuleAdvanced");
+      await selectRule.click();
+      /* Table metadata and header navigation stay consistent across sections. */
+      const rulePopup = page.getByRole("dialog").filter({
+        has: page.getByTestId("TablePermissionControls.close"),
+      });
+      const ruleHeader = rulePopup.getByTestId("Popup.header");
+      await expect(
+        ruleHeader.getByRole("heading", {
+          name: "Project records",
+          exact: true,
+        }),
+      ).toBeVisible();
+      const popupWidth = await rulePopup.evaluate(
+        (element) => getComputedStyle(element).width,
+      );
+      for (const section of ["Insert", "Update", "Delete", "Sync", "Select"]) {
+        await ruleHeader
+          .getByRole("button", { name: section, exact: true })
+          .click();
+        await expect(rulePopup).toHaveCSS("width", popupWidth);
+      }
+      const filteredRows = page
+        .getByTestId("ForcedFilterControl")
+        .getByRole("button", { name: "4 rows", exact: true });
+      await expect(filteredRows).toBeVisible();
+      await filteredRows.click();
+      await expect(page.getByText("4 records", { exact: true })).toBeVisible();
+      await page.getByTestId("Popup.close").last().click();
+
+      const contextSelector = rulePopup
+        .getByTestId("ForcedFilterControl")
+        .locator(getDataKey("user_id"))
+        .getByTestId("ContextDataSelector");
+      await expect(contextSelector).toHaveText("{{user.id}}");
+      await contextSelector.click();
+      await page.locator(getDataKey("user.username")).click();
+      await expect(
+        page.getByTestId("ForcedFilterControl").getByRole("button", {
+          name: "0 rows",
+          exact: true,
+        }),
+      ).toBeVisible();
+      await expect(page.locator(".FilterWrapper_Error")).toHaveCount(0);
+      await contextSelector.click();
+      await page.locator(getDataKey("user.id")).click();
+      await expect(filteredRows).toBeVisible();
+      await page.getByTestId("TablePermissionControls.close").click();
+      await selectRule.click();
+      await expect(contextSelector).toHaveText("{{user.id}}");
+      await expect(filteredRows).toBeVisible();
+      await page.getByTestId("TablePermissionControls.close").click();
+    });
     await page
       .getByTestId("config.ac.edit.type")
       .getByRole("button", { name: "Run SQL", exact: true })
@@ -668,6 +824,59 @@ module.exports.tableConfig.startup_checks.onMount = async ({ _db }) => {
     },
   });
   await deployment.dispose();
+});
+
+test("connection updates create metadata for a new database target", async () => {
+  const configId = "connection-retarget-e2e";
+  const configPath = createConfigTestProject({ id: configId });
+  const deployment = await createTestDeployment({
+    configPath,
+    configId,
+    logPath: test.info().outputPath("connection-retarget-server.log"),
+  });
+  try {
+    const state = await deployment.connectStateAs("admin");
+    const projectConnection = await state.db.connections!.findOne({
+      name: configId,
+    });
+    expect(projectConnection).toBeTruthy();
+    const { connection, database_config: originalConfig } = await state.methods!
+      .createConnection!({
+      connection: {
+        name: "Retargeted connection",
+        type: "Connection URI",
+        db_conn: projectConnection!.db_conn,
+      },
+      origin: deployment.endpoint,
+    });
+    const targetUrl = new URL(connection.db_conn!);
+    targetUrl.hostname =
+      targetUrl.hostname === "localhost" ? "127.0.0.1" : "localhost";
+    const targetFilter = {
+      db_name: connection.db_name,
+      db_host: targetUrl.hostname,
+      db_port: connection.db_port,
+    };
+    expect(await state.db.database_configs!.findOne(targetFilter)).toBeFalsy();
+    const { connection: updatedConnection, database_config: targetConfig } =
+      await state.methods!.createConnection!({
+        connection: { ...connection, db_conn: targetUrl.toString() },
+        origin: deployment.endpoint,
+      });
+    expect(updatedConnection).toMatchObject({
+      id: connection.id,
+      ...targetFilter,
+    });
+    expect(targetConfig).toMatchObject(targetFilter);
+    expect(targetConfig.cors).toEqual({
+      allowedOrigins: [deployment.endpoint],
+    });
+    expect(
+      await state.db.database_configs!.findOne({ id: originalConfig.id }),
+    ).toEqual(originalConfig);
+  } finally {
+    await deployment.dispose();
+  }
 });
 
 test("CLI config sync serializes hot reload and restart", async () => {
@@ -977,11 +1186,71 @@ module.exports.functions = {
       { key: "admin", type: "admin" },
       { key: "default", type: "default" },
     ],
-    seed: async ({ projectDatabase }) => {
+    seed: async ({ projectDatabase, stateDatabase }) => {
       await projectDatabase.query(`
         INSERT INTO records (name) VALUES ('Solar Farm');
         INSERT INTO details (record_id) VALUES (1), (1);
       `);
+      await test.step("PostgreSQL defaults partial table options and preserves explicit settings", async () => {
+        const defaultOptions = {
+          maxCellChars: 500,
+          showFilters: false,
+          refresh: { type: "Realtime", throttleSeconds: 1, intervalSeconds: 1 },
+        };
+        const cases = [
+          { type: "table", options: {} },
+          {
+            type: "table",
+            options: { showFilters: true, filterOperand: "OR" },
+          },
+          {
+            type: "table",
+            options: {
+              maxCellChars: 0,
+              refresh: { type: "None", throttleSeconds: 0, intervalSeconds: 5 },
+            },
+          },
+          {
+            type: "table",
+            options: {
+              refresh: {
+                type: "Interval",
+                throttleSeconds: 0,
+                intervalSeconds: 30,
+              },
+            },
+          },
+          { type: "sql", options: { hideTable: true } },
+        ];
+        for (const { type, options } of cases) {
+          const {
+            rows: [inserted],
+          } = await stateDatabase.query<{
+            id: string;
+            options: Record<string, unknown>;
+          }>(
+            `INSERT INTO windows (user_id, last_updated, type, options)
+            SELECT id, 1, $1, $2::jsonb FROM users WHERE username = 'admin'
+            RETURNING id, options`,
+            [type, JSON.stringify(options)],
+          );
+          if (!inserted) throw new Error("Expected a saved window");
+          const expectedOptions =
+            type === "table" ? { ...defaultOptions, ...options } : options;
+          expect(inserted.options).toEqual(expectedOptions);
+          const {
+            rows: [updated],
+          } = await stateDatabase.query<{ options: Record<string, unknown> }>(
+            "UPDATE windows SET options = $1::jsonb WHERE id = $2 RETURNING options",
+            [JSON.stringify(options), inserted.id],
+          );
+          expect(updated?.options).toEqual(expectedOptions);
+
+          await stateDatabase.query("DELETE FROM windows WHERE id = $1", [
+            inserted.id,
+          ]);
+        }
+      });
     },
   });
   try {
@@ -1088,9 +1357,16 @@ module.exports.functions = {
       {
         id: "bars",
         type: "barchart",
+        title: "Generated bars",
         table_name: "records",
         labelColumn: "name",
         numericAxis: { column: "id", aggregation: "sum" },
+      },
+      {
+        id: "filtered",
+        type: "table",
+        table_name: "records",
+        filterOperand: "OR",
       },
       {
         id: "map",
@@ -1148,6 +1424,15 @@ module.exports.functions = {
       workspace_id: loaded.id,
     });
     expect(loadedWindows).toHaveLength(generatedWindows.length);
+    for (const tableWindow of loadedWindows.filter(
+      ({ type }) => type === "table",
+    )) {
+      expect(tableWindow.options).toMatchObject({
+        maxCellChars: 500,
+        showFilters: false,
+        refresh: { type: "Realtime", throttleSeconds: 1, intervalSeconds: 1 },
+      });
+    }
     const ids = loaded.layout.items.map(({ id }) => id);
     expect(new Set(ids)).toEqual(new Set(loadedWindows.map(({ id }) => id)));
     expect(loaded.layout.activeTabKey).toBe(ids[0]);
@@ -1155,7 +1440,7 @@ module.exports.functions = {
       true,
     );
     expect(
-      loadedWindows.find(({ type }) => type === "table")?.columns[1]
+      loadedWindows.find(({ title }) => title === "Generated bars")?.columns[1]
         .computedConfig.funcDef.key,
     ).toBe("$sum");
     const links = await state.db.links!.find({ workspace_id: loaded.id });
@@ -1813,9 +2098,8 @@ test.describe("Published config CLI", () => {
       for (const folder of [
         "accessControl",
         "functions",
-        "tableConfigs",
-        "tableOptions",
-        "tableHooks",
+        "jobs",
+        "tables",
         "services",
       ]) {
         expect(existsSync(join(configDirectory, "src", folder)), folder).toBe(
@@ -1849,7 +2133,7 @@ test.describe("Published config CLI", () => {
       ).not.toContain("db_name");
       expect(
         readFileSync(join(configDirectory, "src", "index.ts"), "utf8"),
-      ).toContain("table_options: {}");
+      ).toContain("table_options: tableOptions");
       const envExample = readFileSync(
         join(configDirectory, ".env.example"),
         "utf8",
@@ -1892,7 +2176,7 @@ test.describe("Published config CLI", () => {
       ).toContain("not serialization between requests");
 
       writeFileSync(
-        join(configDirectory, "src", "functions", "cli.function.ts"),
+        join(configDirectory, "src", "functions", "inferred.functions.ts"),
         `import { createFunctionsDefinerWithContext, defineFunction } from "@prostgles/app";
 import type { ProstglesContext } from "@prostgles/app";
 import type { DBGeneratedSchema } from "../../generated/DBGeneratedSchema";
@@ -1921,7 +2205,7 @@ export const inferredFunctions = defineFunctions({
         `import { createFunctionGroupDefinerWithContext, defineConfig } from "@prostgles/app";
 import type { ProstglesContext } from "@prostgles/app";
 import type { DBGeneratedSchema } from "../generated/DBGeneratedSchema";
-import { inferredFunctions } from "./functions/cli.function";
+import { inferredFunctions } from "./functions/inferred.functions";
 import { serviceManagerConfig, services } from "./serviceManager";
 const defineFunctionGroup = createFunctionGroupDefinerWithContext<
   DBGeneratedSchema,
@@ -1993,22 +2277,19 @@ export default prostgles({
         configDirectory,
       );
 
-      const invalidHookPath = join(
+      const helperHookPath = join(
         configDirectory,
         "src",
-        "tableHooks",
-        "users.ts",
+        "tables",
+        "users.tableHooks.ts",
       );
-      writeFileSync(invalidHookPath, "export const usersTableHooks = {};\n");
+      writeFileSync(helperHookPath, "export const usersTableHooks = {};\n");
       const lintResult = spawnSync(npmCommand, ["run", "lint"], {
         cwd: configDirectory,
         encoding: "utf8",
       });
-      expect(lintResult.status).not.toBe(0);
-      expect(`${lintResult.stdout}${lintResult.stderr}`).toContain(
-        "must end in '.tableHook.ts'",
-      );
-      rmSync(invalidHookPath);
+      expect(lintResult.status, lintResult.stdout + lintResult.stderr).toBe(0);
+      rmSync(helperHookPath);
 
       run(npmCommand, ["test"], configDirectory);
 

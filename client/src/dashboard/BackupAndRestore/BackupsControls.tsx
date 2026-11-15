@@ -237,7 +237,7 @@ export const BackupsControls = () => {
               name: "restore_start",
               label: "Started",
               select: { $ageNow: ["restore_start", null, "second"] },
-              render: (value) => <StyledInterval value={value} />,
+              render: (value) => <StyledInterval value={value} showAgo />,
             },
             restoreLogsFConf,
           ] satisfies FieldConfig<Backups>[]

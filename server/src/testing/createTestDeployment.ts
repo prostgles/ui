@@ -24,6 +24,8 @@ import type {
 import { getConnectionPaths } from "@common/utils";
 import { sidKeyName, USER_TYPES } from "@common/authTypesAndConstants";
 import { cleanupTestServices } from "./cleanupTestServices";
+import { getPasswordHash } from "../authConfig/authUtils";
+import { waitForTestUserSync } from "./waitForTestUserSync";
 
 const STATE_SOCKET_PATH = "/ws-api-dbs";
 const START_TIMEOUT_MS = 60_000;
@@ -39,6 +41,7 @@ export type TestDeploymentUser<UserKey extends string = string> = {
   /** Stable name used by connectStateAs/connectProjectAs. */
   key: UserKey;
   username?: string;
+  /** Seeded login password equals this user type (defaults to "default"). */
   type?: string;
 };
 
@@ -59,6 +62,7 @@ export type CreateTestDeploymentOptions<
   /** Output file for deployment stdout and stderr. */
   logPath?: string;
   users?: TestDeploymentUser<ClientUserType<Schemas>>[];
+  /** Runs after configured users with project access have synced, when user sync is enabled. */
   seed?: (context: TestDeploymentSeedContext) => void | Promise<void>;
   startupTimeoutMs?: number;
 };
@@ -218,8 +222,14 @@ const seedUsers = async (databaseUrl: string, users: TestDeploymentUser[]) => {
       const userType = userConfig.type ?? USER_TYPES.DEFAULT;
       await client.query(
         `INSERT INTO users (id, username, password, type, status, passwordless_admin, last_updated)
-         VALUES ($1, $2, '', $3, 'active', false, $4)`,
-        [id, userConfig.username ?? userConfig.key, userType, Date.now()],
+         VALUES ($1, $2, $3, $4, 'active', false, $5)`,
+        [
+          id,
+          userConfig.username ?? userConfig.key,
+          getPasswordHash({ id }, userType),
+          userType,
+          Date.now(),
+        ],
       );
       await client.query(
         `INSERT INTO sessions
@@ -368,6 +378,12 @@ export const createTestDeployment = async <
       });
       await Promise.all([stateDatabase.connect(), projectDatabase.connect()]);
       try {
+        await waitForTestUserSync({
+          stateDatabase,
+          projectDatabase,
+          projectDatabaseName: databases.project.name,
+          timeoutMs: startupTimeoutMs,
+        });
         await seed({ stateDatabase, projectDatabase });
       } finally {
         await Promise.all([stateDatabase.end(), projectDatabase.end()]);

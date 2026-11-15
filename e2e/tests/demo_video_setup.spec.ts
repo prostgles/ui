@@ -1,5 +1,5 @@
 import { test } from "./utils/fixtures";
-import { PageWIds, createDatabase, login, runDbSql } from "./utils/utils";
+import { createDatabase, login, runDbSql } from "./utils/utils";
 import { demoRestaurantName, USERS } from "utils/constants";
 import { goTo } from "utils/goTo";
 
@@ -8,7 +8,7 @@ test.describe("Demo video setup", () => {
   test.setTimeout(videoTestDuration);
 
   test("Demo", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     const awaitCondition = async (
       check: () => Promise<boolean>,
       requestedTimeout = 60e3,

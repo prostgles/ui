@@ -34,6 +34,7 @@ export const AlertRecipientsEditor = ({
     <FlexCol>
       <AlertFilterEditor
         label="Recipients"
+        hideLabel
         emptyLabel="All active users"
         tableName="users"
         filter={draft && isEqual(draft.value, value) ? draft.filter : filter}

@@ -50,9 +50,12 @@ export type FilterWrapperProps = {
   className?: string;
   style?: React.CSSProperties;
   hideToggle?: boolean;
+  withShadow?: boolean;
   variant?: "row";
   error?: unknown;
   children?: React.ReactNode;
+  headerContent?: React.ReactNode;
+  headerActions?: React.ReactNode;
   rootFilter:
     | {
         value: DetailedJoinedFilter;
@@ -85,9 +88,11 @@ export class FilterWrapper extends RTComp<
       filter,
       column,
       children,
+      headerContent,
+      headerActions,
       className = "",
       style = {},
-      label = column.name,
+      label = column.label || column.name,
       hideToggle = false,
       rootFilter,
     } = this.props;
@@ -96,6 +101,8 @@ export class FilterWrapper extends RTComp<
     if (
       filter?.type === "$in" ||
       filter?.type === "$nin" ||
+      filter?.type === "$between" ||
+      includes(AgeFilterTypes, filter?.type) ||
       window.isLowWidthScreen
     ) {
       variant = undefined;
@@ -147,15 +154,7 @@ export class FilterWrapper extends RTComp<
         title={(filter.disabled ? "Enable" : "Disable") + " filter"}
         iconPath={mdiCheckBold}
         size="small"
-        className={`DisableEnableToggle ${minimised ? "round" : "rounded-l"}`}
-        style={{
-          ...(minimised && {
-            background: "transparent",
-            padding: 0,
-            minHeight: 0,
-            minWidth: 0,
-          }),
-        }}
+        className="DisableEnableToggle rounded-l"
         onClick={() => onChange({ ...filter, disabled: !filter.disabled })}
         color={btnColor}
       />
@@ -163,8 +162,11 @@ export class FilterWrapper extends RTComp<
 
     const toggleTitle = "Click to expand/collapse";
     if (minimised) {
-      const filterTypeLabel =
+      let filterTypeLabel =
         allowedTypes.find((t) => t.key === filter.type)?.label ?? filter.type;
+      if (filter.complexFilter?.type === "controlled") {
+        filterTypeLabel += ` ${filter.complexFilter.comparator}`;
+      }
       return (
         <MinimisedFilter
           {...this.props}
@@ -172,7 +174,6 @@ export class FilterWrapper extends RTComp<
           toggle={toggle}
           toggleTitle={toggleTitle}
           filterTypeLabel={filterTypeLabel}
-          disabledToggle={disabledToggle}
         />
       );
     }
@@ -214,7 +215,7 @@ export class FilterWrapper extends RTComp<
               !Array.isArray(filter?.value))
           ) {
             delete newF.value;
-            newF.disabled = true;
+            newF.disabled = type !== "$in" && type !== "$nin";
           } else if (
             typeof newF.value !== "string" &&
             TEXT_FILTER_TYPES.some((t) => t.key === type)
@@ -244,9 +245,17 @@ export class FilterWrapper extends RTComp<
     const filterValueContent =
       filterNeedsValue ?
         <div
-          className="FilterWrapper_Children flex-col min-h-0 gap-p5"
+          className="FilterWrapper_Children flex-col min-h-0 min-w-0 gap-p5"
           style={{
-            minWidth: "200px",
+            width:
+              (
+                rowVariant ||
+                filter?.type === "$between" ||
+                filter?.complexFilter?.type === "controlled"
+              ) ?
+                "max-content"
+              : "100%",
+            maxWidth: "100%",
           }}
         >
           {children}
@@ -259,20 +268,24 @@ export class FilterWrapper extends RTComp<
 
     return (
       <FlexCol
-        className={`FilterWrapper variant-${variant ?? ""} filter-bg relative gap-0 ${error ? "b-danger" : ""} ${className}`}
+        className={`FilterWrapper variant-${variant ?? ""} filter-bg relative gap-0 b b-action rounded o-hidden w-fit ${this.props.withShadow ? "shadow" : ""} ${error ? "b-danger" : ""} ${className}`}
         data-command="FilterWrapper"
         data-key={filter?.fieldName}
+        data-filter-disabled={filter?.disabled || undefined}
         style={{
-          maxWidth: rowVariant ? undefined : "400px",
+          maxWidth:
+            rowVariant || filter?.type === "$between" ?
+              "100%"
+            : "min(400px, 100%)",
           maxHeight: "50vh",
           borderColor: error ? "var(--danger)" : undefined,
           ...style,
         }}
       >
         <FlexRow
-          className={`gap-0 mx-p5 ${
+          className={`gap-0 ${
             isWithoutControls ? " "
-            : rowVariant ? " ai-center"
+            : rowVariant ? " ai-stretch"
             : " ai-start mt-p5 "
           }`}
         >
@@ -300,7 +313,7 @@ export class FilterWrapper extends RTComp<
                 className={`FilterWrapper_Field flex-row `}
                 data-command="FilterWrapper_Field"
                 onClick={toggle}
-                variant="text"
+                variant="default"
                 size="small"
                 title={toggleTitle}
                 color={btnColor}
@@ -309,10 +322,12 @@ export class FilterWrapper extends RTComp<
               </Btn>
             </FlexRow>
             {FilterTypeSelector}
+            {headerContent}
           </FlexRowWrap>
 
           {filterContentNode}
 
+          {headerActions}
           <Btn
             iconPath={mdiDelete}
             data-command="FilterWrapper.deleteFilter"

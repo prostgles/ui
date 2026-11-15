@@ -94,20 +94,28 @@ export const resolveTableColumns = (
           tables,
           name,
         );
+    const format = column.format ?? info.renderAs ?? info.defaultRenderAs;
+    const requiresPreviewJoin =
+      format?.type === "Internal" &&
+      (format.params.component === "File" ||
+        format.params.component === "FileAnnotation");
+    /* Joined children cannot contain joins. Preserve raw values when resolved again. */
+    if (!allowNestedColumns && (referenceColumn || requiresPreviewJoin)) {
+      return [
+        {
+          ...column,
+          format:
+            requiresPreviewJoin ?
+              { type: "NONE" as const }
+            : (column.format ?? info.renderAs ?? { type: "NONE" as const }),
+        },
+      ];
+    }
     if (!referenceColumn) {
       /* Restore the source when its inherited display is no longer available. */
       return configuredReference?.show && !configuredReference.nested ?
           [{ ...column, show: true }]
         : [column];
-    }
-    /* Joined children cannot contain joins. Preserve raw values when resolved again. */
-    if (!allowNestedColumns) {
-      return [
-        {
-          ...column,
-          format: column.format ?? info.renderAs ?? { type: "NONE" as const },
-        },
-      ];
     }
     reservedNames.add(name);
     defaults.set(name, referenceColumn);

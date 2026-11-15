@@ -140,7 +140,7 @@ export const Sessions = ({ displayType, className = "" }: SessionsProps) => {
           name: "last_usedd",
           select: { $ageNow: ["last_used", null, "second"] },
           label: t.Sessions["Last used"],
-          render: (value) => <StyledInterval value={value} />,
+          render: (value) => <StyledInterval value={value} showAgo />,
         },
         { name: "ip_address", hide: displayType === "api_token" },
         {

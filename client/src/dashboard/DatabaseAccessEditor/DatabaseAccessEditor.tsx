@@ -23,8 +23,7 @@ export type DatabaseAccessPermission = NonNullable<
 export type DatabaseAccessEditorProps = {
   value: DatabaseAccessPermission | undefined;
   onChange:
-    | undefined
-    | ((newValue: DatabaseAccessPermission | undefined) => void);
+    undefined | ((newValue: DatabaseAccessPermission | undefined) => void);
   contentRight?: React.ReactNode;
   newTables: DBSSchema["agentic_workflows"]["definition_data"]["newTables"];
   hideTablesWithoutAccess?: true;
@@ -50,7 +49,7 @@ export const DatabaseAccessEditor = ({
   }
   return (
     <HeaderSection
-      className="gap-p5 ai-start"
+      className="gap-p5 ai-start max-w-fit"
       data-command="DatabaseAccessEditor"
       title={showSelect ? "" : "Database access"}
       titleEndContent={

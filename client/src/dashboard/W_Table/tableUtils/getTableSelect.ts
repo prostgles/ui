@@ -1,9 +1,5 @@
-import {
-  getSmartGroupFilter,
-  getTableFilterFromDetailedGroupFilter,
-} from "@common/filterUtils";
-import type { AnyObject, Select, SelectFunction } from "prostgles-types";
-import { isDefined } from "prostgles-types";
+import { getSmartGroupFilter } from "@common/filterUtils";
+import type { AnyObject, Select } from "prostgles-types";
 import type { Prgl } from "src/App";
 import { isEmpty } from "../../../utils/utils";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
@@ -30,10 +26,14 @@ import {
 } from "./fetchChartRangeValues";
 import { getColumnsWithInfoAndWidth } from "./getColumnsWithInfoAndWidth";
 import { excludeFkeyActions } from "./excludeFkeyActions";
+import { getComputedColumnSelect } from "./getComputedColumnSelect";
 import { getTableRowIdentityColumns } from "../ColumnMenu/ColumnDisplayFormat/getTableIdentityColumns";
 
+export { getComputedColumnSelect } from "./getComputedColumnSelect";
+
 export const getTableSelect = async (
-  w: Pick<WindowData<"table">, "columns" | "table_name">,
+  w: Pick<WindowData<"table">, "columns" | "table_name"> &
+    Partial<Pick<WindowData<"table">, "options">>,
   tables: DBSchemaTableWJoins[],
   db: Prgl["db"],
   filter: AnyObject,
@@ -94,7 +94,13 @@ export const getTableSelect = async (
   );
 
   Object.entries(
-    getRequiredTableSelect(fullColumns, table, tables, methods),
+    getRequiredTableSelect(
+      fullColumns,
+      table,
+      tables,
+      methods,
+      w.options?.viewAs,
+    ),
   ).forEach(([columnName, requiredColumnSelect]) => {
     // A raw dependency must not replace an existing computed expression.
     if (requiredColumnSelect === 1 && select[columnName]) return;
@@ -126,6 +132,7 @@ export const getRequiredTableSelect = (
   table: DBSchemaTableWJoins,
   tables: DBSchemaTableWJoins[],
   methods: Prgl["methods"] = {},
+  viewAs?: NonNullable<WindowData<"table">["options"]>["viewAs"],
 ): Select => {
   const select: AnyObject = {};
   const shownColumns = columns.filter((column) => column.show);
@@ -149,6 +156,10 @@ export const getRequiredTableSelect = (
       table,
       columns.map((column) => ({ ...column, show: true })),
     ).forEach(({ name }) => addColumn(name));
+    if (viewAs?.type === "card") {
+      addColumn(viewAs.cardGroupBy);
+      addColumn(viewAs.cardOrderBy);
+    }
   }
 
   shownColumns.forEach((column) => {
@@ -177,41 +188,6 @@ export const getRequiredTableSelect = (
   });
 
   return select;
-};
-
-export const getComputedColumnSelect = (
-  computedConfig: Required<ColumnConfig>["computedConfig"],
-): SelectFunction => {
-  let funcName = computedConfig.funcDef.key;
-  let functionArgs: any[] = [computedConfig.column].filter(isDefined);
-  if (computedConfig.column || computedConfig.args) {
-    const { args } = computedConfig;
-    if (args?.$duration?.otherColumn) {
-      functionArgs = [computedConfig.column, args.$duration.otherColumn];
-      funcName = "$age";
-    } else if (funcName === "$string_agg") {
-      functionArgs = [
-        computedConfig.column,
-        args?.$string_agg?.separator || ", ",
-      ];
-    } else if (args?.$template_string) {
-      functionArgs = [args.$template_string];
-    }
-  }
-  const aggregateOptions =
-    computedConfig.funcDef.isAggregate ?
-      computedConfig.aggregateOptions
-    : undefined;
-  const aggregateFilter =
-    aggregateOptions?.filter &&
-    getTableFilterFromDetailedGroupFilter(aggregateOptions.filter);
-  return {
-    [funcName]: functionArgs,
-    ...(!isEmpty(aggregateFilter) && { $filter: aggregateFilter }),
-    ...(aggregateOptions?.orderBy && {
-      $orderBy: aggregateOptions.orderBy,
-    }),
-  } as SelectFunction;
 };
 
 const getNestedColumnSelect = async (

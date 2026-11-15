@@ -44,7 +44,7 @@ export const SmartFilterBarFilters = ({
         <FlexCol
           key="having"
           data-key={"having"}
-          className={`gap-p5 min-h-0 f-0 relative ai-start ${groupSpacing} ${hasFilters ? "bb b-color" : ""} pb-p5`}
+          className={`SmartFilterBarFilters_Having gap-p5 min-h-0 f-0 relative ${groupSpacing} ${hasFilters ? "bb b-color" : ""} pb-p5`}
         >
           <Label
             variant="normal"
@@ -57,7 +57,7 @@ export const SmartFilterBarFilters = ({
             type="having"
             selectedColumns={selectedColumns ?? []}
             itemName="filter"
-            filterClassName={"shadow b b-action"}
+            withShadow={true}
             tables={tables}
             db={db}
             tableName={table.name}
@@ -73,7 +73,7 @@ export const SmartFilterBarFilters = ({
         <FlexCol
           key="where"
           data-key={"where"}
-          className={`gap-p5 min-h-0 f-0 relative ai-start ${groupSpacing}`}
+          className={`SmartFilterBarFilters_Where gap-p5 min-h-0 f-0 relative ${groupSpacing}`}
         >
           {hasHavingFilters && (
             <Label
@@ -93,7 +93,7 @@ export const SmartFilterBarFilters = ({
             type="where"
             selectedColumns={selectedColumns ?? []}
             itemName="filter"
-            filterClassName={"shadow b b-action"}
+            withShadow={true}
             tables={tables}
             db={db}
             tableName={table.name}

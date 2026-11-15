@@ -7,7 +7,8 @@ import type { DeckGLFeatureEditorProps } from "./DeckGLFeatureEditor";
 import "./DeckGLMap.css";
 import type { Bounds, DeckGlLibs } from "./DeckGLWrapped";
 import { DeckWrapped, getDeckLibs, getViewState } from "./DeckGLWrapped";
-import { makeImageLayer, makeTileLayer } from "./mapUtils";
+import { isVectorTileURL, makeImageLayer, makeTileLayer } from "./mapUtils";
+import { MVT_BACKGROUND_COLOR } from "./MVTRendering/MVTLayerProps";
 
 type OnClickEvent = {
   coordinate?: [number, number];
@@ -328,6 +329,7 @@ export class DeckGLMap extends RTComp<DecKGLMapProps, DeckGLMapState, D> {
         dP?.basemapDesaturate ||
         dP?.basemapOpacity ||
         dP?.basemapZoomOffset ||
+        (dP && "enableCollisionFilter" in dP) ||
         "editedFeaturesLayer" in dD)
     ) {
       this.deckW.render({
@@ -431,11 +433,15 @@ export class DeckGLMap extends RTComp<DecKGLMapProps, DeckGLMapState, D> {
             type: "FeatureCollection",
             features: g.features,
           },
-          /** Disabled due to bad experience (features missing) */
-          extensions:
-            enableCollisionFilter ?
-              [new deckGlLibs.extensions.CollisionFilterExtension()]
-            : [],
+          _subLayerProps: {
+            "points-text":
+              enableCollisionFilter !== false ?
+                {
+                  type: deckGlLibs.lib.CollisionFilteredTextLayer,
+                  background: true,
+                }
+              : {},
+          },
           filled: true,
 
           getPointRadius: (f) => (g.getIcon ? 0.1 : (f.properties.radius ?? 1)),
@@ -523,11 +529,18 @@ export class DeckGLMap extends RTComp<DecKGLMapProps, DeckGLMapState, D> {
   deckW?: DeckWrapped;
   render() {
     const { deckW, deckGlLibs } = this;
+    const hasVectorBasemap =
+      this.props.projection !== "orthographic" &&
+      this.props.tileURLs?.some(isVectorTileURL);
     return (
       <div
         className="relative flex-row f-1"
         style={{
           overscrollBehavior: "contain",
+          backgroundColor:
+            hasVectorBasemap ?
+              `rgba(${MVT_BACKGROUND_COLOR.join(", ")}, ${this.props.basemapOpacity})`
+            : undefined,
         }}
         onMouseDown={() => {
           this.mouseDown = true;

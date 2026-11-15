@@ -5,17 +5,39 @@ import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
 import { getColumnsWithInfo } from "./getColumnsWithInfo";
 import { getColWidth } from "./getColWidth";
 import { getColumnActions } from "../ColumnMenu/ColumnDisplayFormat/getFormatColumnSelect";
+import { hasCardFieldLists } from "@common/ColumnConfig/cardLayout";
+import { getTableCardColumns } from "../../SmartCard/getTableCardColumns";
 
 export const getColumnsWithInfoAndWidth = (
   tables: DBSchemaTableWithRenderInfo[],
-  w: Pick<WindowData<"table">, "columns" | "table_name">,
+  w: Pick<WindowData<"table">, "columns" | "table_name"> &
+    Partial<Pick<WindowData<"table">, "options">>,
   data?: AnyObject[],
   windowWidth?: number,
 ): ColumnConfigWithInfo[] => {
   try {
     const { table_name } = w;
 
-    const columnsWithInfo = getColumnsWithInfo(table_name, tables, w.columns);
+    const table = tables.find((table) => table.name === table_name);
+    const useCardFields =
+      w.options?.viewAs?.type === "card" && hasCardFieldLists(table?.card);
+    let columnsWithInfo = getColumnsWithInfo(table_name, tables, w.columns, {
+      showAllColumns: useCardFields,
+    });
+    if (useCardFields && table) {
+      const { headerColumns, bodyColumns } = getTableCardColumns(
+        table,
+        columnsWithInfo,
+      );
+      const summaryColumns = new Set([
+        ...headerColumns,
+        ...bodyColumns.map(({ column }) => column),
+      ]);
+      columnsWithInfo = columnsWithInfo.map((column) => ({
+        ...column,
+        show: summaryColumns.has(column),
+      }));
+    }
 
     try {
       const columnsWithWidth = getColWidth(

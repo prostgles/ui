@@ -3,6 +3,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { RUNTIME_MODE } from "./runtimeMode";
 import { assertPersistentDataPath } from "./assertPersistentDataPath";
+import { isObject, tryCatchV2 } from "prostgles-types";
 
 export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
 export type DBSConnectionInfo = Pick<
@@ -132,32 +133,35 @@ export const getElectronConfig = () => {
   const electronConfigPath = path.resolve(
     `${getRootDir()}/.prostgles-desktop-config.json`,
   );
-  const getCredentials = (): DBSConnectionInfo | undefined => {
-    if (devCredentials) {
-      return devCredentials;
-    }
-    try {
-      const file =
-        !fs.existsSync(electronConfigPath) ?
-          undefined
-        : fs.readFileSync(electronConfigPath);
-      const decrypted = file ? safeStorage.decryptString(file) : undefined;
-      if (decrypted) {
-        return JSON.parse(decrypted) as DBSConnectionInfo;
+  const getCredentialsResult = () =>
+    tryCatchV2((): DBSConnectionInfo | undefined => {
+      if (devCredentials) {
+        return devCredentials;
       }
-    } catch (e) {
-      console.error(e);
-    }
-
-    return undefined;
-  };
+      let encryptedCredentials: Buffer;
+      try {
+        encryptedCredentials = fs.readFileSync(electronConfigPath);
+      } catch (error) {
+        if (isObject(error) && error.code === "ENOENT") return;
+        throw error;
+      }
+      const decrypted = safeStorage.decryptString(encryptedCredentials);
+      const credentials: unknown = JSON.parse(decrypted);
+      if (!isObject(credentials)) {
+        throw new Error(
+          "Saved state database credentials must be a JSON object.",
+        );
+      }
+      return credentials as DBSConnectionInfo;
+    });
 
   return {
     isElectron: true,
     port,
     sidConfig: electronConfig,
-    hasCredentials: () => !!getCredentials(),
-    getCredentials,
+    hasCredentials: () => !!getCredentialsResult().data,
+    getCredentials: () => getCredentialsResult().data,
+    getCredentialsResult,
     focusWindow,
     openPath,
     setCredentials: (connection?: DBSConnectionInfo) => {

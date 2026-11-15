@@ -1,14 +1,16 @@
 import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol } from "@components/Flex";
 import { InfoRow } from "@components/InfoRow";
-import { isDefined } from "prostgles-types";
+import Loading from "@components/Loader/Loading";
+import { usePromise } from "prostgles-client";
+import { isDefined, isObject } from "prostgles-types";
 import React, { useMemo } from "react";
 import { SmartCardList } from "../../SmartCardList/SmartCardList";
 import { SmartCardListJoinedNewRecords } from "../../SmartCardList/SmartCardListJoinedNewRecords";
 import { NewRowDataHandler } from "../SmartFormNewRowDataHandler";
 import type { JoinedRecordsProps } from "./JoinedRecords";
 import type { JoinedRecordSection } from "./useJoinedRecordsSections";
-import { useJoinedSectionFieldConfigs } from "./useJoinedSectionFieldConfigs";
+import { getTableCardFieldConfigs } from "../SmartFormField/getTableCardFieldConfigs";
 import { JoinedRecordsAddRow } from "./JoinedRecordsAddRow";
 
 export const JoinedRecordsSection = ({
@@ -55,7 +57,6 @@ const JoinedRecordsSectionCardList = (
     isInsert,
     descendants,
     newRowDataHandler,
-    tableName,
     tablesToShow,
     sql,
   } = props;
@@ -84,12 +85,13 @@ const JoinedRecordsSectionCardList = (
     [newRowData],
   );
 
-  const fieldConfigs = useJoinedSectionFieldConfigs({
-    sectionTable: s.table,
-    tables,
-    tableName,
-    tablesToShow,
-  });
+  const fieldConfigs = usePromise(async () => {
+    const tableOptions = tablesToShow?.[s.tableName];
+    if (isObject(tableOptions) && tableOptions.fieldConfigs) {
+      return tableOptions.fieldConfigs;
+    }
+    return getTableCardFieldConfigs({ table: s.table, tables, db, methods });
+  }, [s.table, s.tableName, tablesToShow, tables, db, methods]);
 
   const { count } = s;
 
@@ -143,6 +145,8 @@ const JoinedRecordsSectionCardList = (
     );
   }
 
+  if (!fieldConfigs) return <Loading />;
+
   return (
     <div className="flex-col gap-p25">
       {count > 20 && <div className="text-2">Showing top {limit} records</div>}
@@ -162,6 +166,7 @@ const JoinedRecordsSectionCardList = (
         noDataComponent={noDataComponent}
         noDataComponentMode="hide-all"
         fieldConfigs={fieldConfigs}
+        bordered={true}
       />
     </div>
   );

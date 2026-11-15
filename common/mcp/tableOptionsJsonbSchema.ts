@@ -1,6 +1,6 @@
 import { tableColumnConfigFields } from "../ColumnConfig/columnConfigSchema";
 import { columnDisplayFormatSchema } from "../columnDisplayFormat.schema";
-import { cardLayoutOptionsSchema } from "../ColumnConfig/cardLayout";
+import { cardLayoutSectionsSchema } from "../ColumnConfig/cardLayout";
 
 export const tableOptionsJsonbSchema = {
   record: {
@@ -80,12 +80,13 @@ export const tableOptionsJsonbSchema = {
           optional: true,
           description: "Card view options",
           type: {
-            layout: {
-              ...cardLayoutOptionsSchema,
+            summaryFields: {
+              type: "string[]",
               optional: true,
               description:
-                "Field layout for the detailed card opened from the title. Summary rows use automatic placement and share the field label settings.",
+                "Ordered fields beside the title, subheaders and avatar. Also shown above detail sections. At most 10 fields; exclude header fields. An empty array explicitly selects no summary fields. When neither summaryFields nor layoutSections is configured, the first 10 fields (including headers) form the summary and the remaining fields appear in details. These lists do not change table column visibility.",
             },
+            layoutSections: cardLayoutSectionsSchema,
             avatarColumn: {
               type: "string",
               description:

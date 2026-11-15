@@ -64,6 +64,7 @@ export const AlertNotifications = ({
                     </span>
                     <StyledInterval
                       value={age}
+                      showAgo
                       style={{ color: "var(--text-0)" }}
                     />
                     {title && <strong>{title}</strong>}

@@ -33,6 +33,7 @@ import {
   type CONNECTION_HOT_RELOAD_COLUMNS,
 } from "./initConnectionManager";
 import { parsePlugins } from "../Plugins/parsePlugins";
+import { mergeDefinitions } from "../Plugins/mergeDefinitions";
 import { startConnection } from "./startConnection";
 import { setSyncUserSub } from "./setSyncUserSub";
 import { statePrgl } from "../init/startProstgles";
@@ -299,29 +300,46 @@ export class ConnectionManager {
   /** Caller must hold the connection lifecycle queue. */
   updateConnectionAccess = async (connection: PRGLInstanceStarted) => {
     if (!this.dbs) throw "Dbs not ready";
-    const [{ functions, functionOptions }, publish] = await Promise.all([
-      getConnectionServerFunctions({
-        databaseConfig: connection.dbConf,
-        dbs: this.dbs,
-        connection: connection.con,
-      }),
-      getConnectionPublish({
-        dbConf: connection.dbConf,
-        dbs: this.dbs,
-        connection: connection.con,
-      }),
-    ]);
+    const schemaConfig = getSchemaConfig(connection.dbConf.config_sync)?.config;
     const configuredConnection = {
       ...connection.con,
-      ...getSchemaConfig(connection.dbConf.config_sync)?.config.connection,
+      ...schemaConfig?.connection,
     };
+    const [{ functions, functionOptions }, publish, plugins] =
+      await Promise.all([
+        getConnectionServerFunctions({
+          databaseConfig: connection.dbConf,
+          dbs: this.dbs,
+          connection: connection.con,
+        }),
+        getConnectionPublish({
+          dbConf: connection.dbConf,
+          dbs: this.dbs,
+          connection: connection.con,
+        }),
+        parsePlugins({
+          type: "saved",
+          dbs: this.dbs,
+          conMgr: this,
+          con: configuredConnection,
+          app: connection.app,
+          databaseConfig: {
+            ...connection.dbConf,
+            ...schemaConfig?.databaseConfig,
+          },
+        }),
+      ]);
     await connection.prgl.update(
       {
-        functions,
+        functions: mergeDefinitions(
+          functions,
+          plugins.functions,
+          "Function group",
+        ),
         publish,
         modifyClientFunctionSchema: modifyClientFunctionSchema(
           configuredConnection.function_options,
-          functionOptions,
+          { ...plugins.functionOptions, ...functionOptions },
         ),
       },
       true,
@@ -437,11 +455,11 @@ export class ConnectionManager {
     ];
   };
 
-  getFileFolderPath(conId?: string) {
-    if (!conId) return getDataPath("STORAGE");
-    const conn = this.connections?.find((c) => c.id === conId);
-    if (!conn) throw "Connection not found";
-    const conPath = UNIQUE_DB_COLS.map((f) => conn[f]).join("_");
+  getFileFolderPath(
+    connection?: Pick<Connections, (typeof UNIQUE_DB_COLS)[number]>,
+  ) {
+    if (!connection) return getDataPath("STORAGE");
+    const conPath = UNIQUE_DB_COLS.map((f) => connection[f]).join("_");
     return getDataPath("STORAGE", conPath);
   }
 

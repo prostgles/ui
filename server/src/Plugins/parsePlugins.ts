@@ -40,6 +40,7 @@ export type ParseTableConfigArgs = {
 
 type ParsedPlugins = {
   functions: PluginDefinition["functions"];
+  functionOptions: NonNullable<PluginDefinition["functionOptions"]>;
   tableOptions: NonNullable<PluginDefinition["tableOptions"]>;
   fileTable: FileTableConfig | undefined;
   tableConfig: TableConfig | undefined;
@@ -103,12 +104,14 @@ export const parsePlugins = async (
       { users: userOptions.tableConfig.users }
     : {};
   const tableOptions: ParsedPlugins["tableOptions"] = {};
+  const functionOptions: ParsedPlugins["functionOptions"] = {};
   let fileTable: FileTableConfig | undefined;
   let functions: PluginDefinition["functions"];
 
   for (const plugin of plugins) {
     functions = mergeDefinitions(functions, plugin.functions, "Function group");
     Object.assign(tableOptions, plugin.tableOptions);
+    Object.assign(functionOptions, plugin.functionOptions);
     if (plugin.fileTable) {
       if (fileTable) {
         throw new Error(
@@ -145,9 +148,9 @@ export const parsePlugins = async (
           pluginTableConfig.onMount,
           existingTableConfig?.onMount,
         ),
-        publish: {
-          ...existingTableConfig?.publish,
-          ...pluginTableConfig.publish,
+        publishRestrictions: {
+          ...existingTableConfig?.publishRestrictions,
+          ...pluginTableConfig.publishRestrictions,
         },
         columns: mergeDefinitions(
           existingTableConfig?.columns,
@@ -182,6 +185,7 @@ export const parsePlugins = async (
 
   return {
     functions,
+    functionOptions,
     fileTable,
     tableOptions,
     tableConfig: Object.keys(tableConfig).length ? tableConfig : undefined,

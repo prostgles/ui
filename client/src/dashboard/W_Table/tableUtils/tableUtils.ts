@@ -15,7 +15,8 @@ import type {
 } from "@common/ColumnConfig/ColumnConfig";
 import { SORTABLE_CHART_COLUMNS } from "../ColumnMenu/NestedTimechartControls";
 import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
-import { getColumnsWithInfo } from "./getColumnsWithInfo";
+import { getColumnsWithInfoAndWidth } from "./getColumnsWithInfoAndWidth";
+import { getColumnSortOptions } from "./getColumnSortOptions";
 
 /** It's a record to ensure all keys are present */
 const COLUMN_CONFIG_KEYS: Record<keyof ColumnConfig, 1> = {
@@ -26,7 +27,6 @@ const COLUMN_CONFIG_KEYS: Record<keyof ColumnConfig, 1> = {
   label: 1,
   display: 1,
   show: 1,
-  infoLevel: 1,
   style: 1,
   width: 1,
   nested: 1,
@@ -132,7 +132,8 @@ export const getSortColumn = <
 
 export const getSort = (
   tables: DBSchemaTableWJoins[],
-  w: Pick<WindowSyncItem<"table">, "sort" | "columns" | "table_name">,
+  w: Pick<WindowSyncItem<"table">, "sort" | "columns" | "table_name"> &
+    Partial<Pick<WindowSyncItem<"table">, "options">>,
 ): ColumnSortSQL[] => {
   const table = tables.find((t) => t.name === w.table_name);
   const sort = !w.columns && !w.sort?.length ? table?.sort : w.sort;
@@ -144,8 +145,7 @@ export const getSort = (
   const cols = table?.columns;
   if (!cols) return [];
 
-  const windowColumns =
-    w.columns && getColumnsWithInfo(w.table_name, tables, w.columns);
+  const windowColumns = w.columns && getColumnsWithInfoAndWidth(tables, w);
   _sort = _sort.filter((s) => {
     if (!windowColumns) {
       /** Sort key must match a valid table column */
@@ -153,14 +153,18 @@ export const getSort = (
     } else {
       const windowColumn = getSortColumn(s, windowColumns);
       if (windowColumn?.nested) {
-        return !!windowColumn.show;
+        return (
+          !!windowColumn.show &&
+          getColumnSortOptions(windowColumn).some(({ key }) => key === s.key)
+        );
       }
       return cols.some((c) => {
         if (windowColumn?.computedConfig) {
           /** CountAll doesn't require a column */
           return (
-            !windowColumn.computedConfig.column ||
-            windowColumn.computedConfig.column === c.name
+            !!windowColumn.show &&
+            (!windowColumn.computedConfig.column ||
+              windowColumn.computedConfig.column === c.name)
           );
         } else if (windowColumn) {
           return windowColumn.name === c.name;

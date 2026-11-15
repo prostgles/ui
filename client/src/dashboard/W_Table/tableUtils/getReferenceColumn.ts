@@ -64,7 +64,6 @@ export const getReferenceColumn = (
     name,
     label: column.label ?? column.info?.label ?? column.name,
     show: column.show,
-    infoLevel: column.infoLevel,
     idx: column.idx,
     width: column.width,
     display:

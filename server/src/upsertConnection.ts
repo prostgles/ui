@@ -22,27 +22,27 @@ export const upsertConnection = async (
   const { canCreateDb } = await testDBConnection(con);
   try {
     let connection: Connections | undefined;
+    if (con.id && !(await dbs.connections.findOne({ id: con.id }))) {
+      throw "Connection not found: " + con.id;
+    }
+    await dbs.database_configs.insert(
+      {
+        ...pickKeys({ ...c }, ["db_host", "db_name", "db_port"]),
+        cors: { allowedOrigins },
+        csp: CSP_DEFAULTS,
+      },
+      {
+        removeDisallowedFields: true,
+        onConflict: "DoNothing",
+      },
+    );
     if (con.id) {
-      if (!(await dbs.connections.findOne({ id: con.id }))) {
-        throw "Connection not found: " + con.id;
-      }
       connection = await dbs.connections.update(
         { id: con.id },
         omitKeys(c, ["id"]),
         { returning: "*", multi: false },
       );
     } else {
-      await dbs.database_configs.insert(
-        {
-          ...pickKeys({ ...c }, ["db_host", "db_name", "db_port"]),
-          cors: { allowedOrigins },
-          csp: CSP_DEFAULTS,
-        },
-        {
-          removeDisallowedFields: true,
-          onConflict: "DoNothing",
-        },
-      );
       connection = await dbs.connections.insert(
         { ...c, info: { canCreateDb } },
         { returning: "*" },

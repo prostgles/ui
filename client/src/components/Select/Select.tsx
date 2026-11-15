@@ -3,7 +3,7 @@ import React from "react";
 import type { TestSelectors } from "../../Testing";
 import RTComp from "../../dashboard/RTComp";
 import type { BtnProps } from "../Btn";
-import Btn from "../Btn";
+import Btn, { getButtonFontSize } from "../Btn";
 import Chip from "../Chip";
 import { generateUniqueID } from "../FileInput/FileInput";
 import { FlexCol, FlexRow } from "../Flex";
@@ -279,8 +279,7 @@ export class Select<
             e,
             Array.isArray(newValue) ? undefined : (
               (fullOptions.find((fo) => fo.key === newValue) as
-                | FullOption<O>
-                | undefined)
+                FullOption<O> | undefined)
             ),
           );
         }
@@ -306,8 +305,7 @@ export class Select<
             key as OptionType,
             e,
             fullOptions.find((fo) => fo.key === key) as
-              | FullOption<O>
-              | undefined,
+              FullOption<O> | undefined,
           );
         }
       });
@@ -410,7 +408,12 @@ export class Select<
               key={key}
               color="blue"
               style={{
-                fontSize: "18px",
+                fontSize: this.props.size === "small" ? "14px" : "18px",
+                ...(this.props.size === "small" && {
+                  padding: "4px 8px",
+                  minHeight: "32px",
+                  boxSizing: "border-box",
+                }),
               }}
               onDelete={
                 toggleOne &&
@@ -430,6 +433,7 @@ export class Select<
     const searchList = (
       <SearchList
         id={id}
+        checkboxVariant={multiSelect ? "micro" : undefined}
         roundedItems={variant === "search-list-only"}
         style={{
           maxHeight: "500px",
@@ -528,6 +532,12 @@ export class Select<
         {...labelProps}
         // htmlFor={id}
         variant="normal"
+        style={{
+          fontSize: getButtonFontSize(
+            this.props.btnProps?.size ?? this.props.size,
+          ),
+          lineHeight: "1em",
+        }}
       />
     );
     if (variant === "button-group-vertical") {

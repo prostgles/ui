@@ -279,7 +279,7 @@ export const TabsWithDefaultStyle = ({ items }: Pick<TabsProps, "items">) => {
   }, [activeSection, items]);
   return (
     <div
-      className="flex-col f-1 min-h-0 pt-1 w-full"
+      className="flex-col f-1 min-h-0 w-full"
       style={{ maxWidth: "800px" }}
     >
       <Tabs

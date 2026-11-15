@@ -159,9 +159,10 @@ export type RemoteMcpServerParameters = {
         onAuthError: (
           errorType: "dcr_not_supported" | "unknown",
           error: string,
-        ) => void;
+        ) => Promise<void>;
       };
   RemoteServerEvents?: {
+    onAuthenticationError?: (error: string) => Promise<void>;
     onConnected?: (info: {
       serverVersion?: z.infer<typeof ImplementationSchema>;
       capabilities?: z.infer<typeof ServerCapabilitiesSchema>;

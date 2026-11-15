@@ -17,13 +17,13 @@ export type PropertyType =
   | PrimitiveTypeWithArraysAndOptional
   /** Object */
   | {
-      type: Record<string, PrimitiveTypeWithArraysAndOptional>;
+      type: Record<string, PropertyType>;
       optional?: boolean;
       nullable?: boolean;
     }
   /** Array of objects */
   | {
-      arrayOfType: Record<string, PrimitiveTypeWithArraysAndOptional>;
+      arrayOfType: Record<string, PropertyType>;
       optional?: boolean;
       nullable?: boolean;
     };
@@ -96,33 +96,21 @@ type ParsePropertyType<P extends PropertyType> =
   P extends PrimitiveTypeWithArraysAndOptional ? ParsePrimitiveField<P>
   : P extends (
     {
-      type: infer Obj extends Record<
-        string,
-        PrimitiveTypeWithArraysAndOptional
-      >;
+      type: infer Obj extends Record<string, PropertyType>;
     }
   ) ?
-    ParseObjectFields<Obj>
+    ParseSchema<Obj>
   : P extends (
     {
-      arrayOfType: infer Obj extends Record<
-        string,
-        PrimitiveTypeWithArraysAndOptional
-      >;
+      arrayOfType: infer Obj extends Record<string, PropertyType>;
     }
   ) ?
-    ParseObjectFields<Obj>[]
+    ParseSchema<Obj>[]
   : never;
 
 type ParsePrimitiveField<T extends PrimitiveTypeWithArraysAndOptional> =
   T["type"] extends `${infer Inner}[]` ? ParseUnion<Inner & string>[]
   : ParseUnion<T["type"] & string>;
-
-type ParseObjectFields<
-  T extends Record<string, PrimitiveTypeWithArraysAndOptional>,
-> = {
-  [K in keyof T]: ParsePrimitiveField<T[K]>;
-};
 
 type ParseSchema<S extends Record<string, PropertyType>> = {
   [K in keyof S]: ParsePropertyType<S[K]>;
@@ -493,7 +481,7 @@ export type DefineAgenticWorkflow = <
 /**
  * Example usage:
  * 
-import { defineAgenticWorkflow } from "./defineAgenticWorkflow";
+import { defineAgenticWorkflow } from "#prostgles/workflow";
 void defineAgenticWorkflow(
   {
     name: "Test Workflow",
@@ -534,7 +522,7 @@ void defineAgenticWorkflow(
       }
     }
   },
-  async ({ agentHandlers: { researcher }, tableHandlers, orchestrationTools: { web } }) => {
+  async ({ agentHandlers: { researcher }, tableHandlers, orchestratorToolHandlers: { web } }) => {
 
     const doResearch = async () => {
       const result = await researcher(`research_topic: "Prostgles"`);

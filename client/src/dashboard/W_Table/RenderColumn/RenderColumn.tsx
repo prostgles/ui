@@ -71,16 +71,6 @@ export const RenderColumn = (
     );
   }
 
-  const renderedValue = (
-    <RenderColumnValue
-      column={column}
-      row={row}
-      showTitle={true}
-      maxCellChars={maxCellChars}
-      getValues={getValues}
-      table={table as DBSchemaTableWithOptions}
-    />
-  );
   const fontWeight =
     column.style?.fontWeight ??
     ((
@@ -89,10 +79,17 @@ export const RenderColumn = (
     ) ?
       "bold"
     : undefined);
-  const formattedValue =
-    fontWeight ?
-      <div style={{ fontWeight }}>{renderedValue}</div>
-    : renderedValue;
+  const formattedValue = (
+    <RenderColumnValue
+      column={column}
+      row={row}
+      showTitle={true}
+      maxCellChars={maxCellChars}
+      getValues={getValues}
+      table={table as DBSchemaTableWithOptions}
+      fontWeight={fontWeight}
+    />
+  );
   // Colour and chip styles belong to the action button itself.
   const styleOnButton =
     showDrillDown &&
@@ -128,6 +125,7 @@ type RenderColumnValueProps = {
   maxCellChars: number | undefined;
   getValues: () => unknown[];
   showTitle?: boolean;
+  fontWeight: React.CSSProperties["fontWeight"];
 };
 
 export const RenderColumnValue = ({
@@ -137,6 +135,7 @@ export const RenderColumnValue = ({
   maxCellChars = 500,
   getValues,
   showTitle = true,
+  fontWeight,
 }: RenderColumnValueProps) => {
   const { name } = column;
   const format = getColumnFormat(column);
@@ -155,17 +154,22 @@ export const RenderColumnValue = ({
   const value = row[name];
 
   if (formatRender) {
-    return formatRender.render(
+    const formattedValue = formatRender.render(
       value,
       row,
       { column, table },
       format!,
       maxCellChars,
     );
+    return fontWeight ?
+        <div className="min-w-0" style={{ fontWeight }}>
+          {formattedValue}
+        </div>
+      : formattedValue;
   }
 
   return (
-    <div className="text-ellipsis f-0">
+    <div className="text-ellipsis fs-1" style={{ fontWeight }}>
       <RenderValue
         column={column.info ?? column.computedConfig ?? column}
         value={value}

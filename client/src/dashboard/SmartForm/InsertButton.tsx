@@ -1,6 +1,6 @@
 import type { BtnProps } from "@components/Btn";
 import Btn from "@components/Btn";
-import { FileInput } from "@components/FileInput/FileInput";
+import { FileInput, type LocalMedia } from "@components/FileInput/FileInput";
 import { mdiPlus } from "@mdi/js";
 import React, { useCallback, useState } from "react";
 import { t } from "../../i18n/i18nUtils";
@@ -33,24 +33,25 @@ export const InsertButton = ({
   sql,
 }: InsertButtonProps) => {
   const [open, setOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<LocalMedia>();
   const onClose = useCallback(() => {
     setOpen(false);
+    setSelectedFile(undefined);
   }, []);
-  const [defaultFileData, setDefaultFileData] = useState(defaultData);
   if (!db[tableName]?.insert) {
     return null;
   }
 
   const table = tables.find((t) => t.name === tableName);
-  if (table?.isFileTable && !defaultFileData) {
+  if (table?.isFileTable && !defaultData && !selectedFile) {
     return (
       <FileInput
         maxFileCount={1}
         showDropZone={false}
-        onAdd={(files) => {
-          if (!files.length) return;
+        onAdd={([file]) => {
+          if (!file) return;
 
-          setDefaultFileData(files[0]);
+          setSelectedFile(file);
           setOpen(true);
         }}
       />
@@ -73,7 +74,7 @@ export const InsertButton = ({
         <SmartForm
           asPopup={true}
           confirmUpdates={true}
-          defaultData={defaultData}
+          defaultData={selectedFile ?? defaultData}
           fixedData={fixedData}
           db={db}
           sql={sql}

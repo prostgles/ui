@@ -21,7 +21,12 @@ import type { NextFunction, Request, Response } from "express";
 import path from "path";
 import type { DBOFullyTyped, DBOFullyTypedClient } from "prostgles-server";
 import type { VoidFunction } from "prostgles-server/dist/SchemaWatch/SchemaWatch";
-import { getKeys, omitKeys, type AnyObject } from "prostgles-types";
+import {
+  getKeys,
+  getSerialisableError,
+  omitKeys,
+  type AnyObject,
+} from "prostgles-types";
 import { getAuthSetupData } from "./authConfig/subscribeToAuthSetupChanges";
 import { ConnectionManager } from "./ConnectionManager/ConnectionManager";
 import { DIRECTORIES, getElectronConfig } from "./electronConfig";
@@ -95,6 +100,13 @@ app.get(API_ENDPOINTS.DBS, (req, res) => {
               "Failed to start prostgles. Check logs"
             : "Could not connect to the state database. Check logs",
         }
+      : initState.state === "error" ?
+        {
+          ...initState,
+          error:
+            getSerialisableError(initState.error) ??
+            "Failed to start Prostgles",
+        }
       : initState.state === "ok" ?
         omitKeys(initState, nonSerialiseableOrNotNeededKeys)
       : initState,
@@ -104,16 +116,14 @@ app.get(API_ENDPOINTS.DBS, (req, res) => {
     electronConfig?.isElectron && electronConfig.hasCredentials() ?
       electronConfig.getCredentials()
     : undefined;
-  /** Provide credentials if there is a connection error so the user can rectify it */
+  /* Let the authenticated desktop app edit saved details after any startup error. */
   if (
     electronCreds &&
     serverState.initState.state === "error" &&
-    serverState.initState.errorType === "connection" &&
     (req.cookies as AnyObject)[sidKeyName] ===
       electronConfig?.sidConfig.electronSid
   ) {
-    serverState.electronCreds =
-      electronCreds as typeof serverState.electronCreds;
+    serverState.electronCreds = electronCreds;
   }
   /** Alert admin if x-real-ip is spoofable */
   let xRealIpSpoofable = false;

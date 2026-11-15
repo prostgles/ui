@@ -1,0 +1,29 @@
+.SmartCardSections {
+  container-type: inline-size;
+  text-align: left;
+}
+
+.SmartCardSectionFields {
+  display: grid;
+  grid-template-columns: repeat(var(--card-section-columns), minmax(0, 1fr));
+  align-items: start;
+}
+
+.SmartCardSectionFields > * {
+  grid-column: span var(--card-field-span, 1);
+}
+
+.SmartCardSectionFields--inline {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+@container (max-width: 480px) {
+  .SmartCardSectionFields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .SmartCardSectionFields > * {
+    grid-column: 1 / -1;
+  }
+}

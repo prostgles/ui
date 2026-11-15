@@ -6,13 +6,13 @@
     "@types/dom-speech-recognition": "^0.0.6",
     "anser": "^2.3.5",
     "d3": "^7.9.0",
-    "deck.gl": "9.3.7",
+    "deck.gl": "9.4.1",
     "loaders.gl": "^0.3.5",
     "monaco-editor": "^0.53.0",
     "papaparse": "^5.7.0",
     "pdfjs-dist": "^6.3.289",
     "pgsql-ast-parser": "^12.0.2",
-    "prostgles-client": "^4.0.428",
+    "prostgles-client": "^4.0.437",
     "qrcode": "^1.5.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -72,7 +72,6 @@
     "@typescript-eslint/eslint-plugin": "^8.48.0",
     "@typescript-eslint/parser": "^8.48.0",
     "babel-loader": "^9.2.1",
-    "babel-plugin-dynamic-import-node": "^2.3.3",
     "babel-plugin-named-asset-import": "^0.3.8",
     "babel-preset-minify": "^0.5.2",
     "circular-dependency-plugin": "^5.2.2",
@@ -106,8 +105,5 @@
     "webpack-manifest-plugin": "^5.0.1",
     "webpack-merge": "^6.0.1",
     "webpack-shell-plugin-next": "^2.3.3"
-  },
-  "overrides": {
-    "@luma.gl/gltf": "9.3.6"
   }
 }

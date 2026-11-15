@@ -1,6 +1,8 @@
 import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import {
   CallToolResultSchema,
+  ErrorCode,
+  McpError,
   ListPromptsResultSchema,
   ListResourcesResultSchema,
   ListResourceTemplatesResultSchema,
@@ -8,22 +10,27 @@ import {
   ReadResourceResultSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 
-export const createMcpServerHandlers = (client: Client) => {
+export const createMcpServerHandlers = (
+  client: Client,
+  runRequest: <T>(request: () => Promise<T>) => Promise<T> = (request) =>
+    request(),
+) => {
   const fetchPrompts = async () => {
-    const prompts = await client.request(
-      {
-        method: "prompts/list",
-      },
-      ListPromptsResultSchema,
+    const prompts = await runRequest(() =>
+      client.request(
+        {
+          method: "prompts/list",
+        },
+        ListPromptsResultSchema,
+      ),
     );
     return prompts;
   };
 
   const fetchToolsList = async () => {
     try {
-      const response = await client.request(
-        { method: "tools/list" },
-        ListToolsResultSchema,
+      const response = await runRequest(() =>
+        client.request({ method: "tools/list" }, ListToolsResultSchema),
       );
 
       const tools = response.tools.map(
@@ -38,23 +45,29 @@ export const createMcpServerHandlers = (client: Client) => {
         }),
       );
       return tools;
-    } catch (_error) {
-      return [];
+    } catch (error) {
+      if (
+        error instanceof McpError &&
+        error.code === Number(ErrorCode.MethodNotFound)
+      )
+        return [];
+      throw error;
     }
   };
 
   const fetchResourcesList = async () => {
-    const response = await client.request(
-      { method: "resources/list" },
-      ListResourcesResultSchema,
+    const response = await runRequest(() =>
+      client.request({ method: "resources/list" }, ListResourcesResultSchema),
     );
     return response.resources;
   };
 
   const fetchResourceTemplatesList = async () => {
-    const response = await client.request(
-      { method: "resources/templates/list" },
-      ListResourceTemplatesResultSchema,
+    const response = await runRequest(() =>
+      client.request(
+        { method: "resources/templates/list" },
+        ListResourceTemplatesResultSchema,
+      ),
     );
     return response.resourceTemplates;
   };
@@ -67,28 +80,32 @@ export const createMcpServerHandlers = (client: Client) => {
         }
       | undefined,
   ) => {
-    const toolResult = await client.request(
-      {
-        method: "tools/call",
-        params: {
-          name: toolName,
-          arguments: toolArguments,
+    const toolResult = await runRequest(() =>
+      client.request(
+        {
+          method: "tools/call",
+          params: {
+            name: toolName,
+            arguments: toolArguments,
+          },
         },
-      },
-      CallToolResultSchema,
+        CallToolResultSchema,
+      ),
     );
     return toolResult;
   };
 
   const readResource = async (uri: string) => {
-    const resourceResult = await client.request(
-      {
-        method: "resources/read",
-        params: {
-          uri,
+    const resourceResult = await runRequest(() =>
+      client.request(
+        {
+          method: "resources/read",
+          params: {
+            uri,
+          },
         },
-      },
-      ReadResourceResultSchema,
+        ReadResourceResultSchema,
+      ),
     );
     return resourceResult;
   };
@@ -108,9 +125,14 @@ const returnEmptyOnError = <T>(request: () => Promise<T>) => {
     try {
       const data = await request();
       return data;
-    } catch (_error) {
-      /** Error ignored because for some reason servers withour resources trigger a McpError: MCP error -32601: Method not found */
-      return [] as T;
+    } catch (error) {
+      /* Servers may not support resources or prompts. Other errors must preserve stored tools. */
+      if (
+        error instanceof McpError &&
+        error.code === Number(ErrorCode.MethodNotFound)
+      )
+        return [] as T;
+      throw error;
     }
   };
 };

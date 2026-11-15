@@ -2,6 +2,7 @@ import { type DetailedFilter } from "@common/filterUtils";
 import { SuccessMessage } from "@components/Animations";
 import type { BtnProps } from "@components/Btn";
 import Btn from "@components/Btn";
+import ConfirmationDialog from "@components/ConfirmationDialog";
 import ErrorComponent from "@components/ErrorComponent";
 import { classOverride } from "@components/Flex";
 import type { JSONBSchemaCommonProps } from "@components/JSONBSchema/JSONBSchema";
@@ -206,6 +207,7 @@ const SmartFormWithNoError = ({
 }) => {
   const { tableName, label, asPopup, className = "", onClose } = props;
   const [showAsMarkdown, setShowAsMarkdown] = useState(false);
+  const [showCloseConfirmation, setShowCloseConfirmation] = useState(false);
 
   const { mode, displayedColumns, errors, error, table, loading } = state;
 
@@ -237,6 +239,14 @@ const SmartFormWithNoError = ({
     onClose?.(true);
   }, [onClose]);
 
+  const onRequestClose = () => {
+    if (state.hasUnsavedChanges && !successMessage) {
+      setShowCloseConfirmation(true);
+      return;
+    }
+    onCloseWrapped();
+  };
+
   const actionsState = useSmartFormActions({
     ...props,
     ...state,
@@ -249,7 +259,7 @@ const SmartFormWithNoError = ({
     <SmartFormPopupWrapper
       {...props}
       table={table}
-      onClose={onCloseWrapped}
+      onClose={onRequestClose}
       maxWidth={maxWidth}
       displayedColumns={displayedColumns}
       headerText={headerText}
@@ -323,7 +333,28 @@ const SmartFormWithNoError = ({
           />
         )}
 
-        <SmartFormFooterButtons {...props} {...state} {...actionsState} />
+        {showCloseConfirmation && (
+          <ConfirmationDialog
+            asPopup
+            positioning="center"
+            className="bg-color-0"
+            title="Unsaved changes"
+            message="Discard your unsaved changes and close this form?"
+            acceptBtn={{
+              color: "danger",
+              text: "Discard changes",
+              dataCommand: "SmartForm.close.confirm",
+            }}
+            onAccept={onCloseWrapped}
+            onClose={() => setShowCloseConfirmation(false)}
+          />
+        )}
+        <SmartFormFooterButtons
+          {...props}
+          {...state}
+          {...actionsState}
+          onClose={onClose && onRequestClose}
+        />
       </div>
     </SmartFormPopupWrapper>
   );

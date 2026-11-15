@@ -11,7 +11,8 @@ import React from "react";
 import { asHex, asRGB, type RGBA } from "@common/ColumnConfig/colorUtils";
 import type { Command } from "../../../Testing";
 import { rgba2hex } from "./rgba2hex";
-import { COLOR_PALETTE } from "@common/ColumnConfig/COLOR_PALETTE";
+import { COLUMN_COLOR_PALETTE } from "@common/ColumnConfig/chipColors";
+import { resolveColor } from "../../../utils/resolveColor";
 
 type S = {
   anchorEl: Element | null;
@@ -22,6 +23,7 @@ export class ColorPicker extends React.Component<
     style?: React.CSSProperties;
     className?: string;
     value: string;
+    palette?: readonly string[];
     onChange: (color: string, rgb: RGBA, rgb255Alpha: RGBA) => void;
     btnProps?: BtnProps;
     label?: string | LabelProps;
@@ -57,7 +59,12 @@ export class ColorPicker extends React.Component<
         this.onChange(this.color ?? "");
       }, thresh);
     } else {
-      onChange(asHex(this.color), asRGB(this.color), asRGB(this.color, "255"));
+      const resolvedColor = resolveColor(this.color);
+      onChange(
+        this.color.startsWith("var(") ? this.color : asHex(this.color),
+        asRGB(resolvedColor),
+        asRGB(resolvedColor, "255"),
+      );
       this.lastChanged = now;
     }
   };
@@ -72,9 +79,10 @@ export class ColorPicker extends React.Component<
       label,
       variant,
       btnProps,
+      palette = COLUMN_COLOR_PALETTE,
     } = this.props;
 
-    const rgba = asRGB(value);
+    const rgba = asRGB(resolveColor(value));
     const opacity = rgba[3] <= 1 ? rgba[3] : rgba[3] / 255;
 
     const labelNode =
@@ -96,7 +104,7 @@ export class ColorPicker extends React.Component<
     return (
       <FlexRow
         data-command={this.props["data-command"]}
-        className={classOverride("gap-p5 ai-center ", className)}
+        className={classOverride("ColorPicker gap-p5 ai-center ", className)}
         style={style}
       >
         {variant === "legend" ?
@@ -111,17 +119,18 @@ export class ColorPicker extends React.Component<
         }
         {anchorEl && (
           <Popup
-            title={"Layer color"}
+            title={this.props.title ?? "Layer color"}
             anchorEl={anchorEl}
             positioning="beneath-left"
             onClose={() => this.setState({ anchorEl: null })}
             contentClassName="p-1 flex-col gap-1"
           >
             <FlexRowWrap>
-              {COLOR_PALETTE.map((c, ci) => (
+              {palette.map((c, ci) => (
                 <Btn
                   key={ci}
                   data-key={c}
+                  title={c}
                   className={"pointer shadow"}
                   style={{
                     width: "24px",
@@ -130,7 +139,12 @@ export class ColorPicker extends React.Component<
                     borderRadius: "1000%",
                   }}
                   onClick={(e) => {
-                    onChange(asHex(c), asRGB(c), asRGB(c, "255"));
+                    const resolvedColor = resolveColor(c);
+                    onChange(
+                      c.startsWith("var(") ? c : asHex(c),
+                      asRGB(resolvedColor),
+                      asRGB(resolvedColor, "255"),
+                    );
                     this.setState({ anchorEl: null });
                   }}
                 />
@@ -183,9 +197,13 @@ export const ColorCircle = ({
   color,
   onClick,
   label,
-}: Pick<BtnProps, "onClick" | "label"> & { color: string }) => {
+  ...buttonProps
+}: Pick<BtnProps, "onClick" | "label" | "title" | "disabledInfo"> & {
+  color: string;
+}) => {
   return (
     <Btn
+      {...buttonProps}
       label={label}
       size={"micro"}
       className={"shadow b b-color f-0"}

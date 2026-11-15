@@ -315,13 +315,13 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
   await page.keyboard.press("Escape");
 
   await page
-    .locator(getDataLabel("db insertMany receipts "))
+    .locator(getDataLabel("db insertMany receipts"))
     .waitFor({ state: "visible", timeout: 35000 });
   await addSceneAnimation(
     {
       nth: 0,
       selector:
-        getDataLabel("db insertMany receipts ") +
+        getDataLabel("db insertMany receipts") +
         getCommandElemSelector("AgenticWorkflow.openToolCall"),
     },
     { duration: "fast" },

@@ -12,6 +12,11 @@ import {
   cliFileNames,
   type CliFileName,
 } from "./cliFileNames";
+import { configModuleConventions } from "./configModuleConventions";
+import {
+  WORKFLOW_MODULE_NAME,
+  WORKFLOW_TYPES_FILE_NAME,
+} from "../McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/agenticWorkflow/runtimeSdk/workflowConstants";
 
 export const saveCliTemplateFiles = async ({
   configId,
@@ -61,13 +66,9 @@ const testsFolderName = "tests";
 
 const servicesFolderName = "services";
 export const srcSubfolderNames = [
-  "accessControl",
-  "functions",
-  "tableConfigs",
-  "tableOptions",
-  "tableHooks",
-  servicesFolderName,
-] as const;
+  ...new Set(configModuleConventions.map(({ folder }) => folder)),
+  "workflows",
+];
 
 type FolderFiles = {
   [key: string]: string | FolderFiles;
@@ -180,7 +181,10 @@ const getCliTemplateFiles = ({
             strictFunctionTypes: true,
           },
           include: [srcFolderName, generatedFolderName, testsFolderName],
-          exclude: [`${srcFolderName}/services/**/src`],
+          exclude: [
+            `${srcFolderName}/services/**/src`,
+            `${srcFolderName}/workflows`,
+          ],
         },
         null,
         2,
@@ -195,21 +199,59 @@ const getCliTemplateFiles = ({
     },
     [srcFolderName]: {
       ...fromEntries(srcSubfolderNames.map((folderName) => [folderName, {}])),
+      workflows: {
+        [cliFileNames.tsconfig]: JSON.stringify({
+          extends: "../../tsconfig.json",
+          compilerOptions: {
+            noEmit: true,
+            paths: {
+              [WORKFLOW_MODULE_NAME]: [
+                `../../${generatedFolderName}/${WORKFLOW_TYPES_FILE_NAME}`,
+              ],
+            },
+          },
+          include: ["**/*.ts"],
+          exclude: [],
+        }),
+      },
       "index.ts": `
         import { defineConfig } from "@prostgles/app";
         import type { DBGeneratedSchema } from "../${generatedFolderName}/${cliFileNames.dbGeneratedSchema.slice(0, -3)}";
         import { serviceManagerConfig } from "./serviceManager";
+        import { tableConfig } from "./tables/tableConfig";
+        import { tableOptions } from "./tables/tableOptions";
+        import { tableHooks } from "./tables/tableHooks";
 
         const prostgles = defineConfig<DBGeneratedSchema>();
 
         export default prostgles({
           id: ${JSON.stringify(configId)},
           connection: {
-            table_options: {},
+            table_options: tableOptions,
           },
           services: serviceManagerConfig,
-          tableConfig: {},
+          tableConfig,
+          tableHooks,
         });`,
+      tables: {
+        "tableConfig.ts": `
+          import type { TableConfig } from "@prostgles/app";
+
+          export const tableConfig = {} satisfies TableConfig;`,
+        "tableOptions.ts": `
+          import type { TableDisplayConfig } from "@prostgles/app";
+
+          export const tableOptions = {} satisfies TableDisplayConfig;`,
+        "tableHooks.ts": `
+          import type { TableHooks, ProstglesContext } from "@prostgles/app";
+          import type { DBGeneratedSchema } from "../../${generatedFolderName}/${cliFileNames.dbGeneratedSchema.slice(0, -3)}";
+          import type { services } from "../serviceManager";
+
+          export const tableHooks = {} satisfies TableHooks<DBGeneratedSchema, ProstglesContext<typeof services>>;`,
+      },
+      jobs: {
+        "jobs.ts": "export const jobs = {};",
+      },
       [servicesFolderName]: {
         myService: {
           "myService.service.ts": ` 
@@ -477,40 +519,9 @@ const getRuntimeDependency = () => {
 };
 const eslintConfig = `
   import eslint from "@eslint/js";
-  import path from "node:path";
+  import { configModuleEslintPlugin } from "@prostgles/app/eslint";
   import tseslint from "typescript-eslint";
   import { defineConfig } from "eslint/config";
-
-  const semanticFilenameRule = {
-    meta: {
-      type: "problem",
-      schema: [{ type: "string" }],
-      messages: {
-        invalidSuffix: "Files in this folder must end in '{{suffix}}'.",
-      },
-    },
-    create(context) {
-      const suffix = context.options[0];
-      return {
-        Program(node) {
-          if (!path.basename(context.filename).endsWith(suffix)) {
-            context.report({
-              node,
-              messageId: "invalidSuffix",
-              data: { suffix },
-            });
-          }
-        },
-      };
-    },
-  };
-
-  const semanticFileConfig = (folder, suffix) => ({
-    files: [\`${srcFolderName}/\${folder}/**/*.ts\`],
-    rules: {
-      "prostgles-config/semantic-filename": ["error", suffix],
-    },
-  });
 
   export default defineConfig(
     {
@@ -521,7 +532,7 @@ const eslintConfig = `
         "e2e/test-results",
         "e2e/playwright-report",
         "eslint.config.mjs",
-        "src/${servicesFolderName}/*/src",  
+        "src/${servicesFolderName}/*/src",
       ],
     },
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
@@ -536,9 +547,7 @@ const eslintConfig = `
         },
       },
       plugins: {
-        "prostgles-config": {
-          rules: { "semantic-filename": semanticFilenameRule },
-        },
+        "prostgles-config": configModuleEslintPlugin,
       },
       rules: {
         "no-cond-assign": "error",
@@ -569,14 +578,21 @@ const eslintConfig = `
         ],
       },
     },
-    ${srcSubfolderNames
-      .filter((f) => f !== "services")
-      .map((folderName) => {
-        const suffix =
-          folderName === "accessControl" ? folderName : folderName.slice(0, -1);
-        return `semanticFileConfig("${folderName}", ".${suffix}.ts")`;
-      })
-      .join(",\n    ")}
+    {
+      files: ["${srcFolderName}/**/*.ts"],
+      rules: { "prostgles-config/config-module": "error" },
+    },
+    {
+      files: ["${srcFolderName}/workflows/**/*.ts"],
+      extends: [tseslint.configs.disableTypeChecked],
+      languageOptions: {
+        parserOptions: { projectService: false },
+      },
+      rules: {
+        "prostgles-config/config-module": "off",
+        "prostgles-config/workflow-module": "error",
+      },
+    },
   );`;
 
 type SchemaConfigGuidance = {
@@ -655,6 +671,8 @@ const getCliAgentsFile = () => `
 
   Keep these boundaries explicit. Do not introduce a reusable abstraction until at least two concrete, valid uses exist.
 
+  Prefer readability over speculative micro-optimisations. Do not add complexity for negligible gains, such as wrapping two cheap lookup queries in \`Promise.all\` just to save a few milliseconds. Use sequential awaits by default for such queries; introduce parallelism, caching, or other optimisations only when a measured bottleneck or clear performance requirement justifies the readability cost.
+
   ## Config structure
 
   - Import \`DBGeneratedSchema\` from \`generated/DBGeneratedSchema\`, create the typed config helper with \`const prostgles = defineConfig<DBGeneratedSchema>()\`, and default-export \`prostgles({ ... })\`. Keep the helper name \`prostgles\` so function return types can be discovered during schema generation.
@@ -672,8 +690,9 @@ const getCliAgentsFile = () => `
 
   - Configure durable background work with top-level \`jobs: { definitions, tableName? }\`; the managed table defaults to \`prostgles_jobs\`. CLI config reloads update job definitions. The built-in \`extractFileText\` job name is reserved when file text extraction is enabled.
   - Define jobs with \`createJobDefiner<DBGeneratedSchema, ProstglesContext<typeof services>>()\` from \`@prostgles/app\`. Row triggers use \`{ type: "row", table, on: ["insert", "update"], columns?, jobIdColumn?, when? }\`. Generated \`afterEach\` hooks enqueue jobs before application \`afterEach\` hooks, in the same transaction. Jobs run after commit; rollback removes the queued work and raw SQL bypasses these triggers. On updates, \`columns\` requires an actual value change; restrict it so progress/result writes do not enqueue the job again.
-  - Set \`jobIdColumn\` to an existing non-primary-key UUID column to store the job ID atomically, including on reruns. Link updates run normal table hooks and can trigger other jobs; the originating job hook prevents its own recursion. Throwing from a transactional link hook rolls back the mutation and queued job. The linked ID is included in mutation results. Guard result updates with \`{ id: row.id, job_id: run.id }\` when a newer run may supersede the current one. Managed file extraction uses \`extraction_job_id\` for this guard.
+  - Set \`jobIdColumn\` to an existing non-primary-key UUID column to store the job ID atomically, including on reruns. Link updates run normal table hooks and can trigger other jobs; the originating job hook prevents its own recursion. Throwing from a transactional link hook rolls back the mutation and queued job. The linked ID is included in mutation results. Guard result updates with \`{ id: row.id, job_id: run.id }\` when a newer run may supersede the current one. Managed file extraction uses \`text_extraction_job_id\` for this guard.
   - Schedule triggers use \`{ type: "schedule", cron, timezone? }\`; missed occurrences while all workers are stopped are not replayed. \`run\` receives \`row\` (re-fetched on each attempt, absent for schedules), \`params\`, \`dbo\`, \`user\`, \`context\`, \`run\`, \`signal\`, \`progress\`, \`progressMessage\`, \`checkpoint\`, and \`fail\`. Use \`await progressMessage("Processing…")\` for the live row-button label. Params use JSONB column definitions and each needs a default or \`optional: true\`.
+  - Return a JSON value from \`run\` to store it in the job’s \`output\` when it succeeds. Returning nothing leaves \`output\` null; failed and cancelled jobs have no output.
   - Set \`retry: { maxAttempts, backoff, delayMs }\` explicitly when recovery is required; the default is one attempt. Jobs may repeat after failures or worker interruption, so make effects idempotent. \`fail(reason)\` stops retries. \`concurrency\` defaults to 1 across workers and runs for the same job/row key are serialized. \`onConflict\` supports \`queue\` (default), \`replace\`, and \`skip\`.
   - Cancellation and \`timeoutMs\` are cooperative: pass \`signal\` into service requests as their second argument, \`{ signal }\`, and check it before persisting results. \`replace\` requests cancellation; it cannot undo external effects. Persist inputs or immutable revision IDs instead of relying on upload buffers or a snapshot of the triggering row.
   - \`runAs\` defaults to \`"system"\`; use \`"user"\` for work that must obey the triggering/rerunning user's current permissions. Start work through a configured row mutation, schedule, or published job control. The instance also exposes \`jobs.get\`, \`jobs.cancel\`, and \`jobs.rerun\`; job-table read permissions do not authorize these server operations.
@@ -743,6 +762,7 @@ const getCliAgentsFile = () => `
 
   ## LLM agents
 
+  - Agentic workflows are finite jobs: process available inputs, persist results, and finish. Never poll or subscribe to database rows or job status while waiting for future data; polling helpers such as \`waitForDocumentText\` flood workflow logs. Put dependent work in a separate row-triggered job that starts an agentic workflow when its inputs are ready (for example, after extracted text is saved). Keep persistent reactive behavior in services or the UI. Do not add database subscriptions to the workflow SDK to support waiting.
   - ${schemaConfigGuidance.llmCredential}
   - Use \`accessControl[].allowedLLM\` entries shaped as \`{ credentialName, promptName }\` to reference existing, uniquely named LLM credentials and prompts. Set \`llm_daily_limit\` in the access rule when needed.
   - In a server function, call \`ctx.context.startAgent({ prompt, input, outputSchema })\`, where \`ctx\` is the function's second argument. This uses Prostgles' configured models and credentials and inherits the caller's identity from the execution context. The returned object is typed from \`outputSchema\`.
@@ -782,14 +802,21 @@ const getCliAgentsFile = () => `
   - Relational reads and aggregates: selects support nested related-table results, explicit \`$leftJoin\`/\`$innerJoin\` paths, and aggregate functions such as \`$count\` and \`$sum\` with \`groupBy\`. Prefer these to per-row lookups or client-side aggregation; inspect \`SelectParams\` and installed examples for the exact syntax and join path when multiple foreign keys exist.
   - For multi-step writes in a default server function, use \`withClientDbTx\` (see Server-side functions). Use only the callback's handlers for transactional operations; calls through the outer \`dbo\`/\`clientDb\` do not join that transaction. Await every operation and do not retain transaction handlers after the callback finishes. Inside transactional hooks, use the existing \`dbx\` instead of starting another transaction. Raw SQL bypasses table-handler hooks and publish rules; prefer table handlers when they express the operation.
   - \`getClientDBHandlers\` returns \`{ clientDb, withClientDbTx, clientSql, clientMethods, clientSchema }\`. \`clientDb\` exposes permitted table operations; \`withClientDbTx\` supplies the same permission checks inside a transaction; \`clientSql\` and \`clientMethods\` remain subject to SQL/function permissions. In an unrestricted function, \`await getClientDBHandlers(undefined)\` uses the bound caller (the argument is an optional permission scope). On a Prostgles instance or in \`afterCommit\`, use \`await getClientDBHandlers(clientReq, undefined)\` or \`await getClientDBHandlers({ userId }, undefined)\` with a trusted identity. These signatures are different; do not pass a user/request to the function-context version.
-  - Every table and view handler supports realtime \`subscribe\` and \`subscribeOne\`, for example \`dbo.orders.subscribe(filter, params, onData)\`. Prefer subscriptions over polling the database. Keep the returned subscription handler and call \`unsubscribe()\` during cleanup; an \`onMount\` callback can return that cleanup function.
+  - For live UI or persistent service updates, use realtime \`subscribe\` and \`subscribeOne\` on database handlers, for example \`dbo.orders.subscribe(filter, params, onData)\`. Keep the returned subscription handler and call \`unsubscribe()\` during cleanup; an \`onMount\` callback can return that cleanup function.
 
   ## Project structure
 
   - Keep \`src/index.ts\` focused on composing and exporting the config.
-  - Put access rules in \`src/accessControl/\`, server functions in \`src/functions/\`, table definitions in \`src/tableConfigs/\`, display metadata in \`src/tableOptions/\`, and hooks in \`src/tableHooks/\`. Add domain subfolders when a folder becomes crowded.
-  - Use semantic names ending in \`*.accessControl.ts\`, \`*.function.ts\`, \`*.tableConfig.ts\`, \`*.tableOptions.ts\`, and \`*.tableHooks.ts\`. Examples: \`members.accessControl.ts\`, \`deployProject.function.ts\`, \`orders.tableConfig.ts\`, \`customers.tableOptions.ts\`, and \`users.tableHooks.ts\`.
-  - The generated ESLint config enforces these suffixes inside their corresponding folders. Run \`npm run lint\` before committing.
+  - Put access rules in \`src/accessControl/\`, server functions in \`src/functions/\`, jobs in \`src/jobs/\`, and each table's definitions, display metadata, and hooks together in \`src/tables/<tableName>/\` as \`<tableName>.tableConfig.ts\`, \`<tableName>.tableOptions.ts\`, and \`<tableName>.tableHooks.ts\`. Add domain subfolders when a folder becomes crowded.
+  - Semantic modules require a named export derived from their filename: \`orders.tableConfig.ts\` exports \`ordersTableConfig\`, \`customers.tableOptions.ts\` exports \`customersTableOptions\`, and \`users.tableHooks.ts\` exports \`usersTableHooks\`. Convert hyphenated or underscored stems to camelCase; do not repeat a role suffix already present in the stem, so \`myService.service.ts\` exports \`myService\`.
+  - Each \`*.tableConfig.ts\` or \`*.tableOptions.ts\` exports only the entry for the table named by its filename, matching \`TableConfig[string]\` or \`TableDisplayConfig[string]\`. For example, \`users.tableOptions.ts\` exports \`usersTableOptions = { label: "Users" } satisfies TableDisplayConfig[string]\`, without a wrapping \`users\` key. Prefer \`satisfies\` or a type annotation to check definitions where they are written.
+  - Assemble table imports in \`src/tables/tableConfig.ts\`, \`src/tables/tableOptions.ts\`, and \`src/tables/tableHooks.ts\`, exporting \`tableConfig\`, \`tableOptions\`, and \`tableHooks\` maps. For example, import \`usersTableOptions\` from \`./users/users.tableOptions\` and export \`tableOptions = { users: usersTableOptions } satisfies TableDisplayConfig\`. Each entry must reference its matching module's named export; inline definitions and spreads are rejected. Use these maps in \`src/index.ts\`; do not create \`tables.tableOptions.ts\` or other multi-table semantic modules.
+  - Each \`*.tableHooks.ts\` exports only its table's hook definition, checked with \`TableHooks<DBGeneratedSchema, ProstglesContext<typeof services>>["tableName"]\`; keep the wrapping table-name keys in \`tableHooks.ts\`. Export a \`SchemaConfigAccessControl[]\` from \`*.accessControl.ts\` and a \`ProstglesService\` from \`*.service.ts\`.
+  - Distinguish individual \`*.function.ts\` definitions, \`*.functions.ts\` function maps, and \`*.functionGroup.ts\` permission groups. Their exports are named \`deployProjectFunction\`, \`projectFunctions\`, and \`projectFunctionGroup\` for the corresponding filename stems. Use the existing schema/context-aware function definers to preserve input and return inference.
+  - Keep each job in \`src/jobs/<jobName>.job.ts\`: \`processOrder.job.ts\` exports \`processOrderJob\`, a single definition created with \`createJobDefiner<DBGeneratedSchema, ProstglesContext<typeof services>>()\`. Assemble named imports in \`src/jobs/jobs.ts\` as \`export const jobs = { processOrder: processOrderJob }\`, using filename stems as job keys. Inline definitions, spreads, and mismatched imports are rejected. When enabling jobs, import this map in \`src/index.ts\` and pass \`jobs: { definitions: jobs }\`.
+  - Keep each workflow in \`src/workflows/<workflowName>.workflow.ts\` and import \`defineAgenticWorkflow\` from \`${WORKFLOW_MODULE_NAME}\` and call it at the top level. Point \`workflows.<workflowName>.source\` at this file. Workflow sources run separately and use their own \`src/workflows/tsconfig.json\` for editor checking. Prostgles generates their shared database and MCP types in \`${generatedFolderName}/${WORKFLOW_TYPES_FILE_NAME}\`; keep workflows excluded from host TypeScript compilation. The workflow SDK is supplied by Prostgles; do not copy it into the project or add it to \`packageDependencies\`.
+  - Keep private helpers in their module. Shared helpers may use ordinary sibling files such as \`tables/tasks/categoryColumns.ts\`; helpers used across concerns belong in descriptive domain modules such as \`shared/planningCategories.ts\`. These files may export multiple related values and do not have a configuration-module type requirement. Supporting types and related constants may also be exported alongside a module's primary configuration export.
+  - \`npm run lint\`, CLI startup, and CLI reloads check semantic export names and their actual TypeScript types, including unused semantic modules. Run \`npm run lint\` before committing.
 
   ## Local development
 
@@ -839,6 +866,37 @@ const getCliAgentsFile = () => `
   - Give every JSONB column a \`jsonbSchema\` or \`jsonbSchemaType\` so its contents are validated and typed.
   - Follow PostgreSQL schema best practices: use primary and foreign keys, appropriate nullability, unique constraints, and indexes. Model fixed sets of values as lookup tables with \`isLookupTable\` and references instead of \`CHECK (value IN (...))\` constraints.
   - ${schemaConfigGuidance.joins}
+
+  ### Card layouts
+
+  - Configure \`card.headerColumn\`, \`subHeaderColumns\`, and \`avatarColumn\` for the card identity. Put up to 10 additional fields in \`summaryFields\`, in display order. The header and summary remain visible above the detail sections when the title is opened.
+  - Use \`layoutSections\` for ordered detail sections. Each section has optional \`header\`, optional \`layout\` (\`"grid"\` by default or \`"inline"\`), and \`items\`. A string item uses its field name and a label above it. An object item uses \`{ key, labelPlacement, columnSpan }\`; \`labelPlacement\` is \`"above"\` (default), \`"inline"\`, or \`"hidden"\`. Grid sections have optional \`columns\` (1–4, default 2); each item's \`columnSpan\` defaults to 1 and must not exceed the section's columns. Grids collapse to one column on narrow screens. Inline sections size fields to their content and wrap as needed; \`columns\` and \`columnSpan\` have no effect on inline placement.
+  - Choose a short summary and group the remaining useful fields into named sections. Array order controls placement. Do not repeat a field across header roles, summary fields, or sections. Use actual column names, including foreign keys and configured computed/linked columns.
+  - When either list is configured, unlisted fields appear only under **Show additional fields**. Use \`[]\` to explicitly select no fields for that list. If both lists are omitted, the first 10 fields (including headers), plus action controls, form the automatic summary; remaining fields appear in details.
+  - Card placement is independent of table column visibility: use column \`show\` or \`defaultColumns\` for the table, and these card lists for cards. Read permissions still apply. Preserve a managed table's existing card lists when replacing its \`card\` options.
+
+  \`\`\`ts
+  import type { TableDisplayConfig } from "@prostgles/app";
+
+  export const tasksTableOptions = {
+    card: {
+      headerColumn: "title",
+      subHeaderColumns: ["status"],
+      summaryFields: ["due_date", "assignee_id"],
+      layoutSections: [
+        {
+          header: "Details",
+          columns: 2,
+          items: [
+            "project_id",
+            { key: "priority", labelPlacement: "inline" },
+            { key: "description", labelPlacement: "hidden", columnSpan: 2 },
+          ],
+        },
+      ],
+    },
+  } satisfies TableDisplayConfig[string];
+  \`\`\`
 
   ### Preserve managed display defaults
 
@@ -951,7 +1009,7 @@ const getCliAgentsFile = () => `
   - The PDF viewer displays saved highlights and an annotation selector. An FK opens the related annotation row; do not assume it automatically opens the PDF at that highlight. Include the source relation in the row card and verify the full navigation flow. Keep managed table definitions out of \`tableConfig\`, since a same-name definition replaces the managed definition.
   - Configure annotation read/write permissions explicitly and restrict them to files the user may access. A foreign key does not grant permission. Ensure each condition's annotation belongs to its source file/version and project; test that users cannot link another project's excerpt. Once an excerpt is used as reviewed evidence, prevent edits or deletion that would change its text, file, page, or highlight coordinates; create a new annotation for corrections.
   - Set \`extractText: false\` for manual PDF text annotations without server-side extraction, or \`extractText: true\` for extraction through the managed documents service (also supported without an annotation table). Configure Docling with \`extractTextOptions\`, for example \`{ do_ocr: false, table_mode: "fast" }\`; Markdown and JSON outputs remain enabled because the managed extraction columns require them. With annotations configured, omitting \`extractText\` preserves automatic extraction. Older runtimes ignore this flag; upgrade/fix the runtime instead of adding app-level extraction workarounds.
-  - When extraction finishes (\`extraction_status.state === "finished"\`), \`text_content\` contains a \`text[]\` of page text. Use the built-in \`$array_search\` select function on the configured file table to search it without downloading every page. This requires resolved \`prostgles-server\` and client/types packages that support \`$array_search\`; upgrade the source packages if unavailable.
+  - When the job linked by \`text_extraction_job_id\` succeeds (\`status === "succeeded"\`), \`text_content\` contains a \`text[]\` of page text. Extraction options are stored in the job’s \`params.options\`; Docling processing time and timings are stored in the job’s \`output\`. Use the built-in \`$array_search\` select function on the configured file table to search it without downloading every page. This requires resolved \`prostgles-server\` and client/types packages that support \`$array_search\`; upgrade the source packages if unavailable.
 
   \`\`\`ts
   const result = await dbo.files.findOne({ id: fileId }, {

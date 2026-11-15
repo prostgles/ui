@@ -36,10 +36,12 @@ export const startAgent = async (
     started,
     timeout,
     messageId,
+    workflowRunId,
   }: {
     dbs: DBS;
     userId: string;
     chatId?: number;
+    workflowRunId?: number;
     connectionId: string;
     askLLM: GeneratedFunctionSchema["askLLM"];
     signal: AbortSignal | undefined;
@@ -67,6 +69,7 @@ export const startAgent = async (
       name,
       user_id: userId,
       parent_chat_id: chatId,
+      parent_agentic_workflow_run_id: workflowRunId,
       parent_chat_message_id: messageId,
       connection_id: connectionId,
       db_data_permissions: databaseAccess,

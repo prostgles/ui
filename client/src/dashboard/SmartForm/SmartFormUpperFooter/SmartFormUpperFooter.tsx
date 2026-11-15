@@ -84,7 +84,7 @@ export const SmartFormUpperFooter = (props: SmartFormUpperFooterProps) => {
   return (
     <div
       className={
-        "SmartFormUpperFooter bt b-color-0 max-h-fit flex-col o-auto min-h-0 min-w-0 w-full f-0 bg-popup-content"
+        "SmartFormUpperFooter bt b-color-0 max-h-fit flex-col o-hidden min-h-0 min-w-0 w-full f-0 bg-popup-content"
       }
       ref={rootDivRef}
       style={{
@@ -101,6 +101,7 @@ export const SmartFormUpperFooter = (props: SmartFormUpperFooterProps) => {
     >
       {showJoinedTables && (
         <JoinedRecords
+          className="o-auto"
           modeType={modeType}
           db={db}
           sql={sql}
@@ -122,7 +123,7 @@ export const SmartFormUpperFooter = (props: SmartFormUpperFooterProps) => {
         />
       )}
       {showMethods && table && (
-        <div className="dbMethodActions flex-row-wrap gap-p5 p-1">
+        <div className="dbMethodActions flex-row-wrap f-1 min-h-0 max-h-fit o-auto gap-p5 p-1 bt b-color">
           {dbMethodActions.map(({ methodName, argName }) => (
             <ActionButton
               key={`${methodName}:${argName}`}

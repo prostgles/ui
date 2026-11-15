@@ -24,10 +24,10 @@ export const validateDatabaseAccessDefinitions = async ({
   const activeConnection =
     connectionManager.getActiveConnectionSilentFail(connection_id);
   if (!activeConnection) {
-    if (
-      connectionManager.connections?.find((c) => c.id === connection_id)
-        ?.is_state_db
-    ) {
+    const isStateDb = connectionManager.connections?.find(
+      (c) => c.id === connection_id,
+    )?.is_state_db;
+    if (isStateDb) {
       throw "State DB connection not allowed for agentic workflows";
     }
     throw new Error(

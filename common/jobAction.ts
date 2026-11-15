@@ -1,11 +1,15 @@
 import type {
   AnyObject,
+  ClientServerFunction,
   DBSchemaTable,
   JobControlBinding,
+  JobControlOperation,
   JobRecord,
   JSONB,
 } from "prostgles-types";
+import { getKeys, omitKeys } from "prostgles-types";
 import type { ActionButtonState } from "./actionColumn";
+import type { FunctionOptions } from "./functionOptions";
 
 export const jobActionSchema = {
   runningText: { type: "string", optional: true },
@@ -52,36 +56,47 @@ export const getJobActionSelect = (
 export const getJobActionValue = (
   options: JobAction | undefined,
   row: AnyObject,
+  operation: JobControlOperation | undefined = options?.operation,
 ): ActionButtonState => {
   if (!options) return {};
   const job = (
     row[getJobActionValueKey(options)] as JobActionRow[] | undefined
   )?.[0];
 
+  const allowedStatuses =
+    options.operations ?
+      operation ? (options.operations[operation] ?? [])
+      : Object.values(options.operations).flat()
+    : options.allowedStatuses;
   const disabledInfo =
     !job ? "Job has not started"
-    : options.allowedStatuses.includes(job.status) ? undefined
+    : allowedStatuses.includes(job.status) ? undefined
     : `Job control is not allowed while the job is ${job.status}`;
 
-  if (options.operation === "cancel" || options.operation === "rerun") {
+  if (operation === "cancel" || operation === "rerun") {
     return {
       text:
-        options.operation === "cancel" ?
+        operation === "cancel" ?
           (options.runningText ?? "Cancel")
         : (options.succeededText ?? "Rerun"),
       isLoading:
-        options.operation === "cancel" &&
+        operation === "cancel" &&
         !!job?.cancel_requested &&
         (job.status === "pending" || job.status === "running"),
       disabledInfo,
     };
   }
-  if (!job) return { isLoading: false };
+  if (!job)
+    return {
+      text: "Start",
+      isLoading: false,
+      ...(options.operations &&
+        !options.operations.startOrRetry && { disabledInfo }),
+    };
   if (job.status === "pending" || job.status === "running") {
     return {
       text:
-        job.progress_message ||
-        options.runningText ||
+        options.runningText ??
         (job.status === "pending" ? "Queued" : "Running"),
       isLoading: true,
       disabledInfo,
@@ -101,6 +116,38 @@ export const getJobActionValue = (
     isLoading: false,
     disabledInfo,
   };
+};
+
+export const getJobControlMethods = (
+  method: ClientServerFunction,
+): ClientServerFunction[] => {
+  const job = method.jobControl;
+  if (!job?.operations) return [method];
+  const options = method.function_options as FunctionOptions | undefined;
+  return getKeys(job.operations).flatMap((operation) => {
+    const allowedStatuses = job.operations[operation];
+    if (!allowedStatuses) return [];
+    return [
+      {
+        ...method,
+        ...(operation !== "startOrRetry" &&
+          options?.action?.job && {
+            function_options: {
+              ...options,
+              action: { ...options.action, job: undefined },
+            },
+          }),
+        input: omitKeys(method.input ?? {}, ["operation"]),
+        jobControl: {
+          ...omitKeys(job, ["operations"]),
+          operation,
+          allowedStatuses,
+        },
+        run: (args?: Record<string, unknown>) =>
+          method.run({ ...args, operation }),
+      },
+    ];
+  });
 };
 
 /* Every control for the same job link shares one lookup, across action columns. */

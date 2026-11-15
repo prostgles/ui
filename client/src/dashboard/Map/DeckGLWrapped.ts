@@ -13,18 +13,18 @@ import { createReactiveState } from "../../appUtils";
 import type { HoverCoords } from "./DeckGLMap";
 import { fitBounds } from "./fitBounds";
 export const getDeckLibs = async () => {
-  const lib = await import(/* webpackChunkName: "deckgl" */ "deck.gl");
-  const mvtLoader = await import(
+  const lib = await import(/* webpackChunkName: "deckgl" */ "./deckGlLib");
+  const { MVTLoader } = await import(
     /* webpackChunkName: "mvtLoader" */ "@loaders.gl/mvt"
   );
-  const extensions = await import(
+  const { CollisionFilterExtension, PathStyleExtension } = await import(
     /* webpackChunkName: "deckglExtensions" */ "@deck.gl/extensions"
   );
 
   return {
     lib,
-    MVTLoader: mvtLoader.MVTLoader,
-    extensions,
+    mvtLoaders: [MVTLoader],
+    extensions: { CollisionFilterExtension, PathStyleExtension },
   };
 };
 export type DeckGlLib = Awaited<ReturnType<typeof getDeckLibs>>["lib"];
@@ -74,6 +74,7 @@ export class DeckWrapped {
       parent: node,
       useDevicePixels,
       controller: true,
+      onBeforeRender: () => lib.updateLabelCollisions(this.deck),
       ...omitKeys(opts, [
         "type",
         "onHoverItem",

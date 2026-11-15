@@ -54,11 +54,11 @@ export const DatabaseAccessEditorCustomTables = ({
           gap: "0.5em",
         }}
         placeholder={`Search ${tables.length} tables & views`}
+        noSearchLimit={16}
         limit={200}
         listStyle={{
           display: "grid",
-          // gridTemplateColumns: "max-content max-content 1fr",
-          gridTemplateColumns: "max-content minmax(0, 1fr) max-content",
+          gridTemplateColumns: "max-content minmax(0, max-content) max-content",
           gap: "0.5em",
           alignItems: "center",
         }}

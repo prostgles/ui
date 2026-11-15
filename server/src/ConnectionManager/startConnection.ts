@@ -29,8 +29,11 @@ import { getConnectionPublish } from "../connectionPublish/getConnectionPublish"
 import { getConnectionSocketPath } from "./getConnectionSocketPath";
 import { getHotReloadConfigs } from "./getHotReloadConfigs";
 import { syncSchemaConfigResources } from "./syncSchemaConfigResources";
+import { getStartAgenticWorkflow } from "../McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/agenticWorkflow/getStartAgenticWorkflow";
+import { writeWorkflowTypes } from "../McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/agenticWorkflow/getConfiguredWorkflow";
 import { getStartAgent } from "../McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/getStartAgent";
 import { validateSchemaConfigActions } from "./validateSchemaConfigActions";
+import { logTimedStep } from "../utils/logTimedStep";
 
 export const startConnection = async function (
   this: ConnectionManager,
@@ -171,6 +174,7 @@ export const startConnection = async function (
           onMount: _onMount,
           services: _services,
           workspaces: _workspaces,
+          workflows: _workflows,
           accessControl: _accessControl,
           userTypes: _userTypes,
           llmCredential: _llmCredential,
@@ -207,6 +211,10 @@ export const startConnection = async function (
         };
         const prostgles = createProstgles<void, SUser>();
         const connectionPublish: PublishProfile[] = [];
+        let syncWorkflows: (() => Promise<void>) | undefined;
+        const finishDatabaseSetup = logTimedStep(
+          `Initializing database "${connection.name || connection.db_name}" (schema, hooks and TypeScript types)`,
+        );
         prgl = await prostgles({
           ...schemaProstglesOptions,
           dbConnection: connectionInfo,
@@ -224,7 +232,7 @@ export const startConnection = async function (
                   tables,
                   dbo,
                 });
-                await syncSchemaConfigResources({
+                syncWorkflows = await syncSchemaConfigResources({
                   dbs,
                   databaseId: databaseConfig.id,
                   connectionId,
@@ -232,6 +240,7 @@ export const startConnection = async function (
                   rules: schemaConfig.accessControl,
                   userTypes: schemaConfig.userTypes,
                   workspaces: schemaConfig.workspaces,
+                  workflows: schemaConfig.workflows,
                   llmCredential: schemaConfig.llmCredential,
                 });
               }
@@ -248,6 +257,11 @@ export const startConnection = async function (
             return {
               serviceManager: getServiceManager(),
               startAgent: getStartAgent(dbs, connectionId, getExecution),
+              startAgenticWorkflow: getStartAgenticWorkflow(
+                dbs,
+                connectionId,
+                getExecution,
+              ),
             };
           },
           publish: connectionPublish,
@@ -306,6 +320,7 @@ export const startConnection = async function (
             })(params, update);
           },
         });
+        finishDatabaseSetup();
         this.prglConnections.set(connection.id, {
           state: "started",
           io: ioConnection,
@@ -322,6 +337,15 @@ export const startConnection = async function (
           isSuperUser: await getIsSuperUser(prgl._db),
           lastRestart: Date.now(),
         });
+        await syncWorkflows?.();
+        if (!IS_PROD && _workflows && databaseConfig.config_sync) {
+          await writeWorkflowTypes(
+            dbs,
+            connectionId,
+            _workflows,
+            databaseConfig.config_sync.configPath,
+          );
+        }
         connectionStarted = true;
         attachOnMountCleanup();
         void this.setSyncUserSub();

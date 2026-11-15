@@ -1,0 +1,7 @@
+.DetailedCardPopup .SmartCardHeader {
+  text-align: center;
+}
+
+.DetailedCardPopup .SmartCardHeader .RecordSummary_subHeader {
+  justify-content: center;
+}

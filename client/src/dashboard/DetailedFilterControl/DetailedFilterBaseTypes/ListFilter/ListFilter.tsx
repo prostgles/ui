@@ -5,13 +5,16 @@ import React from "react";
 import type { FilterType } from "@common/filterUtils";
 import { FlexRow } from "@components/Flex";
 import Loading from "@components/Loader/Loading";
+import ErrorComponent from "@components/ErrorComponent";
 import type { SearchListItem } from "@components/SearchList/SearchList";
 import { SearchList } from "@components/SearchList/SearchList";
 import RTComp from "../../../RTComp";
 import type { BaseFilterProps } from "../../../SmartFilter/SmartFilter";
 import { fetchListFilterOptions } from "./fetchListFilterOptions";
 
-type ListFilterProps = BaseFilterProps;
+type ListFilterProps = BaseFilterProps & {
+  onError: (error: unknown) => void;
+};
 
 type ListFilterState = {
   searchTerm?: string;
@@ -87,7 +90,10 @@ export class ListFilter extends RTComp<ListFilterProps, ListFilterState> {
               this.setState({ searchingItems: false, error: undefined });
             }
           } catch (error) {
-            this.setState({ error });
+            if (term !== this.searching?.term) return;
+            this.searching = undefined;
+            this.setState({ error, searchingItems: false, options: [] });
+            this.props.onError(error);
           }
         }, 400),
       };
@@ -183,8 +189,8 @@ export class ListFilter extends RTComp<ListFilterProps, ListFilterState> {
 
           onChange({
             ...filter,
-            disabled: !newValue.length,
-            value: newValue,
+            disabled: false,
+            value: newValue.length ? newValue : undefined,
           });
         },
       };
@@ -192,18 +198,23 @@ export class ListFilter extends RTComp<ListFilterProps, ListFilterState> {
 
     return (
       <>
+        <ErrorComponent error={this.state.error} />
         {searchingItems && <Loading variant="cover" />}
         <SearchList<true>
+          autoFocus={!filterItems.length}
           onSearch={(searchTerm) => {
             this.setState({ searchTerm });
           }}
-          className="m-p5"
+          className="ListFilter"
+          checkboxVariant="micro"
+          roundedItems={false}
           noSearchLimit={0}
           items={items}
           onMultiToggle={(items) => {
             const vals = items.filter((d) => d.checked);
             onChange({
               ...filter,
+              disabled: false,
               value: !vals.length ? undefined : vals.map((v) => v.key),
             });
           }}
@@ -218,6 +229,7 @@ export class ListFilter extends RTComp<ListFilterProps, ListFilterState> {
               Array.isArray(filter.value) ? filter.value : [];
             onChange({
               ...filter,
+              disabled: false,
               value: currentValues.concat([searchTerm]),
             });
             this.setState({ searchTerm: "" });
@@ -225,6 +237,7 @@ export class ListFilter extends RTComp<ListFilterProps, ListFilterState> {
           onChange={(newOptions) => {
             onChange({
               ...filter,
+              disabled: false,
               value: !newOptions.length ? undefined : newOptions,
             });
           }}

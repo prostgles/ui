@@ -1,5 +1,9 @@
 import serverPackageJson from "../../../../../../../package.json";
 import prostglesServerPackageJson from "prostgles-server/package.json";
+import {
+  WORKFLOW_MODULE_NAME,
+  WORKFLOW_SDK_FILE_NAME,
+} from "../runtimeSdk/workflowConstants";
 
 export const getAgenticWorkflowDockerCoreFiles = (
   package_dependencies: Record<string, string> | undefined,
@@ -21,7 +25,8 @@ export const getAgenticWorkflowDockerCoreFiles = (
   const tsconfigJson = JSON.stringify({
     compilerOptions: {
       target: "ES2022",
-      module: "CommonJS",
+      module: "Node16",
+      moduleResolution: "Node16",
       strict: true,
       esModuleInterop: true,
       skipLibCheck: true,
@@ -128,6 +133,9 @@ export const packageJsonTemplate = fromServerPackageJson({
   name: "agentic-workflow",
   version: "1.0.0",
   main: "index.js",
+  imports: {
+    [WORKFLOW_MODULE_NAME]: `./${WORKFLOW_SDK_FILE_NAME.slice(0, -3)}.js`,
+  },
   scripts: {
     lint: "eslint index.ts --quiet --fix",
     build: "tsc && npm run lint",

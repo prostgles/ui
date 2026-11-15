@@ -1,4 +1,5 @@
 import type { DetailedFilter } from "@common/filterUtils";
+import { getSearchRanking } from "@components/SearchList/searchMatchUtils/getSearchRanking";
 import type {
   SearchListItem,
   SearchListProps,
@@ -25,6 +26,7 @@ export const useSearchAllListProps = ({
   onOpenDBObject,
   matchedRows,
   searchTerm,
+  matchCase,
 }: SearchAllState & SearchAllProps & ReturnType<typeof useSearchTables>) => {
   const placeholder = "Search...";
 
@@ -40,12 +42,14 @@ export const useSearchAllListProps = ({
   if (mode === "views and queries") {
     /** Prioritise public schema */
     items = (typesToSearch.includes("tables") ? tablesAndViews : [])
-      .map((suggestion) => {
-        const { name, type, subLabel, icon } = suggestion;
+      .map((suggestion): SearchListItem => {
+        const { name, label, type, subLabel, icon } = suggestion;
         return {
           key: name,
-          label: name,
+          label,
           subLabel,
+          ranking: (term) =>
+            getSearchRanking(term, [label, name, subLabel ?? ""], matchCase),
           iconLeft: {
             type: "SvgIcon",
             pathName:
@@ -58,7 +62,7 @@ export const useSearchAllListProps = ({
             onClose();
             onOpenDBObject(suggestion);
           },
-        } satisfies SearchListItem;
+        };
       })
       .concat(
         (typesToSearch.includes("queries") ? (queries ?? []) : []).map((q) => ({
@@ -113,11 +117,13 @@ export const useSearchAllListProps = ({
     onSearch = searchRows;
     dontHighlight = true;
     items = matchedRows?.map((m, i) => {
-      const icon = tableHash.get(m.table)?.icon;
+      const table = tableHash.get(m.table);
+      const icon = table?.icon;
+      const label = table?.label || m.table;
       return {
         ...m,
         key: `${m.$rowhash + i}`,
-        label: m.table,
+        label,
         styles: {
           rowInner: {
             gap: ".25em",
@@ -139,7 +145,7 @@ export const useSearchAllListProps = ({
               : <Icon path={db[m.table]?.insert ? mdiTableEdit : mdiTable} />}
             </div> */}
             <div className="flex-col ai-start f-1">
-              <div className="font-18">{m.table}</div>
+              <div className="font-18">{label}</div>
               <div
                 style={{
                   fontSize: "16px",

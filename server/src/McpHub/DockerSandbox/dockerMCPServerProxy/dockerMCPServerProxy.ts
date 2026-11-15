@@ -36,8 +36,7 @@ const DEFAULT_GATEWAY_IP = "0.0.0.0" as const;
 const MCP_PROXY_PREFIX = "/mcp-proxy/:secret" as const;
 
 let dockerMCPServerProxy:
-  | ReturnType<typeof createDockerMCPServerProxy>
-  | undefined;
+  ReturnType<typeof createDockerMCPServerProxy> | undefined;
 
 export const getOrCreateDockerMCPServerProxy = async () => {
   dockerMCPServerProxy ??= createDockerMCPServerProxy();
@@ -314,7 +313,7 @@ const mcpRequestHandler: RequestHandler = async (
           input: req.body,
           source: {
             type: "proxy",
-            parentToolUseMessageId: String(messageId),
+            parentToolUseMessageId: messageId ?? null,
           },
         } satisfies DBSSchemaForInsert["mcp_tool_approval_requests"],
         { returning: "*" },

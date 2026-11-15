@@ -2,10 +2,7 @@ import type { DBS } from "@src/index";
 import { McpHub } from "./McpHub";
 import { getMcpServerParameters } from "../getMcpServerParameters";
 import { updateMcpServerTools } from "../reloadMcpServerTools";
-import {
-  getSerialisableError,
-  type SubscriptionHandler,
-} from "prostgles-types";
+import { isEqual, type SubscriptionHandler } from "prostgles-types";
 import { insertMcpServerList } from "../insertMcpServerList";
 import type { DBSSchema } from "@common/publishUtils";
 
@@ -83,20 +80,39 @@ export const setupMCPServerHub = async (dbs: DBS) => {
   let globalSettings: DBSSchema["global_settings"] | undefined;
   const onCallback = () => {
     if (enabledMcpServers && globalSettings) {
-      void startMcpHub(dbs, true).then(async (mcpHub) => {
-        if (!enabledMcpServers) {
-          throw new Error("enabledMcpServers is undefined");
-        }
-        await loadMissingTools(dbs, mcpHub, enabledMcpServers);
-      });
+      void startMcpHub(dbs, true)
+        .then(async (mcpHub) => {
+          if (!enabledMcpServers) {
+            throw new Error("enabledMcpServers is undefined");
+          }
+          await loadMissingTools(dbs, mcpHub, enabledMcpServers);
+        })
+        .catch((error) => {
+          console.error("Failed to update MCP server connections", error);
+        });
     }
   };
 
+  let previousServerConfigs: unknown;
   mcpSubscriptions.servers = await dbs.mcp_servers.subscribe(
     { enabled: true },
     { select: { name: 1, enabled: 1, mcp_server_configs: "*" } },
     (servers) => {
       enabledMcpServers = servers;
+      /* Saving refreshed tokens must not close active connections. */
+      const serverConfigs = servers.map((server) => ({
+        ...server,
+        mcp_server_configs: server.mcp_server_configs.map((config) => ({
+          id: config.id,
+          config: config.config,
+          oauth:
+            config.oauth?.phase === "connected" ?
+              { phase: "connected" }
+            : config.oauth,
+        })),
+      }));
+      if (isEqual(previousServerConfigs, serverConfigs)) return;
+      previousServerConfigs = serverConfigs;
       onCallback();
     },
   );

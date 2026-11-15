@@ -151,6 +151,22 @@
 
   --gray: var(--gray-600);
   --faded-gray: var(--gray-100);
+
+  --pink: #a61d6a;
+  --faded-pink: #fce8f3;
+  --purple: #6c2bd9;
+  --faded-purple: #edebfe;
+  --indigo: var(--indigo-700);
+  --faded-indigo: var(--indigo-100);
+
+  --light-red: var(--faded-red);
+  --light-pink: var(--faded-pink);
+  --light-purple: var(--faded-purple);
+  --light-blue: var(--faded-blue);
+  --light-indigo: var(--faded-indigo);
+  --light-green: var(--faded-green);
+  --light-yellow: var(--faded-yellow);
+  --light-gray: var(--faded-gray);
 }
 
 :root.dark-theme {
@@ -229,6 +245,13 @@
 
   --gray: #bfbfbf;
   --faded-gray: #ffffff17;
+
+  --pink: #f8b4d9;
+  --faded-pink: #a61d6a33;
+  --purple: #cabffd;
+  --faded-purple: #9061f933;
+  --indigo: var(--indigo-300);
+  --faded-indigo: #6875f533;
 }
 
 .formfield-bg-color {

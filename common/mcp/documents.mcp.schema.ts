@@ -4,17 +4,56 @@ import {
 } from "./documentsServiceInputSchema";
 
 export const CONVERTABLE_DOCUMENT_TYPES = [
-  // Documents
+  /* Document MIME types accepted by Docling's format detection. */
   "application/pdf",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // DOCX
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // XLSX
-  "application/vnd.openxmlformats-officedocument.presentationml.presentation", // PPTX
+  "text/plain",
+  "text/markdown",
+  "text/x-markdown",
+  "text/html",
+  "application/xhtml+xml",
+  "text/asciidoc",
+  "text/x-asciidoc",
+  "text/csv",
+  "text/vtt",
+  "text/x-tex",
+  "application/x-tex",
+  "text/x-latex",
+  "application/xml",
+  "text/xml",
+  "application/mets+xml",
+  "application/json",
+  "application/msword",
+  "application/x-msword",
+  "application/rtf",
+  "text/rtf",
+  "application/x-rtf",
+  "application/vnd.ms-excel",
+  "application/x-msexcel",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.template",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "application/vnd.openxmlformats-officedocument.presentationml.template",
+  "application/vnd.openxmlformats-officedocument.presentationml.slideshow",
+  "application/vnd.oasis.opendocument.text",
+  "application/vnd.oasis.opendocument.text-template",
+  "application/vnd.oasis.opendocument.spreadsheet",
+  "application/vnd.oasis.opendocument.spreadsheet-template",
+  "application/vnd.oasis.opendocument.presentation",
+  "application/vnd.oasis.opendocument.presentation-template",
+  "application/epub+zip",
+  "message/rfc822",
+  "application/vnd.ms-outlook",
+  "application/x-mimearchive",
+  "multipart/related",
 ] as const;
 export const CONVERTABLE_IMAGE_TYPES = [
   // Images
   "image/png",
   "image/jpeg",
   "image/tiff",
+  "image/gif",
   "image/bmp",
   "image/webp",
 ] as const;

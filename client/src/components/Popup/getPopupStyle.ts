@@ -16,7 +16,6 @@ export const getPopupStyle = ({
   fullScreen,
 }: Args) => {
   let style: React.CSSProperties = {
-    maxWidth: "100vw",
     maxHeight: "100vh",
     outline: "none",
     position: "fixed",
@@ -26,6 +25,10 @@ export const getPopupStyle = ({
     padding: 0,
     borderRadius: ".5em",
     ...stateStyle,
+    maxWidth:
+      positioning === "fullscreen" ?
+        "100vw"
+      : `min(900px, ${stateStyle.maxWidth ?? "100vw"})`,
     ...rootStyle,
   };
 
@@ -38,6 +41,9 @@ export const getPopupStyle = ({
         "right",
         "bottom",
         "position",
+        "positionAnchor",
+        "positionArea",
+        "positionTryFallbacks",
         "inset",
         "width",
         "height",
@@ -45,6 +51,7 @@ export const getPopupStyle = ({
       position: "fixed",
       inset: 0,
       width: "100vw",
+      maxWidth: "100vw",
       height: "100vh",
     };
   }

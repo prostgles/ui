@@ -444,7 +444,7 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
             },
             {
               type: { enum: ["proxy"] },
-              parentToolUseMessageId: "string",
+              parentToolUseMessageId: { type: "string", nullable: true },
             },
           ],
         },
@@ -468,6 +468,11 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
     },
   },
   mcp_server_tool_calls: {
+    indexes: {
+      mcp_server_tool_calls_chat_called_at: {
+        columns: "chat_id, called_at DESC",
+      },
+    },
     columns: {
       id: `SERIAL PRIMARY KEY `,
       chat_id: `INTEGER REFERENCES llm_chats(id) ON DELETE SET NULL`,

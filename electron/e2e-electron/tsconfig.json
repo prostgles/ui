@@ -6,5 +6,6 @@
     "sourceMap": true,
     "outDir": "../tests-out",
     "strict": true
-  }
+  },
+  "include": [".", "../../server/src/testing/ui/playwright.d.ts"]
 }

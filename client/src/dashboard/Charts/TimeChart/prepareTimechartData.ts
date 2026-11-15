@@ -1,4 +1,5 @@
 import { scaleLinear } from "d3";
+import { resolveColor } from "../../../utils/resolveColor";
 import type { TimeChart, TimeChartLayer } from "./TimeChart";
 import { getCssVariableValue } from "./getCssVariableValue";
 
@@ -109,6 +110,7 @@ export const prepareTimechartData = function (this: TimeChart) {
 
     return {
       ...l,
+      color: resolveColor(l.color),
       sortedParsedData: filledData,
       minVal: layerMinVal,
       maxVal: layerMaxVal,

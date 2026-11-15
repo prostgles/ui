@@ -56,8 +56,8 @@ export const ColumnStyleControls = (props: StyleColumnProps) => {
       };
       if (newStyle.type === "Barchart") {
         _newStyle = {
-          barColor: "rgba(0,246,96,1)",
-          textColor: "black",
+          barColor: MINI_BARCHART_COLOR,
+          textColor: "var(--text-0)",
           ..._newStyle,
         } as BarchartStyle;
       }
@@ -129,12 +129,16 @@ export const ColumnStyleControls = (props: StyleColumnProps) => {
               type === "Scale" ?
                 {
                   type,
-                  minColor: "#8fccf0",
-                  maxColor: "#0AA1FA",
-                  textColor: "#1c1c1c",
+                  minColor: "var(--light-blue)",
+                  maxColor: "var(--blue)",
+                  textColor: "var(--text-0)",
                 }
               : type === "Barchart" ?
-                { type, barColor: MINI_BARCHART_COLOR, textColor: "#646464" }
+                {
+                  type,
+                  barColor: MINI_BARCHART_COLOR,
+                  textColor: "var(--text-0)",
+                }
               : type === "Fixed" ? { type }
               : type === "Icons" ? { type, valueToIconMap: {} }
               : { type },
@@ -165,7 +169,7 @@ export const ColumnStyleControls = (props: StyleColumnProps) => {
             <ColorPicker
               label="Cell"
               className="m-p5"
-              value={style.cellColor || "white"}
+              value={style.cellColor || "var(--bg-color-0)"}
               onChange={(cellColor) => {
                 updateStylePart({ cellColor });
               }}

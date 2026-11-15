@@ -16,6 +16,7 @@ import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { defineJoin, type FilterItem, type Select } from "prostgles-types";
 import React, { useMemo, useState } from "react";
 import { AgenticWorkflow } from "../AskLLM/Chat/AskLLMChatMessages/ProstglesToolUseMessage/ProstglesMCPTools/AgenticWorkflow/AgenticWorkflow";
+import { useAgenticWorkflowChat } from "../AskLLM/Chat/AskLLMChatMessages/ProstglesToolUseMessage/ProstglesMCPTools/AgenticWorkflow/hooks/useAgenticWorkflowChat";
 import { useLLMSetup } from "../AskLLM/Setup/LLMSetupProvider";
 import { DashboardMenuSection } from "./DashboardMenuSection";
 
@@ -105,6 +106,8 @@ export const SavedAgenticWorkflowsAndContainers = () => {
   const selectedWorkflow = useMemo(() => {
     return agenticWorkflows?.find((w) => w.id === selectedWorkflowId);
   }, [agenticWorkflows, selectedWorkflowId]);
+  const { chatId: selectedWorkflowChatId } =
+    useAgenticWorkflowChat(selectedWorkflow);
   return (
     <>
       <DashboardMenuSection
@@ -148,19 +151,21 @@ export const SavedAgenticWorkflowsAndContainers = () => {
           positioning="fullscreen"
           title={selectedWorkflow.name}
           headerRightContent={
-            <Btn
-              onClick={() => {
-                state.setShowChat({
-                  selectedChatId: selectedWorkflow.chat_id,
-                });
-                setSelectedWorkflowId(undefined);
-              }}
-              iconPath={mdiChat}
-              variant="faded"
-              color="action"
-            >
-              Show chat
-            </Btn>
+            selectedWorkflowChatId ?
+              <Btn
+                onClick={() => {
+                  state.setShowChat({
+                    selectedChatId: selectedWorkflowChatId,
+                  });
+                  setSelectedWorkflowId(undefined);
+                }}
+                iconPath={mdiChat}
+                variant="faded"
+                color="action"
+              >
+                Show chat
+              </Btn>
+            : undefined
           }
           onClose={() => setSelectedWorkflowId(undefined)}
         >
@@ -169,7 +174,7 @@ export const SavedAgenticWorkflowsAndContainers = () => {
             validatedWorkflowDataIsValid={true}
             chatId={undefined}
             inputData={undefined}
-            tool_use_id={selectedWorkflow.tool_use_id}
+            tool_use_id={selectedWorkflow.tool_use_id ?? undefined}
             workflowValidationError={undefined}
           />
         </Popup>

@@ -25,6 +25,7 @@ import { setupLLM } from "../serverFunctions/askLLM/setupLLM";
 import { initUsers } from "./initUsers";
 import { insertStateDatabase } from "./insertStateDatabase";
 import { getProstglesState } from "./tryStartProstgles";
+import { logTimedStep } from "../utils/logTimedStep";
 
 let authSetupDataListener: AuthSetupDataListener | undefined;
 
@@ -52,6 +53,9 @@ export const prostglesOnReady = async (
     }
     setLoggerDBS(params.dbo);
 
+    const finishStateSetup = logTimedStep(
+      "Initializing state database users and settings",
+    );
     await initUsers(db, _db);
 
     await insertStateDatabase(
@@ -61,11 +65,17 @@ export const prostglesOnReady = async (
       port,
       getProstglesState().isElectron,
     );
+    finishStateSetup();
+    const finishLLMSetup = logTimedStep(
+      "Initializing LLM providers and prompts",
+    );
     await setupLLM(db);
+    finishLLMSetup();
     await setupMCPServerHub(db);
 
     await connectionManager.destroy();
     await connectionManager.init(db, _db, async () => {
+      const finishServiceSetup = logTimedStep("Initializing service manager");
       const { serviceManager, isNew: isNewServiceManager } =
         await initializeServiceManager(db);
       const startupSchemaConfig = getStartupSchemaConfig();
@@ -74,6 +84,7 @@ export const prostglesOnReady = async (
           startupSchemaConfig.schemaConfig.services,
         );
       }
+      finishServiceSetup();
       await applyStartupSchemaConfig({
         dbs: db,
         db: _db,

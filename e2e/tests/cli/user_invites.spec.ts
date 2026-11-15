@@ -108,8 +108,33 @@ test("user invitations confirm email, enforce roles independently of connection 
     }
     expect(admin.methodSchema?.inviteUser?.function_options).toMatchObject({
       title: "Invite user",
-      action: { defaultValue: { text: "Send invitation" } },
+      showInTableHeader: ["users"],
+      action: {
+        defaultValue: {
+          text: "Send invitation",
+          icon: "AccountPlusOutline",
+          color: "green",
+        },
+      },
       renderOutputAsMarkdown: true,
+    });
+    expect(
+      owner.tableSchema?.find((table) => table.name === "users")?.columnConfigs,
+    ).not.toHaveProperty("last_logged_in");
+    expect(
+      admin.tableSchema?.find((table) => table.name === "user_types"),
+    ).toMatchObject({
+      card: {
+        headerColumn: "id",
+        subHeaderColumn: "description",
+        summaryFields: [],
+      },
+      referenceDisplay: { columns: [{ name: "id" }] },
+      sort: [{ key: "id", asc: true }],
+      columnConfigs: {
+        id: { label: "Role", idx: 0 },
+        description: { label: "Description", idx: 1 },
+      },
     });
     const endpoint = deployment.endpoint;
     const invite = (email: string) =>
@@ -323,11 +348,29 @@ test("user invitations confirm email, enforce roles independently of connection 
         { email: noAccessEmail, userType: noAccessType },
       ]) {
         await page.goto(`${endpoint}/users`);
-        await page
-          .getByRole("button", { name: "Invite user", exact: true })
-          .click();
+        const userList = page.getByTestId("SmartCardList");
+        const inviteButton = userList
+          .locator(".SmartCardListControls")
+          .getByRole("button", { name: "Invite user", exact: true });
+        await expect(inviteButton).toHaveText("Invite user");
+        await expect(inviteButton).toHaveClass(/green/);
+        await expect(inviteButton.locator("svg")).toBeVisible();
+        await expect(
+          userList.locator(".SmartCardListControls").getByRole("button").last(),
+        ).toHaveText("Invite user");
+        await expect(
+          userList.getByText("Last logged in").first(),
+        ).toBeVisible();
+        await inviteButton.click();
         const form = page.getByTestId("ActionPopup");
         await expect(form).toHaveAccessibleName("Invite user");
+        const triggerBounds = await inviteButton.boundingBox();
+        if (!triggerBounds) throw new Error("Invite button is not visible");
+        await expect(form).toBeInViewport({ ratio: 1 });
+        await expect(form).toHaveCSS(
+          "top",
+          `${Math.round(triggerBounds.y + triggerBounds.height)}px`,
+        );
         const sendInvitation = form.getByRole("button", {
           name: "Send invitation",
           exact: true,
@@ -390,6 +433,160 @@ test("user invitations confirm email, enforce roles independently of connection 
           .getByTestId("Popup.footer")
           .getByRole("button", { name: "Close", exact: true })
           .click();
+        const userCard = userList.locator(".SmartCard").filter({
+          has: page.getByRole("button", {
+            name: invitation.email,
+            exact: true,
+          }),
+        });
+        await expect(userCard).toBeVisible();
+        await expect(userCard).not.toHaveCSS("border-radius", "0px");
+        await expect(userCard).not.toHaveCSS("box-shadow", "none");
+        await expect(userCard.locator("time")).toHaveCount(1);
+        await expect(
+          userCard
+            .locator(".SmartCardHeader")
+            .getByText("pending", { exact: true }),
+        ).toBeVisible();
+        await expect(userCard.getByText(/^status$/i)).toHaveCount(0);
+        /* User details reveal level 2 fields before expanding level 3 fields. */
+        await expect(userCard.getByText("Id", { exact: true })).toHaveCount(0);
+        await userCard
+          .getByRole("button", { name: invitation.email, exact: true })
+          .click();
+        const userDetails = page.locator(".DetailedCardPopup");
+        await expect(userDetails.locator("label")).toContainText([
+          "Id",
+          "Two-factor authentication",
+        ]);
+        await expect(userDetails).toBeInViewport({ ratio: 1 });
+        await expect
+          .poll(() =>
+            userDetails
+              .locator(".SmartCardContent")
+              .evaluate(
+                (element) => element.scrollHeight - element.clientHeight,
+              ),
+          )
+          .toBeLessThanOrEqual(1);
+        const additionalFields = userDetails
+          .locator("label")
+          .filter({ hasText: /^(Last Updated|Options)$/ });
+        await expect(additionalFields).toHaveCount(0);
+        await userDetails
+          .getByRole("button", { name: "Show additional fields" })
+          .click();
+        await expect(additionalFields).toHaveText(["Last Updated", "Options"]);
+        await userDetails
+          .getByRole("button", { name: "Hide additional fields" })
+          .click();
+        await expect(additionalFields).toHaveCount(0);
+        const detailsWidth = await userDetails.evaluate(
+          (element) => element.getBoundingClientRect().width,
+        );
+        await userDetails.getByTestId("Popup.close").click();
+        await test.step("detailed cards keep their width and stay near the trigger", async () => {
+          /* Keep the relocated trigger outside the list's scroll mask. */
+          const maskOverride = await page.addStyleTag({
+            content: ".SmartCardList { mask: none !important; }",
+          });
+          const detailsButton = userCard.getByRole("button", {
+            name: invitation.email,
+            exact: true,
+          });
+          const previousButtonStyle = await detailsButton.getAttribute("style");
+          await detailsButton.evaluate((button) => {
+            button.style.position = "fixed";
+            button.style.right = "0";
+            button.style.top = "80px";
+            button.style.zIndex = "4";
+          });
+          await detailsButton.click();
+          await expect(userDetails).toBeInViewport({ ratio: 1 });
+          await expect
+            .poll(() =>
+              userDetails.evaluate(
+                (element) => element.getBoundingClientRect().width,
+              ),
+            )
+            .toBeCloseTo(detailsWidth, 0);
+          await userDetails.getByTestId("Popup.close").click();
+          await expect(detailsButton).toHaveCSS("anchor-name", "none");
+          /* When neither side fits, keep the full-width card near its trigger. */
+          await detailsButton.evaluate((button) => {
+            button.style.right = "auto";
+            button.style.left = "calc(50vw - 40px)";
+            button.style.top = "50vh";
+            button.style.width = "80px";
+          });
+          await detailsButton.click();
+          await expect(userDetails).toBeInViewport({ ratio: 1 });
+          const triggerCenter = await detailsButton.evaluate((button) => {
+            const { x, width } = button.getBoundingClientRect();
+            return x + width / 2;
+          });
+          await expect
+            .poll(() =>
+              userDetails.evaluate((element) => {
+                const { x, width } = element.getBoundingClientRect();
+                return x + width / 2;
+              }),
+            )
+            .toBeCloseTo(triggerCenter, 0);
+          await userDetails.getByTestId("Popup.close").click();
+          await detailsButton.evaluate((button, previousStyle) => {
+            if (previousStyle === null) {
+              button.removeAttribute("style");
+            } else {
+              button.setAttribute("style", previousStyle);
+            }
+          }, previousButtonStyle);
+          await maskOverride.evaluate((style) => {
+            style.parentNode?.removeChild(style);
+          });
+        });
+        const userTypeButton = userCard.getByRole("button", {
+          name: invitation.userType,
+          exact: true,
+        });
+        await expect(userTypeButton).toBeVisible();
+        await expect(userTypeButton).toHaveCSS(
+          "background-color",
+          "rgb(224, 231, 255)",
+        );
+        await userTypeButton.click();
+        const userTypeDetails = page.locator(".DetailedCardPopup");
+        await expect(userTypeDetails.locator(".SmartCardHeader")).toContainText(
+          invitation.userType === readerType ?
+            "Read records"
+          : "No access rules",
+        );
+        await expect(userTypeDetails.locator("label")).toHaveCount(0);
+        await userTypeDetails.getByTestId("Popup.close").click();
+        const registrationButton = userCard.getByTitle(
+          "View Registration JSON",
+        );
+        await expect(registrationButton).toHaveText("invite");
+        await registrationButton.click();
+        const registrationPopup = page.getByRole("dialog", {
+          name: "Registration",
+          exact: true,
+        });
+        await expect(
+          registrationPopup.getByTestId("MonacoEditor"),
+        ).toContainText('"confirmed_on": null');
+        const jsonLines = registrationPopup.locator(".view-lines");
+        const jsonText = await jsonLines.innerText();
+        const editor = registrationPopup.getByRole("textbox", {
+          name: "Editor content",
+        });
+        await editor.press("Control+Home");
+        await editor.press("Delete");
+        await expect(jsonLines).toHaveText(jsonText, { useInnerText: true });
+        await registrationPopup.getByTestId("Popup.close").click();
+        await userCard.screenshot({
+          path: test.info().outputPath(`user-card-${invitation.userType}.png`),
+        });
       }
       await adminContext.close();
       const user = await getUser(email);
@@ -643,6 +840,17 @@ test("user invitations confirm email, enforce roles independently of connection 
       });
       await rejectLink(getEmailUrl(email));
       await expect(invite(email)).rejects.toBeTruthy();
+
+      /* Logout from the account menu must POST and end the session. */
+      await page.locator(".TopControls").getByTitle(email).click();
+      const logoutRequest = page.waitForRequest(
+        (request) => new URL(request.url()).pathname === "/auth/logout",
+      );
+      await page.getByRole("option", { name: "Logout", exact: true }).click();
+      expect((await logoutRequest).method()).toBe("POST");
+      await expect(page).toHaveURL((url) => url.pathname === "/auth/login");
+      await page.goto(`${endpoint}/connections/${connection.id}`);
+      await expect(page).toHaveURL((url) => url.pathname === "/auth/login");
       await context.close();
     });
 

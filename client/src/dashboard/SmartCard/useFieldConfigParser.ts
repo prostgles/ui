@@ -24,7 +24,7 @@ export const useFieldConfigParser = (props: SmartCardProps) => {
 
   const displayedColumns =
     hideColumns ?
-      cardColumns?.filter((c) => hideColumns.includes(c.name))
+      cardColumns?.filter((c) => !hideColumns.includes(c.name))
     : cardColumns;
 
   const fieldConfigs =
@@ -32,9 +32,9 @@ export const useFieldConfigParser = (props: SmartCardProps) => {
     getDefaultFieldConfig(displayedColumns);
 
   const fieldConfigsWithColumns = fieldConfigs
-    .filter((fc) => !fc.hide)
+    .filter((fc) => !fc.hide && !hideColumns?.includes(fc.name))
     .map((fc: ParsedFieldConfig) => ({
-      name: fc.name.toString(),
+      name: fc.name,
       col: displayedColumns?.find((c) => fc.name === c.name),
       fc,
     })) /** Do not render if has nulls and no render and excludeNulls is true  */

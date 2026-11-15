@@ -1,3 +1,4 @@
+import type { CardMode } from "@common/ColumnConfig/cardLayout";
 import React from "react";
 import type { Prgl } from "../../../App";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
@@ -7,6 +8,8 @@ import { RenderColumn } from "../../W_Table/RenderColumn/RenderColumn";
 import { getColumnsWithInfo } from "../../W_Table/tableUtils/getColumnsWithInfo";
 import { getTableSelect } from "../../W_Table/tableUtils/getTableSelect";
 import type { ColumnConfig } from "@common/ColumnConfig/ColumnConfig";
+import { hasCardFieldLists } from "@common/ColumnConfig/cardLayout";
+import { isEmptyColumnValue } from "../../W_Table/ColumnMenu/ColumnDisplayFormat/isEmptyColumnValue";
 
 export const getTableCardFieldConfigs = async ({
   table,
@@ -14,19 +17,35 @@ export const getTableCardFieldConfigs = async ({
   db,
   methods,
   columnConfig,
-  infoLevel = 1,
+  cardMode = "summary",
+  hideColumns,
 }: Pick<Prgl, "tables" | "db" | "methods"> & {
   table: DBSchemaTableWJoins;
   columnConfig?: ColumnConfig[];
-  infoLevel?: 1 | 2;
+  cardMode?: CardMode;
+  hideColumns?: string[];
 }): Promise<FieldConfig[]> => {
   const columns = getColumnsWithInfo(table.name, tables, columnConfig, {
-    showAllColumns: infoLevel === 2,
+    showAllColumns: cardMode !== "summary" || hasCardFieldLists(table.card),
   });
+  const visibleColumns = columns.filter(
+    (column) =>
+      !hideColumns?.some(
+        (name) =>
+          name === column.name ||
+          name === column.nested?.fallbackColumn ||
+          name === column.defaultConfig?.nested?.fallbackColumn,
+      ),
+  );
   const { avatarColumn, headerColumn, headerColumns, bodyColumns } =
-    getTableCardColumns(table, columns, infoLevel);
+    getTableCardColumns(table, visibleColumns, cardMode);
   const displayedColumns = [
-    ...headerColumns.map((column) => ({ column, hideLabel: true, style: {} })),
+    ...headerColumns.map((column) => ({
+      column,
+      hideLabel: true,
+      style: {},
+      cardSection: undefined,
+    })),
     ...bodyColumns,
   ];
   const { select } = await getTableSelect(
@@ -48,9 +67,14 @@ export const getTableCardFieldConfigs = async ({
   return [
     ...displayedColumns.map(({ column: config, ...field }): FieldConfig => ({
       name: config.name,
+      columnConfig: config,
       select: select[config.name],
-      hideIf: infoLevel === 2 ? undefined : (value) => value == null,
+      hideIf:
+        cardMode === "summary" ?
+          (_value, row) => isEmptyColumnValue(config, row)
+        : undefined,
       label: field.hideLabel ? "" : config.label,
+      cardSection: field.cardSection,
       cardHeader:
         headerColumns.includes(config) ?
           {
@@ -67,6 +91,7 @@ export const getTableCardFieldConfigs = async ({
           table={table}
           tables={tables}
           barchartVals={undefined}
+          maxCellChars={config === headerColumn ? Infinity : undefined}
           getValues={() => [value]}
         />
       ),

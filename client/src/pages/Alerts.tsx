@@ -14,6 +14,8 @@ import { usePrgl } from "./ProjectConnection/PrglContextProvider";
 export const Alerts = () => {
   const { connectionId, dbs, db, tables, user } = usePrgl();
   const [section, setSection] = useState<string>();
+  const [headerControlsTarget, setHeaderControlsTarget] =
+    useState<HTMLDivElement | null>(null);
   const userId = user?.id;
   const subscribe = tableMightBeUndefinedDueToAccessControl(
     dbs.alerts,
@@ -80,13 +82,23 @@ export const Alerts = () => {
       ...(rules.length && {
         rules: {
           label: "Rules",
-          content: <ManagedAlerts tables={rules} />,
+          content: (
+            <ManagedAlerts
+              tables={rules}
+              headerControlsTarget={headerControlsTarget}
+            />
+          ),
         },
       }),
       ...(deliveries.length && {
         deliveries: {
           label: "Delivery history",
-          content: <ManagedAlerts tables={deliveries} />,
+          content: (
+            <ManagedAlerts
+              tables={deliveries}
+              headerControlsTarget={headerControlsTarget}
+            />
+          ),
         },
       }),
     };
@@ -102,6 +114,9 @@ export const Alerts = () => {
     <PopupMenu
       key={connectionId}
       data-command="Alerts"
+      headerRightContent={
+        <div className="min-w-0 pr-p5" ref={setHeaderControlsTarget} />
+      }
       title={
         <FlexRow className="gap-1">
           <span>Alerts</span>
@@ -134,6 +149,7 @@ export const Alerts = () => {
       positioning="beneath-center"
       onClickClose={false}
       clickCatchStyle={{ opacity: 1 }}
+      contentClassName="p-0"
       contentStyle={{ width: "min(900px, 90vw)", maxHeight: "75vh" }}
     >
       <ErrorComponent error={error} />

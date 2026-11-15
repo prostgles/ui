@@ -299,13 +299,15 @@ export const stateServerAdminFunctions = {
           const file = (await fileTableHandler.findOne({
             id: fileId,
           })) as FileTableRow | undefined;
-          if (!file){ throw new Error("File not found");}
+          if (!file) {
+            throw new Error("File not found");
+          }
           const error = await electron.openPath(
             file.local_file_path ||
-            join(
-              fileTable.storageClient.localFolderPath,
-              getFileStorageKey(file),
-            ),
+              join(
+                fileTable.storageClient.localFolderPath,
+                getFileStorageKey(file),
+              ),
           );
           if (error) throw new Error(error);
           return true;
@@ -313,7 +315,7 @@ export const stateServerAdminFunctions = {
       }),
       getFileFolderSizeInBytes: defineFunction({
         input: { conId: { type: "string", optional: true } },
-        run: ({ conId }) => {
+        run: async ({ conId }) => {
           const dirSize = (directory: string): number => {
             if (!existsSync(directory)) return 0;
             const files = readdirSync(directory);
@@ -329,7 +331,11 @@ export const stateServerAdminFunctions = {
             return stats.reduce((accumulator, size) => accumulator + size, 0);
           };
 
-          const storagePath = connectionManager.getFileFolderPath(conId);
+          const connection =
+            conId ?
+              await connectionManager.getConnectionData(conId)
+            : undefined;
+          const storagePath = connectionManager.getFileFolderPath(connection);
           const size = dirSize(storagePath);
           return {
             size,

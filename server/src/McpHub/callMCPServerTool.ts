@@ -36,7 +36,7 @@ export const callMCPServerTool = async ({
   toolUseId: string | undefined;
   isReRun?: boolean;
   mcp_tool_approval_requests_id: number | undefined;
-  messageId: DBSSchema["llm_messages"]["id"];
+  messageId: DBSSchema["llm_messages"]["id"] | undefined;
   called_at?: Date;
 }): Promise<McpToolCallResponse> => {
   const argErrors = getJSONBObjectSchemaValidationError(

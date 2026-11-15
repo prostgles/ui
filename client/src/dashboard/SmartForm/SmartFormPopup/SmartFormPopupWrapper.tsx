@@ -86,7 +86,7 @@ export const SmartFormPopupWrapper = ({
       }
       onKeyDown={prevNextState?.onKeyDown}
       autoFocusFirst={autoFocusFirstIfIsInsert ? "content" : undefined}
-      contentClassName={`${maxWidth} pt-1`}
+      contentClassName={maxWidth}
       positioning="right-panel"
       onClose={onClose}
       clickCatchStyle={{ opacity: 0.2 }}

@@ -72,21 +72,20 @@ const handler = {
 
           return schema || "No tables found matching the criteria";
         },
-        count: async ({ tableName, filter }, context) => {
+        count: async ({ tableName, filter, ...params }, context) => {
           const tableHandler = await getTableHandlerWithScope(
             tableName,
             context,
           );
-          const result = await tableHandler.count(filter);
+          const result = await tableHandler.count(filter, params);
           return result;
         },
-        find: async ({ tableName, filter, select, ...params }, context) => {
+        find: async ({ tableName, filter, ...params }, context) => {
           const tableHandler = await getTableHandlerWithScope(
             tableName,
             context,
           );
           const result = await tableHandler.find(filter, {
-            select: select as {},
             limit: 10,
             ...params,
           });
@@ -266,7 +265,7 @@ const runSqlTool = async (
 };
 
 /**
- * Hacky type check to ensure ProxyDbCallData is in sync with the actual tool schemas defined in getAllowedDBToolSchemas.
+ * Ensure supported workflow parameters remain accepted by the MCP schemas.
  */
 const sdkCheck = {} as ProxyDbCallData;
 sdkCheck satisfies {

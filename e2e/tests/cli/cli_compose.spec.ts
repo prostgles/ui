@@ -10,19 +10,185 @@ import {
   readdirSync,
   readFileSync,
   rmSync,
+  symlinkSync,
   writeFileSync,
 } from "node:fs";
 import { createServer } from "node:net";
+import { createServer as createHttpServer } from "node:http";
 import { createRequire } from "node:module";
 import { join, resolve } from "node:path";
 import { parse } from "../../../server/node_modules/dotenv";
 import { createConfigTestProject } from "../utils/createConfigTestProject";
 import { Client } from "pg";
+import ts from "../../../server/node_modules/typescript";
+import type { SchemaConfigLlmCredential } from "../../../server/dist/server/src/schemaConfig";
 
 type RunOptions = {
   capture?: boolean;
   cwd?: string;
 };
+
+test("CLI startup compiles once and manual schema sync recompiles edited sources", async () => {
+  const config = {
+    id: "compile-once",
+    tableConfig: { records: { columns: { id: "integer PRIMARY KEY" } } },
+  };
+  const configPath = createConfigTestProject(
+    config,
+    test.info().outputPath("config"),
+  );
+  const compilerPath = createRequire(join(configPath, "package.json")).resolve(
+    "typescript/bin/tsc",
+  );
+  const compilerRunsPath = test.info().outputPath("compiler-runs.txt");
+  const recorderPath = test.info().outputPath("record-compilation.cjs");
+  writeFileSync(
+    recorderPath,
+    `
+const { appendFileSync } = require("node:fs");
+const childProcess = require("node:child_process");
+const { spawn } = childProcess;
+childProcess.spawn = function (...args) {
+  if (args[1]?.[0] === ${JSON.stringify(compilerPath)}) {
+    appendFileSync(${JSON.stringify(compilerRunsPath)}, "tsc\\n");
+  }
+  return spawn.apply(this, args);
+};
+`,
+  );
+  const originalNodeOptions = process.env.NODE_OPTIONS;
+  let deployment: TestDeployment | undefined;
+  try {
+    process.env.NODE_OPTIONS = `${originalNodeOptions ?? ""} --require=${JSON.stringify(recorderPath)}`;
+    deployment = await createTestDeployment({
+      configPath,
+      configId: config.id,
+      logPath: test.info().outputPath("deployment.log"),
+    });
+    expect(
+      readFileSync(compilerRunsPath, "utf8").trim().split("\n"),
+    ).toHaveLength(1);
+    writeFileSync(
+      join(configPath, "index.js"),
+      `module.exports = ${JSON.stringify({
+        ...config,
+        tableConfig: {
+          records: {
+            columns: {
+              ...config.tableConfig.records.columns,
+              completed: "boolean",
+            },
+          },
+        },
+      })};`,
+    );
+    const { project } = await deployment.syncSchema();
+    expect(
+      readFileSync(compilerRunsPath, "utf8").trim().split("\n"),
+    ).toHaveLength(2);
+    expect(
+      await project.db.records!.insert!(
+        { id: 1, completed: true },
+        { returning: "*" },
+      ),
+    ).toEqual({
+      id: 1,
+      completed: true,
+    });
+  } finally {
+    if (originalNodeOptions === undefined) delete process.env.NODE_OPTIONS;
+    else process.env.NODE_OPTIONS = originalNodeOptions;
+    await deployment?.dispose();
+  }
+});
+
+test("dev ignores generated workflow declarations and reloads workflow source edits", async () => {
+  const config = {
+    id: "workflow-dev-reload",
+    workflows: { example: { source: "src/workflows/example.ts" } },
+  };
+  const configPath = createConfigTestProject(
+    config,
+    test.info().outputPath("config"),
+  );
+  const workflowDirectory = join(configPath, "src/workflows");
+  mkdirSync(workflowDirectory, { recursive: true });
+  writeFileSync(
+    join(configPath, "src/index.ts"),
+    `export default ${JSON.stringify(config)};`,
+  );
+  writeFileSync(
+    join(configPath, "tsconfig.json"),
+    JSON.stringify({
+      compilerOptions: {
+        target: "ES2022",
+        module: "commonjs",
+        outDir: "build",
+        types: ["node"],
+        skipLibCheck: true,
+      },
+      include: ["src/index.ts"],
+    }),
+  );
+  const sourcePath = join(workflowDirectory, "example.ts");
+  const declarationPath = join(configPath, "generated/workflows.d.ts");
+  const workflowSource = `import { defineAgenticWorkflow } from "#prostgles/workflow";
+void defineAgenticWorkflow(
+  { name: "Dev reload test", containerConfiguration: { timeout: 60_000 } },
+  async () => {},
+);
+`;
+  writeFileSync(sourcePath, workflowSource);
+  const child = spawn(
+    process.execPath,
+    [
+      resolve(__dirname, "../../../server/dist/server/src/cli/cli.js"),
+      "dev",
+      "--config",
+      configPath,
+      "--temp-db",
+    ],
+    {
+      env: { ...process.env, PROSTGLES_UI_PORT: "0" },
+      stdio: ["ignore", "pipe", "pipe"],
+    },
+  );
+  let logs = "";
+  child.stdout.on("data", (chunk) => {
+    logs += chunk.toString();
+  });
+  child.stderr.on("data", (chunk) => {
+    logs += chunk.toString();
+  });
+  const exited = new Promise<void>((resolve) =>
+    child.once("exit", () => resolve()),
+  );
+  const readyCount = () => {
+    if (child.exitCode !== null) throw new Error(logs.slice(-4000));
+    return logs.split("Server started {").length - 1;
+  };
+  try {
+    await expect.poll(readyCount, { timeout: 90_000 }).toBe(1);
+    expect(readFileSync(declarationPath, "utf8")).toContain(
+      "export declare const defineAgenticWorkflow",
+    );
+    /* Generated type changes must not restart the server that writes them. */
+    writeFileSync(declarationPath, "export {};\n");
+    await new Promise((resolve) => setTimeout(resolve, 5_000));
+    expect(logs.split("express listening on port").length - 1).toBe(1);
+    writeFileSync(
+      sourcePath,
+      workflowSource.replace("Dev reload test", "Edited dev reload test"),
+    );
+    await expect.poll(readyCount, { timeout: 60_000 }).toBe(2);
+    await new Promise((resolve) => setTimeout(resolve, 5_000));
+    expect(logs.split("express listening on port").length - 1).toBe(2);
+  } finally {
+    if (child.exitCode === null) child.kill("SIGTERM");
+    await exited;
+    writeFileSync(test.info().outputPath("dev.log"), logs);
+  }
+});
 
 test("formatted CLI apps have no spurious upgrade conflicts", async () => {
   const serverRoot = resolve(__dirname, "../../../server");
@@ -97,6 +263,545 @@ test("formatted CLI apps have no spurious upgrade conflicts", async () => {
     );
     expect(readFileSync(schemaPath, "utf8")).toBe(schema);
   }
+});
+
+test("CLI semantic modules validate colocated table configs, options and hooks, jobs, workflows, imports, exports and types", async () => {
+  const serverRoot = resolve(__dirname, "../../../server");
+  const appRoot = test.info().outputPath("app");
+  const { saveCliTemplateFiles } =
+    await import("../../../server/dist/server/src/cli/cliTemplateFiles");
+  await saveCliTemplateFiles({
+    configId: "module-conventions",
+    targetPath: appRoot,
+  });
+  expect(readFileSync(join(appRoot, "src/jobs/jobs.ts"), "utf8")).toContain(
+    "export const jobs = {};",
+  );
+  expect(readdirSync(join(appRoot, "src/workflows"))).toEqual([
+    "tsconfig.json",
+  ]);
+  const agentInstructions = readFileSync(join(appRoot, "AGENTS.md"), "utf8");
+  expect(agentInstructions).toContain(
+    "import `defineAgenticWorkflow` from `#prostgles/workflow`",
+  );
+  expect(agentInstructions).toContain("`generated/workflows.d.ts`");
+  for (const [name, target] of [
+    ["@prostgles/app", serverRoot],
+    [".bin", join(serverRoot, "node_modules/.bin")],
+    ...[
+      "typescript",
+      "typescript-eslint",
+      "eslint",
+      "@eslint/js",
+      "prostgles-server",
+      "@types/node",
+      "@playwright/test",
+    ].map((name) => [name, join(serverRoot, "node_modules", name)]),
+  ]) {
+    if (!name || !target) throw new Error("Missing test dependency path");
+    const dependencyPath = join(appRoot, "node_modules", name);
+    mkdirSync(resolve(dependencyPath, ".."), { recursive: true });
+    symlinkSync(target, dependencyPath, "dir");
+  }
+  await test.step("fresh scaffold builds without per-entry modules", () => {
+    const scaffoldBuild = spawnSync("npm", ["run", "build"], {
+      cwd: appRoot,
+      encoding: "utf8",
+    });
+    expect(
+      scaffoldBuild.status,
+      scaffoldBuild.stdout + scaffoldBuild.stderr,
+    ).toBe(0);
+  });
+  const writeModule = (fileName: string, source: string) => {
+    const modulePath = join(appRoot, "src", fileName);
+    mkdirSync(resolve(modulePath, ".."), { recursive: true });
+    writeFileSync(modulePath, source);
+  };
+  writeFileSync(
+    join(appRoot, "generated/DBGeneratedSchema.ts"),
+    `
+    export type DBGeneratedSchema = {
+      users: { columns: { id: string; type: string } };
+      tasks: { columns: { id: number } };
+    };
+    export type ClientDBSchema = DBGeneratedSchema;
+    export type ClientSchemas = [{ userType: "admin"; schema: ClientDBSchema }];
+  `,
+  );
+  writeModule(
+    "tables/tasks/tasks.tableConfig.ts",
+    `
+    import type { TableConfig } from "@prostgles/app";
+    export const tasksTableConfig = {
+      columns: { id: "integer PRIMARY KEY" },
+    } satisfies TableConfig[string];
+  `,
+  );
+  writeModule(
+    "tables/tasks/tasks.tableOptions.ts",
+    `
+    import type { TableDisplayConfig as DisplayConfig } from "@prostgles/app";
+    import { taskLabel } from "./categoryColumns";
+    export const tasksTableOptions: DisplayConfig[string] = { label: taskLabel };
+  `,
+  );
+  writeModule(
+    "tables/users/users.tableOptions.ts",
+    `export const usersTableOptions = {};`,
+  );
+  writeModule(
+    "tables/accounts/user_profiles/user_profiles.tableOptions.ts",
+    `export const userProfilesTableOptions = { label: "User profiles" };`,
+  );
+  writeModule(
+    "tables/tableOptions.ts",
+    `
+    import type { TableDisplayConfig } from "@prostgles/app";
+    import { tasksTableOptions } from "./tasks/tasks.tableOptions";
+    import { usersTableOptions as users } from "./users/users.tableOptions";
+    import { userProfilesTableOptions } from "./accounts/user_profiles/user_profiles.tableOptions";
+    export const tableOptions = {
+      tasks: tasksTableOptions,
+      users,
+      "user_profiles": userProfilesTableOptions,
+    } satisfies TableDisplayConfig;
+  `,
+  );
+  writeModule(
+    "tables/tasks/categoryColumns.ts",
+    `
+    export const taskLabel = "Tasks";
+    export const categoryColumns = { discipline: { label: "Discipline" } };
+  `,
+  );
+  writeModule(
+    "tables/tasks/tasks.tableHooks.ts",
+    `
+    import type { TableHooks, ProstglesContext } from "@prostgles/app";
+    import type { DBGeneratedSchema } from "../../../generated/DBGeneratedSchema";
+    import type { services } from "../../serviceManager";
+    export const tasksTableHooks = {
+      afterEach: [{ commands: { insert: 1 }, validate: async ({ row, context }) => {
+        await context.serviceManager.getServiceWithRetries("myService");
+        row.id.toFixed();
+      } }],
+    } satisfies TableHooks<DBGeneratedSchema, ProstglesContext<typeof services>>["tasks"];
+  `,
+  );
+  writeModule(
+    "tables/tableHooks.ts",
+    `
+    import type { TableHooks, ProstglesContext } from "@prostgles/app";
+    import type { DBGeneratedSchema } from "../../generated/DBGeneratedSchema";
+    import type { services } from "../serviceManager";
+    import { tasksTableHooks as tasks } from "./tasks/tasks.tableHooks";
+    export const tableHooks = {
+      tasks,
+    } satisfies TableHooks<DBGeneratedSchema, ProstglesContext<typeof services>>;
+  `,
+  );
+  writeModule(
+    "jobs/defineJob.ts",
+    `
+    import { createJobDefiner, type ProstglesContext } from "@prostgles/app";
+    import type { DBGeneratedSchema } from "../../generated/DBGeneratedSchema";
+    import type { services } from "../serviceManager";
+    export const defineJob = createJobDefiner<DBGeneratedSchema, ProstglesContext<typeof services>>();
+  `,
+  );
+  writeModule(
+    "jobs/processTask.job.ts",
+    `
+    import { defineJob } from "./defineJob";
+    export const processTaskJob = defineJob({
+      trigger: { type: "row", table: "tasks", on: ["insert"] },
+      params: { message: { jsonbSchema: { type: "string" }, default: "Ready" } },
+      run: async ({ row, params, context }) => {
+        await context.serviceManager.getServiceWithRetries("myService");
+        return row.id.toFixed() + params.message.toUpperCase();
+      },
+    });
+  `,
+  );
+  writeModule(
+    "jobs/maintenance/nightlyCleanup.job.ts",
+    `
+    import { defineJob } from "../defineJob";
+    export const nightlyCleanupJob = defineJob({
+      trigger: { type: "schedule", cron: "0 0 * * *" },
+      retention: "forever",
+      run: () => Promise.resolve("cleaned"),
+    });
+  `,
+  );
+  writeModule(
+    "jobs/jobs.ts",
+    `
+    import { processTaskJob } from "./processTask.job";
+    import { nightlyCleanupJob as nightlyCleanup } from "./maintenance/nightlyCleanup.job";
+    export const jobs = { processTask: processTaskJob, nightlyCleanup };
+  `,
+  );
+  const workflowSource = `import { defineAgenticWorkflow } from "#prostgles/workflow";
+    void defineAgenticWorkflow({ name: "Process task" }, async () => {});`;
+  writeFileSync(
+    join(appRoot, "generated/workflows.d.ts"),
+    `export declare const defineAgenticWorkflow: (config: { name: string }, run: () => Promise<void>) => Promise<void>;`,
+  );
+  writeModule("workflows/processTask.workflow.ts", workflowSource);
+  writeModule("workflows/reports/monthly.workflow.ts", workflowSource);
+  await test.step("workflow editor config resolves the shared SDK in nested folders", () => {
+    const workflowTsconfigPath = join(appRoot, "src/workflows/tsconfig.json");
+    const workflowTsconfig = ts.getParsedCommandLineOfConfigFile(
+      workflowTsconfigPath,
+      {},
+      {
+        ...ts.sys,
+        onUnRecoverableConfigFileDiagnostic: (diagnostic) => {
+          throw new Error(
+            ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n"),
+          );
+        },
+      },
+    );
+    if (!workflowTsconfig) throw new Error("Workflow tsconfig was not loaded");
+    expect(workflowTsconfig.errors).toEqual([]);
+    expect(workflowTsconfig.options.noEmit).toBe(true);
+    expect(workflowTsconfig.fileNames).toEqual(
+      expect.arrayContaining([
+        join(appRoot, "src/workflows/processTask.workflow.ts"),
+        join(appRoot, "src/workflows/reports/monthly.workflow.ts"),
+      ]),
+    );
+    const diagnostics = ts.getPreEmitDiagnostics(
+      ts.createProgram(workflowTsconfig.fileNames, workflowTsconfig.options),
+    );
+    expect(
+      diagnostics.map((diagnostic) =>
+        ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n"),
+      ),
+    ).toEqual([]);
+  });
+  writeModule(
+    "accessControl/task-readers.accessControl.ts",
+    `
+    import type { SchemaConfigAccessControl } from "@prostgles/app";
+    export const taskReadersAccessControl: SchemaConfigAccessControl[] = [];
+  `,
+  );
+  writeModule(
+    "functions/task.function.ts",
+    `
+    import { defineFunction } from "@prostgles/app";
+    export const taskFunction = defineFunction({ run: () => "ok" });
+  `,
+  );
+  writeModule(
+    "functions/task.functions.ts",
+    `
+    import { createFunctionsDefinerWithContext, defineFunction, type ProstglesContext } from "@prostgles/app";
+    import type { DBGeneratedSchema } from "../../generated/DBGeneratedSchema";
+    import type { services } from "../serviceManager";
+    const defineFunctions = createFunctionsDefinerWithContext<DBGeneratedSchema, ProstglesContext<typeof services>>();
+    export const taskFunctions = defineFunctions({ load: defineFunction({ run: () => "ok" }) });
+  `,
+  );
+  writeModule(
+    "functions/task.functionGroup.ts",
+    `
+    import { createFunctionGroupDefinerWithContext, type ProstglesContext } from "@prostgles/app";
+    import type { DBGeneratedSchema } from "../../generated/DBGeneratedSchema";
+    import type { services } from "../serviceManager";
+    import { taskFunctions } from "./task.functions";
+    const defineGroup = createFunctionGroupDefinerWithContext<DBGeneratedSchema, ProstglesContext<typeof services>>();
+    export const taskFunctionGroup = defineGroup({ userFilter: {}, functions: taskFunctions });
+  `,
+  );
+  writeModule(
+    "tables/aliased/aliased.tableConfig.ts",
+    `
+    const table = { columns: { id: "integer" } };
+    export { table as aliasedTableConfig };
+  `,
+  );
+  writeModule(
+    "tables/statuses/statuses.tableConfig.ts",
+    `
+    import type { TableConfig } from "@prostgles/app";
+    export const statusesTableConfig = {
+      isLookupTable: { values: { open: {}, closed: {} } },
+    } satisfies TableConfig[string];
+  `,
+  );
+  writeModule(
+    "tables/tableConfig.ts",
+    `
+    import type { TableConfig } from "@prostgles/app";
+    import { tasksTableConfig } from "./tasks/tasks.tableConfig";
+    import { aliasedTableConfig } from "./aliased/aliased.tableConfig";
+    import { statusesTableConfig } from "./statuses/statuses.tableConfig";
+    export const tableConfig: TableConfig = {
+      tasks: tasksTableConfig,
+      aliased: aliasedTableConfig,
+      statuses: statusesTableConfig,
+    };
+  `,
+  );
+  const build = spawnSync("npm", ["run", "build"], {
+    cwd: appRoot,
+    encoding: "utf8",
+  });
+  expect(build.status, build.stdout + build.stderr).toBe(0);
+  expect(readdirSync(join(appRoot, "build/src"))).not.toContain("workflows");
+
+  await test.step("annotated configs preserve service types in hooks and jobs", () => {
+    const originalConfig = readFileSync(join(appRoot, "src/index.ts"), "utf8");
+    writeModule(
+      "index.ts",
+      `
+      import type { SchemaConfig } from "@prostgles/app";
+      import type { SessionUser } from "prostgles-server";
+      import type { DBGeneratedSchema } from "../generated/DBGeneratedSchema";
+      import { serviceManagerConfig, services } from "./serviceManager";
+      import { jobs } from "./jobs/jobs";
+
+      const config: SchemaConfig<DBGeneratedSchema, SessionUser, typeof services> = {
+        id: "module-conventions",
+        services: serviceManagerConfig,
+        jobs: { definitions: jobs },
+      };
+      export default config;
+    `,
+    );
+    const annotatedBuild = spawnSync("npm", ["run", "build"], {
+      cwd: appRoot,
+      encoding: "utf8",
+    });
+    expect(
+      annotatedBuild.status,
+      annotatedBuild.stdout + annotatedBuild.stderr,
+    ).toBe(0);
+    writeModule("index.ts", originalConfig);
+  });
+
+  await test.step("composite projects retain their original source files", () => {
+    const tsconfigPath = join(appRoot, "tsconfig.json");
+    const originalTsconfig = readFileSync(tsconfigPath, "utf8");
+    const tsconfig = JSON.parse(originalTsconfig) as {
+      compilerOptions: Record<string, unknown>;
+    };
+    writeFileSync(
+      tsconfigPath,
+      JSON.stringify({
+        ...tsconfig,
+        compilerOptions: { ...tsconfig.compilerOptions, composite: true },
+      }),
+    );
+    const compositeLint = spawnSync("npm", ["run", "lint", "--", "--quiet"], {
+      cwd: appRoot,
+      encoding: "utf8",
+    });
+    expect(
+      compositeLint.status,
+      compositeLint.stdout + compositeLint.stderr,
+    ).toBe(0);
+    writeFileSync(tsconfigPath, originalTsconfig);
+  });
+
+  const invalidModules = [
+    ["workflows/missingSuffix.ts", workflowSource],
+    [
+      "workflows/missingDefinition.workflow.ts",
+      `import { defineAgenticWorkflow } from "#prostgles/workflow";
+      void defineAgenticWorkflow;`,
+    ],
+    ["workflows/nested/src/index.ts", workflowSource],
+    [
+      "tables/legacy/legacy.tableOption.ts",
+      "export const legacyTableOptions = {};",
+    ],
+    [
+      "tables/legacy/legacy.tableHook.ts",
+      "export const legacyTableHooks = {};",
+    ],
+    [
+      "tables/unknown/unknown.tableHooks.ts",
+      "export const unknownTableHooks = { missing_table: { beforeEach: [] } };",
+    ],
+    [
+      "tables/broken/broken.tableConfig.ts",
+      "export const brokenTableConfig = { columns: 42 };",
+    ],
+    [
+      "tables/broken/broken.tableOptions.ts",
+      "export const brokenTableOptions = { label: 42 };",
+    ],
+    [
+      "tables/broken/broken.tableHooks.ts",
+      "export const brokenTableHooks = { beforeEach: 'invalid' };",
+    ],
+    [
+      "tables/invalid/tasks.tableHooks.ts",
+      "export const tasksTableHooks = { beforeEach: 'invalid' };",
+    ],
+    [
+      "tables/users/users.tableHooks.ts",
+      "export const usersTableHooks = { users: {}, tasks: {} };",
+    ],
+    [
+      "tables/planning.tableHooks.ts",
+      "export const tableHooks = { tasks: {} };",
+    ],
+    [
+      "tables/tableHooks.ts",
+      `import { tasksTableHooks } from "./tasks/tasks.tableHooks";
+      import { usersTableOptions } from "./users/users.tableOptions";
+      export const tableHooks = {
+        tasks: { beforeEach: [] }, users: usersTableOptions,
+        ...{ extra: tasksTableHooks }, ["computed"]: tasksTableHooks,
+      };`,
+    ],
+    [
+      "accessControl/broken.accessControl.ts",
+      "export const brokenAccessControl = [{ userTypes: [42] }];",
+    ],
+    [
+      "functions/broken.function.ts",
+      "export const brokenFunction = { run: 42 };",
+    ],
+    [
+      "functions/broken.functions.ts",
+      "export const brokenFunctions = { load: { run: 42 } };",
+    ],
+    [
+      "functions/broken.functionGroup.ts",
+      "export const brokenFunctionGroup = { userFilter: {}, functions: { load: { run: 42 } } };",
+    ],
+    ["services/broken.service.ts", "export const brokenService = {};"],
+    [
+      "jobs/broken.job.ts",
+      `export const brokenJob = { trigger: { type: "manual" }, retention: "forever", run: 42 };`,
+    ],
+    ["jobs/wrong.job.ts", `export const otherJob = {};`],
+    ["jobs/default.job.ts", "export default {};"],
+    ["jobs/unsafe.job.ts", "export const unsafeJob: any = {};"],
+    [
+      "jobs/group.job.ts",
+      `import { processTaskJob } from "./processTask.job";
+      export const groupJob = { processTask: processTaskJob, anotherTask: processTaskJob };`,
+    ],
+    [
+      "jobs/mixed.job.ts",
+      `import { processTaskJob } from "./processTask.job";
+      export const mixedJob = { ...processTaskJob, anotherTask: processTaskJob };`,
+    ],
+    [
+      "jobs/unknown.job.ts",
+      `export const unknownJob = {
+        trigger: { type: "row" as const, table: "missing_table" as const, on: [] },
+        run: () => Promise.resolve("unknown table"),
+      };`,
+    ],
+    [
+      "jobs/jobs.ts",
+      `import { processTaskJob } from "./processTask.job";
+      export const jobs = {
+        inline: { trigger: { type: "manual" }, retention: "forever", run: () => Promise.resolve("inline") },
+        other: processTaskJob, ...{ processTask: processTaskJob },
+      };`,
+    ],
+    [
+      "tables/wrong/wrong.tableConfig.ts",
+      "export const otherTableConfig = {};",
+    ],
+    ["tables/default/default.tableOptions.ts", "export default {};"],
+    [
+      "tables/unsafe/unsafe.tableConfig.ts",
+      "export const unsafeTableConfig: any = 42;",
+    ],
+    [
+      "tables/users/users.tableConfig.ts",
+      `import type { TableConfig } from "@prostgles/app";
+      export const usersTableConfig: TableConfig = {
+        users: { columns: { id: "uuid PRIMARY KEY" } },
+        projects: { columns: { id: "uuid PRIMARY KEY" } },
+      };`,
+    ],
+    [
+      "tables/tables/tables.tableOptions.ts",
+      `import type { TableDisplayConfig } from "@prostgles/app";
+      export const tablesTableOptions: TableDisplayConfig = {
+        users: { label: "Users" }, tasks: { label: "Tasks" },
+      };`,
+    ],
+    [
+      "tables/mixed/mixed.tableOptions.ts",
+      `const extraTables = { users: { label: "Users" } };
+      export const mixedTableOptions = { label: "Mixed", ...extraTables };`,
+    ],
+    [
+      "tables/mixed/mixed.tableConfig.ts",
+      `export const mixedTableConfig = {
+        columns: { id: "uuid PRIMARY KEY" }, users: { columns: { id: "uuid" } },
+      };`,
+    ],
+    [
+      "tables/tableConfig.ts",
+      `export const tableConfig = { tasks: { columns: { id: "integer" } } };`,
+    ],
+    [
+      "tables/tableOptions.ts",
+      `import { tasksTableOptions } from "./tasks/tasks.tableOptions";
+      export const tableOptions = {
+        tasks: { label: "Inline" }, users: tasksTableOptions,
+        ...{ extra: tasksTableOptions }, ["computed"]: tasksTableOptions,
+      };`,
+    ],
+  ] as const;
+  for (const [fileName, source] of invalidModules)
+    writeModule(fileName, source);
+  const lint = spawnSync("npm", ["run", "lint", "--", "--quiet"], {
+    cwd: appRoot,
+    encoding: "utf8",
+  });
+  expect(lint.status).toBe(1);
+  for (const [fileName] of invalidModules)
+    expect(lint.stdout).toContain(fileName);
+  expect(lint.stdout).toContain("Expected named export");
+  expect(lint.stdout).toContain("does not satisfy the expected type");
+  expect(lint.stdout).toContain('for only "users"');
+  expect(lint.stdout).toContain("imported from tasks.tableOptions.ts");
+  expect(lint.stdout).toContain("imported from users.tableOptions.ts");
+  expect(lint.stdout).toContain("imported from tasks.tableConfig.ts");
+  expect(lint.stdout).toContain("imported from tasks.tableHooks.ts");
+  expect(lint.stdout).toContain("imported from users.tableHooks.ts");
+  expect(lint.stdout).toContain('Expected named export "planningTableHooks"');
+  expect(lint.stdout).toContain("assemble imports in tableHooks.ts");
+  expect(lint.stdout).toContain('Expected named export "wrongJob"');
+  expect(lint.stdout).toContain("imported from inline.job.ts");
+  expect(lint.stdout).toContain("imported from other.job.ts");
+  expect(lint.stdout).toContain("Use the .workflow.ts suffix");
+  expect(lint.stdout).toContain(
+    "Workflow files must call defineAgenticWorkflow",
+  );
+  expect(lint.stdout).toContain("spreads and computed keys are not supported");
+
+  const startup = spawnSync(
+    process.execPath,
+    [
+      join(serverRoot, "dist/server/src/cli/cli.js"),
+      "start",
+      "--config",
+      appRoot,
+      "--temp-db",
+    ],
+    { encoding: "utf8" },
+  );
+  expect(startup.status).toBe(1);
+  expect(startup.stderr).toContain('Expected named export "wrongTableConfig"');
+  expect(startup.stderr).toContain("broken.tableHooks.ts");
+  expect(startup.stderr).toContain("broken.job.ts");
 });
 
 test("temporary databases remove Docker volumes after disposal and failed setup", async () => {
@@ -270,6 +975,137 @@ test("configured test databases are recreated and retained after success and fai
   } finally {
     await deployment?.dispose();
     await server.dispose();
+  }
+});
+
+test("llmCredential inserts nested providers and preserves them across config syncs", async () => {
+  const requests: {
+    url: string | undefined;
+    authorization: string | undefined;
+  }[] = [];
+  const providerServer = createHttpServer((request, response) => {
+    request.resume();
+    requests.push({
+      url: request.url,
+      authorization: request.headers.authorization,
+    });
+    response.writeHead(200, { "Content-Type": "application/json" });
+    response.end(
+      JSON.stringify(
+        request.url === "/v1/models" ?
+          {
+            object: "list",
+            data: [
+              { id: "custom-model" },
+              { id: "custom-model-with-context", max_model_len: 32768 },
+            ],
+          }
+        : {
+            choices: [{ message: { role: "assistant", content: "Hello" } }],
+          },
+      ),
+    );
+  });
+  await new Promise<void>((resolve) =>
+    providerServer.listen(0, "127.0.0.1", resolve),
+  );
+  const address = providerServer.address();
+  if (!address || typeof address === "string")
+    throw new Error("Missing provider port");
+  const credential = {
+    name: "custom-credential",
+    api_key: "custom-test-key",
+    provider_id: {
+      id: "Custom CLI provider",
+      api_url: `http://127.0.0.1:${address.port}/v1/chat/completions`,
+    },
+  } satisfies SchemaConfigLlmCredential;
+  const config = { id: "nested-llm-provider", llmCredential: credential };
+  const configPath = createConfigTestProject(
+    config,
+    test.info().outputPath("config"),
+  );
+  let deployment: TestDeployment | undefined;
+  try {
+    deployment = await createTestDeployment({
+      configPath,
+      configId: config.id,
+      logPath: test.info().outputPath("deployment.log"),
+    });
+    const state = await deployment.connectStateAs("admin");
+    const providerFilter = { id: credential.provider_id.id };
+    expect(await state.db.llm_providers!.findOne(providerFilter)).toMatchObject(
+      credential.provider_id,
+    );
+    expect(
+      await state.db.llm_credentials!.findOne({ name: credential.name }),
+    ).toMatchObject({
+      name: credential.name,
+      provider_id: credential.provider_id.id,
+    });
+    expect(
+      await state.db.llm_models!.find(
+        { provider_id: credential.provider_id.id },
+        { select: { name: 1, context_length: 1 }, orderBy: { name: 1 } },
+      ),
+    ).toEqual([
+      { name: "custom-model", context_length: 0 },
+      { name: "custom-model-with-context", context_length: 32768 },
+    ]);
+    expect(requests).toEqual([
+      { url: "/v1/models", authorization: "Bearer custom-test-key" },
+      { url: "/v1/chat/completions", authorization: "Bearer custom-test-key" },
+    ]);
+    await deployment.syncSchema();
+    expect(await state.db.llm_providers!.count(providerFilter)).toBe(1);
+    expect(await state.db.llm_credentials!.count({})).toBe(1);
+    const updatedCredential = {
+      ...credential,
+      api_key: "replacement-key",
+      provider_id: {
+        ...credential.provider_id,
+        api_docs_url: "https://example.com/docs",
+        llm_models: [{ name: "configured-model", context_length: 128000 }],
+      },
+    } satisfies SchemaConfigLlmCredential;
+    writeFileSync(
+      join(configPath, "index.js"),
+      `module.exports = ${JSON.stringify({ ...config, llmCredential: updatedCredential })};`,
+    );
+    await deployment.syncSchema();
+    expect(await state.db.llm_providers!.findOne(providerFilter)).toMatchObject(
+      {
+        api_docs_url: updatedCredential.provider_id.api_docs_url,
+      },
+    );
+    expect(
+      await state.db.llm_models!.findOne({
+        provider_id: credential.provider_id.id,
+        name: "configured-model",
+      }),
+    ).toMatchObject({ context_length: 128000 });
+    expect(requests.at(-1)?.authorization).toBe("Bearer replacement-key");
+    writeFileSync(
+      join(configPath, "index.js"),
+      `module.exports = ${JSON.stringify({
+        ...config,
+        llmCredential: {
+          ...credential,
+          provider_id: credential.provider_id.id,
+        },
+      })};`,
+    );
+    await deployment.syncSchema();
+    expect(
+      await state.db.llm_credentials!.findOne({ name: credential.name }),
+    ).toMatchObject({
+      provider_id: credential.provider_id.id,
+    });
+  } finally {
+    await deployment?.dispose();
+    await new Promise<void>((resolve, reject) =>
+      providerServer.close((error) => (error ? reject(error) : resolve())),
+    );
   }
 });
 

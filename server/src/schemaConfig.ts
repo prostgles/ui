@@ -29,12 +29,13 @@ import type {
 } from "prostgles-server";
 import type { ProstglesInitOptions } from "prostgles-server/dist/ProstglesTypes";
 import type { InsertDataWithNested } from "prostgles-types";
+import type { WorkflowConfig } from "./McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/agenticWorkflow/getConfiguredWorkflow";
+import type { getStartAgenticWorkflow } from "./McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/agenticWorkflow/getStartAgenticWorkflow";
 import type { getStartAgent } from "./McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/getStartAgent";
 import type {
   ServiceManager,
   ServiceManagerConfig,
 } from "./ServiceManager/ServiceManager";
-import type { LLMProviderName } from "./serverFunctions/askLLM/setupLLMProviders";
 export {
   createJobDefiner,
   createJobControlFunctionDefiner,
@@ -77,10 +78,8 @@ type DBSSchemaForInsertWithNested = {
 
 export type SchemaConfigLlmCredential = Omit<
   DBSSchemaForInsertWithNested["llm_credentials"],
-  "id" | "created" | "user_id" | "provider_id"
-> & {
-  provider_id: LLMProviderName;
-};
+  "id" | "created" | "user_id"
+>;
 
 export type ProstglesOnMountCleanup = () => void | Promise<void>;
 
@@ -90,6 +89,8 @@ export type ProstglesContext<
   serviceManager: ServiceManager<typeof prostglesServices & Services>;
   /** Run an agent as the caller using the existing Prostgles LLM configuration. */
   startAgent: ReturnType<typeof getStartAgent>;
+  /** Run a registered workflow in Docker as the caller. Resolves after completion. */
+  startAgenticWorkflow: ReturnType<typeof getStartAgenticWorkflow>;
 };
 
 export type ProstglesOnMount<
@@ -211,6 +212,8 @@ export type SchemaConfig<
   onMount?: ProstglesOnMount<S, Services>;
   /** Docker-backed services managed by the host Prostgles instance. */
   services?: ServiceManagerConfig<Services>;
+  /** Standalone defineAgenticWorkflow entrypoints, keyed by stable workflow name. */
+  workflows?: Record<string, WorkflowConfig>;
   workspaces?: WorkspaceInsertModel[];
 };
 

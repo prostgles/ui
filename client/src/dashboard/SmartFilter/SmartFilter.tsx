@@ -15,7 +15,10 @@ import { SmartAddFilter } from "./SmartAddFilter";
 export * from "./smartFilterUtils";
 
 export type Operand = "AND" | "OR";
-export type SmartFilterProps = Pick<FilterWrapperProps, "variant"> & {
+export type SmartFilterProps = Pick<
+  FilterWrapperProps,
+  "variant" | "withShadow"
+> & {
   db: Prgl["db"];
   tableName: string;
   tables: DBSchemaTableWJoins[];
@@ -26,7 +29,6 @@ export type SmartFilterProps = Pick<FilterWrapperProps, "variant"> & {
   hideOperand?: boolean;
   className?: string;
   style?: React.CSSProperties;
-  filterClassName?: string;
   contextData?: ContextDataSchema;
   hideToggle?: boolean;
   minimised?: boolean;
@@ -54,7 +56,7 @@ export const SmartFilter = (props: SmartFilterProps) => {
     variant,
     selectedColumns,
     onChange,
-    filterClassName = "",
+    withShadow,
     showAddFilter = false,
     extraFilters,
     showNoFilterInfoRow = false,
@@ -110,7 +112,7 @@ export const SmartFilter = (props: SmartFilterProps) => {
         const filterNode = (
           <DetailedFilterControl
             key={filterItemIndex + filterFieldName}
-            className={filterClassName}
+            withShadow={withShadow}
             filterItem={filterItem}
             table={table}
             tables={tables}
@@ -145,7 +147,7 @@ export const SmartFilter = (props: SmartFilterProps) => {
                   )
                 }
               >
-                {operand}
+                {operand.toLowerCase()}
               </Btn>
             </React.Fragment>
           );

@@ -10,6 +10,7 @@ import { saveCertificates } from "./saveCertificates";
 import { startConnectionOnRequestHandler } from "./startConnectionOnRequestHandler";
 import type { DBSSchema } from "@common/publishUtils";
 import { subscribeToSessionAccessChanges } from "@src/authConfig/subscribeToSessionAccessChanges";
+import { logTimedStep } from "../utils/logTimedStep";
 
 export const CONNECTION_HOT_RELOAD_COLUMNS = [
   "id",
@@ -152,6 +153,9 @@ export async function initConnectionManager(
     resolveInitialConfig = resolve;
     rejectInitialConfig = reject;
   });
+  const finishInitialConfig = logTimedStep(
+    "Applying initial connection settings",
+  );
   this.dbConfSub = await this.dbs.database_configs.subscribe(
     {},
     {
@@ -183,6 +187,7 @@ export async function initConnectionManager(
   );
   // subscribe() returns before its async initial callback has finished.
   await initialConfig;
+  finishInitialConfig();
 
   startConnectionOnRequestHandler(this);
 

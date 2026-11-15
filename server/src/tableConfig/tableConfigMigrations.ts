@@ -8,9 +8,27 @@ import type { DBSConnectionInfo } from "../electronConfig";
 export const getTableConfigMigrations = (stateConnection: DBSConnectionInfo) =>
   ({
     silentFail: false,
-    version: 8,
+    version: 11,
     onMigrate: async ({ db, oldVersion }) => {
       console.warn("Migrating from version: ", oldVersion);
+
+      if (oldVersion !== undefined && oldVersion < 11) {
+        const workflowRunColumn = await db.oneOrNone(`
+          SELECT column_name FROM information_schema.columns
+          WHERE table_schema = current_schema()
+            AND table_name = 'llm_chats'
+            AND column_name = 'workflow_run_id'
+        `);
+        if (workflowRunColumn) {
+          await db.none(`
+            ALTER TABLE llm_chats
+              RENAME COLUMN workflow_run_id TO parent_agentic_workflow_run_id;
+            ALTER INDEX IF EXISTS llm_chats_workflow_run_id
+              RENAME TO llm_chats_parent_agentic_workflow_run_id;
+          `);
+        }
+      }
+
       if (oldVersion !== undefined && oldVersion < 8) {
         await db.none(`
           UPDATE windows SET filter = '[]'::jsonb

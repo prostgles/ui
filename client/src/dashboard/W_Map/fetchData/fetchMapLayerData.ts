@@ -95,7 +95,7 @@ export const fetchMapLayerData = async function (this: W_Map, dataAge: number) {
                 : await getOSMData(q.query, osmBbox);
               layers.push({
                 dataSignature,
-                id: "osm" + Date.now(),
+                id: q._id,
                 features,
                 pickable: true,
                 stroked: true,
@@ -176,7 +176,7 @@ export const fetchMapLayerData = async function (this: W_Map, dataAge: number) {
               if (!oneRow || !this.ref) {
                 layers.push({
                   dataSignature,
-                  id: "tbl" + Date.now(),
+                  id: q._id,
                   features: [],
                   pickable: true,
                   stroked: true,
@@ -343,7 +343,7 @@ export const fetchMapLayerData = async function (this: W_Map, dataAge: number) {
             const layerColor = lineColor;
 
             layers.push({
-              id: q._id + Date.now(),
+              id: q._id,
               dataSignature,
               features: data.map((r) => ({
                 type: "Feature",

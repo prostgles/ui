@@ -1,11 +1,22 @@
+[data-command="CommandPalette"] .SearchList_Suggestions > .FlexCol,
+[data-command="CommandPalette"] .ul-search-list {
+  max-height: none;
+}
+
 .flicker {
-  animation: flicker .5s infinite ;
+  animation: flicker 0.5s infinite;
 }
 .flicker-slow {
-  animation: flicker 1.5s infinite ;
+  animation: flicker 1.5s infinite;
 }
 @keyframes flicker {
-  0% { opacity: .75; }
-  50% { opacity: 0.1; }
-  100% { opacity: .75; }
+  0% {
+    opacity: 0.75;
+  }
+  50% {
+    opacity: 0.1;
+  }
+  100% {
+    opacity: 0.75;
+  }
 }

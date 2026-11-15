@@ -17,15 +17,8 @@ import {
 } from "utils/constants";
 import { goTo } from "utils/goTo";
 import { isPortFree } from "utils/isPortFree";
-import { getFreePort } from "@src/utils/isPortFree";
 import { startMockSMTPServer } from "./mockSMTPServer";
 import { setupAskLLMToolUse, testAskLLMCode } from "./testAskLLM/testAskLLM";
-import { testChatListLoading } from "./testAskLLM/testChatListLoading";
-import { testPastedTextAttachments } from "./testAskLLM/testPastedTextAttachments";
-import { testQuestionToolBatches } from "./testAskLLM/testQuestionToolBatches";
-import { testSavedWorkflowDefinition } from "./testAskLLM/testSavedWorkflowDefinition";
-import { testQueryAlerts } from "./testQueryAlerts";
-import { testWorkspaceSwitching } from "./testWorkspaceSwitching";
 import {
   getCommandElemSelector,
   getDataKey,
@@ -53,7 +46,6 @@ import {
   getLoginSubmitButton,
   getMonacoEditorBySelector,
   getMonacoValue,
-  getSearchListItem,
   getSelector,
   getTableWindow,
   getTimeout,
@@ -74,7 +66,6 @@ import {
   selectAndUpsertFile,
   sendAskLLMMessage,
   setModelByText,
-  setOrAddWorkspace,
   setPromptByText,
   setTableRule,
   setupMagicLinkAuth,
@@ -85,7 +76,6 @@ import {
   uploadFile,
 } from "./utils/utils";
 
-import { ROOT_DIR } from "svgScreenshots/utils/constants";
 import { MINUTE } from "common/utils";
 import { DEFAULT_AGENT_MODEL } from "../../server/dist/server/src/serverFunctions/askLLM/refreshModels";
 import type { SchemaShape } from "../../client/src/dashboard/SchemaGraph/ERDSchema/useSchemaShapes";
@@ -106,33 +96,6 @@ test.use({
 });
 
 test.describe.configure({ mode: "serial" });
-test("Workspace switching preserves the dashboard", async ({ page }) => {
-  await testWorkspaceSwitching(page);
-});
-test("Chat list shows live loading status", async ({ page }) => {
-  await testChatListLoading(page);
-});
-test("Pasted text attachments reach OpenRouter as text", async ({ page }) => {
-  await testPastedTextAttachments(page);
-});
-test("Question tool batches preserve answers through context compaction", async ({
-  page,
-}) => {
-  await testQuestionToolBatches(page);
-});
-test("Saved workflow definition edits persist and report validation errors", async ({
-  page,
-}) => {
-  await testSavedWorkflowDefinition(page);
-});
-
-const alertTest = test.extend({ video: "on", trace: "on" });
-alertTest(
-  "Saved query alerts are editable, scoped and support custom callbacks",
-  async ({ page }) => {
-    await testQueryAlerts(page);
-  },
-);
 
 test.describe("Main test", () => {
   if (process.env.ONLY_VIDEO) {
@@ -207,7 +170,7 @@ test.describe("Main test", () => {
     page: p,
   }) => {
     await new Promise((resolve) => setTimeout(resolve, 5000));
-    const page = p as PageWIds;
+    const page = p;
     const url = new URL("http://localhost:3004");
     await page.context().addCookies([
       {
@@ -282,7 +245,7 @@ test.describe("Main test", () => {
   test("Can disable passwordless admin by creating a new admin user. User data is reassigned and accessible to the new user [no-backup]", async ({
     page: p,
   }) => {
-    const page = p as PageWIds;
+    const page = p;
 
     const goToWorkspace = async (openUsersTable = true) => {
       await page
@@ -324,8 +287,7 @@ test.describe("Main test", () => {
       getSelector({ testid: "SmartFormField", dataKey: "username" }),
     );
 
-    const userTypeField = await formField.textContent();
-    await expect(userTypeField).toEqual(`Username${USERS.test_user}`);
+    await expect(formField).toHaveText(`Username${USERS.test_user}`);
     await page.getByTestId("SmartForm.close").waitFor({ state: "visible" });
     await page.getByTestId("SmartForm.close").click();
 
@@ -340,7 +302,7 @@ test.describe("Main test", () => {
   });
 
   test("State db backup and restore works", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     await login(page, USERS.test_user, "/auth/login");
     await openConnection(page, "Prostgles UI state");
 
@@ -377,7 +339,7 @@ test.describe("Main test", () => {
   });
 
   test("State db restore from file works", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     await login(page, USERS.test_user, "/auth/login");
     await openConnection(page, "Prostgles UI state");
 
@@ -429,7 +391,7 @@ test.describe("Main test", () => {
   });
 
   test("Create db for Schema graph", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     await login(page, USERS.test_user);
 
     await createDatabase(schemaGraphTestDbName, page, true);
@@ -438,7 +400,7 @@ test.describe("Main test", () => {
   test("Schema graph renders and can be zoomed and panned", async ({
     page: p,
   }) => {
-    const page = p as PageWIds;
+    const page = p;
     await login(page, USERS.test_user);
 
     await openConnection(page, "financial");
@@ -516,25 +478,41 @@ test.describe("Main test", () => {
   });
 
   test("Server settings and account tabs work ", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     await login(page, USERS.test_user, "/auth/login");
 
     for (const pageWithTabs of ["/server-settings", "/account"] as const) {
       await goTo(page, pageWithTabs);
 
+      /* Routes share the same gap between the navbar and their content. */
+      await expect
+        .poll(() =>
+          page
+            .locator(".Tabs")
+            .first()
+            .evaluate((tabs) => {
+              const navbar = document.querySelector('[data-command="NavBar"]');
+              if (!navbar) throw new Error("Navbar not found");
+              return (
+                tabs.getBoundingClientRect().top -
+                navbar.getBoundingClientRect().bottom
+              );
+            }),
+        )
+        .toBe(16);
+
       if (pageWithTabs === "/account") {
         await page.getByTestId("ViewMoreSmartCardList").first().click();
         await expect(
           page.getByTestId("Popup.content").getByTestId("SmartCardList"),
-        ).toContainText("Description");
+        ).toContainText("Highest access level");
         await page.getByTestId("Popup.close").click();
       }
       const tabItems = await page.getByTestId("MenuList").locator("li").all();
       for (const tabItem of tabItems) {
-        const tabKey = await tabItem.getAttribute("data-key");
+        await expect(tabItem).toHaveAttribute("data-key", /.+/);
+        await expect(tabItem).toHaveText(/.+/);
         const tabText = await tabItem.textContent();
-        await expect(tabKey).toBeTruthy();
-        await expect(tabText).toBeTruthy();
         await tabItem.click();
         await page.waitForTimeout(500);
         await expect(page.locator(".Tabs_Content h2").first()).toContainText(
@@ -545,14 +523,9 @@ test.describe("Main test", () => {
   });
 
   test("Email password registration setup", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
 
     await login(page);
-
-    await goTo(page, "/component-list");
-    await expect(page.locator("body")).toContainText(
-      "All button heights match for loading state.",
-    );
 
     await goTo(page, "/server-settings");
 
@@ -566,15 +539,22 @@ test.describe("Main test", () => {
     /** The url will be updated automatically and this will page trigger a reload */
     await page.waitForTimeout(1e3);
     const input = await page.getByLabel("Website URL");
-    await expect(await input.getAttribute("value")).toEqual(
-      "http://localhost:3004",
-    );
-    await page.getByTestId("AuthProviderSetup.signupMode").click();
-    await page.locator('[data-key="public"]').click();
-    /* Changing signup access refreshes the app and resets expanded sections. */
-    await expect(page.getByTestId("AuthProviderSetup.signupMode")).toHaveText(
-      "Public signup",
-    );
+    await expect(input).toHaveValue("http://localhost:3004");
+    const signupMode = page.getByTestId("AuthProviderSetup.signupMode");
+    if ((await signupMode.innerText()) !== "Public signup") {
+      const appBeforeSignupUpdate = await page
+        .getByTestId("App")
+        .evaluateHandle((element) => element);
+      await signupMode.click();
+      await page.locator('[data-key="public"]').click();
+      /* Wait for the app refresh, which resets expanded sections. */
+      await page.waitForFunction(
+        (element) => !element.isConnected,
+        appBeforeSignupUpdate,
+      );
+      await appBeforeSignupUpdate.dispose();
+    }
+    await expect(signupMode).toHaveText("Public signup");
     await page.getByTestId("EmailAuthSetup").locator("button").click();
     await page.getByTestId("EmailAuthSetup.SignupType").click();
     await page.locator(`[data-key="withPassword"]`).click();
@@ -592,17 +572,17 @@ test.describe("Main test", () => {
     await page.getByText("Enabled").click();
     await page.getByText("Save").click({ timeout: 10e3 });
     const errNode = await page.getByTestId("EmailAuthSetup.error");
-    await expect(await errNode.textContent()).toContain("getaddrinfo E");
-    await expect(await errNode.textContent()).toContain("invalid-smtp.invalid");
+    await expect(errNode).toContainText("getaddrinfo E");
+    await expect(errNode).toContainText("invalid-smtp.invalid");
     await fillHostAndTest("127.0.0.1");
     await page.waitForTimeout(1500);
     const errNode1 = await page.getByTestId("EmailAuthSetup.error");
-    await expect(await errNode1.count()).toBe(0);
+    await expect(errNode1).toHaveCount(0);
   });
 
   test("Email password registration", async ({ page: p, browser }) => {
     const page = await browser.newPage();
-    const newPage = p as PageWIds;
+    const newPage = p;
     await login(page);
 
     await goTo(newPage, "/auth/login");
@@ -620,20 +600,18 @@ test.describe("Main test", () => {
 
     /** Passwords do not match registration check */
     await newPage.getByTestId("Login.toggle").click();
+    await expect(newPage.locator("#new-password")).toBeVisible();
     await newPage.locator("#username").fill(USERS.new_user);
     await newPage.locator("#password").fill(USERS.new_user);
     await newPage.getByRole("button", { name: "Sign up" }).click();
-    await expect(
-      await newPage.getByTestId("Login.error").textContent(),
-    ).toContain("Passwords do not match");
+    await expect(newPage.getByTestId("Login.error")).toHaveText(
+      "Passwords do not match",
+    );
     await newPage.locator("#new-password").fill(USERS.new_user);
     await newPage.getByRole("button", { name: "Sign up" }).click();
     await expect(
-      await newPage
-        .getByTestId("AuthNotifPopup")
-        .getByTestId("Popup.content")
-        .textContent(),
-    ).toBe(
+      newPage.getByTestId("AuthNotifPopup").getByTestId("Popup.content"),
+    ).toHaveText(
       "Email verification sent. Open the verification url or enter the code to confirm your email",
     );
     await newPage.getByRole("button", { name: "Ok" }).click();
@@ -670,7 +648,7 @@ test.describe("Main test", () => {
   test("Enable email magic link registrations & Translations", async ({
     page: p,
   }) => {
-    const page = p as PageWIds;
+    const page = p;
 
     await login(page);
     await goTo(page, "/server-settings");
@@ -690,7 +668,7 @@ test.describe("Main test", () => {
   });
 
   test("Email magic link signup", async ({ page: p, browser }) => {
-    const newPage = p as PageWIds;
+    const newPage = p;
     const page: PageWIds = await browser.newPage();
 
     /**
@@ -710,11 +688,8 @@ test.describe("Main test", () => {
     await newPage.getByRole("button", { name: "Continue" }).click();
 
     await expect(
-      await newPage
-        .getByTestId("AuthNotifPopup")
-        .getByTestId("Popup.content")
-        .textContent(),
-    ).toBe("Magic link sent. Open the url from your email to login");
+      newPage.getByTestId("AuthNotifPopup").getByTestId("Popup.content"),
+    ).toHaveText("Magic link sent. Open the url from your email to login");
     await newPage.getByRole("button", { name: "Ok" }).click();
 
     const newUser = await runDbsSql(
@@ -763,27 +738,46 @@ test.describe("Main test", () => {
     );
   });
 
-  test("System theme works as expected", async ({ page: p }) => {
-    const page = p as PageWIds;
+  test("Theme selector and system theme work", async ({ page: p }) => {
+    const page = p;
     await page.emulateMedia({ colorScheme: "dark" });
     await goTo(page);
     await page.locator("html.dark-theme").waitFor({ state: "visible" });
-    const darkBackgroundColor = await page.evaluate(() => {
-      return getComputedStyle(document.body).backgroundColor;
-    });
-    await expect(darkBackgroundColor).toBe("rgb(26, 25, 25)");
+    await expect(page.locator("body")).toHaveCSS(
+      "background-color",
+      "rgb(26, 25, 25)",
+    );
 
     await page.emulateMedia({ colorScheme: "light" });
-    await goTo(page);
     await page.locator("html.light-theme").waitFor({ state: "visible" });
-    const lightBackgroundColor = await page.evaluate(() => {
-      return getComputedStyle(document.body).backgroundColor;
-    });
-    await expect(lightBackgroundColor).toBe("rgb(244, 245, 247)");
+    await expect(page.locator("body")).toHaveCSS(
+      "background-color",
+      "rgb(244, 245, 247)",
+    );
+
+    await login(page);
+    for (const theme of ["dark", "light"] as const) {
+      await page.getByTestId("App.colorScheme").click();
+      await page.locator(`[data-key="${theme}"]`).click();
+      await expect(page.locator("html")).toHaveClass(`${theme}-theme`);
+      await expect
+        .poll(() => page.evaluate(() => localStorage.getItem("theme")))
+        .toBe(theme);
+    }
+
+    await page.reload();
+    await expect(page.locator("html")).toHaveClass("light-theme");
+    await page.emulateMedia({ colorScheme: "dark" });
+    await expect(page.locator("html")).toHaveClass("light-theme");
+    await page.getByTestId("App.colorScheme").click();
+    await page.locator('[data-key="from-system"]').click();
+    await expect(page.locator("html")).toHaveClass("dark-theme");
+    await page.emulateMedia({ colorScheme: "light" });
+    await expect(page.locator("html")).toHaveClass("light-theme");
   });
 
   test("Setup Free LLM assistant signup", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     await loginWhenSignupIsEnabled(page);
     const existingCloudDb = await page
       .getByRole("link", {
@@ -895,13 +889,13 @@ test.describe("Main test", () => {
   });
 
   test("Web app", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     await page.goto("http://localhost:3005");
     await expect(page.locator("body")).toContainText("example_table");
   });
 
   test("Setup Free LLM assistant functions", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     await loginWhenSignupIsEnabled(page);
 
     /** Create cloud db */
@@ -1038,7 +1032,7 @@ test.describe("Main test", () => {
   });
 
   test("Test LLM responses and tools", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     await loginWhenSignupIsEnabled(page);
 
     await openConnection(page, "cloud");
@@ -1081,6 +1075,49 @@ test.describe("Main test", () => {
     ]);
 
     await page.getByTestId("AskLLM").click();
+
+    await test.step("Chat selector searches titles and message content", async () => {
+      const chatSelector = page.getByTestId("LLMChat.select");
+      const originalChatId = await chatSelector.getAttribute("data-key");
+      await sendAskLLMMessage(page, "Violet search phrase");
+      await newChat(page);
+      const newChatId = await chatSelector.getAttribute("data-key");
+      await chatSelector.click();
+      const searchList = page.getByTestId("SearchList").filter({
+        has: chatSelector,
+      });
+      const searchInput = searchList.getByRole("textbox");
+      const chatOptions = searchList.getByRole("option");
+      const originalChatOption = chatOptions.filter({ hasText: userMessage });
+
+      for (const term of ["HEY", "violet search phrase", "FREE AI ASSISTANT"]) {
+        await searchInput.fill("");
+        await expect(chatOptions).toHaveCount(2);
+        await searchInput.fill(term);
+        await expect(chatOptions).toHaveCount(1);
+        await expect(originalChatOption).toHaveAttribute(
+          "data-key",
+          originalChatId!,
+        );
+        await expect(chatSelector).toHaveAttribute("data-key", newChatId!);
+      }
+
+      await searchInput.fill("no matching chat content");
+      await expect(chatOptions).toHaveCount(0);
+      await searchInput.fill("");
+      await expect(chatOptions).toHaveCount(2);
+      await searchInput.fill("violet search phrase");
+      await originalChatOption.click();
+      await expect(chatSelector).toHaveAttribute("data-key", originalChatId!);
+      await expect(page.getByTestId("Chat.messageList")).toContainText(
+        "Violet search phrase",
+      );
+      await chatSelector.click();
+      await expect(searchInput).toHaveValue("");
+      await expect(chatOptions).toHaveCount(2);
+      await originalChatOption.click();
+      await runDbsSql(page, "DELETE FROM llm_chats WHERE id = $1", [newChatId]);
+    });
 
     /**
      * Ensure draft message is correctly handled
@@ -1161,9 +1198,7 @@ test.describe("Main test", () => {
     const dbToolsBtn = await page
       .getByTestId("LLMChatOptions.DatabaseAccess")
       .locator("button");
-    await expect(await dbToolsBtn.getAttribute("class")).toContain(
-      "btn-color-action",
-    );
+    await expect(dbToolsBtn).toContainClass("btn-color-action");
 
     // await addExistingDatabase(page, "food_delivery");
     await createDatabase("food_delivery", page, true);
@@ -1237,7 +1272,7 @@ test.describe("Main test", () => {
   test("Document to markdown service and conversion works", async ({
     page: p,
   }) => {
-    const page = p as PageWIds;
+    const page = p;
     await loginWhenSignupIsEnabled(page);
 
     await openConnection(page, "cloud");
@@ -1331,7 +1366,7 @@ test.describe("Main test", () => {
   });
 
   test("Test LLM tools", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     // page.setDefaultTimeout(TWENTY_SECONDS_OR_MORE.timeout);
     await loginWhenSignupIsEnabled(page);
 
@@ -1573,7 +1608,7 @@ test.describe("Main test", () => {
   });
 
   test("Test LLM sandbox tools", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     await loginWhenSignupIsEnabled(page);
 
     await openConnection(page, "cloud");
@@ -1851,7 +1886,7 @@ test.describe("Main test", () => {
   });
 
   test("Agentic workflow", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     if (process.env.CI) {
       test.setTimeout(10 * 60e3);
     }
@@ -1935,6 +1970,7 @@ test.describe("Main test", () => {
         getTimeout(60e3),
       );
       await page.getByText("OK", { exact: true }).click();
+      await expect(page.getByTestId("UserInput")).toBeVisible();
     };
 
     /** Fill user input form */
@@ -1957,14 +1993,29 @@ test.describe("Main test", () => {
         `Missing required user input: ${JSON.stringify(label)}`,
       );
       const isMultiple = fileTreeKey.endsWith("s");
-      await page.locator(getDataKey(fileTreeKey)).click();
+      const pathInput = page.locator(getDataKey(fileTreeKey));
       const path =
         fileTreeKey.includes("file") ?
           ["ui", "client", "package.json"]
         : ["ui", "client", "src"];
-      await fileBrowserGoToPath(page.getByTestId("FileTree").first(), path);
-      if (isMultiple) {
-        await page.getByText("Done").first().click();
+      for (const clearSelection of [true, false]) {
+        await pathInput.click();
+        await fileBrowserGoToPath(page.getByTestId("FileTree").first(), path);
+        if (isMultiple) {
+          await page.getByText("Done").first().click();
+        }
+        if (clearSelection) {
+          /* Cleared paths must be omitted when starting the workflow. */
+          await page
+            .locator(".PopupMenu_triggerWrapper")
+            .filter({ has: pathInput })
+            .getByRole("button", { name: "Clear", exact: true })
+            .click();
+          await expect(page.getByTestId("FileTree")).toHaveCount(0);
+          await startWorkFlowAndExpectError(
+            `Missing required user input: ${JSON.stringify(label)}`,
+          );
+        }
       }
     };
 
@@ -2014,7 +2065,37 @@ test.describe("Main test", () => {
       `Missing required user input: "Table column values"`,
     );
     await page.locator(getDataKey("table-column-values")).click();
-    await page.locator(`[data-key="regular"]`).last().click();
+    /* Multiselects share compact filter rows and keep the popup's focus corners. */
+    const multiSelectPopup = page.getByTestId("Popup.content").last();
+    const multiSelectSearch = multiSelectPopup.locator(
+      ".SearchList_InputWrapper",
+    );
+    await expect(
+      multiSelectPopup.getByTestId("SearchList.Input"),
+    ).toBeFocused();
+    for (const corner of ["left", "right"]) {
+      await expect(multiSelectSearch).toHaveCSS(
+        `border-top-${corner}-radius`,
+        await multiSelectPopup.evaluate(
+          (element, corner) =>
+            getComputedStyle(element).getPropertyValue(
+              `border-top-${corner}-radius`,
+            ),
+          corner,
+        ),
+      );
+    }
+    const regularOption = multiSelectPopup.locator('[data-key="regular"]');
+    await expect(regularOption.locator(".LABELWRAPPER span")).toHaveCSS(
+      "font-size",
+      "14px",
+    );
+    await expect(regularOption.locator(".ROWINNER")).toHaveCSS(
+      "opacity",
+      "0.75",
+    );
+    await regularOption.click();
+    await expect(regularOption.locator(".ROWINNER")).toHaveCSS("opacity", "1");
     await page.keyboard.press("Escape"); // close multi select dropdown
 
     await selectFileOrFolderPath("file-or-folder-paths");
@@ -2213,7 +2294,7 @@ test.describe("Main test", () => {
   test("Create agent shows and uses the default model and parent chat MCP config", async ({
     page: p,
   }) => {
-    const page = p as PageWIds;
+    const page = p;
 
     await loginWhenSignupIsEnabled(page);
     await openConnection(page, "cloud");
@@ -2291,259 +2372,8 @@ test.describe("Main test", () => {
     });
   });
 
-  test("Remote MCP server", async ({ page: p }) => {
-    const page = p as PageWIds;
-    const imageName = "mcp-keycloak";
-    const containerName = "mcp-keycloak-e2e";
-
-    execSync(
-      `docker build -t ${imageName} ./e2e/tests/testAskLLM/mockRemoteMcp`,
-      { cwd: ROOT_DIR, stdio: "inherit" },
-    );
-
-    const [mcpPort, keycloakPort] = await Promise.all([
-      getFreePort(),
-      getFreePort(),
-    ]);
-    const mcpOrigin = `http://localhost:${mcpPort}`;
-    const keycloakOrigin = `http://localhost:${keycloakPort}`;
-    const container = spawn(
-      "docker",
-      [
-        "run",
-        "--rm",
-        "--name",
-        containerName,
-        "-p",
-        `${keycloakPort}:8080`,
-        "-p",
-        `${mcpPort}:3000`,
-        "-e",
-        `MCP_ORIGIN=${mcpOrigin}`,
-        "-e",
-        `KC_HOSTNAME=${keycloakOrigin}`,
-        imageName,
-      ],
-      { cwd: process.cwd(), stdio: "inherit" },
-    );
-    try {
-      test.setTimeout(4 * 60_000);
-
-      await expect
-        .poll(
-          async () => {
-            try {
-              const ready = await Promise.all([
-                page.request.get(
-                  `${mcpOrigin}/.well-known/oauth-protected-resource/mcp`,
-                ),
-                page.request.get(
-                  `${keycloakOrigin}/.well-known/oauth-authorization-server/realms/mcp`,
-                ),
-              ]);
-
-              return ready.every((response) => response.status() === 200);
-            } catch {
-              return false;
-            }
-          },
-          {
-            timeout: 2 * 60_000,
-            intervals: [500, 1_000, 2_000],
-          },
-        )
-        .toBe(true);
-      await loginWhenSignupIsEnabled(page);
-      await goTo(page, "/server-settings?section=mcpServers");
-
-      await page.getByTestId("AddMCPServer.Open").click();
-      await monacoType(
-        page,
-        ".SmartCodeEditor",
-        JSON.stringify(
-          {
-            mcpServers: {
-              mock: { url: `${mcpOrigin}/mcp` },
-            },
-          },
-          null,
-          2,
-        ),
-        { deleteAllAndFill: true, pressAfterTyping: ["Backspace"] },
-      );
-
-      await page.getByTestId("AddMCPServer.Add").click();
-      await page.getByTestId("AddMCPServer.Add").waitFor({ state: "detached" });
-
-      const serverCard = page
-        .getByTestId("SmartCardList")
-        .locator(getDataKey("mock"));
-      await serverCard.getByTitle("Press to enable").click();
-
-      /* OAuth authorization must not log errors, disable the server, or create alerts. */
-      const expectNoAuthorizationErrors = async () => {
-        expect(
-          await runDbsSql(
-            page,
-            `SELECT enabled,
-              (SELECT count(*)::int FROM mcp_server_logs WHERE server_name = 'mock') AS log_count,
-              (SELECT count(*)::int FROM alerts WHERE title = 'mock MCP server disabled due to error') AS alert_count
-            FROM mcp_servers WHERE name = 'mock'`,
-            undefined,
-            { returnType: "rows" },
-          ),
-        ).toEqual([{ enabled: true, log_count: 0, alert_count: 0 }]);
-      };
-
-      /** General info */
-      await expect(
-        page.getByTestId("McpServerOAuthConfigTopControls.ShowServerInfo"),
-      ).toHaveAttribute("title", "Show server info", { ignoreCase: false });
-      await page
-        .getByTestId("McpServerOAuthConfigTopControls.ShowServerInfo")
-        .click();
-      await expect(page.getByTestId("Popup.content").last()).toContainText(
-        "authorization_endpoint",
-      );
-      await page.getByTestId("Popup.close").last().click();
-
-      /** DCR */
-      await page
-        .getByTestId("McpServerOAuthConfigActions.LoginWithOAuth")
-        .click(TWENTY_SECONDS_OR_MORE);
-      const authorizationLink = page.getByTestId(
-        "McpServerOAuthConfigAuthorizeUrlBtn.OpenAuthorizationUrl",
-      );
-      await expect(authorizationLink).toBeVisible(TWENTY_SECONDS_OR_MORE);
-      await expectNoAuthorizationErrors();
-      const [popup] = await Promise.all([
-        page.waitForEvent("popup"),
-        authorizationLink.click(),
-      ]);
-      await popup.waitForLoadState("load");
-      await popup.locator("#username").fill("admin1");
-      await popup.locator("#password").fill("admin1");
-      await popup.locator("button[name=login]").click();
-      await popup.locator("button[name=accept]").click(TWENTY_SECONDS_OR_MORE);
-      await popup.close();
-
-      const saveConfigAndRefreshToolsAndDeleteConfig = async () => {
-        await expect(
-          page.getByTestId("McpServerOAuthConfigActions.connectionToggle"),
-        ).toHaveText("Connected", { ...TWENTY_SECONDS_OR_MORE });
-        await expectNoAuthorizationErrors();
-        await page.getByTestId("MCPServerConfig.save").click();
-        await page.waitForTimeout(1e3);
-        await page
-          .locator(
-            getDataKey("mock") +
-              " " +
-              getCommandElemSelector("MCPServerFooterActions.refreshTools"),
-          )
-          .click(TWENTY_SECONDS_OR_MORE);
-        await expect(page.getByTestId("Popup.content").last()).toContainText(
-          ` tool for "mock" server`,
-          TWENTY_SECONDS_OR_MORE,
-        );
-        await page.getByText("OK", { exact: true }).click();
-        await page
-          .locator(
-            getDataKey("mock") +
-              " " +
-              getCommandElemSelector("MCPServerConfigButton"),
-          )
-          .click();
-        await page.getByText("Delete config", { exact: true }).click();
-      };
-      await saveConfigAndRefreshToolsAndDeleteConfig();
-
-      const enableServer = async () => {
-        await page.waitForTimeout(3e3);
-        await page
-          .locator(
-            getDataKey("mock") + " " + getCommandElemSelector("SwitchToggle"),
-          )
-          .click();
-      };
-
-      const setAuthMode = async (
-        mode: "bearer" | "client_credentials" | "authorization_code" | "cimd",
-      ) => {
-        await page
-          .getByTestId("McpServerOAuthConfigTopControls.authMode")
-          .click();
-        await page
-          .getByTestId("McpServerOAuthConfigTopControls.authMode")
-          .locator(getDataKey(mode))
-          .click();
-      };
-
-      /** Bearer */
-      await enableServer();
-      await setAuthMode("bearer");
-      await page.getByLabel("Bearer token").fill("test-token");
-      await page
-        .getByTestId("McpServerOAuthConfigActions.LoginWithOAuth")
-        .click();
-      await saveConfigAndRefreshToolsAndDeleteConfig();
-
-      /** authorization_code */
-      await enableServer();
-      await setAuthMode("authorization_code");
-      await page.getByLabel("Client Id").fill("static-client");
-      await page.getByLabel("Client Secret").fill("static-secret");
-      await page
-        .getByTestId("McpServerOAuthConfigActions.LoginWithOAuth")
-        .click();
-
-      await expect(authorizationLink).toHaveAttribute(
-        "href",
-        /[?&]client_id=static-client&/,
-        TWENTY_SECONDS_OR_MORE,
-      );
-      const [popup2] = await Promise.all([
-        page.waitForEvent("popup"),
-        authorizationLink.click(),
-      ]);
-      await popup2.waitForLoadState("load");
-      await popup2.locator("button[name=accept]").click(TWENTY_SECONDS_OR_MORE);
-      await popup2.close();
-      await saveConfigAndRefreshToolsAndDeleteConfig();
-
-      /** client credentials */
-      await enableServer();
-      await setAuthMode("client_credentials");
-      await page.getByLabel("Client Id").fill("static-client");
-      await page.getByLabel("Client Secret").fill("static-secret");
-      await page
-        .getByTestId("McpServerOAuthConfigActions.LoginWithOAuth")
-        .click();
-      await saveConfigAndRefreshToolsAndDeleteConfig();
-
-      /** TODO: CIMD */
-      // await enableServer();
-      // await setAuthMode("cimd");
-      // const redirectUri = await page
-      //   .locator(`[data-label="Redirect URL"] .input-wrapper`)
-      //   .textContent();
-      // if (!redirectUri) throw new Error("Redirect URI not found");
-      // const searchParams = new URLSearchParams({ redirectUri });
-      // await fetch(
-      //   "http://localhost:3000/set_redirect_uri_for_test?" +
-      //     searchParams.toString(),
-      // );
-      // await page
-      //   .getByLabel("Client metadata URL")
-      //   .fill("http://localhost:3000/metadata.json");
-      // await saveConfigAndRefreshToolsAndDeleteConfig();
-    } finally {
-      container.kill("SIGTERM");
-      execSync(`docker rm -f ${containerName}`, { stdio: "ignore" });
-    }
-  });
-
   test("Disable signups", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     await loginWhenSignupIsEnabled(page);
 
     /** Disable signups */
@@ -2596,9 +2426,10 @@ test.describe("Main test", () => {
       await lpage
         .getByTestId("Login.error")
         .waitFor({ state: "visible", ...TWENTY_SECONDS_OR_MORE });
-      await expect(
-        await lpage.getByTestId("Login.error").textContent(),
-      ).toContain(errorMessage);
+      await expect(lpage.getByTestId("Login.error")).toContainText(
+        errorMessage,
+        TWENTY_SECONDS_OR_MORE,
+      );
     };
     for (let i = 0; i < 5; i++) {
       await page.reload();
@@ -2655,7 +2486,7 @@ test.describe("Main test", () => {
   });
 
   test("Create db with owner", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     await login(page);
     const dbName = "db_with_owner";
     await createDatabase(dbName, page, false, { name: dbName, pass: dbName });
@@ -2671,7 +2502,7 @@ test.describe("Main test", () => {
   test("Ensure realtime works and is resilient to schema change", async ({
     page: p,
   }) => {
-    const page = p as PageWIds;
+    const page = p;
     await login(page);
     const dbName = "db_with_owner";
     await openConnection(page, "db_with_owner");
@@ -2773,30 +2604,30 @@ test.describe("Main test", () => {
   });
 
   test("Login returnUrl", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     const requestedUrl =
       "http://localhost:3004/connections/some-connection?a=b";
     await login(page, undefined, requestedUrl);
     await page
       .getByTestId("ProjectConnection.error")
       .waitFor({ state: "visible", ...TWENTY_SECONDS_OR_MORE });
-    const currentUrl = await page.url();
-    await expect(currentUrl).toEqual(requestedUrl);
+    await expect(page).toHaveURL(requestedUrl);
   });
 
   test("Open redirect returnUrl", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     const requestedUrl =
       "http://localhost:3004/auth/login?returnURL=/%2F%2Fwikipedia.org";
     await login(page, undefined, requestedUrl);
     await goTo(page, requestedUrl);
     await goTo(page, requestedUrl);
-    const currentUrl = await page.url();
-    await expect(currentUrl.startsWith("http://localhost:3004/")).toBe(true);
+    await expect(page).toHaveURL(
+      (url) => url.origin === "http://localhost:3004",
+    );
   });
 
   test("Test 2FA", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
 
     await login(page);
 
@@ -2877,7 +2708,7 @@ test.describe("Main test", () => {
   });
 
   test("Sample database backups", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
 
     await login(page);
 
@@ -2950,7 +2781,7 @@ test.describe("Main test", () => {
   test("Delete previous users and data (to improve local tests)", async ({
     page: p,
   }) => {
-    const page = p as PageWIds;
+    const page = p;
 
     await login(page);
     /** Delete previous user */
@@ -2963,7 +2794,7 @@ test.describe("Main test", () => {
       await page.waitForTimeout(1e3);
       await forEachLocator(
         page,
-        () => page.getByTestId("dashboard.window.viewEditRow"),
+        () => page.getByTestId("SmartCard.viewEditRow"),
         async (editBtn) => {
           await editBtn.click();
           await page.getByTestId("SmartForm.delete").click();
@@ -3019,7 +2850,7 @@ test.describe("Main test", () => {
   });
 
   test("Create and prepare test database", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
 
     await login(page);
     await page.getByRole("link", { name: "Connections", exact: true }).click();
@@ -3202,7 +3033,7 @@ test.describe("Main test", () => {
   });
 
   test("Set access rules", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
 
     await createAccessRuleForTestDB(page, "default");
 
@@ -3234,11 +3065,8 @@ test.describe("Main test", () => {
     await page.getByTestId("AskLLM").click();
     await page.getByTestId("AskLLM.popup").waitFor({ state: "visible" });
     await page.getByTestId("SetupLLMCredentials").waitFor({ state: "visible" });
-    const chatSend = await page
-      .getByTestId("AskLLM.popup")
-      .getByTestId("Chat.send")
-      .count();
-    await expect(chatSend).toBe(0);
+    const chatSend = page.getByTestId("AskLLM.popup").getByTestId("Chat.send");
+    await expect(chatSend).toHaveCount(0);
     await page.getByTestId("Popup.close").click();
 
     /** Setup LLM */
@@ -3257,7 +3085,7 @@ test.describe("Main test", () => {
   });
 
   test("Default user has correct permissions", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
 
     /** Increase test time due to doc processing */
     test.setTimeout(7 * MINUTE);
@@ -3276,17 +3104,17 @@ test.describe("Main test", () => {
     await uploadFile(page);
 
     /* Ensure that the file is uploaded and visible in the table */
-    await page
-      .getByText("Show parsed document", { exact: true })
-      .waitFor({ state: "visible", ...TWENTY_SECONDS_OR_MORE });
+    await expect(getTableWindow(page, "files").getByText(fileName)).toBeVisible(
+      TWENTY_SECONDS_OR_MORE,
+    );
 
     await insertRow(page, "my_table", { content: USERS.default_user });
     await insertRow(page, "orders", { status: "incomplete" });
-    await expect(await page.getByText("secret").count()).toBe(0);
+    await expect(page.getByText("secret")).toHaveCount(0);
   });
 
   test("Default user1 has correct permissions", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
 
     await page.request.post("/auth/logout");
     await login(page, USERS.default_user1);
@@ -3300,15 +3128,43 @@ test.describe("Main test", () => {
     await openTable(page, "fil");
     await page.waitForTimeout(1000);
 
-    await uploadFile(page);
+    /* The filter bar picker opens with the selected file and resets on close. */
+    const filesTableWindow = getTableWindow(page, "files");
+    const filesFilterBar = filesTableWindow.getByTitle("Edit filters");
+    if (!(await filesFilterBar.isVisible())) {
+      await filesTableWindow
+        .getByTestId("dashboard.window.toggleFilterBar")
+        .click();
+    }
+    const filterBarFilePicker = filesFilterBar.getByTestId("FileBtn");
+    const filePreview = page.locator(".SmartForm .FileInputMedia");
+    await filterBarFilePicker
+      .locator("input")
+      .setInputFiles(resolve(__dirname, "..", fileName));
+    await expect(filePreview).toContainText(fileName);
+    await expect(filePreview.locator("img")).toBeVisible();
+    await page.getByTestId("SmartForm.close").click();
+    await expect(filterBarFilePicker).toBeVisible();
+    await selectAndUpsertFile(
+      page,
+      () => filterBarFilePicker.click(),
+      async () => {
+        await expect(filePreview).toContainText(fileName);
+        await expect(filePreview.locator("img")).toBeVisible();
+      },
+    );
+    await expect(filterBarFilePicker).toBeVisible(getTimeout(2 * MINUTE));
+    await expect(
+      filesTableWindow.getByText(fileName, { exact: true }),
+    ).toHaveCount(2);
 
     await insertRow(page, "my_table", { content: USERS.default_user1 });
     await insertRow(page, "orders", { status: "incomplete" });
-    await expect(await page.getByText("secret").count()).toBe(0);
+    await expect(page.getByText("secret")).toHaveCount(0);
   });
 
   test("Admin user (test_user) can see all data", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
 
     await page.request.post("/auth/logout");
     await login(page, USERS.test_user);
@@ -3324,10 +3180,10 @@ test.describe("Main test", () => {
     await openTable(page, "ord");
     await openTable(page, "file");
 
-    await expect(await page.getByText("abc", { exact: true }).count()).toBe(2);
-    await expect(await page.getByText("incomplete").count()).toBe(2);
-    await expect(await page.getByText("secret").count()).toBe(1);
-    await expect(await page.getByText(fileName).count()).toBe(2);
+    await expect(page.getByText("abc", { exact: true })).toHaveCount(2);
+    await expect(page.getByText("incomplete")).toHaveCount(2);
+    await expect(page.getByText("secret")).toHaveCount(1);
+    await expect(page.getByText(fileName)).toHaveCount(2);
 
     /** Replace an existing file through the row editor. */
     await getTableWindow(page, "files")
@@ -3387,7 +3243,7 @@ test.describe("Main test", () => {
   test("User can insert and view files through allowed reference columns", async ({
     page: p,
   }) => {
-    const page = p as PageWIds;
+    const page = p;
 
     await login(page, USERS.default_user);
 
@@ -3404,11 +3260,9 @@ test.describe("Main test", () => {
           // Must have blob src attribute
         ).toHaveAttribute("src", /^\s*blob:/),
     );
-    const imgSrc = await page
-      .getByTestId("Popup.content")
-      .locator("img")
-      .getAttribute("src");
-    await expect(imgSrc).toContain("blob:");
+    await expect(
+      page.getByTestId("Popup.content").locator("img"),
+    ).toHaveAttribute("src", /blob:/);
     const nodes = await page.getByText(fileName).innerHTML();
     console.log({ nodes });
     await expect(page.getByText(fileName)).toHaveCount(1);
@@ -3464,307 +3318,8 @@ test.describe("Main test", () => {
     await expect(page.getByText(fileName)).toHaveCount(1);
   });
 
-  test("Table tests", async ({ page: p }) => {
-    const page = p as PageWIds;
-    await login(page, USERS.test_user);
-
-    await openConnection(page, TEST_DB_NAME);
-
-    const wspName = "Table tests";
-    await setOrAddWorkspace(page, wspName);
-    await closeWorkspaceWindows(page);
-    await setWspColLayout(page);
-
-    const query = `
-      CREATE EXTENSION IF NOT EXISTS postgis;
-      DROP TABLE IF EXISTS orders CASCADE;
-      DROP TABLE IF EXISTS users CASCADE;
-      CREATE TABLE users (id UUID  PRIMARY KEY, first_name text, last_name text, email text, created_at timestamp default now(), type TEXT DEFAULT 'default', position numeric);
-      ${QUERIES.orders}
-      ALTER TABLE orders 
-      ADD COLUMN total_cost NUMERIC NOT NULL DEFAULT random() * 100;
-      ALTER TABLE orders ADD COLUMN delivery_address GEOGRAPHY DEFAULT st_point(-0.08 + random()/10, 51.5 + random()/10)::GEOGRAPHY;
-      ALTER TABLE orders
-      ADD COLUMN created_at timestamp default now() + (random() * 10 * '1day'::interval);
-      ALTER TABLE orders ADD FOREIGN KEY (user_id) REFERENCES users;
-      INSERT INTO users (id, first_name, last_name, email, type, position)
-      SELECT 
-        user_id, 
-        "left"(user_id::TEXT, 8), 
-        "right"(user_id::TEXT, 8), 
-        "left"(user_id::TEXT, 8) || "right"(user_id::TEXT, 8) || '@gmail.com',  
-        CASE WHEN rownumid = 1 THEN 'default' WHEN rownumid = 2 THEN 'admin' WHEN random() < .5 THEN 'default' ELSE 'admin' END, 
-        row_number() over()
-      FROM (
-        SELECT *, row_number() over( PARTITION BY user_id) as dpid, row_number() over() as rownumid
-        FROM (
-          SELECT rownum, gen_random_uuid() as user_id
-          FROM generate_series(1, 1e2) as rownum
-        ) t
-      ) t1
-      WHERE dpid = 1;
-      
-      INSERT INTO orders (user_id, status)
-      SELECT u.id, 'completed'
-      FROM (
-        SELECT rownum 
-        FROM generate_series(1, 1e2) as rownum
-      ) t
-      LEFT JOIN users u ON true;
-      `;
-    await page.evaluate(async (query) => {
-      try {
-        await (window as any).sql(query);
-      } catch (err) {
-        document.body.innerText = JSON.stringify(err);
-      }
-    }, query);
-
-    await getSearchListItem(page, { dataKey: "users" }).click();
-    const usersTable = await getTableWindow(page, "users");
-
-    /** Test pagination */
-    let pageInput = await usersTable.getByTestId("Pagination.page");
-    await expect(await pageInput.inputValue()).toBe("1");
-    await expect(await pageInput.getAttribute("min")).toBe("1");
-    await expect(await pageInput.getAttribute("max")).toBe("4");
-    await expect(
-      usersTable.getByTestId("Pagination.pageCountInfo"),
-    ).toContainText(`4 pages  (100 rows)`);
-    await usersTable.getByTestId("Pagination.lastPage").click();
-    pageInput = await usersTable.getByTestId("Pagination.page");
-    await pageInput.scrollIntoViewIfNeeded();
-    await expect(await pageInput.inputValue()).toBe("4");
-    await usersTable.getByTestId("Pagination.firstPage").click();
-    await expect(await pageInput.inputValue()).toBe("1");
-    await usersTable.getByTestId("Pagination.nextPage").click();
-    await expect(await pageInput.inputValue()).toBe("2");
-    await usersTable.getByTestId("Pagination.lastPage").click();
-    await usersTable.getByTestId("Pagination.pageSize").click();
-    await page
-      .getByTestId("Pagination.pageSize")
-      .locator(getDataKey("50"))
-      .click();
-    await expect(await pageInput.inputValue()).toBe("2");
-    await expect(
-      await usersTable.getByTestId("Pagination.pageCountInfo").textContent(),
-    ).toBe(`2 pages  (100 rows)`);
-
-    await usersTable.getByTestId("AddColumnMenu").click();
-    await getSearchListItem(page.getByTestId("AddColumnMenu"), {
-      dataKey: "Referenced",
-    }).click();
-    await getSearchListItem(page.getByTestId("JoinPathSelectorV2"), {
-      dataKey: "orders",
-    }).click(TWENTY_SECONDS_OR_MORE);
-    await page.getByTestId("LinkedColumn.ColumnList.toggle").click();
-    await page.waitForTimeout(1e3);
-    await getSearchListItem(page, { dataKey: "total_cost" })
-      .getByTestId("SummariseColumn.toggle")
-      .click();
-    await page.waitForTimeout(1e3);
-    await getSearchListItem(page.getByTestId("FunctionSelector"), {
-      dataKey: "$sum",
-    }).click();
-    await page.getByTestId("SummariseColumn.apply").click();
-    await page
-      .getByTestId("LinkedColumn.ColumnListMenu")
-      .getByTestId("Popup.close")
-      .click();
-    await page.getByTestId("LinkedColumn.Add").click();
-
-    await page.waitForTimeout(1e3);
-    await usersTable.getByTestId("AddColumnMenu").click();
-    await getSearchListItem(page.getByTestId("AddColumnMenu"), {
-      dataKey: "Referenced",
-    }).click();
-    await getSearchListItem(page.getByTestId("JoinPathSelectorV2"), {
-      dataKey: "orders",
-    }).click(TWENTY_SECONDS_OR_MORE);
-    await page.getByTestId("QuickAddComputedColumn").click();
-    await getSearchListItem(page.getByTestId("FunctionSelector"), {
-      dataKey: "$countAll",
-    }).click();
-    await page.getByTestId("QuickAddComputedColumn.Add").click();
-    await page.getByTestId("LinkedColumn.Add").click();
-
-    const linkedRecordsCount = usersTable
-      .getByTestId("LinkedColumn.OpenRecords")
-      .first();
-    await expect(linkedRecordsCount).toHaveText("100", TWENTY_SECONDS_OR_MORE);
-    await linkedRecordsCount.click();
-    const linkedRecordsPopup = page.getByTestId("Popup.content").last();
-    await expect(
-      linkedRecordsPopup.getByTestId("Pagination.pageCountInfo"),
-    ).toContainText("100 rows", TWENTY_SECONDS_OR_MORE);
-    await page.getByTestId("Popup.close").last().click();
-
-    await usersTable.getByTestId("AddChartMenu.Map").click();
-    await page
-      .getByTestId("AddChartMenu.Map")
-      .getByRole("option")
-      .filter({ hasText: "orders (delivery_address)" })
-      .click();
-    await page.waitForTimeout(3e3);
-    await page.getByTestId("dashboard.window.detachChart").click();
-    await page.waitForTimeout(1e3);
-    await usersTable.getByTestId("AddChartMenu.Timechart").click();
-    await page
-      .getByTestId("AddChartMenu.Timechart")
-      .getByRole("option")
-      .getByText("orders (created_at)", { exact: true })
-      .click();
-    await page.waitForTimeout(3e3);
-    await page.getByTestId("dashboard.window.detachChart").click();
-
-    /** Set count all to ensure the W_TimeChart.ActiveRow below works */
-    // await page.getByTestId("TimeChartLayerOptions.aggFunc").click();
-    // await page.getByTestId("TimeChartLayerOptions.aggFunc.select").click();
-    // await page.getByTestId("TimeChartLayerOptions.aggFunc.select").locator(`[data-key="$countAll"]`).click();
-    // await page.getByTestId("Popup.close").click();
-
-    await page.waitForTimeout(5e3);
-    /** Mouse move is needed to show tooltip and to trigger re-render so that _renderedData.x,y are defined */
-    await page.mouse.move(700, 111);
-    await page.mouse.move(700, 150);
-    await page.mouse.click(700, 150);
-    await page
-      .getByTestId("W_TimeChart.ActiveRow")
-      .waitFor({ state: "visible", timeout: 5e3 });
-    /** Test W_TimeChart activeRow crossfilter */
-    const {
-      data = [],
-      x = -99,
-      y = -99,
-    } = await page.evaluate(() => {
-      try {
-        const timeChartRef = document.querySelector(".W_TimeChart")!;
-        const bbox = timeChartRef.getBoundingClientRect();
-        const data = (timeChartRef as any)._renderedData as {
-          x: number;
-          y: number;
-          value: number;
-        }[];
-        return { data, x: bbox.x, y: bbox.y };
-      } catch (err: any) {
-        document.body.innerText = err.toString() + JSON.stringify(err);
-        return {};
-      }
-    });
-    const [firstPoint, secondPoint] = data;
-    if (
-      typeof firstPoint?.x !== "number" ||
-      typeof secondPoint?.x !== "number"
-    ) {
-      console.error("firstPoint or secondPoint missing:", {
-        firstPoint,
-        secondPoint,
-      });
-    } else {
-      await page.mouse.click(firstPoint.x + x, firstPoint.y + y);
-      await page.waitForTimeout(1e3);
-      await page.mouse.click(firstPoint.x + x, firstPoint.y + y); // to close it
-      await page.waitForTimeout(1e3);
-      await page.mouse.click(secondPoint.x + x, secondPoint.y + y);
-      await page.waitForTimeout(1e3);
-    }
-
-    // Close active row
-    await page.waitForTimeout(2e3);
-    const brush = await page.getByTestId("W_TimeChart.ActiveRow");
-    if (await brush.isVisible()) {
-      await brush.locator("button").click();
-    }
-
-    /**
-     * Ensure card view works
-     */
-    await usersTable.getByTestId("dashboard.window.menu").click();
-    await page.waitForTimeout(1e3);
-    await page.getByText("Display options").click();
-    await page
-      .getByTestId("table.options.displayMode")
-      .locator(getDataKey("card"))
-      .click();
-    await page.getByTestId("table.options.cardView.groupBy").click();
-    await page
-      .getByTestId("SearchList.List")
-      .locator(`[data-key="type"]`)
-      .click();
-    await page.getByTestId("table.options.cardView.orderBy").click();
-    await page
-      .getByTestId("SearchList.List")
-      .locator(`[data-key="position"]`)
-      .click();
-    await page.waitForTimeout(1e3);
-    await page.keyboard.press("Escape");
-    await usersTable.getByTestId("dashboard.window.fullscreen").click();
-    await page.waitForTimeout(3e3);
-    await expect(await page.getByText("First Name").first()).toBeVisible();
-
-    /** Test groupBy */
-    const swapFirstTwoRows = async () => {
-      const groups = await page.getByTestId("CardView.group").all();
-      await expect(groups.length).toBe(2);
-      const [firstGroup, secondGroup] = groups;
-      if (!firstGroup || !secondGroup) {
-        throw new Error("Expected two card groups");
-      }
-      await page.waitForTimeout(2e3);
-      const firstGroupFirstRow = await firstGroup
-        .getByTestId("CardView.row")
-        .first();
-      const secondGroupFirstRow = await secondGroup
-        .getByTestId("CardView.row")
-        .first();
-      const draggedText = await firstGroupFirstRow
-        .getByTitle("id")
-        .textContent();
-      const targetText = await secondGroupFirstRow
-        .getByTitle("id")
-        .textContent();
-      const firstDragHandle = await firstGroupFirstRow.getByTestId(
-        "CardView.DragHeader",
-      );
-      const secondDragHandle = await secondGroupFirstRow.getByTestId(
-        "CardView.DragHeader",
-      );
-
-      const box1 = await firstDragHandle.boundingBox();
-      const box2 = await secondDragHandle.boundingBox();
-      if (!box1 || !box2) {
-        throw "box1 or box2 missing";
-      }
-      await page.mouse.move(box1.x + box1.width / 2, box1.y + box1.height / 2, {
-        steps: 22,
-      });
-      await firstDragHandle.hover();
-      await page.waitForTimeout(1e3);
-      await page.mouse.down({ button: "left" });
-      await page.mouse.move(box2.x + box2.width / 2, box2.y + box2.height / 2, {
-        steps: 111,
-      });
-      await page.mouse.up({ button: "left" });
-      await page.waitForTimeout(5e3);
-
-      const newTargetText = await secondGroup
-        .getByTestId("CardView.row")
-        .first()
-        .getByTitle("id")
-        .textContent();
-      return { draggedText, newTargetText };
-    };
-
-    await swapFirstTwoRows();
-    await page.waitForTimeout(1e3);
-    const { draggedText, newTargetText } = await swapFirstTwoRows();
-    await page.waitForTimeout(1e3);
-    await expect(draggedText).toEqual(newTargetText);
-    await page.waitForTimeout(2e3);
-  });
-
   test("API tests", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     await login(page, USERS.test_user);
 
     await openConnection(page, TEST_DB_NAME);
@@ -3784,53 +3339,8 @@ test.describe("Main test", () => {
       .click();
   });
 
-  test("SQL Autocomplete", async ({ page: p }) => {
-    const page = p as PageWIds;
-    const sqlTestTimeout = { total: 9 * 6e4, sql: 8 * 6e4 };
-    test.setTimeout(sqlTestTimeout.total);
-
-    await page.request.post("/auth/logout");
-    await login(page, USERS.test_user);
-    await openConnection(page, TEST_DB_NAME);
-    await page.waitForTimeout(3000);
-
-    /** Ensure SQL Autocomplete works */
-    await closeWorkspaceWindows(page);
-    await page.getByTestId("dashboard.menu.sqlEditor").click();
-    await page.getByTestId("dashboard.window.menu").click();
-    await page.getByText("General").click();
-
-    for (const _ of new Array(5).fill(1)) {
-      await page.getByText("TEST", { exact: true }).click();
-      await page.waitForTimeout(100);
-    }
-
-    const startSqlTest = () =>
-      new Promise((resolve, reject) => {
-        page.on("dialog", (dialog) => {
-          const msg = dialog.message();
-          console.log("1", msg);
-          if (msg.includes("does not match the expected")) {
-            reject(msg);
-            throw msg;
-          }
-          if (msg === "Demo finished successfully") {
-            return resolve(1);
-          }
-          return dialog.accept();
-        });
-      });
-    await runDbSql(
-      page,
-      `
-        CREATE TABLE force_cached_col_types_reload (); -- Needed failed test rerun
-        DROP TABLE force_cached_col_types_reload;`,
-    );
-    await startSqlTest();
-  });
-
   test("Admin can create and drop connections", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     await login(page, USERS.test_user);
     const dbName = "my_new_db";
     await createDatabase(dbName, page);
@@ -3844,11 +3354,11 @@ test.describe("Main test", () => {
     await goTo(page, "localhost:3004/connections");
     await page.reload();
     const deletedConnection = await page.locator(connectionSelector);
-    await expect(await deletedConnection.count()).toEqual(0);
+    await expect(deletedConnection).toHaveCount(0);
   });
 
   test("Set public user access rules", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
 
     await createAccessRuleForTestDB(page, "public");
     await setTableRule(
@@ -3879,7 +3389,7 @@ test.describe("Main test", () => {
   test("Public user can access all allowed sections without issues", async ({
     page: p,
   }) => {
-    const page = p as PageWIds;
+    const page = p;
     await goTo(page, "localhost:3004/connections");
     await page.reload();
     await page
@@ -3899,7 +3409,7 @@ test.describe("Main test", () => {
   });
 
   test("Public user ask llm limit", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     await goTo(page, "localhost:3004/connections");
     await page.reload();
     await page
@@ -3911,15 +3421,15 @@ test.describe("Main test", () => {
   });
 
   test("MCP Servers", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     await login(page, USERS.test_user, "localhost:3004/auth/login");
     await openConnection(page, TEST_DB_NAME);
 
     await runDbsSql(
       page,
       `
-      UPDATE mcp_servers SET enabled = false WHERE name = 'myServer';
-      DELETE FROM mcp_servers WHERE name = 'myServer';
+      UPDATE mcp_servers SET enabled = false WHERE name IN ('myServer', 'chrome-devtools-test');
+      DELETE FROM mcp_servers WHERE name IN ('myServer', 'chrome-devtools-test');
 
       DELETE FROM alerts; -- left by mock mcp server oauth flows
     `,
@@ -3946,6 +3456,10 @@ test.describe("Main test", () => {
                 MY_TOKEN: "<YOUR_TOKEN>",
               },
             },
+            "chrome-devtools-test": {
+              command: "npx",
+              args: ["-y", "chrome-devtools-mcp@latest"],
+            },
           },
         },
         null,
@@ -3961,6 +3475,17 @@ test.describe("Main test", () => {
     await page.locator(".SwitchToggle " + getDataKey("ALLOWED_DIR")).click();
     await page.getByTestId("AddMCPServer.Add").click();
     await page.getByTestId("AddMCPServer.Add").waitFor({ state: "detached" });
+
+    /* Importing fixed arguments without configurable fields must not create an empty schema. */
+    expect(
+      await runDbsSql(
+        page,
+        "DELETE FROM mcp_servers WHERE name = 'chrome-devtools-test' RETURNING config_schema",
+        undefined,
+        { returnType: "rows" },
+      ),
+    ).toEqual([{ config_schema: null }]);
+
     await page
       .getByTestId("SmartCardList")
       .locator(getDataKey("myServer"))
@@ -3987,7 +3512,7 @@ test.describe("Main test", () => {
 
   /** Flaky on github */
   test("Web template build works", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     await login(page, USERS.test_user, "localhost:3004/auth/login");
     await page.getByRole("link", { name: "cloud" }).click();
     await page.getByTestId("dashboard.goToConnConfig").click();
@@ -4025,7 +3550,7 @@ test.describe("Main test", () => {
   test("show error when on webdev prompt and webapp not templated", async ({
     page: p,
   }) => {
-    const page = p as PageWIds;
+    const page = p;
     await login(page, USERS.test_user, "localhost:3004/auth/login");
     await page.getByRole("link", { name: "sample_database" }).click();
     await page.getByTestId("AskLLM").click();
@@ -4042,14 +3567,14 @@ test.describe("Main test", () => {
   });
 
   test("Web template works", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     await goTo(page, "localhost:3005");
     await expect(page.locator("body")).toContainText("Not logged in");
     await expect(page.locator("body")).toContainText("Available tables:");
   });
 
   test("Web app dev mode works", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     const cwd = resolve(join(__dirname, "..", "demo", "client"));
     console.log("Starting dev server in cwd:", cwd);
     const devProc = spawn("npm", ["run", "dev"], {

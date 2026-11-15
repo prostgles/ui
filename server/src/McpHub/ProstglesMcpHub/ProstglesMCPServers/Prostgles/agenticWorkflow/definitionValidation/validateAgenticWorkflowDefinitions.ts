@@ -15,9 +15,9 @@ export const validateAgenticWorkflowDefinitions = async (
   }: {
     connection_id: string;
     dbs: DBS;
-    chatId: number;
+    chatId: number | undefined;
     userId: string;
-    messageId: DBSSchema["llm_messages"]["id"];
+    messageId: DBSSchema["llm_messages"]["id"] | undefined;
   },
 ) => {
   if (!connection_id) {

@@ -3,6 +3,7 @@ import React from "react";
 import "./Animations.css";
 import "./Chip.css";
 import Btn from "./Btn";
+import type { BtnProps } from "./Btn";
 import { FlexCol, classOverride } from "./Flex";
 import { Icon } from "./Icon/Icon";
 import type { TestSelectors } from "../Testing";
@@ -20,6 +21,7 @@ type ChipProps = TestSelectors &
     variant?: "naked" | "header" | "outline" | "default";
     color?: "blue" | "yellow" | "red" | "green" | "gray" | "orange";
     onDelete?: React.MouseEventHandler<HTMLButtonElement>;
+    deleteButtonSize?: BtnProps["size"];
     leftIcon?: {
       path: string;
       size?: 0.75 | 0.5;
@@ -40,6 +42,7 @@ export default class Chip extends React.Component<ChipProps> {
       label,
       variant = "default",
       onDelete,
+      deleteButtonSize = "default",
       leftIcon,
       color = "gray",
       ...divProps
@@ -135,7 +138,7 @@ export default class Chip extends React.Component<ChipProps> {
               onDelete(e);
             }}
             className="Chip_DeleteBtn ml-p5 round as-start text-1"
-            size="default"
+            size={deleteButtonSize}
             style={{
               padding: 0,
               borderRadius: "1000%",

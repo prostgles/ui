@@ -3,12 +3,16 @@ import type { TileLayer, TileLayerProps } from "deck.gl";
 import {
   getLineColor,
   getFillColor,
-  getPointRadius,
+  getLineWidth,
   getText,
   getTextColor,
   getTextSize,
-} from "./MVTLayerProps";
+} from "./MVTRendering/MVTLayerProps";
 import type { Extent } from "@common/ColumnConfig/mapConstants";
+import {
+  MVT_LAYERS,
+  renderMVTSubLayers,
+} from "./MVTRendering/renderMVTSubLayers";
 
 export const DEFAULT_TILE_URLS = [
   // 'http://{s}.tile.stamen.com/watercolor/{z}/{x}/{y}.jpg'
@@ -42,43 +46,36 @@ export function makeTileLayer(
     tileURLs = DEFAULT_TILE_URLS;
   }
 
-  if (tileURLs.some((url) => url.endsWith(".pbf") || url.endsWith(".mvt"))) {
-    return new deckGlLibs.lib.MVTLayer({
-      id: "basemap",
+  if (tileURLs.some(isVectorTileURL)) {
+    return new deckGlLibs.lib.MVTBasemapLayer({
+      id: "basemap-vector",
       data: tileURLs,
-      loaders: [deckGlLibs.MVTLoader],
+      loaders: deckGlLibs.mvtLoaders,
+      binary: false,
       loadOptions: {
         mvt: {
           // cp node_modules/@loaders.gl/mvt/dist/mvt-worker.js static/mvt-worker.js
           // Added file to express static
           workerUrl: "/mvt-worker.js",
+          layers: MVT_LAYERS,
         },
       },
       minZoom: 0,
       maxZoom: 14,
       opacity,
-      pointType: "circle+text",
+      pointType: "text",
       getLineColor,
       getFillColor,
-      getLineWidth: (f) => {
-        switch (f.properties.class) {
-          case "street":
-            return 6;
-          case "motorway":
-            return 10;
-          default:
-            return 1;
-        }
-      },
-      /** Here it breaks the rendering completely */
-      // extensions: [new deckGlLibs.extensions.CollisionFilterExtension()],
-      getPointRadius,
+      getLineWidth,
+      lineWidthUnits: "meters",
+      lineWidthMinPixels: 0.6,
+      lineWidthMaxPixels: 12,
+      lineJointRounded: true,
+      renderSubLayers: (props) => renderMVTSubLayers(props, deckGlLibs),
       getText,
       getTextColor,
       getTextSize,
-      // getPointRadius: 2,
-      pointRadiusUnits: "pixels",
-      stroked: false,
+      stroked: true,
       // picking: true
     });
   }
@@ -181,3 +178,6 @@ export function makeImageLayer({
     coordinateSystem: "cartesian",
   });
 }
+
+export const isVectorTileURL = (url: string) =>
+  url.endsWith(".pbf") || url.endsWith(".mvt");

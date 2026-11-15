@@ -87,6 +87,6 @@ export const fetchColumnValueSuggestions = async (args: {
     return res;
   } catch (e) {
     console.error(e);
-    return [];
+    throw e;
   }
 };

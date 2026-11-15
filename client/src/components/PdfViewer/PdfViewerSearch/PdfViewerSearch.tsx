@@ -4,6 +4,9 @@ import { Input } from "@components/Input";
 import { mdiChevronLeft, mdiChevronRight, mdiMagnify } from "@mdi/js";
 import type * as pdfjsLib from "pdfjs-dist";
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useDebouncedCallback } from "src/hooks/useDebouncedCallback";
+import type { RenderedPdfPage } from "../usePdfContinuousScroll";
+import { getPdfSearchRanges } from "./getPdfSearchRanges";
 
 import "./PdfViewerSearch.css";
 
@@ -13,43 +16,13 @@ type SearchMatch = {
 
 export type PdfViewerSearchProps = {
   pdfDocument: pdfjsLib.PDFDocumentProxy | null;
-  pageElement: HTMLDivElement | null;
+  renderedPages: RenderedPdfPage[];
   currentPage: number;
   onPageChange: (page: number) => void;
 };
 
 const normalizeText = (text: string) =>
   text.replace(/\s+/g, " ").trim().toLocaleLowerCase();
-const normalizeTextWithOffsets = (source: string) => {
-  let text = "";
-  const offsets: number[] = [];
-  let whitespaceOffset: number | undefined;
-
-  for (let index = 0; index < source.length; index += 1) {
-    const character = source[index]!;
-
-    if (/\s/.test(character)) {
-      whitespaceOffset ??= index;
-      continue;
-    }
-
-    if (whitespaceOffset !== undefined && text) {
-      text += " ";
-      offsets.push(whitespaceOffset);
-    }
-
-    whitespaceOffset = undefined;
-
-    const normalizedCharacter = character.toLocaleLowerCase();
-
-    text += normalizedCharacter;
-    offsets.push(
-      ...Array.from({ length: normalizedCharacter.length }, () => index),
-    );
-  }
-
-  return { text, offsets };
-};
 const getMatchCount = (text: string, query: string) => {
   let count = 0;
   let offset = 0;
@@ -69,15 +42,27 @@ const getMatchCount = (text: string, query: string) => {
 
 export const PdfViewerSearch = ({
   pdfDocument,
-  pageElement,
+  renderedPages,
   currentPage,
   onPageChange,
 }: PdfViewerSearchProps) => {
   const [query, setQuery] = useState("");
   const [pageTexts, setPageTexts] = useState<string[]>([]);
   const [activeMatchIndex, setActiveMatchIndex] = useState(0);
+  const scrollToMatchRef = useRef<number>();
+  const currentPageRef = useRef(currentPage);
+  currentPageRef.current = currentPage;
 
-  const normalizedQuery = normalizeText(query);
+  const [normalizedQuery, setNormalizedQuery] = useState("");
+  const updateSearchQuery = useDebouncedCallback(
+    (value: string) => setNormalizedQuery(normalizeText(value)),
+    [],
+  );
+  const changeQuery = (value: string) => {
+    setQuery(value);
+    updateSearchQuery(value);
+    if (!value) setNormalizedQuery("");
+  };
 
   /** Intercept ctrl+f */
   const inputRef = useRef<HTMLInputElement>(null);
@@ -152,10 +137,16 @@ export const PdfViewerSearch = ({
   }, [normalizedQuery, pageTexts]);
 
   useEffect(() => {
-    setActiveMatchIndex(0);
+    const firstMatchIndex = Math.max(
+      0,
+      matches.findIndex(({ page }) => page === currentPageRef.current),
+    );
+    const firstMatch = matches[firstMatchIndex];
+    setActiveMatchIndex(firstMatchIndex);
+    scrollToMatchRef.current = firstMatchIndex;
 
-    if (matches.length) {
-      onPageChange(matches[0]!.page);
+    if (firstMatch) {
+      onPageChange(firstMatch.page);
     }
   }, [matches, onPageChange]);
 
@@ -164,87 +155,40 @@ export const PdfViewerSearch = ({
       Map<string, unknown> | undefined;
     const HighlightConstructor = (window as any).Highlight;
 
-    if (
-      !pageElement ||
-      !normalizedQuery ||
-      !highlights ||
-      !HighlightConstructor
-    ) {
+    if (!normalizedQuery || !highlights || !HighlightConstructor) {
       return;
     }
 
-    const walker = document.createTreeWalker(pageElement, NodeFilter.SHOW_TEXT);
-    const textNodes: { node: Text; start: number; end: number }[] = [];
-    let sourceText = "";
-    let textNode: Text | null;
-
-    while ((textNode = walker.nextNode() as Text | null)) {
-      if (sourceText) {
-        sourceText += " ";
-      }
-
-      const start = sourceText.length;
-      sourceText += textNode.data;
-
-      textNodes.push({
-        node: textNode,
-        start,
-        end: sourceText.length,
-      });
-    }
-
-    const { text: searchableText, offsets } =
-      normalizeTextWithOffsets(sourceText);
-    const ranges: Range[] = [];
-    let offset = 0;
-
-    while (offset < searchableText.length) {
-      const matchStart = searchableText.indexOf(normalizedQuery, offset);
-
-      if (matchStart === -1) {
-        break;
-      }
-
-      const matchEnd = matchStart + normalizedQuery.length;
-      const sourceStart = offsets[matchStart];
-      const sourceEnd = offsets[matchEnd - 1];
-
-      if (sourceStart === undefined || sourceEnd === undefined) {
-        offset = matchEnd;
-        continue;
-      }
-
-      const startNode = textNodes.find(
-        ({ start, end }) => sourceStart >= start && sourceStart < end,
-      );
-      const endNode = textNodes.find(
-        ({ start, end }) => sourceEnd >= start && sourceEnd < end,
-      );
-
-      if (startNode && endNode) {
-        const range = document.createRange();
-        range.setStart(startNode.node, sourceStart - startNode.start);
-        range.setEnd(endNode.node, sourceEnd - endNode.start + 1);
-        ranges.push(range);
-      }
-
-      offset = matchEnd;
-    }
-
-    highlights.set("pdf-viewer-search", new HighlightConstructor(...ranges));
+    const pageRanges = renderedPages.map(({ page, element }) => ({
+      page,
+      ranges: getPdfSearchRanges(element, normalizedQuery),
+    }));
+    highlights.set(
+      "pdf-viewer-search",
+      new HighlightConstructor(...pageRanges.flatMap(({ ranges }) => ranges)),
+    );
 
     const activeMatch = matches[activeMatchIndex];
-    if (activeMatch?.page === currentPage) {
+    if (activeMatch) {
       const activeRangeIndex = matches
         .slice(0, activeMatchIndex)
-        .filter(({ page }) => page === currentPage).length;
-      const activeRange = ranges[activeRangeIndex];
+        .filter(({ page }) => page === activeMatch.page).length;
+      const activeRange = pageRanges.find(
+        ({ page }) => page === activeMatch.page,
+      )?.ranges[activeRangeIndex];
 
       if (activeRange) {
         highlights.set(
           "pdf-viewer-search-active",
           new HighlightConstructor(activeRange),
         );
+        if (scrollToMatchRef.current === activeMatchIndex) {
+          activeRange.startContainer.parentElement?.scrollIntoView({
+            block: "center",
+            inline: "nearest",
+          });
+          scrollToMatchRef.current = undefined;
+        }
       }
     }
 
@@ -252,9 +196,13 @@ export const PdfViewerSearch = ({
       highlights.delete("pdf-viewer-search");
       highlights.delete("pdf-viewer-search-active");
     };
-  }, [activeMatchIndex, currentPage, matches, normalizedQuery, pageElement]);
+  }, [activeMatchIndex, matches, normalizedQuery, renderedPages]);
 
   const moveToMatch = (direction: 1 | -1) => {
+    if (normalizedQuery !== normalizeText(query)) {
+      setNormalizedQuery(normalizeText(query));
+      return;
+    }
     if (!matches.length) {
       return;
     }
@@ -263,11 +211,12 @@ export const PdfViewerSearch = ({
       (activeMatchIndex + direction + matches.length) % matches.length;
 
     setActiveMatchIndex(nextIndex);
+    scrollToMatchRef.current = nextIndex;
     onPageChange(matches[nextIndex]!.page);
   };
 
   const clearSearch = () => {
-    setQuery("");
+    changeQuery("");
     setActiveMatchIndex(0);
   };
 
@@ -275,17 +224,15 @@ export const PdfViewerSearch = ({
 
   return (
     <FlexRow
-      className="PdfViewerSearch pdf-viewer-search gap-0"
+      className="pdf-viewer-search gap-p25 p-p25 b b-color rounded focus-border"
       role="search"
       aria-label="Search PDF text"
     >
       <Btn
         iconPath={mdiMagnify}
         size="small"
-        className="mt-p25"
         disabledInfo={disabled && "PDF is still loading"}
         aria-label="Search PDF text"
-        style={{ padding: 0, minWidth: 0, minHeight: 0 }}
       />
       <Input
         ref={inputRef}
@@ -294,7 +241,7 @@ export const PdfViewerSearch = ({
         value={query}
         disabled={disabled}
         placeholder="Search document"
-        onChange={(event) => setQuery(event.currentTarget.value)}
+        onChange={(event) => changeQuery(event.currentTarget.value)}
         onKeyDown={(event) => {
           if (event.key === "Enter") {
             moveToMatch(event.shiftKey ? -1 : 1);

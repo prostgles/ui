@@ -1,18 +1,19 @@
-import { getFinalFilterInfo } from "@common/filterUtils";
 import FormField from "@components/FormField/FormField";
 import React from "react";
 import { RenderFilter, type RenderFilterProps } from "../../../RenderFilter";
 
 export const AlertFilterEditor = ({
   label,
+  hideLabel,
   emptyLabel,
   ...props
 }: Pick<RenderFilterProps, "filter" | "onChange" | "tableName" | "source"> & {
   label: string;
+  hideLabel?: boolean;
   emptyLabel: string;
 }) => (
   <FormField
-    label={label}
+    label={hideLabel ? undefined : label}
     inputContent={
       <RenderFilter
         {...props}
@@ -20,18 +21,21 @@ export const AlertFilterEditor = ({
         itemName="condition"
         contextData={undefined}
         selectedColumns={undefined}
-        mode={{
-          children: (
-            <span className="text-ellipsis">
-              {getFinalFilterInfo(props.filter) || emptyLabel}
-            </span>
-          ),
-          variant: "outline",
-          size: "small",
-          style: { borderRadius: "1em", maxWidth: "100%" },
-          disabledInfo:
-            !props.tableName ? "Choose a query table first" : undefined,
-        }}
+        mode={
+          (
+            props.filter &&
+            ("$and" in props.filter ? props.filter.$and : props.filter.$or)
+              .length
+          ) ?
+            "minimised-popup"
+          : {
+              children: emptyLabel,
+              variant: "select",
+              size: "small",
+              disabledInfo:
+                !props.tableName ? "Choose a query table first" : undefined,
+            }
+        }
       />
     }
   />

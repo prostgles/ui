@@ -1,4 +1,5 @@
 import React, { useContext, useState } from "react";
+import { MCPServerAuthPrompt } from "./MCPServerAuthPrompt";
 import {
   MCPServerConfigEditor,
   type MCPServerConfigProps,
@@ -43,6 +44,10 @@ export const MCPServerConfigProvider = ({
   return (
     <MCPServerConfigContext.Provider value={value}>
       {children}
+      <MCPServerAuthPrompt
+        isConfiguring={Boolean(serverToConfigure)}
+        onConfigure={value.setServerToConfigure}
+      />
       {serverToConfigure && (
         <MCPServerConfigEditor
           {...serverToConfigure}

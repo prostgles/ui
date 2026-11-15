@@ -2,41 +2,21 @@ import type {
   BeforeEachTsTrigger,
   DBHandlerServerInternal,
 } from "prostgles-server";
-import {
-  getFileTextExtractionOptions,
-  type FileTextExtractionOptions,
-  type FileTableRowWithExtraction,
-} from "./getFilesTableJobs";
+import type { FileTableRowWithExtraction } from "./getFilesTableJobs";
 import type { ProstglesContext } from "@src/schemaConfig";
 
-export const getFilesTableTextExtractionHook = (
-  fileTableName: string,
-  extractTextOptions?: FileTextExtractionOptions,
-) => ({
+export const getFilesTableTextExtractionHook = (fileTableName: string) => ({
   [fileTableName]: {
     beforeEach: [
       {
         commands: { insert: 1, update: 1 },
         validate: ({ data: fileRow, hookContext }) => {
-          const { original_name, content_type } = fileRow;
-          const buffer = hookContext?.data as Buffer | undefined;
-          const isImageOrPdf =
-            content_type &&
-            ["image/", "application/pdf"].some((prefix) =>
-              content_type.startsWith(prefix),
-            );
-          if (!isImageOrPdf || !original_name || !buffer) {
-            return;
-          }
+          if (!hookContext?.data) return;
 
           return {
             row: {
               ...fileRow,
-              extraction_status: {
-                state: "loading",
-                start: new Date().toISOString(),
-                options: getFileTextExtractionOptions(extractTextOptions),
-              },
+              text_extraction_job_id: null,
               docling_metadata: null,
               text_content: null,
             },

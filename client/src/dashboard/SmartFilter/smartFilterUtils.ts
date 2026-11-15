@@ -53,7 +53,10 @@ type ComputedColumn = Pick<
 
 export type FilterColumn = TableColumn | ComputedColumn;
 
-export type BaseFilterProps = Pick<FilterWrapperProps, "variant"> & {
+export type BaseFilterProps = Pick<
+  FilterWrapperProps,
+  "variant" | "withShadow"
+> & {
   db: Prgl["db"];
   tableName: string;
   onChange: (filter?: DetailedFilter) => void;

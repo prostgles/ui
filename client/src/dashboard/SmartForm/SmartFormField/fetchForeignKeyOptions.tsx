@@ -262,6 +262,7 @@ export const fetchSearchResults = async ({
   });
   return res.map((row) => {
     const rowIconSrc = rowIconColumn && row[rowIconColumn];
+    const label = textColumn ? (row[textColumn] ?? undefined) : undefined;
     return {
       leftContent:
         rowIconSrc ?
@@ -289,7 +290,8 @@ export const fetchSearchResults = async ({
           />
         : null,
       key: row[mainColumn],
-      subLabel: textColumn && row[textColumn],
+      label,
+      subLabel: isDefined(label) ? row[mainColumn]?.toString() : undefined,
     } satisfies FullOption;
   });
 };

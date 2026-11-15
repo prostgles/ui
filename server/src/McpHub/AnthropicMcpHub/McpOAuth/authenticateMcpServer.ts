@@ -39,11 +39,6 @@ export const authenticateMcpServer = async (
   }
   const callbackUrl = new URL(ROUTES.MCP_OAUTH_CALLBACK, origin);
   const request_id = crypto.randomUUID();
-  const FIVE_MINUTES_IN_MS = 5 * 60 * 1000;
-  enqueuedRequestIds.add(request_id);
-  setTimeout(() => {
-    enqueuedRequestIds.delete(request_id);
-  }, FIVE_MINUTES_IN_MS);
   callbackUrl.searchParams.set("scopes", JSON.stringify(config.scopes));
   callbackUrl.searchParams.set("server_name", serverName);
   callbackUrl.searchParams.set("request_id", request_id);
@@ -95,4 +90,14 @@ export const authenticateMcpServer = async (
       enabled: true,
     },
   );
+};
+const FIVE_MINUTES_IN_MS = 5 * 60 * 1000;
+
+export const registerMcpAuthorizationRequest = () => {
+  const requestId = crypto.randomUUID();
+  enqueuedRequestIds.add(requestId);
+  setTimeout(() => {
+    enqueuedRequestIds.delete(requestId);
+  }, FIVE_MINUTES_IN_MS).unref();
+  return requestId;
 };

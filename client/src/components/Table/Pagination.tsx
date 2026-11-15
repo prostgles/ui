@@ -15,6 +15,8 @@ export type PaginationProps = {
   pageSize?: number;
   page?: number;
   totalRows?: number;
+  /* Supply this when the total number of pages is unknown. */
+  hasNextPage?: boolean;
   onPageChange?: (newPage: number) => any;
   onPageSizeChange?: (newPageSize: number) => any;
   className?: string;
@@ -29,6 +31,7 @@ export const Pagination = (props: PaginationProps) => {
     onPageSizeChange,
     pageSize = PAGE_SIZES[0],
     totalRows,
+    hasNextPage,
     className = "",
     disabled = false,
     pageCountInfo,
@@ -38,7 +41,9 @@ export const Pagination = (props: PaginationProps) => {
   };
 
   let maxPage = 0;
-  if (totalRows) {
+  if (hasNextPage !== undefined) {
+    maxPage = zeroBasedPage + Number(hasNextPage);
+  } else if (totalRows) {
     maxPage = Math.ceil(totalRows / pageSize) - 1;
   }
 
@@ -50,7 +55,7 @@ export const Pagination = (props: PaginationProps) => {
     : undefined;
   const noNextMessage =
     disabled ? "Pagination is unavailable"
-    : zeroBasedPage === maxPage ? "Already at last page"
+    : zeroBasedPage >= maxPage ? "Already at last page"
     : undefined;
   const totalPages = maxPage + 1;
   const totalRowCount = +(totalRows ?? 0);
@@ -58,6 +63,7 @@ export const Pagination = (props: PaginationProps) => {
     !disabled &&
     noPrevMessage &&
     noNextMessage &&
+    totalRows != null &&
     totalRowCount <= PAGE_SIZES[0]
   ) {
     return null;
@@ -67,12 +73,13 @@ export const Pagination = (props: PaginationProps) => {
       className="text-2 text-sm p-p5 noselect"
       data-command={"Pagination.pageCountInfo" satisfies Command}
     >
-      {pageCountInfo ?? (
-        <>
-          {totalPages.toLocaleString()} page{totalPages === 1 ? "" : "s"}{" "}
-          {` (${totalRowCount.toLocaleString()} rows)`}
-        </>
-      )}
+      {pageCountInfo ??
+        (hasNextPage === undefined && (
+          <>
+            {totalPages.toLocaleString()} page{totalPages === 1 ? "" : "s"}{" "}
+            {` (${totalRowCount.toLocaleString()} rows)`}
+          </>
+        ))}
     </div>
   );
   const displayPage = zeroBasedPage + 1;
@@ -128,15 +135,17 @@ export const Pagination = (props: PaginationProps) => {
           onPageChange(Math.min(maxPage, zeroBasedPage + 1));
         }}
       />
-      <Btn
-        data-command="Pagination.lastPage"
-        iconPath={mdiPageLast}
-        disabledInfo={noNextMessage}
-        size="default"
-        onClick={() => {
-          onPageChange(maxPage);
-        }}
-      />
+      {hasNextPage === undefined && (
+        <Btn
+          data-command="Pagination.lastPage"
+          iconPath={mdiPageLast}
+          disabledInfo={noNextMessage}
+          size="default"
+          onClick={() => {
+            onPageChange(maxPage);
+          }}
+        />
+      )}
 
       {onPageSizeChange && (
         <FormField
@@ -151,8 +160,12 @@ export const Pagination = (props: PaginationProps) => {
             /**
              * Re-adjust current page if it will become out of bounds
              */
-            if (newPageSize * (zeroBasedPage + 1) > totalRowCount) {
-              onPageChange(Math.ceil(totalRowCount / newPageSize) - 1);
+            if (hasNextPage !== undefined) {
+              onPageChange(0);
+            } else if (newPageSize * (zeroBasedPage + 1) > totalRowCount) {
+              onPageChange(
+                Math.max(0, Math.ceil(totalRowCount / newPageSize) - 1),
+              );
             }
             onPageSizeChange(newPageSize);
           }}

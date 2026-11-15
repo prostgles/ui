@@ -29,6 +29,7 @@ import { ColumnDisplayFormat } from "./ColumnDisplayFormat/ColumnDisplayFormat";
 import { getFormatOptions } from "./ColumnDisplayFormat/columnFormatUtils";
 import { ColumnStyleMenu } from "./ColumnStyleControls/ColumnStyleMenu";
 import { LinkedColumn } from "./LinkedColumn/LinkedColumn";
+import { getColumnsAfterRemoving } from "../tableUtils/getColumnsAfterRemoving";
 
 type P = {
   column: ColumnConfigWithInfo;
@@ -55,7 +56,12 @@ export const ColumnListItemOptions = ({
   const [action, setAction] = useState<ColumnListAction>();
   const nestedColumn = column.nested;
   const removeAction =
-    (column.format?.type === "Action" || column.format?.type === "ActionColumns") ? "Remove action column"
+    column.defaultConfig?.nested?.fallbackColumn ? "Remove reference display"
+    : (
+      column.format?.type === "Action" ||
+      column.format?.type === "ActionColumns"
+    ) ?
+      "Remove action column"
     : column.format ? "Remove formatting"
     : column.computedConfig?.isColumn ? "Remove Function"
     : column.computedConfig || column.nested ? "Remove computed field"
@@ -87,7 +93,7 @@ export const ColumnListItemOptions = ({
       );
       return;
     }
-    onChange(columns.filter((c) => c.name !== column.name));
+    onChange(getColumnsAfterRemoving(columns, column));
   };
 
   return (
@@ -179,7 +185,8 @@ export const ColumnListItemOptions = ({
                 hide: !!nestedColumn,
                 disabledText:
                   (
-                    (column.format?.type !== "Action" && column.format?.type !== "ActionColumns") &&
+                    column.format?.type !== "Action" &&
+                    column.format?.type !== "ActionColumns" &&
                     getFormatOptions(column.info ?? column.computedConfig)
                       .length <= 1
                   ) ?
@@ -210,8 +217,11 @@ export const ColumnListItemOptions = ({
                 label: "Alter column",
                 leftIconPath: mdiPencil,
                 hide:
-                  !prgl.sql || !!column.computedConfig || !!nestedColumn ||
-                  (column.format?.type === "Action" || column.format?.type === "ActionColumns"),
+                  !prgl.sql ||
+                  !!column.computedConfig ||
+                  !!nestedColumn ||
+                  column.format?.type === "Action" ||
+                  column.format?.type === "ActionColumns",
                 listProps: {
                   "data-command": "W_TableMenu_ColumnList.alter",
                 },

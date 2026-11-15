@@ -247,7 +247,9 @@ const useStatusMonitorProcListProps = (
         ...hideOverflowStyle,
         label: "Running time",
         select: { $ageNow: ["query_start"] },
-        render: (value) => <StyledInterval value={value} mode="pg_stat" />,
+        render: (value) => (
+          <StyledInterval value={value} mode="pg_stat" showAgo={false} />
+        ),
       },
       { name: "pid" },
       { name: "backend_xid" },

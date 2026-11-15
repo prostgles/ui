@@ -151,6 +151,7 @@ export const Table = <Sort extends ColumnSortSQL>(
         <TableBody
           cols={cols}
           rows={rows}
+          rowKeys={props.rowKeys}
           activeRowIndex={props.activeRowIndex}
           maxCharsPerCell={props.maxCharsPerCell}
           maxRowHeight={props.maxRowHeight}

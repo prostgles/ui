@@ -3,11 +3,15 @@ import {
   fileTableExtractionColumns,
 } from "@common/managedTableSchema";
 import { getFileServePath } from "@common/utils";
+import type { SUser } from "@src/authConfig/sessionUtils";
 import type { ParseTableConfigArgs } from "@src/Plugins/parsePlugins";
 import type { PluginDefinition } from "@src/Plugins/Plugins";
 import type { ProstglesContext, SchemaConfigDatabase } from "@src/schemaConfig";
 import type { TableConfig, TableHooks } from "prostgles-server";
-import { getLocalStorageClient } from "prostgles-server";
+import {
+  createJobControlFunctionDefiner,
+  getLocalStorageClient,
+} from "prostgles-server";
 import type { FileTableConfig } from "prostgles-server/dist/ProstglesTypes";
 import type { StorageClient } from "prostgles-server/dist/StorageClient/StorageClientTypes";
 import { getFileVersionTableName } from "prostgles-server/dist/StorageClient/fileVersionUtils";
@@ -44,7 +48,7 @@ export const getFilesPlugin = async ({
     if (fileTableConfig.storageType.type === "local") {
       return getLocalStorageClient({
         /* Use path.resolve when using a relative path. Otherwise will get 403 forbidden */
-        localFolderPath: conMgr.getFileFolderPath(connectionId),
+        localFolderPath: conMgr.getFileFolderPath(con),
       });
     } else if (fileTableConfig.storageType.credential_id) {
       const s3Credentials = await dbs.credentials.findOne({
@@ -85,11 +89,13 @@ export const getFilesPlugin = async ({
       columns:
         extractText ?
           fileTableExtractionColumns.columns
-        : omitKeys(fileTableExtractionColumns.columns, ["extraction_job_id"]),
+        : omitKeys(fileTableExtractionColumns.columns, [
+            "text_extraction_job_id",
+          ]),
       constraints:
         extractText ?
           {
-            extraction_job: `FOREIGN KEY (extraction_job_id) REFERENCES ${asName(jobsTableName)}(id)`,
+            text_extraction_job: `FOREIGN KEY (text_extraction_job_id) REFERENCES ${asName(jobsTableName)}(id)`,
           }
         : undefined,
     },
@@ -115,12 +121,9 @@ export const getFilesPlugin = async ({
     };
   }
 
-  /**
-   * TODO: move getFilesTableTextExtractionHook logic into getFilesTableJobs when
-   */
   const tableHooks: TableHooks<void, ProstglesContext> | undefined = {
     ...(extractText ?
-      getFilesTableTextExtractionHook(fileTable.tableName, extractTextOptions)
+      getFilesTableTextExtractionHook(fileTable.tableName)
     : undefined),
     ...(annotationsTable ?
       (getAnnotationsTableHook(
@@ -131,14 +134,41 @@ export const getFilesPlugin = async ({
     : undefined),
   };
 
+  const jobDefinitions =
+    extractText ?
+      { extractFileText: getFilesTableJobs(fileTable, extractTextOptions) }
+    : undefined;
+  const defineJobControl =
+    jobDefinitions &&
+    createJobControlFunctionDefiner<void, ProstglesContext, SUser>()(
+      jobDefinitions,
+    );
+
   return {
     fileTable,
     tableConfig,
     tableHooks,
-    jobDefinitions:
-      extractText ?
+    jobDefinitions,
+    functions:
+      defineJobControl ?
         {
-          extractFileText: getFilesTableJobs(fileTable),
+          __prostgles_fileExtraction: {
+            userFilter: { type: "admin" },
+            functions: {
+              extractFileText: defineJobControl({
+                jobName: "extractFileText",
+                operation: "startOrRetry",
+              }),
+              cancelFileTextExtraction: defineJobControl({
+                jobName: "extractFileText",
+                operation: "cancel",
+              }),
+              rerunFileTextExtraction: defineJobControl({
+                jobName: "extractFileText",
+                operation: "rerun",
+              }),
+            },
+          },
         }
       : undefined,
   };

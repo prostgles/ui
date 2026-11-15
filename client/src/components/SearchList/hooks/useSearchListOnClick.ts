@@ -52,9 +52,10 @@ export const useSearchListOnClick = (props: P) => {
       }
     };
 
-    window.addEventListener("click", onClick);
+    /* Capture clicks before popup parents stop propagation. */
+    window.addEventListener("click", onClick, true);
     return () => {
-      window.removeEventListener("click", onClick);
+      window.removeEventListener("click", onClick, true);
     };
   }, [
     dataSignature,

@@ -1,4 +1,5 @@
 import { mdiClose, mdiPencil, mdiResize } from "@mdi/js";
+import { useMemoDeep } from "prostgles-client";
 import { type AnyObject, type ValidatedColumnInfo } from "prostgles-types";
 import React, { useMemo, useState } from "react";
 import Btn from "@components/Btn";
@@ -30,7 +31,7 @@ export const SmartCardActions = <T extends AnyObject>(
   } = props;
   const [editMode, setEditMode] = useState(false);
 
-  const localRowFilter = useMemo(() => {
+  const resolvedRowFilter = useMemo(() => {
     if (rowFilter) return rowFilter;
     const hasPkeys = cardColumns.some((c) => c.is_pkey);
     const pkeyCols = cardColumns.filter(
@@ -45,6 +46,10 @@ export const SmartCardActions = <T extends AnyObject>(
     }
     return rowFilter;
   }, [cardColumns, defaultData, rowFilter]);
+  const localRowFilter = useMemoDeep(
+    () => resolvedRowFilter,
+    [resolvedRowFilter],
+  );
 
   const tableHandler =
     typeof tableName === "string" ? db[tableName] : undefined;
@@ -85,6 +90,7 @@ export const SmartCardActions = <T extends AnyObject>(
         <Btn
           className="f-0 "
           data-command="SmartCard.viewEditRow"
+          variant="icon"
           iconPath={
             allowedActions.update || allowedActions.delete ?
               mdiPencil

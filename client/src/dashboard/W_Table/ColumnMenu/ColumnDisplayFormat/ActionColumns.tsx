@@ -28,46 +28,46 @@ export const ActionColumns = ({
     methods,
     table,
   );
-  const actions = resolvedActions.map(
-    (action, index) => {
-      const stateKey = "actions" in params ? `${dataKey}_${index}` : dataKey;
-      if ("columnName" in action) {
-        const column = table.columns.find(
-          ({ name, select }) => name === action.columnName && select,
-        );
-        const value = sourceRow?.[
-          action.columnName
-        ] as ActionColumnValue | null;
-        if (!column || !value) return;
-        const defaults = column.jsonbSchema?.defaultValue as
-          ActionColumnValue | undefined;
-        const methodName = value.methodName ?? defaults?.methodName ?? "";
-        return getActionButtonState({
-          methods,
-          table,
-          params: { methodName, argName: value.argName, defaultValue: value },
-          row: sourceRow,
-          queryRow: row,
-          stateKey: methodName,
-          stored: { details: value.details },
-        });
-      }
+  const actions = resolvedActions.map((action, index) => {
+    const stateKey = "actions" in params ? `${dataKey}_${index}` : dataKey;
+    if ("columnName" in action) {
+      const column = table.columns.find(
+        ({ name, select }) => name === action.columnName && select,
+      );
+      const value = sourceRow?.[action.columnName] as ActionColumnValue | null;
+      if (!column || !value) return;
+      const defaults = column.jsonbSchema?.defaultValue as
+        ActionColumnValue | undefined;
+      const methodName = value.methodName ?? defaults?.methodName ?? "";
       return getActionButtonState({
         methods,
         table,
-        params: action,
+        params: { methodName, argName: value.argName, defaultValue: value },
         row: sourceRow,
         queryRow: row,
-        stateKey,
+        stateKey: methodName,
+        stored: { details: value.details },
       });
-    },
-  );
+    }
+    return getActionButtonState({
+      methods,
+      table,
+      params: action,
+      row: sourceRow,
+      queryRow: row,
+      stateKey,
+    });
+  });
   const functionActions = actions.filter((state) => state && !state.stored);
   const hasEnabledActions = functionActions.some(
     (state) => !state?.buttonDisabledInfo,
   );
   return (
-    <div className="flex-row ai-center gap-1" role="group" aria-label="Actions">
+    <div
+      className="flex-row-wrap ai-center gap-1"
+      role="group"
+      aria-label="Actions"
+    >
       {actions.map((state, index) => {
         if (
           state?.method?.jobControl &&

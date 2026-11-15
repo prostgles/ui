@@ -11,6 +11,7 @@ const infoTypes = {
 } as const;
 
 export type FunctionArgs = {
+  $jsonb_diff?: { oldColumn: string; newColumn: string };
   $duration?: { otherColumn: string };
   $string_agg?: { separator: string };
   $template_string?: string;

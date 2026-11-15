@@ -46,17 +46,21 @@ export const getJoinPathLabel = (
       typeof p.on === "string" ?
         undefined
       : hasMultiFkeys(tables, prevPath?.table ?? tableName, p.table);
-    let label =
+    const tableLabel =
+      tables.find((table) => table.name === p.table)?.label || p.table;
+    const joinSuffix =
       typeof p.on === "string" ?
-        `${p.table} (${p.on}${p.reversed ? ", reversed" : ""})`
-      : p.table;
-    if (hasMultipleFkeyConstraints && Array.isArray(p.on)) {
-      label = `(${Object.entries(p.on[0]!)
-        .map(([l, r]) => `${l} = ${r}`)
-        .join(" AND ")}) ${p.table}`;
-    }
+        ` (${p.on}${p.reversed ? ", reversed" : ""})`
+      : "";
+    const joinPrefix =
+      hasMultipleFkeyConstraints && Array.isArray(p.on) ?
+        `(${Object.entries(p.on[0]!)
+          .map(([l, r]) => `${l} = ${r}`)
+          .join(" AND ")}) `
+      : "";
     return {
-      label,
+      label: `${joinPrefix}${p.table}${joinSuffix}`,
+      displayLabel: `${joinPrefix}${tableLabel}${joinSuffix}`,
       multiJoin:
         hasMultipleFkeyConstraints && Array.isArray(p.on) ?
           {
@@ -70,6 +74,7 @@ export const getJoinPathLabel = (
   return {
     labels,
     label: labels.map((d) => d.label).join(" > "),
+    displayLabel: labels.map((d) => d.displayLabel).join(" > "),
   };
 };
 
@@ -83,12 +88,16 @@ export const getAllJoins = ({
   const targetPathIdx = allJoins.findIndex((j) => j.pathStr === valueStr);
   const targetPath = allJoins[targetPathIdx];
   const allJoinsWithLabels = allJoins.map((j) => {
-    const { label, labels } = getJoinPathLabel(j, { tableName, tables });
+    const { label, labels, displayLabel } = getJoinPathLabel(j, {
+      tableName,
+      tables,
+    });
 
     return {
       ...j,
       label,
       labels,
+      displayLabel,
     };
   });
   return {
@@ -159,6 +168,7 @@ export const JoinPathSelectorV2 = (props: JoinPathSelectorV2Props) => {
         return {
           ...getFullOption?.(j.path),
           key: j.label,
+          label: j.displayLabel,
           iconLeft: {
             type: "SvgIcon",
             pathName: (j.table.icon as SvgIconName | undefined) || "Table",
@@ -166,7 +176,7 @@ export const JoinPathSelectorV2 = (props: JoinPathSelectorV2Props) => {
           ranking: (searchTerm) =>
             getSearchRanking(
               searchTerm,
-              j.labels.map((l) => l.label),
+              j.labels.flatMap((label) => [label.displayLabel, label.label]),
             ),
           subLabel: j.table.columns.map((c) => c.name).join(", "),
         } satisfies FullOption<string>;

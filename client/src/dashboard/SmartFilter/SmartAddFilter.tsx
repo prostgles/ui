@@ -108,7 +108,7 @@ export const SmartAddFilter = (props: SmartAddFilterProps) => {
           return {
             key: `${joinPath.pathStr}.${jc.name}`,
             ranking: Number(`2.${labels.length}`),
-            label: `${table.name}.${jc.name}`,
+            label: `${table.label}.${jc.label}`,
             subLabel: path.length > 1 ? label : undefined,
             references: jc.references,
             name: jc.name,
@@ -132,7 +132,7 @@ export const SmartAddFilter = (props: SmartAddFilterProps) => {
           key: c.name,
           ranking: 0,
           name: c.name,
-          label: c.name,
+          label: c.label ?? c.name,
           data_type: tsDataType,
           subLabel: undefined,
           udt_name,
@@ -148,7 +148,10 @@ export const SmartAddFilter = (props: SmartAddFilterProps) => {
       ...c,
       key: c.name,
       ranking: 1,
-      label: c.name,
+      label:
+        (currentTable === tableName ?
+          selectedColumns.find(({ name }) => name === c.name)?.label
+        : undefined) ?? c.label,
       subLabel: undefined,
       computedConfig: undefined,
       joinInfo: undefined,
@@ -183,13 +186,14 @@ export const SmartAddFilter = (props: SmartAddFilterProps) => {
         : joinPath ? "not null"
         : isCategorical(c) ? "$in"
         : "$between";
+      const isListFilter = type === "$in" || type === "$nin";
       const innerFilter: DetailedFilterBase =
         includes(_PG_date, c.udt_name) ?
           getDefaultAgeFilter(fieldName, "$ageNow")
         : {
             fieldName,
             type,
-            disabled: true,
+            disabled: !isListFilter,
             complexFilter:
               c.computedConfig ?
                 {
@@ -205,7 +209,7 @@ export const SmartAddFilter = (props: SmartAddFilterProps) => {
             type: joinType,
             path: joinPath,
             filter: innerFilter,
-            disabled: true,
+            disabled: !isListFilter,
           }
         : innerFilter;
 

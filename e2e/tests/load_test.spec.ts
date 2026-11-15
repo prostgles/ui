@@ -1,5 +1,5 @@
 import { test } from "./utils/fixtures";
-import { PageWIds, login } from "./utils/utils";
+import { login } from "./utils/utils";
 test.use({
   viewport: { width: 1280, height: 1080 },
   video: {
@@ -10,7 +10,7 @@ test.use({
 
 test.describe.serial("Load test first cache", () => {
   test("Load test first cache", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     await login(page, "load_user_0", "http://localhost:3004/auth/login");
   });
 });
@@ -19,7 +19,7 @@ test.describe.configure({ mode: "parallel" });
 for (const [idx, user] of loadUsers.entries()) {
   test.describe("Load test_" + idx, () => {
     test("Load test", async ({ page: p }) => {
-      const page = p as PageWIds;
+      const page = p;
       await login(page, user, "http://localhost:3004/auth/login");
       await page.waitForTimeout(2000);
       const getVideoDemoConnection = async () => {

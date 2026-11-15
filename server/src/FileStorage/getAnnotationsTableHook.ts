@@ -88,7 +88,10 @@ export const getAnnotationsTableHook = (
           const getPage = (page: number) => {
             if (!Number.isInteger(page) || page < 1)
               throw new Error("Annotation pages must be positive integers");
-            if (file.docling_metadata)
+            if (
+              file.docling_metadata &&
+              Object.keys(file.docling_metadata.pages).length
+            )
               return getAnnotationPageText(file.docling_metadata, page);
             const text = file.text_content?.[page - 1];
             if (file.text_content && text === undefined)
@@ -101,14 +104,27 @@ export const getAnnotationsTableHook = (
             page: number,
             startText: string,
             endText: string,
+            selectionIndex: number | undefined,
           ): AnnotationTextSelection[] => {
             if (!startText.trim() || !endText.trim())
               throw new Error("Provide non-empty startText and endText");
             const source = getPage(page);
             if (!source) return [{ page, startText, endText }];
             try {
-              const start = findAnnotationText(source.text, startText);
-              const end = findAnnotationText(source.text, endText);
+              const start = findAnnotationAnchor(
+                source.text,
+                startText,
+                selectionIndex === undefined ? "start_text" : (
+                  `text_selections[${selectionIndex}].startText`
+                ),
+              );
+              const end = findAnnotationAnchor(
+                source.text,
+                endText,
+                selectionIndex === undefined ? "end_text" : (
+                  `text_selections[${selectionIndex}].endText`
+                ),
+              );
               if (end.start < start.start || end.end < start.end)
                 throw new Error("endText must not precede startText");
               const range = { start: start.start, end: end.end };
@@ -139,7 +155,7 @@ export const getAnnotationsTableHook = (
           if (explicit) {
             if (!explicit.length)
               throw new Error("Provide at least one text selection");
-            selections = explicit.flatMap((selection) => {
+            selections = explicit.flatMap((selection, selectionIndex) => {
               const { page, startText, endText, rects } = selection;
               if (
                 !Number.isInteger(page) ||
@@ -150,7 +166,8 @@ export const getAnnotationsTableHook = (
                 throw new Error(
                   "Provide a positive page and non-empty startText and endText",
                 );
-              if (!rects?.length) return resolve(page, startText, endText);
+              if (!rects?.length)
+                return resolve(page, startText, endText, selectionIndex);
               if (
                 rects.some(
                   (r) =>
@@ -188,7 +205,7 @@ export const getAnnotationsTableHook = (
             selections = [];
             for (let p = page; p <= endPage; p++) {
               if (page === endPage) {
-                selections.push(...resolve(p, start_text, end_text));
+                selections.push(...resolve(p, start_text, end_text, undefined));
                 continue;
               }
               const source = getPage(p);
@@ -198,11 +215,19 @@ export const getAnnotationsTableHook = (
                 );
               const start =
                 p === page ?
-                  findAnnotationText(source.text, start_text).start
+                  findAnnotationAnchor(
+                    source.text,
+                    start_text,
+                    `Annotation on page ${p}, start_text`,
+                  ).start
                 : 0;
               const end =
                 p === endPage ?
-                  findAnnotationText(source.text, end_text).end
+                  findAnnotationAnchor(
+                    source.text,
+                    end_text,
+                    `Annotation on page ${p}, end_text`,
+                  ).end
                 : source.text.length;
               const text = source.text.slice(start, end);
               if (text.trim())
@@ -237,6 +262,16 @@ export const getAnnotationsTableHook = (
     ],
   },
 });
+
+const findAnnotationAnchor = (text: string, quote: string, field: string) => {
+  try {
+    return findAnnotationText(text, quote);
+  } catch (error) {
+    throw new Error(
+      `${field} ${JSON.stringify(quote)}: ${(error as Error).message}`,
+    );
+  }
+};
 
 /** Schema keys are aliases for the configured table names. */
 type AnnotationSchema = {

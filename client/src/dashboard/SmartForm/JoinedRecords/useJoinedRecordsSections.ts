@@ -46,11 +46,12 @@ export const useJoinedRecordsSections = (props: JoinedRecordsProps) => {
     modeType: action,
     showRelated,
     newRowData,
-    rowFilter,
+    rowFilter: rowFilterProp,
     parentForm,
     errors,
     tablesToShow,
   } = props;
+  const rowFilter = useMemoDeep(() => rowFilterProp, [rowFilterProp]);
   const [isLoadingSections, setIsLoadingSections] = useState(false);
 
   const tablesMap = useMemo(() => {

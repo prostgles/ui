@@ -124,6 +124,11 @@ export const McpServerOAuthConfigActions = ({
           {authMode === "bearer" ? "Connect" : "Login with OAuth"}
         </Btn>
       )}
+      {authorizationUrl && (
+        <Btn onClickPromise={onAuthenticateMcpServer}>
+          Restart authorization
+        </Btn>
+      )}
       {authorizationUrl ?
         <McpServerOAuthConfigAuthorizeUrlBtn
           authorizationUrl={authorizationUrl}
@@ -182,6 +187,6 @@ export const McpServerOAuthConfigActions = ({
 
 export const LABEL_PROPS = {
   label: "OAuth phase",
-  style: { marginBottom: ".5em" },
+  style: { marginBottom: ".25em" },
   variant: "normal",
 } as const;

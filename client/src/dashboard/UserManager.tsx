@@ -4,8 +4,7 @@ import React from "react";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import { t } from "../i18n/i18nUtils";
 import { PasswordlessSetup } from "./AccessControl/PasswordlessSetup";
-import SmartTable from "./SmartTable";
-import { InviteUser } from "./AccessControl/InviteUser";
+import { SmartCardList } from "./SmartCardList/SmartCardList";
 
 export type Users = {
   created?: Date;
@@ -27,28 +26,26 @@ export const UserManager = () => {
     content = <PasswordlessSetup />;
   } else {
     content = (
-      <>
-        <InviteUser />
-        <SmartTable
-          className="w-full"
-          db={dbs}
-          sql={dbsSql}
-          methods={dbsMethodSchema}
-          titlePrefix={t.Users["Prostgles UI users"]}
-          tableName="users"
-          tables={dbsTables}
-          showInsert={true}
-          allowEdit={true}
-          realtime={{}}
-        />
-      </>
+      <SmartCardList
+        className="w-fit as-center"
+        db={dbs}
+        sql={dbsSql}
+        methods={dbsMethodSchema}
+        title={t.Users["Prostgles UI users"]}
+        tableName="users"
+        tables={dbsTables}
+        flat={false}
+        showTopBar={true}
+        showEdit={true}
+        realtime={true}
+      />
     );
   }
 
   return (
     <div
       className={
-        "flex-col relative w-full f-1 min-h-0 pt-1 " +
+        "flex-col relative w-full f-1 min-h-0 " +
         (window.isLowWidthScreen ? "" : " px-2 ")
       }
     >

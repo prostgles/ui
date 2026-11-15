@@ -63,8 +63,8 @@ type Mode =
 const getFunc = (mode: Mode) => `
 import { readdirSync, rmSync, } from "fs";
 import { readFile } from "fs/promises";
-import { defineAgenticWorkflow } from "./defineAgenticWorkflow";
-export default defineAgenticWorkflow(
+import { defineAgenticWorkflow } from "#prostgles/workflow";
+void defineAgenticWorkflow(
   ${JSON.stringify(
     {
       name: "Test Workflow",

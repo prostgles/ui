@@ -132,7 +132,7 @@ export type CodeEditorProps = Pick<
   style?: React.CSSProperties;
   className?: string;
   markers?: editor.IMarkerData[];
-  onMount?: (editor: editor.IStandaloneCodeEditor) => void;
+  onMount?: MonacoEditorProps["onMount"];
   onTSLibraryChange?: (tsLibraries: TSLibrary[]) => void;
   contentTop?: React.ReactNode;
 };
@@ -197,7 +197,7 @@ export const CodeEditor = (props: CodeEditorProps) => {
   const onMountMonacoEditor = useCallback(
     (newEditor: editor.IStandaloneCodeEditor) => {
       setEditor(newEditor);
-      onMount?.(newEditor);
+      return onMount?.(newEditor);
     },
     [onMount],
   );

@@ -1,5 +1,7 @@
-import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import { tout } from "@src/utils/tout";
+import {
+  StreamableHTTPClientTransport,
+  StreamableHTTPError,
+} from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import type { McpConnection } from "../McpHub";
 import {
   type McpServerEvents,
@@ -8,6 +10,11 @@ import {
 import { createMcpServerHandlers } from "../createMcpServerHandlers";
 import { fromEntries } from "@common/utils";
 import { isMcpOAuthAuthorizationRequired } from "./createMcpOAuthProvider";
+import {
+  OAuthError,
+  ServerError,
+} from "@modelcontextprotocol/sdk/server/auth/errors.js";
+import { UnauthorizedError } from "@modelcontextprotocol/sdk/client/auth.js";
 
 const chainMap = new Map<string, Promise<any>>();
 
@@ -29,7 +36,7 @@ export const connectToRemoteMCPServer = async ({
   getFullLog: () => string;
 } & McpServerEvents) => {
   await chainMap.get(name)?.catch(() => {
-    // ignore previous errors
+    /* Ignore previous errors. */
   });
 
   const inPromise = (async () => {
@@ -41,73 +48,122 @@ export const connectToRemoteMCPServer = async ({
       },
     } as RequestInit;
 
-    const transport = new StreamableHTTPClientTransport(
-      new URL(parameters.url),
-      {
+    let destroyed = false;
+    let sessionExpired = false;
+    let reconnecting: Promise<void> | undefined;
+    let reconnectTimer: ReturnType<typeof setTimeout> | undefined;
+    let transport: StreamableHTTPClientTransport;
+
+    const logError = async (error: unknown) => {
+      if (destroyed || isMcpOAuthAuthorizationRequired(error)) return;
+      await onLog({ type: "error", data: error }, getFullLog());
+    };
+
+    const connect = async () => {
+      transport = new StreamableHTTPClientTransport(new URL(parameters.url), {
         requestInit: parameters.isInitializing ? undefined : requestInit,
         authProvider: parameters.OAuth?.authProvider,
-      },
-    );
+      });
+      const currentTransport = transport;
+      transport.onerror = (error) => {
+        if (
+          destroyed ||
+          transport !== currentTransport ||
+          isMcpOAuthAuthorizationRequired(error)
+        )
+          return;
+        appendToLog("Transport error: " + error.message);
+        if (isExpiredSessionError(error) && transport.sessionId) {
+          sessionExpired = true;
+          if (!reconnectTimer && !reconnecting) {
+            reconnectTimer = setTimeout(() => {
+              reconnectTimer = undefined;
+              void reconnect().catch(logError).catch(console.error);
+            }, 0);
+          }
+          return;
+        }
+        if (sessionExpired && error.message.startsWith("Failed to reconnect"))
+          return;
+        void logError(error).catch(console.error);
+        const dcrNotSupported =
+          error.message ===
+          "Incompatible auth server: does not support dynamic client registration";
+        if (
+          dcrNotSupported ||
+          (error instanceof OAuthError && !(error instanceof ServerError))
+        ) {
+          void parameters.OAuth?.onAuthError(
+            dcrNotSupported ? "dcr_not_supported" : "unknown",
+            error.message,
+          ).catch(console.error);
+        } else if (
+          error instanceof UnauthorizedError ||
+          (error instanceof StreamableHTTPError &&
+            (error.code === 401 || error.code === 403))
+        ) {
+          void parameters.RemoteServerEvents?.onAuthenticationError?.(
+            error.message,
+          ).catch(console.error);
+        }
+      };
+      transport.onclose = onTransportClose;
+      await client.connect(transport);
+      sessionExpired = false;
+    };
 
-    let destroyed = false;
-    transport.onerror = (error) => {
-      if (destroyed || isMcpOAuthAuthorizationRequired(error)) return;
-      const errMsg = "Transport error: " + error.message;
-      appendToLog(errMsg);
-      const dcrNotSupported =
-        error.message ===
-        "Incompatible auth server: does not support dynamic client registration";
+    const reconnect = () => {
+      if (reconnecting) return reconnecting;
+      clearTimeout(reconnectTimer);
+      reconnectTimer = undefined;
+      reconnecting = (async () => {
+        await client.close();
+        if (destroyed) throw new Error(`MCP server ${name} was disconnected`);
+        await connect();
+      })().finally(() => {
+        reconnecting = undefined;
+      });
+      return reconnecting;
+    };
 
-      const isDisconnectedError =
-        error.message ===
-        "SSE stream disconnected: AbortError: This operation was aborted";
-      void onLog(
-        {
-          type: "error",
-          errorType:
-            dcrNotSupported ? "oauth-dcr-not-supported"
-            : isDisconnectedError ? "disconnected"
-            : undefined,
-          data: error,
-        },
-        getFullLog(),
-      );
-      if (!isDisconnectedError) {
-        parameters.OAuth?.onAuthError(
-          dcrNotSupported ? "dcr_not_supported" : "unknown",
-          error.message,
-        );
+    const runRequest = async <T>(request: () => Promise<T>): Promise<T> => {
+      if (reconnecting) await reconnecting;
+      else if (sessionExpired) await reconnect();
+      try {
+        return await request();
+      } catch (error) {
+        /* Only a rejected session is safe to retry; other failures may have executed the tool. */
+        if (!isExpiredSessionError(error) || !sessionExpired || destroyed)
+          throw error;
+        await reconnect();
+        return request();
       }
     };
-    transport.onclose = () => {
-      onTransportClose();
-    };
 
-    const oauthCode = parameters.OAuth?.pendingAuthorizationCode;
-    if (oauthCode) {
-      await transport.finishAuth(oauthCode).catch(async (error) => {
-        console.error(
-          "Failed to finish OAuth authentication for " + name,
-          error,
+    try {
+      const oauthCode = parameters.OAuth?.pendingAuthorizationCode;
+      if (oauthCode) {
+        const authTransport = new StreamableHTTPClientTransport(
+          new URL(parameters.url),
+          { authProvider: parameters.OAuth?.authProvider, requestInit },
         );
-        return Promise.reject(error);
+        try {
+          await authTransport.finishAuth(oauthCode);
+          await parameters.OAuth?.onCodeUsed();
+        } finally {
+          await authTransport.close();
+        }
+      }
+      await connect();
+      await parameters.RemoteServerEvents?.onConnected?.({
+        serverVersion: client.getServerVersion(),
+        capabilities: client.getServerCapabilities(),
       });
-      await parameters.OAuth?.onCodeUsed();
-    }
-
-    await client.connect(transport).catch(async (error) => {
-      await tout(500);
-      await transport.close().catch(() => {});
-      return Promise.reject(error);
-    });
-
-    if (parameters.RemoteServerEvents?.onConnected) {
-      const serverVersion = client.getServerVersion();
-      const capabilities = client.getServerCapabilities();
-      await parameters.RemoteServerEvents.onConnected({
-        capabilities,
-        serverVersion,
-      });
+    } catch (error) {
+      destroyed = true;
+      clearTimeout(reconnectTimer);
+      await client.close().catch(console.error);
+      throw error;
     }
 
     const connection: McpConnection = {
@@ -118,11 +174,14 @@ export const connectToRemoteMCPServer = async ({
         status: "connected",
       },
       client,
-      transport,
-      handlers: createMcpServerHandlers(client),
+      get transport() {
+        return transport;
+      },
+      handlers: createMcpServerHandlers(client, runRequest),
       destroy: async () => {
         try {
           destroyed = true;
+          clearTimeout(reconnectTimer);
           await transport.close().catch((err) => {
             console.error(
               "Failed to close streamable transport for " + name,
@@ -166,3 +225,6 @@ const getHeadersFromRequestInit = (
     ]),
   );
 };
+
+const isExpiredSessionError = (error: unknown) =>
+  error instanceof StreamableHTTPError && error.code === 404;

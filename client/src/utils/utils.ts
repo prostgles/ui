@@ -1,6 +1,11 @@
 import type { AnyObject } from "prostgles-types";
 import { getKeys, isDefined, isEmpty, isObject } from "prostgles-types";
 export { getKeys, isDefined, isEmpty };
+
+export const clamp = (value: number, min: number, max: number) => {
+  return Math.min(Math.max(value, min), max);
+};
+
 export const get = (nestedObj: any, pathArr: string | (string | number)[]) => {
   if (typeof pathArr === "string") pathArr = pathArr.split(".");
   return pathArr.reduce(

@@ -6,19 +6,22 @@ import {
 } from "@components/PdfViewer/PdfViewer";
 import Popup from "@components/Popup/Popup";
 import { Select } from "@components/Select/Select";
-import { mdiComment, mdiSearchWeb } from "@mdi/js";
+import { mdiComment, mdiFileDocumentOutline, mdiSearchWeb } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import type { TableHandlerClient } from "prostgles-client";
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import type { DBSchemaTableWJoins } from "src/dashboard/Dashboard/dashboardUtils";
 import { SmartForm } from "src/dashboard/SmartForm/SmartForm";
 import type { DBManagedTableSchema } from "../MediaViewer/managedTableUtils";
 import type { MediaViewerProps } from "../MediaViewer/MediaViewer";
 import type { CreatedHighlight } from "./PdfViewerHighlights/PdfViewerHighlights";
+import { PdfViewerAnnotations } from "./PdfViewerAnnotations";
+import { DEFAULT_ANNOTATION_COLOR } from "@common/managedTableSchema";
+import type { SmartCardListProps } from "src/dashboard/SmartCardList/SmartCardList";
 
 type P = Omit<
   PdfViewerProps,
-  "highlights" | "onCreateHighlight" | "topLeftControls"
+  "highlights" | "onCreateHighlight" | "topLeftControls" | "sidePanel"
 > & {
   context: MediaViewerProps["context"];
   fileId: string | undefined;
@@ -26,6 +29,7 @@ type P = Omit<
 
 type AnnotationsContext = {
   fileId: string;
+  annotationId: number | undefined;
   annotationPage: number | undefined;
   fileTable: DBSchemaTableWJoins;
   annotationsTable: DBSchemaTableWJoins;
@@ -47,6 +51,7 @@ const PdfViewerWithAnnotations = ({
   annotationsTableHandler,
   annotationsTable,
   url,
+  annotationId,
   annotationPage,
   ...pdfProps
 }: Omit<P, "context" | "topLeftControls"> &
@@ -73,9 +78,23 @@ const PdfViewerWithAnnotations = ({
   });
 
   const [activeAnnotationId, setActiveAnnotationId] = useState<number>();
+  const [selectedAnnotationId, setSelectedAnnotationId] =
+    useState(annotationId);
+  const [hoveredAnnotationId, setHoveredAnnotationId] = useState<number>();
+  const [scrollToAnnotation, setScrollToAnnotation] =
+    useState<SmartCardListProps["scrollToRow"]>();
+  const handleHoverHighlight = useCallback(
+    (highlightId: PdfViewerProps["hoveredHighlightId"]) => {
+      setHoveredAnnotationId(
+        typeof highlightId === "number" ? highlightId : undefined,
+      );
+    },
+    [],
+  );
   const activeAnnotation = annotations?.find(
     (a) => a.id === activeAnnotationId,
   );
+  const highlightedAnnotationId = activeAnnotationId ?? selectedAnnotationId;
 
   const [newAnnotation, setNewAnnotation] = useState<CreatedHighlight>();
   const revisionUrl = new URL(url, window.location.href);
@@ -98,8 +117,53 @@ const PdfViewerWithAnnotations = ({
         {...pdfProps}
         url={revisionUrl.href}
         defaultPage={annotationPage ?? pdfProps.defaultPage}
-        activeHighlightId={activeAnnotationId}
+        activeHighlightId={highlightedAnnotationId}
+        hoveredHighlightId={hoveredAnnotationId}
+        onHoverHighlight={handleHoverHighlight}
+        onSelectHighlight={(highlightId) => {
+          if (typeof highlightId === "number") {
+            setSelectedAnnotationId(highlightId);
+            const annotationIndex = annotations
+              ?.toSorted(
+                (first, second) =>
+                  first.page - second.page || first.id - second.id,
+              )
+              .findIndex(({ id }) => id === highlightId);
+            if (annotationIndex === undefined || annotationIndex < 0) return;
+            setScrollToAnnotation({
+              key: String(highlightId),
+              index: annotationIndex,
+            });
+          }
+        }}
+        onClearHighlight={() => setSelectedAnnotationId(undefined)}
         doclingDocument={fileRow?.docling_metadata ?? undefined}
+        sidePanel={(onSelectHighlight) => (
+          <PdfViewerAnnotations
+            tableName={annotationsTable.name}
+            fileId={fileId}
+            fileVersion={fileVersion}
+            selectedAnnotationId={highlightedAnnotationId}
+            scrollToAnnotation={scrollToAnnotation}
+            hoveredAnnotationId={hoveredAnnotationId}
+            onHoverAnnotation={setHoveredAnnotationId}
+            selectedAnnotationColor={
+              annotations?.find(({ id }) => id === highlightedAnnotationId)
+                ?.color
+            }
+            hoveredAnnotationColor={
+              annotations?.find(({ id }) => id === hoveredAnnotationId)?.color
+            }
+            onSelectAnnotation={(annotationIdToShow) => {
+              if (annotationIdToShow === highlightedAnnotationId) {
+                setSelectedAnnotationId(undefined);
+                return;
+              }
+              setSelectedAnnotationId(annotationIdToShow);
+              onSelectHighlight(annotationIdToShow);
+            }}
+          />
+        )}
         topLeftControls={
           <Select
             emptyLabel={`Annotations (${annotations?.length ?? 0})`}
@@ -122,28 +186,30 @@ const PdfViewerWithAnnotations = ({
           />
         }
         highlights={
-          annotations?.map(({ id, name, text, page, text_selections }) => ({
-            id,
-            page,
-            text_selections,
-            color: "var(--active)",
-            rects: [],
-            tooltip: name || text,
-            leftHandle: (
-              <Btn
-                title="Show highlight details"
-                iconPath={mdiComment}
-                className="jc-center round"
-                aria-label={`Show details`}
-                color="action"
-                style={{
-                  padding: 0,
-                }}
-                variant="faded"
-                onClick={() => setActiveAnnotationId(id)}
-              />
-            ),
-          })) ?? []
+          annotations?.map(
+            ({ id, name, text, page, text_selections, color }) => ({
+              id,
+              page,
+              text_selections,
+              color: color || DEFAULT_ANNOTATION_COLOR,
+              rects: [],
+              tooltip: name || text,
+              leftHandle: (
+                <Btn
+                  title="Show highlight details"
+                  iconPath={mdiComment}
+                  className="jc-center round"
+                  aria-label={`Show details`}
+                  color="action"
+                  style={{
+                    padding: 0,
+                  }}
+                  variant="faded"
+                  onClick={() => setActiveAnnotationId(id)}
+                />
+              ),
+            }),
+          ) ?? []
         }
         onCreateHighlight={fileRow ? setNewAnnotation : undefined}
       />
@@ -217,10 +283,12 @@ export const PdfViewerWithFileTableContext = ({
   fileId,
   ...pdfProps
 }: P) => {
-  const { db, tables } = usePrgl();
+  const prgl = usePrgl();
+  const { db, tables } = prgl;
+  const [showFileForm, setShowFileForm] = useState(false);
+  const fileTable = tables.find((table) => table.managedTableType === "files");
   const annotationsContext = useMemo(() => {
-    if (!context || !fileId) return;
-    const fileTable = tables.find((t) => t.managedTableType === "files");
+    if (!fileId) return;
     const annotationsTable = tables.find(
       (t) => t.managedTableType === "file-annotations",
     );
@@ -243,7 +311,7 @@ export const PdfViewerWithFileTableContext = ({
       window.location.href,
     ).searchParams.get("version");
     const requestedFileVersion =
-      context.table.managedTableType === "file-annotations" ?
+      context?.table.managedTableType === "file-annotations" ?
         typeof context.row.file_version === "number" ?
           context.row.file_version
         : null
@@ -259,9 +327,16 @@ export const PdfViewerWithFileTableContext = ({
             "files_versions"
           >)
         : undefined,
+      annotationId:
+        (
+          context?.table.managedTableType === "file-annotations" &&
+          typeof context.row.id === "number"
+        ) ?
+          context.row.id
+        : undefined,
       annotationPage:
         (
-          context.table.managedTableType === "file-annotations" &&
+          context?.table.managedTableType === "file-annotations" &&
           typeof context.row.page === "number"
         ) ?
           context.row.page
@@ -271,12 +346,43 @@ export const PdfViewerWithFileTableContext = ({
       fileTableHandler: fileTableHandler as TableHandlerClient,
       annotationsTableHandler: annotationsTableHandler as TableHandlerClient,
     };
-  }, [context, fileId, db, tables, pdfProps.url]);
+  }, [context, fileId, fileTable, db, tables, pdfProps.url]);
 
-  if (annotationsContext) {
-    return (
-      <PdfViewerWithResolvedVersion {...pdfProps} {...annotationsContext} />
-    );
-  }
-  return <PdfViewer {...pdfProps} />;
+  const viewerProps = {
+    ...pdfProps,
+    topRightControls: (
+      <>
+        {pdfProps.topRightControls}
+        {fileId && fileTable && (
+          <Btn
+            title="Show file details"
+            iconPath={mdiFileDocumentOutline}
+            variant={showFileForm ? "filled" : "faded"}
+            color="action"
+            aria-pressed={showFileForm}
+            onClick={() => setShowFileForm((show) => !show)}
+          />
+        )}
+      </>
+    ),
+  };
+  return (
+    <>
+      {annotationsContext ?
+        <PdfViewerWithResolvedVersion
+          {...viewerProps}
+          {...annotationsContext}
+        />
+      : <PdfViewer {...viewerProps} />}
+      {showFileForm && fileId && fileTable && (
+        <SmartForm
+          {...prgl}
+          asPopup={true}
+          tableName={fileTable.name}
+          rowFilter={[{ fieldName: "id", value: fileId }]}
+          onClose={() => setShowFileForm(false)}
+        />
+      )}
+    </>
+  );
 };

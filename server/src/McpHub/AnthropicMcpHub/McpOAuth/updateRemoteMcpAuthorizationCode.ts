@@ -13,6 +13,7 @@ export const updateRemoteMcpAuthorizationCode = async (
       scopes: "string",
       code: "string",
       request_id: "string",
+      state: { type: "string", optional: true },
     },
     data,
     "params for updateRemoteMcpAuthorizationCode",
@@ -23,7 +24,8 @@ export const updateRemoteMcpAuthorizationCode = async (
   if (validation.error !== undefined) {
     return { success: false, message: validation.error } as const;
   }
-  const { scopes: scopesStr, code, server_name, request_id } = validation.data;
+  const { scopes: scopesStr, code, server_name, state } = validation.data;
+  const request_id = state ?? validation.data.request_id;
 
   const matchingRequest = enqueuedRequestIds.has(request_id);
   if (!matchingRequest) {

@@ -91,7 +91,7 @@ export const ElectronSetupStateDB = ({
                   id="pass"
                   value={c.db_pass ?? ""}
                   label={t.NewConnectionForm["Password"]}
-                  type="text"
+                  type="password"
                   autoComplete="off"
                   onChange={(db_pass) => updateConnection({ db_pass })}
                 />

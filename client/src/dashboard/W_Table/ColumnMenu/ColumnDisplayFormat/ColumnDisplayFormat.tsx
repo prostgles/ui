@@ -7,7 +7,7 @@ import { FlexCol } from "@components/Flex";
 import { JSONBSchema } from "@components/JSONBSchema/JSONBSchema";
 import { InfoRow } from "@components/InfoRow";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import { includes, type DBSchemaTable } from "prostgles-types";
+import { _PG_date, includes, type DBSchemaTable } from "prostgles-types";
 import React, { useMemo } from "react";
 import { Link } from "react-router";
 import type { Prgl } from "src/App";
@@ -50,6 +50,12 @@ export const ColumnDisplayFormat = ({
     const textCols = table.columns
       .filter((c) => c.tsDataType === "string")
       .map((c) => c.name);
+    const timestampColumns = table.columns
+      .filter(
+        (column) =>
+          column.select && _PG_date.some((type) => type === column.udt_name),
+      )
+      .map((column) => column.name);
     const userFormatSchemas = schemaWithoutAllowedValues.oneOfType
       .map((t) => {
         if (
@@ -64,6 +70,7 @@ export const ColumnDisplayFormat = ({
             params: {
               optional: true as const,
               type: {
+                ...t.params.type,
                 urlColumn: {
                   ...t.params.type.urlColumn,
                   allowedValues: textCols,
@@ -96,6 +103,30 @@ export const ColumnDisplayFormat = ({
               },
             },
           };
+        }
+        if (
+          t.type.enum[0] === "Stopwatch" &&
+          "params" in t &&
+          "type" in t.params &&
+          "startColumn" in t.params.type
+        ) {
+          const stopwatchSchema = {
+            ...t,
+            type: { ...t.type, enum: ["Stopwatch"] as const },
+            params: {
+              type: {
+                startColumn: {
+                  ...t.params.type.startColumn,
+                  allowedValues: timestampColumns,
+                },
+                endColumn: {
+                  ...t.params.type.endColumn,
+                  allowedValues: timestampColumns,
+                },
+              },
+            },
+          };
+          return stopwatchSchema;
         }
         if ("params" in t) {
           if (t.type.enum[0] === "Currency") {

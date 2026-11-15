@@ -70,7 +70,12 @@ export const ProgressBar = ({
         />
       </div>
       <FlexRow>
-        <div className={"text-1 "}>{message}</div>
+        <div
+          className="text-1 text-ellipsis ws-nowrap"
+          title={typeof message === "string" ? message : undefined}
+        >
+          {message}
+        </div>
         {endContent}
       </FlexRow>
     </div>

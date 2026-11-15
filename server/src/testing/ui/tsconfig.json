@@ -15,5 +15,5 @@
       "@testing": ["./server/src/testing/index"]
     }
   },
-  "files": ["index.ts"]
+  "files": ["index.ts", "playwright.d.ts"]
 }

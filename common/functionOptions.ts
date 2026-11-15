@@ -18,6 +18,11 @@ import {
 
 export const functionOptionsSchema = {
   title: { type: "string", optional: true },
+  showInTableHeader: {
+    type: "string[]",
+    optional: true,
+    description: "Tables whose headers should show this function's button",
+  },
   action: {
     optional: true,
     type: {
@@ -92,6 +97,7 @@ export const getFunctionActionValue = (
   row: AnyObject,
   key: string,
   overrides: ActionButtonState = {},
+  includeJobState = true,
 ): ActionButtonState => {
   const state = row[getFunctionActionValueKey(key)] as string | undefined;
   const action = getFunctionOptions(method)?.action;
@@ -104,7 +110,10 @@ export const getFunctionActionValue = (
     ...(state ? (JSON.parse(state) as ActionButtonState) : {}),
     ...overrides,
   };
-  const jobValue = getJobActionValue(action?.job, row);
+  const jobValue = getJobActionValue(
+    includeJobState ? action?.job : undefined,
+    row,
+  );
   return {
     ...values,
     ...jobValue,

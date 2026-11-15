@@ -1,12 +1,12 @@
 import type { TableWindowInsertModel } from "@common/DashboardTypes";
 import type { InternalColumnFormat } from "@common/managedTableSchema";
+import { HTML_COLUMN_ALLOWED_STYLES } from "@common/htmlColumnStyles";
 import { getAge } from "@common/utils";
 import { FlexRowWrap } from "@components/Flex";
 import { MarkdownWithPluginsPopupBtn } from "@components/MarkdownWithPlugins/MarkdownWithPlugins";
 import type {
   FILE_TABLE_SELECT,
   FilesTableRow,
-  FileTableRowExtraction,
 } from "@components/MediaViewer/managedTableUtils";
 import { MediaViewer } from "@components/MediaViewer/MediaViewer";
 import { MonacoLogs } from "@components/MonacoLogs/MonacoLogs";
@@ -14,6 +14,7 @@ import { QRCodeImage } from "@components/QRCodeImage";
 import {
   includes,
   isObject,
+  omitKeys,
   type AnyObject,
   type DBSchemaTable,
   type ValidatedColumnInfo,
@@ -22,19 +23,25 @@ import React from "react";
 import sanitizeHtml from "sanitize-html";
 import { DoclingDocumentViewerPopupBtn } from "src/dashboard/AskLLM/Chat/AskLLMChatMessages/ProstglesToolUseMessage/ProstglesMCPTools/DoclingConvertedDocument/DoclingDocumentViewer";
 import type { DBSchemaTableWithOptions } from "src/dashboard/Dashboard/getTables";
+import { dateAsYMD_Time } from "../../../Charts";
 import { RenderValue } from "../../../SmartForm/SmartFormField/RenderValue";
 import { StyledInterval } from "../../../W_SQL/customRenderers";
 import type { RenderedColumn } from "../../RenderColumn/RenderColumn";
 
 import { FileAnnotationViewer } from "../../ManagedColumn/FileAnnotationViewer";
-import { FileExtractionStatus } from "../../ManagedColumn/FileExtractionStatus";
 import { AlertFieldSummary } from "../../ManagedColumn/Alerts/AlertFieldSummary";
 import { ActionColumns } from "./ActionColumns";
 import { JSONDiffPopup } from "./JSONDiffPopup";
+import { JSONSummary } from "./JSONSummary";
+import { getJSONDiffDataKey } from "./getFormatColumnSelect";
 import { Avatar } from "./Avatar";
-import type { UserColumnFormat } from "@common/columnDisplayFormat.schema";
+import {
+  HTML_COLUMN_ALLOWED_TAGS,
+  type UserColumnFormat,
+} from "@common/columnDisplayFormat.schema";
 import { bytesToSize } from "../../../BackupAndRestore/BackupsControls";
 import { MarkdownColumn } from "./MarkdownColumn";
+import { StopwatchColumn } from "./StopwatchColumn";
 
 const tryParseNumber = (v) => {
   if (typeof v === "string" && v.length && Number.isFinite(+v)) {
@@ -101,9 +108,10 @@ const HREFRender = (
 ) => {
   const urlColumn =
     format?.type === "URL" ? format.params?.urlColumn : undefined;
+  const linkText = format?.type === "URL" ? format.params?.linkText : undefined;
   const url = removeQuotes(urlColumn ? row[urlColumn] : value);
   const text = removeQuotes(value);
-  if (urlColumn && !url.trim()) return text;
+  if ((urlColumn || linkText) && !url.trim()) return text;
   return (
     <a
       href={
@@ -114,7 +122,7 @@ const HREFRender = (
       target="_blank"
       rel="noreferrer"
     >
-      {text}
+      {linkText || text}
     </a>
   );
 };
@@ -144,6 +152,7 @@ const renderDiff: FormattedColRender<
       language={type === "Text Diff" ? "plaintext" : "json"}
       oldValue={row[params.oldColumn]}
       newValue={row[params.newColumn]}
+      changes={row[getJSONDiffDataKey(column.name)]}
     />
   );
 };
@@ -211,14 +220,6 @@ export const DISPLAY_FORMATS = [
           />
         );
       }
-      if (params.component === "FileExtractionStatus") {
-        return (
-          <FileExtractionStatus
-            value={value as FileTableRowExtraction["extraction_status"]}
-          />
-        );
-      }
-
       if (params.component === "FileAnnotation") {
         return (
           <FileAnnotationViewer
@@ -246,13 +247,25 @@ export const DISPLAY_FORMATS = [
           fileId={fileId}
           name={joinedFile?.original_name}
           content_type={joinedFile?.content_type}
-          isLoading={joinedFile?.extraction_status?.state === "loading"}
           style={{ maxHeight: "100%" }}
           context={{ table, columnName: column.name, row }}
         />
       );
     },
   } satisfies FormattedColRender<InternalColumnFormat>,
+  {
+    type: "JSON Summary",
+    tsDataType: ["any"],
+    render: (value, row, { column }, { params }) => (
+      <JSONSummary
+        value={value}
+        path={params.path}
+        title={column.label ?? column.info?.label ?? column.name}
+      />
+    ),
+  } satisfies FormattedColRender<
+    Extract<ColumnFormat, { type: "JSON Summary" }>
+  >,
   {
     type: "JSON Diff",
     tsDataType: ["any"],
@@ -390,20 +403,21 @@ export const DISPLAY_FORMATS = [
   {
     type: "HTML",
     tsDataType: ["string"],
-    render: (v, c, rc, p) => {
+    render: (value) => {
       return (
         <div
-          className="relative min-w-0 min-h-0"
+          className="HTMLColumn relative min-w-0 min-h-0"
+          style={{
+            contain: "layout paint style",
+            overflow: "hidden",
+            maxWidth: "100%",
+          }}
           dangerouslySetInnerHTML={{
-            __html:
-              c.noSanitize ?
-                (v ?? "")
-              : sanitizeHtml(v, {
-                  allowedTags: sanitizeHtml.defaults.allowedTags.concat(
-                    p.params.allowedHTMLTags ?? [],
-                  ),
-                  parser: { lowerCaseAttributeNames: false },
-                }),
+            __html: sanitizeHtml(typeof value === "string" ? value : "", {
+              allowedTags: HTML_COLUMN_ALLOWED_TAGS,
+              allowedAttributes: { "*": ["style"] },
+              allowedStyles: { "*": HTML_COLUMN_ALLOWED_STYLES },
+            }),
           }}
         />
       );
@@ -434,17 +448,37 @@ export const DISPLAY_FORMATS = [
   {
     type: "Age",
     tsDataType: ["string", "number"],
-    render: (v, c, rc, p) => {
-      if (v) {
-        const age = getAge(+new Date(v), Date.now(), true);
-        return (
-          <StyledInterval value={age} mode={p.params?.variant ?? "short"} />
-        );
-      }
-
-      return v;
+    render: (value, row, context, { params }) => {
+      if (value === null || value === undefined || value === "") return value;
+      const date = new Date(value);
+      if (!Number.isFinite(date.getTime())) return value;
+      const age = (
+        <StyledInterval
+          value={omitKeys(getAge(+date, Date.now(), true), ["milliseconds"])}
+          mode={params?.variant ?? "short"}
+          showAgo={params?.showAgo ?? false}
+        />
+      );
+      return params?.showTimestamp ?
+          <span className="flex-col">
+            <time dateTime={date.toISOString()} title={date.toISOString()}>
+              {dateAsYMD_Time(date)}
+            </time>
+            {age}
+          </span>
+        : age;
     },
   } satisfies FormattedColRender<Extract<ColumnFormat, { type: "Age" }>>,
+  {
+    type: "Stopwatch",
+    tsDataType: undefined,
+    render: (_value, row, _context, { params }) => (
+      <StopwatchColumn
+        startValue={row[params.startColumn]}
+        endValue={row[params.endColumn]}
+      />
+    ),
+  } satisfies FormattedColRender<Extract<ColumnFormat, { type: "Stopwatch" }>>,
   {
     type: "Currency",
     tsDataType: ["number", "string"],

@@ -26,7 +26,11 @@ const config = {
   connection: {
     table_options: {
       users: {
-        card: { headerColumn: "name", avatarColumn: "username" },
+        card: {
+          headerColumn: "name",
+          avatarColumn: "username",
+          summaryFields: ["id", "status"],
+        },
         referenceDisplay: { columns: [{ name: "name" }, { name: "username" }] },
         columns: { username: { renderAs: { type: "Avatar" } } },
       },
@@ -69,7 +73,13 @@ const config = {
       constraints: { records_pk: "PRIMARY KEY (tenant_id, id)" },
     },
     other_records: {
-      columns: sourceColumns,
+      columns: {
+        ...sourceColumns,
+        details: "jsonb",
+        optional_value: "text",
+        amount: "integer",
+        enabled: "boolean",
+      },
       constraints: { other_records_pk: "PRIMARY KEY (tenant_id, id)" },
     },
     unaudited: { columns: { id: "integer PRIMARY KEY" } },
@@ -205,6 +215,9 @@ test("history is scoped to the row, newest first, live, and read-only", async ({
   await expect(rows.nth(0)).toContainText("UPDATE");
   await expect(rows.nth(1)).toContainText("INSERT");
   await expect(rows.first().locator('span[title*="seconds"]')).toHaveCount(1);
+  await expect(rows.first().locator("time")).toHaveText(
+    /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/,
+  );
   await expect(history).not.toContainText("other tenant");
   await expect(history).not.toContainText("other row");
   await expect(history).not.toContainText("other entity");
@@ -218,6 +231,22 @@ test("history is scoped to the row, newest first, live, and read-only", async ({
   const search = history
     .getByTestId("Popup.header")
     .getByTestId("SearchList.Input");
+  /* Configured columns exclude hidden table names and unrelated users. */
+  for (const term of ["records", "admin"]) {
+    await search.fill(term);
+    await expect(history.getByTestId("SearchList.List")).toContainText(
+      "No results",
+    );
+  }
+  await search.fill("records");
+  await expect(history.getByTestId("SearchList.List")).toContainText(
+    "No results",
+  );
+  await search.press("Enter");
+  await expect(rows).toHaveCount(0);
+  await history.getByTitle("Click to expand/collapse").click();
+  await history.getByTestId("FilterWrapper.deleteFilter").click();
+  await expect(rows).toHaveCount(2);
   await search.fill("other tenant");
   await expect(history.getByTestId("SearchList.List")).toContainText(
     "No results",
@@ -227,6 +256,16 @@ test("history is scoped to the row, newest first, live, and read-only", async ({
   await history.getByTitle("Click to expand/collapse").click();
   await history.getByTestId("FilterWrapper.deleteFilter").click();
   await expect(rows).toHaveCount(2);
+  /* JSON suggestion titles expose the full value instead of object coercion. */
+  await search.fill("updated");
+  const updatedRowSuggestion = history
+    .getByTestId("SearchList.List")
+    .getByRole("option")
+    .filter({ hasText: "Changes:" });
+  await expect(updatedRowSuggestion).toBeVisible();
+  expect(
+    JSON.parse((await updatedRowSuggestion.getAttribute("title")) ?? "null"),
+  ).toEqual({ name: ["original", "updated"] });
   await search.fill("UPDATE");
   await history
     .getByTestId("SearchList.List")
@@ -299,6 +338,31 @@ test("history is scoped to the row, newest first, live, and read-only", async ({
   } finally {
     client.disconnect();
   }
+  await history.getByTitle("Click to expand/collapse").click();
+  await history.getByTestId("FilterWrapper.deleteFilter").click();
+  await expect(rows).toHaveCount(3);
+  /* Actor suggestions and Enter search follow the configured username join. */
+  await search.fill("restricted");
+  await expect(history.getByTestId("SearchList.List")).toContainText(
+    "No results",
+  );
+  await search.fill("admin");
+  const actorSuggestion = history
+    .getByTestId("SearchList.List")
+    .getByRole("option")
+    .filter({ hasText: "User.username:" });
+  await expect(actorSuggestion).toHaveCount(1);
+  await actorSuggestion.click();
+  await expect(rows).toHaveCount(1);
+  await expect(rows.first()).toContainText("live change");
+  await history.getByTitle("Click to expand/collapse").click();
+  await history.getByTestId("FilterWrapper.deleteFilter").click();
+  await expect(rows).toHaveCount(3);
+  await search.fill("admin");
+  await expect(actorSuggestion).toBeVisible();
+  await search.press("Enter");
+  await expect(rows).toHaveCount(1);
+  await expect(rows.first()).toContainText("live change");
   await history.getByTitle("Click to expand/collapse").click();
   await history.getByTestId("FilterWrapper.deleteFilter").click();
   await expect(rows).toHaveCount(3);
@@ -382,6 +446,9 @@ test("card view opens history without opening the row editor", async ({
     await expect(
       auditRows.first().locator('span[title*="seconds"]'),
     ).toHaveCount(1);
+    await expect(auditRows.first().locator("time")).toHaveText(
+      /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/,
+    );
     const deleted = page
       .locator('[data-table-name="audit_events"]')
       .getByRole("row")
@@ -398,6 +465,43 @@ test("card view opens history without opening the row editor", async ({
     ).toContainText("other tenant");
     await diff.getByTestId("Popup.close").click();
     const auditTable = page.locator('[data-table-name="audit_events"]');
+    await auditTable.getByTestId("dashboard.window.toggleFilterBar").click();
+    /* Ordinary search columns use their configured labels too. */
+    for (const [term, label] of [
+      [new Date().getUTCFullYear().toString(), "Time"],
+      ["DELETE", "Action"],
+      ["records", "Table"],
+    ] as const) {
+      await auditTable.getByTestId("SearchList.Input").fill(term);
+      await expect(
+        auditTable
+          .getByTestId("SearchList.List")
+          .getByText(`${label}:`, { exact: true })
+          .first(),
+      ).toBeVisible();
+    }
+    /* The main table reuses the configured actor search from row history. */
+    await auditTable.getByTestId("SearchList.Input").fill("admin");
+    await auditTable
+      .getByTestId("SearchList.List")
+      .getByRole("option")
+      .filter({ hasText: "User.username:" })
+      .click();
+    await expect(auditRows).toHaveCount(2);
+    await expect(
+      auditRows.filter({ hasText: "Audit Administrator" }),
+    ).toHaveCount(2);
+    /* Searching again retains the existing nested user filter. */
+    await auditTable.getByTestId("SearchList.Input").fill("admin");
+    await expect(
+      auditTable
+        .getByTestId("SearchList.List")
+        .getByRole("option")
+        .filter({ hasText: "User.username:" }),
+    ).toBeVisible();
+    await auditTable.getByTestId("SearchList.Input").fill("");
+    await auditTable.getByTitle("Click to expand/collapse").click();
+    await auditTable.getByTestId("FilterWrapper.deleteFilter").click();
     await auditTable.getByTestId("dashboard.window.menu").click();
     await page.getByText("Columns", { exact: true }).click();
     const contextColumn = page
@@ -462,6 +566,8 @@ test("audit users compose the configured reference fields when the title is empt
     const users = details.getByTestId("SmartCardList");
     await expect(users.locator(".SmartCard")).toHaveCount(1);
     await expect(users.getByRole("img", { name: "admin" })).toBeVisible();
+    await expect(users.locator("label")).toHaveText(["Id", "Status"]);
+    await users.getByRole("button", { name: "Show additional fields" }).click();
     await expect(users.locator("label")).toContainText(["Last Updated"]);
     await expect(details.locator(".SmartCardListControls")).toHaveCount(0);
     await expect(details.getByTestId("Popup.header")).toHaveCount(0);
@@ -514,11 +620,33 @@ test("audit users respect user table and title permissions", async ({
         .first();
       await expect(row).toContainText(canReadUsers ? "admin" : admin!.id);
       await expect(row).not.toContainText("Audit Administrator");
+      const auditTable = page.locator('[data-table-name="audit_events"]');
+      if (!(await auditTable.getByTestId("SmartFilterBar").isVisible())) {
+        await auditTable
+          .getByTestId("dashboard.window.toggleFilterBar")
+          .click();
+      }
+      await auditTable.getByTestId("SearchList.Input").fill("admin");
+      const suggestions = auditTable.getByTestId("SearchList.List");
+      await expect(suggestions).toContainText(
+        canReadUsers ? "User.Username:" : '"type":',
+      );
+      await auditTable.getByTestId("SearchList.Input").fill("");
       if (canReadUsers) {
         await expect(
           row.locator('[data-command^="LinkedColumn.OpenRecord"]'),
         ).toHaveCount(1);
         await expect(row).not.toContainText('"type":');
+        await row.getByTestId("LinkedColumn.OpenRecord").click();
+        const details = page.getByRole("dialog").last();
+        await expect(details.locator("label")).toHaveText(["Id"]);
+        await expect(details).not.toContainText("Audit Administrator");
+        await expect(
+          details.getByRole("button", { name: "Show additional fields" }),
+        ).toHaveCount(0);
+        await details.getByTestId("Popup.close").click();
+      } else {
+        await expect(row.getByTestId("LinkedColumn.OpenRecord")).toHaveCount(0);
       }
     }
   } finally {
@@ -621,6 +749,179 @@ for (const restriction of [
     await expect(page.getByTestId("ProjectConnection.error")).toHaveCount(0);
   });
 }
+
+test("audit diffs render and search changed values while preserving full snapshots", async ({
+  page,
+}) => {
+  const client = await deployment.connectProjectAs("admin");
+  try {
+    const recordId = { tenant_id: "diff", id: 2 };
+    await client.db.other_records!.insert!({
+      ...recordId,
+      name: "JSON diff values",
+      details: { nested: { value: "BeforeMarker" }, items: [false, 0] },
+      optional_value: null,
+      amount: 0,
+      enabled: false,
+    });
+    await client.db.other_records!.update!(recordId, {
+      details: { nested: { value: "AfterMarker" }, items: [] },
+      optional_value: "",
+      amount: 1,
+      enabled: true,
+    });
+    const audit = await client.db.audit_events!.findOne!(
+      { table_name: "other_records", operation: "UPDATE" },
+      {
+        select: {
+          changes: { $jsonb_diff: ["old_row", "new_row"] },
+          unchanged: { $jsonb_diff: ["new_row", "new_row"] },
+        },
+      },
+    );
+    expect(audit?.unchanged).toEqual({});
+    expect(audit?.changes).toMatchObject({
+      amount: ["0", "1"],
+      enabled: ["false", "true"],
+      optional_value: [null, ""],
+    });
+    const [oldDetails, newDetails] = audit?.changes.details ?? [];
+    if (typeof oldDetails !== "string" || typeof newDetails !== "string") {
+      throw new Error("Expected JSON text for both changed details snapshots");
+    }
+    await openTable(page, "other_records", true);
+    await page
+      .locator('[data-table-name="other_records"]')
+      .getByRole("row")
+      .filter({ hasText: "JSON diff values" })
+      .getByTestId("dashboard.window.viewEditRow")
+      .click();
+    await page.getByTestId("AuditTrail.open").click();
+    const history = page.getByRole("dialog").filter({ hasText: "History ·" });
+    const summary = history.getByTitle("View JSON diff").first();
+    await expect(summary.locator("strong")).toHaveText([
+      "amount",
+      "details",
+      "enabled",
+      "optional_value",
+    ]);
+    await expect(summary.locator("del")).toHaveText([
+      "0",
+      oldDetails,
+      "false",
+      "null",
+    ]);
+    await expect(summary.locator("del + span")).toHaveText([
+      "1",
+      newDetails,
+      "true",
+      "",
+    ]);
+    await summary.click();
+    const diff = page
+      .getByRole("dialog")
+      .filter({ hasText: "JSON diff" })
+      .last();
+    await diff.getByTitle("Side-by-side diff").click();
+    for (const side of ["original", "modified"]) {
+      await expect(
+        diff.locator(`.${side} .view-lines[role=presentation]`),
+      ).toContainText("JSON diff values");
+    }
+    await diff.getByTestId("Popup.close").click();
+    const search = history
+      .getByTestId("Popup.header")
+      .getByTestId("SearchList.Input");
+    const rows = history.getByTestId("TableBody").getByRole("row");
+    await search.fill("UPDATE");
+    await history
+      .getByRole("option")
+      .getByText("UPDATE", { exact: true })
+      .click();
+    await expect(rows).toHaveCount(1);
+    const removeLastFilter = async () => {
+      await history.getByTitle("Click to expand/collapse").last().click();
+      await history.getByTestId("FilterWrapper.deleteFilter").click();
+    };
+
+    await search.fill("beforemarker");
+    await expect(history.getByRole("option")).toHaveCount(1);
+    await history.getByTitle("Match case", { exact: true }).click();
+    await expect(history.getByTestId("SearchList.List")).toContainText(
+      "No results",
+    );
+    await search.fill("BeforeMarker");
+    await expect(history.getByRole("option").locator("strong")).toHaveText(
+      "BeforeMarker",
+    );
+    await history.getByTitle("Match case", { exact: true }).click();
+
+    /* Unchanged values are excluded from suggestions and Enter filters. */
+    await search.fill("JSON diff values");
+    await expect(history.getByTestId("SearchList.List")).toContainText(
+      "No results",
+    );
+    await search.press("Enter");
+    await expect(rows).toHaveCount(0);
+    await removeLastFilter();
+    await expect(rows).toHaveCount(1);
+
+    /* Computed suggestions preserve casing, highlight keys and both snapshots, and filter by the diff. */
+    for (const [term, highlightedText] of [
+      ["beforemarker", "BeforeMarker"],
+      ["aftermarker", "AfterMarker"],
+      ["details", "details"],
+    ] as const) {
+      await search.fill(term);
+      const suggestion = history
+        .getByRole("option")
+        .filter({ hasText: "Changes:" });
+      await expect(suggestion.locator("strong")).toHaveText(highlightedText);
+      expect(
+        JSON.parse((await suggestion.getAttribute("title")) ?? "null"),
+      ).toEqual(audit?.changes);
+      await suggestion.click();
+      await expect(rows).toHaveCount(1);
+      await expect(rows).toContainText("UPDATE");
+      /* Long JSON filters truncate visually while retaining the full tooltip. */
+      /* Computed equality filters store JSON text, which the tooltip quotes. */
+      const filterValue = history
+        .locator(".FilterWrapper_MinimisedRoot")
+        .last()
+        .getByTitle(JSON.stringify(JSON.stringify(audit?.changes)), {
+          exact: true,
+        });
+      await expect(filterValue).toHaveCSS("text-overflow", "ellipsis");
+      expect(
+        await filterValue.evaluate(
+          (element) =>
+            element.clientWidth <= 300 &&
+            element.scrollWidth > element.clientWidth,
+        ),
+      ).toBe(true);
+      await removeLastFilter();
+      await search.fill(term);
+      await expect(suggestion).toBeVisible();
+      await search.press("Enter");
+      await expect(rows).toHaveCount(1);
+      await expect(rows).toContainText("UPDATE");
+      await removeLastFilter();
+    }
+    await removeLastFilter();
+    await client.db.other_records!.delete!(recordId);
+    await expect(rows).toHaveCount(3);
+    await search.fill("aftermarker");
+    await expect(
+      history.getByRole("option").filter({ hasText: "Changes:" }),
+    ).toHaveCount(2);
+    await search.press("Enter");
+    await expect(rows).toHaveCount(2);
+    await expect(rows.first()).toContainText("DELETE");
+    await expect(rows.last()).toContainText("UPDATE");
+  } finally {
+    client.disconnect();
+  }
+});
 
 test("plain text diffs preserve lines and support both layouts", async ({
   page,

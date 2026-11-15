@@ -41,8 +41,8 @@ export const getMcpServerParameters = async (
       ...(server.env ?? {}),
     };
     const baseArgs = server.args ?? [];
-    const onLog: McpServerEvents["onLog"] = (item, log) => {
-      void dbs.mcp_server_logs.upsert(
+    const onLog: McpServerEvents["onLog"] = async (item, log) => {
+      await dbs.mcp_server_logs.upsert(
         { server_name: server.name },
         item.type === "stderr" ?
           {
@@ -53,8 +53,8 @@ export const getMcpServerParameters = async (
             error: JSON.stringify(getSerialisableError(item.data)),
           },
       );
-      if (item.type === "error") {
-        void dbs.mcp_servers.update(
+      if (item.type === "error" && server.command !== "streamable-http") {
+        await dbs.mcp_servers.update(
           {
             name: server.name,
           },
@@ -62,7 +62,7 @@ export const getMcpServerParameters = async (
             enabled: false,
           },
         );
-        void dbs.alerts.insert({
+        await dbs.alerts.insert({
           severity: "error",
           title: server.name + " MCP server disabled due to error",
           message: log,

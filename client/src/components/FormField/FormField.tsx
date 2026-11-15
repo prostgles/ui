@@ -16,7 +16,7 @@ import type { TestSelectors } from "../../Testing";
 import Btn from "../Btn";
 import { Checkbox } from "../Checkbox";
 import { generateUniqueID } from "../FileInput/FileInput";
-import { classOverride } from "../Flex";
+import { classOverride, FlexRow } from "../Flex";
 import { Label } from "../Label";
 import List from "../List";
 import Popup, { DATA_HAS_VALUE, DATA_NULLABLE } from "../Popup/Popup";
@@ -69,6 +69,8 @@ export type FormFieldProps<
     ) => void;
     onInput?: (e: React.FormEvent<HTMLInputElement>) => void;
     type?: T;
+    /** Single-line input height: small = 32px (default), default = 40px. */
+    size?: "small" | "default";
     id?: string;
     readOnly?: boolean;
     /**
@@ -115,6 +117,7 @@ export type FormFieldProps<
     asJSON?: AsJSON["component"];
     arrayType?: Pick<ValidatedColumnInfo, "udt_name" | "tsDataType">;
     leftIcon?: React.ReactNode;
+    labelRightContent?: React.ReactNode;
     showFullScreenToggle?: boolean;
 
     variant?: "row";
@@ -204,7 +207,9 @@ export default class FormField<
       if (
         this.inputRef &&
         /text|password|search|tel|url/.test(this.inputRef.type) &&
-        this.cursorPosition !== undefined
+        this.cursorPosition !== undefined &&
+        (this.inputRef.selectionStart !== this.cursorPosition ||
+          this.inputRef.selectionEnd !== this.cursorPosition)
       ) {
         this.inputRef.selectionStart = this.cursorPosition;
         this.inputRef.selectionEnd = this.cursorPosition;
@@ -280,6 +285,7 @@ export default class FormField<
       inputClassName = "",
       style = {},
       inputStyle = {},
+      size = "small",
       asTextArea = false,
       accept,
       onInput,
@@ -314,6 +320,7 @@ export default class FormField<
     const arrayEditor =
       arrayType ?
         <ChipArrayEditor
+          size={size}
           elemTsType={arrayType.tsDataType}
           elemUdtName={arrayType.udt_name}
           inputType={getInputType({
@@ -362,7 +369,9 @@ export default class FormField<
     if (readOnly) valProp = { value };
     if (defaultValue) valProp = { defaultValue };
 
-    let inptClass = " font-semibold formfield-bg-color ";
+    let inputClass =
+      (size === "small" && !asTextArea ? " font-medium " : " font-semibold ") +
+      "formfield-bg-color ";
     if (type !== "checkbox") {
       wrapperStyle = {
         ...wrapperStyle,
@@ -370,7 +379,7 @@ export default class FormField<
     }
 
     if (type.startsWith("file")) {
-      inptClass += " pointer ";
+      inputClass += " pointer ";
     }
 
     let extraInptStyle = {};
@@ -398,7 +407,7 @@ export default class FormField<
       wrapperStyle = { ...wrapperStyle, border: "none", overflow: "visible" };
     }
 
-    inptClass += " " + inputClassName;
+    inputClass += " " + inputClassName;
 
     const onDragStop = (e: React.DragEvent<HTMLInputElement>) => {
       e.currentTarget.classList.toggle("active-drop-target", false);
@@ -422,7 +431,7 @@ export default class FormField<
       key: id,
       required,
       readOnly,
-      className: inptClass,
+      className: inputClass,
       type,
       accept,
       ...valProp,
@@ -500,7 +509,8 @@ export default class FormField<
       : {
           paddingBottom: "4px",
         }),
-      minHeight: window.isLowWidthScreen ? "36px" : "40px",
+      minHeight: size === "small" ? "30px" : "38px",
+      ...(size === "small" && { fontSize: "14px", fontWeight: 600 }),
       ...inputProps.style,
       ...(rval === null && { fontStyle: "italic" }),
     };
@@ -604,6 +614,7 @@ export default class FormField<
               <Label variant="normal" {...label} />
             )
           }
+          headerRightContent={this.props.labelRightContent}
           positioning="fullscreen"
           onClose={() => {
             this.setState({ fullScreen: false });
@@ -641,25 +652,36 @@ export default class FormField<
           ...(asJSON && { minWidth: "min(400px, 90vw)" }),
         }}
         label={label}
-        labelStyle={labelStyle}
+        labelStyle={{
+          ...(size === "small" &&
+            !asTextArea && { fontSize: "14px", fontWeight: 400 }),
+          ...labelStyle,
+        }}
         labelRightContent={
-          showFullScreenToggle && (
-            <Btn
-              title="Click to toggle full screen"
-              className="show-on-trigger-hover"
-              iconPath={mdiFullscreen}
-              size="micro"
-              style={{ padding: "0" }}
-              onClick={() => {
-                this.setState({ fullScreen: !this.state.fullScreen });
-              }}
-            />
+          (this.props.labelRightContent || showFullScreenToggle) && (
+            <FlexRow className="gap-p5">
+              {this.props.labelRightContent}
+              {showFullScreenToggle && (
+                <Btn
+                  title="Click to toggle full screen"
+                  className="show-on-trigger-hover"
+                  iconPath={mdiFullscreen}
+                  size="micro"
+                  style={{ padding: "0" }}
+                  onClick={() => {
+                    this.setState({ fullScreen: !this.state.fullScreen });
+                  }}
+                />
+              )}
+            </FlexRow>
           )
         }
         errorWrapperClassname={`${type !== "checkbox" ? "flex-col" : "flex-row"} gap-p5 min-w-0 ${isEditableSelect || (inputContent && asJSON !== "codeEditor" && type !== "checkbox") ? "" : "f-1"}`}
         inputWrapperClassname={
           (type === "checkbox" ? " ai-center " : "") +
-          (type === "checkbox" || asJSON === "JSONBSchema" || arrayEditor ?
+          (inputContent && !isEditableSelect && asJSON !== "codeEditor" ?
+            " input-wrapper-unset focus-border-unset "
+          : type === "checkbox" || asJSON === "JSONBSchema" || arrayEditor ?
             " focus-border-unset "
           : " ") +
           ((
@@ -706,7 +728,7 @@ export default class FormField<
       >
         {isEditableSelect ?
           <Select
-            className="FormField_Select noselect f-1 formfield-bg-color"
+            className="FormField_Select noselect f-1"
             style={{
               fontSize: "16px",
               fontWeight: 500,
@@ -729,6 +751,7 @@ export default class FormField<
             labelAsValue={labelAsValue}
             btnProps={{
               id,
+              variant: "select",
             }}
           />
         : inputNode}

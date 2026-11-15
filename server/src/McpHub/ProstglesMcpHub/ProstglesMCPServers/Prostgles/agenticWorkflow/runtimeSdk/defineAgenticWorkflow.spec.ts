@@ -24,6 +24,22 @@ void describe("defineAgenticWorkflow", async () => {
               outputSchema: {
                 summary: { type: "string" },
                 references: { type: "string[]" },
+                groups: {
+                  arrayOfType: {
+                    name: { type: "string" },
+                    items: {
+                      arrayOfType: {
+                        index: { type: "number" },
+                        metadata: {
+                          type: {
+                            label: { type: "string" },
+                            description: { type: "string" },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
               },
             },
           },
@@ -83,6 +99,14 @@ void describe("defineAgenticWorkflow", async () => {
           void runSQL("SELECT * FROM tbl1");
           const result = await researcher("Prostgles");
           result.summary satisfies string;
+          /* Nested arrays and objects preserve their inferred field types. */
+          result.groups satisfies {
+            name: string;
+            items: {
+              index: number;
+              metadata: { label: string; description: string };
+            }[];
+          }[];
 
           void orchestratorToolHandlers.web.search({ q: "Prostgles" });
           void orchestratorToolHandlers.web.get_snapshot({

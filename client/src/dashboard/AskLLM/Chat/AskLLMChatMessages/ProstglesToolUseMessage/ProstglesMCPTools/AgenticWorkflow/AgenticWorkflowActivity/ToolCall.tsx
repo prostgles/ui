@@ -1,6 +1,8 @@
 import { getMCPFullToolName } from "@common/mcpUtils";
 import type { DBSSchema } from "@common/publishUtils";
 import { MonacoCodeInMarkdown } from "@components/Chat/MonacoCodeInMarkdown/MonacoCodeInMarkdown";
+import ErrorComponent from "@components/ErrorComponent";
+import Loading from "@components/Loader/Loading";
 import Popup from "@components/Popup/Popup";
 import { SegmentedToggle } from "@components/SegmentedToggle";
 import { SvgIcon } from "@components/SvgIcon";
@@ -12,14 +14,52 @@ import React, { useState } from "react";
 import { ProstglesMCPToolsWithUI } from "../../../ProstglesToolUseMessage";
 
 export const ToolCall = ({
+  toolCallId,
+  onClose,
+}: {
+  toolCallId: number;
+  onClose: () => void;
+}) => {
+  const { dbs } = usePrgl();
+  const {
+    data: toolCall,
+    error,
+    isLoading,
+  } = dbs.mcp_server_tool_calls.useSubscribeOne(
+    { id: toolCallId },
+    { select: "*" },
+  );
+  if (error || !toolCall || isLoading) {
+    return (
+      <Popup title="Tool call details" onClose={onClose}>
+        {error ?
+          <ErrorComponent error={error} />
+        : isLoading ?
+          <Loading />
+        : <div className="p-1">Tool call no longer exists.</div>}
+      </Popup>
+    );
+  }
+  return <ToolCallDetails toolCall={toolCall} onClose={onClose} />;
+};
+
+const ToolCallDetails = ({
   toolCall: selectedMcpToolCall,
   onClose,
-  chatId,
 }: {
   toolCall: DBSSchema["mcp_server_tool_calls"];
   onClose: () => void;
-  chatId: number;
 }) => {
+  const { tables } = usePrgl();
+  const fullName = getMCPFullToolName(
+    selectedMcpToolCall.mcp_server_name || "",
+    selectedMcpToolCall.mcp_tool_name || "",
+  );
+  const ToolUI = ProstglesMCPToolsWithUI[fullName];
+  const [displayMode, setDisplayMode] = useState<"ui" | "json">(
+    ToolUI ? "ui" : "json",
+  );
+  const { mcpServerIcons, getIcon } = useMcpServerIcons(tables);
   const {
     mcp_server_name,
     mcp_tool_name,
@@ -30,16 +70,6 @@ export const ToolCall = ({
     finished_at,
     error,
   } = selectedMcpToolCall;
-  const fullName = getMCPFullToolName(
-    mcp_server_name || "",
-    mcp_tool_name || "",
-  );
-  const ToolUI = ProstglesMCPToolsWithUI[fullName];
-  const [displayMode, setDisplayMode] = useState<"ui" | "json">(
-    ToolUI ? "ui" : "json",
-  );
-  const { tables } = usePrgl();
-  const { mcpServerIcons, getIcon } = useMcpServerIcons(tables);
   const icon = getIcon(mcp_server_name ?? "", mcp_tool_name || "", input);
   const description = mcpServerIcons
     .get(mcp_server_name ?? "")
@@ -75,9 +105,9 @@ export const ToolCall = ({
       onClose={onClose}
       clickCatchStyle={{ opacity: 1 }}
     >
-      {ToolUI && displayMode === "ui" ?
+      {ToolUI && chat_id && displayMode === "ui" ?
         <ToolUI.component
-          chatId={chat_id || chatId}
+          chatId={chat_id}
           loadedSuggestions={undefined}
           toolUseContent={{
             id: tool_use_id || "",
@@ -107,6 +137,7 @@ export const ToolCall = ({
               "Could not parse input as JSON"
             }
             className="f-1"
+            style={{ height: 400, flex: "1 1 auto" }}
             language="json"
             codeHeader={undefined}
             sqlHandler={undefined}
@@ -119,6 +150,7 @@ export const ToolCall = ({
               "Could not parse output as JSON"
             }
             className="f-1"
+            style={{ height: 400, flex: "1 1 auto" }}
             language="json"
             codeHeader={undefined}
             sqlHandler={undefined}

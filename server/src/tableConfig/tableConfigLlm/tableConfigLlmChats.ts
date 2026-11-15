@@ -23,6 +23,10 @@ const commonrunSQLOpts = {
 
 export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
   llm_chats: {
+    constraints: {
+      llm_chats_parent_agentic_workflow_run_id_fkey:
+        "FOREIGN KEY (parent_agentic_workflow_run_id) REFERENCES agentic_workflow_runs(id) ON DELETE SET NULL",
+    },
     /** Breaks ts generated schema  */
     // constraints: {
     //   parent_chat_message_fk:
@@ -40,6 +44,10 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
         },
       },
       parent_chat_message_id: "INT8",
+      parent_agentic_workflow_run_id: {
+        sqlDefinition: "INTEGER",
+        info: { hint: "Agentic workflow run this chat belongs to" },
+      },
       agent_info: {
         nullable: true,
         jsonbSchema: {
@@ -266,6 +274,9 @@ export const tableConfigLlmChats: TableConfig<{ en: 1 }> = {
       ...extraRequestData,
     },
     indexes: {
+      llm_chats_parent_agentic_workflow_run_id: {
+        columns: "parent_agentic_workflow_run_id",
+      },
       unique_chat_for_connection: {
         columns: "id, connection_id",
         unique: true,

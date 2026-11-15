@@ -3,12 +3,16 @@ import {
   getActionValueKey,
   type ActionColumnsParams,
 } from "@common/actionColumn";
-import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
+import type {
+  ComputedColumnConfig,
+  ColumnConfigWithInfo,
+} from "@common/ColumnConfig/ColumnConfig";
 import {
   getFunctionActionSelect,
   getTableFunctionActionSelect,
 } from "@common/functionOptions";
 import { resolveActionColumns } from "@common/resolveActionColumns";
+import type { ClientTableOptions } from "@common/managedTableSchema";
 import { FILE_TABLE_SELECT } from "@components/MediaViewer/managedTableUtils";
 import { ROW_ACTIONS_COLUMN } from "prostgles-client";
 import type {
@@ -18,6 +22,7 @@ import type {
   ServerFunctionHandler,
 } from "prostgles-types";
 import { FILE_ANNOTATION_SELECT } from "../../ManagedColumn/fileAnnotation";
+import { getComputedColumnSelect } from "../../tableUtils/getComputedColumnSelect";
 import type { ColumnFormat } from "./columnFormatUtils";
 
 type FormatColumn = Pick<ColumnConfigWithInfo, "format" | "info" | "name">;
@@ -33,7 +38,7 @@ export const getFormatColumnSelect = ({
   methods,
 }: {
   column: FormatColumn;
-  table: DBSchemaTable;
+  table: DBSchemaTable<ClientTableOptions>;
   tables: DBSchemaTable[];
   methods: ServerFunctionHandler;
 }): AnyObject => {
@@ -80,8 +85,23 @@ export const getFormatColumnSelect = ({
     return select;
   }
   if (format?.type === "JSON Diff" || format?.type === "Text Diff") {
+    const snapshotColumns = [format.params.oldColumn, format.params.newColumn];
+    const select: AnyObject = Object.fromEntries(
+      snapshotColumns
+        .filter((name) => selectableColumns.includes(name))
+        .map((name) => [name, 1]),
+    );
+    const computedConfig = getJSONDiffComputedConfig(column, table);
+    if (computedConfig) {
+      select[getJSONDiffDataKey(column.name)] =
+        getComputedColumnSelect(computedConfig);
+    }
+    return select;
+  }
+
+  if (format?.type === "Stopwatch") {
     return Object.fromEntries(
-      [format.params.oldColumn, format.params.newColumn]
+      [format.params.startColumn, format.params.endColumn]
         .filter((name) => selectableColumns.includes(name))
         .map((name) => [name, 1]),
     );
@@ -119,12 +139,7 @@ export const getFormatColumnSelect = ({
     );
   }
 
-  if (
-    format?.type !== "Internal" ||
-    format.params.component === "FileExtractionStatus"
-  ) {
-    return {};
-  }
+  if (format?.type !== "Internal") return {};
 
   const { params } = format;
 
@@ -143,6 +158,34 @@ export const getFormatColumnSelect = ({
   const query = getNestedJoinSelect(column, tableName, FILE_ANNOTATION_SELECT);
   return { [dataKey]: query };
 };
+
+export const getJSONDiffComputedConfig = (
+  column: FormatColumn,
+  table: DBSchemaTable<ClientTableOptions>,
+): ComputedColumnConfig | undefined => {
+  const format = getColumnFormat(column);
+  if (format?.type !== "JSON Diff" || table.managedTableType !== "audit")
+    return;
+  const { oldColumn, newColumn } = format.params;
+  if (
+    ![oldColumn, newColumn].every((name) =>
+      table.columns.some(
+        (column) =>
+          column.name === name && column.select && column.udt_name === "jsonb",
+      ),
+    )
+  )
+    return;
+  return {
+    column: newColumn,
+    funcDef: { key: "$jsonb_diff", label: "JSON diff", subLabel: "" },
+    args: { $jsonb_diff: { oldColumn, newColumn } },
+    udt_name: "jsonb",
+    tsDataType: "any",
+  };
+};
+
+export const getJSONDiffDataKey = (columnName: string) => `${columnName}__diff`;
 
 export const getColumnActions = (
   column: FormatColumn | undefined,

@@ -1,8 +1,14 @@
 import { Checkbox } from "@components/Checkbox";
 import React from "react";
-import type { ParsedListItem } from "./SearchList";
+import type { ParsedListItem, SearchListProps } from "./SearchList";
 
-export const SearchListRowContent = ({ item }: { item: ParsedListItem }) => {
+export const SearchListRowContent = ({
+  item,
+  checkboxVariant,
+}: {
+  item: ParsedListItem;
+  checkboxVariant: SearchListProps["checkboxVariant"];
+}) => {
   if (item.content !== undefined) return item.content;
   const { contentLeft, contentBottom, contentRight } = item;
 
@@ -14,6 +20,7 @@ export const SearchListRowContent = ({ item }: { item: ParsedListItem }) => {
       {typeof item.checked === "boolean" && (
         <Checkbox
           id={item.id}
+          variant={checkboxVariant}
           className="f-0 no-pointer-events"
           checked={item.checked}
           onChange={() => {}}

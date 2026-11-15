@@ -54,11 +54,23 @@ test("CLI user sync reconciles profiles and access without copying credentials",
     logPath: test.info().outputPath("user-sync-server.log"),
     users: [
       { key: "admin", type: "admin" },
-      { key: "member", type: "default" },
+      { key: "member" },
       { key: "removed", type: "default" },
       { key: "later", type: "default" },
+      { key: "outsider", type: "public" },
     ],
     seed: async ({ projectDatabase: project, stateDatabase: state }) => {
+      await test.step("seed can reference synced users immediately", async () => {
+        const { rows: users } = await state.query<{ id: string }>(
+          "SELECT id FROM users WHERE username IN ('admin', 'member')",
+        );
+        expect(users).toHaveLength(2);
+        await project.query(
+          "INSERT INTO records (user_id) SELECT unnest($1::uuid[])",
+          [users.map(({ id }) => id)],
+        );
+        await project.query("DELETE FROM records");
+      });
       const getConfig = ({
         host,
         port,
@@ -98,6 +110,27 @@ test("CLI user sync reconciles profiles and access without copying credentials",
     ]);
   try {
     const admin = await deployment.connectStateAs("admin");
+    await test.step("seeded users can sign in with their user type as password", async () => {
+      for (const [username, password] of [
+        ["admin", "admin"],
+        ["member", "default"],
+      ]) {
+        const response = await fetch(`${deployment.endpoint}/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password }),
+          redirect: "manual",
+        });
+        expect(response.status).toBe(302);
+        expect(response.headers.get("set-cookie")).toContain("sid_token=");
+        const sessionCount = await stateDatabase.one<{ count: number }>(
+          `SELECT count(*)::int AS count FROM sessions
+           WHERE user_id = (SELECT id FROM users WHERE username = $1)`,
+          [username],
+        );
+        expect(sessionCount.count).toBe(2);
+      }
+    });
     const connection = await stateDatabase.one(
       "SELECT id FROM connections WHERE name = $1",
       [config.id],
@@ -132,16 +165,28 @@ test("CLI user sync reconciles profiles and access without copying credentials",
           auth_provider_profile: null,
         });
       const member = await deployment.connectProjectAs("member");
-      expect(
-        member.tableSchema?.find((table) => table.name === "users"),
-      ).toMatchObject({
+      const syncedUsers = member.tableSchema?.find(
+        (table) => table.name === "users",
+      );
+      expect(syncedUsers).toMatchObject({
         label: "Users",
         icon: "Account",
-        card: { headerColumn: "username", subHeaderColumn: "name" },
+        card: {
+          headerColumn: "username",
+          subHeaderColumns: ["name", "status"],
+          summaryFields: ["email", "type", "created", "registration"],
+          layoutSections: [{ items: ["id", "has_2fa_enabled"] }],
+        },
         referenceDisplay: {
           columns: [{ name: "username", format: { type: "Avatar" } }],
         },
+        columnConfigs: {
+          type: { label: "Role" },
+          last_updated: { show: false },
+          options: { show: false },
+        },
       });
+      expect(syncedUsers?.columnConfigs).not.toHaveProperty("last_logged_in");
       expect(
         await member.db.users!.findOne!({ username: "removed" }),
       ).toMatchObject({

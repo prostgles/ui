@@ -57,8 +57,9 @@ export const SortByControl = ({
       <Select
         id="orderbycomp"
         label={label}
-        // btnProps={{ className: "shadow bg-color-0" }}
-        emptyLabel="Sort by..."
+        btnProps={{ variant: "icon" }}
+        title={orderByKey ? undefined : "Sort by..."}
+        iconPath={orderByKey ? undefined : mdiSortVariant}
         asRow={true}
         value={value?.key}
         fullOptions={orderableFields.map((f) => ({
@@ -73,6 +74,7 @@ export const SortByControl = ({
       {orderByKey && (
         <Btn
           color="action"
+          variant="icon"
           iconPath={orderAsc ? mdiSortReverseVariant : mdiSortVariant}
           onClick={() => {
             setSort(orderByKey, !orderAsc);

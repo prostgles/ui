@@ -6,7 +6,7 @@ import FormField from "@components/FormField/FormField";
 import Popup from "@components/Popup/Popup";
 import { mdiDeleteOutline } from "@mdi/js";
 import { isEqual } from "prostgles-types";
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect } from "react";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import { McpServerOAuthConfig } from "./CustomConfigComponents/McpServerOAuthConfig";
 import { WebMcpConfig } from "./CustomConfigComponents/WebMcpConfig";
@@ -22,11 +22,17 @@ export type MCPServerConfigProps = {
     | undefined;
   defaultConfig: undefined | DBSSchema["mcp_server_configs"]["config"];
   chatId: number | undefined;
+  closeOnReconnect?: boolean;
   onDone: (res: void | MCPServerEnabledConfig) => void;
 };
 
 export const MCPServerConfigEditor = (props: MCPServerConfigProps) => {
-  const { serverName, existingConfig: initialExistingConfig, onDone } = props;
+  const {
+    serverName,
+    existingConfig: initialExistingConfig,
+    closeOnReconnect,
+    onDone,
+  } = props;
   const {
     upsertConfig,
     canSave,
@@ -47,8 +53,20 @@ export const MCPServerConfigEditor = (props: MCPServerConfigProps) => {
     [setConfig],
   );
   const existingConfig =
-    initialExistingConfig ??
-    existingConfigs.find((c) => isEqual(c.config, configValue));
+    existingConfigs.find((c) => isEqual(c.config, configValue)) ??
+    initialExistingConfig;
+  const configId = existingConfig?.id;
+  const oauthPhase = existingConfig?.oauth?.phase;
+  useEffect(() => {
+    if (
+      closeOnReconnect &&
+      configId &&
+      server?.enabled &&
+      (oauthPhase === "connected" || oauthPhase === "connected_bearer")
+    ) {
+      onDone({ configId });
+    }
+  }, [closeOnReconnect, configId, oauthPhase, onDone, server?.enabled]);
   const { dbs } = usePrglCore();
   const otherConfigs = existingConfigs.filter(
     (c) => !existingConfig || c.id !== existingConfig.id,

@@ -63,7 +63,9 @@ export const useAddMCPServer = (showAddServer: boolean) => {
         ...s,
         serverData: {
           ...s.serverData,
-          config_schema: configSchema ?? null,
+          config_schema:
+            configSchema && Object.keys(configSchema).length ? configSchema
+            : null,
         },
       };
     });

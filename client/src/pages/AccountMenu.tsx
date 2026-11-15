@@ -76,32 +76,21 @@ export const AccountMenu = ({ user, forNavBar }: P) => {
         </NavLink>
 
         {!cannotLogout && (
-          <>
-            <form
-              id="logout-form"
-              action={ROUTES.LOGOUT}
-              method="POST"
-              style={{ display: "none" }}
-            ></form>
-            <a
-              key={"logout"}
-              data-command="NavBar.logout"
-              href="#"
-              onClick={() => {
-                (
-                  document.getElementById(
-                    "logout-form",
-                  ) as HTMLFormElement | null
-                )?.submit();
-              }}
-              className="ws-nowrap text-0 font-16 flex-row ai-center gap-p5"
-            >
-              <Icon className="f-0" path={mdiLogout} size={1} />
-              <div className="f-1 min-w-0 text-ellipsis ws-no-wrap">
-                {t.common["Logout"]}
-              </div>
-            </a>
-          </>
+          <a
+            key={"logout"}
+            data-command="NavBar.logout"
+            href="#"
+            onClick={(event) => {
+              event.preventDefault();
+              submitLogoutForm();
+            }}
+            className="ws-nowrap text-0 font-16 flex-row ai-center gap-p5"
+          >
+            <Icon className="f-0" path={mdiLogout} size={1} />
+            <div className="f-1 min-w-0 text-ellipsis ws-no-wrap">
+              {t.common["Logout"]}
+            </div>
+          </a>
         )}
       </>
     );
@@ -159,9 +148,7 @@ export const AccountMenu = ({ user, forNavBar }: P) => {
           {
             label: t.common["Logout"],
             leftIconPath: mdiLogout,
-            onPress: () => {
-              window.location.href = ROUTES.LOGOUT;
-            },
+            onPress: submitLogoutForm,
             disabledText:
               cannotLogout ? "Cannot logout as passwordless admin" : undefined,
           },
@@ -169,4 +156,16 @@ export const AccountMenu = ({ user, forNavBar }: P) => {
       />
     </PopupMenu>
   );
+};
+
+const submitLogoutForm = () => {
+  /*
+   * Submit as navigation so the logout redirect reloads the app.
+   * Fetch follows redirects without navigating the page.
+   */
+  const logoutForm = document.createElement("form");
+  logoutForm.action = ROUTES.LOGOUT;
+  logoutForm.method = "POST";
+  document.body.appendChild(logoutForm);
+  logoutForm.submit();
 };

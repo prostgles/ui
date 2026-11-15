@@ -2,6 +2,7 @@ import {
   getSerialisableError,
   isDefined,
   isEmpty,
+  isEqual,
   isObject,
   omitKeys,
   pickKeys,
@@ -67,6 +68,7 @@ export const useNewRowDataHandler = (args: Args) => {
   }, [columns]);
 
   const [newRowData, setNewRowData] = useState<NewRow>();
+  const [initialNewRow, setInitialNewRow] = useState<AnyObject>();
   const parseError = useCallback(
     (error: ProstglesError) => {
       let newError: string =
@@ -234,6 +236,7 @@ export const useNewRowDataHandler = (args: Args) => {
       const existingData = parentForm.newRowDataHandler?.getNewRow();
       if (existingData) {
         newRowDataHandler.setNewRow(existingData);
+        setInitialNewRow(newRowDataHandler.getRow());
         return;
       }
     }
@@ -261,6 +264,7 @@ export const useNewRowDataHandler = (args: Args) => {
       ]),
     );
     newRowDataHandler.setNewRow(newRowWithDefaultData);
+    setInitialNewRow(newRowDataHandler.getRow());
   }, [
     mode?.type,
     columns,
@@ -291,6 +295,19 @@ export const useNewRowDataHandler = (args: Args) => {
       ...fixedData,
     };
   }, [newRow, mode, fixedData]);
+
+  const hasUnsavedChanges =
+    !onChange &&
+    (mode?.type === "insert" ?
+      !isEqual(newRow, initialNewRow)
+    : Boolean(
+        confirmUpdates &&
+        newRow &&
+        (mode?.type === "multiUpdate" ||
+          (mode?.type === "update" &&
+            mode.currentRow &&
+            !isEqual(pickKeys(mode.currentRow, getKeys(newRow)), newRow))),
+      ));
 
   const getErrors: getErrorsHook = useCallback(
     async (cb) => {
@@ -381,6 +398,7 @@ export const useNewRowDataHandler = (args: Args) => {
     newRowData,
     newRow,
     row,
+    hasUnsavedChanges,
   };
 };
 

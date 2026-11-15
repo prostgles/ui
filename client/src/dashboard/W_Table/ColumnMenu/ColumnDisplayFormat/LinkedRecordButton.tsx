@@ -33,7 +33,7 @@ export const LinkedRecordButton = ({
   table,
   tables,
 }: LinkedRecordButtonProps) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = useState<HTMLButtonElement>();
   const [cardFieldConfigs, setCardFieldConfigs] = useState<FieldConfig[]>();
   const { openLinkedRecordsAsCards } = useLocalSettings();
 
@@ -49,6 +49,7 @@ export const LinkedRecordButton = ({
         data-command="LinkedColumn.OpenRecord"
         onClickPromise={async (event) => {
           event.stopPropagation();
+          const triggerButton = event.currentTarget;
           setCardFieldConfigs(
             openLinkedRecordsAsCards ?
               await getTableCardFieldConfigs({
@@ -56,24 +57,26 @@ export const LinkedRecordButton = ({
                 tables,
                 db,
                 methods,
-                infoLevel: 2,
+                cardMode: "details",
               })
             : undefined,
           );
-          setIsOpen(true);
+          setAnchorEl(triggerButton);
         }}
       >
         {children}
       </Btn>
-      {isOpen &&
+      {anchorEl &&
         (cardFieldConfigs ?
           <DetailedCardPopup
+            anchorEl={anchorEl}
             prgl={{ db, methods, sql, tables }}
             table={table}
             rowFilter={rowFilter}
             fieldConfigs={cardFieldConfigs}
+            columnConfig={undefined}
             showEdit={undefined}
-            onClose={() => setIsOpen(false)}
+            onClose={() => setAnchorEl(undefined)}
             renderDetails={(props) => <SmartCardList {...props} />}
           />
         : <SmartForm
@@ -85,7 +88,7 @@ export const LinkedRecordButton = ({
             tableName={table.name}
             rowFilter={rowFilter}
             confirmUpdates={true}
-            onClose={() => setIsOpen(false)}
+            onClose={() => setAnchorEl(undefined)}
           />)}
     </>
   );

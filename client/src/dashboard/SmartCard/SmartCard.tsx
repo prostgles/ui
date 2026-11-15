@@ -1,3 +1,4 @@
+import type { CardMode } from "@common/ColumnConfig/cardLayout";
 import type { DetailedFilterBase } from "@common/filterUtils";
 import { classOverride, FlexRow } from "@components/Flex";
 import Loading from "@components/Loader/Loading";
@@ -15,10 +16,10 @@ import { SmartCardActions } from "./SmartCardActions";
 import { SmartCardColumn } from "./SmartCardColumn";
 import { useFieldConfigParser } from "./useFieldConfigParser";
 import { getProperty } from "@common/utils";
-import type { CardLayoutOptions } from "@common/ColumnConfig/cardLayout";
-import { getCardLayoutStyle } from "./getCardLayoutStyle";
 import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
 import { SmartCardHeader } from "./SmartCardHeader";
+import type { CardFieldSection } from "./getSectionedCardColumns";
+import { SmartCardSections } from "./SmartCardSections";
 
 type NestedSmartCardProps = Pick<SmartCardProps, "footer" | "excludeNulls">;
 type NestedSmartFormProps = Pick<
@@ -49,6 +50,8 @@ export type FieldConfigBase<T extends AnyObject | void = void> = {
 
   hide?: boolean;
   label?: string;
+  columnConfig?: ColumnConfigWithInfo;
+  cardSection?: CardFieldSection;
   cardHeader?: {
     column: ColumnConfigWithInfo;
     isAvatar: boolean;
@@ -92,7 +95,7 @@ export type SmartCardProps<T extends AnyObject = AnyObject> = Pick<
   Prgl,
   "db" | "tables" | "methods" | "sql"
 > &
-  Pick<SmartCardListProps<T>, "tableName" | "tables"> & {
+  Pick<SmartCardListProps<T>, "tableName" | "tables" | "bordered" | "flat"> & {
     defaultData: T;
     fullData: {
       rows: T[];
@@ -107,8 +110,7 @@ export type SmartCardProps<T extends AnyObject = AnyObject> = Pick<
     contentClassname?: string;
     contentStyle?: React.CSSProperties;
     variant?: "row" | "col" | "row-wrap";
-    cardLayout?: CardLayoutOptions;
-    infoLevel?: 1 | 2;
+    cardMode?: CardMode;
 
     confirmUpdates?: boolean;
     showLocalChanges?: boolean;
@@ -161,8 +163,7 @@ export const SmartCard = <T extends AnyObject>(props: SmartCardProps<T>) => {
     contentStyle = {},
     showViewEditBtn = true,
     enableInsert = true,
-    cardLayout,
-    infoLevel = 2,
+    cardMode = "details",
   } = props;
 
   const [variant, setVariant] = useState(props.variant ?? DEFAULT_VARIANT);
@@ -177,7 +178,7 @@ export const SmartCard = <T extends AnyObject>(props: SmartCardProps<T>) => {
     fc.cardHeader ? [fc] : [],
   );
   const summaryRow =
-    infoLevel === 1 &&
+    cardMode === "summary" &&
     headerFields.some(({ cardHeader }) => cardHeader?.isTitle);
   const header = table && !!headerFields.length && (
     <SmartCardHeader
@@ -185,7 +186,7 @@ export const SmartCard = <T extends AnyObject>(props: SmartCardProps<T>) => {
       table={table}
       row={defaultData}
       fullData={fullData}
-      infoLevel={infoLevel}
+      cardMode={cardMode}
       renderTitle={
         summaryRow && renderTitle ?
           (value) => renderTitle(value, defaultData)
@@ -208,51 +209,58 @@ export const SmartCard = <T extends AnyObject>(props: SmartCardProps<T>) => {
     : variant === "row" ? "flex-row ai-start"
     : "flex-col ai-start ";
 
-  const fieldNodes = fieldConfigsWithColumns
-    .filter(({ fc }) => !table || !fc.cardHeader)
-    .map(({ name, fc, col: column }) => {
-      const labelText = fc.label ?? column?.label ?? column?.name ?? null;
-      const valueNode =
-        fc.render?.(defaultData[name], defaultData, fullData) ||
-        (column && <RenderValue column={column} value={defaultData[name]} />);
+  const bodyFields = fieldConfigsWithColumns.filter(
+    ({ fc }) => !table || !fc.cardHeader,
+  );
+  const fieldNodes = bodyFields.map(({ name, fc, col: column }) => {
+    const labelText = fc.label ?? column?.label ?? column?.name ?? null;
+    const valueNode =
+      fc.render?.(defaultData[name], defaultData, fullData) ||
+      (column && <RenderValue column={column} value={defaultData[name]} />);
 
-      if (fc.renderMode === "full") {
-        return <React.Fragment key={fc.name}>{valueNode}</React.Fragment>;
-      }
-      return (
-        <SmartCardColumn
-          key={`${fc.name}`}
-          className={fc.className}
-          style={fc.style}
-          labelText={labelText}
-          valueNode={valueNode}
-          renderMode={fc.renderMode ?? "value"}
-          labelTitle={column?.udt_name || ""}
-          info={column && getProperty(column, "hint")}
-        />
-      );
-    });
+    if (fc.renderMode === "full") {
+      return <React.Fragment key={fc.name}>{valueNode}</React.Fragment>;
+    }
+    return (
+      <SmartCardColumn
+        key={`${fc.name}`}
+        className={fc.className}
+        style={fc.style}
+        labelText={labelText}
+        valueNode={valueNode}
+        renderMode={fc.renderMode ?? "value"}
+        labelTitle={column?.udt_name || ""}
+        info={column && getProperty(column, "hint")}
+      />
+    );
+  });
 
   return (
     <div
       className={classOverride(
-        `SmartCard card bg-color-0 relative ${variantClass} `,
+        `SmartCard card bg-color-0 relative ${onClose ? "flex-col min-h-0" : variantClass} `,
         className,
       )}
       style={{
         padding: ".25em",
         ...style,
-        ...(summaryRow && {
+        ...((props.flat ?? summaryRow) && {
           width: "100%",
           borderRadius: 0,
           boxShadow: "none",
-          border: 0,
+          border: props.bordered ? "1px solid var(--b-color)" : 0,
           borderBottom: "1px solid var(--b-color)",
         }),
       }}
     >
       <div className="flex-col min-w-0 min-h-0 f-1">
         {title?.(defaultData)}
+        {onClose && (
+          <FlexRow className="w-full min-w-0 ai-start jc-end gap-p5 p-p5 f-0">
+            {header}
+            {actions}
+          </FlexRow>
+        )}
         <div
           className={classOverride(
             `SmartCardContent o-auto f-1 min-w-0 min-h-0 gap-p5 p-p5 parent-hover ${variantClass}`,
@@ -260,21 +268,17 @@ export const SmartCard = <T extends AnyObject>(props: SmartCardProps<T>) => {
           )}
           style={{ columnGap: "1em", ...contentStyle }}
         >
-          {onClose ?
-            <FlexRow className="w-full min-w-0 ai-start jc-end gap-p5">
-              {header}
-              {actions}
-            </FlexRow>
-          : header}
-          {cardLayout ?
-            <div
-              className={`SmartCardBody w-full min-w-0 gap-p5 ${variantClass}`}
-              style={
-                infoLevel === 2 ? getCardLayoutStyle(cardLayout) : undefined
-              }
-            >
-              {fieldNodes}
-            </div>
+          {!onClose && header}
+          {(
+            cardMode !== "summary" &&
+            bodyFields.some(({ fc }) => fc.cardSection)
+          ) ?
+            <SmartCardSections
+              fields={bodyFields.map(({ fc }, index) => ({
+                section: fc.cardSection,
+                node: fieldNodes[index],
+              }))}
+            />
           : fieldNodes}
         </div>
         {footer?.(defaultData)}

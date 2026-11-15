@@ -33,7 +33,7 @@ export type MonacoEditorProps = Pick<TestSelectors, "data-command"> & {
    */
   expandSuggestionDocs?: boolean;
   options?: editor.IStandaloneEditorConstructionOptions;
-  onMount?: (editor: editor.IStandaloneCodeEditor) => void;
+  onMount?: (editor: editor.IStandaloneCodeEditor) => void | (() => void);
   style?: React.CSSProperties;
   loadedSuggestions: LoadedSuggestions | undefined;
   /**
@@ -167,7 +167,7 @@ const MonacoEditorWithoutLanguage = (props: MonacoEditorProps) => {
       //@ts-ignore
       container.current.editorRef = editor;
     }
-    onMount?.(editor);
+    return onMount?.(editor);
   }, [editor, onMount]);
 
   useMonacoEditorAddActions(editor, language);
@@ -176,11 +176,12 @@ const MonacoEditorWithoutLanguage = (props: MonacoEditorProps) => {
     if (!editor) return;
 
     if (onChange) {
-      editor.onDidChangeModelContent(() => {
+      const disposable = editor.onDidChangeModelContent(() => {
         const newValue = editor.getValue();
         if (valueRef.current === newValue) return;
         onChange(newValue, editor, monacoRef.current);
       });
+      return () => disposable.dispose();
     }
   }, [editor, onChange]);
 

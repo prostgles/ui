@@ -1,10 +1,48 @@
-import type { JSONB } from "prostgles-types";
+import { getKeys, type JSONB } from "prostgles-types";
 import {
   actionColumnParamsSchema,
   actionColumnsParamsSchema,
 } from "./actionColumn";
+import { HTML_COLUMN_ALLOWED_STYLES } from "./htmlColumnStyles";
 
 export const ContentTypes = ["image", "video", "audio"] as const;
+
+export const HTML_COLUMN_ALLOWED_TAGS = [
+  "div",
+  "span",
+  "p",
+  "br",
+  "hr",
+  "b",
+  "strong",
+  "i",
+  "em",
+  "u",
+  "s",
+  "small",
+  "sub",
+  "sup",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
+  "blockquote",
+  "pre",
+  "code",
+  "ul",
+  "ol",
+  "li",
+  "table",
+  "caption",
+  "thead",
+  "tbody",
+  "tfoot",
+  "tr",
+  "th",
+  "td",
+];
 
 const CurrencySchema = {
   type: {
@@ -134,6 +172,13 @@ export const columnDisplayFormatSchema = {
             description:
               "Use another column as the URL, keeping this column as the link text. Leave unset to use this column's value as the URL.",
           },
+          linkText: {
+            type: "string",
+            optional: true,
+            title: "Link text",
+            description:
+              "Fixed text to display for every link. Leave empty to use this column's value.",
+          },
         },
       },
     },
@@ -218,6 +263,33 @@ export const columnDisplayFormatSchema = {
             description: "Short shows top two biggest units",
             enum: ["short", "full"],
           },
+          showTimestamp: {
+            type: "boolean",
+            title: "Show timestamp",
+            description: "Show the date and time above the age",
+            optional: true,
+          },
+          showAgo: {
+            type: "boolean",
+            title: "Show ago",
+            description:
+              'Add "ago" for past timestamps or "in" for future timestamps',
+            optional: true,
+          },
+        },
+      },
+    },
+    {
+      type: {
+        enum: ["Stopwatch"],
+        title: "Format",
+        description:
+          "Elapsed time between two timestamps. Ticks while the finish timestamp is null.",
+      },
+      params: {
+        type: {
+          startColumn: { type: "string", title: "Start column" },
+          endColumn: { type: "string", title: "Finish column" },
         },
       },
     },
@@ -226,6 +298,23 @@ export const columnDisplayFormatSchema = {
         enum: ["Markdown", "MarkdownPopup"],
         title: "Format",
         description: "Display string as Markdown",
+      },
+    },
+    {
+      type: {
+        enum: ["JSON Summary"],
+        title: "Format",
+        description: "Show a JSON value as a button that opens the full JSON",
+      },
+      params: {
+        type: {
+          path: {
+            type: "string[]",
+            title: "JSON path",
+            description:
+              "Property names or array indexes, in order. For registration.type, use type. Leave empty to show View JSON.",
+          },
+        },
       },
     },
     {
@@ -259,30 +348,7 @@ export const columnDisplayFormatSchema = {
       type: {
         enum: ["HTML"],
         title: "Format",
-        description: "Display string as sanitised HTML",
-      },
-      params: {
-        type: {
-          noSanitize: {
-            type: "boolean",
-            title: "Do not sanitize HTML",
-            description: "Leave unchecked if you understand the risks",
-            optional: true,
-          },
-          allowedHTMLTags: {
-            title: "Allowed HTML Tags",
-            type: "string[]",
-            allowedValues: [
-              { key: "img", label: "Image" },
-              { key: "video", label: "Video" },
-              { key: "audio", label: "Audio" },
-              { key: "svg", label: "SVG" },
-              { key: "path", label: "Path (SVG)" },
-            ].map((v) => v.key),
-            description: "List of allowed HTML tags. E.g.: div, p, html",
-            optional: true,
-          },
-        },
+        description: `Display the column value as basic sanitised HTML. Allowed tags: ${HTML_COLUMN_ALLOWED_TAGS.join(", ")}. Only the style attribute is allowed, with these CSS properties: ${getKeys(HTML_COLUMN_ALLOWED_STYLES).join(", ")}. Colours accept names, hex, rgb/rgba and hsl/hsla. Lengths accept non-negative px (up to 999.99), em/rem (up to 9.99); sizing also accepts whole percentages up to 100%. Spacing and borders also accept 2-4 whole px values. Content is clipped to its container. Positioning, transforms, URLs, custom properties, scripts, style tags, links, media, SVG, forms and embeds are not supported. Sanitisation cannot be disabled. No parameters are needed.`,
       },
     },
     MediaSchema,

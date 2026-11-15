@@ -204,7 +204,14 @@ export const startProstgles = async ({
           modifyClientFunctionSchema: modifyClientFunctionSchema(undefined, {
             inviteUser: {
               title: "Invite user",
-              action: { defaultValue: { text: "Send invitation" } },
+              showInTableHeader: ["users"],
+              action: {
+                defaultValue: {
+                  text: "Send invitation",
+                  icon: "AccountPlusOutline",
+                  color: "green",
+                },
+              },
               renderOutputAsMarkdown: true,
             },
           }),
@@ -215,13 +222,7 @@ export const startProstgles = async ({
               .then(() => {
                 resolve({ state: "ok", dbs: prgl.db });
               })
-              .catch((err) => {
-                reject({
-                  state: "error",
-                  error: err as Error,
-                  errorType: "init",
-                });
-              });
+              .catch(reject);
           },
         });
 

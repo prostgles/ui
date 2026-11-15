@@ -1,3 +1,4 @@
+import { getJobControlMethods } from "@common/jobAction";
 import {
   getActionFunctions,
   type DBSchemaTable,
@@ -36,12 +37,14 @@ export const getJobActionFunctions = (
         binding.columnName === job.columnName
       );
     })
+    .flatMap((action) =>
+      getJobControlMethods(methods[action.methodName]!).map((method) => ({
+        ...action,
+        method,
+      })),
+    )
     .sort(
       (first, second) =>
-        Number(
-          methods[second.methodName]?.jobControl?.operation === "startOrRetry",
-        ) -
-        Number(
-          methods[first.methodName]?.jobControl?.operation === "startOrRetry",
-        ),
+        Number(second.method.jobControl?.operation === "startOrRetry") -
+        Number(first.method.jobControl?.operation === "startOrRetry"),
     );

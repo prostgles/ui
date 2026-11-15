@@ -1,4 +1,4 @@
-import { mdiCheckBold, mdiCheckboxBlankOutline } from "@mdi/js";
+import { mdiCheckBold, mdiCheckboxBlankOutline, mdiMinus } from "@mdi/js";
 import React from "react";
 import type { TestSelectors } from "../Testing";
 import "./Checkbox.css";
@@ -12,6 +12,7 @@ type P = TestSelectors & {
   className?: string;
   inputClassname?: string;
   checked?: boolean;
+  indeterminate?: boolean;
   label?: React.ReactNode;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>, checked: boolean) => any;
   readOnly?: boolean;
@@ -28,6 +29,7 @@ export const Checkbox = (props: P) => {
     inputClassname = "",
     label,
     checked,
+    indeterminate = false,
     style = {},
     onChange,
     readOnly,
@@ -41,12 +43,18 @@ export const Checkbox = (props: P) => {
   const idRef = React.useRef(id ?? generateUniqueID());
   const inputRef = React.useRef<HTMLInputElement | null>(null);
 
+  React.useEffect(() => {
+    if (inputRef.current) inputRef.current.indeterminate = indeterminate;
+  }, [indeterminate]);
+
   const isBtn = variant === "button";
   const isMiniOrMicro = variant === "minimal" || variant === "micro";
-  const tickColorClass = checked ? " text-action " : "text-2";
+  const tickColorClass = checked || indeterminate ? " text-action " : "text-2";
+  const checkboxIconPath = indeterminate ? mdiMinus : iconPath;
 
   const defaultInputClass =
-    " Checkbox_inner_label flex-row-wrap noselect relative checkbox pointer ai-center jc-center w-fit w-fit h-fit formfield-bg-color " +
+    " Checkbox_inner_label flex-row-wrap noselect relative checkbox pointer ai-center jc-center w-fit w-fit h-fit " +
+    (isMiniOrMicro ? "" : "formfield-bg-color ") +
     (!variant ? " b b-color " : "") +
     (variant === "minimal" ? " round " : " ") +
     (isBtn ? "bg-color-2 b-color p-p5 no-outline"
@@ -92,7 +100,7 @@ export const Checkbox = (props: P) => {
       />
       <Icon
         path={
-          iconPath ??
+          checkboxIconPath ??
           (variant === "header" && !checked ?
             mdiCheckboxBlankOutline
           : mdiCheckBold)
@@ -112,7 +120,7 @@ export const Checkbox = (props: P) => {
           isMiniOrMicro || isBtn || variant === "header" ?
             {}
           : {
-              opacity: checked ? 1 : 0,
+              opacity: checked || indeterminate ? 1 : 0,
             }
         }
       />

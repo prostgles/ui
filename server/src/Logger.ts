@@ -6,10 +6,7 @@ import { join } from "path";
 import { pickKeys } from "prostgles-types";
 import { type DBS } from ".";
 import { getAuthSetupData } from "./authConfig/subscribeToAuthSetupChanges";
-import {
-  serialiseTestLog,
-  shouldLogTestEvent,
-} from "./serialiseTestLog";
+import { serialiseTestLog, shouldLogTestEvent } from "./serialiseTestLog";
 import { getTestLogFiles } from "./testLogFiles";
 
 export const loggerTableConfig: TableConfig<{ en: 1 }> = {
@@ -159,30 +156,6 @@ const rotateTestLogs = async () => {
 };
 
 export const addLog = (e: EventInfo, connection_id: string | null) => {
-  // if (e.type === "sync" && e.tableName === "windows") {
-  //   console.log(
-  //     e.command,
-  //     e.tableName,
-  //     pickKeys(e as any, [
-  //       "state",
-  //       "source",
-  //       "condition",
-  //       "last_synced",
-  //       "is_syncing",
-  //       "lr",
-  //       "channelName",
-  //       "rows",
-  //     ]),
-  //   );
-  //   // if (
-  //   //   e.command === "syncData"
-  //   // ) {
-  //   //   if (!_alreadyStarted && (e as any).is_syncing) {
-  //   //     debugger;
-  //   //   }
-  //   //   _alreadyStarted = true;
-  //   // }
-  // }
   if (testLogPath) {
     addTestLog(e, connection_id);
   }
@@ -195,8 +168,7 @@ export const addLog = (e: EventInfo, connection_id: string | null) => {
       if (e.type === "table" || e.type === "sync") {
         const { clientReq } = e.localParams ?? {};
         return (
-          clientReq?.socket ?
-            e.localParams?.isRemoteRequest?.clientInfo?.sid
+          clientReq?.socket ? e.localParams?.isRemoteRequest?.clientInfo?.sid
           : clientReq?.httpReq ?
             (clientReq.httpReq.cookies as Record<string, string>)["sid"]
           : null

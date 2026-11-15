@@ -7,6 +7,7 @@ import type { OAuthClientInformationMixed } from "@modelcontextprotocol/sdk/shar
 import { getElectronConfig } from "@src/electronConfig";
 import type { DBS } from "@src/index";
 import { isObject } from "prostgles-types";
+import { registerMcpAuthorizationRequest } from "./authenticateMcpServer";
 import {
   MCP_CLIENT_INFO,
   type RemoteMcpServerParameters,
@@ -23,7 +24,7 @@ export const createMcpOAuthProvider = ({
   dbs: DBS;
   serverConfig: DBSSchema["mcp_server_configs"];
 }) => {
-  const { server_name, oauth, config } = serverConfig;
+  const { id, oauth, config } = serverConfig;
   if (
     !oauth ||
     config.type !== "OAuth" ||
@@ -69,6 +70,7 @@ export const createMcpOAuthProvider = ({
       };
 
   let currentAuthorizationUrl: string | undefined;
+  let authorizationRequestId: string | undefined;
   const onPersist = async (authorizationUrl = currentAuthorizationUrl) => {
     if (authorizationUrl) currentAuthorizationUrl = authorizationUrl;
 
@@ -79,8 +81,7 @@ export const createMcpOAuthProvider = ({
       tokens,
     } = state;
     const discoveryState = _discoveryState as unknown as
-      | Record<string, unknown>
-      | undefined;
+      Record<string, unknown> | undefined;
     if (!clientInformation || !discoveryState) return;
 
     const newState: DBSSchema["mcp_server_configs"]["oauth"] | undefined =
@@ -106,13 +107,13 @@ export const createMcpOAuthProvider = ({
       : undefined;
     if (!newState) return;
 
-    await dbs.mcp_server_configs.upsert(
-      {
-        server_name: server_name,
-        config,
-      },
+    await dbs.mcp_server_configs.update(
+      { id },
       {
         oauth: newState,
+        ...(authorizationRequestId && {
+          oauth_request_id: authorizationRequestId,
+        }),
       },
     );
 
@@ -122,6 +123,7 @@ export const createMcpOAuthProvider = ({
   };
 
   const redirectUri = oauth.redirectUri;
+  const scope = oauth.scopes.join(" ");
 
   const clientSecret =
     configClientInfo?.clientSecret ??
@@ -134,13 +136,26 @@ export const createMcpOAuthProvider = ({
   };
 
   const authProvider: OAuthClientProvider = {
-    redirectUrl: redirectUri,
+    redirectUrl: auth.mode === "client_credentials" ? undefined : redirectUri,
     clientMetadataUrl:
       auth.mode === "cimd" ? auth.clientMetadataUrl : undefined,
     clientMetadata: {
       client_name: MCP_CLIENT_INFO.name,
       ...commonConfig,
+      scope: scope || undefined,
     },
+    state: () => {
+      /* Keep the registered redirect URI stable and renew state for each authorization attempt. */
+      authorizationRequestId = registerMcpAuthorizationRequest();
+      return authorizationRequestId;
+    },
+    ...(auth.mode === "client_credentials" && {
+      prepareTokenRequest: () =>
+        new URLSearchParams({
+          grant_type: "client_credentials",
+          ...(scope && { scope }),
+        }),
+    }),
     clientInformation() {
       if (configClientInfo?.mode === "client_credentials") {
         return {
@@ -159,15 +174,36 @@ export const createMcpOAuthProvider = ({
     },
     tokens: async () => {
       if (auth.mode === "client_credentials" && !state.tokens) {
-        const tokens = await fetchClientCredentialsToken(auth);
+        const tokens = await fetchClientCredentialsToken({
+          ...auth,
+          scope,
+        });
         state = { ...state, tokens };
         await onPersist();
       }
       return state.tokens;
     },
     async saveTokens(tokens) {
+      currentAuthorizationUrl = undefined;
       state = { ...state, tokens };
       await onPersist();
+    },
+    invalidateCredentials: (scope) => {
+      if (scope === "all" || scope === "tokens") {
+        state.tokens = undefined;
+      }
+      if (scope === "all" || scope === "client") {
+        state.clientInformation = configClientInfo && {
+          client_id: configClientInfo.clientId,
+          client_secret: configClientInfo.clientSecret,
+        };
+      }
+      if (scope === "all" || scope === "verifier") {
+        state.codeVerifier = undefined;
+      }
+      if (scope === "all" || scope === "discovery") {
+        state.discoveryState = undefined;
+      }
     },
     async redirectToAuthorization(authorizationUrl: URL) {
       await onPersist(authorizationUrl.toString());
@@ -194,15 +230,12 @@ export const createMcpOAuthProvider = ({
     },
   };
 
-  const onAuthError = (
+  const onAuthError = async (
     errorType: "dcr_not_supported" | "unknown",
     error: string,
   ) => {
-    void dbs.mcp_server_configs.update(
-      {
-        server_name: server_name,
-        config,
-      },
+    await dbs.mcp_server_configs.update(
+      { id },
       {
         oauth: {
           phase: "error",

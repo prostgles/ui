@@ -46,7 +46,11 @@ export class LinkMenu extends RTComp<P, S> {
   };
 
   loadShapes = () => {
-    const { w, links, gridRef, windows } = this.props;
+    const { w, links, gridRef, windows, tables } = this.props;
+    const getTableLabel = (tableName: string | null | undefined) =>
+      tables.find((table) => table.name === tableName)?.label ||
+      tableName ||
+      "";
 
     if (w.table_name && this.rootRef) {
       const shapes: Shape[] = [];
@@ -94,7 +98,7 @@ export class LinkMenu extends RTComp<P, S> {
           ) => {
             if (!w) return "";
             if (l.options.type === "table") {
-              return w.table_name!;
+              return getTableLabel(w.table_name);
             } else {
               const { dataSource } = l.options;
               const chartedColumnsLabel = l.options.columns.map((c) => c.name);
@@ -102,7 +106,7 @@ export class LinkMenu extends RTComp<P, S> {
                 dataSource?.type === "table" ?
                   (dataSource.joinPath?.at(-1)?.table ?? dataSource.tableName)
                 : (w.table_name ?? otherW?.table_name);
-              return `${chartedTableLabel} (${chartedColumnsLabel})`;
+              return `${getTableLabel(chartedTableLabel)} (${chartedColumnsLabel})`;
             }
           };
           const textStyle = {
@@ -174,7 +178,7 @@ export class LinkMenu extends RTComp<P, S> {
                       .join(" AND ")})`,
                 color: "blue",
               },
-              { text: p.table, color: "black" },
+              { text: getTableLabel(p.table), color: "black" },
             ]) ?? [];
 
           let flip = false;

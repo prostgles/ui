@@ -28,8 +28,24 @@ export const useLLMChat = (props: UseLLMChatProps) => {
   const chatsFilter = useMemo(() => {
     return {
       connection_id: { $in: [props.connectionId, null] },
-      parent_chat_message_id:
-        selectedChat?.type === "agent" ? selectedChat.parent_message_id : null,
+      ...(!selectedChat ?
+        {
+          parent_agentic_workflow_run_id: null,
+          agent_info: null,
+          parent_chat_message_id: null,
+        }
+      : selectedChat.type === "agenticWorkflow" ?
+        {
+          parent_agentic_workflow_run_id:
+            selectedChat.parent_agentic_workflow_run_id,
+        }
+      : selectedChat.type === "agent" ?
+        {
+          parent_chat_message_id: selectedChat.parent_message_id,
+        }
+      : {
+          id: selectedChat.id,
+        }),
     } satisfies FilterItem<DBSSchema["llm_chats"]>;
   }, [selectedChat, props.connectionId]);
   const [selectedChatId, setSelectedChat] = useState(selectedChat?.id);
@@ -117,6 +133,7 @@ export const useLLMChat = (props: UseLLMChatProps) => {
     llmMessages,
     messages,
     latestChats,
+    chatsFilter,
     setActiveChat: setSelectedChat,
     credentials,
     defaultCredential,

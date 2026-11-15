@@ -21,28 +21,37 @@ import { CodeEditorWithSaveButton } from "src/dashboard/CodeEditor/CodeEditorWit
 import type { CreateAgenticWorkflowToolUseArgs } from "./AgenticWorkflow";
 
 export const AgenticWorkflowDefinition = ({
-  workflow_function_definition,
+  workflow_function_definition: storedDefinition,
   workflow_function_definition_summary,
   chatId,
   workflowId,
   tool_use_id,
   package_dependencies,
+  sourceKey,
 }: CreateAgenticWorkflowToolUseArgs & {
-  chatId: number;
-  tool_use_id: string;
+  chatId: number | undefined;
+  tool_use_id: string | undefined;
+  sourceKey?: string;
 }) => {
   const {
-    dbsMethods: { getAgenticWorkflowTypes, reRunMCPServerTool },
+    dbsMethods: {
+      getAgenticWorkflowTypes,
+      reRunMCPServerTool,
+      saveWorkflowSource,
+    },
     connectionId,
     tables,
   } = usePrgl();
   const { onMount } = useMonacoScrollToLastLine(true);
 
   const agentFilesInfo = usePromise(async () => {
-    if (!getAgenticWorkflowTypes) return;
+    if (!getAgenticWorkflowTypes) {
+      return { agentFiles: undefined, error: undefined };
+    }
     /** Refresh on schema change */
     void tables;
     try {
+      void storedDefinition;
       const agentFiles = await getAgenticWorkflowTypes({
         connectionId,
         workflowId,
@@ -54,22 +63,30 @@ export const AgenticWorkflowDefinition = ({
         error,
       };
     }
-  }, [connectionId, getAgenticWorkflowTypes, workflowId, tables]);
-  const { agentFiles, error } = agentFilesInfo || {};
+  }, [
+    connectionId,
+    getAgenticWorkflowTypes,
+    workflowId,
+    tables,
+    storedDefinition,
+  ]);
+  const { agentFiles } = agentFilesInfo || {};
+  const workflow_function_definition =
+    agentFiles?.sourceDefinition ?? storedDefinition;
   const language = useMemo(() => {
     if (!agentFiles) return "typescript";
     const { files } = agentFiles;
     return {
       lang: "typescript",
       environment: "nodejs",
-      modelFileName: `workflow_${tool_use_id}.ts`,
+      modelFileName: `workflow_${workflowId ?? tool_use_id}.ts`,
       tsLibraries: getEntries(files).map(([filePath, content]) => ({
         filePath: `file:///${filePath}`,
         content,
       })),
       projectPath: undefined,
     } satisfies LanguageConfig;
-  }, [agentFiles, tool_use_id]);
+  }, [agentFiles, tool_use_id, workflowId]);
 
   const codeEditorProps = useMemo(() => {
     const monacoOpts: CodeEditorProps["options"] = {
@@ -77,10 +94,17 @@ export const AgenticWorkflowDefinition = ({
       lineNumbers: "on",
       lineNumbersMinChars: 4,
       minimap: { enabled: true },
-      readOnly: !reRunMCPServerTool,
+      readOnly: sourceKey ? !saveWorkflowSource : !reRunMCPServerTool,
     } as const;
     const onSave: CodeEditorProps["onSave"] =
-      reRunMCPServerTool ?
+      sourceKey && saveWorkflowSource && workflowId ?
+        (definition) =>
+          saveWorkflowSource({
+            workflowId,
+            definition,
+            expectedDefinition: workflow_function_definition,
+          })
+      : reRunMCPServerTool && chatId && tool_use_id ?
         async (newValue) => {
           const result = await reRunMCPServerTool({
             chatId,
@@ -112,6 +136,9 @@ export const AgenticWorkflowDefinition = ({
     return { options: monacoOpts, onSave };
   }, [
     reRunMCPServerTool,
+    sourceKey,
+    saveWorkflowSource,
+    workflow_function_definition,
     workflowId,
     tool_use_id,
     workflow_function_definition_summary,

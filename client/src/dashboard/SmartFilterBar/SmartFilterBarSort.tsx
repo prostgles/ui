@@ -10,6 +10,7 @@ import type { ColumnSort } from "@common/ColumnConfig/ColumnConfig";
 import type { SmartFilterBarProps } from "./SmartFilterBar";
 import { getColumnsWithInfo } from "../W_Table/tableUtils/getColumnsWithInfo";
 import { getColumnSortOptions } from "../W_Table/tableUtils/getColumnSortOptions";
+import { getColumnsWithInfoAndWidth } from "../W_Table/tableUtils/getColumnsWithInfoAndWidth";
 
 type P = SmartFilterBarProps & {
   table: DBSchemaTableWJoins;
@@ -19,8 +20,8 @@ export const SmartFilterBarSort = ({ table, ...props }: P) => {
     "w" in props ? props.w : undefined;
   const { columns } = "w" in props ? props.w : props;
   const resolvedColumns =
-    w || columns ?
-      getColumnsWithInfo(table.name, props.tables, columns)
+    w?.type === "table" ? getColumnsWithInfoAndWidth(props.tables, w)
+    : w || columns ? getColumnsWithInfo(table.name, props.tables, columns)
     : undefined;
   const setSort = (orderByKey: string | undefined, orderAsc = true) => {
     const newSort: ColumnSort | undefined =
@@ -56,7 +57,8 @@ export const SmartFilterBarSort = ({ table, ...props }: P) => {
         style={{
           background: "white",
         }}
-        emptyLabel="Sort by..."
+        title={orderByKey ? undefined : "Sort by..."}
+        iconPath={orderByKey ? undefined : mdiSortVariant}
         asRow={true}
         value={orderByKey}
         fullOptions={

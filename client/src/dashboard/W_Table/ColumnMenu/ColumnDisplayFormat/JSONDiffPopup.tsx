@@ -1,6 +1,7 @@
 import { SegmentedToggle } from "@components/SegmentedToggle";
 import { mdiViewColumn, mdiViewStream } from "@mdi/js";
 import type { editor } from "monaco-editor";
+import type { FunctionReturnTypes } from "prostgles-types";
 import Btn from "@components/Btn";
 import PopupMenu from "@components/PopupMenu";
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -10,14 +11,15 @@ type Props = {
   oldValue: unknown;
   newValue: unknown;
   language: "json" | "plaintext";
+  changes: FunctionReturnTypes["$jsonb_diff"] | undefined;
 };
 
 export const JSONDiffPopup = (props: Props) => {
-  const { oldValue, newValue, language } = props;
+  const { oldValue, newValue, language, changes } = props;
   const title = language === "plaintext" ? "Text diff" : "JSON diff";
   const summary = useMemo(
-    () => getChangeSummary(oldValue, newValue, language),
-    [oldValue, newValue, language],
+    () => getChangeSummary(oldValue, newValue, language, changes),
+    [oldValue, newValue, language, changes],
   );
   return (
     <PopupMenu
@@ -136,38 +138,46 @@ const getChangeSummary = (
   oldValue: unknown,
   newValue: unknown,
   language: Props["language"],
+  changes: Props["changes"],
 ) => {
   if (language === "plaintext") return "View diff";
   const before = asPropertyMap(oldValue);
   const after = asPropertyMap(newValue);
-  const changedKeys = [
-    ...new Set([...Object.keys(before), ...Object.keys(after)]),
-  ].filter(
-    (key) =>
-      !Object.hasOwn(before, key) ||
-      !Object.hasOwn(after, key) ||
-      formatJSON(before[key]) !== formatJSON(after[key]),
-  );
+  const changedKeys =
+    changes ?
+      Object.keys(changes).sort()
+    : [...new Set([...Object.keys(before), ...Object.keys(after)])].filter(
+        (key) =>
+          !Object.hasOwn(before, key) ||
+          !Object.hasOwn(after, key) ||
+          formatJSON(before[key]) !== formatJSON(after[key]),
+      );
   if (!changedKeys.length) return "No changes";
   return (
     <span className="flex-col gap-p25">
-      {changedKeys.map((key) => (
-        <span key={key}>
-          <strong>{key}</strong>{" "}
-          {Object.hasOwn(before, key) && Object.hasOwn(after, key) ?
-            <>
-              <del>{formatSummaryValue(before[key])}</del>
-              {"   "}
-              <span>{formatSummaryValue(after[key])}</span>
-            </>
-          : <span>
-              {formatSummaryValue(
-                Object.hasOwn(after, key) ? after[key] : before[key],
-              )}
-            </span>
-          }
-        </span>
-      ))}
+      {changedKeys.map((key) => {
+        const [oldValue, newValue] = changes?.[key] ?? [
+          before[key],
+          after[key],
+        ];
+        return (
+          <span key={key}>
+            <strong>{key}</strong>{" "}
+            {Object.hasOwn(before, key) && Object.hasOwn(after, key) ?
+              <>
+                <del>{formatSummaryValue(oldValue)}</del>
+                {"   "}
+                <span>{formatSummaryValue(newValue)}</span>
+              </>
+            : <span>
+                {formatSummaryValue(
+                  Object.hasOwn(after, key) ? newValue : oldValue,
+                )}
+              </span>
+            }
+          </span>
+        );
+      })}
     </span>
   );
 };

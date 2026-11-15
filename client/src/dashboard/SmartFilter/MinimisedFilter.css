@@ -1,12 +1,25 @@
-.FilterWrapper_MinimisedRoot {
+.FilterWrapper_MinimisedRoot,
+.GroupedFilterControl_Minimised {
   background-color: var(--blue-50);
+  border-color: var(--b-color);
+  box-shadow: none;
 }
 .FilterWrapper_Type {
   color: rgb(66, 66, 66);
 }
 
-.dark-theme .FilterWrapper_MinimisedRoot {
-  background-color: #12477f;
+.dark-theme .FilterWrapper_MinimisedRoot,
+.dark-theme .GroupedFilterControl_Minimised {
+  background-color: #002445;
+}
+.GroupedFilterControl_Minimised {
+  border-radius: 1em;
+}
+.GroupedFilterControl_Minimised .FilterWrapper_MinimisedRoot,
+.GroupedFilterControl_Minimised .GroupedFilterControl_Minimised,
+.GroupedFilterControl_Minimised [data-command="JoinedFilterControl"] {
+  background-color: transparent;
+  border-width: 0;
 }
 .dark-theme .FilterWrapper_Type {
   color: rgb(196, 196, 196);

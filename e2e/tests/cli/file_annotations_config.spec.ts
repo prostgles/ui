@@ -12,6 +12,8 @@ import { assertServiceOpenApi } from "../utils/assertServiceOpenApi";
 import { expect, test } from "../utils/fixtures";
 import { createConfigTestProject } from "../utils/createConfigTestProject";
 import { openTable } from "../utils/utils";
+import { chipColorsFaded } from "@common/ColumnConfig/chipColors";
+import { DEFAULT_ANNOTATION_COLOR } from "@common/managedTableSchema";
 
 test("CLI annotations support PDF uploads without document extraction", async ({
   page,
@@ -38,6 +40,7 @@ test("CLI annotations support PDF uploads without document extraction", async ({
       },
       connection: {
         table_options: {
+          files: { columns: { caption: { icon: "Tag" } } },
           documents: {
             columns: {
               preview_url: {
@@ -124,29 +127,52 @@ test("CLI annotations support PDF uploads without document extraction", async ({
       logPath: test.info().outputPath("annotations-server.log"),
     });
     const { db: dbo, tableSchema } = await deployment.connectProjectAs("admin");
-    const webApp = await page.request.get(`http://localhost:${apiPort}/app-route`);
+    const webApp = await page.request.get(
+      `http://localhost:${apiPort}/app-route`,
+    );
     expect(await webApp.text()).toBe(webAppHtml);
     expect(
       tableSchema?.find((table) => table.name === "file_annotations"),
-    ).toHaveProperty("managedTableType", "file-annotations");
-    /* Managed files publish card headers and file-size formatting defaults. */
-    expect(tableSchema?.find((table) => table.name === "files")).toMatchObject({
+    ).toMatchObject({
+      managedTableType: "file-annotations",
+      card: {
+        summaryFields: ["id", "file_id", "file_version", "page"],
+        layoutSections: [],
+      },
+      columnConfigs: {
+        text_selections: { show: false },
+      },
+    });
+    /* Managed files publish explicit card fields and independent table formatting. */
+    const filesTableSchema = tableSchema?.find(
+      (table) => table.name === "files",
+    );
+    expect(filesTableSchema).toMatchObject({
       card: {
         headerColumn: "original_name",
         subHeaderColumns: ["original_last_modified", "content_length"],
+        summaryFields: ["description", "url"],
+        layoutSections: [
+          {
+            items: [
+              "id",
+              "extension",
+              "content_type",
+              "added",
+              "updated",
+              "version",
+            ],
+          },
+        ],
       },
       columnConfigs: {
-        content_length: { label: "Size", format: { type: "File size" } },
+        content_length: {
+          label: "Size",
+          format: { type: "File size" },
+        },
+        text_content: { show: false },
+        docling_metadata: { show: false },
       },
-      columns: expect.arrayContaining([
-        expect.objectContaining({
-          name: "extraction_status",
-          defaultRenderAs: {
-            type: "Internal",
-            params: { component: "FileExtractionStatus" },
-          },
-        }),
-      ]),
     });
     expect(
       tableSchema
@@ -191,8 +217,8 @@ test("CLI annotations support PDF uploads without document extraction", async ({
       { returning: "*" },
     );
     // Previously annotations invoked the documents service despite extractText: false.
-    assert.equal(file.extraction_status, null);
-    assert.equal(file.extraction_job_id, undefined);
+    assert.equal(file.extraction_status, undefined);
+    assert.equal(file.text_extraction_job_id, undefined);
     assert.equal(file.docling_metadata, null);
     assert.equal(file.version, 1);
     assert.equal(await dbo.file_versions!.count!({ file_id: file.id }), 1);
@@ -285,6 +311,52 @@ test("CLI annotations support PDF uploads without document extraction", async ({
       "Last modified",
     );
     await setFileView("table");
+    /* Linked file and annotation references must not add unsupported child joins. */
+    const files = page.locator('[data-table-name="files"]');
+    await files.getByTestId("AddColumnMenu").click();
+    await page
+      .getByTestId("SearchList.List")
+      .locator('[data-key="Referenced"]')
+      .click();
+    await page
+      .getByTestId("JoinPathSelectorV2")
+      .locator('[data-key="file_annotations"]')
+      .click();
+    await page.getByTestId("LinkedColumn.Add").click();
+    const linkedExcerpt = files
+      .getByTestId("LinkedColumn.OpenRecord")
+      .filter({ hasText: "Source excerpt" });
+    await expect(linkedExcerpt.getByTitle("Click to copy value")).toContainText(
+      file.id.slice(0, 8),
+    );
+    await expect(files.getByTestId("ErrorComponent")).toHaveCount(0);
+    await state.db.windows!.update(
+      { id: fileWindow.id },
+      {
+        columns: [
+          { name: "original_name" },
+          {
+            name: "conditions",
+            nested: {
+              path: [
+                { table: "file_annotations", on: [{ id: "file_id" }] },
+                { table: "conditions", on: [{ id: "source_annotation_id" }] },
+              ],
+              columns: [{ name: "source_annotation_id" }],
+              display: { type: "values", labels: "none" },
+            },
+          },
+        ],
+      },
+    );
+    await expect(
+      files.getByRole("cell", { name: String(annotation.id), exact: true }),
+    ).toBeVisible();
+    await expect(files.getByTestId("ErrorComponent")).toHaveCount(0);
+    await state.db.windows!.update(
+      { id: fileWindow.id },
+      { columns: fileWindow.columns },
+    );
     /* File previews must use connection context, independent of the URL path. */
     await page.evaluate(() => {
       window.history.replaceState(window.history.state, "", "/file-preview");
@@ -295,14 +367,37 @@ test("CLI annotations support PDF uploads without document extraction", async ({
     await expect(documents.getByTitle("application/pdf")).toBeVisible();
     const pdfResponse = page.waitForResponse((response) => {
       const url = new URL(response.url());
-      return url.port === String(apiPort) && url.pathname.endsWith(`/${file.id}`);
+      return (
+        url.port === String(apiPort) && url.pathname.endsWith(`/${file.id}`)
+      );
     });
     await documents.getByTitle("application/pdf").click();
     expect((await pdfResponse).status()).toBe(200);
-    await expect(page.locator(".PdfViewer .textLayer").first()).not.toBeEmpty();
     await expect(
-      page.getByRole("button", { name: "Annotations (1)", exact: true }),
+      page.getByTestId("PdfViewer").locator(".textLayer").first(),
+    ).not.toBeEmpty();
+    const annotationsPanel = page
+      .getByTestId("PdfViewer")
+      .getByRole("complementary", { name: "PDF annotations", exact: true });
+    await expect(
+      annotationsPanel.getByPlaceholder("Search 1 annotations..."),
     ).toBeVisible();
+    /* File details open the source file's form and reset the toolbar toggle on close. */
+    const fileDetailsButton = page
+      .getByTestId("PdfViewer.toolbar")
+      .getByRole("button", { name: "Show file details", exact: true });
+    await fileDetailsButton.click();
+    const fileDetailsForm = page.getByTestId("SmartForm");
+    await expect(fileDetailsForm).toHaveAttribute("data-key", "files");
+    await expect(
+      fileDetailsForm
+        .locator('[data-key="original_name"]')
+        .getByRole("textbox"),
+    ).toHaveValue("source.pdf");
+    await expect(fileDetailsButton).toHaveAttribute("aria-pressed", "true");
+    await page.getByTestId("Popup.close").last().click();
+    await expect(fileDetailsForm).toHaveCount(0);
+    await expect(fileDetailsButton).toHaveAttribute("aria-pressed", "false");
     await page.getByTestId("Popup.close").last().click();
     await page.evaluate((url) => {
       window.history.replaceState(window.history.state, "", url);
@@ -339,12 +434,26 @@ test("CLI annotations support PDF uploads without document extraction", async ({
       .poll(() => dbo.documents!.findOne!({ file_id: file.id }))
       .toMatchObject({ title: "Updated title", __managed_file_id: "reserved" });
 
-    // Annotation links open an immediately saved form; both errors must be readable.
+    /* Annotation references open the PDF; its details retain inline errors. */
     await expect(form).toBeHidden();
     await openTable(page, "conditions", true);
     await page
       .locator('[data-table-name="conditions"]')
       .getByRole("button", { name: "Source excerpt", exact: true })
+      .click();
+    await expect(page.getByTestId("PdfViewer")).toBeVisible();
+    await expect(page.getByTestId("SmartForm")).toHaveCount(0);
+    await expect(annotationsPanel.locator(".SmartCard.selected")).toContainText(
+      "Source excerpt",
+    );
+    await page.setViewportSize({ width: 1080, height: 900 });
+    await page
+      .getByTestId("PdfViewer.toolbar")
+      .getByRole("button", { name: "Annotations (1)", exact: true })
+      .click();
+    await page
+      .getByTestId("SearchList.List")
+      .getByText("Source excerpt", { exact: true })
       .click();
     const annotationForm = page.getByTestId("SmartForm");
     const textField = annotationForm.locator('[data-key="text"]');
@@ -360,6 +469,8 @@ test("CLI annotations support PDF uploads without document extraction", async ({
       await dbo.file_annotations!.findOne!({ id: annotation.id }),
     ).toMatchObject({ text: "Source excerpt" });
     await page.getByTestId("Popup.close").last().click();
+    await page.getByTestId("Popup.close").last().click();
+    await page.setViewportSize({ width: 1280, height: 720 });
     const image = await dbo.files!.insert!(
       {
         data: await page.screenshot({ type: "jpeg" }),
@@ -461,16 +572,14 @@ test("CLI annotations support PDF uploads without document extraction", async ({
         .getByRole("button", { name: "Updated title", exact: true })
         .click();
       await expect(
-        page.locator(".PdfViewer .textLayer").first(),
+        page.getByTestId("PdfViewer").locator(".textLayer").first(),
       ).not.toBeEmpty();
-      const annotationsButton = page.getByRole("button", {
-        name: "Annotations (1)",
-        exact: true,
-      });
       if (previewUrl === externalFileUrl) {
-        await expect(annotationsButton).toHaveCount(0);
+        await expect(annotationsPanel).toHaveCount(0);
       } else {
-        await expect(annotationsButton).toBeVisible();
+        await expect(
+          annotationsPanel.getByPlaceholder("Search 1 annotations..."),
+        ).toBeVisible();
       }
       await page.getByTestId("Popup.close").last().click();
     }
@@ -488,11 +597,11 @@ test("CLI annotations support PDF uploads without document extraction", async ({
       .getByRole("textbox");
     await captionInput.fill("Custom caption");
     await expect(categoryInput).toHaveValue("general");
+    await expect(fileForm.locator('[data-key="content_length"]')).toHaveCount(
+      0,
+    );
     await expect(
-      fileForm.locator('[data-key="content_length"]'),
-    ).toHaveCount(0);
-    await expect(
-      fileForm.locator('[data-key="extraction_status"]'),
+      fileForm.locator('[data-key="text_extraction_metadata"]'),
     ).toHaveCount(0);
     for (const name of ["initial.txt", "replacement.txt"]) {
       await fileForm.locator('input[type="file"]').setInputFiles({
@@ -507,7 +616,7 @@ test("CLI annotations support PDF uploads without document extraction", async ({
       }
     }
     await fileForm.getByTestId("SmartForm.insert").click();
-    await expect(fileForm).toBeHidden();
+    await expect(page.locator(".SmartForm")).toBeHidden();
     const customFileFilter = { original_name: "replacement.txt" };
     await expect
       .poll(() => dbo.files!.findOne!(customFileFilter))
@@ -521,6 +630,22 @@ test("CLI annotations support PDF uploads without document extraction", async ({
       .filter({ hasText: "replacement.txt" })
       .getByTestId("dashboard.window.viewEditRow")
       .click();
+    /* File previews and removal controls align with icon-bearing form fields. */
+    const savedFilePreview = fileForm.getByTestId("MediaViewer");
+    const removeFileButton = fileForm.getByRole("button", {
+      name: "Remove file",
+      exact: true,
+    });
+    await expect(savedFilePreview).toBeVisible();
+    await expect(removeFileButton).toBeVisible();
+    const captionBounds = await fileForm
+      .locator('[data-key="caption"] .form-field__hint-wrapper')
+      .boundingBox();
+    const previewBounds = await savedFilePreview.boundingBox();
+    const removeButtonBounds = await removeFileButton.boundingBox();
+    assert.ok(captionBounds && previewBounds && removeButtonBounds);
+    expect(previewBounds.x).toBeCloseTo(captionBounds.x, 0);
+    expect(removeButtonBounds.x).toBeCloseTo(captionBounds.x, 0);
     await captionInput.fill("Updated caption");
     await fileForm.getByTestId("SmartForm.update").click();
     await page.getByTestId("SmartForm.update.confirm").click();
@@ -543,6 +668,20 @@ test("CLI annotations stay bound to file revisions", async ({ page }) => {
   const configPath = createConfigTestProject(
     {
       id: configId,
+      /* Revision cards generate a reference display for file_version. */
+      connection: {
+        table_options: {
+          revisions: { card: { headerColumn: "original_name" } },
+        },
+      },
+      tableConfig: {
+        conditions: {
+          columns: {
+            id: "serial PRIMARY KEY",
+            source_annotation_id: "integer REFERENCES file_annotations(id)",
+          },
+        },
+      },
       databaseConfig: {
         file_table_config: {
           fileTable: "files",
@@ -562,7 +701,7 @@ test("CLI annotations stay bound to file revisions", async ({ page }) => {
       {
         original_name: "revisions.pdf",
         data: createAnnotationPdf(),
-        text_content: ["Beginning phrase"],
+        text_content: ["Beginning phrase", "Middle page", "Ending phrase"],
       },
       { returning: "*" },
     );
@@ -598,14 +737,13 @@ test("CLI annotations stay bound to file revisions", async ({ page }) => {
       {
         file_id: file.id,
         file_version: 1,
-        page: 1,
-        start_text: "Beginning",
+        page: 3,
+        start_text: "Ending",
         end_text: "phrase",
       },
       { returning: "*" },
     );
-    expect(historical.text).toBe("Beginning phrase");
-    await db.file_annotations!.delete!({ id: historical.id });
+    expect(historical.text).toBe("Ending phrase");
     await db.file_annotations!.update!(
       { id: original.id },
       { end_text: "phrase" },
@@ -654,8 +792,41 @@ test("CLI annotations stay bound to file revisions", async ({ page }) => {
       .locator('[data-table-name="files"]')
       .getByTitle("application/pdf")
       .click();
-    const viewer = page.locator(".PdfViewer");
-    await expect(viewer.locator(".textLayer")).toContainText(
+    const viewer = page.getByTestId("PdfViewer");
+    await expect(viewer.locator(".textLayer").first()).toContainText(
+      "Replacement phrase",
+    );
+    /* Preview cards omit the file and revision already shown by the PDF. */
+    const annotationCard = viewer
+      .getByRole("complementary", { name: "PDF annotations" })
+      .locator(".SmartCard");
+    await expect(annotationCard).toHaveCount(1);
+    await expect(annotationCard).toContainText("Replacement phrase");
+    await expect(annotationCard.getByTitle("application/pdf")).toHaveCount(0);
+    await expect(
+      annotationCard
+        .locator(".Label")
+        .filter({ hasText: /^file (id|version)$/i }),
+    ).toHaveCount(0);
+    await expect(
+      viewer.locator(`[data-annotation-id="${replacement.id}"]`),
+    ).toBeVisible();
+    await expect(
+      viewer.locator(`[data-annotation-id="${original.id}"]`),
+    ).toHaveCount(0);
+    await page.getByTestId("Popup.close").last().click();
+    /* The file form's top preview resolves annotations without row context. */
+    await page
+      .locator('[data-table-name="files"]')
+      .getByTestId("dashboard.window.viewEditRow")
+      .click();
+    await page
+      .getByTestId("SmartForm")
+      .getByTestId("MediaViewer")
+      .first()
+      .getByRole("button")
+      .click();
+    await expect(viewer.locator(".textLayer").first()).toContainText(
       "Replacement phrase",
     );
     await expect(
@@ -665,6 +836,7 @@ test("CLI annotations stay bound to file revisions", async ({ page }) => {
       viewer.locator(`[data-annotation-id="${original.id}"]`),
     ).toHaveCount(0);
     await page.getByTestId("Popup.close").last().click();
+    await page.getByTestId("Popup.close").last().click();
     await openTable(page, "file_annotations", true);
     await page
       .locator('[data-table-name="file_annotations"]')
@@ -673,7 +845,7 @@ test("CLI annotations stay bound to file revisions", async ({ page }) => {
       .getByTestId("dashboard.window.viewEditRow")
       .click();
     await page.getByTestId("SmartForm").getByTitle("application/pdf").click();
-    await expect(viewer.locator(".textLayer")).toContainText(
+    await expect(viewer.locator(".textLayer").first()).toContainText(
       "Beginning phrase",
     );
     await expect(
@@ -682,6 +854,42 @@ test("CLI annotations stay bound to file revisions", async ({ page }) => {
     await expect(
       viewer.locator(`[data-annotation-id="${replacement.id}"]`),
     ).toHaveCount(0);
+    await page.getByTestId("Popup.close").last().click();
+    await page.getByTestId("Popup.close").last().click();
+
+    /* A reference selects its annotation and page from the historical PDF. */
+    const condition = await db.conditions!.insert!(
+      { source_annotation_id: historical.id },
+      { returning: "*" },
+    );
+    await openTable(page, "conditions", true);
+    await page
+      .locator('[data-table-name="conditions"]')
+      .getByRole("button", { name: "Ending phrase", exact: true })
+      .click();
+    await expect(page.getByTestId("SmartForm")).toHaveCount(0);
+    await expect(viewer.locator(".textLayer").first()).toContainText(
+      "Beginning phrase",
+    );
+    await expect(
+      page.getByTestId("PdfViewer.toolbar").getByTestId("Pagination.page"),
+    ).toHaveValue("3");
+    const selectedHighlight = viewer
+      .getByTestId("PdfViewer.highlight")
+      .and(viewer.locator(`[data-annotation-id="${historical.id}"]`));
+    await expect(selectedHighlight).toBeInViewport();
+    await expect(selectedHighlight).toHaveCSS("opacity", "1");
+    await expect(
+      viewer
+        .getByTestId("PdfViewer.highlight")
+        .and(viewer.locator(`[data-annotation-id="${original.id}"]`)),
+    ).toHaveCSS("opacity", "0.12");
+    await expect(
+      viewer.locator(`[data-annotation-id="${replacement.id}"]`),
+    ).toHaveCount(0);
+    await page.getByTestId("Popup.close").last().click();
+    await expect(viewer).toHaveCount(0);
+    await db.conditions!.delete!({ id: condition.id });
     await db.files!.delete!({ id: file.id });
     expect(await db.file_annotations!.count!({ file_id: file.id })).toBe(0);
   } finally {
@@ -692,9 +900,26 @@ test("CLI annotations stay bound to file revisions", async ({ page }) => {
 test("CLI text annotations validate anchors and span PDF pages", async ({
   page,
 }) => {
+  await page.setViewportSize({ width: 1080, height: 900 });
   const configPath = createConfigTestProject(
     {
       id: "text-annotations-e2e",
+      connection: {
+        table_options: {
+          file_annotations: {
+            columns: { text: { label: "Quoted text" } },
+          },
+        },
+      },
+      tableConfig: {
+        annotation_comments: {
+          columns: {
+            id: "serial PRIMARY KEY",
+            annotation_id: "integer REFERENCES file_annotations(id)",
+            text: "text NOT NULL",
+          },
+        },
+      },
       databaseConfig: {
         file_table_config: {
           fileTable: "files",
@@ -733,6 +958,7 @@ test("CLI text annotations validate anchors and span PDF pages", async ({
       { ...anchors, end_page: 1, end_text: "Beginning phrase" },
       { returning: "*" },
     );
+    expect(deferred.color).toBe(DEFAULT_ANNOTATION_COLOR);
     expect(deferred.text_selections).toEqual([
       { page: 1, startText: "Beginning phrase", endText: "Beginning phrase" },
     ]);
@@ -948,8 +1174,17 @@ test("CLI text annotations validate anchors and span PDF pages", async ({
       .locator('[data-table-name="files"]')
       .getByTitle("application/pdf")
       .click();
-    const viewer = page.locator(".PdfViewer");
-    const highlights = viewer.locator(".pdf-viewer__highlight");
+    const viewer = page.getByTestId("PdfViewer");
+    const toolbar = page
+      .getByTestId("Popup.header")
+      .getByTestId("PdfViewer.toolbar");
+    await expect(toolbar).toBeVisible();
+    const continuousScroll = toolbar.getByRole("checkbox", {
+      name: "Continuous scroll",
+    });
+    await expect(continuousScroll).toBeChecked();
+    await continuousScroll.uncheck();
+    const highlights = viewer.getByTestId("PdfViewer.highlight");
     for (const text of ["Beginning phrase", "Middle page", "Ending phrase"]) {
       await expect(viewer.locator(".textLayer")).toContainText(text);
       // The synthetic table cell has only Docling geometry, so it also renders on page 2.
@@ -968,7 +1203,7 @@ test("CLI text annotations validate anchors and span PDF pages", async ({
         span.y + span.height + 1,
       );
       if (text !== "Ending phrase")
-        await viewer.getByTestId("Pagination.nextPage").click();
+        await toolbar.getByTestId("Pagination.nextPage").click();
     }
     const fullWidth = (await highlights.boundingBox())!.width;
     await db.file_annotations!.update!(
@@ -1055,7 +1290,7 @@ test("CLI text annotations validate anchors and span PDF pages", async ({
       { id: file.id },
       { docling_metadata: null, text_content: null },
     );
-    await viewer.getByTestId("Pagination.firstPage").click();
+    await toolbar.getByTestId("Pagination.firstPage").click();
     await expect(viewer.locator(".textLayer")).toContainText(
       "Beginning phrase",
     );
@@ -1071,18 +1306,22 @@ test("CLI text annotations validate anchors and span PDF pages", async ({
         });
       await viewer.locator(".pdfViewer").dispatchEvent("pointerup");
     };
+    /* Selection controls stay inside the visible pane when the PDF is wider. */
+    await page.setViewportSize({ width: 520, height: 900 });
     await selectText("Beginning phrase");
     for (const title of ["Add annotation", "Add another selection"]) {
       const button = viewer.getByTitle(title, { exact: true });
+      await expect(button).toBeInViewport({ ratio: 1 });
       await expect(button).toHaveCSS("box-sizing", "border-box");
       expect((await button.boundingBox())!.height).toBe(32);
     }
     await viewer.getByTitle("Add another selection").click();
+    await page.setViewportSize({ width: 1080, height: 900 });
     await expect(highlights).toHaveCount(1);
     await selectText("Separate excerpt");
     await viewer.getByTitle("Add another selection").click();
     await expect(highlights).toHaveCount(2);
-    await viewer.getByTestId("Pagination.lastPage").click();
+    await toolbar.getByTestId("Pagination.lastPage").click();
     await expect(viewer.locator(".textLayer")).toContainText("Ending phrase");
     await selectText("Ending phrase");
     await viewer.getByTitle("Add another selection").click();
@@ -1091,6 +1330,18 @@ test("CLI text annotations validate anchors and span PDF pages", async ({
       .getByRole("button", { name: "Save annotation", exact: true })
       .click();
     const form = page.getByTestId("SmartForm").last();
+    /* Annotation colors use the shared palette and persist with the excerpt. */
+    await form.getByTitle("Annotation color", { exact: true }).click();
+    expect(
+      await page
+        .getByTestId("Popup.content")
+        .last()
+        .locator("button[data-key]")
+        .evaluateAll((buttons) =>
+          buttons.map((button) => button.getAttribute("data-key")),
+        ),
+    ).toEqual(chipColorsFaded.map(({ color }) => color));
+    await page.locator('[data-key="var(--light-green)"]').click();
     await form.getByTestId("SmartForm.insert").click();
     await expect
       .poll(() => db.file_annotations!.findOne!())
@@ -1098,6 +1349,7 @@ test("CLI text annotations validate anchors and span PDF pages", async ({
         page: 1,
         end_page: 3,
         text: "Beginning phrase\nSeparate excerpt\nEnding phrase",
+        color: "var(--light-green)",
         text_selections: [
           {
             page: 1,
@@ -1117,9 +1369,13 @@ test("CLI text annotations validate anchors and span PDF pages", async ({
         ],
       });
     await expect(form).toBeHidden();
-    await viewer.getByTestId("Pagination.firstPage").click();
+    await toolbar.getByTestId("Pagination.firstPage").click();
     await expect(highlights).toHaveCount(2);
-    await viewer.getByTestId("Pagination.nextPage").click();
+    await expect(highlights.first()).toHaveAttribute(
+      "style",
+      expect.stringContaining("background-color: var(--light-green)"),
+    );
+    await toolbar.getByTestId("Pagination.nextPage").click();
     await expect(viewer.locator(".textLayer")).toContainText("Middle page");
     await expect(highlights).toHaveCount(0);
 
@@ -1146,10 +1402,10 @@ test("CLI text annotations validate anchors and span PDF pages", async ({
       },
       { returning: "*" },
     );
-    await viewer.getByTestId("Pagination.lastPage").click();
+    await toolbar.getByTestId("Pagination.lastPage").click();
     await expect(highlights).toHaveCount(2);
     const openSaved = async () => {
-      await viewer
+      await toolbar
         .getByRole("button", { name: "Annotations (2)", exact: true })
         .click();
       await page
@@ -1159,30 +1415,24 @@ test("CLI text annotations validate anchors and span PDF pages", async ({
       await expect(page.getByTestId("SmartForm").last()).toBeVisible();
     };
     await openSaved();
-    await expect(viewer.getByTestId("Pagination.page")).toHaveValue("3");
+    await expect(toolbar.getByTestId("Pagination.page")).toHaveValue("3");
     await expect(
-      viewer.locator(
-        `.pdf-viewer__highlight[data-annotation-id="${saved.id}"]`,
-      ),
-    ).toHaveCSS("opacity", "0.4");
+      highlights.and(viewer.locator(`[data-annotation-id="${saved.id}"]`)),
+    ).toHaveCSS("opacity", "1");
     await expect(
-      viewer.locator(
-        `.pdf-viewer__highlight[data-annotation-id="${other.id}"]`,
-      ),
+      highlights.and(viewer.locator(`[data-annotation-id="${other.id}"]`)),
     ).toHaveCSS("opacity", "0.12");
     await page.getByTestId("Popup.close").last().click();
-    await expect(viewer.getByTestId("Pagination.page")).toHaveValue("3");
+    await expect(toolbar.getByTestId("Pagination.page")).toHaveValue("3");
     await expect(
-      viewer.locator(
-        `.pdf-viewer__highlight[data-annotation-id="${other.id}"]`,
-      ),
-    ).toHaveCSS("opacity", "0.4");
-    await viewer.getByTestId("Pagination.prevPage").click();
+      highlights.and(viewer.locator(`[data-annotation-id="${other.id}"]`)),
+    ).toHaveCSS("opacity", "1");
+    await toolbar.getByTestId("Pagination.prevPage").click();
     await expect(viewer.locator(".textLayer")).toContainText("Middle page");
     await openSaved();
-    await expect(viewer.getByTestId("Pagination.page")).toHaveValue("1");
+    await expect(toolbar.getByTestId("Pagination.page")).toHaveValue("1");
 
-    const searchInput = viewer.getByPlaceholder("Search document");
+    const searchInput = toolbar.getByPlaceholder("Search document");
     const pressCtrlF = () =>
       page.evaluate(() =>
         window.dispatchEvent(
@@ -1200,13 +1450,819 @@ test("CLI text annotations validate anchors and span PDF pages", async ({
     await popupClose.click();
     await pressCtrlF();
     await expect(searchInput).toBeFocused();
+
+    /* New searches prefer the current page and scroll to its offscreen match. */
+    await toolbar.getByTestId("Pagination.nextPage").click();
+    await expect(toolbar.getByTestId("Pagination.page")).toHaveValue("2");
+    await searchInput.fill("Footer text");
+    await expect(toolbar.locator(".pdf-viewer-search__count")).toHaveText(
+      "2/3",
+    );
+    for (const expectedPage of ["2", "3", "1", "2"]) {
+      await expect(toolbar.getByTestId("Pagination.page")).toHaveValue(
+        expectedPage,
+      );
+      await expect(
+        viewer.locator(".textLayer span").filter({ hasText: /^Footer text$/ }),
+      ).toBeInViewport({ ratio: 1 });
+      await toolbar.getByRole("button", { name: "Next result" }).click();
+    }
+    await toolbar.getByRole("button", { name: "Previous result" }).click();
+    await expect(toolbar.getByTestId("Pagination.page")).toHaveValue("2");
+    await expect(
+      viewer.locator(".textLayer span").filter({ hasText: /^Footer text$/ }),
+    ).toBeInViewport({ ratio: 1 });
+
+    /* Enter applies pending input; a page without matches falls back to match 1. */
+    await searchInput.fill("Beginning phrase");
+    await searchInput.press("Enter");
+    await expect(toolbar.locator(".pdf-viewer-search__count")).toHaveText(
+      "1/1",
+    );
+    await expect(toolbar.getByTestId("Pagination.page")).toHaveValue("1");
+    await expect
+      .poll(() =>
+        page.evaluate(() =>
+          Array.from(CSS.highlights.get("pdf-viewer-search-active") ?? [])
+            .map((range) => (range instanceof Range ? range.toString() : ""))
+            .join(""),
+        ),
+      )
+      .toBe("Beginning phrase");
+
+    /* Search colors preserve the PDF lettering without painting overlay text. */
+    await expect(viewer.locator(".textLayer")).toHaveCSS(
+      "mix-blend-mode",
+      "multiply",
+    );
+    const searchedText = viewer
+      .locator(".textLayer span")
+      .filter({ hasText: "Beginning phrase" });
+    for (const highlightName of [
+      "pdf-viewer-search",
+      "pdf-viewer-search-active",
+    ]) {
+      expect(
+        await searchedText.evaluate(
+          (span, name) => getComputedStyle(span, `::highlight(${name})`).color,
+          highlightName,
+        ),
+      ).toBe("rgba(0, 0, 0, 0)");
+    }
+
+    /* Continuous scrolling preserves navigation, search and text annotations. */
+    await searchInput.fill("");
+    await expect(continuousScroll).not.toBeChecked();
+    await continuousScroll.check();
+    const pdfPages = viewer.locator(".pdfViewer .page");
+    await expect(pdfPages).toHaveCount(3);
+    await toolbar.getByTestId("Pagination.nextPage").click();
+    await expect(toolbar.getByTestId("Pagination.page")).toHaveValue("2");
+    await expect(pdfPages.nth(1).locator(".textLayer")).toContainText(
+      "Middle page",
+    );
+    await pdfPages.nth(1).hover();
+    await page.mouse.wheel(0, 1250);
+    await expect(toolbar.getByTestId("Pagination.page")).toHaveValue("3");
+    await expect(
+      pdfPages.nth(2).getByTestId("PdfViewer.highlight"),
+    ).toHaveCount(2);
+    await selectText("Ending phrase");
+    await expect(
+      viewer.getByTitle("Add annotation", { exact: true }),
+    ).toBeVisible();
+    await page.evaluate(() => window.getSelection()?.removeAllRanges());
+    await searchInput.fill("Footer text");
+    await expect(toolbar.locator(".pdf-viewer-search__count")).toHaveText(
+      "3/3",
+    );
+    for (const [index, expectedPage] of [3, 1, 2, 3].entries()) {
+      if (index) await searchInput.press("Enter");
+      await expect(toolbar.getByTestId("Pagination.page")).toHaveValue(
+        String(expectedPage),
+      );
+      await expect(
+        pdfPages
+          .nth(expectedPage - 1)
+          .locator(".textLayer span")
+          .filter({ hasText: /^Footer text$/ }),
+      ).toBeInViewport({ ratio: 0.99 });
+    }
+    /* Search highlights every rendered page, including adjacent pages. */
+    await expect
+      .poll(() =>
+        page.evaluate(() =>
+          Array.from(CSS.highlights.get("pdf-viewer-search") ?? [])
+            .map((range) =>
+              range.startContainer.parentElement
+                ?.closest(".page")
+                ?.getAttribute("data-page-number"),
+            )
+            .sort(),
+        ),
+      )
+      .toEqual(["1", "2", "3"]);
+    /* Returning to the active result's page must not override manual scrolling. */
+    await pdfPages.first().evaluate((element) => element.scrollIntoView());
+    await expect(toolbar.getByTestId("Pagination.page")).toHaveValue("1");
+    await expect
+      .poll(() =>
+        page.evaluate(() =>
+          Array.from(CSS.highlights.get("pdf-viewer-search-active") ?? []).map(
+            (range) =>
+              range.startContainer.parentElement
+                ?.closest(".page")
+                ?.getAttribute("data-page-number"),
+          ),
+        ),
+      )
+      .toEqual(["3"]);
+    await pdfPages.nth(2).evaluate((element) => element.scrollIntoView());
+    await expect(toolbar.getByTestId("Pagination.page")).toHaveValue("3");
+    await expect(
+      pdfPages
+        .nth(2)
+        .locator(".textLayer span")
+        .filter({ hasText: "Ending phrase" }),
+    ).toBeInViewport({ ratio: 0.99 });
+    await searchInput.fill("");
+    await continuousScroll.uncheck();
+    await expect(pdfPages).toHaveCount(1);
+    await expect(toolbar.getByTestId("Pagination.page")).toHaveValue("3");
+    await expect(pdfPages.locator(".textLayer")).toContainText("Ending phrase");
+    await continuousScroll.check();
+    await expect(pdfPages).toHaveCount(3);
+    await expect(toolbar.getByTestId("Pagination.page")).toHaveValue("3");
+    await continuousScroll.uncheck();
+    await expect(pdfPages).toHaveCount(1);
+    await expect(pdfPages.locator(".textLayer")).toContainText("Ending phrase");
+
+    /* Wide viewers show searchable table cards beside the PDF; narrow viewers use the menu. */
+    await searchInput.fill("");
+    await page.getByTestId("Popup.close").last().click();
+    await page.setViewportSize({ width: 1600, height: 900 });
+    /* Reserve the annotation pane's full size before the PDF finishes loading. */
+    const pdfResponseReady = Promise.withResolvers<void>();
+    await page.route(
+      new URL(file.url, deployment.dashboardUrl).href,
+      async (route) => {
+        await pdfResponseReady.promise;
+        await route.continue();
+      },
+      { times: 1 },
+    );
+    await page
+      .locator('[data-table-name="files"]')
+      .getByTitle("application/pdf")
+      .click();
+    const annotationsPanel = viewer.getByRole("complementary", {
+      name: "PDF annotations",
+    });
+    await expect(annotationsPanel).toBeVisible();
+    const loadingPanelBounds = await annotationsPanel.boundingBox();
+    assert.ok(loadingPanelBounds);
+    expect(loadingPanelBounds.height).toBeGreaterThan(700);
+    await expect(viewer.locator(".pdfViewer .page")).toHaveCount(0);
+    await continuousScroll.uncheck();
+    pdfResponseReady.resolve();
+    await expect(viewer.locator(".textLayer")).toContainText(
+      "Beginning phrase",
+    );
+    await expect(
+      annotationsPanel.getByPlaceholder("Search 2 annotations..."),
+    ).toBeVisible();
+    await expect(annotationsPanel.getByRole("heading")).toHaveCount(0);
+    await expect(annotationsPanel.locator(".SmartCard")).toHaveCount(2);
+    await expect(annotationsPanel.getByTitle("application/pdf")).toHaveCount(0);
+    expect(await annotationsPanel.boundingBox()).toEqual(loadingPanelBounds);
+    /* PDF clicks reveal offscreen and paginated cards while search and pagination stay fixed. */
+    const paneScrollAnnotations = await db.file_annotations!.insert!(
+      Array.from({ length: 25 }, (_, index) => ({
+        file_id: file.id,
+        name: `Pane scroll annotation ${index}`,
+        text_selections: [
+          {
+            page: 2,
+            startText: "Middle page",
+            endText: "Middle page",
+            rects: [{ x: 40, y: 40, width: 100, height: 12 }],
+          },
+        ],
+      })),
+      { returning: "*" },
+    );
+    const annotationPaneSearch = annotationsPanel.locator(".SmartSearch input");
+    /* Suggestions and Enter filters only search the displayed annotation fields. */
+    await annotationPaneSearch.fill(file.id);
+    await expect(annotationsPanel.getByTestId("SearchList.List")).toContainText(
+      "No results",
+    );
+    await annotationPaneSearch.press("Enter");
+    await expect(annotationsPanel.locator(".SmartCard")).toHaveCount(0);
+    await annotationsPanel.locator(".FilterWrapper_MinimisedRoot").click();
+    await annotationsPanel.getByTestId("FilterWrapper.deleteFilter").click();
+    await expect(annotationsPanel.locator(".SmartCard")).toHaveCount(25);
+    const annotationRows = annotationsPanel.locator(".SmartCardListRows");
+    const annotationPagination = annotationsPanel.getByTestId("Pagination");
+    await expect(annotationPaneSearch).toHaveAttribute(
+      "placeholder",
+      "Search 27 annotations...",
+    );
+    await expect(annotationsPanel.locator(".SmartCard")).toHaveCount(25);
+    const searchBounds = await annotationPaneSearch.boundingBox();
+    const paginationBounds = await annotationPagination.boundingBox();
+    await annotationRows.evaluate((rows) => {
+      rows.scrollTop = rows.scrollHeight;
+    });
+    await expect
+      .poll(() => annotationRows.evaluate((rows) => rows.scrollTop))
+      .toBeGreaterThan(0);
+    await expect(annotationPaneSearch).toBeInViewport({ ratio: 1 });
+    await expect(annotationPagination).toBeInViewport({ ratio: 1 });
+    expect(await annotationPaneSearch.boundingBox()).toEqual(searchBounds);
+    expect(await annotationPagination.boundingBox()).toEqual(paginationBounds);
+    await toolbar.getByTestId("Pagination.lastPage").click();
+    await viewer
+      .locator(".textLayer span")
+      .filter({ hasText: /^Separate excerpt$/ })
+      .click();
+    await expect(
+      annotationPagination.getByTestId("Pagination.page"),
+    ).toHaveValue("2");
+    await expect(annotationsPanel.locator(".SmartCard.selected")).toContainText(
+      "Other excerpt",
+    );
+    await expect(
+      annotationsPanel.locator(".SmartCard.selected"),
+    ).toBeInViewport({
+      ratio: 1,
+    });
+    const pdfSavedText = viewer
+      .locator(".textLayer span")
+      .filter({ hasText: /^Ending phrase$/ });
+    await pdfSavedText.click();
+    await expect(
+      annotationPagination.getByTestId("Pagination.page"),
+    ).toHaveValue("1");
+    const selectedPaneCard = annotationsPanel.locator(".SmartCard.selected");
+    await expect(selectedPaneCard).toContainText("Selected annotation");
+    await expect(selectedPaneCard).toBeInViewport({ ratio: 1 });
+    await annotationRows.evaluate((rows) => {
+      rows.scrollTop = rows.scrollHeight;
+    });
+    await expect(selectedPaneCard).not.toBeInViewport();
+    await pdfSavedText.click();
+    await expect(selectedPaneCard).toBeInViewport({ ratio: 1 });
+    await db.file_annotations!.delete!({
+      id: { $in: paneScrollAnnotations.map(({ id }) => id) },
+    });
+    await expect(annotationPaneSearch).toHaveAttribute(
+      "placeholder",
+      "Search 2 annotations...",
+    );
+    await expect(annotationsPanel.locator(".SmartCard")).toHaveCount(2);
+
+    /* PDF interaction and live updates must preserve the loaded annotation list. */
+    await expect(annotationsPanel.locator(".cover-loader")).toHaveCount(0);
+    const annotationsPanelElement = await annotationsPanel.elementHandle();
+    assert.ok(annotationsPanelElement);
+    await annotationsPanel.evaluate((panel) => {
+      panel.dataset.loadingShown = "false";
+      new MutationObserver((mutations) => {
+        if (
+          mutations.some(({ addedNodes }) =>
+            Array.from(addedNodes).some(
+              (node) =>
+                node instanceof Element &&
+                (node.matches(".cover-loader") ||
+                  node.querySelector(".cover-loader")),
+            ),
+          )
+        ) {
+          panel.dataset.loadingShown = "true";
+        }
+      }).observe(panel, { childList: true, subtree: true });
+    });
+    /* The wider annotation panel can be resized without hiding the PDF. */
+    await expect(annotationsPanel).toHaveCSS("width", "480px");
+    const resizeHandle = annotationsPanel.getByTestId(
+      "PdfViewer.annotationsResizer",
+    );
+    const resizeHandleBounds = await resizeHandle.boundingBox();
+    assert.ok(resizeHandleBounds);
+    const resizeStartX = resizeHandleBounds.x + resizeHandleBounds.width / 2;
+    const resizeStartY = resizeHandleBounds.y + resizeHandleBounds.height / 2;
+    await page.mouse.move(resizeStartX, resizeStartY);
+    await page.mouse.down();
+    await page.mouse.move(resizeStartX - 50, resizeStartY, { steps: 5 });
+    await expect(annotationsPanel).toHaveCSS("width", "430px");
+    await page.mouse.move(resizeStartX - 100, resizeStartY, { steps: 5 });
+    await page.mouse.up();
+    const resizedPanelBounds = await annotationsPanel.boundingBox();
+    assert.ok(resizedPanelBounds);
+    expect(resizedPanelBounds.width).toBeCloseTo(380, -1);
+    const otherCard = annotationsPanel
+      .locator(".SmartCard")
+      .filter({ hasText: "Other excerpt" });
+    const savedCard = annotationsPanel
+      .locator(".SmartCard")
+      .filter({ hasText: "Selected annotation" });
+    await expect(otherCard.locator(".SmartCardHeader")).toContainText(
+      "Other excerpt",
+    );
+    await otherCard
+      .getByRole("button", { name: "Other excerpt", exact: true })
+      .click();
+    await expect(toolbar.getByTestId("Pagination.page")).toHaveValue("3");
+    const annotationText = viewer
+      .locator('.pdfViewer .page[data-page-number="3"] .textLayer span')
+      .filter({ hasText: /^Separate excerpt$/ });
+    await expect(annotationText).toBeInViewport({ ratio: 1 });
+    /* PDF clicks select annotation cards; blank areas clear them without affecting text selection. */
+    const savedAnnotationText = viewer
+      .locator(".textLayer span")
+      .filter({ hasText: /^Ending phrase$/ });
+    /* Hover emphasizes matching cards and PDF highlights without changing selection or page. */
+    const savedPdfHighlight = viewer.locator(
+      `[data-annotation-id="${saved.id}"]`,
+    );
+    const otherPdfHighlight = viewer.locator(
+      `[data-annotation-id="${other.id}"]`,
+    );
+    await savedCard.hover();
+    await expect(savedCard).toContainClass("hovered");
+    await expect(savedPdfHighlight).toContainClass("hovered");
+    await expect(savedPdfHighlight).toHaveCSS("opacity", "1");
+    await expect(savedPdfHighlight).toHaveCSS("outline-style", "none");
+    await expect(savedCard).toHaveCSS(
+      "background-color",
+      await savedPdfHighlight.evaluate(
+        (highlight) => getComputedStyle(highlight).backgroundColor,
+      ),
+    );
+    await expect(otherCard).toContainClass("selected");
+    await expect(savedCard).not.toContainClass("selected");
+    await expect(toolbar.getByTestId("Pagination.page")).toHaveValue("3");
+    /* Annotation tooltips require dwelling and cancel when the pointer leaves. */
+    const annotationTooltip = viewer.getByRole("tooltip");
+    await annotationText.hover();
+    await expect(annotationTooltip).toHaveCount(0);
+    await expect(otherCard).toContainClass("hovered");
+    await expect(otherCard).toHaveCSS("outline-style", "none");
+    await expect(otherPdfHighlight).toContainClass("hovered");
+    await expect(savedCard).not.toContainClass("hovered");
+    await expect(savedPdfHighlight).not.toContainClass("hovered");
+    await expect(savedPdfHighlight).toHaveCSS("opacity", "0.12");
+    await expect(annotationTooltip).toHaveText("Other excerpt");
+    await savedAnnotationText.hover();
+    await expect(annotationTooltip).toHaveCount(0);
+    await expect(savedCard).toContainClass("hovered");
+    await expect(savedPdfHighlight).toContainClass("hovered");
+    await expect(savedPdfHighlight).toHaveCSS("opacity", "1");
+    await expect(otherCard).toContainClass("selected");
+    /* Crossing a gap between text lines must not briefly clear hover emphasis. */
+    const hoveredHighlightBounds = await savedPdfHighlight.boundingBox();
+    assert.ok(hoveredHighlightBounds);
+    await page.mouse.move(
+      hoveredHighlightBounds.x + 1,
+      hoveredHighlightBounds.y - 1,
+    );
+    await expect(savedCard).toContainClass("hovered");
+    await savedAnnotationText.hover();
+    await expect(savedCard).toContainClass("hovered");
+    await annotationsPanel.locator(".SmartSearch input").hover();
+    await expect(annotationsPanel.locator(".SmartCard.hovered")).toHaveCount(0);
+    await expect(viewer.locator(".pdf-viewer__highlight.hovered")).toHaveCount(
+      0,
+    );
+    await expect(savedPdfHighlight).toHaveCSS("opacity", "0.12");
+    await page.waitForTimeout(700);
+    await expect(annotationTooltip).toHaveCount(0);
+    await savedAnnotationText.click();
+    await expect(savedCard).toContainClass("selected");
+    await expect(otherCard).not.toContainClass("selected");
+    const clickOutsideHighlight = async () => {
+      const textBounds = await annotationText.boundingBox();
+      assert.ok(textBounds);
+      await page.mouse.click(
+        textBounds.x - 15,
+        textBounds.y + textBounds.height / 2,
+      );
+    };
+    await clickOutsideHighlight();
+    await expect(annotationsPanel.locator(".SmartCard.selected")).toHaveCount(
+      0,
+    );
+    for (const highlight of await highlights.all()) {
+      await expect(highlight).toHaveCSS("opacity", "1");
+    }
+    await annotationText.click();
+    await annotationText.click();
+    await expect(otherCard).toContainClass("selected");
+    await expect(savedCard).not.toContainClass("selected");
+    const selectionBounds = await savedAnnotationText.boundingBox();
+    assert.ok(selectionBounds);
+    const selectionY = selectionBounds.y + selectionBounds.height / 2;
+    await page.mouse.move(selectionBounds.x + 1, selectionY);
+    await page.mouse.down();
+    await page.mouse.move(
+      selectionBounds.x + selectionBounds.width - 1,
+      selectionY,
+      { steps: 5 },
+    );
+    await page.mouse.up();
+    await expect
+      .poll(() => page.evaluate(() => window.getSelection()?.toString()))
+      .toContain("Ending");
+    await expect(annotationTooltip).toHaveCount(0);
+    await expect(annotationsPanel.locator(".SmartCard.hovered")).toHaveCount(0);
+    await expect(otherCard).toContainClass("selected");
+    await expect(
+      viewer.getByTitle("Add annotation", { exact: true }),
+    ).toBeVisible();
+    await page.evaluate(() => window.getSelection()?.removeAllRanges());
+    await viewer.locator(".pdfViewer").evaluate((renderer) => {
+      const scrollContainer = renderer.parentElement!;
+      scrollContainer.scrollTop = scrollContainer.scrollHeight;
+    });
+    /* Scrolling away from the selected text clears the annotation selection. */
+    await expect(annotationsPanel.locator(".SmartCard.selected")).toHaveCount(
+      0,
+    );
+    await expect(annotationText).not.toBeInViewport();
+    await otherCard
+      .getByRole("button", { name: "Other excerpt", exact: true })
+      .press("Enter");
+    await expect(annotationText).toBeInViewport({ ratio: 1 });
+    await expect(page.locator(".DetailedCardPopup")).toHaveCount(0);
+    await expect(otherCard).toContainClass("selected");
+    await expect(annotationsPanel.locator(".SmartCard.selected")).toHaveCount(
+      1,
+    );
+    await expect(otherCard).not.toHaveCSS(
+      "background-color",
+      await savedCard.evaluate(
+        (card) => getComputedStyle(card).backgroundColor,
+      ),
+    );
+    await expect(
+      viewer.locator(`[data-annotation-id="${other.id}"]`),
+    ).toHaveCSS("opacity", "1");
+    /* Match the card's color and blend with the PDF canvas to preserve its text. */
+    await expect(
+      viewer.locator(`[data-annotation-id="${other.id}"]`),
+    ).toHaveCSS(
+      "background-color",
+      await otherCard.evaluate(
+        (card) => getComputedStyle(card).backgroundColor,
+      ),
+    );
+    await expect(viewer.locator(".pdf-viewer__highlight-layer")).toHaveCSS(
+      "mix-blend-mode",
+      "multiply",
+    );
+    /* Wheel scrolling can leave a selected annotation's page without snapping back. */
+    await continuousScroll.check();
+    await expect(pdfPages).toHaveCount(3);
+    await expect(toolbar.getByTestId("Pagination.page")).toHaveValue("3");
+    await expect(otherCard).toContainClass("selected");
+    await savedCard.hover();
+    await expect(
+      pdfPages.last().locator(`[data-annotation-id="${saved.id}"]`),
+    ).toContainClass("hovered");
+    await expect(toolbar.getByTestId("Pagination.page")).toHaveValue("3");
+    await expect(otherCard).toContainClass("selected");
+    await clickOutsideHighlight();
+    await expect(annotationsPanel.locator(".SmartCard.selected")).toHaveCount(
+      0,
+    );
+    await annotationText.click();
+    await expect(otherCard).toContainClass("selected");
+    await viewer.locator(".pdf-viewer__scroll").hover();
+    await page.mouse.wheel(0, -5000);
+    await expect(toolbar.getByTestId("Pagination.page")).toHaveValue("1");
+    await expect(annotationsPanel.locator(".SmartCard.selected")).toHaveCount(
+      0,
+    );
+    await expect(pdfPages.first().locator(".textLayer")).toContainText(
+      "Beginning phrase",
+    );
+    await continuousScroll.uncheck();
+    await otherCard.getByText("Separate excerpt", { exact: true }).click();
+    await expect(toolbar.getByTestId("Pagination.page")).toHaveValue("3");
+    await toolbar.getByTestId("Pagination.prevPage").click();
+    await expect(toolbar.getByTestId("Pagination.page")).toHaveValue("2");
+    await otherCard.getByText("Separate excerpt", { exact: true }).click();
+    await expect(annotationsPanel.locator(".SmartCard.selected")).toHaveCount(
+      0,
+    );
+    await expect(toolbar.getByTestId("Pagination.page")).toHaveValue("2");
+    await otherCard.getByText("Separate excerpt", { exact: true }).click();
+    await expect(toolbar.getByTestId("Pagination.page")).toHaveValue("3");
+    await expect(annotationText).toBeInViewport({ ratio: 1 });
+    await savedCard
+      .getByRole("button", { name: "Selected annotation", exact: true })
+      .click();
+    await expect(savedCard).toContainClass("selected");
+    await expect(otherCard).not.toContainClass("selected");
+    await otherCard.getByText("Separate excerpt", { exact: true }).click();
+    await expect(otherCard).toContainClass("selected");
+    await expect(savedCard).not.toContainClass("selected");
+    await db.annotation_comments!.insert!({
+      annotation_id: other.id,
+      text: "Linked annotation comment",
+    });
+    await otherCard.getByTestId("SmartCard.viewEditRow").click();
+    await expect(page.getByTestId("SmartForm")).toBeVisible();
+    /* Color edits update both the PDF and the selected card without moving anchors. */
+    const annotationForm = page.getByTestId("SmartForm").last();
+    /* Popup interactions must not toggle the annotation card beneath them. */
+    await annotationForm
+      .locator('[data-key="name"]')
+      .getByRole("textbox")
+      .click();
+    await expect(otherCard).toContainClass("selected");
+    await annotationForm
+      .getByTitle("Annotation color", { exact: true })
+      .click();
+    await page.locator('[data-key="var(--light-purple)"]').click();
+    await expect(otherCard).toContainClass("selected");
+    await annotationForm.getByTestId("SmartForm.update").click();
+    await page.getByTestId("SmartForm.update.confirm").click();
+    await expect
+      .poll(() => db.file_annotations!.findOne!({ id: other.id }))
+      .toMatchObject({
+        color: "var(--light-purple)",
+        page: other.page,
+        text_selections: other.text_selections,
+      });
+    await expect(
+      viewer.locator(`[data-annotation-id="${other.id}"]`),
+    ).toHaveAttribute(
+      "style",
+      expect.stringContaining("background-color: var(--light-purple)"),
+    );
+    await expect(otherCard).toHaveAttribute(
+      "style",
+      expect.stringContaining("var(--light-purple)"),
+    );
+    await expect(annotationForm).toBeHidden();
+    await otherCard.getByTestId("SmartCard.viewEditRow").click();
+    /* Opening an annotation from the PDF panel must keep joined sections mounted. */
+    const joinedRecords = page
+      .getByTestId("SmartForm")
+      .getByTestId("JoinedRecords");
+    await expect(joinedRecords).toBeVisible();
+    const joinedRecordsElement = await joinedRecords.elementHandle();
+    assert.ok(joinedRecordsElement);
+    await joinedRecords.getByTestId("JoinedRecords.SectionToggle").click();
+    const joinedComment = joinedRecords
+      .locator(".SmartCard")
+      .filter({ hasText: "Linked annotation comment" });
+    await expect(joinedComment).toBeVisible();
+    const joinedCommentElement = await joinedComment.elementHandle();
+    assert.ok(joinedCommentElement);
+    await db.file_annotations!.update!(
+      { id: other.id },
+      { name: "Other excerpt refreshed" },
+    );
+    await expect(otherCard.locator(".SmartCardHeader")).toContainText(
+      "Other excerpt refreshed",
+    );
+    expect(
+      await annotationsPanelElement.evaluate((panel) => panel.isConnected),
+    ).toBe(true);
+    await expect(annotationsPanel).toHaveAttribute(
+      "data-loading-shown",
+      "false",
+    );
+    await page.waitForTimeout(3_000);
+    expect(
+      await joinedRecordsElement.evaluate((element) => element.isConnected),
+    ).toBe(true);
+    expect(
+      await joinedCommentElement.evaluate((element) => element.isConnected),
+    ).toBe(true);
+    await db.file_annotations!.update!(
+      { id: other.id },
+      { name: "Other excerpt" },
+    );
+    await expect(
+      otherCard.getByRole("button", { name: "Other excerpt", exact: true }),
+    ).toBeVisible();
+    await page.getByTestId("Popup.close").last().click();
+    await expect(otherCard).toContainClass("selected");
+    /* An active annotation must not override the PDF search's scroll target. */
+    await searchInput.fill("Footer text");
+    await expect(toolbar.locator(".pdf-viewer-search__count")).toHaveText(
+      "3/3",
+    );
+    for (const [index, expectedPage] of ["3", "1", "2", "3"].entries()) {
+      if (index) await searchInput.press("Enter");
+      await expect(toolbar.getByTestId("Pagination.page")).toHaveValue(
+        expectedPage,
+      );
+      await expect(
+        viewer.locator(".textLayer span").filter({ hasText: /^Footer text$/ }),
+      ).toBeInViewport({ ratio: 0.99 });
+    }
+    await searchInput.fill("");
+    await otherCard.getByText("Separate excerpt", { exact: true }).click();
+    await expect(annotationText).toBeInViewport({ ratio: 1 });
+    const annotationSearch = annotationsPanel.locator(".SmartSearch input");
+    await annotationSearch.fill("Separate excerpt");
+    await expect(annotationsPanel.getByTestId("SearchList.List")).toContainText(
+      "Quoted text:",
+    );
+    await annotationSearch.fill("Other excerpt");
+    await expect(annotationsPanel.getByTestId("SearchList.List")).toContainText(
+      "Other excerpt",
+    );
+    await annotationSearch.press("Enter");
+    await expect(annotationsPanel.locator(".SmartCard")).toHaveCount(1);
+    await expect(otherCard).toBeVisible();
+    const annotationsBounds = await annotationsPanel.boundingBox();
+    const pageHost = viewer.locator(".pdfViewer");
+    const pageHostBounds = await pageHost.boundingBox();
+    const pageGap = await pageHost.evaluate((element) =>
+      parseFloat(getComputedStyle(element).fontSize),
+    );
+    const pdfBounds = await viewer.locator(".pdfViewer .page").boundingBox();
+    assert.ok(annotationsBounds && pageHostBounds && pdfBounds);
+    /* The PDF keeps a 1em gap above, below and beside the annotations panel. */
+    expect(
+      pdfBounds.x - annotationsBounds.x - annotationsBounds.width,
+    ).toBeCloseTo(pageGap, 0);
+    expect(pdfBounds.y - pageHostBounds.y).toBeCloseTo(pageGap, 0);
+    expect(
+      pageHostBounds.y + pageHostBounds.height - pdfBounds.y - pdfBounds.height,
+    ).toBeCloseTo(pageGap, 0);
+    await page.setViewportSize({ width: 1080, height: 900 });
+    await expect(annotationsPanel).toBeHidden();
+    await expect(
+      toolbar.getByRole("button", { name: "Annotations (2)", exact: true }),
+    ).toBeVisible();
+
+    /* Menu-opened forms also keep expanded joined records across live refreshes. */
+    await toolbar
+      .getByRole("button", { name: "Annotations (2)", exact: true })
+      .click();
+    await page
+      .getByTestId("SearchList.List")
+      .getByText("Other excerpt", { exact: true })
+      .click();
+    await expect(joinedRecords).toBeVisible();
+    await expect(
+      page
+        .getByTestId("SmartForm")
+        .getByTitle("Annotation color", { exact: true }),
+    ).toHaveAttribute(
+      "style",
+      expect.stringContaining("background-color: var(--light-purple)"),
+    );
+    await joinedRecords.getByTestId("JoinedRecords.SectionToggle").click();
+    await expect(joinedComment).toBeVisible();
+    const menuJoinedCommentElement = await joinedComment.elementHandle();
+    assert.ok(menuJoinedCommentElement);
+    await db.file_annotations!.update!(
+      { id: other.id },
+      { name: "Other excerpt refreshed" },
+    );
+    const annotationName = page
+      .getByTestId("SmartForm")
+      .locator('[data-key="name"]')
+      .getByRole("textbox");
+    await expect(annotationName).toHaveValue("Other excerpt refreshed");
+    await page.waitForTimeout(3_000);
+    expect(
+      await menuJoinedCommentElement.evaluate((element) => element.isConnected),
+    ).toBe(true);
+    await expect(joinedComment).toBeVisible();
+    await db.file_annotations!.update!(
+      { id: other.id },
+      { name: "Other excerpt" },
+    );
+    await expect(annotationName).toHaveValue("Other excerpt");
+    await page.getByTestId("Popup.close").last().click();
+
+    /* Opening an annotation's file from a form or card selects it on its page. */
+    await page.getByTestId("Popup.close").last().click();
+    await page.setViewportSize({ width: 1600, height: 900 });
+    await openTable(page, "file_annotations", true);
+    const annotationsWindow = page.locator(
+      '[data-table-name="file_annotations"]',
+    );
+    for (const source of ["form", "card"]) {
+      if (source === "form") {
+        await annotationsWindow
+          .getByRole("row")
+          .filter({ hasText: "Other excerpt" })
+          .getByTestId("dashboard.window.viewEditRow")
+          .click();
+        await page
+          .getByTestId("SmartForm")
+          .getByTitle("application/pdf")
+          .click();
+      } else {
+        const state = await deployment.connectStateAs("admin");
+        const annotationWindow = await state.db.windows!.findOne({
+          table_name: "file_annotations",
+        });
+        assert.ok(annotationWindow);
+        await state.db.windows!.update(
+          { id: annotationWindow.id },
+          {
+            options: { ...annotationWindow.options, viewAs: { type: "card" } },
+          },
+        );
+        await annotationsWindow
+          .getByTestId("CardView.row")
+          .filter({ hasText: "Other excerpt" })
+          .getByTitle("application/pdf")
+          .click();
+      }
+      await continuousScroll.uncheck();
+      await expect(toolbar.getByTestId("Pagination.page")).toHaveValue("3");
+      await expect(
+        viewer.locator(`[data-annotation-id="${other.id}"]`),
+      ).toHaveCSS("opacity", "1");
+      await expect(
+        viewer.locator(`[data-annotation-id="${saved.id}"]`),
+      ).toHaveCSS("opacity", "0.12");
+      await expect(page.getByTestId("SmartForm")).toHaveCount(
+        source === "form" ? 1 : 0,
+      );
+      /* An annotation selected through a file link can also be deselected. */
+      await otherCard.getByText("Separate excerpt", { exact: true }).click();
+      await expect(annotationsPanel.locator(".SmartCard.selected")).toHaveCount(
+        0,
+      );
+      await annotationsPanel.locator(".SmartSearch input").hover();
+      await expect(
+        viewer.locator(`[data-annotation-id="${saved.id}"]`),
+      ).toHaveCSS("opacity", "1");
+      await page.getByTestId("Popup.close").last().click();
+      if (source === "form") {
+        await page.getByTestId("Popup.close").last().click();
+      }
+    }
+
+    /* Long documents evict canvases and restore annotations when revisited. */
+    const longDocument = await db.files!.insert!(
+      {
+        data: createAnnotationPdf("Long document", 12),
+        original_name: "long-document.pdf",
+      },
+      { returning: "*" },
+    );
+    await db.file_annotations!.insert!({
+      file_id: longDocument.id,
+      page: 1,
+      end_page: 1,
+      start_text: "Long document",
+      end_text: "Long document",
+    });
+    await openTable(page, "files", true);
+    await page
+      .locator('[data-table-name="files"]')
+      .getByRole("row")
+      .filter({ hasText: "long-document.pdf" })
+      .getByTitle("application/pdf")
+      .click();
+    await continuousScroll.check();
+    await expect(pdfPages).toHaveCount(15);
+    for (let pageNumber = 1; pageNumber <= 15; pageNumber += 1) {
+      if (pageNumber > 1)
+        await toolbar.getByTestId("Pagination.nextPage").click();
+      await expect(toolbar.getByTestId("Pagination.page")).toHaveValue(
+        String(pageNumber),
+      );
+      await expect(
+        pdfPages.nth(pageNumber - 1).locator(".textLayer"),
+      ).toBeVisible();
+    }
+    await expect
+      .poll(() => pdfPages.locator("canvas").count())
+      .toBeLessThanOrEqual(10);
+    await toolbar.getByTestId("Pagination.firstPage").click();
+    await expect(
+      pdfPages.first().getByTestId("PdfViewer.highlight"),
+    ).toHaveCount(1);
+    await continuousScroll.uncheck();
+    await expect(pdfPages).toHaveCount(1);
+    await expect(pdfPages.getByTestId("PdfViewer.highlight")).toHaveCount(1);
   } finally {
     await deployment.dispose();
   }
 });
 
-test("CLI extraction jobs retry, limit concurrency and preserve configured jobs", async () => {
+test("CLI extraction jobs run once, preserve annotation text, limit concurrency and preserve configured jobs", async ({
+  page,
+}) => {
   const configId = "extraction-jobs-e2e";
+  const drawingDetails =
+    "Gate, Fence, Construction Road, CCTV Camera & Satellite Dish Details PL.008 R1";
+  const secondPageText = `page two\n${drawingDetails}`;
   const configPath = createConfigTestProject(
     {
       id: configId,
@@ -1215,10 +2271,13 @@ test("CLI extraction jobs retry, limit concurrency and preserve configured jobs"
           fileTable: "files",
           storageType: { type: "local" },
           extractText: true,
+          extractTextOptions: { do_ocr: false, table_mode: "fast" },
+          annotationsTable: "file_annotations",
         },
       },
       connection: {
         table_options: {
+          files: { card: { summaryFields: ["description", "url"] } },
           app_jobs: {
             label: "Background jobs",
             columns: { status: { label: "State" } },
@@ -1227,7 +2286,11 @@ test("CLI extraction jobs retry, limit concurrency and preserve configured jobs"
       },
       tableConfig: {
         extraction_calls: {
-          columns: { id: "serial PRIMARY KEY", name: "text NOT NULL" },
+          columns: {
+            id: "serial PRIMARY KEY",
+            name: "text NOT NULL",
+            filename: "text NOT NULL",
+          },
         },
         job_checks: {
           columns: {
@@ -1273,10 +2336,12 @@ const recordFileHooks = (dbo, rows, phase) => dbo.file_hook_calls.insertMany(
 );
 module.exports.tableHooks = { files: {
   afterEach: [{
-    commands: { update: 1 }, changedFields: ["extraction_job_id"],
+    commands: { update: 1 }, changedFields: ["text_extraction_job_id"],
     validate: async ({ dbx, row }) => {
+      if (!row.text_extraction_job_id) return;
       if (row.original_name === "rejected.pdf") throw new Error("Reject extraction job link");
-      await dbx.file_job_links.insert({ job_id: row.extraction_job_id, file_id: row.id });
+      /* Replacement clears the old link before the job hook assigns the new one. */
+      await dbx.file_job_links.insert({ job_id: row.text_extraction_job_id, file_id: row.id }, { onConflict: "DoNothing" });
     },
   }, {
     commands: { insert: 1, update: 1 }, changedFields: ["text_content"],
@@ -1296,18 +2361,38 @@ module.exports.onMount = ({ dbo, context }) => {
   const getService = serviceManager.getServiceWithRetries.bind(serviceManager);
   serviceManager.getServiceWithRetries = async (name, ...args) => {
     if (name !== "documents") return getService(name, ...args);
-    return { endpoints: { "/v1/convert/file": async ({ files, md_page_break_placeholder }) => {
+    return { endpoints: { "/v1/convert/file": async ({ files, md_page_break_placeholder, do_ocr, table_mode }, { signal }) => {
+      if (do_ocr !== false || table_mode !== "fast") throw new Error("Configured extraction options were lost");
       const name = (await files[0].text()).split("\\n").at(-1);
-      await dbo.extraction_calls.insert({ name });
-      if (name === "blocked") {
+      await dbo.extraction_calls.insert({ name, filename: files[0].name });
+      if (name === "blocked" || name === "cancelled") {
         while (!(await dbo.job_checks.findOne({ id: 1 })).released) {
+          signal.throwIfAborted();
           await new Promise(resolve => setTimeout(resolve, 25));
         }
       }
-      const attempts = await dbo.extraction_calls.count({ name });
-      if (name === "fail" || (name === "retry" && attempts === 1)) throw new Error("Docling unavailable");
+      if (name === "fail") throw new Error("Docling unavailable");
+      const size = { width: 600, height: 800 };
+      const bbox = { l: 40, t: 760, r: 220, b: 730, coord_origin: "BOTTOMLEFT" };
       return {
-        document: { json_content: { name }, md_content: name + md_page_break_placeholder + "page two" },
+        document: {
+          json_content: files[0].type !== "application/pdf" ? { pages: {} } : {
+            name,
+            pages: { 1: { size }, 2: { size }, 3: { size } },
+            texts: [name, "page two"].flatMap((text, index) => [
+              { text, prov: [{ page_no: index + 1, bbox }] },
+              { text: "Footer", label: "page_footer", prov: [{ page_no: index + 1, bbox }] },
+            ]),
+            tables: [{
+              prov: [{ page_no: 2, bbox }],
+              data: { table_cells: [{
+                text: ${JSON.stringify(drawingDetails)},
+                bbox: { ...bbox, t: 700, b: 670 },
+              }] },
+            }],
+          },
+          md_content: "# " + name + md_page_break_placeholder + "| " + ${JSON.stringify(drawingDetails.replace("&", "&amp;"))} + " |",
+        },
         processing_time: 0.1, timings: {},
       };
     } } };
@@ -1321,7 +2406,9 @@ module.exports.onMount = ({ dbo, context }) => {
     logPath: test.info().outputPath("extraction-jobs.log"),
   });
   try {
-    const { db, tableSchema } = await deployment.connectProjectAs("admin");
+    const project = await deployment.connectProjectAs("admin");
+    const { tableSchema } = project;
+    let { db, methods } = project;
     /* Job display defaults survive merging plugin jobs and custom table options. */
     expect(
       tableSchema?.find((table) => table.name === "app_jobs"),
@@ -1329,14 +2416,81 @@ module.exports.onMount = ({ dbo, context }) => {
       label: "Background jobs",
       sort: [{ key: "created_at", asc: false }],
       referenceDisplay: { columns: [{ name: "status" }] },
-      card: { headerColumn: "job_name", subHeaderColumn: "status" },
-      defaultColumns: expect.arrayContaining(["job_name", "status", "error"]),
+      card: {
+        headerColumn: "job_name",
+        subHeaderColumn: "status",
+        summaryFields: [
+          "progress_numeric",
+          "attempts",
+          "created_at",
+          "duration",
+          "error",
+          "output",
+          "progress_message",
+        ],
+        layoutSections: [
+          {
+            items: expect.arrayContaining([
+              "id",
+              "params",
+              "started_at",
+              "finished_at",
+            ]),
+          },
+        ],
+      },
+      defaultColumns: expect.arrayContaining([
+        "job_name",
+        "status",
+        "duration",
+        "error",
+        "output",
+      ]),
       columnConfigs: {
-        id: { infoLevel: 2 },
-        created_at: { format: { type: "Age" } },
+        created_at: {
+          label: "Queued",
+          format: {
+            type: "Age",
+            params: { variant: "short", showAgo: true },
+          },
+        },
+        started_at: {
+          label: "Started",
+          format: {
+            type: "Age",
+            params: { variant: "short", showAgo: true },
+          },
+        },
+        finished_at: {
+          label: "Finished",
+          format: {
+            type: "Age",
+            params: { variant: "short", showAgo: true },
+          },
+        },
+        duration: {
+          label: "Duration",
+          format: {
+            type: "Stopwatch",
+            params: { startColumn: "started_at", endColumn: "finished_at" },
+          },
+          computedConfig: {
+            column: "finished_at",
+            udt_name: "interval",
+            funcDef: { key: "$duration" },
+            args: { $duration: { otherColumn: "started_at" } },
+          },
+        },
+        attempts: { label: "Attempts", width: 100 },
+        error: {
+          label: "Error",
+          format: { type: "JSON Summary", params: { path: ["message"] } },
+        },
+        output: {
+          format: { type: "JSON Summary", params: { path: [] } },
+        },
         status: {
           label: "State",
-          infoLevel: 1,
           style: {
             type: "Conditional",
             conditions: [
@@ -1358,9 +2512,12 @@ module.exports.onMount = ({ dbo, context }) => {
       },
     });
     expect(
+      tableSchema?.find((table) => table.name === "app_jobs")?.defaultColumns,
+    ).not.toContain("finished_at");
+    expect(
       tableSchema
         ?.find((table) => table.name === "files")
-        ?.columns.find((column) => column.name === "extraction_job_id")
+        ?.columns.find((column) => column.name === "text_extraction_job_id")
         ?.references,
     ).toContainEqual(
       expect.objectContaining({ ftable: "app_jobs", fcols: ["id"] }),
@@ -1393,14 +2550,16 @@ module.exports.onMount = ({ dbo, context }) => {
     expect(await db.app_jobs!.count!({ job_name: "extractFileText" })).toBe(0);
     expect(await db.file_job_links!.count!({})).toBe(0);
     const blocked = await upload("blocked");
-    expect(blocked.extraction_job_id).toEqual(expect.any(String));
+    expect(blocked.text_extraction_job_id).toEqual(expect.any(String));
     expect(
-      await db.file_job_links!.findOne!({ job_id: blocked.extraction_job_id }),
+      await db.file_job_links!.findOne!({
+        job_id: blocked.text_extraction_job_id,
+      }),
     ).toMatchObject({
       file_id: blocked.id,
     });
     expect(
-      await db.app_jobs!.findOne!({ id: blocked.extraction_job_id }),
+      await db.app_jobs!.findOne!({ id: blocked.text_extraction_job_id }),
     ).toMatchObject({
       job_name: "extractFileText",
       target_row_pkey: { id: blocked.id },
@@ -1408,7 +2567,72 @@ module.exports.onMount = ({ dbo, context }) => {
     await expect
       .poll(() => db.extraction_calls!.count!({ name: "blocked" }))
       .toBe(1);
-    const retry = await upload("retry");
+    /* A long queue wait must not inflate the running attempt's stopwatch. */
+    await project.sql!(
+      "UPDATE app_jobs SET created_at = started_at - interval '48 minutes' WHERE id = $1",
+      [blocked.text_extraction_job_id],
+    );
+    /* Default job actions stay available on cards with explicit information levels. */
+    await page.clock.install();
+    await page.context().addCookies(deployment.storageStateAs("admin").cookies);
+    await page.goto(deployment.dashboardUrl);
+    await openTable(page, "files", true);
+    const state = await deployment.connectStateAs("admin");
+    try {
+      const fileWindow = await state.db.windows!.findOne({
+        table_name: "files",
+      });
+      assert.ok(fileWindow);
+      await state.db.windows!.update(
+        { id: fileWindow.id },
+        { options: { ...fileWindow.options, viewAs: { type: "card" } } },
+      );
+    } finally {
+      state.disconnect();
+    }
+    const fileCards = page
+      .locator('[data-table-name="files"]')
+      .getByTestId("CardView.row");
+    const extractingButton = fileCards
+      .filter({ hasText: "blocked.pdf" })
+      .getByRole("button", { name: "extractFileText", exact: true });
+    await expect(extractingButton).toBeVisible();
+    await extractingButton.click();
+    const jobDetails = page.getByRole("region", { name: "Job details" });
+    const jobSummaryCard = jobDetails.locator(".SmartCard");
+    await expect(jobSummaryCard).toBeVisible();
+    await expect(jobSummaryCard).not.toHaveCSS("border-top-left-radius", "0px");
+    await expect(jobSummaryCard.locator(".SmartCardHeader")).toContainText(
+      "extractFileText",
+    );
+    await expect(
+      jobSummaryCard.getByText("running", { exact: true }).locator(".."),
+    ).toHaveCSS("border-radius", "12px");
+    await expect(
+      jobSummaryCard.getByText("Queued", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      jobSummaryCard.locator(".SmartCardCol").filter({
+        has: page.getByText("Queued", { exact: true }),
+      }),
+    ).toContainText("48min");
+    await expect(
+      jobSummaryCard.getByText("Started", { exact: true }),
+    ).toHaveCount(0);
+    await expect(
+      jobSummaryCard.getByText("Duration", { exact: true }),
+    ).toBeVisible();
+    const runningStopwatch = jobSummaryCard.locator(".Stopwatch");
+    await expect(runningStopwatch).toBeVisible();
+    await expect(runningStopwatch).not.toContainText("48m");
+    const runningDuration = await runningStopwatch.innerText();
+    await page.clock.fastForward(2_000);
+    await expect(runningStopwatch).not.toHaveText(runningDuration);
+    await expect(
+      jobDetails.getByRole("button", { name: "View JSON", exact: true }),
+    ).toHaveCount(0);
+    await page.getByTestId("Popup.close").last().click();
+    const successfulFile = await upload("success");
     const fail = await upload("fail");
     await expect
       .poll(() =>
@@ -1422,12 +2646,19 @@ module.exports.onMount = ({ dbo, context }) => {
       }),
     ).toBe(1);
     expect(await db.extraction_calls!.count!({})).toBe(1);
+    expect(
+      await db.app_jobs!.findOne!({
+        id: successfulFile.text_extraction_job_id,
+      }),
+    ).toMatchObject({ status: "pending", started_at: null });
     await upload("superseded", blocked.id);
     const replacement = await upload("replacement", blocked.id);
-    expect(replacement.extraction_job_id).not.toBe(blocked.extraction_job_id);
+    expect(replacement.text_extraction_job_id).not.toBe(
+      blocked.text_extraction_job_id,
+    );
     expect(
       await db.file_job_links!.findOne!({
-        job_id: replacement.extraction_job_id,
+        job_id: replacement.text_extraction_job_id,
       }),
     ).toMatchObject({
       file_id: blocked.id,
@@ -1436,30 +2667,136 @@ module.exports.onMount = ({ dbo, context }) => {
     await expect
       .poll(
         async () =>
-          (await db.files!.findOne!({ id: retry.id }))?.extraction_status
-            ?.state,
+          (
+            await db.app_jobs!.findOne!({
+              id: successfulFile.text_extraction_job_id,
+            })
+          )?.status,
         { timeout: 20_000 },
       )
-      .toBe("finished");
+      .toBe("succeeded");
     await expect
       .poll(
         async () =>
-          (await db.files!.findOne!({ id: fail.id }))?.extraction_status?.state,
+          (await db.app_jobs!.findOne!({ id: fail.text_extraction_job_id }))
+            ?.status,
         { timeout: 20_000 },
       )
-      .toBe("error");
-    expect(await db.extraction_calls!.count!({ name: "retry" })).toBe(2);
-    expect(await db.extraction_calls!.count!({ name: "fail" })).toBe(3);
-    expect(await db.files!.findOne!({ id: retry.id })).toMatchObject({
-      text_content: ["retry", "page two"],
-      docling_metadata: { name: "retry" },
+      .toBe("failed");
+    await expect(
+      fileCards.filter({ hasText: "success.pdf" }).getByRole("button", {
+        name: "extractFileText",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(
+      fileCards
+        .filter({ hasText: "fail.pdf" })
+        .getByRole("button", { name: "extractFileText", exact: true }),
+    ).toBeVisible();
+    expect(await db.extraction_calls!.count!({ name: "success" })).toBe(1);
+    expect(
+      await db.app_jobs!.findOne!({
+        id: successfulFile.text_extraction_job_id,
+      }),
+    ).toMatchObject({
+      output: { processing_time: 0.1, timings: {} },
     });
+    await fileCards
+      .filter({ hasText: "success.pdf" })
+      .getByRole("button", { name: "extractFileText", exact: true })
+      .click();
+    await expect(
+      page
+        .getByRole("region", { name: "Job details" })
+        .getByText("Duration", { exact: true }),
+    ).toBeVisible();
+    const finishedStopwatch = page
+      .getByRole("region", { name: "Job details" })
+      .locator(".Stopwatch");
+    await expect(jobDetails.getByText("Finished", { exact: true })).toHaveCount(
+      0,
+    );
+    await expect(finishedStopwatch).toBeVisible();
+    const finishedDuration = await finishedStopwatch.innerText();
+    await page.clock.fastForward(5_000);
+    await expect(finishedStopwatch).toHaveText(finishedDuration);
+    await page
+      .getByRole("region", { name: "Job details" })
+      .getByRole("button", { name: "View JSON", exact: true })
+      .click();
+    /* Job output JSON must have enough space to read its contents. */
+    const outputEditor = page.locator(".monaco-editor").last();
+    await expect(outputEditor).toContainText("processing_time");
+    const outputEditorBounds = await outputEditor.boundingBox();
+    assert.ok(outputEditorBounds);
+    expect(outputEditorBounds.width).toBeGreaterThan(500);
+    await page.getByTestId("Popup.close").last().click();
+    await page.getByTestId("Popup.close").last().click();
+    expect(await db.extraction_calls!.count!({ name: "fail" })).toBe(1);
+    const extractedFile = await db.files!.findOne!({ id: successfulFile.id });
+    expect(extractedFile).toMatchObject({
+      text_content: ["success", secondPageText, ""],
+      docling_metadata: { name: "success" },
+    });
+    assert.ok(extractedFile);
+    /* Anchors copied from extracted pages resolve across table cells without Markdown escaping. */
+    const selections = [1, 2].map((page) => ({
+      page,
+      startText: extractedFile.text_content[page - 1],
+      endText: extractedFile.text_content[page - 1],
+    }));
+    const annotation = await db.file_annotations!.insert!(
+      { file_id: successfulFile.id, text_selections: selections },
+      { returning: "*" },
+    );
+    expect(annotation).toMatchObject({
+      page: 1,
+      end_page: 2,
+      text: `success\n${secondPageText}`,
+      text_selections: [
+        {
+          page: 1,
+          startText: "success",
+          endText: "success",
+          bounds: [{ x: 40, y: 40, width: 180, height: 30 }],
+        },
+        {
+          page: 2,
+          startText: "page two",
+          endText: "page two",
+          bounds: [{ x: 40, y: 40, width: 180, height: 30 }],
+        },
+        {
+          page: 2,
+          startText: drawingDetails,
+          endText: drawingDetails,
+          bounds: [{ x: 40, y: 100, width: 180, height: 30 }],
+        },
+      ],
+    });
+    for (const [field, quote] of [
+      ["startText", "missing start"],
+      ["endText", drawingDetails.replace("&", "&amp;")],
+    ] as const) {
+      await expect(
+        db.file_annotations!.insert!({
+          file_id: successfulFile.id,
+          text_selections: selections.map((selection) =>
+            selection.page === 2 ? { ...selection, [field]: quote } : selection,
+          ),
+        }),
+      ).rejects.toMatchObject({
+        message: `Annotation on page 2: text_selections[1].${field} ${JSON.stringify(quote)}: Annotation text was not found`,
+      });
+    }
     await expect
       .poll(() =>
         db.app_jobs!.count!({
           job_name: "extractFileText",
           status: "failed",
-          attempts: 3,
+          attempts: 1,
+          max_attempts: 1,
         }),
       )
       .toBe(1);
@@ -1468,33 +2805,41 @@ module.exports.onMount = ({ dbo, context }) => {
         async () =>
           (await db.files!.findOne!({ id: blocked.id }))?.text_content,
       )
-      .toEqual(["replacement", "page two"]);
+      .toEqual(["replacement", secondPageText, ""]);
     expect(await db.extraction_calls!.count!({ name: "superseded" })).toBe(0);
     expect(
       await db.file_hook_calls!.count!({
-        text_content: ["blocked", "page two"],
+        text_content: ["blocked", secondPageText, ""],
       }),
     ).toBe(0);
     for (const phase of ["afterEach", "afterAll", "afterCommit"]) {
       await expect
-        .poll(() => db.file_hook_calls!.count!({ file_id: retry.id, phase }))
+        .poll(() =>
+          db.file_hook_calls!.count!({ file_id: successfulFile.id, phase }),
+        )
         .toBe(2);
     }
     // Metadata/result writes do not enqueue another extraction; new bytes do.
     await db.files!.update!(
-      { id: retry.id },
+      { id: successfulFile.id },
       { docling_metadata: { note: "metadata only" } },
     );
     expect(await db.app_jobs!.count!({ job_name: "extractFileText" })).toBe(5);
     expect(await db.file_job_links!.count!({})).toBe(5);
-    expect(await db.file_hook_calls!.count!({ file_id: retry.id })).toBe(6);
+    expect(
+      await db.file_hook_calls!.count!({ file_id: successfulFile.id }),
+    ).toBe(6);
     await db.files!.update!(
-      { id: retry.id },
-      { text_content: ["retry", "page two"] },
+      { id: successfulFile.id },
+      { text_content: ["success", secondPageText, ""] },
     );
-    expect(await db.file_hook_calls!.count!({ file_id: retry.id })).toBe(6);
-    await db.files!.update!({ id: retry.id }, { text_content: null });
-    expect(await db.file_hook_calls!.count!({ file_id: retry.id })).toBe(9);
+    expect(
+      await db.file_hook_calls!.count!({ file_id: successfulFile.id }),
+    ).toBe(6);
+    await db.files!.update!({ id: successfulFile.id }, { text_content: null });
+    expect(
+      await db.file_hook_calls!.count!({ file_id: successfulFile.id }),
+    ).toBe(9);
 
     writeFileSync(
       configFile,
@@ -1505,6 +2850,8 @@ module.exports.jobs.definitions.check.run = async ({ row, dbo }) => {
 };`,
     );
     const { project: reloaded } = await deployment.syncSchema();
+    db = reloaded.db;
+    methods = reloaded.methods;
     await reloaded.db.job_checks!.insert!({ id: 2 });
     await expect
       .poll(
@@ -1521,6 +2868,147 @@ module.exports.jobs.definitions.check.run = async ({ row, dbo }) => {
       )
       .toBe(1);
     expect(await reloaded.db.file_job_links!.count!({})).toBe(6);
+
+    await page.reload();
+
+    /* A completed job can rerun without a file-status flag. */
+    const rerun = (await methods!.rerunFileTextExtraction!({
+      row: { id: replacement.id },
+    })) as { jobId: string };
+    expect(rerun.jobId).not.toBe(replacement.text_extraction_job_id);
+    await expect
+      .poll(
+        async () => (await db.app_jobs!.findOne!({ id: rerun.jobId }))?.status,
+      )
+      .toBe("succeeded");
+    expect(await db.extraction_calls!.count!({ name: "replacement" })).toBe(2);
+
+    /* Cancelling a running extraction stops the card spinner and leaves results empty. */
+    await db.job_checks!.update!({ id: 1 }, { released: false });
+    const cancelled = await upload("cancelled");
+    await expect
+      .poll(() => db.extraction_calls!.count!({ name: "cancelled" }))
+      .toBe(1);
+    await methods!.cancelFileTextExtraction!({
+      row: { id: cancelled.id },
+    });
+    await expect
+      .poll(
+        async () =>
+          (
+            await db.app_jobs!.findOne!({
+              id: cancelled.text_extraction_job_id,
+            })
+          )?.status,
+      )
+      .toBe("cancelled");
+    const cancelledCard = fileCards.filter({ hasText: "cancelled.pdf" });
+    await expect(
+      cancelledCard.getByRole("button", {
+        name: "extractFileText",
+        exact: true,
+      }),
+    ).toBeVisible();
+    expect(await db.files!.findOne!({ id: cancelled.id })).toMatchObject({
+      text_content: null,
+    });
+    expect(
+      await db.app_jobs!.findOne!({ id: cancelled.text_extraction_job_id }),
+    ).toMatchObject({
+      output: null,
+    });
+    await db.job_checks!.update!({ id: 1 }, { released: true });
+    const retried = (await methods!.extractFileText!({
+      row: { id: cancelled.id },
+    })) as { jobId: string };
+    await expect
+      .poll(
+        async () =>
+          (await db.app_jobs!.findOne!({ id: retried.jobId }))?.status,
+      )
+      .toBe("succeeded");
+    await expect(
+      cancelledCard.getByRole("button", {
+        name: "extractFileText",
+        exact: true,
+      }),
+    ).toBeVisible();
+
+    /* Unsupported replacements clear the job link and extraction results. */
+    const unsupportedReplacement = (
+      await db.files!.update!(
+        { id: cancelled.id },
+        {
+          data: Buffer.from([0, 1, 2, 3]),
+          original_name: "replacement.bin",
+        },
+        { returning: "*" },
+      )
+    )?.[0];
+    expect(unsupportedReplacement).toMatchObject({
+      text_extraction_job_id: null,
+      text_content: null,
+      docling_metadata: null,
+    });
+
+    /* Non-PDF documents keep their filenames and use Markdown when Docling has no pages. */
+    for (const extension of [
+      "TXT",
+      "md",
+      "html",
+      "csv",
+      "docx",
+      "xlsx",
+      "pptx",
+      "odt",
+      "adoc",
+      "tex",
+      "xml",
+      "json",
+    ]) {
+      const filename = `document.${extension}`;
+      const document = await reloaded.db.files!.insert!(
+        { data: Buffer.from(filename), original_name: filename },
+        { returning: "*" },
+      );
+      expect(document.text_extraction_job_id).toEqual(expect.any(String));
+      await expect
+        .poll(
+          async () =>
+            (
+              await reloaded.db.app_jobs!.findOne!({
+                id: document.text_extraction_job_id,
+              })
+            )?.status,
+        )
+        .toBe("succeeded");
+      expect(
+        await reloaded.db.extraction_calls!.findOne!({ name: filename }),
+      ).toMatchObject({ filename });
+      expect(
+        (await reloaded.db.files!.findOne!({ id: document.id }))?.text_content,
+      ).toEqual([
+        `# ${filename}`,
+        `| ${drawingDetails.replace("&", "&amp;")} |`,
+      ]);
+      const annotation = await reloaded.db.file_annotations!.insert!(
+        {
+          file_id: document.id,
+          page: 1,
+          start_text: filename,
+          end_text: filename,
+        },
+        { returning: "*" },
+      );
+      expect(annotation.text).toBe(filename);
+    }
+    const unsupportedFile = await reloaded.db.files!.insert!(
+      { data: Buffer.from([0, 1, 2, 3]), original_name: "source.bin" },
+      { returning: "*" },
+    );
+    expect(unsupportedFile.extraction_status).toBeUndefined();
+    expect(unsupportedFile.text_extraction_metadata).toBeUndefined();
+    expect(unsupportedFile.text_extraction_job_id).toBeNull();
   } finally {
     await deployment.dispose();
   }
@@ -1558,38 +3046,33 @@ test("CLI text extraction persists Docling profiling without annotations", async
       (table) => table.name === "files",
     )?.columns;
     expect(
-      columns?.find((column) => column.name === "extraction_job_id")
+      columns?.find((column) => column.name === "text_extraction_job_id")
         ?.references,
     ).toContainEqual(
       expect.objectContaining({ ftable: "prostgles_jobs", fcols: ["id"] }),
     );
-    for (const name of [
-      "text_content",
-      "docling_metadata",
-      "extraction_status",
-    ]) {
+    for (const name of ["text_content", "docling_metadata"]) {
       assert.ok(columns?.some((column) => column.name === name));
     }
     expect(
-      columns?.find((column) => column.name === "extraction_status"),
+      columns?.some((column) => column.name === "text_extraction_metadata"),
+    ).toBe(false);
+    expect(
+      columns?.find((column) => column.name === "text_extraction_job_id"),
     ).toMatchObject({
-      udt_name: "jsonb",
-      defaultRenderAs: {
-        type: "Internal",
-        params: { component: "FileExtractionStatus" },
-      },
+      udt_name: "uuid",
     });
     expect(
       columns?.find((column) => column.name === "text_content"),
     ).toMatchObject({
       udt_name: "_text",
     });
-    // A non-document upload must not invoke the document conversion service.
+    /* A non-document upload must not invoke the document conversion service. */
     const file = await db.files!.insert!(
-      { data: Buffer.from("hello"), original_name: "source.txt" },
+      { data: Buffer.from([0, 1, 2, 3]), original_name: "source.bin" },
       { returning: "*" },
     );
-    assert.equal(file.extraction_status, null);
+    assert.equal(file.extraction_status, undefined);
 
     // A cold Docker build can outlast the extraction timeout.
     await test.step("Start Docling", async () => {
@@ -1599,6 +3082,35 @@ test("CLI text extraction persists Docling profiling without annotations", async
         enable: true,
       });
     });
+
+    /* Text-based documents must complete extraction through the real Docling service. */
+    for (const [filename, content] of [
+      ["source.txt", "Plain text decision notice"],
+      ["source.md", "# Markdown decision notice"],
+      ["source.html", "<html><body><p>HTML decision notice</p></body></html>"],
+      ["source.csv", "number,condition\n1,CSV decision notice"],
+    ] as const) {
+      const document = await db.files!.insert!(
+        { data: Buffer.from(content), original_name: filename },
+        { returning: "*" },
+      );
+      await expect
+        .poll(
+          async () =>
+            (
+              await db.prostgles_jobs!.findOne!({
+                id: document.text_extraction_job_id,
+              })
+            )?.status,
+          { timeout: 120_000 },
+        )
+        .toBe("succeeded");
+      expect(
+        (await db.files!.findOne!({ id: document.id }))?.text_content?.join(
+          "\n",
+        ),
+      ).toContain("decision notice");
+    }
 
     const pdf = await db.files!.insert!(
       {
@@ -1610,13 +3122,20 @@ test("CLI text extraction persists Docling profiling without annotations", async
     await expect
       .poll(
         async () =>
-          (await db.files!.findOne!({ id: pdf.id }))?.extraction_status?.state,
+          (
+            await db.prostgles_jobs!.findOne!({
+              id: pdf.text_extraction_job_id,
+            })
+          )?.status,
         { timeout: 120_000 },
       )
-      .toBe("finished");
+      .toBe("succeeded");
 
-    const extractedPdf = await db.files!.findOne!({ id: pdf.id });
-    assert.equal(extractedPdf?.extraction_status?.state, "finished");
+    const extractionJob = await db.prostgles_jobs!.findOne!({
+      id: pdf.text_extraction_job_id,
+    });
+    assert.ok(extractionJob?.output);
+    expect(extractionJob.output.processing_time).toEqual(expect.any(Number));
     await test.step("Isolate Docling across deployments of the same app", async () => {
       const otherDeployment = await createTestDeployment({
         configPath,
@@ -1640,7 +3159,7 @@ test("CLI text extraction persists Docling profiling without annotations", async
         PROSTGLES_INSTANCE_ID: deployment!.instanceId,
       });
     });
-    const { timings } = extractedPdf.extraction_status;
+    const { timings } = extractionJob.output;
     expect(timings.pipeline_total).toBeDefined();
     for (const profilingItem of Object.values<{
       scope: string;
@@ -1676,17 +3195,25 @@ test("CLI text extraction persists Docling profiling without annotations", async
   }
 });
 
-const createAnnotationPdf = (firstPageText = "Beginning phrase") => {
-  const objects = [
-    "<< /Type /Catalog /Pages 2 0 R >>",
-    "<< /Type /Pages /Kids [4 0 R 6 0 R 8 0 R] /Count 3 >>",
-    "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
-  ];
-  for (const [i, text] of [
+const createAnnotationPdf = (
+  firstPageText = "Beginning phrase",
+  extraPages = 0,
+) => {
+  const pageTexts = [
     firstPageText,
     "Middle page",
     "Ending phrase",
-  ].entries()) {
+    ...Array.from(
+      { length: extraPages },
+      (_, index) => `Extra page ${index + 4}`,
+    ),
+  ];
+  const objects = [
+    "<< /Type /Catalog /Pages 2 0 R >>",
+    `<< /Type /Pages /Kids [${pageTexts.map((_, index) => `${4 + index * 2} 0 R`).join(" ")}] /Count ${pageTexts.length} >>`,
+    "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+  ];
+  for (const [i, text] of pageTexts.entries()) {
     objects.push(
       `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 600 800] /Resources << /Font << /F1 3 0 R >> >> /Contents ${5 + i * 2} 0 R >>`,
     );

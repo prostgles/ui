@@ -31,20 +31,31 @@ const filterSchema = {
 
 const selectSchema = {
   optional: true,
-  record: {
-    values: { oneOf: [{ enum: [1, 0] }, { record: { values: "any" } }] },
-  },
+  oneOf: [{ enum: ["*", ""] }, "string[]", { record: { values: "any" } }],
+} as const;
+
+const sortDirectionSchema = {
+  oneOf: [{ enum: [1, -1] }, "boolean"],
+} as const;
+
+const orderByColumnsSchema = {
+  record: { values: sortDirectionSchema },
 } as const;
 
 const orderByItemSchema = {
   key: "string",
-  asc: { enum: [true, false] },
-  nulls: { enum: ["first", "last"], optional: true },
+  asc: { ...sortDirectionSchema, optional: true, nullable: true },
+  nulls: { enum: ["first", "last"], optional: true, nullable: true },
+  nullEmpty: { type: "boolean", optional: true, nullable: true },
 } as const;
 
 const orderBySchema = {
   optional: true,
   oneOf: [
+    "string",
+    "string[]",
+    orderByColumnsSchema,
+    { arrayOf: orderByColumnsSchema },
     {
       arrayOfType: orderByItemSchema,
     },
@@ -52,6 +63,34 @@ const orderBySchema = {
       type: orderByItemSchema,
     },
   ],
+} as const;
+
+const selectParamsSchema = {
+  select: {
+    description:
+      'Fields to select. Omit or use "*" to select all allowed fields. Supports column arrays, inclusion/exclusion objects, functions and joins.',
+    ...selectSchema,
+  },
+  orderBy: orderBySchema,
+  limit: { optional: true, nullable: true, type: "integer" },
+  offset: { optional: true, type: "integer" },
+  groupBy: { optional: true, type: "boolean" },
+  having: { ...filterSchema.filter, optional: true },
+} as const;
+
+const onConflictSchema = {
+  optional: true,
+  oneOf: [
+    { enum: ["DoNothing", "DoUpdate"] },
+    {
+      type: {
+        action: { enum: ["DoNothing", "DoUpdate"] },
+        conflictColumns: "string[]",
+      },
+    },
+  ],
+  description:
+    "DoNothing ignores conflicts. DoUpdate updates non-conflicting columns. Use { action, conflictColumns } to specify the conflict target.",
 } as const;
 
 const outputSchemaArrayOfObjects = {
@@ -112,6 +151,7 @@ export const dbMcpSchema = {
       type: {
         tableName: "string",
         filter: { ...filterSchema.filter, optional: true },
+        ...selectParamsSchema,
       },
     },
     outputSchema: "number",
@@ -124,18 +164,11 @@ export const dbMcpSchema = {
       type: {
         tableName: "string",
         filter: { optional: true, ...filterSchema.filter },
-        select: {
-          description:
-            'Fields to select. Omit to select all fields. Must satisfy the table schema. Example: { id: 1, name: 1 }, { password: 0 }, or { page_text: { $array_element: ["text_content", 2] } }',
-          ...selectSchema,
-        },
-        orderBy: orderBySchema,
+        ...selectParamsSchema,
         limit: {
-          optional: true,
-          description: "Defaults to 10",
-          type: "integer",
+          ...selectParamsSchema.limit,
+          description: "Defaults to 10. Use null for no limit.",
         },
-        offset: { optional: true, type: "integer" },
       },
     },
     outputSchema: outputSchemaArrayOfObjects,
@@ -153,14 +186,8 @@ export const dbMcpSchema = {
             "Data to insert into the table. Must satisfy the table schema.",
           record: { values: "any" },
         },
-        onConflict: {
-          enum: ["DoNothing", "DoUpdate"],
-          optional: true,
-          description: fixIndent(`
-              By default the insert may fail due to a unique/exclusion constraint violation error. To control this:
-              - DoNothing: will ignore the error and do nothing
-              - DoUpdate: will update all non conflicting columns of the conflicting row`),
-        },
+        onConflict: onConflictSchema,
+        removeDisallowedFields: { type: "boolean", optional: true },
         returning: {
           description:
             'Fields to return for newly inserted data. Use { "*": 1 } to return all fields. Nothing will be returned otherwise',
@@ -190,14 +217,8 @@ export const dbMcpSchema = {
             "Data to insert into the table. Must satisfy the table schema.",
           arrayOf: { record: { values: "any" } },
         },
-        onConflict: {
-          enum: ["DoNothing", "DoUpdate"],
-          optional: true,
-          description: fixIndent(`
-              By default the insert may fail due to a unique/exclusion constraint violation error. To control this:
-              - DoNothing: will ignore the error and do nothing
-              - DoUpdate: will update all non conflicting columns of the conflicting row`),
-        },
+        onConflict: onConflictSchema,
+        removeDisallowedFields: { type: "boolean", optional: true },
         returning: {
           description:
             'Fields to return for newly inserted data. Use { "*": 1 } to return all fields. Nothing will be returned otherwise',

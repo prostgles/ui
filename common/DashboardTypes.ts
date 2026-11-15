@@ -228,8 +228,6 @@ type Filtering = {
 
 export type TableColumn = {
   show?: boolean;
-  /** 1: summary and details; 2: details only; omitted: hidden. With no levels configured, headers count toward the first 10 summary fields; the rest appear in details. */
-  infoLevel?: 1 | 2;
   /**
    * Column name as it appears in the database.
    * For nested columns this can be anything. Use the table name or a more descriptive name.
@@ -265,6 +263,21 @@ export type TableColumn = {
    */
   width: number;
 
+  /**
+   * Column style colors: prefer these theme-aware CSS variables over raw hex/rgb colors.
+   * Use only the variable names listed here; do not invent color names or shades.
+   * Text, borders and bars:
+   * var(--red), var(--pink), var(--purple), var(--blue),
+   * var(--indigo), var(--green), var(--yellow), var(--gray).
+   * Chip/cell backgrounds and scale endpoints:
+   * var(--light-red), var(--light-pink), var(--light-purple), var(--light-blue),
+   * var(--light-indigo), var(--light-green), var(--light-yellow), var(--light-gray).
+   * Pair matching foreground/background colors. The light- prefix means a subtle background in either theme.
+   * Defaults: var(--text-0) for normal text, var(--text-1) for muted text,
+   * var(--bg-color-0) for the surface background, var(--b-color) for neutral borders,
+   * and var(--active) for the default bar color.
+   * The conditional shorthand below accepts bare color names and applies the matching foreground/background pair.
+   */
   styling?: (
     | { type: "None" }
     | {
@@ -320,8 +333,8 @@ export type TableColumn = {
          *         "display": "drillable-records",
          *         "styling": {
          *           "type": "Barchart",
-         *           "barColor": "blue",
-         *           "textColor": "#646464",
+         *           "barColor": "var(--blue)",
+         *           "textColor": "var(--text-0)",
          *           "buttonVariant": "text"
          *         }
          *       }
@@ -377,10 +390,20 @@ export type TableColumn = {
         params?: { firstNameColumn?: string; lastNameColumn?: string };
       }
     | {
+        /** Render a URL with optional fixed link text or a separate destination column. */
+        type: "URL";
+        params?: {
+          /** Column containing the destination URL. Defaults to this column. */
+          urlColumn?: string;
+          /** Fixed link text. Empty or unset uses this column's value. */
+          linkText?: string;
+        };
+      }
+    | {
         /**
          * Column value will be rendered as a link with specific behaviour
          */
-        type: "URL" | "Email" | "Tel";
+        type: "Email" | "Tel";
       }
     | {
         /**
@@ -420,7 +443,14 @@ export type TableColumn = {
         type: "Age";
         params?: {
           variant: "short" | "full";
+          /** Show the date and time above the age. */
+          showTimestamp?: boolean;
+          showAgo?: boolean;
         };
+      }
+    | {
+        type: "Stopwatch";
+        params: { startColumn: string; endColumn: string };
       }
     | {
         /**
@@ -437,7 +467,7 @@ export type TableColumn = {
         type: "MarkdownPopup";
       }
     | {
-        /** Text content as sanitised html */
+        /** Basic HTML formatting, lists and tables with restricted inline colours, typography, spacing, borders and sizing. Content is clipped to its container. Positioning, transforms, URLs, custom properties, scripts, style tags, links, media, SVG, forms, embeds and other attributes are removed. Sanitisation cannot be disabled. No parameters are needed. */
         type: "HTML";
       }
     | {
@@ -451,6 +481,11 @@ export type TableColumn = {
     | {
         /** Used internally in files table. Ignore */
         type: "DoclingDocument";
+      }
+    | {
+        /** Show a nested JSON value as a button opening the full JSON. */
+        type: "JSON Summary";
+        params: { path: string[] };
       }
     | {
         type: "JSON Diff" | "Text Diff";

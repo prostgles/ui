@@ -5,8 +5,10 @@ import type { DBSSchema } from "@common/publishUtils";
 import { loadGeneratedWorkspaces } from "../serverFunctions/loadGeneratedWorkspaces/loadGeneratedWorkspaces";
 import type { SchemaConfig, SchemaConfigAccessControl } from "../schemaConfig";
 import { statePrgl } from "../init/startProstgles";
+import { getConfiguredWorkflow } from "../McpHub/ProstglesMcpHub/ProstglesMCPServers/Prostgles/agenticWorkflow/getConfiguredWorkflow";
+import { logTimedStep } from "../utils/logTimedStep";
 
-/** Persist configured workspaces, the LLM credential, and access-control rules. */
+/** Persist configured resources and return workflow sync for the ready connection. */
 export const syncSchemaConfigResources = async ({
   dbs,
   databaseId,
@@ -14,6 +16,7 @@ export const syncSchemaConfigResources = async ({
   tables,
   rules = [],
   workspaces = [],
+  workflows = {},
   llmCredential,
   userTypes: configuredUserTypes,
 }: {
@@ -23,6 +26,7 @@ export const syncSchemaConfigResources = async ({
   tables: TableSchema[];
   rules?: SchemaConfigAccessControl[];
   workspaces?: SchemaConfig["workspaces"];
+  workflows?: SchemaConfig["workflows"];
   llmCredential?: SchemaConfig["llmCredential"];
   userTypes?: SchemaConfig["userTypes"];
 }) => {
@@ -67,6 +71,9 @@ export const syncSchemaConfigResources = async ({
     { userId: admin.id },
     undefined,
   );
+  const finishResourceSync = logTimedStep(
+    "Synchronizing configured workspaces and access rules",
+  );
   await withClientDbTx(async (tx) => {
     if (typeDefinitions.length) {
       await tx.user_types.insertMany(typeDefinitions, {
@@ -97,8 +104,27 @@ export const syncSchemaConfigResources = async ({
       $notExistsJoined: { access_control_connections: {} },
     });
     if (llmCredential) {
+      const finishCredentialValidation = logTimedStep(
+        "Validating configured LLM credentials (model lookup and test request)",
+      );
+      const { provider_id: provider, ...credential } = llmCredential;
+      /* Credential updates cannot change provider_id, so upsert the provider separately. */
+      const providerId =
+        typeof provider === "object" && "id" in provider ?
+          (
+            await tx.llm_providers.insert(provider, {
+              onConflict: "DoUpdate",
+              returning: { id: 1 },
+            })
+          ).id
+        : provider;
       await tx.llm_credentials.delete({});
-      await tx.llm_credentials.insert({ ...llmCredential, user_id: admin.id });
+      await tx.llm_credentials.insert({
+        ...credential,
+        provider_id: providerId,
+        user_id: admin.id,
+      });
+      finishCredentialValidation();
     }
     const allowedLLMReferences = rules.flatMap((rule) => rule.allowedLLM ?? []);
     const [sharedWorkspaces, publishedMethods, credentials, prompts] =
@@ -183,6 +209,19 @@ export const syncSchemaConfigResources = async ({
       });
     }
   });
+  finishResourceSync();
+  /* Workflow validation needs the registered connection and committed credentials. */
+  return async () => {
+    const workflowNames = Object.keys(workflows);
+    if (!workflowNames.length) return;
+    const finishWorkflowSync = logTimedStep(
+      `Synchronizing ${workflowNames.length} configured workflows`,
+    );
+    for (const name of workflowNames) {
+      await getConfiguredWorkflow(dbs, connectionId, admin.id, name);
+    }
+    finishWorkflowSync();
+  };
 };
 
 const getNamedId = <T extends string | number>(

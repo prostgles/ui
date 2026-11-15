@@ -1,4 +1,4 @@
-import type { ColumnOptions, TableOptions } from "@common/managedTableSchema";
+import type { TableOptions } from "@common/managedTableSchema";
 import type { DBSSchema } from "@common/publishUtils";
 
 export const dbsConnectionOptions = {
@@ -10,6 +10,38 @@ export const dbsConnectionOptions = {
     users: {
       label: "Users",
       icon: "Account",
+    },
+    user_types: {
+      label: "User types",
+      icon: "AccountKey",
+      sort: [{ key: "id", asc: true }],
+      card: {
+        headerColumn: "id",
+        subHeaderColumn: "description",
+        summaryFields: [],
+        layoutSections: [],
+      },
+      referenceDisplay: {
+        columns: [{ name: "id" }],
+      },
+      columns: {
+        id: {
+          label: "Role",
+          idx: 0,
+          width: 200,
+          style: {
+            type: "Fixed",
+            fontWeight: "bold",
+            chipColor: "var(--light-indigo)",
+            textColor: "var(--indigo)",
+          },
+        },
+        description: {
+          label: "Description",
+          idx: 1,
+          width: 400,
+        },
+      },
     },
     backups: {
       label: "Backups",
@@ -102,7 +134,10 @@ export const dbsConnectionOptions = {
   } satisfies Partial<{
     [tableKey in keyof DBSSchema]: Partial<TableOptions> & {
       columns?: Partial<
-        Record<keyof DBSSchema[tableKey], Partial<ColumnOptions>>
+        Record<
+          keyof DBSSchema[tableKey],
+          NonNullable<TableOptions["columns"]>[string]
+        >
       >;
     };
   }>, //satisfies DBSSchema["connections"]["table_options"]

@@ -27,13 +27,13 @@ export const JoinFilterTypeToggle = ({ value, disabled, onChange }: P) => {
 const JOIN_FILTER_TYPES = [
   {
     key: "$existsJoined",
-    label: "Exists",
+    label: "exists",
     subLabel: "At least one matching record exists in the target table",
     iconPath: mdiSetCenter,
   },
   {
     key: "$notExistsJoined",
-    label: "Not Exists",
+    label: "not exists",
     subLabel: "No matching records exists in the target table",
     iconPath: mdiSetNone,
   },

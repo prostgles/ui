@@ -1,6 +1,6 @@
 import { useCallback } from "react";
+import { clamp } from "src/utils/utils";
 import {
-  clamp,
   maxScale,
   minScale,
   type useDrawSchemaShapes,

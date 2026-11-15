@@ -49,6 +49,8 @@ export const MediaViewerContent = ({
     knownFileId ? { fileId: knownFileId } : { url: urlInfo?.validated },
   );
   const [expandedDocUrl, setExpandedDocUrl] = useState<string>();
+  const [pdfHeaderControlsTarget, setPdfHeaderControlsTarget] =
+    useState<HTMLDivElement | null>(null);
   if (!urlInfo) return null;
 
   const { validated: url, type = "", content_type } = urlInfo;
@@ -147,6 +149,9 @@ export const MediaViewerContent = ({
               <Popup
                 title={title ?? urlInfo.forDisplay}
                 subTitle={subTitle}
+                headerRightContent={
+                  isPdf && <div ref={setPdfHeaderControlsTarget} />
+                }
                 positioning="fullscreen"
                 onClose={() => {
                   setExpandedDocUrl(undefined);
@@ -158,6 +163,7 @@ export const MediaViewerContent = ({
                     url={url}
                     fileId={fileId}
                     context={context}
+                    headerControlsTarget={pdfHeaderControlsTarget}
                     withCredentials={withCredentials}
                   />
                 : <iframe

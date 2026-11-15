@@ -74,7 +74,7 @@ export const useMcpServerIcons = (
       if (!serverIcons) return undefined;
       if (toolName) {
         return (
-          serverIcons.toolInfo.get(toolName)?.icon ?? serverIcons.serverIcon
+          serverIcons.toolInfo.get(toolName)?.icon || serverIcons.serverIcon
         );
       }
       return serverIcons.serverIcon;

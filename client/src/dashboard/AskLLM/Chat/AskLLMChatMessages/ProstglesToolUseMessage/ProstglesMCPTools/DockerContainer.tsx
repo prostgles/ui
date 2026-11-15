@@ -78,13 +78,11 @@ export const DockerContainer = ({
         ...input.files,
         ...editedFiles,
       },
-      ...((userInputValue || input.userInputValue) && {
-        userInputValue: {
-          ...input.userInputValue,
-          ...userInputValue,
-        },
-      }),
-    };
+      userInputValue: {
+        ...input.userInputValue,
+        ...userInputValue,
+      },
+    } satisfies DockerContainerInputData;
     const updatedToolUse = onGetNewInput(data);
     return {
       updatedToolUse,

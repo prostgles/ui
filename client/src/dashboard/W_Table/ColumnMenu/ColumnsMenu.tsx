@@ -76,7 +76,10 @@ export class ColumnsMenu extends RTComp<P, S> {
     if (!w) return null;
 
     let table = tables.find((t) => t.name === this.tableName);
-    let cols = getColumnsWithInfoAndWidth(tables, w);
+    let cols = getColumnsWithInfoAndWidth(tables, {
+      table_name: w.table_name,
+      columns: w.columns,
+    });
     const nestedColumnName = nestedColumnOpts?.config.name;
     const nestedColumn = cols.find(
       (column) => column.name === nestedColumnName,

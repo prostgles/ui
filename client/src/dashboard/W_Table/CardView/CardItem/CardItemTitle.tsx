@@ -20,6 +20,7 @@ export const CardItemTitle = ({
   showEdit,
   children,
   renderDetails,
+  onClick,
 }: Pick<CardViewRowProps, "table" | "tableHandler" | "draggedRow"> & {
   prgl: Pick<Prgl, "db" | "tables" | "methods" | "sql">;
   row: Record<string, unknown>;
@@ -27,8 +28,10 @@ export const CardItemTitle = ({
   showEdit: boolean | undefined;
   children: React.ReactNode;
   renderDetails: (props: SmartCardListProps) => React.ReactNode;
+  onClick?: VoidFunction;
 }) => {
   const [details, setDetails] = useState<{
+    anchorEl: HTMLButtonElement;
     rowFilter: DetailedFilterBase[];
     fieldConfigs: FieldConfig[];
   }>();
@@ -43,7 +46,7 @@ export const CardItemTitle = ({
           fontSize: "inherit",
           fontWeight: "inherit",
           lineHeight: "inherit",
-          whiteSpace: "normal",
+          whiteSpace: "nowrap",
           maxWidth: "100%",
           minHeight: 0,
           minWidth: 0,
@@ -51,6 +54,11 @@ export const CardItemTitle = ({
         onClickPromise={async (event) => {
           event.stopPropagation();
           if (draggedRow) return;
+          if (onClick) {
+            onClick();
+            return;
+          }
+          const triggerButton = event.currentTarget;
           const { filter, error } = await getRowFilter(
             row,
             table,
@@ -62,18 +70,23 @@ export const CardItemTitle = ({
             ...prgl,
             table,
             columnConfig,
-            infoLevel: 2,
+            cardMode: "details",
           });
-          setDetails({ rowFilter: filter, fieldConfigs });
+          setDetails({
+            anchorEl: triggerButton,
+            rowFilter: filter,
+            fieldConfigs,
+          });
         }}
       >
-        {children}
+        <span className="text-ellipsis">{children}</span>
       </Btn>
       {details && (
         <DetailedCardPopup
           prgl={prgl}
           table={table}
           {...details}
+          columnConfig={columnConfig}
           showEdit={showEdit}
           onClose={() => setDetails(undefined)}
           renderDetails={renderDetails}

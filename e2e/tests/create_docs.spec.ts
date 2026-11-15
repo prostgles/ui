@@ -54,7 +54,7 @@ test.describe("Create docs and screenshots", () => {
   // });
 
   test(`Restore databases`, async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
 
     await login(page, USERS.test_user, "/auth/login");
     // await saveSVGifs(page); throw "hehe"; // For debugging
@@ -78,7 +78,7 @@ test.describe("Create docs and screenshots", () => {
   });
 
   test("Create docs", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
 
     await login(page, USERS.test_user, "/auth/login");
 
@@ -119,7 +119,7 @@ test.describe("Create docs and screenshots", () => {
   });
 
   test("Create screenshots", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
 
     await login(page, USERS.test_user, "/auth/login");
     if (!IS_GITHUB_WORKER) {
@@ -131,7 +131,7 @@ test.describe("Create docs and screenshots", () => {
   });
 
   test("Create overviews and verify screenshots", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
 
     await login(page, USERS.test_user, "/auth/login");
     if (!IS_GITHUB_WORKER) {

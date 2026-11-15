@@ -56,6 +56,20 @@ export const getRemoteMcpServerParameters = ({
     }),
     headers: withBearerToken(server.headers),
     RemoteServerEvents: {
+      onAuthenticationError: async (error) => {
+        await dbs.mcp_server_configs.update(
+          { id: mcp_server_config.id },
+          {
+            oauth: {
+              phase: "error",
+              errorType: "unknown",
+              error,
+              scopes: config.scopes,
+              redirectUri: "redirectUri" in oauth ? oauth.redirectUri : "",
+            },
+          },
+        );
+      },
       onConnected: async (args) => {
         await saveServerInfo({ ...config, dbs, server }, args);
         if (

@@ -84,8 +84,14 @@ export const DoclingDocumentViewerPopupBtn = (props: P) => {
       title="Parsed document"
       positioning="fullscreen"
       onClickClose={false}
+      className="max-w-full"
       button={
-        <Btn iconPath={mdiEye} color="action" variant="faded">
+        <Btn
+          className="max-w-full"
+          iconPath={mdiEye}
+          color="action"
+          variant="faded"
+        >
           Show parsed document
         </Btn>
       }

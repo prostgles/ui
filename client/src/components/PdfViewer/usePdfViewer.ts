@@ -8,6 +8,10 @@ import "./PdfViewer.css";
 import { usePdfViewerHighlights } from "./PdfViewerHighlights/usePdfViewerHighlights";
 import type { CreatedHighlight } from "./PdfViewerHighlights/PdfViewerHighlights";
 import { getTextHighlightRects } from "./PdfViewerHighlights/getTextHighlightRects";
+import {
+  usePdfContinuousScroll,
+  type RenderedPdfPage,
+} from "./usePdfContinuousScroll";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.mjs",
@@ -15,12 +19,6 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
 ).toString();
 
 const CSS_UNITS = 96 / 72;
-
-type RenderedPage = {
-  element: HTMLDivElement;
-  page: number;
-  viewport: pdfjsLib.PageViewport;
-};
 
 const getErrorMessage = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
@@ -34,9 +32,14 @@ export const usePdfViewer = ({
   scale = 1.5,
   highlights = [],
   activeHighlightId,
+  onHoverHighlight,
+  onSelectHighlight,
+  onClearHighlight,
   withCredentials = false,
   defaultPage,
+  continuousScroll,
 }: PdfViewerProps & {
+  continuousScroll: boolean;
   onPotentialHighlight?: (highlight: CreatedHighlight) => void;
 }) => {
   const pageHostRef = useRef<HTMLDivElement>(null);
@@ -55,41 +58,91 @@ export const usePdfViewer = ({
     }
   }, [defaultPage]);
   const activeHighlight = highlights.find((h) => h.id === activeHighlightId);
+  const previousActiveHighlightIdRef =
+    useRef<PdfViewerProps["activeHighlightId"]>();
   useEffect(() => {
+    if (previousActiveHighlightIdRef.current === activeHighlight?.id) return;
+    previousActiveHighlightIdRef.current = activeHighlight?.id;
     if (!activeHighlight) return;
-    setCurrentPage((page) => activeHighlight.text_selections.some((s) => s.page === page) ?
-      page : activeHighlight.text_selections[0]!.page);
+    const [firstSelection] = activeHighlight.text_selections;
+    if (!firstSelection) return;
+    setCurrentPage((page) =>
+      (
+        activeHighlight.text_selections.some(
+          (selection) => selection.page === page,
+        )
+      ) ?
+        page
+      : firstSelection.page,
+    );
   }, [activeHighlight]);
-  const [renderedPage, setRenderedPage] = useState<RenderedPage | null>(null);
+  const [renderedPage, setRenderedPage] = useState<RenderedPdfPage | null>(
+    null,
+  );
   const [isRendering, setIsRendering] = useState(false);
   const [error, setError] = useState<unknown>();
+  const continuousPages = usePdfContinuousScroll({
+    enabled: continuousScroll,
+    pdfDocument,
+    pageHostRef,
+    currentPage,
+    scale,
+    onPageChange: setCurrentPage,
+    onError: setError,
+  });
 
   const numPages = pdfDocument?.numPages ?? 0;
-  const activeRenderedPage =
-    renderedPage?.page === currentPage ? renderedPage : null;
+  const renderedPages = useMemo(() => {
+    const pages =
+      continuousScroll ? continuousPages
+      : renderedPage?.page === currentPage ? [renderedPage]
+      : [];
+    return pages.map((page) => ({
+      ...page,
+      highlights: highlights
+        .filter((highlight) =>
+          highlight.text_selections.some(
+            (selection) => selection.page === page.page,
+          ),
+        )
+        .map((highlight) => ({
+          ...highlight,
+          rects: getTextHighlightRects(
+            highlight,
+            page.page,
+            page.element,
+            page.viewport,
+          ),
+        })),
+    }));
+  }, [
+    continuousScroll,
+    continuousPages,
+    currentPage,
+    renderedPage,
+    highlights,
+  ]);
+  const activeRenderedPage = renderedPages.find(
+    ({ page }) => page === currentPage,
+  );
   const viewport = activeRenderedPage?.viewport ?? null;
   const pageElement = activeRenderedPage?.element ?? null;
-  const pageHighlights = useMemo(
-    () => highlights
-      .filter((h) => h.text_selections.some((s) => s.page === currentPage))
-      .map((h) => ({ ...h, rects: pageElement && viewport ?
-        getTextHighlightRects(h, currentPage, pageElement, viewport) : [] })),
-    [currentPage, highlights, pageElement, viewport],
-  );
+  const pageHighlights = activeRenderedPage?.highlights ?? [];
 
   const [potentialHighlight, setPotentialHighlight] =
     useState<CreatedHighlight | null>(null);
   const {
     activeTooltip,
+    handleClick,
     handlePointerMove,
     handlePointerUp,
-    setActiveTooltip,
+    clearHover,
   } = usePdfViewerHighlights({
-    pageHighlights,
+    renderedPages,
     setPotentialHighlight,
-    pageElement,
-    viewport,
-    currentPage,
+    onHoverHighlight,
+    onSelectHighlight,
+    onClearHighlight,
   });
 
   useEffect(() => {
@@ -126,7 +179,7 @@ export const usePdfViewer = ({
   }, [url, withCredentials]);
 
   useEffect(() => {
-    if (!pdfDocument || !pageHostRef.current) {
+    if (continuousScroll || !pdfDocument || !pageHostRef.current) {
       return;
     }
 
@@ -145,6 +198,7 @@ export const usePdfViewer = ({
 
       setRenderedPage({
         element: pageView.div,
+        overlayElement: undefined,
         page: currentPage,
         viewport: pageView.viewport,
       });
@@ -152,7 +206,7 @@ export const usePdfViewer = ({
 
     setIsRendering(true);
     setError(undefined);
-    setActiveTooltip(null);
+    clearHover();
     setRenderedPage(null);
 
     host.replaceChildren();
@@ -216,10 +270,15 @@ export const usePdfViewer = ({
         pageViewRef.current = null;
       }
     };
-  }, [currentPage, eventBus, pdfDocument, scale, setActiveTooltip]);
+  }, [continuousScroll, currentPage, eventBus, pdfDocument, scale, clearHover]);
+
+  useEffect(() => {
+    clearHover();
+    setPotentialHighlight(null);
+  }, [continuousScroll, currentPage, clearHover]);
 
   return {
-    isRendering,
+    isRendering: continuousScroll ? !pageElement && !!pdfDocument : isRendering,
     currentPage,
     numPages,
     setCurrentPage,
@@ -227,11 +286,13 @@ export const usePdfViewer = ({
     pageElement,
     viewport,
     activeTooltip,
+    handleClick,
     handlePointerMove,
     handlePointerUp,
     error,
-    setActiveTooltip,
+    clearHover,
     pageHighlights,
+    renderedPages,
     pdfDocument,
     potentialHighlight,
     setPotentialHighlight,

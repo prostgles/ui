@@ -7,7 +7,6 @@ import React, { useState } from "react";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import { SmartCardList } from "../../../dashboard/SmartCardList/SmartCardList";
 import type { ColumnSort } from "@common/ColumnConfig/ColumnConfig";
-import { MCPServerConfigProvider } from "./MCPServerConfig/MCPServerConfigProvider";
 import { MCPServerFooterActions } from "./MCPServerFooterActions/MCPServerFooterActions";
 import { MCPServersHeader } from "./MCPServersHeader";
 import { MCPServersToolbar } from "./MCPServersToolbar/MCPServersToolbar";
@@ -48,7 +47,7 @@ export const MCPServers = ({ chatId, focusedServer }: MCPServersProps) => {
   }
 
   return (
-    <MCPServerConfigProvider>
+    <>
       <FlexCol
         className="p-1 pt-0 min-w-0 f-1 max-w-800"
         data-command="MCPServers"
@@ -124,7 +123,7 @@ export const MCPServers = ({ chatId, focusedServer }: MCPServersProps) => {
           />
         </FlexCol>
       </FlexCol>
-    </MCPServerConfigProvider>
+    </>
   );
 };
 

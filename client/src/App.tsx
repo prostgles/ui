@@ -115,7 +115,9 @@ export const App = () => {
   } = useReactiveState(r_useAppVideoDemo);
 
   const prglLoaded = prglStateStore.useStore((s) => s.loaded);
-  const { theme, userThemeOption } = useAppTheme(state.prglState);
+  const { theme, userThemeOption } = useAppTheme(
+    state.user ?? state.prglState?.user,
+  );
   const appContextProps: AppContextProps | undefined = useMemo(
     () =>
       state.prglState &&
@@ -139,7 +141,12 @@ export const App = () => {
       !state.serverState.electronCredsProvided ||
       initStateError)
   ) {
-    return <ElectronSetup serverState={state.serverState} />;
+    return (
+      <ElectronSetup
+        serverState={state.serverState}
+        error={state.dbsClientError ?? initStateError?.error}
+      />
+    );
   }
 
   const unknownErrorMessage =
@@ -343,7 +350,10 @@ export const App = () => {
                   needsUser={false}
                   userThemeOption={userThemeOption}
                 >
-                  <Documentation isElectron={isElectron} />
+                  <Documentation
+                    isElectron={isElectron}
+                    className="px-1 pb-1"
+                  />
                 </NavBarWrapper>
               }
             />

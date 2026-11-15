@@ -1,3 +1,9 @@
+import type {
+  DeleteParams,
+  InsertParams,
+  SelectParams,
+  UpdateParams,
+} from "prostgles-types";
 import type { DefineAgenticWorkflow } from "./defineAgenticWorkflow";
 
 export type ProxyDbCallData =
@@ -7,36 +13,27 @@ export type ProxyDbCallData =
       query_timeout?: number;
       query_params?: unknown[] | Record<string, unknown>;
     }
-  | {
+  | ({
       type: "db/find" | "db/count";
       tableName: string;
       filter?: any;
-      limit?: any;
-      select?: any;
-      orderBy?: any;
-      offset?: any;
-    }
-  | {
+    } & Omit<SelectParams, "abortSignal" | "returnType">)
+  | ({
       type: "db/insert" | "db/insertMany";
       tableName: string;
       data: any;
-      returning?: any;
-      onConflict?: any;
-    }
-  | {
+    } & Omit<InsertParams, "returnType">)
+  | ({
       type: "db/update";
       tableName: string;
       filter: any;
       data: any;
-      returning?: any;
-      onConflict?: any;
-    }
-  | {
+    } & Omit<UpdateParams, "returnType">)
+  | ({
       type: "db/delete";
       tableName: string;
       filter: any;
-      returning?: any;
-    };
+    } & Omit<DeleteParams, "returnType">);
 export type AgenticWorkflowDefinition = Parameters<DefineAgenticWorkflow>[0];
 export type ProxyCallDataDefinitions = {
   type: "definitions";

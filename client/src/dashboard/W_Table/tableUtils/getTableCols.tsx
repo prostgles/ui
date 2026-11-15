@@ -12,7 +12,7 @@ import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";
 import { onRenderColumn } from "../RenderColumn/onRenderColumn";
 import { getCellStyle } from "../RenderColumn/StyledTableColumn";
-import type W_Table from "../W_Table";
+import type { ColumnMenuState } from "../ColumnMenu/ColumnMenu";
 import type { MinMaxVals, ProstglesColumn, W_TableProps } from "../W_Table";
 import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
 import { getColumnsWithInfoAndWidth } from "./getColumnsWithInfoAndWidth";
@@ -39,7 +39,7 @@ type GetTableColsArgs = Pick<
     barchartVals: MinMaxVals | undefined;
     allowMediaSkip?: boolean;
     hideEditRow?: boolean;
-    columnMenuState?: W_Table["columnMenuState"];
+    columnMenuState?: ColumnMenuState;
     opts?: Pick<Partial<ProstglesTableColumn>, "noRightBorder">;
   };
 export const getTableCols = ({
@@ -136,7 +136,10 @@ export const getTableCols = ({
     if (c.computedConfig?.isColumn && !c.label) {
       labelIcon = mdiFunction;
       labelText = `${c.computedConfig.funcDef.label}(${c.name})`;
-    } else if (c.info?.references || c.nested) {
+    } else if (
+      (c.info?.references || c.nested) &&
+      w.options.viewAs?.type !== "card"
+    ) {
       labelIcon = mdiLink;
     }
     const title =

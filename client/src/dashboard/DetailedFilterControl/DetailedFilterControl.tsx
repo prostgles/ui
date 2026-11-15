@@ -18,15 +18,16 @@ type P = {
   tables: DBSchemaTableWJoins[];
   minimisedOverride: boolean | undefined;
   className?: string;
+  onChange: (filter?: DetailedFilter, childFilterEnabled?: boolean) => void;
 } & Pick<
   DetailedFilterBaseControlProps,
   | "db"
   | "variant"
+  | "withShadow"
   | "contextData"
   | "selectedColumns"
   | "hideToggle"
   | "extraFilters"
-  | "onChange"
   | "otherFilters"
 >;
 export const DetailedFilterControl = ({
@@ -36,6 +37,7 @@ export const DetailedFilterControl = ({
   className,
   minimisedOverride,
   variant,
+  withShadow,
   db,
   contextData,
   extraFilters,
@@ -55,6 +57,7 @@ export const DetailedFilterControl = ({
         contextData={contextData}
         hideToggle={hideToggle}
         variant={variant}
+        withShadow={withShadow}
         className={className}
       />
     );
@@ -77,8 +80,6 @@ export const DetailedFilterControl = ({
     };
     tableColumn = undefined;
   }
-  const label = filterColumn?.name ?? fieldName;
-
   if (tableColumn) {
     filterColumn = {
       type: "column",
@@ -101,11 +102,12 @@ export const DetailedFilterControl = ({
   return (
     <DetailedFilterBaseControl
       className={`${className} min-w-0 min-h-0`}
-      label={label}
+      label={selectedColumn?.label || filterColumn.label || fieldName}
       db={db}
       tableName={tableName}
       column={filterColumn}
       variant={variant}
+      withShadow={withShadow}
       tables={tables}
       contextData={contextData}
       hideToggle={hideToggle}

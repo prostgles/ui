@@ -5,6 +5,8 @@ import type { McpTool } from "@src/McpHub/AnthropicMcpHub/McpTypes";
 import type { McpCallContextFetchTools } from "@src/McpHub/ProstglesMcpHub/ProstglesMCPServerTypes";
 import { getJSONBSchemaAsJSONSchema, omitKeys } from "prostgles-types";
 import { getDefineAgenticWorkflowTsWithDbAndMcpTypes } from "../agenticWorkflow/runtimeSetup/getDefineAgenticWorkflowTsWithDbAndMcpTypes";
+import { getWorkflowDeclaration } from "../agenticWorkflow/runtimeSetup/getWorkflowDeclaration";
+import { WORKFLOW_MODULE_NAME } from "../agenticWorkflow/runtimeSdk/workflowConstants";
 import { CHEAPER_AGENTIC_MODEL_RANKING } from "@src/serverFunctions/askLLM/refreshModels";
 
 const name = "create_agentic_workflow" as const;
@@ -36,10 +38,10 @@ export const getAgenticWorkflowToolSchema = async ({
     description: fixIndent(`
     This tool will allow the user to create and start an agent workflow with suggested tools and prompt.
     The input will be shown to the user for confirmation and execution.
-    The "workflow_function_definition" should be the definition of the function that will be created to execute the agentic workflow. It should include the tools that should be used in the workflow and the prompt that should be given to the agent to execute the workflow. The tools included in the "workflow_function_definition" must be a subset of the available tools listed below.
+    The "workflow_function_definition" must be an executable TypeScript entrypoint that imports defineAgenticWorkflow from "${WORKFLOW_MODULE_NAME}" and calls it at the top level. Pass the configuration as the first argument and the workflow callback as the second. Configure the tools and agent prompts needed for the workflow. The selected tools must be a subset of the available tools.
     The structure of the "workflow_function_definition" should adhere to the types below:
     ${"```typescript"}
-    ${workflowTsSchema} 
+    ${getWorkflowDeclaration(workflowTsSchema)}
     ${"```"}
 
     ## Database Access

@@ -1,3 +1,4 @@
+import type { CardMode } from "@common/ColumnConfig/cardLayout";
 import { FlexRow } from "@components/Flex";
 import React from "react";
 import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
@@ -9,14 +10,14 @@ export const SmartCardHeader = ({
   table,
   row,
   fullData,
-  infoLevel,
+  cardMode,
   renderTitle,
 }: {
   fields: ParsedFieldConfig[];
   table: DBSchemaTableWJoins;
   row: SmartCardProps["defaultData"];
   fullData: SmartCardProps["fullData"];
-  infoLevel: 1 | 2;
+  cardMode: CardMode;
   renderTitle: ((value: React.ReactNode) => React.ReactNode) | undefined;
 }) => {
   const headers = fields.flatMap(({ cardHeader }) =>
@@ -41,7 +42,7 @@ export const SmartCardHeader = ({
           .filter(({ isAvatar, isTitle }) => !isAvatar && !isTitle)
           .map(({ column }) => column)}
         compact={false}
-        hideEmptySubHeaders={infoLevel === 1}
+        hideEmptySubHeaders={cardMode === "summary"}
         renderHeader={(fallback) => {
           const value =
             headerColumn && headerColumn !== avatarColumn ?

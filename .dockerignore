@@ -7,6 +7,7 @@ e2e
 electron
 releases
 **/node_modules
+.cache/webpack
 **/dist
 **/prostgles_backups
 **/prostgles_media

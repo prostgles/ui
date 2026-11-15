@@ -1,7 +1,7 @@
 import type { ProstglesState } from "@common/electronInitTypes";
 import { tout } from "@src/utils/tout";
 import type { Express } from "express";
-import { isEqual } from "prostgles-types";
+import { getSerialisableError, isEqual } from "prostgles-types";
 import type { Server } from "socket.io";
 import type { DBSConnectionInfo } from "../electronConfig";
 import { getElectronConfig } from "../electronConfig";
@@ -77,7 +77,19 @@ export const tryStartProstgles = async (
   ) {
     startingProstglesResult = undefined;
   }
-  startingProstglesResult ??= { args, result: _tryStartProstgles(args) };
+  startingProstglesResult ??= {
+    args,
+    result: _tryStartProstgles(args).catch((error: unknown) => {
+      const errorState = {
+        state: "error",
+        errorType: "init",
+        error: getSerialisableError(error) ?? "Failed to start Prostgles",
+      } satisfies FinishedState;
+      console.error("Failed to start prostgles: ", error);
+      startupState.set(errorState);
+      return errorState;
+    }),
+  };
   return await startingProstglesResult.result;
 };
 
@@ -92,8 +104,8 @@ const _tryStartProstgles = async ({
   await cleanupTestDatabases(con);
 
   let lastError:
-    | Extract<ProstglesInitStateWithDBS, { state: "error" }>
-    | undefined = undefined;
+    Extract<ProstglesInitStateWithDBS, { state: "error" }> | undefined =
+    undefined;
   let attempt = 0;
 
   const connHistoryItem = JSON.stringify(con);
@@ -167,10 +179,22 @@ const _tryStartProstgles = async ({
 export const getProstglesState = (): ProstglesState<InitExtra> => {
   const eConfig = getElectronConfig();
   const isElectron = Boolean(eConfig?.isElectron);
+  const credentials = eConfig?.getCredentialsResult();
   return {
     isElectron,
-    initState: { ...startupState.state },
-    electronCredsProvided: Boolean(eConfig?.hasCredentials()),
+    initState:
+      credentials?.hasError ?
+        {
+          state: "error",
+          errorType: "init",
+          error: {
+            message:
+              "Could not read or decrypt the saved state database credentials.",
+            details: getSerialisableError(credentials.error),
+          },
+        }
+      : { ...startupState.state },
+    electronCredsProvided: Boolean(credentials?.data),
   };
 };
 

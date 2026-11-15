@@ -111,7 +111,7 @@ export const Account = () => {
   return (
     <div className="Account f-1 flex-col w-full o-auto ai-center ">
       <div
-        className="flex-col f-1 min-h-0 pt-1 w-full"
+        className="flex-col f-1 min-h-0 w-full"
         style={{ maxWidth: "800px" }}
       >
         <Tabs

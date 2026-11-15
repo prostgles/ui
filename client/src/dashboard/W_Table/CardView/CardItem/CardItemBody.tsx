@@ -48,7 +48,7 @@ export const CardBody = ({
         data-card-field={c.name}
         title={c.udt_name}
         className={
-          "flex-col gap-p25 min-w-0 " +
+          "flex-col gap-p25 min-w-0 max-w-full " +
           (isAction ? "CardAction"
           : cardRows > 1 ? " h-fit w-fit "
           : "")

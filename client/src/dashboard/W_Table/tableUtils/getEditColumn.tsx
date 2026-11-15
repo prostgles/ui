@@ -81,6 +81,7 @@ export const getEditColumn = ({
         iconPath={iconPath}
         style={style}
         color="action"
+        variant="icon"
         onClickMessage={async (e, setM) => {
           e.stopPropagation();
 

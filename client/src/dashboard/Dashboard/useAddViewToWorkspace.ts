@@ -1,9 +1,6 @@
 import type { DetailedFilter } from "@common/filterUtils";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import {
-  DEFAULT_TABLE_OPTIONS,
-  type WindowData,
-} from "@common/ColumnConfig/WindowData";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 import { tableMightBeUndefinedDueToAccessControl } from "@common/utils";
 import { useAlert, useOnErrorAlert } from "@components/AlertProvider";
 import { useCallback } from "react";
@@ -63,10 +60,7 @@ export const addViewToWorkspace = async (
         const info = await tableHandler.getInfo();
         table_oid = info.oid;
       }
-      options =
-        filter.length ?
-          { ...DEFAULT_TABLE_OPTIONS, showFilters: true }
-        : undefined;
+      options = filter.length ? { showFilters: true } : undefined;
     } else {
       const err =
         db[table] ?

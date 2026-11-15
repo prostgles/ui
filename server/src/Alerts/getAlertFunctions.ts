@@ -1,3 +1,4 @@
+import type { FunctionOptions } from "@common/functionOptions";
 import type { PluginDefinition } from "@src/Plugins/Plugins";
 import { defineFunction, type GetClientDBHandlers } from "prostgles-server";
 import type { JSONB } from "prostgles-types";
@@ -12,7 +13,7 @@ export const getAlertFunctions = (
   dbs: DBS,
   syncUsers: boolean,
   getClientDBHandlers: GetClientDBHandlers,
-): NonNullable<PluginDefinition["functions"]> => {
+) => {
   const names = getAlertTableNames(options);
   const alertInput = {
     type: "ValueLookup",
@@ -32,7 +33,7 @@ export const getAlertFunctions = (
         "Defaults to your user. Uses the selected user's permissions.",
     },
   } as const satisfies Record<string, JSONB.FieldType>;
-  return {
+  const functions = {
     __prostgles_alerts: {
       userFilter: { type: "admin" },
       functions: {
@@ -43,7 +44,7 @@ export const getAlertFunctions = (
           input: {
             alertId: {
               ...alertInput,
-              showInRowCard: { actionLabel: "Preview" },
+              showInRowCard: {},
             },
             ...(syncUsers ? recipientInput : {}),
           },
@@ -60,16 +61,16 @@ export const getAlertFunctions = (
               syncUsers,
             );
             if (!recipient) throw new Error("Alert recipient is not active");
-            return (
-              (await prepareAlert({
-                options,
-                alert,
-                recipientId: recipient.id,
-                getClientDBHandlers,
-                signal: AbortSignal.timeout(30_000),
-                filterRows: (rows) => Promise.resolve(rows),
-              })) ?? { reason: "No matching items to notify" }
-            );
+            const message = await prepareAlert({
+              options,
+              alert,
+              recipientId: recipient.id,
+              getClientDBHandlers,
+              signal: AbortSignal.timeout(30_000),
+              filterRows: (rows) => Promise.resolve(rows),
+            });
+            if (!message) return "No matching items to notify";
+            return `## ${message.title}\n\n${message.body}`;
           },
         }),
         sendTestAlert: defineFunction({
@@ -79,7 +80,7 @@ export const getAlertFunctions = (
           input: {
             alertId: {
               ...alertInput,
-              showInRowCard: { actionLabel: "Send test" },
+              showInRowCard: {},
             },
             channel: {
               type: "ValueLookup",
@@ -127,10 +128,35 @@ export const getAlertFunctions = (
               },
               { returning: "*" },
             );
-            return { deliveryId: delivery.id, jobId: delivery.job_id };
+            return [
+              "## Test alert queued",
+              "The alert will be sent only to you. Check delivery history for its status.",
+              `**Delivery:** \`${delivery.id}\``,
+              `**Job:** \`${delivery.job_id}\``,
+            ].join("\n\n");
           },
         }),
       },
     },
+  } satisfies NonNullable<PluginDefinition["functions"]>;
+  return {
+    functions,
+    functionOptions: {
+      previewAlert: {
+        title: "Preview alert",
+        action: { defaultValue: { text: "Preview", icon: "EyeOutline" } },
+        renderOutputAsMarkdown: true,
+      },
+      sendTestAlert: {
+        title: "Send test alert",
+        action: {
+          defaultValue: { text: "Send test", icon: "SendCheckOutline" },
+        },
+        renderOutputAsMarkdown: true,
+      },
+    } satisfies Record<
+      keyof typeof functions.__prostgles_alerts.functions,
+      FunctionOptions
+    >,
   };
 };

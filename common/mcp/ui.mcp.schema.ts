@@ -403,7 +403,7 @@ export const uiMcpSchema = {
         workflow_function_definition: {
           type: "string",
           description:
-            "Typescript code defining a function that returns an agent workflow. The function must satisfy the following type provided. The function can use available MCP tools and database access if needed. Available MCP tools and database access are determined by the fetchTools function and the input to this tool.",
+            "Executable TypeScript entrypoint that imports defineAgenticWorkflow from the supplied workflow SDK and calls it at the top level with a configuration and workflow callback. Use the provided SDK types, available MCP tools and database schema.",
         },
         workflow_function_definition_summary: {
           type: "string",
@@ -458,7 +458,7 @@ export const uiMcpSchema = {
     icon: "Table",
     mode: undefined,
     description:
-      "Update rendering metadata for database tables. Nested objects are merged, preserving omitted settings (including card columns when changing layout). Arrays are replaced in full; use an empty array to clear a list.",
+      "Update rendering metadata for database tables. Nested objects are merged, preserving omitted settings. Arrays are replaced in full; use an empty array to clear a list. Configure card.summaryFields and card.layoutSections in display order. Header and summary fields remain visible in details, above the sections. Unlisted fields appear under Show additional fields. Do not repeat fields across these lists or header roles. Use column show settings only for table visibility.",
     schema: { type: { metadata: tableOptionsJsonbSchema } },
     outputSchema: {
       type: "unknown",

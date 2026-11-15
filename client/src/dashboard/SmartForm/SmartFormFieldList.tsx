@@ -1,4 +1,4 @@
-import { classOverride, FlexCol } from "@components/Flex";
+import { classOverride, FlexCol, FlexRow } from "@components/Flex";
 import { Label } from "@components/Label";
 import type { FilesTableRow } from "@components/MediaViewer/managedTableUtils";
 import { MediaViewer } from "@components/MediaViewer/MediaViewer";
@@ -14,6 +14,7 @@ import type { DBSchemaTablesWJoins } from "../Dashboard/dashboardUtils";
 import type { SmartFormProps } from "./SmartForm";
 import {
   SmartFormField,
+  SmartFormFieldIcon,
   type SmartColumnInfo,
 } from "./SmartFormField/SmartFormField";
 import { SmartFormFileSection } from "./SmartFormFileSection";
@@ -76,10 +77,33 @@ export const SmartFormFieldList = (props: P) => {
     });
   }, [displayedColumns, tables]);
 
+  const fileSection =
+    (
+      table.isFileTable &&
+      table.fileTableName &&
+      (modeType === "insert" ||
+        (mode.type === "update" && mode.tableHandlerUpdate))
+    ) ?
+      <SmartFormFileSection
+        {...props}
+        key={row.id ?? tableName}
+        table={table}
+        newRowDataHandler={newRowDataHandler}
+        row={row as Required<FilesTableRow>}
+        mode={mode}
+      />
+    : table.isFileTable && typeof row.id === "string" ?
+      <MediaViewer
+        fileId={row.id}
+        style={{ width: "100%", height: "auto", flex: "none" }}
+      />
+    : null;
+
   return (
     <ScrollFade
       className={classOverride(
-        "SmartFormFieldList flex-col f-1 o-auto min-h-0 min-w-0 pb-1 gap-1 pl-1 pr-2",
+        "SmartFormFieldList flex-col f-1 o-auto min-h-0 min-w-0 pb-1 gap-1 pl-1 pr-2" +
+          (props.asPopup ? " pt-1" : ""),
         contentClassname,
       )}
     >
@@ -99,40 +123,26 @@ export const SmartFormFieldList = (props: P) => {
           geoJsonLayersDataFilterSignature=""
         />
       )} */}
-      {(
-        table.isFileTable &&
-        table.fileTableName &&
-        (modeType === "insert" ||
-          (mode.type === "update" && mode.tableHandlerUpdate))
-      ) ?
-        <SmartFormFileSection
-          {...props}
-          key={row.id ?? tableName}
-          table={table}
-          newRowDataHandler={newRowDataHandler}
-          row={row as Required<FilesTableRow>}
-          mode={mode}
-        />
-      : row.url ?
-        <MediaViewer
-          {...(table.isFileTable && typeof row.id === "string" ?
-            { fileId: row.id }
-          : { url: (row as Required<FilesTableRow>).url })}
-          style={{
-            width: "100%",
-            height: "auto",
-            flex: "none",
-          }}
-        />
-      : null}
-      {table.isFileTable && row.docling_metadata && (
-        <DoclingDocumentViewerPopupBtn
-          data={undefined}
-          document={(row as Required<FilesTableRow>).docling_metadata!}
-          markdownContent={
-            (row as Required<FilesTableRow>).text_content?.join("\n\n") ?? ""
-          }
-        />
+      {(fileSection || (table.isFileTable && row.docling_metadata)) && (
+        <FlexRow className="gap-0 f-0 min-w-0">
+          <SmartFormFieldIcon
+            icon={undefined}
+            someColumnsHaveIcons={someColumnsHaveIcons}
+          />
+          <FlexCol className="f-1 min-w-0">
+            {fileSection}
+            {table.isFileTable && row.docling_metadata && (
+              <DoclingDocumentViewerPopupBtn
+                data={undefined}
+                document={(row as Required<FilesTableRow>).docling_metadata!}
+                markdownContent={
+                  (row as Required<FilesTableRow>).text_content?.join("\n\n") ??
+                  ""
+                }
+              />
+            )}
+          </FlexCol>
+        </FlexRow>
       )}
       {displayedColumns.map((c, i) => {
         const rawValue = row[c.name];

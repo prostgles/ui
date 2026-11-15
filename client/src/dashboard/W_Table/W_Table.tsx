@@ -1,69 +1,419 @@
-import { mdiAlertOutline, mdiPlus } from "@mdi/js";
-import type { ChartValues } from "./tableUtils/fetchChartRangeValues";
-import type { AnyObject, SubscriptionHandler } from "prostgles-types";
-import { getKeys } from "prostgles-types";
-
+import { mdiAlertOutline, mdiPlus, mdiRefresh } from "@mdi/js";
+import type { AnyObject, ValidatedColumnInfo } from "prostgles-types";
+import { pickKeys } from "prostgles-types";
+import React, { useRef, useState } from "react";
 import Loading from "@components/Loader/Loading";
 import type { TableColumn, TableProps } from "@components/Table/Table";
-import { PAGE_SIZES, Table, closest } from "@components/Table/Table";
-import React from "react";
-import type {
-  Query,
-  WindowSyncItem,
-  WorkspaceSyncItem,
-} from "../Dashboard/dashboardUtils";
-import type { WindowData } from "@common/ColumnConfig/WindowData";
-import "./ProstglesTable.css";
-
-import type { DeltaOf, DeltaOfData } from "../RTComp";
-import RTComp from "../RTComp";
-
+import { Table } from "@components/Table/Table";
 import Btn from "@components/Btn";
 import ErrorComponent from "@components/ErrorComponent";
-import type { SingleSyncHandles } from "prostgles-client/dist/SyncedTable/SyncedTable";
-import type { ValidatedColumnInfo } from "prostgles-types/lib";
-import type {
-  ColumnConfigWithInfo,
-  ColumnSort,
-  ColumnSortSQL,
-} from "@common/ColumnConfig/ColumnConfig";
-import { ColumnMenu } from "./ColumnMenu/ColumnMenu";
-
-import type { DetailedFilterBase } from "@common/filterUtils";
-import { matchObj } from "@common/utils";
 import { ClickCatchOverlayZIndex } from "@components/ClickCatchOverlay";
 import { FlexCol, FlexRow } from "@components/Flex";
 import { Icon } from "@components/Icon/Icon";
-import type { PaginationProps } from "@components/Table/Pagination";
-import type { TableHandlerClient } from "prostgles-client";
-import { isDefined, isEqual, pickKeys } from "prostgles-types";
-import type { Command } from "../../Testing";
+import type { ColumnSort } from "@common/ColumnConfig/ColumnConfig";
+import { matchObj } from "@common/utils";
+import type {
+  WindowSyncItem,
+  WorkspaceSyncItem,
+} from "../Dashboard/dashboardUtils";
+import type { CommonWindowProps } from "../Dashboard/Dashboard";
+import type { ProstglesQuickMenuProps } from "../W_QuickMenu";
+import type { ChartValues } from "./tableUtils/fetchChartRangeValues";
 import { createReactiveState } from "../../appUtils";
 import { t } from "../../i18n/i18nUtils";
 import { CodeEditor } from "../CodeEditor/CodeEditor";
-import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import { SmartFilterBar } from "../SmartFilterBar/SmartFilterBar";
-import type { ProstglesQuickMenuProps } from "../W_QuickMenu";
+import { TableHeaderActions } from "../ActionPopup/TableHeaderActions";
 import Window from "../Window/Window";
 import { CardView } from "./CardView/CardView";
+import { ColumnMenu, type ColumnMenuState } from "./ColumnMenu/ColumnMenu";
+import { getTableRowIdentityColumns } from "./ColumnMenu/ColumnDisplayFormat/getTableIdentityColumns";
 import { NodeCountChecker } from "./NodeCountChecker";
 import { QuickFilterGroupsControl } from "./QuickFilterGroupsControl";
-import type { RowPanelProps } from "./RowCard";
-import { RowCard } from "./RowCard";
+import { RowCard, type RowPanelProps } from "./RowCard";
 import { W_TableMenu } from "./TableMenu/W_TableMenu";
-import { getAndFixWColumnsConfig } from "./TableMenu/getAndFixWColumnsConfig";
 import { TooManyColumnsWarning } from "./TooManyColumnsWarning";
 import { W_Table_Content } from "./W_Table_Content";
-import { getTableData } from "./getTableData/getTableData";
-import type {
-  OnClickEditRow,
-  RowSiblingData,
-} from "./tableUtils/getEditColumn";
+import { useTableData } from "./getTableData/useTableData";
+import { useTableWindow } from "./useTableWindow";
+import type { OnClickEditRow } from "./tableUtils/getEditColumn";
 import { getColumnsWithInfoAndWidth } from "./tableUtils/getColumnsWithInfoAndWidth";
 import { getTableCols } from "./tableUtils/getTableCols";
 import { getTableSelect } from "./tableUtils/getTableSelect";
 import { prepareColsForRender } from "./tableUtils/prepareColsForRender";
-import { getSort, getSortColumn, updateWCols } from "./tableUtils/tableUtils";
+import { getSort, updateWCols } from "./tableUtils/tableUtils";
+import "./ProstglesTable.css";
+
+const W_Table = (props: W_TableProps) => {
+  const w = useTableWindow(props);
+  const {
+    setLinkMenu,
+    joinFilter,
+    activeRow,
+    activeRowColor,
+    prgl,
+    childWindow,
+    workspace,
+  } = props;
+  const { db, dbs, tables } = prgl;
+  const tableName = w.table_name;
+  const tableHandler = db[tableName];
+  const {
+    rows,
+    barchartVals,
+    runningQuerySince,
+    error,
+    setError,
+    refresh,
+    rowCount,
+    pagination,
+  } = useTableData({ ...props, w });
+  const tableRef = useRef<HTMLDivElement>(null);
+  const [tooManyColumnsWarningWasShown, setTooManyColumnsWarningWasShown] =
+    useState(false);
+  const [rowPanelState] = useState(() =>
+    createReactiveState<RowPanelProps | undefined>(undefined),
+  );
+  const [columnMenuState] = useState<ColumnMenuState>(() =>
+    createReactiveState<ReturnType<ColumnMenuState["get"]>>(undefined),
+  );
+  const rowsLoaded = React.useMemo(() => rows && Date.now(), [rows]);
+
+  const onClickEditRow: OnClickEditRow = (
+    filter,
+    siblingData,
+    rowIndex,
+    fixedUpdateData,
+  ) => {
+    rowPanelState.set({
+      type: "update",
+      rowIndex,
+      filter,
+      siblingData,
+      fixedUpdateData,
+    });
+  };
+  const getWCols = () =>
+    getColumnsWithInfoAndWidth(tables, w, rows, tableRef.current?.offsetWidth);
+  const getMenu = (window: WindowSyncItem<"table">, onClose: VoidFunction) => {
+    if (!tables.some(({ name }) => name === window.table_name))
+      return <ErrorComponent error="Table not found" />;
+    if (!window.columns) return <ErrorComponent error="Columns not defined" />;
+    return (
+      <W_TableMenu
+        prgl={prgl}
+        workspace={workspace}
+        w={window}
+        suggestions={props.suggestions}
+        onClose={onClose}
+        externalFilters={props.externalFilters}
+        joinFilter={joinFilter}
+      />
+    );
+  };
+  const onSort = async (sort: ColumnSort[]) => {
+    try {
+      const orderBy = getSort(tables, { ...w, sort }) as ColumnSort[];
+      const { select } = await getTableSelect(
+        w,
+        tables,
+        db,
+        {},
+        true,
+        prgl.methods,
+      );
+      await tableHandler?.find?.({}, { select, limit: 0, orderBy });
+      setError(undefined);
+      await w.$update({ sort });
+    } catch (error) {
+      setError(error);
+    }
+  };
+  const onColumnReorder = (newColumns: ProstglesColumn[]) => {
+    const columnNames = newColumns
+      .filter((column) => !(column.computed && column.key === "edit_row"))
+      .map(({ name }) => name);
+    const columns = w.columns?.toSorted(
+      (first, second) =>
+        columnNames.indexOf(first.name) - columnNames.indexOf(second.name),
+    );
+    void updateWCols(w, columns);
+  };
+  const onRowClick: TableProps<ColumnSort>["onRowClick"] = (row, event) => {
+    const hasNonComputedFields = w.columns?.some(
+      (column) =>
+        !column.computedConfig && !column.format && column.name in (row ?? {}),
+    );
+    props.onClickRow?.(hasNonComputedFields ? row : undefined, event);
+  };
+  const showTableNotFound = (name: string) => (
+    <div
+      className="p-2 flex-row ai-center text-danger"
+      data-command="W_Table.TableNotFound"
+    >
+      <Icon path={mdiAlertOutline} className="mr-p5" />
+      Table {JSON.stringify(name)} not found
+    </div>
+  );
+  const activeRowStyle: React.CSSProperties =
+    !runningQuerySince ? { background: activeRowColor } : {};
+
+  const FirstLoadCover = (
+    <div className="flex-col f-1 jc-center ai-center">
+      <Loading className="m-auto absolute" />
+    </div>
+  );
+
+  const isFixedLayout = workspace.layout_mode === "fixed";
+  const wrapInWindow = (content: React.ReactNode) => {
+    return (
+      <Window
+        w={w}
+        childWindow={childWindow}
+        tables={tables}
+        layoutMode={workspace.layout_mode ?? "editable"}
+        quickMenuProps={{
+          chartableSQL: undefined,
+          dbs,
+          setLinkMenu,
+          myLinks: props.myLinks,
+          childWindows: props.childWindows,
+          getLinksAndWindows: props.getLinksAndWindows,
+          show: isFixedLayout ? { filter: true } : undefined,
+          headerSearch:
+            isFixedLayout ? { extraFilters: props.externalFilters } : undefined,
+        }}
+        getMenu={getMenu}
+      >
+        {content}
+      </Window>
+    );
+  };
+
+  const cardOpts =
+    w.options.viewAs?.type === "card" ? w.options.viewAs : undefined;
+  const showFilterBar =
+    w.options.showFilters &&
+    (workspace.layout_mode !== "fixed" ||
+      !!w.filter.length ||
+      !!w.having.length);
+  let content: React.ReactNode = null;
+  if (tableName && !tableHandler) {
+    content = showTableNotFound(tableName);
+  } else if (!rows) {
+    content = FirstLoadCover;
+  } else {
+    const cols = getTableCols({
+      data: rows,
+      windowWidth: tableRef.current?.getBoundingClientRect().width,
+      tables,
+      methods: prgl.methods,
+      db,
+      sql: prgl.sql,
+      w,
+      onClickEditRow,
+      barchartVals,
+      suggestions: props.suggestions,
+      columnMenuState,
+      opts: {
+        noRightBorder: isFixedLayout,
+      },
+    });
+
+    let activeRowIndex = -1;
+    if (activeRow?.row_filter) {
+      activeRowIndex = rows.findIndex((r) => matchObj(activeRow.row_filter, r));
+    }
+
+    const canInsert = Boolean(tableHandler?.insert);
+    const showInsertButton = canInsert && w.options.hideInsertButton !== true;
+    const insertRowControls = showInsertButton && !childWindow && (
+      <FlexRow
+        className="p-1"
+        style={{
+          position: "sticky",
+          left: 0,
+          bottom: 0,
+          /** Below the filter search clickcatch */
+          zIndex: ClickCatchOverlayZIndex - 1,
+        }}
+      >
+        <Btn
+          iconPath={mdiPlus}
+          data-command="dashboard.window.rowInsert"
+          data-key={tableName}
+          title={t.W_Table["Insert row"]}
+          className="shadow w-fit h-fit"
+          color="action"
+          variant={w.options.showFilters ? "outline" : "filled"}
+          onClick={() => {
+            rowPanelState.set({ type: "insert" });
+          }}
+        />
+        <NodeCountChecker
+          parentNode={tableRef.current ?? undefined}
+          dataAge={rowsLoaded}
+        />
+      </FlexRow>
+    );
+    const table = tables.find(({ name }) => name === tableName);
+    const rowKeys =
+      table ?
+        getTableRowIdentityColumns(
+          table,
+          table.columns.map(({ name }) => ({
+            ...w.columns?.find((column) => column.name === name),
+            name,
+            show: rows.every((row) => row[name] != null),
+          })),
+        ).map(({ name }) => name)
+      : undefined;
+    content = (
+      <>
+        <div
+          className={`W_Table flex-col f-1 min-h-0 min-w-0 relative`}
+          ref={tableRef}
+        >
+          <ColumnMenu
+            columnMenuState={columnMenuState}
+            suggestions={props.suggestions}
+            w={w}
+          />
+          {!tooManyColumnsWarningWasShown && (
+            <TooManyColumnsWarning
+              w={w}
+              numberOfCols={cols.length}
+              numberOfRows={rows.length}
+              onHide={() => {
+                setTooManyColumnsWarningWasShown(true);
+              }}
+            />
+          )}
+
+          <TableHeaderActions
+            className="p-p5"
+            methods={prgl.methods}
+            tableName={tableName}
+          />
+          {showFilterBar && (
+            <FlexCol
+              key={"W_Table_Filters"}
+              className={`gap-p5 p-p5 bg-color-0 ${childWindow ? " bb b-color " : ""}`}
+              style={{
+                /** Ensure:
+                 * - it covers the attached timechart layer opts button
+                 * - stays behind fixed mode header search bar
+                 * */
+                zIndex: ClickCatchOverlayZIndex - (isFixedLayout ? 1 : 0),
+              }}
+              title="Edit filters"
+            >
+              <SmartFilterBar
+                {...prgl}
+                methods={prgl.methods}
+                w={w}
+                rowCount={rowCount}
+                className=""
+                extraFilters={props.externalFilters}
+                hideSort={!cardOpts}
+                filtersOnly={isFixedLayout}
+                showInsertUpdateDelete={{ onSuccess: refresh }}
+              />
+            </FlexCol>
+          )}
+          <QuickFilterGroupsControl {...props} w={w} />
+
+          <W_Table_Content
+            key={"W_Table_Content"}
+            runningQuerySince={runningQuerySince}
+          >
+            <ErrorComponent
+              withIcon={true}
+              style={{ flex: "unset", padding: "2em" }}
+              error={error}
+            />
+            {!!error && (
+              <Btn iconPath={mdiRefresh} onClick={refresh}>
+                Retry
+              </Btn>
+            )}
+
+            {cardOpts ?
+              <CardView
+                key={`${cardOpts.cardGroupBy}-${cardOpts.cardOrderBy}`}
+                cols={cols}
+                state={{ rows }}
+                props={props}
+                w={w}
+                cardOpts={cardOpts}
+                tableHandler={tableHandler!}
+                paginationProps={pagination}
+                afterLastRowContent={insertRowControls}
+                onEditClickRow={onClickEditRow}
+                onDataChanged={refresh}
+              />
+            : w.options.viewAs?.type === "json" ?
+              <CodeEditor
+                language="json"
+                value={JSON.stringify(
+                  rows.map((r) =>
+                    pickKeys(
+                      r,
+                      cols.filter((c) => c.show).map((c) => c.name),
+                    ),
+                  ),
+                  null,
+                  2,
+                )}
+                className="b-unset"
+              />
+            : <Table
+                style={{
+                  flex: 1,
+                  boxShadow: "unset",
+                }}
+
+                maxCharsPerCell={w.options.maxCellChars ?? 500}
+                maxRowHeight={w.options.maxRowHeight}
+                rowStyle={joinFilter ? activeRowStyle : {}}
+                onSort={onSort}
+                onColumnReorder={onColumnReorder}
+                cols={prepareColsForRender(cols, getWCols, w)}
+                rows={rows}
+                rowKeys={rowKeys}
+                sort={w.sort || undefined}
+                tableStyle={{ borderRadius: "unset", border: "unset" }}
+                pagination={pagination}
+                showSubLabel={w.options.showSubLabel}
+                activeRowStyle={activeRowStyle}
+                activeRowIndex={activeRowIndex}
+                onRowClick={props.onClickRow ? onRowClick : undefined}
+                afterLastRowContent={insertRowControls}
+              />
+            }
+          </W_Table_Content>
+        </div>
+
+        {tableHandler && (
+          <RowCard
+            showR={rowPanelState}
+            rows={rows}
+            tableName={tableName}
+            tableHandler={tableHandler}
+            onPrevOrNext={(newRowPanel) => {
+              rowPanelState.set(newRowPanel);
+            }}
+            onSuccess={refresh}
+          />
+        )}
+      </>
+    );
+  }
+
+  return wrapInWindow(content);
+};
+
+export default W_Table;
 
 export type W_TableProps = Omit<CommonWindowProps, "w"> & {
   w: WindowSyncItem<"table">;
@@ -100,691 +450,7 @@ export type MinMax<T = number> = {
  */
 export type MinMaxVals = ChartValues;
 
-export function getFilter(filter: any = {}, activeRow?: ActiveRow): any {
-  return {
-    $and: [
-      filter,
-      !activeRow ? undefined : (
-        {
-          $existsJoined: {
-            // [`**.${activeRow.table_name}`]: activeRow.row_filter
-            path: ["**", activeRow.table_name],
-            filter: activeRow.row_filter,
-          },
-        }
-      ),
-    ].filter((f) => f),
-  };
-}
-
 export type ProstglesColumn = TableColumn & { computed?: boolean } & Pick<
     ValidatedColumnInfo,
     "name" | "tsDataType" | "udt_name" | "filter"
   >;
-
-export type W_TableState = {
-  rowCount: number;
-  rowsLoaded: number;
-  table?: TableProps<ColumnSort> & Query;
-  sort?: ColumnSortSQL[];
-  loading: boolean;
-
-  rows?: AnyObject[];
-  filter: any;
-  pos?: { x: number; y: number };
-  size?: { w: number; h: number };
-  joins: string[];
-  runningQuerySince: number | undefined;
-  error?: unknown;
-  duration: number;
-  hideTable?: boolean;
-  sql: string;
-  rowPanel?:
-    | {
-        type: "insert";
-      }
-    | {
-        type: "update";
-        rowIndex: number;
-        filter: DetailedFilterBase[];
-        siblingData: RowSiblingData;
-        fixedUpdateData?: AnyObject;
-      };
-  rowDelta?: any;
-  onRowClick?: TableProps<ColumnSort>["onRowClick"];
-
-  filterPopup?: boolean;
-
-  dataAge?: number;
-  barchartVals?: MinMaxVals;
-  columns?: ValidatedColumnInfo[];
-  totalRows?: number;
-  /**
-   * Stringified joinFilter that is set after the data has been downloaded.
-   * Used in setting activeRow styles to all rows adequately
-   */
-  joinFilterStr?: string;
-  localCols?: ColumnConfigWithInfo[];
-  tooManyColumnsWarningWasShown?: boolean;
-};
-
-export type ProstglesTableD = {
-  w?: WindowSyncItem<"table">;
-  pageSize: Required<PaginationProps>["pageSize"];
-  page: number;
-  dataAge?: number;
-  wSync?: SingleSyncHandles<Required<WindowData<"table">>, true>;
-};
-
-export default class W_Table extends RTComp<
-  W_TableProps,
-  W_TableState,
-  ProstglesTableD
-> {
-  refHeader?: HTMLDivElement;
-  refResize?: HTMLElement;
-  ref?: HTMLElement;
-  refRowCount?: HTMLElement;
-
-  state: W_TableState = {
-    barchartVals: new Map(),
-    rowsLoaded: 0,
-    runningQuerySince: undefined,
-    sql: "",
-    loading: false,
-    totalRows: 0,
-    sort: [],
-    joins: [],
-    filter: {},
-    rowCount: 0,
-    duration: 0,
-    error: "",
-    hideTable: true,
-    rowDelta: null,
-    filterPopup: false,
-    joinFilterStr: undefined,
-  };
-  d: ProstglesTableD = {
-    page: 0,
-    pageSize:
-      closest(Math.round((1.2 * window.innerHeight) / 55) || 25, PAGE_SIZES) ??
-      25,
-    w: undefined,
-    dataAge: 0,
-    wSync: undefined,
-  };
-
-  calculatedColWidths = false;
-
-  onMount() {
-    const { w } = this.props;
-
-    if (!Array.isArray(w.filter)) {
-      void w.$update({ filter: [] });
-    }
-
-    this.d.wSync = w.$cloneSync((w, delta) => {
-      this.setData({ w }, { w: delta });
-    });
-  }
-
-  async onUnmount() {
-    this.d.wSync?.$unsync();
-    await this.dataSub?.unsubscribe();
-  }
-
-  /**
-   * To reduce the number of unnecessary data requests let's save the query signature and allow new queries only if different
-   */
-  currentDataRequestSignature = "";
-
-  onClickEditRow: OnClickEditRow = (
-    filter,
-    siblingData,
-    rowIndex,
-    fixedUpdateData,
-  ) => {
-    this.rowPanelRState.set({
-      type: "update",
-      rowIndex,
-      filter,
-      siblingData,
-      fixedUpdateData,
-    });
-  };
-
-  dataSub?: SubscriptionHandler;
-  dataSubFilter?: string;
-  dataAge?: number = 0;
-  autoRefresh?: any;
-  activeRowStr?: string;
-  currDbKey?: string;
-  onDelta = async (
-    dp: DeltaOf<W_TableProps>,
-    ds: DeltaOf<W_TableState>,
-    dd: DeltaOfData<ProstglesTableD>,
-  ) => {
-    const delta = { ...dp, ...ds, ...dd };
-
-    const { workspace } = this.props;
-    const { db, tables } = this.props.prgl;
-    const { w } = this.d;
-    const { table_name: tableName, table_oid } = w || {};
-
-    let ns: Partial<W_TableState> | undefined;
-    if (!w || !tableName) return;
-
-    const tableHandler = db[tableName] as TableHandlerClient | undefined;
-
-    /** Show count if user requires it  */
-    const showCounts = !!(
-      (!workspace.options.hideCounts && !w.options.hideCount) ||
-      (workspace.options.hideCounts && w.options.hideCount === false)
-    );
-
-    /* Table was renamed. Replace from oid or fail gracefully */
-    if (tableName && table_oid && !tableHandler) {
-      const match = tables.find((ti) => ti.oid === table_oid);
-      if (match) {
-        await w.$update({ table_name: match.name });
-        return;
-      } else {
-        /** Reset schema related properties */
-        const emptyInfo = { columns: null, filter: [], having: [], sort: null };
-        const different =
-          !this.d.w ?
-            undefined
-          : Object.entries(emptyInfo).filter(
-              ([key, val]) => !isEqual(this.d.w![key], val),
-            );
-        if (different?.length) {
-          await w.$update(emptyInfo);
-        }
-      }
-    }
-
-    if (!tableHandler) return;
-
-    if (delta.w && ("filter" in delta.w || "having" in delta.w)) {
-      this.props.onForceUpdate();
-    }
-
-    const { dbKey } = this.props.prgl;
-    if (this.currDbKey !== dbKey) {
-      void getAndFixWColumnsConfig(tables, w);
-      this.currDbKey = dbKey;
-    }
-
-    /* Simply re-render */
-    if (
-      ["showSubLabel", "maxRowHeight"].some(
-        (key) => delta.w?.options && key in delta.w.options,
-      )
-    ) {
-      ns = ns || {};
-    }
-
-    /** This is done to prevent errors due to renamed/altered columns */
-    if (
-      delta.w?.columns?.length &&
-      w.sort?.some(
-        (sort) => !getSortColumn(sort, getColumnsWithInfoAndWidth(tables, w)),
-      )
-    ) {
-      void w.$update({ sort: [] });
-    }
-
-    /** This is done to prevent errors due to renamed/altered columns */
-    if (
-      (delta.w?.filter || delta.w?.having) &&
-      !delta.w.id &&
-      !w.options.showFilters
-    ) {
-      void w.$update({ options: { showFilters: true } }, { deepMerge: true });
-    }
-
-    /** This is done to prevent empty result due to page offset */
-    if ((delta.w?.filter || delta.w?.having) && this.d.page !== 0) {
-      this.setData({ page: 0 });
-    }
-
-    /** Trigger count on hideCount toggle */
-    if (
-      delta.w?.options &&
-      "hideCount" in delta.w.options &&
-      this.state.rows?.length
-    ) {
-      ns = {
-        ...ns,
-        dataAge: Date.now(),
-      };
-    }
-
-    const changedOpts = getKeys(delta.w?.options || {});
-
-    /**
-     * Get data
-     */
-    void getTableData.bind(this)(dp, ds, dd, { showCounts });
-
-    /** Force update */
-    const rerenderOPTS: (keyof typeof w.options)[] = [
-      "viewAs",
-      "hideEditRow",
-      "showFilters",
-    ];
-    if (
-      !ns &&
-      (delta.w?.columns ||
-        (changedOpts.length &&
-          rerenderOPTS.some((k) => changedOpts.includes(k))))
-    ) {
-      ns ??= {};
-    }
-
-    if (ns) {
-      this.setState(ns as W_TableState);
-    }
-  };
-
-  getWCols = () => {
-    const { w } = this.d;
-    const { tables } = this.props.prgl;
-    const { rows } = this.state;
-    return !w ?
-        []
-      : getColumnsWithInfoAndWidth(tables, w, rows, this.ref?.offsetWidth);
-  };
-
-  getPaginationProps = (): PaginationProps => {
-    const { page, pageSize } = this.d;
-
-    const { rowCount } = this.state;
-
-    return {
-      page,
-      pageSize,
-      totalRows: rowCount,
-      onPageChange: (newPage) => {
-        this.setData({ page: newPage });
-      },
-      onPageSizeChange: (pageSize) => {
-        this.setData({ pageSize });
-      },
-    };
-  };
-
-  getPagination() {
-    const { pageSize, page } = this.d;
-    return {
-      limit: pageSize,
-      offset: this.props.joinFilter ? 0 : page * pageSize,
-    };
-  }
-
-  getMenu = (w: WindowSyncItem<"table">, onClose: VoidFunction) => {
-    const { prgl, workspace, externalFilters, joinFilter, suggestions } =
-      this.props;
-
-    const cols = w.columns;
-    const table = this.props.prgl.tables.find((t) => t.name === w.table_name);
-    if (!table) {
-      return <ErrorComponent error="Table not found" />;
-    }
-    if (!cols) {
-      return <ErrorComponent error="Columns not defined" />;
-    }
-
-    return (
-      <W_TableMenu
-        prgl={prgl}
-        workspace={workspace}
-        w={w}
-        suggestions={suggestions}
-        onClose={onClose}
-        externalFilters={externalFilters}
-        joinFilter={joinFilter}
-      />
-    );
-  };
-
-  onSort = async (sort: ColumnSort[]) => {
-    const { tables, db, methods } = this.props.prgl;
-    const { w } = this.d;
-    if (!w) return null;
-    const { table_name: tableName } = w;
-    const tableHandler = db[tableName] as TableHandlerClient | undefined;
-
-    try {
-      const orderBy = getSort(tables, { ...w, sort }) as ColumnSort[];
-      /** Ensure the sort is valid */
-      const { select } = await getTableSelect(w, tables, db, {}, true, methods);
-      await tableHandler?.find!({}, { select, limit: 0, orderBy });
-      void w.$update({ sort });
-    } catch (error) {
-      this.setState({ error });
-    }
-  };
-
-  rowPanelRState = createReactiveState<RowPanelProps | undefined>(undefined);
-
-  onColumnReorder = (newCols: ProstglesColumn[]) => {
-    const { w } = this.d;
-    if (!w) return null;
-    const nonEditRowColumns = newCols
-      .filter((c) => !(c.computed && c.key === "edit_row"))
-      .map((c) => c.name);
-    const columns = this.d.w?.columns
-      ?.slice(0)
-      .toSorted(
-        (a, b) =>
-          nonEditRowColumns.indexOf(a.name) - nonEditRowColumns.indexOf(b.name),
-      );
-    void updateWCols(w, columns);
-  };
-
-  columnMenuState = createReactiveState<
-    | {
-        column: string;
-        clientX: number;
-        clientY: number;
-      }
-    | undefined
-  >(undefined);
-
-  render() {
-    const { loading, rows, runningQuerySince, error } = this.state;
-
-    const showTableNotFound = (tableName: string) => (
-      <div
-        className=" p-2 flex-row ai-center text-danger"
-        data-command={"W_Table.TableNotFound" satisfies Command}
-      >
-        <Icon path={mdiAlertOutline} className="mr-p5 " />
-        Table {JSON.stringify(tableName)} not found
-      </div>
-    );
-
-    const { w } = this.d;
-    const tableName = w?.table_name ?? this.props.w.table_name;
-    const {
-      setLinkMenu,
-      joinFilter,
-      activeRow,
-      activeRowColor,
-      prgl,
-      childWindow,
-      workspace,
-    } = this.props;
-    const { db, dbs, tables } = prgl;
-
-    const tableHandler = db[tableName] as TableHandlerClient | undefined;
-    if (!w) {
-      if (tableName && !tableHandler) {
-        return showTableNotFound(tableName);
-      }
-      return null;
-    }
-
-    const activeRowStyle: React.CSSProperties =
-      this.activeRowStr === JSON.stringify(joinFilter || {}) ?
-        { background: activeRowColor }
-      : {};
-
-    const FirstLoadCover = (
-      <div className="flex-col f-1 jc-center ai-center">
-        <Loading className="m-auto absolute" />
-      </div>
-    );
-
-    const wrapInWindow = (content: React.ReactNode) => {
-      return (
-        <Window
-          w={w}
-          childWindow={childWindow}
-          tables={tables}
-          layoutMode={workspace.layout_mode ?? "editable"}
-          quickMenuProps={{
-            chartableSQL: undefined,
-            dbs,
-            setLinkMenu,
-            myLinks: this.props.myLinks,
-            childWindows: this.props.childWindows,
-            getLinksAndWindows: this.props.getLinksAndWindows,
-            show:
-              workspace.layout_mode === "fixed" ? { filter: true } : undefined,
-            headerSearch:
-              workspace.layout_mode === "fixed" ?
-                { extraFilters: this.props.externalFilters }
-              : undefined,
-          }}
-          getMenu={this.getMenu}
-        >
-          {content}
-        </Window>
-      );
-    };
-
-    const cardOpts =
-      w.options.viewAs?.type === "card" ? w.options.viewAs : undefined;
-    const showFilterBar =
-      w.options.showFilters &&
-      (workspace.layout_mode !== "fixed" ||
-        !!w.filter.length ||
-        !!w.having.length);
-    let content: React.ReactNode = null;
-    if (tableName && !tableHandler) {
-      content = showTableNotFound(tableName);
-    } else if (loading || (tableName && !tableHandler)) {
-      content = FirstLoadCover;
-    } else {
-      if (!rows) {
-        return wrapInWindow(FirstLoadCover);
-      }
-
-      const cols = getTableCols({
-        data: this.state.rows,
-        windowWidth: this.ref?.getBoundingClientRect().width,
-        tables,
-        methods: prgl.methods,
-        db,
-        sql: prgl.sql,
-        w: this.d.w,
-        onClickEditRow: this.onClickEditRow,
-        barchartVals: this.state.barchartVals,
-        suggestions: this.props.suggestions,
-        columnMenuState: this.columnMenuState,
-        opts: {
-          noRightBorder: this.props.workspace.layout_mode === "fixed",
-        },
-      });
-
-      let activeRowIndex = -1;
-      if (activeRow?.row_filter) {
-        activeRowIndex = rows.findIndex((r) =>
-          matchObj(activeRow.row_filter, r),
-        );
-      }
-
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      const canInsert = Boolean(tableHandler?.insert);
-      const showInsertButton = canInsert && w.options.hideInsertButton !== true;
-      const insertRowControls = showInsertButton && !childWindow && (
-        <FlexRow
-          className="p-1"
-          style={{
-            position: "sticky",
-            left: 0,
-            bottom: 0,
-            /** Below the filter search clickcatch */
-            zIndex: ClickCatchOverlayZIndex - 1,
-          }}
-        >
-          <Btn
-            iconPath={mdiPlus}
-            data-command="dashboard.window.rowInsert"
-            data-key={tableName}
-            title={t.W_Table["Insert row"]}
-            className="shadow w-fit h-fit"
-            color="action"
-            variant={w.options.showFilters ? "outline" : "filled"}
-            onClick={() => {
-              this.rowPanelRState.set({ type: "insert" });
-            }}
-          />
-          <NodeCountChecker
-            parentNode={this.ref}
-            dataAge={this.state.rowsLoaded}
-          />
-        </FlexRow>
-      );
-      const pkeys = cols
-        .map((c) => (c.show && c.info?.is_pkey ? c.info.name : undefined))
-        .filter(isDefined);
-      const rowKeys = pkeys.length ? pkeys : undefined;
-      content = (
-        <>
-          <div
-            className={`W_Table flex-col f-1 min-h-0 min-w-0 relative`}
-            ref={(r) => {
-              if (r) this.ref = r;
-            }}
-          >
-            <ColumnMenu
-              columnMenuState={this.columnMenuState}
-              suggestions={this.props.suggestions}
-              w={w}
-            />
-            {!this.state.tooManyColumnsWarningWasShown && (
-              <TooManyColumnsWarning
-                w={w}
-                numberOfCols={cols.length}
-                numberOfRows={rows.length}
-                onHide={() => {
-                  this.setState({ tooManyColumnsWarningWasShown: true });
-                }}
-              />
-            )}
-
-            {showFilterBar && (
-              <FlexCol
-                key={"W_Table_Filters"}
-                className={`gap-p5 p-p5 bg-color-0 ${childWindow ? " bb b-color " : ""}`}
-                style={{
-                  /** Ensure it covers the attached timechart layer opts button */
-                  zIndex: ClickCatchOverlayZIndex,
-                }}
-                title="Edit filters"
-              >
-                <SmartFilterBar
-                  {...prgl}
-                  methods={prgl.methods}
-                  w={this.d.w ?? this.props.w}
-                  rowCount={this.state.rowCount}
-                  className=""
-                  extraFilters={this.props.externalFilters}
-                  hideSort={!cardOpts}
-                  filtersOnly={workspace.layout_mode === "fixed"}
-                  showInsertUpdateDelete={{
-                    onSuccess: () => {
-                      this.setState({ dataAge: Date.now() });
-                    },
-                  }}
-                />
-              </FlexCol>
-            )}
-            <QuickFilterGroupsControl {...this.props} />
-
-            <W_Table_Content
-              key={"W_Table_Content"}
-              runningQuerySince={runningQuerySince}
-            >
-              <ErrorComponent
-                withIcon={true}
-                style={{ flex: "unset", padding: "2em" }}
-                error={error}
-              />
-
-              {cardOpts ?
-                <CardView
-                  key={`${cardOpts.cardGroupBy}-${cardOpts.cardOrderBy}-${this.state.dataAge}`}
-                  cols={cols}
-                  state={this.state}
-                  props={this.props}
-                  w={this.d.w}
-                  cardOpts={cardOpts}
-                  tableHandler={tableHandler!}
-                  paginationProps={{ ...this.getPaginationProps() }}
-                  afterLastRowContent={insertRowControls}
-                  onEditClickRow={this.onClickEditRow}
-                  onDataChanged={() => {
-                    this.setState({ dataAge: Date.now() });
-                  }}
-                />
-              : w.options.viewAs?.type === "json" ?
-                <CodeEditor
-                  language="json"
-                  value={JSON.stringify(
-                    rows.map((r) =>
-                      pickKeys(
-                        r,
-                        cols.filter((c) => c.show).map((c) => c.name),
-                      ),
-                    ),
-                    null,
-                    2,
-                  )}
-                  className="b-unset"
-                />
-              : <Table
-                  style={{
-                    flex: 1,
-                    boxShadow: "unset",
-                  }}
-                  // bodyClass={(joinFilter? " active-brush " : "") + (!rows.length? "  " : "")}
-                  // rowClass={((joinFilter && JSON.stringify(joinFilter) === joinFilterStr) ? " active-brush " : "") + (!rows.length ? "  " : "")}
-
-                  maxCharsPerCell={w.options.maxCellChars ?? 500}
-                  maxRowHeight={w.options.maxRowHeight}
-                  rowStyle={joinFilter ? activeRowStyle : {}}
-                  onSort={this.onSort}
-                  onColumnReorder={this.onColumnReorder}
-                  cols={prepareColsForRender(cols, this.getWCols, w)}
-                  rows={rows}
-                  rowKeys={rowKeys}
-                  sort={w.sort || undefined}
-                  tableStyle={{ borderRadius: "unset", border: "unset" }}
-                  pagination={this.getPaginationProps()}
-                  showSubLabel={w.options.showSubLabel}
-                  activeRowStyle={activeRowStyle}
-                  activeRowIndex={activeRowIndex}
-                  onRowClick={
-                    this.props.onClickRow ? this.state.onRowClick : undefined
-                  }
-                  afterLastRowContent={insertRowControls}
-                />
-              }
-            </W_Table_Content>
-          </div>
-
-          {tableHandler && (
-            <RowCard
-              showR={this.rowPanelRState}
-              rows={rows}
-              tableName={tableName}
-              tableHandler={tableHandler}
-              onPrevOrNext={(newRowPanel) => {
-                this.rowPanelRState.set(newRowPanel);
-              }}
-              onSuccess={() => {
-                this.setState({ dataAge: Date.now() });
-              }}
-            />
-          )}
-        </>
-      );
-    }
-
-    return wrapInWindow(content);
-  }
-}

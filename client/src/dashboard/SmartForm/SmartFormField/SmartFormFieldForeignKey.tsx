@@ -105,11 +105,10 @@ export const SmartFormFieldForeignKey = (
   };
 
   const selectedOption = fullOptions?.find((o) => o.key === value);
-  const { subLabel, leftContent } = selectedOption ?? {};
+  const { label, subLabel, leftContent } = selectedOption ?? {};
   const paddingValue = 0;
   const isNullOrEmpty = value === null || value === undefined;
 
-  const valueIsNotObject = !isObject(value);
   const displayValue = (
     <FlexRowWrap
       className={"gap-p5 min-w-0"}
@@ -121,9 +120,9 @@ export const SmartFormFieldForeignKey = (
       {column.file ? null : leftContent}
       <div className="text-ellipsis max-w-fit" style={valueStyle}>
         <RenderValue
-          value={subLabel ?? value}
+          value={label ?? value}
           column={
-            column.udt_name === "uuid" || isDefined(subLabel) ?
+            column.udt_name === "uuid" || isDefined(label) ?
               { ...column, tsDataType: "string", udt_name: "text" }
             : column
           }
@@ -142,7 +141,7 @@ export const SmartFormFieldForeignKey = (
             maxWidth: "300px",
           }}
         >
-          {valueIsNotObject ? value?.toString() : subLabel}
+          {subLabel}
         </div>
       )}
     </FlexRowWrap>
@@ -230,7 +229,7 @@ export const SmartFormFieldForeignKey = (
 
   return (
     <Select
-      className="SmartFormFieldForeignKey FormField_Select noselect formfield-bg-color"
+      className="SmartFormFieldForeignKey FormField_Select noselect"
       variant="div"
       data-command="SmartFormFieldForeignKey"
       fullOptions={fullOptions ?? []}
@@ -240,13 +239,12 @@ export const SmartFormFieldForeignKey = (
       labelAsValue={true}
       btnProps={{
         id,
+        variant: "select",
         children: displayValue,
         style: {
           justifyContent: "space-between",
           flex: 1,
           paddingLeft: "6px",
-          /** Handled by the parent FormField wrapper .focus-border */
-          outline: "unset",
         },
       }}
     />

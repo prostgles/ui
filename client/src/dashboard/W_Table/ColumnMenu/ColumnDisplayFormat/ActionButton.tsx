@@ -8,7 +8,8 @@ import { mdiInformationOutline } from "@mdi/js";
 import type { ClientServerFunction, DBSchemaTable } from "prostgles-types";
 import React, { useState } from "react";
 import { ActionPopup } from "../../../ActionPopup/ActionPopup";
-import { ActionColumnChats } from "./ActionColumnChats";
+import { useOpenJobActionPopup } from "../../../ActionPopup/JobActionPopupProvider";
+import { ActionColumnWorkflows } from "./ActionColumnWorkflows";
 import type { getActionButtonState } from "./getActionButtonState";
 
 export const ActionButton = (
@@ -20,8 +21,9 @@ export const ActionButton = (
         hideButton?: boolean;
       },
 ) => {
-  const [open, setOpen] = useState(false);
+  const [triggerButton, setTriggerButton] = useState<HTMLButtonElement>();
   const [showDetails, setShowDetails] = useState(false);
+  const openJobActionPopup = useOpenJobActionPopup();
   const tableAction = "state" in props ? props : undefined;
   const state = tableAction?.state;
   if (tableAction && !state) return null;
@@ -58,7 +60,7 @@ export const ActionButton = (
           disabledInfo={state ? state.buttonDisabledInfo : values.disabledInfo}
           style={tableAction?.hideButton ? { display: "none" } : undefined}
           onClickPromiseMode="noTickIcon"
-          onClickPromise={async () => {
+          onClickPromise={async (event) => {
             if (!method || (tableAction && !record)) return;
             if (runImmediately) {
               await method.run(
@@ -71,24 +73,34 @@ export const ActionButton = (
                   )
                 : undefined,
               );
+            } else if (method.jobControl && tableAction && state) {
+              const { x, bottom } = event.currentTarget.getBoundingClientRect();
+              openJobActionPopup({
+                state,
+                table: tableAction.table,
+                anchorXY: { x, y: bottom },
+              });
             } else {
-              setOpen(true);
+              setTriggerButton(event.currentTarget);
             }
           }}
         >
-          {state?.values.text ?? (values.icon ? undefined : text)}
+          {tableAction ?
+            (state?.values.text ?? (values.icon ? undefined : text))
+          : text}
         </Btn>
       )}
-      {open && matchesLookup && method && (!tableAction || record) && (
+      {triggerButton && matchesLookup && method && (!tableAction || record) && (
         <ActionPopup
           key={action && `${action.methodName}:${action.argName}`}
+          anchorEl={triggerButton}
           title={text}
           buttonText={state?.buttonText}
           disabledInfo={state?.disabledInfo ?? values.disabledInfo}
           details={stored?.details}
           method={method}
           record={record}
-          onClose={() => setOpen(false)}
+          onClose={() => setTriggerButton(undefined)}
         />
       )}
       {stored && !method?.jobControl && (stored.details || row) && (
@@ -103,7 +115,7 @@ export const ActionButton = (
         <Popup title="Action details" onClose={() => setShowDetails(false)}>
           {stored.details && <MarkdownWithPlugins content={stored.details} />}
           {row && tableAction && (
-            <ActionColumnChats
+            <ActionColumnWorkflows
               row={row}
               table={tableAction.table}
               onOpen={() => setShowDetails(false)}

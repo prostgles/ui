@@ -1,6 +1,6 @@
 import { expect, test } from "./utils/fixtures";
 import { COMMAND_SEARCH_ATTRIBUTE_NAME } from "./utils/Testing";
-import { login, MINUTE, PageWIds } from "./utils/utils";
+import { login, MINUTE } from "./utils/utils";
 import { goTo } from "utils/goTo";
 import { IS_GITHUB_WORKER, USERS } from "utils/constants";
 import { createTestDeployment } from "../../server/dist/server/src/testing";
@@ -21,9 +21,25 @@ test.use({
 test("Unified search switches commands, views and data", async ({ page }) => {
   const config = {
     id: "unified-search-test",
+    connection: {
+      table_options: {
+        search_records: { label: "Activity log" },
+        other_records: { label: "Other records" },
+        project_records: { label: "Projects" },
+        jobs: { label: "Jobs" },
+      },
+    },
     tableConfig: {
       search_records: { columns: { id: "serial PRIMARY KEY", name: "text" } },
       other_records: { columns: { id: "serial PRIMARY KEY", name: "text" } },
+      project_records: { columns: { id: "serial PRIMARY KEY" } },
+      jobs: {
+        columns: {
+          progress: "integer",
+          id: "serial PRIMARY KEY",
+          name: "text",
+        },
+      },
       ...Object.fromEntries(
         Array.from({ length: 20 }, (_, index) => [
           `overflow_records_${index}`,
@@ -108,9 +124,13 @@ test("Unified search switches commands, views and data", async ({ page }) => {
 
     /* Leading prefixes switch modes, strip the prefix and preserve input focus. */
     const searchInput = popup.locator("input[type='text']");
+    const initialPopupBounds = await popup.boundingBox();
+    const initialSearchListWidth = await popup
+      .getByTestId("SearchList")
+      .evaluate((element) => element.clientWidth);
     for (const [query, mode, expectedQuery] of [
       [">Theme Selector", "Commands", "Theme Selector"],
-      ["/ search_records", "Views", "search_records"],
+      ["/ Activity log", "Views", "Activity log"],
       ["?Acme search result", "Data", "Acme search result"],
       ["? Acme", "Data", "Acme"],
       ["> Theme Selector", "Commands", "Theme Selector"],
@@ -125,6 +145,32 @@ test("Unified search switches commands, views and data", async ({ page }) => {
       if (expectedQuery === "Acme search result") {
         await expect(popup.getByText("name: Acme search result")).toBeVisible();
       }
+      /* Popup width and position stay fixed as result counts change. */
+      await expect
+        .poll(() => popup.boundingBox())
+        .toMatchObject({
+          width: initialPopupBounds!.width,
+          x: initialPopupBounds!.x,
+          y: initialPopupBounds!.y,
+        });
+      await expect
+        .poll(() =>
+          popup
+            .getByTestId("SearchList")
+            .evaluate((element) => element.clientWidth),
+        )
+        .toBe(initialSearchListWidth);
+      await expect
+        .poll(() =>
+          popup
+            .getByTestId("SearchList.List")
+            .evaluate(
+              (element) =>
+                element.clientHeight -
+                element.closest(".SearchList_Suggestions")!.clientHeight,
+            ),
+        )
+        .toBe(0);
     }
     /* A typed prefix works before a query; clearing the query keeps its mode. */
     await searchInput.fill("");
@@ -134,9 +180,12 @@ test("Unified search switches commands, views and data", async ({ page }) => {
     ).toBeVisible();
     await expect(searchInput).toHaveValue("");
     await expect(searchInput).toBeFocused();
-    await searchInput.pressSequentially("search_records");
-    await expect(searchInput).toHaveValue("search_records");
+    await searchInput.pressSequentially("Activity log");
+    await expect(searchInput).toHaveValue("Activity log");
     await expect(popup.getByTestId("SearchList.List")).toContainText(
+      "Activity log",
+    );
+    await expect(popup.getByTestId("SearchList.List")).not.toContainText(
       "search_records",
     );
     await searchInput.fill("");
@@ -152,10 +201,40 @@ test("Unified search switches commands, views and data", async ({ page }) => {
     );
     await switchMode("Commands", "Views");
     await expect(popup.getByTestId("SearchAll")).toHaveValue("Theme Selector");
-    await expect(popup.locator("footer")).toContainText(
-      "Tables/Queries/Actions",
-    );
+    const resultTypeFilter = popup
+      .locator("footer")
+      .getByRole("button", { name: "Filter result types", exact: true });
+    await expect(resultTypeFilter).toBeVisible();
+    await expect(resultTypeFilter).toHaveText("");
+    /* Table labels and raw names rank ahead of column-only matches. */
+    const searchResults = popup
+      .getByTestId("SearchList.List")
+      .getByRole("option");
+    for (const query of ["pro", "PRO", "project_records"]) {
+      await popup.getByTestId("SearchAll").fill(query);
+      await expect(searchResults.first()).toContainText("Projects");
+    }
+    await popup.getByTestId("SearchAll").fill("pro");
+    await expect(searchResults).toHaveCount(2);
+    await expect(searchResults.nth(1)).toContainText("Jobs");
+    await popup.getByTestId("SearchList.MatchCase").click();
+    await popup.getByTestId("SearchAll").fill("Pro");
+    await expect(searchResults).toHaveCount(2);
+    await expect(searchResults.nth(1)).toContainText("Progress");
+    await popup.getByTestId("SearchAll").fill("Proj");
+    await expect(searchResults).toHaveCount(1);
+    await expect(searchResults.first()).toContainText("Projects");
+    await popup.getByTestId("SearchAll").fill("PRO");
+    await expect(searchResults).toHaveCount(0);
+    await popup.getByTestId("SearchList.MatchCase").click();
+    await popup.getByTestId("SearchAll").fill("progress");
+    await expect(searchResults).toHaveCount(1);
+    await expect(searchResults.first()).toContainText("Jobs");
+    /* Raw names remain searchable while results display their configured labels. */
     await popup.getByTestId("SearchAll").fill("search_records");
+    await expect(popup.getByTestId("SearchList.List")).toContainText(
+      "Activity log",
+    );
     await popup.getByTestId("SearchAll").press("Enter");
     await expect(popup).toBeHidden();
     await expect(
@@ -172,19 +251,22 @@ test("Unified search switches commands, views and data", async ({ page }) => {
     await page
       .getByTestId("SearchList.List")
       .last()
-      .getByText("other_records", { exact: true })
+      .getByText("Other records", { exact: true })
       .click();
     await page.keyboard.press("Escape");
     await expect(popup).toBeVisible();
     await popup.getByTestId("SearchAll").fill("Acme search result");
     await expect(popup.getByText("name: Acme search result")).toBeVisible();
+    await expect(popup.getByTestId("SearchList.List")).toContainText(
+      "Activity log",
+    );
     await switchMode("Data", "Views");
     await expect(popup.getByTestId("SearchAll")).toHaveValue(
       "Acme search result",
     );
     await switchMode("Views", "Data");
-    await expect(popup.locator("footer")).toContainText("search_records");
-    await expect(popup.locator("footer")).not.toContainText("other_records");
+    await expect(popup.locator("footer")).toContainText("Activity log");
+    await expect(popup.locator("footer")).not.toContainText("Other records");
     await expect(popup.getByText("name: Acme search result")).toBeVisible();
     await page.screenshot({
       path: test.info().outputPath("unified-search-data.png"),
@@ -219,7 +301,7 @@ test("Unified search switches commands, views and data", async ({ page }) => {
     }
     /* Desktop and short mobile viewports keep search controls outside scrolling. */
     await page.keyboard.press("Control+KeyP");
-    await popup.getByTestId("SearchAll").fill("overflow_records");
+    await popup.getByTestId("SearchAll").fill("Overflow Records");
     await expectFixedSearchControls();
     await page.setViewportSize({ width: 390, height: 300 });
     await expectFixedSearchControls();
@@ -285,13 +367,15 @@ test("Unified search switches commands, views and data", async ({ page }) => {
       await expect(trigger).toBeVisible();
       const pageErrors: string[] = [];
       page.on("pageerror", (error) => pageErrors.push(error.message));
-      for (const [shortcut, query] of [
-        ["Control+KeyP", "search_records"],
-        ["Control+Shift+KeyF", "Acme search result"],
+      for (const [shortcut, query, expectedResult] of [
+        ["Control+KeyP", "search_records", "Activity log"],
+        ["Control+Shift+KeyF", "Acme search result", "Acme search result"],
       ] as const) {
         await page.keyboard.press(shortcut);
         await popup.getByTestId("SearchAll").fill(query);
-        await expect(popup.getByTestId("SearchList.List")).toContainText(query);
+        await expect(popup.getByTestId("SearchList.List")).toContainText(
+          expectedResult,
+        );
         await popup.getByTestId("SearchAll").press("Enter");
         const alert = page.getByTestId("Alert");
         await expect(alert).toHaveText(
@@ -319,7 +403,7 @@ test.describe("Test command palette", () => {
 
   let flatUIDocs: any[] | undefined;
   test.beforeEach(async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     page.on("console", console.log);
     page.on("pageerror", console.error);
 
@@ -341,7 +425,7 @@ test.describe("Test command palette", () => {
   const workers = 2;
   for (let i = 0; i < workers; i++) {
     test(`Test command search worker: ${i}`, async ({ page: p }) => {
-      const page = p as PageWIds;
+      const page = p;
       if (IS_GITHUB_WORKER) {
         // Takes too long. Run locally only
         return;

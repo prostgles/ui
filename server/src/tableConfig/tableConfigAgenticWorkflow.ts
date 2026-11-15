@@ -7,13 +7,18 @@ import { startAgenticWorkflowSchema } from "../../../common/mcp/startAgenticWork
 
 export const tableConfigAgenticWorkflow: TableConfig<{ en: 1 }> = {
   agentic_workflows: {
+    indexes: {
+      configuredWorkflow: {
+        unique: true,
+        columns: "connection_id, user_id, source_key",
+      },
+    },
     columns: {
       id: "INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY",
-      chat_id: `INTEGER NOT NULL REFERENCES llm_chats(id) ON DELETE CASCADE`,
       connection_id: `UUID REFERENCES connections(id) ON DELETE CASCADE`,
       user_id: `UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE`,
-      message_id: `int8 NOT NULL REFERENCES llm_messages(id) ON DELETE CASCADE`,
-      tool_use_id: `TEXT NOT NULL `,
+      tool_use_id: `TEXT`,
+      source_key: "TEXT",
       name: "TEXT NOT NULL",
       saved: "BOOLEAN NOT NULL DEFAULT FALSE",
       definition: "TEXT NOT NULL",
@@ -87,10 +92,19 @@ export const tableConfigAgenticWorkflow: TableConfig<{ en: 1 }> = {
   agentic_workflow_runs: {
     columns: {
       id: "INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY",
-      chat_id: `INTEGER NOT NULL REFERENCES llm_chats(id) ON DELETE CASCADE`,
       user_id: `UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE`,
       workflow_id: `INTEGER NOT NULL REFERENCES agentic_workflows(id) ON DELETE CASCADE`,
-      message_id: `int8 REFERENCES llm_messages(id) ON DELETE SET NULL`,
+      invocation_id: "TEXT",
+      related_records: {
+        nullable: true,
+        jsonbSchema: {
+          arrayOfType: {
+            tableName: "string",
+            row: { record: { values: "unknown" } },
+          },
+        },
+      },
+      definition: "TEXT",
       user_input_value: {
         jsonbSchema: {
           record: {

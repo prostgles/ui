@@ -2,6 +2,7 @@ import {
   getFunctionActionValue,
   getFunctionOptions,
 } from "@common/functionOptions";
+import { getJobActionValue, getJobControlMethods } from "@common/jobAction";
 import { getActionFunctionArgs } from "@common/resolveActionFunction";
 import Btn from "@components/Btn";
 import ErrorComponent from "@components/ErrorComponent";
@@ -10,6 +11,7 @@ import { Icon } from "@components/Icon/Icon";
 import { JSONBSchema } from "@components/JSONBSchema/JSONBSchema";
 import { MarkdownWithPlugins } from "@components/MarkdownWithPlugins/MarkdownWithPlugins";
 import Popup from "@components/Popup/Popup";
+import { SvgIcon } from "@components/SvgIcon";
 import { mdiCheck, mdiPlay } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { ROW_ACTIONS_COLUMN } from "prostgles-client";
@@ -20,23 +22,30 @@ import type {
 } from "prostgles-types";
 import React from "react";
 import SmartTable from "../SmartTable";
+import { getTableRowIdentityColumns } from "../W_Table/ColumnMenu/ColumnDisplayFormat/getTableIdentityColumns";
 import { useFunctionExecution } from "./useFunctionExecution";
 import { JobActionDetails } from "./JobActionDetails";
 import { getJobActionFunctions } from "./getJobActionFunctions";
 
 export const ActionPopup = ({
+  anchorEl,
+  anchorXY,
   title,
   buttonText,
   disabledInfo,
   details,
-  method,
+  error,
+  method: publishedMethod,
   record,
   onClose,
 }: {
+  anchorEl?: HTMLButtonElement;
+  anchorXY?: { x: number; y: number };
   title?: string;
   buttonText?: string;
   disabledInfo?: string;
   details?: string;
+  error?: unknown;
   method: ClientServerFunction;
   record?: {
     row: AnyObject;
@@ -47,9 +56,21 @@ export const ActionPopup = ({
   onClose: VoidFunction;
 }) => {
   const { db, tables, methods, sql } = usePrgl();
+  const controls = getJobControlMethods(publishedMethod);
+  const method =
+    controls.find(
+      ({ jobControl }) => jobControl?.operation === "startOrRetry",
+    ) ??
+    controls[0] ??
+    publishedMethod;
   const functionOptions = getFunctionOptions(method);
+  const jobActionValue = getJobActionValue(
+    functionOptions?.action.job,
+    record?.queryRow ?? {},
+  );
+  const buttonStyle = functionOptions?.action.defaultValue;
   const actionButtonText =
-    buttonText ?? functionOptions?.action.defaultValue?.text ?? "Run";
+    jobActionValue.text ?? buttonText ?? buttonStyle?.text ?? "Run";
   const fixedArgs =
     record ?
       getActionFunctionArgs(method, record.argName, record.row, record.table)
@@ -74,26 +95,21 @@ export const ActionPopup = ({
       execution.result
     : undefined;
   const isComplete = markdownResult !== undefined;
+  const showActionButton =
+    !isComplete && (!jobActionValue.disabledInfo || jobActionValue.isLoading);
   const description = details ?? method.description;
   const { row = {}, queryRow = {}, table } = record ?? {};
   const tableInfo = tables.find(({ name }) => name === table?.name);
-  const summaryColumns = Array.from(
-    new Set([
-      tableInfo?.card?.headerColumn,
-      ...(tableInfo?.card?.subHeaderColumns ?? [
-        tableInfo?.card?.subHeaderColumn,
-      ]),
-      ...(table?.uniqueColumnGroups?.[0] ?? []),
-      ...Object.keys(row),
-    ]),
-  )
-    .filter(
-      (column): column is string =>
-        !!column &&
-        row[column] != null &&
-        ["string", "number", "boolean"].includes(typeof row[column]),
-    )
-    .slice(0, 3);
+  const recordTitleColumn = tableInfo?.card?.headerColumn;
+  const recordTitle = recordTitleColumn ? row[recordTitleColumn] : undefined;
+  const recordSubtitle =
+    recordTitle != null && recordTitle !== "" ? String(recordTitle)
+    : tableInfo ?
+      getTableRowIdentityColumns(tableInfo)
+        .map(({ name }) => row[name])
+        .filter((value) => value != null)
+        .join(" · ")
+    : undefined;
   const outputTableName = functionOptions?.outputTable;
   const outputTable = tables.find(({ name }) => name === outputTableName);
   const jobActions =
@@ -110,8 +126,11 @@ export const ActionPopup = ({
     <Popup
       data-command="ActionPopup"
       title={title ?? functionOptions?.title ?? actionButtonText}
+      subTitle={recordSubtitle}
       onClose={onClose}
-      positioning="center"
+      anchorEl={anchorEl}
+      anchorXY={anchorXY}
+      positioning="beneath-left"
       rootStyle={{ width: "min(600px, calc(100vw - 2em))" }}
       showFullscreenToggle={{
         defaultValue: false,
@@ -131,9 +150,14 @@ export const ActionPopup = ({
               "Close"
             : "Cancel"}
           </Btn>
-          {jobActions.map(({ methodName, argName }) => {
-            const controlMethod = methods[methodName]!;
-            if (!table || controlMethod === method) return null;
+          {jobActions.map(({ methodName, argName, method: controlMethod }) => {
+            if (
+              !table ||
+              (methods[methodName] === publishedMethod &&
+                controlMethod.jobControl?.operation ===
+                  method.jobControl?.operation)
+            )
+              return null;
             const values = getFunctionActionValue(
               controlMethod,
               queryRow,
@@ -142,7 +166,7 @@ export const ActionPopup = ({
             if (values.disabledInfo) return null;
             return (
               <Btn
-                key={methodName}
+                key={`${methodName}-${controlMethod.jobControl?.operation}`}
                 color={
                   values.color ??
                   (controlMethod.jobControl?.operation === "cancel" ?
@@ -161,12 +185,17 @@ export const ActionPopup = ({
               </Btn>
             );
           })}
-          {!isComplete && (
+          {showActionButton && (
             <Btn
-              iconPath={mdiPlay}
-              color="action"
-              variant="filled"
-              loading={isRunning}
+              iconPath={buttonStyle?.icon ? undefined : mdiPlay}
+              iconNode={
+                buttonStyle?.icon ?
+                  <SvgIcon icon={buttonStyle.icon} size={16} />
+                : undefined
+              }
+              color={jobActionValue.color ?? buttonStyle?.color ?? "action"}
+              variant={buttonStyle?.variant ?? "filled"}
+              loading={isRunning || jobActionValue.isLoading}
               disabledInfo={
                 disabledInfo ? disabledInfo
                 : hasErrors && showErrors ?
@@ -182,19 +211,7 @@ export const ActionPopup = ({
       }
     >
       <FlexCol className="gap-1 min-w-0">
-        {table && (
-          <section
-            aria-label="Selected record"
-            className="bg-color-2 rounded p-1"
-          >
-            <div className="text-2 font-12">
-              {tableInfo?.label || table.name}
-            </div>
-            <div>
-              {summaryColumns.map((column) => String(row[column])).join(" · ")}
-            </div>
-          </section>
-        )}
+        <ErrorComponent error={error} findMsg={true} />
         {!isComplete && description && (
           <MarkdownWithPlugins content={description} />
         )}

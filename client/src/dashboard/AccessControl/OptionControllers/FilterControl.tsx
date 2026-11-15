@@ -1,8 +1,10 @@
 import {
+  getContextValueMapper,
   getFinalFilter,
   type GroupedDetailedFilter,
 } from "@common/filterUtils";
 import Btn from "@components/Btn";
+import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol, FlexRowWrap } from "@components/Flex";
 import { Label } from "@components/Label";
 import PopupMenu from "@components/PopupMenu";
@@ -20,6 +22,7 @@ import SmartTable from "../../SmartTable";
 export type ContextDataSchema = {
   name: string;
   columns: ValidatedColumnInfo[];
+  data: Record<string, unknown> | undefined;
 }[];
 
 export type SingleGroupFilter = GroupedDetailedFilter;
@@ -75,6 +78,7 @@ export const FilterControl = (props: ForcedFilterControlProps) => {
     tableName,
     mode = "forcedFilter",
     selectedColumns,
+    contextData,
   } = props;
   const { db, sql, methods, tables } = usePrgl();
   const iconPath =
@@ -100,11 +104,25 @@ export const FilterControl = (props: ForcedFilterControlProps) => {
   );
 
   const tableHandler = db[tableName] as TableHandlerClient | undefined;
-  const rowCount = usePromise(async () => {
-    const filter = detailedFilter ? getFinalFilter(detailedFilter) : {};
-    const rowCount = await tableHandler?.count(filter);
-    return rowCount;
-  }, [tableHandler, filters, isAnd]);
+  const preview = usePromise(async () => {
+    try {
+      const filter =
+        detailedFilter ?
+          getFinalFilter(detailedFilter, {
+            contextValueMapper: getContextValueMapper(
+              Object.fromEntries(
+                contextData.map(({ name, data }) => [name, data]),
+              ),
+            ),
+          })
+        : {};
+      const rowCount = await tableHandler?.count(filter);
+      return { filter, rowCount, error: undefined };
+    } catch (error) {
+      return { filter: undefined, rowCount: undefined, error };
+    }
+  }, [tableHandler, detailedFilter, contextData]);
+  const rowCount = preview?.rowCount;
   const isCheck = mode === "checkFilter";
   const ViewDataBtn =
     isCheck ? null : (
@@ -118,7 +136,12 @@ export const FilterControl = (props: ForcedFilterControlProps) => {
           className="ml-auto"
           positioning="center"
           button={
-            <Btn iconPath={mdiTableEye}>
+            <Btn
+              iconPath={mdiTableEye}
+              disabledInfo={
+                !preview?.filter ? "No preview available" : undefined
+              }
+            >
               {rowCount} {pluralise(+rowCount!, "row")}
             </Btn>
           }
@@ -144,9 +167,7 @@ export const FilterControl = (props: ForcedFilterControlProps) => {
               tableName={props.tableName}
               tables={tables}
               filterOperand={isAnd ? "and" : "or"}
-              fixedFilter={
-                detailedFilter ? getFinalFilter(detailedFilter) : undefined
-              }
+              fixedFilter={preview?.filter}
             />
           )}
         />
@@ -181,6 +202,7 @@ export const FilterControl = (props: ForcedFilterControlProps) => {
         />
         {ViewDataBtn}
       </FlexRowWrap>
+      <ErrorComponent error={preview?.error} />
 
       {o !== "disabled" && (
         <FlexRowWrap

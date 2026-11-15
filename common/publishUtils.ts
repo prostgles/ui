@@ -3,6 +3,7 @@ import {
   type ContextValueMapper,
   DetailedFilter,
   GroupedDetailedFilter,
+  getContextValueMapper,
   getFinalFilter,
   identityContextValue,
   isDefined,
@@ -542,8 +543,13 @@ export const validateDynamicFields = async (
 ): Promise<{ error?: any }> => {
   if (!dynamicFields || !tableHandler) return {};
 
+  const contextValueMapper = getContextValueMapper(context);
   for (const [dfIndex, dfRule] of dynamicFields.entries()) {
-    const filter = await parseFullFilter(dfRule.filterDetailed, columns);
+    const filter = await parseFullFilter(
+      dfRule.filterDetailed,
+      columns,
+      contextValueMapper,
+    );
     if (!filter)
       throw new Error(
         "dynamicFields.filter cannot be empty: " + JSON.stringify(dfRule),
@@ -553,7 +559,11 @@ export const validateDynamicFields = async (
     /** Ensure dynamicFields filters do not overlap */
     for (const [_dfIndex, _dfRule] of dynamicFields.entries()) {
       if (dfIndex !== _dfIndex) {
-        const _filter = await parseFullFilter(_dfRule.filterDetailed, columns);
+        const _filter = await parseFullFilter(
+          _dfRule.filterDetailed,
+          columns,
+          contextValueMapper,
+        );
         if (
           await tableHandler.findOne(
             { $and: [filter, _filter] },

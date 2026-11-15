@@ -39,10 +39,7 @@ type LocatorFuncNamesReturningLocatorObj = {
 export type PageWIds = Omit<PG, FuncNames | "getByTestId"> & {
   getByTestId: (command: Command) => LocatorWIds;
 } & {
-  [funcName in FuncNames]: (
-    ...args: Parameters<PG[funcName]>
-  ) => Omit<ReturnType<PG[funcName]>, "getByTestId"> &
-    Pick<PageWIds, "getByTestId">;
+  [funcName in FuncNames]: (...args: Parameters<PG[funcName]>) => LocatorWIds;
 };
 
 type LocatorFuncNames = keyof LocatorFuncNamesReturningLocatorObj;
@@ -59,8 +56,7 @@ export type LocatorWIds = Omit<
 } & {
   [funcName in LocatorFuncNames]: (
     ...args: Parameters<Locator[funcName]>
-  ) => Omit<ReturnType<Locator[funcName]>, LocatorOverridenFuncNames> &
-    Pick<LocatorWIds, LocatorOverridenFuncNames>;
+  ) => LocatorWIds;
 };
 
 export const fillSmartForm = async (
@@ -77,9 +73,9 @@ export const fillSmartForm = async (
     );
     if (typeof valueOrRowOrRows === "string") {
       const value = valueOrRowOrRows;
-      const elem = await page.locator("input#" + escapedSelector);
+      const elem = page.locator("input#" + escapedSelector);
       await elem.fill(value);
-      const selectElem = await page.locator(
+      const selectElem = page.locator(
         `[data-key=${JSON.stringify(key)}] .FormField_Select`,
       );
       if (await selectElem.isVisible()) {
@@ -111,7 +107,7 @@ export const fillSmartForm = async (
 
       /** Nested insert into fkey */
     } else if (typeof valueOrRowOrRows === "object") {
-      const nestedInsertBtn = await page
+      const nestedInsertBtn = page
         .locator(
           `${getTestId("SmartFormField")}${getDataKey(key)} ${getTestId("SmartFormFieldOptions.NestedInsert")}`,
         )
@@ -176,11 +172,15 @@ export const openTable = async (
   await page.getByTestId("dashboard.menu").waitFor({ state: "visible" });
   await page.keyboard.press("Control+KeyP");
   await page.waitForTimeout(200);
-  const searchAlLInput = await page.getByTestId("SearchAll");
+  const searchAlLInput = page.getByTestId("SearchAll");
   await searchAlLInput.waitFor({ state: "visible" });
   await searchAlLInput.fill(namePartStart);
-  await page.waitForTimeout(200);
-  await page.keyboard.press("Enter");
+  await page
+    .getByTestId("SearchAll.Popup")
+    .getByTestId("SearchList.List")
+    .locator(`[data-key${exact ? "=" : "^="}${JSON.stringify(namePartStart)}]`)
+    .first()
+    .click();
   await page.waitForTimeout(500);
 
   /** Ensure table was opened */
@@ -218,10 +218,10 @@ export const getDashboardUtils = (page: PageWIds) => {
   const _open = openConnection.bind(null, page);
   const openMenuIfClosed = async (closeMenu = false) => {
     await page.waitForTimeout(1500);
-    const menuCloseButton = await page
+    const menuCloseButton = page
       .getByTestId("DashboardMenu")
       .getByTestId("Popup.close");
-    const menuPinnedButton = await page.locator(
+    const menuPinnedButton = page.locator(
       getCommandElemSelector("DashboardMenu.togglePinned") +
         getDataKey("pinned"),
     );
@@ -240,15 +240,15 @@ export const getDashboardUtils = (page: PageWIds) => {
       return;
     }
     if (closeMenu) return;
-    const menuBtn = await page.getByTestId("dashboard.menu");
+    const menuBtn = page.getByTestId("dashboard.menu");
     if ((await menuBtn.count()) && (await menuBtn.isEnabled())) {
       await menuBtn.click();
     }
   };
   const toggleMenuPinned = async (shouldBePinned?: boolean) => {
     await page.waitForTimeout(1500);
-    const toggleBtn = await page.getByTestId("DashboardMenu.togglePinned");
-    const menuBtn = await page.getByTestId("dashboard.menu");
+    const toggleBtn = page.getByTestId("DashboardMenu.togglePinned");
+    const menuBtn = page.getByTestId("dashboard.menu");
     const menuIsPinned = await menuBtn.isDisabled();
     if ((await toggleBtn.count()) && (await toggleBtn.isEnabled())) {
       if (menuIsPinned && shouldBePinned) {

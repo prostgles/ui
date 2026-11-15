@@ -17,13 +17,15 @@ export const syncSchemaConfig = async ({
   connectionId,
   configPath,
   type,
+  skipCompilation = false,
 }: {
   dbs: DBS;
   connectionId: string;
   configPath: string;
   type: "sample-schema" | "cli";
+  skipCompilation?: boolean;
 }) => {
-  await compileSchemaConfigProject(configPath);
+  if (!skipCompilation) await compileSchemaConfigProject(configPath);
   const config_sync: NonNullable<DatabaseConfigs["config_sync"]> = {
     type,
     configPath,

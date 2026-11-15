@@ -30,11 +30,11 @@ export const accessControlDemo = async () => {
     `[data-key="messages"] [data-command=${JSON.stringify("selectRuleAdvanced" satisfies Command)}]`,
   );
   await tout(1500);
-  await click("MenuList", `[data-key="insert"]`);
+  await click("Popup.header", `[data-key="insert"]`);
   await tout(1500);
-  await click("MenuList", `[data-key="update"]`);
+  await click("Popup.header", `[data-key="update"]`);
   await tout(1500);
-  await click("MenuList", `[data-key="delete"]`);
+  await click("Popup.header", `[data-key="delete"]`);
   await click("Popup.close");
   await click("ComparablePGPolicies");
   await tout(1500);

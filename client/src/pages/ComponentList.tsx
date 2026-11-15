@@ -5,6 +5,7 @@ import { FlexCol, FlexRow } from "@components/Flex";
 import { isEmpty } from "../utils/utils";
 import { useLocation } from "react-router";
 import Loading from "@components/Loader/Loading";
+import { FilterExamples } from "./ComponentList/FilterExamples";
 
 const buttonHeights: Record<string, number> = {};
 const buttonLoadingHeights: Record<string, number> = {};
@@ -62,7 +63,11 @@ export const ComponentList = () => {
   }
 
   return (
-    <FlexCol ref={ref} className="ComponentList f-1 min-w-0 p-2 o-auto">
+    <FlexCol
+      ref={ref}
+      className="ComponentList f-1 min-w-0 as-stretch px-2 pb-2 o-auto"
+    >
+      {!isLoaderTest && <FilterExamples />}
       {checkMessage}
       {(["micro", "small", "default", "large"] as const).map((size) => (
         <FlexCol key={size} data-size={size} className="mb-2">

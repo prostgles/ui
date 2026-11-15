@@ -20,6 +20,7 @@ import type { DatabaseConfigs } from "..";
 import { dbsConnectionOptions } from "./dbsConnectionOptions";
 import type { ConnectionHotReloadProperties } from "./getHotReloadConfigs";
 import { getTableAuditConfig } from "./getTableAuditConfig";
+import { getUserTableOptions } from "./getUserTableOptions";
 
 export const modifyClientSchema = ({
   connection,
@@ -28,6 +29,7 @@ export const modifyClientSchema = ({
   tableConfig,
   auditConfig,
   pluginTableOptions,
+  userData,
 }: {
   connection: ConnectionHotReloadProperties;
   databaseConfig: Pick<DatabaseConfigs, "file_table_config" | "sync_users">;
@@ -43,7 +45,9 @@ export const modifyClientSchema = ({
   const managedTableOptions: Record<string, Partial<TableOptions>> = {
     ...pluginTableOptions,
     ...((databaseConfig.sync_users || connection.is_state_db) && {
-      users: userTableOptions,
+      users: getUserTableOptions(
+        !!connection.is_state_db && userData?.user?.type === "admin",
+      ),
     }),
     ...(auditConfig && { [auditConfig.tableName]: auditTableOptions }),
     ...(fileTable &&
@@ -249,13 +253,29 @@ const fileTableOptions: TableOptions = {
   card: {
     headerColumn: "original_name",
     subHeaderColumns: ["original_last_modified", "content_length"],
+    summaryFields: ["description", "url"],
+    layoutSections: [
+      {
+        items: [
+          "id",
+          "extension",
+          "content_type",
+          "added",
+          "updated",
+          "version",
+        ],
+      },
+    ],
   },
   icon: "File",
   label: "Files",
   rowIconColumn: "url",
   columns: {
     original_last_modified: { label: "Last modified" },
-    content_length: { label: "Size", renderAs: { type: "File size" } },
+    content_length: {
+      label: "Size",
+      renderAs: { type: "File size" },
+    },
     url: {
       renderAs: {
         type: "Media",
@@ -265,26 +285,23 @@ const fileTableOptions: TableOptions = {
         },
       },
     },
+    storage_key: { show: false },
+    etag: { show: false },
+    cloud_url: { show: false },
+    local_file_path: { show: false },
+    signed_url: { show: false },
+    signed_url_expires: { show: false },
+    deleted: { show: false },
+    deleted_from_storage: { show: false },
+    data: { show: false },
+    text_content: { show: false },
     docling_metadata: {
+      show: false,
       renderAs: {
         type: "DoclingDocument",
       },
     },
-    extraction_status: {
-      defaultRenderAs: {
-        type: "Internal",
-        params: { component: "FileExtractionStatus" },
-      },
-    },
-  },
-};
-
-const userTableOptions: Partial<TableOptions> = {
-  label: "Users",
-  icon: "Account",
-  card: { headerColumn: "username", subHeaderColumn: "name" },
-  referenceDisplay: {
-    columns: [{ name: "username", format: { type: "Avatar" } }],
+    text_extraction_job_id: { show: false },
   },
 };
 
@@ -292,10 +309,17 @@ const annotationsTableOptions: TableOptions = {
   referenceDisplay: undefined,
   managedTableType: "file-annotations",
   sort: undefined,
-  columns: {},
+  columns: {
+    end_page: { show: false },
+    start_text: { show: false },
+    end_text: { show: false },
+    text_selections: { show: false },
+  },
   card: {
     headerColumn: "name",
     subHeaderColumn: "text",
+    summaryFields: ["id", "file_id", "file_version", "page"],
+    layoutSections: [],
   },
   icon: "Link",
   label: "File annotations",
@@ -315,7 +339,7 @@ const auditOperationStyle = {
 
 const auditTableOptions: TableOptions = {
   referenceDisplay: undefined,
-  managedTableType: undefined,
+  managedTableType: "audit",
   icon: "History",
   label: "Audit trail",
   defaultColumns: ["created_at", "operation", "table_name", "actor", "new_row"],
@@ -324,23 +348,31 @@ const auditTableOptions: TableOptions = {
   card: {
     headerColumn: "operation",
     subHeaderColumn: "table_name",
+    summaryFields: ["created_at", "actor", "new_row"],
+    layoutSections: [
+      {
+        items: [
+          "id",
+          "schema_name",
+          "old_id",
+          "new_id",
+          "old_row",
+          "db_context",
+        ],
+      },
+    ],
   },
   columns: {
     created_at: {
       label: "Time",
-      width: 140,
-      renderAs: { type: "Age" },
-      infoLevel: 1,
+      width: 180,
+      renderAs: {
+        type: "Age",
+        params: { variant: "short", showTimestamp: true },
+      },
     },
-    id: { infoLevel: 2 },
-    schema_name: { infoLevel: 2 },
-    old_id: { infoLevel: 2 },
-    new_id: { infoLevel: 2 },
-    old_row: { infoLevel: 2 },
-    db_context: { infoLevel: 2 },
-    table_name: { label: "Table", infoLevel: 1 },
+    table_name: { label: "Table" },
     actor: {
-      infoLevel: 1,
       label: "User",
       width: 200,
       nested: {
@@ -355,7 +387,6 @@ const auditTableOptions: TableOptions = {
       },
     },
     new_row: {
-      infoLevel: 1,
       label: "Changes",
       style: { ...auditOperationStyle, column: "operation" },
       renderAs: {
@@ -364,7 +395,6 @@ const auditTableOptions: TableOptions = {
       },
     },
     operation: {
-      infoLevel: 1,
       label: "Action",
       width: 100,
       style: auditOperationStyle,

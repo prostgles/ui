@@ -27,13 +27,13 @@ export type DockerMCPServerProxyHandler = (
 export type ContainerProxyContext = {
   /**
    * If present, this will enable the container to access MCP tools allowed for the chat.
-   * messageId is used to identify the parent tool use that created this container
+   * messageId identifies the originating message, if the container was started from a chat.
    */
   mcpToolsScope:
     | undefined
     | {
         chat: DBSSchema["llm_chats"];
-        messageId: DBSSchema["llm_messages"]["id"];
+        messageId: DBSSchema["llm_messages"]["id"] | undefined;
       };
 
   user: DBSSchema["users"];

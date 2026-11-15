@@ -1,4 +1,5 @@
 import { isObject } from "@common/publishUtils";
+import { mdiCheckAll, mdiSelectOff } from "@mdi/js";
 import React, { useEffect, useMemo } from "react";
 import { Checkbox } from "../Checkbox";
 import ErrorComponent from "../ErrorComponent";
@@ -40,6 +41,7 @@ export const SearchListContent = <M extends boolean = false>(
     onPressEnter,
     dataSignature,
     leftContent,
+    rightContent,
     noBorder,
     belowSearchBoxContent,
   } = props;
@@ -74,6 +76,10 @@ export const SearchListContent = <M extends boolean = false>(
     searchTerm,
     matchCase,
   });
+  const selectableItems = renderedItems.filter((item) => !item.disabledInfo);
+  const allVisibleItemsSelected =
+    Boolean(selectableItems.length) &&
+    selectableItems.every((item) => item.checked);
 
   const noList = isSearch ? searchClosed : false;
 
@@ -158,7 +164,8 @@ export const SearchListContent = <M extends boolean = false>(
     <div
       data-command="SearchList"
       className={
-        "SearchList list-comp ta-left flex-col min-h-0 gap-dp5 " + className
+        "SearchList list-comp ta-left flex-col min-h-0 gap-dp5 font-16 font-normal " +
+        className
       }
       ref={rootRef}
       onKeyDown={onKeyDown}
@@ -200,13 +207,29 @@ export const SearchListContent = <M extends boolean = false>(
                   {leftContent}
                   {!!multiSelect && (
                     <Checkbox
-                      title="Toggle all"
+                      title={
+                        allVisibleItemsSelected ? "Deselect all" : "Select all"
+                      }
+                      variant={props.checkboxVariant}
+                      iconPath={
+                        !props.checkboxVariant ? undefined
+                        : allVisibleItemsSelected ?
+                          mdiSelectOff
+                        : mdiCheckAll
+                      }
                       className={"mx-p5"}
                       disabledInfo={
-                        !renderedItems.length ? "No items to toggle" : undefined
+                        selectableItems.length ? undefined : (
+                          "No items to toggle"
+                        )
                       }
                       data-command="SearchList.toggleAll"
-                      checked={Boolean(renderedSelected.length)}
+                      checked={allVisibleItemsSelected}
+                      indeterminate={
+                        !props.checkboxVariant &&
+                        Boolean(renderedSelected.length) &&
+                        !allVisibleItemsSelected
+                      }
                       onChange={(e) => {
                         const checked = e.currentTarget.checked;
 
@@ -278,6 +301,7 @@ export const SearchListContent = <M extends boolean = false>(
             isLoading={isSearch && searchingItems}
           />
         }
+        {rightContent}
       </div>
       {belowSearchBoxContent}
       {listNode}

@@ -1,15 +1,15 @@
 import type { BarchartWindowInsertModel } from "@common/DashboardTypes";
 import { pickKeys } from "prostgles-types";
-import {
-  DEFAULT_TABLE_OPTIONS,
-  type WindowData,
-} from "@common/ColumnConfig/WindowData";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 import type {
   ColumnConfig,
   NestedColumn,
 } from "@common/ColumnConfig/ColumnConfig";
 import { aggFunctions } from "@common/ColumnConfig/FUNCTIONS";
-import type { WindowInsertModel, WorkspaceTable } from "./loadGeneratedWorkspaces";
+import type {
+  WindowInsertModel,
+  WorkspaceTable,
+} from "./loadGeneratedWorkspaces";
 
 export const loadGeneratedBarchart = (
   generatedWindow: BarchartWindowInsertModel,
@@ -118,7 +118,6 @@ export const loadGeneratedBarchart = (
     columns,
     filter,
     options: {
-      ...DEFAULT_TABLE_OPTIONS,
       filterOperand,
       quickFilterGroups,
       hideEditRow: true,

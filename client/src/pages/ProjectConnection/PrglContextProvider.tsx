@@ -3,6 +3,7 @@ import { CommandPalette } from "src/app/CommandPalette/CommandPalette";
 import { createStore } from "src/hooks/createStore";
 import type { Prgl } from "../../App";
 import { LLMSetupProvider } from "src/dashboard/AskLLM/Setup/LLMSetupProvider";
+import { JobActionPopupProvider } from "../../dashboard/ActionPopup/JobActionPopupProvider";
 
 export const PrglContext = createContext<Prgl | undefined>(undefined);
 
@@ -26,7 +27,9 @@ export const PrglProvider = ({
           isElectron={prgl.serverState.isElectron}
           prglLoaded={prgl}
         />
-        {children}{" "}
+        <JobActionPopupProvider key={prgl.connectionId}>
+          {children}
+        </JobActionPopupProvider>{" "}
       </LLMSetupProvider>
     </PrglContext.Provider>
   );

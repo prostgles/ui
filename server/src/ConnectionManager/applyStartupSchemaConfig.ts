@@ -68,6 +68,7 @@ export const applyStartupSchemaConfig = async ({
     connectionId: connection.id,
     configPath,
     type: "cli",
+    skipCompilation: true,
   });
   await connectionManager.startConnection(connection.id, dbs, db);
 };

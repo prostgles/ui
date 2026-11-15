@@ -84,15 +84,22 @@ export const getHotReloadConfigs = async ({
     configuredDatabaseConfig,
   );
 
-  const { fileTable, tableConfig, tableHooks, jobs, tableOptions, functions } =
-    await parsePlugins({
-      type: "saved",
-      dbs,
-      con: configuredConnection,
-      conMgr: connectionManager,
-      app,
-      databaseConfig: configuredDatabaseConfig,
-    });
+  const {
+    fileTable,
+    tableConfig,
+    tableHooks,
+    jobs,
+    tableOptions,
+    functions,
+    functionOptions: pluginFunctionOptions,
+  } = await parsePlugins({
+    type: "saved",
+    dbs,
+    con: configuredConnection,
+    conMgr: connectionManager,
+    app,
+    databaseConfig: configuredDatabaseConfig,
+  });
 
   const auth = await getConnectionAuth(app, dbs, _dbs, {
     type: "connection",
@@ -162,7 +169,7 @@ export const getHotReloadConfigs = async ({
       functions: { ...connectionFunctions, ...functions },
       modifyClientFunctionSchema: modifyClientFunctionSchema(
         configuredConnection.function_options,
-        functionOptions,
+        { ...pluginFunctionOptions, ...functionOptions },
       ),
       modifyClientSchema: (table, tableConfig, userData, auditConfig) =>
         modifyClientSchema({

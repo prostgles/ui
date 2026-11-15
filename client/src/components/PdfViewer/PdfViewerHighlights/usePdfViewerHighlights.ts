@@ -1,9 +1,10 @@
 import { intersectAnnotationRects } from "@common/annotationText";
-import type * as pdfjsLib from "pdfjs-dist";
 import {
   useCallback,
   useEffect,
+  useRef,
   useState,
+  type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react";
 
@@ -13,32 +14,58 @@ import type {
   Highlight,
   HighlightRect,
 } from "./PdfViewerHighlights";
+import type { RenderedPdfPage } from "../usePdfContinuousScroll";
+import type { PdfViewerProps } from "../PdfViewer";
+import { useDebouncedCallback } from "src/hooks/useDebouncedCallback";
 
 const isRectVisible = (rect: HighlightRect) =>
   rect.width > 0 && rect.height > 0;
 
 export const usePdfViewerHighlights = ({
   setPotentialHighlight,
-  pageElement,
-  viewport,
-  currentPage,
-  pageHighlights,
+  renderedPages,
+  onHoverHighlight,
+  onSelectHighlight,
+  onClearHighlight,
 }: {
-  viewport: pdfjsLib.PageViewport | null;
-  pageElement: HTMLDivElement | null;
-  currentPage: number;
-  pageHighlights: Highlight[];
+  renderedPages: (RenderedPdfPage & { highlights: Highlight[] })[];
   setPotentialHighlight: (highlight: CreatedHighlight | null) => void;
-}) => {
-  const [activeTooltip, setActiveTooltip] = useState<ActiveTooltip | null>(
+} & Pick<
+  PdfViewerProps,
+  "onHoverHighlight" | "onSelectHighlight" | "onClearHighlight"
+>) => {
+  const [activeTooltip, setVisibleTooltip] = useState<ActiveTooltip | null>(
     null,
   );
+  const hoverClearTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const showTooltip = useDebouncedCallback(
+    (tooltip: ActiveTooltip | null) => setVisibleTooltip(tooltip),
+    [],
+    600,
+  );
+  const setActiveTooltip = useCallback(
+    (tooltip: ActiveTooltip | null) => {
+      showTooltip(tooltip);
+      setVisibleTooltip((previous) =>
+        previous?.key === tooltip?.key ? previous : null,
+      );
+    },
+    [showTooltip],
+  );
+  const clearHover = useCallback(() => {
+    clearTimeout(hoverClearTimeoutRef.current);
+    hoverClearTimeoutRef.current = undefined;
+    setActiveTooltip(null);
+    onHoverHighlight?.(undefined);
+  }, [onHoverHighlight, setActiveTooltip]);
 
   useEffect(() => {
     const handleSelectionChange = () => {
       const selection = document.getSelection()?.toString() ?? "";
       if (selection.trim() === "") {
         setPotentialHighlight(null);
+      } else {
+        clearHover();
       }
     };
 
@@ -46,14 +73,12 @@ export const usePdfViewerHighlights = ({
 
     return () => {
       document.removeEventListener("selectionchange", handleSelectionChange);
+      clearTimeout(hoverClearTimeoutRef.current);
+      hoverClearTimeoutRef.current = undefined;
     };
-  }, [setPotentialHighlight]);
+  }, [setPotentialHighlight, clearHover]);
 
   const createHighlightFromSelection = useCallback(() => {
-    if (!pageElement || !viewport) {
-      return;
-    }
-
     const selection = window.getSelection();
 
     if (!selection || selection.isCollapsed || selection.rangeCount === 0) {
@@ -75,6 +100,12 @@ export const usePdfViewerHighlights = ({
     if (!commonAncestor?.closest(".textLayer")) {
       return;
     }
+
+    const selectedPage = renderedPages.find(({ element }) =>
+      element.contains(commonAncestor),
+    );
+    if (!selectedPage) return;
+    const { element: pageElement, viewport, page: currentPage } = selectedPage;
 
     const pageBounds = pageElement.getBoundingClientRect();
     const rangeClientRects = getSelectedTextRects(range);
@@ -100,24 +131,70 @@ export const usePdfViewerHighlights = ({
       page: currentPage,
       rects,
       text: selectedText,
-      text_selections: [{ page: currentPage, startText: selectedText, endText: selectedText, rects }],
+      text_selections: [
+        {
+          page: currentPage,
+          startText: selectedText,
+          endText: selectedText,
+          rects,
+        },
+      ],
     });
-  }, [currentPage, setPotentialHighlight, pageElement, viewport]);
+  }, [setPotentialHighlight, renderedPages]);
 
   const handlePointerUp = useCallback(() => {
     queueMicrotask(createHighlightFromSelection);
   }, [createHighlightFromSelection]);
 
+  const handleClick = (event: ReactMouseEvent<HTMLDivElement>) => {
+    setActiveTooltip(null);
+    const selection = window.getSelection();
+    const target = event.target;
+    if (
+      (selection && !selection.isCollapsed) ||
+      !(target instanceof Element) ||
+      target.closest(".pdf-viewer__highlight-layer")
+    )
+      return;
+
+    const clickedPage = renderedPages.find(({ element }) =>
+      element.contains(target),
+    );
+    if (!clickedPage) return;
+    const bounds = clickedPage.element.getBoundingClientRect();
+    const pointerX = (event.clientX - bounds.left) / clickedPage.viewport.scale;
+    const pointerY = (event.clientY - bounds.top) / clickedPage.viewport.scale;
+    const clickedHighlight = clickedPage.highlights.find(({ rects }) =>
+      rects.some((rect) => isPointerInRect(rect, pointerX, pointerY)),
+    );
+    if (clickedHighlight) {
+      onSelectHighlight?.(clickedHighlight.id);
+    } else {
+      onClearHighlight?.();
+    }
+  };
+
   const handlePointerMove = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
-      if (!viewport || !pageElement) {
+      const hoveredPage = renderedPages.find(
+        ({ element }) =>
+          event.target instanceof Node && element.contains(event.target),
+      );
+      if (!hoveredPage) {
+        clearHover();
         return;
       }
+      const {
+        element: pageElement,
+        viewport,
+        highlights: pageHighlights,
+        page,
+      } = hoveredPage;
 
       const selection = window.getSelection();
 
-      if (selection && !selection.isCollapsed) {
-        setActiveTooltip(null);
+      if (event.buttons || (selection && !selection.isCollapsed)) {
+        clearHover();
         return;
       }
 
@@ -126,55 +203,67 @@ export const usePdfViewerHighlights = ({
       const pointerY = event.clientY - bounds.top;
 
       for (const highlight of pageHighlights) {
-        if (!highlight.tooltip) {
-          continue;
-        }
-
-        for (const [index, rect] of highlight.rects.entries()) {
+        for (const rect of highlight.rects) {
           const left = rect.x * viewport.scale;
           const top = rect.y * viewport.scale;
           const width = rect.width * viewport.scale;
-          const height = rect.height * viewport.scale;
 
-          const containsPointer =
-            pointerX >= left &&
-            pointerX <= left + width &&
-            pointerY >= top &&
-            pointerY <= top + height;
-
-          if (!containsPointer) {
+          if (
+            !isPointerInRect(
+              rect,
+              pointerX / viewport.scale,
+              pointerY / viewport.scale,
+            )
+          ) {
             continue;
           }
 
-          const key = `${highlight.id}-${index}`;
+          clearTimeout(hoverClearTimeoutRef.current);
+          hoverClearTimeoutRef.current = undefined;
+          onHoverHighlight?.(highlight.id);
+          if (!highlight.tooltip) {
+            setActiveTooltip(null);
+            return;
+          }
+          const key = `${page}-${highlight.id}`;
 
-          setActiveTooltip((previous) =>
-            previous?.key === key ?
-              previous
-            : {
-                key,
-                text: highlight.tooltip!,
-                left: left + width / 2,
-                top,
-              },
-          );
+          setActiveTooltip({
+            key,
+            page,
+            text: highlight.tooltip,
+            left: left + width / 2,
+            top,
+          });
 
           return;
         }
       }
 
-      setActiveTooltip(null);
+      if (!hoverClearTimeoutRef.current) {
+        hoverClearTimeoutRef.current = setTimeout(clearHover, 100);
+      }
     },
-    [pageHighlights, viewport, pageElement],
+    [renderedPages, setActiveTooltip, onHoverHighlight, clearHover],
   );
 
   return {
     activeTooltip,
-    setActiveTooltip,
+    clearHover,
+    handleClick,
     handlePointerMove,
     handlePointerUp,
   };
 };
+
+const isPointerInRect = (
+  rect: HighlightRect,
+  pointerX: number,
+  pointerY: number,
+) =>
+  pointerX >= rect.x &&
+  pointerX <= rect.x + rect.width &&
+  pointerY >= rect.y &&
+  pointerY <= rect.y + rect.height;
 
 const getSelectedTextRects = (range: Range): DOMRect[] => {
   const root = range.commonAncestorContainer;
@@ -197,8 +286,13 @@ const getSelectedTextRects = (range: Range): DOMRect[] => {
     );
 
     const bounds = textNode.parentElement!.getBoundingClientRect();
-    rects.push(...Array.from(textRange.getClientRects()).flatMap((rect) =>
-      intersectAnnotationRects(rect, bounds).map((r) => new DOMRect(r.x, r.y, r.width, r.height))));
+    rects.push(
+      ...Array.from(textRange.getClientRects()).flatMap((rect) =>
+        intersectAnnotationRects(rect, bounds).map(
+          (r) => new DOMRect(r.x, r.y, r.width, r.height),
+        ),
+      ),
+    );
   };
 
   if (root instanceof Text) {

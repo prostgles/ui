@@ -61,7 +61,7 @@ export const useSetMonacoTsLibraries = (
       monaco.languages.typescript.typescriptDefaults.setExtraLibs(extraLibs);
       lastLoadedLibsEditor = editor;
     };
-    editor.onDidFocusEditorText(() => {
+    const focusListener = editor.onDidFocusEditorText(() => {
       if (lastLoadedLibsEditor !== editor) {
         setExtraLibs();
       }
@@ -103,6 +103,7 @@ export const useSetMonacoTsLibraries = (
       console.error(e);
     }
     onTSLibraryChange?.(extraLibs);
+    return () => focusListener.dispose();
   }, [editor, monaco, languageObj, onTSLibraryChange, getIsMounted, nodeLibs]);
 };
 

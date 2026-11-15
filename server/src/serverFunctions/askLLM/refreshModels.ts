@@ -236,41 +236,30 @@ export const fetchLlmModels = async ({
     throw modelsRequest.error;
   }
 
-  if (provider === "Hetzner") {
-    const requestData = modelsRequest.data as HetznerModelInfo;
-    return requestData.data.map((model) => ({
-      name: model.id,
-      provider_id: provider,
-      context_length: model.max_model_len,
-      mcp_tool_support: false,
-      pricing_info: {
-        input: 0,
-        output: 0,
-        cachedInput: 0,
-        cachedOutput: 0,
-      },
-    }));
+  const requestData = modelsRequest.data as OpenAIModelsResponse | null;
+  if (!Array.isArray(requestData?.data)) {
+    throw new Error(
+      "Unexpected response format: expected data to be an array of models",
+    );
   }
 
-  if (!Array.isArray(modelsRequest.data)) {
-    throw new Error("Unexpected response format: expected an array of models");
-  }
-
-  return modelsRequest.data.map((model) => ({
-    ...model,
+  return requestData.data.map((model) => ({
+    name: model.id,
     provider_id: provider,
-  })) as DBSSchemaForInsert["llm_models"][];
+    context_length: model.max_model_len,
+    mcp_tool_support: false,
+    pricing_info: {
+      input: 0,
+      output: 0,
+      cachedInput: 0,
+      cachedOutput: 0,
+    },
+  }));
 };
 
-type HetznerModelInfo = {
-  object: "list";
+type OpenAIModelsResponse = {
   data: {
-    created: number;
     id: string;
-    max_model_len: number;
-    object: "model";
-    owned_by: "hetzner";
-    parent: null;
-    root: "/model";
+    max_model_len?: number;
   }[];
 };

@@ -26,21 +26,27 @@ export const useTablesAndViewsSearchItems = ({
           const table = !OID ? undefined : tableMap.get(OID);
           return {
             name: s.name,
+            label: table?.label || s.name,
             schema: s.schema,
             type,
             icon: table?.icon,
             escapedIdentifier: s.escapedIdentifier,
             subLabel:
-              table ? table.columns.map((c) => c.name).join(", ") : undefined,
+              table ?
+                table.columns
+                  .map((column) => column.label || column.name)
+                  .join(", ")
+              : undefined,
           } satisfies SearchAllSuggestion;
         })
         .filter(isDefined) ??
       tables
-        .map(({ name, icon }) => {
+        .map(({ name, label, icon }) => {
           const handler = db[name];
           if (handler && "find" in handler && handler.find) {
             return {
               name,
+              label: label || name,
               type: "table",
               escapedIdentifier: JSON.stringify(name),
               icon,

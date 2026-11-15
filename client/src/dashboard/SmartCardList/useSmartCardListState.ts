@@ -3,7 +3,7 @@ import {
   type DetailedFilter,
   type GroupedDetailedFilter,
 } from "@common/filterUtils";
-import { useAsyncEffectQueue } from "prostgles-client";
+import { useAsyncEffectQueue, useMemoDeep } from "prostgles-client";
 import { isObject, type AnyObject } from "prostgles-types";
 import { useEffect, useMemo, useState } from "react";
 import { getSelectForFieldConfigs } from "../SmartCard/getSelectForFieldConfigs";
@@ -161,7 +161,7 @@ export const useSmartCardListState = (
     }
   }, [smartProps, db]);
 
-  const tableDataHandlers = useMemo(() => {
+  const tableDataOptions = useMemoDeep(() => {
     if (smartProps.type === "table") {
       const {
         fieldConfigs,
@@ -173,70 +173,70 @@ export const useSmartCardListState = (
       } = smartProps;
       const select = getSelectForFieldConfigs(fieldConfigs, columns);
 
-      const setData = async () => {
-        setLoading(true);
-        try {
-          if (!tableHandler?.find) {
-            throw new Error("tableHandler.find missing");
-          }
-
-          let totalRows = -1;
-          try {
-            totalRows = (await tableHandler.count?.(fullFilter)) ?? -1;
-          } catch (error) {
-            console.error(error);
-          }
-
-          const items = await tableHandler.find(fullFilter, {
-            limit,
-            orderBy,
-            select,
-            offset,
-          });
-          setItems(items);
-          setLoaded(true);
-          setTotalRows(totalRows);
-        } catch (error: any) {
-          setError(error);
-        }
-        setLoading(false);
-      };
-
       return {
-        setData,
         select,
         realtime,
         throttle,
         limit,
         orderBy,
         fullFilter,
+        offset,
       };
     }
-  }, [smartProps, columns, offset, tableHandler]);
+  }, [smartProps, columns, offset]);
 
   /** Table data */
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useAsyncEffectQueue(async () => {
-    if (!tableDataHandlers) return;
+    if (!tableDataOptions) return;
     const {
-      setData,
       realtime,
       throttle,
       select,
       fullFilter = {},
-    } = tableDataHandlers;
+      limit,
+      orderBy,
+      offset,
+    } = tableDataOptions;
+    const setData = async (showLoading: boolean) => {
+      if (showLoading) setLoading(true);
+      try {
+        if (!tableHandler?.find) {
+          throw new Error("tableHandler.find missing");
+        }
+
+        let totalRows = -1;
+        try {
+          totalRows = (await tableHandler.count?.(fullFilter)) ?? -1;
+        } catch (error) {
+          console.error(error);
+        }
+
+        const items = await tableHandler.find(fullFilter, {
+          limit,
+          orderBy,
+          select,
+          offset,
+        });
+        setItems(items);
+        setLoaded(true);
+        setTotalRows(totalRows);
+      } catch (error) {
+        setError(error);
+      }
+      if (showLoading) setLoading(false);
+    };
     if (realtime) {
       try {
         if (!tableHandler?.subscribe) {
           throw new Error("tableHandler.subscribe missing");
         }
         /** This is to not wait for the subscription to start */
-        void setData();
+        void setData(true);
         const sub = await tableHandler.subscribe(
           fullFilter,
           { limit: 0, select, throttle },
           () => {
-            void setData();
+            void setData(false);
           },
         );
         return sub.unsubscribe;
@@ -246,9 +246,9 @@ export const useSmartCardListState = (
         return;
       }
     } else {
-      void setData();
+      void setData(true);
     }
-  }, [tableDataHandlers, tableHandler]);
+  }, [tableDataOptions, tableHandler]);
 
   const tableControls = useMemo(
     () =>

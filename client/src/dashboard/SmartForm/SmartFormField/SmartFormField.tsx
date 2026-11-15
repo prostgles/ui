@@ -6,7 +6,7 @@ import { FormFieldCodeEditor } from "@components/FormField/FormFieldCodeEditor";
 import { JSONBSchemaA } from "@components/JSONBSchema/JSONBSchema";
 import Loading from "@components/Loader/Loading";
 import { SvgIcon } from "@components/SvgIcon";
-import { mdiDotsHorizontal } from "@mdi/js";
+import { mdiCodeJson, mdiDotsHorizontal, mdiFormSelect } from "@mdi/js";
 import {
   isObject,
   type AnyObject,
@@ -42,6 +42,9 @@ import { useSmartFormFieldOnChange } from "./useSmartFormFieldOnChange";
 import type { LocalMedia } from "@components/FileInput/FileInput";
 import { FlexRow } from "@components/Flex";
 import { AlertFieldEditor } from "../../W_Table/ManagedColumn/Alerts/AlertFieldEditor";
+import { ColorPicker } from "../../W_Table/ColumnMenu/ColorPicker";
+import { chipColorsFaded } from "@common/ColumnConfig/chipColors";
+import { DEFAULT_ANNOTATION_COLOR } from "@common/managedTableSchema";
 
 export type SmartFormFieldValue = string | number | LocalMedia | null;
 
@@ -124,6 +127,7 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
     },
   });
   const [collapsed, setCollapsed] = useState(true);
+  const [alertMode, setAlertMode] = useState<"form" | "json">("form");
 
   const renderAsJSON = useSmartFormFieldAsJSON({
     column,
@@ -232,11 +236,46 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
           minWidth: 0,
           ...(type === "checkbox" ? { padding: "1px" } : {}),
         }}
-        asJSON={renderAsJSON?.component}
+        asJSON={
+          internalFormat?.component === "Alert" && alertMode === "form" ?
+            undefined
+          : renderAsJSON?.component
+        }
         showFullScreenToggle={renderAsJSON?.component === "codeEditor"}
+        labelRightContent={
+          internalFormat?.component === "Alert" && (
+            <Btn
+              title={alertMode === "form" ? "Show JSON" : "Show form"}
+              iconPath={alertMode === "form" ? mdiCodeJson : mdiFormSelect}
+              variant="icon"
+              size="nano"
+              onClick={() =>
+                setAlertMode((mode) => (mode === "form" ? "json" : "form"))
+              }
+            />
+          )
+        }
         inputContent={
-          internalFormat?.component === "Alert" ?
+          (
+            table.managedTableType === "file-annotations" &&
+            column.name === "color"
+          ) ?
+            <ColorPicker
+              title="Annotation color"
+              value={
+                typeof value === "string" ? value : DEFAULT_ANNOTATION_COLOR
+              }
+              palette={chipColorsFaded.map(({ color }) => color)}
+              required={true}
+              btnProps={{
+                disabledInfo: readOnly && "Color is read-only",
+                title: "Annotation color",
+              }}
+              onChange={onCheckAndChange}
+            />
+          : internalFormat?.component === "Alert" ?
             <AlertFieldEditor
+              mode={alertMode}
               field={internalFormat.field}
               value={value}
               onChange={onCheckAndChange}

@@ -1,14 +1,11 @@
-import ErrorComponent from "@components/ErrorComponent";
+import type { DataRow } from "@common/utils";
 import { FlexCol } from "@components/Flex";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import { useSubscribe } from "prostgles-client";
-import type {
-  AnyObject,
-  DBSchemaTable,
-  JobControlBinding,
-} from "prostgles-types";
+import type { DBSchemaTable, JobControlBinding } from "prostgles-types";
 import React from "react";
-import { ActionColumnChats } from "../W_Table/ColumnMenu/ColumnDisplayFormat/ActionColumnChats";
+import { SmartCardList } from "../SmartCardList/SmartCardList";
+import { ActionColumnWorkflows } from "../W_Table/ColumnMenu/ColumnDisplayFormat/ActionColumnWorkflows";
+import { InfoRow } from "@components/InfoRow";
 
 export const JobActionDetails = ({
   job,
@@ -17,54 +14,43 @@ export const JobActionDetails = ({
   onClose,
 }: {
   job: JobControlBinding;
-  row: AnyObject;
+  row: DataRow;
   table: DBSchemaTable;
   onClose: VoidFunction;
 }) => {
-  const { db } = usePrgl();
-  const jobId = row[job.columnName];
-  const subscribe = db[job.tableName]?.subscribe;
-  const {
-    data: jobRow,
-    error,
-    isLoading,
-  } = useSubscribe(
-    subscribe!,
-    true,
-    { id: jobId },
-    { select: "*" },
-    { skip: !jobId || !subscribe },
-  );
+  const prgl = usePrgl();
+  const jobIdMaybe = row[job.columnName];
+  const jobId = typeof jobIdMaybe === "string" ? jobIdMaybe : undefined;
+  const jobTableHandler = prgl.db[job.tableName];
+  const jobTable = prgl.tables.find((table) => table.name === job.tableName);
   return (
-    <section aria-label="Job details">
+    <section aria-label="Job details" className="min-w-0">
       <FlexCol className="gap-p5">
-        <ErrorComponent error={error} />
         {!jobId ?
-          <div>Job has not started</div>
-        : jobRow ?
-          <>
-            <div>
-              Status: <strong>{jobRow.status}</strong>
-            </div>
-            {jobRow.progress_message && <div>{jobRow.progress_message}</div>}
-            {jobRow.progress_numeric && (
-              <div>
-                Progress: {jobRow.progress_numeric.done} /{" "}
-                {jobRow.progress_numeric.total}
-              </div>
-            )}
-            {jobRow.attempts != null && <div>Attempts: {jobRow.attempts}</div>}
-            {jobRow.error && (
-              <ErrorComponent error={jobRow.error} findMsg={true} />
-            )}
-          </>
-        : <div>
-            {!subscribe || error || !isLoading ?
-              "Job details unavailable"
-            : "Loading job details..."}
-          </div>
-        }
-        <ActionColumnChats row={row} table={table} onOpen={onClose} />
+          <InfoRow variant="filled" color="info">
+            Job has not started
+          </InfoRow>
+        : jobTable && jobTableHandler?.find ?
+          <SmartCardList
+            {...prgl}
+            tableName={job.tableName}
+            filter={{ id: jobId }}
+            cardMode="summary"
+            flat={false}
+            realtime={!!jobTableHandler.subscribe}
+            showTopBar={false}
+            showEdit={false}
+            limit={1}
+            noDataComponent={<div>Job details unavailable</div>}
+            noDataComponentMode="hide-all"
+          />
+        : <div>Job details unavailable</div>}
+        <ActionColumnWorkflows
+          invocationId={jobId}
+          row={row}
+          table={table}
+          onOpen={onClose}
+        />
       </FlexCol>
     </section>
   );

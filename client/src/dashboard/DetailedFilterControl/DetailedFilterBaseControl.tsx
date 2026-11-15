@@ -7,9 +7,13 @@ import { FilterWrapper, type FilterWrapperProps } from "./FilterWrapper";
 import type { BaseFilterProps } from "../SmartFilter/SmartFilter";
 import { DetailedFilterBaseControlRouter } from "./DetailedFilterBaseControlRouter";
 import { validateFilter } from "./validateFilter";
+import { AgeFilter, AgeFilterTypes } from "./DetailedFilterBaseTypes/AgeFilter";
 
 export type DetailedFilterBaseControlProps = BaseFilterProps &
-  Pick<FilterWrapperProps, "rootFilter" | "selectedColumns" | "label"> & {
+  Pick<
+    FilterWrapperProps,
+    "rootFilter" | "selectedColumns" | "label" | "headerActions"
+  > & {
     hideToggle?: boolean;
     minimised?: boolean;
   };
@@ -41,6 +45,7 @@ export const DetailedFilterBaseControl = (
           tableName,
           column,
           tables,
+          contextData,
         });
         newError = error;
         if (hasError) {
@@ -55,7 +60,7 @@ export const DetailedFilterBaseControl = (
       }
       propsOnChange(newFilter);
     },
-    [propsOnChange, column, db, error, tableName, tables],
+    [propsOnChange, column, db, error, tableName, tables, contextData],
   );
 
   const onChange = onChangeWithValidation;
@@ -100,7 +105,16 @@ export const DetailedFilterBaseControl = (
   );
 
   return (
-    <FilterWrapper error={error} {...filterProps} filter={filter}>
+    <FilterWrapper
+      error={error}
+      {...filterProps}
+      filter={filter}
+      headerContent={
+        includes(AgeFilterTypes, filter.type) && (
+          <AgeFilter {...filterProps} error={error} part="reference" />
+        )
+      }
+    >
       {!withContextSelector ?
         <DetailedFilterBaseControlRouter {...filterProps} error={error} />
       : <FlexRow className={"gap-p5"}>

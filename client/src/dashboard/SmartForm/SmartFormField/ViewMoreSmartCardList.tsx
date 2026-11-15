@@ -2,12 +2,13 @@ import type {
   DetailedFilter,
   GroupedDetailedFilter,
 } from "@common/filterUtils";
+import { isJoinedFilter } from "@common/filterUtils";
 import Btn from "@components/Btn";
 import { InfoRow } from "@components/InfoRow";
 import Popup from "@components/Popup/Popup";
 import { mdiSearchWeb } from "@mdi/js";
 import type { AnyObject } from "prostgles-types";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
 import { SmartCardList } from "../../SmartCardList/SmartCardList";
 import { useJoinedSectionFieldConfigs } from "../JoinedRecords/useJoinedSectionFieldConfigs";
@@ -44,6 +45,12 @@ export const ViewMoreSmartCardList = ({
   sql,
 }: ViewMoreSmartCardListProps) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement>();
+  const [headerControlsTarget, setHeaderControlsTarget] =
+    useState<HTMLDivElement | null>(null);
+  const minimisedSearchFilter = useMemo(
+    () => searchFilter?.map(minimiseFilter),
+    [searchFilter],
+  );
   const cardFieldConfigs = usePromise(async () => {
     if (!anchorEl || !ftable.card) return;
     return getTableCardFieldConfigs({ table: ftable, tables, db, methods });
@@ -76,6 +83,9 @@ export const ViewMoreSmartCardList = ({
       {anchorEl && (
         <Popup
           title={popupTitle ?? ftable.label}
+          headerRightContent={
+            <div className="min-w-0" ref={setHeaderControlsTarget} />
+          }
           onClose={() => setAnchorEl(undefined)}
           anchorEl={anchorEl}
           onClickClose={false}
@@ -86,7 +96,9 @@ export const ViewMoreSmartCardList = ({
           {ftable.card && !cardFieldConfigs ?
             <Loading />
           : <SmartCardList
-              showTopBar={true}
+              showTopBar={{ sort: true }}
+              headerControlsTarget={headerControlsTarget}
+              flat={false}
               db={db}
               style={{ flex: 1 }}
               sql={sql}
@@ -94,14 +106,13 @@ export const ViewMoreSmartCardList = ({
               tables={tables}
               tableName={ftable.name}
               excludeNulls={true}
-              searchFilter={searchFilter}
+              searchFilter={minimisedSearchFilter}
               getActions={
                 getActions ?
                   (row) => getActions(row, () => setAnchorEl(undefined))
                 : undefined
               }
               fieldConfigs={cardFieldConfigs ?? fieldConfigs}
-              cardLayout={ftable.card?.layout}
               noDataComponent={
                 <InfoRow className=" " color="info" variant="filled">
                   No records
@@ -113,4 +124,23 @@ export const ViewMoreSmartCardList = ({
       )}
     </>
   );
+};
+
+const minimiseFilter = <Filter extends DetailedFilter | GroupedDetailedFilter>(
+  filter: Filter,
+): Filter => {
+  if ("$and" in filter) {
+    return { ...filter, $and: filter.$and.map(minimiseFilter) };
+  }
+  if ("$or" in filter) {
+    return { ...filter, $or: filter.$or.map(minimiseFilter) };
+  }
+  if (isJoinedFilter(filter)) {
+    return {
+      ...filter,
+      minimised: true,
+      filter: minimiseFilter(filter.filter),
+    };
+  }
+  return { ...filter, minimised: true };
 };

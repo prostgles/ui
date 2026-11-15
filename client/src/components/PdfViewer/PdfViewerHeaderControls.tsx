@@ -1,4 +1,5 @@
 import React, { useCallback } from "react";
+import { createPortal } from "react-dom";
 
 import { Pagination } from "@components/Table/Pagination";
 import {
@@ -11,11 +12,19 @@ import Btn from "@components/Btn";
 import { mdiOcr } from "@mdi/js";
 
 type P = Omit<PdfViewerSearchProps, "currentPage"> &
-  Pick<PdfViewerProps, "doclingDocument" | "topLeftControls"> & {
+  Pick<
+    PdfViewerProps,
+    | "doclingDocument"
+    | "topLeftControls"
+    | "topRightControls"
+    | "headerControlsTarget"
+  > & {
     onPageChange: (page: number) => void;
     page: number;
     numPages: number;
     isRendering: boolean;
+    continuousScroll: boolean;
+    setContinuousScroll: (enabled: boolean) => void;
     showDoclingOverlay: boolean;
     setShowDoclingOverlay: (show: boolean) => void;
   };
@@ -24,11 +33,15 @@ export const PdfViewerHeaderControls = ({
   onPageChange,
   page,
   isRendering,
+  continuousScroll,
+  setContinuousScroll,
   numPages,
   showDoclingOverlay,
   setShowDoclingOverlay,
   doclingDocument,
   topLeftControls,
+  topRightControls,
+  headerControlsTarget,
   ...searchProps
 }: P) => {
   const changePage = useCallback(
@@ -44,12 +57,20 @@ export const PdfViewerHeaderControls = ({
     [page, numPages, onPageChange],
   );
 
-  return (
+  const controls = (
     <nav
-      className="pdf-viewer__toolbar m-auto flex-row-wrap w-full bg-color-0 jc-center"
+      data-command="PdfViewer.toolbar"
+      className="f-0 flex-row-wrap ai-center jc-end"
+      style={{ gap: "1em" }}
       aria-label="PDF document controls"
     >
       {topLeftControls}
+      <SwitchToggle
+        label="Continuous scroll"
+        title="Scroll through PDF pages. Turn off if performance is slow."
+        checked={continuousScroll}
+        onChange={setContinuousScroll}
+      />
       <Pagination
         className="mt-0"
         disabled={isRendering || !numPages}
@@ -77,6 +98,11 @@ export const PdfViewerHeaderControls = ({
           onClick={() => setShowDoclingOverlay(!showDoclingOverlay)}
         />
       )}
+      {topRightControls}
     </nav>
   );
+
+  return headerControlsTarget ?
+      createPortal(controls, headerControlsTarget)
+    : controls;
 };

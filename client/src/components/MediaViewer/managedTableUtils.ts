@@ -27,7 +27,6 @@ export const FILE_TABLE_SELECT = {
   original_last_modified: 1,
   original_name: 1,
   content_type: 1,
-  extraction_status: 1,
 } satisfies Partial<Record<keyof FilesTableRow, 1>>;
 
 export type DBManagedTableSchema = {

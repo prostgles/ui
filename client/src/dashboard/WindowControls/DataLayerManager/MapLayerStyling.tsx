@@ -1,3 +1,4 @@
+import { COLOR_PALETTE } from "@common/ColumnConfig/COLOR_PALETTE";
 import { FlexRow } from "@components/Flex";
 import { IconPalette } from "@components/IconPalette/IconPalette";
 import PopupMenu from "@components/PopupMenu";
@@ -62,6 +63,7 @@ export const MapLayerStyling = ({
       render={() => (
         <FlexRow>
           <ColorPicker
+            palette={COLOR_PALETTE}
             style={{ flex: "none" }}
             label={{
               label: "Layer color",

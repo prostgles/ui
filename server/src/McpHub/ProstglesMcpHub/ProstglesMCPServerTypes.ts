@@ -42,7 +42,7 @@ export type McpCallContext = {
   clientReq?: AuthClientRequest;
   dbs: DBS;
   toolUseId: string | undefined;
-  messageId: DBSSchema["llm_messages"]["id"];
+  messageId: DBSSchema["llm_messages"]["id"] | undefined;
 } & Pick<
   DBSSchema["llm_chats_allowed_mcp_tools"],
   "tool_id" | "server_config_id"
@@ -108,10 +108,8 @@ export type ProstglesMcpServerHandlerTypedFetchTools<
 >;
 
 export type ProstglesMcpServerHandlerTyped<
-  ServerDefinition extends Omit<
+  ServerDefinition extends Omit<ProstglesMcpServerDefinition, "handler"> =
     ProstglesMcpServerDefinition,
-    "handler"
-  > = ProstglesMcpServerDefinition,
 > = {
   start: (dbs: DBS) => MaybePromise<{
     stop: () => MaybePromise<void>;

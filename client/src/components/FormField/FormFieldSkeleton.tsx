@@ -103,7 +103,7 @@ export const FormFieldSkeleton = forwardRef(
               {...label}
               htmlFor={id}
               variant="normal"
-              style={{ zIndex: 1, ...(isObject(label) ? label.style : {}) }}
+              style={{ zIndex: 1, ...labelStyle, ...label.style }}
             />
           : !labelString ?
             undefined
@@ -154,8 +154,10 @@ export const FormFieldSkeleton = forwardRef(
                 {Boolean(rightIcons) && (
                   <FlexRow
                     className={
-                      `RightIcons ${rightContentAlwaysShow ? "" : "show-on-trigger-hover"} h-fit as-start gap-0 ai-start jc-center ` +
-                      (rightIconsShowBorder ? "  bl b-color " : " ")
+                      `RightIcons ${rightContentAlwaysShow ? "" : "show-on-trigger-hover"} gap-0 jc-center ` +
+                      (rightIconsShowBorder ?
+                        "as-stretch ai-stretch bl b-color"
+                      : "h-fit as-start ai-start")
                     }
                   >
                     {rightIcons}

@@ -1,5 +1,11 @@
 import type { TableConfig } from "prostgles-server";
-import { DEFAULT_TABLE_OPTIONS } from "@common/ColumnConfig/WindowData";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
+
+const defaultTableOptions = {
+  maxCellChars: 500,
+  showFilters: false,
+  refresh: { type: "Realtime", throttleSeconds: 1, intervalSeconds: 1 },
+} satisfies WindowData<"table">["options"];
 
 export const tableConfigWindows = {
   windows: {
@@ -90,7 +96,7 @@ export const tableConfigWindows = {
       },
       having: `JSONB NOT NULL DEFAULT '[]'::jsonb`,
       options: {
-        defaultValue: DEFAULT_TABLE_OPTIONS,
+        defaultValue: defaultTableOptions,
         jsonbSchema: { type: "any" },
       },
       sql_options: {
@@ -163,6 +169,22 @@ export const tableConfigWindows = {
       nested_tables: `JSONB`,
       created: `TIMESTAMPTZ NOT NULL DEFAULT NOW()`,
       last_updated: `BIGINT NOT NULL`,
+    },
+    triggers: {
+      /* Filtered tables send { showFilters: true }, bypassing the options column default. */
+      applyTableWindowDefaults: {
+        actions: ["insert", "update"],
+        type: "before",
+        forEach: "row",
+        query: `
+          BEGIN
+            IF NEW.type = 'table' THEN
+              NEW.options = '${JSON.stringify(defaultTableOptions)}'::jsonb || COALESCE(NEW.options, '{}'::jsonb);
+            END IF;
+            RETURN NEW;
+          END;
+        `,
+      },
     },
   },
 } satisfies TableConfig<{ en: 1 }>;

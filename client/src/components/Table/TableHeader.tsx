@@ -373,10 +373,8 @@ export class TableHeader<Sort extends ColumnSortSQL> extends React.Component<
                         col.onResize(colh.offsetWidth);
                       }
                     }}
-                    onPress={(ev) => {
-                      const colh = (ev.target as HTMLElement).closest(
-                        `[role="columnheader"]`,
-                      );
+                    onPress={(ev, node) => {
+                      const colh = node.closest(`[role="columnheader"]`);
                       if (colh) {
                         colh.classList.toggle("resizing-ew", true);
                         vibrateFeedback(15);
@@ -384,10 +382,8 @@ export class TableHeader<Sort extends ColumnSortSQL> extends React.Component<
                         ev.stopPropagation();
                       }
                     }}
-                    onRelease={(ev) => {
-                      const colh = (ev.target as HTMLElement).closest(
-                        `[role="columnheader"]`,
-                      );
+                    onRelease={(_, node) => {
+                      const colh = node.closest(`[role="columnheader"]`);
                       if (colh) {
                         colh.classList.toggle("resizing-ew", false);
                       }

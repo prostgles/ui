@@ -55,7 +55,7 @@ export const AskLLMChatActionBarMCPToolsBtn = ({
 
   useEffect(() => {
     const canBeEnabledServers = mcpServersThatNeedEnabling?.filter(
-      (server) => !server.config_schema,
+      (server) => !Object.keys(server.config_schema ?? {}).length,
     );
     if (!canBeEnabledServers?.length) {
       return;
@@ -69,7 +69,7 @@ export const AskLLMChatActionBarMCPToolsBtn = ({
   }, [dbs.mcp_servers, mcpServersThatNeedEnabling]);
 
   const mcpServersThatConfiguring = mcpServersThatNeedEnabling?.filter(
-    (server) => server.config_schema,
+    (server) => Object.keys(server.config_schema ?? {}).length,
   );
 
   const btnRef = React.useRef<HTMLButtonElement>(null);

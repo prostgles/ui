@@ -1,4 +1,7 @@
-import type { AnnotationRect, AnnotationTextSelection } from "@common/annotationText";
+import type {
+  AnnotationRect,
+  AnnotationTextSelection,
+} from "@common/annotationText";
 import Btn from "@components/Btn";
 import { mdiPlus } from "@mdi/js";
 import type * as pdfjsLib from "pdfjs-dist";
@@ -27,6 +30,7 @@ export type CreatedHighlight = Omit<
 
 export type ActiveTooltip = {
   key: string;
+  page: number;
   text: string;
   left: number;
   top: number;
@@ -34,7 +38,7 @@ export type ActiveTooltip = {
 
 export type PdfViewerHighlightsProps = Pick<
   PdfViewerProps,
-  "onCreateHighlight" | "activeHighlightId"
+  "onCreateHighlight" | "activeHighlightId" | "hoveredHighlightId"
 > & {
   viewport: pdfjsLib.PageViewport | null;
   pageElement: HTMLDivElement;
@@ -52,6 +56,7 @@ export const PdfViewerHighlights = ({
   activeTooltip,
   pageHighlights,
   activeHighlightId,
+  hoveredHighlightId,
   potentialHighlight,
   onCreateHighlight,
   clearPotentialHighlight,
@@ -59,6 +64,7 @@ export const PdfViewerHighlights = ({
   isAddingSelection,
 }: PdfViewerHighlightsProps) => {
   const potentialHighlightLastRect = potentialHighlight?.rects.at(-1);
+  const selectionControlsTarget = pageElement.closest(".pdf-viewer__content");
   return (
     <>
       {viewport &&
@@ -82,10 +88,19 @@ export const PdfViewerHighlights = ({
                   )}
 
                   <div
-                    className="pdf-viewer__highlight"
+                    data-command="PdfViewer.highlight"
+                    className={`pdf-viewer__highlight${highlight.id === hoveredHighlightId ? " hovered" : ""}`}
                     data-annotation-id={highlight.id}
                     style={{
-                      opacity: activeHighlightId !== undefined && highlight.id !== activeHighlightId ? 0.12 : undefined,
+                      opacity:
+                        (
+                          (activeHighlightId !== undefined ||
+                            hoveredHighlightId !== undefined) &&
+                          highlight.id !== activeHighlightId &&
+                          highlight.id !== hoveredHighlightId
+                        ) ?
+                          0.12
+                        : undefined,
                       left: rect.x * viewport.scale,
                       top: rect.y * viewport.scale,
                       width: rect.width * viewport.scale,
@@ -98,45 +113,55 @@ export const PdfViewerHighlights = ({
             )}
             {potentialHighlight &&
               potentialHighlightLastRect &&
+              selectionControlsTarget &&
               onCreateHighlight && (
-                <div
-                  className="pdf-viewer__selection-controls flex-row ai-center gap-p5"
-                  style={{
-                    position: "absolute",
-                    zIndex: 4,
-                    pointerEvents: "auto",
-                    right: 10,
-                    top:
-                      (potentialHighlightLastRect.y +
-                        potentialHighlightLastRect.height / 2) *
-                      viewport.scale,
-                  }}
-                >
-                  <Btn
-                    size="small"
-                    title={isAddingSelection ? "Save annotation" : "Add annotation"}
-                    color="action"
-                    variant="filled"
-                    iconPath={mdiPlus}
-                    onClick={() => {
-                      clearPotentialHighlight();
-                      onCreateHighlight(potentialHighlight);
+                <>
+                  <div
+                    className="pdf-viewer__selection-anchor"
+                    style={{
+                      left: potentialHighlightLastRect.x * viewport.scale,
+                      top: potentialHighlightLastRect.y * viewport.scale,
+                      width: potentialHighlightLastRect.width * viewport.scale,
+                      height:
+                        potentialHighlightLastRect.height * viewport.scale,
                     }}
                   />
-                  {onAddSelection && (
-                    <Btn
-                      size="small"
-                      title="Add another selection"
-                      color="action"
-                      iconPath={mdiPlus}
-                      variant="filled"
-                      onClick={() => {
-                        onAddSelection(potentialHighlight);
-                        clearPotentialHighlight();
-                      }}
-                    >Add another selection</Btn>
+                  {createPortal(
+                    <div className="pdf-viewer__selection-controls flex-row-wrap ai-center gap-p5 p-p5 bg-color-0 rounded shadow">
+                      <Btn
+                        size="small"
+                        title={
+                          isAddingSelection ? "Save annotation" : (
+                            "Add annotation"
+                          )
+                        }
+                        color="action"
+                        variant="filled"
+                        iconPath={mdiPlus}
+                        onClick={() => {
+                          clearPotentialHighlight();
+                          onCreateHighlight(potentialHighlight);
+                        }}
+                      />
+                      {onAddSelection && (
+                        <Btn
+                          size="small"
+                          title="Add another selection"
+                          color="action"
+                          iconPath={mdiPlus}
+                          variant="filled"
+                          onClick={() => {
+                            onAddSelection(potentialHighlight);
+                            clearPotentialHighlight();
+                          }}
+                        >
+                          Add another selection
+                        </Btn>
+                      )}
+                    </div>,
+                    selectionControlsTarget,
                   )}
-                </div>
+                </>
               )}
           </div>,
           pageElement,

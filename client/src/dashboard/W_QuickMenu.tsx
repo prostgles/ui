@@ -27,6 +27,7 @@ import { getLinkColorV2 } from "./W_Map/fetchData/getMapLayerQueries";
 import type { ChartableSQL } from "./W_SQL/getChartableSQL";
 import { AddChartMenu } from "./W_Table/TableMenu/AddChartMenu";
 import { TableDisplayOptionsJSON } from "./W_Table/TableMenu/TableDisplayOptionsJSON";
+import { getColumnsWithInfo } from "./W_Table/tableUtils/getColumnsWithInfo";
 
 export type ProstglesQuickMenuProps = Pick<
   CommonWindowProps,
@@ -131,9 +132,11 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
       >
         {headerSearch && filterButton && w.options.showFilters && (
           <SmartFilterBarSearch
+            variant="search-no-shadow"
             db={db}
             tables={tables}
             tableName={w.table_name}
+            columns={getColumnsWithInfo(w.table_name, tables, w.columns)}
             filter={w.filter}
             extraFilters={headerSearch.extraFilters}
             onFilterChange={(filter) => {

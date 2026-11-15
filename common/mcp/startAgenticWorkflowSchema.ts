@@ -41,7 +41,8 @@ export const agentOutputSchemaType = {
             nullable: { type: "boolean", optional: true },
             type: {
               record: {
-                values: PropertyTypeOptional,
+                /* Nested schemas are checked recursively before starting an agent. */
+                values: "any",
               },
             },
           },
@@ -49,9 +50,10 @@ export const agentOutputSchemaType = {
         {
           type: {
             optional: { type: "boolean", optional: true },
+            nullable: { type: "boolean", optional: true },
             arrayOfType: {
               record: {
-                values: PropertyTypeOptional,
+                values: "any",
               },
             },
           },

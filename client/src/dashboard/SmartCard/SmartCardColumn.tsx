@@ -25,7 +25,7 @@ export const SmartCardColumn = ({
   return (
     <div
       className={classOverride(
-        "SmartCardCol flex-col o-auto ai-start text-1 ta-left ",
+        "SmartCardCol flex-col o-auto ai-start text-1 ta-left max-w-full ",
         className,
       )}
       style={{ maxHeight: "250px", ...style }}
@@ -42,7 +42,7 @@ export const SmartCardColumn = ({
         </Label>
       )}
       {valueNodeWrapped ?
-        <div className="font-16 text-0 o-auto">{valueNode}</div>
+        <div className="font-16 text-0 o-auto max-w-full">{valueNode}</div>
       : valueNode}
     </div>
   );

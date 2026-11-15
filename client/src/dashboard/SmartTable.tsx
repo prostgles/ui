@@ -28,6 +28,7 @@ import {
   type OnClickEditRow,
 } from "./W_Table/tableUtils/getEditColumn";
 import type { ProstglesColumn } from "./W_Table/W_Table";
+import { TableHeaderActions } from "./ActionPopup/TableHeaderActions";
 
 type SmartTableProps = Pick<Prgl, "db" | "sql" | "tables" | "methods"> &
   Pick<PopupProps, "clickCatchStyle" | "positioning" | "subTitle"> & {
@@ -91,6 +92,17 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
     sub: SubscriptionHandler;
   };
 
+  get columnConfigs() {
+    const { tableName, tables, selectedColumns, tableCols } = this.props;
+    return getColumnsWithInfo(
+      tableName,
+      tables,
+      (selectedColumns ?? tableCols?.map((column) => column.name))?.map(
+        (name) => ({ name, show: true }),
+      ),
+    );
+  }
+
   get columns(): ProstglesColumn[] {
     if (this.state.columns) return this.state.columns;
 
@@ -117,11 +129,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
       const table = tables.find((t) => t.name === tableName);
       if (!table) return [];
       const cols = table.columns;
-      const columnConfigs = getColumnsWithInfo(
-        tableName,
-        tables,
-        selectedColumns?.map((name) => ({ name, show: true })),
-      );
+      const columnConfigs = this.columnConfigs;
       _tableCols = columnConfigs
         .filter((column) => column.show)
         .map((c) => {
@@ -355,6 +363,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
             db={db}
             tables={tables}
             tableName={tableName}
+            columns={this.columnConfigs}
             filter={filter}
             extraFilters={extraFilters}
             onFilterChange={this.onFilterChange}
@@ -385,6 +394,11 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
         }
       >
         {!onClosePopup && titleNode}
+        <TableHeaderActions
+          className="px-1 py-p5"
+          methods={this.props.methods}
+          tableName={tableName}
+        />
         {editRowFilter && (
           <SmartForm
             asPopup={true}
@@ -412,6 +426,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
             sql={sql}
             methods={this.props.methods}
             table_name={tableName}
+            columns={this.columnConfigs}
             tables={tables}
             filter={filter}
             extraFilters={extraFilters}

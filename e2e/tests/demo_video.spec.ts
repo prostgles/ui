@@ -3,7 +3,6 @@ import { type AnyObject } from "prostgles-types";
 import { USERS } from "utils/constants";
 import { goTo } from "utils/goTo";
 import {
-  PageWIds,
   createDatabase,
   login,
   openConnection,
@@ -40,7 +39,7 @@ test.describe("Demo video", () => {
   });
 
   test("Video demo", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     const CI = !!process.env.CI;
     await page.addInitScript(
       ({ CI }) => {
@@ -128,7 +127,7 @@ test.describe("Demo video", () => {
   });
 
   test(`Backup databases`, async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     await login(page, USERS.test_user, "/auth/login");
     await openConnection(page, "prostgles_video_demo");
     await page.getByTestId("dashboard.goToConnConfig").click();

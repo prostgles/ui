@@ -49,7 +49,7 @@ export const getEmailOutboxTables = (
     },
     outbox: {
       info: { label: "Email outbox" },
-      publish: { insert: false, update: false, delete: false },
+      publishRestrictions: { insert: false, update: false, delete: false },
       columns: {
         id: "UUID PRIMARY KEY DEFAULT gen_random_uuid()",
         idempotency_key: "TEXT UNIQUE",

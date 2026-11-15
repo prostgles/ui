@@ -6,8 +6,8 @@ import { useSystemTheme } from "./useSystemTheme";
 const THEMES = ["light", "dark", "from-system"] as const;
 const THEME_SETTING_NAME = "theme" as const;
 
-export const useAppTheme = (prglState: AppState["prglState"]) => {
-  const userThemeOption = prglState?.user?.options?.theme;
+export const useAppTheme = (user: AppState["user"]) => {
+  const userThemeOption = user?.options?.theme;
 
   const { themeOverride } = useLocalSettings();
   const systemTheme = useSystemTheme();
@@ -31,7 +31,7 @@ export const useAppTheme = (prglState: AppState["prglState"]) => {
     document.body.classList.add("text-0");
     document.body.classList.toggle("bg-color-2", theme === "light");
     document.body.classList.toggle("bg-color-3", theme === "dark");
-  }, [theme, prglState]);
+  }, [theme]);
 
   return { theme, userThemeOption: userThemeOption ?? "from-system" };
 };

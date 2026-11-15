@@ -126,6 +126,7 @@ export const CommandPalette = ({
                 : fullscreen ? {}
                 : {
                     width: "min(calc(100vw - 2em), 700px)",
+                    height: "min(100vh, 500px)",
                     maxHeight: "min(100vh, 500px)",
                   },
             }}
@@ -134,8 +135,8 @@ export const CommandPalette = ({
             positioning={showSection !== "docs" ? "top-center" : "center"}
             onClose={onClose}
             contentClassName={
-              "flex-col gap-2 ai-center " +
-              (showSection === "docs" ? " p-2" : "p-1")
+              "flex-col gap-2 " +
+              (showSection === "docs" ? "ai-center p-2" : "p-1")
             }
           >
             {showSection !== "docs" ?
@@ -155,6 +156,7 @@ export const CommandPalette = ({
                     onClose={onClose}
                   />
                 : <SearchList
+                    className="f-1"
                     placeholder="Search actions..."
                     leftContent={searchTypeSelect}
                     defaultSearch={defaultTerm}

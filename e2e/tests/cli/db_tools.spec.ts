@@ -94,125 +94,194 @@ test("table metadata updates preserve omitted settings and replace arrays", asyn
         label: "Notices",
         icon: "Text",
         columns: {
-          title: { label: "Title", show: true, width: 240 },
-          body: { infoLevel: 1 as const },
+          title: { label: "Title", show: false, width: 240 },
+          body: { label: "Body" },
         },
         card: {
           headerColumn: "title",
-          subHeaderColumns: ["id", "body"],
+          subHeaderColumns: ["id"],
+          summaryFields: ["body"],
         },
       },
       other_table: { label: "Other table" },
     };
     expect(await updateMetadata(originalMetadata)).toEqual(originalMetadata);
-    const layout = {
-      type: "grid" as const,
-      columns: 2,
-      fields: { body: { columnSpan: 2, labels: "none" as const } },
-    };
-    expect(await updateMetadata({ notices: { card: { layout } } })).toEqual({
-      ...originalMetadata,
-      notices: {
-        ...originalMetadata.notices,
-        card: { ...originalMetadata.notices.card, layout },
+    const layoutSections = [
+      {
+        header: "Content",
+        columns: 2 as const,
+        items: [
+          {
+            key: "body",
+            columnSpan: 2 as const,
+            labelPlacement: "hidden" as const,
+          },
+        ],
       },
-    });
+    ];
     const updatedMetadata = await updateMetadata({
-      notices: {
-        label: "",
-        columns: { title: { show: false }, body: { infoLevel: 2 } },
-        card: {
-          layout: { fields: { body: { row: 2 } } },
-          subHeaderColumns: ["body"],
-        },
-      },
+      notices: { card: { summaryFields: [], layoutSections } },
     });
     expect(updatedMetadata).toEqual({
       ...originalMetadata,
       notices: {
         ...originalMetadata.notices,
-        label: "",
-        columns: {
-          title: { label: "Title", show: false, width: 240 },
-          body: { infoLevel: 2 },
-        },
         card: {
           ...originalMetadata.notices.card,
-          layout: {
-            ...layout,
-            fields: { body: { ...layout.fields.body, row: 2 } },
-          },
-          subHeaderColumns: ["body"],
+          summaryFields: [],
+          layoutSections,
         },
       },
     });
     expect(await updateMetadata({ notices: { card: {} } })).toEqual(
       updatedMetadata,
     );
-    const clearedMetadata = await updateMetadata({
-      notices: { card: { subHeaderColumns: [] } },
-    });
-    expect(clearedMetadata).toEqual({
+    const replacedSections = [{ layout: "inline" as const, items: ["body"] }];
+    expect(
+      await updateMetadata({
+        notices: {
+          card: { subHeaderColumns: [], layoutSections: replacedSections },
+        },
+      }),
+    ).toEqual({
       ...updatedMetadata,
       notices: {
         ...updatedMetadata!.notices,
-        card: { ...updatedMetadata!.notices!.card, subHeaderColumns: [] },
+        card: {
+          ...updatedMetadata!.notices!.card,
+          subHeaderColumns: [],
+          layoutSections: replacedSections,
+        },
       },
     });
-
-    /* Reject the eleventh explicit summary field, including after merged MCP updates. */
-    const summaryColumns = Object.fromEntries(
-      Array.from({ length: 10 }, (_, index) => [
-        `summary_${index}`,
-        { infoLevel: 1 as const },
-      ]),
+    const expectRejectedMetadata = async (
+      metadata: NonNullable<DBSchema["connections"]["table_options"]>,
+      message: string,
+    ) => {
+      const before = (await db.connections!.findOne(connectionFilter))!
+        .table_options;
+      const result = await methods!.reRunMCPServerTool!({
+        chatId: chat.id,
+        serverName: "prostgles-ui",
+        toolName: "set_tables_metadata",
+        reRunToolUseId: toolUseId,
+        args: { metadata },
+      });
+      expect(result.isError).toBe(true);
+      expect(JSON.stringify(result)).toContain(message);
+      expect(
+        (await db.connections!.findOne(connectionFilter))!.table_options,
+      ).toEqual(before);
+    };
+    /* Validate the merged card, including duplicates across header, summary and sections. */
+    await expectRejectedMetadata(
+      { notices: { card: { summaryFields: ["body"] } } },
+      "is already used in this card",
     );
-    await updateMetadata({ notices: { columns: summaryColumns } });
-    const rejectedUpdate = await methods!.reRunMCPServerTool!({
-      chatId: chat.id,
-      serverName: "prostgles-ui",
-      toolName: "set_tables_metadata",
-      reRunToolUseId: toolUseId,
-      args: { metadata: { notices: { columns: { body: { infoLevel: 1 } } } } },
+    await expectRejectedMetadata(
+      { notices: { card: { summaryFields: ["title"] } } },
+      "is already used in this card",
+    );
+    await expectRejectedMetadata(
+      { notices: { card: { layoutSections: [{ items: ["body", "body"] }] } } },
+      "is already used in this card",
+    );
+    await expectRejectedMetadata(
+      {
+        notices: {
+          card: {
+            layoutSections: [
+              { columns: 1, items: [{ key: "body", columnSpan: 2 }] },
+            ],
+          },
+        },
+      },
+      "columnSpan must be between 1 and 1",
+    );
+    await expectRejectedMetadata(
+      { notices: { card: { layoutSections: [{ items: [""] }] } } },
+      "field name cannot be empty",
+    );
+    expect(
+      await updateMetadata({ notices: { card: { layoutSections: [] } } }),
+    ).toMatchObject({
+      notices: { card: { summaryFields: [], layoutSections: [] } },
     });
-    expect(rejectedUpdate.isError).toBe(true);
-    expect(JSON.stringify(rejectedUpdate)).toContain("at most 10 columns");
-    const savedMetadata = (await db.connections!.findOne(connectionFilter))!
-      .table_options;
-    expect(savedMetadata!.notices!.columns!.body!.infoLevel).toBe(2);
+    expect(JSON.stringify(metadataTool)).not.toContain('"infoLevel"');
+    expect(JSON.stringify(metadataTool)).toContain('"layout"');
+
+    /* Agents can enable basic HTML without options that weaken sanitisation. */
+    const htmlMetadata = await updateMetadata({
+      notices: { columns: { body: { format: { type: "HTML" } } } },
+    });
+    expect(htmlMetadata!.notices!.columns!.body!.format).toEqual({
+      type: "HTML",
+    });
+    expect(JSON.stringify(metadataTool)).not.toContain("noSanitize");
+    expect(JSON.stringify(metadataTool)).not.toContain("allowedHTMLTags");
+    expect(JSON.stringify(metadataTool)).toContain("background-color");
+    expect(JSON.stringify(metadataTool)).toContain(
+      "Content is clipped to its container",
+    );
+
+    /* Reject oversized summaries through MCP, direct metadata writes and CLI sync. */
+    const summaryFields = Array.from(
+      { length: 10 },
+      (_, index) => `summary_${index}`,
+    );
+    await updateMetadata({ notices: { card: { summaryFields } } });
+    const oversizedCard = { summaryFields: [...summaryFields, "extra"] };
+    await expectRejectedMetadata(
+      { notices: { card: oversizedCard } },
+      "at most 10 fields",
+    );
+    await expect(
+      db.connections!.update(connectionFilter, {
+        table_options: { notices: { card: oversizedCard } },
+      }),
+    ).rejects.toMatchObject({
+      message: expect.stringContaining("at most 10 fields"),
+    });
     await expect(
       db.connections!.update(connectionFilter, {
         table_options: {
-          notices: { columns: { ...summaryColumns, extra: { infoLevel: 1 } } },
+          notices: { card: { summaryFields: ["body", "body"] } },
         },
       }),
     ).rejects.toMatchObject({
-      message: expect.stringContaining("at most 10 columns"),
+      message: expect.stringContaining("is already used in this card"),
     });
-    await updateMetadata({
-      notices: {
-        columns: Object.fromEntries(
-          Array.from({ length: 15 }, (_, index) => [`unmarked_${index}`, {}]),
-        ),
-      },
-    });
+
+    /* CLI configuration validates section layouts before saving them. */
     appendFileSync(
       `${configPath}/index.js`,
       `\nmodule.exports.connection = ${JSON.stringify({
         table_options: {
-          notices: { columns: { ...summaryColumns, extra: { infoLevel: 1 } } },
+          notices: {
+            card: { layoutSections: [{ layout: "invalid", items: ["body"] }] },
+          },
         },
       })};`,
     );
     await expect(deployment.syncSchema()).rejects.toMatchObject({
-      message: expect.stringContaining("at most 10 columns"),
+      message: expect.stringContaining("layout must be grid or inline"),
+    });
+
+    appendFileSync(
+      `${configPath}/index.js`,
+      `\nmodule.exports.connection = ${JSON.stringify({
+        table_options: { notices: { card: oversizedCard } },
+      })};`,
+    );
+    await expect(deployment.syncSchema()).rejects.toMatchObject({
+      message: expect.stringContaining("at most 10 fields"),
     });
   } finally {
     await deployment.dispose();
   }
 });
 
-test("database tools select one array element with scoped read access", async () => {
+test("database tools accept Prostgles params and preserve scoped access", async () => {
   const config = {
     id: "db-tool-select-test",
     tableConfig: {
@@ -249,6 +318,9 @@ test("database tools select one array element with scoped read access", async ()
           mode: "custom",
           tablePermissions: {
             notices: {
+              insert: true,
+              update: true,
+              delete: true,
               select: {
                 fields: { id: 1, pages: 1 },
                 forcedFilter: { $and: [{ fieldName: "id", value: 1 }] },
@@ -260,34 +332,45 @@ test("database tools select one array element with scoped read access", async ()
       { returning: "*" },
     );
     const toolUseId = "read-page";
-    const toolName = "db--find";
+    const dbToolNames = [
+      "find",
+      "count",
+      "insert",
+      "insertMany",
+      "update",
+      "delete",
+    ] as const;
     await state.db.llm_messages!.insertMany([
       {
         chat_id: chat.id,
         total_tokens: 0,
-        message: [
-          { type: "tool_use", id: toolUseId, name: toolName, input: {} },
-        ],
+        message: dbToolNames.map((toolName) => ({
+          type: "tool_use" as const,
+          id: `${toolUseId}-${toolName}`,
+          name: getProstglesMCPFullToolName("db", toolName),
+          input: {},
+        })),
       },
       {
         chat_id: chat.id,
         total_tokens: 0,
-        message: [
-          {
-            type: "tool_result",
-            tool_use_id: toolUseId,
-            tool_name: toolName,
-            content: "Pending",
-          },
-        ],
+        message: dbToolNames.map((toolName) => ({
+          type: "tool_result" as const,
+          tool_use_id: `${toolUseId}-${toolName}`,
+          tool_name: getProstglesMCPFullToolName("db", toolName),
+          content: "Pending",
+        })),
       },
     ]);
-    const run = (args: Record<string, unknown>) =>
+    const run = (
+      args: Record<string, unknown>,
+      toolName: (typeof dbToolNames)[number] = "find",
+    ) =>
       state.methods!.reRunMCPServerTool!({
         chatId: chat.id,
         serverName: "db",
-        toolName: "find",
-        reRunToolUseId: toolUseId,
+        toolName,
+        reRunToolUseId: `${toolUseId}-${toolName}`,
         args,
       });
     const readPageArgs = {
@@ -313,7 +396,61 @@ test("database tools select one array element with scoped read access", async ()
       filter: {},
       select: "*",
     });
-    expect(stringWildcard.isError).toBe(true);
+    expect(stringWildcard).toEqual(allFields);
+    /* Native selection and sorting forms must retain the forced row filter. */
+    for (const select of [["id"], { id: true }, { pages: false }]) {
+      for (const orderBy of [
+        "id",
+        ["id"],
+        { id: -1 },
+        [{ id: false }],
+        { key: "id" },
+        { key: "id", asc: -1 },
+        { key: "id", asc: null, nulls: null, nullEmpty: true },
+        [{ key: "id", asc: true, nulls: "last", nullEmpty: false }],
+      ]) {
+        const result = await run({ tableName: "notices", select, orderBy });
+        expect(result.isError, JSON.stringify(result)).not.toBe(true);
+        expect(result.structuredContent).toEqual([{ id: 1 }]);
+      }
+    }
+    const shorthandCount = await run({
+      tableName: "notices",
+      select: { id: "$count" },
+    });
+    expect(shorthandCount.isError, JSON.stringify(shorthandCount)).not.toBe(
+      true,
+    );
+    expect(shorthandCount).toEqual(
+      await run({ tableName: "notices", select: { id: { $count: ["id"] } } }),
+    );
+    const groupedParams = {
+      tableName: "notices",
+      select: ["id"],
+      groupBy: true,
+      having: { id: 1 },
+    };
+    const groupedRows = await run(groupedParams);
+    expect(groupedRows.isError, JSON.stringify(groupedRows)).not.toBe(true);
+    expect(groupedRows.structuredContent).toEqual([{ id: 1 }]);
+    const groupedCount = await run(groupedParams, "count");
+    expect(groupedCount.isError, JSON.stringify(groupedCount)).not.toBe(true);
+    expect(groupedCount.structuredContent).toBe(1);
+    const filteredCount = await run(
+      { ...groupedParams, having: { id: 2 } },
+      "count",
+    );
+    expect(filteredCount.isError, JSON.stringify(filteredCount)).not.toBe(true);
+    expect(filteredCount.structuredContent).toBe(0);
+    for (const params of [
+      { orderBy: { id: 0 } },
+      { groupBy: "true" },
+      { select: [1] },
+    ]) {
+      expect((await run({ tableName: "notices", ...params })).isError).toBe(
+        true,
+      );
+    }
     const hiddenRow = await run({
       tableName: "notices",
       filter: { id: 2 },
@@ -335,6 +472,48 @@ test("database tools select one array element with scoped read access", async ()
     });
     await state.db.mcp_servers!.update({ name: "db" }, { enabled: true });
     expect(await run(readPageArgs)).toEqual(page);
+
+    /* Mutation returning forms and explicit conflict targets match the DB API. */
+    for (const toolName of ["insert", "insertMany"] as const) {
+      const row = { id: 1, pages: [`Changed by ${toolName}`] };
+      const result = await run(
+        {
+          tableName: "notices",
+          data: toolName === "insert" ? row : [row],
+          onConflict: { action: "DoUpdate", conflictColumns: ["id"] },
+          returning: toolName === "insert" ? "*" : ["id", "pages"],
+          removeDisallowedFields: true,
+        },
+        toolName,
+      );
+      expect(result.isError, JSON.stringify(result)).not.toBe(true);
+      expect(result.structuredContent).toEqual(
+        toolName === "insert" ? { ...row, secret: "secret" } : [row],
+      );
+    }
+    const updated = await run(
+      {
+        tableName: "notices",
+        filter: { id: 1 },
+        data: { pages: ["Updated"] },
+        returning: { id: true },
+        multi: false,
+        removeDisallowedFields: true,
+      },
+      "update",
+    );
+    expect(updated.isError, JSON.stringify(updated)).not.toBe(true);
+    expect(updated.structuredContent).toEqual({ id: 1 });
+    const deleted = await run(
+      {
+        tableName: "notices",
+        filter: { id: 1 },
+        returning: ["id"],
+      },
+      "delete",
+    );
+    expect(deleted.isError, JSON.stringify(deleted)).not.toBe(true);
+    expect(deleted.structuredContent).toEqual([{ id: 1 }]);
   } finally {
     await deployment.dispose();
   }

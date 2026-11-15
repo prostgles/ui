@@ -32,7 +32,6 @@ export const getValueColors = async (
   args: DefaultConditionalStyleArgs,
   setStyle: (newStyle: ConditionalStyle) => void,
 ) => {
-  const { theme } = args;
   const values = await fetchColumnValues(args);
   if (!values) return;
   const prevStyleIndexes = new Set<number>();
@@ -49,7 +48,6 @@ export const getValueColors = async (
         condition: v,
         operator: "=",
         ...style,
-        textColor: theme === "dark" ? style.textColorDarkMode : style.textColor,
         chipColor: style.color,
       };
     }),

@@ -1,3 +1,4 @@
+import { COLOR_PALETTE } from "@common/ColumnConfig/COLOR_PALETTE";
 import {
   getSmartGroupFilter,
   getTableFilterFromDetailedGroupFilter,
@@ -224,6 +225,7 @@ export const ColorByLegend = ({ className, style, onChanged, ...props }: P) => {
         const isInData = layers.some((l) => l.groupByValue === s.value);
         return (
           <ColorPicker
+            palette={COLOR_PALETTE}
             key={i}
             style={isInData ? {} : { opacity: 0.25 }}
             value={getColor(s.value, i)}

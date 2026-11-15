@@ -36,7 +36,7 @@ test("CLI managed alerts resolve user filters, retry deliveries and retain share
           },
         },
         reminders_deliveries: {
-          publish: {},
+          publishRestrictions: {},
         },
         records: {
           columns: {
@@ -278,6 +278,7 @@ module.exports.alerts = {
         "channels",
         "definition",
         "schedule",
+        "actions",
       ],
       referenceDisplay: { columns: [{ name: "name" }] },
       columnConfigs: { definition: { label: "Rule details", width: 360 } },
@@ -1270,14 +1271,16 @@ module.exports.tableHooks = {
       id: { $in: deliveries.map((delivery) => delivery.job_id) },
     });
     expect(jobs.some((job) => job.attempts === 2)).toBe(true);
+    const deliveryJobButton = panel
+      .getByTitle("Open Jobs", { exact: true })
+      .first();
+    await expect(deliveryJobButton).toBeVisible();
+    await deliveryJobButton.click();
     await expect(
-      panel.getByRole("button", { name: "View delivery job" }).first(),
+      page
+        .locator(".DetailedCardPopup")
+        .getByText("__prostgles_alertDelivery", { exact: true }),
     ).toBeVisible();
-    await panel
-      .getByRole("button", { name: "View delivery job" })
-      .first()
-      .click();
-    await expect(page.getByText("Delivery job", { exact: true })).toBeVisible();
 
     /* The recipient's bell shows their notification and hides rule management. */
     await page.context().clearCookies();
@@ -1329,7 +1332,10 @@ module.exports.tableHooks = {
     /* Recipients can view delivery history without gaining access to its jobs. */
     await alicePanel.getByText("Delivery history", { exact: true }).click();
     await expect(
-      alicePanel.getByRole("button", { name: "View delivery job" }),
+      alicePanel.getByRole("button", { name: "sent", exact: true }),
+    ).toBeVisible();
+    await expect(
+      alicePanel.getByTitle("Open Jobs", { exact: true }),
     ).toHaveCount(0);
     expect(await stateAdmin.db.alerts!.count(notificationFilter)).toBe(2);
   } finally {
@@ -1413,7 +1419,7 @@ test("CLI email outbox retries, snapshots templates and preserves alert permissi
             title: "TEXT NOT NULL",
           },
         },
-        mail_queue: { publish: {} },
+        mail_queue: { publishRestrictions: {} },
         users: {
           columns: {
             id: "UUID PRIMARY KEY",
@@ -1479,7 +1485,7 @@ test("CLI email outbox retries, snapshots templates and preserves alert permissi
     readFileSync(configFile, "utf8") +
       `
 const { renderOutboxEmail } = require(${JSON.stringify(require.resolve("../../../server/dist/server/src/Emails/renderOutboxEmail"))});
-module.exports.tableConfig.mail_queue.publish = { insert: true, update: true, delete: true };
+module.exports.tableConfig.mail_queue.publishRestrictions = { insert: true, update: true, delete: true };
 module.exports.tableConfig.mail_templates = {
   onMount: async ({ dbo }) => {
     if (!(await dbo.mail_templates.findOne({ key: "alert" })) ||

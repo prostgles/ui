@@ -32,6 +32,7 @@ export type SearchListItemsProps = Pick<
   | "onReorder"
   | "listStyle"
   | "roundedItems"
+  | "checkboxVariant"
   | "autoScrollToBottom"
 > & {
   renderedItems: ParsedListItem[];
@@ -117,8 +118,8 @@ export const SearchListItems = forwardRef<
   return (
     <div
       className={
-        "SearchList_Suggestions flex-col relative w-full f-1  min-h-0 min-w-0 " +
-        (isSearch ? " o-visible " : " ")
+        "SearchList_Suggestions flex-col relative w-full min-h-0 min-w-0 " +
+        (isSearch ? " f-0 o-visible " : " f-1 ")
       }
       data-command={props["data-command"]}
       data-key={props["data-key"]}
@@ -224,7 +225,10 @@ export const SearchListItems = forwardRef<
                       )
                     }
                   >
-                    <SearchListRowContent item={renderedItem} />
+                    <SearchListRowContent
+                      item={renderedItem}
+                      checkboxVariant={props.checkboxVariant}
+                    />
                   </DraggableLI>
                 </React.Fragment>
               );

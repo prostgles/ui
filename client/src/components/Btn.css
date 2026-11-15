@@ -199,6 +199,15 @@ button.fade-in,
   background: var(--faded-bg);
 }
 
+.btn-select {
+  background: var(--bg-color-0);
+  border: 1px solid var(--gray-300);
+  color: var(--text-0);
+}
+.dark-theme .btn-select {
+  border-color: var(--b-default);
+}
+
 :root {
   --btn-hover-bg: #dbdbdb;
 }

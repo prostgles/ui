@@ -8,9 +8,9 @@ export const prepareColsForRender = (
   getWCols: () => ColumnConfigWithInfo[],
   w: WindowSyncItem<"table">,
 ) => {
+  const wcols = getWCols();
   return cols
     .filter((c) => {
-      const wcols = getWCols();
       if (Array.isArray(wcols)) {
         const match = wcols.find((_c) => _c.name === c.name);
         if (match) {
@@ -20,7 +20,6 @@ export const prepareColsForRender = (
       return !c.hidden;
     })
     .toSorted((a, b) => {
-      const wcols = getWCols();
       if (Array.isArray(wcols)) {
         const _a = wcols.findIndex((c) => c.name === a.name),
           _b = wcols.findIndex((c) => c.name === b.name);
@@ -51,7 +50,7 @@ export const prepareColsForRender = (
           }
           return { ..._c };
         });
-        w.$update({
+        void w.$update({
           columns: JSON.parse(JSON.stringify(newCols)) as typeof newCols,
         });
       },

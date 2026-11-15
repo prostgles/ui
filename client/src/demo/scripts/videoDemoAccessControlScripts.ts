@@ -128,8 +128,7 @@ const setMessagesRules = [
     timestamp: 43397,
   },
   {
-    selector:
-      '[data-command="Popup.content"] [data-command="MenuList"] [data-key="insert"]',
+    selector: '[data-command="Popup.header"] [data-key="insert"]',
     timestamp: 64875,
   },
   {
@@ -169,8 +168,7 @@ const setMessagesRules = [
     timestamp: 102512,
   },
   {
-    selector:
-      '[data-command="Popup.content"] [data-command="MenuList"] [data-key="update"]',
+    selector: '[data-command="Popup.header"] [data-key="update"]',
     timestamp: 106736,
   },
   {

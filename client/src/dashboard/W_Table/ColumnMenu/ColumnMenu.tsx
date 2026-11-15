@@ -20,19 +20,25 @@ import React, { useEffect, useMemo, useState } from "react";
 import { AlterColumn } from "./AlterColumn/AlterColumn";
 import { ColumnStyleMenu } from "./ColumnStyleControls/ColumnStyleMenu";
 
-import type { DetailedFilter } from "@common/filterUtils";
+import type { DetailedFilter, DetailedFilterBase } from "@common/filterUtils";
 import Popup from "@components/Popup/Popup";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { useIsMounted } from "prostgles-client";
-import { includes, pickKeys } from "prostgles-types";
+import {
+  includes,
+  isEqual,
+  pickKeys,
+  type ValidatedColumnInfo,
+} from "prostgles-types";
 import { useReactiveState } from "../../../appUtils";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";
 import { useEffectAsync } from "../../DashboardMenu/DashboardMenuSettings";
 import { getAndFixWColumnsConfig } from "../TableMenu/getAndFixWColumnsConfig";
-import type W_Table from "../W_Table";
-import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
+import type { ReactiveState } from "../../../appUtils";
+import { getFilterableCols } from "../../SmartFilter/SmartSearch/SmartSearch";
 import { getColumnsWithInfoAndWidth } from "../tableUtils/getColumnsWithInfoAndWidth";
+import { getColumnsAfterRemoving } from "../tableUtils/getColumnsAfterRemoving";
 import { updateWCols } from "../tableUtils/tableUtils";
 import { AggregateFunctionOptions } from "./AddComputedColumn/AggregateFunctionOptions";
 import { AddComputedColMenu } from "./AddComputedColumn/AddComputedColMenu";
@@ -48,8 +54,12 @@ import type { ColumnConfig } from "@common/ColumnConfig/ColumnConfig";
 
 type P = Pick<CommonWindowProps, "suggestions"> & {
   w: WindowSyncItem<"table">;
-  columnMenuState: W_Table["columnMenuState"];
+  columnMenuState: ColumnMenuState;
 };
+
+export type ColumnMenuState = ReactiveState<
+  { column: string; clientX: number; clientY: number } | undefined
+>;
 
 export const ColumnMenu = (props: P) => {
   const prgl = usePrgl();
@@ -63,9 +73,13 @@ export const ColumnMenu = (props: P) => {
   const colName = state?.column;
   const getIsMounted = useIsMounted();
 
-  const column = useMemo(
-    () => getColumnsWithInfoAndWidth(tables, w).find((c) => c.name === colName),
-    [colName, tables, w],
+  const columnsWithInfo = useMemo(
+    () => getColumnsWithInfoAndWidth(tables, w),
+    [tables, w],
+  );
+  const column = columnsWithInfo.find((column) => column.name === colName);
+  const referenceDisplayColumns = columnsWithInfo.filter(
+    (column) => column.show && column.defaultConfig?.nested?.fallbackColumn,
   );
 
   useEffect(() => {
@@ -112,6 +126,27 @@ export const ColumnMenu = (props: P) => {
 
   const table = tables.find((t) => t.name === w.table_name);
   const validatedColumn = table?.columns.find((c) => c.name === colName);
+  const nestedTable = tables.find(
+    (table) => table.name === column.nested?.path.at(-1)?.table,
+  );
+  const nestedFilterColumns = getFilterableCols(nestedTable?.columns ?? []);
+  const defaultFilterColumn =
+    !column.nested ? validatedColumn : (
+      (nestedFilterColumns.find(
+        (column) => column.name === nestedTable?.card?.headerColumn,
+      ) ??
+      column.nested.columns.find(
+        (column) =>
+          column.show &&
+          !column.computedConfig &&
+          nestedFilterColumns.some(({ name }) => name === column.name),
+      )?.info)
+    );
+  const hasColumnFilter = w.filter.some((filter) =>
+    column.nested ?
+      "path" in filter && isEqual(filter.path, column.nested.path)
+    : "fieldName" in filter && filter.fieldName === column.name,
+  );
 
   const isAction =
     column.format?.type === "Action" || column.format?.type === "ActionColumns";
@@ -193,15 +228,11 @@ export const ColumnMenu = (props: P) => {
     },
     Filter: {
       leftIconPath: mdiFilter,
-      hide: !!column.nested,
       disabledText:
-        !validatedColumn?.filter ? "Not permitted"
-        : isComputed ? "Cannot filter a computed column"
+        !defaultFilterColumn?.filter ? "Not permitted"
+        : !column.nested && isComputed ? "Cannot filter a computed column"
         : undefined,
-      style:
-        w.filter.some((f) => "fieldName" in f && f.fieldName === column.name) ?
-          { color: "var(--active)" }
-        : {},
+      style: hasColumnFilter ? { color: "var(--active)" } : {},
     },
     "Quick Stats": {
       leftIconPath: mdiChartBar,
@@ -371,7 +402,11 @@ export const ColumnMenu = (props: P) => {
       hide: (w.columns?.filter((c) => c.show).length ?? 0) < 2,
     },
     Remove: {
-      label: isAction ? "Remove action column" : "Remove computed column",
+      label:
+        column.defaultConfig?.nested?.fallbackColumn ?
+          "Remove reference display"
+        : isAction ? "Remove action column"
+        : "Remove computed column",
       leftIconPath: mdiEyeRemove,
       style: { color: "var(--text-warning)" },
       hide: !isAction && (!computedType || computedType === "column"),
@@ -383,6 +418,10 @@ export const ColumnMenu = (props: P) => {
     "Unhide all": {
       leftIconPath: mdiEye,
       hide: !w.columns?.some((c) => !c.show),
+    },
+    "Remove all reference displays": {
+      leftIconPath: mdiEyeRemove,
+      hide: !referenceDisplayColumns.length,
     },
   } as const satisfies TabItems;
 
@@ -403,13 +442,16 @@ export const ColumnMenu = (props: P) => {
           if (v === "Add Computed Column") {
             // onClose();
           } else if (v === "Filter") {
-            const nf: DetailedFilter = getDefaultFilter(column);
-            void w.$update({ filter: [nf, ...w.filter] });
+            if (!defaultFilterColumn) return;
+            const filter = getDefaultFilter(defaultFilterColumn);
+            const newFilter: DetailedFilter =
+              column.nested ?
+                { type: "$existsJoined", path: column.nested.path, filter }
+              : filter;
+            void w.$update({ filter: [newFilter, ...w.filter] });
             onClose();
           } else if (v === "Remove") {
-            const columns = (w.columns ?? []).filter(
-              (cc) => column.name !== cc.name,
-            );
+            const columns = getColumnsAfterRemoving(w.columns ?? [], column);
             void updateWCols(w, columns);
             onClose();
           } else if (v === "Hide") {
@@ -433,6 +475,13 @@ export const ColumnMenu = (props: P) => {
             }));
 
             void w.$update({ columns });
+            onClose();
+          } else if (v === "Remove all reference displays") {
+            const columns = referenceDisplayColumns.reduce(
+              getColumnsAfterRemoving,
+              w.columns ?? [],
+            );
+            void updateWCols(w, columns);
             onClose();
           }
 
@@ -461,12 +510,12 @@ export const ColumnMenu = (props: P) => {
 };
 
 /** undefined value means filter is disabled (gray col name text) */
-const getDefaultFilter = (col: ColumnConfigWithInfo): DetailedFilter => {
+const getDefaultFilter = (col: ValidatedColumnInfo): DetailedFilterBase => {
   const isNumeric = includes(["number", "Date"], col.tsDataType);
-  const detailedFilter: DetailedFilter = {
+  const detailedFilter: DetailedFilterBase = {
     fieldName: col.name,
     type:
-      col.info?.is_pkey || col.info?.references?.length ? "="
+      col.is_pkey || col.references?.length ? "="
       : isNumeric ? "$between"
       : "$in",
   };

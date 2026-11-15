@@ -27,8 +27,7 @@ export const getTables = (
     const foreignKeyJoins = getJoinedTables(schemaTables, t.name, db);
     const result = {
       ...t,
-      columnConfigs:
-        getColumnConfigsWithDefaultActions(t, methods) ?? t.columnConfigs,
+      ...getColumnConfigsWithDefaultActions(t, methods),
       ...foreignKeyJoins,
       joinOptions:
         joins ?

@@ -4,8 +4,6 @@ import { SuccessMessage } from "@components/Animations";
 import Btn from "@components/Btn";
 import { CompactTabs } from "@components/CompactTabs/CompactTabs";
 import ErrorComponent from "@components/ErrorComponent";
-import { InfoRow } from "@components/InfoRow";
-import { MonacoLogs } from "@components/MonacoLogs/MonacoLogs";
 import { MonacoLogsWithFullscreen } from "@components/MonacoLogs/MonacoLogsWithFullscreen";
 import { mdiBookmark, mdiBookmarkOutline } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
@@ -15,9 +13,12 @@ import { AgenticWorkflowActions } from "./AgenticWorkflowActions";
 import { AgenticWorkflowActivity } from "./AgenticWorkflowActivity/AgenticWorkflowActivity";
 import { AgenticWorkflowDefinition } from "./AgenticWorkflowDefinition";
 import { AgenticWorkflowDetails } from "./AgenticWorkflowDetails";
+import { AgenticWorkflowLogs } from "./AgenticWorkflowLogs";
 import { useAgenticWorkflowState } from "./hooks/useAgenticWorkflowState";
+import { useAgenticWorkflowChat } from "./hooks/useAgenticWorkflowChat";
 import { useUserInput } from "./hooks/useUserInput";
 import Loading from "@components/Loader/Loading";
+import { MonacoEditor } from "@components/MonacoEditor/MonacoEditor";
 
 export type CreateAgenticWorkflowToolUseArgs = RequiredKeepUndefined<
   JSONB.GetObjectType<
@@ -29,6 +30,7 @@ export const AgenticWorkflow = ({
   validatedWorkflowDataIsValid,
   workflowValidationError,
   workflow_id,
+  workflowRunId,
   chatId: propsChatId,
   inputData,
   tool_use_id: toolUseIdFromProps,
@@ -64,6 +66,7 @@ export const AgenticWorkflow = ({
     useAgenticWorkflowState({
       validatedWorkflowDataIsValid,
       workflow_id,
+      workflowRunId,
     });
 
   const userInputState = useUserInput(
@@ -71,7 +74,8 @@ export const AgenticWorkflow = ({
     latestRun?.user_input_value,
   );
 
-  const chatId = propsChatId ?? workflow?.chat_id;
+  const workflowChat = useAgenticWorkflowChat(workflow);
+  const chatId = propsChatId ?? workflowChat.chatId;
   const workflow_function_definition =
     inputData?.workflow_function_definition ?? workflow?.definition;
   const workflow_function_definition_summary =
@@ -82,11 +86,11 @@ export const AgenticWorkflow = ({
     workflow?.package_dependencies ??
     undefined;
   const tool_use_id = toolUseIdFromProps ?? workflow?.tool_use_id;
+  if (workflow_id && !workflow) return <Loading />;
+  if (workflowChat.isLoading) return <Loading />;
   if (
-    !chatId ||
     !workflow_function_definition ||
-    !workflow_function_definition_summary ||
-    !tool_use_id
+    (!workflow && (!chatId || !tool_use_id))
   ) {
     return (
       <ErrorComponent error={"Missing required data to display the workflow"} />
@@ -105,7 +109,8 @@ export const AgenticWorkflow = ({
         minHeight: "400px",
       }}
       titleEndContent={
-        workflow && (
+        workflow &&
+        !workflow.source_key && (
           <Btn
             iconPath={workflow.saved ? mdiBookmark : mdiBookmarkOutline}
             title={"Save workflow to workspace."}
@@ -145,10 +150,11 @@ export const AgenticWorkflow = ({
               workflowId={workflow?.id}
               chatId={chatId}
               workflow_function_definition_summary={
-                workflow_function_definition_summary
+                workflow_function_definition_summary ?? ""
               }
               workflow_function_definition={workflow_function_definition}
-              tool_use_id={tool_use_id}
+              tool_use_id={tool_use_id ?? undefined}
+              sourceKey={workflow?.source_key ?? undefined}
               package_dependencies={package_dependencies}
             />
           ),
@@ -156,10 +162,10 @@ export const AgenticWorkflow = ({
         ...(workflow && {
           Activity: {
             label: "Activity",
-            content: (
+            content: activeTab === "Activity" && (
               <AgenticWorkflowActivity
-                chatId={chatId}
-                messageId={workflow.message_id}
+                key={latestRun?.id}
+                workflowRunId={latestRun?.id}
                 finishedAt={
                   latestRun?.finished ? new Date(latestRun.finished) : undefined
                 }
@@ -167,20 +173,26 @@ export const AgenticWorkflow = ({
             ),
           },
         }),
+        ...(workflowRunId !== undefined &&
+          latestRun?.definition &&
+          latestRun.definition !== workflow?.definition && {
+            RunDefinition: {
+              label: "Run definition",
+              content: (
+                <MonacoEditor
+                  language="typescript"
+                  value={latestRun.definition}
+                  loadedSuggestions={undefined}
+                  options={{ readOnly: true }}
+                />
+              ),
+            },
+          }),
         Logs: {
           label: "Logs",
-          content:
-            !latestRun ?
-              <InfoRow variant="filled" color="info" className="m-1 h-fit">
-                No logs yet. Logs will appear here once the workflow starts
-                running.
-              </InfoRow>
-            : <MonacoLogs
-                logs={latestRun.log.map((l) => l.text).join("")}
-                maxHeight={0}
-                minHeight={400}
-                style={{ border: "unset" }}
-              />,
+          content: activeTab === "Logs" && (
+            <AgenticWorkflowLogs workflowRunId={latestRun?.id} />
+          ),
         },
       }}
       footer={
@@ -216,8 +228,9 @@ export const AgenticWorkflow = ({
                 setActiveTab("Details");
               }}
               onSuccess={() => setShowSuccessMessage(true)}
-              messageId={workflow.message_id}
+              messageId={workflowChat.messageId}
               latestRun={latestRun}
+              isRunView={workflowRunId !== undefined}
             />
           )}
           {workflowValidationError &&

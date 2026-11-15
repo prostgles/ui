@@ -17,7 +17,15 @@ export const fetchListFilterOptions = async (args: Args) => {
   const firstReference = isTableColumn ? column.references?.[0] : undefined;
   let finalColumnName = column.name;
   let isReference = false;
-  if (firstReference) {
+  if (
+    firstReference &&
+    db[firstReference.ftable]?.find &&
+    tables.some(
+      (table) =>
+        table.name === firstReference.ftable &&
+        table.columns.some(({ name }) => name === firstReference.fcols[0]),
+    )
+  ) {
     finalTableName = firstReference.ftable;
     finalColumnName = firstReference.fcols[0] || finalColumnName;
     isReference = true;

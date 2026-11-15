@@ -1,51 +1,40 @@
-import type { DBSSchema } from "@common/publishUtils";
-import { createWorkflowExecutionHandlers } from "./proxyHandlers/createWorkflowExecutionHandlers";
+import type { DBSSchema, DBSSchemaForInsert } from "@common/publishUtils";
 import type { DBS } from "@src/index";
 import { runConnectionQuery } from "@src/serverFunctions/stateServerFunctions";
 import { getSerialisableError, omitKeys } from "prostgles-types";
 import { startAgenticWorkflowContainer } from "./execution/startAgenticWorkflowContainer";
-import { KeyObjMap } from "@common/KeyObjMap";
-import { tout } from "@src/utils/tout";
+import { createWorkflowExecutionHandlers } from "./proxyHandlers/createWorkflowExecutionHandlers";
+import { validateUserInput } from "./definitionValidation/validateUserInput";
 
-const abortersByUserId = new KeyObjMap<
-  { userId: string; chatId: number; messageId: string },
-  AbortController
+const runningWorkflows = new Map<
+  number,
+  { userId: string; aborter: AbortController }
 >();
 
 export const stopAgenticWorkflow = async ({
   dbs,
-  chatId,
-  messageId,
+  runId,
   userId,
 }: {
   dbs: DBS;
-  chatId: number;
-  messageId: string;
+  runId: number;
   userId: string;
 }) => {
-  const aborter = abortersByUserId.get({ userId, chatId, messageId });
-  if (aborter) {
-    aborter.abort();
-    abortersByUserId.delete({ userId, chatId, messageId });
+  const run = await dbs.agentic_workflow_runs.findOne({
+    id: runId,
+    user_id: userId,
+  });
+  if (!run) throw new Error("Workflow run not found");
+  const running = runningWorkflows.get(runId);
+  if (running?.userId === userId) {
+    running.aborter.abort();
+  } else if (run.state.status === "running") {
+    /* A server restart can leave a run without its in-memory controller. */
+    await dbs.agentic_workflow_runs.update(
+      { id: runId, user_id: userId, state: { "@>": { status: "running" } } },
+      { state: { status: "stopped" }, finished: new Date() },
+    );
   }
-  await tout(2e3);
-  await dbs.agentic_workflow_runs.update(
-    {
-      chat_id: chatId,
-      message_id: messageId,
-      state: { "@>": { status: "running" } },
-    },
-    {
-      state: {
-        status: "stopped",
-      },
-      finished: new Date(),
-    },
-    {
-      returning: { id: 1 },
-    },
-  );
-
   return { success: true };
 };
 
@@ -59,19 +48,26 @@ export const startAgenticWorkflow = async ({
   userInputValue,
   connection_id,
   autoApproveAllTools,
+  signal,
+  invocationId,
+  relatedRecords,
 }: {
   workflow: DBSSchema["agentic_workflows"];
   user: Pick<DBSSchema["users"], "id">;
   dbs: DBS;
-  chat: DBSSchema["llm_chats"];
-  messageId: string;
+  chat?: DBSSchema["llm_chats"];
+  messageId?: string;
   executionMode: "parallel" | "series";
   autoApproveAllTools: boolean;
   userInputValue: Record<string, unknown>;
   connection_id: string;
+  signal?: AbortSignal;
+  invocationId?: string;
+  relatedRecords?: DBSSchema["agentic_workflow_runs"]["related_records"];
 }) => {
+  signal?.throwIfAborted();
   const { name, definition_data, definition_override } = workflow;
-  const containerConfigurationWithOverrides = {
+  const containerConfiguration = {
     ...definition_data.containerConfiguration,
     ...definition_override?.containerConfiguration,
   };
@@ -79,99 +75,119 @@ export const startAgenticWorkflow = async ({
   const databaseAccessDefinitions =
     definition_override?.databaseAccessDefinitions ??
     definition_data.databaseAccessDefinitions;
+  const validatedInput =
+    userInput && validateUserInput(userInputValue, userInput);
+  if (validatedInput?.isValid === false) throw new Error(validatedInput.error);
+  const workflowRun = await dbs.agentic_workflow_runs.insert(
+    {
+      workflow_id: workflow.id,
+      user_id: user.id,
+      invocation_id: invocationId,
+      related_records: relatedRecords,
+      definition: workflow.definition,
+      user_input_value: validatedInput?.value ?? {},
+      execution_mode: executionMode,
+      state: { status: "running" },
+      log: [],
+    } satisfies DBSSchemaForInsert["agentic_workflow_runs"],
+    { returning: "*" },
+  );
   const aborter = new AbortController();
-  const { agentHandlers, orchestratorChat } =
-    await createWorkflowExecutionHandlers(
-      {
-        name,
-        containerConfiguration: containerConfigurationWithOverrides,
-        agentDefinitions,
-        databaseAccessDefinitions,
-        signal: aborter.signal,
-        orchestrationTools,
-        definition_override: workflow.definition_override,
-        mode: "full",
-        message_id: messageId,
-        userInput,
-      },
-      {
-        chatId: workflow.chat_id,
-        dbs,
-        userId: user.id,
-        connectionId: connection_id,
-      },
-      { runInSequence: executionMode !== "parallel", autoApproveAllTools },
-    );
-
-  if (
-    databaseAccessDefinitions?.mode === "custom" &&
-    databaseAccessDefinitions.ddlStatements
-  ) {
-    try {
+  const abort = () => aborter.abort();
+  signal?.addEventListener("abort", abort, { once: true });
+  if (signal?.aborted) abort();
+  runningWorkflows.set(workflowRun.id, { userId: user.id, aborter });
+  try {
+    aborter.signal.throwIfAborted();
+    const { agentHandlers, orchestratorChat } =
+      await createWorkflowExecutionHandlers(
+        {
+          name,
+          containerConfiguration,
+          agentDefinitions,
+          databaseAccessDefinitions,
+          signal: aborter.signal,
+          orchestrationTools,
+          definition_override,
+          mode: "full",
+          message_id: messageId,
+          workflowRunId: workflowRun.id,
+          userInput,
+        },
+        { chatId: chat?.id, dbs, userId: user.id, connectionId: connection_id },
+        { runInSequence: executionMode !== "parallel", autoApproveAllTools },
+      );
+    if (!orchestratorChat)
+      throw new Error("Workflow orchestrator was not created");
+    if (
+      databaseAccessDefinitions?.mode === "custom" &&
+      databaseAccessDefinitions.ddlStatements
+    ) {
       await runConnectionQuery(
         connection_id,
         databaseAccessDefinitions.ddlStatements,
       );
-    } catch (error) {
-      return {
-        state: "init-error" as const,
-        message: `Error creating tables from ddlStatements`,
-        error: getSerialisableError(error),
-      };
     }
-  }
-
-  abortersByUserId.set(
-    { userId: user.id, chatId: chat.id, messageId },
-    aborter,
-  );
-  const res = await startAgenticWorkflowContainer(
-    dbs,
-    {
-      user_id: user.id,
-      workflow_function_definition: workflow.definition,
-      package_dependencies: workflow.package_dependencies ?? undefined,
-      chat,
-      abortSignal: aborter.signal,
-      connection_id,
-      messageId,
-    },
-    {
-      type: "full",
-      userInputValue,
-      workflowId: workflow.id,
-      workflow,
-      orchestratorChat: orchestratorChat!,
-      definition: {
-        name,
-        containerConfiguration: containerConfigurationWithOverrides,
-        agentDefinitions,
-        userInput,
-        databaseAccessDefinitions,
-      },
-      dbPermissions: {
+    aborter.signal.throwIfAborted();
+    const result = await startAgenticWorkflowContainer(
+      dbs,
+      {
+        user_id: user.id,
+        workflow_function_definition: workflow.definition,
+        package_dependencies: workflow.package_dependencies ?? undefined,
+        abortSignal: aborter.signal,
         connection_id,
-        db_data_permissions:
-          databaseAccessDefinitions?.mode === "custom" ?
-            omitKeys(databaseAccessDefinitions, ["ddlStatements"])
-          : (databaseAccessDefinitions ?? null),
       },
-      executionMode,
-      handler: (data, { timestamp }) => {
-        const agentHandler = agentHandlers.get(data.agentName);
-        if (!agentHandler) {
-          throw `Agent handler for ${data.agentName} not found`;
-        }
-        return agentHandler(data.input, timestamp);
+      {
+        type: "full",
+        userInputValue: workflowRun.user_input_value,
+        workflowRun,
+        workflow,
+        orchestratorChat,
+        messageId,
+        definition: {
+          name,
+          containerConfiguration,
+          agentDefinitions,
+          userInput,
+          databaseAccessDefinitions,
+        },
+        dbPermissions: {
+          connection_id,
+          db_data_permissions:
+            databaseAccessDefinitions?.mode === "custom" ?
+              omitKeys(databaseAccessDefinitions, ["ddlStatements"])
+            : (databaseAccessDefinitions ?? null),
+        },
+        executionMode,
+        handler: (data, { timestamp }) => {
+          const agentHandler = agentHandlers.get(data.agentName);
+          if (!agentHandler)
+            throw new Error(`Agent handler for ${data.agentName} not found`);
+          return agentHandler(data.input, timestamp);
+        },
       },
-    },
-  ).catch((error: unknown) => {
+    );
+    return { ...result, runId: workflowRun.id };
+  } catch (error) {
+    await dbs.agentic_workflow_runs.update(
+      { id: workflowRun.id },
+      {
+        state: {
+          status: aborter.signal.aborted ? "stopped" : "error",
+          message: JSON.stringify(getSerialisableError(error)),
+        },
+        finished: new Date(),
+      },
+    );
     return {
       state: "init-error" as const,
       message: "Failed to start agentic workflow",
       error: getSerialisableError(error),
+      runId: workflowRun.id,
     };
-  });
-
-  return res;
+  } finally {
+    signal?.removeEventListener("abort", abort);
+    runningWorkflows.delete(workflowRun.id);
+  }
 };

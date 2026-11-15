@@ -1,5 +1,4 @@
-import { clamp } from "src/dashboard/SchemaGraph/ERDSchema/useDrawSchemaShapes";
-import { isDefined } from "../../../utils/utils";
+import { clamp, isDefined } from "../../../utils/utils";
 import type { Point } from "../../Charts";
 import { DAY, HOUR, MINUTE, MONTH, SECOND, toDateStr } from "../../Charts";
 import type { ChartedText, Circle, MultiLine } from "../../Charts/CanvasChart";

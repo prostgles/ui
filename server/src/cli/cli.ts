@@ -17,6 +17,7 @@ import { ensureCliDatabases } from "./ensureCliDatabases";
 import { upgradeCli } from "./upgradeCli";
 import { getCliDatabaseConfig } from "./getCliDatabaseConfig";
 import { getConfigEnvironment } from "./getConfigEnvironment";
+import { logTimedStep } from "../utils/logTimedStep";
 
 const usage = `Usage:
   prostgles create <directory> [--skip-install]
@@ -126,7 +127,7 @@ const runServer = (
 const watchConfig = (configPath: string, onChange: () => void) => {
   const watchers: ReturnType<typeof watch>[] = [];
   const visit = (directory: string) => {
-    watchers.push(watch(directory, () => onChange()));
+    watchers.push(watch(directory, onChange));
     readdirSync(directory, { withFileTypes: true })
       .filter((entry) => entry.isDirectory() && entry.name !== "node_modules")
       .forEach((entry) => visit(path.join(directory, entry.name)));
@@ -145,6 +146,9 @@ const run = async (configPath: string, isDev: boolean, temporary: boolean) => {
   const onSignal = () => shutdown.abort();
   process.once("SIGINT", onSignal);
   process.once("SIGTERM", onSignal);
+  const finishDatabaseSetup = logTimedStep(
+    temporary ? "Creating temporary databases" : "Checking CLI databases",
+  );
   const databases =
     temporary ?
       await startTemporaryDatabases({
@@ -175,6 +179,7 @@ const run = async (configPath: string, isDev: boolean, temporary: boolean) => {
   } else if (configuredEnvironment) {
     await ensureCliDatabases(configuredEnvironment);
   }
+  finishDatabaseSetup();
   let server: ChildProcess | undefined;
   let restarting = false;
   let stopping = false;

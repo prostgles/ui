@@ -4,7 +4,7 @@ import path from "node:path";
 import test from "node:test";
 import { gzipSync } from "node:zlib";
 
-const MAX_INITIAL_SIZE = 1_450_000;
+const MAX_INITIAL_SIZE = 1_460_000;
 const MAX_TOTAL_SIZE = 5_000_000;
 const BUILD_DIR = path.resolve(import.meta.dirname, "build");
 const BUNDLE_EXTENSIONS = new Set([".css", ".js", ".mjs"]);

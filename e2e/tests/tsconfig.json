@@ -38,6 +38,8 @@
     "**/*.ts",
     "**/*.tsx",
     "../playwright.config.ts",
+    "../playwright.cli.config.ts",
+    "../../server/src/testing/ui/playwright.d.ts",
     "../../client/src/**/*.d.ts"
   ],
   "exclude": ["**/node_modules", "**/build"]

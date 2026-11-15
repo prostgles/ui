@@ -225,7 +225,11 @@ export const mcpServerFunctions = defineFunctionGroupFunctions({
 
       const result = await docService.endpoints["/v1/convert/file"]({
         files: files.map(
-          ({ data }) => new Blob([data], { type: "application/pdf" }),
+          ({ data }) =>
+            new Blob(
+              [data instanceof Uint8Array ? new Uint8Array(data) : data],
+              { type: "application/pdf" },
+            ),
         ),
         ...CONVERT_DOCUMENT_DEFAULT_OPTIONS,
         ...options,
@@ -241,7 +245,11 @@ export const mcpServerFunctions = defineFunctionGroupFunctions({
       if (speechToTextService?.status !== "running") {
         throw "Speech to Text service is not enabled/running";
       }
-      const audioBlobWithMime = new Blob([audio.data], {
+      const audioData =
+        audio.data instanceof Uint8Array ?
+          new Uint8Array(audio.data)
+        : audio.data;
+      const audioBlobWithMime = new Blob([audioData], {
         type: "audio/webm",
       });
 

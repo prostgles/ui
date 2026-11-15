@@ -65,7 +65,7 @@ export const getMonacoEditorBySelector = async (
   parentSelector: string,
 ) => {
   const monacoEditor = await page
-    .locator(`${parentSelector} .monaco-editor`)
+    .locator(`${parentSelector} .monaco-editor:visible`)
     .first();
   return monacoEditor;
 };

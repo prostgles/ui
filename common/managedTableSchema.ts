@@ -1,7 +1,6 @@
 import type { AuditTableRow } from "prostgles-types";
 import type { ActionColumnsParams } from "./actionColumn";
 import type { ColumnConfig } from "./ColumnConfig/ColumnConfig";
-import { doclingTimingsSchema } from "./documentsServiceOutputSchema";
 import type { DBSSchema } from "./publishUtils";
 import type { RequiredKeepUndefined } from "./utils";
 
@@ -37,7 +36,7 @@ export type TableOptions = RequiredKeepUndefined<
     >;
     label: string;
     managedTableType?:
-      "files" | "file-annotations" | "alerts" | "alert-deliveries";
+      "files" | "file-annotations" | "alerts" | "alert-deliveries" | "audit";
   }
 > & {
   audit?: ClientTableAuditConfig;
@@ -57,7 +56,6 @@ export type InternalColumnFormat = {
         tableName: string;
         dataKey: string;
       }
-    | { component: "FileExtractionStatus" }
     | { component: "Alert"; field: AlertFieldName }
     | ({ component: "ActionColumns"; dataKey: string } & ActionColumnsParams);
 };
@@ -85,11 +83,14 @@ export type ColumnOptions = RequiredKeepUndefined<
   defaultRenderAs?: InternalColumnFormat;
 };
 
+export const DEFAULT_ANNOTATION_COLOR = "var(--light-blue)";
+
 export const annotationsTableColumns = {
   id: `INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY`,
   file_id: `UUID NOT NULL`,
   file_version: "INTEGER CHECK (file_version >= 1)",
   name: `TEXT`,
+  color: `TEXT NOT NULL DEFAULT '${DEFAULT_ANNOTATION_COLOR}'`,
   text: `TEXT NOT NULL DEFAULT ''`,
   page: "INTEGER NOT NULL DEFAULT 1 CHECK (page >= 1)",
   end_page: "INTEGER CHECK (end_page >= page)",
@@ -129,33 +130,6 @@ export const fileTableExtractionColumns = {
   columns: {
     text_content: `TEXT[]`,
     docling_metadata: `JSONB`,
-    extraction_job_id: `UUID`,
-    extraction_status: {
-      nullable: true,
-      jsonbSchema: {
-        oneOfType: [
-          {
-            state: { enum: ["loading"] },
-            start: "Date",
-            options: { record: { values: "any" } },
-          },
-          {
-            state: { enum: ["finished"] },
-            start: "Date",
-            end: "Date",
-            options: { record: { values: "any" } },
-            processing_time: "number",
-            timings: doclingTimingsSchema,
-          },
-          {
-            state: { enum: ["error"] },
-            error: "unknown",
-            start: "Date",
-            end: "Date",
-            options: { record: { values: "any" } },
-          },
-        ],
-      },
-    },
+    text_extraction_job_id: `UUID`,
   },
 } as const;

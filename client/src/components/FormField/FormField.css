@@ -86,6 +86,6 @@
   border-color: transparent !important;
 }
 
-html:not(.dark-theme) .FormField_Select {
-  background-color: white !important;
+.form-field .input-wrapper > .btn-select {
+  border-color: transparent;
 }

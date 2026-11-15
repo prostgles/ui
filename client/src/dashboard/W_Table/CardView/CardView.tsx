@@ -4,7 +4,7 @@ import type { TableHandlerClientForColumns } from "prostgles-client/dist/prostgl
 import type { AnyObject } from "prostgles-types";
 import React, { useMemo } from "react";
 import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";
-import type { W_TableProps, W_TableState } from "../W_Table";
+import type { W_TableProps } from "../W_Table";
 import type { OnClickEditRow } from "../tableUtils/getEditColumn";
 import type { ProstglesTableColumn } from "../tableUtils/getTableCols";
 import { CardViewColumn } from "./CardViewColumn";
@@ -15,7 +15,7 @@ import { getCardViewFields } from "./getCardViewFields";
 
 export type CardViewProps = {
   props: W_TableProps;
-  state: W_TableState;
+  state: { rows: AnyObject[] | undefined };
   cardOpts: Extract<ChartOptions<"table">["viewAs"], { type: "card" }>;
   w?: WindowSyncItem<"table">;
   tableHandler: Partial<TableHandlerClientForColumns<AnyObject>>;
@@ -47,8 +47,8 @@ export const CardView = (_props: CardViewProps) => {
     moveItemsProps,
   } = cardViewState;
   const cardFields = useMemo(
-    () => table && getCardViewFields(table, _props.cols, _props.w?.columns),
-    [table, _props.cols, _props.w?.columns],
+    () => table && getCardViewFields(table, _props.cols),
+    [table, _props.cols],
   );
 
   if (!table || !cardFields) {

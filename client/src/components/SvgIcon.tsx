@@ -128,32 +128,16 @@ export const SvgIconFromURL = ({
 }: SvgIconFromURLProps) => {
   const modeOverride = usePromise(async () => {
     if (propsMode !== "auto") return;
-    const res = await fetch(url);
-    const contentType = res.headers.get("content-type");
-    if (contentType?.includes("image/svg+xml")) {
-      const svg = await res.text();
-      if (svg.includes("currentColor")) {
-        return "mask";
-      }
-    }
-    return "background";
+    return getSvgIconMode(url);
   }, [propsMode, url]);
   const mode = propsMode === "auto" ? modeOverride : propsMode;
   const [resolvedUrl, setResolvedUrl] = useState(url);
 
   useEffect(() => {
     let cancelled = false;
-    const img = new Image();
-
-    img.onload = () => {
-      if (!cancelled) setResolvedUrl(url);
-    };
-
-    img.onerror = () => {
-      if (!cancelled) setResolvedUrl(FALLBACK_ICON_URL);
-    };
-
-    img.src = url;
+    void getImageUrl(url).then((imageUrl) => {
+      if (!cancelled) setResolvedUrl(imageUrl);
+    });
 
     return () => {
       cancelled = true;
@@ -182,3 +166,46 @@ export const SvgIconFromURL = ({
 };
 
 const FALLBACK_ICON_URL = "/icons/Help.svg";
+const cachedSvgIconModes = new Map<string, Promise<"mask" | "background">>();
+const cachedImageUrls = new Map<string, Promise<string>>();
+
+const getSvgIconMode = (url: string) => {
+  const cachedMode = cachedSvgIconModes.get(url);
+  if (cachedMode) return cachedMode;
+
+  const modePromise = fetch(url)
+    .then(async (response) => {
+      if (!response.ok) {
+        throw new Error(`${response.status} ${response.statusText}`);
+      }
+      const contentType = response.headers.get("content-type");
+      if (contentType?.includes("image/svg+xml")) {
+        const svg = await response.text();
+        if (svg.includes("currentColor")) return "mask" as const;
+      }
+      return "background" as const;
+    })
+    .catch((error: unknown) => {
+      cachedSvgIconModes.delete(url);
+      throw error;
+    });
+  cachedSvgIconModes.set(url, modePromise);
+  return modePromise;
+};
+
+const getImageUrl = (url: string) => {
+  const cachedImageUrl = cachedImageUrls.get(url);
+  if (cachedImageUrl) return cachedImageUrl;
+
+  const imageUrlPromise = new Promise<string>((resolve) => {
+    const image = new Image();
+    image.onload = () => resolve(url);
+    image.onerror = () => {
+      cachedImageUrls.delete(url);
+      resolve(FALLBACK_ICON_URL);
+    };
+    image.src = url;
+  });
+  cachedImageUrls.set(url, imageUrlPromise);
+  return imageUrlPromise;
+};

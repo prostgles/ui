@@ -1,5 +1,5 @@
 .chip {
-  color-scheme: light dark;
+  color-scheme: light;
 
   padding-left: 0.625rem;
   padding-right: 0.625rem;
@@ -16,6 +16,10 @@
   width: fit-content;
   height: fit-content;
   text-align: start;
+}
+
+.dark-theme .chip {
+  color-scheme: dark;
 }
 
 .chip.lg {
