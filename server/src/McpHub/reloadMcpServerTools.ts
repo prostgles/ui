@@ -2,7 +2,6 @@ import type { DBSSchema, DBSSchemaForInsert } from "@common/publishUtils";
 import { getEntries } from "@common/utils";
 import { getJSONBSchemaAsJSONSchema, type JSONB } from "prostgles-types";
 import { DBS } from "..";
-import { fetchMCPToolsList } from "./AnthropicMcpHub/fetchMCPToolsList";
 import type { McpHub } from "./AnthropicMcpHub/McpHub";
 import { type McpTool } from "./AnthropicMcpHub/McpTypes";
 import { startMcpHub } from "./AnthropicMcpHub/startMcpHub";
@@ -32,35 +31,44 @@ export const updateMcpServerTools = async (
   dbs: DBS,
   serverName: string,
   mcpHub: McpHub,
+  ignoreIfNotConnected = false,
 ) => {
-  let tools: (McpTool & {
+  const tools: (McpTool & {
     mode: DBSSchema["mcp_server_tools"]["mode"];
-  })[] = [];
-  const prostglesMCP = getProstglesMCPServer(serverName);
-  if (prostglesMCP) {
-    tools = getEntries(
-      prostglesMCP.definition.tools as ProstglesMcpServerDefinition["tools"],
-    ).map(([name, { schema, description, mode = null, outputSchema }]) => {
-      return {
-        name,
-        description,
-        mode,
-        ...getSchemasAsJsonSchema({ schema, outputSchema }),
-      };
-    });
-  } else {
-    const client = mcpHub.getClient(serverName);
-    if (!client) {
-      throw new Error(
-        `No connection found for MCP server: ${serverName}. Make sure it is enabled`,
-      );
+  })[] = await (async () => {
+    const prostglesMCP = getProstglesMCPServer(serverName);
+    if (prostglesMCP) {
+      return getEntries(
+        prostglesMCP.definition.tools as ProstglesMcpServerDefinition["tools"],
+      ).map(([name, { schema, description, mode = null, outputSchema }]) => {
+        return {
+          name,
+          description,
+          mode,
+          ...getSchemasAsJsonSchema({ schema, outputSchema }),
+        };
+      });
+    } else {
+      const handlers = mcpHub.getClientHandlers(serverName);
+      if (!handlers) {
+        if (ignoreIfNotConnected) {
+          return [];
+        }
+        throw new Error(
+          `No connection found for MCP server: ${serverName}. Make sure it is enabled`,
+        );
+      }
+      return (await handlers.fetchToolsList()).map((tool) => {
+        return {
+          ...tool,
+          mode: null,
+        };
+      });
     }
-    tools = (await fetchMCPToolsList(client)).map((tool) => {
-      return {
-        ...tool,
-        mode: null,
-      };
-    });
+  })();
+
+  if (!tools.length && ignoreIfNotConnected) {
+    return 0;
   }
 
   await dbs.tx(async (tx) => {
@@ -97,6 +105,7 @@ export const updateMcpServerTools = async (
               name,
               annotations,
               mode,
+              icons,
             }) satisfies DBSSchemaForInsert["mcp_server_tools"],
         ),
         {
@@ -105,7 +114,6 @@ export const updateMcpServerTools = async (
       );
     }
   });
-  // const   resources = await fetchMCPResourcesList(client);
   return tools.length;
 };
 

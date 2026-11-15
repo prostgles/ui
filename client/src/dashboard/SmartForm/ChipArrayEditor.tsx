@@ -10,6 +10,7 @@ import { DraggableLI } from "@components/DraggableLI";
 
 type P = {
   inputType: string;
+  size: "small" | "default";
   /**
    * Used for styling and for adding new element default values
    */
@@ -20,6 +21,7 @@ type P = {
 };
 export const ChipArrayEditor = ({
   inputType,
+  size,
   elemTsType,
   elemUdtName,
   values,
@@ -41,7 +43,7 @@ export const ChipArrayEditor = ({
       className={
         "ChipArrayEditor flex-row-wrap gap-p5 ptd-p25 ai-center no-decor"
       }
-      style={{ listStyle: "none" }}
+      style={{ listStyle: "none", maxHeight: "150px", overflow: "auto" }}
     >
       {renderedValues.map(({ value, isLastNew }, idx) => (
         //  Bad UX when selecting text
@@ -57,6 +59,7 @@ export const ChipArrayEditor = ({
         >
           <InputChip
             key={idx}
+            size={size}
             elemTsType={elemTsType}
             elemUdtName={elemUdtName}
             inputType={inputType}
@@ -116,7 +119,10 @@ export const ChipArrayEditor = ({
   );
 };
 
-type InputChipProps = Pick<P, "elemTsType" | "elemUdtName" | "inputType"> & {
+type InputChipProps = Pick<
+  P,
+  "elemTsType" | "elemUdtName" | "inputType" | "size"
+> & {
   value: any;
   onChange: (newVal) => void;
   onPaste?: (e: React.ClipboardEvent<HTMLInputElement>) => void;
@@ -129,6 +135,7 @@ const InputChip = ({
   onRemove,
   placeholder,
   inputType,
+  size,
   elemTsType,
   elemUdtName,
   onPaste,
@@ -139,9 +146,13 @@ const InputChip = ({
   return (
     <Chip
       className="focus-border  b b-color text-color-0 formfield-bg-color"
+      style={{ padding: "0 6px" }}
       onDelete={onRemove}
+      deleteButtonSize="micro"
       leftIcon={{
         path: mdiPan,
+        size: 0.75,
+        style: { cursor: "grab" },
         className: "show-on-parent-hover",
       }}
     >
@@ -153,6 +164,10 @@ const InputChip = ({
         autoCorrect="off"
         autoCapitalize="off"
         style={{
+          flex: "none",
+          height: size === "small" ? "30px" : "38px",
+          fontSize: size === "small" ? "14px" : "16px",
+          padding: "0 6px",
           width: `${numberOfChars}ch`,
           minWidth: _PG_date.some((v) => v === elemUdtName) ? "250px" : "50px",
           maxWidth: "300px",

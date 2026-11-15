@@ -8,6 +8,11 @@ const path = require("path");
 const webpack = require("webpack");
 const APP_DIR = path.resolve(__dirname, "../src");
 const MONACO_DIR = path.resolve(__dirname, "../node_modules/monaco-editor");
+const PDFJS_DIR = path.resolve(__dirname, "../node_modules/pdfjs-dist");
+
+const CopyWebpackPlugin = require("copy-webpack-plugin");
+const cMapsDir = path.join(PDFJS_DIR, "cmaps");
+
 const { SaveMdiIcons } = require("../setup-icons");
 const PRODUCTION = process.env.NODE_ENV === "production";
 
@@ -41,7 +46,6 @@ const getLoader = () => {
         ]
       : []),
     ],
-    plugins: ["dynamic-import-node"],
   };
 
   const babel = {
@@ -108,13 +112,23 @@ const debouncedProgressHandler = (percentage, message, ...args) => {
 
 module.exports = {
   target: ["web", "es2020"],
+  cache: {
+    type: "filesystem",
+    cacheDirectory: resolve(__dirname, "../../.cache/webpack"),
+    buildDependencies: {
+      config: [
+        __filename,
+        resolve(__dirname, "dev.js"),
+        resolve(__dirname, "prod.js"),
+        resolve(__dirname, "../tsconfig.json"),
+        resolve(__dirname, "../package-lock.json"),
+        resolve(__dirname, "../../package-lock.json"),
+      ],
+    },
+  },
   resolve: {
     extensions: [".ts", ".tsx", ".js", ".jsx"],
-    plugins: [
-      new TsconfigPathsPlugin({
-        /* options: see below */
-      }),
-    ],
+    plugins: [new TsconfigPathsPlugin({/* options: see below */})],
   },
   context: resolve(__dirname, "../src"),
   module: {
@@ -133,7 +147,6 @@ module.exports = {
             options: { importLoaders: 1, sourceMap: false },
           },
           { loader: "postcss-loader" },
-          // { loader: require.resolve('css-loader'), options: { importLoaders: 1, sourceMap: false } },
         ],
       },
       {
@@ -157,13 +170,18 @@ module.exports = {
         include: MONACO_DIR,
         use: ["style-loader", "css-loader"],
       },
+      {
+        test: /\.css$/,
+        include: PDFJS_DIR,
+        use: ["style-loader", "css-loader"],
+      },
       ...getLoader(),
       {
         test: /\.(jpe?g|png|gif|svg)$/i,
-        use: [
-          "file-loader?hash=sha512&digest=hex&name=img/[contenthash].[ext]",
-          "image-webpack-loader?bypassOnDebug&optipng.optimizationLevel=7&gifsicle.interlaced=false",
-        ],
+        type: "asset/resource",
+        generator: {
+          filename: "img/[contenthash][ext][query]",
+        },
       },
     ],
   },
@@ -200,6 +218,14 @@ module.exports = {
       percentBy: null,
     }),
     new SaveMdiIcons(),
+    new CopyWebpackPlugin({
+      patterns: [
+        {
+          from: cMapsDir,
+          to: "cmaps/",
+        },
+      ],
+    }),
     // new (require("webpack-bundle-analyzer").BundleAnalyzerPlugin)(),
   ],
   output: {

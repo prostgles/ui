@@ -70,9 +70,13 @@ export const AgenticWorkflowDetails = ({
 
         <DatabaseAccessEditor
           value={dbAccess}
-          onChange={(newDbAccess) => {
-            updateOverride({ databaseAccessDefinitions: newDbAccess });
-          }}
+          onChange={
+            workflow.source_key ? undefined : (
+              (newDbAccess) => {
+                updateOverride({ databaseAccessDefinitions: newDbAccess });
+              }
+            )
+          }
           hideTablesWithoutAccess={true}
           newTables={newTables}
         />
@@ -83,14 +87,19 @@ export const AgenticWorkflowDetails = ({
             value={orchestrationTools}
             data-command="AgenticWorkflowDetails.orchestrationTools"
             configs={definition_override?.orchestratorMcpServerConfigs}
-            onConfigChange={(serverName, configId) => {
-              void updateOverride({
-                orchestratorMcpServerConfigs: {
-                  ...(definition_override?.orchestratorMcpServerConfigs ?? {}),
-                  [serverName]: { configId },
-                },
-              });
-            }}
+            onConfigChange={
+              workflow.source_key ? undefined : (
+                (serverName, configId) => {
+                  void updateOverride({
+                    orchestratorMcpServerConfigs: {
+                      ...(definition_override?.orchestratorMcpServerConfigs ??
+                        {}),
+                      [serverName]: { configId },
+                    },
+                  });
+                }
+              )
+            }
           />
         )}
 
@@ -114,6 +123,7 @@ export const AgenticWorkflowDetails = ({
                 <AgentDefinition
                   key={agentName}
                   agentName={agentName}
+                  readOnly={!!workflow.source_key}
                   config={{
                     ...agentDefinition,
                     prompt:

@@ -18,7 +18,6 @@ import type { DBSSchema } from "@common/publishUtils";
 import { fixIndent, ROUTES } from "@common/utils";
 import { AppContextProvider } from "@pages/AppContextProvider";
 import { prglStateStore } from "@pages/ProjectConnection/PrglContextProvider";
-// import { type DBHandlerClient } from "prostgles-client";
 import { ElectronSearchBar } from "@components/ElectronSearchBar";
 import type { AuthHandler } from "prostgles-client/dist/getAuthHandler";
 import type { ServerFunctionHandler } from "prostgles-client/dist/prostgles";
@@ -42,6 +41,7 @@ import { NonHTTPSWarning } from "./pages/NonHTTPSWarning";
 import { useAppTheme } from "./theme/useAppTheme";
 import { PrglCoreProvider } from "./useAppState/PrglCoreContextProvider";
 import { useAppState } from "./useAppState/useAppState";
+import type { DBSchemaTableWithRenderInfo } from "./dashboard/Dashboard/getTables";
 
 export type ClientUser = {
   sid: string;
@@ -85,7 +85,7 @@ export type PrglCore = {
   db: DBHandler;
   sql: SQLHandler | undefined;
   methods: ServerFunctionHandler;
-  tables: DBSchemaTableWJoins[];
+  tables: DBSchemaTableWithRenderInfo[];
 };
 export type PrglProject = PrglCore & {
   dbKey: string;
@@ -115,7 +115,9 @@ export const App = () => {
   } = useReactiveState(r_useAppVideoDemo);
 
   const prglLoaded = prglStateStore.useStore((s) => s.loaded);
-  const { theme, userThemeOption } = useAppTheme(state.prglState);
+  const { theme, userThemeOption } = useAppTheme(
+    state.user ?? state.prglState?.user,
+  );
   const appContextProps: AppContextProps | undefined = useMemo(
     () =>
       state.prglState &&
@@ -139,7 +141,12 @@ export const App = () => {
       !state.serverState.electronCredsProvided ||
       initStateError)
   ) {
-    return <ElectronSetup serverState={state.serverState} />;
+    return (
+      <ElectronSetup
+        serverState={state.serverState}
+        error={state.dbsClientError ?? initStateError?.error}
+      />
+    );
   }
 
   const unknownErrorMessage =
@@ -214,6 +221,10 @@ export const App = () => {
           )}
           <NonHTTPSWarning {...prglState} />
           <Switch>
+            <Route
+              path={ROUTES.REGISTER}
+              element={<Login key="register" {...appContextProps} register />}
+            />
             <Route
               key="0"
               path="/"
@@ -328,7 +339,7 @@ export const App = () => {
             <Route
               key="10"
               path={ROUTES.LOGIN}
-              element={<Login {...appContextProps} />}
+              element={<Login key="login" {...appContextProps} />}
             />
             <Route
               key="11"
@@ -339,7 +350,10 @@ export const App = () => {
                   needsUser={false}
                   userThemeOption={userThemeOption}
                 >
-                  <Documentation isElectron={isElectron} />
+                  <Documentation
+                    isElectron={isElectron}
+                    className="px-1 pb-1"
+                  />
                 </NavBarWrapper>
               }
             />

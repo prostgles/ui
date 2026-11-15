@@ -1,10 +1,10 @@
+import { canManageBusinessAccess } from "@common/authTypesAndConstants";
 import React from "react";
 
-import type { DBHandlerClient } from "prostgles-client";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 import { t } from "../i18n/i18nUtils";
 import { PasswordlessSetup } from "./AccessControl/PasswordlessSetup";
-import SmartTable from "./SmartTable";
+import { SmartCardList } from "./SmartCardList/SmartCardList";
 
 export type Users = {
   created?: Date;
@@ -20,23 +20,24 @@ export const UserManager = () => {
   const { dbs, dbsTables, dbsMethodSchema, dbsSql, user } = usePrglCore();
 
   let content: React.ReactNode;
-  if (user?.type !== "admin") {
+  if (!canManageBusinessAccess(user?.type)) {
     content = <div>Must be admin to access this section</div>;
   } else if (user.passwordless_admin) {
     content = <PasswordlessSetup />;
   } else {
     content = (
-      <SmartTable
-        className="w-full"
+      <SmartCardList
+        className="w-fit as-center"
         db={dbs}
         sql={dbsSql}
         methods={dbsMethodSchema}
-        titlePrefix={t.Users["Prostgles UI users"]}
+        title={t.Users["Prostgles UI users"]}
         tableName="users"
         tables={dbsTables}
-        showInsert={true}
-        allowEdit={true}
-        realtime={{}}
+        flat={false}
+        showTopBar={true}
+        showEdit={true}
+        realtime={true}
       />
     );
   }
@@ -44,7 +45,7 @@ export const UserManager = () => {
   return (
     <div
       className={
-        "flex-col relative w-full f-1 min-h-0 pt-1 " +
+        "flex-col relative w-full f-1 min-h-0 " +
         (window.isLowWidthScreen ? "" : " px-2 ")
       }
     >

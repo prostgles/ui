@@ -1,4 +1,11 @@
-import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
+import type { TableConfig } from "prostgles-server";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
+
+const defaultTableOptions = {
+  maxCellChars: 500,
+  showFilters: false,
+  refresh: { type: "Realtime", throttleSeconds: 1, intervalSeconds: 1 },
+} satisfies WindowData<"table">["options"];
 
 export const tableConfigWindows = {
   windows: {
@@ -67,9 +74,31 @@ export const tableConfigWindows = {
       },
       fullscreen: `BOOLEAN DEFAULT TRUE`,
       sort: "JSONB DEFAULT '[]'::jsonb",
-      filter: `JSONB NOT NULL DEFAULT '[]'::jsonb`,
+      filter: {
+        defaultValue: [],
+        jsonbSchema: {
+          type: "unknown[]",
+          // arrayOfType: {
+          //   fieldName: { type: "string" },
+          //   type: {
+          //     optional: true,
+          //     type: "string",
+          //   },
+          //   value: { type: "unknown" },
+          //   disabled: { optional: true, type: "boolean" },
+          //   minimised: { optional: true, type: "boolean" },
+          //   complexFilter: {
+          //     optional: true,
+          //     type: "unknown",
+          //   },
+          // },
+        },
+      },
       having: `JSONB NOT NULL DEFAULT '[]'::jsonb`,
-      options: `JSONB NOT NULL DEFAULT '{}'::jsonb`,
+      options: {
+        defaultValue: defaultTableOptions,
+        jsonbSchema: { type: "any" },
+      },
       sql_options: {
         defaultValue: {
           executeOptions: "block",
@@ -140,6 +169,22 @@ export const tableConfigWindows = {
       nested_tables: `JSONB`,
       created: `TIMESTAMPTZ NOT NULL DEFAULT NOW()`,
       last_updated: `BIGINT NOT NULL`,
+    },
+    triggers: {
+      /* Filtered tables send { showFilters: true }, bypassing the options column default. */
+      applyTableWindowDefaults: {
+        actions: ["insert", "update"],
+        type: "before",
+        forEach: "row",
+        query: `
+          BEGIN
+            IF NEW.type = 'table' THEN
+              NEW.options = '${JSON.stringify(defaultTableOptions)}'::jsonb || COALESCE(NEW.options, '{}'::jsonb);
+            END IF;
+            RETURN NEW;
+          END;
+        `,
+      },
     },
   },
 } satisfies TableConfig<{ en: 1 }>;

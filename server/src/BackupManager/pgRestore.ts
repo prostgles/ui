@@ -1,4 +1,3 @@
-//@ts-nocheck
 import { throttle } from "@common/utils";
 import { asName } from "prostgles-types";
 import type { Readable } from "stream";
@@ -71,7 +70,7 @@ export async function pgRestore(
     const SSL_ENV_VARS = getSSLEnvVars(con);
     const ConnectionEnvVars = getConnectionEnvVars(con);
     const ENV_VARS = { ...SSL_ENV_VARS, ...ConnectionEnvVars };
-    const bkpStream = stream ?? (await fileMgr.getFileStream(bkp.id));
+    const bkpStream = stream ?? (await fileMgr.downloadAsStream(bkp.id));
     const restoreCmd =
       o.command === "psql" || o.format === "p" ?
         {
@@ -170,7 +169,7 @@ export async function pgRestore(
       }
     }, 1000);
 
-    bkpStream.on("data", (chunk) => {
+    bkpStream.on("data", (chunk: any) => {
       chunkSum += chunk.length;
       if (is_state_db) {
         console.log(
@@ -217,6 +216,7 @@ export async function pgRestore(
           return;
         }
         if (!currBkp) {
+          console.error("Backup not found while restoring");
           bkpStream.emit("error", "Backup file not found");
           bkpStream.destroy();
         } else {

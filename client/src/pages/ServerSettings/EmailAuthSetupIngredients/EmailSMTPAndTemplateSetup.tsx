@@ -19,7 +19,7 @@ import { t } from "../../../i18n/i18nUtils";
 
 type EmailConfig = Extract<
   NonNullable<AuthProvidersConfig["email"]>,
-  { signupType: "withMagicLink" }
+  { emailLoginType: "withMagicLink" }
 >;
 export type EmailSMTPCofig = EmailConfig["smtp"];
 export type EmailTemplateCofig = EmailConfig["emailTemplate"];
@@ -47,8 +47,9 @@ export const EmailSMTPAndTemplateSetup = (props: P) => {
 
   const { didChange, error, onSave, value, setValue, setError } =
     useEditableData(props.value && pickKeys(props.value, keysToUpdate.slice()));
-  const { signupType } = props.value ?? {};
-  const enabled = props.value?.enabled && !!signupType;
+  const { emailLoginType } = props.value ?? {};
+  const enabled =
+    (props.value?.enabled || props.value?.allowInvites) && !!emailLoginType;
   return (
     <PopupMenu
       positioning="top-center"
@@ -60,7 +61,9 @@ export const EmailSMTPAndTemplateSetup = (props: P) => {
           color={enabled ? "action" : undefined}
           label={{ label, variant: "normal", className: "mb-p5" }}
           disabledInfo={
-            !signupType ? "Must select a Signup type first" : undefined
+            !emailLoginType ?
+              "Must select an email login method first"
+            : undefined
           }
         >
           {enabled ?
@@ -102,7 +105,7 @@ export const EmailSMTPAndTemplateSetup = (props: P) => {
           >
             <EmailTemplateSetup
               defaultBody={
-                signupType === "withMagicLink" ?
+                emailLoginType === "withMagicLink" ?
                   DEFAULT_MAGIC_LINK_TEMPLATE.body
                 : DEFAULT_EMAIL_VERIFICATION_TEMPLATE.body
               }

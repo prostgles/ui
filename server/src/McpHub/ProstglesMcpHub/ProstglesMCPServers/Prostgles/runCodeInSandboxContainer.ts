@@ -56,6 +56,7 @@ export const runCodeInSandboxContainer = async (
   );
   const aborter = new AbortController();
   aborters.set(container.id, aborter);
+  let pendingLogUpdates = Promise.resolve();
 
   const res = await runContainerWithProxyAccess(
     dbs,
@@ -78,21 +79,27 @@ export const runCodeInSandboxContainer = async (
       signal: aborter.signal,
     },
     (logs) => {
-      void dbs.docker_containers.update(
-        {
-          id: container.id,
-        },
-        {
-          log: logs.map((log) => ({
-            type: log.type,
-            text: log.text,
-          })),
-        },
-      );
+      const logSnapshot = logs.map((log) => ({
+        type: log.type,
+        text: log.text,
+      }));
+      pendingLogUpdates = pendingLogUpdates.then(async () => {
+        await dbs.docker_containers.update(
+          { id: container.id },
+          { log: logSnapshot },
+        );
+      });
+      // Handle write failures when the queue is awaited below.
+      void pendingLogUpdates.catch(() => {});
     },
   )
-    .catch((e) => {
-      void dbs.docker_containers.update(
+    .then(async (result) => {
+      await pendingLogUpdates;
+      return result;
+    })
+    .catch(async (e) => {
+      await pendingLogUpdates.catch(() => {});
+      await dbs.docker_containers.update(
         {
           id: container.id,
         },
@@ -107,7 +114,7 @@ export const runCodeInSandboxContainer = async (
           finished: new Date(),
         },
       );
-      return Promise.reject(e);
+      throw e;
     })
     .finally(() => {
       aborters.delete(container.id);

@@ -1,4 +1,9 @@
-import { ContextDataObject, ContextValue, isObject } from "./publishUtils";
+import {
+  type ContextDataObject,
+  type ContextValue,
+  isObject,
+} from "./publishUtils";
+import type { JoinPath, ParsedJoinPath, SelectFunction } from "prostgles-types";
 
 type AnyObject = Record<string, any>;
 
@@ -10,35 +15,35 @@ export const CORE_FILTER_TYPES = [
   { key: "$eq", label: "=" },
   { key: "<>", label: "!=" },
   { key: "$ne", label: "!=" },
-  { key: "$in", label: "IN" },
-  { key: "$nin", label: "NOT IN" },
-  { key: "not null", label: "IS NOT NULL" },
-  { key: "null", label: "IS NULL" },
-  { key: "$term_highlight", label: "CONTAINS" },
+  { key: "$in", label: "in" },
+  { key: "$nin", label: "not in" },
+  { key: "not null", label: "is not null" },
+  { key: "null", label: "is null" },
+  { key: "$term_highlight", label: "contains" },
 ] as const;
 
 export const FTS_FILTER_TYPES = [
   {
     key: "@@.to_tsquery",
-    label: "Search",
+    label: "search",
     subLabel:
       "(to_tsquery) normalizes each token into a lexeme using the specified or default configuration, and discards any tokens that are stop words according to the configuration",
   },
   {
     key: "@@.plainto_tsquery",
-    label: "Plain search",
+    label: "plain search",
     subLabel:
       "(plainto_tsquery) The text is parsed and normalized much as for to_tsvector, then the & (AND) tsquery operator is inserted between surviving words",
   },
   {
     key: "@@.phraseto_tsquery",
-    label: "Phrase search",
+    label: "phrase search",
     subLabel:
       "(phraseto_tsquery) phraseto_tsquery behaves much like plainto_tsquery, except that it inserts the <-> (FOLLOWED BY) operator between surviving words instead of the & (AND) operator. Also, stop words are not simply discarded, but are accounted for by inserting <N> operators rather than <-> operators. This function is useful when searching for exact lexeme sequences, since the FOLLOWED BY operators check lexeme order not just the presence of all the lexemes",
   },
   {
     key: "@@.websearch_to_tsquery",
-    label: "Web search",
+    label: "web search",
     subLabel:
       "(websearch_to_tsquery) Unlike plainto_tsquery and phraseto_tsquery, it also recognizes certain operators. Moreover, this function will never raise syntax errors, which makes it possible to use raw user-supplied input for search. The following syntax is supported",
   },
@@ -48,21 +53,21 @@ const likeInfo =
 export const TEXT_FILTER_TYPES = [
   {
     key: "$ilike",
-    label: "ILIKE",
+    label: "ilike",
     subLabel: "Case-insensitive text search. " + likeInfo,
   },
   {
     key: "$like",
-    label: "LIKE",
+    label: "like",
     subLabel: "Case-sensitive text search. " + likeInfo,
   },
-  { key: "$nilike", label: "NOT ILIKE" },
-  { key: "$nlike", label: "NOT LIKE" },
+  { key: "$nilike", label: "not ilike" },
+  { key: "$nlike", label: "not like" },
   // { key: "$term_highlightNOT", label: "DOES NOT CONTAIN"},
 ] as const;
 
 export const NUMERIC_FILTER_TYPES = [
-  { key: "$between", label: "Between" },
+  { key: "$between", label: "between" },
   { key: ">", label: ">" },
   { key: ">=", label: ">=" },
   { key: "<", label: "<" },
@@ -74,13 +79,13 @@ export const NUMERIC_FILTER_TYPES = [
 ] as const;
 
 export const DATE_FILTER_TYPES = [
-  { key: "$age", label: "Age at start of day" },
-  { key: "$ageNow", label: "Age" },
-  { key: "$duration", label: "Duration" },
+  { key: "$age", label: "age at start of day" },
+  { key: "$ageNow", label: "age" },
+  { key: "$duration", label: "duration" },
 ] as const;
 
 export const GEO_FILTER_TYPES = [
-  { key: "$ST_DWithin", label: "Within" },
+  { key: "$ST_DWithin", label: "within" },
 ] as const;
 
 export type FilterType =
@@ -109,10 +114,12 @@ type ComplexFilterDetailed =
     }
   | {
       type: "$filter";
-      leftExpression: Record<string, any[]>;
+      leftExpression: Record<string, any>;
     };
 export type DetailedFilterBase = BaseFilter & {
   fieldName: string;
+  /** Restrict a term search to configured columns, including joined columns. */
+  searchColumns?: TermSearchColumn[];
   type?: FilterType;
   value?: any;
   contextValue?: ContextValue;
@@ -121,24 +128,44 @@ export type DetailedFilterBase = BaseFilter & {
   };
   complexFilter?: ComplexFilterDetailed;
 };
-type JoinPath = {
-  table: string;
-  on?: Record<string, string>[] | undefined;
-};
 export type DetailedJoinedFilter = BaseFilter & {
   type: (typeof JOINED_FILTER_TYPES)[number];
   path: (string | JoinPath)[];
-  filter: DetailedFilterBase;
+  filter: DetailedFilterBase | GroupedDetailedFilter;
 };
 export type DetailedFilter = DetailedFilterBase | DetailedJoinedFilter;
+export type TermSearchColumn = {
+  name: string;
+  expression?: SelectFunction;
+  path?: ParsedJoinPath[];
+  filter?: DetailedFilter[];
+};
 export type DetailedGroupFilter =
-  | { $and: DetailedFilter[] }
-  | { $or: DetailedFilter[] };
+  { $and: DetailedFilter[] } | { $or: DetailedFilter[] };
+
+export type ContextValueMapper = (contextValue: ContextValue) => unknown;
+
+export const identityContextValue: ContextValueMapper = (contextValue) =>
+  contextValue;
+
+export const getContextValueMapper =
+  (
+    context: Record<string, Record<string, unknown> | undefined>,
+  ): ContextValueMapper =>
+  ({ objectName, objectPropertyName }) => {
+    const value = context[objectName]?.[objectPropertyName];
+    if (value === undefined) {
+      throw new Error(
+        `No context value available for ${objectName}.${objectPropertyName}`,
+      );
+    }
+    return value;
+  };
 
 export const isJoinedFilter = (f: DetailedFilter): f is DetailedJoinedFilter =>
   Boolean(f.type && JOINED_FILTER_TYPES.includes(f.type as any));
 export const isDetailedFilter = (f: DetailedFilter): f is DetailedFilterBase =>
-  !isJoinedFilter(f.type as any);
+  !isJoinedFilter(f);
 
 type InfoType = "pg";
 export const getFinalFilterInfo = (
@@ -164,10 +191,10 @@ export const getFinalFilterInfo = (
       const path = filter.path
         .map((p) => (typeof p === "string" ? p : p.table))
         .join(" -> ");
-      return `${filter.type === "$existsJoined" ? "Exists" : "Does not exist"} in ${path} where ${filterToString(filter.filter)}`;
+      return `${filter.type === "$existsJoined" ? "Exists" : "Does not exist"} in ${path} where ${getFinalFilterInfo(filter.filter, context, depth + 2, opts)}`;
     }
 
-    const f = getFinalFilter(filter, context, {
+    const f = getFinalFilter(filter, {
       forInfoOnly: opts?.for ?? true,
     });
     if (!f) return undefined;
@@ -182,10 +209,17 @@ export const getFinalFilterInfo = (
       }
       return `${fields} contain ${matchCase ? "(case sensitive)" : ""} ${value}`;
     }
-    const [fieldName, operatorRaw = "="] = fieldNameAndOperator.split(".$");
-    const operator =
-      CORE_FILTER_TYPES.find(({ key }) => key === `$${operatorRaw}`)?.label ||
-      operatorRaw;
+    const filterOperator = [
+      ...CORE_FILTER_TYPES,
+      ...NUMERIC_FILTER_TYPES,
+      ...TEXT_FILTER_TYPES,
+      ...FTS_FILTER_TYPES,
+    ].find(({ key }) => fieldNameAndOperator.endsWith(`.${key}`));
+    const fieldName =
+      filterOperator ?
+        fieldNameAndOperator.slice(0, -filterOperator.key.length - 1)
+      : fieldNameAndOperator;
+    const operator = filterOperator?.label ?? "=";
     const value = f[fieldNameAndOperator];
     if ("fieldName" in filter && filter.contextValue?.objectName === "user") {
       return `${fieldName}::TEXT ${operator} ${value}`;
@@ -194,11 +228,12 @@ export const getFinalFilterInfo = (
       ["number", "boolean"].includes(typeof value) ? value
       : value === null ? `null`
       : value === undefined ? ``
-      : `'${JSON.stringify(value).slice(1, -1)}'`;
+      : typeof value === "string" ? `'${value}'`
+      : JSON.stringify(value);
     return `${fieldName} ${operator} ${valueStr}`;
   };
 
-  let result = "";
+  const result = "";
   if (fullFilter) {
     const isAnd = "$and" in fullFilter;
     if (isAnd || "$or" in fullFilter) {
@@ -208,7 +243,7 @@ export const getFinalFilterInfo = (
         .filter(isDefined)
         .filter((v: string) => v.trim().length);
       const finalFilterStr = finalFilters.join(isAnd ? " AND " : " OR ");
-      return finalFilters.length > 1 && depth > 1 ?
+      return finalFilters.length > 1 && depth > 0 ?
           `( ${finalFilterStr} )`
         : finalFilterStr;
     }
@@ -219,30 +254,23 @@ export const getFinalFilterInfo = (
   return result;
 };
 
-export const parseContextVal = (
+export const getContextualValue = (
   f: DetailedFilterBase,
-  context: ContextDataObject | undefined,
-  { forInfoOnly }: GetFinalFilterOpts = {},
+  { forInfoOnly, contextValueMapper }: GetFinalFilterOpts = {},
 ): any => {
   if (f.contextValue) {
     if (forInfoOnly) {
-      const objPath = `${f.contextValue.objectName}.${f.contextValue.objectPropertyName}`;
-      if (forInfoOnly === "pg") {
-        if (f.contextValue.objectName === "user") {
-          return `prostgles.user('${f.contextValue.objectPropertyName}')`;
-        }
-        return `current_setting('${objPath}')`;
-      }
+      const { objectName, objectPropertyName } = f.contextValue;
+      const objPath = `${objectName}.${objectPropertyName}`;
+      // if (forInfoOnly === "pg") {
+      //   if (objectName === "user") {
+      //     return `prostgles.user('${objectPropertyName}')`;
+      //   }
+      //   return `current_setting('${objPath}')`;
+      // }
       return `{{${objPath}}}`;
     }
-    if (context) {
-      //@ts-ignore
-      return context[f.contextValue.objectName]?.[
-        f.contextValue.objectPropertyName
-      ];
-    }
-
-    return undefined;
+    return (contextValueMapper ?? identityContextValue)(f.contextValue);
   }
 
   return { ...f }.value;
@@ -251,13 +279,37 @@ export const parseContextVal = (
 type GetFinalFilterOpts = {
   forInfoOnly?: boolean | InfoType;
   columns?: string[];
+  contextValueMapper?: ContextValueMapper;
 };
 export const getFinalFilter = (
-  detailedFilter: DetailedFilter,
-  context?: ContextDataObject,
+  detailedFilter: DetailedFilter | GroupedDetailedFilter,
   opts?: GetFinalFilterOpts,
-) => {
+): AnyObject | undefined => {
   const { forInfoOnly = false } = opts ?? {};
+
+  if ("$and" in detailedFilter || "$or" in detailedFilter) {
+    const filter = flattenGroupedFilter(detailedFilter);
+    const isAnd = "$and" in filter;
+    const filters = isAnd ? filter.$and : filter.$or;
+    return {
+      [isAnd ? "$and" : "$or"]: filters
+        .map((filter) => getFinalFilter(filter, opts))
+        .filter(isDefined),
+    };
+  }
+
+  if (detailedFilter.disabled) return undefined;
+
+  if ("path" in detailedFilter) {
+    const filter = getFinalFilter(detailedFilter.filter, {
+      ...opts,
+      columns: undefined,
+    });
+    if (!filter) return undefined;
+    return {
+      [detailedFilter.type]: { path: detailedFilter.path, filter },
+    };
+  }
 
   const checkFieldname = (f: string, columns?: string[]) => {
     if (columns?.length && !columns.includes(f)) {
@@ -269,21 +321,18 @@ export const getFinalFilter = (
     return f;
   };
 
-  if (
-    ("fieldName" in detailedFilter && detailedFilter.disabled) ||
-    (isJoinedFilter(detailedFilter) && detailedFilter.filter.disabled)
-  )
-    return undefined;
-
   const getFilter = (
     f: DetailedFilterBase,
     columns?: string[],
-  ): Record<string, any> => {
-    const val = parseContextVal(f, context, opts);
+  ): Record<string, any> | undefined => {
+    const parsedContextValue = getContextualValue(f, opts);
     const fieldName = checkFieldname(f.fieldName, columns);
 
-    if (f.contextValue && !context && !forInfoOnly) {
-      return {};
+    if (
+      (f.type === "$in" || f.type === "$nin") &&
+      parsedContextValue === undefined
+    ) {
+      return undefined;
     }
 
     if (
@@ -295,22 +344,48 @@ export const getFinalFilter = (
       return {
         [`${fieldName}.${f.type}`]: [
           ...(ftsFilterOptions ? [ftsFilterOptions.lang] : []),
-          parseContextVal(f, context, opts),
+          getContextualValue(f, opts),
         ],
       };
     } else if (f.type === "$term_highlight") {
+      if (f.searchColumns) {
+        return {
+          $or: f.searchColumns.map(({ name, path, filter, expression }) => {
+            const columnFilter: DetailedFilterBase = {
+              ...f,
+              fieldName: name,
+              searchColumns: undefined,
+              ...(expression && {
+                type: "$ilike",
+                value: `%${parsedContextValue}%`,
+                complexFilter: { type: "$filter", leftExpression: expression },
+              }),
+            };
+            return getFinalFilter(
+              path ?
+                {
+                  type: "$existsJoined",
+                  path,
+                  filter: { $and: [...(filter ?? []), columnFilter] },
+                }
+              : columnFilter,
+              opts,
+            );
+          }),
+        };
+      }
       const fieldName =
         f.fieldName ? checkFieldname(f.fieldName, opts?.columns) : "*";
       return {
         $term_highlight: [
           [fieldName],
-          parseContextVal(f, context, opts),
+          getContextualValue(f, opts),
           { matchCase: false, edgeTruncate: 30, returnType: "boolean" },
         ],
       };
     } else if (f.type == "$ST_DWithin") {
       return {
-        $filter: [{ $ST_DWithin: [fieldName, { ...val }] }],
+        $filter: [{ $ST_DWithin: [fieldName, { ...parsedContextValue }] }],
       };
     } else if (
       f.complexFilter ||
@@ -341,7 +416,7 @@ export const getFinalFilter = (
           $filter: [
             { [f.type === "$ageNow" ? "$ageNow" : "$age"]: filterArgs },
             comparator,
-            val,
+            parsedContextValue,
           ],
         };
       } else if (f.complexFilter) {
@@ -350,7 +425,7 @@ export const getFinalFilter = (
         }
 
         return {
-          $filter: [f.complexFilter.leftExpression, f.type, val],
+          $filter: [f.complexFilter.leftExpression, f.type, parsedContextValue],
         };
       }
     }
@@ -366,18 +441,9 @@ export const getFinalFilter = (
     }
     return {
       [[fieldName, f.type === "=" ? null : f.type].filter((v) => v).join(".")]:
-        val,
+        parsedContextValue,
     };
   };
-
-  if (isJoinedFilter(detailedFilter)) {
-    return {
-      [detailedFilter.type]: {
-        path: detailedFilter.path,
-        filter: getFilter(detailedFilter.filter),
-      },
-    };
-  }
 
   return getFilter(detailedFilter, opts?.columns);
 };
@@ -396,7 +462,7 @@ export const simplifyFilter = (f: AnyObject | undefined) => {
         result.$or.length < 2)
     ) {
       if (result.$and) result = result.$and?.[0] ?? {};
-      if (result?.$or) result = result.$or?.[0] ?? {};
+      else if (result.$or) result = result.$or?.[0] ?? {};
     }
     result ??= {};
   }
@@ -405,7 +471,7 @@ export const simplifyFilter = (f: AnyObject | undefined) => {
 };
 
 export const getSmartGroupFilter = (
-  detailedFilter: DetailedFilter[] = [],
+  detailedFilter: (DetailedFilter | GroupedDetailedFilter)[] = [],
   extraFilters?: { detailed?: DetailedFilter[]; filters?: AnyObject[] },
   operand?: "and" | "or",
 ): AnyObject => {
@@ -422,8 +488,10 @@ export const getSmartGroupFilter = (
 };
 
 export const getTableFilterFromDetailedGroupFilter = (
-  detailedGroupFilter: DetailedFilter | DetailedGroupFilter,
+  filter: DetailedFilter | GroupedDetailedFilter,
 ): AnyObject => {
+  const detailedGroupFilter =
+    "$and" in filter || "$or" in filter ? flattenGroupedFilter(filter) : filter;
   const [operand, filterItems] =
     "$and" in detailedGroupFilter ? ["and" as const, detailedGroupFilter.$and]
     : "$or" in detailedGroupFilter ? ["or" as const, detailedGroupFilter.$or]
@@ -435,57 +503,80 @@ export type GroupedDetailedFilter =
   | { $and: (DetailedFilter | GroupedDetailedFilter)[] }
   | { $or: (DetailedFilter | GroupedDetailedFilter)[] };
 
+export const flattenGroupedFilter = (
+  filter: GroupedDetailedFilter,
+): GroupedDetailedFilter => {
+  const isAnd = "$and" in filter;
+  const conditions = isAnd ? filter.$and : filter.$or;
+  const filters = conditions.flatMap(
+    (condition): (DetailedFilter | GroupedDetailedFilter)[] => {
+      if (!("$and" in condition || "$or" in condition)) return [condition];
+      const group = flattenGroupedFilter(condition);
+      if (isAnd && "$and" in group) return group.$and;
+      if (!isAnd && "$or" in group) return group.$or;
+      return [group];
+    },
+  );
+  return isAnd ? { $and: filters } : { $or: filters };
+};
+
 const getDetailedFilterFromTableFilter = (
   tableFilter: AnyObject,
-): DetailedFilter => {
-  const filterType =
-    "$existsJoined" in tableFilter ? "$existsJoined"
-    : "$notExistsJoined" in tableFilter ? "$notExistsJoined"
-    : Object.keys(tableFilter)[0];
-
-  if (filterType === "$existsJoined" || filterType === "$notExistsJoined") {
-    const value = tableFilter.$existsJoined;
-    const tableName = Object.keys(value)[0]!;
-    const filter = value[tableName];
-    return {
-      type: filterType,
-      path: [tableName],
-      filter: getDetailedFilterFromTableFilter(filter) as DetailedFilterBase,
-    };
-  }
-  const fieldName = Object.keys(tableFilter)[0]!;
-  const operator =
-    isObject(tableFilter[fieldName]) ?
-      Object.keys(tableFilter[fieldName])[0]
-    : undefined;
-  return {
-    fieldName,
-    type: operator as FilterType,
-    value: operator ? tableFilter[fieldName][operator] : tableFilter[fieldName],
-  };
+): DetailedFilter | GroupedDetailedFilter => {
+  if (!isObject(tableFilter)) throw new Error("Expected a filter object");
+  const filters = Object.entries(tableFilter).flatMap(
+    ([key, value]): (DetailedFilter | GroupedDetailedFilter)[] => {
+      if ((key === "$and" || key === "$or") && Array.isArray(value)) {
+        const filters = value.map(getDetailedFilterFromTableFilter);
+        return [key === "$and" ? { $and: filters } : { $or: filters }];
+      }
+      if (
+        (key === "$existsJoined" || key === "$notExistsJoined") &&
+        isObject(value)
+      ) {
+        return Object.entries(value).map(([tableName, filter]) => ({
+          type: key,
+          path: [tableName],
+          filter: getDetailedGroupFilterFromTableFilter(filter),
+        }));
+      }
+      if (key.startsWith("$")) throw new Error(`Unsupported filter: ${key}`);
+      const operators = [
+        ...CORE_FILTER_TYPES,
+        ...TEXT_FILTER_TYPES,
+        ...NUMERIC_FILTER_TYPES,
+      ];
+      const suffix = operators.find(({ key: operator }) =>
+        key.endsWith(`.${operator}`),
+      );
+      if (suffix) {
+        return [
+          {
+            fieldName: key.slice(0, -suffix.key.length - 1),
+            type: suffix.key,
+            value,
+          },
+        ];
+      }
+      if (isObject(value)) {
+        if (!Object.keys(value).length)
+          throw new Error("Empty filter operator");
+        return Object.entries(value).map(([operator, operand]) => {
+          const type = operators.find(({ key }) => key === operator)?.key;
+          if (!type)
+            throw new Error(`Unsupported filter operator: ${operator}`);
+          return { fieldName: key, type, value: operand };
+        });
+      }
+      return [{ fieldName: key, type: "=", value }];
+    },
+  );
+  const [firstFilter] = filters;
+  return filters.length === 1 && firstFilter ? firstFilter : { $and: filters };
 };
 export const getDetailedGroupFilterFromTableFilter = (
   tableFilter: AnyObject,
-): DetailedGroupFilter => {
-  const filterType =
-    "$and" in tableFilter && Array.isArray(tableFilter.$and) ? "$and"
-    : "$or" in tableFilter && Array.isArray(tableFilter.$or) ? "$or"
-    : "$existsJoined" in tableFilter ? "$existsJoined"
-    : null;
-
-  if (filterType === "$and") {
-    return {
-      $and: tableFilter.$and.map((f: AnyObject) =>
-        getDetailedFilterFromTableFilter(f),
-      ),
-    };
-  } else if (filterType === "$or") {
-    return {
-      $or: tableFilter.$or.map((f: AnyObject) =>
-        getDetailedFilterFromTableFilter(f),
-      ),
-    };
-  }
-
-  return { $and: [] };
+): GroupedDetailedFilter => {
+  const filter = getDetailedFilterFromTableFilter(tableFilter);
+  return "$and" in filter || "$or" in filter ? filter : { $and: [filter] };
 };

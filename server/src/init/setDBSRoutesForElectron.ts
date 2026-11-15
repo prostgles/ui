@@ -88,64 +88,68 @@ const onPostDBSRequestHandler =
         throw "db_conn or db_host Missing";
       }
 
-      const { data: validatedCreds, error } = await tryCatchV2(async () => {
-        if (mode === "manual") {
-          await testDBConnection(initialCredentials);
-          return initialCredentials;
-        }
+      const { data: validatedCredentials, error } = await tryCatchV2(
+        async () => {
+          if (mode === "manual") {
+            await testDBConnection(initialCredentials);
+            return initialCredentials;
+          }
 
-        const { db_user, db_name } = DEFAULT_ELECTRON_CONNECTION;
-        let db_pass = randomBytes(12).toString("hex");
-        /**
-         * Quick mode = login with provided credentials to ensure DEFAULT_ELECTRON_CONNECTION db and user exist
-         * */
-        await testDBConnection(
-          { ...initialCredentials, db_name: "postgres" },
-          undefined,
-          async (c) => {
-            const userExists = await c.oneOrNone<{ usename: string }>(
-              `SELECT usename FROM pg_catalog.pg_user WHERE usename = $1`,
-              [db_user],
-            );
-            if (!userExists) {
-              await c.none(
-                `CREATE USER ${db_user} WITH ENCRYPTED PASSWORD $1 SUPERUSER`,
-                [db_pass],
+          const { db_user, db_name } = DEFAULT_ELECTRON_CONNECTION;
+          let db_pass = randomBytes(12).toString("hex");
+          /**
+           * Quick mode = login with provided credentials to ensure DEFAULT_ELECTRON_CONNECTION db and user exist
+           * */
+          await testDBConnection(
+            { ...initialCredentials, db_name: "postgres" },
+            undefined,
+            async (c) => {
+              const userExists = await c.oneOrNone<{ usename: string }>(
+                `SELECT usename FROM pg_catalog.pg_user WHERE usename = $1`,
+                [db_user],
               );
-              /** Overwrite password only if using different username */
-            } else if (initialCredentials.db_user !== db_user) {
-              await c.none(
-                `ALTER USER ${db_user} WITH ENCRYPTED PASSWORD $1 SUPERUSER`,
-                [db_pass],
+              if (!userExists) {
+                await c.none(
+                  `CREATE USER ${db_user} WITH ENCRYPTED PASSWORD $1 SUPERUSER`,
+                  [db_pass],
+                );
+                /** Overwrite password only if using different username */
+              } else if (initialCredentials.db_user !== db_user) {
+                await c.none(
+                  `ALTER USER ${db_user} WITH ENCRYPTED PASSWORD $1 SUPERUSER`,
+                  [db_pass],
+                );
+              } else {
+                db_pass = initialCredentials.db_pass;
+              }
+              const dbExists = await c.oneOrNone<{ datname: string }>(
+                `SELECT datname FROM pg_catalog.pg_database WHERE datname = $1`,
+                [db_name],
               );
-            } else {
-              db_pass = initialCredentials.db_pass;
-            }
-            const dbExists = await c.oneOrNone<{ datname: string }>(
-              `SELECT datname FROM pg_catalog.pg_database WHERE datname = $1`,
-              [db_name],
-            );
-            if (!dbExists) {
-              await c.none(`CREATE DATABASE ${db_name} WITH OWNER ${db_user} `);
-            } else {
-              /** If db exists, ensure user has access */
-              await c.none(
-                `GRANT ALL PRIVILEGES ON DATABASE ${db_name} TO ${db_user}`,
-              );
-            }
-          },
-        );
+              if (!dbExists) {
+                await c.none(
+                  `CREATE DATABASE ${db_name} WITH OWNER ${db_user} `,
+                );
+              } else {
+                /** If db exists, ensure user has access */
+                await c.none(
+                  `GRANT ALL PRIVILEGES ON DATABASE ${db_name} TO ${db_user}`,
+                );
+              }
+            },
+          );
 
-        const newConnectionDetails = validateConnection({
-          ...initialCredentials,
-          type: "Standard",
-          db_user,
-          db_name,
-          db_pass,
-        });
-        await testDBConnection(newConnectionDetails, true);
-        return newConnectionDetails;
-      });
+          const newConnectionDetails = validateConnection({
+            ...initialCredentials,
+            type: "Standard",
+            db_user,
+            db_name,
+            db_pass,
+          });
+          await testDBConnection(newConnectionDetails, true);
+          return newConnectionDetails;
+        },
+      );
 
       if (error) {
         throw error;
@@ -154,7 +158,7 @@ const onPostDBSRequestHandler =
       const startup = await tryStartProstgles({
         app,
         io,
-        con: validatedCreds,
+        con: validatedCredentials,
         port,
         host,
       });
@@ -162,14 +166,14 @@ const onPostDBSRequestHandler =
       if (startup.state === "error") {
         throw startup;
       }
-      electronConfig.setCredentials(validatedCreds);
+      electronConfig.setCredentials(validatedCredentials);
       /* Update existing state connection info from the database if changed */
-      if (validatedCreds) {
+      if (validatedCredentials) {
         void startup.dbs.connections
           .findOne({
-            db_name: validatedCreds.db_name,
-            db_user: validatedCreds.db_user,
-            db_pass: { $ne: validatedCreds.db_pass },
+            db_name: validatedCredentials.db_name,
+            db_user: validatedCredentials.db_user,
+            db_pass: { $ne: validatedCredentials.db_pass },
           })
           .then((stateConnection) => {
             if (!stateConnection) {
@@ -178,8 +182,8 @@ const onPostDBSRequestHandler =
             return startup.dbs.connections.update(
               { id: stateConnection.id },
               {
-                db_pass: validatedCreds.db_pass,
-                db_conn: validatedCreds.db_conn,
+                db_pass: validatedCredentials.db_pass,
+                db_conn: validatedCredentials.db_conn,
               },
             );
           });
@@ -188,7 +192,6 @@ const onPostDBSRequestHandler =
       return;
     } catch (err) {
       res.json({ warning: getSerialisableError(err) });
-      electronConfig?.setCredentials(undefined);
     }
   };
 

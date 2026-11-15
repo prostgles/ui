@@ -1,4 +1,5 @@
 import { pbkdf2Sync } from "node:crypto";
+import { verify } from "otplib";
 import type { User } from "../ConnectionManager/ConnectionManager";
 
 const ITERATIONS = 1e5;
@@ -16,4 +17,12 @@ export const getPasswordHash = (
     "sha512",
   ).toString("hex");
   return pwdHash;
+};
+
+export const isTotpTokenValid = async (secret: string, token: string) => {
+  try {
+    return (await verify({ secret, token })).valid;
+  } catch {
+    return false;
+  }
 };

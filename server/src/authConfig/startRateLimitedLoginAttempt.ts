@@ -60,7 +60,13 @@ export const getFailedTooManyTimes = async (
     1,
     database_config.login_rate_limit.maxAttemptsPerHour,
   );
-  if (previousFails.length >= maxAttemptsPerHour) {
+  // Concurrent session checks can log the same missing SID more than once.
+  const failedAttemptCount = new Set(
+    previousFails.map(({ auth_type, sid, id }) =>
+      auth_type === "session-id" && sid ? `session:${sid}` : `attempt:${id}`,
+    ),
+  ).size;
+  if (failedAttemptCount >= maxAttemptsPerHour) {
     return { ip, matchByFilter, failedTooManyTimes: true };
   }
 

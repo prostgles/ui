@@ -43,9 +43,10 @@ export const TableConfig = ({ prgl: { dbs, connectionId, dbsMethods } }: P) => {
           tsLibraries: [
             {
               filePath: "TableConfig.ts",
-              content: TableConfigts,
+              content: TableConfigExample,
             },
           ],
+          projectPath: undefined,
         }}
         codePlaceholder={exampleConfig}
         value={dbConf.table_config_ts}
@@ -64,7 +65,7 @@ export const TableConfig = ({ prgl: { dbs, connectionId, dbsMethods } }: P) => {
   );
 };
 
-const TableConfigts = `
+const TableConfigExample = `
 type TableConfig = Record<
   string, { 
     /**

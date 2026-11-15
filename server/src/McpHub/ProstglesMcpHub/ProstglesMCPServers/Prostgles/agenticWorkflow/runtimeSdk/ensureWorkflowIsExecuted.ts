@@ -1,4 +1,5 @@
 import { WORKFLOW_ENV_VARS } from "./defineAgenticWorkflowHandlers.types";
+import { WORKFLOW_MODULE_NAME } from "./workflowConstants";
 
 export const assertWorkflowStarted = (runState: { wasStarted: boolean }) => {
   if (!WORKFLOW_ENV_VARS.DOCKER_MCP_ENDPOINT) {
@@ -29,14 +30,15 @@ When generating workflow code, you MUST:
 2. Structure must be:
 
 \`\`\`typescript
-import { defineAgenticWorkflow } from "./defineAgenticWorkflow";
+import { defineAgenticWorkflow } from "${WORKFLOW_MODULE_NAME}";
 void defineAgenticWorkflow(
   {
     name: "Workflow Name",
-    // workflow parameters
+    containerConfiguration: { timeout: 60_000 },
+    /* workflow parameters */
   },
-  async ({ agentName }) => {
-    // workflow logic
+  async ({ agentHandlers, tableHandlers }) => {
+    /* workflow logic */
   },
 );
 \`\`\`

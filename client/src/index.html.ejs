@@ -10,6 +10,13 @@
 
         <link href="/util.css" rel="stylesheet" />
         <title>Prostgles UI</title>
+        <style>
+            @keyframes startup-spinner {
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+        </style>
     </head>
 
     <body>
@@ -18,10 +25,11 @@
             <div class="spinner-loader ws-nowrap flex-row gap-1 ai-center m-auto"
                 style="width: 30px; height: 30px; cursor: wait;"
             >
-                <svg class="spinner f-0" width="30px" height="30px"
+                <svg class="f-0" width="30px" height="30px"
+                    style="animation: startup-spinner 0.75s steps(36) infinite;"
                     viewBox="0 0 66 66" xmlns="http://www.w3.org/2000/svg">
-                    <circle class="path  color-animation " fill="none" stroke-width="6" stroke-linecap="round" cx="33"
-                        cy="33" r="30"></circle>
+                    <circle fill="none" stroke="currentColor" stroke-dasharray="140 189"
+                        stroke-width="6" stroke-linecap="round" cx="33" cy="33" r="30"></circle>
                 </svg>
             </div>
         </main>

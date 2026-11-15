@@ -8,14 +8,14 @@ import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable
 import { type ValidatedColumnInfo } from "prostgles-types";
 import React, { useState } from "react";
 import type { Prgl } from "src/App";
-import type { WindowData } from "src/dashboard/Dashboard/dashboardUtils";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 import { useColumnStats } from "./useColumnQuickStats";
 import { RenderValue } from "src/dashboard/SmartForm/SmartFormField/RenderValue";
 
 export type ColumnQuickStatsProps = {
   column: ValidatedColumnInfo;
   db: Prgl["db"];
-  w: SyncDataItem<Required<WindowData<"table">>, true>;
+  w: SyncDataItem<Required<WindowData<"table">>, { handlesOnData: true }>;
 };
 
 export const ColumnQuickStats = (props: ColumnQuickStatsProps) => {

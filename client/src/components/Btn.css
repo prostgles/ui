@@ -196,9 +196,16 @@ button.fade-in,
   background: var(--bg-color-0);
 }
 .btn-outline:hover {
-  background: var(--filled-bg);
-  border-color: var(--filled-bg) !important;
-  color: white;
+  background: var(--faded-bg);
+}
+
+.btn-select {
+  background: var(--bg-color-0);
+  border: 1px solid var(--gray-300);
+  color: var(--text-0);
+}
+.dark-theme .btn-select {
+  border-color: var(--b-default);
 }
 
 :root {

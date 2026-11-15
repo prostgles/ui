@@ -136,12 +136,19 @@ export const dashboardDemo = async () => {
   await click("Popup.close");
 
   /** Set to col layout, add table, clone wsp */
+  if (!getElement("dashboard.menu.settingsToggle")) {
+    await click("dashboard.menu");
+  }
   await click("dashboard.menu.settingsToggle");
   await click("dashboard.menu.settings.defaultLayoutType");
   await click("dashboard.menu.settings.defaultLayoutType", `[data-key="col"]`);
   await click("Popup.close");
   await openTable("orders");
   await click("WorkspaceMenuDropDown");
+  await click(
+    "WorkspaceMenu.SearchList",
+    '[data-key="Main"] [title="Workspace actions"]',
+  );
   await click("WorkspaceMenu.CloneWorkspace");
 
   await tout(1e3);
@@ -163,6 +170,9 @@ export const dashboardDemo = async () => {
   */
 
   await tout(1e3);
+  if (!getElement("dashboard.menu.sqlEditor")) {
+    await click("dashboard.menu");
+  }
   await waitForElement("dashboard.menu.sqlEditor");
 
   await tout(2e3);

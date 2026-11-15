@@ -9,9 +9,9 @@ import type {
   DBSchemaTableWJoins,
   Link,
   LinkSyncItem,
-  WindowData,
   WindowSyncItem,
 } from "./Dashboard/dashboardUtils";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
 import RTComp from "./RTComp";
 import { getLinkColorV2 } from "./W_Map/fetchData/getMapLayerQueries";
 import { JoinPathSelectorV2 } from "./W_Table/ColumnMenu/JoinPathSelectorV2";
@@ -46,7 +46,11 @@ export class LinkMenu extends RTComp<P, S> {
   };
 
   loadShapes = () => {
-    const { w, links, gridRef, windows } = this.props;
+    const { w, links, gridRef, windows, tables } = this.props;
+    const getTableLabel = (tableName: string | null | undefined) =>
+      tables.find((table) => table.name === tableName)?.label ||
+      tableName ||
+      "";
 
     if (w.table_name && this.rootRef) {
       const shapes: Shape[] = [];
@@ -94,7 +98,7 @@ export class LinkMenu extends RTComp<P, S> {
           ) => {
             if (!w) return "";
             if (l.options.type === "table") {
-              return w.table_name!;
+              return getTableLabel(w.table_name);
             } else {
               const { dataSource } = l.options;
               const chartedColumnsLabel = l.options.columns.map((c) => c.name);
@@ -102,7 +106,7 @@ export class LinkMenu extends RTComp<P, S> {
                 dataSource?.type === "table" ?
                   (dataSource.joinPath?.at(-1)?.table ?? dataSource.tableName)
                 : (w.table_name ?? otherW?.table_name);
-              return `${chartedTableLabel} (${chartedColumnsLabel})`;
+              return `${getTableLabel(chartedTableLabel)} (${chartedColumnsLabel})`;
             }
           };
           const textStyle = {
@@ -166,12 +170,15 @@ export class LinkMenu extends RTComp<P, S> {
           joinTextLines =
             parsedPath?.flatMap((p) => [
               {
-                text: `(${Object.entries(p.on[0]!)
-                  .map(([l, r]) => `${l} = ${r}`)
-                  .join(" AND ")})`,
+                text:
+                  typeof p.on === "string" ?
+                    `${p.on}${p.reversed ? " (reversed)" : ""}`
+                  : `(${Object.entries(p.on[0]!)
+                      .map(([l, r]) => `${l} = ${r}`)
+                      .join(" AND ")})`,
                 color: "blue",
               },
-              { text: p.table, color: "black" },
+              { text: getTableLabel(p.table), color: "black" },
             ]) ?? [];
 
           let flip = false;
@@ -242,7 +249,7 @@ export class LinkMenu extends RTComp<P, S> {
       )
       .map((w) => w.table_name!);
     const canJoin = tables.some(
-      (t) => t.name === w.table_name && t.joinsV2.length,
+      (t) => t.name === w.table_name && t.joinOptions.length,
     );
 
     return (

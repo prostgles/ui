@@ -59,10 +59,12 @@ export const getPGIntervalAsText = (
 type StyledIntervalProps = {
   value: PG_Interval;
   mode?: "backups" | "pg_stat" | "full" | "short";
+  showAgo: boolean;
 } & Pick<DivProps, "style" | "className">;
 export const StyledInterval = ({
   value: v,
   mode = "backups",
+  showAgo,
   ...divProps
 }: StyledIntervalProps) => {
   const colorParts = {
@@ -72,7 +74,14 @@ export const StyledInterval = ({
     gray: "-gray-500",
   };
 
-  const textParts = getIntervalAsText(v);
+  const isFuture = Object.values(v).some((value) => value < 0);
+  const textParts = getIntervalAsText(
+    showAgo ?
+      Object.fromEntries(
+        Object.entries(v).map(([key, value]) => [key, Math.abs(value)]),
+      )
+    : v,
+  );
   const shortTextParts =
     mode === "full" ? textParts.slice(0)
     : mode === "short" ? textParts.slice(0, 2)
@@ -95,11 +104,12 @@ export const StyledInterval = ({
   return (
     <span
       style={divProps.style}
-      title={JSON.stringify(v).slice(1, -1)}
+      title={JSON.stringify(v, null, 2)}
       className={`${divProps.className ?? ""} text${color}`}
     >
+      {showAgo && isFuture && "in "}
       {shortText || "0s"}
-      {mode === "backups" ? " ago" : ""}
+      {showAgo && !isFuture && " ago"}
     </span>
   );
 };

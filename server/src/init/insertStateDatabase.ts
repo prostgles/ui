@@ -19,11 +19,12 @@ export const insertStateDatabase = async (
     pickKeys(con, ["db_host", "db_port", "db_user"]),
     pickKeys(con, ["db_pass", "db_conn", "db_ssl"]),
   );
-  const matchingStateConnections = await db.connections.find(
-    pickKeys(con, ["db_name", "db_host", "db_port", "db_user"]),
-  );
+  const matchingStateConnection = await db.connections.findOne({
+    ...pickKeys(con, ["db_name", "db_host", "db_port", "db_user"]),
+    is_state_db: true,
+  });
 
-  if (!matchingStateConnections.length) {
+  if (!matchingStateConnection) {
     const { data: state_db, error } = await tryCatchV2(async () => {
       const { connection: state_db, database_config } = await upsertConnection(
         {
@@ -67,6 +68,6 @@ export const insertStateDatabase = async (
     }
     if (!state_db) throw "state_db not found";
   } else {
-    await db.connections.update({ is_state_db: true }, { port });
+    await db.connections.update({ id: matchingStateConnection.id }, { port });
   }
 };

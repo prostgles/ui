@@ -1,5 +1,3 @@
-import { mdiPalette } from "@mdi/js";
-import React from "react";
 import { isObject } from "@common/publishUtils";
 import type { BtnProps } from "@components/Btn";
 import Btn from "@components/Btn";
@@ -8,10 +6,13 @@ import FormField from "@components/FormField/FormField";
 import { FormFieldDebounced } from "@components/FormField/FormFieldDebounced";
 import { type LabelProps } from "@components/Label";
 import Popup from "@components/Popup/Popup";
+import { mdiPalette } from "@mdi/js";
+import React from "react";
+import { asHex, asRGB, type RGBA } from "@common/ColumnConfig/colorUtils";
 import type { Command } from "../../../Testing";
 import { rgba2hex } from "./rgba2hex";
-import { asHex, asRGB, type RGBA } from "src/utils/colorUtils";
-import { getRandomElement } from "@common/utils";
+import { COLUMN_COLOR_PALETTE } from "@common/ColumnConfig/chipColors";
+import { resolveColor } from "../../../utils/resolveColor";
 
 type S = {
   anchorEl: Element | null;
@@ -22,6 +23,7 @@ export class ColorPicker extends React.Component<
     style?: React.CSSProperties;
     className?: string;
     value: string;
+    palette?: readonly string[];
     onChange: (color: string, rgb: RGBA, rgb255Alpha: RGBA) => void;
     btnProps?: BtnProps;
     label?: string | LabelProps;
@@ -57,7 +59,12 @@ export class ColorPicker extends React.Component<
         this.onChange(this.color ?? "");
       }, thresh);
     } else {
-      onChange(asHex(this.color), asRGB(this.color), asRGB(this.color, "255"));
+      const resolvedColor = resolveColor(this.color);
+      onChange(
+        this.color.startsWith("var(") ? this.color : asHex(this.color),
+        asRGB(resolvedColor),
+        asRGB(resolvedColor, "255"),
+      );
       this.lastChanged = now;
     }
   };
@@ -72,9 +79,10 @@ export class ColorPicker extends React.Component<
       label,
       variant,
       btnProps,
+      palette = COLUMN_COLOR_PALETTE,
     } = this.props;
 
-    const rgba = asRGB(value);
+    const rgba = asRGB(resolveColor(value));
     const opacity = rgba[3] <= 1 ? rgba[3] : rgba[3] / 255;
 
     const labelNode =
@@ -96,7 +104,7 @@ export class ColorPicker extends React.Component<
     return (
       <FlexRow
         data-command={this.props["data-command"]}
-        className={classOverride("gap-p5 ai-center ", className)}
+        className={classOverride("ColorPicker gap-p5 ai-center ", className)}
         style={style}
       >
         {variant === "legend" ?
@@ -111,17 +119,18 @@ export class ColorPicker extends React.Component<
         }
         {anchorEl && (
           <Popup
-            title={"Layer color"}
+            title={this.props.title ?? "Layer color"}
             anchorEl={anchorEl}
             positioning="beneath-left"
             onClose={() => this.setState({ anchorEl: null })}
             contentClassName="p-1 flex-col gap-1"
           >
             <FlexRowWrap>
-              {COLOR_PALETTE.map((c, ci) => (
+              {palette.map((c, ci) => (
                 <Btn
                   key={ci}
                   data-key={c}
+                  title={c}
                   className={"pointer shadow"}
                   style={{
                     width: "24px",
@@ -130,7 +139,12 @@ export class ColorPicker extends React.Component<
                     borderRadius: "1000%",
                   }}
                   onClick={(e) => {
-                    onChange(asHex(c), asRGB(c), asRGB(c, "255"));
+                    const resolvedColor = resolveColor(c);
+                    onChange(
+                      c.startsWith("var(") ? c : asHex(c),
+                      asRGB(resolvedColor),
+                      asRGB(resolvedColor, "255"),
+                    );
                     this.setState({ anchorEl: null });
                   }}
                 />
@@ -183,9 +197,13 @@ export const ColorCircle = ({
   color,
   onClick,
   label,
-}: Pick<BtnProps, "onClick" | "label"> & { color: string }) => {
+  ...buttonProps
+}: Pick<BtnProps, "onClick" | "label" | "title" | "disabledInfo"> & {
+  color: string;
+}) => {
   return (
     <Btn
+      {...buttonProps}
       label={label}
       size={"micro"}
       className={"shadow b b-color f-0"}
@@ -199,53 +217,5 @@ export const ColorCircle = ({
         },
       }}
     />
-  );
-};
-
-const COLORS = {
-  "dark blue": "#174CFA",
-  blue: "#0AA1FA",
-  cyan: "#00D5FF",
-  green: "#089981",
-  orange: "#F79800",
-  red: "#f23645",
-  purple: "#CB11F0",
-  indigo: "#7430F0",
-  gray: "#cecece",
-} as const;
-
-const TIMECHART_COLORS = {
-  // Blue: "#1f77b4",
-  // Orange: "#ff7f0e",
-  // Green: "#2ca02c",
-  // Red: "#d62728",
-  // Purple: "#9467bd",
-  // Brown: "#8c564b",
-  // Pink: "#e377c2",
-  // Gray: "#7f7f7f",
-  // Olive: "#bcbd22",
-  // Teal: "#17becf",
-  "Vivid Blue": "#2E7DFF",
-  "Bright Orange": "#FF6B2C",
-  "Lime Green": "#22C55E",
-  "Cherry Red": "#EF4444",
-  // "Electric Purple": "#A855F7",
-  Purple: "#CB11F0",
-  "Sunshine Yellow": "#F59E0B",
-  "Cyan Teal": "#06B6D4",
-  "Hot Pink": "#EC4899",
-  "Lemon Lime": "#84CC16",
-  "Aqua Green": "#14B8A6",
-};
-
-export const COLOR_PALETTE = Object.values(TIMECHART_COLORS);
-
-export const COLOR_PALETTE_RGB = COLOR_PALETTE.map(
-  (c) => asRGB(c).slice(0, 3) as [number, number, number],
-);
-
-export const getPaletteRGBColor = (layerIndex: number) => {
-  return (
-    COLOR_PALETTE_RGB[layerIndex] ?? getRandomElement(COLOR_PALETTE_RGB).elem
   );
 };

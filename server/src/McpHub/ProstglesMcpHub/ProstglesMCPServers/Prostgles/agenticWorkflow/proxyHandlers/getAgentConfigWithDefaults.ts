@@ -1,5 +1,6 @@
 import type { DBS } from "@src/index";
-import { isEmpty } from "prostgles-types";
+import { getJSONBSchemaValidationError, isEmpty } from "prostgles-types";
+import { agentOutputSchemaType } from "@common/mcp/startAgenticWorkflowSchema";
 import type { AgentDefinition } from "../runtimeSdk/defineAgenticWorkflow";
 import type { DBSSchema } from "@common/publishUtils";
 import { DEFAULT_AGENT_MODEL } from "@src/serverFunctions/askLLM/refreshModels";
@@ -32,6 +33,7 @@ export const getAgentConfigWithDefaults = async (
   if (isEmpty(outputSchema)) {
     throw new Error(`Agent ${agentName} outputSchema is empty`);
   }
+  validateOutputSchema(outputSchema);
   assertNumberIsNonNegativeFinite(maxCostUSD, agentName, "maxCostUSD");
   assertNumberIsNonNegativeFinite(maxIterations, agentName, "maxIterations");
   assertNumberIsNonNegativeFinite(maxTokens, agentName, "maxTokens");
@@ -81,6 +83,21 @@ export const getAgentConfigWithDefaults = async (
     temperature,
     mcpServerConfigs,
   };
+};
+
+const validateOutputSchema = (
+  outputSchema: AgentDefinition["outputSchema"],
+) => {
+  const { error } = getJSONBSchemaValidationError(
+    agentOutputSchemaType,
+    outputSchema,
+  );
+  if (error) throw new Error(`Invalid agent output schema: ${error}`);
+  for (const property of Object.values(outputSchema)) {
+    if ("arrayOfType" in property) validateOutputSchema(property.arrayOfType);
+    else if (typeof property.type !== "string")
+      validateOutputSchema(property.type);
+  }
 };
 
 const assertNumberIsNonNegativeFinite = (

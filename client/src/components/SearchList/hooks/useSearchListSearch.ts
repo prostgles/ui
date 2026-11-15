@@ -33,6 +33,7 @@ export const useSearchListSearch = (
 
   const searching = useRef<{
     term: string;
+    matchCase: boolean;
     dataSignature?: string;
     timeout: NodeJS.Timeout;
     cancelCurrentSearch: VoidFunction | undefined;
@@ -74,19 +75,22 @@ export const useSearchListSearch = (
     (force = false) => {
       if (force || (isSearch && !searchClosed)) {
         searching.current?.cancelCurrentSearch?.();
-        setSearchTerm("");
+        setSearchTerm(getValueAsText(defaultValue) ?? "");
         setSearchClosed(true);
       }
     },
-    [isSearch, searchClosed, setSearchClosed],
+    [defaultValue, isSearch, searchClosed, setSearchClosed],
   );
 
   const onStartSearch = useCallback(
-    (term: string) => {
+    (term: string, searchMatchCase = matchCase) => {
       if (!onSearchItems) return;
 
       if (searching.current) {
-        if (searching.current.term === term) {
+        if (
+          searching.current.term === term &&
+          searching.current.matchCase === searchMatchCase
+        ) {
           return;
         } else {
           clearTimeout(searching.current.timeout);
@@ -103,6 +107,7 @@ export const useSearchListSearch = (
         searching.current = {
           dataSignature,
           term,
+          matchCase: searchMatchCase,
           cancelCurrentSearch: undefined,
           timeout: setTimeout(() => {
             if (!getIsMounted()) return;
@@ -111,9 +116,14 @@ export const useSearchListSearch = (
             try {
               void onSearchItems(
                 term,
-                { matchCase },
+                { matchCase: searchMatchCase },
                 (searchItems, finished, cancel) => {
-                  if (!searching.current) return;
+                  if (
+                    !searching.current ||
+                    searching.current.term !== term ||
+                    searching.current.matchCase !== searchMatchCase
+                  )
+                    return;
                   searching.current.cancelCurrentSearch = () => {
                     updateSearchState({
                       searchingItems: false,
@@ -189,7 +199,7 @@ export const useSearchListSearch = (
       setMatchCaseValue(value);
       updateSearchState({ searchClosed: false });
       if (searchTerm) {
-        onStartSearch(searchTerm);
+        onStartSearch(searchTerm, value);
       }
     },
     [onStartSearch, searchTerm, updateSearchState],

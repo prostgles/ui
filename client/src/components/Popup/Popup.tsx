@@ -18,6 +18,7 @@ import { popupCheckPosition } from "./popupCheckPosition";
 
 const MODAL_ROOT_ID = "modal-root";
 let modalRoot: HTMLElement | null = null;
+let cssAnchorId = 0;
 export const getModalRoot = (forPointer = false) => {
   const id = forPointer ? "pointer-root" : MODAL_ROOT_ID;
   let node = document.getElementById(id);
@@ -73,12 +74,15 @@ export type PopupProps = TestSelectors & {
   ) => void;
   title?: React.ReactNode | ((rootDiv: HTMLDivElement) => React.ReactNode);
   subTitle?: string;
+  headerIcon?: React.ReactNode;
+  headerLeftContent?: React.ReactNode;
   headerRightContent?: React.ReactNode;
   content?: React.ReactNode;
   footer?: React.ReactNode;
   contentClassName?: string;
   rootChildClassname?: string;
   contentStyle?: React.CSSProperties;
+  footerStyle?: React.CSSProperties;
 
   children?: React.ReactNode;
   clickCatchStyle?: React.CSSProperties;
@@ -89,8 +93,7 @@ export type PopupProps = TestSelectors & {
    * */
   onClickClose?: boolean;
   footerButtons?:
-    | FooterButton[]
-    | ((popupClose: PopupProps["onClose"]) => FooterButton[]);
+    FooterButton[] | ((popupClose: PopupProps["onClose"]) => FooterButton[]);
   anchorEl?: HTMLElement | Element;
   /**
    * Number of pixels to offset from anchor
@@ -104,6 +107,7 @@ export type PopupProps = TestSelectors & {
     | "beneath-center"
     | "beneath-right"
     | "beneath-left"
+    | "beneath-left-css"
     | "beneath-left-minfill"
     | "inside"
     | "tooltip"
@@ -209,9 +213,48 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
   };
 
   rObserver?: ResizeObserver;
+  cssAnchor: { name: string; cleanup: VoidFunction } | undefined;
+  setCSSAnchor = () => {
+    this.cssAnchor?.cleanup();
+    this.cssAnchor = undefined;
+    const { anchorEl, positioning } = this.props;
+    if (
+      positioning !== "beneath-left-css" ||
+      !(anchorEl instanceof HTMLElement) ||
+      !CSS.supports("position-area", "bottom span-right") ||
+      !CSS.supports("position-try-fallbacks", "flip-inline")
+    ) {
+      return;
+    }
+
+    const name = `--popup-anchor-${++cssAnchorId}`;
+    const previousAnchorName = anchorEl.style.getPropertyValue("anchor-name");
+    const previousPriority = anchorEl.style.getPropertyPriority("anchor-name");
+    const currentAnchorName =
+      getComputedStyle(anchorEl).getPropertyValue("anchor-name");
+    anchorEl.style.setProperty(
+      "anchor-name",
+      currentAnchorName && currentAnchorName !== "none" ?
+        `${currentAnchorName}, ${name}`
+      : name,
+      previousPriority,
+    );
+    this.cssAnchor = {
+      name,
+      cleanup: () => {
+        anchorEl.style.setProperty(
+          "anchor-name",
+          previousAnchorName,
+          previousPriority,
+        );
+      },
+    };
+  };
+
   onMount() {
     this.el.classList.add("w-fit", "h-fit");
     if (modalRoot) modalRoot.appendChild(this.el);
+    this.setCSSAnchor();
     setTimeout(() => {
       this.checkPosition();
       const { autoFocusFirst } = this.props;
@@ -268,13 +311,30 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
 
   toggledFullScreen = 0;
   onDelta(deltaP: DeltaOf<PopupProps>, deltaS: DeltaOf<PopupState>): void {
+    if (
+      deltaP &&
+      ("anchorEl" in deltaP || "positioning" in deltaP) &&
+      (this.cssAnchor || this.props.positioning === "beneath-left-css")
+    ) {
+      this.setCSSAnchor();
+      this.checkPosition();
+    }
     if (deltaS && "fullScreen" in deltaS) {
       this.toggledFullScreen = Date.now();
+    }
+    /* Content can outgrow a constrained popup without resizing its root. */
+    if (
+      !this.props.persistInitialSize &&
+      deltaP &&
+      ("children" in deltaP || "content" in deltaP)
+    ) {
+      this.checkPosition();
     }
     this.setMainNodeVisibility(this.state.fullScreen !== true);
   }
 
   onUnmount() {
+    this.cssAnchor?.cleanup();
     this.setMainNodeVisibility(true);
     if (modalRoot) {
       try {
@@ -387,16 +447,6 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
                 this.ref = r;
               }
             }}
-            onClick={
-              !(onClickClose && onClose) ? undefined : (
-                (e) => {
-                  if (window.getSelection()?.toString()) {
-                    return;
-                  }
-                  onClose(e);
-                }
-              )
-            }
             style={{
               boxSizing: "content-box",
               ...style,
@@ -442,6 +492,16 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
                     ...contentFullScreenStyle,
                   }}
                   data-command={"Popup.content" satisfies Command}
+                  onClick={
+                    !(onClickClose && onClose) ? undefined : (
+                      (e) => {
+                        if (window.getSelection()?.toString()) {
+                          return;
+                        }
+                        onClose(e);
+                      }
+                    )
+                  }
                 >
                   <ErrorTrap>{content || children}</ErrorTrap>
                 </div>
@@ -454,6 +514,7 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
                 "footer",
                 "onClose",
               ] satisfies (keyof FooterButtonsProps)[])}
+              style={this.props.footerStyle}
               data-command="Popup.footer"
             />
           </div>

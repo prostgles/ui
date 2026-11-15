@@ -19,12 +19,17 @@ import { tout } from "@src/utils/tout";
 import { spawn } from "child_process";
 import type { NextFunction, Request, Response } from "express";
 import path from "path";
-import type { DBOFullyTyped } from "prostgles-server";
+import type { DBOFullyTyped, DBOFullyTypedClient } from "prostgles-server";
 import type { VoidFunction } from "prostgles-server/dist/SchemaWatch/SchemaWatch";
-import { getKeys, omitKeys, type AnyObject } from "prostgles-types";
+import {
+  getKeys,
+  getSerialisableError,
+  omitKeys,
+  type AnyObject,
+} from "prostgles-types";
 import { getAuthSetupData } from "./authConfig/subscribeToAuthSetupChanges";
 import { ConnectionManager } from "./ConnectionManager/ConnectionManager";
-import { actualRootDir, getElectronConfig } from "./electronConfig";
+import { DIRECTORIES, getElectronConfig } from "./electronConfig";
 import { initExpressAndIOServers } from "./init/initExpressAndIOServers";
 import { setDBSRoutesForElectron } from "./init/setDBSRoutesForElectron";
 import type {
@@ -36,6 +41,7 @@ import {
   startingProstglesResult,
   tryStartProstgles,
 } from "./init/tryStartProstgles";
+import { RUNTIME_MODE } from "./runtimeMode";
 
 const { app, http, io } = initExpressAndIOServers();
 
@@ -94,6 +100,13 @@ app.get(API_ENDPOINTS.DBS, (req, res) => {
               "Failed to start prostgles. Check logs"
             : "Could not connect to the state database. Check logs",
         }
+      : initState.state === "error" ?
+        {
+          ...initState,
+          error:
+            getSerialisableError(initState.error) ??
+            "Failed to start Prostgles",
+        }
       : initState.state === "ok" ?
         omitKeys(initState, nonSerialiseableOrNotNeededKeys)
       : initState,
@@ -103,16 +116,14 @@ app.get(API_ENDPOINTS.DBS, (req, res) => {
     electronConfig?.isElectron && electronConfig.hasCredentials() ?
       electronConfig.getCredentials()
     : undefined;
-  /** Provide credentials if there is a connection error so the user can rectify it */
+  /* Let the authenticated desktop app edit saved details after any startup error. */
   if (
     electronCreds &&
     serverState.initState.state === "error" &&
-    serverState.initState.errorType === "connection" &&
     (req.cookies as AnyObject)[sidKeyName] ===
       electronConfig?.sidConfig.electronSid
   ) {
-    serverState.electronCreds =
-      electronCreds as typeof serverState.electronCreds;
+    serverState.electronCreds = electronCreds;
   }
   /** Alert admin if x-real-ip is spoofable */
   let xRealIpSpoofable = false;
@@ -141,7 +152,7 @@ const serveIndexIfNoCredentialsOrInitError = async (
   } = getProstglesState();
   if (state !== "ok" || (isElectron && !electronCredsProvided)) {
     if (req.method === "GET" && !req.path.startsWith(API_ENDPOINTS.DBS)) {
-      res.sendFile(path.resolve(actualRootDir + "/../client/build/index.html"));
+      res.sendFile(path.resolve(DIRECTORIES.CLIENT_BUILD, "index.html"));
       return;
     }
   }
@@ -215,6 +226,7 @@ export type BareConnectionDetails = Pick<
   | "ssl_certificate"
 >;
 export type DBS = DBOFullyTyped<DBGeneratedSchema>;
+export type DBSClient = DBOFullyTypedClient<DBGeneratedSchema>;
 export type Users = DBSSchema["users"];
 export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
 export type DatabaseConfigs = DBSSchema["database_configs"];
@@ -262,12 +274,12 @@ export const startServer = async (
  * Start the server if not electron
  * Otherwise it will be started from electron/main.ts
  */
-if (require.main === module) {
+if (RUNTIME_MODE === "cli" || RUNTIME_MODE === "default") {
   void startServer((result, dbStartupInfo) => {
     if (dbStartupInfo.state === "error") {
       console.error("Failed to start prostgles", dbStartupInfo);
       process.exit(1);
     }
-    console.log("Server started", result);
+    console.log("Server started", result, `http://localhost:${result.port}`);
   });
 }

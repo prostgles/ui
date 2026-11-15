@@ -73,14 +73,14 @@ export const navbarUIDoc = {
         },
         {
           type: "list",
-          selector: ".table-component",
+          selectorCommand: "SmartCardList",
           title: "User List",
           description: "List of all users in the system.",
-          itemSelector: ".TableBody div[role='row']",
+          itemSelector: ".SmartCard",
           itemContent: [
             {
               type: "smartform-popup",
-              selectorCommand: "dashboard.window.viewEditRow",
+              selectorCommand: "SmartCard.viewEditRow",
               title: "Edit User",
               description: "Edit user details.",
               tableName: "users",

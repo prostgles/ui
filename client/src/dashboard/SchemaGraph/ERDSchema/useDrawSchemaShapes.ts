@@ -1,7 +1,7 @@
 import type { Deck, MapView, OrthographicView } from "deck.gl";
 import { useCallback, useEffect, useRef } from "react";
 import { createHiPPICanvas } from "src/dashboard/Charts/createHiPPICanvas";
-import { isDefined } from "../../../utils/utils";
+import { clamp, isDefined } from "../../../utils/utils";
 import type { LinkLine, Rectangle } from "../../Charts/CanvasChart";
 import { drawShapes, type ShapeV2 } from "../../Charts/drawShapes/drawShapes";
 import { getCssVariableValue } from "../../Charts/TimeChart/getCssVariableValue";
@@ -15,10 +15,6 @@ export const minScale = 0.1;
 export const maxScale = 5;
 const minPan = -2000;
 const maxPan = 2000;
-
-export const clamp = (value: number, min: number, max: number) => {
-  return Math.min(Math.max(value, min), max);
-};
 
 export const useDrawSchemaShapes = (
   props: Pick<

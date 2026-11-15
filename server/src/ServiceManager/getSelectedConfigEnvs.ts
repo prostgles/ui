@@ -1,14 +1,14 @@
-import type { DBS } from "..";
-import {
-  prostglesServices,
-  type ProstglesService,
-} from "./ServiceManagerTypes";
+import type { ServiceManager } from "./ServiceManager";
+import { type ProstglesService } from "./ServiceManagerTypes";
 
 export const getSelectedConfigEnvs = async (
-  dbs: DBS | undefined,
-  serviceName: keyof typeof prostglesServices,
+  serviceManager: ServiceManager,
+  serviceName: string,
 ) => {
-  const serviceConfig = prostglesServices[serviceName] as ProstglesService;
+  const serviceConfig = serviceManager.services[
+    serviceName
+  ] as ProstglesService;
+  const dbs = serviceManager.dbs;
   const serviceRecord = await dbs?.services.findOne({ name: serviceName });
   let env = serviceConfig.env || {};
   const buildArgs: string[] = [];

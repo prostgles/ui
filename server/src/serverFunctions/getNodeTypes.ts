@@ -3,9 +3,22 @@ import * as path from "path";
 
 const toPosixPath = (p: string) => p.split(path.sep).join("/");
 
-export const getNodeTypes = () => {
-  const pathToProject = path.resolve(__dirname, "../../../..");
-  const files = extractInstalledPackageTypes(pathToProject);
+const SERVER_DIR = path.resolve(__dirname, "../../../..");
+export const getNodeTypes = (projectPath?: string) => {
+  const files = extractInstalledPackageTypes(projectPath ?? SERVER_DIR);
+  if (projectPath) {
+    const projectFiles = ts.sys.readDirectory(
+      path.resolve(projectPath),
+      [".ts", ".tsx", ".mts", ".cts"],
+      ["**/node_modules", "**/.git", "**/dist", "**/build"],
+    );
+    for (const filePath of projectFiles) {
+      const content = ts.sys.readFile(filePath);
+      if (content !== undefined) {
+        files.push({ filePath: toPosixPath(filePath), content });
+      }
+    }
+  }
   return files;
 };
 
@@ -63,34 +76,33 @@ const extractInstalledPackageTypes = (projectDir: string): TypeFile[] => {
     }
   });
 
-  // 3. For each dependency, locate its package.json and check for a "types" or "typings" field.
+  const compilerOptions: ts.CompilerOptions = {
+    allowJs: false,
+    moduleResolution: ts.ModuleResolutionKind.Node16,
+    baseUrl: projectDir,
+  };
+  /* Resolve declaration entrypoints through nested and hoisted node_modules. */
   const rootTypeFiles: {
     pkgName: string;
     typesFilePath: string;
-    depPkgContent: string;
-    depPkgPath: string;
   }[] = [];
   for (const depName of depNames) {
-    // Assume package is at projectDir/node_modules/<depName>
-    const depDir = path.join(projectDir, "node_modules", depName);
-    const depPkgPath = path.join(depDir, "package.json");
-    if (!ts.sys.fileExists(depPkgPath)) continue;
-
-    const depPkgContent = ts.sys.readFile(depPkgPath);
-    if (!depPkgContent) continue;
-    let depPkg;
-    try {
-      depPkg = JSON.parse(depPkgContent);
-    } catch {
+    const { resolvedModule } = ts.resolveModuleName(
+      depName,
+      projectPkgPath,
+      { ...compilerOptions, preserveSymlinks: true },
+      ts.sys,
+    );
+    if (
+      !resolvedModule ||
+      ![".d.ts", ".d.mts", ".d.cts"].includes(resolvedModule.extension)
+    ) {
       continue;
     }
-    const typesField = depPkg.types || depPkg.typings;
-    if (!typesField) continue;
-    const typesFilePath = path.join(depDir, typesField);
-    if (!ts.sys.fileExists(typesFilePath)) continue;
+    const typesFilePath = resolvedModule.resolvedFileName;
     const pkgName = depName.startsWith("@types/") ? depName.slice(7) : depName;
 
-    rootTypeFiles.push({ pkgName, typesFilePath, depPkgContent, depPkgPath });
+    rootTypeFiles.push({ pkgName, typesFilePath });
   }
 
   // If no package provides a types entry point, return an empty array.
@@ -99,11 +111,6 @@ const extractInstalledPackageTypes = (projectDir: string): TypeFile[] => {
   }
 
   // 4. Create a TS program using the type entry files as roots.
-  const compilerOptions: ts.CompilerOptions = {
-    allowJs: false,
-    moduleResolution: ts.ModuleResolutionKind.Node16,
-    baseUrl: projectDir,
-  };
   const program = ts.createProgram(
     rootTypeFiles.map((rtp) => rtp.typesFilePath),
     compilerOptions,
@@ -112,6 +119,20 @@ const extractInstalledPackageTypes = (projectDir: string): TypeFile[] => {
   // 5. Recursively collect declaration files from each root.
   const collected = new Map<string, TypeFile>();
   const nodeModulesRoot = path.resolve(projectDir, "node_modules");
+  const getNodeModulesRelativePath = (targetPath: string) => {
+    const projectRelativePath = toPosixPath(
+      path.relative(projectDir, targetPath),
+    );
+    if (projectRelativePath.startsWith("node_modules/")) {
+      return projectRelativePath;
+    }
+    const normalizedPath = toPosixPath(path.resolve(targetPath));
+    const marker = "/node_modules/";
+    const markerIndex = normalizedPath.indexOf(marker);
+    return markerIndex === -1 ? undefined : (
+        normalizedPath.slice(markerIndex + 1)
+      );
+  };
   const isInsideNodeModules = (targetPath: string): boolean => {
     const rel = path.relative(nodeModulesRoot, targetPath);
     return !rel.startsWith("..") && !path.isAbsolute(rel);
@@ -119,7 +140,7 @@ const extractInstalledPackageTypes = (projectDir: string): TypeFile[] => {
   function addNearestPackageJson(fileName: string) {
     let dir = path.dirname(fileName);
 
-    while (isInsideNodeModules(dir)) {
+    while (isInsideNodeModules(dir) || getNodeModulesRelativePath(dir)) {
       const pkgJsonPath = path.join(dir, "package.json");
       if (ts.sys.fileExists(pkgJsonPath)) {
         if (!collected.has(pkgJsonPath)) {
@@ -212,32 +233,19 @@ const extractInstalledPackageTypes = (projectDir: string): TypeFile[] => {
   }
 
   // For each package's root type file, collect its source and any referenced files.
-  for (const {
-    depPkgContent,
-    depPkgPath,
-    pkgName,
-    typesFilePath,
-  } of rootTypeFiles) {
+  for (const { pkgName, typesFilePath } of rootTypeFiles) {
     const sf = program.getSourceFile(typesFilePath);
     if (sf) {
       collectSourceFile(sf, pkgName, pkgName);
-    }
-
-    /** This is needed for monaco-editor to work out index.d.ts path */
-    if (
-      depPkgContent.includes('"types"') ||
-      depPkgContent.includes('"typings"')
-    ) {
-      collected.set(depPkgPath, {
-        filePath: depPkgPath,
-        content: depPkgContent,
-      });
     }
   }
 
   const result = Array.from(collected.values()).map((file) => ({
     ...file,
-    filePath: "/" + toPosixPath(path.relative(projectDir, file.filePath)),
+    filePath:
+      "/" +
+      (getNodeModulesRelativePath(file.filePath) ??
+        toPosixPath(path.relative(projectDir, file.filePath))),
   }));
   return result;
 };

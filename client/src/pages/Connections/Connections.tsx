@@ -12,6 +12,8 @@ import { ConnectionsOptions } from "./ConnectionsOptions";
 import { CreateConnection } from "./CreateConnection/CreateConnection";
 import { useConnections } from "./useConnections";
 import { useConnectionServersList } from "./useConnectionServersList";
+import { Navigate } from "react-router";
+import { USER_TYPES } from "@common/authTypesAndConstants";
 
 export const Connections = (props: AppContextProps) => {
   const { user, dbs, dbsMethods, dbsSql } = props;
@@ -19,6 +21,11 @@ export const Connections = (props: AppContextProps) => {
   const { connections, isAdmin, showDbNames } = state;
   const { serverUserGroupings } = useConnectionServersList(state);
   if (!user || !connections || !serverUserGroupings) return <Loading />;
+  if (user.type !== USER_TYPES.ADMIN && connections.length === 1) {
+    return (
+      <Navigate to={`${ROUTES.CONNECTIONS}/${connections[0]!.id}`} replace />
+    );
+  }
 
   const {
     createConnection,
@@ -32,7 +39,7 @@ export const Connections = (props: AppContextProps) => {
       data-command="Connections"
       className="Connections gap-0 f-1 w-full min-h-0"
     >
-      <div className="flex-row as-center w-full gap-p5 mt-1 p-p5  max-w-800">
+      <div className="flex-row as-center w-full gap-p5 px-p5 pb-p5 max-w-800">
         {!connections.length && (
           <InfoRow color="info" className=" f-1 w-full">
             {t.Connections["No connections available/permitted"]}

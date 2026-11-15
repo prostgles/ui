@@ -5,6 +5,7 @@ const timeoutMinutes = 6;
 const IS_PIPELINE = !!process.env.CI;
 
 export default defineConfig({
+  tsconfig: "./tests/tsconfig.json",
   timeout: timeoutMinutes * 6e4,
   testDir: "./tests",
   fullyParallel: false,
@@ -12,7 +13,11 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
 
   retries: 0,
-  workers: process.env.CI ? 1 : 4,
+  /* A configured database pair can only be used by one deployment at a time. */
+  workers:
+    process.env.PROSTGLES_E2E_DB_NAMES_PREFIX?.trim() ? 1
+    : process.env.CI ? 2
+    : 4,
   reporter: [["html", { noCopyPrompt: true }]],
   use: {
     baseURL: "http://localhost:3004",
@@ -22,7 +27,7 @@ export default defineConfig({
     testIdAttribute: "data-command",
     actionTimeout: IS_PIPELINE ? 15e3 : 5e3,
   },
-  maxFailures: 0,
+  maxFailures: 1,
   projects: [
     {
       name: "chromium",

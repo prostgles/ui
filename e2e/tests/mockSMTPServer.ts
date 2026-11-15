@@ -1,6 +1,17 @@
 import { SMTPServer, SMTPServerOptions } from "smtp-server";
 
-export const startMockSMTPServer = () => {
+export const startMockSMTPServer = async ({
+  port = 3017,
+  disabledCommands,
+  onEmail,
+}: {
+  port?: number;
+  disabledCommands?: SMTPServerOptions["disabledCommands"];
+  onEmail?: (
+    email: { recipient: string; message: string },
+    callback: (error?: Error) => void,
+  ) => void;
+} = {}) => {
   const emails: string[] = [];
   const getEmails = () => emails;
 
@@ -20,6 +31,7 @@ export const startMockSMTPServer = () => {
       */
     },
     authOptional: true,
+    disabledCommands,
     secure: false,
     onConnect(session, callback) {
       console.log("Client connected:", session.remoteAddress);
@@ -47,10 +59,18 @@ export const startMockSMTPServer = () => {
       });
 
       stream.on("end", () => {
+        if (onEmail) {
+          const [recipient] = session.envelope.rcptTo;
+          onEmail(
+            { recipient: recipient?.address ?? "", message: mailData },
+            callback,
+          );
+          return;
+        }
         console.log("Received mail:");
         console.log("------------------------");
         console.log(mailData.replaceAll("=3D", "="));
-        emails.push(mailData.replaceAll("=3D", "="));
+        emails.push(mailData.replace(/=\r?\n/g, "").replaceAll("=3D", "="));
         console.log("------------------------");
         callback();
       });
@@ -62,11 +82,6 @@ export const startMockSMTPServer = () => {
 
   const server = new SMTPServer(serverOptions);
 
-  const PORT = 3017;
-  server.listen(PORT, "127.0.0.1", () => {
-    console.log(`Mock SMTP Server running on port ${PORT}`);
-  });
-
   server.on("error", (err) => {
     console.error("Server error:", err);
   });
@@ -75,7 +90,27 @@ export const startMockSMTPServer = () => {
     console.log("Server closed");
   });
 
+  await new Promise<void>((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(port, "127.0.0.1", () => {
+      server.removeListener("error", reject);
+      resolve();
+    });
+  });
+  const address = server.server.address();
+  if (!address || typeof address === "string") {
+    throw new Error("SMTP port missing");
+  }
+  console.log(`Mock SMTP Server running on port ${address.port}`);
+
   return {
     getEmails,
+    getLatestCode: () => {
+      const code = emails.at(-1)?.match(/[?&]code=(\d{6})\b/)?.[1];
+      if (!code) throw new Error("Confirmation code missing from latest email");
+      return code;
+    },
+    port: address.port,
+    close: () => new Promise<void>((resolve) => server.close(resolve)),
   };
 };

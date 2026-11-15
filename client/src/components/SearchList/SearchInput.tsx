@@ -5,7 +5,6 @@ import Btn from "../Btn";
 import { classOverride, FlexRow } from "../Flex";
 import { Input } from "../Input";
 import Loading from "../Loader/Loading";
-import { ClickCatchOverlayZIndex } from "@components/ClickCatchOverlay";
 
 export const SearchInputZIndex = 2;
 
@@ -50,8 +49,6 @@ export const SearchInput = (props: SearchInputProps) => {
     ...inputProps
   } = props;
 
-  const size = window.isLowWidthScreen ? "small" : undefined;
-
   return (
     <FlexRow
       ref={inputWrapperRef}
@@ -75,20 +72,17 @@ export const SearchInput = (props: SearchInputProps) => {
         type={type}
         ref={inputRef}
         style={{
-          minWidth: "5em",
           ...(mode?.["!noList"] && {
             borderBottomLeftRadius: 0,
             borderBottomRightRadius: 0,
-            zIndex: ClickCatchOverlayZIndex + 1,
           }),
           ...(matchCaseState && {
             borderTopRightRadius: 0,
             borderBottomRightRadius: 0,
           }),
-          ...(size !== "small" && {
-            padding: "0.5em",
-            paddingRight: 0,
-          }),
+          lineHeight: "20px",
+          padding: "3px 8px",
+          paddingRight: 0,
           ...(leftContent && {
             paddingLeft: 0,
           }),
@@ -128,9 +122,8 @@ export const SearchInput = (props: SearchInputProps) => {
             iconPath={mdiFormatLetterCase}
             style={{
               visibility: isLoading ? "hidden" : "visible",
-              padding: "6px",
             }}
-            size="small"
+            size="micro"
             color={matchCaseState.value ? "action" : undefined}
             onClick={() => {
               matchCaseState.onChange(!matchCaseState.value);

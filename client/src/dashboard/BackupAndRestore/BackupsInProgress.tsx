@@ -38,7 +38,9 @@ export const BackupsInProgress = ({
           name: "created_ago" as "created",
           label: "Started",
           select: { $ageNow: ["created", null, "second"] },
-          render: (value: PG_Interval) => <StyledInterval value={value} />,
+          render: (value: PG_Interval) => (
+            <StyledInterval value={value} showAgo />
+          ),
         },
         {
           name: "status",

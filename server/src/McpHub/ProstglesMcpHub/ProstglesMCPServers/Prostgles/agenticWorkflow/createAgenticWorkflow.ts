@@ -1,5 +1,5 @@
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
-import type { DBSSchemaForInsert } from "@common/publishUtils";
+import type { DBSSchema, DBSSchemaForInsert } from "@common/publishUtils";
 import {
   fromEntries,
   getEntries,
@@ -11,12 +11,21 @@ import {
   omitKeys,
   type JSONBObjectTypeIfDefined,
 } from "prostgles-types";
-import type { McpCallContext } from "../../../ProstglesMCPServerTypes";
+import type { DBS } from "@src/index";
+
 import { validateAgenticWorkflowDefinitions } from "./definitionValidation/validateAgenticWorkflowDefinitions";
 import { startAgenticWorkflowContainer } from "./execution/startAgenticWorkflowContainer";
 import type { ProxyCallDataDefinitions } from "./runtimeSdk/defineAgenticWorkflowHandlers.types";
 import type { TableSchemaOpts } from "./runtimeSetup/getDefineAgenticWorkflowTsWithDbAndMcpTypes";
 
+export type WorkflowContext = {
+  dbs: DBS;
+  user_id: string;
+  connection_id: string;
+  chat?: DBSSchema["llm_chats"];
+  messageId?: string;
+  toolUseId?: string;
+};
 type Args = JSONBObjectTypeIfDefined<
   (typeof PROSTGLES_MCP_SERVERS_AND_TOOLS)["prostgles-ui"]["create_agentic_workflow"]["schema"]["type"]
 >;
@@ -34,13 +43,8 @@ const getValidWorkflowDefinition = async (
     aborter: AbortController;
     tableSchemaOpts: TableSchemaOpts;
   },
-  { user_id, chat, dbs, clientReq, messageId, toolUseId }: McpCallContext,
+  { user_id, chat, dbs, messageId, toolUseId }: WorkflowContext,
 ) => {
-  if (!toolUseId) {
-    throw new Error(
-      "tool_use_id is required to create or update an agentic workflow",
-    );
-  }
   return new Promise<
     | {
         isValid: true;
@@ -59,10 +63,8 @@ const getValidWorkflowDefinition = async (
         user_id,
         workflow_function_definition,
         package_dependencies,
-        chat,
         abortSignal: aborter.signal,
         connection_id,
-        messageId,
       },
       {
         type: "definitions-only",
@@ -89,18 +91,15 @@ const getValidWorkflowDefinition = async (
         const definition_data = omitKeys(definitions, ["name"]);
 
         await validateAgenticWorkflowDefinitions(definitionData, {
-          chatId: chat.id,
+          chatId: chat?.id,
           connection_id,
           dbs,
-          clientReq,
           userId: user_id,
           messageId,
         }).then(({ agentConfigsWithDefaults, newTables }) => {
           const workflowInsertData: DBSSchemaForInsert["agentic_workflows"] = {
             user_id,
             name: definitions.name,
-            chat_id: chat.id,
-            message_id: messageId,
             tool_use_id: toolUseId,
             definition: workflow_function_definition,
             definition_summary: workflow_function_definition_summary,
@@ -150,21 +149,22 @@ const getValidWorkflowDefinition = async (
   });
 };
 
-export const createAgenticWorkflow = async (
+export const validateWorkflowDefinition = async (
   {
     workflow_function_definition,
     workflow_function_definition_summary,
     workflowId,
     package_dependencies,
   }: Args,
-  ctx: McpCallContext,
+  ctx: WorkflowContext,
 ) => {
-  const { dbs, chat, user_id } = ctx;
-  const { connection_id } = chat;
+  const { connection_id } = ctx;
   if (!connection_id) {
-    throw new Error("Chat is missing connection_id");
+    throw new Error("Workflow is missing connection_id");
   }
   const aborter = new AbortController();
+  const needsSchemaDiscovery =
+    workflow_function_definition.includes("ddlStatements");
 
   const initialBuild = await getValidWorkflowDefinition(
     {
@@ -173,17 +173,18 @@ export const createAgenticWorkflow = async (
       workflowId,
       connection_id,
       aborter,
-      tableSchemaOpts: {
-        type: "generic",
-      },
+      tableSchemaOpts:
+        needsSchemaDiscovery ?
+          { type: "generic" }
+        : { type: "full", ddlStatements: undefined },
       package_dependencies,
     },
     ctx,
   );
 
-  /** We check a second time with actual table schemas */
+  /* Only repeat when the first pass used generic types to discover DDL. */
   let res = initialBuild;
-  if (initialBuild.isValid) {
+  if (initialBuild.isValid && needsSchemaDiscovery) {
     const databaseAccessDefinitions =
       initialBuild.data.definition_override?.databaseAccessDefinitions ??
       initialBuild.data.definition_data.databaseAccessDefinitions;
@@ -207,11 +208,27 @@ export const createAgenticWorkflow = async (
     );
   }
 
+  return res;
+};
+
+export const createAgenticWorkflow = async (
+  args: Args,
+  ctx: WorkflowContext,
+) => {
+  const { dbs, chat, user_id, connection_id } = ctx;
+  const { workflowId } = args;
+  const res = await validateWorkflowDefinition(args, ctx);
+
   if (res.isValid) {
     const { data: workflowInsertData } = res;
     if (workflowId) {
       const res = await dbs.agentic_workflows.update(
-        { id: workflowId, chat_id: chat.id, user_id },
+        {
+          id: workflowId,
+          connection_id,
+          user_id,
+          ...(chat && { source_key: null }),
+        },
         omitKeys(
           {
             ...workflowInsertData,
@@ -219,7 +236,7 @@ export const createAgenticWorkflow = async (
               $merge: [workflowInsertData.definition_override],
             },
           },
-          ["user_id", "chat_id"],
+          ["user_id"],
         ),
         { returning: { id: 1 } },
       );

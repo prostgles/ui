@@ -1,5 +1,6 @@
 import type { UIDocElement } from "../../../UIDocs";
 import { mapUIDoc } from "./mapUIDoc";
+import { serverSideFunctionUIDoc } from "./serverSideFunctionUIDoc";
 import { sqlEditorUIDoc } from "./sqlEditorUIDoc";
 import { tableUIDoc } from "./table/tableUIDoc";
 import { timechartUIDoc } from "./timechartUIDoc";
@@ -23,5 +24,11 @@ export const dashboardContentUIDoc = {
     - **Real-time updates**: Each table/view shows real-time data by default
     - **Cross-filtering**: Tables, maps, and timecharts stay cross-filtered when opened from the same source data, allowing you to explore your data from different angles while keeping the context.
     `,
-  children: [sqlEditorUIDoc, tableUIDoc, mapUIDoc, timechartUIDoc],
+  children: [
+    sqlEditorUIDoc,
+    tableUIDoc,
+    mapUIDoc,
+    timechartUIDoc,
+    serverSideFunctionUIDoc,
+  ],
 } satisfies UIDocElement;

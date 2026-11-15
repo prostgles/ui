@@ -11,7 +11,7 @@ import {
   mdiTable,
   mdiTableSearch,
 } from "@mdi/js";
-import { getKeys } from "prostgles-types";
+import { getKeys, isEmpty } from "prostgles-types";
 import React, { useState } from "react";
 import { DatabaseAccessEditorCustomTables } from "./DatabaseAccessEditorCustomTables";
 import { SwitchToggle } from "@components/SwitchToggle";
@@ -23,8 +23,7 @@ export type DatabaseAccessPermission = NonNullable<
 export type DatabaseAccessEditorProps = {
   value: DatabaseAccessPermission | undefined;
   onChange:
-    | undefined
-    | ((newValue: DatabaseAccessPermission | undefined) => void);
+    undefined | ((newValue: DatabaseAccessPermission | undefined) => void);
   contentRight?: React.ReactNode;
   newTables: DBSSchema["agentic_workflows"]["definition_data"]["newTables"];
   hideTablesWithoutAccess?: true;
@@ -40,9 +39,17 @@ export const DatabaseAccessEditor = ({
   const showSelect = value?.mode !== "custom" || onChange;
   const [showAllTables, setShowAllTables] = useState(!hideTablesWithoutAccess);
   const [showDetails, setShowDetails] = useState(false);
+
+  if (
+    value?.mode === "custom" &&
+    !value.ddlStatements &&
+    isEmpty(value.tablePermissions)
+  ) {
+    return null;
+  }
   return (
     <HeaderSection
-      className="gap-p5 ai-start"
+      className="gap-p5 ai-start max-w-fit"
       data-command="DatabaseAccessEditor"
       title={showSelect ? "" : "Database access"}
       titleEndContent={

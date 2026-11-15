@@ -2,4 +2,4 @@
 npm i && \
 npx playwright install && \
 npm run setup && \
-npx playwright test main.spec.ts --headed
+npm run test:main -- --headed

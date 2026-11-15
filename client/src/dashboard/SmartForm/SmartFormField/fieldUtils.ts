@@ -147,11 +147,17 @@ export const getInputType = (
     : ["address_line1", "address_line"].includes(c.name) ? "address-line1"
     : ["address_line2"].includes(c.name) ? "address-line2"
     : c.tsDataType === "string" ? "text"
-    : (c.tsDataType)
+    : c.tsDataType
   );
 };
 
-export const getInputAutocomplete = (c: ValidatedColumnInfo): string => {
+export const getInputAutocomplete = (
+  c: Pick<ValidatedColumnInfo, "name" | "udt_name">,
+): string => {
+  const noAutocomplete = ["date", "timestamp", "timestamptz"].includes(
+    c.udt_name,
+  );
+  if (noAutocomplete) return "off";
   const _autocomplete_values = [
     "address-line1",
     "address-line2",
@@ -176,15 +182,10 @@ export const getInputAutocomplete = (c: ValidatedColumnInfo): string => {
   const autocomplete_values = _autocomplete_values.concat(
     _autocomplete_values.map((v) => v.replaceAll("-", "_")),
   );
-  const noAutocomplete = ["date", "timestamp", "timestamptz"].includes(
-    c.udt_name,
-  );
-  return (
-    noAutocomplete ? "off"
-    : autocomplete_values.includes(c.name.toLowerCase()) ?
-      c.name.replaceAll("_", "-").toLowerCase()
-    : "on"
-  );
+
+  const autocompleteName = c.name.replaceAll("_", "-").toLowerCase();
+  const hasAutocomplete = autocomplete_values.includes(autocompleteName);
+  return hasAutocomplete ? autocompleteName : "on";
 };
 
 export const columnIsReadOnly = (

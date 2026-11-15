@@ -108,7 +108,7 @@ export const useLLMSchemaStr = ({ sql, connection, tables, activeChat }: P) => {
           );
         });
     const { tableConstraints, viewDefinitions } = definitions;
-    const viewDefinitonsMap = new Map(
+    const viewDefinitionsMap = new Map(
       viewDefinitions.map((v) => [v.oid.toString(), v.view_definition]),
     );
     const res =
@@ -116,7 +116,7 @@ export const useLLMSchemaStr = ({ sql, connection, tables, activeChat }: P) => {
         `The following tables currently exist in the database: ${allowedTables.map((t) => JSON.stringify(t.name))}`
       : allowedTables
           .map((t) => {
-            const viewDefinition = viewDefinitonsMap.get(t.oid.toString());
+            const viewDefinition = viewDefinitionsMap.get(t.oid.toString());
             if (viewDefinition) {
               return {
                 query: `CREATE VIEW ${t.name} AS ${viewDefinition}`,

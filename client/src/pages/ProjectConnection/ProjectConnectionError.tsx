@@ -1,3 +1,4 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import { mdiArrowLeft, mdiLogin } from "@mdi/js";
 import React from "react";
 import ErrorComponent from "@components/ErrorComponent";
@@ -20,7 +21,7 @@ export const ProjectConnectionError = (props: P) => {
   const { prglState, projectDb } = props;
 
   const canLogin =
-    !prglState.auth.user || prglState.auth.user.type === "public";
+    !prglState.auth.user || prglState.auth.user.type === USER_TYPES.PUBLIC;
   const error = projectDb.error;
   return (
     <FlexCol
@@ -44,6 +45,7 @@ export const ProjectConnectionError = (props: P) => {
           style={{ fontSize: "18px", fontWeight: "bold" }}
           className="mt-1"
           variant="outline"
+          size="default"
           asNavLink={true}
           href={`/`}
           iconPath={mdiArrowLeft}

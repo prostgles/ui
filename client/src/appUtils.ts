@@ -6,6 +6,7 @@ import type { SQLEditorRef } from "./dashboard/SQLEditor/W_SQLEditor";
 import type { getSVGif } from "./app/domToSVG/SVGif/getSVGif";
 import type { domToThemeAwareSVG } from "./app/domToSVG/domToThemeAwareSVG";
 import type { setThemeForSVGScreenshot } from "./app/domToSVG/setThemeForSVGScreenshot";
+import type { CLIENT_LOGS_KEY } from "@common/constants";
 
 type Unsubscribe = {
   unsubscribe: () => void;
@@ -114,6 +115,7 @@ declare global {
     getSVGif: typeof getSVGif;
     documentation: DocumentationFile[];
     flatUIDocs: UIDocFlat[];
+    [CLIENT_LOGS_KEY]: unknown[] | undefined;
   }
 
   interface HTMLDivElement {

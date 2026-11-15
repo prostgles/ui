@@ -1,7 +1,7 @@
 import React, { useRef } from "react";
 import "./Table.css";
 
-import type { ColumnSortSQL } from "../../dashboard/W_Table/ColumnMenu/ColumnMenu";
+import type { ColumnSortSQL } from "@common/ColumnConfig/ColumnConfig";
 import { classOverride } from "../Flex";
 import { Pagination } from "./Pagination";
 import { closest, PAGE_SIZES, type TableProps, type TableState } from "./Table";
@@ -81,6 +81,13 @@ export const TableBody = <Sort extends ColumnSortSQL>(
     mode: enableExperimentalVirtualisation ? "auto" : "off",
   });
 
+  // Only virtualised rows need their cached layout reset on resize.
+  // Remounting ordinary cells would discard their open popups.
+  const columnLayoutKey =
+    enableExperimentalVirtualisation ?
+      visibleCols.map((col) => `${col.key}:${col.width ?? "flex"}`).join("|")
+    : undefined;
+
   return (
     <div
       data-command="TableBody"
@@ -101,7 +108,7 @@ export const TableBody = <Sort extends ColumnSortSQL>(
         )
       }
     >
-      <div ref={scrollBodyRef} className="relative f-0">
+      <div key={columnLayoutKey} ref={scrollBodyRef} className="relative f-0">
         {!_rows.length ?
           <div className="text-3 p-2 noselect">No data</div>
         : _rows.map((row, iRow) => {

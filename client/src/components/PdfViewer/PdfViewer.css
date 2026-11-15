@@ -1,0 +1,111 @@
+.PdfViewer .pdf-viewer__annotations {
+  display: none;
+  min-width: 320px;
+  max-width: 40vw;
+}
+
+.PdfViewerAnnotations > .SmartCardListControls {
+  flex-shrink: 0;
+  flex-flow: row wrap;
+  align-items: center;
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--b-color);
+}
+
+@media (min-width: 1280px) {
+  .PdfViewer .pdf-viewer__annotations {
+    display: flex;
+  }
+
+  .pdf-viewer__annotations-menu {
+    display: none;
+  }
+}
+
+.PdfViewer .pdfViewer,
+.PdfViewer .pdfViewer * {
+  box-sizing: content-box;
+}
+
+.PdfViewer .pdfViewer .page {
+  margin: 0;
+  border: 0;
+}
+
+.PdfViewer .pdf-viewer__scroll {
+  position: absolute;
+  inset: 0;
+}
+
+.PdfViewer .pdf-viewer__continuous .page + .page {
+  margin-top: 1em;
+}
+
+.PdfViewer .pdfViewer .pdf-viewer__highlight-layer button,
+.PdfViewer .pdfViewer .pdf-viewer__highlight-layer button * {
+  box-sizing: border-box;
+}
+
+.pdf-viewer__highlight-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  mix-blend-mode: multiply;
+
+  /*
+   * Highlights must not capture pointer events, otherwise dragging over
+   * highlighted text will interrupt text selection.
+   */
+  pointer-events: none;
+}
+
+.pdf-viewer__highlight {
+  position: absolute;
+}
+
+.pdf-viewer__content {
+  anchor-scope: --pdf-selection;
+}
+
+.pdf-viewer__selection-anchor {
+  position: absolute;
+  anchor-name: --pdf-selection;
+}
+
+.pdf-viewer__selection-controls {
+  position: absolute;
+  z-index: 4;
+  right: 0;
+  bottom: 0;
+  width: max-content;
+  max-width: calc(100% - 1rem);
+  margin: 0.5rem;
+  pointer-events: auto;
+}
+
+@supports (position-area: bottom span-all) {
+  .pdf-viewer__selection-controls {
+    inset: auto;
+    position-anchor: --pdf-selection;
+    position-area: bottom span-all;
+    position-try-fallbacks: flip-block;
+    position-visibility: anchors-visible;
+  }
+}
+
+.pdf-viewer__tooltip {
+  position: absolute;
+  z-index: 3;
+  max-width: 20rem;
+  padding: 0.375rem 0.5rem;
+  color: white;
+  font:
+    0.75rem/1.4 system-ui,
+    sans-serif;
+  white-space: normal;
+  pointer-events: none;
+  background: rgb(20 20 20 / 92%);
+  border-radius: 0.25rem;
+  box-shadow: 0 0.25rem 0.75rem rgb(0 0 0 / 25%);
+  transform: translate(-50%, calc(-100% - 0.375rem));
+}

@@ -7,9 +7,8 @@ import type { DeckGLFeatureEditorProps } from "./DeckGLFeatureEditor";
 import "./DeckGLMap.css";
 import type { Bounds, DeckGlLibs } from "./DeckGLWrapped";
 import { DeckWrapped, getDeckLibs, getViewState } from "./DeckGLWrapped";
-import { makeImageLayer, makeTileLayer } from "./mapUtils";
-
-export type Extent = [number, number, number, number];
+import { isVectorTileURL, makeImageLayer, makeTileLayer } from "./mapUtils";
+import { MVT_BACKGROUND_COLOR } from "./MVTRendering/MVTLayerProps";
 
 type OnClickEvent = {
   coordinate?: [number, number];
@@ -46,13 +45,14 @@ export type Point = [number, number];
 
 import type { GeoJsonLayer } from "deck.gl";
 import type { Feature } from "geojson";
-import type { MapExtent } from "../Dashboard/dashboardUtils";
 import type { MAP_SELECT_COLUMNS } from "../W_Map/fetchData/getMapData";
 import { InMapControls } from "./InMapControls";
+import type { Extent } from "@common/ColumnConfig/mapConstants";
+
+type MapExtent = [[number, number], [number, number]];
 
 export type DeckGlColor =
-  | [number, number, number]
-  | [number, number, number, number];
+  [number, number, number] | [number, number, number, number];
 
 export type GeoJSONFeature = Omit<Feature, "properties"> & {
   properties: (
@@ -127,25 +127,6 @@ export type HoverCoords = {
   screenCoordinates?: [number, number];
   coordinates?: [number, number];
 };
-export const MapExtentBehavior = [
-  {
-    key: "autoZoomToData",
-    label: "Follow data",
-    subLabel: "Will zoom to data extent on data change",
-  },
-  {
-    key: "filterToMapBounds",
-    label: "Follow map",
-    subLabel: "Filters data to map bounds",
-  },
-  {
-    key: "freeRoam",
-    label: "Free roam",
-    subLabel: "Map bounds filter not applied",
-  },
-] as const;
-
-export type MapExtentBehavior = (typeof MapExtentBehavior)[number]["key"];
 
 export type DecKGLMapProps = {
   basemapOpacity: number;
@@ -348,6 +329,7 @@ export class DeckGLMap extends RTComp<DecKGLMapProps, DeckGLMapState, D> {
         dP?.basemapDesaturate ||
         dP?.basemapOpacity ||
         dP?.basemapZoomOffset ||
+        (dP && "enableCollisionFilter" in dP) ||
         "editedFeaturesLayer" in dD)
     ) {
       this.deckW.render({
@@ -451,11 +433,15 @@ export class DeckGLMap extends RTComp<DecKGLMapProps, DeckGLMapState, D> {
             type: "FeatureCollection",
             features: g.features,
           },
-          /** Disabled due to bad experience (features missing) */
-          extensions:
-            enableCollisionFilter ?
-              [new deckGlLibs.extensions.CollisionFilterExtension()]
-            : [],
+          _subLayerProps: {
+            "points-text":
+              enableCollisionFilter !== false ?
+                {
+                  type: deckGlLibs.lib.CollisionFilteredTextLayer,
+                  background: true,
+                }
+              : {},
+          },
           filled: true,
 
           getPointRadius: (f) => (g.getIcon ? 0.1 : (f.properties.radius ?? 1)),
@@ -543,11 +529,18 @@ export class DeckGLMap extends RTComp<DecKGLMapProps, DeckGLMapState, D> {
   deckW?: DeckWrapped;
   render() {
     const { deckW, deckGlLibs } = this;
+    const hasVectorBasemap =
+      this.props.projection !== "orthographic" &&
+      this.props.tileURLs?.some(isVectorTileURL);
     return (
       <div
         className="relative flex-row f-1"
         style={{
           overscrollBehavior: "contain",
+          backgroundColor:
+            hasVectorBasemap ?
+              `rgba(${MVT_BACKGROUND_COLOR.join(", ")}, ${this.props.basemapOpacity})`
+            : undefined,
         }}
         onMouseDown={() => {
           this.mouseDown = true;

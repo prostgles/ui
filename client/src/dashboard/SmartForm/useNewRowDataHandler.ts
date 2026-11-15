@@ -2,6 +2,7 @@ import {
   getSerialisableError,
   isDefined,
   isEmpty,
+  isEqual,
   isObject,
   omitKeys,
   pickKeys,
@@ -22,6 +23,7 @@ import {
 } from "./SmartFormNewRowDataHandler";
 import type { useSmartFormMode } from "./useSmartFormMode";
 import { isJoinedFilter } from "@common/filterUtils";
+import { useMemoDeep } from "prostgles-client";
 
 type Args = {
   columns: ValidatedColumnInfo[];
@@ -55,7 +57,8 @@ export const useNewRowDataHandler = (args: Args) => {
     parentForm,
   } = args;
   const [error, setError] = useState<undefined | string>();
-  const [errors, setErrors] = useState<AnyObject>({});
+  const [_errors, setErrors] = useState<AnyObject>({});
+  const errors = useMemoDeep(() => _errors, [_errors]);
   const columnMap = useMemo(() => {
     const colMap: Map<string, ValidatedColumnInfo> = new Map();
     columns.forEach((c) => {
@@ -65,6 +68,7 @@ export const useNewRowDataHandler = (args: Args) => {
   }, [columns]);
 
   const [newRowData, setNewRowData] = useState<NewRow>();
+  const [initialNewRow, setInitialNewRow] = useState<AnyObject>();
   const parseError = useCallback(
     (error: ProstglesError) => {
       let newError: string =
@@ -205,10 +209,11 @@ export const useNewRowDataHandler = (args: Args) => {
     onChanged: (newRow) => setNewRowData({ ...newRow }),
   });
 
-  const [newRow, setNewRow] = useState<AnyObject>();
+  const newRow = useMemo(
+    () => newRowDataHandler.getRow(),
+    [newRowData, newRowDataHandler],
+  );
   useEffect(() => {
-    const newRow = newRowDataHandler.getRow();
-    setNewRow(newRow);
     setErrors({});
     setError(undefined);
   }, [newRowData, newRowDataHandler]);
@@ -231,6 +236,7 @@ export const useNewRowDataHandler = (args: Args) => {
       const existingData = parentForm.newRowDataHandler?.getNewRow();
       if (existingData) {
         newRowDataHandler.setNewRow(existingData);
+        setInitialNewRow(newRowDataHandler.getRow());
         return;
       }
     }
@@ -258,6 +264,7 @@ export const useNewRowDataHandler = (args: Args) => {
       ]),
     );
     newRowDataHandler.setNewRow(newRowWithDefaultData);
+    setInitialNewRow(newRowDataHandler.getRow());
   }, [
     mode?.type,
     columns,
@@ -288,6 +295,19 @@ export const useNewRowDataHandler = (args: Args) => {
       ...fixedData,
     };
   }, [newRow, mode, fixedData]);
+
+  const hasUnsavedChanges =
+    !onChange &&
+    (mode?.type === "insert" ?
+      !isEqual(newRow, initialNewRow)
+    : Boolean(
+        confirmUpdates &&
+        newRow &&
+        (mode?.type === "multiUpdate" ||
+          (mode?.type === "update" &&
+            mode.currentRow &&
+            !isEqual(pickKeys(mode.currentRow, getKeys(newRow)), newRow))),
+      ));
 
   const getErrors: getErrorsHook = useCallback(
     async (cb) => {
@@ -378,6 +398,7 @@ export const useNewRowDataHandler = (args: Args) => {
     newRowData,
     newRow,
     row,
+    hasUnsavedChanges,
   };
 };
 

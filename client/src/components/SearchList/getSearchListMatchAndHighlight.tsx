@@ -109,7 +109,7 @@ export const getSearchListMatchAndHighlight = (args: {
           </div>
         );
       } else {
-        rank = Infinity;
+        rank = r.ranking ?? Infinity;
       }
     }
 

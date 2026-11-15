@@ -1,9 +1,8 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./utils/fixtures";
 import { type AnyObject } from "prostgles-types";
 import { USERS } from "utils/constants";
 import { goTo } from "utils/goTo";
 import {
-  PageWIds,
   createDatabase,
   login,
   openConnection,
@@ -18,6 +17,7 @@ test.use({
   video: {
     mode: "on",
     size: viewPortSize,
+    fps: 60,
   },
   trace: "on",
   launchOptions: {
@@ -29,17 +29,17 @@ const videoTestDuration = 12 * 60e3;
 test.describe("Demo video", () => {
   test.setTimeout(videoTestDuration);
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(({ page }) => {
     page.on("console", (msg) =>
       console.log("[browser:" + msg.type() + "]", msg.text()),
     );
     page.on("pageerror", (err) =>
-      console.error("[pageerror]", err?.stack || err),
+      console.error("[pageerror]", err.stack || err),
     );
   });
 
   test("Video demo", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     const CI = !!process.env.CI;
     await page.addInitScript(
       ({ CI }) => {
@@ -47,7 +47,7 @@ test.describe("Demo video", () => {
       },
       { CI },
     );
-    await login(page, USERS.test_user, "/login");
+    await login(page, USERS.test_user, "/auth/login");
     await page.waitForTimeout(2000);
 
     await runDbsSql(
@@ -106,12 +106,12 @@ test.describe("Demo video", () => {
           try {
             await (node as any).start();
           } catch (e) {
-            const errorObj = Object.getOwnPropertyNames(
-              typeof e !== "object" ? { error: e } : e,
-            ).reduce(
+            const error =
+              typeof e !== "object" || e === null ? { error: e } : e;
+            const errorObj = Object.getOwnPropertyNames(error).reduce(
               (acc, key) => ({
                 ...acc,
-                [key]: (e as AnyObject)[key],
+                [key]: (error as AnyObject)[key],
               }),
               {},
             );
@@ -127,8 +127,8 @@ test.describe("Demo video", () => {
   });
 
   test(`Backup databases`, async ({ page: p }) => {
-    const page = p as PageWIds;
-    await login(page, USERS.test_user, "/login");
+    const page = p;
+    await login(page, USERS.test_user, "/auth/login");
     await openConnection(page, "prostgles_video_demo");
     await page.getByTestId("dashboard.goToConnConfig").click();
     await page.getByTestId("config.bkp").click();

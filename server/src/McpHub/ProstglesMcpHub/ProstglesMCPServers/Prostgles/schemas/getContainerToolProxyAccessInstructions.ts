@@ -6,16 +6,14 @@ export const getContainerToolProxyAccessInstructions = (
 ) => {
   const mcpToolAccessInstructions =
     !mcpTools.length ?
-      "No MCP tools allowed. Must request access to MCP tools to be able to call MCP tools from the container."
+      "No MCP tools are available. Request access before calling MCP tools from the container."
     : [
-        `To call mcp tools you need to POST JSON body parameters to the "${DOCKER_MCP_ENDPOINT_ENV_VAR}" environment variable endpoint.`,
-        `The endpoint is in the format \`${DOCKER_MCP_ENDPOINT_ENV_VAR}/[tool_server_name]/[tool_name]\`.`,
-        `Foe example, if using curl: \`curl -X POST $${DOCKER_MCP_ENDPOINT_ENV_VAR}/db/execute_sql -H "Content-Type: application/json" -d '{"sql": "SELECT * FROM users;"}'\``,
-        `The following endpoints are available:\n\n`,
-        // TODO: check if showing tool schemas here is useful or just adds confusion
-        // ...dbTools.map((t) => {
-        //   return ` - /${t.tool_name} - ${t.description} JSON body input schema: ${getJSONBTSTypes([], t.schema)}. Response schema: ${getJSONBTSTypes([], t.outputSchema)}`;
-        // }),
+        `Read process.env.${DOCKER_MCP_ENDPOINT_ENV_VAR} inside the running container. Its value is the complete authenticated proxy base URL, including /mcp-proxy/<secret>. Preserve that path; do not hardcode hosts, ports or secrets, append another /mcp-proxy, or resolve a leading-slash URL that discards the base path.`,
+        `Append /<server_name>/<tool_name> to that value. The chat tool db--insert maps to /db/insert, not /db--insert. Use exact server/tool names from the tool list and inspect their schemas before calling. This is an HTTP JSON proxy, not an MCP JSON-RPC /mcp endpoint.`,
+        `POST the tool arguments directly as the JSON body with Content-Type: application/json; do not wrap them in name/arguments, params, or a JSON-RPC envelope. For example, when db--execute_readonly_sql is allowed: curl -X POST "$${DOCKER_MCP_ENDPOINT_ENV_VAR}/db/execute_readonly_sql" -H "Content-Type: application/json" -d '{"sql":"SELECT 1"}'.`,
+        `File uploads use the same /db/insert or /db/insertMany routes and JSON arguments as the normal database tools, not multipart/form-data or a separate upload route. The proxy URL is not a base URL for downloading stored files.`,
+        `The response body is JSON: the tool's structuredContent when present, otherwise a JSON string for a single text result or a content fallback. Check response.ok before using await response.json(); do not assume a JSON-RPC result or MCP content wrapper.`,
+        `Tool discovery does not grant access. Only tools allowed in the current chat/workflow scope can be called; calls may wait for UI approval. Request missing access from chat rather than trying alternative URLs. create_agentic_workflow must be called from chat, not from the container.`,
       ].join("\n");
 
   return mcpToolAccessInstructions;

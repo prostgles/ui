@@ -7,8 +7,19 @@
   clip-path: circle(25%);
 }
 
-
 .popup-component-root.positioning_tooltip {
-  pointer-events: none ;
+  pointer-events: none;
   touch-action: none;
+}
+
+.popup-component-root.positioning_beneath-left-css {
+  position-visibility: always;
+}
+
+@position-try --popup-viewport {
+  position-area: none;
+  inset: 0;
+  align-self: anchor-center;
+  justify-self: anchor-center;
+  margin: 0;
 }

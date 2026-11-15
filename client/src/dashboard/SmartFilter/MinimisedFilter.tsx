@@ -1,18 +1,20 @@
-import { mdiSetCenter } from "@mdi/js";
+import { mdiCheckBold, mdiSetCenter, mdiSetNone } from "@mdi/js";
 import { includes } from "prostgles-types";
 import React, { type ReactNode } from "react";
-import { getFinalFilterInfo, TEXT_FILTER_TYPES } from "@common/filterUtils";
+import {
+  DATE_FILTER_TYPES,
+  getFinalFilterInfo,
+  TEXT_FILTER_TYPES,
+} from "@common/filterUtils";
 import { sliceText } from "@common/utils";
 import { Icon } from "@components/Icon/Icon";
 import type { FilterWrapperProps } from "../DetailedFilterControl/FilterWrapper";
 import "./MinimisedFilter.css";
-import { FlexRow } from "@components/Flex";
 
 type P = FilterWrapperProps &
   Pick<FilterWrapperProps, "rootFilter"> & {
     toggle: VoidFunction;
     toggleTitle: string;
-    disabledToggle: false | JSX.Element | undefined;
     filterTypeLabel: string | undefined;
   };
 
@@ -23,7 +25,7 @@ export const MinimisedFilter = ({
   style,
   toggle,
   toggleTitle,
-  disabledToggle,
+  hideToggle,
   className,
   filterTypeLabel,
   rootFilter,
@@ -43,14 +45,14 @@ export const MinimisedFilter = ({
         if (asFullText) {
           return [
             getValueForDisplay(filterValue[0], asFullText),
-            "AND",
+            "and",
             getValueForDisplay(filterValue[1], asFullText),
           ].join(" ");
         }
         return (
           <>
             {getValueForDisplay(filterValue[0], asFullText)}
-            <span className="ws-pre text-1p5 font-normal font-14"> AND </span>
+            <span className="ws-pre text-1p5 font-normal font-14"> and </span>
             {getValueForDisplay(filterValue[1], asFullText)}
           </>
         ) as AsText extends true ? string : ReactNode;
@@ -73,13 +75,10 @@ export const MinimisedFilter = ({
             {sliceText(JSON.stringify(filterValue).slice(1, -1), maxLen, "...")}{" "}
             )
             {filterValue.length > 2 && (
-              <div
-                className="min-w-0 min-h-0 o-hidden text-1p5 ml-p5 flex-row ai-center "
-                style={{ fontWeight: 600 }}
-              >
+              <span className="text-1p5 ml-p5" style={{ fontWeight: 600 }}>
                 {" "}
                 ({filterValue.length})
-              </div>
+              </span>
             )}
           </>
         ) as AsText extends true ? string : ReactNode;
@@ -91,7 +90,9 @@ export const MinimisedFilter = ({
     }
 
     const isStringDate =
-      !TEXT_FILTER_TYPES.some(({ key }) => filter.type === key) &&
+      ![...TEXT_FILTER_TYPES, ...DATE_FILTER_TYPES].some(
+        ({ key }) => filter.type === key,
+      ) &&
       column.udt_name === "date" &&
       typeof filterValue === "string" &&
       filterValue;
@@ -121,88 +122,73 @@ export const MinimisedFilter = ({
   const filterValue = getValueForDisplay(filter.value, false);
   const filterValueText = getValueForDisplay(filter.value, true);
 
-  let comparatorNode: React.ReactNode = null;
-  if (filter.complexFilter) {
-    comparatorNode = (
-      //@ts-ignore
-      <div className="p-p25">{filter.complexFilter.comparator}</div>
-    );
-  }
   return (
-    <FlexRow
+    <button
+      type="button"
       className={
-        "FilterWrapper_MinimisedRoot noselect pointer relative o-hidden gap-p25 " +
+        "FilterWrapper_MinimisedRoot flex-row ai-center noselect pointer relative gap-p25 b w-fit max-w-full min-w-0 " +
         className
       }
+      data-filter-disabled={disabled || value === undefined || undefined}
       style={{
-        opacity: filter.disabled ? ".8" : 1,
+        fontSize: "inherit",
         ...style,
         borderRadius: "1em",
         padding: window.isMobileDevice ? "2px 6px" : "4px 8px",
       }}
+      title={toggleTitle}
+      onClick={toggle}
     >
-      {disabledToggle}
+      {!hideToggle && (
+        <Icon
+          path={mdiCheckBold}
+          sizeName="small"
+          className={disabled ? "text-2" : "text-action"}
+        />
+      )}
       {rootFilter && (
         <Icon
           title={
-            rootFilter.value.type === "$existsJoined" ? "Exists" : "Not exists"
+            rootFilter.value.type === "$existsJoined" ? "exists" : "not exists"
           }
-          path={mdiSetCenter}
-          size={1}
-          className="text-0"
+          path={
+            rootFilter.value.type === "$existsJoined" ?
+              mdiSetCenter
+            : mdiSetNone
+          }
+          sizeName="small"
+          className="FilterWrapper_MinimisedContent text-1"
         />
       )}
-      <button
-        style={{
-          background: "transparent",
-          opacity: value === undefined || disabled ? 0.75 : 1,
-          padding: "0",
-        }}
-        title={toggleTitle}
-        onClick={toggle}
-      >
-        <div
-          className={"flex-row ai-center noselect pointer relative o-hidden "}
+      <span className="FilterWrapper_MinimisedContent flex-row ai-center min-w-0 o-hidden">
+        <span
+          data-command="FilterWrapper_FieldName"
+          className="FilterWrapper_FieldName font-16 font-medium mr-p25"
         >
-          <div
-            data-command="FilterWrapper_FieldName"
-            className={"FilterWrapper_FieldName  font-18 mr-p25 "}
-            style={{ fontWeight: 600 }}
-          >
-            {label}
-          </div>
-          <div
-            className="FilterWrapper_Type mr-p25 font-14 "
+          {label}
+        </span>
+        <span className="FilterWrapper_Type mr-p25 font-14">
+          {filterTypeLabel}
+        </span>
+        {filter.type !== "not null" && filter.type !== "null" && (
+          <span
+            className="min-w-0 min-h-0 text-ellipsis font-16 font-normal"
+            title={filterValueText}
             style={{
-              textTransform: "uppercase",
-              height: "18px",
+              maxWidth: "300px",
+              whiteSpace: "nowrap",
+              color:
+                disabled ? "var(--text-2)"
+                : column.tsDataType === "string" ? "var(--color-text)"
+                : column.udt_name === "date" ? "#0000ad"
+                : column.tsDataType === "number" ? "var(--color-number)"
+                : "black",
             }}
           >
-            {filterTypeLabel}
-          </div>
-          {comparatorNode}
-          {filter.type !== "not null" && filter.type !== "null" && (
-            <>
-              <div
-                className="min-w-0 min-h-0 o-hidden font-16 flex-row ai-center "
-                title={filterValueText}
-                style={{
-                  whiteSpace: "nowrap",
-                  fontWeight: 600,
-                  color:
-                    disabled ? "var(--text-2)"
-                    : column.tsDataType === "string" ? "var(--color-text)"
-                    : column.udt_name === "date" ? "#0000ad"
-                    : column.tsDataType === "number" ? "var(--color-number)"
-                    : "black",
-                }}
-              >
-                {filterValue}
-              </div>
-            </>
-          )}
-        </div>
-      </button>
-    </FlexRow>
+            {filterValue}
+          </span>
+        )}
+      </span>
+    </button>
   );
 };

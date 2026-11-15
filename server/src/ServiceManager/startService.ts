@@ -1,28 +1,29 @@
-import { spawn } from "child_process";
-import { tout } from "@src/utils/tout";
-import type { ServiceManager } from "./ServiceManager";
-import {
-  prostglesServices,
-  type OnServiceLogs,
-  type ProstglesService,
-  type RunningServiceInstance,
-  type ServiceInstance,
-} from "./ServiceManagerTypes";
-import { camelCaseToSkewerCase } from "./buildService";
-import { getServiceEndpoints } from "./getServiceEndpoints";
-import { getSelectedConfigEnvs } from "./getSelectedConfigEnvs";
 import {
   executeDockerCommand,
   type ExecutionResult,
   type ProcessLog,
 } from "@src/McpHub/DockerSandbox/executeDockerCommand";
 import { getFreePort } from "@src/utils/isPortFree";
+import { tout } from "@src/utils/tout";
+import { spawn } from "child_process";
+import type { ServiceManager } from "./ServiceManager";
+import {
+  type OnServiceLogs,
+  type RunningServiceInstance,
+  type ServiceInstance,
+} from "./ServiceManagerTypes";
+import { getSelectedConfigEnvs } from "./getSelectedConfigEnvs";
+import { getServiceEndpoints } from "./getServiceEndpoints";
 import { resolveBinary } from "./resolveBinary";
+import {
+  getServiceDockerConnectivity,
+  getServiceDockerResources,
+} from "@src/dockerRuntime";
 
 const STOPPED_REASON = "stopped";
 export async function startService(
   this: ServiceManager,
-  serviceName: keyof typeof prostglesServices,
+  serviceName: string,
   onLogs: OnServiceLogs,
 ): Promise<Extract<ServiceInstance, { status: "running" }>> {
   const onLogsCombined: OnServiceLogs = (logs) => {
@@ -32,7 +33,10 @@ export async function startService(
   console.log("starting Service " + serviceName);
   const { labelArgs } = this.getActiveService(serviceName, "building-done");
 
-  const serviceConfig: ProstglesService = prostglesServices[serviceName];
+  const serviceConfig = this.services[serviceName];
+  if (!serviceConfig) {
+    throw new Error(`Service ${serviceName} not found in service registry`);
+  }
   const abortController = new AbortController();
   let logs: ProcessLog[] = [];
   const getLogs = () => {
@@ -40,8 +44,8 @@ export async function startService(
   };
   const stop = () => abortController.abort(STOPPED_REASON);
   this.activeServices.set(serviceName, { getLogs, stop, status: "starting" });
-  const imageName = camelCaseToSkewerCase(serviceName);
-  const containerName = `prostgles-service-${imageName}`;
+  const { containerName, imageName, networkName, volumePrefix } =
+    getServiceDockerResources(serviceName);
 
   const cleanup = () => {
     spawn(resolveBinary("docker"), ["stop", "-t", "0", containerName], {
@@ -60,27 +64,33 @@ export async function startService(
     healthCheck,
     endpoints,
   } = serviceConfig;
-  const hostPort = await getFreePort(preferredHostPort);
+  const hostPort =
+    networkName ? undefined : await getFreePort(preferredHostPort);
   const volumeArgs: string[] = [];
   for (const [volumeName, containerPath] of Object.entries(volumes)) {
-    const hostPath = `prostgles-service-${imageName}-${volumeName}`;
+    const hostPath = `${volumePrefix}-${volumeName}`;
     await executeDockerCommand(["volume", "create", hostPath], {
       timeout: 10_000,
     });
     volumeArgs.push("-v", `${hostPath}:${containerPath}`);
   }
 
-  const { env, gpus = "none" } = await getSelectedConfigEnvs(
-    this.dbs,
-    serviceName,
-  );
+  const { env, gpus = "none" } = await getSelectedConfigEnvs(this, serviceName);
 
-  const baseHost = `127.0.0.1:${hostPort}`;
+  const { baseUrl, runArgs: connectivityArgs } = getServiceDockerConnectivity({
+    containerName,
+    containerPort: port,
+    hostPort: hostPort ?? preferredHostPort,
+    networkName,
+  });
 
   const onStopped = (
     res: ExecutionResult | { type: "error"; error: unknown },
   ) => {
     const stopReason = "type" in res ? res.type : res.state;
+    if ("log" in res) {
+      logs = res.log;
+    }
     const instance: ServiceInstance =
       abortController.signal.reason === STOPPED_REASON ?
         {
@@ -89,7 +99,9 @@ export async function startService(
       : {
           status: "error",
           error: new Error(
-            `Service ${serviceName} stopped unexpectedly with state: ${stopReason}`,
+            `Service ${serviceName} (container ${containerName}) stopped unexpectedly with state: ${stopReason}` +
+              ("exitCode" in res ? `, exit code: ${res.exitCode}` : ""),
+            { cause: "error" in res ? res.error : undefined },
           ),
         };
     this.activeServices.set(serviceName, instance);
@@ -111,8 +123,7 @@ export async function startService(
           Array.isArray(gpus) ? `"device=${gpus.join(",")}"` : gpus.toString(),
         ]
       : []),
-      "-p",
-      `${baseHost}:${port}`,
+      ...connectivityArgs,
       ...volumeArgs,
       ...Object.entries(env).flatMap(([key, value]) => [
         "-e",
@@ -135,7 +146,6 @@ export async function startService(
       onStopped({ type: "error", error });
     });
 
-  const baseUrl = `http://${baseHost}`;
   const startingServiceLabel = `Starting service ${JSON.stringify(serviceName)}. `;
   while (this.activeServices.get(serviceName)?.status === "starting") {
     await tout(1000);
@@ -163,16 +173,21 @@ export async function startService(
 
   const serviceInstance = this.activeServices.get(serviceName);
   if (serviceInstance?.status !== "starting") {
+    const recentLogs = logs
+      .slice(-100)
+      .map(({ text }) => text)
+      .join("")
+      .slice(-8_000);
     const error = new Error(
       startingServiceLabel +
-        "Healthcheck not finished. Service failed to start. Current status:" +
-        serviceInstance?.status,
+        "Healthcheck not finished. Service failed to start. Current status: " +
+        serviceInstance?.status +
+        (recentLogs ? `\nRecent container logs:\n${recentLogs}` : ""),
+      {
+        cause: serviceInstance?.status === "error" ? serviceInstance.error : undefined,
+      },
     );
-    onStopped({
-      type: "error",
-      error,
-    });
-    return Promise.reject(error);
+    throw error;
   }
 
   const runningService: RunningServiceInstance = {
@@ -189,8 +204,6 @@ export async function startService(
   return runningService;
 }
 
-export const getContainerName = (
-  serviceName: keyof typeof prostglesServices,
-) => {
-  return `prostgles-service-${camelCaseToSkewerCase(serviceName)}`;
+export const getContainerName = (serviceName: string) => {
+  return getServiceDockerResources(serviceName).containerName;
 };

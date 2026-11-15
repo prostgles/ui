@@ -3,11 +3,14 @@ import { isObject } from "@common/publishUtils";
 import {
   _PG_numbers,
   type AnyObject,
+  type SelectFunction,
   type ValidatedColumnInfo,
 } from "prostgles-types";
+import { getValueAsText } from "@components/SearchList/SearchListContent";
+import { getSearchHighlight } from "./getSearchHighlight";
 import type { Prgl } from "src/App";
 import type { DBSchemaTableWJoins } from "src/dashboard/Dashboard/dashboardUtils";
-import type { ColumnConfig } from "../../W_Table/ColumnMenu/ColumnMenu";
+import type { ColumnConfig } from "@common/ColumnConfig/ColumnConfig";
 import {
   getComputedColumnSelect,
   getTableSelect,
@@ -15,6 +18,7 @@ import {
 
 type Args = {
   currentlySearchedColumn: string;
+  expression?: SelectFunction;
   term: string;
   matchCase: boolean;
   db: Prgl["db"];
@@ -26,13 +30,14 @@ type Args = {
   selectedColumns: ColumnConfig[] | undefined;
   tables: DBSchemaTableWJoins[];
 };
-export type SmartSearchResultRows = {
-  prgl_term_highlight: string[];
-}[];
+export type SmartSearchResultRows = (AnyObject & {
+  prgl_term_highlight: Record<string, (string | string[])[]> | null;
+})[];
 export const getRows = async (args: Args, limit = 3, matchStart = false) => {
   const {
     db,
     currentlySearchedColumn,
+    expression,
     matchCase,
     term,
     tableName,
@@ -43,51 +48,40 @@ export const getRows = async (args: Args, limit = 3, matchStart = false) => {
     selectedColumns,
     tables,
   } = args;
-  const getLikeFilter = (notLike = false) => ({
-    [currentlySearchedColumn]: {
-      [`$${notLike ? "n" : ""}${matchCase ? "" : "i"}like`]: `${term}%`,
-    },
-  });
-
-  /** If single column then include it to later extract exact value */
-  let computedCol: ColumnConfig | undefined;
-  let isAggregate = false;
-  const prgl_term_highlight = {
-    $term_highlight: [
-      [currentlySearchedColumn],
-      term,
-      { matchCase, edgeTruncate: 30, returnType: "object" },
-    ],
+  const computedConfig = isObject(column) ? column.computedConfig : undefined;
+  const computedExpression =
+    expression ?? (computedConfig && getComputedColumnSelect(computedConfig));
+  const isAggregate = !!computedConfig?.funcDef.isAggregate;
+  const getLikeFilter = (notLike = false, prefix = true) => {
+    const operator = `$${notLike ? "n" : ""}${matchCase ? "" : "i"}like`;
+    const value = `${prefix ? "" : "%"}${term}%`;
+    return computedExpression ?
+        { $filter: [computedExpression, operator, value] }
+      : { [currentlySearchedColumn]: { [operator]: value } };
   };
-  let select: { prgl_term_highlight: AnyObject } = { prgl_term_highlight };
-  if (column) {
-    if (isObject(column)) {
-      if (column.computedConfig) {
-        computedCol = column;
-        isAggregate = !!column.computedConfig.funcDef.isAggregate;
-        select[column.name] = getComputedColumnSelect(column.computedConfig);
-        if (selectedColumns) {
-          const { select: fullSelect } = await getTableSelect(
-            { table_name: tableName, columns: selectedColumns },
-            tables,
-            db,
-            {},
-            true,
-          );
-          select = {
-            ...select,
-            ...fullSelect,
-          };
-        }
-        select.prgl_term_highlight = getComputedColumnSelect(
-          column.computedConfig,
-        );
-      } else {
-        select[column.name] = 1;
-      }
-    } else {
-      select[column] = 1;
-    }
+
+  let select: AnyObject =
+    computedExpression ?
+      { [currentlySearchedColumn]: computedExpression }
+    : {
+        prgl_term_highlight: {
+          $term_highlight: [
+            [currentlySearchedColumn],
+            term,
+            { matchCase, edgeTruncate: 30, returnType: "object" },
+          ],
+        },
+        ...(column && { [isObject(column) ? column.name : column]: 1 }),
+      };
+  if (computedConfig && selectedColumns) {
+    const { select: fullSelect } = await getTableSelect(
+      { table_name: tableName, columns: selectedColumns },
+      tables,
+      db,
+      {},
+      true,
+    );
+    select = { ...fullSelect, ...select };
   }
 
   const searchFilters =
@@ -96,13 +90,15 @@ export const getRows = async (args: Args, limit = 3, matchStart = false) => {
     : matchStart ? [getLikeFilter()]
     : [
         getLikeFilter(true),
-        {
-          $term_highlight: [
-            [currentlySearchedColumn],
-            term,
-            { matchCase, edgeTruncate: 30, returnType: "boolean" },
-          ],
-        },
+        computedExpression ?
+          getLikeFilter(false, false)
+        : {
+            $term_highlight: [
+              [currentlySearchedColumn],
+              term,
+              { matchCase, edgeTruncate: 30, returnType: "boolean" },
+            ],
+          },
       ];
 
   const finalFilter = {
@@ -118,7 +114,7 @@ export const getRows = async (args: Args, limit = 3, matchStart = false) => {
   /** Group increases query time considerably. Must try not to use it when not crucial */
   const groupBy = !columnInfo?.is_pkey && columnInfo?.udt_name !== "uuid";
   const skipSearch = isFruitlessSearch(term, columnInfo);
-  const items =
+  const items: AnyObject[] =
     skipSearch ?
       []
     : ((await db[tableName]?.find?.(finalFilter, {
@@ -127,16 +123,20 @@ export const getRows = async (args: Args, limit = 3, matchStart = false) => {
         having,
         groupBy,
       })) ?? []);
-  const computedColName = computedCol?.name;
-  const result =
-    computedColName ?
-      items.map((d) => ({
-        ...d,
-        prgl_term_highlight: {
-          [computedColName]: [d[computedColName].toString()],
-        },
-      }))
-    : items;
+  const computedColName = computedExpression && currentlySearchedColumn;
+  const result: SmartSearchResultRows = items.map((row) => ({
+    ...row,
+    prgl_term_highlight:
+      computedColName ?
+        {
+          [computedColName]: getSearchHighlight(
+            getValueAsText(row[computedColName]) ?? "",
+            term,
+            matchCase,
+          ),
+        }
+      : row.prgl_term_highlight,
+  }));
   return { result, isAggregate };
 };
 
@@ -264,7 +264,7 @@ export const getSmartSearchRows = async (
   try {
     const { result, isAggregate } = await getRows(args, undefined, true);
     const remaining = 3 - result.length;
-    if (remaining > 0 && !isAggregate) {
+    if (args.term && remaining > 0 && !isAggregate) {
       const moreRows = await getRows(args, remaining);
       return [...result, ...moreRows.result];
     }

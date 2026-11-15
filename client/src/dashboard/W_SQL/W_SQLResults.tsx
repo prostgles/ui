@@ -1,10 +1,10 @@
-import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
-import React, { useMemo, useState } from "react";
 import type { PaginationProps } from "@components/Table/Pagination";
 import { Table } from "@components/Table/Table";
+import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
+import React, { useMemo, useState } from "react";
 import { CodeEditor } from "../CodeEditor/CodeEditor";
-import type { WindowData } from "../Dashboard/dashboardUtils";
-import type { ColumnSortSQL } from "../W_Table/ColumnMenu/ColumnMenu";
+import type { WindowData } from "@common/ColumnConfig/WindowData";
+import type { ColumnSortSQL } from "@common/ColumnConfig/ColumnConfig";
 import { TooManyColumnsWarning } from "../W_Table/TooManyColumnsWarning";
 import { CSVRender } from "./CSVRender";
 import { getSQLResultTableColumns } from "./getSQLResultTableColumns";
@@ -23,8 +23,8 @@ export type W_SQLResultsProps = Pick<
   | "pageSize"
   | "isSelect"
 > &
-  Pick<W_SQLProps, "childWindow" | "tables"> & {
-    w: SyncDataItem<Required<WindowData<"sql">>, true>;
+  Pick<W_SQLProps, "childWindow"> & {
+    w: SyncDataItem<Required<WindowData<"sql">>, { handlesOnData: true }>;
     onResize: (newCols: W_SQLState["cols"]) => void;
     onSort: (newSort: ColumnSortSQL[]) => void;
     onPageChange: (newPage: number) => void;
@@ -42,7 +42,6 @@ export const W_SQLResults = (props: W_SQLResultsProps) => {
     childWindow,
     sort,
     w,
-    tables,
     page,
     pageSize,
     onSort,
@@ -70,12 +69,11 @@ export const W_SQLResults = (props: W_SQLResultsProps) => {
   const tableColumns = useMemo(() => {
     return getSQLResultTableColumns({
       cols,
-      tables,
       maxCharsPerCell,
       onResize,
       rows,
     });
-  }, [cols, tables, maxCharsPerCell, onResize, rows]);
+  }, [cols, maxCharsPerCell, onResize, rows]);
 
   const pagination = useMemo(() => {
     if (!isSelect) return;

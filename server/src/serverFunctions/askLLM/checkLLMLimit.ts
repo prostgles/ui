@@ -1,6 +1,7 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import type { DBSSchema } from "@common/publishUtils";
-import { HOUR } from "prostgles-server/dist/FileManager/FileManager";
 import type { DBS } from "../..";
+import { HOUR } from "@common/utils";
 
 export const checkLLMLimit = async (
   dbs: DBS,
@@ -8,7 +9,7 @@ export const checkLLMLimit = async (
   allowedUsedLLMCreds: DBSSchema["access_control_allowed_llm"][],
   accessRules: DBSSchema["access_control"][],
 ) => {
-  if (user.type === "admin") return;
+  if (user.type === USER_TYPES.ADMIN) return;
   if (!allowedUsedLLMCreds.length) {
     throw "LLM credential/prompt not allowed";
   }
@@ -30,7 +31,7 @@ export const checkLLMLimit = async (
 
   /** If normal user then check messages by user_id only */
   let userIds: string[] = [];
-  if (user.type !== "public") {
+  if (user.type !== USER_TYPES.PUBLIC) {
     userIds = [user.id];
 
     /** If public user then must check all messages from the same IP */

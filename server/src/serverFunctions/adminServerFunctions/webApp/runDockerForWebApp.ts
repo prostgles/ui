@@ -12,7 +12,7 @@ export const runDockerForWebApp = async ({
   web_app_directory: string;
   shCommand: string;
   timeout?: number;
-  image: "node:24-slim" | "mcr.microsoft.com/playwright:v1.58.0-noble";
+  image: "node:24-trixie-slim" | "mcr.microsoft.com/playwright:v1.63.0-noble";
   env?: Record<string, string>;
   /**
    * Needed for Playwright

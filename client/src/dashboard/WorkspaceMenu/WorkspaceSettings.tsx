@@ -2,30 +2,19 @@ import Btn from "@components/Btn";
 import { IconPalette } from "@components/IconPalette/IconPalette";
 import PopupMenu from "@components/PopupMenu";
 import { mdiCog } from "@mdi/js";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import React from "react";
-import type { Prgl } from "../../App";
-import type {
-  DBSchemaTablesWJoins,
-  Workspace,
-} from "../Dashboard/dashboardUtils";
+import type { Workspace } from "../Dashboard/dashboardUtils";
 import { SmartForm } from "../SmartForm/SmartForm";
 
-type WorkspaceSettingsProps = Pick<
-  Prgl,
-  "dbs" | "dbsMethodSchema" | "dbsSql"
-> & {
+type WorkspaceSettingsProps = {
   w: Workspace;
-  dbsTables: DBSchemaTablesWJoins;
 };
-export const WorkspaceSettings = ({
-  dbs,
-  dbsTables,
-  w,
-  dbsMethodSchema,
-  dbsSql,
-}: WorkspaceSettingsProps) => {
+export const WorkspaceSettings = ({ w }: WorkspaceSettingsProps) => {
+  const { dbs, dbsTables, dbsMethodSchema, dbsSql } = usePrgl();
   return (
     <PopupMenu
+      className="w-full"
       title={"Workspace settings"}
       style={{
         height: "100%",
@@ -37,8 +26,9 @@ export const WorkspaceSettings = ({
       button={
         <Btn
           title="Workspace settings"
+          titleAsLabel={true}
           iconPath={mdiCog}
-          className="workspace-settings"
+          className="workspace-settings w-full jc-start"
           size="small"
           onContextMenu={async () => {
             const workspaceData = await dbs.workspaces.findOne(

@@ -41,7 +41,7 @@ export const ContainerConfigurationEditor = ({
     newConfig: Partial<typeof containerConfiguration>,
   ) => {
     await dbs.agentic_workflows.update(
-      { id, chat_id: workflow.chat_id, user_id: workflow.user_id },
+      { id, user_id: workflow.user_id },
       {
         definition_override: {
           ...workflow.definition_override,
@@ -64,13 +64,23 @@ export const ContainerConfigurationEditor = ({
           iconPath={mdiCogOutline}
           variant="faded"
           color={showEdit ? "action" : undefined}
+          disabledInfo={
+            workflow.source_key ?
+              "Edit the workflow definition to change configuration"
+            : undefined
+          }
           onClick={() => setShowEdit(!showEdit)}
           size="micro"
         />
       }
     >
       {!showEdit ?
-        <FlexRowWrap className="pointer " onClick={() => setShowEdit(true)}>
+        <FlexRowWrap
+          className="pointer "
+          onClick={() => {
+            if (!workflow.source_key) setShowEdit(true);
+          }}
+        >
           <Btn
             variant="faded"
             className="text-1"

@@ -1,9 +1,10 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import Btn from "@components/Btn";
 import { Chat } from "@components/Chat/Chat";
 import { FlexCol } from "@components/Flex";
 import Popup from "@components/Popup/Popup";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useDebouncedCallback } from "src/hooks/useDebouncedCallback";
 import type { Prgl } from "../../../App";
 import type { LoadedSuggestions } from "../../Dashboard/dashboardUtils";
@@ -30,6 +31,11 @@ export type AskLLMChatProps = Pick<
         type: "agent";
         id: number;
         parent_message_id: DBSSchema["llm_messages"]["id"];
+      }
+    | {
+        type: "agenticWorkflow";
+        id: number;
+        parent_agentic_workflow_run_id: DBSSchema["agentic_workflow_runs"]["id"];
       }
     | undefined;
 };
@@ -69,7 +75,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
     connection,
     activeChat,
   });
-  const isAdmin = user?.type === "admin";
+  const isAdmin = user?.type === USER_TYPES.ADMIN;
   const { chatIsLoading, onStopSending, sendMessage } = useAskLLMChatSend({
     askLLM,
     stopAskLLM,
@@ -77,16 +83,6 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
     activeChat,
     dbSchemaForPrompt,
   });
-  const [currentlyTypedMessage, setCurrentlyTypedMessage] = useState(
-    activeChat?.currently_typed_message,
-  );
-  useEffect(() => {
-    if (chatIsLoading) {
-      setCurrentlyTypedMessage("");
-    } else {
-      setCurrentlyTypedMessage(activeChat?.currently_typed_message);
-    }
-  }, [activeChat?.currently_typed_message, chatIsLoading]);
   const onCurrentlyTypedMessageChange = useDebouncedCallback(
     (currently_typed_message: string) => {
       if (!activeChatId || chatIsLoading) return;
@@ -98,7 +94,10 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
     [activeChatId, chatIsLoading, dbs.llm_chats],
   );
 
-  const agentChat = selectedChat?.type === "agent" ? activeChat : undefined;
+  const agentChat =
+    selectedChat?.type === "agent" || selectedChat?.type === "agenticWorkflow" ?
+      activeChat
+    : undefined;
 
   /* Prevents flickering when popup is opened */
   if (!messages) return;
@@ -163,12 +162,13 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
           }}
         >
           <Chat
+            key={activeChatId}
             style={chatStyle}
             messages={messages}
             disabledInfo={activeChat.disabled_message ?? undefined}
             maxWidth={CHAT_WIDTH}
             onSend={sendMessage}
-            currentlyTypedMessage={currentlyTypedMessage}
+            currentlyTypedMessage={activeChat.currently_typed_message}
             onCurrentlyTypedMessageChange={onCurrentlyTypedMessageChange}
             isLoading={chatIsLoading}
             onStopSending={onStopSending}

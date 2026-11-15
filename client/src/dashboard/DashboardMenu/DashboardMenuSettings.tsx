@@ -4,17 +4,15 @@ import { pageReload } from "@components/Loader/Loading";
 import PopupMenu from "@components/PopupMenu";
 import { SwitchToggle } from "@components/SwitchToggle";
 import { mdiCog, mdiTable, mdiViewGridPlus } from "@mdi/js";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { useEffectAsync, usePromise } from "prostgles-client";
-import type { DBHandlerClient } from "prostgles-client";
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import React, { useMemo } from "react";
-import type { DashboardProps } from "../Dashboard/Dashboard";
 import type { Workspace } from "../Dashboard/dashboardUtils";
 import { useLocalSettings } from "../localSettings";
 import { SmartForm, type SmartFormProps } from "../SmartForm/SmartForm";
 import { DashboardHotkeys } from "./DashboardHotkeys";
 import { SettingsSection } from "./SettingsSection";
-import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 export { useEffectAsync };
 
 const layoutType = [
@@ -24,7 +22,7 @@ const layoutType = [
 ];
 
 type P = {
-  workspace: SyncDataItem<Workspace, true>;
+  workspace: SyncDataItem<Workspace, { handlesOnData: true }>;
 };
 
 export const DashboardMenuSettings = ({ workspace }: P) => {
@@ -75,6 +73,7 @@ export const DashboardMenuSettings = ({ workspace }: P) => {
         <Btn
           iconPath={mdiCog}
           title="Show settings"
+          size="small"
           className=""
           data-command="dashboard.menu.settingsToggle"
         />
@@ -100,6 +99,16 @@ export const DashboardMenuSettings = ({ workspace }: P) => {
                 confirmUpdates={false}
                 showJoinedTables={false}
               />
+              <SwitchToggle
+                label={{
+                  label: "Open linked records as cards",
+                  info: "Open drill-down and reference clicks as filtered cards. Turn off to open individual records in a smart form.",
+                }}
+                checked={localSettings.openLinkedRecordsAsCards}
+                onChange={(openLinkedRecordsAsCards) => {
+                  localSettings.$set({ openLinkedRecordsAsCards });
+                }}
+              />
             </SettingsSection>
             <SettingsSection title="Dashboard menu" iconPath={mdiTable}>
               <FormField
@@ -120,7 +129,7 @@ export const DashboardMenuSettings = ({ workspace }: P) => {
                 ]}
                 value={workspace.options.tableListSortBy}
                 onChange={(tableListSortBy) => {
-                  workspace.$update(
+                  void workspace.$update(
                     { options: { tableListSortBy } },
                     { deepMerge: true },
                   );

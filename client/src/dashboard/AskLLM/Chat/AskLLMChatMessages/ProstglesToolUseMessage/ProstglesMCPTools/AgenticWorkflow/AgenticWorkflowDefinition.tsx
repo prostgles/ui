@@ -1,3 +1,4 @@
+import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import { getEntries } from "@common/utils";
 import ErrorComponent from "@components/ErrorComponent";
 import { FlexCol } from "@components/Flex";
@@ -10,6 +11,7 @@ import { useMonacoScrollToLastLine } from "@components/MonacoLogs/MonacoLogs";
 import { mdiGraph, mdiLanguageTypescript, mdiText } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { usePromise } from "prostgles-client";
+import { getJSONBSchemaValidationError } from "prostgles-types";
 import React, { useMemo, useState } from "react";
 import {
   type CodeEditorProps,
@@ -19,26 +21,37 @@ import { CodeEditorWithSaveButton } from "src/dashboard/CodeEditor/CodeEditorWit
 import type { CreateAgenticWorkflowToolUseArgs } from "./AgenticWorkflow";
 
 export const AgenticWorkflowDefinition = ({
-  workflow_function_definition,
+  workflow_function_definition: storedDefinition,
   workflow_function_definition_summary,
   chatId,
   workflowId,
   tool_use_id,
   package_dependencies,
+  sourceKey,
 }: CreateAgenticWorkflowToolUseArgs & {
-  chatId: number;
-  tool_use_id: string;
+  chatId: number | undefined;
+  tool_use_id: string | undefined;
+  sourceKey?: string;
 }) => {
   const {
-    dbsMethods: { getAgenticWorkflowTypes, reRunMCPServerTool },
+    dbsMethods: {
+      getAgenticWorkflowTypes,
+      reRunMCPServerTool,
+      saveWorkflowSource,
+    },
     connectionId,
+    tables,
   } = usePrgl();
   const { onMount } = useMonacoScrollToLastLine(true);
 
   const agentFilesInfo = usePromise(async () => {
-    if (!getAgenticWorkflowTypes) return;
-
+    if (!getAgenticWorkflowTypes) {
+      return { agentFiles: undefined, error: undefined };
+    }
+    /** Refresh on schema change */
+    void tables;
     try {
+      void storedDefinition;
       const agentFiles = await getAgenticWorkflowTypes({
         connectionId,
         workflowId,
@@ -50,21 +63,30 @@ export const AgenticWorkflowDefinition = ({
         error,
       };
     }
-  }, [connectionId, getAgenticWorkflowTypes, workflowId]);
-  const { agentFiles, error } = agentFilesInfo || {};
+  }, [
+    connectionId,
+    getAgenticWorkflowTypes,
+    workflowId,
+    tables,
+    storedDefinition,
+  ]);
+  const { agentFiles } = agentFilesInfo || {};
+  const workflow_function_definition =
+    agentFiles?.sourceDefinition ?? storedDefinition;
   const language = useMemo(() => {
     if (!agentFiles) return "typescript";
     const { files } = agentFiles;
     return {
       lang: "typescript",
       environment: "nodejs",
-      modelFileName: `workflow_${tool_use_id}.ts`,
+      modelFileName: `workflow_${workflowId ?? tool_use_id}.ts`,
       tsLibraries: getEntries(files).map(([filePath, content]) => ({
         filePath: `file:///${filePath}`,
         content,
       })),
+      projectPath: undefined,
     } satisfies LanguageConfig;
-  }, [agentFiles, tool_use_id]);
+  }, [agentFiles, tool_use_id, workflowId]);
 
   const codeEditorProps = useMemo(() => {
     const monacoOpts: CodeEditorProps["options"] = {
@@ -72,12 +94,19 @@ export const AgenticWorkflowDefinition = ({
       lineNumbers: "on",
       lineNumbersMinChars: 4,
       minimap: { enabled: true },
-      readOnly: !reRunMCPServerTool,
+      readOnly: sourceKey ? !saveWorkflowSource : !reRunMCPServerTool,
     } as const;
     const onSave: CodeEditorProps["onSave"] =
-      reRunMCPServerTool ?
+      sourceKey && saveWorkflowSource && workflowId ?
+        (definition) =>
+          saveWorkflowSource({
+            workflowId,
+            definition,
+            expectedDefinition: workflow_function_definition,
+          })
+      : reRunMCPServerTool && chatId && tool_use_id ?
         async (newValue) => {
-          await reRunMCPServerTool({
+          const result = await reRunMCPServerTool({
             chatId,
             serverName: "prostgles-ui",
             toolName: "create_agentic_workflow",
@@ -89,11 +118,27 @@ export const AgenticWorkflowDefinition = ({
             } satisfies CreateAgenticWorkflowToolUseArgs,
             reRunToolUseId: tool_use_id,
           });
+          // MCP failures resolve normally; reject to retain the unsaved draft.
+          const { data } = getJSONBSchemaValidationError(
+            PROSTGLES_MCP_SERVERS_AND_TOOLS["prostgles-ui"]
+              .create_agentic_workflow.outputSchema,
+            result.structuredContent,
+            { allowExtraProperties: true },
+          );
+          if (result.isError || !data) {
+            throw result.structuredContent ?? result.content;
+          }
+          if (!data.isValid) {
+            throw data.error ?? (data.logs || "Workflow validation failed");
+          }
         }
       : undefined;
     return { options: monacoOpts, onSave };
   }, [
     reRunMCPServerTool,
+    sourceKey,
+    saveWorkflowSource,
+    workflow_function_definition,
     workflowId,
     tool_use_id,
     workflow_function_definition_summary,

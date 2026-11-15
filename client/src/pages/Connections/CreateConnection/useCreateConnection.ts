@@ -100,8 +100,7 @@ export const useCreateConnection = (props: CreateConnectionProps) => {
     async (action: CreateConnectionType[number]) => {
       let newDbName = "";
       let newDbOwnerCredentials:
-        | undefined
-        | Pick<Connection, "db_user" | "db_pass">;
+        undefined | Pick<Connection, "db_user" | "db_pass">;
       if (newPgUser.create) {
         if (newUsernameError || newUserPasswordError)
           throw "User already exists or password is missing";

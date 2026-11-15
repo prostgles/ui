@@ -4,7 +4,7 @@ import { InfoRow } from "@components/InfoRow";
 import React from "react";
 import type { Prgl } from "src/App";
 import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";
-import type { RefreshOptions } from "./W_TableMenu";
+import type { RefreshOptions } from "@common/ColumnConfig/WindowData";
 
 export const AutoRefreshMenu = ({
   w,

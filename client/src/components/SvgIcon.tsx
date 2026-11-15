@@ -1,5 +1,5 @@
 import { useIsMounted, usePromise } from "prostgles-client";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import sanitizeHtml from "sanitize-html";
 import { classOverride, type DivProps } from "./Flex";
 
@@ -40,13 +40,15 @@ export const SvgIcon = ({
   const getIsMounted = useIsMounted();
   const iconPath = getIconPath(icon);
   const fallbackIconPath = fallbackIcon ? getIconPath(fallbackIcon) : undefined;
-  const [svg, setSvg] = React.useState(
+  const [svg, setSvg] = useState(
     cachedSvgs.get(iconPath) ||
       (fallbackIconPath && cachedSvgs.get(fallbackIconPath)),
   );
   useEffect(() => {
     void fetchIconAndCache(iconPath, fallbackIconPath).then((fetchedSvg) => {
-      if (!getIsMounted()) return;
+      if (!getIsMounted()) {
+        return;
+      }
       setSvg(fetchedSvg);
     });
   }, [iconPath, getIsMounted, icon, fallbackIconPath]);
@@ -64,36 +66,39 @@ export const SvgIcon = ({
     />
   );
 };
-
-const fetchIconAndCache = (
+const fetchIconAndCache = async (
   iconPath: string,
   fallbackIcon: string | undefined,
 ): Promise<string> => {
-  return fetch(iconPath)
-    .then((res) => (!res.ok ? Promise.reject(res.statusText) : res.text()))
-    .then((svgRaw) => {
-      const svg = sanitizeHtml(svgRaw, {
-        allowedTags: ["svg", "path"],
-        allowedAttributes: {
-          svg: ["width", "height", "view", "style", "xmlns", "viewBox", "role"],
-          path: ["d", "style"],
-        },
-        parser: {
-          lowerCaseTags: false,
-          lowerCaseAttributeNames: false,
-        },
-      });
-      cachedSvgs.set(iconPath, svg);
-      return svg;
-    })
-    .catch((err) => {
+  try {
+    const res = await fetch(iconPath);
+
+    if (!res.ok) {
       if (fallbackIcon) {
         return fetchIconAndCache(fallbackIcon, undefined);
       }
-      console.error(`Error fetching SVG icon at ${iconPath}:`, err);
-      cachedSvgs.set(iconPath, "");
-      return "";
+      throw new Error(`${res.status} ${res.statusText}`);
+    }
+
+    const svgRaw = await res.text();
+    const svg = sanitizeHtml(svgRaw, {
+      allowedTags: ["svg", "path"],
+      allowedAttributes: {
+        svg: ["width", "height", "view", "style", "xmlns", "viewBox", "role"],
+        path: ["d", "style"],
+      },
+      parser: {
+        lowerCaseTags: false,
+        lowerCaseAttributeNames: false,
+      },
     });
+
+    cachedSvgs.set(iconPath, svg);
+    return svg;
+  } catch (error) {
+    console.error(`Error fetching SVG icon at ${iconPath}:`, error);
+    return "";
+  }
 };
 
 export const getIcon = async (icon: string) => {
@@ -123,17 +128,21 @@ export const SvgIconFromURL = ({
 }: SvgIconFromURLProps) => {
   const modeOverride = usePromise(async () => {
     if (propsMode !== "auto") return;
-    const res = await fetch(url);
-    const contentType = res.headers.get("content-type");
-    if (contentType?.includes("image/svg+xml")) {
-      const svg = await res.text();
-      if (svg.includes("currentColor")) {
-        return "mask";
-      }
-    }
-    return "background";
+    return getSvgIconMode(url);
   }, [propsMode, url]);
   const mode = propsMode === "auto" ? modeOverride : propsMode;
+  const [resolvedUrl, setResolvedUrl] = useState(url);
+
+  useEffect(() => {
+    let cancelled = false;
+    void getImageUrl(url).then((imageUrl) => {
+      if (!cancelled) setResolvedUrl(imageUrl);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [url]);
 
   return (
     <div
@@ -144,11 +153,11 @@ export const SvgIconFromURL = ({
         ...(mode === "mask" ?
           {
             backgroundColor: "currentColor",
-            maskImage: `url(${JSON.stringify(url)}), url(${JSON.stringify(FALLBACK_ICON_URL)})`,
+            maskImage: `url(${JSON.stringify(resolvedUrl)}) `,
             maskSize: "cover",
           }
         : {
-            backgroundImage: `url(${JSON.stringify(url)}), url(${JSON.stringify(FALLBACK_ICON_URL)})`,
+            backgroundImage: `url(${JSON.stringify(resolvedUrl)}) `,
             backgroundSize: "cover",
           }),
       }}
@@ -157,3 +166,46 @@ export const SvgIconFromURL = ({
 };
 
 const FALLBACK_ICON_URL = "/icons/Help.svg";
+const cachedSvgIconModes = new Map<string, Promise<"mask" | "background">>();
+const cachedImageUrls = new Map<string, Promise<string>>();
+
+const getSvgIconMode = (url: string) => {
+  const cachedMode = cachedSvgIconModes.get(url);
+  if (cachedMode) return cachedMode;
+
+  const modePromise = fetch(url)
+    .then(async (response) => {
+      if (!response.ok) {
+        throw new Error(`${response.status} ${response.statusText}`);
+      }
+      const contentType = response.headers.get("content-type");
+      if (contentType?.includes("image/svg+xml")) {
+        const svg = await response.text();
+        if (svg.includes("currentColor")) return "mask" as const;
+      }
+      return "background" as const;
+    })
+    .catch((error: unknown) => {
+      cachedSvgIconModes.delete(url);
+      throw error;
+    });
+  cachedSvgIconModes.set(url, modePromise);
+  return modePromise;
+};
+
+const getImageUrl = (url: string) => {
+  const cachedImageUrl = cachedImageUrls.get(url);
+  if (cachedImageUrl) return cachedImageUrl;
+
+  const imageUrlPromise = new Promise<string>((resolve) => {
+    const image = new Image();
+    image.onload = () => resolve(url);
+    image.onerror = () => {
+      cachedImageUrls.delete(url);
+      resolve(FALLBACK_ICON_URL);
+    };
+    image.src = url;
+  });
+  cachedImageUrls.set(url, imageUrlPromise);
+  return imageUrlPromise;
+};

@@ -4,6 +4,7 @@ import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { useLLMSchemaStr } from "../Chat/useLLMSchemaStr";
 import type { DBSSchema } from "@common/publishUtils";
 
+export type AskLLMToolApproveState = ReturnType<typeof useAskLLMToolApprove>;
 export const useAskLLMToolApprove = () => {
   const {
     dbs,
@@ -23,6 +24,9 @@ export const useAskLLMToolApprove = () => {
           id: 1,
           message: 1,
         },
+        llm_chats: {
+          parent_agentic_workflow_run_id: 1,
+        },
         mcp_server_tools: {
           id: 1,
           description: 1,
@@ -39,6 +43,10 @@ export const useAskLLMToolApprove = () => {
   const requests:
     | (DBSSchema["mcp_tool_approval_requests"] & {
         llm_messages: Pick<DBSSchema["llm_messages"], "id" | "message">[];
+        llm_chats: Pick<
+          DBSSchema["llm_chats"],
+          "parent_agentic_workflow_run_id"
+        >[];
         mcp_server_tools: Pick<
           DBSSchema["mcp_server_tools"],
           "id" | "description" | "annotations"
@@ -73,7 +81,9 @@ export const useAskLLMToolApprove = () => {
       id: number;
       response: "approve" | "deny" | "auto-approve";
     }) => {
-      if (!approveToolUse) throw new Error("approveToolUse method not found");
+      if (!approveToolUse) {
+        throw new Error("approveToolUse method not found");
+      }
       await approveToolUse({
         id,
         response,
@@ -87,7 +97,7 @@ export const useAskLLMToolApprove = () => {
     return;
   }
   return {
-    requests: requests,
+    requests,
     respond,
     dbSchemaForPrompt,
     showRequestId,

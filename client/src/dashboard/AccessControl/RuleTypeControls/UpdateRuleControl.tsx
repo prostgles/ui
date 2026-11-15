@@ -80,7 +80,7 @@ export const UpdateRuleControl = (props: P) => {
               </div>
             }
             contextData={contextDataSchema}
-            detailedFilter={rule.forcedFilterDetailed as SingleGroupFilter}
+            detailedFilter={rule.forcedFilterDetailed}
             tableName={table.name}
             onSetError={console.error}
             onChange={(forcedFilterDetailed) => {
@@ -114,7 +114,7 @@ export const UpdateRuleControl = (props: P) => {
               </div>
             }
             contextData={contextDataSchema}
-            detailedFilter={rule.checkFilterDetailed as SingleGroupFilter}
+            detailedFilter={rule.checkFilterDetailed}
             tableName={table.name}
             onSetError={console.error}
             onChange={(checkFilterDetailed) => {

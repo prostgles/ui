@@ -6,16 +6,17 @@ import { Icon } from "../Icon/Icon";
 import Popup from "../Popup/Popup";
 import { DropZone } from "./DropZone";
 import { FileInputMedia } from "./FileInputMedia";
+import type { FilesTableRow } from "@components/MediaViewer/managedTableUtils";
 
-export type SavedMedia = {
-  id: string;
-  name?: string;
-  content_type: string;
-  url: string;
-};
+export type SavedMedia = Pick<
+  Required<FilesTableRow>,
+  "id" | "original_name" | "original_last_modified" | "content_type" | "url"
+>;
 
-export type LocalMedia = {
-  name: string;
+export type LocalMedia = Pick<
+  Required<FilesTableRow>,
+  "original_name" | "original_last_modified"
+> & {
   data: File;
 };
 
@@ -129,7 +130,7 @@ export class FileInput extends RTComp<
           onClose={() => {
             this.setState({ focusedFile: undefined });
           }}
-          title={focusedFile.file.name}
+          title={focusedFile.file.original_name}
           onKeyDown={
             !isViewerMode ? undefined : (
               (e) => {
@@ -179,9 +180,8 @@ export class FileInput extends RTComp<
     const setFiles = (files: FileList | File[]) => {
       const newFiles: LocalMedia[] = Array.from(files).map((file) => ({
         data: file,
-        // url: URL.createObjectURL(file),
-        // content_type: file.type,
-        name: file.name,
+        original_name: file.name,
+        original_last_modified: new Date(file.lastModified).toISOString(),
       }));
       this.props.onAdd?.(newFiles);
     };

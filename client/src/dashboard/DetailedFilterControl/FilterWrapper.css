@@ -5,3 +5,68 @@
 .dark-theme .filter-bg {
   background: #002445;
 }
+
+.FilterWrapper .ListFilter .SearchList_InputWrapper {
+  border-radius: 0;
+}
+
+.FilterWrapper .SmartSearch input,
+.FilterWrapper .ListFilter input[type="text"],
+.FilterWrapper .form-field input[type="text"] {
+  field-sizing: content;
+  width: auto;
+}
+
+.FilterWrapper .SmartSearch input,
+.FilterWrapper .form-field input[type="text"] {
+  max-width: 16em;
+}
+
+.FilterWrapper.variant-row .FilterWrapper_TextInput,
+.FilterWrapper.variant-row
+  .FilterWrapper_TextInput
+  :is(
+    .SearchListInput,
+    .form-field__hint-wrapper,
+    .form-field__right-content-wrapper,
+    .form-field__error-wrapper
+  ) {
+  display: flex;
+  flex: 1;
+  align-items: stretch;
+}
+
+.FilterWrapper.variant-row
+  .FilterWrapper_TextInput
+  :is(.SearchList_InputWrapper, .input-wrapper) {
+  flex: 1;
+  height: auto;
+  align-self: stretch;
+  border-radius: 0;
+  border-top: 0;
+  border-bottom: 0;
+}
+
+.FilterWrapper.variant-row .SmartSearch input {
+  margin: 0 !important;
+  align-self: stretch;
+  border-radius: 0;
+}
+
+[data-filter-disabled="true"]
+  .FilterWrapper__LabelContainer
+  > :not(.DisableEnableToggle),
+[data-filter-disabled="true"]
+  .FilterWrapper__TypeLabelContainer
+  > .FilterWrapper_Type,
+[data-filter-disabled="true"] .AgeFilter_Reference,
+[data-filter-disabled="true"] .FilterWrapper_Children,
+[data-filter-disabled="true"] .FilterWrapper_Error,
+[data-filter-disabled="true"] [data-command="FilterWrapper.deleteFilter"],
+[data-filter-disabled="true"] .FilterWrapper_MinimisedContent,
+[data-filter-disabled="true"]
+  .JoinedFilterControl_Header
+  > :not(.DisableEnableToggle),
+[data-filter-disabled="true"] .GroupedFilterControl_Actions {
+  opacity: 0.5;
+}

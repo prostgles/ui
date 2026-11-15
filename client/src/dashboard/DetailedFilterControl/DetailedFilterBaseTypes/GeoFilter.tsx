@@ -119,7 +119,7 @@ export const GeoFilter = ({
   };
 
   return (
-    <div className="flex-row p-p5 gap-p5 ai-center">
+    <div className="flex-row gap-p5 ai-center">
       <FormFieldDebounced
         placeholder="Km"
         style={{ padding: 0 }}
@@ -135,7 +135,7 @@ export const GeoFilter = ({
             Km
           </div>
         }
-        inputStyle={{ minHeight: "38px" }}
+        inputStyle={{ minHeight: "30px" }}
         value={args.distance}
         onChange={(distance) => updateValue({ distance: Number(distance) })}
       />
@@ -143,7 +143,8 @@ export const GeoFilter = ({
         <>
           <div>of</div>
           <Btn
-            variant="faded"
+            size="small"
+            variant="default"
             onClick={(e) => {
               setOpen(open ? undefined : (e.target as any));
             }}

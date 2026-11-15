@@ -4,7 +4,6 @@ import React, { useMemo } from "react";
 import { NavLink } from "react-router";
 import RTComp from "../dashboard/RTComp";
 import type { TestSelectors } from "../Testing";
-import { tout } from "../utils/utils";
 import "./Btn.css";
 import { parsedError } from "./ErrorComponent";
 import { classOverride } from "./Flex";
@@ -44,17 +43,18 @@ type BtnCustomProps = (
   /**
    * If provided then the button is disabled and will display a tooltip with this message
    */
-  disabledInfo?: string;
+  disabledInfo?: string | false;
   /**
    * no-fade - will not fade out the button when disabled/loading
    */
   disabledVariant?: "no-fade";
-  loading?: boolean;
+  loading?: boolean | "allow-clicking";
   fadeIn?: boolean;
   _ref?: React.RefObject<HTMLButtonElement>;
 
   size?: "large" | "default" | "small" | "micro" | "nano";
-  variant?: "outline" | "filled" | "faded" | "icon" | "text" | "default";
+  variant?:
+    "outline" | "select" | "filled" | "faded" | "icon" | "text" | "default";
   color?:
     | "danger"
     | "warn"
@@ -103,14 +103,14 @@ type BtnCustomProps = (
   );
 type KeysOfUnion<T> = T extends T ? keyof T : never;
 
-type OmmitedKeys =
+type ExcludedButtonProps =
   | KeysOfUnion<BtnCustomProps>
   | "children"
   | "ref"
   | "onClick"
   | "style"
   | "title";
-const CUSTOM_ATTRS: OmmitedKeys[] = [
+const CUSTOM_ATTRS: ExcludedButtonProps[] = [
   "iconPath",
   "children",
   "disabledInfo",
@@ -156,6 +156,7 @@ export type BtnProps<HREF extends string | void = void> = TestSelectors &
 
 type BtnState = {
   show: boolean;
+  isPromisePending: boolean;
   clickMessage?: {
     type: "err" | "ok" | "loading";
     msg: React.ReactNode;
@@ -170,6 +171,7 @@ class Button<HREF extends string | void = void> extends RTComp<
 > {
   state: BtnState = {
     show: true,
+    isPromisePending: false,
   };
 
   timeOut?: NodeJS.Timeout;
@@ -231,17 +233,12 @@ class Button<HREF extends string | void = void> extends RTComp<
   setPromise = async (
     promise: ReturnType<Required<BtnProps>["onClickPromise"]>,
   ) => {
-    this.clickMessage({ loading: 1, delay: 0 });
+    this.setState({ isPromisePending: true });
     const minDuration = 500;
-    const startTime = Date.now();
+    this.clickMessage({ loading: 1, delay: minDuration });
     try {
-      const res = await promise;
-      const endTime = Date.now();
-      const duration = endTime - startTime;
+      await promise;
       if (!this.mounted) return;
-      if (duration < minDuration) {
-        await tout(Math.max(0, minDuration - duration));
-      }
       this.clickMessage({ loading: 0 });
     } catch (err) {
       if (this.props.onClickPromiseMode === "noTickIcon") {
@@ -254,6 +251,8 @@ class Button<HREF extends string | void = void> extends RTComp<
             this.props.onClickPromiseMessage
           : undefined) ?? err,
       });
+    } finally {
+      this.setState({ isPromisePending: false });
     }
   };
 
@@ -278,7 +277,8 @@ class Button<HREF extends string | void = void> extends RTComp<
       onClickPromiseMode,
       ...otherProps
     } = this.props;
-    const { clickMessage, showClickConfirmation } = this.state;
+    const { clickMessage, showClickConfirmation, isPromisePending } =
+      this.state;
     let extraStyle: React.CSSProperties = {};
 
     const color =
@@ -292,7 +292,8 @@ class Button<HREF extends string | void = void> extends RTComp<
 
     if (clickMessage?.replace) return clickMessage.msg;
 
-    const isDisabled = disabledInfo || loading;
+    const showDisabledStyle = disabledInfo || loading === true;
+    const isDisabled = showDisabledStyle || isPromisePending;
     let _className = "";
     const { size: sizeFromProps = "small" } = this.props;
     const size =
@@ -301,12 +302,13 @@ class Button<HREF extends string | void = void> extends RTComp<
       : sizeFromProps;
 
     const hasBgClassname = (className + "").includes("bg-");
+    const hasIcon = iconPath || iconProps || iconNode;
     _className =
       " f-0 flex-row gap-p5 ai-center  " +
       ("href" in this.props ? " button-css " : "  ") +
       (variant === "outline" ? " b " : "");
 
-    if (children && !iconNode && !iconPath && !loading) {
+    if (children && !hasIcon && !loading) {
       if (variant === "outline") {
         if (!hasBgClassname)
           _className =
@@ -331,7 +333,7 @@ class Button<HREF extends string | void = void> extends RTComp<
         extraStyle.padding = "12px";
       }
 
-      if (variant === "text") {
+      if (variant === "text" && style.padding === undefined) {
         extraStyle.paddingLeft = 0;
       }
     } else {
@@ -351,7 +353,9 @@ class Button<HREF extends string | void = void> extends RTComp<
     _className +=
       (fadeIn ? " fade-in " : "") +
       (iconPath && !children ? "  " : "rounded") + // round
-      (isDisabled ? ` disabled ${disabledVariant ? "no-fade" : ""} ` : " ");
+      (showDisabledStyle ?
+        ` disabled ${disabledVariant ? "no-fade" : ""} `
+      : " ");
 
     const loadingSize = {
       large: 22,
@@ -382,7 +386,7 @@ class Button<HREF extends string | void = void> extends RTComp<
       <>
         {iconPosition === "right" && childrenContent}
 
-        {!(iconPath || iconProps?.path || iconNode) || loading ? null : (
+        {!hasIcon || loading ? null : (
           (iconNode ?? (
             <Icon
               path={
@@ -449,14 +453,6 @@ class Button<HREF extends string | void = void> extends RTComp<
       extraStyle.minWidth = "32px";
     }
 
-    const FontSizeMap: Record<Required<BtnCustomProps>["size"], string> = {
-      large: "16px",
-      default: "16px",
-      small: "14px",
-      micro: "12px",
-      nano: "10px",
-    };
-
     const finalProps: PropsOf<HTMLAnchorElement> | PropsOf<HTMLButtonElement> =
       {
         ...omitKeys(this.props, CUSTOM_ATTRS as any),
@@ -467,12 +463,14 @@ class Button<HREF extends string | void = void> extends RTComp<
             : () => alert(disabledInfo)
           : onClick,
         title: disabledInfo || title,
+        "aria-disabled": isDisabled ? true : undefined,
+        "aria-busy": loading ? true : undefined,
         style: {
           ...extraStyle,
           display: "flex",
           lineHeight: "1em",
           width: "fit-content",
-          fontSize: FontSizeMap[size],
+          fontSize: getButtonFontSize(size),
           ...style,
         },
         onMouseDown: (e) => e.preventDefault(),
@@ -582,7 +580,6 @@ const Btn = <HREF extends string | void = void>(allProps: BtnProps<HREF>) => {
       },
     };
   }, [onClickPromise, onErrorAlert, props]);
-
   return (
     <Button
       {...(propsWithOnAlert as BtnProps<string>)}
@@ -596,3 +593,15 @@ const Btn = <HREF extends string | void = void>(allProps: BtnProps<HREF>) => {
 };
 
 export default Btn;
+
+export const getButtonFontSize = (size: BtnCustomProps["size"] = "small") => {
+  const buttonSize =
+    size === "default" && window.isLowWidthScreen ? "small" : size;
+  return {
+    large: "16px",
+    default: "16px",
+    small: "14px",
+    micro: "12px",
+    nano: "10px",
+  }[buttonSize];
+};

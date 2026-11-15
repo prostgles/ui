@@ -99,7 +99,7 @@ export function onFormFieldKeyDown(
                 newValue.substring(removeMinusAtIndex + 1);
             }
             inpt.value = newValue;
-            this.onChange(inpt);
+            this.onChange(inpt, e);
           } else {
             this.inputSelStart = undefined;
           }

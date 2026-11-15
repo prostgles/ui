@@ -80,7 +80,7 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
   await newChat(page);
   await deletePreviousMessages(page);
   await setPromptByText(page, "chat");
-  await setModelByText(page, "sonn");
+  await setModelByText(page, "luna");
 
   await deletePreviousMessages(page);
   await setPromptByText(page, "Create workflow");
@@ -142,7 +142,9 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
     type: "fadeIn",
     duration: 1_000,
   } as const;
+
   await addScene({
+    svgFileName: "receipts_workflow",
     animations: [
       {
         type: "growIn",
@@ -234,12 +236,14 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
 
   await addSceneAnimation(getCommandElemSelector("UserInput.Done"), {
     duration: "fast",
+    svgFileName: "receipts_workflow_files_selected",
   });
 
   await addSceneAnimation(getDataKey("Definition"), {
     duration: {
       waitBeforeClick: 1500,
     },
+    svgFileName: "receipts_workflow_ts_definition",
   });
 
   await addSceneAnimation(getCommandElemSelector("AgenticWorkflow.start"), {
@@ -311,15 +315,14 @@ export const aiAssistantAgenticWorkflowSvgif: OnBeforeScreenshot = async (
   await page.keyboard.press("Escape");
 
   await page
-    .locator(getDataLabel("db insertMany receipts "))
+    .locator(getDataLabel("db insertMany receipts"))
     .waitFor({ state: "visible", timeout: 35000 });
   await addSceneAnimation(
     {
       nth: 0,
       selector:
-        getDataLabel("db insertMany receipts ") +
-        " " +
-        getCommandElemSelector("AgenticWorkflowActivity.openTable"),
+        getDataLabel("db insertMany receipts") +
+        getCommandElemSelector("AgenticWorkflow.openToolCall"),
     },
     { duration: "fast" },
   );

@@ -2,7 +2,6 @@ import type { GeneratedFunctionSchema } from "@common/DBGeneratedSchema";
 import type { DBSSchema } from "@common/publishUtils";
 import type { DBS } from "@src/index";
 import { statePrgl } from "@src/init/startProstgles";
-import type { AuthClientRequest } from "prostgles-server";
 import { startAgent } from "../../startAgent";
 import { getValidatedMcpServerToolsAllowed } from "../definitionValidation/getValidatedMcpServerToolsAllowed";
 import type { DefineAgenticWorkflow } from "../runtimeSdk/defineAgenticWorkflow";
@@ -22,25 +21,23 @@ export const createWorkflowExecutionHandlers = async <
     databaseAccessDefinitions,
     mode,
     message_id,
+    workflowRunId,
   }: Parameters<P>[0] & {
     signal?: AbortSignal;
+    workflowRunId?: number;
     mode: "definitions-only" | "full";
-  } & Pick<
-      DBSSchema["agentic_workflows"],
-      "definition_override" | "message_id"
-    >,
+    message_id: string | undefined;
+  } & Pick<DBSSchema["agentic_workflows"], "definition_override">,
   {
     dbs,
     chatId,
     userId,
     connectionId,
-    clientReq,
   }: {
     dbs: DBS;
-    chatId: number;
+    chatId: number | undefined;
     userId: string;
     connectionId: string;
-    clientReq: AuthClientRequest;
   },
   {
     runInSequence = true,
@@ -53,9 +50,12 @@ export const createWorkflowExecutionHandlers = async <
   if (!statePrgl) {
     throw new Error("Prostgles state is not initialized");
   }
-  const { clientMethods } = await statePrgl.getClientDBHandlers(clientReq, {
-    methods: { askLLM: true },
-  });
+  const { clientMethods } = await statePrgl.getClientDBHandlers(
+    { userId },
+    {
+      methods: { askLLM: true },
+    },
+  );
   const dbsClientFunctions = clientMethods as unknown as {
     [K in keyof GeneratedFunctionSchema]: {
       run: GeneratedFunctionSchema[K];
@@ -112,6 +112,7 @@ export const createWorkflowExecutionHandlers = async <
             started,
             timeout: containerConfiguration.timeout,
             messageId: message_id,
+            workflowRunId,
           },
         );
       };
@@ -149,6 +150,7 @@ export const createWorkflowExecutionHandlers = async <
             databaseAccessDefinitions,
           autoApproveAllTools,
           messageId: message_id,
+          workflowRunId,
         })
       ),
   };

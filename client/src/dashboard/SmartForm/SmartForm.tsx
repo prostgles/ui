@@ -2,12 +2,13 @@ import { type DetailedFilter } from "@common/filterUtils";
 import { SuccessMessage } from "@components/Animations";
 import type { BtnProps } from "@components/Btn";
 import Btn from "@components/Btn";
+import ConfirmationDialog from "@components/ConfirmationDialog";
 import ErrorComponent from "@components/ErrorComponent";
 import { classOverride } from "@components/Flex";
 import type { JSONBSchemaCommonProps } from "@components/JSONBSchema/JSONBSchema";
 import Loading from "@components/Loader/Loading";
 import type { AnyObject, ValidatedColumnInfo } from "prostgles-types";
-import { includes, omitKeys } from "prostgles-types";
+import { omitKeys } from "prostgles-types";
 import React, { useCallback, useState } from "react";
 import type { Prgl } from "../../App";
 import { ifEmpty } from "../../utils/utils";
@@ -18,9 +19,10 @@ import { SmartFormFooterButtons } from "./SmartFormFooter/SmartFormFooterButtons
 import { useSmartFormActions } from "./SmartFormFooter/useSmartFormActions";
 import { type NewRowDataHandler } from "./SmartFormNewRowDataHandler";
 import { SmartFormPopupWrapper } from "./SmartFormPopup/SmartFormPopupWrapper";
+import { getSmartFormHeaderText } from "./SmartFormPopup/SmartFormHeader";
+import { SmartFormViewAsMarkdown } from "./SmartFormPopup/SmartFormViewAsMarkdown";
 import { SmartFormUpperFooter } from "./SmartFormUpperFooter/SmartFormUpperFooter";
 import { useSmartForm, type SmartFormState } from "./useSmartForm";
-import { SmartFormViewAsMarkdown } from "./SmartFormPopup/SmartFormViewAsMarkdown";
 
 export type getErrorsHook = (
   cb: (
@@ -205,22 +207,17 @@ const SmartFormWithNoError = ({
 }) => {
   const { tableName, label, asPopup, className = "", onClose } = props;
   const [showAsMarkdown, setShowAsMarkdown] = useState(false);
+  const [showCloseConfirmation, setShowCloseConfirmation] = useState(false);
 
   const { mode, displayedColumns, errors, error, table, loading } = state;
 
   const isLoading = loading || ("loading" in mode ? mode.loading : false);
-  const headerFromCardConfig =
-    (
-      table.card?.headerColumn &&
-      "currentRow" in mode &&
-      mode.currentRow &&
-      table.card.headerColumn in mode.currentRow
-    ) ?
-      (mode.currentRow[table.card.headerColumn] as string)
-    : undefined;
   const headerText =
     label ??
-    (headerFromCardConfig || table.label || table.comment || tableName);
+    getSmartFormHeaderText(
+      table,
+      "currentRow" in mode ? mode.currentRow : undefined,
+    );
 
   const formHeader =
     asPopup ? null
@@ -242,6 +239,14 @@ const SmartFormWithNoError = ({
     onClose?.(true);
   }, [onClose]);
 
+  const onRequestClose = () => {
+    if (state.hasUnsavedChanges && !successMessage) {
+      setShowCloseConfirmation(true);
+      return;
+    }
+    onCloseWrapped();
+  };
+
   const actionsState = useSmartFormActions({
     ...props,
     ...state,
@@ -254,13 +259,20 @@ const SmartFormWithNoError = ({
     <SmartFormPopupWrapper
       {...props}
       table={table}
-      onClose={onCloseWrapped}
+      onClose={onRequestClose}
       maxWidth={maxWidth}
       displayedColumns={displayedColumns}
       headerText={headerText}
       rowFilterObj={"rowFilterObj" in mode ? mode.rowFilterObj : undefined}
+      row={
+        mode.type === "view" || mode.type === "update" ?
+          mode.currentRow
+        : undefined
+      }
       showAsMarkdown={showAsMarkdown}
-      setShowAsMarkdown={setShowAsMarkdown}
+      setShowAsMarkdown={
+        state.modeType === "insert" ? undefined : setShowAsMarkdown
+      }
     >
       <div
         data-command={isLoading ? undefined : "SmartForm"}
@@ -292,8 +304,8 @@ const SmartFormWithNoError = ({
         <SmartFormUpperFooter {...props} {...state} />
 
         <ErrorComponent
-          className="f-0 b rounded"
-          style={{ flex: "none", padding: "1em" }}
+          className="f-0 b rounded m-p5 p-1 gap-p5"
+          style={{ flex: "none", lineHeight: "1.5rem" }}
           withIcon={true}
           error={
             error ||
@@ -321,7 +333,28 @@ const SmartFormWithNoError = ({
           />
         )}
 
-        <SmartFormFooterButtons {...props} {...state} {...actionsState} />
+        {showCloseConfirmation && (
+          <ConfirmationDialog
+            asPopup
+            positioning="center"
+            className="bg-color-0"
+            title="Unsaved changes"
+            message="Discard your unsaved changes and close this form?"
+            acceptBtn={{
+              color: "danger",
+              text: "Discard changes",
+              dataCommand: "SmartForm.close.confirm",
+            }}
+            onAccept={onCloseWrapped}
+            onClose={() => setShowCloseConfirmation(false)}
+          />
+        )}
+        <SmartFormFooterButtons
+          {...props}
+          {...state}
+          {...actionsState}
+          onClose={onClose && onRequestClose}
+        />
       </div>
     </SmartFormPopupWrapper>
   );

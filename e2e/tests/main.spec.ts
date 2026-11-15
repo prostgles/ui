@@ -1,8 +1,10 @@
-import { chromium, expect, test, type Locator } from "@playwright/test";
-import { authenticator } from "otplib";
+import { chromium, expect, test, type Locator } from "./utils/fixtures";
+import type { Route } from "@playwright/test";
+import { generate } from "otplib";
+import { createHash } from "node:crypto";
 import { speechToTextTest } from "testAskLLM/speechToTextTest";
 
-import { spawn } from "child_process";
+import { execSync, spawn } from "child_process";
 import { fileBrowserGoToPath } from "fileBrowserGoToPath";
 import { writeFileSync } from "fs";
 import { mkdir } from "fs/promises";
@@ -16,10 +18,14 @@ import {
 import { goTo } from "utils/goTo";
 import { isPortFree } from "utils/isPortFree";
 import { startMockSMTPServer } from "./mockSMTPServer";
-import { testAskLLMCode, setupAskLLMToolUse } from "./testAskLLM/testAskLLM";
-import { getCommandElemSelector, getDataKey, getDataLabel } from "./Testing";
+import { setupAskLLMToolUse, testAskLLMCode } from "./testAskLLM/testAskLLM";
 import {
-  addExistingDatabase,
+  getCommandElemSelector,
+  getDataKey,
+  getDataLabel,
+} from "./utils/Testing";
+import {
+  addFileToChat,
   clickAndWait,
   clickInsertRow,
   closeWorkspaceWindows,
@@ -37,11 +43,12 @@ import {
   forEachLocator,
   getAskLLMLastMessage,
   getLLMResponses,
+  getLoginSubmitButton,
   getMonacoEditorBySelector,
   getMonacoValue,
-  getSearchListItem,
   getSelector,
   getTableWindow,
+  getTimeout,
   insertRow,
   login,
   loginWhenSignupIsEnabled,
@@ -55,6 +62,7 @@ import {
   runDbSql,
   runDbsSql,
   runSql,
+  scrollElementIntoView,
   selectAndUpsertFile,
   sendAskLLMMessage,
   setModelByText,
@@ -63,10 +71,14 @@ import {
   setupMagicLinkAuth,
   setWspColLayout,
   toggleMCPTools,
+  TWENTY_SECONDS_OR_MORE,
   typeConfirmationCode,
   uploadFile,
 } from "./utils/utils";
-import { createConnection } from "net";
+
+import { MINUTE } from "common/utils";
+import { DEFAULT_AGENT_MODEL } from "../../server/dist/server/src/serverFunctions/askLLM/refreshModels";
+import type { SchemaShape } from "../../client/src/dashboard/SchemaGraph/ERDSchema/useSchemaShapes";
 
 const schemaGraphTestDbName = "financial.sql";
 const DB_NAMES = {
@@ -77,10 +89,6 @@ const DB_NAMES = {
 };
 const backupDir = resolve(__dirname, "../demo/backups");
 
-const getTimeout = (base: number) => ({
-  timeout: base * (process.env.CI ? 3 : 1),
-});
-const TWENTY_SECONDS_OR_MORE = getTimeout(20_000);
 const viewPortSize = { width: 1080, height: 1080 };
 test.use({
   /** Increase size to ensure agentic workflow fits all logs */
@@ -88,16 +96,25 @@ test.use({
 });
 
 test.describe.configure({ mode: "serial" });
+
 test.describe("Main test", () => {
   if (process.env.ONLY_VIDEO) {
     test.skip();
   }
-  let getEmails: () => any[];
+  let smtp: Awaited<ReturnType<typeof startMockSMTPServer>> | undefined;
+  const getSMTPServer = () => {
+    if (!smtp) throw new Error("SMTP server has not started");
+    return smtp;
+  };
 
   test.beforeAll(async () => {
-    ({ getEmails } = startMockSMTPServer());
-    console.log("getEmails", getEmails());
-    return { getEmails };
+    smtp = await startMockSMTPServer({
+      disabledCommands: ["AUTH", "STARTTLS"],
+    });
+  });
+
+  test.afterAll(async () => {
+    await smtp?.close();
   });
 
   test.beforeEach(async ({ page, browser }, testInfo) => {
@@ -111,7 +128,7 @@ test.describe("Main test", () => {
     const helperContext = await browser.newContext();
     const helperPage = (await helperContext.newPage()) as PageWIds;
 
-    await login(helperPage, USERS.test_user, "/login");
+    await login(helperPage, USERS.test_user, "/auth/login");
     const backupName = testInfo.title;
 
     const restoreCount = await runDbsMethod(helperPage, "restoreConnections", {
@@ -124,7 +141,7 @@ test.describe("Main test", () => {
         allActive: true,
       });
     }
-    await helperPage.request.post("/logout").catch(() => {});
+    await helperPage.request.post("/auth/logout").catch(() => {});
     await helperContext.close();
   });
 
@@ -153,7 +170,7 @@ test.describe("Main test", () => {
     page: p,
   }) => {
     await new Promise((resolve) => setTimeout(resolve, 5000));
-    const page = p as PageWIds;
+    const page = p;
     const url = new URL("http://localhost:3004");
     await page.context().addCookies([
       {
@@ -171,7 +188,9 @@ test.describe("Main test", () => {
 
     await page.getByRole("link", { name: "Connections" }).click();
     await page.getByRole("link", { name: "Prostgles UI state" }).click();
-    await page.getByTestId("Feedback").waitFor({ state: "visible" });
+    await page
+      .getByTestId("dashboard.menu.quickSearch")
+      .waitFor({ state: "visible" });
 
     const browser2 = await chromium.launch();
     const newPage = await browser2.newPage();
@@ -188,7 +207,7 @@ test.describe("Main test", () => {
       },
     ]);
     await goTo(newPage);
-    await expect(await newPage.textContent("body")).toContain(
+    await expect(newPage.locator("body")).toContainText(
       "Only 1 session is allowed for the passwordless admin",
     );
     await browser2.close();
@@ -226,7 +245,7 @@ test.describe("Main test", () => {
   test("Can disable passwordless admin by creating a new admin user. User data is reassigned and accessible to the new user [no-backup]", async ({
     page: p,
   }) => {
-    const page = p as PageWIds;
+    const page = p;
 
     const goToWorkspace = async (openUsersTable = true) => {
       await page
@@ -247,6 +266,7 @@ test.describe("Main test", () => {
 
     await page.waitForTimeout(500);
     if (!localNoAuthSetup) {
+      await goTo(page);
       await disablePwdlessAdminAndCreateUser(page);
     }
     await login(page);
@@ -267,8 +287,7 @@ test.describe("Main test", () => {
       getSelector({ testid: "SmartFormField", dataKey: "username" }),
     );
 
-    const userTypeField = await formField.textContent();
-    await expect(userTypeField).toEqual(`Username${USERS.test_user}`);
+    await expect(formField).toHaveText(`Username${USERS.test_user}`);
     await page.getByTestId("SmartForm.close").waitFor({ state: "visible" });
     await page.getByTestId("SmartForm.close").click();
 
@@ -283,8 +302,8 @@ test.describe("Main test", () => {
   });
 
   test("State db backup and restore works", async ({ page: p }) => {
-    const page = p as PageWIds;
-    await login(page, USERS.test_user, "/login");
+    const page = p;
+    await login(page, USERS.test_user, "/auth/login");
     await openConnection(page, "Prostgles UI state");
 
     const table = page.locator(`[data-table-name="user_types"]`);
@@ -297,9 +316,12 @@ test.describe("Main test", () => {
     await page
       .getByRole("button", { name: "Start backup", exact: true })
       .click();
-    await page.getByText("Completed");
+    await expect(
+      page.getByTestId("BackupControls.Restore").first(),
+    ).toBeVisible(TWENTY_SECONDS_OR_MORE);
 
     await page.getByTestId("config.goToConnDashboard").click();
+    await expect(table).toBeVisible();
     await closeWorkspaceWindows(page);
     await page.reload();
     await expect(table).not.toBeAttached();
@@ -317,8 +339,8 @@ test.describe("Main test", () => {
   });
 
   test("State db restore from file works", async ({ page: p }) => {
-    const page = p as PageWIds;
-    await login(page, USERS.test_user, "/login");
+    const page = p;
+    await login(page, USERS.test_user, "/auth/login");
     await openConnection(page, "Prostgles UI state");
 
     const table = page.locator(`[data-table-name="user_types"]`);
@@ -338,6 +360,7 @@ test.describe("Main test", () => {
     console.log("Saved backup dump:", backupFilePath);
 
     await page.getByTestId("config.goToConnDashboard").click();
+    await expect(table).toBeVisible();
     await closeWorkspaceWindows(page);
     await page.reload();
 
@@ -361,14 +384,14 @@ test.describe("Main test", () => {
     await page.waitForTimeout(8e3);
     await page.reload();
 
-    await login(page, USERS.test_user, "/login");
+    await login(page, USERS.test_user, "/auth/login");
     await openConnection(page, "Prostgles UI state");
     // await page.getByTestId("config.goToConnDashboard").click();
     await expect(table).toBeVisible();
   });
 
   test("Create db for Schema graph", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     await login(page, USERS.test_user);
 
     await createDatabase(schemaGraphTestDbName, page, true);
@@ -377,7 +400,7 @@ test.describe("Main test", () => {
   test("Schema graph renders and can be zoomed and panned", async ({
     page: p,
   }) => {
-    const page = p as PageWIds;
+    const page = p;
     await login(page, USERS.test_user);
 
     await openConnection(page, "financial");
@@ -393,27 +416,15 @@ test.describe("Main test", () => {
     await page.getByTestId("Btn.ClickConfirmation.Confirm").click();
 
     const getDrawnInfo = async () => {
-      const drawnInfo: {
-        scale3d: [number, number, number];
-        zoomScale: number;
-        translate: { x: number; y: number };
-        shapes: (
-          | {
-              type: "rectangle";
-              coords: [number, number];
-              data: {
-                name: string;
-              };
-            }
-          | {
-              type: "linkline";
-            }
-        )[];
-      } = await page.evaluate(() => {
-        //@ts-ignore
-        return document.querySelector("canvas")?._drawn;
-      });
-      return drawnInfo;
+      const drawnInfo = await page.evaluate(
+        () => document.querySelector("canvas")?._drawn,
+      );
+      if (!drawnInfo) throw new Error("Schema graph has not rendered");
+      // The generic canvas declaration omits the diagram's table metadata.
+      return {
+        ...drawnInfo,
+        shapes: drawnInfo.shapes as unknown as SchemaShape[],
+      };
     };
     const initialShapesInfo = await getDrawnInfo();
 
@@ -467,25 +478,41 @@ test.describe("Main test", () => {
   });
 
   test("Server settings and account tabs work ", async ({ page: p }) => {
-    const page = p as PageWIds;
-    await login(page, USERS.test_user, "/login");
+    const page = p;
+    await login(page, USERS.test_user, "/auth/login");
 
     for (const pageWithTabs of ["/server-settings", "/account"] as const) {
       await goTo(page, pageWithTabs);
+
+      /* Routes share the same gap between the navbar and their content. */
+      await expect
+        .poll(() =>
+          page
+            .locator(".Tabs")
+            .first()
+            .evaluate((tabs) => {
+              const navbar = document.querySelector('[data-command="NavBar"]');
+              if (!navbar) throw new Error("Navbar not found");
+              return (
+                tabs.getBoundingClientRect().top -
+                navbar.getBoundingClientRect().bottom
+              );
+            }),
+        )
+        .toBe(16);
 
       if (pageWithTabs === "/account") {
         await page.getByTestId("ViewMoreSmartCardList").first().click();
         await expect(
           page.getByTestId("Popup.content").getByTestId("SmartCardList"),
-        ).toContainText("Description");
+        ).toContainText("Highest access level");
         await page.getByTestId("Popup.close").click();
       }
       const tabItems = await page.getByTestId("MenuList").locator("li").all();
       for (const tabItem of tabItems) {
-        const tabKey = await tabItem.getAttribute("data-key");
+        await expect(tabItem).toHaveAttribute("data-key", /.+/);
+        await expect(tabItem).toHaveText(/.+/);
         const tabText = await tabItem.textContent();
-        await expect(tabKey).toBeTruthy();
-        await expect(tabText).toBeTruthy();
         await tabItem.click();
         await page.waitForTimeout(500);
         await expect(page.locator(".Tabs_Content h2").first()).toContainText(
@@ -495,15 +522,10 @@ test.describe("Main test", () => {
     }
   });
 
-  test("Email password registration setup", async ({ page: p, browser }) => {
-    const page = p as PageWIds;
+  test("Email password registration setup", async ({ page: p }) => {
+    const page = p;
 
     await login(page);
-
-    await goTo(page, "/component-list");
-    await expect(page.locator("body")).toContainText(
-      "All button heights match for loading state.",
-    );
 
     await goTo(page, "/server-settings");
 
@@ -517,9 +539,22 @@ test.describe("Main test", () => {
     /** The url will be updated automatically and this will page trigger a reload */
     await page.waitForTimeout(1e3);
     const input = await page.getByLabel("Website URL");
-    await expect(await input.getAttribute("value")).toEqual(
-      "http://localhost:3004",
-    );
+    await expect(input).toHaveValue("http://localhost:3004");
+    const signupMode = page.getByTestId("AuthProviderSetup.signupMode");
+    if ((await signupMode.innerText()) !== "Public signup") {
+      const appBeforeSignupUpdate = await page
+        .getByTestId("App")
+        .evaluateHandle((element) => element);
+      await signupMode.click();
+      await page.locator('[data-key="public"]').click();
+      /* Wait for the app refresh, which resets expanded sections. */
+      await page.waitForFunction(
+        (element) => !element.isConnected,
+        appBeforeSignupUpdate,
+      );
+      await appBeforeSignupUpdate.dispose();
+    }
+    await expect(signupMode).toHaveText("Public signup");
     await page.getByTestId("EmailAuthSetup").locator("button").click();
     await page.getByTestId("EmailAuthSetup.SignupType").click();
     await page.locator(`[data-key="withPassword"]`).click();
@@ -527,60 +562,56 @@ test.describe("Main test", () => {
       await page.getByTestId("EmailSMTPAndTemplateSetup").click();
       await page.getByText("Email Provider").click();
       await page.locator(`[data-label="Host"] input`).fill(hostVal);
+      await page.locator("input#smtp-Port").fill(String(getSMTPServer().port));
       await page
         .getByTestId("EmailSMTPAndTemplateSetup")
         .getByText("Save")
         .click();
     };
-    await fillHostAndTest("invalid___prostgles-test-mock");
+    await fillHostAndTest("invalid-smtp.invalid");
     await page.getByText("Enabled").click();
     await page.getByText("Save").click({ timeout: 10e3 });
     const errNode = await page.getByTestId("EmailAuthSetup.error");
-    await expect(await errNode.textContent()).toContain(
-      // "getaddrinfo ENOTFOUND invalid___prostgles-test-mock", // or EAI_AGAIN
-      "getaddrinfo E",
-    );
-    await expect(await errNode.textContent()).toContain(
-      "invalid___prostgles-test-mock",
-    );
-    await fillHostAndTest("prostgles-test-mock");
+    await expect(errNode).toContainText("getaddrinfo E");
+    await expect(errNode).toContainText("invalid-smtp.invalid");
+    await fillHostAndTest("127.0.0.1");
     await page.waitForTimeout(1500);
     const errNode1 = await page.getByTestId("EmailAuthSetup.error");
-    await expect(await errNode1.count()).toBe(0);
+    await expect(errNode1).toHaveCount(0);
   });
 
   test("Email password registration", async ({ page: p, browser }) => {
     const page = await browser.newPage();
-    const newPage = p as PageWIds;
+    const newPage = p;
     await login(page);
 
-    await goTo(newPage, "/login");
+    await goTo(newPage, "/auth/login");
 
-    /** Test failed login throttle */
+    /* Unknown emails fail password login and are throttled. */
     await newPage.locator("#username").fill(USERS.new_user);
     await newPage.locator("#password").fill(USERS.new_user);
     const start = Date.now();
-    await newPage.getByRole("button", { name: "Sign in" }).click();
-    await newPage.getByTestId("Login.error").waitFor({ state: "visible" });
+    await newPage.getByRole("button", { name: "Sign in", exact: true }).click();
+    await expect(newPage.getByTestId("Login.error")).toHaveText(
+      "Invalid credentials",
+    );
     await expect(Date.now() - start).toBeGreaterThan(499);
     await newPage.reload();
 
     /** Passwords do not match registration check */
     await newPage.getByTestId("Login.toggle").click();
+    await expect(newPage.locator("#new-password")).toBeVisible();
     await newPage.locator("#username").fill(USERS.new_user);
     await newPage.locator("#password").fill(USERS.new_user);
     await newPage.getByRole("button", { name: "Sign up" }).click();
-    await expect(
-      await newPage.getByTestId("Login.error").textContent(),
-    ).toContain("Passwords do not match");
+    await expect(newPage.getByTestId("Login.error")).toHaveText(
+      "Passwords do not match",
+    );
     await newPage.locator("#new-password").fill(USERS.new_user);
     await newPage.getByRole("button", { name: "Sign up" }).click();
     await expect(
-      await newPage
-        .getByTestId("AuthNotifPopup")
-        .getByTestId("Popup.content")
-        .textContent(),
-    ).toBe(
+      newPage.getByTestId("AuthNotifPopup").getByTestId("Popup.content"),
+    ).toHaveText(
       "Email verification sent. Open the verification url or enter the code to confirm your email",
     );
     await newPage.getByRole("button", { name: "Ok" }).click();
@@ -591,22 +622,25 @@ test.describe("Main test", () => {
       [USERS.new_user],
       { returnType: "row" },
     );
-    const code = newUser?.registration?.email_confirmation?.confirmation_code;
+    const code = getSMTPServer().getLatestCode();
+    expect(newUser?.registration?.code_hash).toBe(
+      createHash("sha256").update(code).digest("hex"),
+    );
     await expect(typeof code).toBe("string");
     await expect(code.length).toBe(6);
+    expect(getSMTPServer().getEmails().at(-1)).toContain(code);
+    expect(getSMTPServer().getEmails().at(-1)).toContain(
+      `To: ${USERS.new_user}`,
+    );
     await newPage.locator("#email-verification-code").fill(code);
     await newPage.getByRole("button", { name: "Confirm email" }).click();
     await expect(
-      await newPage
-        .getByTestId("AuthNotifPopup")
-        .getByTestId("Popup.content")
-        .textContent(),
-    ).toBe("Your email has been confirmed. You can now sign in");
-    await newPage.getByRole("button", { name: "Ok" }).click();
+      newPage.getByTestId("AuthNotifPopup").getByTestId("Popup.content"),
+    ).toHaveText("Your email has been confirmed. You can now sign in");
+    await newPage.getByRole("button", { name: "OK", exact: true }).click();
+    await expect(newPage).toHaveURL("http://localhost:3004/auth/login");
 
-    await newPage.locator("#username").fill(USERS.new_user);
-    await newPage.locator("#password").fill(USERS.new_user);
-    await newPage.getByRole("button", { name: "Sign in" }).click();
+    await fillLoginFormAndSubmit(newPage, USERS.new_user);
 
     await newPage.getByTestId("App.colorScheme").waitFor({ state: "visible" });
   });
@@ -614,12 +648,12 @@ test.describe("Main test", () => {
   test("Enable email magic link registrations & Translations", async ({
     page: p,
   }) => {
-    const page = p as PageWIds;
+    const page = p;
 
     await login(page);
     await goTo(page, "/server-settings");
     await page.locator(`[data-key="auth"]`).click();
-    await setupMagicLinkAuth(page);
+    await setupMagicLinkAuth(page, getSMTPServer().port);
 
     await goTo(page, "/connections");
     await page.getByTestId("App.LanguageSelector").click();
@@ -634,13 +668,13 @@ test.describe("Main test", () => {
   });
 
   test("Email magic link signup", async ({ page: p, browser }) => {
-    const newPage = p as PageWIds;
+    const newPage = p;
     const page: PageWIds = await browser.newPage();
 
     /**
      * Can still login with password with email magic link registrations
      */
-    await goTo(page, "/login");
+    await goTo(page, "/auth/login");
     await page.locator("#username").fill(USERS.test_user);
     await page.getByRole("button", { name: "Continue" }).click();
     await page.locator("#password").waitFor({ state: "visible" });
@@ -648,17 +682,14 @@ test.describe("Main test", () => {
     await page.getByRole("button", { name: "Continue" }).click();
     await page.getByTestId("App.colorScheme").waitFor({ state: "visible" });
 
-    await goTo(newPage, "/login");
+    await goTo(newPage, "/auth/login");
 
     await newPage.locator("#username").fill(USERS.new_user1);
     await newPage.getByRole("button", { name: "Continue" }).click();
 
     await expect(
-      await newPage
-        .getByTestId("AuthNotifPopup")
-        .getByTestId("Popup.content")
-        .textContent(),
-    ).toBe("Magic link sent. Open the url from your email to login");
+      newPage.getByTestId("AuthNotifPopup").getByTestId("Popup.content"),
+    ).toHaveText("Magic link sent. Open the url from your email to login");
     await newPage.getByRole("button", { name: "Ok" }).click();
 
     const newUser = await runDbsSql(
@@ -681,9 +712,19 @@ test.describe("Main test", () => {
       { returnType: "rows" },
     );
     console.log("failedAttempts", failedAttempts);
-    const code = newUser?.registration.otp_code;
+    const code = getSMTPServer().getLatestCode();
+    expect(newUser?.registration?.code_hash).toBe(
+      createHash("sha256").update(code).digest("hex"),
+    );
     await expect(typeof code).toBe("string");
-    await goTo(newPage, `/magic-link?code=${code}&email=${USERS.new_user1}`);
+    expect(getSMTPServer().getEmails().at(-1)).toContain(code);
+    expect(getSMTPServer().getEmails().at(-1)).toContain(
+      `To: ${USERS.new_user1}`,
+    );
+    await goTo(
+      newPage,
+      `/auth/magic-link?code=${code}&email=${USERS.new_user1}`,
+    );
 
     await newPage.getByTestId("App.colorScheme").waitFor({ state: "visible" });
 
@@ -697,27 +738,46 @@ test.describe("Main test", () => {
     );
   });
 
-  test("System theme works as expected", async ({ page: p }) => {
-    const page = p as PageWIds;
+  test("Theme selector and system theme work", async ({ page: p }) => {
+    const page = p;
     await page.emulateMedia({ colorScheme: "dark" });
     await goTo(page);
     await page.locator("html.dark-theme").waitFor({ state: "visible" });
-    const darkBackgroundColor = await page.evaluate(() => {
-      return getComputedStyle(document.body).backgroundColor;
-    });
-    await expect(darkBackgroundColor).toBe("rgb(26, 25, 25)");
+    await expect(page.locator("body")).toHaveCSS(
+      "background-color",
+      "rgb(26, 25, 25)",
+    );
 
     await page.emulateMedia({ colorScheme: "light" });
-    await goTo(page);
     await page.locator("html.light-theme").waitFor({ state: "visible" });
-    const lightBackgroundColor = await page.evaluate(() => {
-      return getComputedStyle(document.body).backgroundColor;
-    });
-    await expect(lightBackgroundColor).toBe("rgb(244, 245, 247)");
+    await expect(page.locator("body")).toHaveCSS(
+      "background-color",
+      "rgb(244, 245, 247)",
+    );
+
+    await login(page);
+    for (const theme of ["dark", "light"] as const) {
+      await page.getByTestId("App.colorScheme").click();
+      await page.locator(`[data-key="${theme}"]`).click();
+      await expect(page.locator("html")).toHaveClass(`${theme}-theme`);
+      await expect
+        .poll(() => page.evaluate(() => localStorage.getItem("theme")))
+        .toBe(theme);
+    }
+
+    await page.reload();
+    await expect(page.locator("html")).toHaveClass("light-theme");
+    await page.emulateMedia({ colorScheme: "dark" });
+    await expect(page.locator("html")).toHaveClass("light-theme");
+    await page.getByTestId("App.colorScheme").click();
+    await page.locator('[data-key="from-system"]').click();
+    await expect(page.locator("html")).toHaveClass("dark-theme");
+    await page.emulateMedia({ colorScheme: "light" });
+    await expect(page.locator("html")).toHaveClass("light-theme");
   });
 
   test("Setup Free LLM assistant signup", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     await loginWhenSignupIsEnabled(page);
     const existingCloudDb = await page
       .getByRole("link", {
@@ -747,7 +807,7 @@ test.describe("Main test", () => {
     await page.getByTestId("dashboard.goToConnConfig").click();
 
     await page.getByTestId("config.auth").click();
-    await setupMagicLinkAuth(page);
+    await setupMagicLinkAuth(page, getSMTPServer().port);
     await page.getByText("Enabled").click();
     await page.getByText("Save").click();
 
@@ -817,6 +877,8 @@ test.describe("Main test", () => {
     /** Enable Web app */
     await page.getByTestId("config.webApp").click();
     await page.waitForTimeout(1500);
+    await page.getByTestId("WebApp.directory").hover();
+    await page.waitForTimeout(1500);
     await page.getByTestId("WebApp.directory").click();
     await fileBrowserGoToPath(page.getByTestId("FileTree"), [
       "ui",
@@ -827,13 +889,13 @@ test.describe("Main test", () => {
   });
 
   test("Web app", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     await page.goto("http://localhost:3005");
     await expect(page.locator("body")).toContainText("example_table");
   });
 
   test("Setup Free LLM assistant functions", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     await loginWhenSignupIsEnabled(page);
 
     /** Create cloud db */
@@ -895,11 +957,19 @@ test.describe("Main test", () => {
       "max_tokens",
       "temperature",
     ].entries()) {
-      await page.getByTitle("Add new item").click();
+      await page
+        .getByRole("button", { name: "Add new item", exact: true })
+        .click();
       await page.getByLabel("Argument name").last().fill(argName);
       await page.getByLabel("Data type").last().click();
       await page.locator(`[data-key="any"]`).click();
-      await page.waitForTimeout(500); // Popup closes but also has this "Show more" button
+      /* Selecting a type must retain the argument name and finish adding it. */
+      await expect(
+        page.getByRole("heading", { name: "Add new item", exact: true }),
+      ).toBeHidden();
+      await expect(page.getByLabel("Argument name").last()).toHaveValue(
+        argName,
+      );
       await page.getByTitle("Show more").click();
       await page.getByText("Optional", { exact: true }).nth(index).click();
       await page.waitForTimeout(500);
@@ -946,8 +1016,15 @@ test.describe("Main test", () => {
       [USERS.free_llm_user1],
       { returnType: "row" },
     );
-    const freeLLMCode = llmUser?.registration.otp_code;
+    const freeLLMCode = getSMTPServer().getLatestCode();
+    expect(llmUser?.registration?.code_hash).toBe(
+      createHash("sha256").update(freeLLMCode).digest("hex"),
+    );
     await expect(typeof freeLLMCode).toBe("string");
+    expect(getSMTPServer().getEmails().at(-1)).toContain(freeLLMCode);
+    expect(getSMTPServer().getEmails().at(-1)).toContain(
+      `To: ${USERS.free_llm_user1}`,
+    );
     await page.locator("input#otp-code").fill(freeLLMCode);
     await page.getByTestId("ProstglesSignup.continue").click();
     await page.waitForTimeout(1e3);
@@ -955,7 +1032,7 @@ test.describe("Main test", () => {
   });
 
   test("Test LLM responses and tools", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     await loginWhenSignupIsEnabled(page);
 
     await openConnection(page, "cloud");
@@ -999,7 +1076,80 @@ test.describe("Main test", () => {
 
     await page.getByTestId("AskLLM").click();
 
-    await sendAskLLMMessage(page, " request_tool_access ");
+    await test.step("Chat selector searches titles and message content", async () => {
+      const chatSelector = page.getByTestId("LLMChat.select");
+      const originalChatId = await chatSelector.getAttribute("data-key");
+      await sendAskLLMMessage(page, "Violet search phrase");
+      await newChat(page);
+      const newChatId = await chatSelector.getAttribute("data-key");
+      await chatSelector.click();
+      const searchList = page.getByTestId("SearchList").filter({
+        has: chatSelector,
+      });
+      const searchInput = searchList.getByRole("textbox");
+      const chatOptions = searchList.getByRole("option");
+      const originalChatOption = chatOptions.filter({ hasText: userMessage });
+
+      for (const term of ["HEY", "violet search phrase", "FREE AI ASSISTANT"]) {
+        await searchInput.fill("");
+        await expect(chatOptions).toHaveCount(2);
+        await searchInput.fill(term);
+        await expect(chatOptions).toHaveCount(1);
+        await expect(originalChatOption).toHaveAttribute(
+          "data-key",
+          originalChatId!,
+        );
+        await expect(chatSelector).toHaveAttribute("data-key", newChatId!);
+      }
+
+      await searchInput.fill("no matching chat content");
+      await expect(chatOptions).toHaveCount(0);
+      await searchInput.fill("");
+      await expect(chatOptions).toHaveCount(2);
+      await searchInput.fill("violet search phrase");
+      await originalChatOption.click();
+      await expect(chatSelector).toHaveAttribute("data-key", originalChatId!);
+      await expect(page.getByTestId("Chat.messageList")).toContainText(
+        "Violet search phrase",
+      );
+      await chatSelector.click();
+      await expect(searchInput).toHaveValue("");
+      await expect(chatOptions).toHaveCount(2);
+      await originalChatOption.click();
+      await runDbsSql(page, "DELETE FROM llm_chats WHERE id = $1", [newChatId]);
+    });
+
+    /**
+     * Ensure draft message is correctly handled
+     * */
+    const textArea = page.getByTestId("Chat.textarea");
+    await expect(textArea).toHaveValue("");
+    const draft = "Unsent draft should not be resent after clearing";
+    await textArea.fill(draft);
+    await expect
+      .poll(async () =>
+        runDbsSql(
+          page,
+          "SELECT count(*)::int FROM llm_chats WHERE currently_typed_message = $1",
+          [draft],
+          { returnType: "value" },
+        ),
+      )
+      .toBe(1);
+    await page.getByTestId("AskLLM.popup").getByTestId("Popup.close").click();
+    await page.getByTestId("AskLLM").click();
+    await expect(textArea).toHaveValue(draft);
+    const userMessages = page.locator(".message:not(.incoming)");
+    const messageCount = await userMessages.count();
+    await textArea.fill("");
+    await textArea.press("Enter");
+    await page.waitForTimeout(500);
+    await expect(userMessages).toHaveCount(messageCount);
+
+    /** Test request tool access */
+    await sendAskLLMMessage(page, " request_tool_access ", false);
+    await expect(textArea).toHaveValue("", { timeout: 1000 });
+    await expect(textArea).toBeDisabled();
     await page
       .getByTestId("RequestToolAccess.Approve")
       .click({ ...TWENTY_SECONDS_OR_MORE });
@@ -1022,16 +1172,16 @@ test.describe("Main test", () => {
     await page.getByTestId("Popup.close").last().click();
     await newChat(page);
 
-    await setModelByText(page, "son");
+    await setModelByText(page, "luna");
 
     await expect(page.getByTestId("LLMChatOptions.MCPTools")).toContainText(
-      "9",
+      "11",
     );
-    await sendAskLLMMessage(page, " task ");
+    await sendAskLLMMessage(page, " task ", false);
 
     await page
       .getByTestId("RequestToolAccess.Approve")
-      .click({ ...TWENTY_SECONDS_OR_MORE });
+      .click(TWENTY_SECONDS_OR_MORE);
     await expect(page.getByTestId("RequestToolAccess")).toContainText(
       "Added tool access",
       { ...TWENTY_SECONDS_OR_MORE },
@@ -1042,15 +1192,13 @@ test.describe("Main test", () => {
     );
 
     await expect(page.getByTestId("LLMChatOptions.MCPTools")).toContainText(
-      "12",
+      "13",
     );
 
     const dbToolsBtn = await page
       .getByTestId("LLMChatOptions.DatabaseAccess")
       .locator("button");
-    await expect(await dbToolsBtn.getAttribute("class")).toContain(
-      "btn-color-action",
-    );
+    await expect(dbToolsBtn).toContainClass("btn-color-action");
 
     // await addExistingDatabase(page, "food_delivery");
     await createDatabase("food_delivery", page, true);
@@ -1077,14 +1225,24 @@ test.describe("Main test", () => {
     );
     await page
       .getByTestId("AskLLMChat.LoadSuggestedDashboards")
-      .click({ ...TWENTY_SECONDS_OR_MORE });
+      .click(TWENTY_SECONDS_OR_MORE);
 
-    const workspaceBtn = await page.getByTestId("WorkspaceMenu.list");
-    await expect(workspaceBtn).toContainText("Customer Insights");
+    /* Generated dashboards appear in the selector and open their saved views. */
+    const workspaceSelector = page.getByTestId("WorkspaceMenuDropDown");
+    await expect(workspaceSelector).toHaveText(
+      "Order Management",
+      TWENTY_SECONDS_OR_MORE,
+    );
+    await workspaceSelector.click();
+    const workspaceList = page
+      .getByRole("dialog")
+      .getByTestId("WorkspaceMenu.list");
+    await expect(workspaceList).toContainText(
+      "Customer Insights",
+      TWENTY_SECONDS_OR_MORE,
+    );
 
-    await page.waitForTimeout(1e3);
-
-    await page.locator(getDataKey("Restaurant Performance")).click();
+    await workspaceList.locator(getDataKey("Restaurant Performance")).click();
     await page
       .getByTestId("TableBody")
       .locator(".ProgressBar")
@@ -1092,9 +1250,17 @@ test.describe("Main test", () => {
       // .scrollIntoViewIfNeeded({ timeout: 60e3 });
       .waitFor({ state: "visible", timeout: 60e3 });
 
+    /* Unloading generated dashboards removes them from the workspace menu. */
     await page.getByTestId("AskLLM").click();
-    await page.getByTestId("AskLLMChat.UnloadSuggestedDashboards").click();
-    await expect(workspaceBtn).not.toContainText("Customer Insights");
+    await Promise.all([
+      page.waitForEvent("load"),
+      page
+        .getByTestId("AskLLMChat.UnloadSuggestedDashboards")
+        .click(TWENTY_SECONDS_OR_MORE),
+    ]);
+    await workspaceSelector.click();
+    await expect(workspaceList).toBeVisible();
+    await expect(workspaceList).not.toContainText("Customer Insights");
 
     await page.waitForTimeout(2e3);
 
@@ -1106,7 +1272,7 @@ test.describe("Main test", () => {
   test("Document to markdown service and conversion works", async ({
     page: p,
   }) => {
-    const page = p as PageWIds;
+    const page = p;
     await loginWhenSignupIsEnabled(page);
 
     await openConnection(page, "cloud");
@@ -1116,20 +1282,14 @@ test.describe("Main test", () => {
      * Only test locally due to service image size
      */
     if (!process.env.CI) {
-      const addFile = async () => {
-        const pdfFilePath = join(
-          __dirname,
-          "..",
-          "tests",
-          "testAskLLM",
-          "sample.pdf",
-        );
-        const fileChooserPromise = page.waitForEvent("filechooser");
-        await page.getByTestId("Chat.addFiles").click();
-        const fileChooser = await fileChooserPromise;
-        await fileChooser.setFiles(pdfFilePath);
-      };
-      await addFile();
+      const pdfFilePath = join(
+        __dirname,
+        "..",
+        "tests",
+        "testAskLLM",
+        "sample.pdf",
+      );
+      await addFileToChat(page, pdfFilePath);
       const toggle = page.getByTestId(
         "ChatFileAttachments.convertDocsToMarkdown",
       );
@@ -1144,7 +1304,7 @@ test.describe("Main test", () => {
 
       /** Service finished starting. This might take much longer if it needs installing */
       await expect(page.getByLabel("Convert docs to markdown")).toBeChecked(
-        getTimeout(90e3),
+        getTimeout(4 * 60e3),
       );
 
       await page.keyboard.press("Control+KeyK");
@@ -1175,9 +1335,9 @@ test.describe("Main test", () => {
       await expect(itemBtn).not.toBeAttached();
 
       /** Re-adding the same file works */
-      await addFile();
+      await addFileToChat(page, pdfFilePath);
 
-      await expect(itemBtn).toBeVisible({ ...TWENTY_SECONDS_OR_MORE });
+      await expect(itemBtn).toBeVisible(TWENTY_SECONDS_OR_MORE);
 
       await page.getByTestId("Chat.send").click();
 
@@ -1186,14 +1346,12 @@ test.describe("Main test", () => {
         .getByTestId("Chat.messageList")
         .getByTestId("LLMChatMessageContent.textDocument")
         .getByText("sample.pdf");
-      await expect(inChatItemBtn).toBeVisible({
-        ...TWENTY_SECONDS_OR_MORE,
-      });
+      await expect(inChatItemBtn).toBeVisible(TWENTY_SECONDS_OR_MORE);
 
       /** Agent was provided the text content */
       await expect(page.getByTestId("Chat.messageList")).toContainText(
         "This is a sample PDF",
-        { ...TWENTY_SECONDS_OR_MORE },
+        TWENTY_SECONDS_OR_MORE,
       );
 
       await inChatItemBtn.click();
@@ -1208,7 +1366,8 @@ test.describe("Main test", () => {
   });
 
   test("Test LLM tools", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
+    // page.setDefaultTimeout(TWENTY_SECONDS_OR_MORE.timeout);
     await loginWhenSignupIsEnabled(page);
 
     await openConnection(page, "cloud");
@@ -1220,11 +1379,13 @@ test.describe("Main test", () => {
       expectedMsg: string,
       msgType: "last-msg" | "last-tool-use",
     ) => {
-      await sendAskLLMMessage(page, " mcp ");
+      await sendAskLLMMessage(page, " mcp ", false);
       await page
         .getByTestId("AskLLMToolApprover.AllowOnce")
-        .click({ ...TWENTY_SECONDS_OR_MORE });
-      await page.waitForTimeout(1e3);
+        .click(TWENTY_SECONDS_OR_MORE);
+      await expect(
+        page.getByRole("button", { name: "Approve Once" }),
+      ).toHaveCount(0, TWENTY_SECONDS_OR_MORE);
       const mcpToolUse = await getAskLLMLastMessage(page);
 
       const locatorToCheck =
@@ -1257,12 +1418,11 @@ test.describe("Main test", () => {
     /** Ensure chat name updates based on first message */
     await expect(page.getByTestId("LLMChat.select")).toContainText("mcp");
 
-    await sendAskLLMMessage(page, " mcp ");
+    await sendAskLLMMessage(page, " mcp ", false);
     await page
       .getByTestId("AskLLMToolApprover.AllowOnce")
       .waitFor({ state: "visible", ...TWENTY_SECONDS_OR_MORE });
     await page.getByTestId("Popup.close").last().click();
-    await page.waitForTimeout(1e3);
     await sendAskLLMMessage(page, " interrupt tool call ");
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       "Tool use requests were interrupted by the user",
@@ -1281,9 +1441,9 @@ test.describe("Main test", () => {
       .getByText(
         'prostgles-ui--get_specific_tool_schemas\nmcpServerTools: {"web":{"fetch":1}}',
       )
-      .click();
+      .click(TWENTY_SECONDS_OR_MORE);
     await expect(page.getByTestId("Chat.messageList")).toContainText(
-      `Fetches content from a URL`,
+      `Fetches from a URL`,
     );
 
     await page.waitForTimeout(1e3);
@@ -1292,7 +1452,7 @@ test.describe("Main test", () => {
       .getByTestId("ToolUseMessage.toggleGroup")
       .getByText("2 tool calls")
       .last()
-      .click();
+      .click(TWENTY_SECONDS_OR_MORE);
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       `Tool name "playwright--browser_navigate" is invalid. Try enabling and reloading the tools`,
     );
@@ -1300,6 +1460,18 @@ test.describe("Main test", () => {
       `Tool name "playwright--browser_snapshot" is invalid. Try enabling and reloading the tools`,
     );
 
+    /* Use the same installed Chromium as the browser tests, without a desktop display. */
+    await runDbsSql(
+      page,
+      "UPDATE mcp_servers SET env = env || $1::jsonb WHERE name = 'playwright'",
+      [
+        JSON.stringify({
+          PLAYWRIGHT_MCP_EXECUTABLE_PATH: chromium.executablePath(),
+          PLAYWRIGHT_MCP_HEADLESS: "true",
+          PLAYWRIGHT_MCP_ISOLATED: "true",
+        }),
+      ],
+    );
     await enableMCPServers(page, ["playwright"]);
     await page
       .getByText("browser_tabs")
@@ -1322,7 +1494,7 @@ test.describe("Main test", () => {
 
     await toggleMCPTools(page, ["browser_navigate", "browser_snapshot"]);
 
-    await sendAskLLMMessage(page, " mcpplaywright ");
+    await sendAskLLMMessage(page, " mcpplaywright ", false);
     await page.waitForTimeout(2e3);
     await page.getByTestId("AskLLMToolApprover.AllowOnce").click();
     await page.waitForTimeout(200);
@@ -1337,13 +1509,17 @@ test.describe("Main test", () => {
       .getByTestId("Chat.messageList")
       .getByText("browser_snapshot")
       .last();
-    await lastToolUseBtn.scrollIntoViewIfNeeded();
+    await scrollElementIntoView(lastToolUseBtn);
     await page.waitForTimeout(1e3);
     await lastToolUseBtn.click();
     await page.waitForTimeout(1e3);
     /** Can be flaky */
     await expect(page.getByTestId("MarkdownMonacoCode").last()).toContainText(
-      `Page Title: Prostgles`,
+      "Prostgles UI",
+      { ...TWENTY_SECONDS_OR_MORE },
+    );
+    await expect(page.getByTestId("MarkdownMonacoCode").last()).toContainText(
+      "http://localhost:3004/auth/login",
       { ...TWENTY_SECONDS_OR_MORE },
     );
     await lastToolUseBtn.click();
@@ -1382,22 +1558,36 @@ test.describe("Main test", () => {
       await sendAskLLMMessage(page, "cost", true);
     }
     await expect(page.getByTestId("Chat.messageList")).toContainText(
-      `Maximum total cost of the chat (5) reached. Current cost: 5.4`,
+      `Maximum total cost of the chat (5) reached. Current cost: 5.`,
       { ...TWENTY_SECONDS_OR_MORE },
     );
 
-    const maxCost = 4;
+    /** Test max speculative chat cost */
+    await newChat(page);
+    const costOfNodeModulesToolResult = 0.84;
+    const maxCost = costPerMsg * 2 + 0.8 * costOfNodeModulesToolResult;
     await page.getByTestId("LLMChatOptions.toggle").click();
+    await page.waitForTimeout(1500);
     await fillSmartForm(page, "llm_chats", {
       max_total_cost_usd: maxCost.toString(),
     });
+    await page.waitForTimeout(1500);
     await page.getByTestId("Popup.close").last().click();
-    /** Test max speculative chat cost */
-    await newChat(page);
+    await page.waitForTimeout(1500);
+    await page.getByTestId("LLMChatOptions.toggle").click();
+    await expect(
+      page.locator("input#llm_chats-max_total_cost_usd"),
+    ).toHaveValue(maxCost.toString());
+    await page.getByTestId("Popup.close").last().click();
+
+    /** Install electron to ensure node_modules exists */
+    await execSync("npm install", {
+      cwd: resolve(__dirname, "../../electron"),
+    });
     await enableMCPServers(page, ["filesystem"], true);
     await fileBrowserGoToPath(page.getByTestId("FileTree"), [
       "ui",
-      "client",
+      "electron",
       "node_modules",
     ]);
 
@@ -1412,13 +1602,13 @@ test.describe("Main test", () => {
     await expect(
       page.getByTestId("Chat.messageList").locator(".message").last(),
     ).toContainText(
-      `Maximum total cost of the chat (5) will be reached after sending this message`,
+      `Maximum total cost of the chat (${maxCost}) will be reached after sending this message`,
       getTimeout(30e3),
     );
   });
 
   test("Test LLM sandbox tools", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     await loginWhenSignupIsEnabled(page);
 
     await openConnection(page, "cloud");
@@ -1458,7 +1648,7 @@ test.describe("Main test", () => {
       prepareCb: (() => Promise<void>) | undefined = undefined,
       locator: Locator | undefined = undefined,
     ) => {
-      await sendAskLLMMessage(page, " mcpsandbox ");
+      await sendAskLLMMessage(page, " mcpsandbox ", false);
       await page
         .getByTestId("AskLLMToolApprover.AllowOnce")
         .click({ ...TWENTY_SECONDS_OR_MORE });
@@ -1473,6 +1663,7 @@ test.describe("Main test", () => {
       await page
         .getByTestId("DockerSandboxCreateContainer.stop")
         .waitFor({ state: "detached", ...getTimeout(40e3) });
+      await page.waitForTimeout(3e3);
 
       for (const res of Array.isArray(result) ? result : [result]) {
         await expect(
@@ -1565,6 +1756,27 @@ test.describe("Main test", () => {
     );
     await page.keyboard.press("Escape");
 
+    /** SQL result columns must access values by name, including falsy values. */
+    await sendAskLLMMessage(page, " sql_preview ");
+    await page.getByTestId("ToolUseMessage.toggle").last().click();
+    const sqlPreview = page
+      .getByTestId("ToolUseMessage")
+      .last()
+      .getByTestId("MarkdownMonacoCode");
+    const expectedSqlCells = ["preview row", "0", "false", "NULL"];
+    await expect(sqlPreview.getByRole("columnheader")).toHaveText([
+      "display label",
+      "total",
+      "enabled",
+      "missing",
+    ]);
+    await expect(sqlPreview.getByRole("cell")).toHaveText(expectedSqlCells);
+    await sqlPreview.getByRole("button", { name: "Close result" }).click();
+    await sqlPreview
+      .getByRole("button", { name: "Execute SQL (With rollback)", exact: true })
+      .click();
+    await expect(sqlPreview.getByRole("cell")).toHaveText(expectedSqlCells);
+
     /** Test stopping chat */
     await newChat(page);
     await sendAskLLMMessage(page, " longresponse ", {
@@ -1601,7 +1813,7 @@ test.describe("Main test", () => {
 
     await newChat(page);
     await toggleMCPTools(page, ["fetch"]);
-    await sendAskLLMMessage(page, " parallel_calls ");
+    await sendAskLLMMessage(page, " parallel_calls ", false);
 
     /** Should not request approval for the other 2 requests */
     await page.getByTestId("AskLLMToolApprover.AllowAlways").click();
@@ -1622,8 +1834,10 @@ test.describe("Main test", () => {
     await newChat(page);
     await toggleMCPTools(page, ["websearch", "get_snapshot"]);
     await page.waitForTimeout(7e3); // wait for the server to start
-    await sendAskLLMMessage(page, " websearch ");
-    await page.getByTestId("AskLLMToolApprover.AllowAlways").click();
+    await sendAskLLMMessage(page, " websearch ", false);
+    await page
+      .getByTestId("AskLLMToolApprover.AllowAlways")
+      .click(TWENTY_SECONDS_OR_MORE);
     await page.getByTestId("AskLLMToolApprover.AllowAlways").click();
     await expect(page.getByTestId("Chat.messageList")).toContainText(
       "Search done.",
@@ -1664,6 +1878,7 @@ test.describe("Main test", () => {
     await sendAskLLMMessage(
       page,
       " I need you to create a user list component ",
+      false,
     );
     await page
       .getByTestId("AskLLMToolApprover.AllowAlways")
@@ -1671,7 +1886,7 @@ test.describe("Main test", () => {
   });
 
   test("Agentic workflow", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     if (process.env.CI) {
       test.setTimeout(10 * 60e3);
     }
@@ -1685,7 +1900,7 @@ test.describe("Main test", () => {
 
     /** Test ask tool */
     await newChat(page);
-    await sendAskLLMMessage(page, " ask_tool ");
+    await sendAskLLMMessage(page, " ask_tool ", false);
     await page.getByTestId("AskUserQuestions").getByText("Red").first().click();
     await page
       .getByTestId("AskUserQuestions")
@@ -1755,6 +1970,7 @@ test.describe("Main test", () => {
         getTimeout(60e3),
       );
       await page.getByText("OK", { exact: true }).click();
+      await expect(page.getByTestId("UserInput")).toBeVisible();
     };
 
     /** Fill user input form */
@@ -1777,14 +1993,29 @@ test.describe("Main test", () => {
         `Missing required user input: ${JSON.stringify(label)}`,
       );
       const isMultiple = fileTreeKey.endsWith("s");
-      await page.locator(getDataKey(fileTreeKey)).click();
+      const pathInput = page.locator(getDataKey(fileTreeKey));
       const path =
         fileTreeKey.includes("file") ?
           ["ui", "client", "package.json"]
         : ["ui", "client", "src"];
-      await fileBrowserGoToPath(page.getByTestId("FileTree").first(), path);
-      if (isMultiple) {
-        await page.getByText("Done").first().click();
+      for (const clearSelection of [true, false]) {
+        await pathInput.click();
+        await fileBrowserGoToPath(page.getByTestId("FileTree").first(), path);
+        if (isMultiple) {
+          await page.getByText("Done").first().click();
+        }
+        if (clearSelection) {
+          /* Cleared paths must be omitted when starting the workflow. */
+          await page
+            .locator(".PopupMenu_triggerWrapper")
+            .filter({ has: pathInput })
+            .getByRole("button", { name: "Clear", exact: true })
+            .click();
+          await expect(page.getByTestId("FileTree")).toHaveCount(0);
+          await startWorkFlowAndExpectError(
+            `Missing required user input: ${JSON.stringify(label)}`,
+          );
+        }
       }
     };
 
@@ -1834,7 +2065,37 @@ test.describe("Main test", () => {
       `Missing required user input: "Table column values"`,
     );
     await page.locator(getDataKey("table-column-values")).click();
-    await page.locator(`[data-key="regular"]`).last().click();
+    /* Multiselects share compact filter rows and keep the popup's focus corners. */
+    const multiSelectPopup = page.getByTestId("Popup.content").last();
+    const multiSelectSearch = multiSelectPopup.locator(
+      ".SearchList_InputWrapper",
+    );
+    await expect(
+      multiSelectPopup.getByTestId("SearchList.Input"),
+    ).toBeFocused();
+    for (const corner of ["left", "right"]) {
+      await expect(multiSelectSearch).toHaveCSS(
+        `border-top-${corner}-radius`,
+        await multiSelectPopup.evaluate(
+          (element, corner) =>
+            getComputedStyle(element).getPropertyValue(
+              `border-top-${corner}-radius`,
+            ),
+          corner,
+        ),
+      );
+    }
+    const regularOption = multiSelectPopup.locator('[data-key="regular"]');
+    await expect(regularOption.locator(".LABELWRAPPER span")).toHaveCSS(
+      "font-size",
+      "14px",
+    );
+    await expect(regularOption.locator(".ROWINNER")).toHaveCSS(
+      "opacity",
+      "0.75",
+    );
+    await regularOption.click();
+    await expect(regularOption.locator(".ROWINNER")).toHaveCSS("opacity", "1");
     await page.keyboard.press("Escape"); // close multi select dropdown
 
     await selectFileOrFolderPath("file-or-folder-paths");
@@ -1998,7 +2259,8 @@ test.describe("Main test", () => {
     await expect(
       page.getByTestId("AgenticWorkflow.validationErrorLogs"),
     ).toContainText(
-      `Validation error for databaseHandler usage: the following table names do not match any new tables or existing tables: ["invalid_table"]`,
+      // `Validation error for databaseHandler usage: the following table names do not match any new tables or existing tables: ["invalid_table"]`,
+      `Table "invalid_table" is used in the workflow but not included in tablePermissions`,
       getTimeout(30e3),
     );
 
@@ -2011,10 +2273,107 @@ test.describe("Main test", () => {
       `"invalid_table" does not match any new or existing tables`,
       getTimeout(30e3),
     );
+
+    await page.waitForTimeout(1e3);
+    await newChat(page);
+    await sendAskLLMMessage(page, " agentic_workflow_agent_failure ");
+    await page.getByTestId("AgenticWorkflow.start").click(getTimeout(90e3));
+    await expect(page.getByTestId("Alert")).toContainText(
+      `Agentic workflow container stopped with status: error`,
+      getTimeout(30e3),
+    );
+    await page.getByText("OK", { exact: true }).click();
+    await expect(page.getByTestId("AgenticWorkflow")).toContainText(
+      `The agent failed to complete the task`,
+    );
+    await expect(page.getByTestId("AgenticWorkflow")).not.toContainText(
+      `"<!DOCTYPE html>"`,
+    );
+  });
+
+  test("Create agent shows and uses the default model and parent chat MCP config", async ({
+    page: p,
+  }) => {
+    const page = p;
+
+    await loginWhenSignupIsEnabled(page);
+    await openConnection(page, "cloud");
+    await closeWorkspaceWindows(page);
+    await page.getByTestId("AskLLM").click();
+
+    await setupAskLLMToolUse(page);
+
+    await newChat(page);
+    await sendAskLLMMessage(page, "Agent defaults test setup");
+    const parentChat: { id: number } = await runDbsSql(
+      page,
+      `SELECT chat_id AS id FROM llm_messages
+       WHERE message @> $1::jsonb ORDER BY id DESC LIMIT 1`,
+      [JSON.stringify([{ type: "text", text: "Agent defaults test setup" }])],
+      { returnType: "row" },
+    );
+    const chatConfig: { id: number } = await runDbsSql(
+      page,
+      `INSERT INTO mcp_server_configs (server_name, config)
+       VALUES ('web', $1) ON CONFLICT (server_name, config)
+       DO UPDATE SET config = EXCLUDED.config RETURNING id`,
+      [
+        {
+          type: "local",
+          value: {
+            access: { mode: "allow", urls: ["agent-defaults.example"] },
+          },
+        },
+      ],
+      { returnType: "row" },
+    );
+    await runDbsSql(
+      page,
+      `INSERT INTO llm_chats_allowed_mcp_tools (chat_id, server_name, tool_id, server_config_id)
+       SELECT $1, server_name, id, $2 FROM mcp_server_tools
+       WHERE server_name = 'web' AND name = 'fetch'
+       ON CONFLICT (chat_id, tool_id) DO UPDATE SET server_config_id = EXCLUDED.server_config_id`,
+      [parentChat.id, chatConfig.id],
+    );
+
+    await sendAskLLMMessage(page, " create_agent ", false);
+    const agent = page.getByTestId("AskLLM.popup").getByTestId("Agent");
+    await expect(agent.getByTestId("LLMChatOptions.Model")).toContainText(
+      DEFAULT_AGENT_MODEL,
+      TWENTY_SECONDS_OR_MORE,
+    );
+    await expect(agent.getByTestId("McpToolAccess.configure")).toContainText(
+      "agent-defaults.example",
+    );
+    await page
+      .getByTestId("AskLLMToolApprover.AllowOnce")
+      .click(TWENTY_SECONDS_OR_MORE);
+    await agent
+      .getByText("View activity", { exact: true })
+      .click(TWENTY_SECONDS_OR_MORE);
+
+    await expect(page.getByTestId("Popup.content").last()).toContainText(
+      "Agent goal reached",
+      getTimeout(30e3),
+    );
+    const agentConfig = await runDbsSql(
+      page,
+      `SELECT models.name AS "modelName", tools.server_config_id AS "configId"
+       FROM llm_chats AS chats
+       JOIN llm_models AS models ON models.id = chats.model
+       JOIN llm_chats_allowed_mcp_tools AS tools ON tools.chat_id = chats.id
+       WHERE chats.parent_chat_id = $1 AND tools.server_name = 'web'`,
+      [parentChat.id],
+      { returnType: "row" },
+    );
+    expect(agentConfig).toEqual({
+      modelName: DEFAULT_AGENT_MODEL,
+      configId: chatConfig.id,
+    });
   });
 
   test("Disable signups", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     await loginWhenSignupIsEnabled(page);
 
     /** Disable signups */
@@ -2048,15 +2407,15 @@ test.describe("Main test", () => {
       },
     });
 
-    await login(page, USERS.test_user, "/login");
+    await login(page, USERS.test_user, "/auth/login");
     await page.waitForTimeout(1500);
 
     await runDbsSql(
       page,
       `DELETE FROM login_attempts; UPDATE database_configs SET login_rate_limit = '{"groupBy": "x-real-ip", "maxAttemptsPerHour": 5}'`,
     );
-    await page.request.post("/logout");
-    await goTo(page, "/login");
+    await page.request.post("/auth/logout");
+    await goTo(page, "/auth/login");
     const loginAndExpectError = async (
       errorMessage: string,
       user: string,
@@ -2067,9 +2426,10 @@ test.describe("Main test", () => {
       await lpage
         .getByTestId("Login.error")
         .waitFor({ state: "visible", ...TWENTY_SECONDS_OR_MORE });
-      await expect(
-        await lpage.getByTestId("Login.error").textContent(),
-      ).toContain(errorMessage);
+      await expect(lpage.getByTestId("Login.error")).toContainText(
+        errorMessage,
+        TWENTY_SECONDS_OR_MORE,
+      );
     };
     for (let i = 0; i < 5; i++) {
       await page.reload();
@@ -2117,7 +2477,7 @@ test.describe("Main test", () => {
         "x-real-ip": "1.1.1.3",
       },
     });
-    await login(newPage, USERS.test_user, "/login");
+    await login(newPage, USERS.test_user, "/auth/login");
     await newPage.waitForTimeout(1500);
     await runDbsSql(
       newPage,
@@ -2126,7 +2486,7 @@ test.describe("Main test", () => {
   });
 
   test("Create db with owner", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     await login(page);
     const dbName = "db_with_owner";
     await createDatabase(dbName, page, false, { name: dbName, pass: dbName });
@@ -2142,7 +2502,7 @@ test.describe("Main test", () => {
   test("Ensure realtime works and is resilient to schema change", async ({
     page: p,
   }) => {
-    const page = p as PageWIds;
+    const page = p;
     await login(page);
     const dbName = "db_with_owner";
     await openConnection(page, "db_with_owner");
@@ -2216,7 +2576,9 @@ test.describe("Main test", () => {
       );
     `,
     );
+    await page.waitForTimeout(3e3);
     await page.getByTestId("dashboard.goToConnConfig").click();
+    await page.getByTestId("config.details").click();
     await page.getByTestId("NewConnectionForm.MoreOptionsToggle").click();
     await page.getByTestId("NewConnectionForm.schemaFilter").click();
     await page
@@ -2242,30 +2604,30 @@ test.describe("Main test", () => {
   });
 
   test("Login returnUrl", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     const requestedUrl =
       "http://localhost:3004/connections/some-connection?a=b";
     await login(page, undefined, requestedUrl);
     await page
       .getByTestId("ProjectConnection.error")
       .waitFor({ state: "visible", ...TWENTY_SECONDS_OR_MORE });
-    const currentUrl = await page.url();
-    await expect(currentUrl).toEqual(requestedUrl);
+    await expect(page).toHaveURL(requestedUrl);
   });
 
   test("Open redirect returnUrl", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     const requestedUrl =
-      "http://localhost:3004/login?returnURL=/%2F%2Fwikipedia.org";
+      "http://localhost:3004/auth/login?returnURL=/%2F%2Fwikipedia.org";
     await login(page, undefined, requestedUrl);
     await goTo(page, requestedUrl);
     await goTo(page, requestedUrl);
-    const currentUrl = await page.url();
-    await expect(currentUrl.startsWith("http://localhost:3004/")).toBe(true);
+    await expect(page).toHaveURL(
+      (url) => url.origin === "http://localhost:3004",
+    );
   });
 
   test("Test 2FA", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
 
     await login(page);
 
@@ -2284,7 +2646,7 @@ test.describe("Main test", () => {
       .textContent();
     const createAndFillCode = async () => {
       await page.waitForTimeout(1200);
-      const code = authenticator.generate(Base64Secret ?? "");
+      const code = await generate({ secret: Base64Secret ?? "" });
       await page
         .getByTestId("Setup2FA.Enable.ConfirmCode")
         .locator("input")
@@ -2294,7 +2656,7 @@ test.describe("Main test", () => {
     await createAndFillCode();
 
     /** Allow 1 invalid code */
-    const INVALID_CODE = "Invalid code";
+    const INVALID_CODE = "Invalid totp code";
     await page.waitForTimeout(300);
     const setupErrorNode = await page.getByTestId("Setup2FA.error");
     if (
@@ -2307,9 +2669,9 @@ test.describe("Main test", () => {
     /** Using token */
     await login(page);
     const fillTokenAndSignIn = async () => {
-      const newCode = authenticator.generate(Base64Secret ?? "");
+      const newCode = await generate({ secret: Base64Secret ?? "" });
       await page.locator("#totp_token").fill(newCode);
-      await page.getByRole("button", { name: "Sign in", exact: true }).click();
+      await getLoginSubmitButton(page).click();
     };
     await fillTokenAndSignIn();
     await page.waitForTimeout(1e3);
@@ -2328,13 +2690,13 @@ test.describe("Main test", () => {
       .waitFor({ state: "visible", ...TWENTY_SECONDS_OR_MORE });
 
     /** Using recovery code */
-    await page.request.post("/logout");
+    await page.request.post("/auth/logout");
     await login(page);
     await page
       .getByRole("button", { name: "Enter recovery code", exact: true })
       .click();
     await page.locator("#totp_recovery_code").fill(recoveryCode ?? "");
-    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+    await getLoginSubmitButton(page).click();
     await page.waitForTimeout(3e3);
     await page
       .getByRole("link", { name: "Connections" })
@@ -2346,9 +2708,31 @@ test.describe("Main test", () => {
   });
 
   test("Sample database backups", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
 
     await login(page);
+
+    await test.step(
+      "Connections load while the logo request is pending",
+      async () => {
+        let pendingLogoRequest: Route | undefined;
+        const logoPattern = "**/prostgles-logo.svg";
+        await page.route(logoPattern, (route) => {
+          pendingLogoRequest = route;
+        });
+        try {
+          await goTo(page, "/connections");
+          await expect.poll(() => !!pendingLogoRequest).toBe(true);
+          await expect(
+            page.getByTestId("ConnectionServer.add").first(),
+          ).toBeVisible();
+        } finally {
+          await pendingLogoRequest?.continue();
+          await page.unroute(logoPattern);
+        }
+      },
+      { timeout: 10_000 },
+    );
 
     /** Create Sample database */
     await createDatabase("sample_database", page, false);
@@ -2397,7 +2781,7 @@ test.describe("Main test", () => {
   test("Delete previous users and data (to improve local tests)", async ({
     page: p,
   }) => {
-    const page = p as PageWIds;
+    const page = p;
 
     await login(page);
     /** Delete previous user */
@@ -2410,7 +2794,7 @@ test.describe("Main test", () => {
       await page.waitForTimeout(1e3);
       await forEachLocator(
         page,
-        async () => page.getByTestId("dashboard.window.viewEditRow"),
+        () => page.getByTestId("SmartCard.viewEditRow"),
         async (editBtn) => {
           await editBtn.click();
           await page.getByTestId("SmartForm.delete").click();
@@ -2466,7 +2850,7 @@ test.describe("Main test", () => {
   });
 
   test("Create and prepare test database", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
 
     await login(page);
     await page.getByRole("link", { name: "Connections", exact: true }).click();
@@ -2649,7 +3033,7 @@ test.describe("Main test", () => {
   });
 
   test("Set access rules", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
 
     await createAccessRuleForTestDB(page, "default");
 
@@ -2681,19 +3065,16 @@ test.describe("Main test", () => {
     await page.getByTestId("AskLLM").click();
     await page.getByTestId("AskLLM.popup").waitFor({ state: "visible" });
     await page.getByTestId("SetupLLMCredentials").waitFor({ state: "visible" });
-    const chatSend = await page
-      .getByTestId("AskLLM.popup")
-      .getByTestId("Chat.send")
-      .count();
-    await expect(chatSend).toBe(0);
+    const chatSend = page.getByTestId("AskLLM.popup").getByTestId("Chat.send");
+    await expect(chatSend).toHaveCount(0);
     await page.getByTestId("Popup.close").click();
 
     /** Setup LLM */
     await enableAskLLM(page, 0);
 
     /** Expect LLM to work */
-    const [{ isOk }] = await getLLMResponses(page, ["hehhehey"]);
-    expect(isOk).toBe(true);
+    const [response] = await getLLMResponses(page, ["hehhehey"]);
+    expect(response).toMatchObject({ isOk: true });
 
     /** Clear prev chats to ensure llm limit test works */
     await runDbsSql(page, `TRUNCATE llm_chats CASCADE;`);
@@ -2704,15 +3085,15 @@ test.describe("Main test", () => {
   });
 
   test("Default user has correct permissions", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
 
-    await page.request.post("/logout");
+    /** Increase test time due to doc processing */
+    test.setTimeout(7 * MINUTE);
+
+    await page.request.post("/auth/logout");
     await login(page, USERS.default_user);
 
-    await page.getByRole("link", { name: "Connections" }).click();
-    await page.getByRole("link", { name: TEST_DB_NAME }).click();
-    await page.waitForTimeout(1000);
-    await page.getByTestId("dashboard.menu").waitFor({ state: "visible" });
+    await openConnection(page, TEST_DB_NAME);
     await setWspColLayout(page);
     /** Open table using ctrl+P */
     await openTable(page, "my_tabl");
@@ -2721,21 +3102,24 @@ test.describe("Main test", () => {
     await page.waitForTimeout(1000);
 
     await uploadFile(page);
+
+    /* Ensure that the file is uploaded and visible in the table */
+    await expect(getTableWindow(page, "files").getByText(fileName)).toBeVisible(
+      TWENTY_SECONDS_OR_MORE,
+    );
 
     await insertRow(page, "my_table", { content: USERS.default_user });
     await insertRow(page, "orders", { status: "incomplete" });
-    await expect(await page.getByText("secret").count()).toBe(0);
+    await expect(page.getByText("secret")).toHaveCount(0);
   });
 
   test("Default user1 has correct permissions", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
 
-    await page.request.post("/logout");
+    await page.request.post("/auth/logout");
     await login(page, USERS.default_user1);
 
-    await page.getByRole("link", { name: "Connections" }).click();
-    await page.getByRole("link", { name: TEST_DB_NAME }).click();
-    await page.waitForTimeout(1000);
+    await openConnection(page, TEST_DB_NAME);
     await setWspColLayout(page);
 
     /** Open table using ctrl+P */
@@ -2744,20 +3128,47 @@ test.describe("Main test", () => {
     await openTable(page, "fil");
     await page.waitForTimeout(1000);
 
-    await uploadFile(page);
+    /* The filter bar picker opens with the selected file and resets on close. */
+    const filesTableWindow = getTableWindow(page, "files");
+    const filesFilterBar = filesTableWindow.getByTitle("Edit filters");
+    if (!(await filesFilterBar.isVisible())) {
+      await filesTableWindow
+        .getByTestId("dashboard.window.toggleFilterBar")
+        .click();
+    }
+    const filterBarFilePicker = filesFilterBar.getByTestId("FileBtn");
+    const filePreview = page.locator(".SmartForm .FileInputMedia");
+    await filterBarFilePicker
+      .locator("input")
+      .setInputFiles(resolve(__dirname, "..", fileName));
+    await expect(filePreview).toContainText(fileName);
+    await expect(filePreview.locator("img")).toBeVisible();
+    await page.getByTestId("SmartForm.close").click();
+    await expect(filterBarFilePicker).toBeVisible();
+    await selectAndUpsertFile(
+      page,
+      () => filterBarFilePicker.click(),
+      async () => {
+        await expect(filePreview).toContainText(fileName);
+        await expect(filePreview.locator("img")).toBeVisible();
+      },
+    );
+    await expect(filterBarFilePicker).toBeVisible(getTimeout(2 * MINUTE));
+    await expect(
+      filesTableWindow.getByText(fileName, { exact: true }),
+    ).toHaveCount(2);
 
     await insertRow(page, "my_table", { content: USERS.default_user1 });
     await insertRow(page, "orders", { status: "incomplete" });
-    await expect(await page.getByText("secret").count()).toBe(0);
+    await expect(page.getByText("secret")).toHaveCount(0);
   });
 
   test("Admin user (test_user) can see all data", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
 
-    await page.request.post("/logout");
+    await page.request.post("/auth/logout");
     await login(page, USERS.test_user);
-    await page.getByRole("link", { name: "Connections" }).click();
-    await page.getByRole("link", { name: TEST_DB_NAME }).click();
+    await openConnection(page, TEST_DB_NAME);
 
     await setWspColLayout(page);
     await page.waitForTimeout(1e3);
@@ -2769,10 +3180,32 @@ test.describe("Main test", () => {
     await openTable(page, "ord");
     await openTable(page, "file");
 
-    await expect(await page.getByText("abc", { exact: true }).count()).toBe(2);
-    await expect(await page.getByText("incomplete").count()).toBe(2);
-    await expect(await page.getByText("secret").count()).toBe(1);
-    await expect(await page.getByText(fileName).count()).toBe(2);
+    await expect(page.getByText("abc", { exact: true })).toHaveCount(2);
+    await expect(page.getByText("incomplete")).toHaveCount(2);
+    await expect(page.getByText("secret")).toHaveCount(1);
+    await expect(page.getByText(fileName)).toHaveCount(2);
+
+    /** Replace an existing file through the row editor. */
+    await getTableWindow(page, "files")
+      .getByTestId("dashboard.window.viewEditRow")
+      .first()
+      .click();
+    await page
+      .getByRole("button", { name: "Remove file", exact: true })
+      .click();
+    await selectAndUpsertFile(
+      page,
+      (page) => page.getByTestId("FileBtn").click(),
+      async () => {
+        await expect(page.locator(".FileInputMedia img")).toBeVisible();
+      },
+      true,
+    );
+    await expect(page.locator(".SmartForm")).toHaveCount(
+      0,
+      TWENTY_SECONDS_OR_MORE,
+    );
+    await expect(page.getByText(fileName)).toHaveCount(2);
 
     /** Disable files permissions to test direct insert */
     await page.getByTestId("dashboard.goToConnConfig").click();
@@ -2795,9 +3228,7 @@ test.describe("Main test", () => {
   //   const page = p as PageWIds;
 
   //   await login(page, USERS.test_user);
-  //   await page.getByRole("link", { name: "Connections" }).click();
-  //   await page.getByRole("link", { name: TEST_DB_NAME, exact: true }).click();
-  //   await page.waitForTimeout(1e3);
+  // await openConnection(page, TEST_DB_NAME);
   //   await runDbSql(page, `DELETE FROM my_table WHERE id > 4;`);
   //   await runDbSql(
   //     page,
@@ -2812,13 +3243,11 @@ test.describe("Main test", () => {
   test("User can insert and view files through allowed reference columns", async ({
     page: p,
   }) => {
-    const page = p as PageWIds;
+    const page = p;
 
     await login(page, USERS.default_user);
-    await page.getByRole("link", { name: "Connections" }).click();
-    await page.getByRole("link", { name: TEST_DB_NAME, exact: true }).click();
-    await page.waitForTimeout(1e3);
 
+    await openConnection(page, TEST_DB_NAME);
     await expect(page.getByText(fileName)).toHaveCount(0);
 
     await clickInsertRow(page, "my_table");
@@ -2831,11 +3260,9 @@ test.describe("Main test", () => {
           // Must have blob src attribute
         ).toHaveAttribute("src", /^\s*blob:/),
     );
-    const imgSrc = await page
-      .getByTestId("Popup.content")
-      .locator("img")
-      .getAttribute("src");
-    await expect(imgSrc).toContain("blob:");
+    await expect(
+      page.getByTestId("Popup.content").locator("img"),
+    ).toHaveAttribute("src", /blob:/);
     const nodes = await page.getByText(fileName).innerHTML();
     console.log({ nodes });
     await expect(page.getByText(fileName)).toHaveCount(1);
@@ -2856,14 +3283,12 @@ test.describe("Main test", () => {
     await expect(page.locator(`#my_table-id`)).toHaveValue("4");
     await page.keyboard.press("ArrowRight");
 
-    await expect(
-      page.getByTestId("Popup.content").locator("img"),
-    ).toHaveAttribute(
-      "src",
-      // Inserted url starts with /prostgles_storage
-
-      /^\/prostgles_storage/,
-    );
+    /** Valid loaded img */
+    const img = page.getByTestId("Popup.content").locator("img");
+    await expect(img).toHaveAttribute("src", /prostgles_storage/);
+    await expect(img).toBeVisible();
+    await expect(img).toHaveJSProperty("complete", true);
+    await expect(img).not.toHaveJSProperty("naturalWidth", 0);
 
     // Deleting works
     await page
@@ -2893,316 +3318,14 @@ test.describe("Main test", () => {
     await expect(page.getByText(fileName)).toHaveCount(1);
   });
 
-  test("Table tests", async ({ page: p }) => {
-    const page = p as PageWIds;
-    await login(page, USERS.test_user);
-    await page.getByRole("link", { name: "Connections" }).click();
-    await page.getByRole("link", { name: TEST_DB_NAME, exact: true }).click();
-
-    const wspName = "Table tests";
-    /** Delete existing duplicate workspace */
-    await page.getByTestId("WorkspaceMenuDropDown").click();
-    await page.waitForTimeout(1e3);
-    let deleted = false;
-    await forEachLocator(
-      page,
-      async () => {
-        //.getByText("WorkspaceMenu.SearchList")
-        const res = await page
-          .getByTestId("WorkspaceMenu.SearchList")
-          .locator(`[data-key=${JSON.stringify(wspName)}]`);
-        return res;
-      },
-      async (item) => {
-        const deleteWspBtn = await item.getByTestId("WorkspaceDeleteBtn");
-        deleted = true;
-        await deleteWspBtn.click();
-        await page.waitForTimeout(555);
-        await page.getByTestId("WorkspaceDeleteBtn.Confirm").click();
-        await page.waitForTimeout(555);
-      },
-    );
-    if (!deleted) {
-      await page.locator(`[data-close-popup="true"]`).click();
-    }
-    await page.getByTestId("WorkspaceMenuDropDown").click();
-    await page.getByTestId("WorkspaceMenuDropDown.WorkspaceAddBtn").click();
-    await page.waitForTimeout(1e3);
-    await page.keyboard.insertText(wspName);
-    await page.keyboard.press("Enter");
-    await page.waitForTimeout(1e3);
-    await setWspColLayout(page);
-
-    const query = `
-      CREATE EXTENSION IF NOT EXISTS postgis;
-      DROP TABLE IF EXISTS orders CASCADE;
-      DROP TABLE IF EXISTS users CASCADE;
-      CREATE TABLE users (id UUID  PRIMARY KEY, first_name text, last_name text, email text, created_at timestamp default now(), type TEXT DEFAULT 'default', position numeric);
-      ${QUERIES.orders}
-      ALTER TABLE orders 
-      ADD COLUMN total_cost NUMERIC NOT NULL DEFAULT random() * 100;
-      ALTER TABLE orders ADD COLUMN delivery_address GEOGRAPHY DEFAULT st_point(-0.08 + random()/10, 51.5 + random()/10)::GEOGRAPHY;
-      ALTER TABLE orders
-      ADD COLUMN created_at timestamp default now() + (random() * 10 * '1day'::interval);
-      ALTER TABLE orders ADD FOREIGN KEY (user_id) REFERENCES users;
-      INSERT INTO users (id, first_name, last_name, email, type, position)
-      SELECT 
-        user_id, 
-        "left"(user_id::TEXT, 8), 
-        "right"(user_id::TEXT, 8), 
-        "left"(user_id::TEXT, 8) || "right"(user_id::TEXT, 8) || '@gmail.com',  
-        CASE WHEN rownumid = 1 THEN 'default' WHEN rownumid = 2 THEN 'admin' WHEN random() < .5 THEN 'default' ELSE 'admin' END, 
-        row_number() over()
-      FROM (
-        SELECT *, row_number() over( PARTITION BY user_id) as dpid, row_number() over() as rownumid
-        FROM (
-          SELECT rownum, gen_random_uuid() as user_id
-          FROM generate_series(1, 1e2) as rownum
-        ) t
-      ) t1
-      WHERE dpid = 1;
-      
-      INSERT INTO orders (user_id, status)
-      SELECT u.id, 'completed'
-      FROM (
-        SELECT rownum 
-        FROM generate_series(1, 1e2) as rownum
-      ) t
-      LEFT JOIN users u ON true;
-      `;
-    await page.evaluate(async (query) => {
-      try {
-        await (window as any).sql(query);
-      } catch (err) {
-        document.body.innerText = JSON.stringify(err);
-      }
-    }, query);
-
-    await getSearchListItem(page, { dataKey: "users" }).click();
-    const usersTable = await getTableWindow(page, "users");
-
-    /** Test pagination */
-    let pageInput = await usersTable.getByTestId("Pagination.page");
-    await expect(await pageInput.inputValue()).toBe("1");
-    await expect(await pageInput.getAttribute("min")).toBe("1");
-    await expect(await pageInput.getAttribute("max")).toBe("4");
-    await expect(
-      usersTable.getByTestId("Pagination.pageCountInfo"),
-    ).toContainText(`4 pages  (100 rows)`);
-    await usersTable.getByTestId("Pagination.lastPage").click();
-    pageInput = await usersTable.getByTestId("Pagination.page");
-    await pageInput.scrollIntoViewIfNeeded();
-    await expect(await pageInput.inputValue()).toBe("4");
-    await usersTable.getByTestId("Pagination.firstPage").click();
-    await expect(await pageInput.inputValue()).toBe("1");
-    await usersTable.getByTestId("Pagination.nextPage").click();
-    await expect(await pageInput.inputValue()).toBe("2");
-    await usersTable.getByTestId("Pagination.lastPage").click();
-    await usersTable.getByTestId("Pagination.pageSize").click();
-    await page
-      .getByTestId("Pagination.pageSize")
-      .locator(getDataKey("50"))
-      .click();
-    await expect(await pageInput.inputValue()).toBe("2");
-    await expect(
-      await usersTable.getByTestId("Pagination.pageCountInfo").textContent(),
-    ).toBe(`2 pages  (100 rows)`);
-
-    await usersTable.getByTestId("AddColumnMenu").click();
-    await getSearchListItem(page.getByTestId("AddColumnMenu"), {
-      dataKey: "Referenced",
-    }).click();
-    await getSearchListItem(page.getByTestId("JoinPathSelectorV2"), {
-      dataKey: "orders",
-    }).click(TWENTY_SECONDS_OR_MORE);
-    await page.getByTestId("LinkedColumn.ColumnList.toggle").click();
-    await page.waitForTimeout(1e3);
-    await getSearchListItem(page, { dataKey: "total_cost" })
-      .getByTestId("SummariseColumn.toggle")
-      .click();
-    await page.waitForTimeout(1e3);
-    await getSearchListItem(page.getByTestId("FunctionSelector"), {
-      dataKey: "$sum",
-    }).click();
-    await page.getByTestId("SummariseColumn.apply").click();
-    await page
-      .getByTestId("LinkedColumn.ColumnListMenu")
-      .getByTestId("Popup.close")
-      .click();
-    await page.getByTestId("LinkedColumn.Add").click();
-
-    await page.waitForTimeout(1e3);
-    await usersTable.getByTestId("AddChartMenu.Map").click();
-    await page
-      .getByTestId("AddChartMenu.Map")
-      .getByRole("option")
-      .filter({ hasText: "orders (delivery_address)" })
-      .click();
-    await page.waitForTimeout(3e3);
-    await page.getByTestId("dashboard.window.detachChart").click();
-    await page.waitForTimeout(1e3);
-    await usersTable.getByTestId("AddChartMenu.Timechart").click();
-    await page
-      .getByTestId("AddChartMenu.Timechart")
-      .getByRole("option")
-      .getByText("orders (created_at)", { exact: true })
-      .click();
-    await page.waitForTimeout(3e3);
-    await page.getByTestId("dashboard.window.detachChart").click();
-
-    /** Set count all to ensure the W_TimeChart.ActiveRow below works */
-    // await page.getByTestId("TimeChartLayerOptions.aggFunc").click();
-    // await page.getByTestId("TimeChartLayerOptions.aggFunc.select").click();
-    // await page.getByTestId("TimeChartLayerOptions.aggFunc.select").locator(`[data-key="$countAll"]`).click();
-    // await page.getByTestId("Popup.close").click();
-
-    await page.waitForTimeout(5e3);
-    /** Mouse move is needed to show tooltip and to trigger re-render so that _renderedData.x,y are defined */
-    await page.mouse.move(700, 111);
-    await page.mouse.move(700, 150);
-    await page.mouse.click(700, 150);
-    await page
-      .getByTestId("W_TimeChart.ActiveRow")
-      .waitFor({ state: "visible", timeout: 5e3 });
-    /** Test W_TimeChart activeRow crossfilter */
-    const {
-      data = [],
-      x = -99,
-      y = -99,
-    } = await page.evaluate(async () => {
-      try {
-        const timeChartRef = document.querySelector(".W_TimeChart")!;
-        const bbox = timeChartRef.getBoundingClientRect();
-        const data = (timeChartRef as any)._renderedData as {
-          x: number;
-          y: number;
-          value: number;
-        }[];
-        return { data, x: bbox.x, y: bbox.y };
-      } catch (err: any) {
-        document.body.innerText = err.toString() + JSON.stringify(err);
-        return {};
-      }
-    });
-    const [firstPoint, secondPoint] = data;
-    if (
-      typeof firstPoint?.x !== "number" ||
-      typeof secondPoint?.x !== "number"
-    ) {
-      console.error("firstPoint or secondPoint missing:", {
-        firstPoint,
-        secondPoint,
-      });
-    } else {
-      await page.mouse.click(firstPoint.x + x, firstPoint.y + y);
-      await page.waitForTimeout(1e3);
-      await page.mouse.click(firstPoint.x + x, firstPoint.y + y); // to close it
-      await page.waitForTimeout(1e3);
-      await page.mouse.click(secondPoint.x + x, secondPoint.y + y);
-      await page.waitForTimeout(1e3);
-    }
-
-    // Close active row
-    await page.waitForTimeout(2e3);
-    const brush = await page.getByTestId("W_TimeChart.ActiveRow");
-    if (await brush.isVisible()) {
-      await brush.locator("button").click();
-    }
-
-    /**
-     * Ensure card view works
-     */
-    await usersTable.getByTestId("dashboard.window.menu").click();
-    await page.waitForTimeout(1e3);
-    await page.getByText("Display options").click();
-    await page.getByTestId("table.options.displayMode").click();
-    await page
-      .getByTestId("SearchList.List")
-      .locator(`[data-key="card"]`)
-      .click();
-    await page.getByTestId("table.options.cardView.groupBy").click();
-    await page
-      .getByTestId("SearchList.List")
-      .locator(`[data-key="type"]`)
-      .click();
-    await page.getByTestId("table.options.cardView.orderBy").click();
-    await page
-      .getByTestId("SearchList.List")
-      .locator(`[data-key="position"]`)
-      .click();
-    await page.waitForTimeout(1e3);
-    await page.keyboard.press("Escape");
-    await usersTable.getByTestId("dashboard.window.fullscreen").click();
-    await page.waitForTimeout(3e3);
-    await expect(await page.getByText("first_name").first()).toBeVisible();
-
-    /** Test groupBy */
-    const swapFirstTwoRows = async () => {
-      const groups = await page.getByTestId("CardView.group").all();
-      await expect(groups.length).toBe(2);
-      const [firstGroup, secondGroup] = groups;
-      await page.waitForTimeout(2e3);
-      const firstGroupFirstRow = await firstGroup
-        .getByTestId("CardView.row")
-        .first();
-      const secondGroupFirstRow = await secondGroup
-        .getByTestId("CardView.row")
-        .first();
-      const draggedText = await firstGroupFirstRow
-        .getByTitle("id")
-        .textContent();
-      const targetText = await secondGroupFirstRow
-        .getByTitle("id")
-        .textContent();
-      const firstDragHandle = await firstGroupFirstRow.getByTestId(
-        "CardView.DragHeader",
-      );
-      const secondDragHandle = await secondGroupFirstRow.getByTestId(
-        "CardView.DragHeader",
-      );
-
-      const box1 = await firstDragHandle.boundingBox();
-      const box2 = await secondDragHandle.boundingBox();
-      if (!box1 || !box2) {
-        throw "box1 or box2 missing";
-      }
-      await page.mouse.move(box1.x + box1.width / 2, box1.y + box1.height / 2, {
-        steps: 22,
-      });
-      await firstDragHandle.hover();
-      await page.waitForTimeout(1e3);
-      await page.mouse.down({ button: "left" });
-      await page.mouse.move(box2.x + box2.width / 2, box2.y + box2.height / 2, {
-        steps: 111,
-      });
-      await page.mouse.up({ button: "left" });
-      await page.waitForTimeout(5e3);
-
-      const newTargetText = await secondGroup
-        .getByTestId("CardView.row")
-        .first()
-        .getByTitle("id")
-        .textContent();
-      return { draggedText, newTargetText };
-    };
-
-    await swapFirstTwoRows();
-    await page.waitForTimeout(1e3);
-    const { draggedText, newTargetText } = await swapFirstTwoRows();
-    await page.waitForTimeout(1e3);
-    await expect(draggedText).toEqual(newTargetText);
-    await page.waitForTimeout(2e3);
-  });
-
   test("API tests", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     await login(page, USERS.test_user);
-    await page.getByRole("link", { name: "Connections" }).click();
-    await page.getByRole("link", { name: TEST_DB_NAME, exact: true }).click();
+
+    await openConnection(page, TEST_DB_NAME);
     await page
       .getByTestId("dashboard.goToConnConfig")
-      .waitFor({ state: "visible", timeout: 10e3 });
-    await page.getByTestId("dashboard.goToConnConfig").click();
+      .click(TWENTY_SECONDS_OR_MORE);
     await page.getByTestId("config.api").click();
 
     await page
@@ -3216,56 +3339,8 @@ test.describe("Main test", () => {
       .click();
   });
 
-  test("SQL Autocomplete", async ({ page: p }) => {
-    const page = p as PageWIds;
-    const sqlTestTimeout = { total: 9 * 6e4, sql: 8 * 6e4 };
-    test.setTimeout(sqlTestTimeout.total);
-
-    await page.request.post("/logout");
-    await login(page, USERS.test_user);
-    await page.getByRole("link", { name: "Connections" }).click();
-    await page.getByRole("link", { name: TEST_DB_NAME }).click();
-
-    await page.getByTestId("dashboard.menu").waitFor({ state: "visible" });
-    await page.waitForTimeout(3000);
-
-    /** Ensure SQL Autocomplete works */
-    await closeWorkspaceWindows(page);
-    await page.getByTestId("dashboard.menu.sqlEditor").click();
-    await page.getByTestId("dashboard.window.menu").click();
-    await page.getByText("General").click();
-
-    for (const _ of new Array(5).fill(1)) {
-      await page.getByText("TEST", { exact: true }).click();
-      await page.waitForTimeout(100);
-    }
-
-    const startSqlTest = async () =>
-      new Promise(async (resolve, reject) => {
-        page.on("dialog", (dialog) => {
-          const msg = dialog.message();
-          console.log("1", msg);
-          if (msg.includes("does not match the expected")) {
-            reject(msg);
-            throw msg;
-          }
-          if (msg === "Demo finished successfully") {
-            return resolve(1);
-          }
-          return dialog.accept();
-        });
-      });
-    await runDbSql(
-      page,
-      `
-        CREATE TABLE force_cached_col_types_reload (); -- Needed failed test rerun
-        DROP TABLE force_cached_col_types_reload;`,
-    );
-    await startSqlTest();
-  });
-
   test("Admin can create and drop connections", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     await login(page, USERS.test_user);
     const dbName = "my_new_db";
     await createDatabase(dbName, page);
@@ -3279,11 +3354,11 @@ test.describe("Main test", () => {
     await goTo(page, "localhost:3004/connections");
     await page.reload();
     const deletedConnection = await page.locator(connectionSelector);
-    await expect(await deletedConnection.count()).toEqual(0);
+    await expect(deletedConnection).toHaveCount(0);
   });
 
   test("Set public user access rules", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
 
     await createAccessRuleForTestDB(page, "public");
     await setTableRule(
@@ -3314,11 +3389,9 @@ test.describe("Main test", () => {
   test("Public user can access all allowed sections without issues", async ({
     page: p,
   }) => {
-    const page = p as PageWIds;
+    const page = p;
     await goTo(page, "localhost:3004/connections");
     await page.reload();
-    await page.getByRole("link", { name: "Connections" }).click();
-    await page.getByRole("link", { name: TEST_DB_NAME }).click();
     await page
       .getByTestId("dashboard.menu.tablesSearchList")
       .waitFor({ state: "visible", ...TWENTY_SECONDS_OR_MORE });
@@ -3330,36 +3403,35 @@ test.describe("Main test", () => {
       "hey",
       "hey",
     ]);
-    await expect(response1.isOk).toBe(true);
-    await expect(response2.isOk).toBe(true);
-    await expect(response3.isOk).toBe(true);
+    expect(response1).toMatchObject({ isOk: true });
+    expect(response2).toMatchObject({ isOk: true });
+    expect(response3).toMatchObject({ isOk: true });
   });
 
   test("Public user ask llm limit", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     await goTo(page, "localhost:3004/connections");
     await page.reload();
-    await page.getByRole("link", { name: "Connections" }).click();
-    await page.getByRole("link", { name: TEST_DB_NAME }).click();
     await page
       .getByTestId("dashboard.menu.tablesSearchList")
       .waitFor({ state: "visible", ...TWENTY_SECONDS_OR_MORE });
     const [response1, response2] = await getLLMResponses(page, ["hey", "hey"]);
-    await expect(response1.isOk).toBe(true);
-    await expect(response2.isOk).toBe(false);
+    expect(response1).toMatchObject({ isOk: true });
+    expect(response2).toMatchObject({ isOk: false });
   });
 
   test("MCP Servers", async ({ page: p }) => {
-    const page = p as PageWIds;
-    await login(page, USERS.test_user, "localhost:3004/login");
-    await page.getByRole("link", { name: "Connections" }).click();
-    await page.getByRole("link", { name: TEST_DB_NAME }).click();
+    const page = p;
+    await login(page, USERS.test_user, "localhost:3004/auth/login");
+    await openConnection(page, TEST_DB_NAME);
 
     await runDbsSql(
       page,
       `
-      UPDATE mcp_servers SET enabled = false WHERE name = 'myServer';
-      DELETE FROM mcp_servers WHERE name = 'myServer';
+      UPDATE mcp_servers SET enabled = false WHERE name IN ('myServer', 'chrome-devtools-test');
+      DELETE FROM mcp_servers WHERE name IN ('myServer', 'chrome-devtools-test');
+
+      DELETE FROM alerts; -- left by mock mcp server oauth flows
     `,
     );
 
@@ -3384,6 +3456,10 @@ test.describe("Main test", () => {
                 MY_TOKEN: "<YOUR_TOKEN>",
               },
             },
+            "chrome-devtools-test": {
+              command: "npx",
+              args: ["-y", "chrome-devtools-mcp@latest"],
+            },
           },
         },
         null,
@@ -3399,6 +3475,17 @@ test.describe("Main test", () => {
     await page.locator(".SwitchToggle " + getDataKey("ALLOWED_DIR")).click();
     await page.getByTestId("AddMCPServer.Add").click();
     await page.getByTestId("AddMCPServer.Add").waitFor({ state: "detached" });
+
+    /* Importing fixed arguments without configurable fields must not create an empty schema. */
+    expect(
+      await runDbsSql(
+        page,
+        "DELETE FROM mcp_servers WHERE name = 'chrome-devtools-test' RETURNING config_schema",
+        undefined,
+        { returnType: "rows" },
+      ),
+    ).toEqual([{ config_schema: null }]);
+
     await page
       .getByTestId("SmartCardList")
       .locator(getDataKey("myServer"))
@@ -3407,11 +3494,12 @@ test.describe("Main test", () => {
 
     await page.getByLabel("ALLOWED_DIR").fill("/prostgles-mcp-test");
     await page.getByText("Enable", { exact: true }).click();
+    await page.waitForTimeout(1e3);
     await page.getByTestId("Popup.close").last().click();
     await page.getByTestId("Popup.close").last().click();
     await page.getByTestId("Alerts").click(TWENTY_SECONDS_OR_MORE);
     await expect(page.getByTestId("Alerts")).toContainText(
-      "MCP Server Hub Tool Load Error",
+      "MCP server disabled due to error",
     );
     await page.getByText("Go to issue").click();
     await page
@@ -3424,8 +3512,8 @@ test.describe("Main test", () => {
 
   /** Flaky on github */
   test("Web template build works", async ({ page: p }) => {
-    const page = p as PageWIds;
-    await login(page, USERS.test_user, "localhost:3004/login");
+    const page = p;
+    await login(page, USERS.test_user, "localhost:3004/auth/login");
     await page.getByRole("link", { name: "cloud" }).click();
     await page.getByTestId("dashboard.goToConnConfig").click();
     await page.getByTestId("config.webApp").click();
@@ -3462,8 +3550,8 @@ test.describe("Main test", () => {
   test("show error when on webdev prompt and webapp not templated", async ({
     page: p,
   }) => {
-    const page = p as PageWIds;
-    await login(page, USERS.test_user, "localhost:3004/login");
+    const page = p;
+    await login(page, USERS.test_user, "localhost:3004/auth/login");
     await page.getByRole("link", { name: "sample_database" }).click();
     await page.getByTestId("AskLLM").click();
     await page.getByTestId("AskLLM.popup").waitFor({ state: "visible" });
@@ -3479,14 +3567,14 @@ test.describe("Main test", () => {
   });
 
   test("Web template works", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     await goTo(page, "localhost:3005");
     await expect(page.locator("body")).toContainText("Not logged in");
     await expect(page.locator("body")).toContainText("Available tables:");
   });
 
   test("Web app dev mode works", async ({ page: p }) => {
-    const page = p as PageWIds;
+    const page = p;
     const cwd = resolve(join(__dirname, "..", "demo", "client"));
     console.log("Starting dev server in cwd:", cwd);
     const devProc = spawn("npm", ["run", "dev"], {
@@ -3497,7 +3585,7 @@ test.describe("Main test", () => {
     });
     try {
       await new Promise((resolve, reject) => {
-        devProc.stdout?.on("data", (data) => {
+        devProc.stdout.on("data", (data) => {
           const str = data.toString();
           console.log("devProc stdout:", str);
           if (str.includes("5173")) {

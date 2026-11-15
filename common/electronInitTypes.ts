@@ -1,3 +1,5 @@
+import type { DBGeneratedSchema } from "./DBGeneratedSchema";
+
 export type ProstglesInitState<
   T extends Record<string, unknown> = Record<string, unknown>,
 > =
@@ -21,15 +23,18 @@ export type ProstglesState<
   isElectron: boolean;
   xRealIpSpoofable?: boolean;
   electronCredsProvided?: boolean;
-  electronCreds?: {
-    db_conn: string;
-    db_host: string;
-    db_port: number;
-    db_user: string;
-    db_name: string;
-    db_pass: string;
-    db_ssl: string;
-  };
+  electronCreds?: Required<
+    Pick<
+      DBGeneratedSchema["connections"]["columns"],
+      | "db_conn"
+      | "db_host"
+      | "db_port"
+      | "db_user"
+      | "db_name"
+      | "db_pass"
+      | "db_ssl"
+    >
+  >;
   initState: ProstglesInitState<T>;
 };
 

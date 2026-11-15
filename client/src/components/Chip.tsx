@@ -3,6 +3,7 @@ import React from "react";
 import "./Animations.css";
 import "./Chip.css";
 import Btn from "./Btn";
+import type { BtnProps } from "./Btn";
 import { FlexCol, classOverride } from "./Flex";
 import { Icon } from "./Icon/Icon";
 import type { TestSelectors } from "../Testing";
@@ -20,6 +21,7 @@ type ChipProps = TestSelectors &
     variant?: "naked" | "header" | "outline" | "default";
     color?: "blue" | "yellow" | "red" | "green" | "gray" | "orange";
     onDelete?: React.MouseEventHandler<HTMLButtonElement>;
+    deleteButtonSize?: BtnProps["size"];
     leftIcon?: {
       path: string;
       size?: 0.75 | 0.5;
@@ -40,6 +42,7 @@ export default class Chip extends React.Component<ChipProps> {
       label,
       variant = "default",
       onDelete,
+      deleteButtonSize = "default",
       leftIcon,
       color = "gray",
       ...divProps
@@ -72,7 +75,7 @@ export default class Chip extends React.Component<ChipProps> {
           ...this.props.style,
         }}
         className={classOverride(
-          `chip-component flex-row ws-pre-wrap ai-center chip lg ${color} variant-${variant} ${variant === "default" ? "gap-p25" : ""} ${asHeader ? "text-ellipsis" : ""}`,
+          `chip-component flex-row ws-pre-wrap ai-center chip min-w-0 lg ${color} variant-${variant} ${variant === "default" ? "gap-p25" : ""} ${asHeader ? "text-ellipsis" : ""}`,
           className,
         )}
       >
@@ -81,7 +84,7 @@ export default class Chip extends React.Component<ChipProps> {
             <Btn
               iconPath={leftIcon.path}
               onClick={leftIcon.onClick}
-              className={classOverride("mr-p5 round", leftIcon.className)}
+              className={classOverride("round f-0", leftIcon.className)}
               size="default"
               style={{
                 padding: 0,
@@ -93,7 +96,7 @@ export default class Chip extends React.Component<ChipProps> {
             />
           : <Icon
               path={leftIcon.path}
-              className={classOverride("mr-p5 round", leftIcon.className)}
+              className={classOverride("round f-0", leftIcon.className)}
               size={leftIcon.size ?? 1}
               style={leftIcon.style}
             />
@@ -102,7 +105,7 @@ export default class Chip extends React.Component<ChipProps> {
 
         {!asHeader && labelNode}
 
-        <FlexCol className={`gap-p25 `}>
+        <FlexCol className={`gap-p25 min-w-0`}>
           {asHeader && labelNode}
           {"value" in this.props && this.props.value ?
             <span
@@ -135,7 +138,7 @@ export default class Chip extends React.Component<ChipProps> {
               onDelete(e);
             }}
             className="Chip_DeleteBtn ml-p5 round as-start text-1"
-            size="default"
+            size={deleteButtonSize}
             style={{
               padding: 0,
               borderRadius: "1000%",

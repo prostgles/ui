@@ -11,7 +11,7 @@ export const useUserInput = (
 ) => {
   const [editedUserInputValue, setUserInputValue] =
     useState<Record<string, unknown>>();
-  const userInputValue = editedUserInputValue ?? lastValueUsed;
+  const userInputValue = { ...lastValueUsed, ...editedUserInputValue };
 
   const [localFilter, setLocalFilter] = useState<
     Record<string, SingleGroupFilter>

@@ -26,10 +26,11 @@ export const textToSVG = (
     x,
     y,
     isSingleLine,
-    numberOfLines,
   } = textInfo;
   const style = placeholderOrElementStyle;
-  if (!content.trim()) return;
+  if (!content.trim()) {
+    return;
+  }
   const textNode = document.createElementNS(SVG_NAMESPACE, "text");
   (textNode as SVGScreenshotNodeType)._bboxCode = bboxCode;
   (textNode as SVGScreenshotNodeType)._textInfo = textInfo;

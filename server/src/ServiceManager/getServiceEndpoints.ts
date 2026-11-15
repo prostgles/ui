@@ -97,7 +97,15 @@ export const getServiceEndpoints = <S extends ProstglesService>({
           }
 
           if (outputSchema) {
-            const responseData = await response.json();
+            const text = await response.text();
+
+            let responseData: unknown;
+            try {
+              responseData = JSON.parse(text);
+            } catch {
+              // Allow for text output if outputSchema is not JSON
+              responseData = text;
+            }
             const validatedOutput = getJSONBSchemaValidationError(
               outputSchema,
               responseData,

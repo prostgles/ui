@@ -4,10 +4,11 @@ import { mdiImageFilterCenterFocus, mdiTargetVariant } from "@mdi/js";
 import Btn from "@components/Btn";
 import { FlexCol, FlexRow } from "@components/Flex";
 import { Select } from "@components/Select/Select";
-import { MapExtentBehavior, type DecKGLMapProps } from "./DeckGLMap";
+import { type DecKGLMapProps } from "./DeckGLMap";
 import { DeckGLFeatureEditor } from "./DeckGLFeatureEditor";
 import type { DeckGlLibs, DeckWrapped } from "./DeckGLWrapped";
 import type { GeoJsonLayer } from "deck.gl";
+import { MapExtentBehaviorOptions } from "@common/ColumnConfig/mapConstants";
 
 type P = Pick<
   DecKGLMapProps,
@@ -105,7 +106,7 @@ export const InMapControls = ({
               title="Map extent behavior"
               data-command="MapExtentBehavior"
               size="small"
-              fullOptions={MapExtentBehavior}
+              fullOptions={MapExtentBehaviorOptions}
               value={options.extentBehavior}
               onChange={(extentBehavior) => {
                 onOptionsChange({ extentBehavior });

@@ -132,7 +132,11 @@ export const SmartFilterBarRightActions = (props: SmartFilterBarProps) => {
 
             {!!tableHandler.update && showupdate && (
               <PopupMenu
-                title={`Update ${rowCount} rows`}
+                title={
+                  rowCount == null || rowCount < 0 ?
+                    "Update matching rows"
+                  : `Update ${rowCount} rows`
+                }
                 positioning="right-panel"
                 button={
                   <Btn

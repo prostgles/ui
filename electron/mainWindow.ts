@@ -3,6 +3,7 @@ import * as path from "path";
 import { BrowserWindow, screen, shell, Tray, nativeImage, app } from "electron";
 import { loadingHTML } from "./loadingHTML";
 import { setContextMenu } from "./setContextMenu";
+import { getLastVisitedUrl, saveLastVisitedUrl } from "./lastVisitedUrl";
 
 const iconPath = path.join(__dirname, "/../images/icon.ico");
 
@@ -11,6 +12,7 @@ const electronSid = crypto.randomBytes(48).toString("hex");
 
 /** Limit to single instance */
 let mainWindow: BrowserWindow;
+let appUrl: string | undefined;
 
 const focusIfOpen = () => {
   // Tried to run a second instance - focus main window.
@@ -22,7 +24,8 @@ const focusIfOpen = () => {
 };
 
 const createWindow = () => {
-  if (mainWindow) return mainWindow;
+  if (mainWindow && !mainWindow.isDestroyed()) return mainWindow;
+  mainWindowLoaded = undefined;
 
   /** Make sure we open it on primary display */
   const primaryDisplay = screen.getPrimaryDisplay();
@@ -50,6 +53,15 @@ const createWindow = () => {
       allowRunningInsecureContent: false,
     },
   });
+  mainWindow.webContents.on("did-navigate", (_event, url) => {
+    if (appUrl) saveLastVisitedUrl(url, appUrl);
+  });
+  mainWindow.webContents.on(
+    "did-navigate-in-page",
+    (_event, url, isMainFrame) => {
+      if (isMainFrame && appUrl) saveLastVisitedUrl(url, appUrl);
+    },
+  );
   setContextMenu(mainWindow);
   mainWindow.setMenuBarVisibility(false);
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -73,16 +85,17 @@ const openLoadingScreen = async () => {
   }
 };
 
-let mainWindowLoaded: { port: number };
+let mainWindowLoaded: { port: number } | undefined;
 let didSetActivate = false;
 const openProstglesApp = (port: number, delay = 1100) => {
   if (!port) return;
   const url = `http://localhost:${port}`;
+  appUrl = url;
 
   createWindow();
   setTimeout(async () => {
     if (port !== mainWindowLoaded?.port) {
-      await loadWithRetries(url, port);
+      await loadWithRetries(getLastVisitedUrl(url), port);
     }
     mainWindowLoaded = { port };
   }, delay);
@@ -114,7 +127,7 @@ const setSIDCookies = async (url: string) => {
 let tries = 5;
 const loadWithRetries = async (url: string, port: number): Promise<void> => {
   try {
-    await setSIDCookies(url);
+    await setSIDCookies(new URL(url).origin);
     try {
       await mainWindow.webContents.stop();
     } catch (error) {

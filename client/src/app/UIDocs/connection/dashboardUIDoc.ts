@@ -62,13 +62,6 @@ export const dashboardUIDoc = {
       selectorCommand: "ConnectionSelector",
     },
     {
-      type: "select",
-      title: "Workspaces",
-      description:
-        "List of available workspaces for the selected connection. Each workspace stores opened views and their layout.",
-      selectorCommand: "WorkspaceMenu.list",
-    },
-    {
       type: "popup",
       selectorCommand: "WorkspaceMenuDropDown",
       title: "Workspaces menu",
@@ -93,33 +86,41 @@ export const dashboardUIDoc = {
           itemContent: [
             {
               type: "popup",
-              selectorCommand: "WorkspaceDeleteBtn",
-              title: "Delete workspace",
-              description: "Opens the delete workspace confirmation dialog",
+              selector: '[title="Workspace actions"]',
+              title: "Workspace actions",
+              description: "Opens the workspace actions menu.",
               children: [
                 {
-                  type: "button",
+                  type: "popup",
+                  selectorCommand: "WorkspaceDeleteBtn",
                   title: "Delete workspace",
+                  description: "Opens the delete workspace confirmation dialog",
+                  children: [
+                    {
+                      type: "button",
+                      title: "Delete workspace",
+                      description:
+                        "Confirms the deletion of the selected workspace.",
+                      selectorCommand: "WorkspaceDeleteBtn.Confirm",
+                    },
+                  ],
+                },
+                {
+                  type: "button",
+                  selectorCommand: "WorkspaceMenu.CloneWorkspace",
+                  title: "Clone workspace",
                   description:
-                    "Confirms the deletion of the selected workspace.",
-                  selectorCommand: "WorkspaceDeleteBtn.Confirm",
+                    "Creates a copy of the selected workspace with a new name.",
+                },
+                {
+                  selectorCommand: "WorkspaceSettings",
+                  type: "smartform-popup",
+                  tableName: "workspaces",
+                  title: "Workspace settings",
+                  description:
+                    "Opens the settings for the selected workspace, allowing you to manage its properties.",
                 },
               ],
-            },
-            {
-              type: "button",
-              selectorCommand: "WorkspaceMenu.CloneWorkspace",
-              title: "Clone workspace",
-              description:
-                "Creates a copy of the selected workspace with a new name.",
-            },
-            {
-              selectorCommand: "WorkspaceSettings",
-              type: "smartform-popup",
-              tableName: "workspaces",
-              title: "Workspace settings",
-              description:
-                "Opens the settings for the selected workspace, allowing you to manage its properties.",
             },
           ],
         },
@@ -146,23 +147,23 @@ export const dashboardUIDoc = {
             },
           ],
         },
-        {
-          type: "button",
-          selectorCommand: "WorkspaceMenu.toggleWorkspaceLayoutMode",
-          title: "Toggle layout mode",
-          description:
-            "Switches between fixed and editable layout modes for the current workspace. Fixed mode locks the layout, preventing it from being changed by the user.",
-        },
       ],
+    },
+    {
+      type: "button",
+      selectorCommand: "WorkspaceMenu.toggleWorkspaceLayoutMode",
+      title: "Toggle layout mode",
+      description:
+        "Switches between fixed and editable layout modes for the current workspace. Fixed mode locks the layout, preventing it from being changed by the user.",
     },
     dashboardContentUIDoc,
     AIAssistantUIDoc,
     {
       type: "popup",
-      selectorCommand: "Feedback",
-      title: "Feedback",
+      selectorCommand: "dashboard.menu.quickSearch",
+      title: "Quick search",
       description:
-        "Opens the feedback form, allowing you to provide feedback about the application.",
+        "Opens the quick search menu for searching across all available tables and views from the current database.",
       children: [],
     },
     {

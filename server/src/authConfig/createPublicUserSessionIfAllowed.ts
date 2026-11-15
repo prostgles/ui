@@ -1,3 +1,4 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import type {
   AuthClientRequest,
   LoginClientInfo,
@@ -25,11 +26,8 @@ export const createPublicUserSessionIfAllowed = async (
     const newRandomUser = await insertUser(dbsTx, {
       username: `user-${new Date().toISOString()}_${Math.round(Math.random() * 1e8)}`,
       password: "",
-      type: "public",
+      type: USER_TYPES.PUBLIC,
     });
-    if (!newRandomUser) {
-      return;
-    }
 
     return makeSession(
       newRandomUser,
@@ -38,14 +36,11 @@ export const createPublicUserSessionIfAllowed = async (
         user_agent: client.user_agent || null,
         type: "web",
       },
-      dbsTx as DBS,
+      dbsTx,
       Date.now() + Number(7 * DAY),
     );
   });
 
-  if (!session) {
-    return;
-  }
   return {
     type: "new-session",
     session,

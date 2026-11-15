@@ -50,7 +50,10 @@ export class NewRowDataHandler {
     } else {
       this.newRow[columnName] = newData;
     }
-    this.newRow = await this.onChange(this.newRow, columnName, newData);
+    const pendingNewRow = this.onChange(this.newRow, columnName, newData);
+    /* Keep controlled inputs synchronous to preserve native undo and selection. */
+    this.onChanged(this.newRow);
+    this.newRow = await pendingNewRow;
     this.onChanged(this.newRow);
   };
 

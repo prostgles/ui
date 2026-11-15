@@ -10,12 +10,15 @@ import type { ContextDataSchema } from "../AccessControl/OptionControllers/Filte
 import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
 import { DetailedFilterControl } from "../DetailedFilterControl/DetailedFilterControl";
 import type { FilterWrapperProps } from "../DetailedFilterControl/FilterWrapper";
-import type { ColumnConfig } from "../W_Table/ColumnMenu/ColumnMenu";
+import type { ColumnConfig } from "@common/ColumnConfig/ColumnConfig";
 import { SmartAddFilter } from "./SmartAddFilter";
 export * from "./smartFilterUtils";
 
 export type Operand = "AND" | "OR";
-export type SmartFilterProps = Pick<FilterWrapperProps, "variant"> & {
+export type SmartFilterProps = Pick<
+  FilterWrapperProps,
+  "variant" | "withShadow"
+> & {
   db: Prgl["db"];
   tableName: string;
   tables: DBSchemaTableWJoins[];
@@ -26,7 +29,6 @@ export type SmartFilterProps = Pick<FilterWrapperProps, "variant"> & {
   hideOperand?: boolean;
   className?: string;
   style?: React.CSSProperties;
-  filterClassName?: string;
   contextData?: ContextDataSchema;
   hideToggle?: boolean;
   minimised?: boolean;
@@ -54,7 +56,7 @@ export const SmartFilter = (props: SmartFilterProps) => {
     variant,
     selectedColumns,
     onChange,
-    filterClassName = "",
+    withShadow,
     showAddFilter = false,
     extraFilters,
     showNoFilterInfoRow = false,
@@ -84,7 +86,9 @@ export const SmartFilter = (props: SmartFilterProps) => {
       {detailedFilter.map((filterItem, filterItemIndex) => {
         const filterFieldName =
           isJoinedFilter(filterItem) ?
-            filterItem.filter.fieldName
+            filterItem.path
+              .map((p) => (typeof p === "string" ? p : p.table))
+              .join(".")
           : filterItem.fieldName;
 
         const otherFilters = detailedFilter.filter(
@@ -108,7 +112,7 @@ export const SmartFilter = (props: SmartFilterProps) => {
         const filterNode = (
           <DetailedFilterControl
             key={filterItemIndex + filterFieldName}
-            className={filterClassName}
+            withShadow={withShadow}
             filterItem={filterItem}
             table={table}
             tables={tables}
@@ -129,7 +133,7 @@ export const SmartFilter = (props: SmartFilterProps) => {
           !hideOperand
         ) {
           return (
-            <React.Fragment key={"filter-item" + filterFieldName}>
+            <React.Fragment key={filterItemIndex + filterFieldName}>
               {filterNode}
               <Btn
                 className="OPERAND text-active hover"
@@ -143,7 +147,7 @@ export const SmartFilter = (props: SmartFilterProps) => {
                   )
                 }
               >
-                {operand}
+                {operand.toLowerCase()}
               </Btn>
             </React.Fragment>
           );

@@ -1,9 +1,12 @@
+import { getSmartGroupFilter } from "@common/filterUtils";
 import Btn from "@components/Btn";
-import { FlexCol, FlexRow } from "@components/Flex";
+import ErrorComponent from "@components/ErrorComponent";
+import { FlexRow } from "@components/Flex";
+import Loading from "@components/Loader/Loading";
 import { Select } from "@components/Select/Select";
 import { mdiDotsHorizontal, mdiPlus, mdiRobot } from "@mdi/js";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
-import React from "react";
+import React, { useState } from "react";
 import { t } from "../../../i18n/i18nUtils";
 import { getPGIntervalAsText } from "../../W_SQL/customRenderers";
 import {
@@ -20,6 +23,7 @@ export const AskLLMChatHeader = (
     credentials,
     activeChatId,
     latestChats,
+    chatsFilter,
     createNewChat,
     preferredPromptId,
     setActiveChat,
@@ -28,6 +32,34 @@ export const AskLLMChatHeader = (
   } = props;
 
   const { dbs, user } = usePrgl();
+  const [searchTerm, setSearchTerm] = useState("");
+  const { data: matchingChats, error: searchError } = dbs.llm_chats.useFind(
+    {
+      $and: [
+        chatsFilter,
+        getSmartGroupFilter([
+          {
+            fieldName: "*",
+            type: "$term_highlight",
+            value: searchTerm,
+            searchColumns: [
+              { name: "name" },
+              {
+                name: "message",
+                path: [{ table: "llm_messages", on: [{ id: "chat_id" }] }],
+              },
+            ],
+          },
+        ]),
+      ],
+    },
+    { select: { id: 1 }, limit: null },
+    { skip: !searchTerm },
+  );
+  const visibleChats = latestChats?.filter(
+    (chat) =>
+      !searchTerm || matchingChats?.some((match) => match.id === chat.id),
+  );
 
   return (
     <FlexRow className="AskLLMChatHeader">
@@ -47,16 +79,29 @@ export const AskLLMChatHeader = (
         <Select
           title={t.AskLLMChatHeader.Chat}
           data-command="LLMChat.select"
+          data-key={activeChatId?.toString()}
+          noSearchLimit={0}
+          onSearch={setSearchTerm}
+          endOfResultsContent={
+            searchTerm && searchError ?
+              <ErrorComponent error={searchError} />
+            : undefined
+          }
           fullOptions={
-            latestChats?.map((c) => ({
+            visibleChats?.map((c) => ({
               key: c.id,
               label: c.name,
               iconPath: c.agent_info ? mdiRobot : undefined,
               subLabel: getPGIntervalAsText(c.created_ago, true, true, true),
+              rightContent:
+                c.status?.state === "loading" ?
+                  <Loading sizePx={16} show />
+                : undefined,
             })) ?? []
           }
           btnProps={{
             size: "default",
+            children: <div className="text-ellipsis">{activeChat?.name}</div>,
           }}
           value={activeChatId}
           showSelectedSublabel={true}
@@ -69,26 +114,24 @@ export const AskLLMChatHeader = (
             setActiveChat(v);
           }}
         />
-        {!activeChat?.agent_info && (
-          <Btn
-            iconPath={mdiPlus}
-            title={t.AskLLMChatHeader["New chat"]}
-            data-command="AskLLMChat.NewChat"
-            variant="faded"
-            color="action"
-            size="default"
-            disabledInfo={
-              !preferredPromptId ?
-                t.AskLLMChatHeader["No prompt found"]
-              : undefined
-            }
-            onClickPromise={async () => {
-              if (!preferredPromptId)
-                throw new Error(t.AskLLMChatHeader["No prompt found"]);
-              await createNewChat(preferredPromptId);
-            }}
-          />
-        )}
+        <Btn
+          iconPath={mdiPlus}
+          title={t.AskLLMChatHeader["New chat"]}
+          data-command="AskLLMChat.NewChat"
+          variant="faded"
+          color="action"
+          size="default"
+          disabledInfo={
+            !preferredPromptId ?
+              t.AskLLMChatHeader["No prompt found"]
+            : undefined
+          }
+          onClickPromise={async () => {
+            if (!preferredPromptId)
+              throw new Error(t.AskLLMChatHeader["No prompt found"]);
+            await createNewChat(preferredPromptId);
+          }}
+        />
       </FlexRow>
 
       {user && (

@@ -4,11 +4,9 @@ import Btn from "@components/Btn";
 import { FlexCol } from "@components/Flex";
 import { IconPalette } from "@components/IconPalette/IconPalette";
 import { SmartSearch } from "../../../SmartFilter/SmartSearch/SmartSearch";
-import type {
-  ConditionalStyleIcons,
-  StyleColumnProps,
-} from "../ColumnStyleControls/ColumnStyleControls";
+import type { StyleColumnProps } from "../ColumnStyleControls/ColumnStyleControls";
 import FormField from "@components/FormField/FormField";
+import type { ConditionalStyleIcons } from "@common/ColumnConfig/columnStyleTypes";
 
 type P = StyleColumnProps & {
   style: ConditionalStyleIcons;

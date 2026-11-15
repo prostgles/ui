@@ -1,3 +1,5 @@
 flask>=3.0.0
 faster-whisper>=1.1.0
+# PyAV 19 removed metadata_errors: https://github.com/SYSTRAN/faster-whisper/issues/1589
+av<19
 werkzeug>=3.0.0

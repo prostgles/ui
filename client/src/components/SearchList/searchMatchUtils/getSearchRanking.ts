@@ -1,10 +1,17 @@
 import { isDefined } from "src/utils/utils";
 
-export const getSearchRanking = (searchTerm: string, labels: string[]) => {
+export const getSearchRanking = (
+  searchTerm: string,
+  labels: string[],
+  matchCase = false,
+) => {
   if (searchTerm) {
     const matchedLabelRank = labels
       .map((l, i) => {
-        const idx = l.toLowerCase().indexOf(searchTerm.toLowerCase());
+        const idx =
+          matchCase ?
+            l.indexOf(searchTerm)
+          : l.toLowerCase().indexOf(searchTerm.toLowerCase());
         const rank =
           idx === -1 ? undefined : (
             Number(`${i}.${idx.toString().padStart(3, "0")}`)

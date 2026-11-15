@@ -72,21 +72,20 @@ const handler = {
 
           return schema || "No tables found matching the criteria";
         },
-        count: async ({ tableName, filter }, context) => {
+        count: async ({ tableName, filter, ...params }, context) => {
           const tableHandler = await getTableHandlerWithScope(
             tableName,
             context,
           );
-          const result = await tableHandler.count(filter);
+          const result = await tableHandler.count(filter, params);
           return result;
         },
-        find: async ({ tableName, filter, select, ...params }, context) => {
+        find: async ({ tableName, filter, ...params }, context) => {
           const tableHandler = await getTableHandlerWithScope(
             tableName,
             context,
           );
           const result = await tableHandler.find(filter, {
-            select: select as {},
             limit: 10,
             ...params,
           });
@@ -98,7 +97,7 @@ const handler = {
             context,
           );
           const result = await tableHandler.delete(filter, {
-            returning: returning as "*",
+            returning: returning as unknown as "*",
           });
           return result;
         },
@@ -109,7 +108,7 @@ const handler = {
           );
           const result = await tableHandler.insert(data, {
             ...params,
-            returning: returning as "*",
+            returning: returning as unknown as "*",
           });
           return result;
         },
@@ -123,7 +122,7 @@ const handler = {
           );
           const result = await tableHandler.insertMany(data, {
             ...params,
-            returning: returning as "*",
+            returning: returning as unknown as "*",
           });
           return result;
         },
@@ -136,7 +135,7 @@ const handler = {
             context,
           );
           const result = await tableHandler.update(filter, data, {
-            returning: returning as "*",
+            returning: returning as unknown as "*",
             ...params,
           });
           return result;
@@ -205,11 +204,11 @@ const handler = {
 
 const getTableHandlerWithScope = async (
   tableName: string,
-  { chat, clientReq, connection_id }: McpCallContext,
+  { chat, user_id, connection_id }: McpCallContext,
 ) => {
   const { clientDb } = await getClientDBHandlersForChat(
     { ...chat, connection_id },
-    clientReq,
+    user_id,
   );
   const tableHandler = clientDb[tableName] as TableHandler | undefined;
   if (!tableHandler) {
@@ -259,15 +258,14 @@ const runSqlTool = async (
     query_timeout && Number.isInteger(query_timeout) ?
       [`SET LOCAL statement_timeout to '${query_timeout}s'`, sql].join(";\n")
     : sql;
-  const result = await db.any<Record<string, any>>(
-    queryWithTimeout,
-    query_params,
+  const result = await db.tx((t) =>
+    t.any<Record<string, any>>(queryWithTimeout, query_params),
   );
   return result;
 };
 
 /**
- * Hacky type check to ensure ProxyDbCallData is in sync with the actual tool schemas defined in getAllowedDBToolSchemas.
+ * Ensure supported workflow parameters remain accepted by the MCP schemas.
  */
 const sdkCheck = {} as ProxyDbCallData;
 sdkCheck satisfies {

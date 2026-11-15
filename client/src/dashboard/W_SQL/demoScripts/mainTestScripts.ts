@@ -72,10 +72,10 @@ export const mainTestScripts: DemoScript = async ({
     WHERE`);
   await fromBeginning(false, script);
   await moveCursor.lineEnd();
-  await typeAuto(` f.n`);
+  await typeAuto(` f.on`);
   await typeAuto(` `);
   await typeAuto(` mt.n`);
-  testResult(`${script} f.name = mt.name`);
+  testResult(`${script} f.original_name = mt.name`);
 
   /** Jsonb Path */
   await runDbSQL(`

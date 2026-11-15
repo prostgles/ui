@@ -6,7 +6,7 @@ import type { Prgl } from "src/App";
 import type { ContextDataSchema } from "../AccessControl/OptionControllers/FilterControl";
 import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
 import type { FilterWrapperProps } from "../DetailedFilterControl/FilterWrapper";
-import type { ColumnConfig } from "../W_Table/ColumnMenu/ColumnMenu";
+import type { ColumnConfig } from "@common/ColumnConfig/ColumnConfig";
 
 export const testFilter = (
   f: DetailedFilter,
@@ -53,7 +53,10 @@ type ComputedColumn = Pick<
 
 export type FilterColumn = TableColumn | ComputedColumn;
 
-export type BaseFilterProps = Pick<FilterWrapperProps, "variant"> & {
+export type BaseFilterProps = Pick<
+  FilterWrapperProps,
+  "variant" | "withShadow"
+> & {
   db: Prgl["db"];
   tableName: string;
   onChange: (filter?: DetailedFilter) => void;

@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import type { TableRules, TableRulesErrors } from "@common/publishUtils";
 import ErrorComponent from "@components/ErrorComponent";
-import { MenuList } from "@components/MenuList";
+import { SegmentedToggle } from "@components/SegmentedToggle";
+import { SvgIcon } from "@components/SvgIcon";
 import Popup from "@components/Popup/Popup";
 import type { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
-import { FlexCol, FlexRow } from "@components/Flex";
+import { FlexCol } from "@components/Flex";
 import { FileTableAccessControlInfo } from "./FileTableAccessControlInfo";
 import { DeleteRuleControl } from "./../RuleTypeControls/DeleteRuleControl";
 import { InsertRuleControl } from "./../RuleTypeControls/InsertRuleControl";
@@ -17,7 +18,7 @@ import type {
 import { TABLE_RULE_LABELS } from "./TablePermissionControls";
 import { Icon } from "@components/Icon/Icon";
 import { mdiFile, mdiTable, mdiTableEye } from "@mdi/js";
-import { getEntries } from "@common/utils";
+import { fromEntries, getEntries } from "@common/utils";
 import { SyncRuleControl } from "../RuleTypeControls/SyncRuleControl";
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 
@@ -47,6 +48,7 @@ export const TableRulesPopup = ({
     {
       name: "user",
       columns: prgl.dbsTables.find((t) => t.name === "users")!.columns,
+      data: contextData?.user,
     },
   ];
 
@@ -79,9 +81,14 @@ export const TableRulesPopup = ({
     JSON.stringify(localRules[editedRuleType]);
   return (
     <Popup
-      title={
-        <FlexRow className="gap-p5 ai-start">
-          <Icon
+      title={table.label}
+      subTitle={
+        isFileTable ? "File metadata is stored in this table" : undefined
+      }
+      headerIcon={
+        table.icon ?
+          <SvgIcon icon={table.icon} />
+        : <Icon
             className="text-2"
             path={
               isFileTable ? mdiFile
@@ -90,17 +97,22 @@ export const TableRulesPopup = ({
               : mdiTable
             }
           />
-          <FlexCol className="gap-p5">
-            <div>{table.name}</div>
-            {table.isFileTable && (
-              <div className="font-14 text-2">
-                File metadata is stored in this table
-              </div>
-            )}
-          </FlexCol>
-        </FlexRow>
+      }
+      headerLeftContent={
+        <SegmentedToggle
+          className="f-0"
+          value={editedRuleType}
+          onChange={setEditedRuleType}
+          options={fromEntries(
+            getEntries(TABLE_RULE_LABELS).map(([key, { label, title }]) => [
+              key,
+              { title, children: label.mini, iconPath: "", size: "default" },
+            ]),
+          )}
+        />
       }
       positioning="right-panel"
+      rootStyle={{ width: "min(900px, 100vw)" }}
       focusTrap={true}
       onClose={closePopup}
       clickCatchStyle={{ opacity: 1 }}
@@ -121,19 +133,6 @@ export const TableRulesPopup = ({
       ]}
     >
       <FlexCol className="gap-2">
-        <MenuList
-          className="m-auto"
-          style={{ width: "100%", minWidth: "500px" }}
-          variant="horizontal-tabs"
-          items={getEntries(TABLE_RULE_LABELS).map(([key, { label }]) => ({
-            key,
-            label: label.mini,
-            onPress: () => {
-              setEditedRuleType(key);
-            },
-          }))}
-          activeKey={editedRuleType}
-        />
         <FileTableAccessControlInfo
           ruleType={editedRuleType}
           table={table}

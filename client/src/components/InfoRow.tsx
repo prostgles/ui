@@ -26,13 +26,15 @@ export function InfoRow(props: InfoRowProps) {
   } = props;
 
   let rootClass = "";
-  const bgColor = color === "info" ? "default" : color;
+  const bgColor = color === "info" ? "bg-color-2" : `bg-${color}`;
+  const bColor = color === "info" ? "b-color" : `b-${color}`;
+  const textColor = color === "info" ? "text-1" : `text-${color}`;
   if (variant === "filled") {
-    rootClass = `b b-${bgColor} text-${bgColor} bg-${bgColor} px-1 py-p75`;
+    rootClass = `b ${bColor} ${textColor} ${bgColor} px-1 py-p75`;
   } else if (variant === "naked") {
-    rootClass = `text-${bgColor} `;
+    rootClass = textColor;
   } else {
-    rootClass = `b b-${bgColor} text-${bgColor} px-1 py-p75`;
+    rootClass = `b ${bColor} ${textColor} px-1 py-p75`;
   }
 
   return (

@@ -15,13 +15,13 @@ import {
 import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { isDefined } from "prostgles-types";
 import React, { useMemo, useState } from "react";
-import type { ProstglesMCPToolsProps } from "../../ProstglesToolUseMessage";
 import {
   AgenticWorkflowSchemaDrift,
   useAgenticWorkflowSchemaDrift,
 } from "./AgenticWorkflowSchemaDrift";
 import type { useAgenticWorkflowState } from "./hooks/useAgenticWorkflowState";
 import type { UseAgenticWorkflowUserInputReturn } from "./hooks/useUserInput";
+import { AgenticWorkflowToolApprovals } from "./AgenticWorkflowToolApprovals";
 
 export const AgenticWorkflowActions = ({
   workflow,
@@ -33,8 +33,11 @@ export const AgenticWorkflowActions = ({
   latestRun,
   onSuccess,
   className,
-}: Pick<ProstglesMCPToolsProps, "chatId"> & {
+  isRunView = false,
+}: {
+  chatId: number | undefined;
   className?: string;
+  isRunView?: boolean;
   workflow: DBSSchema["agentic_workflows"];
   onStarted: () => void;
   onInitError: () => void;
@@ -53,8 +56,7 @@ export const AgenticWorkflowActions = ({
   const { data: agentMessages } = dbs.llm_messages.useSubscribe({
     $existsJoined: {
       llm_chats: {
-        parent_chat_id: chatId,
-        parent_chat_message_id: messageId,
+        parent_agentic_workflow_run_id: latestRun?.id ?? -1,
       },
     },
   });
@@ -100,11 +102,12 @@ export const AgenticWorkflowActions = ({
           endContent={
             <>
               {isDefined(totalCost) && (
-                <div className="ml-auto" title="Cost">
+                <div className="ml-auto f-0" title="Cost">
                   ${totalCost.toFixed(2)}
                 </div>
               )}
               <Stopwatch
+                className="f-0"
                 title="Workflow duration"
                 startTime={new Date(created)}
                 endTime={finished ? new Date(finished) : undefined}
@@ -113,6 +116,7 @@ export const AgenticWorkflowActions = ({
           }
         />
       )}
+      <AgenticWorkflowToolApprovals workflowRunId={latestRun?.id} />
       <Btn
         iconPath={mdiCheckAll}
         title={
@@ -166,7 +170,8 @@ export const AgenticWorkflowActions = ({
         size="small"
         className="ml-p25"
         disabledInfo={
-          !startAgenticWorkflow ?
+          isRunView ? "This view shows an existing run"
+          : !startAgenticWorkflow ?
             "Starting agentic workflows is not allowed/available"
           : undefined
         }
@@ -174,10 +179,6 @@ export const AgenticWorkflowActions = ({
         loading={isRunning ? true : undefined}
         onClickPromiseMode="noTickIcon"
         onClickPromise={async () => {
-          if (!messageId) {
-            throw new Error(`messageId missing`);
-          }
-
           if (schemaDrift) {
             setShowSchemaDriftAlert(schemaDrift);
             return;
@@ -187,12 +188,13 @@ export const AgenticWorkflowActions = ({
           const res = await startAgenticWorkflow!({
             chatId,
             workflowId: workflow.id,
-            userInputValue: userInputValue ?? {},
+            userInputValue: userInputValue,
             messageId,
             executionMode,
             autoApproveAllTools,
           }).catch((err) => {
-            return Promise.reject(err);
+            onInitError();
+            throw err;
           });
 
           if (res.state === "aborted") {
@@ -221,6 +223,11 @@ export const AgenticWorkflowActions = ({
         <Btn
           size="small"
           title="Stop"
+          disabledInfo={
+            !stopAgenticWorkflow ?
+              "Stopping workflows is not allowed"
+            : undefined
+          }
           className="ml-p25"
           iconPath={mdiStop}
           data-command="AgenticWorkflow.stop"
@@ -228,8 +235,7 @@ export const AgenticWorkflowActions = ({
           color="danger"
           onClickPromise={() =>
             stopAgenticWorkflow!({
-              chatId,
-              messageId: messageId!,
+              runId: latestRun!.id,
             }).then((res) => {
               if (!res.success) {
                 throw new Error(`Failed to stop workflow run`);

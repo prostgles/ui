@@ -28,6 +28,7 @@ import type { CommandSearchHighlight } from "./CommandPalette";
 import "./CommandPalette.css";
 import type { DynamicComponentRegistry } from "./DynamicComponent";
 import { useGoToUI } from "./useGoToUI";
+import { commandPaletteStore, setShowSection } from "./commandPaletteStore";
 
 export const useCommandPaletteState = (prglLoaded: boolean) => {
   const { showSection, setShowSection } = useOnKeyDown();
@@ -107,7 +108,7 @@ export const useCommandPaletteState = (prglLoaded: boolean) => {
 };
 
 const useOnKeyDown = () => {
-  const [showSection, setShowSection] = useState<"commands" | "docs">();
+  const showSection = commandPaletteStore.useStore((s) => s.showSection);
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "F1") {
@@ -118,16 +119,13 @@ const useOnKeyDown = () => {
         event.preventDefault();
         setShowSection("commands");
       }
-      if (event.key === "Escape") {
-        setShowSection(undefined);
-      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [showSection]);
+  }, []);
   return { showSection, setShowSection };
 };
 

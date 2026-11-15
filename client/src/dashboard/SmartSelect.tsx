@@ -1,3 +1,4 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import { mdiAlertCircleOutline, mdiPencil, mdiPlus } from "@mdi/js";
 import type { TableHandlerClient } from "prostgles-client";
 import { isDefined } from "prostgles-types";
@@ -104,11 +105,11 @@ export const SmartSelect = <
             {!items.length && <Loading variant="cover" />}
             <Values values={displayValues} />
 
-            {values.length === 1 && values[0] === "admin" ?
+            {values.length === 1 && values[0] === USER_TYPES.ADMIN ?
               <InfoRow variant="naked" color="warning">
                 <Icon path={mdiAlertCircleOutline} size={1} />
                 <div>
-                  There are no unnassigned user types left. Update current
+                  There are no unassigned user types left. Update current
                   access rules to free up user types or create new user types
                 </div>
               </InfoRow>

@@ -1,116 +1,146 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import type { DBSSchema } from "@common/publishUtils";
+import type { FunctionOptions } from "@common/functionOptions";
 import type { SUser } from "@src/authConfig/sessionUtils";
+import type { ProstglesContext } from "@src/schemaConfig";
 import {
-  type ServerFunctionDefinition,
-  type ServerFunctionDefinitions,
-} from "prostgles-server";
+  getConnectionInviteUserTypeFilter,
+  getUserInviteFunctions,
+  userInviteFunctionOptions,
+} from "@src/serverFunctions/userInviteFunctions";
+import { defineJoin, type ServerFunctionDefinitions } from "prostgles-server";
+import { getKeys } from "prostgles-types";
 import type { DBS } from "..";
-import { getCompiledTS } from "./connectionManagerUtils";
-import { getAccessRule } from "./startConnection";
-import type { ConnectionManager } from "./ConnectionManager";
-import type { ConnectionDetails } from "@src/connectionUtils/getConnectionDetails";
-import { getConnectionFunctionRunner } from "./getConnectionFunctionRunner";
+import { getEvaledExports } from "./connectionManagerUtils";
 import type { ConnectionHotReloadProperties } from "./getHotReloadConfigs";
+import { getSchemaConfig } from "./getSchemaConfig";
 
 type Args = {
   dbs: DBS;
   databaseConfig: DBSSchema["database_configs"];
   connection: ConnectionHotReloadProperties;
-  connectionManager: ConnectionManager;
-  connectionInfo: ConnectionDetails;
 };
 
 export const getConnectionServerFunctions = async ({
   databaseConfig,
   dbs,
   connection,
-  connectionManager,
-  connectionInfo,
 }: Args) => {
-  const connectionFunctions = await dbs.published_methods.find({
-    connection_id: connection.id,
+  const schemaConfig = getSchemaConfig(databaseConfig.config_sync)?.config;
+  const syncUsers =
+    schemaConfig?.databaseConfig?.sync_users ?? databaseConfig.sync_users;
+  const inviteUserTypes =
+    syncUsers && !connection.is_state_db ?
+      await dbs.user_types.find(
+        {
+          id: { $nin: [USER_TYPES.ADMIN, USER_TYPES.PUBLIC] },
+          ...getConnectionInviteUserTypeFilter(connection.id),
+        },
+        {
+          select: { id: 1 },
+          returnType: "values",
+          orderBy: { id: 1 },
+          limit: null,
+        },
+      )
+    : [];
+  const connectionFunctions = await dbs.published_methods.find(
+    {
+      connection_id: connection.id,
+    },
+    {
+      select: {
+        "*": 1,
+        user_types: defineJoin({
+          $leftJoin: [
+            "access_control_methods",
+            "access_control",
+            "access_control_user_types",
+          ],
+          select: { user_type: 1 },
+        }),
+      },
+    },
+  );
+  const publishMethods: ServerFunctionDefinitions<
+    void,
+    SUser,
+    ProstglesContext
+  > = {};
+
+  /** Combine all userFilter with admin into unique groups */
+  connectionFunctions.forEach((m) => {
+    const userTypesList = Array.from(
+      new Set([USER_TYPES.ADMIN, ...m.user_types.map((r) => r.user_type)]),
+    ).toSorted();
+    const userFilter = {
+      type: { $in: userTypesList },
+    };
+    const groupName = userTypesList.join(",");
+    publishMethods[groupName] ??= {
+      userFilter,
+      functions: {},
+    };
+    const method = getEvaledExports<{
+      run: (
+        args: Record<string, unknown> | undefined,
+        params: unknown,
+      ) => Promise<unknown>;
+    }>(m.run)!.run;
+    publishMethods[groupName].functions[m.name] = {
+      input: m.arguments.reduce((a, v) => ({ ...a, [v.name]: v }), {}),
+      description: m.description,
+      run: method,
+    };
   });
-  const publishMethods: ServerFunctionDefinitions<void, SUser> = async (
-    params,
-  ) => {
-    const result: Record<string, ServerFunctionDefinition> = {};
 
-    const authContext = await (async () => {
-      if (!params) return;
-      const { user } = params;
-
-      /** Admin has access to all methods */
-      if (user?.type === "admin") {
-        return { ...params, user, type: "admin" as const };
-      } else {
-        const ac = await getAccessRule(
-          dbs,
-          user,
-          databaseConfig.id,
-          connection.id,
+  if (inviteUserTypes.length) {
+    if (schemaConfig?.functions?.userInvites) {
+      throw new Error(
+        'Function group "userInvites" conflicts with built-in invitations',
+      );
+    }
+    for (const functionName of getKeys(userInviteFunctionOptions)) {
+      if (
+        Object.values(schemaConfig?.functions ?? {}).some(
+          (group) => group.functions[functionName],
+        ) ||
+        connectionFunctions.some((method) => method.name === functionName)
+      ) {
+        throw new Error(
+          `Function "${functionName}" conflicts with built-in invitations`,
         );
-        if (ac) {
-          const allowedMethods = await dbs.access_control_methods.find({
-            access_control_id: ac.id,
-          });
-          const allowedFunctions = new Set(
-            allowedMethods.map((m) => m.published_method_id),
-          );
-          return {
-            ...params,
-            user,
-            type: "access-rule" as const,
-            allowedFunctions,
-          };
-        }
       }
-    })();
+    }
+  }
 
-    connectionFunctions.forEach((m) => {
-      const isAllowedToRunFunction =
-        authContext?.type === "admin" ||
-        authContext?.allowedFunctions.has(m.id);
-      const run =
-        !isAllowedToRunFunction || !authContext ?
-          undefined
-        : async (validatedArgs?: Record<string, unknown>) => {
-            const sourceCode = getCompiledTS(m.run);
-
-            try {
-              const forkedPrglProcRunner = await getConnectionFunctionRunner({
-                dbs,
-                connection,
-                connectionManager,
-                databaseConfig,
-                connectionInfo,
-              }).catch((err) => {
-                console.error(
-                  "Error getting function runner for connection function",
-                  err,
-                );
-                return Promise.reject("Error setting up function runner");
-              });
-              return forkedPrglProcRunner.run({
-                type: "run",
-                code: sourceCode,
-                validatedArgs,
-                user: authContext.user,
-              });
-            } catch (err: any) {
-              return Promise.reject(err);
-            }
-          };
-
-      result[m.name] = {
-        input:
-          !m.arguments.length ?
-            undefined
-          : m.arguments.reduce((a, v) => ({ ...a, [v.name]: v }), {}),
-        run,
-      };
-    });
-
-    return result;
+  return {
+    functions: {
+      ...schemaConfig?.functions,
+      /** Connection-managed functions retain precedence on name collisions. */
+      ...publishMethods,
+      ...(inviteUserTypes.length &&
+        getUserInviteFunctions({
+          dbs,
+          id: connection.id,
+          userTypes: inviteUserTypes,
+        })),
+    } as ServerFunctionDefinitions<void, SUser, ProstglesContext>,
+    functionOptions: {
+      ...(inviteUserTypes.length && userInviteFunctionOptions),
+      ...Object.fromEntries(
+        connectionFunctions.map((method) => [
+          method.name,
+          {
+            defaultArgs: Object.fromEntries(
+              method.arguments
+                .filter((argument) => argument.defaultValue !== undefined)
+                .map((argument) => [argument.name, argument.defaultValue]),
+            ),
+            ...(method.outputTable && { outputTable: method.outputTable }),
+          } satisfies FunctionOptions,
+        ]),
+      ),
+    },
   };
-  return publishMethods;
 };

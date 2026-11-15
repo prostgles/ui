@@ -1,15 +1,17 @@
 import { getTableFilterFromDetailedGroupFilter } from "@common/filterUtils";
 import Btn from "@components/Btn";
 import { FileTree } from "@components/FileTree/FileTree";
-import { FlexRowWrap } from "@components/Flex";
+import { FlexCol, FlexRow, FlexRowWrap } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
 import { FullscreenWrapper } from "@components/FullscreenWrapper/FullscreenWrapper";
 import { InfoRow } from "@components/InfoRow";
+import { Label } from "@components/Label";
 import PopupMenu from "@components/PopupMenu";
 import { Select, type FullOption } from "@components/Select/Select";
 import {
   mdiChevronDown,
   mdiChevronUp,
+  mdiClose,
   mdiFileDocument,
   mdiFolderOutline,
 } from "@mdi/js";
@@ -54,7 +56,7 @@ export const UserInput = ({
             {Object.entries(userInput).map(([inputKey, inputItem]) => {
               // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
               const currentValue =
-                userInputValue?.[inputKey] ??
+                userInputValue[inputKey] ??
                 ("defaultValue" in inputItem ?
                   inputItem.defaultValue
                 : undefined);
@@ -67,7 +69,6 @@ export const UserInput = ({
                     key={inputKey}
                     optional={inputItem.optional}
                     value={(currentValue as string) || ""}
-                    labelStyle={{ lineHeight: "1em", fontWeight: "normal" }}
                     label={title}
                     title={title}
                     data-key={inputKey}
@@ -128,38 +129,58 @@ export const UserInput = ({
                       },
                     ]}
                     button={
-                      <Btn
-                        variant="faded"
-                        data-key={inputKey}
-                        iconPath={
-                          type === "file" ? mdiFileDocument : mdiFolderOutline
-                        }
-                        color={
-                          !currentValue ? undefined
-                          : inputItem.accessMode === "read-write" ?
-                            "danger"
-                          : "action"
-                        }
-                        label={{
-                          label:
+                      <FlexCol className="gap-0">
+                        <Label
+                          variant="normal"
+                          label={
                             title +
                             (inputItem.accessMode === "read-write" ?
                               " (Read-Write)"
-                            : " (Read-Only)"),
-                          style: {
-                            lineHeight: "1em",
-                            fontWeight: "normal",
-                            fontSize: "inherit",
+                            : " (Read-Only)")
+                          }
+                          style={{
+                            ...userInputLabelStyle,
                             color: "var(--text-1)",
                             marginBottom: "0.25em",
-                          },
-                        }}
-                      >
-                        {currentValue ||
-                          (type === "all" ? "Select..."
-                          : type === "directory" ? "Select folder..."
-                          : "Select file...")}
-                      </Btn>
+                          }}
+                        />
+                        <FlexRow className="gap-p25">
+                          <Btn
+                            variant="faded"
+                            data-key={inputKey}
+                            iconPath={
+                              type === "file" ? mdiFileDocument : (
+                                mdiFolderOutline
+                              )
+                            }
+                            color={
+                              !currentValue ? undefined
+                              : inputItem.accessMode === "read-write" ?
+                                "danger"
+                              : "action"
+                            }
+                          >
+                            {currentValue ||
+                              (type === "all" ? "Select..."
+                              : type === "directory" ? "Select folder..."
+                              : "Select file...")}
+                          </Btn>
+                          {Boolean(currentValue) && (
+                            <Btn
+                              variant="icon"
+                              iconPath={mdiClose}
+                              title="Clear"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                setUserInputValue((prev) => ({
+                                  ...prev,
+                                  [inputKey]: undefined,
+                                }));
+                              }}
+                            />
+                          )}
+                        </FlexRow>
+                      </FlexCol>
                     }
                     render={(pClose) => (
                       <FileTree
@@ -190,7 +211,6 @@ export const UserInput = ({
                   <FormField
                     key={inputKey}
                     value={currentValue}
-                    labelStyle={{ lineHeight: "1em", fontWeight: "normal" }}
                     label={title}
                     optional={inputItem.optional}
                     title={title}
@@ -204,7 +224,9 @@ export const UserInput = ({
                         inputItem.dataType === "boolean" ? Boolean(newValueRaw)
                         : inputItem.dataType === "number" ? Number(newValueRaw)
                         : inputItem.dataType === "Date" ?
-                          new Date(String(newValueRaw)).toISOString()
+                          new Date(String(newValueRaw))
+                            .toISOString()
+                            .split("T")[0]
                         : String(newValueRaw);
                       setUserInputValue((prev) => ({
                         ...prev,
@@ -231,9 +253,7 @@ export const UserInput = ({
                       label: {
                         label: title,
                         variant: "normal",
-                        style: {
-                          lineHeight: "1em",
-                        },
+                        style: userInputLabelStyle,
                         className: "mb-p25",
                       },
                     }}
@@ -389,3 +409,9 @@ const InputDataTypeToFormFieldTypeMap = {
   boolean: "checkbox",
   Date: "date",
 } as const;
+
+const userInputLabelStyle: React.CSSProperties = {
+  fontSize: "14px",
+  fontWeight: 400,
+  lineHeight: "1em",
+};

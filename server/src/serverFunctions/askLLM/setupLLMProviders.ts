@@ -1,5 +1,16 @@
 import type { DBSSchemaForInsert } from "@common/publishUtils";
 import type { DBS } from "../..";
+import { DEFAULT_AGENT_MODEL } from "./refreshModels";
+
+export type LLMProviderName =
+  | "OpenAI"
+  | "Anthropic"
+  | "Google"
+  | "Hetzner"
+  | "Ollama"
+  | "OpenRouter"
+  | "Prostgles"
+  | "Custom";
 
 /**
  * https://www.anthropic.com/pricing#api
@@ -89,6 +100,13 @@ export const setupLLMProviders = async (dbs: DBS) => {
         llm_models: [],
       },
       {
+        id: "Hetzner",
+        api_url: "https://inference.hetzner.com/api/v1/chat/completions",
+        api_docs_url: "https://experiments.hetzner.com/docs/inference",
+        logo_url: "/logos/hetzner.svg",
+        llm_models: [],
+      },
+      {
         id: "Ollama",
         api_url: "http://localhost:11434/v1/chat/completions",
         api_docs_url: "https://github.com/ollama/ollama/blob/main/docs/api.md",
@@ -140,17 +158,6 @@ export const setupLLMProviders = async (dbs: DBS) => {
             pricing_info: null,
             model_created: "2025-03-07 12:19:04.913961",
           },
-          // {
-          //   name: "anthropic/claude-4.6-sonnet",
-          //   pricing_info: {
-          //     input: 3,
-          //     output: 15,
-          //     cachedInput: 1,
-          //     cachedOutput: 0.08,
-          //   },
-          //   model_created: "2024-10-22 12:00:00",
-          //   mcp_tool_support: true,
-          // },
         ],
       },
       {
@@ -159,14 +166,7 @@ export const setupLLMProviders = async (dbs: DBS) => {
         logo_url: "/v2.svg",
         llm_models: [
           {
-            name: "anthropic/claude-4.6-sonnet",
-            pricing_info: {
-              input: 3,
-              output: 15,
-              cachedInput: 1,
-              cachedOutput: 0.08,
-            },
-            model_created: "2024-10-22 12:00:00",
+            name: DEFAULT_AGENT_MODEL,
             mcp_tool_support: true,
           },
         ],
@@ -180,6 +180,7 @@ export const setupLLMProviders = async (dbs: DBS) => {
         llm_models: [],
       },
     ] satisfies (DBSSchemaForInsert["llm_providers"] & {
+      id: LLMProviderName;
       llm_models: Omit<DBSSchemaForInsert["llm_models"], "provider_id">[];
     })[]);
   }

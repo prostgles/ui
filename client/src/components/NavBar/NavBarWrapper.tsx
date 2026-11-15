@@ -25,7 +25,7 @@ export const NavBarWrapper = (props: NavBarWrapperProps) => {
 
   const options = useNavBarItems(extraProps);
   return (
-    <div className="flex-col ai-center w-full f-1 min-h-0">
+    <div className="flex-col ai-center w-full f-1 min-h-0 gap-1">
       <NavBar
         dbs={dbs}
         dbsMethods={dbsMethods}

@@ -10,8 +10,8 @@ import Loading from "@components/Loader/Loading";
 import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 import { SvgIcon } from "@components/SvgIcon";
 import { mdiCogOutline, mdiTools } from "@mdi/js";
-import { MCPServerConfig } from "@pages/ServerSettings/MCPServers/MCPServerConfig/MCPServerConfig";
-import { getMcpConfigValueAsString } from "@pages/ServerSettings/MCPServers/MCPServerConfig/MCPServerConfigButton";
+import { getMcpConfigAsStrings } from "@pages/ServerSettings/MCPServers/MCPServerConfig/MCPServerConfigButton";
+import { MCPServerConfigEditor } from "@pages/ServerSettings/MCPServers/MCPServerConfig/MCPServerConfigEditor";
 import { useMcpServerIcons } from "@pages/ServerSettings/MCPServers/MCPServerTools/useMcpServerIcons";
 import React, { useState } from "react";
 import type { TestSelectors } from "src/Testing";
@@ -39,7 +39,8 @@ export const McpToolAccess = ({
   const [editServerConfig, setEditServerConfig] = useState<{
     serverName: string;
     configId: number | undefined;
-    configData: Record<string, string> | undefined;
+    configData: DBSSchema["mcp_server_configs"]["config"] | undefined;
+    configOAuth: DBSSchema["mcp_server_configs"]["oauth"];
   }>();
   const { dbs } = usePrglCore();
   const {
@@ -66,14 +67,21 @@ export const McpToolAccess = ({
           const server = mcpServers?.find((s) => s.name === mcpServerName);
           const { config_schema } = server ?? {};
           const { configId } = configs?.[mcpServerName] ?? {};
+          const isConfigurable =
+            Boolean(config_schema) || server?.command === "streamable-http";
+          const existingConfig =
+            configId === undefined ? undefined : (
+              existingMcpServerConfigs.find((config) => config.id === configId)
+            );
+
           const configData =
-            !config_schema ? undefined
-            : configId === undefined ? getDefaultMcpConfig(config_schema)
-            : existingMcpServerConfigs.find((c) => c.id === configId)?.config;
-          const configDataString =
-            configData ?
-              getMcpConfigValueAsString(configData, config_schema)
-            : undefined;
+            existingConfig?.config ??
+            (!config_schema ? undefined : getDefaultMcpConfig(config_schema));
+
+          const configOAuth = existingConfig?.oauth ?? null;
+          const configDataStrings =
+            configData &&
+            getMcpConfigAsStrings(configData, config_schema ?? null);
 
           return (
             <FlexRowWrap
@@ -92,7 +100,7 @@ export const McpToolAccess = ({
               <span style={{ fontWeight: "normal" }}>
                 {sliceText(toolNames.join(", "), 50)}
               </span>
-              {config_schema && (
+              {isConfigurable && (
                 <Btn
                   size="micro"
                   variant={"faded"}
@@ -109,10 +117,12 @@ export const McpToolAccess = ({
                       serverName: mcpServerName,
                       configId,
                       configData,
+                      configOAuth,
                     })
                   }
                 >
-                  {configDataString || "Configure"}
+                  {configDataStrings?.map((d) => d.displayValue).join(" ") ||
+                    "Configure"}
                 </Btn>
               )}
             </FlexRowWrap>
@@ -120,7 +130,7 @@ export const McpToolAccess = ({
         })}
       </ScrollFade>
       {editServerConfig && (
-        <MCPServerConfig
+        <MCPServerConfigEditor
           serverName={editServerConfig.serverName}
           chatId={undefined}
           defaultConfig={editServerConfig.configData}
@@ -128,7 +138,8 @@ export const McpToolAccess = ({
             editServerConfig.configId && editServerConfig.configData ?
               {
                 id: editServerConfig.configId,
-                value: editServerConfig.configData,
+                config: editServerConfig.configData,
+                oauth: editServerConfig.configOAuth,
               }
             : undefined
           }

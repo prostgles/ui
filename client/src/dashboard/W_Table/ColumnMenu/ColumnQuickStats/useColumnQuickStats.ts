@@ -138,7 +138,7 @@ export const useColumnStats = (
         });
         distribution = topValues.map((v) => ({
           label: v.label?.toString() ?? "NULL",
-          count: v.count,
+          count: Number(v.count),
           onClick: () => {
             w.$update({
               filter: [

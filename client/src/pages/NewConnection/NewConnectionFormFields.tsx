@@ -139,7 +139,7 @@ export const NewConnectionForm = ({
           <FormFieldDebounced
             label={t.NewConnectionForm["Connection URI"]}
             data-command="NewConnectionForm.db_conn"
-            type="text"
+            type={isForStateDB ? "password" : "text"}
             hint="postgres://user:pass@host:port/database?sslmode=require"
             required={true}
             value={c.db_conn || ""}
@@ -185,7 +185,7 @@ export const NewConnectionForm = ({
             value={c.db_pass ?? ""}
             label={t.NewConnectionForm["Password"]}
             data-command="NewConnectionForm.db_pass"
-            type="text"
+            type={isForStateDB ? "password" : "text"}
             autoComplete="off"
             onChange={(db_pass) => updateConnection({ db_pass })}
           />

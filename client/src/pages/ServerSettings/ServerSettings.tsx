@@ -45,14 +45,14 @@ export const ServerSettings = ({ serverState }: ServerSettingsProps) => {
   return (
     <div className="ServerSettings w-full o-auto">
       <div
-        className="flex-row jc-center p-p5"
+        className="flex-row jc-center px-p5"
         style={{
           alignSelf: "stretch",
           paddingBottom: "4em",
         }}
       >
         <div
-          className="flex-col gap-1 mt-2 max-w-800 min-w-0 f-1"
+          className="flex-col gap-1 max-w-800 min-w-0 f-1"
           style={{ alignSelf: "stretch" }}
         >
           <TabsWithDefaultStyle

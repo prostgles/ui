@@ -1,3 +1,4 @@
+import { USER_TYPES } from "@common/authTypesAndConstants";
 import type { DBSSchema } from "@common/publishUtils";
 import Btn from "@components/Btn";
 import { FlexCol, FlexRow } from "@components/Flex";
@@ -25,7 +26,7 @@ export const W_MethodMenu = (
   const [editedMethod, setEditedMethod] =
     useState<DBSSchema["published_methods"]>();
 
-  const isAdmin = user?.type === "admin";
+  const isAdmin = user?.type === USER_TYPES.ADMIN;
   const { hiddenArgs = [] } = w.options;
 
   if (!method || isEmpty(method)) return null;
@@ -57,8 +58,10 @@ export const W_MethodMenu = (
                   return {
                     key: a.name,
                     subLabel:
-                      a.type.startsWith("Lookup") ?
-                        `references ${(a as any).table}`
+                      a.type.includes("Lookup") &&
+                      "table" in a &&
+                      typeof a.table === "string" ?
+                        `references ${a.table}`
                       : a.type,
                     checked,
                     disabledInfo: !a.optional ? "Is required" : undefined,
@@ -95,7 +98,7 @@ export const W_MethodMenu = (
                 dbsMethods={props.prgl.dbsMethods}
                 method={{ ...(editedMethod ?? method) }}
                 dbsTables={props.prgl.dbsTables}
-                tables={props.tables}
+                tables={props.prgl.tables}
                 onChange={(v) => {
                   if (isEqual(v, method)) {
                     setEditedMethod(undefined);

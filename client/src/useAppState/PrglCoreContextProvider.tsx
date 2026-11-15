@@ -6,6 +6,8 @@ import { usePromise } from "prostgles-client";
 import type { ServerFunctionHandler } from "prostgles-client/dist/prostgles";
 import React, { createContext, useContext, useMemo } from "react";
 import type { Prgl, PrglReadyState, Theme } from "src/App";
+import { MCPServerConfigProvider } from "../pages/ServerSettings/MCPServers/MCPServerConfig/MCPServerConfigProvider";
+import { JobActionPopupProvider } from "../dashboard/ActionPopup/JobActionPopupProvider";
 
 const PrglCoreContext = createContext<PrglReadyState | undefined>(undefined);
 
@@ -61,7 +63,9 @@ export const PrglCoreProvider = ({
   return (
     <PrglCoreContext.Provider value={prglCore}>
       <PrglContext.Provider value={prglFromCore}>
-        {children}
+        <MCPServerConfigProvider>
+          <JobActionPopupProvider>{children}</JobActionPopupProvider>
+        </MCPServerConfigProvider>
       </PrglContext.Provider>
     </PrglCoreContext.Provider>
   );

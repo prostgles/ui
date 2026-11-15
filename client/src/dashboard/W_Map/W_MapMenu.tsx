@@ -14,7 +14,7 @@ import { SwitchToggle } from "@components/SwitchToggle";
 import type { TabItem } from "@components/Tabs";
 import Tabs from "@components/Tabs";
 import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
-import type { ColumnConfig } from "../W_Table/ColumnMenu/ColumnMenu";
+import type { ColumnConfig } from "@common/ColumnConfig/ColumnConfig";
 import { AutoRefreshMenu } from "../W_Table/TableMenu/AutoRefreshMenu";
 import { DataLayerManager } from "../WindowControls/DataLayerManager/DataLayerManager";
 import { MapBasemapOptions } from "./controls/MapBasemapOptions";

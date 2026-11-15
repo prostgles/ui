@@ -1,7 +1,7 @@
 import React from "react";
 import "./SmartSearch.css";
 
-import type { DetailedFilter } from "@common/filterUtils";
+import type { DetailedFilter, TermSearchColumn } from "@common/filterUtils";
 import ErrorComponent from "@components/ErrorComponent";
 import type {
   SearchListItem,
@@ -13,8 +13,12 @@ import { isObject } from "prostgles-types";
 import type { Prgl } from "src/App";
 import type { DBSchemaTableWJoins } from "src/dashboard/Dashboard/dashboardUtils";
 import RTComp from "../../RTComp";
-import type { ColumnConfig } from "../../W_Table/ColumnMenu/ColumnMenu";
+import type { ColumnConfig } from "@common/ColumnConfig/ColumnConfig";
 import { onSearchItems } from "./onSearchItems";
+import {
+  getSmartSearchColumns,
+  type SmartSearchColumn,
+} from "./getSmartSearchColumns";
 
 export type SmartSearchOnChangeArgs = {
   filter: DetailedFilter[];
@@ -37,6 +41,8 @@ type P = {
   db: Prgl["db"];
   tableName: string;
   columns?: string[];
+  /** Search shown configured columns and their configured joins. */
+  columnConfigs?: ColumnConfig[];
   column?: string | ColumnConfig;
   selectedColumns?: ColumnConfig[];
   onChange?: (args?: SmartSearchOnChangeArgs) => void; //   source: "row" | "enter"
@@ -61,7 +67,11 @@ type P = {
     hideMatchCase?: boolean;
   };
 
-  onPressEnter?: (term: string, searchItems: SearchListItem[]) => void;
+  onPressEnter?: (
+    term: string,
+    searchItems: SearchListItem[],
+    searchColumns: TermSearchColumn[],
+  ) => void;
 
   tables: DBSchemaTableWJoins[];
 
@@ -98,13 +108,14 @@ export class SmartSearch extends RTComp<P, S> {
 
   get filterableCols(): Pick<
     ValidatedColumnInfo,
-    "name" | "tsDataType" | "udt_name" | "is_pkey"
+    "name" | "label" | "tsDataType" | "udt_name" | "is_pkey"
   >[] {
     const { tableName, columns: cols, tables, column } = this.props;
     if (column && isObject(column) && column.computedConfig) {
       return [
         {
           name: column.name,
+          label: column.label || column.name,
           tsDataType: column.computedConfig.tsDataType,
           udt_name: column.computedConfig.udt_name,
           is_pkey: false,
@@ -124,6 +135,19 @@ export class SmartSearch extends RTComp<P, S> {
 
   searchItems: SearchListItem[] = [];
   onSearchItems = onSearchItems.bind(this);
+
+  get searchColumns(): SmartSearchColumn[] {
+    const { tableName, tables, columnConfigs } = this.props;
+    if (columnConfigs) {
+      return getSmartSearchColumns(tableName, tables, columnConfigs);
+    }
+    return this.filterableCols.map((info) => ({
+      name: info.name,
+      label: info.label || info.name,
+      tableName,
+      info,
+    }));
+  }
 
   get defaultValue() {
     const { defaultValue } = this.props;
@@ -163,17 +187,22 @@ export class SmartSearch extends RTComp<P, S> {
       inputStyle,
       noResultsComponent,
       noBorder,
+      columnConfigs,
     } = this.props;
 
     const { defaultValue } = this;
 
-    if (!this.filterableCols.length) {
+    if (!this.searchColumns.length) {
       return <div>No filterable columns</div>;
     }
 
     const rerenderProps = {
       key: (defaultValue ?? "") + searchKey,
-      dataSignature: JSON.stringify([detailedFilter, extraFilters]),
+      dataSignature: JSON.stringify([
+        detailedFilter,
+        extraFilters,
+        columnConfigs,
+      ]),
     };
     const searchNode = (
       <SearchList
@@ -188,6 +217,7 @@ export class SmartSearch extends RTComp<P, S> {
         className={`SmartSearch ${className}`}
         items={searchItems}
         variant={variant ?? "search"}
+        roundedItems={false}
         searchEmpty={searchEmpty}
         onSearchItems={this.onSearchItems}
         inputStyle={inputStyle}
@@ -195,7 +225,19 @@ export class SmartSearch extends RTComp<P, S> {
         placeholder={placeholder}
         onPressEnter={
           !onPressEnter ? undefined : (
-            (term) => onPressEnter(term, this.searchItems)
+            (term) =>
+              onPressEnter(
+                term,
+                this.searchItems,
+                this.searchColumns.map(
+                  ({ name, path, filter, expression }) => ({
+                    name,
+                    expression,
+                    path,
+                    filter,
+                  }),
+                ),
+              )
           )
         }
         matchCase={

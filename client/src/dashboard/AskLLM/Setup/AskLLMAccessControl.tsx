@@ -6,15 +6,14 @@ import FormField from "@components/FormField/FormField";
 import PopupMenu from "@components/PopupMenu";
 import { SwitchToggle } from "@components/SwitchToggle";
 import { mdiAssistant, mdiClose, mdiPlus } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client";
+import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import React, { useState } from "react";
 import type { Prgl } from "../../../App";
 import { SectionHeader } from "../../AccessControl/AccessControlRuleEditor";
 import type { ValidEditedAccessRuleState } from "../../AccessControl/useEditedAccessRule";
 import { SmartForm } from "../../SmartForm/SmartForm";
-import { SetupLLMCredentials } from "./SetupLLMCredentials";
-import { usePrgl } from "@pages/ProjectConnection/PrglContextProvider";
 import { useLLMSetup } from "./LLMSetupProvider";
+import { SetupLLMCredentials } from "./SetupLLMCredentials";
 
 type P = Prgl & {
   accessRuleId: number | undefined;
@@ -33,12 +32,12 @@ export const AskLLMAccessControl = ({
   const [localCredentialId, setLocalCredentialId] = useState<number>();
   const rule = editedRule?.newRule ?? editedRule?.rule;
   const isAllowed = !!rule?.access_control_allowed_llm?.length;
-  const { data: creds } = dbs.llm_credentials.useSubscribe({});
+  const { data: llmCredentials } = dbs.llm_credentials.useSubscribe({});
   const { data: prompts } = dbs.llm_prompts.useSubscribe({});
   const allowedItems = rule?.access_control_allowed_llm?.map((d) => ({
     ...d,
     llm_prompt: prompts?.find((p) => p.id === d.llm_prompt_id),
-    llm_credential: creds?.find((c) => c.id === d.llm_credential_id),
+    llm_credential: llmCredentials?.find((c) => c.id === d.llm_credential_id),
   }));
 
   /** We need to reset form after both values are undefined */
@@ -64,7 +63,7 @@ export const AskLLMAccessControl = ({
             />
           }
           footerButtons={
-            !creds?.length ?
+            !llmCredentials?.length ?
               undefined
             : [
                 {

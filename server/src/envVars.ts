@@ -4,9 +4,13 @@ import type { DBSConnectionInfo } from "./electronConfig";
 import { actualRootDir } from "./electronConfig";
 import { DB_SSL_ENUM } from "./tableConfig/tableConfigConnections";
 import { validateConnection } from "./connectionUtils/validateConnection";
-const envFileVars = dotenv.config({
-  path: path.resolve(actualRootDir + "/../.env"),
-});
+import { getCliDatabaseConfig } from "./cli/getCliDatabaseConfig";
+const envFileVars =
+  process.env.PROSTGLES_UI_CONFIG ?
+    undefined
+  : dotenv.config({
+      path: path.resolve(actualRootDir + "/../.env"),
+    });
 
 export const {
   PRGL_USERNAME = "",
@@ -21,17 +25,23 @@ export const {
   POSTGRES_SSL,
   PROSTGLES_STRICT_COOKIE,
 } = {
-  ...(envFileVars.parsed ?? {}),
+  ...(envFileVars?.parsed ?? {}),
   ...process.env,
 } as Record<string, string>;
 
 const db_ssl: DBSConnectionInfo["db_ssl"] = //@ts-ignore
   DB_SSL_ENUM[DB_SSL_ENUM.indexOf(POSTGRES_SSL?.trim().toLowerCase())] ??
   "prefer";
+
+const stateDatabaseUrl =
+  process.env.PROSTGLES_UI_CONFIG ?
+    getCliDatabaseConfig(process.env).state.url
+  : POSTGRES_URL;
+
 export const DBS_CONNECTION_INFO = validateConnection({
   name: "Prostgles UI state",
-  type: !POSTGRES_URL ? "Standard" : "Connection URI",
-  db_conn: POSTGRES_URL ?? null,
+  type: !stateDatabaseUrl ? "Standard" : "Connection URI",
+  db_conn: stateDatabaseUrl ?? null,
   db_name: POSTGRES_DB,
   db_user: POSTGRES_USER,
   db_pass: POSTGRES_PASSWORD ?? null,

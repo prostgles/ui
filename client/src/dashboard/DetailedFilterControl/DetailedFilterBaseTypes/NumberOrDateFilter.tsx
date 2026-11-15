@@ -43,7 +43,7 @@ export class NumberOrDateFilter extends RTComp<
       let limits: Limits | undefined;
 
       if (column.type === "column") {
-        limits = (await tableHandler.findOne(
+        limits = await tableHandler.findOne(
           {},
           {
             select: {
@@ -51,7 +51,7 @@ export class NumberOrDateFilter extends RTComp<
               max: { $max: [column.name] },
             },
           },
-        ));
+        );
       } else {
         const { select } = await getTableSelect(
           { table_name: tableName, columns: column.columns },
@@ -175,15 +175,15 @@ export class NumberOrDateFilter extends RTComp<
         : null;
 
     const commonProps = {
-      className: "p-p25 mr-p5",
-      style: colIs(column, "_PG_date") ? {} : { maxWidth: "125px" },
-      inputStyle: { padding: "4px 8px" },
+      className: "max-w-full",
+      style: colIs(column, "_PG_date") ? {} : { width: "125px" },
+      inputStyle: { minHeight: "30px", padding: "4px 8px" },
       type: inputType as "number",
       asColumn: true,
     };
 
     return (
-      <FlexRowWrap className="gap-0 f-1 " style={{ minWidth: "150px" }}>
+      <FlexRowWrap className="gap-p5 min-w-0 px-p25 pb-p25">
         <FormFieldDebounced
           {...commonProps}
           value={parseValue(column, min)}

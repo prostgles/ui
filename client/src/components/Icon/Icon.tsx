@@ -4,6 +4,7 @@ import * as React from "react";
 export type IconProps = {
   id?: string;
   path: string;
+  children?: React.ReactNode;
   ref?: React.RefObject<SVGSVGElement>;
   className?: string;
   title?: string | null;
@@ -26,6 +27,7 @@ export const Icon = React.forwardRef<SVGSVGElement, IconProps>(
   (
     {
       path,
+      children,
       id = ++idCounter,
       title = null,
       description = null,
@@ -68,7 +70,7 @@ export const Icon = React.forwardRef<SVGSVGElement, IconProps>(
     if (color) {
       pathStyle.fill = color;
     }
-    const pathElement = <path d={path} style={pathStyle} />;
+    const pathElement = children ?? <path d={path} style={pathStyle} />;
     const transformElement = pathElement;
     if (transform.length > 0) {
       style.transform = transform.join(" ");

@@ -2,6 +2,7 @@ import type { Primitive } from "d3";
 import { type AnyObject } from "prostgles-types";
 import React from "react";
 import type { TestSelectors } from "../../Testing";
+import type { Checkbox } from "../Checkbox";
 import "../List.css";
 import type { OptionKey } from "../Select/Select";
 import type { SearchInputProps } from "./SearchInput";
@@ -109,14 +110,16 @@ export type SearchListProps<M extends boolean = false> = TestSelectors & {
 
   inputID?: string;
   checkboxed?: boolean;
+  checkboxVariant?: React.ComponentProps<typeof Checkbox>["variant"];
   placeholder?: string;
   autoFocus?: boolean;
   inputProps?: Pick<
     SearchInputProps,
-    "type" | "leftContent" | keyof TestSelectors | "autoFocus"
+    "type" | "leftContent" | "wrapperStyle" | keyof TestSelectors | "autoFocus"
   >;
 
   leftContent?: React.ReactNode;
+  rightContent?: React.ReactNode;
   belowSearchBoxContent?: React.ReactNode;
 
   /**
@@ -134,6 +137,8 @@ export type SearchListProps<M extends boolean = false> = TestSelectors & {
   selectedKey?: OptionKey;
   rootStyle?: React.CSSProperties;
   listStyle?: React.CSSProperties;
+  /** Defaults to true. Disable when rows sit flush against borders or shadows. */
+  roundedItems?: boolean;
 
   /**
    * Number of rows to slice from result
@@ -180,5 +185,30 @@ export type SearchListProps<M extends boolean = false> = TestSelectors & {
 export const SearchList = <M extends boolean = false>(
   props: SearchListProps<M>,
 ) => {
-  return <SearchListContent {...props} />;
+  const hasMicroCheckboxes = props.checkboxVariant === "micro";
+  return (
+    <SearchListContent
+      {...props}
+      className={`${props.className ?? ""} ${hasMicroCheckboxes ? "SearchList_micro" : ""}`}
+      items={
+        !hasMicroCheckboxes ?
+          props.items
+        : props.items?.map((item) => ({
+            ...item,
+            styles: {
+              ...item.styles,
+              rowInner: {
+                opacity: item.checked ? 1 : 0.75,
+                ...item.styles?.rowInner,
+              },
+              label: {
+                fontSize: "14px",
+                fontWeight: item.checked ? 500 : 400,
+                ...item.styles?.label,
+              },
+            },
+          }))
+      }
+    />
+  );
 };

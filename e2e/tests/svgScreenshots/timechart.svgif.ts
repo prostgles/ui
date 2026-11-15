@@ -4,7 +4,9 @@ import {
   deleteAllWorkspaces,
   newChat,
   openTable,
+  runDbsSql,
   sendAskLLMMessage,
+  setModelByText,
   setPromptByText,
 } from "utils/utils";
 import type { OnBeforeScreenshot } from "./SVG_SCREENSHOT_DETAILS";
@@ -15,13 +17,14 @@ export const timechartSvgif: OnBeforeScreenshot = async (
   { addScene, addSceneAnimation },
 ) => {
   await openConnection("crypto");
+  const wspLocator = await page.locator(
+    getCommandElemSelector("SilverGridChild") + `[data-view-type="timechart"]`,
+  );
 
-  const wspText = await page
-    .locator(
-      getCommandElemSelector("SilverGridChild") +
-        `[data-view-type="timechart"]`,
-    )
-    .textContent();
+  const wspText =
+    (await wspLocator.count()) > 0 ?
+      await wspLocator.first().textContent()
+    : undefined;
   const alreadyShowing =
     wspText?.includes("Multi-Asset Price Comparison") ?? false;
   if (!alreadyShowing) {
@@ -30,8 +33,11 @@ export const timechartSvgif: OnBeforeScreenshot = async (
     await page.getByTestId("AskLLM").click();
     await setPromptByText(page, "dashboard");
     await newChat(page);
+    await setModelByText(page, "luna");
     await sendAskLLMMessage(page, " funding ");
-    await page.getByTestId("AskLLMChat.LoadSuggestedDashboards").click();
+    await page
+      .getByTestId("AskLLMChat.LoadSuggestedDashboards")
+      .click({ timeout: 30_000 });
   }
   await page.waitForTimeout(2000);
   const shortWait = { animations: [{ type: "wait" as const, duration: 1500 }] };
@@ -49,6 +55,7 @@ export const timechartSvgif: OnBeforeScreenshot = async (
     await page.mouse.move((chartBBox!.x + chartBBox!.width) / 2, 300);
     await page.waitForTimeout(100);
     await page.mouse.wheel(0, -200);
+    /** Hide tooltips */
     // await page.waitForTimeout(100);
     // await page.mouse.move(0, 300);
     await page.waitForTimeout(1000);
@@ -56,7 +63,7 @@ export const timechartSvgif: OnBeforeScreenshot = async (
       animations: [
         isLast ?
           { type: "wait" as const, duration: 3000 }
-        : shortWait.animations[0],
+        : shortWait.animations[0]!,
         // {
         //   type: "custom",
         //   elementSelector:

@@ -2,7 +2,12 @@ import { useOnErrorAlert } from "@components/AlertProvider";
 import Btn from "@components/Btn";
 import { classOverride, FlexRow, FlexRowWrap } from "@components/Flex";
 import FormField from "@components/FormField/FormField";
-import { mdiCheck, mdiClose, mdiFolderPlusOutline } from "@mdi/js";
+import {
+  mdiCheck,
+  mdiClose,
+  mdiFolderPlusOutline,
+  mdiHomeOutline,
+} from "@mdi/js";
 import React, { useMemo, useState } from "react";
 import { usePrglCore } from "src/useAppState/PrglCoreContextProvider";
 
@@ -38,6 +43,13 @@ export const FileTreeCurrentDirectory = ({
 
   return (
     <FlexRowWrap className={classOverride("gap-0", className)}>
+      <Btn
+        iconPath={mdiHomeOutline}
+        size="small"
+        title="Go home"
+        aria-label="Go home"
+        onClick={() => onChange("")}
+      />
       <span>
         {path.split("/").map((pathPart, index, pathParts) => {
           return (

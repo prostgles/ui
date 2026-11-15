@@ -24,16 +24,20 @@ export class SilverGridResizer extends RTComp<
     next: LayoutSize;
   };
 
-  cleanupListeners?: VoidFunction;
+  cleanupListeners: VoidFunction | undefined;
+  onUnmount() {
+    this.cleanupListeners?.();
+  }
+
   onDelta() {
     const { onChange, layoutMode } = this.props;
-    const ref = this.ref as any;
-    if (this.cleanupListeners && layoutMode !== "editable") {
-      this.cleanupListeners();
+    if (layoutMode !== "editable") {
+      this.cleanupListeners?.();
+      this.cleanupListeners = undefined;
+      return;
     }
-    if (!ref || ref?._hasListeners) return;
-    ref._hasListeners = true;
-    this.cleanupListeners = setPan(this.ref!, {
+    if (!this.ref || this.cleanupListeners) return;
+    this.cleanupListeners = setPan(this.ref, {
       onPanEnd: () => {
         const { prev, next } = this.sizes!;
         onChange(prev, next);

@@ -1,40 +1,16 @@
 import { documentsServiceInputSchema } from "@common/mcp/documentsServiceInputSchema";
+import { documentsServiceOutputSchema } from "@common/documentsServiceOutputSchema";
 import type { ProstglesService } from "@src/ServiceManager/ServiceManagerTypes";
 import type { JSONB } from "prostgles-types";
-
-const outputSchema = {
-  type: {
-    document: {
-      type: {
-        filename: { oneOf: ["string", { enum: [null] }] },
-        md_content: { oneOf: ["string", { enum: [null] }] },
-        json_content: "any",
-        html_content: { oneOf: ["string", { enum: [null] }] },
-        text_content: { oneOf: ["string", { enum: [null] }] },
-        doctags_content: { oneOf: ["string", { enum: [null] }] },
-      },
-    },
-    status: {
-      enum: [
-        "pending",
-        "started",
-        "failure",
-        "success",
-        "partial_success",
-        "skipped",
-      ],
-    },
-    errors: "any[]",
-  },
-} as const;
 
 const port = 5001;
 
 export const documentsService = {
   icon: "FileDocumentOutline",
   label: "Docling",
-  description: `Convert documents and images to structured data using [Docling](https://www.docling.ai/). Check [UI](http://localhost:${port}/ui/) and [Swagger](http://0.0.0.0:${port}/swagger) for more information.`,
+  description: `Convert documents and images to structured data using [Docling](https://www.docling.ai/). Check [UI](http://localhost:${port}/ui/), [API docs](http://localhost:${port}/docs), and [OpenAPI schema](http://localhost:${port}/openapi.json) for more information.`,
   port,
+  openApiEndpoint: "/openapi.json",
   volumes: {
     "docling-cache": "/app/.cache",
   },
@@ -48,7 +24,7 @@ export const documentsService = {
         cpu: {
           env: {},
           buildArgs: {
-            BASE_IMAGE: "quay.io/docling-project/docling-serve:v1.17.0",
+            BASE_IMAGE: "quay.io/docling-project/docling-serve:v1.34.0",
           },
         },
         cuda: {
@@ -59,7 +35,7 @@ export const documentsService = {
             MKL_NUM_THREADS: "4",
           },
           buildArgs: {
-            BASE_IMAGE: "quay.io/docling-project/docling-serve-cu128:v1.17.0",
+            BASE_IMAGE: "quay.io/docling-project/docling-serve-cu128:v1.34.0",
           },
           gpus: "all",
         },
@@ -81,21 +57,15 @@ export const documentsService = {
     DOCLING_SERVE_ENABLE_UI: "1",
     DOCLING_SERVE_MAX_SYNC_WAIT: "600",
     DOCLING_SERVE_MAX_DOCUMENT_TIMEOUT: "600",
+    DOCLING_DEBUG_PROFILE_PIPELINE_TIMINGS: "true",
   },
   healthCheck: { endpoint: "/health" },
   endpoints: {
-    "/": {
-      method: "GET",
-      inputSchema: undefined,
-      description: "Service info endpoint",
-      outputSchema: {
-        type: "string",
-      },
-    },
     "/ui": {
       method: "GET",
       inputSchema: undefined,
       description: "Interactive web interface for document conversion",
+      openApi: false,
       outputSchema: {
         type: "string",
       },
@@ -114,7 +84,7 @@ export const documentsService = {
         },
       },
       inputType: "FormData",
-      outputSchema,
+      outputSchema: documentsServiceOutputSchema,
     },
     "/v1/convert/source": {
       method: "POST",
@@ -134,22 +104,13 @@ export const documentsService = {
                   },
                   url: "string",
                 },
-                {
-                  kind: { enum: ["s3"] },
-                  endpoint: "string",
-                  verify_ssl: { type: "boolean", optional: true },
-                  access_key: "string",
-                  secret_key: "string",
-                  bucket: "string",
-                  key_prefix: "string",
-                },
               ],
             },
           },
           options: documentsServiceInputSchema,
         },
       },
-      outputSchema,
+      outputSchema: documentsServiceOutputSchema,
     },
     "/health": {
       method: "GET",
@@ -157,10 +118,7 @@ export const documentsService = {
       inputSchema: undefined,
       outputSchema: {
         type: {
-          status: {
-            type: "string",
-            allowedValues: ["healthy"],
-          },
+          status: "string",
         },
       },
     },

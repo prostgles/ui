@@ -58,7 +58,7 @@ export const useGoToUI = (
 
   const goToUI = useCallback(
     async (doc: UIDoc): Promise<undefined | boolean> => {
-      const nonIteractableContainers: UIDoc["type"][] = [
+      const nonInteractableContainers: UIDoc["type"][] = [
         "info",
         "list",
         "page",
@@ -90,7 +90,7 @@ export const useGoToUI = (
           }
           await tout(400);
         }
-      } else if (nonIteractableContainers.includes(doc.type)) {
+      } else if (nonInteractableContainers.includes(doc.type)) {
         // Do not highlight non-interactable container types
         const { items } = getUIDocElementsAndAlertIfEmpty(doc, addAlert);
         return !items.length;

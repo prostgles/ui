@@ -1,42 +1,36 @@
 import type { DBS } from "@src/index";
 import { McpHub } from "./McpHub";
-import { fetchMCPServerConfigs } from "../fetchMCPServerConfigs";
+import { getMcpServerParameters } from "../getMcpServerParameters";
 import { updateMcpServerTools } from "../reloadMcpServerTools";
-import {
-  getSerialisableError,
-  type SubscriptionHandler,
-} from "prostgles-types";
+import { isEqual, type SubscriptionHandler } from "prostgles-types";
 import { insertMcpServerList } from "../insertMcpServerList";
 import type { DBSSchema } from "@common/publishUtils";
 
 const mcpHub = new McpHub();
 
 let mcpHubInitPromise: Promise<McpHub> | undefined;
-export const startMcpHub = async (
-  dbs: DBS,
-  restart = false,
-): Promise<McpHub> => {
-  if (mcpHubInitPromise) {
-    await mcpHubInitPromise;
-    if (!restart) {
+export const startMcpHub = (dbs: DBS, restart = false): Promise<McpHub> => {
+  const result = (async () => {
+    if (!restart && mcpHubInitPromise) {
       const res = await mcpHubInitPromise;
       return res;
-    } else {
-      mcpHubInitPromise = undefined;
     }
-  }
 
-  mcpHubInitPromise = (async () => {
-    if (restart) {
-      await mcpHub.destroy();
-    }
-    const serversConfig = await fetchMCPServerConfigs(dbs);
+    await mcpHubInitPromise?.catch((err) => {
+      console.error("Error starting MCP Hub", err);
+    });
+
+    await mcpHub.destroy().catch((err) => {
+      console.error("Error destroying MCP Hub", err);
+    });
+
+    const serversConfig = await getMcpServerParameters(dbs);
     const serverNames = Array.from(
-      new Set(Object.values(serversConfig).map((s) => s.server_name)),
+      new Set(Array.from(serversConfig.values()).map((s) => s.server_name)),
     );
     await mcpHub.setServerConnections(serversConfig);
     if (serverNames.length) {
-      const serverNamesWithConfig = Object.keys(serversConfig);
+      const serverNamesWithConfig = Array.from(serversConfig.keys());
       console.log(
         `McpHub started. Enabled servers (${serverNamesWithConfig.length}): ${serverNamesWithConfig.join()}`,
       );
@@ -44,20 +38,29 @@ export const startMcpHub = async (
     return mcpHub;
   })();
 
-  return mcpHubInitPromise;
+  mcpHubInitPromise = result;
+
+  return result;
+};
+
+type EnabledMcpServer = Pick<DBSSchema["mcp_servers"], "name" | "enabled"> & {
+  mcp_server_configs: Pick<
+    DBSSchema["mcp_server_configs"],
+    "server_name" | "config"
+  >[];
 };
 
 const loadMissingTools = async (
   dbs: DBS,
   mcpHub: McpHub,
-  enabledMcpServers: DBSSchema["mcp_servers"][],
+  enabledMcpServers: EnabledMcpServer[],
 ) => {
   for (const { name: server_name } of enabledMcpServers) {
     const toolCount = await dbs.mcp_server_tools.count({
       server_name,
     });
     if (!toolCount) {
-      await updateMcpServerTools(dbs, server_name, mcpHub);
+      await updateMcpServerTools(dbs, server_name, mcpHub, true);
     }
   }
 };
@@ -73,35 +76,43 @@ export const setupMCPServerHub = async (dbs: DBS) => {
     await sub?.unsubscribe();
   }
 
-  let enabledMcpServers: DBSSchema["mcp_servers"][] | undefined;
+  let enabledMcpServers: EnabledMcpServer[] | undefined;
   let globalSettings: DBSSchema["global_settings"] | undefined;
   const onCallback = () => {
     if (enabledMcpServers && globalSettings) {
-      void startMcpHub(dbs, true).then(async (mcpHub) => {
-        if (!enabledMcpServers) {
-          throw new Error("enabledMcpServers is undefined");
-        }
-        await loadMissingTools(dbs, mcpHub, enabledMcpServers).catch((err) => {
-          void dbs.alerts.insert({
-            severity: "error",
-            title: "MCP Server Hub Tool Load Error",
-            message: JSON.stringify(getSerialisableError(err)),
-            ui_path: {
-              page: "/server-settings",
-              section: "mcpServers",
-            },
-          });
-          console.error("Error loading MCP server tools", err);
+      void startMcpHub(dbs, true)
+        .then(async (mcpHub) => {
+          if (!enabledMcpServers) {
+            throw new Error("enabledMcpServers is undefined");
+          }
+          await loadMissingTools(dbs, mcpHub, enabledMcpServers);
+        })
+        .catch((error) => {
+          console.error("Failed to update MCP server connections", error);
         });
-      });
     }
   };
 
+  let previousServerConfigs: unknown;
   mcpSubscriptions.servers = await dbs.mcp_servers.subscribe(
     { enabled: true },
-    { select: { "*": 1, mcp_server_configs: "*" } },
+    { select: { name: 1, enabled: 1, mcp_server_configs: "*" } },
     (servers) => {
       enabledMcpServers = servers;
+      /* Saving refreshed tokens must not close active connections. */
+      const serverConfigs = servers.map((server) => ({
+        ...server,
+        mcp_server_configs: server.mcp_server_configs.map((config) => ({
+          id: config.id,
+          config: config.config,
+          oauth:
+            config.oauth?.phase === "connected" ?
+              { phase: "connected" }
+            : config.oauth,
+        })),
+      }));
+      if (isEqual(previousServerConfigs, serverConfigs)) return;
+      previousServerConfigs = serverConfigs;
       onCallback();
     },
   );

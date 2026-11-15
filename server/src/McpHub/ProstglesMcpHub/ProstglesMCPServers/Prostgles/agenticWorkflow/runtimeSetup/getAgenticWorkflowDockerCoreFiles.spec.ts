@@ -3,7 +3,6 @@ import { test } from "node:test";
 import { packageJsonTemplate } from "./getAgenticWorkflowDockerCoreFiles";
 import { getProperty } from "@common/utils";
 const serverPackageJsonPath = "../".repeat(9) + "package.json";
-// eslint-disable-next-line security/detect-non-literal-require
 const serverPackageJson = require(
   serverPackageJsonPath,
 ) as typeof packageJsonTemplate;
@@ -14,7 +13,6 @@ void test("Same package versions are used", () => {
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         getProperty(serverPackageJson[depProp], pkg) ||
         /** prostgles-types is used from prostgles-server  */
-        // eslint-disable-next-line security/detect-non-literal-require
         "^" + require(pkg + "/package.json").version;
       strict.equal(
         version,

@@ -1,24 +1,21 @@
-import { join } from "path";
-import { getDockerBuildHash } from "./getDockerBuildHash";
-import type { ServiceManager } from "./ServiceManager";
-import {
-  OnServiceLogs,
-  prostglesServices,
-  ServiceInstance,
-} from "./ServiceManagerTypes";
-import { isEqual, pickKeys } from "prostgles-types";
+import { filterArr } from "@common/llmUtils";
 import { getEntries } from "@common/utils";
-import { dockerInspect } from "./dockerInspect";
-import { getSelectedConfigEnvs } from "./getSelectedConfigEnvs";
 import {
   executeDockerCommand,
   type ExecutionResult,
 } from "@src/McpHub/DockerSandbox/executeDockerCommand";
-import { filterArr } from "@common/llmUtils";
+import { join, resolve } from "path";
+import { isEqual, pickKeys } from "prostgles-types";
+import { dockerInspect } from "./dockerInspect";
+import { getDockerBuildHash } from "./getDockerBuildHash";
+import { getSelectedConfigEnvs } from "./getSelectedConfigEnvs";
+import type { ServiceManager } from "./ServiceManager";
+import { OnServiceLogs, ServiceInstance } from "./ServiceManagerTypes";
+import { getServiceDockerResources } from "@src/dockerRuntime";
 
 export async function buildService(
   this: ServiceManager,
-  serviceName: keyof typeof prostglesServices,
+  serviceName: string,
   onLogs: OnServiceLogs,
 ): Promise<ExecutionResult["state"]> {
   const onLogsCombined: OnServiceLogs = (logs) => {
@@ -41,18 +38,19 @@ export async function buildService(
   const stop = () => {
     abortController.abort();
   };
-  const serviceCwd = join(
-    __dirname,
-    "../../../../",
-    "/src/ServiceManager/services",
-    serviceName,
-    "src",
+
+  const service = this.services[serviceName];
+  if (!service) {
+    throw new Error(`Service ${serviceName} not found in service registry`);
+  }
+  const serviceCwd = resolve(
+    this.getServiceRoot(serviceName),
+    service.buildContext ?? join(serviceName, "src"),
   );
 
-  const imageName = camelCaseToSkewerCase(serviceName);
+  const { imageName } = getServiceDockerResources(serviceName);
 
-  const { buildArgs } = await getSelectedConfigEnvs(this.dbs, serviceName);
-  /** Only rebuild if hash differs */
+  const { buildArgs } = await getSelectedConfigEnvs(this, serviceName);
   const buildHash = await getDockerBuildHash(serviceCwd, buildArgs);
   const buildLabels = {
     "prostgles-build-hash": buildHash,
@@ -62,7 +60,8 @@ export async function buildService(
     "--label",
     `${key}=${value}`,
   ]);
-  const matchingDockerImage = await dockerInspect(imageName);
+  const matchingDockerImage =
+    service.pullBaseImages ? undefined : await dockerInspect(imageName);
   if (
     matchingDockerImage &&
     isEqual(
@@ -83,7 +82,15 @@ export async function buildService(
   const instance: ServiceInstance = {
     status: "building",
     building: executeDockerCommand(
-      ["build", ...buildArgs, "-t", imageName, ...labelArgs, "."],
+      [
+        "build",
+        ...(service.pullBaseImages ? ["--pull"] : []),
+        ...buildArgs,
+        "-t",
+        imageName,
+        ...labelArgs,
+        ".",
+      ],
       {
         timeout: 600_000,
         signal: abortController.signal,
@@ -129,10 +136,3 @@ export async function buildService(
   onLogsCombined(log);
   return state;
 }
-
-export const camelCaseToSkewerCase = (str: string) => {
-  return str
-    .replace(/([a-z])([A-Z])/g, "$1-$2")
-    .replace(/[\s_]+/g, "-")
-    .toLowerCase();
-};

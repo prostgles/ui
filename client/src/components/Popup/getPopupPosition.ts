@@ -42,6 +42,16 @@ export const getPopupSize = (popup: Popup) => {
     style.getPropertyValue(`border-left-width`).slice(0, -2),
   );
 
+  /* Preserve scroll offsets while measuring the unshrunk content. */
+  const scrollPositions = [
+    rootChild,
+    ...rootChild.querySelectorAll("*"),
+  ].flatMap((element) => {
+    const { scrollTop, scrollLeft } = element;
+    return scrollTop || scrollLeft ? [{ element, scrollTop, scrollLeft }] : [];
+  });
+  const previousFlexShrink = rootChild.style.flexShrink;
+  rootChild.style.flexShrink = "0";
   const { width: widthWithoutB, height: heightWithoutB } = [
     titleRef,
     contentRef,
@@ -56,6 +66,11 @@ export const getPopupSize = (popup: Popup) => {
       }),
       { width: 0, height: 0 },
     );
+  rootChild.style.flexShrink = previousFlexShrink;
+  scrollPositions.forEach(({ element, scrollTop, scrollLeft }) => {
+    element.scrollTop = scrollTop;
+    element.scrollLeft = scrollLeft;
+  });
   const width = widthWithoutB + bLeft + bRight;
   const height = heightWithoutB + bTop + bBottom;
   const size = {

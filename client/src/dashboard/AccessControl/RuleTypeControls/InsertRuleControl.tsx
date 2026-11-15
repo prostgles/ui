@@ -89,7 +89,7 @@ export const InsertRuleControl = ({
               </div>
             }
             contextData={contextData}
-            detailedFilter={rule.checkFilterDetailed as SingleGroupFilter}
+            detailedFilter={rule.checkFilterDetailed}
             tableName={table.name}
             onSetError={console.error}
             onChange={(checkFilterDetailed) => {

@@ -1,5 +1,6 @@
+import type { CardMode } from "@common/ColumnConfig/cardLayout";
 import type { DetailedFilterBase } from "@common/filterUtils";
-import { classOverride } from "@components/Flex";
+import { classOverride, FlexRow } from "@components/Flex";
 import Loading from "@components/Loader/Loading";
 import {
   type AnyObject,
@@ -15,6 +16,10 @@ import { SmartCardActions } from "./SmartCardActions";
 import { SmartCardColumn } from "./SmartCardColumn";
 import { useFieldConfigParser } from "./useFieldConfigParser";
 import { getProperty } from "@common/utils";
+import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
+import { SmartCardHeader } from "./SmartCardHeader";
+import type { CardFieldSection } from "./getSectionedCardColumns";
+import { SmartCardSections } from "./SmartCardSections";
 
 type NestedSmartCardProps = Pick<SmartCardProps, "footer" | "excludeNulls">;
 type NestedSmartFormProps = Pick<
@@ -45,10 +50,20 @@ export type FieldConfigBase<T extends AnyObject | void = void> = {
 
   hide?: boolean;
   label?: string;
+  columnConfig?: ColumnConfigWithInfo;
+  cardSection?: CardFieldSection;
+  cardHeader?: {
+    column: ColumnConfigWithInfo;
+    isAvatar: boolean;
+    isTitle: boolean;
+  };
 };
 
-export type FieldConfigRender<T extends AnyObject = AnyObject> = (
-  value: any,
+export type FieldConfigRender<
+  T extends AnyObject = AnyObject,
+  K extends keyof T | string = string,
+> = (
+  value: K extends keyof T ? T[K] : any,
   row: T,
   data: {
     rows: T[];
@@ -56,20 +71,23 @@ export type FieldConfigRender<T extends AnyObject = AnyObject> = (
   },
 ) => React.ReactNode;
 
-export type ParsedFieldConfig<T extends AnyObject = AnyObject> =
-  FieldConfigBase<T> & {
-    select?: "*" | number | AnyObject | keyof T;
-    hideIf?: (value, row: T) => boolean;
-    render?: FieldConfigRender<T>;
-    /**
-     * Defaults to "value"
-     */
-    renderMode?: "valueNode" | "value" | "full";
-  };
+export type ParsedFieldConfig<
+  T extends AnyObject = AnyObject,
+  K extends keyof T | string = string,
+> = FieldConfigBase<T> & {
+  select?: "*" | number | AnyObject | keyof T;
+  hideIf?: (value: K extends keyof T ? T[K] : any, row: T) => boolean;
+  render?: FieldConfigRender<T, K>;
+  /**
+   * Defaults to "value"
+   */
+  renderMode?: "valueNode" | "value" | "full";
+};
 
-export type FieldConfig<T extends AnyObject = AnyObject> =
-  | string
-  | ParsedFieldConfig<T>;
+export type FieldConfig<
+  T extends AnyObject = AnyObject,
+  K extends keyof T | string = string,
+> = string | ParsedFieldConfig<T, K>;
 
 export type SmartCardCommonProps = {};
 
@@ -77,7 +95,7 @@ export type SmartCardProps<T extends AnyObject = AnyObject> = Pick<
   Prgl,
   "db" | "tables" | "methods" | "sql"
 > &
-  Pick<SmartCardListProps<T>, "tableName" | "tables"> & {
+  Pick<SmartCardListProps<T>, "tableName" | "tables" | "bordered" | "flat"> & {
     defaultData: T;
     fullData: {
       rows: T[];
@@ -92,6 +110,7 @@ export type SmartCardProps<T extends AnyObject = AnyObject> = Pick<
     contentClassname?: string;
     contentStyle?: React.CSSProperties;
     variant?: "row" | "col" | "row-wrap";
+    cardMode?: CardMode;
 
     confirmUpdates?: boolean;
     showLocalChanges?: boolean;
@@ -105,16 +124,18 @@ export type SmartCardProps<T extends AnyObject = AnyObject> = Pick<
      * Changing how table columns are displayed
      * Displaying additional custom computed columns
      */
-    fieldConfigs?: FieldConfig<T>[] | string[];
+    fieldConfigs?: FieldConfig<T>[] | (keyof T)[];
 
     title?: (row: T) => React.ReactNode;
+    renderTitle?: (value: React.ReactNode, row: T) => React.ReactNode;
     footer?: (row: T) => React.ReactNode;
     getActions?: (row: T) => React.ReactNode;
+    onClose?: VoidFunction;
 
     enableInsert?: boolean;
 
     /**
-     * If true then will not displaye fields with null values
+     * If true then will not displays fields with null values
      * */
     excludeNulls?: boolean;
 
@@ -134,12 +155,15 @@ export const SmartCard = <T extends AnyObject>(props: SmartCardProps<T>) => {
     fieldConfigs: _fieldConfigs,
     footer = null,
     title,
+    renderTitle,
+    onClose,
     defaultData,
     fullData,
     contentClassname = "",
     contentStyle = {},
     showViewEditBtn = true,
     enableInsert = true,
+    cardMode = "details",
   } = props;
 
   const [variant, setVariant] = useState(props.variant ?? DEFAULT_VARIANT);
@@ -149,22 +173,94 @@ export const SmartCard = <T extends AnyObject>(props: SmartCardProps<T>) => {
     return <Loading />;
   }
   const { cardColumns, fieldConfigsWithColumns } = parsedFields;
+  const table = props.tables.find((table) => table.name === props.tableName);
+  const headerFields = fieldConfigsWithColumns.flatMap(({ fc }) =>
+    fc.cardHeader ? [fc] : [],
+  );
+  const summaryRow =
+    cardMode === "summary" &&
+    headerFields.some(({ cardHeader }) => cardHeader?.isTitle);
+  const header = table && !!headerFields.length && (
+    <SmartCardHeader
+      fields={headerFields}
+      table={table}
+      row={defaultData}
+      fullData={fullData}
+      cardMode={cardMode}
+      renderTitle={
+        summaryRow && renderTitle ?
+          (value) => renderTitle(value, defaultData)
+        : undefined
+      }
+    />
+  );
+  const actions = (
+    <SmartCardActions
+      {...props}
+      enableInsert={enableInsert}
+      showViewEditBtn={showViewEditBtn}
+      cardColumns={cardColumns}
+      defaultData={defaultData}
+    />
+  );
 
   const variantClass =
     variant === "row-wrap" ? "flex-row-wrap ai-start"
     : variant === "row" ? "flex-row ai-start"
     : "flex-col ai-start ";
 
+  const bodyFields = fieldConfigsWithColumns.filter(
+    ({ fc }) => !table || !fc.cardHeader,
+  );
+  const fieldNodes = bodyFields.map(({ name, fc, col: column }) => {
+    const labelText = fc.label ?? column?.label ?? column?.name ?? null;
+    const valueNode =
+      fc.render?.(defaultData[name], defaultData, fullData) ||
+      (column && <RenderValue column={column} value={defaultData[name]} />);
+
+    if (fc.renderMode === "full") {
+      return <React.Fragment key={fc.name}>{valueNode}</React.Fragment>;
+    }
+    return (
+      <SmartCardColumn
+        key={`${fc.name}`}
+        className={fc.className}
+        style={fc.style}
+        labelText={labelText}
+        valueNode={valueNode}
+        renderMode={fc.renderMode ?? "value"}
+        labelTitle={column?.udt_name || ""}
+        info={column && getProperty(column, "hint")}
+      />
+    );
+  });
+
   return (
     <div
       className={classOverride(
-        `SmartCard card bg-color-0 relative ${variantClass} `,
+        `SmartCard card bg-color-0 relative ${onClose ? "flex-col min-h-0" : variantClass} `,
         className,
       )}
-      style={{ padding: ".25em", ...style }}
+      style={{
+        padding: ".25em",
+        ...style,
+        ...((props.flat ?? summaryRow) && {
+          width: "100%",
+          borderRadius: 0,
+          boxShadow: "none",
+          border: props.bordered ? "1px solid var(--b-color)" : 0,
+          borderBottom: "1px solid var(--b-color)",
+        }),
+      }}
     >
       <div className="flex-col min-w-0 min-h-0 f-1">
         {title?.(defaultData)}
+        {onClose && (
+          <FlexRow className="w-full min-w-0 ai-start jc-end gap-p5 p-p5 f-0">
+            {header}
+            {actions}
+          </FlexRow>
+        )}
         <div
           className={classOverride(
             `SmartCardContent o-auto f-1 min-w-0 min-h-0 gap-p5 p-p5 parent-hover ${variantClass}`,
@@ -172,41 +268,22 @@ export const SmartCard = <T extends AnyObject>(props: SmartCardProps<T>) => {
           )}
           style={{ columnGap: "1em", ...contentStyle }}
         >
-          {fieldConfigsWithColumns.map(({ name, fc, col: column }) => {
-            const labelText = fc.label ?? column?.label ?? column?.name ?? null;
-
-            const valueNode =
-              fc.render?.(defaultData[name], defaultData, fullData) ||
-              (column && (
-                <RenderValue column={column} value={defaultData[name]} />
-              ));
-
-            if (fc.renderMode === "full") {
-              return <React.Fragment key={fc.name}>{valueNode}</React.Fragment>;
-            }
-            return (
-              <SmartCardColumn
-                key={`${fc.name}`}
-                className={fc.className}
-                style={fc.style}
-                labelText={labelText}
-                valueNode={valueNode}
-                renderMode={fc.renderMode ?? "value"}
-                labelTitle={column?.udt_name || ""}
-                info={column && getProperty(column, "hint")}
-              />
-            );
-          })}
+          {!onClose && header}
+          {(
+            cardMode !== "summary" &&
+            bodyFields.some(({ fc }) => fc.cardSection)
+          ) ?
+            <SmartCardSections
+              fields={bodyFields.map(({ fc }, index) => ({
+                section: fc.cardSection,
+                node: fieldNodes[index],
+              }))}
+            />
+          : fieldNodes}
         </div>
         {footer?.(defaultData)}
       </div>
-      <SmartCardActions
-        {...props}
-        enableInsert={enableInsert}
-        showViewEditBtn={showViewEditBtn}
-        cardColumns={cardColumns}
-        defaultData={defaultData}
-      />
+      {!onClose && actions}
     </div>
   );
 };

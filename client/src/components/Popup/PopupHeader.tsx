@@ -23,6 +23,8 @@ export const PopupHeader = ({
   collapsible,
   showFullscreenToggle,
   onToggleFullscreen,
+  headerIcon,
+  headerLeftContent,
   headerRightContent,
   positioning,
   onClose,
@@ -56,16 +58,18 @@ export const PopupHeader = ({
           variant="icon"
         />
       )}
+      {headerIcon}
       <FlexCol
         id="modal-headline"
         className={
-          "ai-none jc-none f-1 font-20 noselect font-medium text-0 o-hidden text-ellipsis ta-left m-0 ws-nowrap " +
+          "ai-none jc-none gap-p25 font-20 noselect font-medium text-0 o-hidden ta-left m-0 ws-nowrap " +
+          (headerLeftContent ? "" : "f-1 ") +
           (collapsible ? " pointer " : " ")
         }
         onClick={collapsible ? toggleContent : undefined}
       >
         <h4
-          className="m-0"
+          className="m-0 ta-left text-ellipsis"
           style={{
             ...(collapsible ? { paddingLeft: 0 } : {}),
           }}
@@ -76,14 +80,14 @@ export const PopupHeader = ({
         {subTitle && (
           <h6
             title={subTitle}
-            className="font-14 m-0 text-ellipsis text-1"
-            style={{ opacity: 0.7, maxWidth: "200px" }}
+            className="font-14 font-normal m-0 text-ellipsis text-1"
           >
             {subTitle}
           </h6>
         )}
       </FlexCol>
-      <FlexRow className="Popup-header-actions gap-0">
+      {headerLeftContent}
+      <FlexRow className="Popup-header-actions gap-p5 ml-auto">
         {headerRightContent}
 
         {showFullscreenToggle && (
@@ -102,7 +106,6 @@ export const PopupHeader = ({
           variant="icon"
           data-close-popup={true}
           className="f-0"
-          style={{ margin: "1px" }}
           iconPath={mdiClose}
           onClick={onClose}
           title={t.common.Close}

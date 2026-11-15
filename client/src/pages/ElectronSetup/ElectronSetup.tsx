@@ -11,6 +11,7 @@ import { useElectronSetup } from "./useElectronSetup";
 
 type ElectronSetup = {
   serverState: AppState["serverState"];
+  error: unknown;
 };
 
 export const getBrowserOS = () => {
@@ -22,12 +23,12 @@ export const getBrowserOS = () => {
   return os;
 };
 
-export const ElectronSetup = ({ serverState }: ElectronSetup) => {
+export const ElectronSetup = ({ serverState, error }: ElectronSetup) => {
   const state = useElectronSetup({
     serverState,
+    error,
   });
-  const { step, setStep, loading, validationWarning, error, onPressDone } =
-    state;
+  const { step, setStep, loading, validationWarning, onPressDone } = state;
 
   return (
     <FlexCol className="ElectronSetup m-auto min-s-0">
@@ -35,7 +36,22 @@ export const ElectronSetup = ({ serverState }: ElectronSetup) => {
         className={"ta-center p-2  flex-col gap-2 max-w-700 p-1 min-h-0 "}
         style={{ width: "600px" }}
       >
-        {step === "1-privacy" ?
+        <ErrorComponent
+          className="rounded f-0"
+          style={{ background: "#fde8e8", padding: ".5rem" }}
+          title="Startup failed"
+          withIcon={true}
+          error={error}
+        />
+        {step === "startup-error" ?
+          <Btn
+            onClick={() => setStep("2-setup")}
+            color="action"
+            variant="filled"
+          >
+            Edit connection details
+          </Btn>
+        : step === "1-privacy" ?
           <div>
             <h3>PRIVACY</h3>
             <section className="ta-left  font-18">
@@ -51,29 +67,19 @@ export const ElectronSetup = ({ serverState }: ElectronSetup) => {
                 message="Connecting to electron state database"
               />
             : <ElectronSetupStateDB state={state} />}
-
-            {Boolean(!loading && error) && (
-              <ErrorComponent
-                className="rounded f-0"
-                style={{ background: "#fde8e8" }}
-                withIcon={true}
-                error={
-                  serverState?.initState.state === "error" ? error : undefined
-                }
-              />
-            )}
           </FlexCol>
         }
 
-        {!loading && (
+        {!loading && step !== "startup-error" && (
           <FlexRow style={{ justifyContent: "space-between" }}>
             <Btn
               data-command="ElectronSetup.Back"
               onClick={() => {
-                setStep("1-privacy");
+                setStep(error ? "startup-error" : "1-privacy");
               }}
               iconPath={mdiArrowLeft}
               variant="outline"
+              size="default"
               style={{ opacity: step === "2-setup" ? 1 : 0 }}
             >
               Back
@@ -89,6 +95,7 @@ export const ElectronSetup = ({ serverState }: ElectronSetup) => {
                 iconPath={mdiArrowRight}
                 color="action"
                 variant="filled"
+                size="default"
               >
                 Next
               </Btn>
@@ -99,6 +106,7 @@ export const ElectronSetup = ({ serverState }: ElectronSetup) => {
                 className="ml-auto"
                 iconPath={mdiConnection}
                 onClickMessage={onPressDone}
+                size="default"
               >
                 Connect
               </Btn>

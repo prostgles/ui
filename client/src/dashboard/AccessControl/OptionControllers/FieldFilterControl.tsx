@@ -153,6 +153,7 @@ export const FieldFilterControl = ({
                 setFields(fields, !isExcept);
               }}
               variant="chips-lg"
+              size="small"
             />
           )}
 

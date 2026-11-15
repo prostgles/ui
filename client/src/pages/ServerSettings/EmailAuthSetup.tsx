@@ -45,7 +45,7 @@ export const EmailAuthSetup = ({
 
   return (
     <Section
-      title={t.EmailAuthSetup["Email signup"]}
+      title="Email authentication"
       data-command="EmailAuthSetup"
       titleIconPath={mdiEmail}
       disabledInfo={disabledInfo}
@@ -72,7 +72,8 @@ export const EmailAuthSetup = ({
             !localAuth ?
               {
                 enabled,
-                signupType: "withPassword",
+                allowInvites: false,
+                emailLoginType: "withPassword",
                 emailTemplate: DEFAULT_EMAIL_VERIFICATION_TEMPLATE,
                 smtp: DEFAULT_SMTP_CONFIG,
                 minPasswordLength: 8,
@@ -85,10 +86,10 @@ export const EmailAuthSetup = ({
         }}
       />
       <Select
-        label={"Signup type"}
+        label="Email login method"
         data-command="EmailAuthSetup.SignupType"
         showSelectedSublabel={true}
-        value={localAuth?.signupType}
+        value={localAuth?.emailLoginType}
         fullOptions={
           [
             {
@@ -109,29 +110,44 @@ export const EmailAuthSetup = ({
             },
           ] as const
         }
-        onChange={(signupType) => {
+        onChange={(emailLoginType) => {
           setLocalAuth(
-            signupType === "withMagicLink" ?
+            emailLoginType === "withMagicLink" ?
               {
                 enabled: localAuth?.enabled ?? false,
-                signupType,
+                allowInvites: localAuth?.allowInvites ?? false,
+                emailLoginType,
                 emailTemplate: DEFAULT_MAGIC_LINK_TEMPLATE,
                 smtp: localAuth?.smtp ?? DEFAULT_SMTP_CONFIG,
               }
             : {
-                signupType,
+                emailLoginType,
                 enabled: localAuth?.enabled ?? false,
+                allowInvites: localAuth?.allowInvites ?? false,
                 emailTemplate: DEFAULT_EMAIL_VERIFICATION_TEMPLATE,
                 smtp: localAuth?.smtp ?? DEFAULT_SMTP_CONFIG,
                 minPasswordLength:
-                  localAuth?.signupType === "withPassword" ?
+                  localAuth?.emailLoginType === "withPassword" ?
                     (localAuth.minPasswordLength ?? 8)
                   : undefined,
               },
           );
         }}
       />
-      {localAuth?.signupType === "withPassword" && (
+      <SwitchToggle
+        label="Allow invitations"
+        title="Allow authorized users to invite people even when public signup is disabled."
+        data-command="EmailAuthSetup.allowInvites"
+        checked={!!localAuth?.allowInvites}
+        disabledInfo={
+          !localAuth &&
+          t.EmailAuthSetup["Must configure the email provider first"]
+        }
+        onChange={(allowInvites) => {
+          if (localAuth) setLocalAuth({ ...localAuth, allowInvites });
+        }}
+      />
+      {localAuth?.emailLoginType === "withPassword" && (
         <FormField
           label={t.EmailAuthSetup["Minimum password length"]}
           optional={true}
@@ -148,14 +164,14 @@ export const EmailAuthSetup = ({
       <EmailSMTPAndTemplateSetup
         websiteUrl={authProviders.website_url}
         label={
-          localAuth?.signupType === "withMagicLink" ?
+          localAuth?.emailLoginType === "withMagicLink" ?
             t.EmailAuthSetup["Magic link email configuration"]
           : t.EmailAuthSetup["Email verification"]
         }
         value={localAuth}
         onChange={async (newConfig) => {
           if (!localAuth) throw "Local auth not found";
-          if (localAuth.enabled) {
+          if (localAuth.enabled || localAuth.allowInvites) {
             await doUpdate({
               ...authProviders,
               email: {

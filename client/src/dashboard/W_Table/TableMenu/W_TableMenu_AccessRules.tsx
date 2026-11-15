@@ -4,6 +4,7 @@ import { FlexCol } from "@components/Flex";
 import { InfoRow } from "@components/InfoRow";
 import { Label } from "@components/Label";
 import { LabeledRow } from "@components/LabeledRow";
+import { ScrollFade } from "@components/ScrollFade/ScrollFade";
 import { mdiAccount, mdiPlus } from "@mdi/js";
 import React from "react";
 import { Link } from "react-router";
@@ -20,7 +21,7 @@ export const W_TableMenu_AccessRules = ({
   if (!tableMeta) return null;
   const { accessRules } = tableMeta;
   return (
-    <FlexCol>
+    <ScrollFade className="flex-col gap-1 min-h-0 o-auto">
       <ul className="no-decor flex-col gap-1">
         {accessRules.map((r) => {
           const dbRule = r.dbPermissions;
@@ -122,6 +123,6 @@ export const W_TableMenu_AccessRules = ({
       >
         Create
       </Btn>
-    </FlexCol>
+    </ScrollFade>
   );
 };

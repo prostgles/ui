@@ -13,7 +13,7 @@ type P = {
 export const MapInfoSection = (props: P) => {
   const { loadingLayers, w, active_row, fetchedLayers, error } = props;
   const [show, setShow] = useState(false);
-  const { extentBehavior } = w.options;
+  const { extentBehavior = "autoZoomToData" } = w.options;
   /** Debounce show */
   useEffect(() => {
     const timeout = setTimeout(() => {

@@ -1,3 +1,4 @@
+import { COLOR_PALETTE } from "@common/ColumnConfig/COLOR_PALETTE";
 import type { BtnProps } from "@components/Btn";
 import React from "react";
 import { ColorPicker } from "../../W_Table/ColumnMenu/ColorPicker";
@@ -24,6 +25,7 @@ export const LayerColorPicker = ({
 
   return (
     <ColorPicker
+      palette={COLOR_PALETTE}
       data-command="LayerColorPicker"
       style={{ flex: "none" }}
       btnProps={btnProps}

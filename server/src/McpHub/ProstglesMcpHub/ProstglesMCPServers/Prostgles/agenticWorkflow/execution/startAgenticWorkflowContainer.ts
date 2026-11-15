@@ -28,18 +28,14 @@ export const startAgenticWorkflowContainer = async (
     workflow_function_definition,
     package_dependencies,
     user_id,
-    chat,
     connection_id,
     abortSignal,
-    messageId,
   }: {
     workflow_function_definition: string;
     package_dependencies: undefined | Record<string, string>;
     user_id: string;
-    chat: DBSSchema["llm_chats"];
     connection_id: string;
     abortSignal: AbortSignal;
-    messageId: DBSSchema["llm_messages"]["id"];
   },
   mode:
     | {
@@ -53,7 +49,8 @@ export const startAgenticWorkflowContainer = async (
       }
     | {
         type: "full";
-        workflowId: number;
+        workflowRun: DBSSchema["agentic_workflow_runs"];
+        messageId: DBSSchema["llm_messages"]["id"] | undefined;
         workflow: DBSSchema["agentic_workflows"];
         orchestratorChat: DBSSchema["llm_chats"];
         userInputValue: Record<string, unknown>;
@@ -73,21 +70,7 @@ export const startAgenticWorkflowContainer = async (
         userInput: mode.workflow.definition_data.userInput,
         userInputValues: mode.userInputValue,
       });
-  const workflowRun =
-    mode.type === "full" ?
-      await dbs.agentic_workflow_runs.insert(
-        {
-          workflow_id: mode.workflowId,
-          message_id: messageId,
-          chat_id: chat.id,
-          user_input_value: mode.userInputValue,
-          log: [],
-          state: { status: "running" },
-          user_id,
-        },
-        { returning: "*" },
-      )
-    : undefined;
+  const workflowRun = mode.type === "full" ? mode.workflowRun : undefined;
 
   const mainHandler: DockerMCPServerProxyHandler = (ctx, req, res) => {
     if (mode.type !== "full") {
@@ -114,8 +97,7 @@ export const startAgenticWorkflowContainer = async (
         res.json(result);
       })
       .catch((error) => {
-        console.error("Error in handler:", error);
-        res.status(500).json(error);
+        res.status(500).json(getSerialisableError(error));
       });
   };
   const result = await runContainerWithProxyAccess(
@@ -125,7 +107,7 @@ export const startAgenticWorkflowContainer = async (
       mcpToolsScope:
         mode.type === "full" ?
           {
-            messageId,
+            messageId: mode.messageId,
             chat: mode.orchestratorChat,
           }
         : undefined,
@@ -200,8 +182,7 @@ export const startAgenticWorkflowContainer = async (
             );
 
             data satisfies
-              | Extract<ProxyCallData, { type: "progress" }>
-              | undefined;
+              Extract<ProxyCallData, { type: "progress" }> | undefined;
 
             if (error !== undefined) {
               throw new Error("Invalid request data: " + error);
@@ -302,21 +283,7 @@ export const startAgenticWorkflowContainer = async (
           console.error("Failed to update workflow log:", e);
         });
     },
-  ).catch((error: unknown) => {
-    if (workflowRun) {
-      void dbs.agentic_workflow_runs.update(
-        { id: workflowRun.id },
-        {
-          state: {
-            status: "error",
-            message: JSON.stringify(getSerialisableError(error)),
-          },
-          finished: new Date(),
-        },
-      );
-    }
-    return Promise.reject(getSerialisableError(error));
-  });
+  );
 
   if (workflowRun) {
     await dbs.agentic_workflow_runs
@@ -325,7 +292,8 @@ export const startAgenticWorkflowContainer = async (
         {
           state: {
             status:
-              result.state === "finished" ? "completed"
+              abortSignal.aborted ? "stopped"
+              : result.state === "finished" ? "completed"
               : result.state === "timed-out" ? "timed-out"
               : result.state === "aborted" ? "stopped"
               : "error",

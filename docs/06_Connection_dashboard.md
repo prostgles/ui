@@ -22,11 +22,11 @@ With quick search, saved queries, AI-powered assistance, and instant access to e
 - **Dashboard menu toggle**: Opens or closes the dashboard menu unless the menu is pinned.  
 - **Go to configuration**: Opens the configuration page for the selected connection.  
 - **Change connection**: Switch to a different database connection.  
-- **Workspaces**: List of available workspaces for the selected connection. Each workspace stores opened views and their layout.  
 - <a href="#workspaces_menu">Workspaces menu</a>: Opens the workspaces menu, allowing you to create, manage, and switch between workspaces.  
+- **Toggle layout mode**: Switches between fixed and editable layout modes for the current workspace. Fixed mode locks the layout, preventing it from being changed by the user.  
 - <a href="#workspace_area">Workspace area</a>: Main content area of the dashboard, where the tables, views, SQL editors and other visualisations are displayed.  
 - <a href="#ai_assistant">AI Assistant</a>: Opens an AI assistant chat to help generate SQL queries, understand database schema, or perform other tasks.  
-- **Feedback**: Opens the feedback form, allowing you to provide feedback about the application.  
+- **Quick search**: Opens the quick search menu for searching across all available tables and views from the current database.  
 - **Go to Connections**: Opens the connections list page.  
 
 <h2 id="dashboard_menu"> Dashboard menu </h2> 
@@ -36,9 +36,9 @@ The layout adapts to the screen size by pinning the menu to keep it open when th
 For wider screens the centered layout mode can be enabled through the settings.
 
   - **Open an SQL editor**: Opens an SQL editor view in the workspace area.  
-  - **Quick search**: Opens the quick search menu for searching across all available tables and views from the current database.  
+  - **Feedback**: Opens the feedback form, allowing you to provide feedback about the application.  
   - **Settings**: Opens the settings menu for configuring dashboard layout preferences.  
-  - **Pin/Unpin menu**: Toggles the pinning of the dashboard menu. Pinned menus remain open until unpinned or accessing from a low width screen.  
+  - **Pin/Unpin menu**: Toggles menu docking from the footer. This preference applies across all workspaces for your account. Narrow screens always use a popup menu.  
   - **Resize menu**: Allows resizing the dashboard menu. Drag to adjust the width of the menu.  
   - **Resize centered layout**: Allows resizing the workspace area when centered layout is enabled. Drag to adjust the width of the centered layout.  
   - **Saved queries**: List of saved queries of the current user from the current workspace. Click to open a saved query.  

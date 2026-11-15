@@ -5,7 +5,7 @@ type LoadedComponent<N extends keyof DynamicComponentRegistry> = Awaited<
   ReturnType<DynamicComponentRegistry[N]>
 >["default"];
 
-export type DynamicComponentProps<N extends keyof DynamicComponentRegistry> = {
+type DynamicComponentProps<N extends keyof DynamicComponentRegistry> = {
   component: N;
   props: React.ComponentProps<LoadedComponent<N>>;
 };
@@ -55,6 +55,14 @@ const DYNAMIC_COMPONENT_REGISTRY = {
     import("src/dashboard/SchemaGraph/SchemaGraph").then((mod) => ({
       default: mod.SchemaGraph,
     })),
+  MCPServers: () =>
+    import("src/pages/ServerSettings/MCPServers/MCPServers").then((mod) => ({
+      default: mod.MCPServers,
+    })),
+  ConnectionConfigSync: () =>
+    import("src/dashboard/ConnectionConfig/ConnectionConfigSync").then(
+      (mod) => ({ default: mod.ConnectionConfigSync }),
+    ),
 } as const satisfies Record<
   string,
   () => Promise<{ default: React.ComponentType<any> }>

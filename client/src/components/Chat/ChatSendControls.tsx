@@ -37,7 +37,10 @@ export const ChatSendControls = ({
         if (autoSend) {
           await onSend([{ type: "text", text: audioOrTranscript }], files);
         } else {
-          setCurrentMessage(audioOrTranscript);
+          const currentMessage = textAreaRef.current?.value ?? "";
+          setCurrentMessage(
+            (currentMessage ? `${currentMessage}. ` : "") + audioOrTranscript,
+          );
         }
         return;
       } else {

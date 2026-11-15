@@ -51,7 +51,7 @@ export const useTableSizeInfo = (
           tableListEndInfo === "none" ? "" : (
             (tableListEndInfo === "size" ?
               sizeNum === 0 ?
-                "0"
+                "0 Bytes"
               : bytesToSize(sizeNum, 0)
             : +count > 0 ? kFormatter(+count)
             : "") || ""

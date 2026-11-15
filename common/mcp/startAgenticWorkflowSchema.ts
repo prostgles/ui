@@ -41,7 +41,8 @@ export const agentOutputSchemaType = {
             nullable: { type: "boolean", optional: true },
             type: {
               record: {
-                values: PropertyTypeOptional,
+                /* Nested schemas are checked recursively before starting an agent. */
+                values: "any",
               },
             },
           },
@@ -49,9 +50,10 @@ export const agentOutputSchemaType = {
         {
           type: {
             optional: { type: "boolean", optional: true },
+            nullable: { type: "boolean", optional: true },
             arrayOfType: {
               record: {
-                values: PropertyTypeOptional,
+                values: "any",
               },
             },
           },
@@ -68,13 +70,42 @@ export const agentDefinitionsSchema = {
   record: {
     values: {
       type: {
-        prompt: "string",
-        modelName: { type: "string", optional: true },
-        maxCostUSD: { type: "number", optional: true },
-        maxIterations: { type: "number", optional: true },
+        prompt: { type: "string" },
+        modelName: {
+          type: "string",
+          optional: true,
+          description:
+            "The name of the LLM model to use for this agent. If not provided, the default model will be used.",
+        },
+        maxCostUSD: {
+          type: "number",
+          optional: true,
+          description:
+            "The maximum cost in USD that this agent is allowed to incur.",
+        },
+        maxIterations: {
+          type: "number",
+          optional: true,
+          description:
+            "The maximum number of iterations this agent is allowed to run.",
+        },
         tools: {
           ...mcpServerToolsAllowed,
           optional: true,
+        },
+        mcpServerConfigs: {
+          optional: true,
+          description:
+            "SYSTEM ONLY — DO NOT SPECIFY: Do not generate, invent, or prompt the user for configuration IDs. This field is automatically injected by the host runtime when a tool requires user-provided MCP server authorization.",
+
+          record: {
+            partial: true,
+            values: {
+              type: {
+                configId: { type: "number" },
+              },
+            },
+          },
         },
         maxTokens: { type: "number", optional: true },
         temperature: { type: "number", optional: true },

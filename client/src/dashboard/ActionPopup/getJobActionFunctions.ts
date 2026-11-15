@@ -1,0 +1,50 @@
+import { getJobControlMethods } from "@common/jobAction";
+import {
+  getActionFunctions,
+  type DBSchemaTable,
+  type JobControlBinding,
+  type ServerFunctionHandler,
+} from "prostgles-types";
+
+export const getRowActionFunctions = (
+  methods: ServerFunctionHandler,
+  table: DBSchemaTable,
+) => {
+  const allowedActions = Object.keys(methods);
+  return getActionFunctions(methods, table).filter(({ methodName }) => {
+    const job = methods[methodName]?.jobControl;
+    return (
+      !job ||
+      getJobActionFunctions(methods, table, job, allowedActions)[0]
+        ?.methodName === methodName
+    );
+  });
+};
+
+export const getJobActionFunctions = (
+  methods: ServerFunctionHandler,
+  table: DBSchemaTable,
+  job: JobControlBinding,
+  allowedActions: string[] | undefined,
+) =>
+  getActionFunctions(methods, table)
+    .filter(({ methodName }) => {
+      const binding = methods[methodName]?.jobControl;
+      return (
+        allowedActions?.includes(methodName) &&
+        binding?.jobName === job.jobName &&
+        binding.tableName === job.tableName &&
+        binding.columnName === job.columnName
+      );
+    })
+    .flatMap((action) =>
+      getJobControlMethods(methods[action.methodName]!).map((method) => ({
+        ...action,
+        method,
+      })),
+    )
+    .sort(
+      (first, second) =>
+        Number(second.method.jobControl?.operation === "startOrRetry") -
+        Number(first.method.jobControl?.operation === "startOrRetry"),
+    );

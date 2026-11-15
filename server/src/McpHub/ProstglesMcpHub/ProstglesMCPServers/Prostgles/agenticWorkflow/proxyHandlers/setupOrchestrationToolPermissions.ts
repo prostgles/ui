@@ -13,10 +13,12 @@ export const setupOrchestrationToolPermissions = async ({
   databaseAccessDefinitions,
   autoApproveAllTools,
   messageId,
+  workflowRunId,
 }: {
   dbs: DBS;
-  chatId: number;
-  messageId: DBSSchema["llm_messages"]["id"];
+  chatId: number | undefined;
+  workflowRunId: number | undefined;
+  messageId: DBSSchema["llm_messages"]["id"] | undefined;
   userId: string;
   orchestrationToolsWithInfo: Awaited<
     ReturnType<typeof getValidatedMcpServerToolsAllowed> | undefined
@@ -39,6 +41,7 @@ export const setupOrchestrationToolPermissions = async ({
       user_id: userId,
       connection_id: connectionId,
       parent_chat_id: chatId,
+      parent_agentic_workflow_run_id: workflowRunId,
       parent_chat_message_id: messageId,
       db_data_permissions: dataPermissions && {
         ...dataPermissions,

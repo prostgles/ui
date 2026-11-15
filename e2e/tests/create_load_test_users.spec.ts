@@ -1,5 +1,5 @@
-import { test } from "@playwright/test";
-import { PageWIds, login } from "./utils/utils";
+import { test } from "./utils/fixtures";
+import { login } from "./utils/utils";
 import { USERS } from "utils/constants";
 test.use({
   viewport: { width: 1280, height: 1080 },
@@ -19,8 +19,8 @@ test.describe("Create load test users", () => {
   });
 
   test("Create load test users", async ({ page: p }) => {
-    const page = p as PageWIds;
-    await login(page, USERS.test_user, "http://localhost:3004/login");
+    const page = p;
+    await login(page, USERS.test_user, "http://localhost:3004/auth/login");
     await page.evaluate(async (loadUsers) => {
       try {
         const existingLoadUsers = await (window as any).dbs.users.count({

@@ -1,4 +1,5 @@
 import { useScrollFade } from "@components/ScrollFade/ScrollFade";
+import { useAutoScrollToBottom } from "@components/ScrollFade/useAutoScrollToBottom";
 import React, {
   forwardRef,
   useCallback,
@@ -19,7 +20,6 @@ import type {
   SearchListProps,
 } from "./SearchList";
 import { SearchListRowContent } from "./SearchListRowContent";
-import { useAutoScrollToBottom } from "@components/ScrollFade/useAutoScrollToBottom";
 
 export type SearchListItemsProps = Pick<
   SearchListProps,
@@ -30,8 +30,9 @@ export type SearchListItemsProps = Pick<
   | "endOfResultsContent"
   | "noResultsContent"
   | "onReorder"
-  | "onMultiToggle"
   | "listStyle"
+  | "roundedItems"
+  | "checkboxVariant"
   | "autoScrollToBottom"
 > & {
   renderedItems: ParsedListItem[];
@@ -59,10 +60,11 @@ export const SearchListItems = forwardRef<
     searchingItems,
     endSearch,
     onReorder,
-    onMultiToggle,
     showFirstItemAsFocused,
     autoScrollToBottom,
+    roundedItems = true,
   } = props;
+  const itemBorderRadius = roundedItems ? "var(--rounded)" : 0;
   const inputWrapper = inputWrapperRef.current;
   const notAllItemsShown =
     renderedItems.length && renderedItems.length < items.length && !searchTerm;
@@ -116,8 +118,8 @@ export const SearchListItems = forwardRef<
   return (
     <div
       className={
-        "SearchList_Suggestions flex-col relative w-full f-1  min-h-0 min-w-0 " +
-        (isSearch ? " o-visible " : " ")
+        "SearchList_Suggestions flex-col relative w-full min-h-0 min-w-0 " +
+        (isSearch ? " f-0 o-visible " : " f-1 ")
       }
       data-command={props["data-command"]}
       data-key={props["data-key"]}
@@ -177,6 +179,12 @@ export const SearchListItems = forwardRef<
                     title={renderedItem.disabledInfo ?? renderedItem.title}
                     style={{
                       ...renderedItem.rowStyle,
+                      /* Override shorthand and individual corner styles. */
+                      borderRadius: itemBorderRadius,
+                      borderTopLeftRadius: itemBorderRadius,
+                      borderTopRightRadius: itemBorderRadius,
+                      borderBottomLeftRadius: itemBorderRadius,
+                      borderBottomRightRadius: itemBorderRadius,
                       ...(renderedItem.disabledInfo ?
                         {
                           cursor: "not-allowed",
@@ -217,7 +225,10 @@ export const SearchListItems = forwardRef<
                       )
                     }
                   >
-                    <SearchListRowContent item={renderedItem} />
+                    <SearchListRowContent
+                      item={renderedItem}
+                      checkboxVariant={props.checkboxVariant}
+                    />
                   </DraggableLI>
                 </React.Fragment>
               );

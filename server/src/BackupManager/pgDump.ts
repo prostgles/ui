@@ -1,6 +1,7 @@
-import type { DumpOpts, PGDumpParams } from "@common/utils";
+import type { PGDumpParams } from "@common/utils";
 import type { ChildProcess } from "child_process";
-import { isDefined, omitKeys, pickKeys } from "prostgles-types";
+import { isDefined } from "prostgles-types";
+import Stream from "stream";
 import { getSSLEnvVars } from "../ConnectionManager/saveCertificates";
 import type BackupManager from "./BackupManager";
 import { envToStr, pipeFromCommand } from "./pipeFromCommand";
@@ -12,8 +13,8 @@ import {
   makeLogs,
 } from "./utils";
 
-export async function pgDump(
-  this: BackupManager,
+export const pgDump = async (
+  backupManagerInstance: BackupManager,
   conId: string,
   credId: number | null,
   {
@@ -21,12 +22,16 @@ export async function pgDump(
     initiator = "manual_backup",
     name,
   }: Omit<PGDumpParams, "credentialID" | "destination">,
-) {
+) => {
   if (isDefined(name) && typeof name !== "string") {
     throw new Error("Backup name must be a string");
   }
-  const con = await this.dbs.connections.findOne({ id: conId });
-  if (!con) throw new Error("Could not find the connection");
+  const con = await backupManagerInstance.dbs.connections.findOne({
+    id: conId,
+  });
+  if (!con) {
+    throw new Error("Could not find the connection");
+  }
   let proc: ChildProcess | undefined;
 
   const setError = (err: any) => {
@@ -34,7 +39,7 @@ export async function pgDump(
     console.error(nowIso + " pg_dump err for connection " + conId, err);
     proc?.kill();
     if (backup_id) {
-      void this.dbs.backups.update(
+      void backupManagerInstance.dbs.backups.update(
         { id: backup_id },
         {
           status: { state: "error", timestamp: nowIso, message: String(err) },
@@ -46,14 +51,14 @@ export async function pgDump(
     }
   };
 
-  const { fileMgr } = await getFileMgr(this.dbs, credId);
+  const { fileMgr } = await getFileMgr(backupManagerInstance.dbs, credId);
 
   if (!credId) {
-    const space = await this.checkIfEnoughSpace(conId);
+    const space = await backupManagerInstance.checkIfEnoughSpace(conId);
     if (space.err) throw space.err;
   }
 
-  const currentBackup = await this.getCurrentBackup(con.id);
+  const currentBackup = await backupManagerInstance.getCurrentBackup(con.id);
   if (currentBackup) {
     throw "Cannot backup while another backup is in progress";
   }
@@ -68,7 +73,7 @@ export async function pgDump(
   const dumpCommand =
     dumpAll ?
       {
-        command: this.getCmd("pg_dumpall"),
+        command: backupManagerInstance.getCmd("pg_dumpall"),
         args: addOptions(
           ["-d", uri],
           [
@@ -84,7 +89,7 @@ export async function pgDump(
         ),
       }
     : {
-        command: this.getCmd("pg_dump"),
+        command: backupManagerInstance.getCmd("pg_dump"),
         // opts: addOptions([uri_NOT_SAFE_-> VISIBLE TO ps aux], [
         args: addOptions(
           [],
@@ -110,11 +115,11 @@ export async function pgDump(
   try {
     const content_type =
       dumpAll || o.format === "p" ? "text/sql" : "application/gzip";
-    const backup = await this.dbs.backups.insert(
+    const backup = await backupManagerInstance.dbs.backups.insert(
       {
         name,
         created: new Date(),
-        dbSizeInBytes: await this.getDBSizeInBytes(conId),
+        dbSizeInBytes: await backupManagerInstance.getDBSizeInBytes(conId),
         initiator,
         connection_id: con.id,
         credential_id: credId ?? null,
@@ -125,64 +130,70 @@ export async function pgDump(
           " " +
           dumpCommand.args.join(" "),
         status: { state: "loading", loaded: 0, total: 0 },
-        options: omitKeys(o as any, ["credentialID"]) as DumpOpts,
+        options: o,
         content_type,
       },
       { returning: "*" },
     );
 
-    const bkpForId = await this.dbs.backups.findOne(
+    const bkpForId = await backupManagerInstance.dbs.backups.findOne(
       { id: backup.id },
-      { select: { created: "$datetime_" } },
+      { select: { created: "$datetime_" as "$datetime" } },
     );
     if (!bkpForId) throw "Internal error";
     backup_id = `${(con.db_name || "").replace(/[\W]+/g, "_")}__${bkpForId.created}_pg_dump${dumpAll ? "all" : ""}_${backup.id}.${content_type === "text/sql" ? "sql" : "dump"}`;
-    await this.dbs.backups.update({ id: backup.id }, { id: backup_id });
+    await backupManagerInstance.dbs.backups.update(
+      { id: backup.id },
+      { id: backup_id },
+    );
 
-    const getBkp = () => this.dbs.backups.findOne({ id: backup_id });
+    const getBkp = () =>
+      backupManagerInstance.dbs.backups.findOne({ id: backup_id });
 
-    const destStream = fileMgr.uploadStream(
-      backup_id,
-      content_type,
-      (loadingRaw) => {
-        /** S3 is adding some extra fields while total is missing */
-        const loading = pickKeys(loadingRaw, ["total", "loaded"]);
-        void this.dbs.backups.update(
-          {
-            $and: [
-              { id: backup_id },
-              { status: { "@>": { state: "loading" } } },
-            ],
-          },
-          {
-            status: { state: "loading", ...loading },
-            last_updated: new Date(),
-          },
-        );
-      },
-      setError,
-      (item) => {
+    const destStream = new Stream.PassThrough();
+    void fileMgr
+      .upload({
+        file: destStream,
+        fileName: backup_id,
+        contentType: content_type,
+        onProgress: (loaded) => {
+          void backupManagerInstance.dbs.backups.update(
+            {
+              $and: [
+                { id: backup_id },
+                { status: { "@>": { state: "loading" } } },
+              ],
+            },
+            {
+              status: { state: "loading", loaded, total: undefined },
+              last_updated: new Date(),
+            },
+          );
+        },
+      })
+      .then((item) => {
         void getBkp().then(async (bkp) => {
           if (bkp && "err" in bkp.status) {
             try {
-              await fileMgr.deleteFile(bkp.id);
+              await fileMgr.delete(bkp.id);
             } catch {}
           } else {
             const nowIso = new Date().toISOString();
-            void this.dbs.backups.update(
+            void backupManagerInstance.dbs.backups.update(
               { id: backup_id },
               {
-                sizeInBytes: item.content_length,
+                sizeInBytes: item.contentLength,
                 uploaded: nowIso,
                 status: { state: "finished", timestamp: nowIso },
                 last_updated: nowIso,
-                local_filepath: item.filePath,
+                local_filepath:
+                  item.type === "local" ? item.filePath : undefined,
               },
             );
           }
         });
-      },
-    );
+      })
+      .catch(setError);
 
     // const res = child.spawnSync(dumpCommand.command, dumpCommand.opts.concat(["-f", "-l"]) as any, { env: ENV_VARS });
 
@@ -200,7 +211,9 @@ export async function pgDump(
         !o.keepLogs ? undefined : (
           async ({ chunk: _dump_logs }, isStdErr) => {
             if (!isStdErr) return;
-            const currBkp = await this.dbs.backups.findOne({ id: backup_id });
+            const currBkp = await backupManagerInstance.dbs.backups.findOne({
+              id: backup_id,
+            });
             if (!currBkp || currBkp.status.state === "error") {
               proc?.kill();
               return;
@@ -210,7 +223,7 @@ export async function pgDump(
               currBkp.dump_logs,
               currBkp.created,
             );
-            void this.dbs.backups.update(
+            void backupManagerInstance.dbs.backups.update(
               { id: backup_id },
               {
                 dump_logs,
@@ -223,7 +236,9 @@ export async function pgDump(
 
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
     const interval = setInterval(async () => {
-      const bkp = await this.dbs.backups.findOne({ id: backup_id });
+      const bkp = await backupManagerInstance.dbs.backups.findOne({
+        id: backup_id,
+      });
       if (!bkp || "err" in bkp.status) {
         destStream.end();
         clearInterval(interval);
@@ -236,4 +251,4 @@ export async function pgDump(
   } catch (err) {
     setError(err);
   }
-}
+};

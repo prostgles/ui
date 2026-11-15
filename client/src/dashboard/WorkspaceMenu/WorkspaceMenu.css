@@ -2,6 +2,16 @@
   color: var(--action) !important;
 }
 
+.WorkspaceActionsMenu .btn {
+  width: 100% !important;
+  border-radius: 0;
+}
+
+.WorkspaceActionsMenu .btn:not(:disabled):is(:hover, :focus-visible) {
+  background-color: var(--li-hover-bg);
+  filter: none;
+}
+
 #dashboard-menu-button {
   background-color: rgb(240 254 255);
   border: "1px solid #00d0ff";

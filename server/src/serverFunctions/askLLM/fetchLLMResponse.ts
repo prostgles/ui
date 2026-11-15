@@ -38,6 +38,7 @@ export const fetchLLMResponse = async (
     .replace("$MODEL", model);
   if (api_url === "http://localhost:3004/mocked-llm") {
     return {
+      responseData: { mocked: true },
       content: [{ type: "text", text: "Mocked response" }],
       cost: 0,
       total_tokens: 0,

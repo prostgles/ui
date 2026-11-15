@@ -1,11 +1,13 @@
 import React from "react";
-import type { DoclintDocument } from "./DoclintDocument";
+import type { DoclingDocument } from "./DoclingDocument";
+
+export const DOCLING_TEXT_BG_CLASS = " bg-color-2 ";
 
 export const DoclingText = ({
   texts,
   page: { page_no, image, size },
-}: Pick<DoclintDocument, "texts"> & {
-  page: DoclintDocument["pages"][string];
+}: Pick<DoclingDocument, "texts"> & {
+  page: DoclingDocument["pages"][string];
 }) => {
   const pageTextItems = texts.filter((t) =>
     t.prov.find((p) => p.page_no === page_no),
@@ -16,20 +18,36 @@ export const DoclingText = ({
         const prov = textItem.prov.find((p) => p.page_no === page_no);
         if (!prov) return null;
         const { l, t, r, b, coord_origin } = prov.bbox;
-        const scaleX = image.size.width / size.width;
-        const scaleY = image.size.height / size.height;
+        const displaySize = image?.size ?? size;
+        const scaleX = displaySize.width / size.width;
+        const scaleY = displaySize.height / size.height;
 
-        const left = `${l * scaleX}px`;
-        const width = `${(r - l) * scaleX}px`;
+        // const left = `${l * scaleX}px`;
+        // const width = `${(r - l) * scaleX}px`;
+        // const isBottomLeft = coord_origin === "BOTTOMLEFT";
+        // // Convert document-space top/bottom into CSS top-origin space
+        // const topDoc = isBottomLeft ? size.height - t : t;
+        // const bottomDoc = isBottomLeft ? size.height - b : b;
+        // const top = `${topDoc * scaleY}px`;
+        // const height = `${(bottomDoc - topDoc) * scaleY}px`;
+        // const widthPx = (r - l) * scaleX;
+        // const heightPx = (bottomDoc - topDoc) * scaleY;
+        // const fontSizePx = getEstimatedFontSizePx(
+        //   textItem.text,
+        //   Math.max(1, widthPx),
+        //   Math.max(1, heightPx),
+        // );
+        // const fontSize = fontSizePx + "px";
+
+        const left = `${(l * scaleX * 100) / displaySize.width}%`;
+        const width = `${((r - l) * scaleX * 100) / displaySize.width}%`;
 
         const isBottomLeft = coord_origin === "BOTTOMLEFT";
-
-        // Convert document-space top/bottom into CSS top-origin space
         const topDoc = isBottomLeft ? size.height - t : t;
         const bottomDoc = isBottomLeft ? size.height - b : b;
 
-        const top = `${topDoc * scaleY}px`;
-        const height = `${(bottomDoc - topDoc) * scaleY}px`;
+        const top = `${(topDoc * scaleY * 100) / displaySize.height}%`;
+        const height = `${((bottomDoc - topDoc) * scaleY * 100) / displaySize.height}%`;
 
         const widthPx = (r - l) * scaleX;
         const heightPx = (bottomDoc - topDoc) * scaleY;
@@ -38,11 +56,17 @@ export const DoclingText = ({
           Math.max(1, widthPx),
           Math.max(1, heightPx),
         );
+        const fontSize = `${(fontSizePx * 100) / displaySize.width}cqw`;
+
         return (
           <div
             key={idx}
             title={textItem.orig}
-            className="show-on-hover bg-warning text-ellipsis"
+            className={
+              (image ? "show-on-hover " : "") +
+              " ta-start text-ellipsis" +
+              DOCLING_TEXT_BG_CLASS
+            }
             style={{
               whiteSpace: "pre-wrap",
               position: "absolute",
@@ -50,11 +74,11 @@ export const DoclingText = ({
               left,
               width,
               height,
-              fontSize: fontSizePx + "px",
+              fontSize,
               lineHeight: 1.2,
             }}
           >
-            {textItem.text}
+            {textItem.orig}
           </div>
         );
       })}

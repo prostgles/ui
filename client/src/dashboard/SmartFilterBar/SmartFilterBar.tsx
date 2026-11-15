@@ -17,11 +17,12 @@ import { SmartAddFilter } from "../SmartFilter/SmartAddFilter";
 import type {
   ColumnConfig,
   ColumnSort,
-} from "../W_Table/ColumnMenu/ColumnMenu";
+} from "@common/ColumnConfig/ColumnConfig";
 import { SmartFilterBarFilters } from "./SmartFilterBarFilters";
 import { SmartFilterBarRightActions } from "./SmartFilterBarRightActions";
 import { SmartFilterBarSearch } from "./SmartFilterBarSearch";
 import { useSmartFilterBarState } from "./useSmartFilterBarState";
+import { getColumnsWithInfo } from "../W_Table/tableUtils/getColumnsWithInfo";
 
 export type SmartFilterBarProps = PrglCore & {
   className?: string;
@@ -37,8 +38,9 @@ export type SmartFilterBarProps = PrglCore & {
     showupdate?: boolean;
     showdelete?: boolean;
   };
-  rowCount: number;
+  rowCount: number | undefined;
   hideSort?: boolean;
+  filtersOnly?: boolean;
   extraFilters?: AnyObject[];
   fixedData?: AnyObject;
 } & (
@@ -85,6 +87,24 @@ export const SmartFilterBar = (props: SmartFilterBarProps) => {
     setColFilterLayout,
   } = state;
 
+  const filters = (
+    <SmartFilterBarFilters
+      state={state}
+      db={db}
+      tables={tables}
+      extraFilters={props.extraFilters}
+      filtersOnly={props.filtersOnly}
+    />
+  );
+  if (props.filtersOnly) {
+    if (!state.hasFilters && !state.hasHavingFilters) return null;
+    return (
+      <FlexCol className={className} style={style}>
+        {filters}
+      </FlexCol>
+    );
+  }
+
   return (
     <FlexCol
       className={classOverride(
@@ -98,7 +118,7 @@ export const SmartFilterBar = (props: SmartFilterBarProps) => {
 
       <FlexRowWrap
         className={classOverride(
-          "min-h-0 f-0 relative ai-center gap-p5",
+          "TopRow min-h-0 f-0 relative ai-center gap-p5",
           innerClassname,
         )}
       >
@@ -145,6 +165,7 @@ export const SmartFilterBar = (props: SmartFilterBarProps) => {
           <SmartFilterBarSearch
             db={db}
             tableName={table.name}
+            columns={getColumnsWithInfo(table.name, tables, selectedColumns)}
             tables={tables}
             onFilterChange={onFilterChange}
             filter={filter}
@@ -153,12 +174,7 @@ export const SmartFilterBar = (props: SmartFilterBarProps) => {
           <SmartFilterBarRightActions {...props} />
         </FlexRow>
       </FlexRowWrap>
-      <SmartFilterBarFilters
-        state={state}
-        db={db}
-        tables={tables}
-        extraFilters={props.extraFilters}
-      />
+      {filters}
     </FlexCol>
   );
 };
@@ -167,7 +183,7 @@ const toggleAllFilters = (filters: DetailedFilter[], minimised?: boolean) => {
   const someFiltersExpanded = minimised ?? filters.some((f) => !f.minimised);
 
   return filters.map((f) => {
-    if (isJoinedFilter(f)) {
+    if (isJoinedFilter(f) && "fieldName" in f.filter) {
       f.filter.minimised = someFiltersExpanded;
     }
     return {

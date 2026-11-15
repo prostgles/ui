@@ -21,6 +21,7 @@ export const AgentDefinition = ({
   config,
   agentName,
   onChange,
+  readOnly = false,
 }: {
   config: NonNullable<
     DBSSchema["agentic_workflows"]["definition_data"]["agentDefinitions"]
@@ -32,6 +33,7 @@ export const AgentDefinition = ({
     >[string];
 
   agentName: string;
+  readOnly?: boolean;
   onChange: (updatedFields: Partial<typeof config>) => void | Promise<void>;
 }) => {
   const prgl = usePrgl();
@@ -81,12 +83,23 @@ export const AgentDefinition = ({
           modelName={modelName}
           forAgent={true}
           value={null}
+          btnProps={{
+            disabledInfo:
+              readOnly ?
+                "Edit the workflow definition to change configuration"
+              : undefined,
+          }}
           onChange={(_, { name }) => {
             void onChange({ modelName: name });
           }}
         />
         <Btn
           size="small"
+          disabledInfo={
+            readOnly ?
+              "Edit the workflow definition to change configuration"
+            : undefined
+          }
           onClick={() => setExpanded((e) => !e)}
           iconPath={mdiCogOutline}
           variant="faded"
@@ -132,14 +145,18 @@ export const AgentDefinition = ({
           title="Agent tools"
           value={agentTools}
           configs={config.mcpServerConfigs}
-          onConfigChange={(serverName, configId) => {
-            void onChange({
-              mcpServerConfigs: {
-                ...(config.mcpServerConfigs ?? {}),
-                [serverName]: { configId },
-              },
-            });
-          }}
+          onConfigChange={
+            readOnly ? undefined : (
+              (serverName, configId) => {
+                void onChange({
+                  mcpServerConfigs: {
+                    ...(config.mcpServerConfigs ?? {}),
+                    [serverName]: { configId },
+                  },
+                });
+              }
+            )
+          }
         />
       : null}
       <ScrollFade

@@ -13,7 +13,10 @@ type P = {
 };
 
 export const ConnectionSelector = ({ connection, dbs, location }: P) => {
-  const { data: connections } = dbs.connections.useFind();
+  const { data: connections } = dbs.connections.useFind(
+    {},
+    { orderBy: { created: false } },
+  );
   const [isLoading, setIsLoading] = useState(false);
   return (
     <Select
@@ -38,7 +41,6 @@ export const ConnectionSelector = ({ connection, dbs, location }: P) => {
         iconPosition: "left",
         variant: "faded",
         loading: isLoading,
-        size: "default",
         style: {
           flex: 1,
           minWidth: 0,

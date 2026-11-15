@@ -75,10 +75,12 @@ export const parseExplainResult = ({
           (name, idx) =>
             ({
               idx,
-              key: name,
+              key: idx,
               name: name,
+              label: name,
               subLabel: "",
               sortable: false,
+              dataType: name.includes("Cost") ? "numeric" : "text",
               udt_name: name.includes("Cost") ? "numeric" : "text",
               tsDataType: name.includes("Cost") ? "number" : "string",
             }) satisfies Required<W_SQLState>["cols"][number],

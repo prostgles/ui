@@ -1,8 +1,10 @@
 import type { DetailedFilter } from "@common/filterUtils";
 import { useMemo, useState } from "react";
-import { IsTable, type WindowSyncItem } from "../Dashboard/dashboardUtils";
+import { type WindowSyncItem } from "../Dashboard/dashboardUtils";
+import { type WindowData } from "@common/ColumnConfig/WindowData";
 import type { Operand } from "../SmartFilter/SmartFilter";
 import type { SmartFilterBarProps } from "./SmartFilterBar";
+import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
 
 export const useSmartFilterBarState = (props: SmartFilterBarProps) => {
   const [colFilterLayout, setColFilterLayout] = useState(false);
@@ -97,4 +99,10 @@ export const useSmartFilterBarState = (props: SmartFilterBarProps) => {
       someFiltersExpanded,
     } as const;
   }, [props, colFilterLayout, table_name, table]);
+};
+
+const IsTable = (
+  w?: any,
+): w is SyncDataItem<WindowData<"table">, { handlesOnData: true }> => {
+  return w?.type === "table";
 };

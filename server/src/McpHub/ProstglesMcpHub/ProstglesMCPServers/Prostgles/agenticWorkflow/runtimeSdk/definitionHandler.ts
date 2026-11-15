@@ -16,6 +16,7 @@ export const definitionHandler = async (
   );
   process.exit(0);
 };
+
 const dbTableMethods = new Set([
   "find",
   "findOne",

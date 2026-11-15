@@ -1,7 +1,7 @@
 import { PROSTGLES_MCP_SERVERS_AND_TOOLS } from "@common/prostglesMcp";
 import { fromEntries, getEntries } from "@common/utils";
 import type { McpTool } from "@src/McpHub/AnthropicMcpHub/McpTypes";
-import { getServiceManager } from "@src/ServiceManager/ServiceManager";
+import { getServiceManager } from "@src/ServiceManager/getServiceManager";
 import { getJSONBSchemaAsJSONSchema } from "prostgles-types";
 import type {
   ProstglesMcpServerDefinition,
@@ -21,13 +21,11 @@ const definition = {
 } as const satisfies ProstglesMcpServerDefinition;
 
 const handler = {
-  start: (dbs) => {
-    const serviceManager = getServiceManager(dbs);
+  start: () => {
+    const serviceManager = getServiceManager();
 
     return {
-      stop: () => {
-        serviceManager.stopService("documents");
-      },
+      stop: () => serviceManager.stopService("documents"),
       tools: {
         get_document_text: async ({
           fileAsBase64,

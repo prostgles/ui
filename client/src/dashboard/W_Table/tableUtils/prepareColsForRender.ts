@@ -1,16 +1,16 @@
 import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";
-import { isNumericColumn } from "../../W_SQL/getSQLResultTableColumns";
-import type { ColumnConfigWInfo } from "../W_Table";
+import type { ColumnConfigWithInfo } from "@common/ColumnConfig/ColumnConfig";
 import type { ProstglesTableColumn } from "./getTableCols";
+import { isNumericTableColumn } from "./isNumericTableColumn";
 
 export const prepareColsForRender = (
   cols: ProstglesTableColumn[],
-  getWCols: () => ColumnConfigWInfo[],
+  getWCols: () => ColumnConfigWithInfo[],
   w: WindowSyncItem<"table">,
 ) => {
+  const wcols = getWCols();
   return cols
     .filter((c) => {
-      const wcols = getWCols();
       if (Array.isArray(wcols)) {
         const match = wcols.find((_c) => _c.name === c.name);
         if (match) {
@@ -20,7 +20,6 @@ export const prepareColsForRender = (
       return !c.hidden;
     })
     .toSorted((a, b) => {
-      const wcols = getWCols();
       if (Array.isArray(wcols)) {
         const _a = wcols.findIndex((c) => c.name === a.name),
           _b = wcols.findIndex((c) => c.name === b.name);
@@ -35,18 +34,8 @@ export const prepareColsForRender = (
       /* Align numbers to right for an easier read */
       headerClassname:
         c.style?.type === "Barchart" ? ""
-        : (
-          isNumericColumn(c) ||
-          c.nested?.columns.filter(
-            (nc) =>
-              nc.show &&
-              nc.computedConfig &&
-              isNumericColumn(nc.computedConfig),
-          ).length === 1
-        ) ?
-          " jc-end  "
+        : isNumericTableColumn(c) ? " jc-end  "
         : " ",
-      className: isNumericColumn(c) ? " ta-right " : " ",
       onResize: (width: number) => {
         const wcols = getWCols();
         const currentCols = wcols;
@@ -61,7 +50,7 @@ export const prepareColsForRender = (
           }
           return { ..._c };
         });
-        w.$update({
+        void w.$update({
           columns: JSON.parse(JSON.stringify(newCols)) as typeof newCols,
         });
       },

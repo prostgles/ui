@@ -1,13 +1,14 @@
 import { isObject } from "prostgles-types";
 import React from "react";
 import { vibrateFeedback } from "../../dashboard/Dashboard/dashboardUtils";
-import type { ColumnSortSQL } from "../../dashboard/W_Table/ColumnMenu/ColumnMenu";
+import type { ColumnSortSQL } from "@common/ColumnConfig/ColumnConfig";
 import type { ColumnSortMenuProps } from "../../dashboard/W_Table/ColumnMenu/ColumnSortMenu";
 import {
   ColumnSortMenu,
   getDefaultSort,
 } from "../../dashboard/W_Table/ColumnMenu/ColumnSortMenu";
 import { getSortColumn } from "../../dashboard/W_Table/tableUtils/tableUtils";
+import { getColumnSortOptions } from "../../dashboard/W_Table/tableUtils/getColumnSortOptions";
 import type { ProstglesColumn } from "../../dashboard/W_Table/W_Table";
 import { quickClone } from "../../utils/utils";
 import { classOverride } from "../Flex";
@@ -220,15 +221,12 @@ export class TableHeader<Sort extends ColumnSortSQL> extends React.Component<
                       let newSort = quickClone(mySort);
                       if (!newSort) {
                         if (isObject(col.sortable)) {
-                          const [col1, col2] =
-                            col.sortable.column.nested?.columns.filter(
-                              (c) => c.show,
-                            ) ?? [];
-                          const onlyOneActiveColumn = col1 && !col2;
-                          if (onlyOneActiveColumn) {
+                          const [firstSortOption, secondSortOption] =
+                            getColumnSortOptions(col.sortable.column);
+                          if (firstSortOption && !secondSortOption) {
                             newSort = getDefaultSort(
-                              `${col.key}.${col1.name}`,
-                            ) as Sort; // { key: `${col.key}.${onlyOneActiveColumn.name}`, asc: true };
+                              firstSortOption.key,
+                            ) as Sort;
                           } else {
                             this.setState({
                               showNestedSortOptions: {
@@ -375,10 +373,8 @@ export class TableHeader<Sort extends ColumnSortSQL> extends React.Component<
                         col.onResize(colh.offsetWidth);
                       }
                     }}
-                    onPress={(ev) => {
-                      const colh = (ev.target as HTMLElement).closest(
-                        `[role="columnheader"]`,
-                      );
+                    onPress={(ev, node) => {
+                      const colh = node.closest(`[role="columnheader"]`);
                       if (colh) {
                         colh.classList.toggle("resizing-ew", true);
                         vibrateFeedback(15);
@@ -386,10 +382,8 @@ export class TableHeader<Sort extends ColumnSortSQL> extends React.Component<
                         ev.stopPropagation();
                       }
                     }}
-                    onRelease={(ev) => {
-                      const colh = (ev.target as HTMLElement).closest(
-                        `[role="columnheader"]`,
-                      );
+                    onRelease={(_, node) => {
+                      const colh = node.closest(`[role="columnheader"]`);
                       if (colh) {
                         colh.classList.toggle("resizing-ew", false);
                       }

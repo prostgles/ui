@@ -58,18 +58,21 @@ export const SmartFormFieldForeignKey = (
   const newValue = newRowDataHandler.getNewRow()[column.name];
 
   const isUpsertingFile = column.file && isObject(newValue);
+  const isNestedInsert = newValue?.type === "nested-column";
   const rowWithFKeyVals = useMemo(() => {
     if (!row) return;
     const fkeyColNames = column.references
       .map((ref) => ref.cols)
       .filter(isDefined)
       .flat()
-      .filter((c) => {
+      .filter((refColumn) => {
         /** Exclude file insert data */
-        return !isUpsertingFile || c !== column.name;
+        return (
+          (!isNestedInsert && !isUpsertingFile) || refColumn !== column.name
+        );
       });
     return pickKeys(row, fkeyColNames);
-  }, [row, column, isUpsertingFile]);
+  }, [row, column, isNestedInsert, isUpsertingFile]);
 
   const rowWithFKeyValsMemo = useMemoDeep(
     () => rowWithFKeyVals,
@@ -98,11 +101,11 @@ export const SmartFormFieldForeignKey = (
   const valueStyle = {
     fontSize: "16px",
     fontWeight: 500,
-    paddingLeft: "6px 0",
+    lineHeight: "1em",
   };
 
   const selectedOption = fullOptions?.find((o) => o.key === value);
-
+  const { label, subLabel, leftContent } = selectedOption ?? {};
   const paddingValue = 0;
   const isNullOrEmpty = value === null || value === undefined;
 
@@ -114,17 +117,21 @@ export const SmartFormFieldForeignKey = (
         padding: isNullOrEmpty && !readOnly ? 0 : `${paddingValue} 0`,
       }}
     >
-      {column.file ? null : selectedOption?.leftContent}
+      {column.file ? null : leftContent}
       <div className="text-ellipsis max-w-fit" style={valueStyle}>
         <RenderValue
-          value={value}
-          column={column}
+          value={label ?? value}
+          column={
+            column.udt_name === "uuid" || isDefined(label) ?
+              { ...column, tsDataType: "string", udt_name: "text" }
+            : column
+          }
           showTitle={false}
           maxLength={30}
           getValues={undefined}
         />
       </div>
-      {isDefined(selectedOption?.subLabel) && (
+      {isDefined(subLabel) && (
         <div
           className="SmartFormFieldForeignKey.subLabel ta-left text-ellipsis"
           style={{
@@ -134,7 +141,7 @@ export const SmartFormFieldForeignKey = (
             maxWidth: "300px",
           }}
         >
-          {selectedOption.subLabel}
+          {subLabel}
         </div>
       )}
     </FlexRowWrap>
@@ -184,10 +191,12 @@ export const SmartFormFieldForeignKey = (
     const newDataText = sliceText(
       Object.entries(referencedInsertDataObj ?? {})
         .map(([k, v]) =>
-          isObject(v) ? `{ ${k} }`
+          v === undefined ? undefined
+          : isObject(v) ? `{ ${k} }`
           : Array.isArray(v) ? `[{ ${k} }]`
           : v?.toString(),
         )
+        .filter(isDefined)
         .join(", "),
       60,
     );
@@ -220,7 +229,7 @@ export const SmartFormFieldForeignKey = (
 
   return (
     <Select
-      className="SmartFormFieldForeignKey FormField_Select noselect formfield-bg-color"
+      className="SmartFormFieldForeignKey FormField_Select noselect"
       variant="div"
       data-command="SmartFormFieldForeignKey"
       fullOptions={fullOptions ?? []}
@@ -230,13 +239,12 @@ export const SmartFormFieldForeignKey = (
       labelAsValue={true}
       btnProps={{
         id,
+        variant: "select",
         children: displayValue,
         style: {
           justifyContent: "space-between",
           flex: 1,
           paddingLeft: "6px",
-          /** Handled by the parent FormField wrapper .focus-border */
-          outline: "unset",
         },
       }}
     />

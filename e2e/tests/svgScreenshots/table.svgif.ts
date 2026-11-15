@@ -26,6 +26,16 @@ export const tableSvgif: OnBeforeScreenshot = async (
   await openMenuIfClosed();
   await page.locator(getDataKey("users")).click();
 
+  /* Quick Stats needs the raw foreign key instead of its linked display. */
+  await page
+    .locator(`[role="columnheader"]` + getDataKey("id"))
+    .click({ button: "right" });
+  await page.locator(getDataKey("Columns")).click();
+  const columnList = page.getByTestId("SearchList.List");
+  await columnList.locator(getDataKey("type")).click();
+  await columnList.locator(getDataKey("__managed_type")).click();
+  await page.getByTestId("Popup.close").click();
+
   /** Show linked computed column */
   await addSceneAnimation(getCommandElemSelector("AddColumnMenu"));
 

@@ -15,9 +15,13 @@ export type PaginationProps = {
   pageSize?: number;
   page?: number;
   totalRows?: number;
+  /* Supply this when the total number of pages is unknown. */
+  hasNextPage?: boolean;
   onPageChange?: (newPage: number) => any;
   onPageSizeChange?: (newPageSize: number) => any;
   className?: string;
+  disabled?: boolean;
+  pageCountInfo?: React.ReactNode;
 };
 
 export const Pagination = (props: PaginationProps) => {
@@ -27,24 +31,41 @@ export const Pagination = (props: PaginationProps) => {
     onPageSizeChange,
     pageSize = PAGE_SIZES[0],
     totalRows,
+    hasNextPage,
     className = "",
+    disabled = false,
+    pageCountInfo,
   } = props;
   const onPageChange = (newPage) => {
     if (zeroBasedPage !== newPage) onPC?.(newPage);
   };
 
   let maxPage = 0;
-  if (totalRows) {
+  if (hasNextPage !== undefined) {
+    maxPage = zeroBasedPage + Number(hasNextPage);
+  } else if (totalRows) {
     maxPage = Math.ceil(totalRows / pageSize) - 1;
   }
 
   // if (!maxPage) return null;
 
-  const noPrev = zeroBasedPage === 0 ? "Already at first page" : undefined;
-  const noNext = zeroBasedPage === maxPage ? "Already at last page" : undefined;
+  const noPrevMessage =
+    disabled ? "Pagination is unavailable"
+    : zeroBasedPage === 0 ? "Already at first page"
+    : undefined;
+  const noNextMessage =
+    disabled ? "Pagination is unavailable"
+    : zeroBasedPage >= maxPage ? "Already at last page"
+    : undefined;
   const totalPages = maxPage + 1;
   const totalRowCount = +(totalRows ?? 0);
-  if (noPrev && noNext && totalRowCount < PAGE_SIZES[0]) {
+  if (
+    !disabled &&
+    noPrevMessage &&
+    noNextMessage &&
+    totalRows != null &&
+    totalRowCount <= PAGE_SIZES[0]
+  ) {
     return null;
   }
   const pageCountInfoNode = (
@@ -52,8 +73,13 @@ export const Pagination = (props: PaginationProps) => {
       className="text-2 text-sm p-p5 noselect"
       data-command={"Pagination.pageCountInfo" satisfies Command}
     >
-      {totalPages.toLocaleString()} page{totalPages === 1 ? "" : "s"}{" "}
-      {` (${totalRowCount.toLocaleString()} rows)`}
+      {pageCountInfo ??
+        (hasNextPage === undefined && (
+          <>
+            {totalPages.toLocaleString()} page{totalPages === 1 ? "" : "s"}{" "}
+            {` (${totalRowCount.toLocaleString()} rows)`}
+          </>
+        ))}
     </div>
   );
   const displayPage = zeroBasedPage + 1;
@@ -65,7 +91,7 @@ export const Pagination = (props: PaginationProps) => {
       <Btn
         data-command="Pagination.firstPage"
         iconPath={mdiPageFirst}
-        disabledInfo={noPrev}
+        disabledInfo={noPrevMessage}
         size="default"
         onClick={() => {
           onPageChange(0);
@@ -74,7 +100,7 @@ export const Pagination = (props: PaginationProps) => {
       <Btn
         data-command="Pagination.prevPage"
         iconPath={mdiChevronLeft}
-        disabledInfo={noPrev}
+        disabledInfo={noPrevMessage}
         size="default"
         onClick={() => {
           onPageChange(Math.max(0, zeroBasedPage - 1));
@@ -84,13 +110,14 @@ export const Pagination = (props: PaginationProps) => {
       <input
         data-command={"Pagination.page" satisfies Command}
         type="number"
-        className="h-fit min-w-0 p-p5"
+        className="h-fit min-w-0 p-p25"
         style={{
           width: `${(displayPage || 0).toString().length + 5}ch`,
         }}
         value={displayPage}
         min={1}
         max={maxPage + 1}
+        disabled={disabled}
         onChange={(e) => {
           const p = +e.target.value - 1;
           if (p >= 0 && p <= maxPage) {
@@ -102,21 +129,23 @@ export const Pagination = (props: PaginationProps) => {
       <Btn
         data-command="Pagination.nextPage"
         iconPath={mdiChevronRight}
-        disabledInfo={noNext}
+        disabledInfo={noNextMessage}
         size="default"
         onClick={() => {
           onPageChange(Math.min(maxPage, zeroBasedPage + 1));
         }}
       />
-      <Btn
-        data-command="Pagination.lastPage"
-        iconPath={mdiPageLast}
-        disabledInfo={noNext}
-        size="default"
-        onClick={() => {
-          onPageChange(maxPage);
-        }}
-      />
+      {hasNextPage === undefined && (
+        <Btn
+          data-command="Pagination.lastPage"
+          iconPath={mdiPageLast}
+          disabledInfo={noNextMessage}
+          size="default"
+          onClick={() => {
+            onPageChange(maxPage);
+          }}
+        />
+      )}
 
       {onPageSizeChange && (
         <FormField
@@ -124,14 +153,19 @@ export const Pagination = (props: PaginationProps) => {
           value={pageSize}
           data-command="Pagination.pageSize"
           options={PAGE_SIZES.map((s) => `${s}`)}
+          disabledInfo={disabled ? "Pagination is unavailable" : undefined}
           onChange={(e) => {
             const newPageSize = +e;
             if (newPageSize === pageSize) return;
             /**
              * Re-adjust current page if it will become out of bounds
              */
-            if (newPageSize * (zeroBasedPage + 1) > totalRowCount) {
-              onPageChange(Math.ceil(totalRowCount / newPageSize) - 1);
+            if (hasNextPage !== undefined) {
+              onPageChange(0);
+            } else if (newPageSize * (zeroBasedPage + 1) > totalRowCount) {
+              onPageChange(
+                Math.max(0, Math.ceil(totalRowCount / newPageSize) - 1),
+              );
             }
             onPageSizeChange(newPageSize);
           }}

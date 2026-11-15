@@ -10,12 +10,13 @@ import { classOverride } from "./Flex";
 import { Icon } from "./Icon/Icon";
 import { MenuList } from "./MenuList";
 import type { MenuListitem } from "./MenuListItem";
+import type { TestSelectors } from "src/Testing";
 
 export type TabItem = Partial<
   Omit<MenuListitem, "contentRight" | "onPress">
 > & {
   content?: React.ReactNode;
-};
+} & TestSelectors;
 
 export type TabItems<K extends string = string> = {
   [P in K]: TabItem;
@@ -278,7 +279,7 @@ export const TabsWithDefaultStyle = ({ items }: Pick<TabsProps, "items">) => {
   }, [activeSection, items]);
   return (
     <div
-      className="flex-col f-1 min-h-0 pt-1 w-full"
+      className="flex-col f-1 min-h-0 w-full"
       style={{ maxWidth: "800px" }}
     >
       <Tabs

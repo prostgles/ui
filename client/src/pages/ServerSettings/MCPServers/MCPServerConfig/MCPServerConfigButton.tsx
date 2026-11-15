@@ -1,41 +1,44 @@
 import { isObject, type DBSSchema } from "@common/publishUtils";
+import { getEntries, sliceText } from "@common/utils";
 import Btn from "@components/Btn";
 import { FlexRow } from "@components/Flex";
 import { mdiCogOutline } from "@mdi/js";
-import React from "react";
-import {
-  useMCPServerConfig,
-  type MCPServerConfigProps,
-} from "./MCPServerConfig";
-import { sliceText } from "@common/utils";
+import React, { useMemo } from "react";
+import { type MCPServerConfigProps } from "./MCPServerConfigEditor";
+import { useMCPServerConfig } from "./MCPServerConfigProvider";
 
 export const MCPServerConfigButton = (
-  props: Omit<MCPServerConfigProps, "onDone" | "variant"> & {
-    schema: NonNullable<DBSSchema["mcp_servers"]["config_schema"]>;
+  props: Omit<MCPServerConfigProps, "onDone" | "variant" | "serverName"> & {
+    schema: DBSSchema["mcp_servers"]["config_schema"];
+    server: DBSSchema["mcp_servers"];
   },
 ) => {
-  const { schema, existingConfig, serverName, chatId } = props;
+  const { schema, existingConfig, server, chatId } = props;
   const { setServerToConfigure } = useMCPServerConfig();
+
+  const config = existingConfig?.config;
+  const configItems = useMemo(() => {
+    return config ? getMcpConfigAsStrings(config, schema) : [];
+  }, [config, schema]);
 
   return (
     <Btn
       onClick={() => {
         void setServerToConfigure({
           existingConfig,
-          serverName,
+          serverName: server.name,
           chatId,
           defaultConfig: undefined,
         });
       }}
+      color={existingConfig?.oauth?.phase === "error" ? "danger" : undefined}
+      variant="faded"
       style={{ flexShrink: 1 }}
       size="micro"
       iconPath={mdiCogOutline}
       data-command="MCPServerConfigButton"
     >
-      {Object.entries(schema).map(([key, { title }]) => {
-        const value = existingConfig?.value[key];
-        const displayValue = getMcpConfigValueAsString(value, undefined);
-
+      {configItems.map(({ key, displayValue, title }) => {
         return (
           <FlexRow
             key={key}
@@ -50,7 +53,46 @@ export const MCPServerConfigButton = (
   );
 };
 
-export const getMcpConfigValueAsString = (
+export const getMcpConfigAsStrings = (
+  config: DBSSchema["mcp_server_configs"]["config"],
+  schema: DBSSchema["mcp_servers"]["config_schema"],
+) => {
+  if (config.type === "OAuth") {
+    return [
+      {
+        key: "OAuth scopes",
+        title: `Scopes: ${config.scopes.join(", ") || "<none>"}`,
+        displayValue: `(${config.scopes.length} scopes)`,
+      },
+      {
+        key: "OAuth mode",
+        displayValue: config.auth.mode,
+        title: undefined,
+      },
+    ];
+  }
+
+  return getEntries(
+    schema ??
+      Object.keys(config.value).reduce(
+        (acc, key) => {
+          acc[key] = { type: "string" };
+          return acc;
+        },
+        {} as Record<string, { type: "string"; title?: undefined }>,
+      ),
+  ).map(([key, { title }]) => {
+    const value = config.value[key];
+    const displayValue = getMcpConfigValueAsString(value, undefined);
+    return {
+      key,
+      title: title ?? key,
+      displayValue,
+    };
+  });
+};
+
+const getMcpConfigValueAsString = (
   value: unknown,
   config_schema: DBSSchema["mcp_servers"]["config_schema"] | undefined,
 ): string => {

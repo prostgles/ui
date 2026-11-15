@@ -2,7 +2,7 @@ import React, { useRef, useState } from "react";
 import "./Table.css";
 
 import type { AnyObject } from "prostgles-types";
-import type { ColumnSortSQL } from "../../dashboard/W_Table/ColumnMenu/ColumnMenu";
+import type { ColumnSortSQL } from "@common/ColumnConfig/ColumnConfig";
 import type { ColumnSortMenuProps } from "../../dashboard/W_Table/ColumnMenu/ColumnSortMenu";
 import type { ProstglesColumn } from "../../dashboard/W_Table/W_Table";
 import { classOverride } from "../Flex";
@@ -15,7 +15,7 @@ export type PageSize = (typeof PAGE_SIZES)[number];
 export const TableRootClassname = "table-component";
 export type OnColRenderRowInfo = {
   row: AnyObject;
-  value: any;
+  value: unknown;
   renderedVal: React.ReactNode;
   rowIndex: number;
   prevRow: AnyObject | undefined;
@@ -151,6 +151,7 @@ export const Table = <Sort extends ColumnSortSQL>(
         <TableBody
           cols={cols}
           rows={rows}
+          rowKeys={props.rowKeys}
           activeRowIndex={props.activeRowIndex}
           maxCharsPerCell={props.maxCharsPerCell}
           maxRowHeight={props.maxRowHeight}

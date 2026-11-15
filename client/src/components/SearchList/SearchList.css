@@ -20,6 +20,25 @@
 .SearchList_InputWrapper {
   border-color: var(--gray-300);
 }
+
+.SearchList_InputWrapper > input {
+  min-width: 5em;
+}
+
+.SearchList_InputWrapper:focus-within > input {
+  min-width: 12em;
+}
+
+.SearchList_micro {
+  --li-hover-bg: color-mix(in srgb, currentColor 6%, transparent);
+  --li-focus-bg: color-mix(in srgb, currentColor 10%, transparent);
+}
+
+.SearchList_micro .SearchList_InputWrapper {
+  border-left: 0;
+  border-right: 0;
+}
+
 .dark-theme .SearchList_InputWrapper {
   background-color: #1c1c1c;
   border-color: var(--gray-500);

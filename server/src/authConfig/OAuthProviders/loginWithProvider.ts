@@ -1,3 +1,4 @@
+import { getSignupUserType } from "../getSignupUserType";
 import type { DBGeneratedSchema } from "@common/DBGeneratedSchema";
 import type {
   LoginClientInfo,
@@ -44,10 +45,10 @@ export const loginWithProvider = async (
   if (failedTooManyTimes) {
     return "rate-limit-exceeded";
   }
-  await onSuccess();
-
   const matchingUser = await db.users.findOne({ auth_provider, username });
   if (matchingUser) {
+    if (matchingUser.status !== "active") return "inactive-account";
+    await onSuccess();
     const session = await upsertSession({
       user: matchingUser,
       ip,
@@ -57,6 +58,9 @@ export const loginWithProvider = async (
     });
     return { session, response: { success: true } };
   } else {
+    if (database_config.auth_providers?.signupMode !== "public") {
+      return "no-match";
+    }
     const newUser = await db.users
       .insert(
         {
@@ -72,7 +76,7 @@ export const loginWithProvider = async (
             profile,
             user_id: auth_provider_user_id,
           },
-          type: database_config.auth_created_user_type ?? "default",
+          type: getSignupUserType(database_config.auth_created_user_type),
           status: "active",
           password: "",
         },
@@ -82,6 +86,7 @@ export const loginWithProvider = async (
         console.error(e);
         return Promise.reject("Could not create user");
       });
+    await onSuccess();
     const session = await upsertSession({
       user: newUser,
       ip,

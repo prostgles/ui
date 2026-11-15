@@ -40,21 +40,24 @@ export const MonacoLogs = ({
     applyAnsiDecorations(monaco, editor, logs);
   }, [editor, logs, monaco]);
 
-  const { monacoStyle, onMountWrapped } = useMemo(() => {
-    const monacoStyle: React.CSSProperties = {
+  const monacoStyle = useMemo<React.CSSProperties>(
+    () => ({
       minWidth: "400px",
       width: "100%",
       maxHeight: !maxHeight ? undefined : `${maxHeight}px`,
       overflow: "hidden",
       flex: 1,
       ...style,
-    };
-    const onMountWrapped = (editor: editor.IStandaloneCodeEditor) => {
-      onMount(editor);
+    }),
+    [maxHeight, style],
+  );
+  const onMountWrapped = useCallback(
+    (editor: editor.IStandaloneCodeEditor) => {
       setEditor(editor);
-    };
-    return { monacoStyle, onMountWrapped };
-  }, [maxHeight, onMount, style]);
+      return onMount(editor);
+    },
+    [onMount],
+  );
 
   return (
     <CodeEditor
@@ -76,19 +79,22 @@ export const useMonacoScrollToLastLine = (once = false) => {
   const didScrollRef = React.useRef(false);
   const onMount = useCallback(
     (editor: editor.IStandaloneCodeEditor) => {
+      let scrollTimeout: ReturnType<typeof setTimeout> | undefined;
       const scrollToLastLine = () => {
-        if (once && didScrollRef.current) {
+        if ((once && didScrollRef.current) || scrollTimeout) {
           return;
         }
-        didScrollRef.current = true;
-        const lineCount = editor.getModel()?.getLineCount();
-        setTimeout(() => {
+        scrollTimeout = setTimeout(() => {
+          scrollTimeout = undefined;
+          didScrollRef.current = true;
+          const lineCount = editor.getModel()?.getLineCount();
           editor.revealLineInCenter(lineCount ?? 1);
         }, 100);
       };
       const disposable = editor.onDidChangeModelContent(scrollToLastLine);
       scrollToLastLine();
       return () => {
+        clearTimeout(scrollTimeout);
         disposable.dispose();
       };
     },

@@ -1,15 +1,18 @@
 import { ROUTES } from "@common/utils";
-import type { DBS } from "../Dashboard/DBS";
-import { useNavigate, useSearchParams } from "react-router";
 import { useCallback, useMemo } from "react";
+import { useNavigate, useSearchParams } from "react-router";
 import type { Workspace } from "../Dashboard/dashboardUtils";
+import type { DBS } from "../Dashboard/DBS";
+import { canCreateWorkspace } from "../Dashboard/cloneWorkspace";
 
 export const useWorkspaces = (
   dbs: DBS,
   userId: string,
   connectionId: string,
+  isAdmin: boolean,
 ) => {
   const unsortedWorkspaces = useWorkspacesSync(dbs, connectionId);
+  const canCreateWorkspaces = canCreateWorkspace(dbs);
   const workspaces = useMemo(() => {
     return (
       unsortedWorkspaces
@@ -19,12 +22,17 @@ export const useWorkspaces = (
           ...wsp,
           isMine: wsp.user_id === userId,
         }))
-        /** Exclude editable original workspaces */
+        /** Hide editable originals after personal clones are created */
         .filter(
-          (wsp) => wsp.isMine || !wsp.published || wsp.layout_mode === "fixed",
+          (wsp) =>
+            isAdmin ||
+            !canCreateWorkspaces ||
+            wsp.isMine ||
+            !wsp.published ||
+            wsp.layout_mode === "fixed",
         )
     );
-  }, [unsortedWorkspaces, userId]);
+  }, [canCreateWorkspaces, unsortedWorkspaces, userId, isAdmin]);
 
   return { workspaces };
 };
@@ -53,7 +61,10 @@ export const useSetActiveWorkspace = (
         setSearchParams(searchParams);
         return;
       }
-      if (w.id === currentWorkspaceId) {
+      if (
+        w.id ===
+        (searchParams.get(WorkspaceIdSearchParam) ?? currentWorkspaceId)
+      ) {
         return;
       }
       const path = getWorkspacePath(w);
@@ -72,7 +83,7 @@ export const useSetActiveWorkspace = (
 export const useWorkspacesSync = (dbs: DBS, connection_id: string) => {
   const { data: unsortedWorkspaces = [] } = dbs.workspaces.useSync!(
     { connection_id, deleted: false },
-    { handlesOnData: true, select: "*", patchText: false },
+    { handlesOnData: true },
   );
   return unsortedWorkspaces;
 };

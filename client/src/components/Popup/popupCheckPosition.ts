@@ -94,6 +94,22 @@ export const popupCheckPosition = function (this: Popup) {
     return;
   }
 
+  if (positioning === "beneath-left-css" && this.cssAnchor) {
+    this.setState({
+      stateStyle: {
+        ...commonState,
+        positionAnchor: this.cssAnchor.name,
+        positionArea: "bottom span-right",
+        positionTryFallbacks:
+          "flip-inline, flip-block, flip-inline flip-block, --popup-viewport",
+        width: "max-content",
+        height: "max-content",
+        margin: 0,
+      },
+    });
+    return;
+  }
+
   const size = getPopupSize(this);
   if (!this.ref || !size) return;
 
@@ -130,6 +146,9 @@ export const popupCheckPosition = function (this: Popup) {
     anchorX = anchorXY.x;
     anchorY = anchorXY.y;
   } else if (anchorEl) {
+    if (!anchorEl.isConnected) {
+      console.warn("Popup anchorEl is not connected to the DOM");
+    }
     const anchorR = anchorEl.getBoundingClientRect();
     anchorX = anchorR.x - anchorPadding;
     anchorY = anchorR.y - anchorPadding;
@@ -162,9 +181,10 @@ export const popupCheckPosition = function (this: Popup) {
     x = xCenter - width / 2;
   } else if (
     positioning === "beneath-left" ||
+    positioning === "beneath-left-css" ||
     positioning === "beneath-left-minfill"
   ) {
-    if (positioning === "beneath-left") {
+    if (positioning !== "beneath-left-minfill") {
       return getPopupPosition({
         opacity: commonState.opacity,
         anchorX,

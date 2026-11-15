@@ -21,7 +21,6 @@ import RTComp from "../RTComp";
 import type {
   DBSchemaTablesWJoins,
   DBSchemaTableWJoins,
-  OnAddChart,
   WindowSyncItem,
 } from "../Dashboard/dashboardUtils";
 
@@ -35,7 +34,7 @@ import { CodeEditor } from "../CodeEditor/CodeEditor";
 import type { DBS } from "../Dashboard/DBS";
 import { SQLHotkeys } from "./SQLHotkeys";
 import { TestSQL } from "./TestSQL";
-import { download } from "./W_SQL";
+import { download, type OnAddChart } from "./W_SQL";
 
 type P = {
   tableName?: string;
@@ -47,15 +46,6 @@ type P = {
   dbsTables: DBSchemaTableWJoins[];
   tables: DBSchemaTablesWJoins;
   onClose: VoidFunction;
-};
-
-const REFRESH_OPTIONS = ["Realtime", "Custom", "None"] as const;
-export type Unpromise<T extends Promise<any>> =
-  T extends Promise<infer U> ? U : never;
-
-export type RefreshOptions = {
-  autoRefreshSeconds?: number;
-  refreshType?: (typeof REFRESH_OPTIONS)[number];
 };
 
 type S = {

@@ -1,10 +1,12 @@
-import { mdiPencil, mdiResize } from "@mdi/js";
+import { mdiClose, mdiPencil, mdiResize } from "@mdi/js";
+import { useMemoDeep } from "prostgles-client";
 import { type AnyObject, type ValidatedColumnInfo } from "prostgles-types";
 import React, { useMemo, useState } from "react";
 import Btn from "@components/Btn";
 import { FlexCol } from "@components/Flex";
 import { SmartForm } from "../SmartForm/SmartForm";
 import type { SmartCardProps } from "./SmartCard";
+import { t } from "../../i18n/i18nUtils";
 
 export const SmartCardActions = <T extends AnyObject>(
   props: SmartCardProps<T> & {
@@ -14,6 +16,7 @@ export const SmartCardActions = <T extends AnyObject>(
 ) => {
   const {
     getActions,
+    onClose,
     tableName,
     db,
     tables,
@@ -28,7 +31,7 @@ export const SmartCardActions = <T extends AnyObject>(
   } = props;
   const [editMode, setEditMode] = useState(false);
 
-  const localRowFilter = useMemo(() => {
+  const resolvedRowFilter = useMemo(() => {
     if (rowFilter) return rowFilter;
     const hasPkeys = cardColumns.some((c) => c.is_pkey);
     const pkeyCols = cardColumns.filter(
@@ -43,6 +46,10 @@ export const SmartCardActions = <T extends AnyObject>(
     }
     return rowFilter;
   }, [cardColumns, defaultData, rowFilter]);
+  const localRowFilter = useMemoDeep(
+    () => resolvedRowFilter,
+    [resolvedRowFilter],
+  );
 
   const tableHandler =
     typeof tableName === "string" ? db[tableName] : undefined;
@@ -59,24 +66,31 @@ export const SmartCardActions = <T extends AnyObject>(
     allowedActions.update || allowedActions.delete || allowedActions.view;
 
   const extraActions = getActions?.(defaultData);
-  if (!showViewEditRow && !extraActions) {
+  if (!showViewEditRow && !extraActions && !onClose) {
     return null;
   }
 
   return (
     <FlexCol
-      className="show-on-parent-hover rounded"
-      style={{
-        position: "absolute",
-        right: 0,
-        top: 0,
-        backdropFilter: "blur(4px)",
-      }}
+      className={
+        onClose ? "flex-row f-0 gap-0" : "show-on-parent-hover rounded"
+      }
+      style={
+        onClose ? undefined : (
+          {
+            position: "absolute",
+            right: 0,
+            top: 0,
+            backdropFilter: "blur(4px)",
+          }
+        )
+      }
     >
       {showViewEditRow && (
         <Btn
           className="f-0 "
           data-command="SmartCard.viewEditRow"
+          variant="icon"
           iconPath={
             allowedActions.update || allowedActions.delete ?
               mdiPencil
@@ -90,6 +104,16 @@ export const SmartCardActions = <T extends AnyObject>(
         />
       )}
       {extraActions}
+      {onClose && (
+        <Btn
+          data-command="Popup.close"
+          data-close-popup={true}
+          variant="icon"
+          iconPath={mdiClose}
+          onClick={onClose}
+          title={t.common.Close}
+        />
+      )}
       {editMode && typeof tableName === "string" && (
         <SmartForm
           db={db}

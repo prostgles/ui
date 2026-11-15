@@ -2,16 +2,11 @@ const fs = require("fs");
 const path = require("path");
 
 let inDebounce;
-let fileWasSaved = false;
 const saveFile = () => {
   clearTimeout(inDebounce);
   inDebounce = setTimeout(() => {
     const filePath = path.join(__dirname, "./last_compiled.txt");
     fs.writeFileSync(filePath, Date.now().toString(), { encoding: "utf-8" });
-    if (!fileWasSaved) {
-      console.log("Prostgles UI accessible at");
-    }
-    fileWasSaved = true;
   }, 1000);
 };
 

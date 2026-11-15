@@ -6,9 +6,9 @@ import React from "react";
 import type { PrglCore } from "../../App";
 import { CreateFileColumn } from "./CreateFileColumn";
 import { FileColumnConfigControls } from "./FileColumnConfigControls";
-import type { useFileTableConfigControls } from "./useFileTableConfigControls";
+import type { useFileTableConfigControls } from "./hooks/useFileTableConfigControls";
 
-type FileStorageReferencedTablesConfigProps = Pick<PrglCore, "tables" | "db"> &
+type FileStorageReferencedTablesConfigProps = Pick<PrglCore, "tables"> &
   Pick<
     ReturnType<typeof useFileTableConfigControls>,
     | "canCreateTables"
@@ -23,7 +23,6 @@ type FileStorageReferencedTablesConfigProps = Pick<PrglCore, "tables" | "db"> &
 export const FileStorageReferencedTablesConfig = ({
   file_table_config,
   tables,
-  db,
   setRefsConfig,
   refsConfig,
   updateRefsConfig,
@@ -31,6 +30,7 @@ export const FileStorageReferencedTablesConfig = ({
 }: FileStorageReferencedTablesConfigProps) => {
   const tc = file_table_config;
   if (!tc?.fileTable) return null;
+
   return (
     <FlexCol className="f-1 mt-2">
       <h3 className="m-0 p-0">Referenced column limits</h3>

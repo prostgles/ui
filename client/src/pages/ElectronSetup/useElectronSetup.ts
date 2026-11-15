@@ -1,4 +1,4 @@
-import { omitKeys, type AnyObject } from "prostgles-types";
+import type { AnyObject } from "prostgles-types";
 import { useEffect, useState } from "react";
 import { DEFAULT_ELECTRON_CONNECTION } from "@common/electronInitTypes";
 import type { AppState } from "../../App";
@@ -11,6 +11,7 @@ import { API_ENDPOINTS } from "@common/utils";
 
 type ElectronSetup = {
   serverState: AppState["serverState"];
+  error: unknown;
 };
 
 export const getOS = () => {
@@ -22,7 +23,7 @@ export const getOS = () => {
   return os;
 };
 
-export const useElectronSetup = ({ serverState }: ElectronSetup) => {
+export const useElectronSetup = ({ serverState, error }: ElectronSetup) => {
   const [isQuickMode, setIsQuickMode] = useState(true);
   const [connection, setConnection] = useState<Connection>({
     ...DEFAULT_CONNECTION,
@@ -61,18 +62,19 @@ export const useElectronSetup = ({ serverState }: ElectronSetup) => {
     }));
   }, [setConnection, os]);
 
-  const [step, setStep] = useState<"1-privacy" | "2-setup">("1-privacy");
+  const [step, setStep] = useState<"1-privacy" | "2-setup" | "startup-error">(
+    error ? "startup-error" : "1-privacy",
+  );
 
-  const { electronCredsProvided, initState, electronCreds } = serverState || {};
-  const error =
-    initState?.state === "error" ? initState.error || "Init error" : null;
+  const { electronCredsProvided, electronCreds } = serverState || {};
   useEffect(() => {
-    if (electronCredsProvided) {
-      setStep("2-setup");
+    if (electronCredsProvided || error) {
+      setStep(error ? "startup-error" : "2-setup");
       if (electronCreds) {
+        setIsQuickMode(false);
         setConnection((c) => ({
           ...c,
-          ...omitKeys(electronCreds, ["db_ssl"]),
+          ...electronCreds,
         }));
       }
     }

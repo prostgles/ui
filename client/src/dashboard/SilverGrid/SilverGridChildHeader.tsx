@@ -77,7 +77,7 @@ export const SilverGridChildHeader = (props: P) => {
       {
         minimize: true,
         fullScreen: false,
-        close: isFixedOrSemiFixed === "fixed",
+        close: true,
         pan: isFixedOrSemiFixed === "fixed",
         resize: isFixedOrSemiFixed === "fixed",
       }
@@ -85,7 +85,6 @@ export const SilverGridChildHeader = (props: P) => {
   const { state: theme } = useReactiveState(appTheme);
   const bgClass = theme === "dark" ? "bg-color-0" : "bg-color-3";
   const bgActiveClass = theme === "dark" ? "bg-color-2" : "bg-color-0";
-  const btnClass = `f-0 ${isFixedOrSemiFixed && !fullscreen ? "show-on-parent-hover" : ""}`;
 
   return (
     <div
@@ -191,7 +190,7 @@ export const SilverGridChildHeader = (props: P) => {
       {!hideButtons.minimize && (
         <Btn
           {...dataCommand("dashboard.window.collapse")}
-          className={btnClass}
+          className="f-0"
           iconPath={
             !minimized ? mdiUnfoldLessHorizontal : mdiUnfoldMoreHorizontal
           }
@@ -211,7 +210,7 @@ export const SilverGridChildHeader = (props: P) => {
         <Btn
           {...dataCommand("dashboard.window.fullscreen")}
           title="Toggle view fullscreen mode"
-          className={btnClass}
+          className="f-0 mr-p25"
           iconPath={!fullscreen ? mdiFullscreen : mdiFullscreenExit}
           onClick={onClickFullscreen}
         />
@@ -220,7 +219,7 @@ export const SilverGridChildHeader = (props: P) => {
         <Btn
           {...dataCommand("dashboard.window.close")}
           title="Remove view"
-          className={btnClass}
+          className="f-0"
           iconPath={mdiClose}
           onClick={(e) => onClickClose(e)}
           disabledInfo={

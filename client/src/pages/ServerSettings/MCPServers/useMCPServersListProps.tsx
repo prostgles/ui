@@ -55,6 +55,10 @@ export const useMCPServersListProps = (
           ),
         },
         {
+          name: "icon_bytes",
+          hide: true,
+        },
+        {
           name: "mcp_server_configs",
           select: "*",
           hide: true,

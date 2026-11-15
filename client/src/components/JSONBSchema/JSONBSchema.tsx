@@ -29,6 +29,7 @@ export type JSONBSchemaCommonProps = Pick<Prgl, "db" | "tables"> & {
   showErrors?: boolean;
   nestingPath?: (string | number)[];
   allowIncomplete?: boolean;
+  debounceInputs?: boolean;
   noLabels?: boolean;
   schemaStyles?: {
     path: string[];
@@ -40,6 +41,7 @@ export type JSONBSchemaCommonProps = Pick<Prgl, "db" | "tables"> & {
 type P<S extends Schema> = JSONBSchemaCommonProps & {
   schema: S;
   onChange: (newValue: JSONB.GetType<S>) => void;
+  endContent?: React.ReactNode;
 };
 
 export const JSONBSchema = <S extends Schema>(props: P<S>) => {

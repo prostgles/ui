@@ -6,6 +6,7 @@ import { isDefined } from "prostgles-types";
 import { join } from "path";
 import { connectionManager } from "@src/index";
 import { statePrgl } from "@src/init/startProstgles";
+import { WORKFLOW_SDK_FILE_NAME } from "../runtimeSdk/workflowConstants";
 
 const defineAgenticWorkflowDirectory = join(
   __dirname,
@@ -40,9 +41,7 @@ export const allFilesInDirectory = new Map(
     .filter(isDefined),
 );
 
-const defineAgenticWorkflowTs = allFilesInDirectory.get(
-  "defineAgenticWorkflow.ts",
-);
+const defineAgenticWorkflowTs = allFilesInDirectory.get(WORKFLOW_SDK_FILE_NAME);
 export const defineAgenticWorkflowHandlersTs = allFilesInDirectory.get(
   "defineAgenticWorkflowHandlers.ts",
 );
@@ -95,10 +94,12 @@ export const getDefineAgenticWorkflowTsWithDbAndMcpTypes = async ({
 
   if (!mcpServerToolDefinitions) {
     return (
-      defineAgenticWorkflowTs.slice(
+      defineAgenticWorkflowTsContent.slice(
         0,
-        defineAgenticWorkflowTs.indexOf("// type McpServerToolDefinitions ="),
-      ) + defineAgenticWorkflowTs.slice(endOfReplace)
+        defineAgenticWorkflowTsContent.indexOf(
+          "// type McpServerToolDefinitions =",
+        ),
+      ) + defineAgenticWorkflowTsContent.slice(endOfReplace)
     );
   }
 
@@ -117,9 +118,9 @@ export const getDefineAgenticWorkflowTsWithDbAndMcpTypes = async ({
   ].join("\n");
 
   const result =
-    defineAgenticWorkflowTs.slice(0, startOfReplace) +
+    defineAgenticWorkflowTsContent.slice(0, startOfReplace) +
     McpTypes +
-    defineAgenticWorkflowTs.slice(endOfReplace);
+    defineAgenticWorkflowTsContent.slice(endOfReplace);
 
   const startOfDbSchemaReplace = result.lastIndexOf(
     "export type DBGeneratedSchema =",
@@ -181,7 +182,7 @@ export const getAgenticWorkflowFiles = async (
     });
   return {
     ...Object.fromEntries(allFilesInDirectory),
-    "defineAgenticWorkflow.ts": defineAgenticWorkflowTsWithSchemas,
+    [WORKFLOW_SDK_FILE_NAME]: defineAgenticWorkflowTsWithSchemas,
     "defineAgenticWorkflowHandlers.ts": defineAgenticWorkflowHandlersTs,
   };
 };

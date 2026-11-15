@@ -8,6 +8,7 @@ import React, { useState } from "react";
 import { quickClone } from "../../utils/utils";
 import { FileColumnConfigEditor } from "./FileColumnConfigEditor";
 import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
+import ErrorComponent from "@components/ErrorComponent";
 
 export type FileTableConfigReferences = Record<
   string,
@@ -64,7 +65,7 @@ export const FileColumnConfigControls = (
     })
     .filter(isDefined);
   const [editColumn, setEditColumn] = useState<(typeof linkedTables)[number]>();
-  const [error, setError] = useState<any>();
+  const [error, setError] = useState<unknown>();
 
   if (!linkedTables.length) return null;
 
@@ -98,6 +99,7 @@ export const FileColumnConfigControls = (
       )}
       <SearchList
         className="b b-color"
+        roundedItems={false}
         items={linkedTables.map((linkedTable, i) => {
           return {
             key: linkedTable.key,
@@ -146,6 +148,7 @@ export const FileColumnConfigControls = (
           };
         })}
       />
+      <ErrorComponent error={error} />
     </FlexCol>
   );
 };
