@@ -770,7 +770,7 @@ test("user invitations confirm email, enforce roles independently of connection 
         await expect(userTypeButton).toBeVisible();
         await expect(userTypeButton).toHaveCSS(
           "background-color",
-          "rgb(224, 231, 255)",
+          "rgb(229, 237, 255)",
         );
         await userTypeButton.click();
         const userTypeDetails = page.locator(".DetailedCardPopup");
